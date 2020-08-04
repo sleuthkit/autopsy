@@ -130,6 +130,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
                     throw new TskCoreException("Error indexing content", ex1);
                 }
             }
+            // ELTODO WHY IS THIS HERE?
             ingester.commit();
         }
     }

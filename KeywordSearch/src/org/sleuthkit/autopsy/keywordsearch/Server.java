@@ -48,6 +48,7 @@ import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import org.apache.commons.io.FileUtils;
 import java.util.concurrent.TimeoutException;
+import static java.util.stream.Collectors.toList;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.client.solrj.SolrServerException;
@@ -70,6 +71,7 @@ import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.util.NamedList;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.modules.Places;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -1864,11 +1866,16 @@ public class Server {
         // CloudSolrClient is gaered towards SolrCloud deployments. These are only good for collection-specific operations.
         private final HttpSolrClient queryClient;        
         private final SolrClient indexingClient;
+        
+        public final int maxBufferSize;        
+        public final List<SolrInputDocument> buffer;
+        private final Object bufferLock;
 
         private Collection(String name, Case theCase, Index index) throws TimeoutException, InterruptedException, SolrServerException, IOException {
             this.name = name;
             this.caseType = theCase.getCaseType();
             this.textIndex = index;
+            bufferLock = new Object();
             
             if (caseType == CaseType.SINGLE_USER_CASE) {
                 // get SolrJ client
@@ -1886,6 +1893,12 @@ public class Server {
                     indexingClient = configureMultiUserConnection(theCase, index, name);
                 }
             }
+            
+            // document batching
+            maxBufferSize = org.sleuthkit.autopsy.keywordsearch.UserPreferences.getDocumentsQueueSize();
+            org.sleuthkit.autopsy.keywordsearch.UserPreferences.setDocumentsQueueSize(maxBufferSize); // ELTODO remove
+            logger.log(Level.INFO, "Using Solr document queue size = {0}", maxBufferSize); //NON-NLS
+            buffer = new ArrayList<>(maxBufferSize * 2); // ELTODO
         }
 
         /**
@@ -1927,9 +1940,11 @@ public class Server {
 
         private void commit() throws SolrServerException {
             
-            if (indexingClient == null) {
-                // indexing is only supported for Solr 8
-                throw new SolrServerException("Could not commit to index. Indexing Solr client not initialized");
+            try {
+                sendBufferedDocs(buffer);
+            } catch (KeywordSearchModuleException ex) {
+                // ELTODO bundle message
+                throw new SolrServerException(NbBundle.getMessage(this.getClass(), "Server.commit.exception.msg"), ex);
             }
             
             try {
@@ -1948,24 +1963,48 @@ public class Server {
             queryClient.deleteByQuery(deleteQuery);
         }
 
+        // ELTODO synchronization
         void addDocument(SolrInputDocument doc) throws KeywordSearchModuleException {
 
-            if (indexingClient == null) {
-                // indexing is only supported for Solr 8
-                throw new KeywordSearchModuleException("Could not add document to index. Indexing Solr client not initialized");
-            }
+            List<SolrInputDocument> clone;
+            synchronized (bufferLock) {
+                buffer.add(doc);
+                // buffer documents if the buffer is not full
+                if (buffer.size() < maxBufferSize) {
+                    return;
+                }
 
-            try {
-                indexingClient.add(doc);
-            } catch (SolrServerException | RemoteSolrException ex) {
-                logger.log(Level.SEVERE, "Could not add document to index via update handler: " + doc.getField("id"), ex); //NON-NLS
-                throw new KeywordSearchModuleException(
-                        NbBundle.getMessage(this.getClass(), "Server.addDoc.exception.msg", doc.getField("id")), ex); //NON-NLS
-            } catch (IOException ex) {
-                logger.log(Level.SEVERE, "Could not add document to index via update handler: " + doc.getField("id"), ex); //NON-NLS
-                throw new KeywordSearchModuleException(
-                        NbBundle.getMessage(this.getClass(), "Server.addDoc.exception.msg2", doc.getField("id")), ex); //NON-NLS
+                clone = buffer.stream().collect(toList());
+                buffer.clear();
             }
+            
+            // buffer is full
+            sendBufferedDocs(clone);
+        }
+        
+        // ELTODO synchronization
+        private synchronized void sendBufferedDocs(List<SolrInputDocument> docBuffer) throws KeywordSearchModuleException {
+            
+            if (docBuffer.isEmpty()) {
+                return;
+            }
+            
+            try {
+                // ELTODO indexingClient.add(doc);
+                indexingClient.add(docBuffer);
+            } catch (SolrServerException | RemoteSolrException ex) {
+                logger.log(Level.SEVERE, "Could not add buffered documents to index", ex); //NON-NLS
+                // ELTODO modify "Server.addDoc.exception.msg"
+                throw new KeywordSearchModuleException(
+                        NbBundle.getMessage(this.getClass(), "Server.addDoc.exception.msg", "ELTODO BLAH"), ex); //NON-NLS
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE, "Could not add buffered documents to index", ex); //NON-NLS
+                // ELTODO modify "Server.addDoc.exception.msg"
+                throw new KeywordSearchModuleException(
+                        NbBundle.getMessage(this.getClass(), "Server.addDoc.exception.msg2", "ELTODO BLAH"), ex); //NON-NLS
+            } finally {
+                docBuffer.clear();
+            }            
         }
 
         /**
