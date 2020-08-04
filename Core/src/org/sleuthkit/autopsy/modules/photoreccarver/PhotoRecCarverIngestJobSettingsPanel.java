@@ -28,10 +28,13 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.swing.JOptionPane;
 import org.apache.commons.lang.StringUtils;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -44,7 +47,7 @@ final class PhotoRecCarverIngestJobSettingsPanel extends IngestModuleIngestJobSe
 
     private static final Logger logger = Logger.getLogger(PhotoRecCarverIngestJobSettingsPanel.class.getName());
     private static final String EXTENSION_LIST_SEPARATOR = ",";
-    private static final String PHOTOREC_TYPES_URL = "https://www.cgsecurity.org/wiki/File_Formats_Recovered_By_PhotoRec";
+    private static final String PHOTOREC_TYPES_URL = "http://sleuthkit.org/autopsy/docs/user-docs/latest/photorec_carver_page.html";
 
     /**
      * Instantiate the ingest job settings panel.
@@ -116,12 +119,72 @@ final class PhotoRecCarverIngestJobSettingsPanel extends IngestModuleIngestJobSe
     }
 
     @Override
+    @Messages({
+        "PhotoRecCarverIngestJobSettingsPanel_getSettings_invalidExtensions_title=Invalid Extensions",
+        "# {0} - extensions",
+        "PhotoRecCarverIngestJobSettingsPanel_getSettings_invalidExtensions_description=The following extensions are invalid and were removed: {0}"
+    })
     public IngestModuleIngestJobSettings getSettings() {
+
+
         return new PhotoRecCarverIngestJobSettings(
                 keepCorruptedFilesCheckbox.isSelected(),
                 includeExcludeCheckbox.isSelected(),
                 includeRadioButton.isSelected(),
-                getExtensions(extensionListTextfield.getText()));
+                getAndUpdateExtensions()
+        );
+    }
+    
+    
+    private List<String> getAndUpdateExtensions() {
+        PhotoRecExtensions extensions = getExtensions(extensionListTextfield.getText());
+        
+        if (extensions.getInvalidExtensions().size() > 0) {
+            JOptionPane.showMessageDialog(
+                    this, 
+                    String.format("<html>%s</html>", 
+                            Bundle.PhotoRecCarverIngestJobSettingsPanel_getSettings_invalidExtensions_description(
+                                    String.join(",", extensions.getInvalidExtensions()))), 
+                    Bundle.PhotoRecCarverIngestJobSettingsPanel_getSettings_invalidExtensions_title(), 
+                    JOptionPane.ERROR_MESSAGE);
+        }
+        
+        
+        extensionListTextfield.setText(String.join(EXTENSION_LIST_SEPARATOR, extensions.getValidExtensions()));
+        return extensions.getValidExtensions();
+    }
+
+    /**
+     * An object defining valid and invalid photorec extensions as provided by the user.
+     */
+    private static class PhotoRecExtensions {
+
+        private final List<String> validExtensions;
+        private final List<String> invalidExtensions;
+
+        /**
+         * Main constructor.
+         * @param validExtensions A list of strings representing the valid extensions.
+         * @param invalidExtensions A list of invalid extensions.
+         */
+        PhotoRecExtensions(List<String> validExtensions, List<String> invalidExtensions) {
+            this.validExtensions = validExtensions == null ? Collections.emptyList() : Collections.unmodifiableList(validExtensions);
+            this.invalidExtensions = invalidExtensions == null ? Collections.emptyList() : Collections.unmodifiableList(invalidExtensions);
+        }
+
+        /**
+         * @return The valid extensions.
+         */
+        List<String> getValidExtensions() {
+            return validExtensions;
+        }
+
+        /**
+         * @return The invalid extensions.
+         */
+        List<String> getInvalidExtensions() {
+            return invalidExtensions;
+        }
     }
 
     /**
@@ -132,15 +195,18 @@ final class PhotoRecCarverIngestJobSettingsPanel extends IngestModuleIngestJobSe
      *
      * @return The list of strings to use with photorec.
      */
-    private List<String> getExtensions(String combinedList) {
+    private PhotoRecExtensions getExtensions(String combinedList) {
         if (StringUtils.isBlank(combinedList)) {
-            return Collections.emptyList();
+            return new PhotoRecExtensions(null, null);
         }
 
-        return Stream.of(combinedList.split(EXTENSION_LIST_SEPARATOR))
+        Map<Boolean, List<String>> extensions = Stream.of(combinedList.split(EXTENSION_LIST_SEPARATOR))
                 .map(ext -> ext.trim())
                 .filter(ext -> StringUtils.isNotBlank(ext))
-                .collect(Collectors.toList());
+                .sorted((a, b) -> a.toLowerCase().compareTo(b.toLowerCase()))
+                .collect(Collectors.partitioningBy(PhotoRecCarverFileOptExtensions::isValidExtension));
+
+        return new PhotoRecExtensions(extensions.get(true), extensions.get(false));
     }
 
     /**
@@ -185,7 +251,10 @@ final class PhotoRecCarverIngestJobSettingsPanel extends IngestModuleIngestJobSe
 
         org.openide.awt.Mnemonics.setLocalizedText(extensionListLabel, org.openide.util.NbBundle.getMessage(PhotoRecCarverIngestJobSettingsPanel.class, "PhotoRecCarverIngestJobSettingsPanel.extensionListLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(fullListOfTypesHyperlink, org.openide.util.NbBundle.getMessage(PhotoRecCarverIngestJobSettingsPanel.class, "PhotoRecCarverIngestJobSettingsPanel.fullListOfTypesHyperlink.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(fullListOfTypesHyperlink, String.format("<html>%s</html>", PHOTOREC_TYPES_URL));
+        fullListOfTypesHyperlink.setMaximumSize(new java.awt.Dimension(240, 50));
+        fullListOfTypesHyperlink.setMinimumSize(new java.awt.Dimension(240, 50));
+        fullListOfTypesHyperlink.setPreferredSize(new java.awt.Dimension(240, 50));
 
         extensionListTextfield.setText(org.openide.util.NbBundle.getMessage(PhotoRecCarverIngestJobSettingsPanel.class, "PhotoRecCarverIngestJobSettingsPanel.extensionListTextfield.text")); // NOI18N
 
@@ -198,21 +267,24 @@ final class PhotoRecCarverIngestJobSettingsPanel extends IngestModuleIngestJobSe
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(detectionSettingsLabel)
-                    .addComponent(keepCorruptedFilesCheckbox)
-                    .addComponent(includeExcludeCheckbox)))
-            .addGroup(layout.createSequentialGroup()
-                .addGap(31, 31, 31)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(includeRadioButton)
-                    .addComponent(excludeRadioButton)
-                    .addComponent(exampleLabel)
-                    .addComponent(extensionListTextfield, javax.swing.GroupLayout.PREFERRED_SIZE, 258, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(fullListOfTypesLabel)
-                    .addComponent(fullListOfTypesHyperlink, javax.swing.GroupLayout.PREFERRED_SIZE, 250, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(extensionListLabel)))
+                    .addGroup(layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(detectionSettingsLabel)
+                            .addComponent(keepCorruptedFilesCheckbox)
+                            .addComponent(includeExcludeCheckbox)))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(31, 31, 31)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(includeRadioButton)
+                            .addComponent(excludeRadioButton)
+                            .addComponent(exampleLabel)
+                            .addComponent(extensionListTextfield, javax.swing.GroupLayout.PREFERRED_SIZE, 258, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(fullListOfTypesLabel)
+                            .addComponent(extensionListLabel)
+                            .addComponent(fullListOfTypesHyperlink, javax.swing.GroupLayout.PREFERRED_SIZE, 238, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -236,8 +308,7 @@ final class PhotoRecCarverIngestJobSettingsPanel extends IngestModuleIngestJobSe
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(fullListOfTypesLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(fullListOfTypesHyperlink)
-                .addContainerGap())
+                .addComponent(fullListOfTypesHyperlink, javax.swing.GroupLayout.PREFERRED_SIZE, 51, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
     }// </editor-fold>//GEN-END:initComponents
 

@@ -8,6 +8,9 @@ OpenIDE-Module-Long-Description=PhotoRec Carver ingest module. \n\n Carves unall
 OpenIDE-Module-Short-Description=Carves unallocated space and feeds carved files back into the system for processing.
 moduleDisplayName.text=PhotoRec Carver
 moduleDescription.text=Runs PhotoRec carver against unallocated space in the data source.
+# {0} - extensions
+PhotoRecCarverIngestJobSettingsPanel_getSettings_invalidExtensions_description=The following extensions are invalid and were removed: {0}
+PhotoRecCarverIngestJobSettingsPanel_getSettings_invalidExtensions_title=Invalid Extensions
 PhotoRecIngestModule.nonHostnameUNCPathUsed=PhotoRec cannot operate with a UNC path containing IP addresses.
 PhotoRecIngestModule.PermissionsNotSufficient=Insufficient permissions accessing
 PhotoRecIngestModule.PermissionsNotSufficientSeeReference=See 'Shared Drive Authentication' in Autopsy help.
@@ -27,7 +30,6 @@ PhotoRecIngestModule.complete.numberOfErrors=Number of Errors while Carving:
 PhotoRecCarverIngestJobSettingsPanel.detectionSettingsLabel.text=PhotoRec Settings
 PhotoRecCarverIngestJobSettingsPanel.keepCorruptedFilesCheckbox.text=Keep corrupted files
 PhotoRecCarverIngestJobSettingsPanel.includeExcludeCheckbox.text=Focus on certain file types
-PhotoRecCarverIngestJobSettingsPanel.fullListOfTypesHyperlink.text=<html>https://www.cgsecurity.org/wiki/\nFile_Formats_Recovered_By_PhotoRec</html>
 PhotoRecCarverIngestJobSettingsPanel.fullListOfTypesLabel.text=Full List of Types:
 PhotoRecCarverIngestJobSettingsPanel.exampleLabel.text=Example: jpg,png,zip
 PhotoRecCarverIngestJobSettingsPanel.extensionListTextfield.text=
