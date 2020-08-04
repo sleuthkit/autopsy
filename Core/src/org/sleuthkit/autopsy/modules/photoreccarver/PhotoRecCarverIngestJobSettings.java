@@ -58,7 +58,7 @@ final class PhotoRecCarverIngestJobSettings implements IngestModuleIngestJobSett
      * @param includeExcludeExtensions The extensions to include or exclude
      *                                 (i.e. jpg, gif)
      */
-    public PhotoRecCarverIngestJobSettings(boolean keepCorruptedFiles, boolean fileOptOption, boolean includeElseExclude, List<String> includeExcludeExtensions) {
+    PhotoRecCarverIngestJobSettings(boolean keepCorruptedFiles, boolean fileOptOption, boolean includeElseExclude, List<String> includeExcludeExtensions) {
         this.keepCorruptedFiles = keepCorruptedFiles;
         this.fileOptOption = fileOptOption;
         this.includeElseExclude = includeElseExclude;
@@ -94,7 +94,7 @@ final class PhotoRecCarverIngestJobSettings implements IngestModuleIngestJobSett
      *
      * @return The extension names.
      */
-    public List<String> getIncludeExcludeExtensions() {
+    List<String> getIncludeExcludeExtensions() {
         return includeExcludeExtensions == null
                 ? Collections.emptyList()
                 : Collections.unmodifiableList(includeExcludeExtensions);
@@ -106,7 +106,7 @@ final class PhotoRecCarverIngestJobSettings implements IngestModuleIngestJobSett
      *
      * @param includeExcludeExtensions The extension names.
      */
-    public void setIncludeExcludeExtensions(List<String> includeExcludeExtensions) {
+    void setIncludeExcludeExtensions(List<String> includeExcludeExtensions) {
         this.includeExcludeExtensions = new ArrayList<>();
         if (includeExcludeExtensions != null) {
             this.includeExcludeExtensions.addAll(includeExcludeExtensions);
@@ -120,7 +120,7 @@ final class PhotoRecCarverIngestJobSettings implements IngestModuleIngestJobSett
      * @return Whether or not the fileopt option (and subsequent file extension
      *         filtering) should be enabled.
      */
-    public boolean hasFileOptOption() {
+    boolean hasFileOptOption() {
         return fileOptOption;
     }
 
@@ -131,7 +131,7 @@ final class PhotoRecCarverIngestJobSettings implements IngestModuleIngestJobSett
      * @param fileOptOption Whether or not the fileopt option (and subsequent
      *                      file extension filtering) should be enabled.
      */
-    public void setFileOptOption(boolean fileOptOption) {
+    void setFileOptOption(boolean fileOptOption) {
         this.fileOptOption = fileOptOption;
     }
 
@@ -143,7 +143,7 @@ final class PhotoRecCarverIngestJobSettings implements IngestModuleIngestJobSett
      *
      * @return Whether to include or exclude includeExcludeExtensions.
      */
-    public boolean isIncludeElseExclude() {
+    boolean isIncludeElseExclude() {
         return includeElseExclude;
     }
 
@@ -157,7 +157,7 @@ final class PhotoRecCarverIngestJobSettings implements IngestModuleIngestJobSett
      * @param includeElseExclude Whether to include or exclude
      *                           includeExcludeExtensions.
      */
-    public void setIncludeElseExclude(boolean includeElseExclude) {
+    void setIncludeElseExclude(boolean includeElseExclude) {
         this.includeElseExclude = includeElseExclude;
     }
 }
