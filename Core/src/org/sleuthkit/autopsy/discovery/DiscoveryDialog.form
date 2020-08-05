@@ -48,12 +48,14 @@
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" attributes="0">
                           <EmptySpace min="10" pref="10" max="-2" attributes="0"/>
-                          <Component id="imagesButton" min="-2" pref="110" max="-2" attributes="0"/>
+                          <Component id="imagesButton" linkSize="1" min="-2" pref="110" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
-                          <Component id="videosButton" min="-2" pref="110" max="-2" attributes="0"/>
+                          <Component id="videosButton" linkSize="1" min="-2" pref="110" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
-                          <Component id="documentsButton" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace pref="370" max="32767" attributes="0"/>
+                          <Component id="documentsButton" linkSize="1" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Component id="domainsButton" linkSize="1" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace pref="190" max="32767" attributes="0"/>
                       </Group>
                       <Group type="102" attributes="0">
                           <Component id="step1Label" min="-2" pref="243" max="-2" attributes="0"/>
@@ -78,6 +80,7 @@
                       <Component id="videosButton" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="imagesButton" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="documentsButton" alignment="3" min="-2" pref="43" max="-2" attributes="0"/>
+                      <Component id="domainsButton" alignment="3" min="-2" pref="43" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace min="-2" pref="8" max="-2" attributes="0"/>
               </Group>
@@ -190,6 +193,26 @@
             <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="0"/>
             <AuxValue name="classDetails" type="java.lang.String" value="Box.Filler.HorizontalStrut"/>
           </AuxValues>
+        </Component>
+        <Component class="javax.swing.JButton" name="domainsButton">
+          <Properties>
+            <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+              <Image iconType="3" name="/org/sleuthkit/autopsy/images/web-file.png"/>
+            </Property>
+            <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+              <ResourceString bundle="org/sleuthkit/autopsy/discovery/Bundle.properties" key="DiscoveryDialog.domainsButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+            </Property>
+            <Property name="disabledIcon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+              <Image iconType="3" name="/org/sleuthkit/autopsy/images/web-file.png"/>
+            </Property>
+            <Property name="disabledSelectedIcon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+              <Image iconType="3" name="/org/sleuthkit/autopsy/images/web-file.png"/>
+            </Property>
+            <Property name="focusable" type="boolean" value="false"/>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="domainsButtonActionPerformed"/>
+          </Events>
         </Component>
       </SubComponents>
     </Container>

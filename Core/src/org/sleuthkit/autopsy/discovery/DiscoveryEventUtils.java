@@ -22,8 +22,10 @@ import com.google.common.eventbus.EventBus;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import org.sleuthkit.autopsy.discovery.ArtifactSearchData.ArtifactType;
 import org.sleuthkit.autopsy.discovery.FileSearch.GroupKey;
 import org.sleuthkit.autopsy.discovery.FileSearchData.FileType;
+import org.sleuthkit.autopsy.discovery.SearchData.ResultType;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
@@ -54,15 +56,28 @@ final class DiscoveryEventUtils {
      */
     static final class SearchStartedEvent {
 
+        private final ResultType resultType;
         private final FileType fileType;
+        private final ArtifactType artifactType;
 
         /**
          * Construct a new SearchStartedEvent
          *
          * @param type The type of file the search event is for.
          */
-        SearchStartedEvent(FileType type) {
-            this.fileType = type;
+        SearchStartedEvent(ResultType resultType, FileType fileType, ArtifactType artifactType) {
+            this.resultType = resultType;
+            this.fileType = fileType;
+            this.artifactType = artifactType;
+        }
+
+        /**
+         * Get the broad search type.
+         *
+         * @return The result type, either FILES, or ARTIFACTS.
+         */
+        ResultType getResultType() {
+            return resultType;
         }
 
         /**
@@ -70,8 +85,17 @@ final class DiscoveryEventUtils {
          *
          * @return The type of files being searched for.
          */
-        FileType getType() {
+        FileType getFileType() {
             return fileType;
+        }
+
+        /**
+         * Get the type of artifact the search is being performed for.
+         *
+         * @return The type of artifacts being searched for.
+         */
+        ArtifactType getArtifactType() {
+            return artifactType;
         }
     }
 

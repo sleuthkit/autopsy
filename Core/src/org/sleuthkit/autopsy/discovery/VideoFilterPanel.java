@@ -110,4 +110,9 @@ final class VideoFilterPanel extends AbstractFiltersPanel {
         return SearchData.ResultType.FILE;
     }
 
+    @Override
+    ArtifactSearchData.ArtifactType getArtifactType() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
 }

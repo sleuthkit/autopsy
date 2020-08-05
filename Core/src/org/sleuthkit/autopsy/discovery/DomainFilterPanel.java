@@ -1,9 +1,24 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy
+ *
+ * Copyright 2020 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.discovery;
+
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 
 /**
  *
@@ -18,7 +33,13 @@ public class DomainFilterPanel extends AbstractFiltersPanel {
      * Creates new form DomainFilterPanel
      */
     public DomainFilterPanel() {
+        super();
         initComponents();
+        addFilter(new DataSourceFilterPanel(), false, null, 0);
+        addFilter(new ArtifactTypeFilterPanel(), false, null, 1);
+        addFilter(new DateFilterPanel(), false, null, 0);
+        addFilter(new DomainUniquenessFilterPanel(), false, null, 1);
+        addPanelsToScrollPane(domainFiltersSplitPane);
     }
 
     /**
@@ -30,16 +51,37 @@ public class DomainFilterPanel extends AbstractFiltersPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 400, Short.MAX_VALUE)
+        javax.swing.JScrollPane domainFiltersScrollPane = new javax.swing.JScrollPane();
+        javax.swing.JPanel domainFiltersPanel = new javax.swing.JPanel();
+        domainFiltersSplitPane = new javax.swing.JSplitPane();
+
+        setPreferredSize(new java.awt.Dimension(225, 70));
+        setLayout(new java.awt.BorderLayout());
+
+        domainFiltersSplitPane.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(DomainFilterPanel.class, "DomainFilterPanel.domainFiltersSplitPane.border.title"))); // NOI18N
+        domainFiltersSplitPane.setResizeWeight(0.5);
+        domainFiltersSplitPane.setToolTipText(org.openide.util.NbBundle.getMessage(DomainFilterPanel.class, "DomainFilterPanel.domainFiltersSplitPane.toolTipText")); // NOI18N
+
+        javax.swing.GroupLayout domainFiltersPanelLayout = new javax.swing.GroupLayout(domainFiltersPanel);
+        domainFiltersPanel.setLayout(domainFiltersPanelLayout);
+        domainFiltersPanelLayout.setHorizontalGroup(
+            domainFiltersPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(domainFiltersPanelLayout.createSequentialGroup()
+                .addGap(8, 8, 8)
+                .addComponent(domainFiltersSplitPane)
+                .addGap(8, 8, 8))
         );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 300, Short.MAX_VALUE)
+        domainFiltersPanelLayout.setVerticalGroup(
+            domainFiltersPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(domainFiltersPanelLayout.createSequentialGroup()
+                .addGap(8, 8, 8)
+                .addComponent(domainFiltersSplitPane)
+                .addGap(8, 8, 8))
         );
+
+        domainFiltersScrollPane.setViewportView(domainFiltersPanel);
+
+        add(domainFiltersScrollPane, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
     @Override
@@ -52,7 +94,13 @@ public class DomainFilterPanel extends AbstractFiltersPanel {
         return SearchData.ResultType.ARTIFACT;
     }
 
+    @Override
+    ArtifactSearchData.ArtifactType getArtifactType() {
+        return ARTIFACT_TYPE;
+    }
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JSplitPane domainFiltersSplitPane;
     // End of variables declaration//GEN-END:variables
 }

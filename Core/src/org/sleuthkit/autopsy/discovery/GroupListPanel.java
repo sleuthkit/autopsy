@@ -37,7 +37,7 @@ import org.sleuthkit.autopsy.discovery.FileSearchData.FileType;
 final class GroupListPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
-    private FileType resultType = null;
+    private FileType fileType = null;
     private Map<GroupKey, Integer> groupMap = null;
     private List<AbstractFilter> searchfilters;
     private FileSearch.AttributeType groupingAttribute;
@@ -59,7 +59,7 @@ final class GroupListPanel extends javax.swing.JPanel {
      */
     @Subscribe
     void handleSearchStartedEvent(DiscoveryEventUtils.SearchStartedEvent searchStartedEvent) {
-        resultType = searchStartedEvent.getType();
+        fileType = searchStartedEvent.getFileType();
         groupKeyList.setListData(new GroupKey[0]);
     }
 
@@ -170,7 +170,7 @@ final class GroupListPanel extends javax.swing.JPanel {
                     if (selectedGroup.equals(groupKey)) {
                         selectedGroupKey = groupKey;
                         DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.GroupSelectedEvent(
-                                searchfilters, groupingAttribute, groupSort, fileSortMethod, selectedGroupKey, groupMap.get(selectedGroupKey), resultType));
+                                searchfilters, groupingAttribute, groupSort, fileSortMethod, selectedGroupKey, groupMap.get(selectedGroupKey), fileType));
                         break;
                     }
                 }

@@ -62,13 +62,20 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
     }
 
     abstract SearchData.ResultType getResultType();
-    
+
     /**
      * Get the type of results this filters panel is for.
      *
      * @return The type of results this panel filters.
      */
     abstract FileSearchData.FileType getFileType();
+
+    /**
+     * Get the type of results this filters panel is for.
+     *
+     * @return The type of results this panel filters.
+     */
+    abstract ArtifactSearchData.ArtifactType getArtifactType();
 
     /**
      * Add a DiscoveryFilterPanel to the specified column with the specified
@@ -245,14 +252,14 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
      * @return The list of filters selected by the user.
      */
     synchronized List<AbstractFilter> getFilters() {
-        
+
         List<AbstractFilter> filtersToUse = new ArrayList<>();
         if (getResultType().equals(SearchData.ResultType.FILE)) {
-             filtersToUse.add(new SearchFiltering.FileTypeFilter(getFileType()));
-        } else if (getResultType().equals(SearchData.ResultType.ARTIFACT)){
-            
+            filtersToUse.add(new SearchFiltering.FileTypeFilter(getFileType()));
+        } else if (getResultType().equals(SearchData.ResultType.ARTIFACT)) {
+
         }
-       
+
         for (AbstractDiscoveryFilterPanel filterPanel : filters) {
             if (filterPanel.getCheckbox().isSelected()) {
                 AbstractFilter filter = filterPanel.getFilter();

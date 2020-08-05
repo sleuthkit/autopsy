@@ -36,6 +36,7 @@ import org.openide.windows.RetainLocation;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
+import org.sleuthkit.autopsy.discovery.SearchData.ResultType;
 
 /**
  * Create a dialog for displaying the Discovery results.
@@ -277,12 +278,19 @@ public final class DiscoveryTopComponent extends TopComponent {
      */
     @Messages({"DiscoveryTopComponent.cancelButton.text=Cancel Search",
         "# {0} - searchType",
-        "DiscoveryTopComponent.searchInProgress.text=Performing search for results of type {0}. Please wait."})
+        "DiscoveryTopComponent.searchInProgress.text=Performing search for results of type {0}. Please wait.",
+        "DiscoveryTopComponent.searchError.text=Error no type specified for search."})
     @Subscribe
     void handleSearchStartedEvent(DiscoveryEventUtils.SearchStartedEvent searchStartedEvent) {
         newSearchButton.setText(Bundle.DiscoveryTopComponent_cancelButton_text());
         progressMessageTextArea.setForeground(Color.red);
-        progressMessageTextArea.setText(Bundle.DiscoveryTopComponent_searchInProgress_text(searchStartedEvent.getType().name()));
+        String text = Bundle.DiscoveryTopComponent_searchError_text();
+        if (searchStartedEvent.getResultType() == ResultType.FILE) {
+            text = Bundle.DiscoveryTopComponent_searchInProgress_text(searchStartedEvent.getFileType().name());
+        } else if (searchStartedEvent.getResultType() == ResultType.ARTIFACT) {
+            text = Bundle.DiscoveryTopComponent_searchInProgress_text(searchStartedEvent.getArtifactType().name());
+        }
+        progressMessageTextArea.setText(text);
     }
 
     /**

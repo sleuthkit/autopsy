@@ -108,4 +108,9 @@ final class ImageFilterPanel extends AbstractFiltersPanel {
     SearchData.ResultType getResultType() {
         return SearchData.ResultType.FILE;
     }
+
+    @Override
+    ArtifactSearchData.ArtifactType getArtifactType() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
 }
