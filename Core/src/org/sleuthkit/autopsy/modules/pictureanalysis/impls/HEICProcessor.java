@@ -109,14 +109,14 @@ public class HEICProcessor implements PictureProcessor {
     }
 
     /**
-     * Give each file its own folder in module output. This makes scanning
-     * for ImageMagick output fast.
+     * Give each file its own folder in module output. This makes scanning for
+     * ImageMagick output fast.
      */
     private Path getModuleOutputFolder(AbstractFile file) throws NoCurrentCaseException {
         final String moduleOutputDirectory = Case.getCurrentCaseThrows().getModuleDirectory();
-        
-        return Paths.get(moduleOutputDirectory, 
-                HEIC_MODULE_FOLDER, 
+
+        return Paths.get(moduleOutputDirectory,
+                HEIC_MODULE_FOLDER,
                 String.valueOf(file.getId()));
     }
 
@@ -134,16 +134,16 @@ public class HEICProcessor implements PictureProcessor {
     @Override
     public void process(IngestJobContext context, AbstractFile file) {
         try {
-            if (IMAGE_MAGICK_PATH == null || context.fileIngestIsCancelled()) {
+            if (IMAGE_MAGICK_PATH == null) {
                 return;
             }
             createModuleOutputFolder(file);
 
-            final Path localDiskCopy = extractToDisk(file);
-
             if (context.fileIngestIsCancelled()) {
                 return;
             }
+
+            final Path localDiskCopy = extractToDisk(file);
 
             convertToJPEG(context, localDiskCopy, file);
         } catch (IOException ex) {
@@ -192,6 +192,10 @@ public class HEICProcessor implements PictureProcessor {
             return context.fileIngestIsCancelled() || System.currentTimeMillis() - startTime >= TIMEOUT_IN_MS;
         });
 
+        if (context.fileIngestIsCancelled()) {
+            return;
+        }
+        
         if (exitStatus != EXIT_SUCCESS) {
             logger.log(Level.INFO, "Non-zero exit status for HEIC file [id: {0}]. Skipping...", heicFile.getId());
             return;

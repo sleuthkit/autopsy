@@ -49,12 +49,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_USER_CONTENT_SUSPECTED;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_MAKE;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_MODEL;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.ReadContentInputStream;
@@ -83,14 +78,8 @@ public class EXIFProcessor implements PictureProcessor {
 
         try (BufferedInputStream bin = new BufferedInputStream(new ReadContentInputStream(file));) {
 
-            final Blackboard blackboard = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard();
-
             final Collection<BlackboardAttribute> attributes = new ArrayList<>();
             final Metadata metadata = ImageMetadataReader.readMetadata(bin);
-
-            if (context.fileIngestIsCancelled()) {
-                return;
-            }
 
             // Date
             final ExifSubIFDDirectory exifDir = metadata.getFirstDirectoryOfType(ExifSubIFDDirectory.class);
@@ -110,7 +99,7 @@ public class EXIFProcessor implements PictureProcessor {
 
                 final Date date = exifDir.getDate(ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL, timeZone);
                 if (date != null) {
-                    attributes.add(new BlackboardAttribute(TSK_DATETIME_CREATED, MODULE_NAME, date.getTime() / 1000));
+                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED, MODULE_NAME, date.getTime() / 1000));
                 }
             }
 
@@ -123,13 +112,13 @@ public class EXIFProcessor implements PictureProcessor {
             if (gpsDir != null) {
                 final GeoLocation loc = gpsDir.getGeoLocation();
                 if (loc != null) {
-                    attributes.add(new BlackboardAttribute(TSK_GEO_LATITUDE, MODULE_NAME, loc.getLatitude()));
-                    attributes.add(new BlackboardAttribute(TSK_GEO_LONGITUDE, MODULE_NAME, loc.getLongitude()));
+                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE, MODULE_NAME, loc.getLatitude()));
+                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE, MODULE_NAME, loc.getLongitude()));
                 }
 
                 final Rational altitude = gpsDir.getRational(GpsDirectory.TAG_ALTITUDE);
                 if (altitude != null) {
-                    attributes.add(new BlackboardAttribute(TSK_GEO_ALTITUDE, MODULE_NAME, altitude.doubleValue()));
+                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE, MODULE_NAME, altitude.doubleValue()));
                 }
             }
 
@@ -142,20 +131,23 @@ public class EXIFProcessor implements PictureProcessor {
             if (devDir != null) {
                 final String model = devDir.getString(ExifIFD0Directory.TAG_MODEL);
                 if (StringUtils.isNotBlank(model)) {
-                    attributes.add(new BlackboardAttribute(TSK_DEVICE_MODEL, MODULE_NAME, model));
+                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL, MODULE_NAME, model));
                 }
 
                 final String make = devDir.getString(ExifIFD0Directory.TAG_MAKE);
                 if (StringUtils.isNotBlank(make)) {
-                    attributes.add(new BlackboardAttribute(TSK_DEVICE_MAKE, MODULE_NAME, make));
+                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MAKE, MODULE_NAME, make));
                 }
             }
 
             if (context.fileIngestIsCancelled()) {
                 return;
             }
+            
+            final Blackboard blackboard = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard();
 
             if (!attributes.isEmpty() && !blackboard.artifactExists(file, TSK_METADATA_EXIF, attributes)) {
+                
                 final BlackboardArtifact exifArtifact = file.newArtifact(TSK_METADATA_EXIF);
                 final BlackboardArtifact userSuspectedArtifact = file.newArtifact(TSK_USER_CONTENT_SUSPECTED);
                 exifArtifact.addAttributes(attributes);

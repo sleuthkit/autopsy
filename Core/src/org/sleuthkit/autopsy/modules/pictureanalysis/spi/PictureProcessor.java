@@ -35,11 +35,11 @@ public interface PictureProcessor {
      * the pipeline
      * @param file The image file to process
      */
-    public void process(IngestJobContext context, AbstractFile file);
+    void process(IngestJobContext context, AbstractFile file);
 
     /**
      * Indicates the MIME types this processor supports.
      */
-    public Set<String> mimeTypes();
+    Set<String> mimeTypes();
 
 }

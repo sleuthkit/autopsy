@@ -26,6 +26,9 @@ import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 
+/**
+ * Factory for the Picture Analysis ingest module.
+ */
 @ServiceProvider(service = IngestModuleFactory.class)
 public class PictureAnalysisIngestModuleFactory extends IngestModuleFactoryAdapter {
 
