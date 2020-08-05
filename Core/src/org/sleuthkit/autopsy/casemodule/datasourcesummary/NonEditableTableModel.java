@@ -24,7 +24,8 @@ import javax.swing.table.DefaultTableModel;
  * A Table model where cells are not editable.
  */
 class NonEditableTableModel extends DefaultTableModel {
-
+    private static final long serialVersionUID = 1L;
+    
     NonEditableTableModel(Object[][] data, Object[] columnNames) {
         super(data, columnNames);
     }
