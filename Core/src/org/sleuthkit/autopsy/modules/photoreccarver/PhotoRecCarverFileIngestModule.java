@@ -37,6 +37,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -102,6 +103,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
     private File executableFile;
     private IngestServices services;
     private final UNCPathUtilities uncPathUtilities = new UNCPathUtilities();
+    private final PhotoRecCarverIngestJobSettings settings;
     private final String optionsString;
     private long jobId;
 
@@ -119,6 +121,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
      * @param settings Ingest job settings used to configure the module.
      */
     PhotoRecCarverFileIngestModule(PhotoRecCarverIngestJobSettings settings) {
+        this.settings = settings;
         this.optionsString = getPhotorecOptions(settings);
     }
 
@@ -181,7 +184,22 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
      * @inheritDoc
      */
     @Override
+    @NbBundle.Messages({
+        "# {0} - extensions",
+        "PhotoRecCarverFileIngestModule_getSettings_invalidExtensions_description=The following extensions are invalid: {0}"
+    })
     public void startUp(IngestJobContext context) throws IngestModule.IngestModuleException {
+        // validate settings
+        List<String> invalidExtensions = this.settings.getIncludeExcludeExtensions().stream()
+                .filter((ext) -> !PhotoRecCarverFileOptExtensions.isValidExtension(ext))
+                .collect(Collectors.toList());
+        
+        if (invalidExtensions.size() > 0) {
+            throw new IngestModule.IngestModuleException(
+                    Bundle.PhotoRecCarverFileIngestModule_getSettings_invalidExtensions_description(
+                            String.join(",", invalidExtensions)));
+        }
+        
         this.context = context;
         this.services = IngestServices.getInstance();
         this.jobId = this.context.getJobId();

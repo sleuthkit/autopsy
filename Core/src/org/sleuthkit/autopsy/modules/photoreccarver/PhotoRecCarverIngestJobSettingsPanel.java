@@ -119,11 +119,6 @@ final class PhotoRecCarverIngestJobSettingsPanel extends IngestModuleIngestJobSe
     }
 
     @Override
-    @Messages({
-        "PhotoRecCarverIngestJobSettingsPanel_getSettings_invalidExtensions_title=Invalid Extensions",
-        "# {0} - extensions",
-        "PhotoRecCarverIngestJobSettingsPanel_getSettings_invalidExtensions_description=The following extensions are invalid and were removed: {0}"
-    })
     public IngestModuleIngestJobSettings getSettings() {
 
 
@@ -131,82 +126,30 @@ final class PhotoRecCarverIngestJobSettingsPanel extends IngestModuleIngestJobSe
                 keepCorruptedFilesCheckbox.isSelected(),
                 includeExcludeCheckbox.isSelected(),
                 includeRadioButton.isSelected(),
-                getAndUpdateExtensions()
+                getExtensions(extensionListTextfield.getText())
         );
     }
     
-    
-    private List<String> getAndUpdateExtensions() {
-        PhotoRecExtensions extensions = getExtensions(extensionListTextfield.getText());
-        
-        if (extensions.getInvalidExtensions().size() > 0) {
-            JOptionPane.showMessageDialog(
-                    this, 
-                    String.format("<html>%s</html>", 
-                            Bundle.PhotoRecCarverIngestJobSettingsPanel_getSettings_invalidExtensions_description(
-                                    String.join(",", extensions.getInvalidExtensions()))), 
-                    Bundle.PhotoRecCarverIngestJobSettingsPanel_getSettings_invalidExtensions_title(), 
-                    JOptionPane.ERROR_MESSAGE);
-        }
-        
-        
-        extensionListTextfield.setText(String.join(EXTENSION_LIST_SEPARATOR, extensions.getValidExtensions()));
-        return extensions.getValidExtensions();
-    }
 
-    /**
-     * An object defining valid and invalid photorec extensions as provided by the user.
-     */
-    private static class PhotoRecExtensions {
-
-        private final List<String> validExtensions;
-        private final List<String> invalidExtensions;
-
-        /**
-         * Main constructor.
-         * @param validExtensions A list of strings representing the valid extensions.
-         * @param invalidExtensions A list of invalid extensions.
-         */
-        PhotoRecExtensions(List<String> validExtensions, List<String> invalidExtensions) {
-            this.validExtensions = validExtensions == null ? Collections.emptyList() : Collections.unmodifiableList(validExtensions);
-            this.invalidExtensions = invalidExtensions == null ? Collections.emptyList() : Collections.unmodifiableList(invalidExtensions);
-        }
-
-        /**
-         * @return The valid extensions.
-         */
-        List<String> getValidExtensions() {
-            return validExtensions;
-        }
-
-        /**
-         * @return The invalid extensions.
-         */
-        List<String> getInvalidExtensions() {
-            return invalidExtensions;
-        }
-    }
 
     /**
      * Determines a list of extensions to pass as parameters to photorec based
-     * on the specified input. Splits on separator and trims.
+     * on the specified input.
      *
      * @param combinedList The comma-separated list.
      *
      * @return The list of strings to use with photorec.
      */
-    private PhotoRecExtensions getExtensions(String combinedList) {
+    private List<String> getExtensions(String combinedList) {
         if (StringUtils.isBlank(combinedList)) {
-            return new PhotoRecExtensions(null, null);
+            return Collections.emptyList();
         }
 
-        Map<Boolean, List<String>> extensions = Stream.of(combinedList.split(EXTENSION_LIST_SEPARATOR))
+        return Stream.of(combinedList.split(EXTENSION_LIST_SEPARATOR))
                 .map(ext -> ext.trim())
                 .filter(ext -> StringUtils.isNotBlank(ext))
                 .sorted((a, b) -> a.toLowerCase().compareTo(b.toLowerCase()))
-                .collect(Collectors.partitioningBy(PhotoRecCarverFileOptExtensions::isValidExtension));
-
-        return new PhotoRecExtensions(extensions.get(true), extensions.get(false));
+                .collect(Collectors.toList());
     }
 
     /**
