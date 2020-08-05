@@ -112,4 +112,9 @@ public class MappedList<E, F> extends TransformationList<E, F> {
         });
     }
 
+    @Override
+    public int getViewIndex(int index) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
 }

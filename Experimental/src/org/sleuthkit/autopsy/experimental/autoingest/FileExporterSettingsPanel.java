@@ -80,6 +80,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import javax.swing.DefaultListModel;
+import javax.swing.tree.TreeNode;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -1322,10 +1323,10 @@ public final class FileExporterSettingsPanel extends JPanel {
      */
     private TreePath findTreePathByRuleAndArtifactClauseName(String ruleName, String clauseName) {
         @SuppressWarnings("unchecked")
-        Enumeration<DefaultMutableTreeNode> enumeration = rootNode.preorderEnumeration();
+        Enumeration<TreeNode> enumeration = rootNode.preorderEnumeration();
         boolean insideRule = false;
         while (enumeration.hasMoreElements()) {
-            DefaultMutableTreeNode node = enumeration.nextElement();
+            DefaultMutableTreeNode node = (DefaultMutableTreeNode) enumeration.nextElement();
             Item item = (Item) node.getUserObject();
             if (item.getItemType() == ItemType.RULE) {
                 insideRule = node.toString().equalsIgnoreCase(ruleName);
@@ -1349,9 +1350,9 @@ public final class FileExporterSettingsPanel extends JPanel {
      */
     private TreePath findTreePathByRuleName(String ruleName) {
         @SuppressWarnings("unchecked")
-        Enumeration<DefaultMutableTreeNode> enumeration = rootNode.depthFirstEnumeration();
+        Enumeration<TreeNode> enumeration = rootNode.depthFirstEnumeration();
         while (enumeration.hasMoreElements()) {
-            DefaultMutableTreeNode node = enumeration.nextElement();
+            DefaultMutableTreeNode node = (DefaultMutableTreeNode) enumeration.nextElement();
             if (node.toString().equalsIgnoreCase(ruleName)) {
                 return new TreePath(node.getPath());
             }
