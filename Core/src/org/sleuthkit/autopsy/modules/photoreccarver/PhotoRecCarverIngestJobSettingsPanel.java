@@ -226,9 +226,11 @@ final class PhotoRecCarverIngestJobSettingsPanel extends IngestModuleIngestJobSe
         exampleLabel = new javax.swing.JLabel();
         fullListOfTypesLabel = new javax.swing.JLabel();
         extensionListLabel = new javax.swing.JLabel();
-        fullListOfTypesHyperlink = new javax.swing.JLabel();
         extensionListTextfield = new javax.swing.JTextField();
         includeRadioButton = new javax.swing.JRadioButton();
+        fullListOfTypesHyperlink = new javax.swing.JTextArea();
+
+        setPreferredSize(null);
 
         org.openide.awt.Mnemonics.setLocalizedText(keepCorruptedFilesCheckbox, org.openide.util.NbBundle.getMessage(PhotoRecCarverIngestJobSettingsPanel.class, "PhotoRecCarverIngestJobSettingsPanel.keepCorruptedFilesCheckbox.text")); // NOI18N
 
@@ -251,16 +253,19 @@ final class PhotoRecCarverIngestJobSettingsPanel extends IngestModuleIngestJobSe
 
         org.openide.awt.Mnemonics.setLocalizedText(extensionListLabel, org.openide.util.NbBundle.getMessage(PhotoRecCarverIngestJobSettingsPanel.class, "PhotoRecCarverIngestJobSettingsPanel.extensionListLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(fullListOfTypesHyperlink, String.format("<html>%s</html>", PHOTOREC_TYPES_URL));
-        fullListOfTypesHyperlink.setMaximumSize(new java.awt.Dimension(240, 50));
-        fullListOfTypesHyperlink.setMinimumSize(new java.awt.Dimension(240, 50));
-        fullListOfTypesHyperlink.setPreferredSize(new java.awt.Dimension(240, 50));
-
         extensionListTextfield.setText(org.openide.util.NbBundle.getMessage(PhotoRecCarverIngestJobSettingsPanel.class, "PhotoRecCarverIngestJobSettingsPanel.extensionListTextfield.text")); // NOI18N
 
         includeExcludeButtonGroup.add(includeRadioButton);
         includeRadioButton.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(includeRadioButton, org.openide.util.NbBundle.getMessage(PhotoRecCarverIngestJobSettingsPanel.class, "PhotoRecCarverIngestJobSettingsPanel.includeRadioButton.text")); // NOI18N
+
+        fullListOfTypesHyperlink.setEditable(false);
+        fullListOfTypesHyperlink.setColumns(20);
+        fullListOfTypesHyperlink.setLineWrap(true);
+        fullListOfTypesHyperlink.setRows(5);
+        fullListOfTypesHyperlink.setText(PHOTOREC_TYPES_URL);
+        fullListOfTypesHyperlink.setFocusable(false);
+        fullListOfTypesHyperlink.setOpaque(false);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -283,7 +288,7 @@ final class PhotoRecCarverIngestJobSettingsPanel extends IngestModuleIngestJobSe
                             .addComponent(extensionListTextfield, javax.swing.GroupLayout.PREFERRED_SIZE, 258, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(fullListOfTypesLabel)
                             .addComponent(extensionListLabel)
-                            .addComponent(fullListOfTypesHyperlink, javax.swing.GroupLayout.PREFERRED_SIZE, 238, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                            .addComponent(fullListOfTypesHyperlink, javax.swing.GroupLayout.PREFERRED_SIZE, 247, javax.swing.GroupLayout.PREFERRED_SIZE))))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -308,7 +313,8 @@ final class PhotoRecCarverIngestJobSettingsPanel extends IngestModuleIngestJobSe
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(fullListOfTypesLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(fullListOfTypesHyperlink, javax.swing.GroupLayout.PREFERRED_SIZE, 51, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addComponent(fullListOfTypesHyperlink, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -321,7 +327,7 @@ final class PhotoRecCarverIngestJobSettingsPanel extends IngestModuleIngestJobSe
     private javax.swing.JRadioButton excludeRadioButton;
     private javax.swing.JLabel extensionListLabel;
     private javax.swing.JTextField extensionListTextfield;
-    private javax.swing.JLabel fullListOfTypesHyperlink;
+    private javax.swing.JTextArea fullListOfTypesHyperlink;
     private javax.swing.JLabel fullListOfTypesLabel;
     private javax.swing.ButtonGroup includeExcludeButtonGroup;
     private javax.swing.JCheckBox includeExcludeCheckbox;

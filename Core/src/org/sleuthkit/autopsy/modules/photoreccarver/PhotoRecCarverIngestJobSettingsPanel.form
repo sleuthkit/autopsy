@@ -5,6 +5,11 @@
     <Component class="javax.swing.ButtonGroup" name="includeExcludeButtonGroup">
     </Component>
   </NonVisualComponents>
+  <Properties>
+    <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+      <Dimension value="null"/>
+    </Property>
+  </Properties>
   <AuxValues>
     <AuxValue name="FormSettings_autoResourcing" type="java.lang.Integer" value="1"/>
     <AuxValue name="FormSettings_autoSetComponentName" type="java.lang.Boolean" value="false"/>
@@ -39,7 +44,7 @@
                           <Component id="extensionListTextfield" min="-2" pref="258" max="-2" attributes="0"/>
                           <Component id="fullListOfTypesLabel" min="-2" max="-2" attributes="0"/>
                           <Component id="extensionListLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                          <Component id="fullListOfTypesHyperlink" alignment="0" min="-2" pref="238" max="-2" attributes="0"/>
+                          <Component id="fullListOfTypesHyperlink" alignment="0" min="-2" pref="247" max="-2" attributes="0"/>
                       </Group>
                   </Group>
               </Group>
@@ -69,7 +74,8 @@
               <EmptySpace max="-2" attributes="0"/>
               <Component id="fullListOfTypesLabel" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="fullListOfTypesHyperlink" min="-2" pref="51" max="-2" attributes="0"/>
+              <Component id="fullListOfTypesHyperlink" min="-2" pref="36" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -139,22 +145,6 @@
         </Property>
       </Properties>
     </Component>
-    <Component class="javax.swing.JLabel" name="fullListOfTypesHyperlink">
-      <Properties>
-        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
-          <Connection code="String.format(&quot;&lt;html&gt;%s&lt;/html&gt;&quot;, PHOTOREC_TYPES_URL)" type="code"/>
-        </Property>
-        <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-          <Dimension value="[240, 50]"/>
-        </Property>
-        <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-          <Dimension value="[240, 50]"/>
-        </Property>
-        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-          <Dimension value="[240, 50]"/>
-        </Property>
-      </Properties>
-    </Component>
     <Component class="javax.swing.JTextField" name="extensionListTextfield">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
@@ -171,6 +161,19 @@
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/modules/photoreccarver/Bundle.properties" key="PhotoRecCarverIngestJobSettingsPanel.includeRadioButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JTextArea" name="fullListOfTypesHyperlink">
+      <Properties>
+        <Property name="editable" type="boolean" value="false"/>
+        <Property name="columns" type="int" value="20"/>
+        <Property name="lineWrap" type="boolean" value="true"/>
+        <Property name="rows" type="int" value="5"/>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
+          <Connection code="PHOTOREC_TYPES_URL" type="code"/>
+        </Property>
+        <Property name="focusable" type="boolean" value="false"/>
+        <Property name="opaque" type="boolean" value="false"/>
       </Properties>
     </Component>
   </SubComponents>
