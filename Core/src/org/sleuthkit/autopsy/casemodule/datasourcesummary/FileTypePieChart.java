@@ -44,7 +44,8 @@ import static org.sleuthkit.autopsy.coreutils.FileTypeUtils.FileTypeCategory;
  * A Pie Chart that shows file mime types in a data source.
  */
 class FileTypePieChart extends JPanel {
-
+    private static final long serialVersionUID = 1L;
+    
     private static final Font DEFAULT_FONT = new JLabel().getFont();
     private static final Font DEFAULT_HEADER_FONT = new Font(DEFAULT_FONT.getName(), DEFAULT_FONT.getStyle(), (int) (DEFAULT_FONT.getSize() * 1.5));
 

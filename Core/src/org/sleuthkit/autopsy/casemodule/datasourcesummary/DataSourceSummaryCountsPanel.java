@@ -38,7 +38,8 @@ import org.sleuthkit.datamodel.DataSource;
     "DataSourceSummaryCountsPanel.FilesByCategoryTableModel.count.header=Count"
 })
 class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
-
+    private static final long serialVersionUID = 1L;
+    
     // Result returned for a data model if no data found.
     private static final Object[][] EMPTY_PAIRS = new Object[][]{};
 
@@ -60,10 +61,10 @@ class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
         Bundle.DataSourceSummaryCountsPanel_ArtifactCountsTableModel_count_header()
     };
 
-    private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(DataSourceSummaryCountsPanel.class.getName());
     private final DefaultTableCellRenderer rightAlignedRenderer = new DefaultTableCellRenderer();
-    private FileTypePieChart fileTypePieChart = new FileTypePieChart();
+    
+    private final FileTypePieChart fileTypePieChart = new FileTypePieChart();
 
     private DataSource dataSource;
 
@@ -191,19 +192,18 @@ class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
     private void initComponents() {
 
         javax.swing.JScrollPane scrollParent = new javax.swing.JScrollPane();
-        parentPanel = new javax.swing.JPanel();
-        fileCountsByCategoryScrollPane = new javax.swing.JScrollPane();
+        javax.swing.JPanel parentPanel = new javax.swing.JPanel();
+        javax.swing.JScrollPane fileCountsByCategoryScrollPane = new javax.swing.JScrollPane();
         fileCountsByCategoryTable = new javax.swing.JTable();
-        byCategoryLabel = new javax.swing.JLabel();
-        resultsByTypeLabel = new javax.swing.JLabel();
-        artifactCountsScrollPane = new javax.swing.JScrollPane();
+        javax.swing.JLabel byCategoryLabel = new javax.swing.JLabel();
+        javax.swing.JLabel resultsByTypeLabel = new javax.swing.JLabel();
+        javax.swing.JScrollPane artifactCountsScrollPane = new javax.swing.JScrollPane();
         artifactCountsTable = new javax.swing.JTable();
-        fileTypePiePanel = fileTypePieChart;
-        filesByCatParent = new javax.swing.JPanel();
-        resultsByTypeParent = new javax.swing.JPanel();
+        javax.swing.JPanel fileTypePiePanel = fileTypePieChart;
+        javax.swing.JPanel filesByCatParent = new javax.swing.JPanel();
+        javax.swing.JPanel resultsByTypeParent = new javax.swing.JPanel();
 
         parentPanel.setMinimumSize(new java.awt.Dimension(840, 320));
-        parentPanel.setPreferredSize(null);
 
         fileCountsByCategoryScrollPane.setViewportView(fileCountsByCategoryTable);
 
@@ -211,6 +211,7 @@ class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(resultsByTypeLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryCountsPanel.class, "DataSourceSummaryCountsPanel.resultsByTypeLabel.text")); // NOI18N
 
+        artifactCountsTable.setAutoCreateRowSorter(true);
         artifactCountsScrollPane.setViewportView(artifactCountsTable);
 
         fileTypePiePanel.setPreferredSize(new java.awt.Dimension(400, 300));
@@ -303,15 +304,7 @@ class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JScrollPane artifactCountsScrollPane;
     private javax.swing.JTable artifactCountsTable;
-    private javax.swing.JLabel byCategoryLabel;
-    private javax.swing.JScrollPane fileCountsByCategoryScrollPane;
     private javax.swing.JTable fileCountsByCategoryTable;
-    private javax.swing.JPanel fileTypePiePanel;
-    private javax.swing.JPanel filesByCatParent;
-    private javax.swing.JPanel parentPanel;
-    private javax.swing.JLabel resultsByTypeLabel;
-    private javax.swing.JPanel resultsByTypeParent;
     // End of variables declaration//GEN-END:variables
 }
