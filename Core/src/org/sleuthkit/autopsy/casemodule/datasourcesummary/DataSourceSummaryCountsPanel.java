@@ -77,7 +77,6 @@ class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
         artifactCountsTable.getTableHeader().setReorderingAllowed(false);
         setDataSource(null);
     }
-    
 
     /**
      * The datasource currently used as the model in this panel.
@@ -138,7 +137,7 @@ class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
     private static Object[][] getFileCategoryModel(DataSource selectedDataSource) {
         Long fileCount = zeroIfNull(DataSourceInfoUtilities.getCountOfFiles(selectedDataSource));
         Long unallocatedFiles = zeroIfNull(DataSourceInfoUtilities.getCountOfUnallocatedFiles(selectedDataSource));
-        Long allocatedFiles = zeroIfNull(getAllocatedCount(fileCount, unallocatedFiles));
+        Long allocatedFiles = zeroIfNull(DataSourceInfoUtilities.getCountOfAllocatedFiles(selectedDataSource));
         Long slackFiles = zeroIfNull(DataSourceInfoUtilities.getCountOfSlackFiles(selectedDataSource));
         Long directories = zeroIfNull(DataSourceInfoUtilities.getCountOfDirectories(selectedDataSource));
 
@@ -160,24 +159,6 @@ class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
      */
     private static Long zeroIfNull(Long origValue) {
         return origValue == null ? 0 : origValue;
-    }
-
-    /**
-     * Safely gets the allocated files count.
-     *
-     * @param allFilesCount         The count of all files.
-     * @param unallocatedFilesCount The count of unallocated files.
-     *
-     * @return The count of allocated files.
-     */
-    private static long getAllocatedCount(Long allFilesCount, Long unallocatedFilesCount) {
-        if (allFilesCount == null) {
-            return 0;
-        } else if (unallocatedFilesCount == null) {
-            return allFilesCount;
-        } else {
-            return allFilesCount - unallocatedFilesCount;
-        }
     }
 
     /**
