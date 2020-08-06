@@ -29,15 +29,15 @@ import org.sleuthkit.datamodel.DataSource;
  * IngestJobInfoPanel.
  */
 @Messages({
-        "DataSourceSummaryTabbedPane_countsTab_title=Counts",
-        "DataSourceSummaryTabbedPane_detailsTab_title=Details",
-        "DataSourceSummaryTabbedPane_userActivityTab_title=User Activity",
-        "DataSourceSummaryTabbedPane_ingestHistoryTab_title=Ingest History"
+    "DataSourceSummaryTabbedPane_countsTab_title=Counts",
+    "DataSourceSummaryTabbedPane_detailsTab_title=Details",
+    "DataSourceSummaryTabbedPane_userActivityTab_title=User Activity",
+    "DataSourceSummaryTabbedPane_ingestHistoryTab_title=Ingest History"
 })
 public class DataSourceSummaryTabbedPane extends JTabbedPane {
 
     private static final long serialVersionUID = 1L;
-    
+
     private final DataSourceSummaryCountsPanel countsPanel = new DataSourceSummaryCountsPanel();
     private final DataSourceSummaryDetailsPanel detailsPanel = new DataSourceSummaryDetailsPanel();
     private final DataSourceSummaryUserActivityPanel userActivityPanel = new DataSourceSummaryUserActivityPanel();
@@ -49,7 +49,7 @@ public class DataSourceSummaryTabbedPane extends JTabbedPane {
      * Constructs a tabbed pane showing the summary of a data source.
      */
     public DataSourceSummaryTabbedPane() {
-       
+
         addTab(Bundle.DataSourceSummaryTabbedPane_detailsTab_title(), detailsPanel);
         addTab(Bundle.DataSourceSummaryTabbedPane_countsTab_title(), countsPanel);
         addTab(Bundle.DataSourceSummaryTabbedPane_userActivityTab_title(), userActivityPanel);
