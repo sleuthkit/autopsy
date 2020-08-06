@@ -18,10 +18,13 @@
  */
 package org.sleuthkit.autopsy.casemodule.datasourcesummary;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import javax.swing.JLabel;
+import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableModel;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.DataSource;
@@ -32,6 +35,7 @@ import org.sleuthkit.datamodel.DataSource;
 @Messages({
     "DataSourceSummaryUserActivityPanel_tab_title=User Activity",
     "DataSourceSummaryUserActivityPanel_TopProgramsTableModel_name_header=Program",
+    "DataSourceSummaryUserActivityPanel_TopProgramsTableModel_folder_header=Folder",
     "DataSourceSummaryUserActivityPanel_TopProgramsTableModel_count_header=Run Times"
 })
 public class DataSourceSummaryUserActivityPanel extends javax.swing.JPanel {
@@ -44,12 +48,6 @@ public class DataSourceSummaryUserActivityPanel extends javax.swing.JPanel {
     static {
         RIGHT_ALIGNED_RENDERER.setHorizontalAlignment(JLabel.RIGHT);
     }
-    
-    // column headers for artifact counts table
-    private static final Object[] TOP_PROGS_COLUMN_HEADERS = new Object[]{
-        Bundle.DataSourceSummaryUserActivityPanel_TopProgramsTableModel_name_header(),
-        Bundle.DataSourceSummaryUserActivityPanel_TopProgramsTableModel_count_header()
-    };
     
     private DataSource dataSource;
     
@@ -78,7 +76,7 @@ public class DataSourceSummaryUserActivityPanel extends javax.swing.JPanel {
     public void setDataSource(DataSource dataSource) {
         this.dataSource = dataSource;
         if (dataSource == null || !Case.isCaseOpen()) {
-            updateTopPrograms(EMPTY_PAIRS);
+            updateTopPrograms(new TopProgramsModel(null));
         } else {
             updateTopPrograms(getTopProgramsModel(dataSource));
         }
@@ -88,8 +86,8 @@ public class DataSourceSummaryUserActivityPanel extends javax.swing.JPanel {
      * Updates the Top Programs Table in the gui.
      * @param data The data in Object[][] form to be used by the DefaultTableModel.
      */
-    private void updateTopPrograms(Object[][] data) {
-        topProgramsTable.setModel(new NonEditableTableModel(data, TOP_PROGS_COLUMN_HEADERS));
+    private void updateTopPrograms(TopProgramsModel model) {
+        topProgramsTable.setModel(model);
         topProgramsTable.getColumnModel().getColumn(0).setPreferredWidth(230);
         topProgramsTable.getColumnModel().getColumn(1).setCellRenderer(RIGHT_ALIGNED_RENDERER);        
         this.repaint();
@@ -102,17 +100,61 @@ public class DataSourceSummaryUserActivityPanel extends javax.swing.JPanel {
      *
      * @return The JTable data model of counts of program runs.
      */
-    private static Object[][] getTopProgramsModel(DataSource selectedDataSource) {
-        Map<String, Long> artifactMapping = DataSourceInfoUtilities.getTopPrograms(selectedDataSource, TOP_PROGS_COUNT);
-        if (artifactMapping == null) {
-            return EMPTY_PAIRS;
+    private static TopProgramsModel getTopProgramsModel(DataSource selectedDataSource) {
+        List<DataSourceInfoUtilities.TopProgramsResult> topProgramList = 
+                DataSourceInfoUtilities.getTopPrograms(selectedDataSource, TOP_PROGS_COUNT);
+        
+        if (topProgramList == null) {
+            return new TopProgramsModel(null);
+        } else {
+            return new TopProgramsModel(topProgramList);
+        }
+    }
+    
+    private static class TopProgramsModel extends AbstractTableModel {
+        // column headers for artifact counts table
+        private static final String[] TOP_PROGS_COLUMN_HEADERS = new String[]{
+            Bundle.DataSourceSummaryUserActivityPanel_TopProgramsTableModel_name_header(),
+            Bundle.DataSourceSummaryUserActivityPanel_TopProgramsTableModel_folder_header(),
+            Bundle.DataSourceSummaryUserActivityPanel_TopProgramsTableModel_count_header()
+        };
+    
+        private final List<DataSourceInfoUtilities.TopProgramsResult> programResults;
+
+        public TopProgramsModel(List<DataSourceInfoUtilities.TopProgramsResult> programResults) {
+            this.programResults = programResults == null ? new ArrayList<>() : Collections.unmodifiableList(programResults);
         }
 
-        return artifactMapping.entrySet().stream()
-                .filter((entrySet) -> entrySet != null && entrySet.getKey() != null)
-                .sorted((a, b) -> -Long.compare(a.getValue(), b.getValue()))
-                .map((entrySet) -> new Object[]{entrySet.getKey(), entrySet.getValue()})
-                .toArray(Object[][]::new);
+        @Override
+        public String getColumnName(int column) {
+            return column < 0 || column >= TOP_PROGS_COLUMN_HEADERS.length ? null : TOP_PROGS_COLUMN_HEADERS[column];
+        }
+        
+        @Override
+        public int getRowCount() {
+            return programResults.size();
+        }
+
+        @Override
+        public int getColumnCount() {
+            return TOP_PROGS_COLUMN_HEADERS.length;
+        }
+
+        @Override
+        public Object getValueAt(int rowIndex, int columnIndex) {
+            if (rowIndex < 0 || rowIndex >= programResults.size()) {
+                return null;
+            }
+            
+            DataSourceInfoUtilities.TopProgramsResult result = programResults.get(rowIndex);
+            switch (columnIndex) {
+                case 0: return result.getProgramName();
+                case 1: return DataSourceInfoUtilities.getShortFolderName(result.getProgramPath());
+                case 2: return result.getRunTimes();
+                default: return null;
+            }
+        }
+        
     }
     
     

@@ -20,6 +20,8 @@ package org.sleuthkit.autopsy.casemodule.datasourcesummary;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -30,6 +32,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Set;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
+import org.apache.commons.lang3.tuple.Pair;
+import java.util.function.Function;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -247,6 +253,31 @@ final class DataSourceInfoUtilities {
         return getBaseQueryResult(query, getStringLongResultSetHandler(nameParam, valueParam), errorMessage);
     }
 
+    static class TopProgramsResult {
+
+        private final String programName;
+        private final String programPath;
+        private final long runTimes;
+
+        public TopProgramsResult(String programName, String programPath, long runTimes) {
+            this.programName = programName;
+            this.programPath = programPath;
+            this.runTimes = runTimes;
+        }
+
+        public String getProgramName() {
+            return programName;
+        }
+
+        public String getProgramPath() {
+            return programPath;
+        }
+
+        public long getRunTimes() {
+            return runTimes;
+        }
+    }
+
     /**
      * Retrieves a list of the top programs used on the data source. Currently
      * determines this based off of which prefetch results return the highest
@@ -257,36 +288,94 @@ final class DataSourceInfoUtilities {
      *
      * @return
      */
-    static Map<String, Long> getTopPrograms(DataSource dataSource, int count) {
+    static List<TopProgramsResult> getTopPrograms(DataSource dataSource, int count) {
         if (dataSource == null || count <= 0) {
-            return Collections.emptyMap();
+            return Collections.emptyList();
         }
 
-        String progNameParam = "prog_name";
-        String runTimesParam = "run_times";
-        String prefetchIdentifier = "Windows Prefetch Extractor";
+        final String progNameParam = "prog_name";
+        final String progPathParam = "prog_path";
+        final String runTimesParam = "run_times";
+        final String prefetchIdentifier = "Windows Prefetch Extractor";
 
-        String query = "SELECT program_artifacts." + progNameParam + ", MAX(attr.value_int32) AS " + runTimesParam + "\n"
+        final String query = "SELECT\n"
+                + "    prog_name_query." + progNameParam + ",\n"
+                + "    prog_path_query." + progPathParam + ",\n"
+                + "    MAX(attr.value_int32) AS " + runTimesParam + "\n"
                 + "FROM blackboard_artifacts bba\n"
                 + "INNER JOIN blackboard_attributes attr ON bba.artifact_id = attr.artifact_id\n"
                 + "INNER JOIN (\n"
-                + "-- get all the different artifacts coming from prefetch\n"
-                + "	SELECT \n"
-                + "		bba.artifact_id as artifact_id, \n"
-                + "		attr.value_text as " + progNameParam + "\n"
-                + "	FROM blackboard_artifacts bba\n"
-                + "	INNER JOIN blackboard_attributes attr ON bba.artifact_id = attr.artifact_id\n"
-                + "	WHERE bba.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_PROG_RUN.getTypeID() + "\n"
-                + "	AND attr.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID() + "\n"
-                + "	AND attr.source = '" + prefetchIdentifier + "'\n"
-                + ") program_artifacts ON bba.artifact_id = program_artifacts.artifact_id\n"
+                + "    SELECT \n"
+                + "        bba1.artifact_id AS artifact_id,\n"
+                + "        attr1.value_text AS " + progNameParam + "\n"
+                + "    FROM blackboard_artifacts bba1\n"
+                + "    INNER JOIN blackboard_attributes attr1 ON bba1.artifact_id = attr1.artifact_id\n"
+                + "    WHERE bba1.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_PROG_RUN.getTypeID() + "\n"
+                + "    AND attr1.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID() + "\n"
+                + ") prog_name_query ON bba.artifact_id = prog_name_query.artifact_id\n"
+                + "LEFT JOIN (\n"
+                + "    SELECT \n"
+                + "        bba2.artifact_id AS artifact_id,\n"
+                + "        attr2.value_text AS " + progPathParam + "\n"
+                + "    FROM blackboard_artifacts bba2\n"
+                + "    INNER JOIN blackboard_attributes attr2 ON bba2.artifact_id = attr2.artifact_id\n"
+                + "    WHERE bba2.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_PROG_RUN.getTypeID() + "\n"
+                + "    AND attr2.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH.getTypeID() + "\n"
+                + ") prog_path_query ON bba.artifact_id = prog_path_query.artifact_id\n"
                 + "WHERE attr.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COUNT.getTypeID() + "\n"
-                + "GROUP BY program_artifacts." + progNameParam + "\n"
-                + "ORDER BY " + runTimesParam + " DESC\n"
+                + "AND bba.data_source_obj_id = " + dataSource.getId() + "\n"
+                + "AND attr.source = '" + prefetchIdentifier + "'\n"
+                + "GROUP BY prog_name_query." + progNameParam + ", prog_path_query." + progPathParam + "\n"
+                + "ORDER BY MAX(attr.value_int32) DESC\n"
                 + "LIMIT " + count + " OFFSET 0";
 
-        String errorMessage = "Unable to get top program counts; returning null.";
-        return getBaseQueryResult(query, getStringLongResultSetHandler(progNameParam, runTimesParam), errorMessage);
+        final String errorMessage = "Unable to get top program results; returning null.";
+
+        ResultSetHandler<List<TopProgramsResult>> handler = (resultSet) -> {
+            List<TopProgramsResult> progResults = new ArrayList<>();
+
+            while (resultSet.next()) {
+                try {
+                    progResults.add(new TopProgramsResult(
+                            resultSet.getString(progNameParam),
+                            resultSet.getString(progPathParam),
+                            resultSet.getLong(runTimesParam)));
+                } catch (SQLException ex) {
+                    logger.log(Level.WARNING, "Failed to get a top program result from the result set.", ex);
+                }
+            }
+
+            return progResults;
+        };
+
+        return getBaseQueryResult(query, handler, errorMessage);
+    }
+
+    private static List<Pair<Pattern, Function<Matcher, String>>> SHORT_FOLDER_MATCHERS = Arrays.asList(
+            // Windows if in /Windows
+            Pair.of(Pattern.compile("^([A-Z]:)?[\\\\\\/]?windows", Pattern.CASE_INSENSITIVE), (match) -> "Windows"),
+            // program name if /Program Files/program or /Program Files (x86)/program
+            Pair.of(Pattern.compile("^([A-Z]:)?[\\\\\\/]?Program Files( \\(x86\\))?[\\\\\\/](?<programName>.+?)[\\\\\\/]", 
+                    Pattern.CASE_INSENSITIVE), (match) -> match.group("programName")),
+            // match for an AppData folder
+            Pair.of(Pattern.compile("(^|[\\\\\\/])AppData([\\\\\\/]|$)"), (match) -> "AppData")
+    );
+
+    static String getShortFolderName(String path) {
+        if (path == null) {
+            return "";
+        }
+        
+        for (Pair<Pattern, Function<Matcher, String>> matchEntry : SHORT_FOLDER_MATCHERS) {
+            Pattern p = matchEntry.getLeft();
+            Function<Matcher, String> resultsProvider = matchEntry.getRight();
+            Matcher match = p.matcher(path);
+            if (match.find()) {
+                return resultsProvider.apply(match);
+            }
+        }
+        
+        return "";
     }
 
     /**
