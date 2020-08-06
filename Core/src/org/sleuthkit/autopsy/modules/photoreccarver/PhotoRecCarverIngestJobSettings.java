@@ -28,20 +28,37 @@ import java.util.List;
  */
 final class PhotoRecCarverIngestJobSettings implements IngestModuleIngestJobSettings {
 
+    /**
+     * What kind of filtering should occur for the extension list.
+     */
+    static enum ExtensionFilterOption {
+        /**
+         * The file extensions should be included (and others should be
+         * filtered).
+         */
+        INCLUDE,
+        /**
+         * The extensions should be excluded from the results list.
+         */
+        EXCLUDE,
+        /**
+         * No extension filtering should take place.
+         */
+        NO_FILTER
+    };
+
     private static final long serialVersionUID = 1L;
 
     private boolean keepCorruptedFiles;
-    private List<String> includeExcludeExtensions;
-    private boolean fileOptOption;
-    private boolean includeElseExclude;
+    private List<String> extensions;
+    private ExtensionFilterOption extensionFilterOption;
 
     /**
      * Instantiate the ingest job settings with default values.
      */
     PhotoRecCarverIngestJobSettings() {
         this(PhotoRecCarverFileIngestModule.DEFAULT_CONFIG_KEEP_CORRUPTED_FILES,
-                PhotoRecCarverFileIngestModule.DEFAULT_CONFIG_FILE_OPT_OPTIONS,
-                PhotoRecCarverFileIngestModule.DEFAULT_CONFIG_INCLUDE_ELSE_EXCLUDE,
+                PhotoRecCarverFileIngestModule.DEFAULT_CONFIG_EXTENSION_FILTER,
                 null);
     }
 
@@ -50,19 +67,16 @@ final class PhotoRecCarverIngestJobSettings implements IngestModuleIngestJobSett
      *
      * @param keepCorruptedFiles       Whether or not to keep corrupted files.
      * @param fileOptOption            Whether or not the file opt options
-     *                                 should be enabled (whether or not to
-     *                                 include/exclude file extensions).
-     * @param includeElseExclude       If file opt options is enabled, whether
-     *                                 to include only the extensions listed or
-     *                                 exclude extensions from output.
+     * @param extensionFilterOption    How the includeExcludeExtensions should
+     *                                 be filtered.
      * @param includeExcludeExtensions The extensions to include or exclude
      *                                 (i.e. jpg, gif)
      */
-    PhotoRecCarverIngestJobSettings(boolean keepCorruptedFiles, boolean fileOptOption, boolean includeElseExclude, List<String> includeExcludeExtensions) {
+    PhotoRecCarverIngestJobSettings(boolean keepCorruptedFiles, ExtensionFilterOption extensionFilterOption, List<String> includeExcludeExtensions) {
         this.keepCorruptedFiles = keepCorruptedFiles;
-        this.fileOptOption = fileOptOption;
-        this.includeElseExclude = includeElseExclude;
-        setIncludeExcludeExtensions(includeExcludeExtensions);
+        setExtensionFilterOption(extensionFilterOption);
+        setExtensions(includeExcludeExtensions);
+        
     }
 
     @Override
@@ -94,10 +108,10 @@ final class PhotoRecCarverIngestJobSettings implements IngestModuleIngestJobSett
      *
      * @return The extension names.
      */
-    List<String> getIncludeExcludeExtensions() {
-        return includeExcludeExtensions == null
+    List<String> getExtensions() {
+        return extensions == null
                 ? Collections.emptyList()
-                : Collections.unmodifiableList(includeExcludeExtensions);
+                : Collections.unmodifiableList(extensions);
     }
 
     /**
@@ -106,58 +120,30 @@ final class PhotoRecCarverIngestJobSettings implements IngestModuleIngestJobSett
      *
      * @param includeExcludeExtensions The extension names.
      */
-    void setIncludeExcludeExtensions(List<String> includeExcludeExtensions) {
-        this.includeExcludeExtensions = new ArrayList<>();
+    void setExtensions(List<String> includeExcludeExtensions) {
+        this.extensions = new ArrayList<>();
         if (includeExcludeExtensions != null) {
-            this.includeExcludeExtensions.addAll(includeExcludeExtensions);
+            this.extensions.addAll(includeExcludeExtensions);
         }
     }
 
     /**
-     * Returns whether or not the fileopt option (and subsequent file extension
-     * filtering) should be enabled.
-     *
-     * @return Whether or not the fileopt option (and subsequent file extension
-     *         filtering) should be enabled.
+     * How extension filtering should be handled.
+     * @return How extension filtering should be handled.
      */
-    boolean hasFileOptOption() {
-        return fileOptOption;
+    ExtensionFilterOption getExtensionFilterOption() {
+        return (this.extensionFilterOption == null) ? 
+                ExtensionFilterOption.NO_FILTER : 
+                extensionFilterOption;
     }
 
     /**
-     * Returns whether or not the fileopt option (and subsequent file extension
-     * filtering) should be enabled.
-     *
-     * @param fileOptOption Whether or not the fileopt option (and subsequent
-     *                      file extension filtering) should be enabled.
+     * Sets how extension filtering should be handled.
+     * @param extensionFilterOption How extension filtering should be handled.
      */
-    void setFileOptOption(boolean fileOptOption) {
-        this.fileOptOption = fileOptOption;
-    }
-
-    /**
-     * If the hasFileOptOption is true, this determines whether
-     * includeExcludeExtensions will be included in the results (excluding all
-     * others) or includeExcludeExtensions will be excluded from results
-     * (including all others).
-     *
-     * @return Whether to include or exclude includeExcludeExtensions.
-     */
-    boolean isIncludeElseExclude() {
-        return includeElseExclude;
-    }
-
-    /**
-     * Sets whether or not to include or exclude files. If the hasFileOptOption
-     * is true, this determines whether includeExcludeExtensions will be
-     * included in the results (excluding all others) or
-     * includeExcludeExtensions will be excluded from results (including all
-     * others).
-     *
-     * @param includeElseExclude Whether to include or exclude
-     *                           includeExcludeExtensions.
-     */
-    void setIncludeElseExclude(boolean includeElseExclude) {
-        this.includeElseExclude = includeElseExclude;
+    void setExtensionFilterOption(ExtensionFilterOption extensionFilterOption) {
+        this.extensionFilterOption = (extensionFilterOption == null) ? 
+                ExtensionFilterOption.NO_FILTER : 
+                extensionFilterOption;
     }
 }

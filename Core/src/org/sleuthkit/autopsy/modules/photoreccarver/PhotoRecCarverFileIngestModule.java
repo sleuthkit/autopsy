@@ -81,7 +81,9 @@ import org.sleuthkit.datamodel.TskData;
 final class PhotoRecCarverFileIngestModule implements FileIngestModule {
 
     static final boolean DEFAULT_CONFIG_KEEP_CORRUPTED_FILES = false;
-    static final boolean DEFAULT_CONFIG_FILE_OPT_OPTIONS = false;
+    static final PhotoRecCarverIngestJobSettings.ExtensionFilterOption DEFAULT_CONFIG_EXTENSION_FILTER = 
+            PhotoRecCarverIngestJobSettings.ExtensionFilterOption.NO_FILTER;
+    
     static final boolean DEFAULT_CONFIG_INCLUDE_ELSE_EXCLUDE = false;
 
     private static final String PHOTOREC_DIRECTORY = "photorec_exec"; //NON-NLS
@@ -139,7 +141,9 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             toRet.addAll(Arrays.asList("options", "keep_corrupted_file"));
         }
 
-        if (settings.hasFileOptOption()) {
+        if (settings.getExtensionFilterOption() != 
+                PhotoRecCarverIngestJobSettings.ExtensionFilterOption.NO_FILTER) {
+            
             // add the file opt menu item
             toRet.add("fileopt");
 
@@ -148,15 +152,17 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
 
             // if we are including file extensions, then we are excluding 
             // everything else and vice-versa.
-            String everythingEnable = settings.isIncludeElseExclude()
+            String everythingEnable = settings.getExtensionFilterOption() == 
+                    PhotoRecCarverIngestJobSettings.ExtensionFilterOption.INCLUDE
                     ? disable : enable;
 
             toRet.addAll(Arrays.asList("everything", everythingEnable));
 
-            final String itemEnable = settings.isIncludeElseExclude()
+            final String itemEnable = settings.getExtensionFilterOption() == 
+                    PhotoRecCarverIngestJobSettings.ExtensionFilterOption.INCLUDE
                     ? enable : disable;
 
-            settings.getIncludeExcludeExtensions().forEach((extension) -> {
+            settings.getExtensions().forEach((extension) -> {
                 toRet.addAll(Arrays.asList(extension, itemEnable));
             });
         }
@@ -190,13 +196,15 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
     })
     public void startUp(IngestJobContext context) throws IngestModule.IngestModuleException {
         // validate settings
-        if (this.settings.hasFileOptOption()) {
-            if (this.settings.getIncludeExcludeExtensions().isEmpty() && this.settings.isIncludeElseExclude()) {
+        if (this.settings.getExtensionFilterOption() != PhotoRecCarverIngestJobSettings.ExtensionFilterOption.NO_FILTER) {
+            if (this.settings.getExtensions().isEmpty() && 
+                    this.settings.getExtensionFilterOption() == PhotoRecCarverIngestJobSettings.ExtensionFilterOption.INCLUDE) {
+                
                 throw new IngestModule.IngestModuleException(
                         Bundle.PhotoRecCarverFileIngestModule_startUp_noExtensionsProvided_description());
             }
             
-            List<String> invalidExtensions = this.settings.getIncludeExcludeExtensions().stream()
+            List<String> invalidExtensions = this.settings.getExtensions().stream()
                     .filter((ext) -> !PhotoRecCarverFileOptExtensions.isValidExtension(ext))
                     .collect(Collectors.toList());
 

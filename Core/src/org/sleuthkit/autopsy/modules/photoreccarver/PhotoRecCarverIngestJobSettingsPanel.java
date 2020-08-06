@@ -62,10 +62,10 @@ final class PhotoRecCarverIngestJobSettingsPanel extends IngestModuleIngestJobSe
      * @param settings The ingest job settings.
      */
     private void customizeComponents(PhotoRecCarverIngestJobSettings settings) {
-        includeExcludeCheckbox.setSelected(settings.hasFileOptOption());
-        extensionListTextfield.setText(String.join(EXTENSION_LIST_SEPARATOR, settings.getIncludeExcludeExtensions()));
-        includeRadioButton.setSelected(!settings.isIncludeElseExclude());
-        excludeRadioButton.setSelected(!settings.isIncludeElseExclude());
+        includeExcludeCheckbox.setSelected(settings.getExtensionFilterOption() != PhotoRecCarverIngestJobSettings.ExtensionFilterOption.NO_FILTER);
+        extensionListTextfield.setText(String.join(EXTENSION_LIST_SEPARATOR, settings.getExtensions()));
+        includeRadioButton.setSelected(settings.getExtensionFilterOption() == PhotoRecCarverIngestJobSettings.ExtensionFilterOption.INCLUDE);
+        excludeRadioButton.setSelected(settings.getExtensionFilterOption() == PhotoRecCarverIngestJobSettings.ExtensionFilterOption.EXCLUDE);
         keepCorruptedFilesCheckbox.setSelected(settings.isKeepCorruptedFiles());
         setupTypesHyperlink();
         setIncludePanelEnabled();
@@ -117,12 +117,21 @@ final class PhotoRecCarverIngestJobSettingsPanel extends IngestModuleIngestJobSe
 
     @Override
     public IngestModuleIngestJobSettings getSettings() {
-
-
+        PhotoRecCarverIngestJobSettings.ExtensionFilterOption filterOption = 
+                PhotoRecCarverIngestJobSettings.ExtensionFilterOption.NO_FILTER;
+        
+        if (includeExcludeCheckbox.isSelected()) {
+            if (includeRadioButton.isSelected()) {
+                filterOption = PhotoRecCarverIngestJobSettings.ExtensionFilterOption.INCLUDE;
+            } else {
+                filterOption = PhotoRecCarverIngestJobSettings.ExtensionFilterOption.EXCLUDE;
+            }
+        }
+        
+        
         return new PhotoRecCarverIngestJobSettings(
                 keepCorruptedFilesCheckbox.isSelected(),
-                includeExcludeCheckbox.isSelected(),
-                includeRadioButton.isSelected(),
+                filterOption,
                 getExtensions(extensionListTextfield.getText())
         );
     }
