@@ -18,13 +18,15 @@
  */
 package org.sleuthkit.autopsy.casemodule.datasourcesummary;
 
+import java.awt.Component;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import javax.swing.JLabel;
+import javax.swing.JTable;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableCellRenderer;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.DataSource;
@@ -39,18 +41,16 @@ import org.sleuthkit.datamodel.DataSource;
     "DataSourceSummaryUserActivityPanel_TopProgramsTableModel_count_header=Run Times"
 })
 public class DataSourceSummaryUserActivityPanel extends javax.swing.JPanel {
-    // Result returned for a data model if no data found.
-    private static final Object[][] EMPTY_PAIRS = new Object[][]{};
+
     private static final int TOP_PROGS_COUNT = 10;
-    
     private static final DefaultTableCellRenderer RIGHT_ALIGNED_RENDERER = new DefaultTableCellRenderer();
-    
+
     static {
         RIGHT_ALIGNED_RENDERER.setHorizontalAlignment(JLabel.RIGHT);
     }
-    
+
     private DataSource dataSource;
-    
+
     /**
      * Creates new form DataSourceUserActivityPanel
      */
@@ -81,18 +81,21 @@ public class DataSourceSummaryUserActivityPanel extends javax.swing.JPanel {
             updateTopPrograms(getTopProgramsModel(dataSource));
         }
     }
-    
+
     /**
      * Updates the Top Programs Table in the gui.
-     * @param data The data in Object[][] form to be used by the DefaultTableModel.
+     *
+     * @param data The data in Object[][] form to be used by the
+     *             DefaultTableModel.
      */
     private void updateTopPrograms(TopProgramsModel model) {
         topProgramsTable.setModel(model);
         topProgramsTable.getColumnModel().getColumn(0).setPreferredWidth(230);
-        topProgramsTable.getColumnModel().getColumn(1).setCellRenderer(RIGHT_ALIGNED_RENDERER);        
+        topProgramsTable.getColumnModel().getColumn(0).setCellRenderer(PATH_CELL_RENDERER);
+        topProgramsTable.getColumnModel().getColumn(1).setCellRenderer(RIGHT_ALIGNED_RENDERER);
         this.repaint();
     }
-    
+
     /**
      * The counts of top programs run.
      *
@@ -101,24 +104,64 @@ public class DataSourceSummaryUserActivityPanel extends javax.swing.JPanel {
      * @return The JTable data model of counts of program runs.
      */
     private static TopProgramsModel getTopProgramsModel(DataSource selectedDataSource) {
-        List<DataSourceInfoUtilities.TopProgramsResult> topProgramList = 
-                DataSourceInfoUtilities.getTopPrograms(selectedDataSource, TOP_PROGS_COUNT);
-        
+        List<DataSourceInfoUtilities.TopProgramsResult> topProgramList
+                = DataSourceInfoUtilities.getTopPrograms(selectedDataSource, TOP_PROGS_COUNT);
+
         if (topProgramList == null) {
             return new TopProgramsModel(null);
         } else {
             return new TopProgramsModel(topProgramList);
         }
     }
-    
+
+    private static class ProgramNameCellValue {
+
+        private final String programName;
+        private final String programPath;
+
+        public ProgramNameCellValue(String programName, String programPath) {
+            this.programName = programName;
+            this.programPath = programPath;
+        }
+
+        @Override
+        public String toString() {
+            return programName;
+        }
+
+        String getProgramName() {
+            return programName;
+        }
+
+        String getProgramPath() {
+            return programPath;
+        }
+    }
+
+    private static TableCellRenderer PATH_CELL_RENDERER = new DefaultTableCellRenderer() {
+
+        public Component getTableCellRendererComponent(
+                JTable table, Object value,
+                boolean isSelected, boolean hasFocus,
+                int row, int column) {
+            JLabel c = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            if (value instanceof ProgramNameCellValue) {
+                ProgramNameCellValue cellValue = (ProgramNameCellValue) value;
+                c.setToolTipText(cellValue.getProgramPath());
+            }
+            return c;
+        }
+    };
+
     private static class TopProgramsModel extends AbstractTableModel {
+
         // column headers for artifact counts table
         private static final String[] TOP_PROGS_COLUMN_HEADERS = new String[]{
             Bundle.DataSourceSummaryUserActivityPanel_TopProgramsTableModel_name_header(),
             Bundle.DataSourceSummaryUserActivityPanel_TopProgramsTableModel_folder_header(),
             Bundle.DataSourceSummaryUserActivityPanel_TopProgramsTableModel_count_header()
         };
-    
+
         private final List<DataSourceInfoUtilities.TopProgramsResult> programResults;
 
         public TopProgramsModel(List<DataSourceInfoUtilities.TopProgramsResult> programResults) {
@@ -129,7 +172,7 @@ public class DataSourceSummaryUserActivityPanel extends javax.swing.JPanel {
         public String getColumnName(int column) {
             return column < 0 || column >= TOP_PROGS_COLUMN_HEADERS.length ? null : TOP_PROGS_COLUMN_HEADERS[column];
         }
-        
+
         @Override
         public int getRowCount() {
             return programResults.size();
@@ -145,19 +188,22 @@ public class DataSourceSummaryUserActivityPanel extends javax.swing.JPanel {
             if (rowIndex < 0 || rowIndex >= programResults.size()) {
                 return null;
             }
-            
+
             DataSourceInfoUtilities.TopProgramsResult result = programResults.get(rowIndex);
             switch (columnIndex) {
-                case 0: return result.getProgramName();
-                case 1: return DataSourceInfoUtilities.getShortFolderName(result.getProgramPath());
-                case 2: return result.getRunTimes();
-                default: return null;
+                case 0:
+                    return new ProgramNameCellValue(result.getProgramName(), result.getProgramPath());
+                case 1:
+                    return DataSourceInfoUtilities.getShortFolderName(result.getProgramPath());
+                case 2:
+                    return result.getRunTimes();
+                default:
+                    return null;
             }
         }
-        
+
     }
-    
-    
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
