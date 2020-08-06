@@ -2593,6 +2593,12 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                             // move onto the the next DSP that can process this data source
                             jobLogger.logDataSourceProcessorError(selectedProcessor.getDataSourceType());
                             logDataSourceProcessorResult(dataSource);
+                            
+                            // If we had created an ingest stream, close it
+                            if (currentIngestStream != null) {
+                                currentIngestStream.stop();
+                                currentIngestStream = null;
+                            }
                             continue;
                         }
 
