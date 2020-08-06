@@ -353,12 +353,16 @@ final class DataSourceInfoUtilities {
 
     private static List<Pair<Pattern, Function<Matcher, String>>> SHORT_FOLDER_MATCHERS = Arrays.asList(
             // Windows if in /Windows
-            Pair.of(Pattern.compile("^([A-Z]:)?[\\\\\\/]?windows", Pattern.CASE_INSENSITIVE), (match) -> "Windows"),
+            Pair.of(Pattern.compile("^([A-Z]:)?[\\\\\\/]?windows", Pattern.CASE_INSENSITIVE), 
+                    (match) -> "Windows"),
+            
             // program name if /Program Files/program or /Program Files (x86)/program
-            Pair.of(Pattern.compile("^([A-Z]:)?[\\\\\\/]?Program Files( \\(x86\\))?[\\\\\\/](?<programName>.+?)[\\\\\\/]", 
+            Pair.of(Pattern.compile("^([A-Z]:)?[\\\\\\/]?Program Files( \\(x86\\))?[\\\\\\/](?<programName>.+?)([\\\\\\/]|$)", 
                     Pattern.CASE_INSENSITIVE), (match) -> match.group("programName")),
+            
             // match for an AppData folder
-            Pair.of(Pattern.compile("(^|[\\\\\\/])AppData([\\\\\\/]|$)"), (match) -> "AppData")
+            Pair.of(Pattern.compile("(^|[\\\\\\/])AppData([\\\\\\/]|$)", Pattern.CASE_INSENSITIVE), 
+                    (match) -> "AppData")
     );
 
     static String getShortFolderName(String path) {

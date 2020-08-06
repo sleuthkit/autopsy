@@ -92,7 +92,8 @@ public class DataSourceSummaryUserActivityPanel extends javax.swing.JPanel {
         topProgramsTable.setModel(model);
         topProgramsTable.getColumnModel().getColumn(0).setPreferredWidth(230);
         topProgramsTable.getColumnModel().getColumn(0).setCellRenderer(PATH_CELL_RENDERER);
-        topProgramsTable.getColumnModel().getColumn(1).setCellRenderer(RIGHT_ALIGNED_RENDERER);
+        topProgramsTable.getColumnModel().getColumn(1).setPreferredWidth(150);
+        topProgramsTable.getColumnModel().getColumn(2).setCellRenderer(RIGHT_ALIGNED_RENDERER);
         this.repaint();
     }
 
@@ -217,11 +218,12 @@ public class DataSourceSummaryUserActivityPanel extends javax.swing.JPanel {
         javax.swing.JScrollPane topProgramsScrollPane = new javax.swing.JScrollPane();
         topProgramsTable = new javax.swing.JTable();
 
-        setMinimumSize(new java.awt.Dimension(256, 300));
+        setMinimumSize(null);
+        setPreferredSize(null);
 
         org.openide.awt.Mnemonics.setLocalizedText(programsRunLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryUserActivityPanel.class, "DataSourceSummaryUserActivityPanel.programsRunLabel.text")); // NOI18N
 
-        topProgramsScrollPane.setPreferredSize(new java.awt.Dimension(290, 187));
+        topProgramsScrollPane.setPreferredSize(new java.awt.Dimension(460, 187));
         topProgramsScrollPane.setViewportView(topProgramsTable);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -232,8 +234,8 @@ public class DataSourceSummaryUserActivityPanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(programsRunLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(topProgramsScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(47, Short.MAX_VALUE))
+                    .addComponent(topProgramsScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 460, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(128, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
