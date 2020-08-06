@@ -31,7 +31,7 @@ final class PhotoRecCarverIngestJobSettings implements IngestModuleIngestJobSett
     /**
      * What kind of filtering should occur for the extension list.
      */
-    static enum ExtensionFilterOption {
+    enum ExtensionFilterOption {
         /**
          * The file extensions should be included (and others should be
          * filtered).
