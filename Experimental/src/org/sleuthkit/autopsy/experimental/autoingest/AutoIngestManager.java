@@ -2570,10 +2570,17 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                                 currentJob.setErrorsOccurred(true);
                                 setErrorsOccurredFlagForCase(caseDirectoryPath);
                                 jobLogger.logIngestJobSettingsErrors();
-                                // TODO Change exception type
-                                throw new AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException("Error(s) in ingest job settings");
+                                throw new AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException("Error(s) in ingest job settings for " + manifestPath);
                             }
                             currentIngestStream = selectedProcessor.processWithIngestStream(dataSource.getDeviceId(), dataSource.getPath(), ingestJobSettings, progressMonitor, callBack);
+                            if (currentIngestStream == null) {
+                                // Either there was a failure to add the data source object to the database or the ingest settings were bad.
+                                // An error in the ingest settings is the more likely scenario.
+                                currentJob.setErrorsOccurred(true);
+                                setErrorsOccurredFlagForCase(caseDirectoryPath);
+                                jobLogger.logProbableIngestJobSettingsErrors();
+                                throw new AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException("Error initializing processing for " + manifestPath + ", probably due to an ingest settings error");
+                            }
                         } else {
                             selectedProcessor.process(dataSource.getDeviceId(), dataSource.getPath(), progressMonitor, callBack);
                         }
@@ -2692,77 +2699,77 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
             IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, ingestJobEventListener);
             try {
                 synchronized (ingestLock) {
-                    // TODO Don't redo loading the settings when there's an ingest stream
-                    IngestJobSettings ingestJobSettings = new IngestJobSettings(AutoIngestUserPreferences.getAutoModeIngestModuleContextString());
-                    List<String> settingsWarnings = ingestJobSettings.getWarnings();
-                    if (settingsWarnings.isEmpty()) {
-                        
-                        IngestJobStartResult ingestJobStartResult = null;
-                        IngestJob ingestJob;
-                        if (currentIngestStream == null) {
-                            ingestJobStartResult = IngestManager.getInstance().beginIngestJob(dataSource.getContent(), ingestJobSettings);
-                            ingestJob = ingestJobStartResult.getJob();
-                        } else {
-                            ingestJob = currentIngestStream.getIngestJob();
+                    IngestJob ingestJob;
+                    IngestJobStartResult ingestJobStartResult = null;
+                    if (currentIngestStream == null) {
+                        IngestJobSettings ingestJobSettings = new IngestJobSettings(AutoIngestUserPreferences.getAutoModeIngestModuleContextString());
+                        List<String> settingsWarnings = ingestJobSettings.getWarnings();
+                        if (! settingsWarnings.isEmpty()) {
+                            for (String warning : settingsWarnings) {
+                                sysLogger.log(Level.SEVERE, "Ingest job settings error for {0}: {1}", new Object[]{manifestPath, warning});
+                            }
+                            currentJob.setErrorsOccurred(true);
+                            setErrorsOccurredFlagForCase(caseDirectoryPath);
+                            jobLogger.logIngestJobSettingsErrors();
+                            throw new AnalysisStartupException("Error(s) in ingest job settings");
                         }
-                        if (null != ingestJob) {
-                            currentJob.setIngestJob(ingestJob);
-                            /*
-                             * Block until notified by the ingest job event
-                             * listener or until interrupted because auto ingest
-                             * is shutting down.
-                             */
-                            ingestLock.wait();
-                            sysLogger.log(Level.INFO, "Finished ingest modules analysis for {0} ", manifestPath);
-                            IngestJob.ProgressSnapshot jobSnapshot = ingestJob.getSnapshot();
-                            for (IngestJob.ProgressSnapshot.DataSourceProcessingSnapshot snapshot : jobSnapshot.getDataSourceSnapshots()) {
-                                AutoIngestJobLogger nestedJobLogger = new AutoIngestJobLogger(manifestPath, snapshot.getDataSource(), caseDirectoryPath);
-                                if (!snapshot.isCancelled()) {
-                                    List<String> cancelledModules = snapshot.getCancelledDataSourceIngestModules();
-                                    if (!cancelledModules.isEmpty()) {
-                                        sysLogger.log(Level.WARNING, String.format("Ingest module(s) cancelled for %s", manifestPath));
-                                        currentJob.setErrorsOccurred(true);
-                                        setErrorsOccurredFlagForCase(caseDirectoryPath);
-                                        for (String module : snapshot.getCancelledDataSourceIngestModules()) {
-                                            sysLogger.log(Level.WARNING, String.format("%s ingest module cancelled for %s", module, manifestPath));
-                                            nestedJobLogger.logIngestModuleCancelled(module);
-                                        }
-                                    }
-                                    nestedJobLogger.logAnalysisCompleted();
-                                } else {
-                                    currentJob.setProcessingStage(AutoIngestJob.Stage.CANCELLING, Date.from(Instant.now()));
+                        
+                        
+                        ingestJobStartResult = IngestManager.getInstance().beginIngestJob(dataSource.getContent(), ingestJobSettings);
+                        ingestJob = ingestJobStartResult.getJob();
+                    } else {
+                        ingestJob = currentIngestStream.getIngestJob();
+                    }
+                    
+                    if (null != ingestJob) {
+                        currentJob.setIngestJob(ingestJob);
+                        /*
+                         * Block until notified by the ingest job event
+                         * listener or until interrupted because auto ingest
+                         * is shutting down.
+                         */
+                        ingestLock.wait();
+                        sysLogger.log(Level.INFO, "Finished ingest modules analysis for {0} ", manifestPath);
+                        IngestJob.ProgressSnapshot jobSnapshot = ingestJob.getSnapshot();
+                        for (IngestJob.ProgressSnapshot.DataSourceProcessingSnapshot snapshot : jobSnapshot.getDataSourceSnapshots()) {
+                            AutoIngestJobLogger nestedJobLogger = new AutoIngestJobLogger(manifestPath, snapshot.getDataSource(), caseDirectoryPath);
+                            if (!snapshot.isCancelled()) {
+                                List<String> cancelledModules = snapshot.getCancelledDataSourceIngestModules();
+                                if (!cancelledModules.isEmpty()) {
+                                    sysLogger.log(Level.WARNING, String.format("Ingest module(s) cancelled for %s", manifestPath));
                                     currentJob.setErrorsOccurred(true);
                                     setErrorsOccurredFlagForCase(caseDirectoryPath);
-                                    nestedJobLogger.logAnalysisCancelled();
-                                    CancellationReason cancellationReason = snapshot.getCancellationReason();
-                                    if (CancellationReason.NOT_CANCELLED != cancellationReason && CancellationReason.USER_CANCELLED != cancellationReason) {
-                                        throw new AnalysisStartupException(String.format("Analysis cancelled due to %s for %s", cancellationReason.getDisplayName(), manifestPath));
+                                    for (String module : snapshot.getCancelledDataSourceIngestModules()) {
+                                        sysLogger.log(Level.WARNING, String.format("%s ingest module cancelled for %s", module, manifestPath));
+                                        nestedJobLogger.logIngestModuleCancelled(module);
                                     }
                                 }
+                                nestedJobLogger.logAnalysisCompleted();
+                            } else {
+                                currentJob.setProcessingStage(AutoIngestJob.Stage.CANCELLING, Date.from(Instant.now()));
+                                currentJob.setErrorsOccurred(true);
+                                setErrorsOccurredFlagForCase(caseDirectoryPath);
+                                nestedJobLogger.logAnalysisCancelled();
+                                CancellationReason cancellationReason = snapshot.getCancellationReason();
+                                if (CancellationReason.NOT_CANCELLED != cancellationReason && CancellationReason.USER_CANCELLED != cancellationReason) {
+                                    throw new AnalysisStartupException(String.format("Analysis cancelled due to %s for %s", cancellationReason.getDisplayName(), manifestPath));
+                                }
                             }
-                        } else if (ingestJobStartResult != null && !ingestJobStartResult.getModuleErrors().isEmpty()) {
-                            for (IngestModuleError error : ingestJobStartResult.getModuleErrors()) {
-                                sysLogger.log(Level.SEVERE, String.format("%s ingest module startup error for %s", error.getModuleDisplayName(), manifestPath), error.getThrowable());
-                            }
-                            currentJob.setErrorsOccurred(true);
-                            setErrorsOccurredFlagForCase(caseDirectoryPath);
-                            jobLogger.logIngestModuleStartupErrors();
-                            throw new AnalysisStartupException(String.format("Error(s) during ingest module startup for %s", manifestPath));
-                        } else if (ingestJobStartResult != null) {
-                            sysLogger.log(Level.SEVERE, String.format("Ingest manager ingest job start error for %s", manifestPath), ingestJobStartResult.getStartupException());
-                            currentJob.setErrorsOccurred(true);
-                            setErrorsOccurredFlagForCase(caseDirectoryPath);
-                            jobLogger.logAnalysisStartupError();
-                            throw new AnalysisStartupException("Ingest manager error starting job", ingestJobStartResult.getStartupException());
                         }
-                    } else {
-                        for (String warning : settingsWarnings) {
-                            sysLogger.log(Level.SEVERE, "Ingest job settings error for {0}: {1}", new Object[]{manifestPath, warning});
+                    } else if (ingestJobStartResult != null && !ingestJobStartResult.getModuleErrors().isEmpty()) {
+                        for (IngestModuleError error : ingestJobStartResult.getModuleErrors()) {
+                            sysLogger.log(Level.SEVERE, String.format("%s ingest module startup error for %s", error.getModuleDisplayName(), manifestPath), error.getThrowable());
                         }
                         currentJob.setErrorsOccurred(true);
                         setErrorsOccurredFlagForCase(caseDirectoryPath);
-                        jobLogger.logIngestJobSettingsErrors();
-                        throw new AnalysisStartupException("Error(s) in ingest job settings");
+                        jobLogger.logIngestModuleStartupErrors();
+                        throw new AnalysisStartupException(String.format("Error(s) during ingest module startup for %s", manifestPath));
+                    } else if (ingestJobStartResult != null) {
+                        sysLogger.log(Level.SEVERE, String.format("Ingest manager ingest job start error for %s", manifestPath), ingestJobStartResult.getStartupException());
+                        currentJob.setErrorsOccurred(true);
+                        setErrorsOccurredFlagForCase(caseDirectoryPath);
+                        jobLogger.logAnalysisStartupError();
+                        throw new AnalysisStartupException("Ingest manager error starting job", ingestJobStartResult.getStartupException());
                     }
                 }
             } finally {
