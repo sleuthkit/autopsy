@@ -85,7 +85,7 @@ final class PhotoRecCarverIngestJobSettingsPanel extends IngestModuleIngestJobSe
                 try {
                     Desktop.getDesktop().browse(new URI(PHOTOREC_TYPES_URL));
                 } catch (IOException | URISyntaxException ex) {
-                    logger.log(Level.WARNING, "There was an error going to types huperlink: " + PHOTOREC_TYPES_URL, ex);
+                    logger.log(Level.WARNING, "There was an error going to types hyperlink: " + PHOTOREC_TYPES_URL, ex);
                 }
             }
         });

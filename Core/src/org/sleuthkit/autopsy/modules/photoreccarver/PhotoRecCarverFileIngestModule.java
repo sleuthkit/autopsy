@@ -185,18 +185,24 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
     @Override
     @NbBundle.Messages({
         "# {0} - extensions",
-        "PhotoRecCarverFileIngestModule_getSettings_invalidExtensions_description=The following extensions are invalid: {0}"
+        "PhotoRecCarverFileIngestModule_startUp_invalidExtensions_description=The following extensions are invalid: {0}",
+        "PhotoRecCarverFileIngestModule_startUp_noExtensionsProvided_description=No extensions provided for PhotoRec to carve."
     })
     public void startUp(IngestJobContext context) throws IngestModule.IngestModuleException {
         // validate settings
         if (this.settings.hasFileOptOption()) {
+            if (this.settings.getIncludeExcludeExtensions().isEmpty() && this.settings.isIncludeElseExclude()) {
+                throw new IngestModule.IngestModuleException(
+                        Bundle.PhotoRecCarverFileIngestModule_startUp_noExtensionsProvided_description());
+            }
+            
             List<String> invalidExtensions = this.settings.getIncludeExcludeExtensions().stream()
                     .filter((ext) -> !PhotoRecCarverFileOptExtensions.isValidExtension(ext))
                     .collect(Collectors.toList());
 
             if (!invalidExtensions.isEmpty()) {
                 throw new IngestModule.IngestModuleException(
-                        Bundle.PhotoRecCarverFileIngestModule_getSettings_invalidExtensions_description(
+                        Bundle.PhotoRecCarverFileIngestModule_startUp_invalidExtensions_description(
                                 String.join(",", invalidExtensions)));
             }   
         }
