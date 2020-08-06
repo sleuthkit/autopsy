@@ -104,7 +104,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
     private IngestServices services;
     private final UNCPathUtilities uncPathUtilities = new UNCPathUtilities();
     private final PhotoRecCarverIngestJobSettings settings;
-    private final String optionsString;
+    private String optionsString;
     private long jobId;
 
     private static class IngestJobTotals {
@@ -122,7 +122,6 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
      */
     PhotoRecCarverFileIngestModule(PhotoRecCarverIngestJobSettings settings) {
         this.settings = settings;
-        this.optionsString = getPhotorecOptions(settings);
     }
 
     /**
@@ -190,15 +189,19 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
     })
     public void startUp(IngestJobContext context) throws IngestModule.IngestModuleException {
         // validate settings
-        List<String> invalidExtensions = this.settings.getIncludeExcludeExtensions().stream()
-                .filter((ext) -> !PhotoRecCarverFileOptExtensions.isValidExtension(ext))
-                .collect(Collectors.toList());
-        
-        if (!invalidExtensions.isEmpty()) {
-            throw new IngestModule.IngestModuleException(
-                    Bundle.PhotoRecCarverFileIngestModule_getSettings_invalidExtensions_description(
-                            String.join(",", invalidExtensions)));
+        if (this.settings.hasFileOptOption()) {
+            List<String> invalidExtensions = this.settings.getIncludeExcludeExtensions().stream()
+                    .filter((ext) -> !PhotoRecCarverFileOptExtensions.isValidExtension(ext))
+                    .collect(Collectors.toList());
+
+            if (!invalidExtensions.isEmpty()) {
+                throw new IngestModule.IngestModuleException(
+                        Bundle.PhotoRecCarverFileIngestModule_getSettings_invalidExtensions_description(
+                                String.join(",", invalidExtensions)));
+            }   
         }
+        
+        this.optionsString = getPhotorecOptions(this.settings);
         
         this.context = context;
         this.services = IngestServices.getInstance();

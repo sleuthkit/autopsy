@@ -9,8 +9,7 @@ OpenIDE-Module-Short-Description=Carves unallocated space and feeds carved files
 moduleDisplayName.text=PhotoRec Carver
 moduleDescription.text=Runs PhotoRec carver against unallocated space in the data source.
 # {0} - extensions
-PhotoRecCarverIngestJobSettingsPanel_getSettings_invalidExtensions_description=The following extensions are invalid and were removed: {0}
-PhotoRecCarverIngestJobSettingsPanel_getSettings_invalidExtensions_title=Invalid Extensions
+PhotoRecCarverFileIngestModule_getSettings_invalidExtensions_description=The following extensions are invalid: {0}
 PhotoRecIngestModule.nonHostnameUNCPathUsed=PhotoRec cannot operate with a UNC path containing IP addresses.
 PhotoRecIngestModule.PermissionsNotSufficient=Insufficient permissions accessing
 PhotoRecIngestModule.PermissionsNotSufficientSeeReference=See 'Shared Drive Authentication' in Autopsy help.
