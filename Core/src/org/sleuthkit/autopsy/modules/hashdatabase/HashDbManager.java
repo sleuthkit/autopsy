@@ -291,7 +291,9 @@ public class HashDbManager implements PropertyChangeListener {
         }
 
         // Add the hash database to the collection
-        hashSets.add(db);
+        if(!hashSets.contains(db)) {
+            hashSets.add(db);
+        }
 
         // Let any external listeners know that there's a new set   
         try {
