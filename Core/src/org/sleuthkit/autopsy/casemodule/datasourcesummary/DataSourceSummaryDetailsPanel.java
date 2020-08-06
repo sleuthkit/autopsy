@@ -19,12 +19,12 @@
 package org.sleuthkit.autopsy.casemodule.datasourcesummary;
 
 import java.text.DecimalFormat;
-import java.util.Map;
-import java.util.HashMap;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.table.DefaultTableModel;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -36,23 +36,47 @@ class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
 
     //Because this panel was made using the gridbaglayout and netbean's Customize Layout tool it will be best to continue to modify it through that
     private static final long serialVersionUID = 1L;
-    private Map<Long, String> osDetailMap = new HashMap<>();
     private static final Integer SIZE_COVERSION_CONSTANT = 1000;
     private static final DecimalFormat APPROXIMATE_SIZE_FORMAT = new DecimalFormat("#.##");
-    private final Map<Long, Long> unallocatedFilesSizeMap;
-    private final Map<Long, String> usageMap;
     private static final Logger logger = Logger.getLogger(DataSourceSummaryDetailsPanel.class.getName());
+
+    private DataSource dataSource;
 
     /**
      * Creates new form DataSourceSummaryDetailsPanel
      */
     @Messages({"DataSourceSummaryDetailsPanel.getDataSources.error.text=Failed to get the list of datasources for the current case.",
         "DataSourceSummaryDetailsPanel.getDataSources.error.title=Load Failure"})
-    DataSourceSummaryDetailsPanel(Map<Long, String> usageMap) {
+    DataSourceSummaryDetailsPanel() {
         initComponents();
-        this.usageMap = usageMap;
-        this.unallocatedFilesSizeMap = DataSourceInfoUtilities.getSizeOfUnallocatedFiles();
-        osDetailMap = DataSourceInfoUtilities.getOperatingSystems();
+        setDataSource(null);
+    }
+
+    /**
+     * The datasource currently used as the model in this panel.
+     *
+     * @return The datasource currently being used as the model in this panel.
+     */
+    public DataSource getDataSource() {
+        return dataSource;
+    }
+
+    /**
+     * Sets datasource to visualize in the panel.
+     *
+     * @param dataSource The datasource to use in this panel.
+     */
+    public void setDataSource(DataSource dataSource) {
+        this.dataSource = dataSource;
+
+        if (dataSource == null || !Case.isCaseOpen()) {
+            updateDetailsPanelData(null, null, null, null);
+        } else {
+            updateDetailsPanelData(dataSource,
+                    DataSourceInfoUtilities.getSizeOfUnallocatedFiles(dataSource),
+                    DataSourceInfoUtilities.getOperatingSystems(dataSource),
+                    DataSourceInfoUtilities.getDataSourceType(dataSource));
+        }
     }
 
     /**
@@ -60,75 +84,78 @@ class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
      *
      * @param selectedDataSource the DataSource to display details about.
      */
-    void updateDetailsPanelData(DataSource selectedDataSource) {
+    private void updateDetailsPanelData(DataSource selectedDataSource, Long unallocatedFilesSize, String osDetails, String usage) {
         clearTableValues();
         if (selectedDataSource != null) {
-            String sizeString = "";
-            String sectorSizeString = "";
-            String md5String = "";
-            String sha1String = "";
-            String sha256String = "";
-            String acquisitionDetailsString = "";
-            String imageTypeString = "";
-            String[] filePaths = new String[0];
-            String osDetailString = osDetailMap.get(selectedDataSource.getId()) == null ? "" : osDetailMap.get(selectedDataSource.getId());
-            String dataSourceTypeString = usageMap.get(selectedDataSource.getId()) == null ? "" : usageMap.get(selectedDataSource.getId());
-            try {
-                acquisitionDetailsString = selectedDataSource.getAcquisitionDetails();
-            } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, "Unable to get aquisition details for selected data source", ex);
-            }
-            if (selectedDataSource instanceof Image) {
-                imageTypeString = ((Image) selectedDataSource).getType().getName();
-                filePaths = ((Image) selectedDataSource).getPaths();
-                sizeString = getSizeString(selectedDataSource.getSize());
-                sectorSizeString = getSizeString(((Image) selectedDataSource).getSsize());
-                try {
-                    //older databases may have null as the hash values
-                    md5String = ((Image) selectedDataSource).getMd5();
-                    if (md5String == null) {
-                        md5String = "";
-                    }
-                } catch (TskCoreException ex) {
-                    logger.log(Level.WARNING, "Unable to get MD5 for selected data source", ex);
-                }
-                try {
-                    sha1String = ((Image) selectedDataSource).getSha1();
-                    if (sha1String == null) {
-                        sha1String = "";
-                    }
-                } catch (TskCoreException ex) {
-                    logger.log(Level.WARNING, "Unable to get SHA1 for selected data source", ex);
-                }
-                try {
-                    sha256String = ((Image) selectedDataSource).getSha256();
-                    if (sha256String == null) {
-                        sha256String = "";
-                    }
-                } catch (TskCoreException ex) {
-                    logger.log(Level.WARNING, "Unable to get SHA256 for selected data source", ex);
-                }
-            }
+            unallocatedSizeValue.setText(getSizeString(unallocatedFilesSize));
+            operatingSystemValue.setText(StringUtils.isBlank(osDetails) ? "" : osDetails);
+            dataSourceUsageValue.setText(StringUtils.isBlank(usage) ? "" : usage);
+
+            timeZoneValue.setText(selectedDataSource.getTimeZone());
             displayNameValue.setText(selectedDataSource.getName());
             originalNameValue.setText(selectedDataSource.getName());
             deviceIdValue.setText(selectedDataSource.getDeviceId());
-            dataSourceUsageValue.setText(dataSourceTypeString);
-            operatingSystemValue.setText(osDetailString);
-            timeZoneValue.setText(selectedDataSource.getTimeZone());
-            acquisitionDetailsTextArea.setText(acquisitionDetailsString);
-            imageTypeValue.setText(imageTypeString);
-            sizeValue.setText(sizeString);
-            unallocatedSizeValue.setText(getSizeString(unallocatedFilesSizeMap.get(selectedDataSource.getId())));
-            sectorSizeValue.setText(sectorSizeString);
-            md5HashValue.setText(md5String);
-            sha1HashValue.setText(sha1String);
-            sha256HashValue.setText(sha256String);
-            for (String path : filePaths) {
-                ((DefaultTableModel) filePathsTable.getModel()).addRow(new Object[]{path});
+
+            try {
+                acquisitionDetailsTextArea.setText(selectedDataSource.getAcquisitionDetails());
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, "Unable to get aquisition details for selected data source", ex);
+            }
+
+            if (selectedDataSource instanceof Image) {
+                setFieldsForImage((Image) selectedDataSource);
             }
         }
         updateFieldVisibility();
         this.repaint();
+    }
+
+    /**
+     * Sets text fields for an image. This should be called after
+     * clearTableValues and before updateFieldVisibility to ensure the proper
+     * rendering.
+     *
+     * @param selectedImage The selected image.
+     */
+    private void setFieldsForImage(Image selectedImage) {
+        imageTypeValue.setText(selectedImage.getType().getName());
+        sizeValue.setText(getSizeString(selectedImage.getSize()));
+        sectorSizeValue.setText(getSizeString(selectedImage.getSsize()));
+
+        for (String path : selectedImage.getPaths()) {
+            ((DefaultTableModel) filePathsTable.getModel()).addRow(new Object[]{path});
+        }
+
+        try {
+            //older databases may have null as the hash values
+            String md5String = selectedImage.getMd5();
+            if (md5String == null) {
+                md5String = "";
+            }
+            md5HashValue.setText(md5String);
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, "Unable to get MD5 for selected data source", ex);
+        }
+
+        try {
+            String sha1String = selectedImage.getSha1();
+            if (sha1String == null) {
+                sha1String = "";
+            }
+            sha1HashValue.setText(sha1String);
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, "Unable to get SHA1 for selected data source", ex);
+        }
+
+        try {
+            String sha256String = selectedImage.getSha256();
+            if (sha256String == null) {
+                sha256String = "";
+            }
+            sha256HashValue.setText(sha256String);
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, "Unable to get SHA256 for selected data source", ex);
+        }
     }
 
     /**
@@ -147,7 +174,7 @@ class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
         "DataSourceSummaryDetailsPanel.units.terabytes= TB",
         "DataSourceSummaryDetailsPanel.units.petabytes= PB"
     })
-    private String getSizeString(Long size) {
+    private static String getSizeString(Long size) {
         if (size == null) {
             return "";
         }

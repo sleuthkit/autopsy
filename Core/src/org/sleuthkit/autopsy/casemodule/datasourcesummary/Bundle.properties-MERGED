@@ -1,4 +1,6 @@
 CTL_DataSourceSummaryAction=Data Source Summary
+DataSourceSummaryCountsPanel.ArtifactCountsTableModel.count.header=Count
+DataSourceSummaryCountsPanel.ArtifactCountsTableModel.type.header=Result Type
 DataSourceSummaryCountsPanel.FilesByCategoryTableModel.all.row=All
 DataSourceSummaryCountsPanel.FilesByCategoryTableModel.allocated.row=Allocated
 DataSourceSummaryCountsPanel.FilesByCategoryTableModel.count.header=Count
