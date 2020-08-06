@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.casemodule.datasourcesummary;
 
 import javax.swing.JTabbedPane;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.IngestJobInfoPanel;
 import org.sleuthkit.datamodel.DataSource;
 
@@ -27,13 +28,20 @@ import org.sleuthkit.datamodel.DataSource;
  * DataSourceSummaryCountsPanel, DataSourceSummaryDetailsPanel, and
  * IngestJobInfoPanel.
  */
+@Messages({
+        "DataSourceSummaryTabbedPane_countsTab_title=Counts",
+        "DataSourceSummaryTabbedPane_detailsTab_title=Details",
+        "DataSourceSummaryTabbedPane_userActivityTab_title=User Activity",
+        "DataSourceSummaryTabbedPane_ingestHistoryTab_title=Ingest History"
+})
 public class DataSourceSummaryTabbedPane extends JTabbedPane {
 
     private static final long serialVersionUID = 1L;
     
-    private final DataSourceSummaryCountsPanel countsPanel;
-    private final DataSourceSummaryDetailsPanel detailsPanel;
-    private final IngestJobInfoPanel ingestHistoryPanel;
+    private final DataSourceSummaryCountsPanel countsPanel = new DataSourceSummaryCountsPanel();
+    private final DataSourceSummaryDetailsPanel detailsPanel = new DataSourceSummaryDetailsPanel();
+    private final DataSourceSummaryUserActivityPanel userActivityPanel = new DataSourceSummaryUserActivityPanel();
+    private final IngestJobInfoPanel ingestHistoryPanel = new IngestJobInfoPanel();
 
     private DataSource dataSource = null;
 
@@ -41,13 +49,11 @@ public class DataSourceSummaryTabbedPane extends JTabbedPane {
      * Constructs a tabbed pane showing the summary of a data source.
      */
     public DataSourceSummaryTabbedPane() {
-        countsPanel = new DataSourceSummaryCountsPanel();
-        detailsPanel = new DataSourceSummaryDetailsPanel();
-        ingestHistoryPanel = new IngestJobInfoPanel();
-        
-        addTab(Bundle.DataSourceSummaryDialog_detailsTab_title(), detailsPanel);
-        addTab(Bundle.DataSourceSummaryDialog_countsTab_title(), countsPanel);
-        addTab(Bundle.DataSourceSummaryDialog_ingestHistoryTab_title(), ingestHistoryPanel);
+       
+        addTab(Bundle.DataSourceSummaryTabbedPane_detailsTab_title(), detailsPanel);
+        addTab(Bundle.DataSourceSummaryTabbedPane_countsTab_title(), countsPanel);
+        addTab(Bundle.DataSourceSummaryTabbedPane_userActivityTab_title(), userActivityPanel);
+        addTab(Bundle.DataSourceSummaryTabbedPane_ingestHistoryTab_title(), ingestHistoryPanel);
     }
 
     /**
@@ -69,6 +75,7 @@ public class DataSourceSummaryTabbedPane extends JTabbedPane {
 
         detailsPanel.setDataSource(dataSource);
         countsPanel.setDataSource(dataSource);
+        userActivityPanel.setDataSource(dataSource);
         ingestHistoryPanel.setDataSource(dataSource);
     }
 }
