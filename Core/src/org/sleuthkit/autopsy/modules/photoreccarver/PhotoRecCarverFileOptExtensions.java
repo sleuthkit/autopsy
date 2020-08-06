@@ -36,7 +36,7 @@ final class PhotoRecCarverFileOptExtensions {
      *
      * @return True if the extension can be used with photorec.
      */
-    public static boolean isValidExtension(String extension) {
+    static boolean isValidExtension(String extension) {
         return KNOWN_EXTENSIONS.contains(extension);
     }
 
@@ -378,4 +378,7 @@ final class PhotoRecCarverFileOptExtensions {
             "zcode",
             "zip",
             "zpr"));
+
+    private PhotoRecCarverFileOptExtensions() {
+    }
 }

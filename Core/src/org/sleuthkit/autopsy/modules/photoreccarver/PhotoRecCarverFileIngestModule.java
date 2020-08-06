@@ -194,7 +194,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
                 .filter((ext) -> !PhotoRecCarverFileOptExtensions.isValidExtension(ext))
                 .collect(Collectors.toList());
         
-        if (invalidExtensions.size() > 0) {
+        if (!invalidExtensions.isEmpty()) {
             throw new IngestModule.IngestModuleException(
                     Bundle.PhotoRecCarverFileIngestModule_getSettings_invalidExtensions_description(
                             String.join(",", invalidExtensions)));
