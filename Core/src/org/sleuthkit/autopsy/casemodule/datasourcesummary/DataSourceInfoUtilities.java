@@ -18,10 +18,14 @@
  */
 package org.sleuthkit.autopsy.casemodule.datasourcesummary;
 
+import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -29,6 +33,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Set;
@@ -36,11 +41,16 @@ import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import org.apache.commons.lang3.tuple.Pair;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import org.apache.commons.lang.StringUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.DataSource;
 
 /**
@@ -51,6 +61,7 @@ final class DataSourceInfoUtilities {
 
     private static final Logger logger = Logger.getLogger(DataSourceInfoUtilities.class.getName());
 
+    
     /**
      * Gets a count of files for a particular datasource where it is not a
      * virtual directory and has a name.
@@ -253,30 +264,108 @@ final class DataSourceInfoUtilities {
         return getBaseQueryResult(query, getStringLongResultSetHandler(nameParam, valueParam), errorMessage);
     }
 
+    /**
+     * Describes a result of a program run on a datasource.
+     */
     static class TopProgramsResult {
 
         private final String programName;
         private final String programPath;
-        private final long runTimes;
+        private final Long runTimes;
+        private final Date lastRun;
 
-        public TopProgramsResult(String programName, String programPath, long runTimes) {
+        /**
+         * Main constructor.
+         * @param programName The name of the program.
+         * @param programPath The path of the program.
+         * @param runTimes The number of runs.
+         */
+        TopProgramsResult(String programName, String programPath, Long runTimes, Date lastRun) {
             this.programName = programName;
             this.programPath = programPath;
             this.runTimes = runTimes;
+            this.lastRun = lastRun;
         }
 
-        public String getProgramName() {
+        /**
+         * @return The name of the program
+         */
+        String getProgramName() {
             return programName;
         }
 
-        public String getProgramPath() {
+        /**
+         * @return The path of the program.
+         */
+        String getProgramPath() {
             return programPath;
         }
 
-        public long getRunTimes() {
+        /**
+         * @return The number of run times or null if not present.
+         */
+        Long getRunTimes() {
             return runTimes;
         }
+
+        /**
+         * @return The last time the program was run or null if not present.
+         */
+        public Date getLastRun() {
+            return lastRun;
+        }
     }
+    
+    
+    private enum JoinType {
+        LEFT,
+        RIGHT,
+        INNER,
+        OUTER
+    }
+    
+    private enum AttributeColumn {
+        value_text,
+        value_int32,
+        value_int64
+    }
+    
+    private static final String QUERY_SUFFIX = "_query";
+    
+    private static String getAttributeJoin(JoinType joinType, AttributeColumn attributeColumn, ATTRIBUTE_TYPE attrType, String keyName, String bbaName) {
+        String queryName = keyName + QUERY_SUFFIX;
+        String innerQueryName = "inner_attribute_" + queryName;
+        
+        return 
+                "\n" + joinType + " JOIN (\n" +
+                "    SELECT \n" +
+                "        " + innerQueryName + ".artifact_id,\n" +
+                "        " + innerQueryName + "." + attributeColumn + " AS " + keyName + "\n" +
+                "    FROM blackboard_attributes " + innerQueryName + "\n" +
+                "    WHERE " + innerQueryName + ".attribute_type_id = " + attrType.getTypeID() + " -- " + attrType.name() + "\n" +
+                ") " + queryName + " ON " + queryName + ".artifact_id = " + bbaName + ".artifact_id\n";
+    }
+    
+    private static String getFullKey(String key) {
+        return key + QUERY_SUFFIX + "." + key;
+    }
+    
+    private static String getWhereString(List<String> clauses) {
+        if (clauses.size() <= 0) {
+            return "";
+        }
+        
+        List<String> parenthesized = clauses.stream()
+                .map(c -> "(" + c + ")")
+                .collect(Collectors.toList());
+        
+        return "\nWHERE " + String.join("\n    AND ", parenthesized) + "\n";
+    }
+    
+    private static String getLikeClause(String column, String likeString, boolean isLike) {
+        return column + (isLike ? "" : " NOT") + " LIKE '" + likeString + "'";
+    }
+    
 
     /**
      * Retrieves a list of the top programs used on the data source. Currently
@@ -293,53 +382,69 @@ final class DataSourceInfoUtilities {
             return Collections.emptyList();
         }
 
-        final String progNameParam = "prog_name";
-        final String progPathParam = "prog_path";
-        final String runTimesParam = "run_times";
-        final String prefetchIdentifier = "Windows Prefetch Extractor";
+        // ntosboot should be ignored
+        final String ntosBootIdentifier = "NTOSBOOT";
+        // programs in windows directory to be ignored
+        final String windowsDir = "/WINDOWS%";
+        
+        final String nameParam = "name";
+        final String pathParam = "path";
+        final String runCountParam = "run_count";
+        final String lastRunParam = "last_run";
+        
+        String bbaQuery = "bba";
 
         final String query = "SELECT\n"
-                + "    prog_name_query." + progNameParam + ",\n"
-                + "    prog_path_query." + progPathParam + ",\n"
-                + "    MAX(attr.value_int32) AS " + runTimesParam + "\n"
-                + "FROM blackboard_artifacts bba\n"
-                + "INNER JOIN blackboard_attributes attr ON bba.artifact_id = attr.artifact_id\n"
-                + "INNER JOIN (\n"
-                + "    SELECT \n"
-                + "        bba1.artifact_id AS artifact_id,\n"
-                + "        attr1.value_text AS " + progNameParam + "\n"
-                + "    FROM blackboard_artifacts bba1\n"
-                + "    INNER JOIN blackboard_attributes attr1 ON bba1.artifact_id = attr1.artifact_id\n"
-                + "    WHERE bba1.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_PROG_RUN.getTypeID() + "\n"
-                + "    AND attr1.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID() + "\n"
-                + ") prog_name_query ON bba.artifact_id = prog_name_query.artifact_id\n"
-                + "LEFT JOIN (\n"
-                + "    SELECT \n"
-                + "        bba2.artifact_id AS artifact_id,\n"
-                + "        attr2.value_text AS " + progPathParam + "\n"
-                + "    FROM blackboard_artifacts bba2\n"
-                + "    INNER JOIN blackboard_attributes attr2 ON bba2.artifact_id = attr2.artifact_id\n"
-                + "    WHERE bba2.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_PROG_RUN.getTypeID() + "\n"
-                + "    AND attr2.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH.getTypeID() + "\n"
-                + ") prog_path_query ON bba.artifact_id = prog_path_query.artifact_id\n"
-                + "WHERE attr.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COUNT.getTypeID() + "\n"
-                + "AND bba.data_source_obj_id = " + dataSource.getId() + "\n"
-                + "AND attr.source = '" + prefetchIdentifier + "'\n"
-                + "GROUP BY prog_name_query." + progNameParam + ", prog_path_query." + progPathParam + "\n"
-                + "ORDER BY MAX(attr.value_int32) DESC\n"
-                + "LIMIT " + count + " OFFSET 0";
-
+                + "    " + getFullKey(nameParam) + " AS " + nameParam + ",\n"
+                + "    " + getFullKey(pathParam) + " AS " + pathParam + ",\n"
+                + "    MAX(" + getFullKey(runCountParam) + ") AS " + runCountParam + ",\n"
+                + "    MAX(" + getFullKey(lastRunParam) + ") AS " + lastRunParam + "\n"
+                + "FROM blackboard_artifacts " + bbaQuery + "\n"
+                + getAttributeJoin(JoinType.INNER, AttributeColumn.value_text, ATTRIBUTE_TYPE.TSK_PROG_NAME, nameParam, bbaQuery)
+                + getAttributeJoin(JoinType.LEFT, AttributeColumn.value_text, ATTRIBUTE_TYPE.TSK_PATH, pathParam, bbaQuery)
+                + getAttributeJoin(JoinType.LEFT, AttributeColumn.value_int32, ATTRIBUTE_TYPE.TSK_COUNT, runCountParam, bbaQuery)
+                + getAttributeJoin(JoinType.LEFT, AttributeColumn.value_int64, ATTRIBUTE_TYPE.TSK_DATETIME, lastRunParam, bbaQuery)
+                + getWhereString(Arrays.asList(
+                        bbaQuery + ".artifact_type_id = " + ARTIFACT_TYPE.TSK_PROG_RUN.getTypeID(),
+                        bbaQuery + ".data_source_obj_id = " + dataSource.getId(),
+                        // exclude ntosBootIdentifier from results
+                        getLikeClause(getFullKey(nameParam), ntosBootIdentifier, false),
+                        // exclude windows directory items from results
+                        getFullKey(pathParam) + " IS NULL OR " + getLikeClause(getFullKey(pathParam), windowsDir, false)
+                ))
+                + "GROUP BY " + getFullKey(nameParam) + ", " + getFullKey(pathParam) + "\n"
+                + "ORDER BY \n"
+                + "    MAX(" + getFullKey(runCountParam) + ") DESC,\n"
+                + "    MAX(" + getFullKey(lastRunParam) + ") DESC,\n"
+                + "    " + getFullKey(nameParam) + " ASC";
+                
         final String errorMessage = "Unable to get top program results; returning null.";
 
         ResultSetHandler<List<TopProgramsResult>> handler = (resultSet) -> {
             List<TopProgramsResult> progResults = new ArrayList<>();
 
-            while (resultSet.next()) {
+            boolean quitAtCount = false;
+            
+            while (resultSet.next() && (!quitAtCount || progResults.size() < count)) {
                 try {
+                    long lastRunEpoch = resultSet.getLong(lastRunParam);
+                    Date lastRun = (resultSet.wasNull()) ? null : new Date(lastRunEpoch * 1000);
+                    
+                    Long runCount = resultSet.getLong(runCountParam);
+                    if (resultSet.wasNull()) {
+                        runCount = null;
+                    }
+                    
+                    if (lastRun != null || runCount != null) {
+                        quitAtCount = true;
+                    }
+                    
                     progResults.add(new TopProgramsResult(
-                            resultSet.getString(progNameParam),
-                            resultSet.getString(progPathParam),
-                            resultSet.getLong(runTimesParam)));
+                            resultSet.getString(nameParam),
+                            resultSet.getString(pathParam),
+                            runCount,
+                            lastRun));
+                    
                 } catch (SQLException ex) {
                     logger.log(Level.WARNING, "Failed to get a top program result from the result set.", ex);
                 }
@@ -350,30 +455,62 @@ final class DataSourceInfoUtilities {
 
         return getBaseQueryResult(query, handler, errorMessage);
     }
-
-    private static List<Pair<Pattern, Function<Matcher, String>>> SHORT_FOLDER_MATCHERS = Arrays.asList(
-            // Windows if in /Windows
-            Pair.of(Pattern.compile("^([A-Z]:)?[\\\\\\/]?windows", Pattern.CASE_INSENSITIVE),
-                    (match) -> "Windows"),
-            // program name if /Program Files/program or /Program Files (x86)/program
-            Pair.of(Pattern.compile("^([A-Z]:)?[\\\\\\/]?Program Files( \\(x86\\))?[\\\\\\/](?<programName>.+?)([\\\\\\/]|$)",
-                    Pattern.CASE_INSENSITIVE), (match) -> match.group("programName")),
-            // match for an AppData folder
-            Pair.of(Pattern.compile("(^|[\\\\\\/])AppData([\\\\\\/]|$)", Pattern.CASE_INSENSITIVE),
-                    (match) -> "AppData")
+    
+    
+    
+    /**
+     * Functions that determine the folder name of a list of path elements.  If not matched, function returns null. 
+     */
+    private static final List<Function<List<String>, String>> SHORT_FOLDER_MATCHERS = Arrays.asList(
+            // handle Program Files and Program Files (x86) - if true, return the next folder
+            (pathList) -> {
+                if (pathList.size() < 2) {
+                    return null;
+                }
+                
+                String rootParent = pathList.get(0).toUpperCase();
+                if ("PROGRAM FILES".equals(rootParent) || "PROGRAM FILES (X86)".equals(rootParent)) {
+                    return pathList.get(1);
+                } else {
+                    return null;
+                }
+            },
+            // if there is a folder named "APPLICATION DATA" or "APPDATA"
+            (pathList) -> {
+                for (String pathEl : pathList) {
+                    String uppered = pathEl.toUpperCase();
+                    if ("APPLICATION DATA".equals(uppered) || "APPDATA".equals(uppered)) {
+                        return "AppData";
+                    } 
+                }
+                return null;
+            }
     );
 
-    static String getShortFolderName(String path) {
-        if (path == null) {
+    /**
+     * Determines a short folder name if any.  Otherwise, returns empty string.
+     * @param strPath The string path.
+     * @return The short folder name or empty string if not found.
+     */
+    static String getShortFolderName(String strPath, String applicationName) {
+        if (strPath == null) {
             return "";
         }
 
-        for (Pair<Pattern, Function<Matcher, String>> matchEntry : SHORT_FOLDER_MATCHERS) {
-            Pattern p = matchEntry.getLeft();
-            Function<Matcher, String> resultsProvider = matchEntry.getRight();
-            Matcher match = p.matcher(path);
-            if (match.find()) {
-                return resultsProvider.apply(match);
+        List<String> pathEls = new ArrayList<>(Arrays.asList(applicationName));
+        
+        File file = new File(strPath);
+        while (file != null && StringUtils.isNotBlank(file.getName())) {
+            pathEls.add(file.getName());
+            file = file.getParentFile();
+        }
+        
+        Collections.reverse(pathEls);
+
+        for (Function<List<String>, String> matchEntry : SHORT_FOLDER_MATCHERS) {
+            String result = matchEntry.apply(pathEls);
+            if (StringUtils.isNotBlank(result)) {
+                return result;
             }
         }
 

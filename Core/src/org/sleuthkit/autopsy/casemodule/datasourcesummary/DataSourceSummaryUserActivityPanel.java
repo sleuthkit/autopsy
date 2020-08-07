@@ -19,6 +19,8 @@
 package org.sleuthkit.autopsy.casemodule.datasourcesummary;
 
 import java.awt.Component;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -38,10 +40,11 @@ import org.sleuthkit.datamodel.DataSource;
     "DataSourceSummaryUserActivityPanel_tab_title=User Activity",
     "DataSourceSummaryUserActivityPanel_TopProgramsTableModel_name_header=Program",
     "DataSourceSummaryUserActivityPanel_TopProgramsTableModel_folder_header=Folder",
-    "DataSourceSummaryUserActivityPanel_TopProgramsTableModel_count_header=Run Times"
+    "DataSourceSummaryUserActivityPanel_TopProgramsTableModel_count_header=Run Times",
+    "DataSourceSummaryUserActivityPanel_TopProgramsTableModel_lastrun_header=Last Run"
 })
 public class DataSourceSummaryUserActivityPanel extends javax.swing.JPanel {
-
+    private static final DateFormat DATETIME_FORMAT = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
     private static final int TOP_PROGS_COUNT = 10;
     private static final DefaultTableCellRenderer RIGHT_ALIGNED_RENDERER = new DefaultTableCellRenderer();
 
@@ -90,10 +93,12 @@ public class DataSourceSummaryUserActivityPanel extends javax.swing.JPanel {
      */
     private void updateTopPrograms(TopProgramsModel model) {
         topProgramsTable.setModel(model);
-        topProgramsTable.getColumnModel().getColumn(0).setPreferredWidth(230);
+        topProgramsTable.getColumnModel().getColumn(0).setPreferredWidth(250);
         topProgramsTable.getColumnModel().getColumn(0).setCellRenderer(PATH_CELL_RENDERER);
         topProgramsTable.getColumnModel().getColumn(1).setPreferredWidth(150);
         topProgramsTable.getColumnModel().getColumn(2).setCellRenderer(RIGHT_ALIGNED_RENDERER);
+        topProgramsTable.getColumnModel().getColumn(2).setPreferredWidth(80);
+        topProgramsTable.getColumnModel().getColumn(3).setPreferredWidth(150);
         this.repaint();
     }
 
@@ -160,7 +165,8 @@ public class DataSourceSummaryUserActivityPanel extends javax.swing.JPanel {
         private static final String[] TOP_PROGS_COLUMN_HEADERS = new String[]{
             Bundle.DataSourceSummaryUserActivityPanel_TopProgramsTableModel_name_header(),
             Bundle.DataSourceSummaryUserActivityPanel_TopProgramsTableModel_folder_header(),
-            Bundle.DataSourceSummaryUserActivityPanel_TopProgramsTableModel_count_header()
+            Bundle.DataSourceSummaryUserActivityPanel_TopProgramsTableModel_count_header(),
+            Bundle.DataSourceSummaryUserActivityPanel_TopProgramsTableModel_lastrun_header()
         };
 
         private final List<DataSourceInfoUtilities.TopProgramsResult> programResults;
@@ -195,9 +201,11 @@ public class DataSourceSummaryUserActivityPanel extends javax.swing.JPanel {
                 case 0:
                     return new ProgramNameCellValue(result.getProgramName(), result.getProgramPath());
                 case 1:
-                    return DataSourceInfoUtilities.getShortFolderName(result.getProgramPath());
+                    return DataSourceInfoUtilities.getShortFolderName(result.getProgramPath(), result.getProgramName());
                 case 2:
                     return result.getRunTimes();
+                case 3:
+                    return result.getLastRun() == null ? null : DATETIME_FORMAT.format(result.getLastRun());
                 default:
                     return null;
             }
@@ -218,12 +226,9 @@ public class DataSourceSummaryUserActivityPanel extends javax.swing.JPanel {
         javax.swing.JScrollPane topProgramsScrollPane = new javax.swing.JScrollPane();
         topProgramsTable = new javax.swing.JTable();
 
-        setMinimumSize(null);
-        setPreferredSize(null);
-
         org.openide.awt.Mnemonics.setLocalizedText(programsRunLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryUserActivityPanel.class, "DataSourceSummaryUserActivityPanel.programsRunLabel.text")); // NOI18N
 
-        topProgramsScrollPane.setPreferredSize(new java.awt.Dimension(460, 187));
+        topProgramsScrollPane.setPreferredSize(new java.awt.Dimension(750, 187));
         topProgramsScrollPane.setViewportView(topProgramsTable);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
