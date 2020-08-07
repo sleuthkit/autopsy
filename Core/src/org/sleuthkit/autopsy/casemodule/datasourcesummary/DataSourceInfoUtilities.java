@@ -19,13 +19,10 @@
 package org.sleuthkit.autopsy.casemodule.datasourcesummary;
 
 import java.io.File;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -37,12 +34,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Set;
-import java.util.regex.Pattern;
-import java.util.regex.Matcher;
-import org.apache.commons.lang3.tuple.Pair;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.apache.commons.lang.StringUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -61,7 +54,6 @@ final class DataSourceInfoUtilities {
 
     private static final Logger logger = Logger.getLogger(DataSourceInfoUtilities.class.getName());
 
-    
     /**
      * Gets a count of files for a particular datasource where it is not a
      * virtual directory and has a name.
@@ -276,9 +268,10 @@ final class DataSourceInfoUtilities {
 
         /**
          * Main constructor.
+         *
          * @param programName The name of the program.
          * @param programPath The path of the program.
-         * @param runTimes The number of runs.
+         * @param runTimes    The number of runs.
          */
         TopProgramsResult(String programName, String programPath, Long runTimes, Date lastRun) {
             this.programName = programName;
@@ -315,57 +308,103 @@ final class DataSourceInfoUtilities {
             return lastRun;
         }
     }
-    
-    
+
+    /**
+     * A SQL join type.
+     */
     private enum JoinType {
         LEFT,
         RIGHT,
         INNER,
         OUTER
     }
-    
+
+    /**
+     * A blackboard attribute value column.
+     */
     private enum AttributeColumn {
         value_text,
         value_int32,
         value_int64
     }
-    
+
+    /**
+     * The suffix joined to a key name for use as an identifier of a query.
+     */
     private static final String QUERY_SUFFIX = "_query";
-    
+
+    /**
+     * Creates a sql statement querying the blackboard attributes table for a
+     * particular attribute type and returning a specified value. That query
+     * also joins with the blackboard artifact table.
+     *
+     * @param joinType        The type of join statement to create.
+     * @param attributeColumn The blackboard attribute column that should be
+     *                        returned.
+     * @param attrType        The attribute type to query for.
+     * @param keyName         The aliased name of the attribute to return. This
+     *                        is also used to calculate the alias of the query
+     *                        same as getFullKey.
+     * @param bbaName         The blackboard artifact table alias.
+     *
+     * @return The generated sql statement.
+     */
     private static String getAttributeJoin(JoinType joinType, AttributeColumn attributeColumn, ATTRIBUTE_TYPE attrType, String keyName, String bbaName) {
         String queryName = keyName + QUERY_SUFFIX;
         String innerQueryName = "inner_attribute_" + queryName;
-        
-        return 
-                "\n" + joinType + " JOIN (\n" +
-                "    SELECT \n" +
-                "        " + innerQueryName + ".artifact_id,\n" +
-                "        " + innerQueryName + "." + attributeColumn + " AS " + keyName + "\n" +
-                "    FROM blackboard_attributes " + innerQueryName + "\n" +
-                "    WHERE " + innerQueryName + ".attribute_type_id = " + attrType.getTypeID() + " -- " + attrType.name() + "\n" +
-                ") " + queryName + " ON " + queryName + ".artifact_id = " + bbaName + ".artifact_id\n";
+
+        return "\n" + joinType + " JOIN (\n"
+                + "    SELECT \n"
+                + "        " + innerQueryName + ".artifact_id,\n"
+                + "        " + innerQueryName + "." + attributeColumn + " AS " + keyName + "\n"
+                + "    FROM blackboard_attributes " + innerQueryName + "\n"
+                + "    WHERE " + innerQueryName + ".attribute_type_id = " + attrType.getTypeID() + " -- " + attrType.name() + "\n"
+                + ") " + queryName + " ON " + queryName + ".artifact_id = " + bbaName + ".artifact_id\n";
     }
-    
+
+    /**
+     * Given a column key, creates the full name for the column key.
+     *
+     * @param key The column key.
+     *
+     * @return The full identifier for the column key.
+     */
     private static String getFullKey(String key) {
         return key + QUERY_SUFFIX + "." + key;
     }
-    
+
+    /**
+     * Constructs a SQL 'where' statement from a list of clauses and puts
+     * parenthesis around each clause.
+     *
+     * @param clauses The clauses
+     *
+     * @return The generated 'where' statement.
+     */
     private static String getWhereString(List<String> clauses) {
         if (clauses.size() <= 0) {
             return "";
         }
-        
+
         List<String> parenthesized = clauses.stream()
                 .map(c -> "(" + c + ")")
                 .collect(Collectors.toList());
-        
+
         return "\nWHERE " + String.join("\n    AND ", parenthesized) + "\n";
     }
-    
+
+    /**
+     * Generates a [column] LIKE sql clause.
+     *
+     * @param column     The column identifier.
+     * @param likeString The string that will be used as column comparison.
+     * @param isLike     if false, the statement becomes NOT LIKE.
+     *
+     * @return The generated statement.
+     */
     private static String getLikeClause(String column, String likeString, boolean isLike) {
         return column + (isLike ? "" : " NOT") + " LIKE '" + likeString + "'";
     }
-    
 
     /**
      * Retrieves a list of the top programs used on the data source. Currently
@@ -386,12 +425,12 @@ final class DataSourceInfoUtilities {
         final String ntosBootIdentifier = "NTOSBOOT";
         // programs in windows directory to be ignored
         final String windowsDir = "/WINDOWS%";
-        
+
         final String nameParam = "name";
         final String pathParam = "path";
         final String runCountParam = "run_count";
         final String lastRunParam = "last_run";
-        
+
         String bbaQuery = "bba";
 
         final String query = "SELECT\n"
@@ -417,34 +456,34 @@ final class DataSourceInfoUtilities {
                 + "    MAX(" + getFullKey(runCountParam) + ") DESC,\n"
                 + "    MAX(" + getFullKey(lastRunParam) + ") DESC,\n"
                 + "    " + getFullKey(nameParam) + " ASC";
-                
+
         final String errorMessage = "Unable to get top program results; returning null.";
 
         ResultSetHandler<List<TopProgramsResult>> handler = (resultSet) -> {
             List<TopProgramsResult> progResults = new ArrayList<>();
 
             boolean quitAtCount = false;
-            
+
             while (resultSet.next() && (!quitAtCount || progResults.size() < count)) {
                 try {
                     long lastRunEpoch = resultSet.getLong(lastRunParam);
                     Date lastRun = (resultSet.wasNull()) ? null : new Date(lastRunEpoch * 1000);
-                    
+
                     Long runCount = resultSet.getLong(runCountParam);
                     if (resultSet.wasNull()) {
                         runCount = null;
                     }
-                    
+
                     if (lastRun != null || runCount != null) {
                         quitAtCount = true;
                     }
-                    
+
                     progResults.add(new TopProgramsResult(
                             resultSet.getString(nameParam),
                             resultSet.getString(pathParam),
                             runCount,
                             lastRun));
-                    
+
                 } catch (SQLException ex) {
                     logger.log(Level.WARNING, "Failed to get a top program result from the result set.", ex);
                 }
@@ -455,11 +494,10 @@ final class DataSourceInfoUtilities {
 
         return getBaseQueryResult(query, handler, errorMessage);
     }
-    
-    
-    
+
     /**
-     * Functions that determine the folder name of a list of path elements.  If not matched, function returns null. 
+     * Functions that determine the folder name of a list of path elements. If
+     * not matched, function returns null.
      */
     private static final List<Function<List<String>, String>> SHORT_FOLDER_MATCHERS = Arrays.asList(
             // handle Program Files and Program Files (x86) - if true, return the next folder
@@ -467,7 +505,7 @@ final class DataSourceInfoUtilities {
                 if (pathList.size() < 2) {
                     return null;
                 }
-                
+
                 String rootParent = pathList.get(0).toUpperCase();
                 if ("PROGRAM FILES".equals(rootParent) || "PROGRAM FILES (X86)".equals(rootParent)) {
                     return pathList.get(1);
@@ -481,15 +519,17 @@ final class DataSourceInfoUtilities {
                     String uppered = pathEl.toUpperCase();
                     if ("APPLICATION DATA".equals(uppered) || "APPDATA".equals(uppered)) {
                         return "AppData";
-                    } 
+                    }
                 }
                 return null;
             }
     );
 
     /**
-     * Determines a short folder name if any.  Otherwise, returns empty string.
+     * Determines a short folder name if any. Otherwise, returns empty string.
+     *
      * @param strPath The string path.
+     *
      * @return The short folder name or empty string if not found.
      */
     static String getShortFolderName(String strPath, String applicationName) {
@@ -498,13 +538,13 @@ final class DataSourceInfoUtilities {
         }
 
         List<String> pathEls = new ArrayList<>(Arrays.asList(applicationName));
-        
+
         File file = new File(strPath);
         while (file != null && StringUtils.isNotBlank(file.getName())) {
             pathEls.add(file.getName());
             file = file.getParentFile();
         }
-        
+
         Collections.reverse(pathEls);
 
         for (Function<List<String>, String> matchEntry : SHORT_FOLDER_MATCHERS) {
