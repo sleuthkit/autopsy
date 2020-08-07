@@ -32,26 +32,28 @@ splitToken:
         
 		<SearchEngine engine="Yahoo" domainSubstring=".yahoo." >
 			<splitToken plainToken="?p=" regexToken="\\?p=" />
+			<splitToken plainToken="?text=" regexToken="\\?text="/>
 		</SearchEngine>
                 
                <SearchEngine engine="Twitter" domainSubstring="twitter." >
 			<splitToken plainToken="?q=" regexToken="\\?q=" />
 			<splitToken plainToken="&amp;q=" regexToken="&amp;q="/> 
-               </SearchEngine>
+		 </SearchEngine>
                
                 <SearchEngine engine="LinkedIn" domainSubstring=".linkedin." >
 			<splitToken plainToken="&amp;keywords=" regexToken="&amp;keywords="/> 
-               </SearchEngine>
+                       </SearchEngine>
                
                 <SearchEngine engine="Facebook" domainSubstring=".facebook." >
-			<splitToken plainToken="?value=" regexToken="\\?value="/> 
+			<splitToken plainToken="?value=" regexToken="\\?value="/>
+                                    <splitToken plainToken="?q=" regexToken="\\?q="/>
                </SearchEngine>
 
-		<SearchEngine engine="Bing" domainSubstring=".bing" >
+		<SearchEngine engine="Bing" domainSubstring=".bing." >
 			<splitToken plainToken="search?q=" regexToken="search\\?q=" />
 
         </SearchEngine>
-		<SearchEngine engine="Baidu" domainSubstring=".baidu" >
+		<SearchEngine engine="Baidu" domainSubstring=".baidu." >
 			<splitToken plainToken="?wd=" regexToken="\\?wd=" />
 			<splitToken plainToken="?kw=" regexToken="\\?kw=" />
 			<splitToken plainToken="baidu.com/q?" regexToken="word=" />
@@ -60,21 +62,25 @@ splitToken:
 			<splitToken plainToken="/qw=" regexToken="\\qw=" />
 			<splitToken plainToken="?qw=" regexToken="\\qw=" />
 			<splitToken plainToken="bs="  regexToken="&amp;bs=" />
+			<splitToken plainToken="?ie=" regexToken="\\?ie=" />
         </SearchEngine> 
 
 		<SearchEngine engine="Sogou" domainSubstring=".sogou.com" >
 			<splitToken plainToken="query=" regexToken="query=" />
-		</SearchEngine> 
+                                <splitToken plainToken="?ie=" regexToken="\\?ie=" />
+                         </SearchEngine> 
 
 		<SearchEngine engine="Soso" domainSubstring=".soso.com" >
 			<splitToken plainToken="p=S" regexToken="p=S" />
 			<splitToken plainToken="?w=" regexToken="\\?w=" />
 			<splitToken plainToken="&amp;w" regexToken="&amp;w"/>
+			<splitToken plainToken="?ie=" regexToken="\\?ie=" />			
 		</SearchEngine> 
 
 		<SearchEngine engine="Youdao" domainSubstring=".youdao" >
 			<splitToken plainToken="search?q=" regexToken="\\?q=" />
 			<splitToken plainToken="?i=" regexToken="\\?i=" />
+			<splitToken plainToken="#keyfrom=" regexToken="\\#keyfrom=" /> 
 		</SearchEngine> 
 
 		<SearchEngine engine="Yandex" domainSubstring=".yandex" >
@@ -100,6 +106,68 @@ splitToken:
 		<SearchEngine engine="Parset" domainSubstring=".parset.com" >
 			<splitToken plainToken="?Keyword=" regexToken="\\?Keyword=" />
 		</SearchEngine> 
+
+		<SearchEngine engine="Amazon" domainSubstring=".amazon.com" >
+			<splitToken plainToken="?k=" regexToken="\\?k=" />
+		 </SearchEngine>
+		<SearchEngine engine="DuckDuckGo" domainSubstring=".duckduckgo.com" >
+			<splitToken plainToken="?q=" regexToken="\\?q=" />
+		 </SearchEngine>
+		
+		
+		
+		<SearchEngine engine="Youtube" domainSubstring=".youtube.com" >
+			<splitToken plainToken="?search_query=" regexToken="\\?search_query=" />
+		 </SearchEngine>
+		
+		<SearchEngine engine="Reddit" domainSubstring=".reddit.com" >
+			<splitToken plainToken="?q=" regexToken="\\?q=" />
+		 </SearchEngine>
+		
+			
+		<SearchEngine engine="CCSearch" domainSubstring=".ccsearch.creativecommons." >
+			<splitToken plainToken="?q=" regexToken="\\?q=" />
+		 </SearchEngine>
+		
+			
+		<SearchEngine engine="Reddit" domainSubstring=".swisscows.com" >
+			<splitToken plainToken="?query=" regexToken="\\?query=" />
+		  </SearchEngine>
+		
+		<SearchEngine engine="GIbiru" domainSubstring=".gibiru.com" >
+			<splitToken plainToken="?q=" regexToken="\\?q=" />
+		  </SearchEngine>
+
+
+		<SearchEngine engine="GIbiru" domainSubstring=".gibiru.com" >
+			<splitToken plainToken="?q=" regexToken="\\?q=" />
+		  </SearchEngine>
+			
+		
+		<SearchEngine engine="Wiki" domainSubstring=".wiki." >
+			<splitToken plainToken="?cx=" regexToken="\\?cx=" />
+		  </SearchEngine>
+				
+		<SearchEngine engine="Cutestat" domainSubstring=".cutestat.com" >
+			<splitToken plainToken="?q=" regexToken="\\?q=" />
+		  </SearchEngine>		
+		
+		<SearchEngine engine="Givewater" domainSubstring=".search.givewater." >
+			<splitToken plainToken="?q=" regexToken="\\?q=" />
+		  </SearchEngine>		
+		
+		<SearchEngine engine="Ekoru" domainSubstring=".ekoru." >
+			<splitToken plainToken="?q=" regexToken="\\?q=" />
+		  </SearchEngine>
+				
+		<SearchEngine engine="Ecosia" domainSubstring=".ecosia." >
+			<splitToken plainToken="?q=" regexToken="\\?q=" />
+		  </SearchEngine>
+
+		<SearchEngine engine="Slideshare" domainSubstring=".slideshare." >
+			<splitToken plainToken="?searchform=" regexToken="\\?q=" />
+		  </SearchEngine>
+
 
 
 </SES>
