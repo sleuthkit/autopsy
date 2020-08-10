@@ -45,47 +45,49 @@ in photorec.sig where *bar* is the file extension, *0* is the signature offset, 
 The following is the list of valid file types for the version of PhotoRec currently used by Autopsy:
 
 \verbatim
-1cd          cab          dvi          gi           lzh          par2         rfp          txt
-3dm          caf          dvr          gif          lzo          pcap         riff         tz
-7z           cam          dwg          gm*          m2ts         pcb          rlv          v2i
-a            catdrawing   dxf          gp2          mat          pct          rm           vault
-ab           cdt          e01          gp5          max          pcx          rns          vdi
-abr          che          eCryptfs     gpg          mb           pdb          rpm          vdj
-acb          chm          edb          gpx          mcd          pdf          rw2          veg
-accdb        class        elf          gsm          mdb          pds          rx2          vfb
-ace          comicdoc     emf          gz           mdf          pf           sav          vib
-ado          cow          ess          hdf          mfa          pfx          save         vmdk
-afdesign     cp_          evt          hdr          mfg          plist        ses          vmg
-ahn          cpi          evtx         hds          mft          plr          sgcta        wallet
-aif          crw          exe          hfsp         mid          plt          shn          wdp
-all          csh          exs          hm           mig          png          sib          wee
-als          ctg          ext          hr9          mk5          pnm          sit          wim
-amd          cwk          fat          http         mkv          prc          skd          win
-amr          d2s          fbf          ibd          mlv          prd          skp          wks
-apa          dad          fbk          icc          mobi         prt          snag         wld
-ape          dar          fcp          icns         mov          ps           snz          wmf
-apple        dat          fcs          ico          mov/mdat     psb          sp3          wnk
-ari          DB           fdb          idx          mp3          psd          sparseimage  woff
-arj          db           fds          ifo          mpg          psf          spe          wpb
-asf          dbf          fh10         imb          mpl          psp          spf          wpd
-asl          dbn          fh5          indd         mrw          pst          sqlite       wtv
-asm          dcm          fit          info         msa          ptb          sqm          wv
-atd          ddf          fits         iso          mus          ptf          steuer2014   x3f
-au           dex          flac         it           mxf          pyc          stl          x3i
-axp          diskimage    flp          itu          MYI          pzf          studio       x4a
-axx          djv          flv          jks          myo          pzh          swf          xar
-bac          dmp          fm           jpg          nd2          qbb          tar          xcf
-bdm          doc          fob          jsonlz4      nds          qdf          tax          xfi
-bim          dpx          fos          kdb          nes          qkt          tg           xfs
-bin          drw          fp5          kdbx         njx          qxd          tib          xm
-binvox       ds2          fp7          key          nk2          r3d          tif          xml
-bkf          DS_Store     freeway      ldf          nsf          ra           TiVo         xpt
-blend        dsc          frm          lit          oci          raf          torrent      xsv
-bmp          dss          fs           lnk          ogg          rar          tph          xv
-bpg          dst          fwd          logic        one          raw          tpl          xz
-bvr          dta          gam          lso          orf          rdc          ts           z2d
-bz2          dump         gct          luks         paf          reg          ttf          zcode
-c4d          dv           gho          lxo          pap          res          tx?          zip
+1cd          caf          dwg          gp2          max          pdb          rw2          vfb
+3dm          cam          dxf          gp5          mb           pdf          rx2          vib
+7z           catdrawing   e01          gpg          mcd          pds          sav          vmdk
+a            cdt          eCryptfs     gpx          mdb          pf           save         vmg
+ab           che          edb          gsm          mdf          pfx          ses          wallet
+abr          chm          elf          gz           mfa          plist        sgcta        wdp
+acb          class        emf          hdf          mfg          plr          shn          wee
+accdb        comicdoc     ess          hdr          mft          plt          sib          wim
+ace          cow          evt          hds          mid          png          sit          win
+ado          cp_          evtx         hfsp         mig          pnm          skd          wks
+afdesign     cpi          exe          hm           mk5          prc          skp          wld
+ahn          crw          exs          hr9          mkv          prd          snag         wmf
+aif          csh          ext          http         mlv          prt          snz          wnk
+all          ctg          fat          ibd          mobi         ps           sp3          woff
+als          cwk          fbf          icc          mov          psb          sparseimage  wpb
+amd          d2s          fbk          icns         mov/mdat     psd          spe          wpd
+amr          dad          fcp          ico          mp3          psf          spf          wtv
+apa          dar          fcs          idx          mpg          psp          sqlite       wv
+ape          dat          fdb          ifo          mpl          pst          sqm          x3f
+apple        DB           fds          imb          mrw          ptb          steuer2014   x3i
+ari          db           fh10         indd         msa          ptf          stl          x4a
+arj          dbf          fh5          info         mus          pyc          studio       xar
+asf          dbn          fit          iso          mxf          pzf          swf          xcf
+asl          dcm          fits         it           MYI          pzh          tar          xfi
+asm          ddf          flac         itu          myo          qbb          tax          xfs
+atd          dex          flp          jks          nd2          qdf          tg           xm
+au           diskimage    flv          jpg          nds          qkt          tib          xml
+axp          djv          fm           jsonlz4      nes          qxd          tif          xpt
+axx          dmp          fob          kdb          njx          r3d          TiVo         xsv
+bac          doc          fos          kdbx         nk2          ra           torrent      xv
+bdm          dpx          fp5          key          nsf          raf          tph          xz
+bim          drw          fp7          ldf          oci          rar          tpl          z2d
+bin          ds2          freeway      lit          ogg          raw          ts           zcode
+binvox       DS_Store     frm          lnk          one          rdc          ttf          zip
+bkf          dsc          fs           logic        orf          reg          tx?          zpr
+blend        dss          fwd          lso          paf          res          txt
+bmp          dst          gam          luks         pap          rfp          tz
+bpg          dta          gct          lxo          par2         riff         v2i
+bvr          dump         gho          lzh          pcap         rlv          vault
+bz2          dv           gi           lzo          pcb          rm           vdi
+c4d          dvi          gif          m2ts         pct          rns          vdj
+cab          dvr          gm*          mat          pcx          rpm          veg
+
 \endverbatim
 
 */
