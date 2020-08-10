@@ -24,6 +24,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.table.AbstractTableModel;
@@ -45,7 +46,8 @@ import org.sleuthkit.datamodel.DataSource;
 })
 public class DataSourceSummaryUserActivityPanel extends javax.swing.JPanel {
 
-    private static final DateFormat DATETIME_FORMAT = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+    private static final long serialVersionUID = 1L;
+    private static final DateFormat DATETIME_FORMAT = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss", Locale.getDefault());
     private static final int TOP_PROGS_COUNT = 10;
     private static final DefaultTableCellRenderer RIGHT_ALIGNED_RENDERER = new DefaultTableCellRenderer();
 
@@ -122,30 +124,45 @@ public class DataSourceSummaryUserActivityPanel extends javax.swing.JPanel {
         }
     }
 
+    /**
+     * A POJO defining the values present in the name cell. Defines the name as
+     * well as the path for the tooltip.
+     */
     private static class ProgramNameCellValue {
 
         private final String programName;
         private final String programPath;
 
-        public ProgramNameCellValue(String programName, String programPath) {
+        ProgramNameCellValue(String programName, String programPath) {
             this.programName = programName;
             this.programPath = programPath;
         }
 
         @Override
         public String toString() {
+            // override so that the value in the cell reads as programName
             return programName;
         }
 
+        /**
+         * @return The program name.
+         */
         String getProgramName() {
             return programName;
         }
 
+        /**
+         * @return The path of the program.
+         */
         String getProgramPath() {
             return programPath;
         }
     }
 
+    /**
+     * Defines a cell renderer for the first cell rendering the name as the text
+     * and path as the tooltip.
+     */
     private static TableCellRenderer PATH_CELL_RENDERER = new DefaultTableCellRenderer() {
 
         public Component getTableCellRendererComponent(
@@ -161,7 +178,13 @@ public class DataSourceSummaryUserActivityPanel extends javax.swing.JPanel {
         }
     };
 
+    /**
+     * Defines the table model for a JTable of the programs. Accepts a list of
+     * TopProgramsResult objects as rows data source.
+     */
     private static class TopProgramsModel extends AbstractTableModel {
+
+        private static final long serialVersionUID = 1L;
 
         // column headers for artifact counts table
         private static final String[] TOP_PROGS_COLUMN_HEADERS = new String[]{
@@ -173,7 +196,12 @@ public class DataSourceSummaryUserActivityPanel extends javax.swing.JPanel {
 
         private final List<DataSourceInfoUtilities.TopProgramsResult> programResults;
 
-        public TopProgramsModel(List<DataSourceInfoUtilities.TopProgramsResult> programResults) {
+        /**
+         * Main constructor.
+         *
+         * @param programResults The results to display.
+         */
+        TopProgramsModel(List<DataSourceInfoUtilities.TopProgramsResult> programResults) {
             this.programResults = programResults == null ? new ArrayList<>() : Collections.unmodifiableList(programResults);
         }
 

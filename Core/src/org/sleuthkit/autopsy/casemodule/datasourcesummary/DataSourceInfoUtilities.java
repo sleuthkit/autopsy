@@ -214,7 +214,7 @@ final class DataSourceInfoUtilities {
      * @return The result set handler to generate the map of string to long.
      */
     private static ResultSetHandler<LinkedHashMap<String, Long>> getStringLongResultSetHandler(String keyParam, String valueParam) {
-        ResultSetHandler<LinkedHashMap<String, Long>> handler = (resultSet) -> {
+        return (resultSet) -> {
             LinkedHashMap<String, Long> toRet = new LinkedHashMap<>();
             while (resultSet.next()) {
                 try {
@@ -226,8 +226,6 @@ final class DataSourceInfoUtilities {
 
             return toRet;
         };
-
-        return handler;
     }
 
     /**
@@ -382,7 +380,7 @@ final class DataSourceInfoUtilities {
      * @return The generated 'where' statement.
      */
     private static String getWhereString(List<String> clauses) {
-        if (clauses.size() <= 0) {
+        if (clauses.isEmpty()) {
             return "";
         }
 
