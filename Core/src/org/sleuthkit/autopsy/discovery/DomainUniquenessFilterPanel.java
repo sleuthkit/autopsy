@@ -48,8 +48,17 @@ class DomainUniquenessFilterPanel extends AbstractDiscoveryFilterPanel {
 
         domainUniquenessCheckbox = new javax.swing.JCheckBox();
         domainUniqueScrollPane = new javax.swing.JScrollPane();
+        jList1 = new javax.swing.JList<>();
 
         org.openide.awt.Mnemonics.setLocalizedText(domainUniquenessCheckbox, org.openide.util.NbBundle.getMessage(DomainUniquenessFilterPanel.class, "DomainUniquenessFilterPanel.domainUniquenessCheckbox.text")); // NOI18N
+
+        jList1.setModel(new javax.swing.AbstractListModel<String>() {
+            String[] strings = { "Unique", "Multiple instances" };
+            public int getSize() { return strings.length; }
+            public String getElementAt(int i) { return strings[i]; }
+        });
+        jList1.setEnabled(false);
+        domainUniqueScrollPane.setViewportView(jList1);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -97,5 +106,6 @@ class DomainUniquenessFilterPanel extends AbstractDiscoveryFilterPanel {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JScrollPane domainUniqueScrollPane;
     private javax.swing.JCheckBox domainUniquenessCheckbox;
+    private javax.swing.JList<String> jList1;
     // End of variables declaration//GEN-END:variables
 }

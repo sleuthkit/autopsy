@@ -18,9 +18,11 @@
  */
 package org.sleuthkit.autopsy.discovery;
 
+import javax.swing.DefaultListModel;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
  *
@@ -35,6 +37,21 @@ class ArtifactTypeFilterPanel extends AbstractDiscoveryFilterPanel {
      */
     ArtifactTypeFilterPanel() {
         initComponents();
+        setUpArtifactTypeFilter();
+
+    }
+
+    /**
+     * Initialize the data source filter.
+     */
+    private void setUpArtifactTypeFilter() {
+        int count = 0;
+        DefaultListModel<ArtifactTypeItem> artifactTypeModel = (DefaultListModel<ArtifactTypeItem>) jList1.getModel();
+        artifactTypeModel.removeAllElements();
+        for (BlackboardArtifact.ARTIFACT_TYPE artifactType : ArtifactSearchData.ArtifactType.DOMAIN.getBlackboardTypes()) {
+            artifactTypeModel.add(count, new ArtifactTypeItem(artifactType));
+            count++;
+        }
     }
 
     /**
@@ -48,12 +65,17 @@ class ArtifactTypeFilterPanel extends AbstractDiscoveryFilterPanel {
 
         artifactTypeCheckbox = new javax.swing.JCheckBox();
         artifactTypeScrollPane = new javax.swing.JScrollPane();
+        jList1 = new javax.swing.JList<>();
 
         org.openide.awt.Mnemonics.setLocalizedText(artifactTypeCheckbox, org.openide.util.NbBundle.getMessage(ArtifactTypeFilterPanel.class, "ArtifactTypeFilterPanel.artifactTypeCheckbox.text")); // NOI18N
 
         setPreferredSize(new java.awt.Dimension(27, 27));
 
         artifactTypeScrollPane.setPreferredSize(new java.awt.Dimension(27, 27));
+
+        jList1.setModel(new DefaultListModel<ArtifactTypeItem>());
+        jList1.setEnabled(false);
+        artifactTypeScrollPane.setViewportView(jList1);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -79,7 +101,7 @@ class ArtifactTypeFilterPanel extends AbstractDiscoveryFilterPanel {
 
     @Override
     JList<?> getList() {
-         return null;
+        return null;
     }
 
     @Override
@@ -89,7 +111,7 @@ class ArtifactTypeFilterPanel extends AbstractDiscoveryFilterPanel {
 
     @Override
     String checkForError() {
-       return "Domain search is not implemented.";
+        return "Domain search is not implemented.";
     }
 
     @Override
@@ -97,9 +119,41 @@ class ArtifactTypeFilterPanel extends AbstractDiscoveryFilterPanel {
         return null;
     }
 
+    /**
+     * Utility class to allow us to display the AritfactType display name
+     * instead of the name.
+     */
+    private class ArtifactTypeItem {
+
+        private final BlackboardArtifact.ARTIFACT_TYPE artifactType;
+
+        /**
+         * Construct a new ArtifactTypeItem.
+         *
+         * @param ds The artifact type being wrapped.
+         */
+        ArtifactTypeItem(BlackboardArtifact.ARTIFACT_TYPE artifactType) {
+            this.artifactType = artifactType;
+        }
+
+        /**
+         * Get the ArtifactType represented by this ArtifactTypeItem.
+         *
+         * @return The ArtifactType represented by this ArtifactTypeItem.
+         */
+        BlackboardArtifact.ARTIFACT_TYPE getArtifactType() {
+            return artifactType;
+        }
+
+        @Override
+        public String toString() {
+            return artifactType.getDisplayName();
+        }
+    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox artifactTypeCheckbox;
     private javax.swing.JScrollPane artifactTypeScrollPane;
+    private javax.swing.JList<ArtifactTypeItem> jList1;
     // End of variables declaration//GEN-END:variables
 }

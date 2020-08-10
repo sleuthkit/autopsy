@@ -5,6 +5,11 @@
  */
 package org.sleuthkit.autopsy.discovery;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.Set;
 import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
@@ -13,13 +18,13 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
  */
 public class ArtifactSearchData extends SearchData {
 
-        
+    private static final Set<BlackboardArtifact.ARTIFACT_TYPE> DOMAIN_ARTIFACT_TYPES = EnumSet.of(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK, BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE, BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE, BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY, BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY, BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG);
+
     @Override
-    ResultType getResultType(){
+    ResultType getResultType() {
         return ResultType.ARTIFACT;
     }
-    
-    
+
     /**
      * Enum representing the file type. We don't simply use
      * FileTypeUtils.FileTypeCategory because: - Some file types categories
@@ -31,26 +36,26 @@ public class ArtifactSearchData extends SearchData {
         "ArtifactSearchData.ArtifactType.Other.displayName=Other"})
     enum ArtifactType {
 
-        DOMAIN(0, Bundle.ArtifactSearchData_ArtifactType_Domain_displayName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK),
-        OTHER(1, Bundle.ArtifactSearchData_ArtifactType_Other_displayName(), null);
+        DOMAIN(0, Bundle.ArtifactSearchData_ArtifactType_Domain_displayName(), DOMAIN_ARTIFACT_TYPES),
+        OTHER(1, Bundle.ArtifactSearchData_ArtifactType_Other_displayName(), new HashSet<>());
 
         private final int ranking;  // For ordering in the UI
         private final String displayName;
-        private final BlackboardArtifact.ARTIFACT_TYPE artifactType;
+        private final Set<BlackboardArtifact.ARTIFACT_TYPE> artifactTypes = new HashSet<>();
 
-        ArtifactType(int value, String displayName, BlackboardArtifact.ARTIFACT_TYPE type) {
+        ArtifactType(int value, String displayName, Set<BlackboardArtifact.ARTIFACT_TYPE> types) {
             this.ranking = value;
             this.displayName = displayName;
-            this.artifactType = type;
+            this.artifactTypes.addAll(types);
         }
 
         /**
-         * Get the MIME types matching this category.
+         * Get the BlackboardArtifact types matching this category.
          *
-         * @return Collection of MIME type strings
+         * @return Collection of BlackboardArtifact types.
          */
-        BlackboardArtifact.ARTIFACT_TYPE getMediaTypes() {
-            return artifactType;
+        Collection<BlackboardArtifact.ARTIFACT_TYPE> getBlackboardTypes() {
+            return Collections.unmodifiableCollection(artifactTypes);
         }
 
         @Override
@@ -66,7 +71,6 @@ public class ArtifactSearchData extends SearchData {
         int getRanking() {
             return ranking;
         }
-
 
         static ArtifactType fromBlackboardArtifact(final BlackboardArtifact.ARTIFACT_TYPE type) {
             switch (type) {

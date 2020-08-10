@@ -21,6 +21,9 @@ package org.sleuthkit.autopsy.discovery;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.SpinnerNumberModel;
+import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.communications.Utils;
 
 /**
  *
@@ -29,12 +32,18 @@ import javax.swing.JList;
 class DateFilterPanel extends AbstractDiscoveryFilterPanel {
 
     private static final long serialVersionUID = 1L;
+    private final SpinnerNumberModel numberModel;
 
     /**
      * Creates new form DateFilterPanel
      */
+    @NbBundle.Messages({"# {0} - timeZone",
+        "DateFilterPanel.dateRange.text=Date Range ({0}):"})
     DateFilterPanel() {
+        // numberModel is used in initComponents
+        numberModel = new SpinnerNumberModel(10, 1, Integer.MAX_VALUE, 1);
         initComponents();
+        jRadioButton1.setText(Bundle.DateFilterPanel_dateRange_text(Utils.getUserPreferredZoneId().toString()));
     }
 
     /**
@@ -46,22 +55,134 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        buttonGroup1 = new javax.swing.ButtonGroup();
         dateFilterCheckbox = new javax.swing.JCheckBox();
-        dateFilterScrollPane = new javax.swing.JScrollPane();
+        jPanel1 = new javax.swing.JPanel();
+        daysSpinner = new javax.swing.JSpinner(numberModel);
+        daysLabel = new javax.swing.JLabel();
+        mostRecentButton = new javax.swing.JRadioButton();
+        startCheckBox = new javax.swing.JCheckBox();
+        startDatePicker = new com.github.lgooddatepicker.components.DatePicker();
+        endDatePicker = new com.github.lgooddatepicker.components.DatePicker();
+        endCheckBox = new javax.swing.JCheckBox();
+        jRadioButton1 = new javax.swing.JRadioButton();
 
         org.openide.awt.Mnemonics.setLocalizedText(dateFilterCheckbox, org.openide.util.NbBundle.getMessage(DateFilterPanel.class, "DateFilterPanel.dateFilterCheckbox.text")); // NOI18N
+
+        daysSpinner.setEnabled(false);
+        daysSpinner.setPreferredSize(new java.awt.Dimension(75, 26));
+
+        org.openide.awt.Mnemonics.setLocalizedText(daysLabel, org.openide.util.NbBundle.getMessage(DateFilterPanel.class, "DateFilterPanel.daysLabel.text")); // NOI18N
+        daysLabel.setEnabled(false);
+
+        buttonGroup1.add(mostRecentButton);
+        org.openide.awt.Mnemonics.setLocalizedText(mostRecentButton, org.openide.util.NbBundle.getMessage(DateFilterPanel.class, "DateFilterPanel.mostRecentButton.text")); // NOI18N
+        mostRecentButton.setEnabled(false);
+        mostRecentButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mostRecentButtonActionPerformed(evt);
+            }
+        });
+
+        org.openide.awt.Mnemonics.setLocalizedText(startCheckBox, org.openide.util.NbBundle.getMessage(DateFilterPanel.class, "DateFilterPanel.startCheckBox.text")); // NOI18N
+        startCheckBox.setEnabled(false);
+        startCheckBox.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                startCheckBoxStateChanged(evt);
+            }
+        });
+
+        startDatePicker.setEnabled(false);
+        startDatePicker.setMinimumSize(new java.awt.Dimension(60, 22));
+        startDatePicker.setPreferredSize(new java.awt.Dimension(110, 22));
+
+        endDatePicker.setEnabled(false);
+        endDatePicker.setMinimumSize(new java.awt.Dimension(60, 22));
+        endDatePicker.setPreferredSize(new java.awt.Dimension(110, 22));
+
+        org.openide.awt.Mnemonics.setLocalizedText(endCheckBox, org.openide.util.NbBundle.getMessage(DateFilterPanel.class, "DateFilterPanel.endCheckBox.text")); // NOI18N
+        endCheckBox.setEnabled(false);
+        endCheckBox.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                endCheckBoxStateChanged(evt);
+            }
+        });
+
+        buttonGroup1.add(jRadioButton1);
+        jRadioButton1.setEnabled(false);
+
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addComponent(mostRecentButton, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(daysSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(daysLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 132, Short.MAX_VALUE))
+            .addComponent(jRadioButton1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                .addGap(30, 30, 30)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(endCheckBox)
+                    .addComponent(startCheckBox))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(endDatePicker, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(startDatePicker, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(mostRecentButton)
+                    .addComponent(daysSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(daysLabel))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jRadioButton1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(startCheckBox)
+                    .addComponent(startDatePicker, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(endCheckBox)
+                    .addComponent(endDatePicker, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(0, 0, 0))
+        );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(dateFilterScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 223, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addGap(0, 0, 0)
+                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGap(0, 0, 0))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(dateFilterScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 43, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addGap(0, 0, 0)
+                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(8, 8, 8))
         );
     }// </editor-fold>//GEN-END:initComponents
+
+    private void mostRecentButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mostRecentButtonActionPerformed
+
+    }//GEN-LAST:event_mostRecentButtonActionPerformed
+
+    private void startCheckBoxStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_startCheckBoxStateChanged
+        startDatePicker.setEnabled(startCheckBox.isSelected());
+//        validateFilters();
+    }//GEN-LAST:event_startCheckBoxStateChanged
+
+    private void endCheckBoxStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_endCheckBoxStateChanged
+        endDatePicker.setEnabled(endCheckBox.isSelected());
+//        validateFilters();
+    }//GEN-LAST:event_endCheckBoxStateChanged
 
     @Override
     void configurePanel(boolean selected, int[] indicesSelected) {
@@ -75,7 +196,7 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
 
     @Override
     JList<?> getList() {
-         return null;
+        return null;
     }
 
     @Override
@@ -95,7 +216,16 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.JCheckBox dateFilterCheckbox;
-    private javax.swing.JScrollPane dateFilterScrollPane;
+    private javax.swing.JLabel daysLabel;
+    private javax.swing.JSpinner daysSpinner;
+    private javax.swing.JCheckBox endCheckBox;
+    private com.github.lgooddatepicker.components.DatePicker endDatePicker;
+    private javax.swing.JPanel jPanel1;
+    private javax.swing.JRadioButton jRadioButton1;
+    private javax.swing.JRadioButton mostRecentButton;
+    private javax.swing.JCheckBox startCheckBox;
+    private com.github.lgooddatepicker.components.DatePicker startDatePicker;
     // End of variables declaration//GEN-END:variables
 }

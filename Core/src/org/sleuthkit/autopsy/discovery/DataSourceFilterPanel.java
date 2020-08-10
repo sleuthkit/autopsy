@@ -140,6 +140,7 @@ final class DataSourceFilterPanel extends AbstractDiscoveryFilterPanel {
             dsListModel.removeAllElements();
             for (DataSource ds : Case.getCurrentCase().getSleuthkitCase().getDataSources()) {
                 dsListModel.add(count, new DataSourceItem(ds));
+                count++;
             }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error loading data sources", ex);
