@@ -48,11 +48,11 @@ public class DataSourceSummaryUserActivityPanel extends javax.swing.JPanel {
     private static final DateFormat DATETIME_FORMAT = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
     private static final int TOP_PROGS_COUNT = 10;
     private static final DefaultTableCellRenderer RIGHT_ALIGNED_RENDERER = new DefaultTableCellRenderer();
-    
+
     static {
         RIGHT_ALIGNED_RENDERER.setHorizontalAlignment(JLabel.RIGHT);
     }
-    
+
     private DataSource dataSource;
 
     /**
@@ -114,40 +114,40 @@ public class DataSourceSummaryUserActivityPanel extends javax.swing.JPanel {
     private static TopProgramsModel getTopProgramsModel(DataSource selectedDataSource) {
         List<DataSourceInfoUtilities.TopProgramsResult> topProgramList
                 = DataSourceInfoUtilities.getTopPrograms(selectedDataSource, TOP_PROGS_COUNT);
-        
+
         if (topProgramList == null) {
             return new TopProgramsModel(null);
         } else {
             return new TopProgramsModel(topProgramList);
         }
     }
-    
+
     private static class ProgramNameCellValue {
-        
+
         private final String programName;
         private final String programPath;
-        
+
         public ProgramNameCellValue(String programName, String programPath) {
             this.programName = programName;
             this.programPath = programPath;
         }
-        
+
         @Override
         public String toString() {
             return programName;
         }
-        
+
         String getProgramName() {
             return programName;
         }
-        
+
         String getProgramPath() {
             return programPath;
         }
     }
-    
+
     private static TableCellRenderer PATH_CELL_RENDERER = new DefaultTableCellRenderer() {
-        
+
         public Component getTableCellRendererComponent(
                 JTable table, Object value,
                 boolean isSelected, boolean hasFocus,
@@ -160,7 +160,7 @@ public class DataSourceSummaryUserActivityPanel extends javax.swing.JPanel {
             return c;
         }
     };
-    
+
     private static class TopProgramsModel extends AbstractTableModel {
 
         // column headers for artifact counts table
@@ -170,34 +170,34 @@ public class DataSourceSummaryUserActivityPanel extends javax.swing.JPanel {
             Bundle.DataSourceSummaryUserActivityPanel_TopProgramsTableModel_count_header(),
             Bundle.DataSourceSummaryUserActivityPanel_TopProgramsTableModel_lastrun_header()
         };
-        
+
         private final List<DataSourceInfoUtilities.TopProgramsResult> programResults;
-        
+
         public TopProgramsModel(List<DataSourceInfoUtilities.TopProgramsResult> programResults) {
             this.programResults = programResults == null ? new ArrayList<>() : Collections.unmodifiableList(programResults);
         }
-        
+
         @Override
         public String getColumnName(int column) {
             return column < 0 || column >= TOP_PROGS_COLUMN_HEADERS.length ? null : TOP_PROGS_COLUMN_HEADERS[column];
         }
-        
+
         @Override
         public int getRowCount() {
             return programResults.size();
         }
-        
+
         @Override
         public int getColumnCount() {
             return TOP_PROGS_COLUMN_HEADERS.length;
         }
-        
+
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
             if (rowIndex < 0 || rowIndex >= programResults.size()) {
                 return null;
             }
-            
+
             DataSourceInfoUtilities.TopProgramsResult result = programResults.get(rowIndex);
             switch (columnIndex) {
                 case 0:
@@ -212,7 +212,7 @@ public class DataSourceSummaryUserActivityPanel extends javax.swing.JPanel {
                     return null;
             }
         }
-        
+
     }
 
     /**
