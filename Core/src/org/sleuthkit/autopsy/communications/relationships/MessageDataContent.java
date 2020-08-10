@@ -19,9 +19,21 @@
 package org.sleuthkit.autopsy.communications.relationships;
 
 import java.beans.PropertyChangeEvent;
+import java.util.List;
+import java.util.logging.Level;
 import org.openide.explorer.ExplorerManager;
-import org.sleuthkit.autopsy.contentviewers.MessageContentViewer;
+import org.openide.nodes.Node;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.contentviewers.artifactviewers.MessageArtifactViewer;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT;
+import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Extends MessageContentViewer so that it implements DataContent and can be set
@@ -32,7 +44,9 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
  * solution to a very similar problem.
  *
  */
-final class MessageDataContent extends MessageContentViewer implements DataContent, ExplorerManager.Provider {
+final class MessageDataContent extends MessageArtifactViewer implements DataContent, ExplorerManager.Provider {
+
+    private static final Logger LOGGER = Logger.getLogger(MessageDataContent.class.getName());
 
     private static final long serialVersionUID = 1L;
     final private ExplorerManager explorerManager = new ExplorerManager();
@@ -45,5 +59,54 @@ final class MessageDataContent extends MessageContentViewer implements DataConte
     @Override
     public ExplorerManager getExplorerManager() {
         return explorerManager;
+    }
+
+    @Override
+    public void setNode(Node node) {
+        BlackboardArtifact artifact = null;
+        if (node != null) {
+            artifact = getNodeArtifact(node);
+        }
+        setArtifact(artifact);
+    }
+
+    /**
+     * Returns the artifact represented by node.
+     *
+     * If the node lookup has an artifact, that artifact is returned. However,
+     * if the node lookup is a file, then we look for a TSK_ASSOCIATED_OBJECT
+     * artifact on the file, and if a message artifact is found associated with
+     * the file, that artifact is returned.
+     *
+     * @param node Node to check.
+     *
+     * @return Blackboard artifact for the node, null if there isn't any.
+     */
+    private BlackboardArtifact getNodeArtifact(Node node) {
+        BlackboardArtifact nodeArtifact = node.getLookup().lookup(BlackboardArtifact.class);
+
+        if (nodeArtifact == null) {
+            try {
+                SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+                AbstractFile file = node.getLookup().lookup(AbstractFile.class);
+                if (file != null) {
+                    List<BlackboardArtifact> artifactsList = tskCase.getBlackboardArtifacts(TSK_ASSOCIATED_OBJECT, file.getId());
+
+                    for (BlackboardArtifact fileArtifact : artifactsList) {
+                        BlackboardAttribute associatedArtifactAttribute = fileArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT));
+                        if (associatedArtifactAttribute != null) {
+                            BlackboardArtifact associatedArtifact = fileArtifact.getSleuthkitCase().getBlackboardArtifact(associatedArtifactAttribute.getValueLong());
+                            if (isMessageArtifact(associatedArtifact)) {
+                                nodeArtifact = associatedArtifact;
+                            }
+                        }
+                    }
+                }
+            } catch (NoCurrentCaseException | TskCoreException ex) {
+                LOGGER.log(Level.SEVERE, "Failed to get file for selected node.", ex); //NON-NLS
+            }
+        }
+
+        return nodeArtifact;
     }
 }

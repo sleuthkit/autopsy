@@ -1,12 +1,12 @@
-/*! \page file_discovery_page File Discovery
+/*! \page discovery_page Discovery
 
 \section file_disc_overview Overview
 
-The file discovery tool shows images, videos, or documents that match a set of filters configured by the user. You can choose how to group and order your results in order to see the most relevant data first.
+The discovery tool shows images, videos, or documents that match a set of filters configured by the user. You can choose how to group and order your results in order to see the most relevant data first.
 
 \section file_disc_prereq Prerequisites
 
-We suggest running all \ref ingest_page "ingest modules" before launching file discovery, but if time is a factor the following are the modules that are the most important. You will see a warning if you open file discovery without running the \ref file_type_identification_page, the \ref hash_db_page, and the \ref EXIF_parser_page.
+We suggest running all \ref ingest_page "ingest modules" before launching discovery, but if time is a factor the following are the modules that are the most important. You will see a warning if you open discovery without running the \ref file_type_identification_page, the \ref hash_db_page, and the \ref EXIF_parser_page.
 
 Required ingest modules:
 <ul>
@@ -24,22 +24,24 @@ Optional ingest modules:
 <li>\ref embedded_file_extractor_page - Allows display of an image contained in a document
 </ul>
 
-\section file_disc_run Running File Discovery
+\section file_disc_run Running Discovery
 
-To launch file discovery, either click the "File Discovery" icon near the top of the Autopsy UI or go to "Tools", "File Discovery". There are three steps when setting up file discovery, which flow from the top of the panel to the bottom:
+To launch discovery, either click the "Discovery" icon near the top of the Autopsy UI or go to "Tools", "Discovery". There are three steps when setting up discovery, which flow from the top of the panel to the bottom:
 <ol>
 <li>\ref file_disc_type "Choose the file type"
 <li>\ref file_disc_filtering "Set up filters"
 <li>\ref file_disc_grouping "Choose how to group and sort the results
 </ol>
 
-Once everything is set up, use the "Show" button at the bottom of the left panel to display your results. If you want to cancel a search in progress you can use the "Cancel" button.
+\image html FileDiscovery/fd_setup.png
+
+Once everything is set up, use the "Show" button at the bottom right to display your results.
 
 \image html FileDiscovery/fd_main.png
 
 \subsection file_disc_type File Type
 
-The first step is choosing whether you want to display images, videos, or documents. The file type is determined by the MIME type of the file, which is why the \ref file_type_identification_page must be run to see any results. Switching between the file types will clear any results being displayed and reset the filters.
+The first step is choosing whether you want to display images, videos, or documents. The file type is determined by the MIME type of the file, which is why the \ref file_type_identification_page must be run to see any results. Switching between the file types will reset the filters.
 
 \image html FileDiscovery/fd_fileType.png
 
@@ -79,13 +81,13 @@ This means the file must have a "User Content Suspected" result associated with 
 
 \subsubsection file_disc_hash_filter Hash Set Filter
 
-The hash set filter restricts the results to files found in the selected hash sets. Only notable hash sets that have hits in the current case are listed (though those hits may not be images or videos). See the \ref hash_db_page page for more information on creating and using hash sets.
+The hash set filter restricts the results to files found in the selected hash sets. Only notable hash sets that have hits in the current case are listed. See the \ref hash_db_page page for more information on creating and using hash sets.
 
 \image html FileDiscovery/fd_hashSetFilter.png
 
 \subsubsection file_disc_int_filter Interesting Item Filter
 
-The interesting item filter restricts the results to files found in the selected interesting item rule sets. Only interesting file rule sets that have results in the current case are listed (though those matches may not be images or videos). See the \ref interesting_files_identifier_page page for more information on creating and using interesting item rule sets.
+The interesting item filter restricts the results to files found in the selected interesting item rule sets. Only interesting file rule sets that have results in the current case are listed. See the \ref interesting_files_identifier_page page for more information on creating and using interesting item rule sets.
 
 \image html FileDiscovery/fd_interestingItemsFilter.png
 
@@ -125,7 +127,7 @@ The final options are for how you want to group and sort your results.
 
 \image html FileDiscovery/fd_grouping.png
 
-The first option lets you choose the top level grouping for your results and the second option lets you choose how to sort them. The groups appear in the middle column of the file discovery panel. Note that some of the grouping options may not always appear - for example, grouping by past occurrences will only be present if the \ref central_repo_page is enabled, and grouping by hash set will only be present if there are hash set hits in your current case. The example below shows the groups created using the default options (group by file size, order groups by group name):
+The first option lets you choose the top level grouping for your results and the second option lets you choose how to sort them. The groups appear in the left column of the results window. Note that some of the grouping options may not always appear - for example, grouping by past occurrences will only be present if the \ref central_repo_page is enabled, and grouping by hash set will only be present if there are hash set hits in your current case. The example below shows the groups created using the default options (group by file size, order groups by group name):
 
 \image html FileDiscovery/fd_groupingSize.png
 
@@ -135,13 +137,15 @@ In the case of file size and past occurrences, ordering by group name is based o
 
 The interesting items filter was not enabled so most images ended up in the "None" group, meaning they have no interesting file result associated with them. The final group in the list contains a file that matched both interesting item rule sets.
 
-The last grouping and sorting option is choosing how to sort the results within a group. This is the order of the results in the top right panel after selecting a group from the middle column. Note that due to the merging of results with the same hash in that panel, ordering by file name, path, or data source can vary. See the \ref file_disc_dedupe section below for more information.
+The last grouping and sorting option is choosing how to sort the results within a group. This is the order of the results on the right side of the results window after selecting a group from the left column. Note that due to the merging of results with the same hash in that panel, ordering by file name, path, or data source can vary. See the \ref file_disc_dedupe section below for more information.
 
 \section file_disc_results Viewing Results
 
 \subsection file_disc_results_overview Overview
 
-Once you select your options and click "Show", you'll see a list of groups in the middle panel. Selecting one of these groups will display the results from that group in the right panel. If your results are images, you'll see thumbnails for each image in the top area of the right panel.
+Once you select your options and click "Search", you'll see a new window with the list of groups on the left side. Selecting one of these groups will display the results from that group on the right side. Selecting a result will cause a panel to rise showing more details about each instance of that result. You can manually raise and lower this panel using the large arrows on the right side of the divider.
+
+If your results are images, you'll see thumbnails for each image in the top area of the right panel.
 
 \image html FileDiscovery/fd_resultGroups.png
 

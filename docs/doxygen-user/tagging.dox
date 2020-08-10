@@ -1,6 +1,6 @@
-/*! \page tagging_page Tagging
+/*! \page tagging_page Tagging and Commenting
 
-Tagging (or Bookmarking) allows you to create a reference to a file or object and easily find it later or include it in a \ref reporting_page "report". Tagging is also used by the \ref central_repo_page "central repository" to mark items as notable.
+Tagging (or Bookmarking) allows you to create a reference to a file or object and easily find it later or include it in a \ref reporting_page "report". Tagging is also used by the \ref central_repo_page "central repository" to mark items as notable. You can add comments to files and results using tags or through the central repository.
 
 \section tagging_items Tagging items
 
@@ -22,7 +22,7 @@ At this point there are three options:
 
 - New tag -- Create a new tag and add it to the file/result
 
-\image html tagging_new_tag.png
+\image html tagging_new_tag.PNG
 
 There are several default tag names:
 - Bookmark - Default tag for marking files of interest
@@ -99,7 +99,7 @@ If using the central repository, changing the notable status will effect tagged 
 - If "File A" is tagged with "Tag A", which is not notable, and then "Tag A" is switched to notable, "File A" will be marked as notable in the central repository
 - If "File B" is tagged with "Tag B", which is notable, and then "Tag B" is switched to non-notable, if there are no other notable tags on "File B" then its notable status in the central repository will be removed.
 
-\section user_tags Hiding tags from other users
+\subsection user_tags Hiding tags from other users
 
 Tags are associated with the account name of the user that tagged them. This information is visible through selecting items under the "Tags" section of the directory tree:
 
@@ -112,5 +112,27 @@ or through the \ref cv_annotations content viewer:
 It is possible to hide all tagged files and results in the "Tags" area of the tree that were tagged by other users. Open the \ref view_options_page menu either through the gear icon above the directory tree or through Tools->Options, and then select the checkbox to hide other users' tags in the tags area of the tree.
 
 \image html tagging_view_options.png
+
+\section tagging_commenting Commenting
+
+There are two methods to adding comments to files and results. The first method was discussed in the \ref tagging_items section. Right click on the file or result of interest, choose "Add File Tag" or "Add Result Tag" and then "Tag and Comment". This allows you to add a comment about the item. You can add multiple tags with comments to the same file or result.
+
+\image html tagging_comment_context.png
+
+If you have a \ref central_repo_page "central repository" enabled, you can also use it to save comments about files. Right click on the file and select "Add/Edit Central Repository Comment". If there was already a comment for this file it will appear in the dialog and can be changed - only one central repository comment can be stored at a time.
+
+\image html tagging_cr_comment.png
+
+If a file or result has a comment associated with it, you'll see a notepad icon in the "C" column of the result viewer. Hovering over it will tell you what type of comments are on the item.
+
+\image html tagging_comment_icon.png
+
+You can view comments associated with tags by going to the "Tags" section of the tree viewer and selecting one of your tags. Any comments will appear in the "Comment" column in the results viewer.
+
+\image html tagging_comment_in_result_viewer.png
+
+You can view all comments on an item through the "Annotation" tab in the content viewer.
+
+\image html tagging_comment_anno.png
 
 */

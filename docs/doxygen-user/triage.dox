@@ -56,7 +56,7 @@ VHD is a file format used by Microsoft Virtual Machines that is readable by Wind
 
 To create a sparse VHD, check the box for "Make a VHD image..." when selecting the disk to analyze.
 
-\image html createVHD.png
+\image html triage/createVHD.png
 
 \section triage_scenarios Scenarios
 

@@ -70,7 +70,8 @@ The following topics are available here:
  - \subpage timeline_page
  - \subpage communications_page
  - \subpage geolocation_page
- - \subpage file_discovery_page
+ - \subpage discovery_page
+ - \subpage personas_page
 
 - Reporting
  - \subpage tagging_page
@@ -93,7 +94,9 @@ The following topics are available here:
   - \ref object_detection_page
   - \ref volatility_dsp_page
 
-- \subpage translations_page
+- Community Contributions
+  - \subpage translations_page
+  - \subpage update_interesting_files_page
  
 
 If the topic you need is not listed, then you can:

@@ -23,6 +23,8 @@ import java.awt.KeyboardFocusManager;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import static javax.swing.SwingUtilities.isDescendingFrom;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import org.netbeans.swing.outline.DefaultOutlineModel;
 import org.netbeans.swing.outline.Outline;
 import org.openide.explorer.ExplorerManager;
@@ -38,42 +40,29 @@ import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
 
 /**
  *
- * General Purpose class for panels that need OutlineView of message nodes at 
- * the top with a MessageContentViewer at the bottom.
+ * General Purpose class for panels that need OutlineView of message nodes at
+ * the top with a MessageDataContent at the bottom.
  */
-public class MessagesPanel extends javax.swing.JPanel implements Lookup.Provider {
+class MessagesPanel extends javax.swing.JPanel implements Lookup.Provider {
+
+    private static final long serialVersionUID = 1L;
 
     private final Outline outline;
     private final ModifiableProxyLookup proxyLookup;
-    private final PropertyChangeListener focusPropertyListener;
-    
+    private PropertyChangeListener focusPropertyListener;
+
+    private final MessageDataContent messageContentViewer;
+
     /**
      * Creates new form MessagesPanel
      */
-    public MessagesPanel() {
+    MessagesPanel() {
         initComponents();
-        
+
+        messageContentViewer = new MessageDataContent();
+        splitPane.setRightComponent(messageContentViewer);
+
         proxyLookup = new ModifiableProxyLookup(createLookup(outlineViewPanel.getExplorerManager(), getActionMap()));
-
-        // See org.sleuthkit.autopsy.timeline.TimeLineTopComponent for a detailed
-        // explaination of focusPropertyListener
-        focusPropertyListener = (final PropertyChangeEvent focusEvent) -> {
-            if (focusEvent.getPropertyName().equalsIgnoreCase("focusOwner")) {
-                final Component newFocusOwner = (Component) focusEvent.getNewValue();
-
-                if (newFocusOwner == null) {
-                    return;
-                }
-                if (isDescendingFrom(newFocusOwner, messageContentViewer)) {
-                    //if the focus owner is within the MessageContentViewer (the attachments table)
-                    proxyLookup.setNewLookups(createLookup(((MessageDataContent) messageContentViewer).getExplorerManager(), getActionMap()));
-                } else if (isDescendingFrom(newFocusOwner, MessagesPanel.this)) {
-                    //... or if it is within the Results table.
-                    proxyLookup.setNewLookups(createLookup(outlineViewPanel.getExplorerManager(), getActionMap()));
-
-                }
-            }
-        };
 
         outline = outlineViewPanel.getOutlineView().getOutline();
         outlineViewPanel.getOutlineView().setPropertyColumns(
@@ -92,23 +81,34 @@ public class MessagesPanel extends javax.swing.JPanel implements Lookup.Provider
 
                 if (nodes != null && nodes.length == 1) {
                     messageContentViewer.setNode(nodes[0]);
-                }
-                else {
+                } else {
                     messageContentViewer.setNode(null);
                 }
+                
             }
         });
         
+        // This is a trick to get the first message to be selected after the ChildFactory has added
+        // new data to the table.
+        outlineViewPanel.getOutlineView().getOutline().getOutlineModel().addTableModelListener(new TableModelListener() {
+            @Override
+            public void tableChanged(TableModelEvent e) {
+                if (e.getType() == TableModelEvent.INSERT) {
+                    outline.setRowSelectionInterval(0, 0);
+                }
+            }
+        });
+
         splitPane.setResizeWeight(0.5);
         splitPane.setDividerLocation(0.5);
-        outlineViewPanel.setTableColumnsWidth(5,10,10,15,50,10);
+        outlineViewPanel.setTableColumnsWidth(5, 10, 10, 15, 50, 10);
     }
-    
+
     public MessagesPanel(ChildFactory<?> nodeFactory) {
         this();
         setChildFactory(nodeFactory);
     }
-    
+
     @Override
     public Lookup getLookup() {
         return proxyLookup;
@@ -117,9 +117,36 @@ public class MessagesPanel extends javax.swing.JPanel implements Lookup.Provider
     @Override
     public void addNotify() {
         super.addNotify();
+
+        if (focusPropertyListener == null) {
+            // See org.sleuthkit.autopsy.timeline.TimeLineTopComponent for a detailed
+            // explaination of focusPropertyListener
+            focusPropertyListener = (final PropertyChangeEvent focusEvent) -> {
+                if (focusEvent.getPropertyName().equalsIgnoreCase("focusOwner")) {
+                    handleFocusChange((Component) focusEvent.getNewValue());
+
+                }
+            };
+
+        }
+
         //add listener that maintains correct selection in the Global Actions Context
         KeyboardFocusManager.getCurrentKeyboardFocusManager()
                 .addPropertyChangeListener("focusOwner", focusPropertyListener);
+    }
+
+    private void handleFocusChange(Component newFocusOwner) {
+        if (newFocusOwner == null) {
+            return;
+        }
+        if (isDescendingFrom(newFocusOwner, messageContentViewer)) {
+            //if the focus owner is within the MessageContentViewer (the attachments table)
+            proxyLookup.setNewLookups(createLookup((messageContentViewer).getExplorerManager(), getActionMap()));
+        } else if (isDescendingFrom(newFocusOwner, MessagesPanel.this)) {
+            //... or if it is within the Results table.
+            proxyLookup.setNewLookups(createLookup(outlineViewPanel.getExplorerManager(), getActionMap()));
+
+        }
     }
 
     @Override
@@ -135,9 +162,9 @@ public class MessagesPanel extends javax.swing.JPanel implements Lookup.Provider
                         new DataResultFilterNode(
                                 new AbstractNode(
                                         Children.create(nodeFactory, true)),
-                                outlineViewPanel.getExplorerManager()),true));
+                                outlineViewPanel.getExplorerManager()), true));
     }
-    
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -149,20 +176,17 @@ public class MessagesPanel extends javax.swing.JPanel implements Lookup.Provider
 
         splitPane = new javax.swing.JSplitPane();
         outlineViewPanel = new org.sleuthkit.autopsy.communications.relationships.OutlineViewPanel();
-        messageContentViewer = new MessageDataContent();
 
         setLayout(new java.awt.BorderLayout());
 
         splitPane.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
         splitPane.setLeftComponent(outlineViewPanel);
-        splitPane.setRightComponent(messageContentViewer);
 
         add(splitPane, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private org.sleuthkit.autopsy.contentviewers.MessageContentViewer messageContentViewer;
     private org.sleuthkit.autopsy.communications.relationships.OutlineViewPanel outlineViewPanel;
     private javax.swing.JSplitPane splitPane;
     // End of variables declaration//GEN-END:variables

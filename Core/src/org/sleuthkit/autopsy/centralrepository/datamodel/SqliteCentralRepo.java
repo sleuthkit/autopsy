@@ -832,47 +832,26 @@ final class SqliteCentralRepo extends RdbmsCentralRepo {
             releaseSharedLock();
         }        
     }      
-
+    
     @Override
-    public void executeInsertSQL(String insertSQL) throws CentralRepoException {
+    public void executeCommand(String sql, List<Object> params) throws CentralRepoException {
         try {
-            acquireSharedLock();
-            super.executeInsertSQL(insertSQL);
+            acquireExclusiveLock();
+            super.executeCommand(sql, params);
         } finally {
-            releaseSharedLock();
+            releaseExclusiveLock();
         }
     }
     
     @Override
-    public void executeSelectSQL(String selectSQL, CentralRepositoryDbQueryCallback queryCallback) throws CentralRepoException {
+    public void executeQuery(String sql, List<Object> params, CentralRepositoryDbQueryCallback queryCallback) throws CentralRepoException {
         try {
             acquireSharedLock();
-            super.executeSelectSQL(selectSQL, queryCallback);
+            super.executeQuery(sql, params, queryCallback);
         } finally {
             releaseSharedLock();
         }
     }
-    
-    @Override
-    public void executeUpdateSQL(String updateSQL) throws CentralRepoException {
-        try {
-            acquireSharedLock();
-            super.executeUpdateSQL(updateSQL);
-        } finally {
-            releaseSharedLock();
-        }
-    }
-    
-    @Override
-    public void executeDeleteSQL(String deleteSQL) throws CentralRepoException {
-        try {
-            acquireSharedLock();
-            super.executeDeleteSQL(deleteSQL);
-        } finally {
-            releaseSharedLock();
-        }
-    }
-    
     
     /**
      * Check whether a reference set with the given name/version is in the

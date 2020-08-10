@@ -1,0 +1,20 @@
+; Testdisk.inf
+; PE Builder v3 plugin INF file for Testdisk and PhotoRec 7.1
+; Plugin by Ahmed Hossam/Xtreme <Xtremesony_xp@yahoo.com>
+; Made For Christophe GRENIER (www.cgsecurity.org)
+; © Windows Xpire Tech Center
+; Windows Xpire Tech Center officially represented by Xtreme
+; CodeName: Radw
+
+[Version]
+Signature= "$Windows NT$"
+
+[PEBuilder]
+Name="(Xtreme) Disk Tools: TestDisk and PhotoRec  -Press CONFIG to Enable-"
+Enable=1
+Help=Help.htm
+config=Get_Files.cmd
+
+
+[SourceDisksFiles]
+"please run autoHelp to configure your plugin"=a,,1 

@@ -104,6 +104,7 @@ IngestJobTableModel.colName.inProgress=In Progress
 IngestJobTableModel.colName.filesQueued=Files Queued
 IngestJobTableModel.colName.dirQueued=Dir Queued
 IngestJobTableModel.colName.rootQueued=Root Queued
+IngestJobTableModel.colName.streamingQueued=Streaming Queued
 IngestJobTableModel.colName.dsQueued=DS Queued
 ModuleTableModel.colName.module=Module
 ModuleTableModel.colName.duration=Duration
@@ -140,7 +141,7 @@ IngestJob.cancelReason.outOfDiskSpace.text=Out of disk space
 IngestJob.cancelReason.servicesDown.text=Services Down
 IngestJob.cancelReason.caseClosed.text=Case closed
 IngestJobSettingsPanel.globalSettingsButton.text=Global Settings
-gest=
+gest
 IngestJobSettingsPanel.globalSettingsButton.actionCommand=Advanced
 IngestJobSettingsPanel.globalSettingsButton.text=Global Settings
 IngestJobSettingsPanel.pastJobsButton.text=History
