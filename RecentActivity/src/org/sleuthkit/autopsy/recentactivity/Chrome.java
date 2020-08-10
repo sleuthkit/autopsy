@@ -84,15 +84,15 @@ class Chrome extends Extract {
     private final Logger logger = Logger.getLogger(this.getClass().getName());
     private Content dataSource;
     private IngestJobContext context;
-    
+
     private static final Map<String, String> BROWSERS_MAP = ImmutableMap.<String, String>builder()  
-            .put("Microsoft Edge", "Microsoft/Edge") 
-            .put("Yandex Browser", "YandexBrowser") 
-            .put("Opera", "Opera Software") 
-            .put("SalamWeb", "SalamWeb") 
-            .put("UC Browser", "UCBrowser")
-            .put("Brave", "BraveSoftware")
-            .put("Google Chrome", "Chrome")
+            .put(NbBundle.getMessage(Chrome.class, "Browser.name.Microsoft.Edge"), "Microsoft/Edge") 
+            .put(NbBundle.getMessage(Chrome.class, "Browser.name.Yandex"), "YandexBrowser") 
+            .put(NbBundle.getMessage(Chrome.class, "Browser.name.Opera"), "Opera Software") 
+            .put(NbBundle.getMessage(Chrome.class, "Browser.name.SalamWeb"), "SalamWeb") 
+            .put(NbBundle.getMessage(Chrome.class, "Browser.name.UC.Browser"), "UCBrowser")
+            .put(NbBundle.getMessage(Chrome.class, "Browser.name.Brave"), "BraveSoftware")
+            .put(NbBundle.getMessage(Chrome.class, "Browser.name.Google.Chrome"), "Chrome")
             .build();
 
     
