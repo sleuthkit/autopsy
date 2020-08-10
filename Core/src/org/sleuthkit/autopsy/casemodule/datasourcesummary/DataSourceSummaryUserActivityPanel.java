@@ -100,6 +100,7 @@ public class DataSourceSummaryUserActivityPanel extends javax.swing.JPanel {
         topProgramsTable.getColumnModel().getColumn(2).setCellRenderer(RIGHT_ALIGNED_RENDERER);
         topProgramsTable.getColumnModel().getColumn(2).setPreferredWidth(80);
         topProgramsTable.getColumnModel().getColumn(3).setPreferredWidth(150);
+        topProgramsScrollPane.getVerticalScrollBar().setValue(0);
         this.repaint();
     }
 
@@ -224,7 +225,7 @@ public class DataSourceSummaryUserActivityPanel extends javax.swing.JPanel {
     private void initComponents() {
 
         javax.swing.JLabel programsRunLabel = new javax.swing.JLabel();
-        javax.swing.JScrollPane topProgramsScrollPane = new javax.swing.JScrollPane();
+        topProgramsScrollPane = new javax.swing.JScrollPane();
         topProgramsTable = new javax.swing.JTable();
 
         org.openide.awt.Mnemonics.setLocalizedText(programsRunLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryUserActivityPanel.class, "DataSourceSummaryUserActivityPanel.programsRunLabel.text")); // NOI18N
@@ -256,6 +257,7 @@ public class DataSourceSummaryUserActivityPanel extends javax.swing.JPanel {
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JScrollPane topProgramsScrollPane;
     private javax.swing.JTable topProgramsTable;
     // End of variables declaration//GEN-END:variables
 }
