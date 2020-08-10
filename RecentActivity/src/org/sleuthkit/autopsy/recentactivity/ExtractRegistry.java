@@ -996,11 +996,11 @@ class ExtractRegistry extends Extract {
         while ((line != null) && (!line.contains(SECTION_DIVIDER))) {
             line = reader.readLine();
             line = line.trim();
-            if (line.toLowerCase().contains("device unique id")) {
+            if ((line != null) && (line.toLowerCase().contains("device unique id"))) {
                 // Columns are seperated by colons :
                 // Data : Values
                 // Record is 4 lines in length (Device Unique Id, Name, Last Seen,  LastConnected
-                while (!line.contains(SECTION_DIVIDER) && !line.isEmpty() && !line.toLowerCase().contains("radio support not found")) {
+                while (line != null && !line.contains(SECTION_DIVIDER) && !line.isEmpty() && !line.toLowerCase().contains("radio support not found")) {
                     Collection<BlackboardAttribute> attributes = new ArrayList<>();
                     addBlueToothAttribute(line, attributes, TSK_DEVICE_ID);
                     line = reader.readLine();
