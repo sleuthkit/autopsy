@@ -1,45 +1,93 @@
 /*! \page photorec_carver_page PhotoRec Carver Module
 
-What Does It Do
-========
+\section photorec_overview Overview
 
 The PhotoRec Carver module carves files from unallocated space in the data source and sends the files found through the ingest processing chain.
 
 This can help a reviewer discover more information about files that used to be on the device and were subsequently deleted. These are simply extra files that were found in "empty" portions of the device storage.
 
 
-Configuration
-=======
+\section photorec_usage Using the Module
 
-There is nothing to configure for this module.
-
-
-Using the Module
-======
 Select the checkbox in the Ingest Modules settings screen to enable the PhotoRec Carver. Ensure that "Process Unallocated Space" is selected.
 
-Ingest Settings
-------
-The run-time setting for this module allows you to choose whether to keep corrupted files.
+\subsection photorec_settings Ingest Settings
+
+The run-time setting for this module allows you to choose whether to keep corrupted files and to include or exclude certain file types.
 
 \image html photo_rec_settings.PNG
 
-Also note that the "Run ingest modules on" selection needs to include unallocated space for this module to run.
+For the "Focus on certain file types" option, you will enter a comma separated list of file types. Depending on which option you choose, PhotoRec will either carve only files of those types or all files except those types. You will see an error if an invalid type is entered. Note that file types are case-sensitive.
 
-Seeing Results
-------
+\image html photo_rec_extensions.png
+
+The list of \ref photorec_extensions "valid file types" for the current version of Autopsy is at the bottom of this page.
+
+\subsection photorec_results Seeing Results
+
 The results of carving show up on the tree under the appropriate data source with the heading "$CarvedFiles".
 
 \image html photorec_output.PNG
 
 Applicable types also show up in the "Views", "File Types" portion of the the tree, depending upon the file type.
 
-Custom File Signatures
-======
+\section photorec_custom Custom File Signatures
 To add custom file signatures, create a file (if it does not exist) photorec.sig in the user home directory (for example - /home/john/photorec.sig, or C:\\Users\john\photorec.sig). The photorec.sig file should contain one expression per line.
 For example, to detect a file foo.bar which has header signature - 0x4141414141414141, add an expression
 
 	bar 0 0x4141414141414141
-in photorec.sig where *bar* is the file extension, *0* is the signature offset, and *0x4141414141414141* is the signature.
-Add another expression on a new line to detect another custom file based on its signature.
+in photorec.sig where *bar* is the file extension, *0* is the signature offset, and *0x4141414141414141* is the signature. Add another expression on a new line to detect another custom file based on its signature. Note that custom signatures can not be used with the "Carve only the specified types" option. 
+
+\image html photo_rec_custom.png
+
+\section photorec_extensions Valid File Types
+
+The following is the list of valid file types for the version of PhotoRec currently used by Autopsy:
+
+\verbatim
+1cd          caf          dvr          gi           lzo          pcb          rm           vault
+3dm          cam          dwg          gif          m2ts         pct          rns          vdi
+7z           catdrawing   dxf          gm*          mat          pcx          rpm          vdj
+a            cdt          e01          gp2          max          pdb          rw2          veg
+ab           che          eCryptfs     gp5          mb           pdf          rx2          vfb
+abr          chm          edb          gpg          mcd          pds          sav          vib
+acb          class        elf          gpx          mdb          pf           save         vmdk
+accdb        comicdoc     emf          gsm          mdf          pfx          ses          vmg
+ace          cow          ess          gz           mfa          plist        sgcta        wallet
+ado          cp_          evt          hdf          mfg          plr          shn          wdp
+afdesign     cpi          evtx         hdr          mft          plt          sib          wee
+ahn          crw          exe          hds          mid          png          sit          wim
+aif          csh          exs          hfsp         mig          pnm          sit          win
+all          ctg          ext          hm           mk5          prc          skd          wks
+als          cwk          ext          hr9          mkv          prd          skp          wld
+amd          d2s          fat          http         mlv          prt          snag         wmf
+amr          dad          fat          ibd          mobi         ps           snz          wnk
+apa          dar          fbf          icc          mov          psb          sp3          woff
+ape          dat          fbk          icns         mov/mdat     psd          sparseimage  wpb
+apple        DB           fcp          ico          mp3          psf          spe          wpd
+ari          db           fcs          idx          mpg          psp          spf          wtv
+arj          dbf          fdb          ifo          mpl          pst          sqlite       wv
+asf          dbn          fds          imb          mrw          ptb          sqm          x3f
+asl          dcm          fh10         indd         msa          ptf          steuer2014   x3i
+asm          ddf          fh5          info         mus          pyc          stl          x4a
+atd          dex          fit          iso          mxf          pzf          studio       xar
+au           diskimage    fits         it           MYI          pzh          swf          xcf
+axp          djv          flac         itu          myo          qbb          tar          xfi
+axx          dmp          flp          jks          nd2          qdf          tax          xfs
+bac          doc          flv          jpg          nds          qkt          tg           xm
+bdm          dpx          fm           jsonlz4      nes          qxd          tib          xml
+bim          drw          fob          kdb          njx          r3d          tif          xpt
+bin          ds2          fos          kdbx         nk2          ra           TiVo         xsv
+binvox       DS_Store     fp5          key          nsf          raf          torrent      xv
+bkf          dsc          fp7          ldf          oci          rar          tph          xz
+blend        dss          freeway      lit          ogg          raw          tpl          z2d
+bmp          dst          frm          lnk          one          rdc          ts           zcode
+bpg          dta          fs           logic        orf          reg          ttf          zip
+bvr          dump         fwd          lso          paf          res          tx?          zpr
+bz2          dump         gam          luks         pap          rfp          txt
+c4d          dv           gct          lxo          par2         riff         tz
+cab          dvi          gho          lzh          pcap         rlv          v2i
+caf          dvr          gi           lzo          pcb          rm           vault
+\endverbatim
+
 */
