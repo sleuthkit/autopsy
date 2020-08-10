@@ -38,6 +38,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -64,6 +65,7 @@ import javax.swing.SwingUtilities;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
+import org.openide.util.NotImplementedException;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.actions.OpenOutputFolderAction;
@@ -1344,6 +1346,34 @@ public class Case {
         }
         return hostPath.toString();
     }
+    
+    
+    private static String getJoinedPaths(String...pathComponents) {
+        if (pathComponents == null) {
+            return null;
+        }
+        
+        if (pathComponents.length < 1) {
+            return "";
+        }
+        
+        String[] remaining = Arrays.copyOfRange(pathComponents, 1, pathComponents.length);
+        return Paths.get(pathComponents[0], remaining).toAbsolutePath().toString();
+    }
+    
+    private String getBaseTempDirectory() {
+        // TODO
+        throw new NotImplementedException();
+    }
+
+    private String getBaseTempDirectory() {
+        // TODO
+        throw new NotImplementedException();
+    }
+    
+    private static final String AUTOPSY_FOLDER_NAME = 
+
+    
 
     /**
      * Gets the full path to the temp directory for this case, creating it if it
@@ -1352,6 +1382,7 @@ public class Case {
      * @return The temp subdirectory path.
      */
     public String getTempDirectory() {
+        return getOrCreateDirectory(Paths.get(getBaseTempDirectory(), ))
         return getOrCreateSubdirectory(TEMP_FOLDER);
     }
 
