@@ -993,7 +993,7 @@ class ExtractRegistry extends Extract {
     private void parseBlueToothDevices(AbstractFile regFile, BufferedReader reader) throws FileNotFoundException, IOException {
         List<BlackboardArtifact> bbartifacts = new ArrayList<>();
         String line = reader.readLine();
-        while (!line.contains(SECTION_DIVIDER)) {
+        while ((line != null) && (!line.contains(SECTION_DIVIDER))) {
             line = reader.readLine();
             line = line.trim();
             if (line.toLowerCase().contains("device unique id")) {
@@ -1005,7 +1005,7 @@ class ExtractRegistry extends Extract {
                     addBlueToothAttribute(line, attributes, TSK_DEVICE_ID);
                     line = reader.readLine();
                     // Name may not exist, check for it to make sure.
-                    if (line.toLowerCase().contains("name")) {
+                    if ((line != null) && (line.toLowerCase().contains("name"))) {
                         addBlueToothAttribute(line, attributes, TSK_NAME);
                         line = reader.readLine();
                     }
