@@ -59,9 +59,9 @@ import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.blackboardutils.WebBrowserArtifactsHelper;
 
 /**
- * Chrome recent activity extraction
+ * Chromium recent activity extraction
  */
-class Chrome extends Extract {
+class Chromium extends Extract {
 
     private static final String HISTORY_QUERY = "SELECT urls.url, urls.title, urls.visit_count, urls.typed_count, " //NON-NLS
             + "last_visit_time, urls.hidden, visits.visit_time, (SELECT urls.url FROM urls WHERE urls.id=visits.url) AS from_visit, visits.transition FROM urls, visits WHERE urls.id = visits.url"; //NON-NLS
@@ -86,13 +86,13 @@ class Chrome extends Extract {
     private IngestJobContext context;
 
     private static final Map<String, String> BROWSERS_MAP = ImmutableMap.<String, String>builder()  
-            .put(NbBundle.getMessage(Chrome.class, "Browser.name.Microsoft.Edge"), "Microsoft/Edge") 
-            .put(NbBundle.getMessage(Chrome.class, "Browser.name.Yandex"), "YandexBrowser") 
-            .put(NbBundle.getMessage(Chrome.class, "Browser.name.Opera"), "Opera Software") 
-            .put(NbBundle.getMessage(Chrome.class, "Browser.name.SalamWeb"), "SalamWeb") 
-            .put(NbBundle.getMessage(Chrome.class, "Browser.name.UC.Browser"), "UCBrowser")
-            .put(NbBundle.getMessage(Chrome.class, "Browser.name.Brave"), "BraveSoftware")
-            .put(NbBundle.getMessage(Chrome.class, "Browser.name.Google.Chrome"), "Chrome")
+            .put(NbBundle.getMessage(Chromium.class, "Browser.name.Microsoft.Edge"), "Microsoft/Edge") 
+            .put(NbBundle.getMessage(Chromium.class, "Browser.name.Yandex"), "YandexBrowser") 
+            .put(NbBundle.getMessage(Chromium.class, "Browser.name.Opera"), "Opera Software") 
+            .put(NbBundle.getMessage(Chromium.class, "Browser.name.SalamWeb"), "SalamWeb") 
+            .put(NbBundle.getMessage(Chromium.class, "Browser.name.UC.Browser"), "UCBrowser")
+            .put(NbBundle.getMessage(Chromium.class, "Browser.name.Brave"), "BraveSoftware")
+            .put(NbBundle.getMessage(Chromium.class, "Browser.name.Google.Chrome"), "Chrome")
             .build();
 
     
@@ -107,8 +107,8 @@ class Chrome extends Extract {
         "Progress_Message_Chrome_Cache=Chrome Cache",
     })
 
-    Chrome() {
-        moduleName = NbBundle.getMessage(Chrome.class, "Chrome.moduleName");
+    Chromium() {
+        moduleName = NbBundle.getMessage(Chromium.class, "Chrome.moduleName");
     }
 
     @Override
