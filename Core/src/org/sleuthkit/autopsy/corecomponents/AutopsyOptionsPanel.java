@@ -43,6 +43,8 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.GeneralFilter;
+import org.sleuthkit.autopsy.casemodule.settings.CaseSettingsUtil;
+import org.sleuthkit.autopsy.casemodule.settings.CaseSettingsUtilException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.core.UserPreferencesException;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
@@ -305,10 +307,10 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         specifyLogoRB.setSelected(!useDefault);
         agencyLogoPathField.setEnabled(!useDefault);
         browseLogosButton.setEnabled(!useDefault);
-        tempDirectoryField.setText(UserPreferences.getBaseTempDirectory());
+        tempDirectoryField.setText(CaseSettingsUtil.getBaseTempDirectory());
         logFileCount.setText(String.valueOf(UserPreferences.getLogFileCount()));
         solrMaxHeapSpinner.setValue(UserPreferences.getMaxSolrVMSize());
-        tempDirectoryField.setText(UserPreferences.getBaseTempDirectory());
+        tempDirectoryField.setText(CaseSettingsUtil.getBaseTempDirectory());
         try {
             updateAgencyLogo(path);
         } catch (IOException ex) {
@@ -359,10 +361,10 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         "AutopsyOptionsPanel_storeTempDir_onError_description=There was an error creating the temporary directory on the filesystem at: {0}.",})
     private void storeTempDir() {
         String tempDirectoryPath = tempDirectoryField.getText();
-        if (!UserPreferences.getBaseTempDirectory().equals(tempDirectoryPath)) {
+        if (!CaseSettingsUtil.getBaseTempDirectory().equals(tempDirectoryPath)) {
             try {
-                UserPreferences.setBaseTempDirectory(tempDirectoryPath);
-            } catch (UserPreferencesException ex) {
+                CaseSettingsUtil.setBaseTempDirectory(tempDirectoryPath);
+            } catch (CaseSettingsUtilException ex) {
                 logger.log(Level.WARNING, "There was an error creating the temporary directory defined by the user: " + tempDirectoryPath, ex);
                 JOptionPane.showMessageDialog(this,
                         String.format("<html>%s</html>", Bundle.AutopsyOptionsPanel_storeTempDir_onError_description(tempDirectoryPath)),

@@ -38,7 +38,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -65,7 +64,6 @@ import javax.swing.SwingUtilities;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
-import org.openide.util.NotImplementedException;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.actions.OpenOutputFolderAction;
@@ -87,6 +85,7 @@ import org.sleuthkit.autopsy.casemodule.events.ReportAddedEvent;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData.CaseNodeDataException;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CoordinationServiceUtils;
 import org.sleuthkit.autopsy.casemodule.services.Services;
+import org.sleuthkit.autopsy.casemodule.settings.CaseSettingsUtil;
 import org.sleuthkit.autopsy.commonpropertiessearch.CommonAttributeSearchAction;
 import org.sleuthkit.autopsy.communications.OpenCommVisualizationToolAction;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
@@ -142,7 +141,7 @@ import org.sleuthkit.datamodel.TskUnsupportedSchemaVersionException;
  * An Autopsy case. Currently, only one case at a time may be open.
  */
 public class Case {
-
+    private static final String CASE_TEMP_DIR = "AutopsyCase";
     private static final int CASE_LOCK_TIMEOUT_MINS = 1;
     private static final int CASE_RESOURCES_LOCK_TIMEOUT_HOURS = 1;
     private static final String SINGLE_USER_CASE_DB_NAME = "autopsy.db";
@@ -1348,46 +1347,6 @@ public class Case {
     }
     
     
-    private static String getJoinedPaths(String mainPath, String...pathComponents) {
-        if (mainPath == null) {
-            return null;
-        }
-        
-        return Paths.get(mainPath, pathComponents).toAbsolutePath().toString();
-    }
-    
-    private static String ensureExists(String path) {
-        File f = new File(path);
-        if (!f.exists()) {
-            f.mkdirs();
-        }
-        return path;
-    }
-    
-    
-    
-    private String getBaseTempDirectory() {
-        // TODO
-        throw new NotImplementedException();
-    }
-
-    
-    private static final String AUTOPSY_TEMP_DIR = "Autopsy";
-    private static final String APPLICATION_TEMP_DIR = "Application";
-    
-    private String getBaseAutopsyTempDirectory() {
-        return getJoinedPaths(getBaseTempDirectory(), AUTOPSY_TEMP_DIR);
-    }
-    
-    public String getApplicationTempDirectory() {
-        return ensureExists(getJoinedPaths(getBaseAutopsyTempDirectory(), APPLICATION_TEMP_DIR));
-    }
-    
-    private String getBaseCaseTempDirectory() {
-        return getJoinedPaths(getBaseAutopsyTempDirectory(), getName());
-    }
-
-    
     /**
      * Gets the full path to the temp directory for this case, creating it if it
      * does not exist.
@@ -1395,7 +1354,15 @@ public class Case {
      * @return The temp subdirectory path.
      */
     public String getTempDirectory() {
-        return ensureExists(getJoinedPaths(getBaseCaseTempDirectory(), TEMP_FOLDER));
+        // get temp folder scoped to the uuid of the case
+        Path path = Paths.get(CaseSettingsUtil.getBaseTempDirectory(), CASE_TEMP_DIR, getName(), TEMP_FOLDER);
+        File f = path.toFile();
+        // verify that the folder exists
+        if (!f.exists()) {
+            f.mkdirs();
+        }
+        
+        return path.toAbsolutePath().toString();
     }
 
     /**
@@ -1405,7 +1372,7 @@ public class Case {
      * @return The cache directory path.
      */
     public String getCacheDirectory() {
-        return ensureExists(getJoinedPaths(getBaseCaseTempDirectory(), CACHE_FOLDER));
+        return getOrCreateSubdirectory(CACHE_FOLDER);
     }
 
     /**
@@ -2807,6 +2774,11 @@ public class Case {
             caseDb.close();
         }
 
+        /**
+         * Delete files from temp directory if any exist.
+         */
+        deleteTempfilesFromCaseDirectory(progressIndicator);
+        
         /*
          * Switch the log directory.
          */

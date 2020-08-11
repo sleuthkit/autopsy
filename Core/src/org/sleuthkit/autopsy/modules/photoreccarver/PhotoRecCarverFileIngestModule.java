@@ -94,7 +94,6 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
     private static final String PHOTOREC_RESULTS_EXTENDED = "results.1"; //NON-NLS
     private static final String PHOTOREC_REPORT = "report.xml"; //NON-NLS
     private static final String LOG_FILE = "run_log.txt"; //NON-NLS
-    private static final String TEMP_DIR_NAME = "temp"; // NON-NLS
     private static final String SEP = System.getProperty("line.separator");
     private static final Logger logger = Logger.getLogger(PhotoRecCarverFileIngestModule.class.getName());
     private static final HashMap<Long, IngestJobTotals> totalsForIngestJobs = new HashMap<>();
@@ -102,6 +101,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
     private static final Map<Long, WorkingPaths> pathsByJob = new ConcurrentHashMap<>();
     private IngestJobContext context;
     private Path rootOutputDirPath;
+    private Path rootTempDirPath;
     private File executableFile;
     private IngestServices services;
     private final UNCPathUtilities uncPathUtilities = new UNCPathUtilities();
@@ -230,6 +230,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
         }
 
         this.rootOutputDirPath = createModuleOutputDirectoryForCase();
+        this.rootTempDirPath = createTempOutputDirectoryForCase();
 
         //Set photorec executable directory based on operating system.
         executableFile = locateExecutable();
@@ -244,7 +245,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
                 Files.createDirectories(outputDirPath);
 
                 // A temp subdirectory is also created as a location for writing unallocated space files to disk.
-                Path tempDirPath = Paths.get(outputDirPath.toString(), PhotoRecCarverFileIngestModule.TEMP_DIR_NAME);
+                Path tempDirPath = Paths.get(this.rootTempDirPath.toString(), folder);
                 Files.createDirectory(tempDirPath);
 
                 // Save the directories for the current job.
@@ -493,9 +494,26 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             return this.tempDirPath;
         }
     }
+    
+    /**
+     * Creates the output directory for this module for the current case's temp directory, if it
+     * does not already exist.
+     *
+     * @return The absolute path of the output directory.
+     *
+     * @throws org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException
+     */
+    synchronized Path createTempOutputDirectoryForCase() throws IngestModule.IngestModuleException {
+        try {
+            Path path = Paths.get(Case.getCurrentCaseThrows().getTempDirectory(), PhotoRecCarverIngestModuleFactory.getModuleName());
+            return createOutputDirectoryForCase(path);
+        } catch (NoCurrentCaseException ex) {
+            throw new IngestModule.IngestModuleException(Bundle.cannotCreateOutputDir_message(ex.getLocalizedMessage()), ex);
+        }
+    }
 
     /**
-     * Creates the output directory for this module for the current case, if it
+     * Creates the output directory for this module for the current case's module directory, if it
      * does not already exist.
      *
      * @return The absolute path of the output directory.
@@ -503,12 +521,23 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
      * @throws org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException
      */
     synchronized Path createModuleOutputDirectoryForCase() throws IngestModule.IngestModuleException {
-        Path path;
         try {
-            path = Paths.get(Case.getCurrentCaseThrows().getModuleDirectory(), PhotoRecCarverIngestModuleFactory.getModuleName());
+            Path path = Paths.get(Case.getCurrentCaseThrows().getModuleDirectory(), PhotoRecCarverIngestModuleFactory.getModuleName());
+            return createOutputDirectoryForCase(path);
         } catch (NoCurrentCaseException ex) {
             throw new IngestModule.IngestModuleException(Bundle.cannotCreateOutputDir_message(ex.getLocalizedMessage()), ex);
         }
+    }
+    
+    /**
+     * Creates the output directory for this module for the current case, if it
+     * does not already exist.
+     * @param path The absolute path to be created.
+     * @return The absolute path of the output directory.
+     *
+     * @throws org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException
+     */
+    private synchronized Path createOutputDirectoryForCase(Path path) throws IngestModule.IngestModuleException {
         try {
             Files.createDirectory(path);
             if (UNCPathUtilities.isUNC(path)) {

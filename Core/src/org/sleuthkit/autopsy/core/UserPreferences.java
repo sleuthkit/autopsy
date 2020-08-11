@@ -18,15 +18,12 @@
  */
 package org.sleuthkit.autopsy.core;
 
-import java.io.File;
 import java.nio.file.Paths;
 import org.sleuthkit.autopsy.coreutils.TextConverter;
 import java.util.prefs.BackingStoreException;
 import org.sleuthkit.autopsy.events.MessageServiceConnectionInfo;
 import java.util.prefs.PreferenceChangeListener;
 import java.util.prefs.Preferences;
-import org.apache.commons.lang3.StringUtils;
-import org.openide.util.NbBundle.Messages;
 import org.openide.util.NbPreferences;
 import org.python.icu.util.TimeZone;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
@@ -86,10 +83,6 @@ public final class UserPreferences {
     private static final String GEO_OSM_TILE_ZIP_PATH = "GeolocationOsmZipPath";
     private static final String GEO_OSM_SERVER_ADDRESS = "GeolocationOsmServerAddress";
     private static final String GEO_MBTILES_FILE_PATH = "GeolcoationMBTilesFilePath";
-    private static final String TEMP_DIR = "UserDefinedTempDirectory";
-    private static final String TEMP_DEFAULT = System.getProperty("java.io.tmpdir");
-    private static final String TEMP_APP_LEVEL_FOLDER = "Application";
-            
 
     // Prevent instantiation.
     private UserPreferences() {
@@ -618,31 +611,5 @@ public final class UserPreferences {
      */
     public static String getGeolocationMBTilesFilePath() {
         return preferences.get(GEO_MBTILES_FILE_PATH, "");
-    }
-     
-    
-    public static String getBaseTempDirectory() {
-        String tempDir = preferences.get(TEMP_DIR, TEMP_DEFAULT);
-        return StringUtils.isBlank(tempDir) ? TEMP_DEFAULT : tempDir;
-    }
-
-    @Messages({
-        "# {0} - path",
-        "UserPreferences_setBaseTempDirectory_errorOnCreate_text=There was an error creating the temp directory for path: {0}"
-    })
-    public static void setBaseTempDirectory(String path) throws UserPreferencesException {
-        File f = new File(path);
-        if (!f.exists()) {
-            if (!f.mkdirs()) {
-                throw new UserPreferencesException(Bundle.UserPreferences_setBaseTempDirectory_errorOnCreate_text(path));
-            }
-        }
-        preferences.put(TEMP_DIR, path);
-    }
-
-    public static String getAppLevelTempDirectory() {
-        return Paths.get(getBaseTempDirectory(), TEMP_APP_LEVEL_FOLDER).toAbsolutePath().toString();
-    }
-        
-        
+    }   
 }
