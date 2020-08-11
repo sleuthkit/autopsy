@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.core;
 import org.sleuthkit.autopsy.core.events.ServiceEvent;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.beans.PropertyChangeListener;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -161,7 +162,12 @@ public class ServicesMonitor {
          *                    may be the empty string.
          */
         public ServiceStatusReport(String serviceName, String status, String details) {
-            this.serviceName = serviceName;
+            /*
+             * Support the deprecated members of the Services enum.
+             */
+            String svcName = replaceDeprecatedServiceName(serviceName);
+
+            this.serviceName = svcName;
             this.status = status;
             this.details = details;
         }
@@ -332,17 +338,22 @@ public class ServicesMonitor {
      *         for the specifed service.
      */
     public ServiceStatusReport getServiceStatusReport(String serviceName) {
+        /*
+         * Support the deprecated members of the Services enum.
+         */
+        String svcName = replaceDeprecatedServiceName(serviceName);
+
         ServiceStatusReport statusReport;
-        if (coreServicesByName.containsKey(serviceName)) {
+        if (coreServicesByName.containsKey(svcName)) {
             /*
              * If the request is for a core service, perform an "on demand"
              * check to get the current status.
              */
-            MonitoredService service = coreServicesByName.get(serviceName);
+            MonitoredService service = coreServicesByName.get(svcName);
             statusReport = service.getStatus();
             setServiceStatus(statusReport);
         } else {
-            statusReport = statusByService.get(serviceName);
+            statusReport = statusByService.get(svcName);
         }
         return statusReport;
     }
@@ -364,7 +375,12 @@ public class ServicesMonitor {
      * @param subscriber   The subscriber to add.
      */
     public void addSubscriber(Set<String> serviceNames, PropertyChangeListener subscriber) {
-        eventPublisher.addSubscriber(serviceNames, subscriber);
+        /*
+         * Support the deprecated members of the Services enum.
+         */
+        Set<String> svcNames = replaceDeprecatedServiceNames(serviceNames);
+
+        eventPublisher.addSubscriber(svcNames, subscriber);
     }
 
     /**
@@ -374,7 +390,12 @@ public class ServicesMonitor {
      * @param subscriber  The subscriber to add.
      */
     public void addSubscriber(String serviceName, PropertyChangeListener subscriber) {
-        eventPublisher.addSubscriber(serviceName, subscriber);
+        /*
+         * Support the deprecated members of the Services enum.
+         */
+        String svcName = replaceDeprecatedServiceName(serviceName);
+
+        eventPublisher.addSubscriber(svcName, subscriber);
     }
 
     /**
@@ -394,18 +415,28 @@ public class ServicesMonitor {
      * @param subscriber   The subscriber to remove.
      */
     public void removeSubscriber(Set<String> serviceNames, PropertyChangeListener subscriber) {
-        eventPublisher.removeSubscriber(serviceNames, subscriber);
+        /*
+         * Support the deprecated members of the Services enum.
+         */
+        Set<String> svcNames = replaceDeprecatedServiceNames(serviceNames);
+
+        eventPublisher.removeSubscriber(svcNames, subscriber);
     }
 
     /**
      * Adds a subscriber to service status events for a service.
      *
-     * @param service    The name of the service the subscriber is no longer
-     *                   interested in.
-     * @param subscriber The subscriber to remove.
+     * @param serviceName The name of the service the subscriber is no longer
+     *                    interested in.
+     * @param subscriber  The subscriber to remove.
      */
-    public void removeSubscriber(String service, PropertyChangeListener subscriber) {
-        eventPublisher.removeSubscriber(service, subscriber);
+    public void removeSubscriber(String serviceName, PropertyChangeListener subscriber) {
+        /*
+         * Support the deprecated members of the Services enum.
+         */
+        String svcName = replaceDeprecatedServiceName(serviceName);
+
+        eventPublisher.removeSubscriber(svcName, subscriber);
     }
 
     /**
@@ -469,6 +500,44 @@ public class ServicesMonitor {
          * only.
          */
         eventPublisher.publishLocally(new ServiceEvent(serviceName, status, details));
+    }
+
+    /**
+     * Handles mapping deprecated service names from the Service enum to the
+     * correct service names. Names of services that do not appear in the enum
+     * or that are not deprecated are unchanged.
+     *
+     * @param serviceName The service name.
+     *
+     * @return The mapped service name.
+     */
+    private static String replaceDeprecatedServiceName(String serviceName) {
+        String svcName;
+        if (serviceName.equals(Service.REMOTE_CASE_DATABASE.getDisplayName())) {
+            svcName = Service.DATABASE_SERVER.getDisplayName();
+        } else if (serviceName.equals(Service.REMOTE_KEYWORD_SEARCH.getDisplayName())) {
+            svcName = Service.KEYWORD_SEARCH_SERVICE.getDisplayName();
+        } else {
+            svcName = serviceName;
+        }
+        return svcName;
+    }
+
+    /**
+     * Handles mapping deprecated service names from the Service enum to the
+     * correct service names. Names of services that do not appear in the enum
+     * or that are not deprecated are unchanged.
+     *
+     * @param serviceNames A set of service names.
+     *
+     * @return A set of of mapped service names.
+     */
+    private static Set<String> replaceDeprecatedServiceNames(Set<String> serviceNames) {
+        Set<String> svcNames = new HashSet<>();
+        for (String serviceName : serviceNames) {
+            svcNames.add(replaceDeprecatedServiceName(serviceName));
+        }
+        return svcNames;
     }
 
     /**
