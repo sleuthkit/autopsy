@@ -150,10 +150,10 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
         try {         
             KeywordSearch.getServer().connectToSolrServer(host, Integer.toString(port));
         } catch (SolrServerException ex) {
-            logger.log(Level.SEVERE, "Uanble to connect to Solr server. Host: " + host + ", port: " + port, ex);
+            logger.log(Level.SEVERE, "Unable to connect to Solr server. Host: " + host + ", port: " + port, ex);
             throw new KeywordSearchServiceException(NbBundle.getMessage(SolrSearchService.class, "SolrConnectionCheck.HostnameOrPort")); //NON-NLS*/
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Uanble to connect to Solr server. Host: " + host + ", port: " + port, ex);
+            logger.log(Level.SEVERE, "Unable to connect to Solr server. Host: " + host + ", port: " + port, ex);
             String result = NbBundle.getMessage(SolrSearchService.class, "SolrConnectionCheck.HostnameOrPort"); //NON-NLS
             String message = ex.getCause().getMessage().toLowerCase();
             if (message.startsWith(SERVER_REFUSED_CONNECTION)) {
@@ -173,10 +173,10 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
             }
             throw new KeywordSearchServiceException(result);
         } catch (NumberFormatException ex) {
-            logger.log(Level.SEVERE, "Uanble to connect to Solr server. Host: " + host + ", port: " + port, ex);
+            logger.log(Level.SEVERE, "Unable to connect to Solr server. Host: " + host + ", port: " + port, ex);
             throw new KeywordSearchServiceException(Bundle.SolrConnectionCheck_Port());
         } catch (IllegalArgumentException ex) {
-            logger.log(Level.SEVERE, "Uanble to connect to Solr server. Host: " + host + ", port: " + port, ex);
+            logger.log(Level.SEVERE, "Unable to connect to Solr server. Host: " + host + ", port: " + port, ex);
             throw new KeywordSearchServiceException(ex.getMessage());
         }
     }

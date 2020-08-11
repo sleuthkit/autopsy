@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2011-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -73,7 +73,6 @@ import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.util.NamedList;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.modules.Places;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -84,6 +83,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.coreutils.ThreadUtils;
 import org.sleuthkit.autopsy.healthmonitor.HealthMonitor;
 import org.sleuthkit.autopsy.healthmonitor.TimingMetric;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
@@ -249,8 +249,7 @@ public class Server {
     private HttpSolrClient localSolrServer = null;
     private SOLR_VERSION localServerVersion = SOLR_VERSION.SOLR8; // start local Solr 8 by default
 
-    // A reference to the Solr server we are currently connected to for the Case.
-    // This could be a local or remote server.
+    // A reference to the remote/network running Solr instance.
     private HttpSolrClient remoteSolrServer;
 
     private Collection currentCollection;
@@ -385,11 +384,11 @@ public class Server {
         serverAction.addPropertyChangeListener(l);
     }
 
-    int getCurrentSolrServerPort() {
+    int getLocalSolrServerPort() {
         return localSolrServerPort;
     }
 
-    int getCurrentSolrStopPort() {
+    int getLocalSolrStopPort() {
         return localSolrStopPort;
     }
 
@@ -1869,13 +1868,12 @@ public class Server {
         private HttpSolrClient queryClient = null;        
         private SolrClient indexingClient = null;
         
-        public final int maxBufferSize;
-        public final List<SolrInputDocument> buffer;
+        private final int maxBufferSize;
+        private final List<SolrInputDocument> buffer;
         private final Object bufferLock;
         
         private ScheduledThreadPoolExecutor periodicTasksExecutor = null;
         private static final long PERIODIC_BATCH_SEND_INTERVAL_MINUTES = 10;
-        private static final long EXECUTOR_TERMINATION_WAIT_SECS = 30;
 
         private Collection(String name, Case theCase, Index index) throws TimeoutException, InterruptedException, SolrServerException, IOException {
             this.name = name;
@@ -1905,7 +1903,7 @@ public class Server {
             logger.log(Level.INFO, "Using Solr document queue size = {0}", maxBufferSize); //NON-NLS
             buffer = new ArrayList<>(maxBufferSize);
             periodicTasksExecutor = new ScheduledThreadPoolExecutor(1, new ThreadFactoryBuilder().setNameFormat("periodic-batched-document-task-%d").build()); //NON-NLS
-            periodicTasksExecutor.scheduleWithFixedDelay(new SentBatchedDocumentsTask(), PERIODIC_BATCH_SEND_INTERVAL_MINUTES, PERIODIC_BATCH_SEND_INTERVAL_MINUTES, TimeUnit.MINUTES);
+            periodicTasksExecutor.scheduleWithFixedDelay(new SendBatchedDocumentsTask(), PERIODIC_BATCH_SEND_INTERVAL_MINUTES, PERIODIC_BATCH_SEND_INTERVAL_MINUTES, TimeUnit.MINUTES);
         }
 
         /**
@@ -1914,7 +1912,7 @@ public class Server {
          * if the buffer is not full, we want to periodically send the batched documents
          * so that users are able to see them in their keyword searches.
          */
-        private final class SentBatchedDocumentsTask implements Runnable {
+        private final class SendBatchedDocumentsTask implements Runnable {
 
             @Override
             public void run() {
@@ -1933,7 +1931,6 @@ public class Server {
 
                 try {
                     // send the cloned list to Solr
-                    logger.log(Level.INFO, "Periodic batched document update"); //NON-NLS
                     sendBufferedDocs(clone);
                 } catch (KeywordSearchModuleException ex) {
                     logger.log(Level.SEVERE, "Periodic  batched document update failed", ex); //NON-NLS
@@ -1979,17 +1976,21 @@ public class Server {
         }
 
         private void commit() throws SolrServerException {
-            
+
+            List<SolrInputDocument> clone;
             synchronized (bufferLock) {
-                try {
-                    // we do a manual commit after ingest is complete, so I 
-                    // think there is no need to clone the buffer
-                    sendBufferedDocs(buffer);
-                } catch (KeywordSearchModuleException ex) {
-                    throw new SolrServerException(NbBundle.getMessage(this.getClass(), "Server.commit.exception.msg"), ex);
-                }
+                // Make a clone and release the lock, so that we don't
+                // hold other ingest threads
+                clone = buffer.stream().collect(toList());
+                buffer.clear();
             }
-            
+
+            try {
+                sendBufferedDocs(clone);
+            } catch (KeywordSearchModuleException ex) {
+                throw new SolrServerException(NbBundle.getMessage(this.getClass(), "Server.commit.exception.msg"), ex);
+            }
+
             try {
                 //commit and block
                 indexingClient.commit(true, true);
@@ -2107,14 +2108,7 @@ public class Server {
             try {
                 // stop the periodic batch update task. If the task is already running, 
                 // allow it to finish.
-                periodicTasksExecutor.shutdown();
-                try {
-                    while (!periodicTasksExecutor.awaitTermination(EXECUTOR_TERMINATION_WAIT_SECS, TimeUnit.SECONDS)) {
-                        logger.log(Level.WARNING, "Waited at least {0} seconds for periodic KWS task executor to shut down, continuing to wait", EXECUTOR_TERMINATION_WAIT_SECS); //NON-NLS
-                    }
-                } catch (InterruptedException ex) {
-                    logger.log(Level.SEVERE, "Unexpected interrupt while stopping periodic KWS task executor", ex); //NON-NLS
-                }
+                ThreadUtils.shutDownTaskExecutor(periodicTasksExecutor);
 
                 // We only unload cores for "single-user" cases.
                 if (this.caseType == CaseType.MULTI_USER_CASE) {
