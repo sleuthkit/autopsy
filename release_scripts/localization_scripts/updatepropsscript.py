@@ -131,7 +131,8 @@ def get_prop_entries(rows: List[List[str]],
                      should_delete_converter: Callable[[List[str]], bool] = None,
                      path_converter: Callable[[str], str] = None) -> Iterator[PropEntry]:
 
-    """Parses PropEntry objects from rows of values in a csv.
+    """Parses PropEntry objects from rows of values in a csv.  Any items that have an empty string value will be
+    ignored.
 
     Args:
         rows (List[List[str]]): The csv file rows to parse.
@@ -146,9 +147,11 @@ def get_prop_entries(rows: List[List[str]],
     Returns:
         List[PropEntry]: The generated prop entry objects.
     """
-    return map(lambda row: get_prop_entry(
-            row, path_idx, key_idx, value_idx, should_delete_converter, path_converter), 
-            rows)
+    propentry_iter = map(lambda row: get_prop_entry(row, path_idx, key_idx, value_idx, should_delete_converter,
+                                                    path_converter), rows)
+
+    # filter rows that have no value
+    return filter(lambda entry: entry and entry.value.strip(), propentry_iter)
 
 
 def get_should_deleted(row_items: List[str], requested_idx: int) -> bool:

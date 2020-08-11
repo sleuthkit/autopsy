@@ -21,13 +21,11 @@ package org.sleuthkit.autopsy.thunderbirdparser;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.logging.Level;
-import org.apache.james.mime4j.dom.BinaryBody;
 import org.apache.james.mime4j.dom.Body;
 import org.apache.james.mime4j.dom.Entity;
 import org.apache.james.mime4j.dom.Message;
@@ -227,15 +225,15 @@ class MimeJ4MessageParser {
             } else if (e.getDispositionType() != null
                     && e.getDispositionType().equals(ContentDispositionField.DISPOSITION_TYPE_ATTACHMENT)) {
                 handleAttachment(email, e, fileID, index);
-            } else if (e.getMimeType().equals(HTML_TYPE)
-                    || e.getMimeType().equals(ContentTypeField.TYPE_TEXT_PLAIN)) {
+            } else if ((e.getMimeType().equals(HTML_TYPE) && (email.getHtmlBody() == null || email.getHtmlBody().isEmpty()))
+                    || (e.getMimeType().equals(ContentTypeField.TYPE_TEXT_PLAIN) && (email.getTextBody() == null || email.getTextBody().isEmpty()))) {
                 handleTextBody(email, (TextBody) e.getBody(), e.getMimeType(), e.getHeader().getFields());
             } else {
-                // Ignore other types.
-            }
+                handleAttachment(email, e, fileID, index);
+            } 
         }
     }
-
+    
     /**
      * Extract text out of a body part of the message.
      *
