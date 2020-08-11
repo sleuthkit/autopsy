@@ -266,7 +266,7 @@ public class Server {
         initSettings();
 
         this.localSolrServer = getSolrClient("http://localhost:" + localSolrServerPort + "/solr");
-        
+
         serverAction = new ServerAction();
         File solr8Folder = InstalledFileLocator.getDefault().locate("solr", Server.class.getPackage().getName(), false); //NON-NLS
         File solr4Folder = InstalledFileLocator.getDefault().locate("solr4", Server.class.getPackage().getName(), false); //NON-NLS
@@ -371,6 +371,20 @@ public class Server {
             client.setDefaultCollection(defaultCollectionName);
         }
         client.connect();
+        return client;
+    }
+
+    private ConcurrentUpdateSolrClient getSolrClient(String solrUrl) {
+        int numThreads = org.sleuthkit.autopsy.keywordsearch.UserPreferences.getNumThreads();
+        int numDocs = org.sleuthkit.autopsy.keywordsearch.UserPreferences.getDocumentsQueueSize();
+        logger.log(Level.INFO, "Creating new ConcurrentUpdateSolrClient. Queue size = {0}, Number of threads = {1}", new Object[]{numDocs, numThreads}); //NON-NLS
+        ConcurrentUpdateSolrClient client = new ConcurrentUpdateSolrClient.Builder(solrUrl)
+                .withQueueSize(numDocs)
+                .withThreadCount(numThreads)
+                .withConnectionTimeout(1000)
+                .withResponseParser(new XMLResponseParser())
+                .build();
+
         return client;
     }
 
@@ -604,7 +618,7 @@ public class Server {
             }
         } catch (SolrServerException | IOException ex) {
             throw new KeywordSearchModuleException(NbBundle.getMessage(Server.class, "Server.connect.exception.msg", ex.getLocalizedMessage()), ex);
-        }        
+        }
     }
     
     private HttpSolrClient configureMultiUserConnection(Case theCase, Index index, String name) {
