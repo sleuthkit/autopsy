@@ -1348,33 +1348,46 @@ public class Case {
     }
     
     
-    private static String getJoinedPaths(String...pathComponents) {
-        if (pathComponents == null) {
+    private static String getJoinedPaths(String mainPath, String...pathComponents) {
+        if (mainPath == null) {
             return null;
         }
         
-        if (pathComponents.length < 1) {
-            return "";
+        return Paths.get(mainPath, pathComponents).toAbsolutePath().toString();
+    }
+    
+    private static String ensureExists(String path) {
+        File f = new File(path);
+        if (!f.exists()) {
+            f.mkdirs();
         }
-        
-        String[] remaining = Arrays.copyOfRange(pathComponents, 1, pathComponents.length);
-        return Paths.get(pathComponents[0], remaining).toAbsolutePath().toString();
+        return path;
     }
+    
+    
     
     private String getBaseTempDirectory() {
         // TODO
         throw new NotImplementedException();
     }
 
-    private String getBaseTempDirectory() {
-        // TODO
-        throw new NotImplementedException();
+    
+    private static final String AUTOPSY_TEMP_DIR = "Autopsy";
+    private static final String APPLICATION_TEMP_DIR = "Application";
+    
+    private String getBaseAutopsyTempDirectory() {
+        return getJoinedPaths(getBaseTempDirectory(), AUTOPSY_TEMP_DIR);
     }
     
-    private static final String AUTOPSY_FOLDER_NAME = 
+    public String getApplicationTempDirectory() {
+        return ensureExists(getJoinedPaths(getBaseAutopsyTempDirectory(), APPLICATION_TEMP_DIR));
+    }
+    
+    private String getBaseCaseTempDirectory() {
+        return getJoinedPaths(getBaseAutopsyTempDirectory(), getName());
+    }
 
     
-
     /**
      * Gets the full path to the temp directory for this case, creating it if it
      * does not exist.
@@ -1382,8 +1395,7 @@ public class Case {
      * @return The temp subdirectory path.
      */
     public String getTempDirectory() {
-        return getOrCreateDirectory(Paths.get(getBaseTempDirectory(), ))
-        return getOrCreateSubdirectory(TEMP_FOLDER);
+        return ensureExists(getJoinedPaths(getBaseCaseTempDirectory(), TEMP_FOLDER));
     }
 
     /**
@@ -1393,7 +1405,7 @@ public class Case {
      * @return The cache directory path.
      */
     public String getCacheDirectory() {
-        return getOrCreateSubdirectory(CACHE_FOLDER);
+        return ensureExists(getJoinedPaths(getBaseCaseTempDirectory(), CACHE_FOLDER));
     }
 
     /**
