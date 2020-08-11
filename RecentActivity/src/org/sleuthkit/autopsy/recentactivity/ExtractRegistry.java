@@ -964,7 +964,7 @@ class ExtractRegistry extends Extract {
                 if (line.toLowerCase().matches("^bam v.*")) {
                     parseBamKey(regAbstractFile, reader, Bundle.Registry_System_Bam());
                 } else if (line.toLowerCase().matches("^bthport v..*")) {
-                    parseBlueToothDevices(regAbstractFile, reader)  ;
+                    parseBlueToothDevices(regAbstractFile, reader);
                 }  
                 line = reader.readLine();
             }
@@ -980,7 +980,8 @@ class ExtractRegistry extends Extract {
     }
     
     /**
-     * Create recently used artifacts to parse the regripper plugin output, this format is used in several diffent plugins
+     * Create recently used artifacts to parse the regripper plugin output, this 
+     * format is used in several diffent plugins
      * 
      * @param regFile registry file the artifact is associated with
      * 
@@ -995,7 +996,11 @@ class ExtractRegistry extends Extract {
         String line = reader.readLine();
         while ((line != null) && (!line.contains(SECTION_DIVIDER))) {
             line = reader.readLine();
-            line = line.trim();
+            
+            if (line != null) {
+                line = line.trim();
+            }
+            
             if ((line != null) && (line.toLowerCase().contains("device unique id"))) {
                 // Columns are seperated by colons :
                 // Data : Values
@@ -1015,12 +1020,15 @@ class ExtractRegistry extends Extract {
                     BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_BLUETOOTH_PAIRING, regFile, attributes);
                     if(bba != null) {
                          bbartifacts.add(bba);
-                    }  
+                    }
                     // Read blank line between records then next read line is start of next block
-                    line = reader.readLine();
+                    reader.readLine();
                     line = reader.readLine();
                 }
-                line = line.trim();
+                
+                if (line != null) {
+                    line = line.trim();
+                }
             }
         }
         if (!bbartifacts.isEmpty()) {
@@ -1030,12 +1038,12 @@ class ExtractRegistry extends Extract {
 
 
     private void addBlueToothAttribute(String line, Collection<BlackboardAttribute> attributes, ATTRIBUTE_TYPE attributeType) {
-	if(line == null) {
+	if (line == null) {
 		return;
 	}
 	
 	String tokens[] = line.split(": ");
-	if(tokens.length > 1 && !tokens[1].isEmpty()) {
+	if (tokens.length > 1 && !tokens[1].isEmpty()) {
             String tokenString = tokens[1];
             if (attributeType.getDisplayName().toLowerCase().contains("date")) {
                 String dateString = tokenString.toLowerCase().replace(" z", "");
@@ -1050,9 +1058,7 @@ class ExtractRegistry extends Extract {
                     // we set the timestamp to 0 and continue on processing
                     logger.log(Level.WARNING, String.format("Failed to parse date/time %s for Bluetooth Last Seen attribute.", dateString), ex); //NON-NLS
                 }
-	        attributes.add(new BlackboardAttribute(attributeType, getName(), dateLong));
-                    
-                    
+	        attributes.add(new BlackboardAttribute(attributeType, getName(), dateLong));                   
             } else {
 		attributes.add(new BlackboardAttribute(attributeType, getName(), tokenString));
             }
