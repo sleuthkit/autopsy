@@ -28,8 +28,10 @@ import junit.framework.Test;
 import org.apache.commons.io.FileUtils;
 
 import org.netbeans.junit.NbModuleSuite;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoAccount.CentralRepoAccountType;
 import org.sleuthkit.datamodel.Account;
+import org.sleuthkit.datamodel.InvalidAccountIDException;
 
 /**
  * Tests the Account APIs on the Central Repository.
@@ -145,7 +147,7 @@ public class CentralRepoAccountsTest extends TestCase {
             // Create the account
             CentralRepository.getInstance()
                     .getOrCreateAccount(expectedAccountType, "+1 401-231-2552");
-        } catch (CentralRepoException ex) {
+        } catch (InvalidAccountIDException | CentralRepoException ex) {
              Assert.fail("Didn't expect an exception here. Exception: " + ex);
         }
     }
@@ -167,7 +169,7 @@ public class CentralRepoAccountsTest extends TestCase {
             
             Assert.assertEquals(expectedAccountType, actualAccount.getAccountType());
             Assert.assertEquals("+1 441-231-2552", actualAccount.getIdentifier());
-        } catch (CentralRepoException ex) {
+        } catch (InvalidAccountIDException | CentralRepoException ex) {
              Assert.fail("Didn't expect an exception here. Exception: " + ex);
         }
     }

@@ -73,6 +73,7 @@ import org.sleuthkit.autopsy.coreutils.History;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
+import org.sleuthkit.autopsy.coreutils.ThreadUtils;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
@@ -375,17 +376,26 @@ public class TimeLineController {
         }
     }
 
+    
     /**
-     * "Shut down" Timeline. Remove all the case and ingest listers. Close the
-     * timeline window.
+     * Shuts down the task executor in charge of handling case events.
+     */
+    void shutDownTimeLineListeners() {
+        ThreadUtils.shutDownTaskExecutor(executor);
+    }
+    
+    /**
+     * "Shut down" Timeline. Close the timeline window.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    public void shutDownTimeLine() {
+    public void shutDownTimeLineGui() {
         if (topComponent != null) {
             topComponent.close();
             topComponent = null;
         }
     }
+    
+    
 
     /**
      * Add the case and ingest listeners, prompt for rebuilding the database if

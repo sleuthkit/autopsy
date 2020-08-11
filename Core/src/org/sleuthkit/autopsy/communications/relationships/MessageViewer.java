@@ -38,6 +38,8 @@ import javax.swing.JPanel;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import static javax.swing.SwingUtilities.isDescendingFrom;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import org.netbeans.swing.outline.DefaultOutlineModel;
 import org.netbeans.swing.outline.Outline;
 import org.openide.explorer.ExplorerManager;
@@ -50,6 +52,7 @@ import org.openide.nodes.Node.PropertySet;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.communications.ModifiableProxyLookup;
+import org.sleuthkit.autopsy.communications.Utils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
@@ -113,6 +116,13 @@ final class MessageViewer extends JPanel implements RelationshipsViewer {
         rootTablePane.getExplorerManager().addPropertyChangeListener((PropertyChangeEvent evt) -> {
             if (evt.getPropertyName().equals(ExplorerManager.PROP_SELECTED_NODES)) {
                 showSelectedThread();
+            }
+        });
+        
+        rootTablePane.getOutlineView().getOutline().getModel().addTableModelListener(new TableModelListener() {
+            @Override
+            public void tableChanged(TableModelEvent e) {
+                Utils.setColumnWidths(rootTablePane.getOutlineView().getOutline());
             }
         });
 
@@ -258,8 +268,6 @@ final class MessageViewer extends JPanel implements RelationshipsViewer {
      */
     private void showMessagesPane() {
         switchCard("messages");
-        Outline outline = rootTablePane.getOutlineView().getOutline();
-        outline.clearSelection();
     }
 
     /**

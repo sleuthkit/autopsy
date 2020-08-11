@@ -31,7 +31,9 @@ import javax.swing.JOptionPane;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.table.AbstractTableModel;
 import org.openide.util.NbBundle.Messages;
+import static org.sleuthkit.autopsy.casemodule.Case.Events.CURRENT_CASE;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.IngestJobInfo;
 import org.sleuthkit.datamodel.IngestModuleInfo;
@@ -47,6 +49,8 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
 
     private static final Logger logger = Logger.getLogger(IngestJobInfoPanel.class.getName());
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.STARTED, IngestManager.IngestJobEvent.CANCELLED, IngestManager.IngestJobEvent.COMPLETED);
+    private static final Set<Case.Events> CASE_EVENTS_OF_INTEREST = EnumSet.of(Case.Events.CURRENT_CASE);
+
     private List<IngestJobInfo> ingestJobs;
     private final List<IngestJobInfo> ingestJobsForSelectedDataSource = new ArrayList<>();
     private IngestJobTableModel ingestJobTableModel = new IngestJobTableModel();
@@ -76,6 +80,16 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
             if (evt.getPropertyName().equals(IngestManager.IngestJobEvent.STARTED.toString())
                     || evt.getPropertyName().equals(IngestManager.IngestJobEvent.CANCELLED.toString())
                     || evt.getPropertyName().equals(IngestManager.IngestJobEvent.COMPLETED.toString())) {
+                refresh();
+            }
+        });
+        
+        Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, (PropertyChangeEvent evt) -> {
+            if (!(evt instanceof AutopsyEvent) || (((AutopsyEvent) evt).getSourceType() != AutopsyEvent.SourceType.LOCAL)) {
+                return;
+            }
+                    
+            if (CURRENT_CASE == Case.Events.valueOf(evt.getPropertyName())) {
                 refresh();
             }
         });
@@ -110,9 +124,15 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
      */
     private void refresh() {
         try {
-            SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-            this.ingestJobs = skCase.getIngestJobs();
-            setDataSource(selectedDataSource);
+            if (Case.isCaseOpen()) {
+                SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+                this.ingestJobs = skCase.getIngestJobs();
+                setDataSource(selectedDataSource);
+            } else {
+                this.ingestJobs = new ArrayList<>();
+                setDataSource(null);
+            }
+            
         } catch (TskCoreException | NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Failed to load ingest jobs.", ex);
             JOptionPane.showMessageDialog(this, Bundle.IngestJobInfoPanel_loadIngestJob_error_text(), Bundle.IngestJobInfoPanel_loadIngestJob_error_title(), JOptionPane.ERROR_MESSAGE);

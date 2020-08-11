@@ -501,9 +501,9 @@ class GeoFilterPanel extends javax.swing.JPanel {
                 DataSource dataSource, BlackboardArtifact.ARTIFACT_TYPE artifactType) throws TskCoreException {
             long count = 0;
             String queryStr
-                    = "SELECT count(DISTINCT artifact_id) AS count FROM"
+                    = "SELECT count(DISTINCT artIds) AS count FROM"
                     + " ("
-                    + " SELECT * FROM blackboard_artifacts as arts"
+                    + " SELECT arts.artifact_id as artIds, * FROM blackboard_artifacts as arts"
                     + " INNER JOIN blackboard_attributes as attrs"
                     + " ON attrs.artifact_id = arts.artifact_id"
                     + " WHERE arts.artifact_type_id = " + artifactType.getTypeID()
@@ -516,7 +516,7 @@ class GeoFilterPanel extends javax.swing.JPanel {
                     + " or attrs.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_TRACKPOINTS.getTypeID()
                     + " or attrs.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_WAYPOINTS.getTypeID()
                     + " )"
-                    + " )";
+                    + " ) as innerTable";
             try (SleuthkitCase.CaseDbQuery queryResult = sleuthkitCase.executeQuery(queryStr);
                     ResultSet resultSet = queryResult.getResultSet()) {
                 if (resultSet.next()) {

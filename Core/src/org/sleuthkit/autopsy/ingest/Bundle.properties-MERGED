@@ -104,6 +104,7 @@ IngestJobTableModel.colName.inProgress=In Progress
 IngestJobTableModel.colName.filesQueued=Files Queued
 IngestJobTableModel.colName.dirQueued=Dir Queued
 IngestJobTableModel.colName.rootQueued=Root Queued
+IngestJobTableModel.colName.streamingQueued=Streaming Queued
 IngestJobTableModel.colName.dsQueued=DS Queued
 ModuleTableModel.colName.module=Module
 ModuleTableModel.colName.duration=Duration

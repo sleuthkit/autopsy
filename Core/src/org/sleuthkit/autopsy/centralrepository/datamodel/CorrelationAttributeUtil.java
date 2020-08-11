@@ -34,8 +34,8 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
-import org.sleuthkit.datamodel.CommunicationsUtils;
 import org.sleuthkit.datamodel.HashUtility;
+import org.sleuthkit.datamodel.InvalidAccountIDException;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
@@ -184,7 +184,15 @@ public class CorrelationAttributeUtil {
                     makeCorrAttrsFromCommunicationArtifacts(correlationAttrs, sourceArtifact);
                 }
             }
-        } catch (CentralRepoException ex) {
+        } catch (CorrelationAttributeNormalizationException ex) {
+            logger.log(Level.WARNING, String.format("Error normalizing correlation attribute (%s)", artifact), ex); // NON-NLS
+            return correlationAttrs;
+        } 
+        catch (InvalidAccountIDException ex) {
+            logger.log(Level.WARNING, String.format("Invalid account identifier (artifactID: %d)", artifact.getId())); // NON-NLS
+            return correlationAttrs;
+        } 
+        catch (CentralRepoException ex) {
             logger.log(Level.SEVERE, String.format("Error querying central repository (%s)", artifact), ex); // NON-NLS
             return correlationAttrs;
         } catch (TskCoreException ex) {
@@ -198,18 +206,19 @@ public class CorrelationAttributeUtil {
     }
 
     /**
-     * Makes a correlation attribute instance from a phone number attribute of an
-     * artifact.
+     * Makes a correlation attribute instance from a phone number attribute of
+     * an artifact.
      *
      * @param corrAttrInstances Correlation attributes will be added to this.
      * @param artifact An artifact with a phone number attribute.
      *
-     * @throws TskCoreException     If there is an error querying the case
-     *                              database.
+     * @throws TskCoreException If there is an error querying the case database.
      * @throws CentralRepoException If there is an error querying the central
-     *                              repository.
+     * repository.
+     * @throws CorrelationAttributeNormalizationException If there is an error
+     * in normalizing the attribute.
      */
-    private static void makeCorrAttrsFromCommunicationArtifacts(List<CorrelationAttributeInstance> corrAttrInstances, BlackboardArtifact artifact) throws TskCoreException, CentralRepoException {
+    private static void makeCorrAttrsFromCommunicationArtifacts(List<CorrelationAttributeInstance> corrAttrInstances, BlackboardArtifact artifact) throws TskCoreException, CentralRepoException, CorrelationAttributeNormalizationException {
         CorrelationAttributeInstance corrAttr = null;
 
         /*
@@ -227,13 +236,13 @@ public class CorrelationAttributeUtil {
         /*
          * Normalize the phone number.
          */
-        if (value != null) {
-            if(CommunicationsUtils.isValidPhoneNumber(value)) {
-                value = CommunicationsUtils.normalizePhoneNum(value);
-                corrAttr = makeCorrAttr(artifact, CentralRepository.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.PHONE_TYPE_ID), value);
-                if(corrAttr != null) {
-                    corrAttrInstances.add(corrAttr);
-                }
+        if (value != null
+                && CorrelationAttributeNormalizer.isValidPhoneNumber(value)) {
+
+            value = CorrelationAttributeNormalizer.normalizePhone(value);
+            corrAttr = makeCorrAttr(artifact, CentralRepository.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.PHONE_TYPE_ID), value);
+            if (corrAttr != null) {
+                corrAttrInstances.add(corrAttr);
             }
         }
     }
@@ -277,7 +286,7 @@ public class CorrelationAttributeUtil {
      *
      * @return The correlation attribute instance.
      */
-    private static void makeCorrAttrFromAcctArtifact(List<CorrelationAttributeInstance> corrAttrInstances, BlackboardArtifact acctArtifact) throws TskCoreException, CentralRepoException {
+    private static void makeCorrAttrFromAcctArtifact(List<CorrelationAttributeInstance> corrAttrInstances, BlackboardArtifact acctArtifact) throws InvalidAccountIDException, TskCoreException, CentralRepoException {
 
         // Get the account type from the artifact
         BlackboardAttribute accountTypeAttribute = acctArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE));

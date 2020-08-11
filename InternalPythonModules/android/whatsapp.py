@@ -177,16 +177,16 @@ class WhatsAppAnalyzer(general.AndroidComponentAnalyzer):
                 home_phone = contacts_parser.get_home_phone()
                 mobile_phone = contacts_parser.get_mobile_phone()
                 email = contacts_parser.get_email()
-
+                other_attributes = contacts_parser.get_other_attributes()
                 # add contact if we have at least one valid phone/email
-                if phone or home_phone or mobile_phone or email:
+                if phone or home_phone or mobile_phone or email or other_attributes:
                     helper.addContact( 
                         name, 
                         phone,
                         home_phone,
                         mobile_phone,
                         email,
-                        contacts_parser.get_other_attributes()
+                        other_attributes
                     )
             contacts_parser.close()
         except SQLException as ex:
@@ -443,10 +443,14 @@ class WhatsAppContactsParser(TskContactsParser):
         return (value if general.isValidEmailAddress(value) else None)
         
     def get_other_attributes(self):
-        return [BlackboardAttribute(
+        value = self.result_set.getString("jid")
+        if value:
+            return [BlackboardAttribute(
                     BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ID, 
                     self._PARENT_ANALYZER, 
-                    self.result_set.getString("jid"))]
+                    value)]
+        else:
+             return []
 
 class WhatsAppMessagesParser(TskMessagesParser):
     """

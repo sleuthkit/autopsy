@@ -20,13 +20,13 @@ package org.sleuthkit.autopsy.ingest;
 
 final class DataSourceIngestTask extends IngestTask {
 
-    DataSourceIngestTask(DataSourceIngestJob job) {
-        super(job);
+    DataSourceIngestTask(IngestJobPipeline ingestJobPipeline) {
+        super(ingestJobPipeline);
     }
 
     @Override
     void execute(long threadId) throws InterruptedException {
         super.setThreadId(threadId);
-        getIngestJob().process(this);
+        getIngestJobPipeline().process(this);
     }
 }

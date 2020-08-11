@@ -70,7 +70,8 @@ The following topics are available here:
  - \subpage timeline_page
  - \subpage communications_page
  - \subpage geolocation_page
- - \subpage file_discovery_page
+ - \subpage discovery_page
+ - \subpage personas_page
 
 - Reporting
  - \subpage tagging_page

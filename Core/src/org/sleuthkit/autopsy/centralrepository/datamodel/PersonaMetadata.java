@@ -24,23 +24,23 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import org.apache.commons.lang3.StringUtils;
-import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
- * This class abstracts metadata associated with a Persona.
- * Metadata is in the form of a name/value pair.
- * 
+ * This class abstracts metadata associated with a Persona. Metadata is in the
+ * form of a name/value pair.
+ *
  * A Persona may have zero or more metadata.
- * 
+ *
  */
 public class PersonaMetadata {
-    
-    private static final String SELECT_QUERY_BASE = 
-            "SELECT pmd.id, pmd.persona_id, pmd.name, pmd.value, pmd.justification, pmd.confidence_id, pmd.date_added, pmd.examiner_id, e.login_name, e.display_name "
-                + "FROM persona_metadata as pmd "
-                + "INNER JOIN examiners as e ON e.id = pmd.examiner_id ";
-    
+
+    private static final String SELECT_QUERY_BASE
+            = "SELECT pmd.id, pmd.persona_id, pmd.name, pmd.value, pmd.justification, pmd.confidence_id, pmd.date_added, pmd.examiner_id, e.login_name, e.display_name "
+            + "FROM persona_metadata as pmd "
+            + "INNER JOIN examiners as e ON e.id = pmd.examiner_id ";
+
     private final long id;
     private final long personaId;
     private final String name;
@@ -49,7 +49,7 @@ public class PersonaMetadata {
     private final Persona.Confidence confidence;
     private final long dateAdded;
     private final CentralRepoExaminer examiner;
-    
+
     public long getId() {
         return id;
     }
@@ -81,7 +81,7 @@ public class PersonaMetadata {
     public CentralRepoExaminer getExaminer() {
         return examiner;
     }
-    
+
     public PersonaMetadata(long id, long personaId, String name, String value, String justification, Persona.Confidence confidence, long dateAdded, CentralRepoExaminer examiner) {
         this.id = id;
         this.personaId = personaId;
@@ -92,8 +92,8 @@ public class PersonaMetadata {
         this.dateAdded = dateAdded;
         this.examiner = examiner;
     }
-    
-     /**
+
+    /**
      * Adds specified metadata to the given persona.
      *
      * @param personaId Id of persona to add metadata for.
@@ -112,67 +112,87 @@ public class PersonaMetadata {
         Instant instant = Instant.now();
         Long timeStampMillis = instant.toEpochMilli();
 
-        String insertClause = " INTO persona_metadata (persona_id, name, value, justification, confidence_id, date_added, examiner_id ) "
-                + "VALUES ( "
-                + personaId + ", "
-                + "'" + name + "', "
-                + "'" + value + "', "
-                + "'" + ((StringUtils.isBlank(justification) ? "" : SleuthkitCase.escapeSingleQuotes(justification))) + "', "
-                + confidence.getLevelId() + ", "
-                + timeStampMillis.toString() + ", "
-                + examiner.getId()
-                + ")";
+        String insertSQL = "INSERT INTO persona_metadata (persona_id, name, value, justification, confidence_id, date_added, examiner_id ) "
+                + "VALUES ( ?, ?, ?, ?, ?, ?, ?)";
 
-        getCRInstance().executeInsertSQL(insertClause);
-        
+        List<Object> params = new ArrayList<>();
+        params.add(personaId);
+        params.add(name);
+        params.add(value);
+        params.add(StringUtils.isBlank(justification) ? "" : justification);
+        params.add(confidence.getLevelId());
+        params.add(timeStampMillis);
+        params.add(examiner.getId());
+
+        getCRInstance().executeCommand(insertSQL, params);
+
         String queryClause = SELECT_QUERY_BASE
-                + "WHERE pmd.persona_id = " + personaId
-                + " AND pmd.name = '" + name + "'"
-                + " AND pmd.value = '" + value + "'"
-                + " AND pmd.date_added = " + timeStampMillis
-                + " AND pmd.examiner_id = " + examiner.getId();
-        
+                + "WHERE pmd.persona_id = ?"
+                + " AND pmd.name = ?"
+                + " AND pmd.value = ?"
+                + " AND pmd.date_added = ?"
+                + " AND pmd.examiner_id = ?";
+
+        List<Object> queryParams = new ArrayList<>();
+        queryParams.add(personaId);
+        queryParams.add(name);
+        queryParams.add(value);
+        queryParams.add(timeStampMillis);
+        queryParams.add(examiner.getId());
+
         PersonaMetadataQueryCallback queryCallback = new PersonaMetadataQueryCallback();
-        getCRInstance().executeSelectSQL(queryClause, queryCallback);
-        
+        getCRInstance().executeQuery(queryClause, queryParams, queryCallback);
+
         Collection<PersonaMetadata> metadata = queryCallback.getMetadataList();
         if (metadata.size() != 1) {
             throw new CentralRepoException("Metadata add query failed");
         }
-        
+
         return metadata.iterator().next();
     }
-    
+
     /**
      * Removes the given PersonaMetadata
      *
      * @param metadata Metadata to remove.
      *
-     * @throws CentralRepoException If there is an error in removing the metadata.
+     * @throws CentralRepoException If there is an error in removing the
+     * metadata.
      */
     static void removePersonaMetadata(PersonaMetadata metadata) throws CentralRepoException {
-        String deleteClause = " DELETE FROM persona_metadata WHERE id = " + metadata.getId();
-        getCRInstance().executeDeleteSQL(deleteClause);
+        String deleteSql = " DELETE FROM persona_metadata WHERE id = ?";
+
+        List<Object> params = new ArrayList<>();
+        params.add(metadata.getId());
+
+        getCRInstance().executeCommand(deleteSql, params);
     }
-    
+
     /**
      * Modifies the given PersonaMetadata
      *
      * @param metadata Metadata to modify.
      *
-     * @throws CentralRepoException If there is an error in modifying the metadata.
+     * @throws CentralRepoException If there is an error in modifying the
+     * metadata.
      */
     static void modifyPersonaMetadata(PersonaMetadata metadata, Persona.Confidence confidence, String justification) throws CentralRepoException {
         CentralRepository cr = CentralRepository.getInstance();
-        
+
         if (cr == null) {
             throw new CentralRepoException("Failed to modify persona metadata, Central Repo is not enabled");
         }
-        
-        String updateClause = "UPDATE persona_metadata SET confidence_id = " + confidence.getLevelId() + ", justification = '" + justification + "' WHERE id = " + metadata.id;
-        cr.executeUpdateSQL(updateClause);
+
+        String updateSql = "UPDATE persona_metadata SET confidence_id = ?, justification = ? WHERE id = ?";
+
+        List<Object> params = new ArrayList<>();
+        params.add(confidence.getLevelId());
+        params.add(StringUtils.isBlank(justification) ? "" : justification);
+        params.add(metadata.id);
+
+        getCRInstance().executeCommand(updateSql, params);
     }
-    
+
     /**
      * Callback to process a Persona metadata query.
      */
@@ -206,8 +226,8 @@ public class PersonaMetadata {
             return Collections.unmodifiableCollection(personaMetadataList);
         }
     };
-    
-     /**
+
+    /**
      * Gets all metadata for the persona with specified id.
      *
      * @param personaId Id of the persona for which to get the metadata.
@@ -216,30 +236,34 @@ public class PersonaMetadata {
      * @throws CentralRepoException If there is an error in retrieving aliases.
      */
     static Collection<PersonaMetadata> getPersonaMetadata(long personaId) throws CentralRepoException {
-        String queryClause = SELECT_QUERY_BASE + "WHERE pmd.persona_id = " + personaId;
-        
+        String queryClause = SELECT_QUERY_BASE
+                + "WHERE pmd.persona_id = ?";
+
+        List<Object> params = new ArrayList<>();
+        params.add(personaId);
+
         PersonaMetadataQueryCallback queryCallback = new PersonaMetadataQueryCallback();
-        getCRInstance().executeSelectSQL(queryClause, queryCallback);
+        getCRInstance().executeQuery(queryClause, params, queryCallback);
 
         return queryCallback.getMetadataList();
 
     }
-    
+
     /**
-     * Wraps the call to CentralRepository.getInstance() throwing an 
-     * exception if instance is null;
-     * 
+     * Wraps the call to CentralRepository.getInstance() throwing an exception
+     * if instance is null;
+     *
      * @return Instance of CentralRepository
-     * 
-     * @throws CentralRepoException 
+     *
+     * @throws CentralRepoException
      */
-    private static CentralRepository getCRInstance()  throws CentralRepoException {
+    private static CentralRepository getCRInstance() throws CentralRepoException {
         CentralRepository instance = CentralRepository.getInstance();
-        
-        if(instance == null) {
+
+        if (instance == null) {
             throw new CentralRepoException("Failed to get instance of CentralRespository, CR was null");
         }
-        
+
         return instance;
     }
 }
