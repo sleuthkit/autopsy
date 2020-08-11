@@ -1596,22 +1596,32 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                         processJobs();
                     } catch (InterruptedException ex) {
                         /*
-                         * Interrupted while blocked, i.e., this task was
-                         * cancelled while waiting for something to happen on
-                         * another thread because ingest is shutting down.
+                         * Interrupted while blocked during job processing,
+                         * i.e., this task was cancelled while waiting for
+                         * something to happen on another thread because auto
+                         * ingest is shutting down. Exit the loop.
                          */
+                        sysLogger.log(Level.SEVERE, "Interrupted while blocked during job processing, stopping job processing", ex);
                         break;
-                    } catch (Exception ex) {
-                        /*
-                         * Exception firewall.
-                         */
-                        sysLogger.log(Level.SEVERE, "Auto ingest system error", ex);
+                    } catch (SharedConfigDownloadException | ServiceDownException | AnalysisStartupException ex) {
+                        sysLogger.log(Level.SEVERE, "Critical auto ingest system error, pausing job processing", ex);
                         if (jobProcessingTaskFuture.isCancelled()) {
                             break;
                         }
                         pauseForSystemError();
+                    } finally {
+                        /*
+                         * Exception firewall. RJCTODO
+                         */
+                        sysLogger.log(Level.SEVERE, "Unexpected auto ingest system error, pausing job processing"); // RJCTODO add ex
                     }
                 } catch (InterruptedException ex) {
+                    /*
+                     * Interrupted while blocked waiting for an input directory
+                     * scan or for a resume command after a pause because auto
+                     * ingest is shutting down. Exit the loop.
+                     */
+                    sysLogger.log(Level.SEVERE, "Interrupted while blocked waiting for scan or paused, stopping job processing", ex);
                     break;
                 }
             }
@@ -1791,48 +1801,47 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         /**
          * Processes jobs until the pending jobs queue is empty.
          *
-         * @throws InterruptedException If the thread running the job processing
-         *                              task is interrupted while blocked, i.e.,
-         *                              if auto ingest is shutting down.
+         * @throws SharedConfigDownloadException If there is an error
+         *                                       downloading shared
+         *                                       configuration.
+         * @throws ServiceDownException          If any of the core application
+         *                                       services are down or there is
+         *                                       an error querying the services
+         *                                       monitor.
+         * @throws AnalysisStartupException      If there is an error starting
+         *                                       analysis of the data source by
+         *                                       the data source level and file
+         *                                       level ingest modules.
+         * @throws InterruptedException          If the thread running the job
+         *                                       processing task is interrupted
+         *                                       while blocked, i.e., if auto
+         *                                       ingest is shutting down.
          */
-        private void processJobs() throws InterruptedException {
-            sysLogger.log(Level.INFO, "Started processing pending jobs queue");
+        private void processJobs() throws SharedConfigDownloadException, ServiceDownException, AnalysisStartupException, InterruptedException {
             try {
-                Lock manifestLock = null;
-                do {
-                    try {
-                        verifyRequiredSevicesAreRunning();
-                    } catch (ServiceDownException ex) {
-                        sysLogger.log(Level.SEVERE, "Critical auto ingest system error", ex);
-                        pauseForSystemError();
-                    }
-
-                    manifestLock = JobProcessingTask.this.dequeueAndLockNextJob();
-
+                sysLogger.log(Level.INFO, "Started processing pending jobs queue");
+                Lock manifestLock = JobProcessingTask.this.dequeueAndLockNextJob();
+                while (null != manifestLock) {
                     try {
                         if (currentJob.isCanceled() || jobProcessingTaskFuture.isCancelled()) {
                             return;
                         }
                         processJob();
-                    } catch (CoordinationServiceException ex) {
-                        sysLogger.log(Level.SEVERE, "Auto ingest system error", ex);
-                    } catch (ServiceDownException | SharedConfigDownloadException | AnalysisStartupException ex) {
-                        sysLogger.log(Level.SEVERE, "Critical auto ingest system error", ex);
-                        pauseForSystemError();
                     } finally {
                         manifestLock.release();
                     }
                     if (jobProcessingTaskFuture.isCancelled()) {
                         return;
                     }
-
                     pauseIfRequested();
                     if (jobProcessingTaskFuture.isCancelled()) {
                         return;
                     }
-                } while (null != manifestLock);
+                    manifestLock = JobProcessingTask.this.dequeueAndLockNextJob();
+                }
             } catch (CoordinationServiceException ex) {
-                sysLogger.log(Level.SEVERE, "Auto ingest system error", ex);
+                sysLogger.log(Level.SEVERE, "Coordination service error processing pending jobs queue, checking core services", ex);
+                verifyRequiredSevicesAreRunning();
             }
         }
 
@@ -1991,11 +2000,10 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          * @throws SharedConfigDownloadException If there is an error while
          *                                       downloading shared
          *                                       configuration.
-         * @throws ServiceDownException          If the one or more core
-         *                                       application services is down.
-         * @throws CaseOpeningException          If there is an error creating,
-         *                                       opening or closing the case for
-         *                                       the job.
+         * @throws ServiceDownException          If any of the core application
+         *                                       services are down or there is
+         *                                       an error querying the services
+         *                                       monitor.
          * @throws AnalysisStartupException      If there is an error starting
          *                                       analysis of the data source by
          *                                       the data source level and file
@@ -2076,8 +2084,10 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          * @throws SharedConfigDownloadException If there is an error while
          *                                       downloading shared
          *                                       configuration.
-         * @throws ServiceDownException          If the one or more core
-         *                                       application services is down.
+         * @throws ServiceDownException          If any of the core application
+         *                                       services are down or there is
+         *                                       an error querying the services
+         *                                       monitor.
          * @throws AnalysisStartupException      If there is an error starting
          *                                       analysis of the data source by
          *                                       the data source level and file
@@ -2092,12 +2102,10 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
             if (currentJob.isCanceled() || jobProcessingTaskFuture.isCancelled()) {
                 return;
             }
-
             verifyRequiredSevicesAreRunning();
             if (currentJob.isCanceled() || jobProcessingTaskFuture.isCancelled()) {
                 return;
             }
-
             Case caseForJob = null;
             try {
                 caseForJob = openCase();
@@ -2150,9 +2158,9 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                         return false;
                     }
                 };
-                boolean configUpdated = trySubTask("Checking services availability", configDownloadTask);
+                boolean configUpdated = trySubTask("downloading shared configuration", configDownloadTask);
                 if (!configUpdated) {
-                    throw new SharedConfigDownloadException("Failed to update shared job configuration");
+                    throw new SharedConfigDownloadException("Shared configuration downloaded");
                 }
             }
         }
@@ -2161,9 +2169,9 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          * Checks the availability of the services required to process an
          * automated ingest job.
          *
-         * @throws ServiceDownException If any of the services are down or there
-         *                              is an error querying the services
-         *                              monitor.
+         * @throws ServiceDownException If any of the core application services
+         *                              are down or there is an error querying
+         *                              the services monitor.
          * @throws InterruptedException If the thread running the job processing
          *                              task is interrupted while blocked, i.e.,
          *                              if auto ingest is shutting down.
@@ -2176,11 +2184,11 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 try {
                     return allServicesAreUp();
                 } catch (ServicesMonitorException ex) {
-                    sysLogger.log(Level.SEVERE, "Error checking services availability", ex);
+                    sysLogger.log(Level.SEVERE, "Error verifying required services are available", ex);
                     return false;
                 }
             };
-            boolean servicesUp = trySubTask("Checking services availability", servicesCheckTask);
+            boolean servicesUp = trySubTask("verifying required services availability", servicesCheckTask);
             if (!servicesUp) {
                 throw new ServiceDownException("A core application service is down");
             }
@@ -2239,7 +2247,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 try {
                     success = future.get();
                 } catch (ExecutionException ex) {
-                    sysLogger.log(Level.SEVERE, String.format("Error executing %s", taskDesc), ex);
+                    sysLogger.log(Level.SEVERE, String.format("Unexpected error %s", taskDesc), ex);
                 }
                 ++attempt;
                 delayInMins += (SUB_TASK_RETRY_INCR_MINS * attempt);
