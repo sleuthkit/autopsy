@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.casemodule.multiusercases.services;
 import java.util.logging.Level;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.ServiceProvider;
-import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.core.ServicesMonitor;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;

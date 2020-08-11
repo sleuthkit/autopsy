@@ -30,7 +30,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * An implementation of the monitored service interface that reports status for
- * the database server for multi-user cases.
+ * the PostgreSQL database server for multi-user cases.
  */
 @ServiceProvider(service = ServicesMonitor.MonitoredService.class)
 public final class PostgreSqlServer implements ServicesMonitor.MonitoredService {

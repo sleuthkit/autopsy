@@ -29,7 +29,7 @@ import org.sleuthkit.autopsy.events.MessageServiceException;
 
 /**
  * An implementation of the monitored service interface that reports status for
- * the messaging service for multi-user cases.
+ * the ActiveMQ messaging service for multi-user cases.
  */
 @ServiceProvider(service = ServicesMonitor.MonitoredService.class)
 public final class ActiveMqMessageBroker implements ServicesMonitor.MonitoredService {
