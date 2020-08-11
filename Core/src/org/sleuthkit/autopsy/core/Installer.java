@@ -230,6 +230,7 @@ public class Installer extends ModuleInstall {
         packageInstallers.add(org.sleuthkit.autopsy.ingest.Installer.getDefault());
         packageInstallers.add(org.sleuthkit.autopsy.centralrepository.eventlisteners.Installer.getDefault());
         packageInstallers.add(org.sleuthkit.autopsy.healthmonitor.Installer.getDefault());
+        packageInstallers.add(org.sleuthkit.autopsy.casemodule.Installer.getDefault());
 
         /**
          * This is a temporary workaround for the following bug in Tika that

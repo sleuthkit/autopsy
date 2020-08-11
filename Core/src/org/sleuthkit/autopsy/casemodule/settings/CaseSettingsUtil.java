@@ -45,6 +45,14 @@ public class CaseSettingsUtil {
         String tempDir = preferences.get(TEMP_DIR, TEMP_DEFAULT);
         return StringUtils.isBlank(tempDir) ? TEMP_DEFAULT : tempDir;
     }
+    
+    /**
+     * Returns whether or not there is a user-specified temp directory saved in settings.
+     * @return True if a user-specified temp directory exists in the settings.
+     */
+    public static boolean isBaseTempDirectorySpecified() {
+        return StringUtils.isNotBlank(preferences.get(TEMP_DIR, null));
+    }
 
     /**
      * Sets the base user-specified temporary directory.
