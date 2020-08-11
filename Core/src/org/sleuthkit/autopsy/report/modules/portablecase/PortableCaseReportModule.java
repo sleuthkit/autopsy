@@ -29,6 +29,7 @@ import java.util.logging.Level;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.InputStreamReader;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -50,6 +51,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.casemodule.services.contentviewertags.ContentViewerTagManager;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
@@ -206,6 +208,7 @@ public class PortableCaseReportModule implements ReportModule {
         "PortableCaseReportModule.generateReport.errorCopyingInterestingFiles=Error copying interesting files",
         "PortableCaseReportModule.generateReport.errorCopyingInterestingResults=Error copying interesting results",
         "PortableCaseReportModule.generateReport.errorCreatingImageTagTable=Error creating image tags table",
+        "PortableCaseReportModule.generateReport.errorCopyingAutopsy=Error copying application",
         "# {0} - attribute type name",
         "PortableCaseReportModule.generateReport.errorLookingUpAttrType=Error looking up attribute type {0}",
         "PortableCaseReportModule.generateReport.compressingCase=Compressing case..."
@@ -434,6 +437,15 @@ public class PortableCaseReportModule implements ReportModule {
             if (!success) {
                 // Errors have been handled already
                 return;
+            }
+        }
+        
+        if(options.includeApplication()) {
+            try {
+                copyApplication(getApplicationBasePath(), reportPath, "autopsy");
+                createAppLaunchBatFile(reportPath);
+            } catch (IOException ex) {
+                handleError("Error copying autopsy", Bundle.PortableCaseReportModule_generateReport_errorCopyingAutopsy(), ex, progressPanel); // NON-NLS
             }
         }
 
@@ -1141,6 +1153,76 @@ public class PortableCaseReportModule implements ReportModule {
             }
         }
         return UNKNOWN_FILE_TYPE_FOLDER;
+    }
+    
+    /**
+     * Returns base path of the users autopsy installation.
+     * 
+     * @return Path of autopsy installation.
+     */
+    private Path getApplicationBasePath() {
+        return getAutopsyExePath().getParent().getParent();
+    }
+    
+    /**
+     * Find the path of the installed version of autopsy.
+     * 
+     * @return Path to the installed autopsy.exe.
+     */
+    private Path getAutopsyExePath() {
+        // If this is an installed version, there should be an <appName>64.exe file in the bin folder
+        String exeName = getAutopsyExeName();
+        String installPath = PlatformUtil.getInstallPath();
+
+        return Paths.get(installPath, "bin", exeName);
+    }
+    
+    /**
+     * Generate the name of the autopsy exe.
+     * 
+     * @return The name of the autopsy exe. 
+     */
+    private String getAutopsyExeName() {
+        String appName = UserPreferences.getAppName();
+        return appName + "64.exe";
+    }
+    
+    /**
+     * Copy the sorceFolder to destBaseFolder\appName.
+     * 
+     * @param sourceFolder Autopsy installation directory.
+     * @param destBaseFolder Report base direction.
+     * @param appName Name of the application being copied.
+     * 
+     * @throws IOException 
+     */
+    private void copyApplication(Path sourceFolder, String destBaseFolder, String appName) throws IOException {
+
+        // Create an appName folder in the destination 
+        Path destAppFolder = Paths.get(destBaseFolder, appName);
+        if (!destAppFolder.toFile().exists()) {
+            if (!destAppFolder.toFile().mkdirs()) {
+                throw new IOException("Failed to create directory " + destAppFolder.toString());
+            }
+        }
+
+        // Now copy the files
+        FileUtils.copyDirectory(sourceFolder.toFile(), destAppFolder.toFile());
+    }
+    
+    /**
+     * Create a bat file at destBaseFolder that will launch the portable case.
+     * 
+     * @param destBaseFolder
+     * @throws IOException 
+     */
+    private void createAppLaunchBatFile(String destBaseFolder) throws IOException {
+        Path filePath = Paths.get(destBaseFolder, "open.bat");
+        String exePath = "\"%~dp0autopsy\\bin\\" + getAutopsyExeName() + "\"";
+        String casePath = ".\\" + caseName ;
+        try(FileWriter writer = new FileWriter(filePath.toFile())) {
+            writer.write(exePath + " --caseDir \" " + casePath + "\"");
+        }
     }
 
     /**

@@ -52,8 +52,10 @@ public class CommandLineOptionProcessor extends OptionProcessor {
     private final Option ingestProfileOption = Option.requiredArgument('p', "ingestProfile");
     private final Option listAllDataSourcesCommandOption = Option.withoutArgument('l', "listAllDataSources");
     private final Option generateReportsOption = Option.withoutArgument('g', "generateReports");
+    private final Option runUICommandOption = Option.requiredArgument('u', "runUI");
 
     private boolean runFromCommandLine = false;
+    private boolean openCaseInUI = false;
 
     private final List<CommandLineCommand> commands = new ArrayList<>();
 
@@ -75,6 +77,7 @@ public class CommandLineOptionProcessor extends OptionProcessor {
         set.add(ingestProfileOption);
         set.add(listAllDataSourcesCommandOption);
         set.add(generateReportsOption);
+        set.add(runUICommandOption);
         return set;
     }
 
@@ -87,7 +90,8 @@ public class CommandLineOptionProcessor extends OptionProcessor {
         // input arguments must contain at least one command
         if (!(values.containsKey(createCaseCommandOption) || values.containsKey(addDataSourceCommandOption)
                 || values.containsKey(runIngestCommandOption) || values.containsKey(listAllDataSourcesCommandOption)
-                || values.containsKey(generateReportsOption))) {
+                || values.containsKey(generateReportsOption)
+                || values.containsKey(runUICommandOption))) {
             // not running from command line
             logger.log(Level.INFO, "No command line commands passed in as inputs. Not running from command line."); //NON-NLS
             System.err.println("No command line commands passed in as inputs. Not running from command line.");
@@ -373,7 +377,21 @@ public class CommandLineOptionProcessor extends OptionProcessor {
             newCommand.addInputValue(CommandLineCommand.InputType.CASE_FOLDER_PATH.name(), caseDir);
             commands.add(newCommand);
             runFromCommandLine = true;
-        }        
+        } 
+        
+        if(values.containsKey(runUICommandOption)) {
+            argDirs = values.get(runUICommandOption);
+            if (argDirs.length < 1) {
+                logger.log(Level.SEVERE, "Missing argument 'runUI'");
+                System.err.println("Missing argument 'runUI'");
+                return;
+            }
+            String casePath = argDirs[0];
+            CommandLineCommand newCommand = new CommandLineCommand(CommandLineCommand.CommandType.OPEN_CASE_IN_UI);
+            newCommand.addInputValue(CommandLineCommand.InputType.CASE_FOLDER_PATH.name(), casePath);
+            commands.add(newCommand);
+            openCaseInUI = true;
+        }
     }
 
     /**
@@ -383,6 +401,15 @@ public class CommandLineOptionProcessor extends OptionProcessor {
      */
     public boolean isRunFromCommandLine() {
         return runFromCommandLine;
+    }
+    
+    /**
+     * Returns whether Autopsy should open existing case in the user interface.
+     * 
+     * @return true if opening an existing case, false otherwise.
+     */
+    public boolean openCaseInUI() {
+        return openCaseInUI;
     }
 
     /**

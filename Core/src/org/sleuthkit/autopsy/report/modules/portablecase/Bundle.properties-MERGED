@@ -24,6 +24,7 @@ PortableCaseReportModule.generateReport.copyingFiles=Copying files tagged as {0}
 PortableCaseReportModule.generateReport.copyingTags=Copying tags...
 PortableCaseReportModule.generateReport.creatingCase=Creating portable case database...
 PortableCaseReportModule.generateReport.errorCopyingArtifacts=Error copying tagged artifacts
+PortableCaseReportModule.generateReport.errorCopyingAutopsy=Error copying application
 PortableCaseReportModule.generateReport.errorCopyingFiles=Error copying tagged files
 PortableCaseReportModule.generateReport.errorCopyingInterestingFiles=Error copying interesting files
 PortableCaseReportModule.generateReport.errorCopyingInterestingResults=Error copying interesting results
