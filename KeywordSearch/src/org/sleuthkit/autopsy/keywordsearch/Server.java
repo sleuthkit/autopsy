@@ -374,20 +374,6 @@ public class Server {
         return client;
     }
 
-    private ConcurrentUpdateSolrClient getSolrClient(String solrUrl) {
-        int numThreads = org.sleuthkit.autopsy.keywordsearch.UserPreferences.getNumThreads();
-        int numDocs = org.sleuthkit.autopsy.keywordsearch.UserPreferences.getDocumentsQueueSize();
-        logger.log(Level.INFO, "Creating new ConcurrentUpdateSolrClient. Queue size = {0}, Number of threads = {1}", new Object[]{numDocs, numThreads}); //NON-NLS
-        ConcurrentUpdateSolrClient client = new ConcurrentUpdateSolrClient.Builder(solrUrl)
-                .withQueueSize(numDocs)
-                .withThreadCount(numThreads)
-                .withConnectionTimeout(1000)
-                .withResponseParser(new XMLResponseParser())
-                .build();
-
-        return client;
-    }
-
     @Override
     public void finalize() throws java.lang.Throwable {
         stop();
