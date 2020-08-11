@@ -24,7 +24,9 @@ import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -36,9 +38,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import org.apache.commons.lang3.StringUtils;
 import org.netbeans.spi.options.OptionsPanelController;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.util.NbBundle.Messages;
@@ -71,7 +71,7 @@ import org.sleuthkit.autopsy.report.ReportBranding;
 })
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class AutopsyOptionsPanel extends javax.swing.JPanel {
-
+    
     private static final long serialVersionUID = 1L;
     private final JFileChooser logoFileChooser;
     private final JFileChooser tempDirChooser;
@@ -96,9 +96,9 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         logoFileChooser.setFileFilter(new GeneralFilter(GeneralFilter.GRAPHIC_IMAGE_EXTS, GeneralFilter.GRAPHIC_IMG_DECR));
         
         tempDirChooser = new JFileChooser();
-        logoFileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        logoFileChooser.setMultiSelectionEnabled(false);
-                
+        tempDirChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        tempDirChooser.setMultiSelectionEnabled(false);
+        
         if (!PlatformUtil.is64BitJVM() || Version.getBuildType() == Version.Type.DEVELOPMENT) {
             //32 bit JVM has a max heap size of 1.4 gb to 4 gb depending on OS
             //So disabling the setting of heap size when the JVM is not 64 bit 
@@ -111,8 +111,8 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         // The cast to int in the following is to ensure that the correct SpinnerNumberModel
         // constructor is called.
         solrMaxHeapSpinner.setModel(new javax.swing.SpinnerNumberModel(UserPreferences.getMaxSolrVMSize(),
-                512, ((int)getSystemMemoryInGB()) * MEGA_IN_GIGA, 512));
-
+                512, ((int) getSystemMemoryInGB()) * MEGA_IN_GIGA, 512));
+        
         textFieldListener = new TextFieldListener();
         agencyLogoPathField.getDocument().addDocumentListener(textFieldListener);
         logFileCount.setText(String.valueOf(UserPreferences.getLogFileCount()));
@@ -288,7 +288,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
      */
     private static String[] getDefaultsFromFileContents(List<String> list) {
         Optional<String> defaultSettings = list.stream().filter(line -> line.startsWith("default_options=")).findFirst();
-
+        
         if (defaultSettings.isPresent()) {
             return defaultSettings.get().replace("default_options=", "").replaceAll("\"", "").split(" ");
         }
@@ -305,6 +305,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         specifyLogoRB.setSelected(!useDefault);
         agencyLogoPathField.setEnabled(!useDefault);
         browseLogosButton.setEnabled(!useDefault);
+        tempDirectoryField.setText(UserPreferences.getBaseTempDirectory());
         logFileCount.setText(String.valueOf(UserPreferences.getLogFileCount()));
         solrMaxHeapSpinner.setValue(UserPreferences.getMaxSolrVMSize());
         tempDirectoryField.setText(UserPreferences.getBaseTempDirectory());
@@ -355,8 +356,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
     @Messages({
         "AutopsyOptionsPanel_storeTempDir_onError_title=Error Saving Temporary Directory",
         "# {0} - path",
-        "AutopsyOptionsPanel_storeTempDir_onError_description=There was an error creating the temporary directory on the filesystem at: {0}.",
-    })
+        "AutopsyOptionsPanel_storeTempDir_onError_description=There was an error creating the temporary directory on the filesystem at: {0}.",})
     private void storeTempDir() {
         String tempDirectoryPath = tempDirectoryField.getText();
         if (!UserPreferences.getBaseTempDirectory().equals(tempDirectoryPath)) {
@@ -364,12 +364,12 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
                 UserPreferences.setBaseTempDirectory(tempDirectoryPath);
             } catch (UserPreferencesException ex) {
                 logger.log(Level.WARNING, "There was an error creating the temporary directory defined by the user: " + tempDirectoryPath, ex);
-                JOptionPane.showMessageDialog(this, 
+                JOptionPane.showMessageDialog(this,
                         String.format("<html>%s</html>", Bundle.AutopsyOptionsPanel_storeTempDir_onError_description(tempDirectoryPath)),
-                        Bundle.AutopsyOptionsPanel_storeTempDir_onError_title(), 
+                        Bundle.AutopsyOptionsPanel_storeTempDir_onError_title(),
                         JOptionPane.ERROR_MESSAGE);
             }
-        }        
+        }
     }
 
     /**
@@ -378,7 +378,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
     void store() {
         UserPreferences.setLogFileCount(Integer.parseInt(logFileCount.getText()));
         storeTempDir();
-
+        
         if (!agencyLogoPathField.getText().isEmpty()) {
             File file = new File(agencyLogoPathField.getText());
             if (file.exists()) {
@@ -387,7 +387,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         } else {
             ModuleSettings.setConfigSetting(ReportBranding.MODULE_NAME, ReportBranding.AGENCY_LOGO_PATH_PROP, "");
         }
-        UserPreferences.setMaxSolrVMSize((int)solrMaxHeapSpinner.getValue());
+        UserPreferences.setMaxSolrVMSize((int) solrMaxHeapSpinner.getValue());
         if (memField.isEnabled()) {  //if the field could of been changed we need to try and save it
             try {
                 writeEtcConfFile();
@@ -396,8 +396,6 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
             }
         }
     }
-    
-    
 
     /**
      * Checks to see if the memory and agency logo field inputs are valid.
@@ -409,7 +407,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         if (!isTempDirValid()) {
             valid = false;
         }
-
+        
         if (!isAgencyLogoPathValid()) {
             valid = false;
         }
@@ -419,7 +417,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         if (!isLogNumFieldValid()) {
             valid = false;
         }
-
+        
         return valid;
     }
 
@@ -431,7 +429,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
      */
     boolean isAgencyLogoPathValid() {
         boolean valid = true;
-
+        
         if (defaultLogoRB.isSelected()) {
             agencyLogoPathFieldValidationLabel.setText("");
         } else {
@@ -459,10 +457,10 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
                 }
             }
         }
-
+        
         return valid;
     }
-    
+
     /**
      * Checks that if the mem field is enabled it has a valid value.
      *
@@ -503,7 +501,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
 
     /**
      * Check if the logFileCount field is valid.
-     * 
+     *
      * @return true if the logFileCount is valid false if it is not
      */
     private boolean isLogNumFieldValid() {
@@ -519,35 +517,37 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
             logNumAlert.setText(Bundle.AutopsyOptionsPanel_logNumAlert_invalidInput_text());
             return false;
         }
-        return true;      
+        return true;
     }
-
+    
     private boolean isTempDirValid() {
         String tempDirectoryPath = tempDirectoryField.getText();
         return new File(tempDirectoryPath).mkdirs();
     }
-    
+
     /**
      * Listens for registered text fields that have changed and fires a
      * PropertyChangeEvent accordingly.
      */
     private class TextFieldListener implements DocumentListener {
-
+        
         @Override
         public void insertUpdate(DocumentEvent e) {
             firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
         }
-
+        
         @Override
         public void removeUpdate(DocumentEvent e) {
             firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
         }
-
+        
         @Override
         public void changedUpdate(DocumentEvent e) {
             firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
         }
     }
+    
+    private static final String AUTOPSY_TEMP_DIR = "Autopsy";
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -850,31 +850,36 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
 
+    @Messages({
+        "AutopsyOptionsPanel_tempDirectoryBrowseButtonActionPerformed_onInvalidPath_title=Path cannot be used",
+        "# {0} - path",
+        "AutopsyOptionsPanel_tempDirectoryBrowseButtonActionPerformed_onInvalidPath_description=Unable to create temporary directory within specified path: {0}",})
     private void tempDirectoryBrowseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tempDirectoryBrowseButtonActionPerformed
-        String oldTempPath = tempDirectoryField.getText();
-        int returnState = logoFileChooser.showOpenDialog(this);
+        int returnState = tempDirChooser.showOpenDialog(this);
         if (returnState == JFileChooser.APPROVE_OPTION) {
-            String path = logoFileChooser.getSelectedFile().getPath();
+            String specifiedPath = tempDirChooser.getSelectedFile().getPath();
             try {
-                updateAgencyLogo(path);
-                firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
-            } catch (IOException | IndexOutOfBoundsException ex) {
-                JOptionPane.showMessageDialog(this,
-                    NbBundle.getMessage(this.getClass(),
-                        "AutopsyOptionsPanel.invalidImageFile.msg"),
-                    NbBundle.getMessage(this.getClass(), "AutopsyOptionsPanel.invalidImageFile.title"),
-                    JOptionPane.ERROR_MESSAGE);
-                try {
-                    updateAgencyLogo(oldLogoPath); //restore previous setting if new one is invalid
-                } catch (IOException ex1) {
-                    logger.log(Level.WARNING, "Error loading image from previously saved agency logo path", ex1);
+                String path = Paths.get(specifiedPath, AUTOPSY_TEMP_DIR).toAbsolutePath().toString();
+                File f = new File(path);
+                if (!f.exists()) {
+                    if (!f.mkdirs()) {
+                        throw new InvalidPathException(path, "Unable to create parent directories leading to " + path);
+                    }
                 }
+                tempDirectoryField.setText(path);
+                firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+            } catch (InvalidPathException ex) {
+                logger.log(Level.WARNING, "Unable to create temporary directory in " + specifiedPath, ex);
+                JOptionPane.showMessageDialog(this,
+                        Bundle.AutopsyOptionsPanel_tempDirectoryBrowseButtonActionPerformed_onInvalidPath_description(specifiedPath),
+                        Bundle.AutopsyOptionsPanel_tempDirectoryBrowseButtonActionPerformed_onInvalidPath_title(),
+                        JOptionPane.ERROR_MESSAGE);
             }
         }
     }//GEN-LAST:event_tempDirectoryBrowseButtonActionPerformed
 
     private void solrMaxHeapSpinnerStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_solrMaxHeapSpinnerStateChanged
-        int value = (int)solrMaxHeapSpinner.getValue();
+        int value = (int) solrMaxHeapSpinner.getValue();
         if (value == UserPreferences.getMaxSolrVMSize()) {
             // if the value hasn't changed there's nothing to do.
             return;
@@ -938,10 +943,10 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
                 firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
             } catch (IOException | IndexOutOfBoundsException ex) {
                 JOptionPane.showMessageDialog(this,
-                    NbBundle.getMessage(this.getClass(),
-                        "AutopsyOptionsPanel.invalidImageFile.msg"),
-                    NbBundle.getMessage(this.getClass(), "AutopsyOptionsPanel.invalidImageFile.title"),
-                    JOptionPane.ERROR_MESSAGE);
+                        NbBundle.getMessage(this.getClass(),
+                                "AutopsyOptionsPanel.invalidImageFile.msg"),
+                        NbBundle.getMessage(this.getClass(), "AutopsyOptionsPanel.invalidImageFile.title"),
+                        JOptionPane.ERROR_MESSAGE);
                 try {
                     updateAgencyLogo(oldLogoPath); //restore previous setting if new one is invalid
                 } catch (IOException ex1) {
