@@ -441,16 +441,14 @@ public class PortableCaseReportModule implements ReportModule {
         if (options.shouldCompress()) {
             progressPanel.updateStatusLabel(Bundle.PortableCaseReportModule_generateReport_compressingCase());
 
-            boolean success = compressCase(progressPanel, options.includeApplication() ? outputDir.getAbsolutePath() : caseFolder.getAbsolutePath());
+            if(!compressCase(progressPanel, options.includeApplication() ? outputDir.getAbsolutePath() : caseFolder.getAbsolutePath())){
+                // Errors have been handled already
+                return;
+            }
 
             // Check for cancellation 
             if (progressPanel.getStatus() == ReportProgressPanel.ReportStatus.CANCELED) {
                 handleCancellation(progressPanel);
-                return;
-            }
-
-            if (!success) {
-                // Errors have been handled already
                 return;
             }
         }
