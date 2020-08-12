@@ -270,7 +270,6 @@ AutopsyOptionsPanel.tempDirectoryPanel.AccessibleContext.accessibleName=Temp Dir
 AutopsyOptionsPanel.tempDirectoryPanel.name=Temp Directory
 AutopsyOptionsPanel.tempDirectoryPanel.border.title=Temp Directory
 AutopsyOptionsPanel.tempDirectoryWarningLabel.text=Close the current case to change the temporary directory.
-AutopsyOptionsPanel.tempDirectoryLabel.text=Temp Directory:
 AutopsyOptionsPanel.solrJVMHeapWarning.text=NOTE:  Setting this too large may impact overall performance.
 AutopsyOptionsPanel.maxMemoryUnitsLabel2.text=MB
 AutopsyOptionsPanel.maxSolrMemoryLabel.text=Maximum Solr JVM Memory:
