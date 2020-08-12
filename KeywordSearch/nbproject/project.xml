@@ -114,6 +114,14 @@
                     </run-dependency>
                 </dependency>
                 <dependency>
+                    <code-name-base>org.sleuthkit.autopsy.Tika</code-name-base>
+                    <build-prerequisite/>
+                    <compile-dependency/>
+                    <run-dependency>
+                        <specification-version>1.0</specification-version>
+                    </run-dependency>
+                </dependency>
+                <dependency>
                     <code-name-base>org.sleuthkit.autopsy.core</code-name-base>
                     <build-prerequisite/>
                     <compile-dependency/>
@@ -206,7 +214,6 @@
                 <package>org.apache.solr.common.luke</package>
                 <package>org.apache.solr.common.params</package>
                 <package>org.apache.solr.common.util</package>
-                <package>org.apache.tika.parser.txt</package>
                 <package>org.apache.zookeeper</package>
                 <package>org.apache.zookeeper.client</package>
                 <package>org.apache.zookeeper.common</package>
@@ -276,20 +283,12 @@
                 <binary-origin>release/modules/ext/icu4j-3.8.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/guava-19.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/guava-19.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/language-detector-0.6.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\language-detector-0.6.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/joda-time-2.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/joda-time-2.2.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/tika-core-1.20.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/tika-core-1.20.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/tagsoup-1.2.1.jar</runtime-relative-path>
@@ -322,10 +321,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/poi-ooxml-4.0.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/poi-ooxml-4.0.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/tika-parsers-1.20.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/tika-parsers-1.20.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/sqlwrapper-0.0.1.jar</runtime-relative-path>

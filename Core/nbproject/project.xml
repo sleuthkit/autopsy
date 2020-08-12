@@ -246,6 +246,14 @@
                     </run-dependency>
                 </dependency>
                 <dependency>
+                    <code-name-base>org.sleuthkit.autopsy.Tika</code-name-base>
+                    <build-prerequisite/>
+                    <compile-dependency/>
+                    <run-dependency>
+                        <specification-version>1.0</specification-version>
+                    </run-dependency>
+                </dependency>
+                <dependency>
                     <code-name-base>org.sleuthkit.autopsy.corelibs</code-name-base>
                     <build-prerequisite/>
                     <compile-dependency/>
@@ -309,8 +317,6 @@
                 <package>net.sf.sevenzipjbinding.impl</package>
                 <package>net.sf.sevenzipjbinding.simple</package>
                 <package>net.sf.sevenzipjbinding.simple.impl</package>
-                <package>org.apache.tika</package>
-                <package>org.apache.tika.io</package>
                 <package>org.sleuthkit.autopsy.actions</package>
                 <package>org.sleuthkit.autopsy.appservices</package>
                 <package>org.sleuthkit.autopsy.casemodule</package>
@@ -428,10 +434,6 @@
                 <binary-origin>release/modules/ext/libphonenumber-3.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/tika-core-1.20.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\tika-core-1.20.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/StixLib.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/StixLib.jar</binary-origin>
             </class-path-extension>
@@ -460,20 +462,12 @@
                 <binary-origin>release\modules\ext\jmatio-1.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/tika-parsers-1.20.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\tika-parsers-1.20.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/asm-7.0.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\asm-7.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/commons-pool2-2.4.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/commons-pool2-2.4.2.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/sleuthkit-4.10.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/sleuthkit-4.10.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jxmapviewer2-2.4.jar</runtime-relative-path>
@@ -610,6 +604,14 @@
             <class-path-extension>
                 <runtime-relative-path>ext/grib-4.5.5.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\grib-4.5.5.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/sleuthkit-4.10.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/sleuthkit-4.10.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/sleuthkit-caseuco-4.10.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/sleuthkit-caseuco-4.10.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/gax-1.44.0.jar</runtime-relative-path>
@@ -778,10 +780,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/curator-client-2.8.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/curator-client-2.8.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/sleuthkit-caseuco-4.10.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/sleuthkit-caseuco-4.10.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/fontbox-2.0.13.jar</runtime-relative-path>

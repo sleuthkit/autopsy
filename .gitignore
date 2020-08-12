@@ -81,6 +81,7 @@ hs_err_pid*.log
 /thunderbirdparser/release/
 /RecentActivity/release/
 /CentralRepository/release/
+/Tika/release
 
 .idea/
 *.iml
