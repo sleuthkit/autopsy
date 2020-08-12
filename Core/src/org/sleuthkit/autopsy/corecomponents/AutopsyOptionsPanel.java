@@ -38,7 +38,9 @@ import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import org.apache.commons.lang3.StringUtils;
 import org.netbeans.spi.options.OptionsPanelController;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.util.NbBundle.Messages;
@@ -117,6 +119,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         
         textFieldListener = new TextFieldListener();
         agencyLogoPathField.getDocument().addDocumentListener(textFieldListener);
+        tempDirectoryField.getDocument().addDocumentListener(textFieldListener);
         logFileCount.setText(String.valueOf(UserPreferences.getLogFileCount()));
     }
 
@@ -405,11 +408,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
      * @return True if valid; false otherwise.
      */
     boolean valid() {
-        boolean valid = true;
-        if (!isTempDirValid()) {
-            valid = false;
-        }
-        
+        boolean valid = true;       
         if (!isAgencyLogoPathValid()) {
             valid = false;
         }
@@ -520,13 +519,6 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
             return false;
         }
         return true;
-    }
-    
-    private boolean isTempDirValid() {
-        String tempDirectoryPath = tempDirectoryField.getText();
-        if (StringUtils.isNotBlank(tempDirectoryPath)) {
-            return new File(tempDirectoryPath).mkdirs();
-        }
     }
 
     /**

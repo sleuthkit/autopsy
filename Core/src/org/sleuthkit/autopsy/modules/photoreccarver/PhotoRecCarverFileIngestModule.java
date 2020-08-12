@@ -86,6 +86,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
     
     static final boolean DEFAULT_CONFIG_INCLUDE_ELSE_EXCLUDE = false;
 
+    private static final String PHOTOREC_TEMP_SUBDIR = "Photorec";
     private static final String PHOTOREC_DIRECTORY = "photorec_exec"; //NON-NLS
     private static final String PHOTOREC_SUBDIRECTORY = "bin"; //NON-NLS
     private static final String PHOTOREC_EXECUTABLE = "photorec_win.exe"; //NON-NLS
@@ -505,7 +506,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
      */
     synchronized Path createTempOutputDirectoryForCase() throws IngestModule.IngestModuleException {
         try {
-            Path path = Paths.get(Case.getCurrentCaseThrows().getTempDirectory(), PhotoRecCarverIngestModuleFactory.getModuleName());
+            Path path = Paths.get(Case.getCurrentCaseThrows().getTempDirectory(), PHOTOREC_TEMP_SUBDIR);
             return createOutputDirectoryForCase(path);
         } catch (NoCurrentCaseException ex) {
             throw new IngestModule.IngestModuleException(Bundle.cannotCreateOutputDir_message(ex.getLocalizedMessage()), ex);

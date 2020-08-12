@@ -62,30 +62,48 @@ public class CaseSettingsUtil {
     public static boolean isBaseTempDirectorySpecified() {
         return StringUtils.isNotBlank(preferences.get(TEMP_DIR_KEY, null));
     }
+    
+
+    
+    /**
+     * Checks to see if temporary directory location can be created and is read/write.
+     * @param path The location.
+     * @return True if this is a valid location for a temp directory.
+     * @throws CaseSettingsUtilException If path could not be validated due to mkdirs failure or the directory is not read/write.
+     */
+    @NbBundle.Messages({
+        "# {0} - path",
+        "UserPreferences_validateTempDirectory_errorOnCreate_text=There was an error creating the temp directory for path: {0}",
+        "# {0} - path",
+        "UserPreferences_validateTempDirectory_errorOnReadWrite_text=There was an error reading or writing to temp directory path: {0}"   
+    })
+    public static boolean validateTempDirectory(String path) throws CaseSettingsUtilException {
+        if (StringUtils.isBlank(path)) {
+            // in this instance, the default path will be used.
+            return true;
+        }
+        
+        File f = new File(path);
+        if (!f.exists()) {
+            if (!f.mkdirs()) {
+                throw new CaseSettingsUtilException(Bundle.UserPreferences_validateTempDirectory_errorOnCreate_text(path));
+            }
+        }
+        
+        if (!FileUtil.hasReadWriteAccess(Paths.get(path))) {
+            throw new CaseSettingsUtilException(Bundle.UserPreferences_validateTempDirectory_errorOnReadWrite_text(path));
+        }
+        return true;
+    }
 
     /**
      * Sets the base user-specified temporary directory.
      * @param path The path to the directory.
      * @throws CaseSettingsUtilException If the directory cannot be accessed or created.
      */
-    @NbBundle.Messages({
-        "# {0} - path",
-        "UserPreferences_setBaseTempDirectory_errorOnCreate_text=There was an error creating the temp directory for path: {0}",
-        "# {0} - path",
-        "UserPreferences_setBaseTempDirectory_errorOnReadWrite_text=There was an error reading or writing to temp directory path: {0}"   
-    })
+
     public static void setBaseTempDirectory(String path) throws CaseSettingsUtilException {
-        File f = new File(path);
-        if (!f.exists()) {
-            if (!f.mkdirs()) {
-                throw new CaseSettingsUtilException(Bundle.UserPreferences_setBaseTempDirectory_errorOnCreate_text(path));
-            }
-        }
-        
-        if (!FileUtil.hasReadWriteAccess(Paths.get(path))) {
-            throw new CaseSettingsUtilException(Bundle.UserPreferences_setBaseTempDirectory_errorOnCreate_text(path));
-        }
-        
+        validateTempDirectory(path);
         preferences.put(TEMP_DIR_KEY, path);
     }
     

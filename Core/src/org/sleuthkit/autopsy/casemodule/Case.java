@@ -61,6 +61,7 @@ import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.ThreadSafe;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import org.apache.uima.util.FileUtils;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -1194,25 +1195,6 @@ public class Case {
                  */
                 mainFrame.setTitle(getNameForTitle());
             });
-        }
-    }
-
-    /**
-     * Empties the temp subdirectory for the current case.
-     */
-    private static void clearTempSubDir(String tempSubDirPath) {
-        File tempFolder = new File(tempSubDirPath);
-        if (tempFolder.isDirectory()) {
-            File[] files = tempFolder.listFiles();
-            if (files.length > 0) {
-                for (File file : files) {
-                    if (file.isDirectory()) {
-                        FileUtil.deleteDir(file);
-                    } else {
-                        file.delete();
-                    }
-                }
-            }
         }
     }
 
@@ -2406,7 +2388,7 @@ public class Case {
          * Clear the temp subdirectory of the case directory.
          */
         progressIndicator.progress(Bundle.Case_progressMessage_clearingTempDirectory());
-        Case.clearTempSubDir(this.getTempDirectory());
+        FileUtils.deleteAllFiles(new File(this.getTempDirectory()));
     }
 
     /**
