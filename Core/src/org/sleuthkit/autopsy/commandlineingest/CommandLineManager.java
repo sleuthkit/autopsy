@@ -29,8 +29,8 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 /**
  * Base class for the command line managers.
  */
-abstract class CommandLineManager {
-    
+class CommandLineManager {
+
     private static final Logger LOGGER = Logger.getLogger(CommandLineOpenCaseManager.class.getName());
 
     /**
@@ -49,7 +49,7 @@ abstract class CommandLineManager {
 
         Case newCase = Case.getCurrentCase();
         LOGGER.log(Level.INFO, "Opened case {0}", newCase.getName());
-        
+
         return newCase;
     }
 

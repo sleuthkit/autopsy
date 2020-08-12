@@ -1209,10 +1209,8 @@ public class PortableCaseReportModule implements ReportModule {
 
         // Create an appName folder in the destination 
         Path destAppFolder = Paths.get(destBaseFolder, UserPreferences.getAppName());
-        if (!destAppFolder.toFile().exists()) {
-            if (!destAppFolder.toFile().mkdirs()) {
-                throw new IOException("Failed to create directory " + destAppFolder.toString());
-            }
+        if (!destAppFolder.toFile().exists() && !destAppFolder.toFile().mkdirs()) {
+            throw new IOException("Failed to create directory " + destAppFolder.toString());
         }
 
         // Now copy the files

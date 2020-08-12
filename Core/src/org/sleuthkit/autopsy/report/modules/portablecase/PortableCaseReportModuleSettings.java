@@ -36,7 +36,7 @@ public class PortableCaseReportModuleSettings implements ReportModuleSettings {
     private ChunkSize chunkSize;
     private boolean allTagsSelected;
     private boolean allSetsSelected;
-    private boolean includeApplication;
+    private boolean shouldIncludeApplication;
     
         /**
      * Enum for storing the display name for each chunk type and the
@@ -144,7 +144,7 @@ public class PortableCaseReportModuleSettings implements ReportModuleSettings {
     }
     
     public boolean includeApplication() {
-        return includeApplication;
+        return shouldIncludeApplication;
     }
 
     /**
@@ -162,7 +162,7 @@ public class PortableCaseReportModuleSettings implements ReportModuleSettings {
     }
     
     public void setIncludeApplication(boolean includeApplication) {
-        this.includeApplication = includeApplication;
+        this.shouldIncludeApplication = includeApplication;
     }
 
 }
