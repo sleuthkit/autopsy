@@ -18,24 +18,24 @@
  */
 package org.sleuthkit.autopsy.commandlineingest;
 
+import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
 import org.netbeans.spi.sendopts.OptionProcessor;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.casemodule.CaseActionException;
+import org.sleuthkit.autopsy.casemodule.OpenFromArguments;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Handles the opening of a case from the command line.
- * 
+ *
  */
-public class CommandLineOpenCaseManager extends CommandLineManager{
+public class CommandLineOpenCaseManager extends CommandLineManager {
 
     private static final Logger LOGGER = Logger.getLogger(CommandLineOpenCaseManager.class.getName());
-    
+
     /**
      * Starts the thread to open the case.
      */
@@ -51,7 +51,7 @@ public class CommandLineOpenCaseManager extends CommandLineManager{
 
         @Override
         public void run() {
-            List<CommandLineCommand> commands = null;
+            String casePath = "";
 
             // first look up all OptionProcessors and get input data from CommandLineOptionProcessor
             Collection<? extends OptionProcessor> optionProcessors = Lookup.getDefault().lookupAll(OptionProcessor.class);
@@ -59,33 +59,25 @@ public class CommandLineOpenCaseManager extends CommandLineManager{
             while (optionsIterator.hasNext()) {
                 // find CommandLineOptionProcessor
                 OptionProcessor processor = optionsIterator.next();
-                if (processor instanceof CommandLineOptionProcessor) {
-                    // check if we are running from command line                       
-                    commands = ((CommandLineOptionProcessor) processor).getCommands();
+                if (processor instanceof OpenFromArguments) {
+                    // check if we are running from command line
+                    casePath = Paths.get(((OpenFromArguments) processor).getDefaultArg()).toAbsolutePath().toString();
                     break;
                 }
             }
 
-            if (commands == null || commands.isEmpty()) {
+            if (casePath == null || casePath.isEmpty()) {
                 LOGGER.log(Level.SEVERE, "No command line commands specified");
                 System.err.println("No command line commands specified");
                 return;
             }
-            
-            String casePath;
-            for (CommandLineCommand command : commands) {
-                CommandLineCommand.CommandType type = command.getType();
-                if(type.equals(CommandLineCommand.CommandType.OPEN_CASE_IN_UI)) {
-                    try {
-                        Map<String, String> inputs = command.getInputs();
-                        casePath = inputs.get(CommandLineCommand.InputType.CASE_FOLDER_PATH.name());
-                                  CommandLineOpenCaseManager.this.openCase(casePath);
-                    } catch (CaseActionException ex) {
-                        String baseCaseName = command.getInputs().get(CommandLineCommand.InputType.CASE_FOLDER_PATH.name());
-                        LOGGER.log(Level.SEVERE, "Error opening case " + baseCaseName, ex);
-                        System.err.println("Error opening case " + baseCaseName);
-                    }
-                }
+
+            try {
+                CommandLineOpenCaseManager.this.openCase(casePath);
+                LOGGER.log(Level.INFO, "Opening case at " + casePath);
+            } catch (CaseActionException ex) {
+                LOGGER.log(Level.SEVERE, "Error opening case from command line ", ex);
+                System.err.println("Error opening case ");
             }
         }
 

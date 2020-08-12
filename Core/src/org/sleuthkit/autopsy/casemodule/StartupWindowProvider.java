@@ -151,9 +151,10 @@ public class StartupWindowProvider implements StartupWindowInterface {
         while (optionsIterator.hasNext()) {
             // find CommandLineOptionProcessor
             OptionProcessor processor = optionsIterator.next();
-            if ((processor instanceof CommandLineOptionProcessor)) {
+            if ((processor instanceof OpenFromArguments)) {
                 // check if we are running from command line            
-                return ((CommandLineOptionProcessor) processor).openCaseInUI();
+                String arg = ((OpenFromArguments) processor).getDefaultArg();
+                return arg != null && !arg.isEmpty();
             }
         }
         return false;
