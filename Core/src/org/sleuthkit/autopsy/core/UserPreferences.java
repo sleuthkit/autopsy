@@ -611,5 +611,5 @@ public final class UserPreferences {
      */
     public static String getGeolocationMBTilesFilePath() {
         return preferences.get(GEO_MBTILES_FILE_PATH, "");
-    }   
+    }
 }

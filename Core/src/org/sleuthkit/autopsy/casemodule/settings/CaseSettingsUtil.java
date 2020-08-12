@@ -33,17 +33,26 @@ import org.sleuthkit.autopsy.coreutils.FileUtil;
 public class CaseSettingsUtil {
     private static final Preferences preferences = NbPreferences.forModule(UserPreferences.class);
     
-    private static final String TEMP_DIR = "UserDefinedTempDirectory";
-    private static final String TEMP_DEFAULT = System.getProperty("java.io.tmpdir");
+    private static final String TEMP_DIR_KEY = "UserDefinedTempDirectory";
+    private static final String DEFAULT_TEMP_SUBDIR = "Autopsy";
     
+    
+    
+    /**
+     * Retrieves a default temporary directory that is a subdirectory of java.io.tmpdir.
+     * @return The absolute path to the temp directory.
+     */
+    private static String getDefaultTempDirectory() {
+        return Paths.get(System.getProperty("java.io.tmpdir"), DEFAULT_TEMP_SUBDIR).toAbsolutePath().toString();
+    }
     
     /**
      * Retrieves the base user-specified temporary directory.
      * @return The base user-specified temporary directory.
      */
     public static String getBaseTempDirectory() {
-        String tempDir = preferences.get(TEMP_DIR, TEMP_DEFAULT);
-        return StringUtils.isBlank(tempDir) ? TEMP_DEFAULT : tempDir;
+        String tempDir = preferences.get(TEMP_DIR_KEY, null);
+        return StringUtils.isBlank(tempDir) ? getDefaultTempDirectory() : tempDir;
     }
     
     /**
@@ -51,7 +60,7 @@ public class CaseSettingsUtil {
      * @return True if a user-specified temp directory exists in the settings.
      */
     public static boolean isBaseTempDirectorySpecified() {
-        return StringUtils.isNotBlank(preferences.get(TEMP_DIR, null));
+        return StringUtils.isNotBlank(preferences.get(TEMP_DIR_KEY, null));
     }
 
     /**
@@ -77,7 +86,7 @@ public class CaseSettingsUtil {
             throw new CaseSettingsUtilException(Bundle.UserPreferences_setBaseTempDirectory_errorOnCreate_text(path));
         }
         
-        preferences.put(TEMP_DIR, path);
+        preferences.put(TEMP_DIR_KEY, path);
     }
     
     private CaseSettingsUtil() {

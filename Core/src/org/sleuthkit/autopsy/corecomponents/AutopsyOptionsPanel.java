@@ -524,7 +524,9 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
     
     private boolean isTempDirValid() {
         String tempDirectoryPath = tempDirectoryField.getText();
-        return new File(tempDirectoryPath).mkdirs();
+        if (StringUtils.isNotBlank(tempDirectoryPath)) {
+            return new File(tempDirectoryPath).mkdirs();
+        }
     }
 
     /**

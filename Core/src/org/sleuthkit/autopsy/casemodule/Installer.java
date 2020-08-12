@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.casemodule;
 import java.io.File;
 import java.util.logging.Level;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.StringUtils;
 import org.openide.modules.ModuleInstall;
 import org.sleuthkit.autopsy.casemodule.settings.CaseSettingsUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -47,14 +48,17 @@ public class Installer extends ModuleInstall {
 
     @Override
     public void restored() {
-        String tempDir = null;
+        String tempDirStr = null;
         try {
-            if (CaseSettingsUtil.isBaseTempDirectorySpecified()) {
-                tempDir = CaseSettingsUtil.getBaseTempDirectory();
-                FileUtils.cleanDirectory(new File(tempDir));
-            }   
+            tempDirStr = CaseSettingsUtil.getBaseTempDirectory();
+            if (StringUtils.isNotBlank(tempDirStr)) {
+                File tempDir = new File(tempDirStr);
+                if (tempDir.exists()) {
+                    FileUtils.cleanDirectory(tempDir);
+                }
+            }
         } catch (Exception ex) {
-            logger.log(Level.WARNING, "There was an error while cleaning up temp directory: " + (tempDir == null ? "<null>" : tempDir), ex);
+            logger.log(Level.WARNING, "There was an error while cleaning up temp directory: " + (tempDirStr == null ? "<null>" : tempDirStr), ex);
         }
     }
 }
