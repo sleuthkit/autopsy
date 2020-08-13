@@ -65,8 +65,8 @@
         </copy>
         
         <!--Copy ImageMagick to release-->
-        <copy todir="${basedir}/release/ImageMagick-7.0.10-Q16-HDRI" >
-            <fileset dir="${thirdparty.dir}/ImageMagick-7.0.10-Q16-HDRI"/>
+        <copy todir="${basedir}/release/ImageMagick-7.0.10-27-portable-Q16-x64" >
+            <fileset dir="${thirdparty.dir}/ImageMagick-7.0.10-27-portable-Q16-x64"/>
         </copy>
 
         <!-- The 'libgstlibav.dll' file is too big to store on GitHub, so we
