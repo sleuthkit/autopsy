@@ -25,6 +25,7 @@ public class CaseSettingsUtilException extends Exception {
 
     /**
      * Main constructor.
+     *
      * @param string The message for the exception.
      */
     CaseSettingsUtilException(String string) {
@@ -33,10 +34,11 @@ public class CaseSettingsUtilException extends Exception {
 
     /**
      * Main constructor.
+     *
      * @param string The message for the exception.
      * @param thrwbl The inner exception.
      */
     CaseSettingsUtilException(String string, Throwable thrwbl) {
         super(string, thrwbl);
-    }   
+    }
 }

@@ -329,7 +329,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         setTempDirEnabled();
         valid(); //ensure the error messages are up to date
     }
-    
+
     private void setTempDirEnabled() {
         boolean enabled = !Case.isCaseOpen();
         this.tempDirectoryBrowseButton.setEnabled(enabled);

@@ -31,65 +31,73 @@ import org.sleuthkit.autopsy.coreutils.FileUtil;
  * Provides case-specific settings like the user-specified temp folder.
  */
 public class CaseSettingsUtil {
+
     private static final Preferences preferences = NbPreferences.forModule(UserPreferences.class);
-    
+
     private static final String TEMP_DIR_KEY = "UserDefinedTempDirectory";
     private static final String DEFAULT_TEMP_SUBDIR = "Autopsy";
-    
-    
-    
+
     /**
-     * Retrieves a default temporary directory that is a subdirectory of java.io.tmpdir.
+     * Retrieves a default temporary directory that is a subdirectory of
+     * java.io.tmpdir.
+     *
      * @return The absolute path to the temp directory.
      */
     private static String getDefaultTempDirectory() {
         return Paths.get(System.getProperty("java.io.tmpdir"), DEFAULT_TEMP_SUBDIR).toAbsolutePath().toString();
     }
-    
+
     /**
      * Retrieves the base user-specified temporary directory.
+     *
      * @return The base user-specified temporary directory.
      */
     public static String getBaseTempDirectory() {
         String tempDir = preferences.get(TEMP_DIR_KEY, null);
         return StringUtils.isBlank(tempDir) ? getDefaultTempDirectory() : tempDir;
     }
-    
+
     /**
-     * Returns whether or not there is a user-specified temp directory saved in settings.
+     * Returns whether or not there is a user-specified temp directory saved in
+     * settings.
+     *
      * @return True if a user-specified temp directory exists in the settings.
      */
     public static boolean isBaseTempDirectorySpecified() {
         return StringUtils.isNotBlank(preferences.get(TEMP_DIR_KEY, null));
     }
-    
 
-    
     /**
-     * Checks to see if temporary directory location can be created and is read/write.
+     * Checks to see if temporary directory location can be created and is
+     * read/write.
+     *
      * @param path The location.
+     *
      * @return True if this is a valid location for a temp directory.
-     * @throws CaseSettingsUtilException If path could not be validated due to mkdirs failure or the directory is not read/write.
+     *
+     * @throws CaseSettingsUtilException If path could not be validated due to
+     *                                   mkdirs failure or the directory is not
+     *                                   read/write.
      */
     @NbBundle.Messages({
         "# {0} - path",
         "UserPreferences_validateTempDirectory_errorOnCreate_text=There was an error creating the temp directory for path: {0}",
         "# {0} - path",
-        "UserPreferences_validateTempDirectory_errorOnReadWrite_text=There was an error reading or writing to temp directory path: {0}"   
+        "UserPreferences_validateTempDirectory_errorOnReadWrite_text=There was an error reading or writing to temp directory path: {0}"
     })
     public static boolean validateTempDirectory(String path) throws CaseSettingsUtilException {
         if (StringUtils.isBlank(path)) {
             // in this instance, the default path will be used.
             return true;
         }
-        
+
         File f = new File(path);
         if (!f.exists()) {
             if (!f.mkdirs()) {
                 throw new CaseSettingsUtilException(Bundle.UserPreferences_validateTempDirectory_errorOnCreate_text(path));
             }
         }
-        
+
         if (!FileUtil.hasReadWriteAccess(Paths.get(path))) {
             throw new CaseSettingsUtilException(Bundle.UserPreferences_validateTempDirectory_errorOnReadWrite_text(path));
         }
@@ -98,15 +106,17 @@ public class CaseSettingsUtil {
 
     /**
      * Sets the base user-specified temporary directory.
+     *
      * @param path The path to the directory.
-     * @throws CaseSettingsUtilException If the directory cannot be accessed or created.
+     *
+     * @throws CaseSettingsUtilException If the directory cannot be accessed or
+     *                                   created.
      */
-
     public static void setBaseTempDirectory(String path) throws CaseSettingsUtilException {
         validateTempDirectory(path);
         preferences.put(TEMP_DIR_KEY, path);
     }
-    
+
     private CaseSettingsUtil() {
     }
 }

@@ -81,9 +81,9 @@ import org.sleuthkit.datamodel.TskData;
 final class PhotoRecCarverFileIngestModule implements FileIngestModule {
 
     static final boolean DEFAULT_CONFIG_KEEP_CORRUPTED_FILES = false;
-    static final PhotoRecCarverIngestJobSettings.ExtensionFilterOption DEFAULT_CONFIG_EXTENSION_FILTER = 
-            PhotoRecCarverIngestJobSettings.ExtensionFilterOption.NO_FILTER;
-    
+    static final PhotoRecCarverIngestJobSettings.ExtensionFilterOption DEFAULT_CONFIG_EXTENSION_FILTER
+            = PhotoRecCarverIngestJobSettings.ExtensionFilterOption.NO_FILTER;
+
     static final boolean DEFAULT_CONFIG_INCLUDE_ELSE_EXCLUDE = false;
 
     private static final String PHOTOREC_TEMP_SUBDIR = "Photorec";
@@ -142,9 +142,9 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             toRet.addAll(Arrays.asList("options", "keep_corrupted_file"));
         }
 
-        if (settings.getExtensionFilterOption() != 
-                PhotoRecCarverIngestJobSettings.ExtensionFilterOption.NO_FILTER) {
-            
+        if (settings.getExtensionFilterOption()
+                != PhotoRecCarverIngestJobSettings.ExtensionFilterOption.NO_FILTER) {
+
             // add the file opt menu item
             toRet.add("fileopt");
 
@@ -153,15 +153,15 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
 
             // if we are including file extensions, then we are excluding 
             // everything else and vice-versa.
-            String everythingEnable = settings.getExtensionFilterOption() == 
-                    PhotoRecCarverIngestJobSettings.ExtensionFilterOption.INCLUDE
-                    ? disable : enable;
+            String everythingEnable = settings.getExtensionFilterOption()
+                    == PhotoRecCarverIngestJobSettings.ExtensionFilterOption.INCLUDE
+                            ? disable : enable;
 
             toRet.addAll(Arrays.asList("everything", everythingEnable));
 
-            final String itemEnable = settings.getExtensionFilterOption() == 
-                    PhotoRecCarverIngestJobSettings.ExtensionFilterOption.INCLUDE
-                    ? enable : disable;
+            final String itemEnable = settings.getExtensionFilterOption()
+                    == PhotoRecCarverIngestJobSettings.ExtensionFilterOption.INCLUDE
+                            ? enable : disable;
 
             settings.getExtensions().forEach((extension) -> {
                 toRet.addAll(Arrays.asList(extension, itemEnable));
@@ -198,13 +198,13 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
     public void startUp(IngestJobContext context) throws IngestModule.IngestModuleException {
         // validate settings
         if (this.settings.getExtensionFilterOption() != PhotoRecCarverIngestJobSettings.ExtensionFilterOption.NO_FILTER) {
-            if (this.settings.getExtensions().isEmpty() && 
-                    this.settings.getExtensionFilterOption() == PhotoRecCarverIngestJobSettings.ExtensionFilterOption.INCLUDE) {
-                
+            if (this.settings.getExtensions().isEmpty()
+                    && this.settings.getExtensionFilterOption() == PhotoRecCarverIngestJobSettings.ExtensionFilterOption.INCLUDE) {
+
                 throw new IngestModule.IngestModuleException(
                         Bundle.PhotoRecCarverFileIngestModule_startUp_noExtensionsProvided_description());
             }
-            
+
             List<String> invalidExtensions = this.settings.getExtensions().stream()
                     .filter((ext) -> !PhotoRecCarverFileOptExtensions.isValidExtension(ext))
                     .collect(Collectors.toList());
@@ -213,11 +213,11 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
                 throw new IngestModule.IngestModuleException(
                         Bundle.PhotoRecCarverFileIngestModule_startUp_invalidExtensions_description(
                                 String.join(",", invalidExtensions)));
-            }   
+            }
         }
-        
+
         this.optionsString = getPhotorecOptions(this.settings);
-        
+
         this.context = context;
         this.services = IngestServices.getInstance();
         this.jobId = this.context.getJobId();
@@ -495,10 +495,10 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             return this.tempDirPath;
         }
     }
-    
+
     /**
-     * Creates the output directory for this module for the current case's temp directory, if it
-     * does not already exist.
+     * Creates the output directory for this module for the current case's temp
+     * directory, if it does not already exist.
      *
      * @return The absolute path of the output directory.
      *
@@ -514,8 +514,8 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
     }
 
     /**
-     * Creates the output directory for this module for the current case's module directory, if it
-     * does not already exist.
+     * Creates the output directory for this module for the current case's
+     * module directory, if it does not already exist.
      *
      * @return The absolute path of the output directory.
      *
@@ -529,11 +529,13 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             throw new IngestModule.IngestModuleException(Bundle.cannotCreateOutputDir_message(ex.getLocalizedMessage()), ex);
         }
     }
-    
+
     /**
      * Creates the output directory for this module for the current case, if it
      * does not already exist.
+     *
      * @param path The absolute path to be created.
+     *
      * @return The absolute path of the output directory.
      *
      * @throws org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException

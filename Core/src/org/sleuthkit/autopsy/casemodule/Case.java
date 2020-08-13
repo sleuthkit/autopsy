@@ -142,6 +142,7 @@ import org.sleuthkit.datamodel.TskUnsupportedSchemaVersionException;
  * An Autopsy case. Currently, only one case at a time may be open.
  */
 public class Case {
+
     private static final String CASE_TEMP_DIR = "AutopsyCase";
     private static final int CASE_LOCK_TIMEOUT_MINS = 1;
     private static final int CASE_RESOURCES_LOCK_TIMEOUT_HOURS = 1;
@@ -1322,8 +1323,7 @@ public class Case {
         }
         return hostPath.toString();
     }
-    
-    
+
     /**
      * Gets the full path to the temp directory for this case, creating it if it
      * does not exist.
@@ -1338,7 +1338,7 @@ public class Case {
         if (!f.exists()) {
             f.mkdirs();
         }
-        
+
         return path.toAbsolutePath().toString();
     }
 
@@ -1550,9 +1550,9 @@ public class Case {
      *
      * This should not be called from the event dispatch thread (EDT)
      *
-     * @param newTag            The added ContentTag.
-     * @param deletedTagList    List of ContentTags that were removed as a result 
-     *                          of the addition of newTag.
+     * @param newTag         The added ContentTag.
+     * @param deletedTagList List of ContentTags that were removed as a result
+     *                       of the addition of newTag.
      */
     public void notifyContentTagAdded(ContentTag newTag, List<ContentTag> deletedTagList) {
         eventPublisher.publish(new ContentTagAddedEvent(newTag, deletedTagList));
@@ -1615,9 +1615,9 @@ public class Case {
      *
      * This should not be called from the event dispatch thread (EDT)
      *
-     * @param newTag            The added ContentTag.
-     * @param removedTagList    List of ContentTags that were removed as a result 
-     *                          of the addition of newTag.
+     * @param newTag         The added ContentTag.
+     * @param removedTagList List of ContentTags that were removed as a result
+     *                       of the addition of newTag.
      */
     public void notifyBlackBoardArtifactTagAdded(BlackboardArtifactTag newTag, List<BlackboardArtifactTag> removedTagList) {
         eventPublisher.publish(new BlackBoardArtifactTagAddedEvent(newTag, removedTagList));
@@ -2107,7 +2107,7 @@ public class Case {
          */
         private void openFileSystems(List<Image> images) throws TskCoreException, InterruptedException {
             byte[] tempBuff = new byte[512];
-            
+
             for (Image image : images) {
                 String imageStr = image.getName();
 
@@ -2131,12 +2131,12 @@ public class Case {
                 if (images == null) {
                     return;
                 }
-                
+
                 if (images.size() > MAX_IMAGE_THRESHOLD) {
                     // If we have a large number of images, don't try to preload anything
                     logger.log(
-                        Level.INFO,
-                        String.format("Skipping background load of file systems due to large number of images in case (%d)", images.size()));
+                            Level.INFO,
+                            String.format("Skipping background load of file systems due to large number of images in case (%d)", images.size()));
                     return;
                 }
 
@@ -2493,7 +2493,7 @@ public class Case {
      * specific to this case.
      *
      * @param progressIndicator A progress indicator.
-     * @param isNewCase True if case is new
+     * @param isNewCase         True if case is new
      *
      * @throws CaseActionException If there is a problem completing the
      *                             operation. The exception will have a
@@ -2755,7 +2755,7 @@ public class Case {
          * Delete files from temp directory if any exist.
          */
         deleteTempfilesFromCaseDirectory(progressIndicator);
-        
+
         /*
          * Switch the log directory.
          */
