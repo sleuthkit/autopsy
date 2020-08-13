@@ -22,6 +22,8 @@ import com.google.common.eventbus.Subscribe;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Graphics;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.swing.JSplitPane;
@@ -47,14 +49,12 @@ public final class DiscoveryTopComponent extends TopComponent {
 
     private static final long serialVersionUID = 1L;
     private static final String PREFERRED_ID = "Discovery"; // NON-NLS
+    private static final int ANIMATION_INCREMENT = 30;
+    private volatile static int resultsAreaSize = 250;
     private final GroupListPanel groupListPanel;
     private final DetailsPanel detailsPanel;
     private final ResultsPanel resultsPanel;
     private int dividerLocation = -1;
-
-    private static final int ANIMATION_INCREMENT = 10;
-    private static final int RESULTS_AREA_SMALL_SIZE = 250;
-
     private SwingAnimator animator = null;
 
     /**
@@ -76,6 +76,19 @@ public final class DiscoveryTopComponent extends TopComponent {
             public BasicSplitPaneDivider createDefaultDivider() {
                 return new BasicSplitPaneDividerImpl(this);
 
+            }
+        });
+        rightSplitPane.addPropertyChangeListener(JSplitPane.DIVIDER_LOCATION_PROPERTY, new PropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                if (evt.getPropertyName().equalsIgnoreCase(JSplitPane.DIVIDER_LOCATION_PROPERTY)) {
+                    //Only change the saved location when it was a manual change by the user and not the animation or the window opening initially
+                    if ((animator == null || !animator.isRunning()) && evt.getNewValue() instanceof Integer
+                            && ((int) evt.getNewValue() + 5) < (rightSplitPane.getHeight() - rightSplitPane.getDividerSize())) {
+                        resultsAreaSize = (int) evt.getNewValue();
+
+                    }
+                }
             }
         });
     }
@@ -130,6 +143,7 @@ public final class DiscoveryTopComponent extends TopComponent {
     @Override
     protected void componentClosed() {
         DiscoveryDialog.getDiscoveryDialogInstance().cancelSearch();
+        DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.ClearInstanceSelectionEvent());
         DiscoveryEventUtils.getDiscoveryEventBus().unregister(this);
         DiscoveryEventUtils.getDiscoveryEventBus().unregister(groupListPanel);
         DiscoveryEventUtils.getDiscoveryEventBus().unregister(resultsPanel);
@@ -245,6 +259,7 @@ public final class DiscoveryTopComponent extends TopComponent {
     void handleDetailsVisibleEvent(DiscoveryEventUtils.DetailsVisibleEvent detailsVisibleEvent) {
         if (animator != null && animator.isRunning()) {
             animator.stop();
+            animator = null;
         }
         dividerLocation = rightSplitPane.getDividerLocation();
         if (detailsVisibleEvent.isShowDetailsArea()) {
@@ -316,8 +331,9 @@ public final class DiscoveryTopComponent extends TopComponent {
 
         @Override
         public boolean hasTerminated() {
-            if (dividerLocation != JSplitPane.UNDEFINED_CONDITION && dividerLocation < RESULTS_AREA_SMALL_SIZE) {
-                dividerLocation = RESULTS_AREA_SMALL_SIZE;
+            if (dividerLocation != JSplitPane.UNDEFINED_CONDITION && dividerLocation < resultsAreaSize) {
+                dividerLocation = resultsAreaSize;
+                animator = null;
                 return true;
             }
             return false;
@@ -340,6 +356,7 @@ public final class DiscoveryTopComponent extends TopComponent {
         public boolean hasTerminated() {
             if (dividerLocation > rightSplitPane.getHeight() || dividerLocation == JSplitPane.UNDEFINED_CONDITION) {
                 dividerLocation = rightSplitPane.getHeight();
+                animator = null;
                 return true;
             }
             return false;
@@ -362,8 +379,9 @@ public final class DiscoveryTopComponent extends TopComponent {
 
         @Override
         public void paintComponent(Graphics g) {
-            if ((dividerLocation == JSplitPane.UNDEFINED_CONDITION) || (dividerLocation <= rightSplitPane.getHeight() && dividerLocation >= RESULTS_AREA_SMALL_SIZE)) {
-                rightSplitPane.setDividerLocation(dividerLocation);
+            if (animator != null && animator.isRunning() && (dividerLocation == JSplitPane.UNDEFINED_CONDITION
+                    || (dividerLocation <= getHeight() && dividerLocation >= resultsAreaSize))) {
+                setDividerLocation(dividerLocation);
             }
             super.paintComponent(g);
         }

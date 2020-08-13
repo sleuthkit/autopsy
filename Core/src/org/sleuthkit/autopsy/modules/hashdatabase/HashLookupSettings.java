@@ -373,6 +373,35 @@ final class HashLookupSettings implements Serializable {
         private final int referenceSetID;
         private DatabaseType dbType;
 
+        
+
+        /**
+         * Constructs a HashDbInfo object.
+         *
+         * @param hashSetName        The name of the hash set
+         * @param knownFilesType     The known files type
+         * @param searchDuringIngest Whether or not the db is searched during
+         *                           ingest
+         * @param sendIngestMessages Whether or not ingest messages are sent
+         * @param path               The path to the db
+         * @param referenceSetID     The reference set ID.
+         * @param version            The version for the hashset.
+         * @param readOnly           Whether or not the set is readonly.
+         * @param isCRType           A central repo db type (otherwise, file type).
+         */
+        HashDbInfo(String hashSetName, HashDbManager.HashDb.KnownFilesType knownFilesType, boolean searchDuringIngest, boolean sendIngestMessages, 
+                String path, int referenceSetID, String version, boolean readOnly, boolean isCRType) {
+            this.hashSetName = hashSetName;
+            this.knownFilesType = knownFilesType;
+            this.searchDuringIngest = searchDuringIngest;
+            this.sendIngestMessages = sendIngestMessages;
+            this.path = path;
+            this.referenceSetID = referenceSetID;
+            this.version = version;
+            this.readOnly = readOnly;
+            this.dbType = isCRType ? DatabaseType.CENTRAL_REPOSITORY : DatabaseType.FILE;
+        }
+        
         /**
          * Constructs a HashDbInfo object for files type
          *

@@ -185,11 +185,11 @@ public class CorrelationAttributeUtil {
                 }
             }
         } catch (CorrelationAttributeNormalizationException ex) {
-            logger.log(Level.SEVERE, String.format("Error normalizing correlation attribute (%s)", artifact), ex); // NON-NLS
+            logger.log(Level.WARNING, String.format("Error normalizing correlation attribute (%s)", artifact), ex); // NON-NLS
             return correlationAttrs;
         } 
         catch (InvalidAccountIDException ex) {
-            logger.log(Level.SEVERE, String.format("Invalid account identifier (%s)", artifact), ex); // NON-NLS
+            logger.log(Level.WARNING, String.format("Invalid account identifier (artifactID: %d)", artifact.getId())); // NON-NLS
             return correlationAttrs;
         } 
         catch (CentralRepoException ex) {

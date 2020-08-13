@@ -273,6 +273,8 @@ final class ExtractPrefetch extends Extract {
                                     BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME, getName(),
                                     applicationName),//NON-NLS
                                 new BlackboardAttribute(
+                                    BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH, getName(), filePath),
+                                new BlackboardAttribute(
                                     BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME, getName(),
                                     executionTime),
                                 new BlackboardAttribute(
@@ -380,7 +382,7 @@ final class ExtractPrefetch extends Extract {
         
         for (AbstractFile pFile : files) {
 
-            if (pFile.getParentPath().toLowerCase().contains(filePath.toLowerCase())) {
+            if (pFile.getParentPath().toLowerCase().endsWith(filePath.toLowerCase() + '/')) {
                 return pFile;
             }
         }
