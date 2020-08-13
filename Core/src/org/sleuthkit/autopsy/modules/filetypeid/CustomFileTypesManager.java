@@ -26,8 +26,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import javax.xml.bind.DatatypeConverter;
 import javax.xml.parsers.ParserConfigurationException;
+import org.apache.commons.codec.DecoderException;
+import org.apache.commons.codec.binary.Hex;
 import org.openide.util.io.NbObjectInputStream;
 import org.openide.util.io.NbObjectOutputStream;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
@@ -166,7 +167,7 @@ final class CustomFileTypesManager {
             /*
              * Add type for gzip.
              */
-            byteArray = DatatypeConverter.parseHexBinary("1F8B");  //NON-NLS  
+            byteArray = Hex.decodeHex("1F8B");  //NON-NLS  
             signatureList.clear();
             signatureList.add(new Signature(byteArray, 0L));
             fileType = new FileType("application/x-gzip", signatureList); //NON-NLS
@@ -175,7 +176,7 @@ final class CustomFileTypesManager {
             /*
              * Add type for wk1.
              */
-            byteArray = DatatypeConverter.parseHexBinary("0000020006040600080000000000"); //NON-NLS
+            byteArray = Hex.decodeHex("0000020006040600080000000000"); //NON-NLS
             signatureList.clear();
             signatureList.add(new Signature(byteArray, 0L));
             fileType = new FileType("application/x-123", signatureList); //NON-NLS
@@ -184,7 +185,7 @@ final class CustomFileTypesManager {
             /*
              * Add type for Radiance images.
              */
-            byteArray = DatatypeConverter.parseHexBinary("233F52414449414E43450A");//NON-NLS
+            byteArray = Hex.decodeHex("233F52414449414E43450A");//NON-NLS
             signatureList.clear();
             signatureList.add(new Signature(byteArray, 0L));
             fileType = new FileType("image/vnd.radiance", signatureList); //NON-NLS
@@ -193,7 +194,7 @@ final class CustomFileTypesManager {
             /*
              * Add type for dcx images.
              */
-            byteArray = DatatypeConverter.parseHexBinary("B168DE3A"); //NON-NLS
+            byteArray = Hex.decodeHex("B168DE3A"); //NON-NLS
             signatureList.clear();
             signatureList.add(new Signature(byteArray, 0L));
             fileType = new FileType("image/x-dcx", signatureList); //NON-NLS
@@ -210,7 +211,7 @@ final class CustomFileTypesManager {
             /*
              * Add type for pict images.
              */
-            byteArray = DatatypeConverter.parseHexBinary("001102FF"); //NON-NLS
+            byteArray = Hex.decodeHex("001102FF"); //NON-NLS
             signatureList.clear();
             signatureList.add(new Signature(byteArray, 522L));
             fileType = new FileType("image/x-pict", signatureList); //NON-NLS
@@ -251,7 +252,7 @@ final class CustomFileTypesManager {
             /*
              * Add type for tga.
              */
-            byteArray = DatatypeConverter.parseHexBinary("54525545564953494F4E2D5846494C452E00"); //NON-NLS
+            byteArray = Hex.decodeHex("54525545564953494F4E2D5846494C452E00"); //NON-NLS
             signatureList.clear();
             signatureList.add(new Signature(byteArray, 17, false));
             fileType = new FileType("image/x-tga", signatureList); //NON-NLS
@@ -311,7 +312,7 @@ final class CustomFileTypesManager {
              * Add type for .tec files with leading End Of Image marker (JFIF
              * JPEG)
              */
-            byteArray = DatatypeConverter.parseHexBinary("FFD9FFD8"); //NON-NLS
+            byteArray = Hex.decodeHex("FFD9FFD8"); //NON-NLS
             signatureList.clear();
             signatureList.add(new Signature(byteArray, 0L));
             fileType = new FileType("image/jpeg", signatureList); //NON-NLS
@@ -321,13 +322,13 @@ final class CustomFileTypesManager {
              * Add type for Windows NT registry files with leading End Of Image marker (JFIF
              * JPEG)
              */
-            byteArray = DatatypeConverter.parseHexBinary("72656766"); //NON-NLS
+            byteArray = Hex.decodeHex("72656766"); //NON-NLS
             signatureList.clear();
             signatureList.add(new Signature(byteArray, 0L));
             fileType = new FileType("application/x.windows-registry", signatureList); //NON-NLS
             autopsyDefinedFileTypes.add(fileType);
 
-        } catch (IllegalArgumentException ex) {
+        } catch (DecoderException ex) {
             /*
              * parseHexBinary() throws this if the argument passed in is not hex
              */
@@ -424,7 +425,7 @@ final class CustomFileTypesManager {
                 }
             }
             return fileTypes;
-        } catch (IOException | ParserConfigurationException | SAXException ex) {
+        } catch (IOException | ParserConfigurationException | SAXException | DecoderException ex) {
             throw new CustomFileTypesException(String.format("Failed to read ssettings from %s", filePath), ex); //NON-NLS
         }
     }
@@ -441,7 +442,7 @@ final class CustomFileTypesManager {
      * @throws NumberFormatException    if there is a problem parsing the file
      *                                  type.
      */
-    private static FileType parseFileType(Element fileTypeElem) throws IllegalArgumentException, NumberFormatException {
+    private static FileType parseFileType(Element fileTypeElem) throws DecoderException, NumberFormatException {
         String mimeType = parseMimeType(fileTypeElem);
         Signature signature = parseSignature(fileTypeElem);
         // File type definitions in the XML file were written prior to the 
@@ -469,7 +470,7 @@ final class CustomFileTypesManager {
      *
      * @return The signature.
      */
-    private static Signature parseSignature(Element fileTypeElem) throws IllegalArgumentException, NumberFormatException {
+    private static Signature parseSignature(Element fileTypeElem) throws DecoderException, NumberFormatException {
         NodeList signatureElems = fileTypeElem.getElementsByTagName(SIGNATURE_TAG_NAME);
         Element signatureElem = (Element) signatureElems.item(0);
 
@@ -477,18 +478,18 @@ final class CustomFileTypesManager {
         Signature.Type signatureType = Signature.Type.valueOf(sigTypeAttribute);
 
         String sigBytesString = getChildElementTextContent(signatureElem, BYTES_TAG_NAME);
-        byte[] signatureBytes = DatatypeConverter.parseHexBinary(sigBytesString);
+        byte[] signatureBytes = Hex.decodeHex(sigBytesString);
 
         Element offsetElem = (Element) signatureElem.getElementsByTagName(OFFSET_TAG_NAME).item(0);
         String offsetString = offsetElem.getTextContent();
-        long offset = DatatypeConverter.parseLong(offsetString);
+        long offset = Long.parseLong(offsetString);
 
         boolean isRelativeToStart;
         String relativeString = offsetElem.getAttribute(RELATIVE_ATTRIBUTE);
         if (null == relativeString || relativeString.equals("")) {
             isRelativeToStart = true;
         } else {
-            isRelativeToStart = DatatypeConverter.parseBoolean(relativeString);
+            isRelativeToStart = Boolean.parseBoolean(relativeString);
         }
 
         return new Signature(signatureBytes, offset, signatureType, isRelativeToStart);
