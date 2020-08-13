@@ -57,7 +57,6 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import javax.annotation.concurrent.GuardedBy;
-import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
@@ -165,6 +164,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
     private List<AutoIngestJob> pendingJobs;
     @GuardedBy("jobsLock")
     private AutoIngestJob currentJob;
+    @GuardedBy("jobsLock")
     private AutoIngestJobLogger jobLogger;
     @GuardedBy("jobsLock")
     private List<AutoIngestJob> completedJobs;
@@ -1527,15 +1527,20 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
     /**
      * A single instance of this job processing task is used by the auto ingest
      * manager to process auto ingest jobs.
-     *
-     * The job processing task can be paused between jobs (it waits on the
-     * monitor of its pause lock object) and resumed (by notifying the monitor
-     * of its pause lock object). This supports doing things that should be done
-     * between jobs: orderly shutdown of auto ingest and changes to the ingest
-     * configuration (settings). Note that the ingest configuration may be
-     * specific to the host machine or shared between multiple nodes, in which
-     * case it is downloaded from a specified location before each job.
-     *
+     * <p>
+     * While processing a job, this task blocks to wait on sub tasks in other
+     * threads that do the following: a) obtain coordination service locks, b)
+     * update the coordination service data store, c) download shared
+     * configuration settings, d) verify the availability of the core
+     * application services, e) run a data source processor on the data source
+     * for the job, and f) run the the analysis (ingest) modules on the data
+     * source for the job.
+     * <p>
+     * The job processing task can be paused by request between jobs and
+     * resumed. This supports doing things that should be done between jobs such
+     * as settings changes and orderly shutdown of auto ingest while no job is
+     * in progress.
+     * <p>
      * The task pauses itself if critical system errors occur, e.g., problems
      * with the coordination service, database server, Solr server, etc. The
      * idea behind this is to avoid attempts to process jobs when the auto
@@ -1543,19 +1548,11 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
      * results. It is up to a system administrator to examine the auto ingest
      * system logs, etc., to find a remedy for the problem and then resume the
      * task.
-     *
-     *
-     * Note that the task also a) waits on the futures of sub tasks that check
-     * the availability of the core application services and download shared job
-     * configuration and b) waits on the monitor of its ingest lock object both
-     * when the data source processor and the analysis modules are running in
-     * other threads. For the latter, notifies are done via a data source
-     * processor callback and an ingest job event handler, respectively.
      */
     private final class JobProcessingTask implements Runnable {
 
-        private final static String SUB_TASK_THREAD_POOL_NAME = "AIM-service-status-checks-%d";
-        private final static int SUB_TASK_THREADS = 1;
+        private final static String SUB_TASK_THREAD_NAME = "AIM-job-processing-subtask-%d";
+        private final static int NUM_SUB_TASK_THREADS = 1;
         private final static int MAX_SUB_TASK_RETRIES = 2;
         private final static int SUB_TASK_RETRY_INCR_MINS = 5;
         private final ScheduledThreadPoolExecutor subTaskExecutor;
@@ -1571,7 +1568,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          * process auto ingest jobs.
          */
         private JobProcessingTask() {
-            subTaskExecutor = new ScheduledThreadPoolExecutor(SUB_TASK_THREADS, new ThreadFactoryBuilder().setNameFormat(SUB_TASK_THREAD_POOL_NAME).build());
+            subTaskExecutor = new ScheduledThreadPoolExecutor(NUM_SUB_TASK_THREADS, new ThreadFactoryBuilder().setNameFormat(SUB_TASK_THREAD_NAME).build());
             ingestLock = new Object();
             pauseLock = new Object();
         }
@@ -1596,32 +1593,44 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                         processJobs();
                     } catch (InterruptedException ex) {
                         /*
-                         * Interrupted while blocked during job processing,
-                         * i.e., this task was cancelled while waiting for
-                         * something to happen on another thread because auto
-                         * ingest is shutting down. Exit the loop.
+                         * This task was interrupted because auto ingest is
+                         * shutting down while the task was blocked during job
+                         * processing, i.e., the task was cancelled while
+                         * waiting for something to happen in another thread.
+                         * Exit the loop.
                          */
-                        sysLogger.log(Level.SEVERE, "Interrupted while blocked during job processing, stopping job processing", ex);
+                        sysLogger.log(Level.SEVERE, "Job processing task interrupted", ex);
                         break;
                     } catch (SharedConfigDownloadException | ServiceDownException | AnalysisStartupException ex) {
-                        sysLogger.log(Level.SEVERE, "Critical auto ingest system error, pausing job processing", ex);
+                        /*
+                         * A critical error occurred while processing a job.
+                         * Pause to allow a system adminstrator to apply a
+                         * remedy.
+                         */
+                        sysLogger.log(Level.SEVERE, "A critical auto ingest system error occurred", ex);
                         if (jobProcessingTaskFuture.isCancelled()) {
                             break;
                         }
                         pauseForSystemError();
-                    } finally {
+                    } finally { // RJCTODO
                         /*
-                         * Exception firewall. RJCTODO
+                         * This is an exception firewall. An unchecked runtime
+                         * critical error occurred while processing a job. Pause
+                         * to allow a system adminstrator to apply a remedy.
                          */
-                        sysLogger.log(Level.SEVERE, "Unexpected auto ingest system error, pausing job processing"); // RJCTODO add ex
+                        sysLogger.log(Level.SEVERE, "An unexpected auto ingest system error occurred"); // RJCTODO add ex
+                        if (jobProcessingTaskFuture.isCancelled()) {
+                            break;
+                        }
+                        pauseForSystemError();
                     }
                 } catch (InterruptedException ex) {
                     /*
-                     * Interrupted while blocked waiting for an input directory
-                     * scan or for a resume command after a pause because auto
-                     * ingest is shutting down. Exit the loop.
+                     * This task was interrupted because auto ingest is shutting
+                     * down while blocked waiting for an input directory scan or
+                     * for a resume command after a pause. Exit the loop.
                      */
-                    sysLogger.log(Level.SEVERE, "Interrupted while blocked waiting for scan or paused, stopping job processing", ex);
+                    sysLogger.log(Level.SEVERE, "Job processing task interrupted", ex);
                     break;
                 }
             }
@@ -1740,7 +1749,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
             }
 
             synchronized (pauseLock) {
-                sysLogger.log(Level.SEVERE, "Job processing paused for system error");
+                sysLogger.log(Level.SEVERE, "Job processing paused for critical system error");
                 setChanged();
                 notifyObservers(Event.PAUSED_FOR_SYSTEM_ERROR);
 
@@ -1751,7 +1760,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 eventPublisher.publishRemotely(lastPublishedStateEvent = new AutoIngestNodeStateEvent(Event.PAUSED_FOR_SYSTEM_ERROR, AutoIngestManager.LOCAL_HOST_NAME));
 
                 pauseLock.wait();
-                sysLogger.log(Level.INFO, "Job processing resumed after system error");
+                sysLogger.log(Level.INFO, "Job processing resumed after critical system error");
                 setChanged();
                 notifyObservers(Event.RESUMED);
 
@@ -1840,7 +1849,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                     manifestLock = JobProcessingTask.this.dequeueAndLockNextJob();
                 }
             } catch (CoordinationServiceException ex) {
-                sysLogger.log(Level.SEVERE, "Coordination service error processing pending jobs queue, checking core services", ex);
+                sysLogger.log(Level.SEVERE, "Coordination service error processing pending jobs queue", ex);
                 verifyRequiredSevicesAreRunning();
             }
         }
@@ -2030,7 +2039,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
             eventPublisher.publishRemotely(new AutoIngestJobStartedEvent(currentJob));
 
             /*
-             * Attempt the job. Any exceptions are propagated to the enclosing
+             * Attempt the job.
              */
             try {
                 if (currentJob.isCanceled() || jobProcessingTaskFuture.isCancelled()) {
@@ -2049,13 +2058,17 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                     currentJob.setCompletedDate(completedDate);
                 } else {
                     /*
-                     * The job may be retried.
+                     * The job may be retried, see below.
                      */
                     currentJob.setProcessingStatus(AutoIngestJob.ProcessingStatus.PENDING);
                 }
                 currentJob.setProcessingHostName("");
                 updateAutoIngestJobData(currentJob);
 
+                /*
+                 * Determine whether or not the job should be retired if it
+                 * failed to complete.
+                 */
                 boolean retry = (!currentJob.isCanceled() && !currentJob.isCompleted());
                 sysLogger.log(Level.INFO, "Completed processing of {0}, retry = {1}", new Object[]{manifestPath, retry});
                 if (currentJob.isCanceled()) {
@@ -2065,6 +2078,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                         jobLogger.logJobCancelled();
                     }
                 }
+                
                 synchronized (jobsLock) {
                     if (!retry) {
                         completedJobs.add(currentJob);
@@ -2177,6 +2191,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          *                              if auto ingest is shutting down.
          */
         private void verifyRequiredSevicesAreRunning() throws ServiceDownException, InterruptedException {
+            sysLogger.log(Level.INFO, "Verifying core application services are up");
             if (currentJob != null) {
                 currentJob.setProcessingStage(AutoIngestJob.Stage.CHECKING_SERVICES, Date.from(Instant.now()));
             }
