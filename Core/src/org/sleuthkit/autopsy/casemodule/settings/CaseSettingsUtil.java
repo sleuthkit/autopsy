@@ -81,9 +81,9 @@ public class CaseSettingsUtil {
      */
     @NbBundle.Messages({
         "# {0} - path",
-        "UserPreferences_validateTempDirectory_errorOnCreate_text=There was an error creating the temp directory for path: {0}",
+        "CaseSettingsUtil_validateTempDirectory_errorOnCreate_text=There was an error creating the temp directory for path: {0}",
         "# {0} - path",
-        "UserPreferences_validateTempDirectory_errorOnReadWrite_text=There was an error reading or writing to temp directory path: {0}"
+        "CaseSettingsUtil_validateTempDirectory_errorOnReadWrite_text=There was an error reading or writing to temp directory path: {0}"
     })
     public static boolean validateTempDirectory(String path) throws CaseSettingsUtilException {
         if (StringUtils.isBlank(path)) {
@@ -94,12 +94,12 @@ public class CaseSettingsUtil {
         File f = new File(path);
         if (!f.exists()) {
             if (!f.mkdirs()) {
-                throw new CaseSettingsUtilException(Bundle.UserPreferences_validateTempDirectory_errorOnCreate_text(path));
+                throw new CaseSettingsUtilException(Bundle.CaseSettingsUtil_validateTempDirectory_errorOnCreate_text(path));
             }
         }
 
         if (!FileUtil.hasReadWriteAccess(Paths.get(path))) {
-            throw new CaseSettingsUtilException(Bundle.UserPreferences_validateTempDirectory_errorOnReadWrite_text(path));
+            throw new CaseSettingsUtilException(Bundle.CaseSettingsUtil_validateTempDirectory_errorOnReadWrite_text(path));
         }
         return true;
     }
