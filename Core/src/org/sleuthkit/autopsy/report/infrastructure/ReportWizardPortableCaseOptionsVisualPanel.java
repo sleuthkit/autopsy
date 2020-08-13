@@ -33,11 +33,13 @@ import org.sleuthkit.autopsy.report.modules.portablecase.PortableCaseReportModul
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class ReportWizardPortableCaseOptionsVisualPanel extends javax.swing.JPanel {
 
+    private static final long serialVersionUID = 1L;
+
     private final ReportWizardPortableCaseOptionsPanel wizPanel;
     private PortableCaseReportModuleSettings settings = null;
-    private Map<String, ReportModuleConfig> moduleConfigs;
+    private final Map<String, ReportModuleConfig> moduleConfigs;
     private final boolean useCaseSpecificData;
-    
+
     /**
      * Creates new form ReportWizardPortableCaseOptionsVisualPanel
      */
@@ -48,9 +50,9 @@ class ReportWizardPortableCaseOptionsVisualPanel extends javax.swing.JPanel {
         initComponents();
         customizeComponents();
     }
-    
+
     private void customizeComponents() {
-        
+
         if (!PlatformUtil.isWindowsOS()) {
             errorLabel.setVisible(true);
             compressCheckbox.setEnabled(false);
@@ -61,7 +63,7 @@ class ReportWizardPortableCaseOptionsVisualPanel extends javax.swing.JPanel {
         for (ChunkSize chunkSize : ChunkSize.values()) {
             chunkSizeComboBox.addItem(chunkSize);
         }
-               
+
         // initialize settings
         if (moduleConfigs != null) {
             // get configuration for this module
@@ -75,42 +77,42 @@ class ReportWizardPortableCaseOptionsVisualPanel extends javax.swing.JPanel {
                 }
             }
         }
-        
+
         if (settings == null) {
             // get default module configuration
             settings = new PortableCaseReportModuleSettings();
         }
-                        
+
         // update according to input configuration
         compressCheckbox.setSelected(settings.shouldCompress());
         chunkSizeComboBox.setEnabled(settings.shouldCompress());
         chunkSizeComboBox.setSelectedItem(settings.getChunkSize());
-        
+
         // initialize other panels and pass them the settings
-        listPanel.setLayout(new GridLayout(1,2));
+        listPanel.setLayout(new GridLayout(1, 2));
         listPanel.add(new PortableCaseTagsListPanel(wizPanel, settings, useCaseSpecificData));
         listPanel.add(new PortableCaseInterestingItemsListPanel(wizPanel, settings, useCaseSpecificData));
     }
-    
+
     @NbBundle.Messages({
-        "ReportWizardPortableCaseOptionsVisualPanel.getName.title=Choose Portable Case settings",  
-    })  
+        "ReportWizardPortableCaseOptionsVisualPanel.getName.title=Choose Portable Case settings",})
     @Override
     public String getName() {
         return Bundle.ReportWizardPortableCaseOptionsVisualPanel_getName_title();
     }
-    
+
     /**
      * Get the selected chunk size
-     * 
+     *
      * @return the chunk size that was selected
      */
     private ChunkSize getChunkSize() {
         return (ChunkSize) chunkSizeComboBox.getSelectedItem();
     }
-    
+
     /**
-     * Update the selected compression options and enable/disable the finish button
+     * Update the selected compression options and enable/disable the finish
+     * button
      */
     private void updateCompression() {
         if (settings != null) {
@@ -118,7 +120,7 @@ class ReportWizardPortableCaseOptionsVisualPanel extends javax.swing.JPanel {
             wizPanel.setFinish(settings.isValid());
         }
     }
-    
+
     /**
      * Update the include application option.
      */
@@ -127,7 +129,7 @@ class ReportWizardPortableCaseOptionsVisualPanel extends javax.swing.JPanel {
             settings.setIncludeApplication(includeAppCheckbox.isSelected());
         }
     }
-    
+
     /**
      * Get the user-selected settings.
      *
@@ -135,7 +137,7 @@ class ReportWizardPortableCaseOptionsVisualPanel extends javax.swing.JPanel {
      */
     PortableCaseReportModuleSettings getPortableCaseReportSettings() {
         return settings;
-    }    
+    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -245,6 +247,12 @@ class ReportWizardPortableCaseOptionsVisualPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_compressCheckboxActionPerformed
 
     private void includeAppCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_includeAppCheckboxActionPerformed
+        if (includeAppCheckbox.isSelected()) {
+            chunkSizeComboBox.setEnabled(false);
+            chunkSizeComboBox.setSelectedItem(ChunkSize.NONE);
+        } else {
+            chunkSizeComboBox.setEnabled(compressCheckbox.isSelected());
+        }
         updateIncludeApplication();
     }//GEN-LAST:event_includeAppCheckboxActionPerformed
 

@@ -1218,7 +1218,7 @@ public class PortableCaseReportModule implements ReportModule {
     /**
      * Create a bat file at destBaseFolder that will launch the portable case.
      *
-     * @param destBaseFolder
+     * @param destBaseFolder Folder to create the bat file in.
      *
      * @throws IOException
      */
