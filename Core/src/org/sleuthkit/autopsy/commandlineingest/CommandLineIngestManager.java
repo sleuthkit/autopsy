@@ -429,31 +429,11 @@ public class CommandLineIngestManager {
          * @param caseForJob The case
          * @param dataSource The data source.
          *
-         * @throws
-         * AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorExceptioif
-         *                                                                     there
-         *                                                                     was
-         *                                                                     a
-         *                                                                     DSP
-         *                                                                     processing
-         *                                                                     error
+         * @throws AutoIngestDataSourceProcessorException if there was a DSP
+         * processing error.
          *
-         * @throws ead                                                                   running
-         *                                                                               the
-         *                                                                               job
-         *                                                                               processing
-         *                                                                               task
-         *                                                                               is
-         *                                                                               interrupted
-         *                                                                               while
-         *                                                                               blocked,
-         *                                                                               i.e.,
-         *                                                                               if
-         *                                                                               auto
-         *                                                                               ingest
-         *                                                                               is
-         *                                                                               shutting
-         *                                                                               down.
+         * @throws InterruptedException running the job processing task while
+         * blocking, i.e., if auto ingest is shutting down.
          */
         private void runDataSourceProcessor(Case caseForJob, AutoIngestDataSource dataSource) throws InterruptedException, AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException {
 
