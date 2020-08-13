@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.corelibs;
 
-import com.sun.javafx.PlatformUtil;
+import org.apache.commons.lang3.SystemUtils;
 import org.hyperic.sigar.Sigar;
 import org.openide.util.NbBundle;
 
@@ -43,7 +43,7 @@ public class SigarLoader {
                 if (sigar == null) {
                     try {
                         //rely on netbeans / jna to locate the lib variation for architecture/OS
-                        if (PlatformUtil.isWindows()) {
+                        if (SystemUtils.IS_OS_WINDOWS) {
                             System.loadLibrary("libsigar"); //NON-NLS
                         } else {
                             System.loadLibrary("sigar"); //NON-NLS
