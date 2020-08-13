@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.contentviewers.artifactviewers;
 
 import java.awt.event.ActionEvent;
@@ -39,6 +38,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.centralrepository.datamodel.Persona;
 import org.sleuthkit.autopsy.centralrepository.datamodel.PersonaAccount;
 import org.sleuthkit.autopsy.centralrepository.persona.PersonaDetailsDialog;
@@ -46,8 +46,10 @@ import org.sleuthkit.autopsy.centralrepository.persona.PersonaDetailsDialogCallb
 import org.sleuthkit.autopsy.centralrepository.persona.PersonaDetailsMode;
 import org.sleuthkit.autopsy.centralrepository.persona.PersonaDetailsPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.guiutils.ContactCache;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.CommunicationsManager;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -113,13 +115,24 @@ final class MessageAccountPanel extends JPanel {
                     return new ArrayList<>();
                 }
 
-                Collection<PersonaAccount> personAccounts = PersonaAccount.getPersonaAccountsForAccount(account);
-                if (personAccounts != null && !personAccounts.isEmpty()) {
-                    for (PersonaAccount personaAccount : PersonaAccount.getPersonaAccountsForAccount(account)) {
-                        dataList.add(new AccountContainer(account, personaAccount));
+                List<BlackboardArtifact> contactList = ContactCache.getContacts(account);
+                BlackboardArtifact contact = null;
+
+                if (contactList != null && !contactList.isEmpty()) {
+                    contact = contactList.get(0);
+                }
+
+                if (CentralRepository.isEnabled()) {
+                    Collection<PersonaAccount> personAccounts = PersonaAccount.getPersonaAccountsForAccount(account);
+                    if (personAccounts != null && !personAccounts.isEmpty()) {
+                        for (PersonaAccount personaAccount : PersonaAccount.getPersonaAccountsForAccount(account)) {
+                            dataList.add(new AccountContainer(account, personaAccount, contact));
+                        }
+                    } else {
+                        dataList.add(new AccountContainer(account, null, contact));
                     }
                 } else {
-                    dataList.add(new AccountContainer(account, null));
+                    dataList.add(new AccountContainer(account, null, contact));
                 }
             }
 
@@ -127,8 +140,7 @@ final class MessageAccountPanel extends JPanel {
         }
 
         @Messages({
-            "MessageAccountPanel_no_matches=No matches found.",
-        })
+            "MessageAccountPanel_no_matches=No matches found.",})
         @Override
         protected void done() {
             try {
@@ -199,6 +211,7 @@ final class MessageAccountPanel extends JPanel {
             for (AccountContainer o : data) {
                 group.addGap(5)
                         .addComponent(o.getAccountLabel())
+                        .addGroup(o.getContactLineVerticalGroup(layout))
                         .addGroup(o.getPersonLineVerticalGroup(layout));
             }
 
@@ -234,6 +247,7 @@ final class MessageAccountPanel extends JPanel {
             group.addGap(10);
             for (AccountContainer o : data) {
                 pgroup.addGroup(o.getPersonaSequentialGroup(layout));
+                pgroup.addGroup(o.getContactSequentialGroup(layout));
             }
             group.addGap(10)
                     .addGroup(pgroup)
@@ -253,10 +267,13 @@ final class MessageAccountPanel extends JPanel {
 
         private final Account account;
         private Persona persona = null;
+        private final String contactName;
 
         private JLabel accountLabel;
         private JLabel personaHeader;
         private JLabel personaDisplayName;
+        private JLabel contactHeader;
+        private JLabel contactDisplayName;
         private JButton button;
 
         /**
@@ -265,16 +282,22 @@ final class MessageAccountPanel extends JPanel {
          * @param account
          * @param personaAccount
          */
-        AccountContainer(Account account, PersonaAccount personaAccount) {
+        AccountContainer(Account account, PersonaAccount personaAccount, BlackboardArtifact contactArtifact) throws TskCoreException {
+            if (contactArtifact != null && contactArtifact.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT.getTypeID()) {
+                throw new IllegalArgumentException("Failed to create AccountContainer object, passed in artifact was not a TSK_CONTACT");
+            }
+
             this.account = account;
             this.persona = personaAccount != null ? personaAccount.getPersona() : null;
+            this.contactName = getNameFromContactArtifact(contactArtifact);
         }
 
         @Messages({
             "MessageAccountPanel_persona_label=Persona:",
             "MessageAccountPanel_unknown_label=Unknown",
             "MessageAccountPanel_button_view_label=View",
-            "MessageAccountPanel_button_create_label=Create"
+            "MessageAccountPanel_button_create_label=Create",
+            "MessageAccountPanel_contact_label=Contact:"
         })
         /**
          * Swing components will not be initialized until this method is called.
@@ -282,14 +305,27 @@ final class MessageAccountPanel extends JPanel {
         private void initalizeSwingControls() {
             accountLabel = new JLabel();
             personaHeader = new JLabel(Bundle.MessageAccountPanel_persona_label());
+            contactHeader = new JLabel(Bundle.MessageAccountPanel_contact_label());
             personaDisplayName = new JLabel();
+            contactDisplayName = new JLabel();
             button = new JButton();
             button.addActionListener(new PersonaButtonListener(this));
 
             accountLabel.setText(account.getTypeSpecificID());
-
+            contactDisplayName.setText(contactName);
             personaDisplayName.setText(persona != null ? persona.getName() : Bundle.MessageAccountPanel_unknown_label());
             button.setText(persona != null ? Bundle.MessageAccountPanel_button_view_label() : Bundle.MessageAccountPanel_button_create_label());
+        }
+
+        private String getNameFromContactArtifact(BlackboardArtifact contactArtifact) throws TskCoreException {
+            if (contactArtifact != null) {
+                BlackboardAttribute attribute = contactArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME));
+                if (attribute != null) {
+                    return attribute.getValueString();
+                }
+            }
+
+            return Bundle.MessageAccountPanel_unknown_label();
         }
 
         /**
@@ -365,6 +401,17 @@ final class MessageAccountPanel extends JPanel {
 
             return group;
         }
+        
+         private SequentialGroup getContactSequentialGroup(GroupLayout layout) {
+            SequentialGroup group = layout.createSequentialGroup();
+
+            group
+                    .addComponent(contactHeader)
+                    .addPreferredGap(ComponentPlacement.RELATED)
+                    .addComponent(contactDisplayName);
+
+            return group;
+        }
 
         /**
          * Generates the vertical layout code for the persona line.
@@ -378,6 +425,12 @@ final class MessageAccountPanel extends JPanel {
                     .addComponent(personaHeader)
                     .addComponent(personaDisplayName)
                     .addComponent(button);
+        }
+        
+        private ParallelGroup getContactLineVerticalGroup(GroupLayout layout) {
+            return layout.createParallelGroup(Alignment.BASELINE)
+                    .addComponent(contactHeader)
+                    .addComponent(contactDisplayName);
         }
     }
 
