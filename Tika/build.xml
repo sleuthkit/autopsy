@@ -10,15 +10,18 @@
     <property name="modules.dir" value="${basedir}/release/modules/" />
     <property name="ext.dir" value="${modules.dir}/ext" />
 
-    <target name="init" depends="init-ivy,harness.init,pull-ivy"/>
-    <target name="pull-ivy">
+    <target name="-pre-compile">
+        <init-ivy/>
         <ivy:resolve log="quiet"/>
         <ivy:retrieve conf="tika" pattern="${ext.dir}/[artifact]-[revision](-[classifier]).[ext]" />
     </target>
-    <target name="clean" depends="projectized-common.clean">
-        <!--Override clean to delete jars, etc downloaded with Ivy, 
-        or copied in from thirdparty folder.  This way we don't end up with 
-        out-of-date/unneeded stuff in the installer-->
+    
+    <target name="-post-compile">
+         
+    </target>
+    
+    <target name="-post-clean">
+        <!-- Clean out all jars downloaded by Ivy -->
         <delete dir="${basedir}/release/"/>
     </target>
 </project>
