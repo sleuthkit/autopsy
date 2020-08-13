@@ -19,16 +19,16 @@
 package org.sleuthkit.autopsy.casemodule.settings;
 
 /**
- * Exception class for CaseSettingsUtil.
+ * Exception class for TempFolderSettingsUtil.
  */
-public class CaseSettingsUtilException extends Exception {
+public class TempFolderSettingsUtilException extends Exception {
 
     /**
      * Main constructor.
      *
      * @param string The message for the exception.
      */
-    CaseSettingsUtilException(String string) {
+    TempFolderSettingsUtilException(String string) {
         super(string);
     }
 
@@ -38,7 +38,7 @@ public class CaseSettingsUtilException extends Exception {
      * @param string The message for the exception.
      * @param thrwbl The inner exception.
      */
-    CaseSettingsUtilException(String string, Throwable thrwbl) {
+    TempFolderSettingsUtilException(String string, Throwable thrwbl) {
         super(string, thrwbl);
     }
 }

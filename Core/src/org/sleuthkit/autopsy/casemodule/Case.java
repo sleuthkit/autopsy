@@ -86,7 +86,6 @@ import org.sleuthkit.autopsy.casemodule.events.ReportAddedEvent;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData.CaseNodeDataException;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CoordinationServiceUtils;
 import org.sleuthkit.autopsy.casemodule.services.Services;
-import org.sleuthkit.autopsy.casemodule.settings.CaseSettingsUtil;
 import org.sleuthkit.autopsy.commonpropertiessearch.CommonAttributeSearchAction;
 import org.sleuthkit.autopsy.communications.OpenCommVisualizationToolAction;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
@@ -143,7 +142,7 @@ import org.sleuthkit.datamodel.TskUnsupportedSchemaVersionException;
  */
 public class Case {
 
-    private static final String CASE_TEMP_DIR = "AutopsyCase";
+    private static final String CASE_TEMP_DIR = Case.class.getSimpleName();
     private static final int CASE_LOCK_TIMEOUT_MINS = 1;
     private static final int CASE_RESOURCES_LOCK_TIMEOUT_HOURS = 1;
     private static final String SINGLE_USER_CASE_DB_NAME = "autopsy.db";
@@ -153,7 +152,6 @@ public class Case {
     private static final String LOG_FOLDER = "Log"; //NON-NLS
     private static final String REPORTS_FOLDER = "Reports"; //NON-NLS
     private static final String CONFIG_FOLDER = "Config"; // NON-NLS
-    private static final String TEMP_FOLDER = "Temp"; //NON-NLS
     private static final String MODULE_FOLDER = "ModuleOutput"; //NON-NLS
     private static final String CASE_ACTION_THREAD_NAME = "%s-case-action";
     private static final String CASE_RESOURCES_THREAD_NAME = "%s-manage-case-resources";
@@ -1332,7 +1330,7 @@ public class Case {
      */
     public String getTempDirectory() {
         // get temp folder scoped to the uuid of the case
-        Path path = Paths.get(CaseSettingsUtil.getBaseTempDirectory(), CASE_TEMP_DIR, getName(), TEMP_FOLDER);
+        Path path = Paths.get(UserPreferences.getApplicationTempDirectory(), CASE_TEMP_DIR, getName());
         File f = path.toFile();
         // verify that the folder exists
         if (!f.exists()) {

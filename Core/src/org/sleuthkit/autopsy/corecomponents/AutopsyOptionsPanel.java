@@ -36,6 +36,7 @@ import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import org.netbeans.spi.options.OptionsPanelController;
@@ -44,8 +45,8 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.GeneralFilter;
-import org.sleuthkit.autopsy.casemodule.settings.CaseSettingsUtil;
-import org.sleuthkit.autopsy.casemodule.settings.CaseSettingsUtilException;
+import org.sleuthkit.autopsy.casemodule.settings.TempFolderSettingsUtil;
+import org.sleuthkit.autopsy.casemodule.settings.TempFolderSettingsUtilException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
@@ -308,10 +309,10 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         specifyLogoRB.setSelected(!useDefault);
         agencyLogoPathField.setEnabled(!useDefault);
         browseLogosButton.setEnabled(!useDefault);
-        tempDirectoryField.setText(CaseSettingsUtil.getBaseTempDirectory());
+        tempDirectoryField.setText(TempFolderSettingsUtil.getBaseTempDirectory());
         logFileCount.setText(String.valueOf(UserPreferences.getLogFileCount()));
         solrMaxHeapSpinner.setValue(UserPreferences.getMaxSolrVMSize());
-        tempDirectoryField.setText(CaseSettingsUtil.getBaseTempDirectory());
+        tempDirectoryField.setText(TempFolderSettingsUtil.getBaseTempDirectory());
         try {
             updateAgencyLogo(path);
         } catch (IOException ex) {
@@ -369,15 +370,17 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         "AutopsyOptionsPanel_storeTempDir_onError_description=There was an error creating the temporary directory on the filesystem at: {0}.",})
     private void storeTempDir() {
         String tempDirectoryPath = tempDirectoryField.getText();
-        if (!CaseSettingsUtil.getBaseTempDirectory().equals(tempDirectoryPath)) {
+        if (!TempFolderSettingsUtil.getBaseTempDirectory().equals(tempDirectoryPath)) {
             try {
-                CaseSettingsUtil.setBaseTempDirectory(tempDirectoryPath);
-            } catch (CaseSettingsUtilException ex) {
+                TempFolderSettingsUtil.setBaseTempDirectory(tempDirectoryPath);
+            } catch (TempFolderSettingsUtilException ex) {
                 logger.log(Level.WARNING, "There was an error creating the temporary directory defined by the user: " + tempDirectoryPath, ex);
-                JOptionPane.showMessageDialog(this,
-                        String.format("<html>%s</html>", Bundle.AutopsyOptionsPanel_storeTempDir_onError_description(tempDirectoryPath)),
-                        Bundle.AutopsyOptionsPanel_storeTempDir_onError_title(),
-                        JOptionPane.ERROR_MESSAGE);
+                SwingUtilities.invokeLater(() -> {
+                    JOptionPane.showMessageDialog(this,
+                            String.format("<html>%s</html>", Bundle.AutopsyOptionsPanel_storeTempDir_onError_description(tempDirectoryPath)),
+                            Bundle.AutopsyOptionsPanel_storeTempDir_onError_title(),
+                            JOptionPane.ERROR_MESSAGE);
+                });
             }
         }
     }
@@ -547,8 +550,6 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
             firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
         }
     }
-
-    private static final String AUTOPSY_TEMP_DIR = "Autopsy";
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -886,14 +887,13 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         if (returnState == JFileChooser.APPROVE_OPTION) {
             String specifiedPath = tempDirChooser.getSelectedFile().getPath();
             try {
-                String path = Paths.get(specifiedPath, AUTOPSY_TEMP_DIR).toAbsolutePath().toString();
-                File f = new File(path);
+                File f = new File(specifiedPath);
                 if (!f.exists()) {
                     if (!f.mkdirs()) {
-                        throw new InvalidPathException(path, "Unable to create parent directories leading to " + path);
+                        throw new InvalidPathException(specifiedPath, "Unable to create parent directories leading to " + specifiedPath);
                     }
                 }
-                tempDirectoryField.setText(path);
+                tempDirectoryField.setText(specifiedPath);
                 firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
             } catch (InvalidPathException ex) {
                 logger.log(Level.WARNING, "Unable to create temporary directory in " + specifiedPath, ex);

@@ -26,6 +26,7 @@ import java.util.prefs.PreferenceChangeListener;
 import java.util.prefs.Preferences;
 import org.openide.util.NbPreferences;
 import org.python.icu.util.TimeZone;
+import org.sleuthkit.autopsy.casemodule.settings.TempFolderSettingsUtil;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.TextConverterException;
 import org.sleuthkit.autopsy.coreutils.Version;
@@ -83,7 +84,8 @@ public final class UserPreferences {
     private static final String GEO_OSM_TILE_ZIP_PATH = "GeolocationOsmZipPath";
     private static final String GEO_OSM_SERVER_ADDRESS = "GeolocationOsmServerAddress";
     private static final String GEO_MBTILES_FILE_PATH = "GeolcoationMBTilesFilePath";
-
+    
+    private static final String AUTOPSY_TEMP_DIR = "Autopsy";
     // Prevent instantiation.
     private UserPreferences() {
     }
@@ -611,5 +613,15 @@ public final class UserPreferences {
      */
     public static String getGeolocationMBTilesFilePath() {
         return preferences.get(GEO_MBTILES_FILE_PATH, "");
+    }
+    
+    /**
+     * Retrieves the root application temp directory.
+     * 
+     * @return The absolute path to the application temp directory.
+     */
+    public static String getApplicationTempDirectory() {
+        return Paths.get(TempFolderSettingsUtil.getBaseTempDirectory(), AUTOPSY_TEMP_DIR)
+                .toAbsolutePath().toString();
     }
 }
