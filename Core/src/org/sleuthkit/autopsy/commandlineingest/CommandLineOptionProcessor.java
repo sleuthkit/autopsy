@@ -372,15 +372,16 @@ public class CommandLineOptionProcessor extends OptionProcessor {
             argDirs = values.get(generateReportsOption);
             if (argDirs.length > 0) {
                 reportProfile = argDirs[0];
-                // If the user doesn't supply an options for generateReports the
-                // argsDirs length will be 0, so if reportProfile is empty
-                // something is not right.
-                if (reportProfile.isEmpty()) {
-                    logger.log(Level.SEVERE, "'generateReports' argument is empty");
-                    System.err.println("'generateReports' argument is empty");
-                    runFromCommandLine = false;
-                    return;
-                }
+            }
+            
+            // If the user doesn't supply an options for generateReports the
+            // argsDirs length will be 0, so if reportProfile is empty
+            // something is not right.
+            if (reportProfile != null && reportProfile.isEmpty()) {
+                logger.log(Level.SEVERE, "'generateReports' argument is empty");
+                System.err.println("'generateReports' argument is empty");
+                runFromCommandLine = false;
+                return;
             }
 
             CommandLineCommand newCommand = new CommandLineCommand(CommandLineCommand.CommandType.GENERATE_REPORTS);
