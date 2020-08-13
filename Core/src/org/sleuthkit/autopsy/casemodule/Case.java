@@ -990,11 +990,6 @@ public class Case {
             throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.createCaseDir.exception.cantCreateCaseDir", logsDir));
         }
 
-        Path tempDir = Paths.get(caseDirPath, hostPathComponent, TEMP_FOLDER);
-        if (!tempDir.toFile().mkdirs()) {
-            throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.createCaseDir.exception.cantCreateCaseDir", tempDir));
-        }
-
         Path cacheDir = Paths.get(caseDirPath, hostPathComponent, CACHE_FOLDER);
         if (!cacheDir.toFile().mkdirs()) {
             throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.createCaseDir.exception.cantCreateCaseDir", cacheDir));
