@@ -61,7 +61,6 @@ import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.ThreadSafe;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
-import org.apache.uima.util.FileUtils;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -2381,7 +2380,7 @@ public class Case {
          * Clear the temp subdirectory of the case directory.
          */
         progressIndicator.progress(Bundle.Case_progressMessage_clearingTempDirectory());
-        FileUtils.deleteAllFiles(new File(this.getTempDirectory()));
+        FileUtil.deleteDir(new File(this.getTempDirectory()));
     }
 
     /**

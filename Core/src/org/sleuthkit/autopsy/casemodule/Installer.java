@@ -20,10 +20,10 @@ package org.sleuthkit.autopsy.casemodule;
 
 import java.io.File;
 import java.util.logging.Level;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.openide.modules.ModuleInstall;
 import org.sleuthkit.autopsy.core.UserPreferences;
+import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
@@ -54,7 +54,7 @@ public class Installer extends ModuleInstall {
             if (StringUtils.isNotBlank(tempDirStr)) {
                 File tempDir = new File(tempDirStr);
                 if (tempDir.exists()) {
-                    FileUtils.cleanDirectory(tempDir);
+                    FileUtil.deleteDir(tempDir);
                 }
             }
         } catch (Exception ex) {

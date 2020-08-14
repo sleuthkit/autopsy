@@ -468,8 +468,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             try {
                 // The last instance of this module for an ingest job cleans out 
                 // the working paths map entry for the job and deletes the temp dir.
-                WorkingPaths paths = PhotoRecCarverFileIngestModule.pathsByJob.remove(this.jobId);
-                FileUtil.deleteDir(new File(paths.getTempDirPath().toString()));
+                FileUtil.deleteDir(this.rootTempDirPath.toFile());
                 postSummary(jobId);
             } catch (SecurityException ex) {
                 logger.log(Level.SEVERE, "Error shutting down PhotoRec carver module", ex); // NON-NLS
