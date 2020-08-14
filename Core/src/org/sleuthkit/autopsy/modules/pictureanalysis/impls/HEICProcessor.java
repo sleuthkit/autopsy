@@ -74,7 +74,7 @@ public class HEICProcessor implements PictureProcessor {
     private static final long TIMEOUT_IN_MS = TimeUnit.MILLISECONDS.convert(2, TimeUnit.MINUTES);
 
     // Windows location
-    private static final String IMAGE_MAGICK_FOLDER = "ImageMagick-7.0.10-Q16-HDRI";
+    private static final String IMAGE_MAGICK_FOLDER = "ImageMagick-7.0.10-27-portable-Q16-x64";
     private static final String IMAGE_MAGICK_EXE = "magick.exe";
 
     // Actual path of ImageMagick on the system
