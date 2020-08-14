@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.casemodule.settings;
+package org.sleuthkit.autopsy.machinesettings;
 
 import java.io.File;
 import java.nio.file.Paths;
@@ -24,17 +24,16 @@ import java.util.prefs.Preferences;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
-import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 
 /**
  * Provides case-specific settings like the user-specified temp folder.
  */
-public class TempFolderSettingsUtil {
+public class UserMachinePreferences {
 
-    private static final Preferences preferences = NbPreferences.forModule(UserPreferences.class);
+    private static final Preferences preferences = NbPreferences.forModule(UserMachinePreferences.class);
 
-    private static final String TEMP_DIR_KEY = "UserDefinedTempDirectory";
+    private static final String TEMP_DIR_KEY = "TempDirectory";
 
     /**
      * Retrieves a default temporary directory that is a subdirectory of
@@ -64,17 +63,17 @@ public class TempFolderSettingsUtil {
      *
      * @return True if this is a valid location for a temp directory.
      *
-     * @throws TempFolderSettingsUtilException If path could not be validated due to
-     *                                   mkdirs failure or the directory is not
-     *                                   read/write.
+     * @throws UserMachinePreferencesException If path could not be validated
+     *                                         due to mkdirs failure or the
+     *                                         directory is not read/write.
      */
     @NbBundle.Messages({
         "# {0} - path",
-        "TempFolderSettingsUtil_validateTempDirectory_errorOnCreate_text=There was an error creating the temp directory for path: {0}",
+        "UserMachinePreferences_validateTempDirectory_errorOnCreate_text=There was an error creating the temp directory for path: {0}",
         "# {0} - path",
-        "TempFolderSettingsUtil_validateTempDirectory_errorOnReadWrite_text=There was an error reading or writing to temp directory path: {0}"
+        "UserMachinePreferences_validateTempDirectory_errorOnReadWrite_text=There was an error reading or writing to temp directory path: {0}"
     })
-    private static boolean validateTempDirectory(String path) throws TempFolderSettingsUtilException {
+    private static boolean validateTempDirectory(String path) throws UserMachinePreferencesException {
         if (StringUtils.isBlank(path)) {
             // in this instance, the default path will be used.
             return true;
@@ -83,12 +82,12 @@ public class TempFolderSettingsUtil {
         File f = new File(path);
         if (!f.exists()) {
             if (!f.mkdirs()) {
-                throw new TempFolderSettingsUtilException(Bundle.TempFolderSettingsUtil_validateTempDirectory_errorOnCreate_text(path));
+                throw new UserMachinePreferencesException(Bundle.UserMachinePreferences_validateTempDirectory_errorOnCreate_text(path));
             }
         }
 
         if (!FileUtil.hasReadWriteAccess(Paths.get(path))) {
-            throw new TempFolderSettingsUtilException(Bundle.TempFolderSettingsUtil_validateTempDirectory_errorOnReadWrite_text(path));
+            throw new UserMachinePreferencesException(Bundle.UserMachinePreferences_validateTempDirectory_errorOnReadWrite_text(path));
         }
         return true;
     }
@@ -98,14 +97,14 @@ public class TempFolderSettingsUtil {
      *
      * @param path The path to the directory.
      *
-     * @throws TempFolderSettingsUtilException If the directory cannot be accessed or
-     *                                   created.
+     * @throws UserMachinePreferencesException If the directory cannot be
+     *                                         accessed or created.
      */
-    public static void setBaseTempDirectory(String path) throws TempFolderSettingsUtilException {
+    public static void setBaseTempDirectory(String path) throws UserMachinePreferencesException {
         validateTempDirectory(path);
         preferences.put(TEMP_DIR_KEY, path);
     }
 
-    private TempFolderSettingsUtil() {
+    private UserMachinePreferences() {
     }
 }

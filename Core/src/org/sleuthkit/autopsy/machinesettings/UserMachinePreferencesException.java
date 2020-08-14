@@ -16,19 +16,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.casemodule.settings;
+package org.sleuthkit.autopsy.machinesettings;
 
 /**
- * Exception class for TempFolderSettingsUtil.
+ * Exception class for UserMachinePreferences.
  */
-public class TempFolderSettingsUtilException extends Exception {
+public class UserMachinePreferencesException extends Exception {
 
     /**
      * Main constructor.
      *
      * @param string The message for the exception.
      */
-    TempFolderSettingsUtilException(String string) {
+    UserMachinePreferencesException(String string) {
         super(string);
     }
 
@@ -38,7 +38,7 @@ public class TempFolderSettingsUtilException extends Exception {
      * @param string The message for the exception.
      * @param thrwbl The inner exception.
      */
-    TempFolderSettingsUtilException(String string, Throwable thrwbl) {
+    UserMachinePreferencesException(String string, Throwable thrwbl) {
         super(string, thrwbl);
     }
 }

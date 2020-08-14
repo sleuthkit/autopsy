@@ -50,7 +50,7 @@ public class Installer extends ModuleInstall {
     public void restored() {
         String tempDirStr = null;
         try {
-            tempDirStr = UserPreferences.getApplicationTempDirectory();
+            tempDirStr = UserPreferences.getAppTempDirectory();
             if (StringUtils.isNotBlank(tempDirStr)) {
                 File tempDir = new File(tempDirStr);
                 if (tempDir.exists()) {

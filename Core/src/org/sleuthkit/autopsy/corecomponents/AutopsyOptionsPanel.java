@@ -45,8 +45,8 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.GeneralFilter;
-import org.sleuthkit.autopsy.casemodule.settings.TempFolderSettingsUtil;
-import org.sleuthkit.autopsy.casemodule.settings.TempFolderSettingsUtilException;
+import org.sleuthkit.autopsy.machinesettings.UserMachinePreferences;
+import org.sleuthkit.autopsy.machinesettings.UserMachinePreferencesException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
@@ -309,10 +309,10 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         specifyLogoRB.setSelected(!useDefault);
         agencyLogoPathField.setEnabled(!useDefault);
         browseLogosButton.setEnabled(!useDefault);
-        tempDirectoryField.setText(TempFolderSettingsUtil.getBaseTempDirectory());
+        tempDirectoryField.setText(UserMachinePreferences.getBaseTempDirectory());
         logFileCount.setText(String.valueOf(UserPreferences.getLogFileCount()));
         solrMaxHeapSpinner.setValue(UserPreferences.getMaxSolrVMSize());
-        tempDirectoryField.setText(TempFolderSettingsUtil.getBaseTempDirectory());
+        tempDirectoryField.setText(UserMachinePreferences.getBaseTempDirectory());
         try {
             updateAgencyLogo(path);
         } catch (IOException ex) {
@@ -370,10 +370,10 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         "AutopsyOptionsPanel_storeTempDir_onError_description=There was an error creating the temporary directory on the filesystem at: {0}.",})
     private void storeTempDir() {
         String tempDirectoryPath = tempDirectoryField.getText();
-        if (!TempFolderSettingsUtil.getBaseTempDirectory().equals(tempDirectoryPath)) {
+        if (!UserMachinePreferences.getBaseTempDirectory().equals(tempDirectoryPath)) {
             try {
-                TempFolderSettingsUtil.setBaseTempDirectory(tempDirectoryPath);
-            } catch (TempFolderSettingsUtilException ex) {
+                UserMachinePreferences.setBaseTempDirectory(tempDirectoryPath);
+            } catch (UserMachinePreferencesException ex) {
                 logger.log(Level.WARNING, "There was an error creating the temporary directory defined by the user: " + tempDirectoryPath, ex);
                 SwingUtilities.invokeLater(() -> {
                     JOptionPane.showMessageDialog(this,

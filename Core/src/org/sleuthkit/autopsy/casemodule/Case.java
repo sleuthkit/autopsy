@@ -1330,7 +1330,7 @@ public class Case {
      */
     public String getTempDirectory() {
         // get temp folder scoped to the uuid of the case
-        Path path = Paths.get(UserPreferences.getApplicationTempDirectory(), CASE_TEMP_DIR, getName());
+        Path path = Paths.get(UserPreferences.getAppTempDirectory(), CASE_TEMP_DIR, getName());
         File f = path.toFile();
         // verify that the folder exists
         if (!f.exists()) {

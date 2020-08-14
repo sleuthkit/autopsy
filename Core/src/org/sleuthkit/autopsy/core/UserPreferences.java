@@ -26,7 +26,7 @@ import java.util.prefs.PreferenceChangeListener;
 import java.util.prefs.Preferences;
 import org.openide.util.NbPreferences;
 import org.python.icu.util.TimeZone;
-import org.sleuthkit.autopsy.casemodule.settings.TempFolderSettingsUtil;
+import org.sleuthkit.autopsy.machinesettings.UserMachinePreferences;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.TextConverterException;
 import org.sleuthkit.autopsy.coreutils.Version;
@@ -620,8 +620,8 @@ public final class UserPreferences {
      * 
      * @return The absolute path to the application temp directory.
      */
-    public static String getApplicationTempDirectory() {
-        return Paths.get(TempFolderSettingsUtil.getBaseTempDirectory(), AUTOPSY_TEMP_DIR)
+    public static String getAppTempDirectory() {
+        return Paths.get(UserMachinePreferences.getBaseTempDirectory(), AUTOPSY_TEMP_DIR)
                 .toAbsolutePath().toString();
     }
 }
