@@ -49,10 +49,7 @@ final class DataSourceSummaryDialog extends javax.swing.JDialog implements Obser
      * datasource.
      */
     @Messages({
-        "DataSourceSummaryDialog.window.title=Data Sources Summary",
-        "DataSourceSummaryDialog.countsTab.title=Counts",
-        "DataSourceSummaryDialog.detailsTab.title=Details",
-        "DataSourceSummaryDialog.ingestHistoryTab.title=Ingest History"
+        "DataSourceSummaryDialog.window.title=Data Sources Summary"
     })
     DataSourceSummaryDialog(Frame owner) {
         super(owner, Bundle.DataSourceSummaryDialog_window_title(), true);

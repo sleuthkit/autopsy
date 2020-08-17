@@ -378,7 +378,7 @@ final class CommunicationArtifactViewerHelper {
         "CommunicationArtifactViewerHelper_persona_button_view=View",
         "CommunicationArtifactViewerHelper_persona_button_create=Create"
     })
-    
+        
     static List<AccountPersonaSearcherData> addPersonaRow(JPanel panel, GridBagLayout gridbagLayout, GridBagConstraints constraints, String accountIdentifier) {
         List<AccountPersonaSearcherData> dataList = new ArrayList<>();
 
@@ -427,6 +427,35 @@ final class CommunicationArtifactViewerHelper {
         addLineEndGlue(panel, gridbagLayout, constraints);
 
         return dataList;
+    }
+    
+    /**
+     * Adds a contact row to the panel.
+     *
+     * @param panel         Panel to update.
+     * @param gridbagLayout Layout to use.
+     * @param constraints   Constrains to use.
+     * @param contactId     Contact name to display.
+     *
+     * @return A JLabel with the contact information.
+     */
+    @NbBundle.Messages({
+        "#{0} - contact name",
+        "CommunicationArtifactViewerHelper_contact_label=Contact: {0}",
+        "CommunicationArtifactViewerHelper_contact_label_unknown=Unknown"
+    })
+    static JLabel addContactRow(JPanel panel, GridBagLayout gridbagLayout, GridBagConstraints constraints, String contactId) {
+        // Increase the y value because we are not calling the addKey
+        constraints.gridy++;
+        //Don't change the origian constraints, just make a copy to modify
+        GridBagConstraints indentedConstraints = (GridBagConstraints) constraints.clone();
+
+        // Add an indent to match persona labels
+        indentedConstraints.insets = new java.awt.Insets(0, 2 * LEFT_INSET, 0, 0);
+
+        String contactInfo = Bundle.CommunicationArtifactViewerHelper_contact_label(contactId != null && !contactId.isEmpty() ? contactId : Bundle.CommunicationArtifactViewerHelper_contact_label_unknown());
+
+        return addValueAtCol(panel, gridbagLayout, indentedConstraints, contactInfo, 1);
     }
 
     /**
