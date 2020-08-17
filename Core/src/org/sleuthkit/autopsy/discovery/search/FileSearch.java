@@ -905,7 +905,7 @@ public class FileSearch {
         INTERESTING_ITEM_SET(new InterestingItemAttribute(), Bundle.FileSearch_GroupingAttributeType_interestingItem_displayName()),
         FILE_TAG(new FileTagAttribute(), Bundle.FileSearch_GroupingAttributeType_tag_displayName()),
         OBJECT_DETECTED(new ObjectDetectedAttribute(), Bundle.FileSearch_GroupingAttributeType_object_displayName()),
-        NO_GROUPING(new DiscoveryKeyUtils.NoGroupingAttribute(), Bundle.FileSearch_GroupingAttributeType_none_displayName());
+        NO_GROUPING(new NoGroupingAttribute(), Bundle.FileSearch_GroupingAttributeType_none_displayName());
 
         private final AttributeType attributeType;
         private final String displayName;
