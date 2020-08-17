@@ -339,10 +339,10 @@ final class DiscoveryDialog extends javax.swing.JDialog {
 
         org.openide.awt.Mnemonics.setLocalizedText(step1Label, org.openide.util.NbBundle.getMessage(DiscoveryDialog.class, "DiscoveryDialog.step1Label.text")); // NOI18N
 
-        domainsButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/web-file.png"))); // NOI18N
+        domainsButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/domain-32.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(domainsButton, org.openide.util.NbBundle.getMessage(DiscoveryDialog.class, "DiscoveryDialog.domainsButton.text")); // NOI18N
-        domainsButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/web-file.png"))); // NOI18N
-        domainsButton.setDisabledSelectedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/web-file.png"))); // NOI18N
+        domainsButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/domain-32.png"))); // NOI18N
+        domainsButton.setDisabledSelectedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/domain-32.png"))); // NOI18N
         domainsButton.setFocusable(false);
         domainsButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
