@@ -23,10 +23,11 @@ import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
-import org.sleuthkit.autopsy.discovery.FileSearchData;
-import org.sleuthkit.autopsy.discovery.FileSearchData.Frequency;
-import org.sleuthkit.autopsy.discovery.SearchData.ResultType;
-import org.sleuthkit.autopsy.discovery.SearchFiltering;
+import org.sleuthkit.autopsy.discovery.search.AbstractFilter;
+import org.sleuthkit.autopsy.discovery.search.FileSearchData;
+import org.sleuthkit.autopsy.discovery.search.FileSearchData.Frequency;
+import org.sleuthkit.autopsy.discovery.search.SearchData.ResultType;
+import org.sleuthkit.autopsy.discovery.search.SearchFiltering;
 
 /**
  * Panel to allow configuration of the Past Occurrences filter.
