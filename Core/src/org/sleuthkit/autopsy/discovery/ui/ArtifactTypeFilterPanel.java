@@ -27,7 +27,7 @@ import org.sleuthkit.autopsy.discovery.search.AttributeSearchData;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
- * Filter for selection of a specific Arrtifact type to limit results to.
+ * Filter for selection of a specific Artifact type to limit results to.
  */
 class ArtifactTypeFilterPanel extends AbstractDiscoveryFilterPanel {
 
