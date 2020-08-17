@@ -24,6 +24,7 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.discovery.FileSearchData.Frequency;
+import org.sleuthkit.autopsy.discovery.SearchData.ResultType;
 
 /**
  * Panel to allow configuration of the Past Occurrences filter.
@@ -37,9 +38,15 @@ final class PastOccurrencesFilterPanel extends AbstractDiscoveryFilterPanel {
      */
     PastOccurrencesFilterPanel() {
         initComponents();
-        setUpFrequencyFilter();
+        setUpFrequencyFilter(ResultType.FILE);
     }
-
+   /**
+     * Creates new form PastOccurrencesFilterPanel.
+     */
+    PastOccurrencesFilterPanel(ResultType type) {
+        initComponents();
+        setUpFrequencyFilter(type);
+    }
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -94,11 +101,11 @@ final class PastOccurrencesFilterPanel extends AbstractDiscoveryFilterPanel {
     /**
      * Initialize the frequency filter.
      */
-    private void setUpFrequencyFilter() {
+    private void setUpFrequencyFilter(ResultType type) {
         int count = 0;
         DefaultListModel<FileSearchData.Frequency> frequencyListModel = (DefaultListModel<FileSearchData.Frequency>) crFrequencyList.getModel();
         frequencyListModel.removeAllElements();
-        if (!CentralRepository.isEnabled()) {
+        if (!CentralRepository.isEnabled() && type != ResultType.ATTRIBUTE) {
             for (FileSearchData.Frequency freq : FileSearchData.Frequency.getOptionsForFilteringWithoutCr()) {
                 frequencyListModel.add(count, freq);
             }

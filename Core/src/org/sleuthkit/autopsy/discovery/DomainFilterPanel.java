@@ -27,7 +27,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 public class DomainFilterPanel extends AbstractFiltersPanel {
 
     private static final long serialVersionUID = 1L;
-    private static final ArtifactSearchData.ArtifactType ARTIFACT_TYPE = ArtifactSearchData.ArtifactType.DOMAIN;
+    private static final AttributeSearchData.ArtifactType ARTIFACT_TYPE = AttributeSearchData.ArtifactType.DOMAIN;
 
     /**
      * Creates new form DomainFilterPanel
@@ -97,11 +97,11 @@ public class DomainFilterPanel extends AbstractFiltersPanel {
 
     @Override
     SearchData.ResultType getResultType() {
-        return SearchData.ResultType.ARTIFACT;
+        return SearchData.ResultType.ATTRIBUTE;
     }
 
     @Override
-    ArtifactSearchData.ArtifactType getArtifactType() {
+    AttributeSearchData.ArtifactType getArtifactType() {
         return ARTIFACT_TYPE;
     }
 

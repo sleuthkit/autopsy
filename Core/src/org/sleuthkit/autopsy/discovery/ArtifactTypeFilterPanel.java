@@ -48,7 +48,7 @@ class ArtifactTypeFilterPanel extends AbstractDiscoveryFilterPanel {
         int count = 0;
         DefaultListModel<ArtifactTypeItem> artifactTypeModel = (DefaultListModel<ArtifactTypeItem>) jList1.getModel();
         artifactTypeModel.removeAllElements();
-        for (BlackboardArtifact.ARTIFACT_TYPE artifactType : ArtifactSearchData.ArtifactType.DOMAIN.getBlackboardTypes()) {
+        for (BlackboardArtifact.ARTIFACT_TYPE artifactType : AttributeSearchData.ArtifactType.DOMAIN.getBlackboardTypes()) {
             artifactTypeModel.add(count, new ArtifactTypeItem(artifactType));
             count++;
         }

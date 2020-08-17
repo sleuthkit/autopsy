@@ -22,7 +22,7 @@ import com.google.common.eventbus.EventBus;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import org.sleuthkit.autopsy.discovery.ArtifactSearchData.ArtifactType;
+import org.sleuthkit.autopsy.discovery.AttributeSearchData.ArtifactType;
 import org.sleuthkit.autopsy.discovery.FileSearch.GroupKey;
 import org.sleuthkit.autopsy.discovery.FileSearchData.FileType;
 import org.sleuthkit.autopsy.discovery.SearchData.ResultType;

@@ -70,7 +70,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
     private static volatile boolean shouldUpdate = false;
     private SearchData.ResultType resultType = SearchData.ResultType.FILE;
     private FileSearchData.FileType fileType = FileSearchData.FileType.IMAGE;
-    private ArtifactSearchData.ArtifactType artifactType = null;
+    private AttributeSearchData.ArtifactType artifactType = null;
     private final PropertyChangeListener listener;
     private final Set<BlackboardAttribute> objectsDetected = new HashSet<>();
     private final Set<BlackboardAttribute> interestingItems = new HashSet<>();
@@ -220,7 +220,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
             case FILE:
                 validateFileDialog();
                 break;
-            case ARTIFACT:
+            case ATTRIBUTE:
                 validateArtifactDialog();
                 break;
         }
@@ -608,8 +608,8 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         domainsButton.setEnabled(false);
         domainsButton.setBackground(SELECTED_COLOR);
         domainsButton.setForeground(Color.BLACK);
-        resultType = SearchData.ResultType.ARTIFACT;
-        artifactType = ArtifactSearchData.ArtifactType.DOMAIN;
+        resultType = SearchData.ResultType.ATTRIBUTE;
+        artifactType = AttributeSearchData.ArtifactType.DOMAIN;
         fileType = null;
         documentFilterPanel.addPropertyChangeListener(listener);
         validateDialog();

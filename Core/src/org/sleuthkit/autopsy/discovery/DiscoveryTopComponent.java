@@ -287,7 +287,7 @@ public final class DiscoveryTopComponent extends TopComponent {
         String text = Bundle.DiscoveryTopComponent_searchError_text();
         if (searchStartedEvent.getResultType() == ResultType.FILE) {
             text = Bundle.DiscoveryTopComponent_searchInProgress_text(searchStartedEvent.getFileType().name());
-        } else if (searchStartedEvent.getResultType() == ResultType.ARTIFACT) {
+        } else if (searchStartedEvent.getResultType() == ResultType.ATTRIBUTE) {
             text = Bundle.DiscoveryTopComponent_searchInProgress_text(searchStartedEvent.getArtifactType().name());
         }
         progressMessageTextArea.setText(text);
