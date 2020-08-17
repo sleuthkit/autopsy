@@ -1,7 +1,3 @@
-# To change this license header, choose License Headers in Project Properties.
-# To change this template file, choose Tools | Templates
-# and open the template in the editor.
-
 CTL_OpenDiscoveryAction=Discovery
 # {0} - dataSourceName
 DataSourceModuleWrapper.exifModule.text=Exif Parser module was not run on data source: {0}\n
@@ -12,16 +8,6 @@ DataSourceModuleWrapper.hashModule.text=Hash Lookup module was not run on data s
 # {0} - timeZone
 DateFilterPanel.dateRange.text=Date Range ({0}):
 DiscoveryDialog.name.text=Discovery
-DiscoveryDialog.sortingPanel.border.title=Step 3: Choose display settings
-DiscoveryDialog.searchButton.text=Search
-DiscoveryDialog.domainsButton.text=Domains
-DiscoveryDialog.groupByLabel.text=Group By:
-DiscoveryDialog.step1Label.text=Step 1: Choose result type
-DiscoveryDialog.orderByLabel.text=Order Within Groups By:
-DiscoveryDialog.documentsButton.text=Documents
-DiscoveryDialog.orderGroupsByLabel.text=Order Groups By:
-DiscoveryDialog.videosButton.text=Videos
-DiscoveryDialog.imagesButton.text=Images
 DiscoveryTopComponent.cancelButton.text=Cancel Search
 DiscoveryTopComponent.name=\ Discovery
 DiscoveryTopComponent.newSearch.text=New Search
@@ -58,6 +44,20 @@ OpenDiscoveryAction.resultsIncomplete.text=Discovery results may be incomplete
 # {0} - currentPage
 # {1} - totalPages
 ResultsPanel.currentPage.displayValue=Page: {0} of {1}
+# To change this license header, choose License Headers in Project Properties.
+# To change this template file, choose Tools | Templates
+# and open the template in the editor.
+ResultsPanel.currentPageLabel.text=Page: -
+DiscoveryDialog.sortingPanel.border.title=Step 3: Choose display settings
+DiscoveryDialog.searchButton.text=Search
+DiscoveryDialog.domainsButton.text=Domains
+DiscoveryDialog.groupByLabel.text=Group By:
+DiscoveryDialog.step1Label.text=Step 1: Choose result type
+DiscoveryDialog.orderByLabel.text=Order Within Groups By:
+DiscoveryDialog.documentsButton.text=Documents
+DiscoveryDialog.orderGroupsByLabel.text=Order Groups By:
+DiscoveryDialog.videosButton.text=Videos
+DiscoveryDialog.imagesButton.text=Images
 ResultsPanel.documentPreview.text=Document preview creation cancelled.
 # {0} - selectedPage
 # {1} - maxPage
@@ -106,6 +106,7 @@ ResultsPanel.gotoPageLabel.text=Go to Page:
 HashSetFilterPanel.hashSetCheckbox.text=Hash Set:
 PastOccurrencesFilterPanel.pastOccurrencesCheckbox.text=Past Occurrences:
 DocumentFilterPanel.documentsFiltersSplitPane.border.title=Step 2: Filter which documents to show
+ObjectDetectedFilterPanel.text=Object Detected:
 DetailsPanel.instancesList.border.title=Instances
 VideoThumbnailPanel.bytes.text=bytes
 VideoThumbnailPanel.deleted.text=All instances of file are deleted.
