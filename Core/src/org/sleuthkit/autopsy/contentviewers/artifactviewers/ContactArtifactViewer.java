@@ -293,8 +293,6 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
      * @param contactPanelConstraints Layout constraints.
      *
      */
-    @NbBundle.Messages({
-        "ContactArtifactViewer_plural_suffix=s",})
     private void updateContactMethodSection(List<BlackboardAttribute> sectionAttributesList, String sectionHeader, GridBagLayout contactPanelLayout, GridBagConstraints contactPanelConstraints) {
 
         // If there are no attributes for this section, do nothing
@@ -302,11 +300,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
             return;
         }
 
-        String sectionHeaderString = sectionHeader;
-        if (sectionAttributesList.size() > 1) {
-            sectionHeaderString = sectionHeaderString.concat(Bundle.ContactArtifactViewer_plural_suffix());
-        }
-        CommunicationArtifactViewerHelper.addHeader(this, contactPanelLayout, contactPanelConstraints, sectionHeaderString);
+        CommunicationArtifactViewerHelper.addHeader(this, contactPanelLayout, contactPanelConstraints, sectionHeader);
         for (BlackboardAttribute bba : sectionAttributesList) {
             CommunicationArtifactViewerHelper.addKey(this, contactPanelLayout, contactPanelConstraints, bba.getAttributeType().getDisplayName());
             CommunicationArtifactViewerHelper.addValue(this, contactPanelLayout, contactPanelConstraints, bba.getDisplayString());
