@@ -29,7 +29,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 abstract class AbstractFilter {
 
     /**
-     * Returns part of a query on the tsk_files table that can be AND-ed with
+     * Returns part of a query on the table that can be AND-ed with
      * other pieces
      *
      * @return the SQL query or an empty string if there is no SQL query for
@@ -48,15 +48,15 @@ abstract class AbstractFilter {
     }
 
     /**
-     * Run a secondary filter that does not operate on tsk_files.
+     * Run a secondary filter that does not operate on table.
      *
-     * @param currentResults The current list of matching files; empty if no
+     * @param currentResults The current list of matching results; empty if no
      *                       filters have yet been run.
      * @param caseDb         The case database
      * @param centralRepoDb  The central repo database. Can be null if the
      *                       filter does not require it.
      *
-     * @return The list of files that match this filter (and any that came
+     * @return The list of results that match this filter (and any that came
      *         before it)
      *
      * @throws FileSearchException

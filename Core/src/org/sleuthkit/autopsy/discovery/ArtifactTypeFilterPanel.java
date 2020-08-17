@@ -25,8 +25,7 @@ import javax.swing.JList;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
- *
- * @author wschaefer
+ * Filter for selection of a specific Arrtifact type to limit results to.
  */
 class ArtifactTypeFilterPanel extends AbstractDiscoveryFilterPanel {
 
@@ -48,7 +47,7 @@ class ArtifactTypeFilterPanel extends AbstractDiscoveryFilterPanel {
         int count = 0;
         DefaultListModel<ArtifactTypeItem> artifactTypeModel = (DefaultListModel<ArtifactTypeItem>) jList1.getModel();
         artifactTypeModel.removeAllElements();
-        for (BlackboardArtifact.ARTIFACT_TYPE artifactType : AttributeSearchData.ArtifactType.DOMAIN.getBlackboardTypes()) {
+        for (BlackboardArtifact.ARTIFACT_TYPE artifactType : AttributeSearchData.AttributeType.DOMAIN.getBlackboardTypes()) {
             artifactTypeModel.add(count, new ArtifactTypeItem(artifactType));
             count++;
         }

@@ -61,21 +61,26 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
         secondColumnPanel.setLayout(new GridBagLayout());
     }
 
+    /**
+     * Get the broad ResultType, such as files or attributes.
+     *
+     * @return
+     */
     abstract SearchData.ResultType getResultType();
 
     /**
-     * Get the type of results this filters panel is for.
+     * Get the file type of results this filters panel is for.
      *
-     * @return The type of results this panel filters.
+     * @return The file type of results this panel filters.
      */
     abstract FileSearchData.FileType getFileType();
 
     /**
-     * Get the type of results this filters panel is for.
+     * Get the attribute type of results this filters panel is for.
      *
-     * @return The type of results this panel filters.
+     * @return The attribute type of results this panel filters.
      */
-    abstract AttributeSearchData.ArtifactType getArtifactType();
+    abstract AttributeSearchData.AttributeType getArtifactType();
 
     /**
      * Add a DiscoveryFilterPanel to the specified column with the specified

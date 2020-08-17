@@ -70,7 +70,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
     private static volatile boolean shouldUpdate = false;
     private SearchData.ResultType resultType = SearchData.ResultType.FILE;
     private FileSearchData.FileType fileType = FileSearchData.FileType.IMAGE;
-    private AttributeSearchData.ArtifactType artifactType = null;
+    private AttributeSearchData.AttributeType artifactType = null;
     private final PropertyChangeListener listener;
     private final Set<BlackboardAttribute> objectsDetected = new HashSet<>();
     private final Set<BlackboardAttribute> interestingItems = new HashSet<>();
@@ -143,6 +143,9 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         repaint();
     }
 
+    /**
+     * Set the type buttons to a default state where none are selected.
+     */
     private void unselectAllButtons() {
         imagesButton.setSelected(false);
         imagesButton.setEnabled(true);
@@ -609,7 +612,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         domainsButton.setBackground(SELECTED_COLOR);
         domainsButton.setForeground(Color.BLACK);
         resultType = SearchData.ResultType.ATTRIBUTE;
-        artifactType = AttributeSearchData.ArtifactType.DOMAIN;
+        artifactType = AttributeSearchData.AttributeType.DOMAIN;
         fileType = null;
         documentFilterPanel.addPropertyChangeListener(listener);
         validateDialog();

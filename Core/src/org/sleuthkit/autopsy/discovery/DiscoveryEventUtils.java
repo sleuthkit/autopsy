@@ -22,7 +22,7 @@ import com.google.common.eventbus.EventBus;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import org.sleuthkit.autopsy.discovery.AttributeSearchData.ArtifactType;
+import org.sleuthkit.autopsy.discovery.AttributeSearchData.AttributeType;
 import org.sleuthkit.autopsy.discovery.FileSearch.GroupKey;
 import org.sleuthkit.autopsy.discovery.FileSearchData.FileType;
 import org.sleuthkit.autopsy.discovery.SearchData.ResultType;
@@ -58,23 +58,23 @@ final class DiscoveryEventUtils {
 
         private final ResultType resultType;
         private final FileType fileType;
-        private final ArtifactType artifactType;
+        private final AttributeType attributeType;
 
         /**
          * Construct a new SearchStartedEvent
          *
          * @param type The type of file the search event is for.
          */
-        SearchStartedEvent(ResultType resultType, FileType fileType, ArtifactType artifactType) {
+        SearchStartedEvent(ResultType resultType, FileType fileType, AttributeType attributeType) {
             this.resultType = resultType;
             this.fileType = fileType;
-            this.artifactType = artifactType;
+            this.attributeType = attributeType;
         }
 
         /**
          * Get the broad search type.
          *
-         * @return The result type, either FILES, or ARTIFACTS.
+         * @return The result type, either FILES, or ATTRIBUTES.
          */
         ResultType getResultType() {
             return resultType;
@@ -90,12 +90,12 @@ final class DiscoveryEventUtils {
         }
 
         /**
-         * Get the type of artifact the search is being performed for.
+         * Get the type of attribute the search is being performed for.
          *
-         * @return The type of artifacts being searched for.
+         * @return The type of attribute being searched for.
          */
-        ArtifactType getArtifactType() {
-            return artifactType;
+        AttributeType getAttributeType() {
+            return attributeType;
         }
     }
 

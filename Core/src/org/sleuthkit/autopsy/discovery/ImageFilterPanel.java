@@ -110,7 +110,7 @@ final class ImageFilterPanel extends AbstractFiltersPanel {
     }
 
     @Override
-    AttributeSearchData.ArtifactType getArtifactType() {
+    AttributeSearchData.AttributeType getArtifactType() {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 }

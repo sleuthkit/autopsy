@@ -26,8 +26,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.communications.Utils;
 
 /**
- *
- * @author wschaefer
+ * Filter panel for allowing the user to filter on date.
  */
 class DateFilterPanel extends AbstractDiscoveryFilterPanel {
 
@@ -35,7 +34,7 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
     private final SpinnerNumberModel numberModel;
 
     /**
-     * Creates new form DateFilterPanel
+     * Creates new form DateFilterPanel.
      */
     @NbBundle.Messages({"# {0} - timeZone",
         "DateFilterPanel.dateRange.text=Date Range ({0}):"})
@@ -43,7 +42,7 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
         // numberModel is used in initComponents
         numberModel = new SpinnerNumberModel(10, 1, Integer.MAX_VALUE, 1);
         initComponents();
-        jRadioButton1.setText(Bundle.DateFilterPanel_dateRange_text(Utils.getUserPreferredZoneId().toString()));
+        rangeRadioButton.setText(Bundle.DateFilterPanel_dateRange_text(Utils.getUserPreferredZoneId().toString()));
     }
 
     /**
@@ -65,7 +64,7 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
         startDatePicker = new com.github.lgooddatepicker.components.DatePicker();
         endDatePicker = new com.github.lgooddatepicker.components.DatePicker();
         endCheckBox = new javax.swing.JCheckBox();
-        jRadioButton1 = new javax.swing.JRadioButton();
+        rangeRadioButton = new javax.swing.JRadioButton();
 
         org.openide.awt.Mnemonics.setLocalizedText(dateFilterCheckbox, org.openide.util.NbBundle.getMessage(DateFilterPanel.class, "DateFilterPanel.dateFilterCheckbox.text")); // NOI18N
 
@@ -78,11 +77,6 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
         buttonGroup1.add(mostRecentButton);
         org.openide.awt.Mnemonics.setLocalizedText(mostRecentButton, org.openide.util.NbBundle.getMessage(DateFilterPanel.class, "DateFilterPanel.mostRecentButton.text")); // NOI18N
         mostRecentButton.setEnabled(false);
-        mostRecentButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mostRecentButtonActionPerformed(evt);
-            }
-        });
 
         org.openide.awt.Mnemonics.setLocalizedText(startCheckBox, org.openide.util.NbBundle.getMessage(DateFilterPanel.class, "DateFilterPanel.startCheckBox.text")); // NOI18N
         startCheckBox.setEnabled(false);
@@ -108,8 +102,8 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
             }
         });
 
-        buttonGroup1.add(jRadioButton1);
-        jRadioButton1.setEnabled(false);
+        buttonGroup1.add(rangeRadioButton);
+        rangeRadioButton.setEnabled(false);
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -121,7 +115,7 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
                 .addComponent(daysSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(daysLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 132, Short.MAX_VALUE))
-            .addComponent(jRadioButton1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(rangeRadioButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                 .addGap(30, 30, 30)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -140,7 +134,7 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
                     .addComponent(daysSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(daysLabel))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jRadioButton1)
+                .addComponent(rangeRadioButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(startCheckBox)
@@ -170,18 +164,14 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void mostRecentButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mostRecentButtonActionPerformed
-
-    }//GEN-LAST:event_mostRecentButtonActionPerformed
-
     private void startCheckBoxStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_startCheckBoxStateChanged
         startDatePicker.setEnabled(startCheckBox.isSelected());
-//        validateFilters();
+//        validateFilters(); //TODO JIRA-6714 when search will begin doing something
     }//GEN-LAST:event_startCheckBoxStateChanged
 
     private void endCheckBoxStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_endCheckBoxStateChanged
         endDatePicker.setEnabled(endCheckBox.isSelected());
-//        validateFilters();
+//        validateFilters(); //TODO JIRA-6714 when search will begin doing something
     }//GEN-LAST:event_endCheckBoxStateChanged
 
     @Override
@@ -223,8 +213,8 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
     private javax.swing.JCheckBox endCheckBox;
     private com.github.lgooddatepicker.components.DatePicker endDatePicker;
     private javax.swing.JPanel jPanel1;
-    private javax.swing.JRadioButton jRadioButton1;
     private javax.swing.JRadioButton mostRecentButton;
+    private javax.swing.JRadioButton rangeRadioButton;
     private javax.swing.JCheckBox startCheckBox;
     private com.github.lgooddatepicker.components.DatePicker startDatePicker;
     // End of variables declaration//GEN-END:variables

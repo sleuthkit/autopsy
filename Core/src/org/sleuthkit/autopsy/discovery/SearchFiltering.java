@@ -156,18 +156,18 @@ class SearchFiltering {
 
         @NbBundle.Messages({
             "# {0} - filters",
-            "FileSearchFiltering.SizeFilter.desc=Size(s): {0}",
-            "FileSearchFiltering.SizeFilter.or=, "})
+            "SearchFiltering.SizeFilter.desc=Size(s): {0}",
+            "SearchFiltering.SizeFilter.or=, "})
         @Override
         String getDesc() {
             String desc = ""; // NON-NLS
             for (FileSize size : fileSizes) {
                 if (!desc.isEmpty()) {
-                    desc += Bundle.FileSearchFiltering_SizeFilter_or();
+                    desc += Bundle.SearchFiltering_SizeFilter_or();
                 }
                 desc += size.getSizeGroup();
             }
-            desc = Bundle.FileSearchFiltering_SizeFilter_desc(desc);
+            desc = Bundle.SearchFiltering_SizeFilter_desc(desc);
             return desc;
         }
     }
@@ -220,22 +220,22 @@ class SearchFiltering {
         }
 
         @NbBundle.Messages({
-            "FileSearchFiltering.ParentSearchTerm.fullString= (exact)",
-            "FileSearchFiltering.ParentSearchTerm.subString= (substring)",
-            "FileSearchFiltering.ParentSearchTerm.includeString= (include)",
-            "FileSearchFiltering.ParentSearchTerm.excludeString= (exclude)",})
+            "SearchFiltering.ParentSearchTerm.fullString= (exact)",
+            "SearchFiltering.ParentSearchTerm.subString= (substring)",
+            "SearchFiltering.ParentSearchTerm.includeString= (include)",
+            "SearchFiltering.ParentSearchTerm.excludeString= (exclude)",})
         @Override
         public String toString() {
             String returnString = getSearchStr();
             if (isFullPath()) {
-                returnString += Bundle.FileSearchFiltering_ParentSearchTerm_fullString();
+                returnString += Bundle.SearchFiltering_ParentSearchTerm_fullString();
             } else {
-                returnString += Bundle.FileSearchFiltering_ParentSearchTerm_subString();
+                returnString += Bundle.SearchFiltering_ParentSearchTerm_subString();
             }
             if (isIncluded()) {
-                returnString += Bundle.FileSearchFiltering_ParentSearchTerm_includeString();
+                returnString += Bundle.SearchFiltering_ParentSearchTerm_includeString();
             } else {
-                returnString += Bundle.FileSearchFiltering_ParentSearchTerm_excludeString();
+                returnString += Bundle.SearchFiltering_ParentSearchTerm_excludeString();
             }
             return returnString;
         }
@@ -310,31 +310,31 @@ class SearchFiltering {
 
         @NbBundle.Messages({
             "# {0} - filters",
-            "FileSearchFiltering.ParentFilter.desc=Paths matching: {0}",
-            "FileSearchFiltering.ParentFilter.or=, ",
-            "FileSearchFiltering.ParentFilter.exact=(exact match)",
-            "FileSearchFiltering.ParentFilter.substring=(substring)",
-            "FileSearchFiltering.ParentFilter.included=(included)",
-            "FileSearchFiltering.ParentFilter.excluded=(excluded)"})
+            "SearchFiltering.ParentFilter.desc=Paths matching: {0}",
+            "SearchFiltering.ParentFilter.or=, ",
+            "SearchFiltering.ParentFilter.exact=(exact match)",
+            "SearchFiltering.ParentFilter.substring=(substring)",
+            "SearchFiltering.ParentFilter.included=(included)",
+            "SearchFiltering.ParentFilter.excluded=(excluded)"})
         @Override
         String getDesc() {
             String desc = ""; // NON-NLS
             for (ParentSearchTerm searchTerm : parentSearchTerms) {
                 if (!desc.isEmpty()) {
-                    desc += Bundle.FileSearchFiltering_ParentFilter_or();
+                    desc += Bundle.SearchFiltering_ParentFilter_or();
                 }
                 if (searchTerm.isFullPath()) {
-                    desc += searchTerm.getSearchStr() + Bundle.FileSearchFiltering_ParentFilter_exact();
+                    desc += searchTerm.getSearchStr() + Bundle.SearchFiltering_ParentFilter_exact();
                 } else {
-                    desc += searchTerm.getSearchStr() + Bundle.FileSearchFiltering_ParentFilter_substring();
+                    desc += searchTerm.getSearchStr() + Bundle.SearchFiltering_ParentFilter_substring();
                 }
                 if (searchTerm.isIncluded()) {
-                    desc += Bundle.FileSearchFiltering_ParentFilter_included();                           
+                    desc += Bundle.SearchFiltering_ParentFilter_included();                           
                 } else {
-                    desc += Bundle.FileSearchFiltering_ParentFilter_excluded();
+                    desc += Bundle.SearchFiltering_ParentFilter_excluded();
                 }
             }
-            desc = Bundle.FileSearchFiltering_ParentFilter_desc(desc);
+            desc = Bundle.SearchFiltering_ParentFilter_desc(desc);
             return desc;
         }
     }
@@ -370,21 +370,21 @@ class SearchFiltering {
 
         @NbBundle.Messages({
             "# {0} - filters",
-            "FileSearchFiltering.DataSourceFilter.desc=Data source(s): {0}",
-            "FileSearchFiltering.DataSourceFilter.or=, ",
+            "SearchFiltering.DataSourceFilter.desc=Data source(s): {0}",
+            "SearchFiltering.DataSourceFilter.or=, ",
             "# {0} - Data source name",
             "# {1} - Data source ID",
-            "FileSearchFiltering.DataSourceFilter.datasource={0}({1})",})
+            "SearchFiltering.DataSourceFilter.datasource={0}({1})",})
         @Override
         String getDesc() {
             String desc = ""; // NON-NLS
             for (DataSource ds : dataSources) {
                 if (!desc.isEmpty()) {
-                    desc += Bundle.FileSearchFiltering_DataSourceFilter_or();
+                    desc += Bundle.SearchFiltering_DataSourceFilter_or();
                 }
-                desc += Bundle.FileSearchFiltering_DataSourceFilter_datasource(ds.getName(), ds.getId());
+                desc += Bundle.SearchFiltering_DataSourceFilter_datasource(ds.getName(), ds.getId());
             }
-            desc = Bundle.FileSearchFiltering_DataSourceFilter_desc(desc);
+            desc = Bundle.SearchFiltering_DataSourceFilter_desc(desc);
             return desc;
         }
     }
@@ -419,10 +419,10 @@ class SearchFiltering {
 
         @NbBundle.Messages({
             "# {0} - filters",
-            "FileSearchFiltering.KeywordListFilter.desc=Keywords in list(s): {0}",})
+            "SearchFiltering.KeywordListFilter.desc=Keywords in list(s): {0}",})
         @Override
         String getDesc() {
-            return Bundle.FileSearchFiltering_KeywordListFilter_desc(concatenateSetNamesForDisplay(listNames));
+            return Bundle.SearchFiltering_KeywordListFilter_desc(concatenateSetNamesForDisplay(listNames));
         }
     }
 
@@ -469,18 +469,18 @@ class SearchFiltering {
 
         @NbBundle.Messages({
             "# {0} - filters",
-            "FileSearchFiltering.FileTypeFilter.desc=Type: {0}",
-            "FileSearchFiltering.FileTypeFilter.or=, ",})
+            "SearchFiltering.FileTypeFilter.desc=Type: {0}",
+            "SearchFiltering.FileTypeFilter.or=, ",})
         @Override
         String getDesc() {
             String desc = "";
             for (FileType cat : categories) {
                 if (!desc.isEmpty()) {
-                    desc += Bundle.FileSearchFiltering_FileTypeFilter_or();
+                    desc += Bundle.SearchFiltering_FileTypeFilter_or();
                 }
                 desc += cat.toString();
             }
-            desc = Bundle.FileSearchFiltering_FileTypeFilter_desc(desc);
+            desc = Bundle.SearchFiltering_FileTypeFilter_desc(desc);
             return desc;
         }
     }
@@ -539,18 +539,18 @@ class SearchFiltering {
 
         @NbBundle.Messages({
             "# {0} - filters",
-            "FileSearchFiltering.FrequencyFilter.desc=Past occurrences: {0}",
-            "FileSearchFiltering.FrequencyFilter.or=, ",})
+            "SearchFiltering.FrequencyFilter.desc=Past occurrences: {0}",
+            "SearchFiltering.FrequencyFilter.or=, ",})
         @Override
         String getDesc() {
             String desc = ""; // NON-NLS
             for (Frequency freq : frequencies) {
                 if (!desc.isEmpty()) {
-                    desc += Bundle.FileSearchFiltering_FrequencyFilter_or();
+                    desc += Bundle.SearchFiltering_FrequencyFilter_or();
                 }
                 desc += freq.toString();
             }
-            return Bundle.FileSearchFiltering_FrequencyFilter_desc(desc);
+            return Bundle.SearchFiltering_FrequencyFilter_desc(desc);
         }
     }
 
@@ -623,10 +623,10 @@ class SearchFiltering {
 
         @NbBundle.Messages({
             "# {0} - filters",
-            "FileSearchFiltering.InterestingItemSetFilter.desc=Interesting item hits in set(s): {0}",})
+            "SearchFiltering.InterestingItemSetFilter.desc=Interesting item hits in set(s): {0}",})
         @Override
         String getDesc() {
-            return Bundle.FileSearchFiltering_InterestingItemSetFilter_desc(concatenateSetNamesForDisplay(setNames));
+            return Bundle.SearchFiltering_InterestingItemSetFilter_desc(concatenateSetNamesForDisplay(setNames));
         }
     }
 
@@ -661,10 +661,10 @@ class SearchFiltering {
 
         @NbBundle.Messages({
             "# {0} - filters",
-            "FileSearchFiltering.ObjectDetectionFilter.desc=Objects detected in set(s): {0}",})
+            "SearchFiltering.ObjectDetectionFilter.desc=Objects detected in set(s): {0}",})
         @Override
         String getDesc() {
-            return Bundle.FileSearchFiltering_ObjectDetectionFilter_desc(concatenateSetNamesForDisplay(typeNames));
+            return Bundle.SearchFiltering_ObjectDetectionFilter_desc(concatenateSetNamesForDisplay(typeNames));
         }
     }
 
@@ -737,10 +737,10 @@ class SearchFiltering {
 
         @NbBundle.Messages({
             "# {0} - filters",
-            "FileSearchFiltering.ScoreFilter.desc=Score(s) of : {0}",})
+            "SearchFiltering.ScoreFilter.desc=Score(s) of : {0}",})
         @Override
         String getDesc() {
-            return Bundle.FileSearchFiltering_ScoreFilter_desc(
+            return Bundle.SearchFiltering_ScoreFilter_desc(
                     concatenateSetNamesForDisplay(scores.stream().map(p -> p.toString()).collect(Collectors.toList())));
         }
     }

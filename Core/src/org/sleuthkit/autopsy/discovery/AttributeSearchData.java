@@ -27,7 +27,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
- * Utility enums for searches made for artifacts with Discovery.
+ * Utility enums for searches made for attributes with Discovery.
  */
 public class AttributeSearchData extends SearchData {
 
@@ -39,24 +39,21 @@ public class AttributeSearchData extends SearchData {
     }
 
     /**
-     * Enum representing the file type. We don't simply use
-     * FileTypeUtils.FileTypeCategory because: - Some file types categories
-     * overlap - It is convenient to have the "OTHER" option for files that
-     * don't match the given types
+     * Enum representing the attribute type. 
      */
     @NbBundle.Messages({
-        "ArtifactSearchData.ArtifactType.Domain.displayName=Domain",
-        "ArtifactSearchData.ArtifactType.Other.displayName=Other"})
-    enum ArtifactType {
+        "AttributeSearchData.AttributeType.Domain.displayName=Domain",
+        "AttributeSearchData.AttributeType.Other.displayName=Other"})
+    enum AttributeType {
 
-        DOMAIN(0, Bundle.ArtifactSearchData_ArtifactType_Domain_displayName(), DOMAIN_ARTIFACT_TYPES),
-        OTHER(1, Bundle.ArtifactSearchData_ArtifactType_Other_displayName(), new HashSet<>());
+        DOMAIN(0, Bundle.AttributeSearchData_AttributeType_Domain_displayName(), DOMAIN_ARTIFACT_TYPES),
+        OTHER(1, Bundle.AttributeSearchData_AttributeType_Other_displayName(), new HashSet<>());
 
         private final int ranking;  // For ordering in the UI
         private final String displayName;
         private final Set<BlackboardArtifact.ARTIFACT_TYPE> artifactTypes = new HashSet<>();
 
-        ArtifactType(int value, String displayName, Set<BlackboardArtifact.ARTIFACT_TYPE> types) {
+        AttributeType(int value, String displayName, Set<BlackboardArtifact.ARTIFACT_TYPE> types) {
             this.ranking = value;
             this.displayName = displayName;
             this.artifactTypes.addAll(types);
@@ -85,7 +82,7 @@ public class AttributeSearchData extends SearchData {
             return ranking;
         }
 
-        static ArtifactType fromBlackboardArtifact(final BlackboardArtifact.ARTIFACT_TYPE type) {
+        static AttributeType fromBlackboardArtifact(final BlackboardArtifact.ARTIFACT_TYPE type) {
             switch (type) {
                 case TSK_WEB_BOOKMARK:
                     return DOMAIN;

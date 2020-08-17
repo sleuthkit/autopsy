@@ -24,7 +24,6 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.discovery.FileSearchData.Frequency;
-import org.sleuthkit.autopsy.discovery.SearchData.ResultType;
 
 /**
  * Panel to allow configuration of the Past Occurrences filter.

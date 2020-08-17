@@ -18,15 +18,22 @@
  */
 package org.sleuthkit.autopsy.discovery;
 
-
+/**
+ * Abstract class to contain data that is common to all result types.
+ */
 abstract class SearchData {
-    
+
+    /**
+     * Enum of the broad result type categories.
+     */
     enum ResultType {
         FILE,
         ATTRIBUTE;
     }
-    
+
+    /**
+     * Get the broad result type.
+     */
     abstract ResultType getResultType();
 
-    
 }

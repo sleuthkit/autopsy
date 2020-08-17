@@ -21,16 +21,15 @@ package org.sleuthkit.autopsy.discovery;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 
 /**
- *
- * @author wschaefer
+ * Filter panel for searching domain attributes with Discovery.
  */
 public class DomainFilterPanel extends AbstractFiltersPanel {
 
     private static final long serialVersionUID = 1L;
-    private static final AttributeSearchData.ArtifactType ARTIFACT_TYPE = AttributeSearchData.ArtifactType.DOMAIN;
+    private static final AttributeSearchData.AttributeType ARTIFACT_TYPE = AttributeSearchData.AttributeType.DOMAIN;
 
     /**
-     * Creates new form DomainFilterPanel
+     * Creates new form DomainFilterPanel.
      */
     public DomainFilterPanel() {
         super();
@@ -43,7 +42,6 @@ public class DomainFilterPanel extends AbstractFiltersPanel {
             pastOccurrencesIndices = new int[]{2, 3, 4};
             addFilter(new PastOccurrencesFilterPanel(), true, pastOccurrencesIndices, 0);
         }
-
         addPanelsToScrollPane(domainFiltersSplitPane);
     }
 
@@ -100,7 +98,7 @@ public class DomainFilterPanel extends AbstractFiltersPanel {
     }
 
     @Override
-    AttributeSearchData.ArtifactType getArtifactType() {
+    AttributeSearchData.AttributeType getArtifactType() {
         return ARTIFACT_TYPE;
     }
 
