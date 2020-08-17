@@ -43,14 +43,14 @@ import org.sleuthkit.autopsy.discovery.search.SearchData.ResultType;
 /**
  * Create a dialog for displaying the Discovery results.
  */
-@TopComponent.Description(preferredID = "Discovery", persistenceType = TopComponent.PERSISTENCE_NEVER)
+@TopComponent.Description(preferredID = "DiscoveryTc", persistenceType = TopComponent.PERSISTENCE_NEVER)
 @TopComponent.Registration(mode = "discovery", openAtStartup = false)
 @RetainLocation("discovery")
 @NbBundle.Messages("DiscoveryTopComponent.name= Discovery")
 public final class DiscoveryTopComponent extends TopComponent {
 
     private static final long serialVersionUID = 1L;
-    private static final String PREFERRED_ID = "Discovery"; // NON-NLS
+    private static final String PREFERRED_ID = "DiscoveryTc"; // NON-NLS
     private static final int ANIMATION_INCREMENT = 30;
     private volatile static int resultsAreaSize = 250;
     private final GroupListPanel groupListPanel;
