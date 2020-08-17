@@ -22,7 +22,7 @@ import java.awt.Image;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import org.sleuthkit.autopsy.discovery.ResultFile;
+import org.sleuthkit.autopsy.discovery.search.ResultFile;
 
 /**
  * Class to wrap all the information necessary for video thumbnails to be

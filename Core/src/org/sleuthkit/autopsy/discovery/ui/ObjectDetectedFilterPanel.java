@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.discovery.ui;
 
+import org.sleuthkit.autopsy.discovery.search.AbstractFilter;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.DefaultListModel;
@@ -25,7 +26,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.discovery.SearchFiltering;
+import org.sleuthkit.autopsy.discovery.search.SearchFiltering;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;

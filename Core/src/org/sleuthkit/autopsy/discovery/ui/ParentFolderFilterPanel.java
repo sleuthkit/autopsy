@@ -18,14 +18,15 @@
  */
 package org.sleuthkit.autopsy.discovery.ui;
 
+import org.sleuthkit.autopsy.discovery.search.AbstractFilter;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.DefaultListModel;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
-import org.sleuthkit.autopsy.discovery.SearchFiltering;
-import org.sleuthkit.autopsy.discovery.SearchFiltering.ParentSearchTerm;
+import org.sleuthkit.autopsy.discovery.search.SearchFiltering;
+import org.sleuthkit.autopsy.discovery.search.SearchFiltering.ParentSearchTerm;
 
 /**
  * Panel to allow configuration of the Parent Folder filter.

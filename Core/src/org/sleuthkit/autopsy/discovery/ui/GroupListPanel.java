@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.discovery.ui;
 
+import org.sleuthkit.autopsy.discovery.search.AbstractFilter;
 import com.google.common.eventbus.Subscribe;
 import java.awt.Cursor;
 import java.util.List;
@@ -28,13 +29,12 @@ import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.discovery.Bundle;
-import org.sleuthkit.autopsy.discovery.DiscoveryEventUtils;
-import org.sleuthkit.autopsy.discovery.FileGroup;
-import org.sleuthkit.autopsy.discovery.FileSearch;
-import org.sleuthkit.autopsy.discovery.FileSearch.GroupKey;
-import org.sleuthkit.autopsy.discovery.FileSearchData.FileType;
-import org.sleuthkit.autopsy.discovery.FileSorter;
+import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils;
+import org.sleuthkit.autopsy.discovery.search.DiscoveryKeyUtils.GroupKey;
+import org.sleuthkit.autopsy.discovery.search.FileGroup;
+import org.sleuthkit.autopsy.discovery.search.FileSearch;
+import org.sleuthkit.autopsy.discovery.search.FileSearchData.FileType;
+import org.sleuthkit.autopsy.discovery.search.FileSorter;
 
 /**
  * Panel to display the list of groups which are provided by a search.

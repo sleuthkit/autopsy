@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.discovery;
+package org.sleuthkit.autopsy.discovery.search;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -25,7 +25,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import org.sleuthkit.autopsy.discovery.FileSearch.GroupKey;
+import org.sleuthkit.autopsy.discovery.search.DiscoveryKeyUtils.GroupKey;
 
 /**
  * Class to hold the results of the filtering/grouping/sorting operations.
@@ -36,7 +36,7 @@ class SearchResults {
     private final FileSearch.AttributeType attrType;
     private final FileSorter fileSorter;
 
-    private final Map<FileSearch.GroupKey, FileGroup> groupMap = new HashMap<>();
+    private final Map<GroupKey, FileGroup> groupMap = new HashMap<>();
     private List<FileGroup> groupList = new ArrayList<>();
 
     private static final long MAX_OUTPUT_FILES = 2000; // For debug UI - maximum number of lines to print
@@ -75,7 +75,7 @@ class SearchResults {
     void add(List<ResultFile> files) {
         for (ResultFile file : files) {
             // Add the file to the appropriate group, creating it if necessary
-            FileSearch.GroupKey groupKey = attrType.getGroupKey(file);
+            GroupKey groupKey = attrType.getGroupKey(file);
 
             if (!groupMap.containsKey(groupKey)) {
                 groupMap.put(groupKey, new FileGroup(groupSortingType, groupKey));

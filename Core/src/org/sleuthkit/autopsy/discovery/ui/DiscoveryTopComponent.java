@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.discovery.ui;
 
+import org.sleuthkit.autopsy.discovery.search.AbstractFilter;
 import com.google.common.eventbus.Subscribe;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -36,9 +37,8 @@ import org.openide.windows.RetainLocation;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.discovery.Bundle;
-import org.sleuthkit.autopsy.discovery.DiscoveryEventUtils;
-import org.sleuthkit.autopsy.discovery.SearchData.ResultType;
+import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils;
+import org.sleuthkit.autopsy.discovery.search.SearchData.ResultType;
 
 /**
  * Create a dialog for displaying the Discovery results.

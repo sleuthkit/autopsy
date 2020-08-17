@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.discovery;
+package org.sleuthkit.autopsy.discovery.search;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -29,22 +29,22 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 /**
  * Utility enums for searches made for attributes with Discovery.
  */
-public class AttributeSearchData extends SearchData {
+public class AttributeSearchData implements SearchData {
 
     private static final Set<BlackboardArtifact.ARTIFACT_TYPE> DOMAIN_ARTIFACT_TYPES = EnumSet.of(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK, BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE, BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE, BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY, BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY, BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG);
 
     @Override
-    ResultType getResultType() {
+    public ResultType getResultType() {
         return ResultType.ATTRIBUTE;
     }
 
     /**
-     * Enum representing the attribute type. 
+     * Enum representing the attribute type.
      */
     @NbBundle.Messages({
         "AttributeSearchData.AttributeType.Domain.displayName=Domain",
         "AttributeSearchData.AttributeType.Other.displayName=Other"})
-    enum AttributeType {
+    public enum AttributeType {
 
         DOMAIN(0, Bundle.AttributeSearchData_AttributeType_Domain_displayName(), DOMAIN_ARTIFACT_TYPES),
         OTHER(1, Bundle.AttributeSearchData_AttributeType_Other_displayName(), new HashSet<>());
@@ -64,7 +64,7 @@ public class AttributeSearchData extends SearchData {
          *
          * @return Collection of BlackboardArtifact types.
          */
-        Collection<BlackboardArtifact.ARTIFACT_TYPE> getBlackboardTypes() {
+        public Collection<BlackboardArtifact.ARTIFACT_TYPE> getBlackboardTypes() {
             return Collections.unmodifiableCollection(artifactTypes);
         }
 
@@ -78,11 +78,11 @@ public class AttributeSearchData extends SearchData {
          *
          * @return the rank (lower should be displayed first)
          */
-        int getRanking() {
+        public int getRanking() {
             return ranking;
         }
 
-        static AttributeType fromBlackboardArtifact(final BlackboardArtifact.ARTIFACT_TYPE type) {
+        public static AttributeType fromBlackboardArtifact(final BlackboardArtifact.ARTIFACT_TYPE type) {
             switch (type) {
                 case TSK_WEB_BOOKMARK:
                     return DOMAIN;

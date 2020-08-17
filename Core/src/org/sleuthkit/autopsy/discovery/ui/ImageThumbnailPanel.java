@@ -28,7 +28,6 @@ import javax.swing.JComponent;
 import javax.swing.JList;
 import javax.swing.ListCellRenderer;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.discovery.Bundle;
 
 /**
  * Class which displays a thumbnail and information for an image file.

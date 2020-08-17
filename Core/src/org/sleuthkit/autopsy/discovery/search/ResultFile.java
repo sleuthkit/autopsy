@@ -16,9 +16,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.discovery;
+package org.sleuthkit.autopsy.discovery.search;
 
-import org.sleuthkit.autopsy.discovery.FileSearchData.FileType;
+import org.sleuthkit.autopsy.discovery.search.FileSearchData.FileType;
 import org.sleuthkit.datamodel.AbstractFile;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -39,7 +39,7 @@ import org.sleuthkit.datamodel.TskData;
 /**
  * Container for files that holds all necessary data for grouping and sorting.
  */
-class ResultFile {
+public class ResultFile {
 
     private final static Logger logger = Logger.getLogger(ResultFile.class.getName());
     private FileSearchData.Frequency frequency;
@@ -59,7 +59,7 @@ class ResultFile {
      *
      * @param abstractFile
      */
-    ResultFile(AbstractFile abstractFile) {
+    public ResultFile(AbstractFile abstractFile) {
         try {
             //call get uniquePath to cache the path
             abstractFile.getUniquePath();
@@ -86,7 +86,7 @@ class ResultFile {
      *
      * @return The Frequency enum
      */
-    FileSearchData.Frequency getFrequency() {
+    public FileSearchData.Frequency getFrequency() {
         return frequency;
     }
 
@@ -95,7 +95,7 @@ class ResultFile {
      *
      * @param frequency The frequency of the file as an enum
      */
-    void setFrequency(FileSearchData.Frequency frequency) {
+    public void setFrequency(FileSearchData.Frequency frequency) {
         this.frequency = frequency;
     }
 
@@ -105,7 +105,7 @@ class ResultFile {
      *
      * @param duplicate The abstract file to add as a duplicate.
      */
-    void addDuplicate(AbstractFile duplicate) {
+    public void addDuplicate(AbstractFile duplicate) {
         if (deleted && !duplicate.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC)) {
             deleted = false;
         }
@@ -128,7 +128,7 @@ class ResultFile {
      *
      * @return The score of this ResultFile.
      */
-    DataResultViewerTable.Score getScore() {
+    public DataResultViewerTable.Score getScore() {
         return currentScore;
     }
 
@@ -137,7 +137,7 @@ class ResultFile {
      *
      * @return The score description of this ResultFile.
      */
-    String getScoreDescription() {
+    public String getScoreDescription() {
         return scoreDescription;
     }
 
@@ -147,7 +147,7 @@ class ResultFile {
      *
      * @return The deleted status of this ResultFile.
      */
-    boolean isDeleted() {
+    public boolean isDeleted() {
         return deleted;
     }
 
@@ -158,7 +158,7 @@ class ResultFile {
      * @return The list of AbstractFiles which have been identified as instances
      *         of this file.
      */
-    List<AbstractFile> getAllInstances() {
+    public List<AbstractFile> getAllInstances() {
         return Collections.unmodifiableList(instances);
     }
 
@@ -167,7 +167,7 @@ class ResultFile {
      *
      * @return The FileType enum.
      */
-    FileType getFileType() {
+    public FileType getFileType() {
         return fileType;
     }
 
@@ -176,7 +176,7 @@ class ResultFile {
      *
      * @param keywordListName
      */
-    void addKeywordListName(String keywordListName) {
+    public void addKeywordListName(String keywordListName) {
         if (!keywordListNames.contains(keywordListName)) {
             keywordListNames.add(keywordListName);
         }
@@ -190,7 +190,7 @@ class ResultFile {
      *
      * @return the keyword list names that matched this file.
      */
-    List<String> getKeywordListNames() {
+    public List<String> getKeywordListNames() {
         return Collections.unmodifiableList(keywordListNames);
     }
 
@@ -199,7 +199,7 @@ class ResultFile {
      *
      * @param hashSetName
      */
-    void addHashSetName(String hashSetName) {
+    public void addHashSetName(String hashSetName) {
         if (!hashSetNames.contains(hashSetName)) {
             hashSetNames.add(hashSetName);
         }
@@ -213,7 +213,7 @@ class ResultFile {
      *
      * @return The hash set names that matched this file.
      */
-    List<String> getHashSetNames() {
+    public List<String> getHashSetNames() {
         return Collections.unmodifiableList(hashSetNames);
     }
 
@@ -222,7 +222,7 @@ class ResultFile {
      *
      * @param tagName
      */
-    void addTagName(String tagName) {
+    public void addTagName(String tagName) {
         if (!tagNames.contains(tagName)) {
             tagNames.add(tagName);
         }
@@ -236,7 +236,7 @@ class ResultFile {
      *
      * @return the tag names that matched this file.
      */
-    List<String> getTagNames() {
+    public List<String> getTagNames() {
         return Collections.unmodifiableList(tagNames);
     }
 
@@ -245,7 +245,7 @@ class ResultFile {
      *
      * @param interestingSetName
      */
-    void addInterestingSetName(String interestingSetName) {
+    public void addInterestingSetName(String interestingSetName) {
         if (!interestingSetNames.contains(interestingSetName)) {
             interestingSetNames.add(interestingSetName);
         }
@@ -259,7 +259,7 @@ class ResultFile {
      *
      * @return the interesting item set names that matched this file.
      */
-    List<String> getInterestingSetNames() {
+    public List<String> getInterestingSetNames() {
         return Collections.unmodifiableList(interestingSetNames);
     }
 
@@ -268,7 +268,7 @@ class ResultFile {
      *
      * @param objectDetectedName
      */
-    void addObjectDetectedName(String objectDetectedName) {
+    public void addObjectDetectedName(String objectDetectedName) {
         if (!objectDetectedNames.contains(objectDetectedName)) {
             objectDetectedNames.add(objectDetectedName);
         }
@@ -282,7 +282,7 @@ class ResultFile {
      *
      * @return the objects detected in this file.
      */
-    List<String> getObjectDetectedNames() {
+    public List<String> getObjectDetectedNames() {
         return Collections.unmodifiableList(objectDetectedNames);
     }
 
@@ -291,7 +291,7 @@ class ResultFile {
      *
      * @return the AbstractFile object
      */
-    AbstractFile getFirstInstance() {
+    public AbstractFile getFirstInstance() {
         return instances.get(0);
     }
 

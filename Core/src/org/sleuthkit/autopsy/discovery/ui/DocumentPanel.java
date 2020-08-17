@@ -29,8 +29,7 @@ import javax.swing.JList;
 import javax.swing.ListCellRenderer;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.corecomponents.AutoWrappingJTextPane;
-import org.sleuthkit.autopsy.discovery.Bundle;
-import org.sleuthkit.autopsy.discovery.FileSearchData;
+import org.sleuthkit.autopsy.discovery.search.FileSearchData;
 
 /**
  * Class which displays a preview and details about a document.

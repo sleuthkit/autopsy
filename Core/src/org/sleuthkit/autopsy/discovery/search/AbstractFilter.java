@@ -16,19 +16,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.discovery.ui;
+package org.sleuthkit.autopsy.discovery.search;
 
 import java.util.ArrayList;
 import java.util.List;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
-import org.sleuthkit.autopsy.discovery.FileSearchException;
-import org.sleuthkit.autopsy.discovery.ResultFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
  * Base class for the filters.
  */
-abstract class AbstractFilter {
+public abstract class AbstractFilter {
 
     /**
      * Returns part of a query on the table that can be AND-ed with
@@ -37,7 +35,7 @@ abstract class AbstractFilter {
      * @return the SQL query or an empty string if there is no SQL query for
      *         this filter.
      */
-    abstract String getWhereClause();
+    public abstract String getWhereClause();
 
     /**
      * Indicates whether this filter needs to use the secondary, non-SQL method
@@ -45,7 +43,7 @@ abstract class AbstractFilter {
      *
      * @return false by default
      */
-    boolean useAlternateFilter() {
+    public boolean useAlternateFilter() {
         return false;
     }
 
@@ -63,7 +61,7 @@ abstract class AbstractFilter {
      *
      * @throws FileSearchException
      */
-    List<ResultFile> applyAlternateFilter(List<ResultFile> currentResults, SleuthkitCase caseDb,
+    public List<ResultFile> applyAlternateFilter(List<ResultFile> currentResults, SleuthkitCase caseDb,
             CentralRepository centralRepoDb) throws FileSearchException {
         return new ArrayList<>();
     }
@@ -73,5 +71,5 @@ abstract class AbstractFilter {
      *
      * @return A description of the filter
      */
-    abstract String getDesc();
+    public abstract String getDesc();
 }

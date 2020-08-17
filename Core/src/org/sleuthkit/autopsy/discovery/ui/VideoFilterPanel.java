@@ -19,9 +19,9 @@
 package org.sleuthkit.autopsy.discovery.ui;
 
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
-import org.sleuthkit.autopsy.discovery.AttributeSearchData;
-import org.sleuthkit.autopsy.discovery.FileSearchData;
-import org.sleuthkit.autopsy.discovery.SearchData;
+import org.sleuthkit.autopsy.discovery.search.AttributeSearchData;
+import org.sleuthkit.autopsy.discovery.search.FileSearchData;
+import org.sleuthkit.autopsy.discovery.search.SearchData;
 
 /**
  * Panel for displaying all filters available for the searches of type Video.

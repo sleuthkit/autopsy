@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.discovery.ui;
 
+import org.sleuthkit.autopsy.discovery.search.AbstractFilter;
 import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -31,10 +32,10 @@ import javax.swing.JSplitPane;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.apache.commons.lang3.StringUtils;
-import org.sleuthkit.autopsy.discovery.AttributeSearchData;
-import org.sleuthkit.autopsy.discovery.FileSearchData;
-import org.sleuthkit.autopsy.discovery.SearchData;
-import org.sleuthkit.autopsy.discovery.SearchFiltering;
+import org.sleuthkit.autopsy.discovery.search.AttributeSearchData;
+import org.sleuthkit.autopsy.discovery.search.FileSearchData;
+import org.sleuthkit.autopsy.discovery.search.SearchData;
+import org.sleuthkit.autopsy.discovery.search.SearchFiltering;
 
 /**
  * Abstract class extending JPanel for displaying all the filters associated

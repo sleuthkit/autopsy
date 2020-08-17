@@ -16,21 +16,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.discovery;
+package org.sleuthkit.autopsy.discovery.search;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.discovery.FileSearch.GroupKey;
 
 /**
  * Class for storing files that belong to a particular group.
  */
-class FileGroup implements Comparable<FileGroup> {
+public class FileGroup implements Comparable<FileGroup> {
 
     private final FileGroup.GroupSortingAlgorithm groupSortingType;
-    private final GroupKey groupKey;
+    private final DiscoveryKeyUtils.GroupKey groupKey;
     private final List<ResultFile> files;
     private final String displayName;
 
@@ -40,7 +39,7 @@ class FileGroup implements Comparable<FileGroup> {
      * @param groupSortingType The method for sorting the group
      * @param groupKey         The GroupKey for this group
      */
-    FileGroup(FileGroup.GroupSortingAlgorithm groupSortingType, GroupKey groupKey) {
+    public FileGroup(FileGroup.GroupSortingAlgorithm groupSortingType, DiscoveryKeyUtils.GroupKey groupKey) {
         this.groupSortingType = groupSortingType;
         this.groupKey = groupKey;
         files = new ArrayList<>();
@@ -66,7 +65,7 @@ class FileGroup implements Comparable<FileGroup> {
      *
      * @return The display name of the group.
      */
-    String getDisplayName() {
+    public String getDisplayName() {
         return displayName; // NON-NLS
     }
 
@@ -75,14 +74,14 @@ class FileGroup implements Comparable<FileGroup> {
      *
      * @return The unique key for the group.
      */
-    GroupKey getGroupKey() {
+    public DiscoveryKeyUtils.GroupKey getGroupKey() {
         return groupKey;
     }
 
     /**
      * Sort all the files in the group
      */
-    void sortFiles(FileSorter sorter) {
+    public void sortFiles(FileSorter sorter) {
         Collections.sort(files, sorter);
     }
 
@@ -142,7 +141,7 @@ class FileGroup implements Comparable<FileGroup> {
      */
     @Messages({"FileGroup.groupSortingAlgorithm.groupSize.text=Group Size",
         "FileGroup.groupSortingAlgorithm.groupName.text=Group Name"})
-    enum GroupSortingAlgorithm {
+    public enum GroupSortingAlgorithm {
         BY_GROUP_NAME(Bundle.FileGroup_groupSortingAlgorithm_groupName_text()), // Sort using the group key (for example, if grouping by size sort from largest to smallest value)
         BY_GROUP_SIZE(Bundle.FileGroup_groupSortingAlgorithm_groupSize_text());  // Sort from largest to smallest group
 
@@ -169,7 +168,7 @@ class FileGroup implements Comparable<FileGroup> {
      *
      * @return List of ResultFile objects
      */
-    List<ResultFile> getFiles() {
+    public List<ResultFile> getFiles() {
         return Collections.unmodifiableList(files);
     }
 

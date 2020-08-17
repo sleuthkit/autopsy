@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.discovery.ui;
 
+import org.sleuthkit.autopsy.discovery.search.AbstractFilter;
 import com.google.common.eventbus.Subscribe;
 import java.awt.Cursor;
 import java.awt.Image;
@@ -35,16 +36,15 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.discovery.FileSearch.GroupKey;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
-import org.sleuthkit.autopsy.discovery.Bundle;
-import org.sleuthkit.autopsy.discovery.DiscoveryEventUtils;
-import org.sleuthkit.autopsy.discovery.FileGroup;
-import org.sleuthkit.autopsy.discovery.FileSearch;
-import org.sleuthkit.autopsy.discovery.FileSearchData;
-import org.sleuthkit.autopsy.discovery.FileSorter;
-import org.sleuthkit.autopsy.discovery.ResultFile;
+import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils;
+import org.sleuthkit.autopsy.discovery.search.DiscoveryKeyUtils.GroupKey;
+import org.sleuthkit.autopsy.discovery.search.FileGroup;
+import org.sleuthkit.autopsy.discovery.search.FileSearch;
+import org.sleuthkit.autopsy.discovery.search.FileSearchData;
+import org.sleuthkit.autopsy.discovery.search.FileSorter;
+import org.sleuthkit.autopsy.discovery.search.ResultFile;
 import org.sleuthkit.autopsy.textsummarizer.TextSummary;
 
 /**
@@ -653,7 +653,7 @@ final class ResultsPanel extends javax.swing.JPanel {
 
         @Override
         protected Void doInBackground() throws Exception {
-            FileSearch.getVideoThumbnails(thumbnailWrapper);
+            DiscoveryUiUtils.getVideoThumbnails(thumbnailWrapper);
             return null;
         }
 

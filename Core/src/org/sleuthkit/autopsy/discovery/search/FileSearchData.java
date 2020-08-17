@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.discovery;
+package org.sleuthkit.autopsy.discovery.search;
 
 import com.google.common.collect.ImmutableSet;
 import java.util.ArrayList;
@@ -30,12 +30,12 @@ import org.sleuthkit.autopsy.coreutils.FileTypeUtils;
 /**
  * Utility enums for searches made for files with Discovery.
  */
-final class FileSearchData extends SearchData {
+public final class FileSearchData implements SearchData {
 
     private final static long BYTES_PER_MB = 1000000;
 
     @Override
-    ResultType getResultType() {
+    public ResultType getResultType() {
         return ResultType.FILE;
     }
 
@@ -49,7 +49,7 @@ final class FileSearchData extends SearchData {
         "FileSearchData.Frequency.verycommon.displayName=Very Common (100+)",
         "FileSearchData.Frequency.known.displayName=Known (NSRL)",
         "FileSearchData.Frequency.unknown.displayName=Unknown",})
-    enum Frequency {
+    public enum Frequency {
         UNIQUE(0, 1, Bundle.FileSearchData_Frequency_unique_displayName()),
         RARE(1, 10, Bundle.FileSearchData_Frequency_rare_displayName()),
         COMMON(2, 100, Bundle.FileSearchData_Frequency_common_displayName()),
@@ -72,7 +72,7 @@ final class FileSearchData extends SearchData {
          *
          * @return the rank (lower should be displayed first)
          */
-        int getRanking() {
+        public int getRanking() {
             return ranking;
         }
 
@@ -83,7 +83,7 @@ final class FileSearchData extends SearchData {
          *
          * @return the corresponding enum
          */
-        static Frequency fromCount(long count) {
+        public static Frequency fromCount(long count) {
             if (count <= UNIQUE.getMaxOccur()) {
                 return UNIQUE;
             } else if (count <= RARE.getMaxOccur()) {
@@ -100,7 +100,7 @@ final class FileSearchData extends SearchData {
          *
          * @return enums that can be used to filter with a CR.
          */
-        static List<Frequency> getOptionsForFilteringWithCr() {
+        public static List<Frequency> getOptionsForFilteringWithCr() {
             return Arrays.asList(UNIQUE, RARE, COMMON, VERY_COMMON, KNOWN);
         }
 
@@ -110,7 +110,7 @@ final class FileSearchData extends SearchData {
          *
          * @return enums that can be used to filter without a CR.
          */
-        static List<Frequency> getOptionsForFilteringWithoutCr() {
+        public static List<Frequency> getOptionsForFilteringWithoutCr() {
             return Arrays.asList(KNOWN, UNKNOWN);
         }
 
@@ -122,7 +122,7 @@ final class FileSearchData extends SearchData {
         /**
          * @return the maxOccur
          */
-        int getMaxOccur() {
+        public int getMaxOccur() {
             return maxOccur;
         }
     }
@@ -149,7 +149,7 @@ final class FileSearchData extends SearchData {
         "FileSearchData.FileSize.16kbto100kb=: 16-100KB",
         "FileSearchData.FileSize.upTo500kb=: 0-500KB",
         "FileSearchData.FileSize.upTo16kb=: 0-16KB",})
-    enum FileSize {
+    public enum FileSize {
         XXLARGE_VIDEO(0, 10000 * BYTES_PER_MB, -1, Bundle.FileSearchData_FileSize_XXLARGE_displayName(), Bundle.FileSearchData_FileSize_10PlusGb()),
         XLARGE_VIDEO(1, 5000 * BYTES_PER_MB, 10000 * BYTES_PER_MB, Bundle.FileSearchData_FileSize_XLARGE_displayName(), Bundle.FileSearchData_FileSize_5gbto10gb()),
         LARGE_VIDEO(2, 1000 * BYTES_PER_MB, 5000 * BYTES_PER_MB, Bundle.FileSearchData_FileSize_LARGE_displayName(), Bundle.FileSearchData_FileSize_1gbto5gb()),
@@ -190,7 +190,7 @@ final class FileSearchData extends SearchData {
          *
          * @return the enum whose range contains the file size
          */
-        static FileSize fromImageSize(long size) {
+        public static FileSize fromImageSize(long size) {
             if (size > XXLARGE_IMAGE.getMinBytes()) {
                 return XXLARGE_IMAGE;
             } else if (size > XLARGE_IMAGE.getMinBytes()) {
@@ -214,7 +214,7 @@ final class FileSearchData extends SearchData {
          *
          * @return the enum whose range contains the file size
          */
-        static FileSize fromVideoSize(long size) {
+        public static FileSize fromVideoSize(long size) {
             if (size > XXLARGE_VIDEO.getMinBytes()) {
                 return XXLARGE_VIDEO;
             } else if (size > XLARGE_VIDEO.getMinBytes()) {
@@ -235,7 +235,7 @@ final class FileSearchData extends SearchData {
          *
          * @return the maximum file size that will fit in this range.
          */
-        long getMaxBytes() {
+        public long getMaxBytes() {
             return maxBytes;
         }
 
@@ -244,7 +244,7 @@ final class FileSearchData extends SearchData {
          *
          * @return the maximum file size that is not part of this range
          */
-        long getMinBytes() {
+        public long getMinBytes() {
             return minBytes;
         }
 
@@ -253,7 +253,7 @@ final class FileSearchData extends SearchData {
          *
          * @return the rank (lower should be displayed first)
          */
-        int getRanking() {
+        public int getRanking() {
             return ranking;
         }
 
@@ -262,7 +262,7 @@ final class FileSearchData extends SearchData {
             return sizeGroup + displaySize;
         }
 
-        String getSizeGroup() {
+        public String getSizeGroup() {
             return sizeGroup;
         }
 
@@ -272,7 +272,7 @@ final class FileSearchData extends SearchData {
          * @return Enums that can be used to filter most file including images
          *         by size.
          */
-        static List<FileSize> getDefaultSizeOptions() {
+        public static List<FileSize> getDefaultSizeOptions() {
             return Arrays.asList(XXLARGE_IMAGE, XLARGE_IMAGE, LARGE_IMAGE, MEDIUM_IMAGE, SMALL_IMAGE, XSMALL_IMAGE);
         }
 
@@ -281,7 +281,7 @@ final class FileSearchData extends SearchData {
          *
          * @return enums that can be used to filter videos by size.
          */
-        static List<FileSize> getOptionsForVideos() {
+        public static List<FileSize> getOptionsForVideos() {
             return Arrays.asList(XXLARGE_VIDEO, XLARGE_VIDEO, LARGE_VIDEO, MEDIUM_VIDEO, SMALL_VIDEO, XSMALL_VIDEO);
         }
     }
@@ -314,7 +314,7 @@ final class FileSearchData extends SearchData {
                     .add("application/pdf", //NON-NLS
                             "application/xhtml+xml").build(); //NON-NLS
 
-    static Collection<String> getDocTypesWithoutImageExtraction() {
+    public static Collection<String> getDocTypesWithoutImageExtraction() {
         return Collections.unmodifiableCollection(IMAGE_UNSUPPORTED_DOC_TYPES);
     }
 
@@ -331,7 +331,7 @@ final class FileSearchData extends SearchData {
         "FileSearchData.FileType.Documents.displayName=Documents",
         "FileSearchData.FileType.Executables.displayName=Executables",
         "FileSearchData.FileType.Other.displayName=Other/Unknown"})
-    enum FileType {
+    public enum FileType {
 
         IMAGE(0, Bundle.FileSearchData_FileType_Image_displayName(), FileTypeUtils.FileTypeCategory.IMAGE.getMediaTypes()),
         AUDIO(1, Bundle.FileSearchData_FileType_Audio_displayName(), FileTypeUtils.FileTypeCategory.AUDIO.getMediaTypes()),
@@ -355,7 +355,7 @@ final class FileSearchData extends SearchData {
          *
          * @return Collection of MIME type strings
          */
-        Collection<String> getMediaTypes() {
+        public Collection<String> getMediaTypes() {
             return Collections.unmodifiableCollection(mediaTypes);
         }
 
@@ -369,7 +369,7 @@ final class FileSearchData extends SearchData {
          *
          * @return the rank (lower should be displayed first)
          */
-        int getRanking() {
+        public int getRanking() {
             return ranking;
         }
 
@@ -380,7 +380,7 @@ final class FileSearchData extends SearchData {
          *
          * @return the corresponding enum (will be OTHER if no types matched)
          */
-        static FileType fromMIMEtype(String mimeType) {
+        public static FileType fromMIMEtype(String mimeType) {
             for (FileType type : FileType.values()) {
                 if (type.getMediaTypes().contains(mimeType)) {
                     return type;
@@ -398,7 +398,7 @@ final class FileSearchData extends SearchData {
         "FileSearchData.Score.notable.displayName=Notable",
         "FileSearchData.Score.interesting.displayName=Interesting",
         "FileSearchData.Score.unknown.displayName=Unknown",})
-    enum Score {
+    public enum Score {
         NOTABLE(0, Bundle.FileSearchData_Score_notable_displayName()),
         INTERESTING(1, Bundle.FileSearchData_Score_interesting_displayName()),
         UNKNOWN(2, Bundle.FileSearchData_Score_unknown_displayName());
@@ -416,7 +416,7 @@ final class FileSearchData extends SearchData {
          *
          * @return the rank (lower should be displayed first)
          */
-        int getRanking() {
+        public int getRanking() {
             return ranking;
         }
 
@@ -425,7 +425,7 @@ final class FileSearchData extends SearchData {
          *
          * @return enums that can be used to filter
          */
-        static List<Score> getOptionsForFiltering() {
+        public static List<Score> getOptionsForFiltering() {
             return Arrays.asList(NOTABLE, INTERESTING);
         }
 

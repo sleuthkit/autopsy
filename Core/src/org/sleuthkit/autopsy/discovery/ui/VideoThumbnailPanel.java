@@ -32,7 +32,6 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.ListCellRenderer;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.discovery.Bundle;
 
 /**
  * Class which displays thumbnails and information for a video file.

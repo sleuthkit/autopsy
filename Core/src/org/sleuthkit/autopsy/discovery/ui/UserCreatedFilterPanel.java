@@ -18,10 +18,11 @@
  */
 package org.sleuthkit.autopsy.discovery.ui;
 
+import org.sleuthkit.autopsy.discovery.search.AbstractFilter;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
-import org.sleuthkit.autopsy.discovery.SearchFiltering;
+import org.sleuthkit.autopsy.discovery.search.SearchFiltering;
 
 /**
  * Panel to allow configuration of the User Created Filter.

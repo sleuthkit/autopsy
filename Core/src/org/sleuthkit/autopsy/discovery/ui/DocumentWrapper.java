@@ -19,8 +19,7 @@
 package org.sleuthkit.autopsy.discovery.ui;
 
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.discovery.Bundle;
-import org.sleuthkit.autopsy.discovery.ResultFile;
+import org.sleuthkit.autopsy.discovery.search.ResultFile;
 import org.sleuthkit.autopsy.textsummarizer.TextSummary;
 
 /**

@@ -18,13 +18,13 @@
  */
 package org.sleuthkit.autopsy.discovery.ui;
 
+import org.sleuthkit.autopsy.discovery.search.AbstractFilter;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.SpinnerNumberModel;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.communications.Utils;
-import org.sleuthkit.autopsy.discovery.Bundle;
 
 /**
  * Filter panel for allowing the user to filter on date.

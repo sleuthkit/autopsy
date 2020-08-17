@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.discovery.ui;
 
+import org.sleuthkit.autopsy.discovery.search.AbstractFilter;
 import java.util.LinkedHashMap;
 import javax.swing.SwingWorker;
 import java.util.List;
@@ -25,13 +26,13 @@ import java.util.Map;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.discovery.FileSearch.GroupKey;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
-import org.sleuthkit.autopsy.discovery.DiscoveryEventUtils;
-import org.sleuthkit.autopsy.discovery.FileGroup;
-import org.sleuthkit.autopsy.discovery.FileSearch;
-import org.sleuthkit.autopsy.discovery.FileSearchException;
-import org.sleuthkit.autopsy.discovery.FileSorter;
+import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils;
+import org.sleuthkit.autopsy.discovery.search.DiscoveryKeyUtils.GroupKey;
+import org.sleuthkit.autopsy.discovery.search.FileGroup;
+import org.sleuthkit.autopsy.discovery.search.FileSearch;
+import org.sleuthkit.autopsy.discovery.search.FileSearchException;
+import org.sleuthkit.autopsy.discovery.search.FileSorter;
 
 /**
  * SwingWorker to perform search on a background thread.

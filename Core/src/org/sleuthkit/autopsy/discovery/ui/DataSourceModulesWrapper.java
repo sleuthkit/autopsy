@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.discovery.ui;
 
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.discovery.Bundle;
 import org.sleuthkit.autopsy.modules.exif.ExifParserModuleFactory;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeIdModuleFactory;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashLookupModuleFactory;

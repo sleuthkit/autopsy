@@ -16,17 +16,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.discovery;
+package org.sleuthkit.autopsy.discovery.search;
 
 /**
  * Abstract class to contain data that is common to all result types.
  */
-abstract class SearchData {
+public interface SearchData {
 
     /**
      * Enum of the broad result type categories.
      */
-    enum ResultType {
+    public enum ResultType {
         FILE,
         ATTRIBUTE;
     }
@@ -34,6 +34,6 @@ abstract class SearchData {
     /**
      * Get the broad result type.
      */
-    abstract ResultType getResultType();
+    public abstract ResultType getResultType();
 
 }

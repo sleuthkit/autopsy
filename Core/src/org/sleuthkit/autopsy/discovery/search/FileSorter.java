@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.discovery;
+package org.sleuthkit.autopsy.discovery.search;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,7 +29,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Class used to sort ResultFiles using the supplied method.
  */
-class FileSorter implements Comparator<ResultFile> {
+public class FileSorter implements Comparator<ResultFile> {
 
     private final List<Comparator<ResultFile>> comparators = new ArrayList<>();
 
@@ -40,7 +40,7 @@ class FileSorter implements Comparator<ResultFile> {
      *
      * @param method The method that should be used to sort the files
      */
-    FileSorter(SortingMethod method) {
+    public FileSorter(SortingMethod method) {
 
         // Set up the primary comparators that should applied to the files
         switch (method) {
@@ -247,7 +247,7 @@ class FileSorter implements Comparator<ResultFile> {
         "FileSorter.SortingMethod.frequency.displayName=Central Repo Frequency",
         "FileSorter.SortingMethod.keywordlist.displayName=Keyword List Names",
         "FileSorter.SortingMethod.fullPath.displayName=Full Path"})
-    enum SortingMethod {
+   public enum SortingMethod {
         BY_FILE_NAME(new ArrayList<>(),
                 Bundle.FileSorter_SortingMethod_filename_displayName()), // Sort alphabetically by file name
         BY_DATA_SOURCE(new ArrayList<>(),
@@ -276,7 +276,7 @@ class FileSorter implements Comparator<ResultFile> {
             return displayName;
         }
 
-        List<FileSearch.AttributeType> getRequiredAttributes() {
+        public List<FileSearch.AttributeType> getRequiredAttributes() {
             return Collections.unmodifiableList(requiredAttributes);
         }
 
@@ -285,7 +285,7 @@ class FileSorter implements Comparator<ResultFile> {
          *
          * @return enums that can be used to ordering images.
          */
-        static List<SortingMethod> getOptionsForOrdering() {
+        public static List<SortingMethod> getOptionsForOrdering() {
             return Arrays.asList(BY_FILE_SIZE, BY_FULL_PATH, BY_FILE_NAME, BY_DATA_SOURCE);
         }
     }

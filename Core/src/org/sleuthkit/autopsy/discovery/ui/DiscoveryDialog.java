@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.discovery.ui;
 
+import org.sleuthkit.autopsy.discovery.search.AbstractFilter;
 import static java.awt.BorderLayout.CENTER;
 import java.awt.Color;
 import java.beans.PropertyChangeEvent;
@@ -36,25 +37,24 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.discovery.AttributeSearchData;
-import org.sleuthkit.autopsy.discovery.Bundle;
-import org.sleuthkit.autopsy.discovery.DiscoveryEventUtils;
-import org.sleuthkit.autopsy.discovery.FileGroup;
-import org.sleuthkit.autopsy.discovery.FileGroup.GroupSortingAlgorithm;
-import org.sleuthkit.autopsy.discovery.FileSearch;
-import static org.sleuthkit.autopsy.discovery.FileGroup.GroupSortingAlgorithm.BY_GROUP_SIZE;
-import org.sleuthkit.autopsy.discovery.FileSearch.GroupingAttributeType;
-import org.sleuthkit.autopsy.discovery.FileSearchData;
-import org.sleuthkit.autopsy.discovery.FileSorter;
-import static org.sleuthkit.autopsy.discovery.FileSearch.GroupingAttributeType.PARENT_PATH;
-import org.sleuthkit.autopsy.discovery.FileSorter.SortingMethod;
-import org.sleuthkit.autopsy.discovery.SearchData;
+import org.sleuthkit.autopsy.discovery.search.AttributeSearchData;
+import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils;
+import org.sleuthkit.autopsy.discovery.search.FileGroup;
+import org.sleuthkit.autopsy.discovery.search.FileGroup.GroupSortingAlgorithm;
+import static org.sleuthkit.autopsy.discovery.search.FileGroup.GroupSortingAlgorithm.BY_GROUP_SIZE;
+import org.sleuthkit.autopsy.discovery.search.FileSearch;
+import org.sleuthkit.autopsy.discovery.search.FileSearch.GroupingAttributeType;
+import static org.sleuthkit.autopsy.discovery.search.FileSearch.GroupingAttributeType.PARENT_PATH;
+import org.sleuthkit.autopsy.discovery.search.FileSearchData;
+import org.sleuthkit.autopsy.discovery.search.FileSorter;
+import org.sleuthkit.autopsy.discovery.search.FileSorter.SortingMethod;
+import static org.sleuthkit.autopsy.discovery.search.FileSorter.SortingMethod.BY_FILE_NAME;
+import org.sleuthkit.autopsy.discovery.search.SearchData;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
-import static org.sleuthkit.autopsy.discovery.FileSorter.SortingMethod.BY_FILE_NAME;
 
 /**
  * Dialog for displaying the controls and filters for configuration of a

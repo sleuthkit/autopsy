@@ -31,7 +31,6 @@ import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.discovery.Bundle;
 
 /**
  * Class to open the Discovery dialog. Allows the user to run searches and see

@@ -19,7 +19,7 @@
 package org.sleuthkit.autopsy.discovery.ui;
 
 import java.awt.Cursor;
-import org.sleuthkit.autopsy.discovery.DiscoveryEventUtils;
+import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils;
 
 /**
  * Panel for separating the results list from the details area.

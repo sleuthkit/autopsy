@@ -18,11 +18,12 @@
  */
 package org.sleuthkit.autopsy.discovery.ui;
 
+import org.sleuthkit.autopsy.discovery.search.AbstractFilter;
 import javax.swing.DefaultListModel;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
-import org.sleuthkit.autopsy.discovery.AttributeSearchData;
+import org.sleuthkit.autopsy.discovery.search.AttributeSearchData;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**

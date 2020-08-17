@@ -16,16 +16,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.discovery;
+package org.sleuthkit.autopsy.discovery.search;
 
-import org.sleuthkit.autopsy.discovery.ui.AbstractFilter;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
-import org.sleuthkit.autopsy.discovery.FileSearchData.FileSize;
-import org.sleuthkit.autopsy.discovery.FileSearchData.FileType;
-import org.sleuthkit.autopsy.discovery.FileSearchData.Frequency;
-import org.sleuthkit.autopsy.discovery.FileSearchData.Score;
+import org.sleuthkit.autopsy.discovery.search.FileSearchData.FileSize;
+import org.sleuthkit.autopsy.discovery.search.FileSearchData.FileType;
+import org.sleuthkit.autopsy.discovery.search.FileSearchData.Frequency;
+import org.sleuthkit.autopsy.discovery.search.FileSearchData.Score;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -43,7 +42,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 /**
  * Run various filters to return a subset of files from the current case.
  */
-class SearchFiltering {
+public class SearchFiltering {
 
     /**
      * Run the given filters to get a list of matching files.
@@ -126,7 +125,7 @@ class SearchFiltering {
     /**
      * A filter for specifying the file size
      */
-    static class SizeFilter extends AbstractFilter {
+    public static class SizeFilter extends AbstractFilter {
 
         private final List<FileSize> fileSizes;
 
@@ -135,12 +134,12 @@ class SearchFiltering {
          *
          * @param fileSizes the file sizes that should match
          */
-        SizeFilter(List<FileSize> fileSizes) {
+        public SizeFilter(List<FileSize> fileSizes) {
             this.fileSizes = fileSizes;
         }
 
         @Override
-        String getWhereClause() {
+        public String getWhereClause() {
             String queryStr = ""; // NON-NLS
             for (FileSize size : fileSizes) {
                 if (!queryStr.isEmpty()) {
@@ -160,7 +159,7 @@ class SearchFiltering {
             "SearchFiltering.SizeFilter.desc=Size(s): {0}",
             "SearchFiltering.SizeFilter.or=, "})
         @Override
-        String getDesc() {
+        public String getDesc() {
             String desc = ""; // NON-NLS
             for (FileSize size : fileSizes) {
                 if (!desc.isEmpty()) {
@@ -177,7 +176,7 @@ class SearchFiltering {
      * A utility class for the ParentFilter to store the search string and
      * whether it is a full path or a substring.
      */
-    static class ParentSearchTerm {
+    public static class ParentSearchTerm {
 
         private final String searchStr;
         private final boolean fullPath;
@@ -192,7 +191,7 @@ class SearchFiltering {
          * @param isIncluded True if the results must include the path, false if
          *                   the path should be excluded from the results.
          */
-        ParentSearchTerm(String searchStr, boolean isFullPath, boolean isIncluded) {
+        public ParentSearchTerm(String searchStr, boolean isFullPath, boolean isIncluded) {
             this.searchStr = searchStr;
             this.fullPath = isFullPath;
             this.included = isIncluded;
@@ -203,7 +202,7 @@ class SearchFiltering {
          *
          * @return The SQL for a where clause to search for a matching path
          */
-        String getSQLForTerm() {
+        public String getSQLForTerm() {
             // TODO - these should really be prepared statements
             if (isIncluded()) {
                 if (isFullPath()) {
@@ -244,21 +243,21 @@ class SearchFiltering {
         /**
          * @return the fullPath
          */
-        boolean isFullPath() {
+        public boolean isFullPath() {
             return fullPath;
         }
 
         /**
          * @return the included
          */
-        boolean isIncluded() {
+        public boolean isIncluded() {
             return included;
         }
 
         /**
          * @return the searchStr
          */
-        String getSearchStr() {
+        public String getSearchStr() {
             return searchStr;
         }
     }
@@ -266,7 +265,7 @@ class SearchFiltering {
     /**
      * A filter for specifying parent path (either full path or substring)
      */
-    static class ParentFilter extends AbstractFilter {
+    public static class ParentFilter extends AbstractFilter {
 
         private final List<ParentSearchTerm> parentSearchTerms;
 
@@ -275,12 +274,12 @@ class SearchFiltering {
          *
          * @param parentSearchTerms Full paths or substrings to filter on
          */
-        ParentFilter(List<ParentSearchTerm> parentSearchTerms) {
+        public ParentFilter(List<ParentSearchTerm> parentSearchTerms) {
             this.parentSearchTerms = parentSearchTerms;
         }
 
         @Override
-        String getWhereClause() {
+        public String getWhereClause() {
             String includeQueryStr = ""; // NON-NLS
             String excludeQueryStr = "";
             for (ParentSearchTerm searchTerm : parentSearchTerms) {
@@ -318,7 +317,7 @@ class SearchFiltering {
             "SearchFiltering.ParentFilter.included=(included)",
             "SearchFiltering.ParentFilter.excluded=(excluded)"})
         @Override
-        String getDesc() {
+        public String getDesc() {
             String desc = ""; // NON-NLS
             for (ParentSearchTerm searchTerm : parentSearchTerms) {
                 if (!desc.isEmpty()) {
@@ -343,7 +342,7 @@ class SearchFiltering {
     /**
      * A filter for specifying data sources
      */
-    static class DataSourceFilter extends AbstractFilter {
+    public static class DataSourceFilter extends AbstractFilter {
 
         private final List<DataSource> dataSources;
 
@@ -352,12 +351,12 @@ class SearchFiltering {
          *
          * @param dataSources the data sources to filter on
          */
-        DataSourceFilter(List<DataSource> dataSources) {
+        public DataSourceFilter(List<DataSource> dataSources) {
             this.dataSources = dataSources;
         }
 
         @Override
-        String getWhereClause() {
+        public String getWhereClause() {
             String queryStr = ""; // NON-NLS
             for (DataSource ds : dataSources) {
                 if (!queryStr.isEmpty()) {
@@ -377,7 +376,7 @@ class SearchFiltering {
             "# {1} - Data source ID",
             "SearchFiltering.DataSourceFilter.datasource={0}({1})",})
         @Override
-        String getDesc() {
+        public String getDesc() {
             String desc = ""; // NON-NLS
             for (DataSource ds : dataSources) {
                 if (!desc.isEmpty()) {
@@ -394,7 +393,7 @@ class SearchFiltering {
      * A filter for specifying keyword list names. A file must contain a keyword
      * from one of the given lists to pass.
      */
-    static class KeywordListFilter extends AbstractFilter {
+   public static class KeywordListFilter extends AbstractFilter {
 
         private final List<String> listNames;
 
@@ -403,12 +402,12 @@ class SearchFiltering {
          *
          * @param listNames
          */
-        KeywordListFilter(List<String> listNames) {
+        public KeywordListFilter(List<String> listNames) {
             this.listNames = listNames;
         }
 
         @Override
-        String getWhereClause() {
+        public String getWhereClause() {
             String keywordListPart = concatenateNamesForSQL(listNames);
 
             String queryStr = "(obj_id IN (SELECT obj_id from blackboard_artifacts WHERE artifact_id IN "
@@ -422,7 +421,7 @@ class SearchFiltering {
             "# {0} - filters",
             "SearchFiltering.KeywordListFilter.desc=Keywords in list(s): {0}",})
         @Override
-        String getDesc() {
+        public String getDesc() {
             return Bundle.SearchFiltering_KeywordListFilter_desc(concatenateSetNamesForDisplay(listNames));
         }
     }
@@ -430,7 +429,7 @@ class SearchFiltering {
     /**
      * A filter for specifying file types.
      */
-    static class FileTypeFilter extends AbstractFilter {
+    public static class FileTypeFilter extends AbstractFilter {
 
         private final List<FileType> categories;
 
@@ -439,7 +438,7 @@ class SearchFiltering {
          *
          * @param categories List of file types to filter on
          */
-        FileTypeFilter(List<FileType> categories) {
+        public FileTypeFilter(List<FileType> categories) {
             this.categories = categories;
         }
 
@@ -448,13 +447,13 @@ class SearchFiltering {
          *
          * @param category the file type to filter on
          */
-        FileTypeFilter(FileType category) {
+        public FileTypeFilter(FileType category) {
             this.categories = new ArrayList<>();
             this.categories.add(category);
         }
 
         @Override
-        String getWhereClause() {
+        public String getWhereClause() {
             String queryStr = ""; // NON-NLS
             for (FileType cat : categories) {
                 for (String type : cat.getMediaTypes()) {
@@ -473,7 +472,7 @@ class SearchFiltering {
             "SearchFiltering.FileTypeFilter.desc=Type: {0}",
             "SearchFiltering.FileTypeFilter.or=, ",})
         @Override
-        String getDesc() {
+        public String getDesc() {
             String desc = "";
             for (FileType cat : categories) {
                 if (!desc.isEmpty()) {
@@ -489,7 +488,7 @@ class SearchFiltering {
     /**
      * A filter for specifying frequency in the central repository.
      */
-    static class FrequencyFilter extends AbstractFilter {
+    public static class FrequencyFilter extends AbstractFilter {
 
         private final List<Frequency> frequencies;
 
@@ -498,24 +497,24 @@ class SearchFiltering {
          *
          * @param frequencies List of frequencies that will pass the filter
          */
-        FrequencyFilter(List<Frequency> frequencies) {
+        public FrequencyFilter(List<Frequency> frequencies) {
             this.frequencies = frequencies;
         }
 
         @Override
-        String getWhereClause() {
+        public String getWhereClause() {
             // Since this relies on the central repository database, there is no
             // query on the case database.
             return ""; // NON-NLS
         }
 
         @Override
-        boolean useAlternateFilter() {
+        public boolean useAlternateFilter() {
             return true;
         }
 
         @Override
-        List<ResultFile> applyAlternateFilter(List<ResultFile> currentResults, SleuthkitCase caseDb,
+        public List<ResultFile> applyAlternateFilter(List<ResultFile> currentResults, SleuthkitCase caseDb,
                 CentralRepository centralRepoDb) throws FileSearchException {
 
             // We have to have run some kind of SQL filter before getting to this point,
@@ -543,7 +542,7 @@ class SearchFiltering {
             "SearchFiltering.FrequencyFilter.desc=Past occurrences: {0}",
             "SearchFiltering.FrequencyFilter.or=, ",})
         @Override
-        String getDesc() {
+        public String getDesc() {
             String desc = ""; // NON-NLS
             for (Frequency freq : frequencies) {
                 if (!desc.isEmpty()) {
@@ -559,7 +558,7 @@ class SearchFiltering {
      * A filter for specifying hash set names. A file must match one of the
      * given sets to pass.
      */
-    static class HashSetFilter extends AbstractFilter {
+    public static class HashSetFilter extends AbstractFilter {
 
         private final List<String> setNames;
 
@@ -568,12 +567,12 @@ class SearchFiltering {
          *
          * @param setNames
          */
-        HashSetFilter(List<String> setNames) {
+        public HashSetFilter(List<String> setNames) {
             this.setNames = setNames;
         }
 
         @Override
-        String getWhereClause() {
+        public String getWhereClause() {
             String hashSetPart = concatenateNamesForSQL(setNames);
 
             String queryStr = "(obj_id IN (SELECT obj_id from blackboard_artifacts WHERE artifact_id IN "
@@ -588,7 +587,7 @@ class SearchFiltering {
             "# {0} - filters",
             "FileSearchFiltering.HashSetFilter.desc=Hash set hits in set(s): {0}",})
         @Override
-        String getDesc() {
+        public String getDesc() {
             return Bundle.FileSearchFiltering_HashSetFilter_desc(concatenateSetNamesForDisplay(setNames));
         }
     }
@@ -597,7 +596,7 @@ class SearchFiltering {
      * A filter for specifying interesting file set names. A file must match one
      * of the given sets to pass.
      */
-    static class InterestingFileSetFilter extends AbstractFilter {
+    public static class InterestingFileSetFilter extends AbstractFilter {
 
         private final List<String> setNames;
 
@@ -606,12 +605,12 @@ class SearchFiltering {
          *
          * @param setNames
          */
-        InterestingFileSetFilter(List<String> setNames) {
+        public InterestingFileSetFilter(List<String> setNames) {
             this.setNames = setNames;
         }
 
         @Override
-        String getWhereClause() {
+        public String getWhereClause() {
             String intItemSetPart = concatenateNamesForSQL(setNames);
 
             String queryStr = "(obj_id IN (SELECT obj_id from blackboard_artifacts WHERE artifact_id IN "
@@ -626,7 +625,7 @@ class SearchFiltering {
             "# {0} - filters",
             "SearchFiltering.InterestingItemSetFilter.desc=Interesting item hits in set(s): {0}",})
         @Override
-        String getDesc() {
+        public String getDesc() {
             return Bundle.SearchFiltering_InterestingItemSetFilter_desc(concatenateSetNamesForDisplay(setNames));
         }
     }
@@ -635,7 +634,7 @@ class SearchFiltering {
      * A filter for specifying object types detected. A file must match one of
      * the given types to pass.
      */
-    static class ObjectDetectionFilter extends AbstractFilter {
+    public static class ObjectDetectionFilter extends AbstractFilter {
 
         private final List<String> typeNames;
 
@@ -644,12 +643,12 @@ class SearchFiltering {
          *
          * @param typeNames
          */
-        ObjectDetectionFilter(List<String> typeNames) {
+        public ObjectDetectionFilter(List<String> typeNames) {
             this.typeNames = typeNames;
         }
 
         @Override
-        String getWhereClause() {
+        public String getWhereClause() {
             String objTypePart = concatenateNamesForSQL(typeNames);
 
             String queryStr = "(obj_id IN (SELECT obj_id from blackboard_artifacts WHERE artifact_id IN "
@@ -664,7 +663,7 @@ class SearchFiltering {
             "# {0} - filters",
             "SearchFiltering.ObjectDetectionFilter.desc=Objects detected in set(s): {0}",})
         @Override
-        String getDesc() {
+        public String getDesc() {
             return Bundle.SearchFiltering_ObjectDetectionFilter_desc(concatenateSetNamesForDisplay(typeNames));
         }
     }
@@ -673,7 +672,7 @@ class SearchFiltering {
      * A filter for specifying the score. A file must have one of the given
      * scores to pass
      */
-    static class ScoreFilter extends AbstractFilter {
+    public static class ScoreFilter extends AbstractFilter {
 
         private final List<Score> scores;
 
@@ -682,12 +681,12 @@ class SearchFiltering {
          *
          * @param typeNames
          */
-        ScoreFilter(List<Score> scores) {
+        public ScoreFilter(List<Score> scores) {
             this.scores = scores;
         }
 
         @Override
-        String getWhereClause() {
+        public String getWhereClause() {
 
             // Current algorithm:
             // "Notable" if the file is a match for a notable hashset or has been tagged with a notable tag.
@@ -740,7 +739,7 @@ class SearchFiltering {
             "# {0} - filters",
             "SearchFiltering.ScoreFilter.desc=Score(s) of : {0}",})
         @Override
-        String getDesc() {
+        public String getDesc() {
             return Bundle.SearchFiltering_ScoreFilter_desc(
                     concatenateSetNamesForDisplay(scores.stream().map(p -> p.toString()).collect(Collectors.toList())));
         }
@@ -750,7 +749,7 @@ class SearchFiltering {
      * A filter for specifying tag names. A file must contain one of the given
      * tags to pass.
      */
-    static class TagsFilter extends AbstractFilter {
+    public static class TagsFilter extends AbstractFilter {
 
         private final List<TagName> tagNames;
 
@@ -759,12 +758,12 @@ class SearchFiltering {
          *
          * @param tagNames
          */
-        TagsFilter(List<TagName> tagNames) {
+        public TagsFilter(List<TagName> tagNames) {
             this.tagNames = tagNames;
         }
 
         @Override
-        String getWhereClause() {
+        public String getWhereClause() {
             String tagIDs = ""; // NON-NLS
             for (TagName tagName : tagNames) {
                 if (!tagIDs.isEmpty()) {
@@ -783,7 +782,7 @@ class SearchFiltering {
             "FileSearchFiltering.TagsFilter.desc=Tagged {0}",
             "FileSearchFiltering.TagsFilter.or=, ",})
         @Override
-        String getDesc() {
+        public String getDesc() {
             String desc = ""; // NON-NLS
             for (TagName name : tagNames) {
                 if (!desc.isEmpty()) {
@@ -799,17 +798,10 @@ class SearchFiltering {
      * A filter for specifying that the file must have user content suspected
      * data.
      */
-    static class UserCreatedFilter extends AbstractFilter {
-
-        /**
-         * Create the ExifFilter
-         */
-        UserCreatedFilter() {
-            // Nothing to save
-        }
+    public static class UserCreatedFilter extends AbstractFilter {
 
         @Override
-        String getWhereClause() {
+        public String getWhereClause() {
             return "(obj_id IN (SELECT obj_id from blackboard_artifacts WHERE artifact_id IN "
                     + "(SELECT artifact_id FROM blackboard_attributes WHERE artifact_type_id = "
                     + BlackboardArtifact.ARTIFACT_TYPE.TSK_USER_CONTENT_SUSPECTED.getTypeID() + ")))";
@@ -818,7 +810,7 @@ class SearchFiltering {
         @NbBundle.Messages({
             "FileSearchFiltering.UserCreatedFilter.desc=that contain EXIF data",})
         @Override
-        String getDesc() {
+        public String getDesc() {
             return Bundle.FileSearchFiltering_UserCreatedFilter_desc();
         }
     }
@@ -827,29 +819,22 @@ class SearchFiltering {
      * A filter for specifying that the file must have been marked as notable in
      * the CR.
      */
-    static class NotableFilter extends AbstractFilter {
-
-        /**
-         * Create the NotableFilter
-         */
-        NotableFilter() {
-            // Nothing to save
-        }
+    public static class NotableFilter extends AbstractFilter {
 
         @Override
-        String getWhereClause() {
+        public String getWhereClause() {
             // Since this relies on the central repository database, there is no
             // query on the case database.
             return ""; // NON-NLS
         }
 
         @Override
-        boolean useAlternateFilter() {
+        public boolean useAlternateFilter() {
             return true;
         }
 
         @Override
-        List<ResultFile> applyAlternateFilter(List<ResultFile> currentResults, SleuthkitCase caseDb,
+        public List<ResultFile> applyAlternateFilter(List<ResultFile> currentResults, SleuthkitCase caseDb,
                 CentralRepository centralRepoDb) throws FileSearchException {
 
             if (centralRepoDb == null) {
@@ -887,7 +872,7 @@ class SearchFiltering {
         @NbBundle.Messages({
             "FileSearchFiltering.PreviouslyNotableFilter.desc=that were previously marked as notable",})
         @Override
-        String getDesc() {
+        public String getDesc() {
             return Bundle.FileSearchFiltering_PreviouslyNotableFilter_desc();
         }
     }
@@ -895,17 +880,17 @@ class SearchFiltering {
     /**
      * A filter for specifying if known files should be included.
      */
-    static class KnownFilter extends AbstractFilter {
+    public static class KnownFilter extends AbstractFilter {
 
         @Override
-        String getWhereClause() {
+        public String getWhereClause() {
             return "known!=" + TskData.FileKnown.KNOWN.getFileKnownValue(); // NON-NLS
         }
 
         @NbBundle.Messages({
             "FileSearchFiltering.KnownFilter.desc=which are not known"})
         @Override
-        String getDesc() {
+        public String getDesc() {
             return Bundle.FileSearchFiltering_KnownFilter_desc();
         }
     }

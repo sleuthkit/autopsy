@@ -20,7 +20,7 @@ package org.sleuthkit.autopsy.discovery.ui;
 
 import java.awt.Image;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
-import org.sleuthkit.autopsy.discovery.ResultFile;
+import org.sleuthkit.autopsy.discovery.search.ResultFile;
 
 /**
  * Class to wrap all the information necessary for an image thumbnail to be
