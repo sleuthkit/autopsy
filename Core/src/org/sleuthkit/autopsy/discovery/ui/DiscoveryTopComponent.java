@@ -43,14 +43,14 @@ import org.sleuthkit.autopsy.discovery.search.SearchData.ResultType;
 /**
  * Create a dialog for displaying the Discovery results.
  */
-@TopComponent.Description(preferredID = "Discoverytc", persistenceType = TopComponent.PERSISTENCE_NEVER)
+@TopComponent.Description(preferredID = "Discovery", persistenceType = TopComponent.PERSISTENCE_NEVER)
 @TopComponent.Registration(mode = "discovery", openAtStartup = false)
 @RetainLocation("discovery")
 @NbBundle.Messages("DiscoveryTopComponent.name= Discovery")
 public final class DiscoveryTopComponent extends TopComponent {
 
     private static final long serialVersionUID = 1L;
-    private static final String PREFERRED_ID = "Discoverytc"; // NON-NLS
+    private static final String PREFERRED_ID = "Discovery"; // NON-NLS
     private static final int ANIMATION_INCREMENT = 30;
     private volatile static int resultsAreaSize = 250;
     private final GroupListPanel groupListPanel;
@@ -184,7 +184,7 @@ public final class DiscoveryTopComponent extends TopComponent {
 
         add(mainSplitPane, java.awt.BorderLayout.CENTER);
 
-        org.openide.awt.Mnemonics.setLocalizedText(newSearchButton, org.openide.util.NbBundle.getMessage(DiscoveryTopComponent.class, "FileSearchDialog.cancelButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(newSearchButton, Bundle.DiscoveryTopComponent_cancelButton_text());
         newSearchButton.setMaximumSize(new java.awt.Dimension(110, 26));
         newSearchButton.setMinimumSize(new java.awt.Dimension(110, 26));
         newSearchButton.setPreferredSize(new java.awt.Dimension(110, 26));

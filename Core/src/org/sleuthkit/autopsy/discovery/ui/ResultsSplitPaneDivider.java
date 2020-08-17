@@ -55,7 +55,7 @@ final class ResultsSplitPaneDivider extends javax.swing.JPanel {
         org.openide.awt.Mnemonics.setLocalizedText(detailsLabel, org.openide.util.NbBundle.getMessage(ResultsSplitPaneDivider.class, "ResultsSplitPaneDivider.detailsLabel.text")); // NOI18N
         detailsLabel.setFocusable(false);
 
-        hideButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/discovery/arrow-down.png"))); // NOI18N
+        hideButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/discovery/ui/arrow-down.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(hideButton, org.openide.util.NbBundle.getMessage(ResultsSplitPaneDivider.class, "ResultsSplitPaneDivider.hideButton.text")); // NOI18N
         hideButton.setBorder(null);
         hideButton.setFocusable(false);
@@ -67,7 +67,7 @@ final class ResultsSplitPaneDivider extends javax.swing.JPanel {
             }
         });
 
-        showButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/discovery/arrow-up.png"))); // NOI18N
+        showButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/discovery/ui/arrow-up.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(showButton, org.openide.util.NbBundle.getMessage(ResultsSplitPaneDivider.class, "ResultsSplitPaneDivider.showButton.text")); // NOI18N
         showButton.setBorder(null);
         showButton.setFocusable(false);
@@ -86,7 +86,7 @@ final class ResultsSplitPaneDivider extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(detailsLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 251, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 199, Short.MAX_VALUE)
                 .addComponent(showButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(hideButton)
