@@ -29,7 +29,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 /**
  * Installer for casemodule that cleans out user specified temp directory.
  */
-public class Installer extends ModuleInstall {
+public final class Installer extends ModuleInstall {
 
     private static final Logger logger = Logger.getLogger(Installer.class.getName());
     private static final long serialVersionUID = 1L;

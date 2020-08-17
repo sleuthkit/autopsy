@@ -22,7 +22,8 @@ package org.sleuthkit.autopsy.machinesettings;
  * Exception class for UserMachinePreferences.
  */
 public class UserMachinePreferencesException extends Exception {
-
+    private static final long serialVersionUID = 1L;
+    
     /**
      * Main constructor.
      *

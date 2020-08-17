@@ -29,7 +29,7 @@ import org.sleuthkit.autopsy.coreutils.FileUtil;
 /**
  * Provides case-specific settings like the user-specified temp folder.
  */
-public class UserMachinePreferences {
+public final class UserMachinePreferences {
 
     private static final Preferences preferences = NbPreferences.forModule(UserMachinePreferences.class);
 
@@ -80,10 +80,8 @@ public class UserMachinePreferences {
         }
 
         File f = new File(path);
-        if (!f.exists()) {
-            if (!f.mkdirs()) {
-                throw new UserMachinePreferencesException(Bundle.UserMachinePreferences_validateTempDirectory_errorOnCreate_text(path));
-            }
+        if (!f.exists() && !f.mkdirs()) {
+            throw new UserMachinePreferencesException(Bundle.UserMachinePreferences_validateTempDirectory_errorOnCreate_text(path));
         }
 
         if (!FileUtil.hasReadWriteAccess(Paths.get(path))) {

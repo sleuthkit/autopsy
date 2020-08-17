@@ -533,13 +533,14 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
      * Creates the output directory for this module for the current case, if it
      * does not already exist.
      *
-     * @param path The absolute path to be created.
+     * @param providedPath The absolute path to be created.
      *
      * @return The absolute path of the output directory.
      *
      * @throws org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException
      */
-    private synchronized Path createOutputDirectoryForCase(Path path) throws IngestModule.IngestModuleException {
+    private synchronized Path createOutputDirectoryForCase(Path providedPath) throws IngestModule.IngestModuleException {
+        Path path = providedPath;
         try {
             Files.createDirectory(path);
             if (UNCPathUtilities.isUNC(path)) {

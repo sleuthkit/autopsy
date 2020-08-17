@@ -26,7 +26,6 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -888,10 +887,8 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
             String specifiedPath = tempDirChooser.getSelectedFile().getPath();
             try {
                 File f = new File(specifiedPath);
-                if (!f.exists()) {
-                    if (!f.mkdirs()) {
-                        throw new InvalidPathException(specifiedPath, "Unable to create parent directories leading to " + specifiedPath);
-                    }
+                if (!f.exists() && !f.mkdirs()) {
+                    throw new InvalidPathException(specifiedPath, "Unable to create parent directories leading to " + specifiedPath);
                 }
                 tempDirectoryField.setText(specifiedPath);
                 firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
