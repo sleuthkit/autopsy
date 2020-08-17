@@ -51,7 +51,6 @@ ContactArtifactViewer_persona_no_match=No matches found
 ContactArtifactViewer_persona_searching=Searching...
 ContactArtifactViewer_persona_unknown=Unknown
 ContactArtifactViewer_phones_header=Phone
-ContactArtifactViewer_plural_suffix=s
 DataContentViewerArtifact.failedToGetAttributes.message=Failed to get some or all attributes from case database
 DataContentViewerArtifact.failedToGetSourcePath.message=Failed to get source file path from case database
 DefaultArtifactContentViewer.attrsTableHeader.sources=Source(s)
