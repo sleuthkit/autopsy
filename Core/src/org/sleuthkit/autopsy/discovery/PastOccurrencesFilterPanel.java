@@ -38,15 +38,9 @@ final class PastOccurrencesFilterPanel extends AbstractDiscoveryFilterPanel {
      */
     PastOccurrencesFilterPanel() {
         initComponents();
-        setUpFrequencyFilter(ResultType.FILE);
+        setUpFrequencyFilter();
     }
-   /**
-     * Creates new form PastOccurrencesFilterPanel.
-     */
-    PastOccurrencesFilterPanel(ResultType type) {
-        initComponents();
-        setUpFrequencyFilter(type);
-    }
+ 
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -101,11 +95,11 @@ final class PastOccurrencesFilterPanel extends AbstractDiscoveryFilterPanel {
     /**
      * Initialize the frequency filter.
      */
-    private void setUpFrequencyFilter(ResultType type) {
+    private void setUpFrequencyFilter() {
         int count = 0;
         DefaultListModel<FileSearchData.Frequency> frequencyListModel = (DefaultListModel<FileSearchData.Frequency>) crFrequencyList.getModel();
         frequencyListModel.removeAllElements();
-        if (!CentralRepository.isEnabled() && type != ResultType.ATTRIBUTE) {
+        if (!CentralRepository.isEnabled()) {
             for (FileSearchData.Frequency freq : FileSearchData.Frequency.getOptionsForFilteringWithoutCr()) {
                 frequencyListModel.add(count, freq);
             }

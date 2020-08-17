@@ -39,12 +39,11 @@ public class DomainFilterPanel extends AbstractFiltersPanel {
         addFilter(new ArtifactTypeFilterPanel(), false, null, 1);
         addFilter(new DateFilterPanel(), false, null, 1);
         int[] pastOccurrencesIndices;
-        if (!CentralRepository.isEnabled()) {
-            pastOccurrencesIndices = new int[]{0};
-        } else {
+        if (CentralRepository.isEnabled()) {
             pastOccurrencesIndices = new int[]{2, 3, 4};
+            addFilter(new PastOccurrencesFilterPanel(), true, pastOccurrencesIndices, 0);
         }
-        addFilter(new PastOccurrencesFilterPanel(), true, pastOccurrencesIndices, 0);
+
         addPanelsToScrollPane(domainFiltersSplitPane);
     }
 
