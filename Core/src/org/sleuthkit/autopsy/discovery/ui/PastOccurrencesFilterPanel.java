@@ -113,9 +113,11 @@ final class PastOccurrencesFilterPanel extends AbstractDiscoveryFilterPanel {
         int count = 0;
         DefaultListModel<FileSearchData.Frequency> frequencyListModel = (DefaultListModel<FileSearchData.Frequency>) crFrequencyList.getModel();
         frequencyListModel.removeAllElements();
-        if (!CentralRepository.isEnabled() && type != ResultType.ATTRIBUTE) {
-            for (FileSearchData.Frequency freq : FileSearchData.Frequency.getOptionsForFilteringWithoutCr()) {
-                frequencyListModel.add(count, freq);
+        if (!CentralRepository.isEnabled()) {
+            if (type != ResultType.ATTRIBUTE) {
+                for (FileSearchData.Frequency freq : FileSearchData.Frequency.getOptionsForFilteringWithoutCr()) {
+                    frequencyListModel.add(count, freq);
+                }
             }
         } else {
             for (FileSearchData.Frequency freq : FileSearchData.Frequency.getOptionsForFilteringWithCr()) {
@@ -137,7 +139,7 @@ final class PastOccurrencesFilterPanel extends AbstractDiscoveryFilterPanel {
         boolean canBeFilteredOn = type == ResultType.FILE || CentralRepository.isEnabled();
         pastOccurrencesCheckbox.setEnabled(canBeFilteredOn);
         pastOccurrencesCheckbox.setSelected(selected && canBeFilteredOn);
-        
+
         if (pastOccurrencesCheckbox.isEnabled() && pastOccurrencesCheckbox.isSelected()) {
             crFrequencyScrollPane.setEnabled(true);
             crFrequencyList.setEnabled(true);
