@@ -154,8 +154,8 @@
          before flushing.
          If both ramBufferSizeMB and maxBufferedDocs is set, then
          Lucene will flush based on whichever limit is hit first.  -->
-     <ramBufferSizeMB>32</ramBufferSizeMB> 
-     <maxBufferedDocs>200</maxBufferedDocs> 
+     <ramBufferSizeMB>256</ramBufferSizeMB> 
+     <!-- maxBufferedDocs>200</maxBufferedDocs --> 
 	 
 	<!-- <maxFieldLength>10000</maxFieldLength> 
 	deprecated, replaced with solr.LimitTokenCountFilterFactory filter in schema.xml
@@ -299,7 +299,8 @@
          searcher to be opened to make those changes visible.
       -->
      <autoCommit> 
-       <maxDocs>15000</maxDocs> 
+       <maxTime>3000000</maxTime>
+	   <!-- maxDocs>15000</maxDocs --> 
        <openSearcher>true</openSearcher> 
      </autoCommit>
 
@@ -346,13 +347,23 @@
        </listener>
       -->
 
-    <!-- Enables a transaction log, currently used for real-time get.
+    <!-- Enables a transaction log, used for real-time get, durability, and
+         and solr cloud replica recovery.  The log can grow as big as
+         uncommitted changes to the index, so use of a hard autoCommit
+         is recommended (see below).
          "dir" - the target directory for transaction logs, defaults to the
-            solr data directory.  --> 
-    <!-- <updateLog>
-      <str name="dir">${solr.data.dir:}</str>
+                solr data directory.
+         "numVersionBuckets" - sets the number of buckets used to keep
+                track of max version values when checking for re-ordered
+                updates; increase this value to reduce the cost of
+                synchronizing access to version buckets during high-volume
+                indexing, this requires 8 bytes (long) * numVersionBuckets
+                of heap space per Solr core.
+    -->
+    <updateLog>
+      <str name="dir">${solr.ulog.dir:}</str>
+      <int name="numVersionBuckets">${solr.ulog.numVersionBuckets:65536}</int>
     </updateLog>
-   -->
 
   </updateHandler>
   
@@ -397,6 +408,12 @@
        Query section - these settings control query time things like caches
        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
   <query>
+	<!-- Any queries that take longer than the specified threshold will be 
+	logged as "slow" queries at the WARN level. The log file under which 
+	you can find all these queries is called solr_slow_requests.log and 
+	will be found in your SOLR_LOGS_DIR -->
+	<slowQueryThresholdMillis>3000</slowQueryThresholdMillis>
+	
     <!-- Max Boolean Clauses
 
          Maximum number of clauses in each BooleanQuery,  an exception
