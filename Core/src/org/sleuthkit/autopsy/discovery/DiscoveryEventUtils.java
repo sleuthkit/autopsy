@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.discovery;
 
+import org.sleuthkit.autopsy.discovery.ui.AbstractFilter;
 import com.google.common.eventbus.EventBus;
 import java.util.Collections;
 import java.util.List;

@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.discovery;
 
+import org.sleuthkit.autopsy.discovery.ui.VideoThumbnailsWrapper;
+import org.sleuthkit.autopsy.discovery.ui.AbstractFilter;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.io.Files;

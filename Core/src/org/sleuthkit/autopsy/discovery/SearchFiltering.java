@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.discovery;
 
+import org.sleuthkit.autopsy.discovery.ui.AbstractFilter;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
