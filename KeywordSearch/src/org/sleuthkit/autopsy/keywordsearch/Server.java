@@ -366,7 +366,12 @@ public class Server {
         }
         
         logger.log(Level.INFO, "Creating new CloudSolrClient"); //NON-NLS
-        CloudSolrClient client = new CloudSolrClient.Builder(solrUrls).build();
+        int connectionTimeoutMs = org.sleuthkit.autopsy.keywordsearch.UserPreferences.getConnectionTimeout();
+        CloudSolrClient client = new CloudSolrClient.Builder(solrUrls)
+                .withConnectionTimeout(connectionTimeoutMs)
+                .withSocketTimeout(connectionTimeoutMs)
+                .withResponseParser(new XMLResponseParser())
+                .build();
         if (!defaultCollectionName.isEmpty()) {
             client.setDefaultCollection(defaultCollectionName);
         }
@@ -1865,8 +1870,8 @@ public class Server {
         // We use different Solr clients for different operations. HttpSolrClient is geared towards query performance.
         // ConcurrentUpdateSolrClient is geared towards batching solr documents for better indexing throughput. 
         // CloudSolrClient is gaered towards SolrCloud deployments. These are only good for collection-specific operations.
-        private HttpSolrClient queryClient = null;        
-        private SolrClient indexingClient = null;
+        private HttpSolrClient queryClient;        
+        private SolrClient indexingClient;
         
         private final int maxBufferSize;
         private final List<SolrInputDocument> buffer;
@@ -1883,8 +1888,8 @@ public class Server {
             
             if (caseType == CaseType.SINGLE_USER_CASE) {
                 // get SolrJ client
-                queryClient = getSolrClient("http://localhost:" + localSolrServerPort + "/solr/" + name);
-                indexingClient = getConcurrentClient("http://localhost:" + localSolrServerPort + "/solr/" + name);
+                queryClient = getSolrClient("http://localhost:" + localSolrServerPort + "/solr/" + name); // HttpClient
+                indexingClient = getConcurrentClient("http://localhost:" + localSolrServerPort + "/solr/" + name); // ConcurrentClient
             } else {
                 // read Solr connection info from user preferences, unless "solrserver.txt" is present
                 queryClient = configureMultiUserConnection(theCase, index, name);
@@ -1892,9 +1897,9 @@ public class Server {
                 // for MU cases, use CloudSolrClient for indexing. Indexing is only supported for Solr 8.
                 if (IndexFinder.getCurrentSolrVersion().equals(index.getSolrVersion())) {
                     IndexingServerProperties properties = getMultiUserServerProperties(theCase.getCaseDirectory());
-                    indexingClient = getCloudSolrClient(properties.getHost(), properties.getPort(), name);
+                    indexingClient = getCloudSolrClient(properties.getHost(), properties.getPort(), name); // CloudClient
                 } else {
-                    indexingClient = configureMultiUserConnection(theCase, index, name);
+                    indexingClient = configureMultiUserConnection(theCase, index, name); // HttpClient
                 }
             }
             
