@@ -16,10 +16,6 @@
         <ivy:retrieve conf="tika" pattern="${ext.dir}/[artifact]-[revision](-[classifier]).[ext]" />
     </target>
     
-    <target name="-post-compile">
-         
-    </target>
-    
     <target name="-post-clean">
         <!-- Clean out all jars downloaded by Ivy -->
         <delete dir="${basedir}/release/"/>
