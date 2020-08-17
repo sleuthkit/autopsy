@@ -38,6 +38,11 @@
         <dependency conf="slf4j-libs->default" org="org.slf4j" name="jcl-over-slf4j" rev="1.7.10"/>
         <dependency conf="slf4j-libs->default" org="org.slf4j" name="jul-to-slf4j" rev="1.7.10"/>
         
+        <!-- Remnants of a past Tika dependency. These jars were being exported from Tika, which has since 
+             moved into it's own NBM. For sake of backwards compatibility, these are still provided. -->
+        <dependency conf="autopsy->default" org="org.apache.httpcomponents" name="httpclient" rev="4.5.6"/>
+        <dependency conf="autopsy->default" org="org.apache.httpcomponents" name="httpmime" rev="4.5.6"/>
+        
         <exclude org="*" ext="*" type="javadoc"/>
     </dependencies>
 </ivy-module>

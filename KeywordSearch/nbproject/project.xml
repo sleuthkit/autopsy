@@ -184,6 +184,7 @@
                 <package>org.apache.http.entity.mime.content</package>
                 <package>org.apache.http.impl</package>
                 <package>org.apache.http.impl.auth</package>
+                <package>org.apache.http.impl.bootstrap</package>
                 <package>org.apache.http.impl.client</package>
                 <package>org.apache.http.impl.conn</package>
                 <package>org.apache.http.impl.conn.tsccm</package>
@@ -197,6 +198,7 @@
                 <package>org.apache.http.params</package>
                 <package>org.apache.http.pool</package>
                 <package>org.apache.http.protocol</package>
+                <package>org.apache.http.ssl</package>
                 <package>org.apache.http.util</package>
                 <package>org.apache.jute</package>
                 <package>org.apache.jute.compiler</package>
@@ -241,16 +243,20 @@
                 <binary-origin>release\modules\ext\guava-18.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/httpcore-4.3.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\httpcore-4.3.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/zookeeper-3.4.6.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\zookeeper-3.4.6.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/commons-digester-1.8.1.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\commons-digester-1.8.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/httpmime-4.5.6.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\httpmime-4.5.6.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/httpclient-4.5.6.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\httpclient-4.5.6.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/commons-validator-1.5.1.jar</runtime-relative-path>
@@ -269,6 +275,10 @@
                 <binary-origin>release\modules\ext\jericho-html-3.3.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/httpcore-4.4.10.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\httpcore-4.4.10.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/slf4j-api-1.7.6.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\slf4j-api-1.7.6.jar</binary-origin>
             </class-path-extension>
@@ -279,10 +289,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/commons-io-2.3.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\commons-io-2.3.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/httpclient-4.3.1.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\httpclient-4.3.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/wstx-asl-3.2.7.jar</runtime-relative-path>
@@ -299,10 +305,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/noggit-0.5.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\noggit-0.5.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/httpmime-4.3.1.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\httpmime-4.3.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/icu4j-3.8.jar</runtime-relative-path>
