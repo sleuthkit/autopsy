@@ -24,6 +24,7 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.discovery.FileSearchData.Frequency;
+import org.sleuthkit.autopsy.discovery.SearchData.ResultType;
 
 /**
  * Panel to allow configuration of the Past Occurrences filter.
@@ -31,15 +32,26 @@ import org.sleuthkit.autopsy.discovery.FileSearchData.Frequency;
 final class PastOccurrencesFilterPanel extends AbstractDiscoveryFilterPanel {
 
     private static final long serialVersionUID = 1L;
+    private final ResultType type;
 
     /**
      * Creates new form PastOccurrencesFilterPanel.
      */
     PastOccurrencesFilterPanel() {
         initComponents();
+        type = ResultType.FILE;
         setUpFrequencyFilter();
     }
- 
+
+    /**
+     * Creates new form PastOccurrencesFilterPanel.
+     */
+    PastOccurrencesFilterPanel(ResultType type) {
+        initComponents();
+        this.type = type;
+        setUpFrequencyFilter();
+    }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -98,13 +110,15 @@ final class PastOccurrencesFilterPanel extends AbstractDiscoveryFilterPanel {
         int count = 0;
         DefaultListModel<FileSearchData.Frequency> frequencyListModel = (DefaultListModel<FileSearchData.Frequency>) crFrequencyList.getModel();
         frequencyListModel.removeAllElements();
-        if (!CentralRepository.isEnabled()) {
+        if (!CentralRepository.isEnabled() && type != ResultType.ATTRIBUTE) {
             for (FileSearchData.Frequency freq : FileSearchData.Frequency.getOptionsForFilteringWithoutCr()) {
                 frequencyListModel.add(count, freq);
             }
         } else {
             for (FileSearchData.Frequency freq : FileSearchData.Frequency.getOptionsForFilteringWithCr()) {
-                frequencyListModel.add(count, freq);
+                if (type == ResultType.FILE || freq != FileSearchData.Frequency.KNOWN) {
+                    frequencyListModel.add(count, freq);
+                }
             }
         }
     }
@@ -117,7 +131,10 @@ final class PastOccurrencesFilterPanel extends AbstractDiscoveryFilterPanel {
 
     @Override
     void configurePanel(boolean selected, int[] indicesSelected) {
-        pastOccurrencesCheckbox.setSelected(selected);
+        boolean canBeFilteredOn = type == ResultType.FILE || CentralRepository.isEnabled();
+        pastOccurrencesCheckbox.setEnabled(canBeFilteredOn);
+        pastOccurrencesCheckbox.setSelected(selected && canBeFilteredOn);
+        
         if (pastOccurrencesCheckbox.isEnabled() && pastOccurrencesCheckbox.isSelected()) {
             crFrequencyScrollPane.setEnabled(true);
             crFrequencyList.setEnabled(true);

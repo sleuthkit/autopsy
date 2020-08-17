@@ -77,6 +77,11 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
         buttonGroup1.add(mostRecentButton);
         org.openide.awt.Mnemonics.setLocalizedText(mostRecentButton, org.openide.util.NbBundle.getMessage(DateFilterPanel.class, "DateFilterPanel.mostRecentButton.text")); // NOI18N
         mostRecentButton.setEnabled(false);
+        mostRecentButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mostRecentButtonActionPerformed(evt);
+            }
+        });
 
         org.openide.awt.Mnemonics.setLocalizedText(startCheckBox, org.openide.util.NbBundle.getMessage(DateFilterPanel.class, "DateFilterPanel.startCheckBox.text")); // NOI18N
         startCheckBox.setEnabled(false);
@@ -104,6 +109,11 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
 
         buttonGroup1.add(rangeRadioButton);
         rangeRadioButton.setEnabled(false);
+        rangeRadioButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                rangeRadioButtonActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -173,6 +183,14 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
         endDatePicker.setEnabled(endCheckBox.isSelected());
 //        validateFilters(); //TODO JIRA-6714 when search will begin doing something
     }//GEN-LAST:event_endCheckBoxStateChanged
+
+    private void mostRecentButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mostRecentButtonActionPerformed
+
+    }//GEN-LAST:event_mostRecentButtonActionPerformed
+
+    private void rangeRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rangeRadioButtonActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_rangeRadioButtonActionPerformed
 
     @Override
     void configurePanel(boolean selected, int[] indicesSelected) {
