@@ -41,7 +41,7 @@ public class DomainFilterPanel extends AbstractFiltersPanel {
         if (CentralRepository.isEnabled()) {
             pastOccurrencesIndices = new int[]{2, 3, 4};
         }
-        addFilter(new PastOccurrencesFilterPanel(), true, pastOccurrencesIndices, 0);
+        addFilter(new PastOccurrencesFilterPanel(SearchData.ResultType.ATTRIBUTE), true, pastOccurrencesIndices, 0);
         addPanelsToScrollPane(domainFiltersSplitPane);
     }
 
