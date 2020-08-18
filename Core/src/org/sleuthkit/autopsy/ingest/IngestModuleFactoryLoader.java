@@ -39,7 +39,7 @@ import org.sleuthkit.autopsy.modules.photoreccarver.PhotoRecCarverIngestModuleFa
 import org.sleuthkit.autopsy.modules.embeddedfileextractor.EmbeddedFileExtractorModuleFactory;
 import org.sleuthkit.autopsy.modules.encryptiondetection.EncryptionDetectionModuleFactory;
 import org.sleuthkit.autopsy.centralrepository.ingestmodule.CentralRepoIngestModuleFactory;
-import org.sleuthkit.autopsy.modules.pictureanalysis.PictureAnalysisIngestModuleFactory;
+import org.sleuthkit.autopsy.modules.pictureanalyzer.PictureAnalyzerIngestModuleFactory;
 import org.sleuthkit.autopsy.modules.vmextractor.VMExtractorIngestModuleFactory;
 import org.sleuthkit.autopsy.python.JythonModuleLoader;
 
@@ -60,7 +60,7 @@ final class IngestModuleFactoryLoader {
             add(FileTypeIdModuleFactory.class.getCanonicalName());
             add(FileExtMismatchDetectorModuleFactory.class.getCanonicalName());
             add(EmbeddedFileExtractorModuleFactory.class.getCanonicalName());
-            add(PictureAnalysisIngestModuleFactory.class.getCanonicalName());
+            add(PictureAnalyzerIngestModuleFactory.class.getCanonicalName());
             add("org.sleuthkit.autopsy.keywordsearch.KeywordSearchModuleFactory"); //NON-NLS
             add("org.sleuthkit.autopsy.thunderbirdparser.EmailParserModuleFactory"); //NON-NLS
             add(EncryptionDetectionModuleFactory.class.getCanonicalName());

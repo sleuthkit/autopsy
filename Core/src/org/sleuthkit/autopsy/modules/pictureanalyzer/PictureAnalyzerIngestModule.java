@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.modules.pictureanalysis;
+package org.sleuthkit.autopsy.modules.pictureanalyzer;
 
 import java.util.Collection;
 
@@ -25,7 +25,7 @@ import org.openide.util.NbBundle;
 
 import org.sleuthkit.autopsy.ingest.FileIngestModuleAdapter;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
-import org.sleuthkit.autopsy.modules.pictureanalysis.spi.PictureProcessor;
+import org.sleuthkit.autopsy.modules.pictureanalyzer.spi.PictureProcessor;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 
 import org.sleuthkit.datamodel.AbstractFile;
@@ -37,7 +37,7 @@ import org.sleuthkit.datamodel.TskData;
  * module acts as a container for multiple PictureProcessors, which are the
  * classes that do the work mentioned in the examples above.
  */
-public class PictureAnalysisIngestModule extends FileIngestModuleAdapter {
+public class PictureAnalyzerIngestModule extends FileIngestModuleAdapter {
 
     private FileTypeDetector fileTypeDetector;
     private Collection<? extends PictureProcessor> registry;
@@ -71,7 +71,7 @@ public class PictureAnalysisIngestModule extends FileIngestModuleAdapter {
 
     @Override
     @NbBundle.Messages({
-        "PictureAnalysisIngestModule.cannot_run_file_type=Cannot run file type detection."
+        "PictureAnalyzerIngestModule.cannot_run_file_type=Cannot run file type detection."
     })
     public void startUp(IngestJobContext context) throws IngestModuleException {
         registry = Lookup.getDefault().lookupAll(PictureProcessor.class);
@@ -79,7 +79,7 @@ public class PictureAnalysisIngestModule extends FileIngestModuleAdapter {
         try {
             fileTypeDetector = new FileTypeDetector();
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
-            throw new IngestModuleException(Bundle.PictureAnalysisIngestModule_cannot_run_file_type(), ex);
+            throw new IngestModuleException(Bundle.PictureAnalyzerIngestModule_cannot_run_file_type(), ex);
         }
     }
 

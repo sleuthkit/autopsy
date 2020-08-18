@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.modules.pictureanalysis;
+package org.sleuthkit.autopsy.modules.pictureanalyzer;
 
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
@@ -30,13 +30,13 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
  * Factory for the Picture Analysis ingest module.
  */
 @ServiceProvider(service = IngestModuleFactory.class)
-public class PictureAnalysisIngestModuleFactory extends IngestModuleFactoryAdapter {
+public class PictureAnalyzerIngestModuleFactory extends IngestModuleFactoryAdapter {
 
     @NbBundle.Messages({
-        "PictureAnalysisIngestModuleFactory.module_name=Picture Analysis"
+        "PictureAnalyzerIngestModuleFactory.module_name=Picture Analyzer"
     })
     public static String getModuleName() {
-        return Bundle.PictureAnalysisIngestModuleFactory_module_name();
+        return Bundle.PictureAnalyzerIngestModuleFactory_module_name();
     }
     
     @Override
@@ -46,12 +46,12 @@ public class PictureAnalysisIngestModuleFactory extends IngestModuleFactoryAdapt
 
     @Override
     @NbBundle.Messages({
-        "PictureAnalysisIngestModuleFactory.module_description=Performs general"
+        "PictureAnalyzerIngestModuleFactory.module_description=Performs general"
                 + " analysis on picture files, including extracting EXIF metadata"
                 + " and converting between formats."
     })
     public String getModuleDescription() {
-        return Bundle.PictureAnalysisIngestModuleFactory_module_description();
+        return Bundle.PictureAnalyzerIngestModuleFactory_module_description();
     }
 
     @Override
@@ -61,7 +61,7 @@ public class PictureAnalysisIngestModuleFactory extends IngestModuleFactoryAdapt
 
     @Override
     public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings ingestOptions) {
-        return new PictureAnalysisIngestModule();
+        return new PictureAnalyzerIngestModule();
     }
     
     @Override

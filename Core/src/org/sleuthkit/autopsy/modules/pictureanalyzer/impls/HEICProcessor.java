@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.modules.pictureanalysis.impls;
+package org.sleuthkit.autopsy.modules.pictureanalyzer.impls;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -41,7 +41,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.util.lookup.ServiceProvider;
 
-import org.sleuthkit.autopsy.modules.pictureanalysis.spi.PictureProcessor;
+import org.sleuthkit.autopsy.modules.pictureanalyzer.spi.PictureProcessor;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
@@ -91,18 +91,19 @@ public class HEICProcessor implements PictureProcessor {
 
     private Path findImageMagick() {
         final Path windowsLocation = Paths.get(IMAGE_MAGICK_FOLDER, IMAGE_MAGICK_EXE);
-        final Path linuxLocation = Paths.get("usr", "bin", "magick");
-        final Path macOsLocation = Paths.get("usr", "local", "bin", "magick");
+        final Path macAndLinuxLocation = Paths.get("/usr", "local", "bin", "magick");
+
+        final String osName = PlatformUtil.getOSName().toLowerCase();
 
         if (PlatformUtil.isWindowsOS() && PlatformUtil.is64BitJVM()) {
-            final File locatedExec = InstalledFileLocator.getDefault().locate(windowsLocation.toString(),
-                    HEICProcessor.class.getPackage().getName(), false);
+            final File locatedExec = InstalledFileLocator.getDefault().locate(
+                windowsLocation.toString(), HEICProcessor.class.getPackage().getName(), false);
 
-            return (locatedExec != null) ? locatedExec.toPath() : null;
-        } else if (Files.isExecutable(linuxLocation) && !Files.isDirectory(linuxLocation)) {
-            return linuxLocation;
-        } else if (Files.isExecutable(macOsLocation) && !Files.isDirectory(macOsLocation)) {
-            return macOsLocation;
+            return (locatedExec != null) ? locatedExec.toPath() : null;        
+        } else if ((osName.equals("linux") || osName.startsWith("mac")) && 
+                    Files.isExecutable(macAndLinuxLocation) && 
+                    !Files.isDirectory(macAndLinuxLocation)) {
+            return macAndLinuxLocation;      
         } else {
             return null;
         }
@@ -158,8 +159,8 @@ public class HEICProcessor implements PictureProcessor {
     /**
      * Copies the HEIC container to disk in order to run ImageMagick.
      */
-    private Path extractToDisk(AbstractFile heicFile) throws IOException {
-        final String tempDir = Case.getCurrentCase().getTempDirectory();
+    private Path extractToDisk(AbstractFile heicFile) throws IOException, NoCurrentCaseException {
+        final String tempDir = Case.getCurrentCaseThrows().getTempDirectory();
         final String heicFileName = FileUtil.escapeFileName(heicFile.getName());
 
         final Path localDiskCopy = Paths.get(tempDir, heicFileName);
@@ -206,7 +207,7 @@ public class HEICProcessor implements PictureProcessor {
         final String glob = String.format("{%1$s.jpg,%1$s-*.jpg}", baseFileName);
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(moduleOutputFolder, glob)) {
 
-            final Path caseDirectory = Paths.get(Case.getCurrentCase().getCaseDirectory());
+            final Path caseDirectory = Paths.get(Case.getCurrentCaseThrows().getCaseDirectory());
             for (Path candidate : stream) {
                 if (context.fileIngestIsCancelled()) {
                     return;
@@ -215,7 +216,7 @@ public class HEICProcessor implements PictureProcessor {
                 final BasicFileAttributes attrs = Files.readAttributes(candidate, BasicFileAttributes.class);
                 final Path localCasePath = caseDirectory.relativize(candidate);
 
-                final DerivedFile jpegFile = Case.getCurrentCase().getSleuthkitCase()
+                final DerivedFile jpegFile = Case.getCurrentCaseThrows().getSleuthkitCase()
                         .addDerivedFile(candidate.getFileName().toString(),
                                 localCasePath.toString(), attrs.size(), 0L,
                                 attrs.creationTime().to(TimeUnit.SECONDS),

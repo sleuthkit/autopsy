@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.modules.pictureanalysis.spi;
+package org.sleuthkit.autopsy.modules.pictureanalyzer.spi;
 
 import java.util.Set;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;

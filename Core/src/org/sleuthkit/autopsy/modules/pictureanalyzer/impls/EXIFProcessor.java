@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.modules.pictureanalysis.impls;
+package org.sleuthkit.autopsy.modules.pictureanalyzer.impls;
 
 import com.drew.imaging.ImageMetadataReader;
 import com.drew.imaging.ImageProcessingException;
@@ -54,7 +54,7 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.autopsy.modules.pictureanalysis.spi.PictureProcessor;
+import org.sleuthkit.autopsy.modules.pictureanalyzer.spi.PictureProcessor;
 
 /**
  * Extracts EXIF metadata from JPEG, TIFF, and WAV files. Currently only date,
