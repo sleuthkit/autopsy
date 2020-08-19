@@ -242,7 +242,7 @@ class ReportWizardPortableCaseOptionsVisualPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_chunkSizeComboBoxActionPerformed
 
     private void compressCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_compressCheckboxActionPerformed
-        chunkSizeComboBox.setEnabled(compressCheckbox.isSelected());
+        chunkSizeComboBox.setEnabled(compressCheckbox.isSelected() && !includeAppCheckbox.isSelected());
         updateCompression();
     }//GEN-LAST:event_compressCheckboxActionPerformed
 
