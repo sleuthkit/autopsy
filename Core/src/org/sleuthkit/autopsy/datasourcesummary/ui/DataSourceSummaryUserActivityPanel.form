@@ -42,7 +42,7 @@
     <Component class="javax.swing.JLabel" name="programsRunLabel">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourcesummary/Bundle.properties" key="DataSourceSummaryUserActivityPanel.programsRunLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/sleuthkit/autopsy/datasourcesummary/ui/Bundle.properties" key="DataSourceSummaryUserActivityPanel.programsRunLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
       <AuxValues>

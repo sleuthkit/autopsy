@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.casemodule.datasourcesummary;
+package org.sleuthkit.autopsy.datasourcesummary.ui;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -28,26 +28,21 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.CaseDbAccessManager;
 
 /**
- * Callback which gets a map of datasource object IDs to maps of String labels
- * to the values associated with them, given a query which should select a
- * 'data_source_obj_id', a 'label', and a 'value'.
+ * Get the map of Data Source ID to a value found related to that data source
+ * query which selects data_source_obj_id and value which is grouped by that
+ * data source object id.
  */
-class DataSourceLabeledValueCallback implements CaseDbAccessManager.CaseDbAccessQueryCallback {
+class DataSourceSingleValueCallback implements CaseDbAccessManager.CaseDbAccessQueryCallback {
 
     private static final Logger logger = Logger.getLogger(DataSourceSingleValueCallback.class.getName());
-    private final Map<Long, Map<String, Long>> dataSourceObjIdLabeledValues = new HashMap<>();
+    private final Map<Long, Long> dataSourceObjIdValues = new HashMap<>();
 
     @Override
     public void process(ResultSet rs) {
         try {
             while (rs.next()) {
                 try {
-                    Long dataSourceObjId = rs.getLong("data_source_obj_id");
-                    String labelForValue = rs.getString("label");
-                    Long value = rs.getLong("value");
-                    Map<String, Long> labelsMap = dataSourceObjIdLabeledValues.get(dataSourceObjId) == null ? new HashMap<>() : dataSourceObjIdLabeledValues.get(dataSourceObjId);
-                    labelsMap.put(labelForValue, value);
-                    dataSourceObjIdLabeledValues.put(dataSourceObjId, labelsMap);
+                    dataSourceObjIdValues.put(rs.getLong("data_source_obj_id"), rs.getLong("value"));
                 } catch (SQLException ex) {
                     logger.log(Level.WARNING, "Unable to get data_source_obj_id or value from result set", ex);
                 }
@@ -60,12 +55,12 @@ class DataSourceLabeledValueCallback implements CaseDbAccessManager.CaseDbAccess
     /**
      * Get the processed results
      *
-     * @return Collection which maps datasource object IDs to maps of String
-     *         labels to the values associated with them only contains entries
-     *         for data sources with at least 1 item found for any label.
+     * @return Collection which maps datasource id to a value related to the
+     *         datasource id, only contains entries for datasources with at
+     *         least 1 item found.
      */
-    Map<Long, Map<String, Long>> getMapOfLabeledValues() {
-        return Collections.unmodifiableMap(dataSourceObjIdLabeledValues);
+    Map<Long, Long> getMapOfValues() {
+        return Collections.unmodifiableMap(dataSourceObjIdValues);
     }
 
 }

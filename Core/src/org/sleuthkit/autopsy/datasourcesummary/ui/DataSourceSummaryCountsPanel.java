@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.casemodule.datasourcesummary;
+package org.sleuthkit.autopsy.datasourcesummary.ui;
 
 import java.util.Map;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -24,6 +24,7 @@ import javax.swing.JLabel;
 import javax.swing.table.DefaultTableCellRenderer;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.datasourcesummary.ui.Bundle;
 import org.sleuthkit.datamodel.DataSource;
 
 /**

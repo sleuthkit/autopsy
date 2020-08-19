@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.casemodule.datasourcesummary;
+package org.sleuthkit.autopsy.datasourcesummary.ui;
 
 import java.awt.Frame;
 import java.beans.PropertyChangeEvent;
@@ -27,6 +27,7 @@ import java.util.Observer;
 import java.util.Set;
 import javax.swing.event.ListSelectionEvent;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.datasourcesummary.ui.Bundle;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisCompletedEvent;
 import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisCompletedEvent.Reason;
