@@ -1328,7 +1328,8 @@ public class Case {
      * @return The temp subdirectory path.
      */
     public String getTempDirectory() {
-        // get temp folder scoped to the uuid of the case
+        // get temp folder scoped to the combination of case name and timestamp 
+        // provieded by getName()
         Path path = Paths.get(UserPreferences.getAppTempDirectory(), CASE_TEMP_DIR, getName());
         File f = path.toFile();
         // verify that the folder exists
