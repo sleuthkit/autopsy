@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.casemodule.datasourcesummary;
+package org.sleuthkit.autopsy.datasourcesummary.ui;
 
 import java.awt.BorderLayout;
 import java.awt.Font;
@@ -39,6 +39,7 @@ import javax.swing.JLabel;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.FileTypeUtils;
 import static org.sleuthkit.autopsy.coreutils.FileTypeUtils.FileTypeCategory;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourceInfoUtilities;
 
 /**
  * A Pie Chart that shows file mime types in a data source.

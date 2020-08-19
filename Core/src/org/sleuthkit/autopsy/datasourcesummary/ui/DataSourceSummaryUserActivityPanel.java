@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.casemodule.datasourcesummary;
+package org.sleuthkit.autopsy.datasourcesummary.ui;
 
 import java.awt.Component;
 import java.text.DateFormat;
@@ -32,6 +32,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourceInfoUtilities;
 import org.sleuthkit.datamodel.DataSource;
 
 /**
