@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.casemodule.datasourcesummary;
 
 import java.util.Map;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JLabel;
 import javax.swing.table.DefaultTableCellRenderer;
 import org.openide.util.NbBundle.Messages;
@@ -35,7 +34,7 @@ import org.sleuthkit.datamodel.DataSource;
     "DataSourceSummaryCountsPanel.FilesByCategoryTableModel.type.header=File Type",
     "DataSourceSummaryCountsPanel.FilesByCategoryTableModel.count.header=Count"
 })
-class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
+final class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
     private static final long serialVersionUID = 1L;
     
     // Result returned for a data model if no data found.
@@ -53,7 +52,6 @@ class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
         Bundle.DataSourceSummaryCountsPanel_ArtifactCountsTableModel_count_header()
     };
 
-    private static final Logger logger = Logger.getLogger(DataSourceSummaryCountsPanel.class.getName());
     private final DefaultTableCellRenderer rightAlignedRenderer = new DefaultTableCellRenderer();
     
     private final FileTypePieChart fileTypePieChart = new FileTypePieChart();
