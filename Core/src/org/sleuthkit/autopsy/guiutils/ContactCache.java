@@ -39,12 +39,13 @@ import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * A singleton cache of the Contact artifacts for accounts. The map of account
  * unique ids to list of contact artifacts is stored in a LoadingCache which
- * expires after 10 of non-use. 
+ * expires after 10 of non-use.
  *
  */
 public final class ContactCache {
@@ -52,7 +53,7 @@ public final class ContactCache {
     private static final Logger logger = Logger.getLogger(ContactCache.class.getName());
 
     private static ContactCache instance;
-    
+
     private final LoadingCache<String, Map<String, List<BlackboardArtifact>>> accountMap;
 
     /**
@@ -70,6 +71,37 @@ public final class ContactCache {
     }
 
     /**
+     * Returns a list of Contact TSK_NAME values for the given account type
+     * specific id.
+     *
+     * @param accountTypeSpecificID Account type specific id
+     *
+     * @return List of contact string names or empty list if none were found.
+     *
+     * @throws TskCoreException
+     */
+    public static synchronized List<String> getContactNameList(String accountTypeSpecificID) throws TskCoreException {
+        List<BlackboardArtifact> contactList;
+        try {
+            contactList = getInstance().accountMap.get("realMap").get(accountTypeSpecificID);
+        } catch (ExecutionException ex) {
+            throw new TskCoreException("Unable to get contact list from cache", ex);
+        }
+        List<String> contactNameList = new ArrayList<>();
+
+        if (contactList != null) {
+            for (BlackboardArtifact artifact : contactList) {
+                BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.fromID(TSK_NAME.getTypeID())));
+                if (attribute != null && !contactNameList.contains(attribute.getValueString())) {
+                    contactNameList.add(attribute.getValueString());
+                }
+            }
+        }
+
+        return contactNameList;
+    }
+
+    /**
      * Force the cache to invalidate all entries.
      */
     static synchronized void invalidateCache() {
@@ -80,16 +112,16 @@ public final class ContactCache {
      * Construct a new instance.
      */
     private ContactCache() {
-        
+
         accountMap = CacheBuilder.newBuilder().expireAfterAccess(10, TimeUnit.MINUTES).build(
                 new CacheLoader<String, Map<String, List<BlackboardArtifact>>>() {
             @Override
             public Map<String, List<BlackboardArtifact>> load(String key) {
                 try {
-                    return  buildMap();
+                    return buildMap();
                 } catch (SQLException | TskCoreException ex) {
                     logger.log(Level.WARNING, "Failed to build account to contact map", ex);
-                } 
+                }
                 return new HashMap<>();  // Return an empty map if there is an exception to avoid NPE and continual trying.
             }
         });
@@ -119,42 +151,42 @@ public final class ContactCache {
 
         return instance;
     }
-    
+
     /**
      * Builds the map of account IDs to contacts that reference them.
-     * 
+     *
      * @return A map of account IDs to contact artifacts.
-     * 
+     *
      * @throws TskCoreException
-     * @throws SQLException 
+     * @throws SQLException
      */
     private Map<String, List<BlackboardArtifact>> buildMap() throws TskCoreException, SQLException {
         Map<String, List<BlackboardArtifact>> acctMap = new HashMap<>();
         List<BlackboardArtifact> contactList = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT);
 
-        for(BlackboardArtifact contactArtifact: contactList) {
+        for (BlackboardArtifact contactArtifact : contactList) {
             List<BlackboardAttribute> contactAttributes = contactArtifact.getAttributes();
-            for(BlackboardAttribute attribute: contactAttributes) {
+            for (BlackboardAttribute attribute : contactAttributes) {
                 String typeName = attribute.getAttributeType().getTypeName();
-                
-                if(typeName.startsWith("TSK_EMAIL")
-                || typeName.startsWith("TSK_PHONE")
-                || typeName.startsWith("TSK_NAME")
-                || typeName.startsWith("TSK_ID")) {
+
+                if (typeName.startsWith("TSK_EMAIL")
+                        || typeName.startsWith("TSK_PHONE")
+                        || typeName.startsWith("TSK_NAME")
+                        || typeName.startsWith("TSK_ID")) {
                     String accountID = attribute.getValueString();
                     List<BlackboardArtifact> artifactList = acctMap.get(accountID);
-                    if(artifactList == null) {
+                    if (artifactList == null) {
                         artifactList = new ArrayList<>();
                         acctMap.put(accountID, artifactList);
                     }
-                    if(!artifactList.contains(contactArtifact)) {
+                    if (!artifactList.contains(contactArtifact)) {
                         artifactList.add(contactArtifact);
                     }
                 }
             }
-            
+
         }
-      
+
         return acctMap;
     }
 }

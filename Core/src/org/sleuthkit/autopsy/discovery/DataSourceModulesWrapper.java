@@ -19,9 +19,9 @@
 package org.sleuthkit.autopsy.discovery;
 
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.modules.exif.ExifParserModuleFactory;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeIdModuleFactory;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashLookupModuleFactory;
+import org.sleuthkit.autopsy.modules.pictureanalyzer.PictureAnalyzerIngestModuleFactory;
 import org.sleuthkit.datamodel.IngestJobInfo;
 import org.sleuthkit.datamodel.IngestModuleInfo;
 
@@ -118,7 +118,7 @@ class DataSourceModulesWrapper {
      *                   data source.
      */
     private void updateExifStatus(IngestModuleInfo moduleInfo) {
-        if (!exifModuleRun && moduleInfo.getDisplayName().equals(ExifParserModuleFactory.getModuleName())) {
+        if (!exifModuleRun && moduleInfo.getDisplayName().equals(PictureAnalyzerIngestModuleFactory.getModuleName())) {
             exifModuleRun = true;
         }
     }

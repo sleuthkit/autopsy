@@ -26,6 +26,9 @@ CallLogArtifactViewer_label_from=From
 CallLogArtifactViewer_label_to=To
 CallLogArtifactViewer_suffix_local=(Local)
 CallLogArtifactViewer_value_unknown=Unknown
+#{0} - contact name
+CommunicationArtifactViewerHelper_contact_label=Contact: {0}
+CommunicationArtifactViewerHelper_contact_label_unknown=Unknown
 CommunicationArtifactViewerHelper_menuitem_copy=Copy
 CommunicationArtifactViewerHelper_persona_button_create=Create
 CommunicationArtifactViewerHelper_persona_button_view=View
@@ -51,7 +54,6 @@ ContactArtifactViewer_persona_no_match=No matches found
 ContactArtifactViewer_persona_searching=Searching...
 ContactArtifactViewer_persona_unknown=Unknown
 ContactArtifactViewer_phones_header=Phone
-ContactArtifactViewer_plural_suffix=s
 DataContentViewerArtifact.failedToGetAttributes.message=Failed to get some or all attributes from case database
 DataContentViewerArtifact.failedToGetSourcePath.message=Failed to get source file path from case database
 DefaultArtifactContentViewer.attrsTableHeader.sources=Source(s)
