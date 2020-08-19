@@ -30,9 +30,7 @@ import org.sleuthkit.datamodel.DataSource;
  * Panel for displaying summary information on the known files present in the
  * specified DataSource
  */
-@Messages({"DataSourceSummaryCountsPanel.FilesByMimeTypeTableModel.type.header=File Type",
-    "DataSourceSummaryCountsPanel.FilesByMimeTypeTableModel.count.header=Count",
-    "DataSourceSummaryCountsPanel.ArtifactCountsTableModel.type.header=Result Type",
+@Messages({"DataSourceSummaryCountsPanel.ArtifactCountsTableModel.type.header=Result Type",
     "DataSourceSummaryCountsPanel.ArtifactCountsTableModel.count.header=Count",
     "DataSourceSummaryCountsPanel.FilesByCategoryTableModel.type.header=File Type",
     "DataSourceSummaryCountsPanel.FilesByCategoryTableModel.count.header=Count"
@@ -42,12 +40,6 @@ class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
     
     // Result returned for a data model if no data found.
     private static final Object[][] EMPTY_PAIRS = new Object[][]{};
-
-    // column headers for mime type table
-    private static final Object[] MIME_TYPE_COLUMN_HEADERS = new Object[]{
-        Bundle.DataSourceSummaryCountsPanel_FilesByMimeTypeTableModel_type_header(),
-        Bundle.DataSourceSummaryCountsPanel_FilesByMimeTypeTableModel_count_header()
-    };
 
     // column headers for file by category table
     private static final Object[] FILE_BY_CATEGORY_COLUMN_HEADERS = new Object[]{
