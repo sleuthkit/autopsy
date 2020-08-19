@@ -38,15 +38,16 @@ import java.util.stream.Collectors;
 import javax.swing.JLabel;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.FileTypeUtils;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourceMimeTypeSummary;
 import static org.sleuthkit.autopsy.coreutils.FileTypeUtils.FileTypeCategory;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourceInfoUtilities;
 
 /**
  * A Pie Chart that shows file mime types in a data source.
  */
 class FileTypePieChart extends JPanel {
+
     private static final long serialVersionUID = 1L;
-    
+
     private static final Font DEFAULT_FONT = new JLabel().getFont();
     private static final Font DEFAULT_HEADER_FONT = new Font(DEFAULT_FONT.getName(), DEFAULT_FONT.getStyle(), (int) (DEFAULT_FONT.getSize() * 1.5));
 
@@ -139,9 +140,9 @@ class FileTypePieChart extends JPanel {
             addIfPresent(Bundle.DataSourceSummaryCountsPanel_FilesByMimeTypeTableModel_executables_row(),
                     this.dataSource, FileTypeCategory.EXECUTABLE);
             addIfPresent(Bundle.DataSourceSummaryCountsPanel_FilesByMimeTypeTableModel_other_label(),
-                    DataSourceInfoUtilities.getCountOfFilesNotInMimeTypes(this.dataSource, ALL_CATEGORY_MIME_TYPES));
+                    DataSourceMimeTypeSummary.getCountOfFilesNotInMimeTypes(this.dataSource, ALL_CATEGORY_MIME_TYPES));
             addIfPresent(Bundle.DataSourceSummaryCountsPanel_FilesByMimeTypeTableModel_notAnalyzed_label(),
-                    DataSourceInfoUtilities.getCountOfFilesWithNoMimeType(this.dataSource));
+                    DataSourceMimeTypeSummary.getCountOfFilesWithNoMimeType(this.dataSource));
         }
     }
 
@@ -184,6 +185,6 @@ class FileTypePieChart extends JPanel {
      * @return The count.
      */
     private static Long getCount(DataSource dataSource, FileTypeUtils.FileTypeCategory category) {
-        return DataSourceInfoUtilities.getCountOfFilesForMimeTypes(dataSource, category.getMediaTypes());
+        return DataSourceMimeTypeSummary.getCountOfFilesForMimeTypes(dataSource, category.getMediaTypes());
     }
 }

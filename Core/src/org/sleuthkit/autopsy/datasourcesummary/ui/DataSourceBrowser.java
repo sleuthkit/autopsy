@@ -39,8 +39,7 @@ import org.sleuthkit.autopsy.datasourcesummary.ui.DataSourceSummaryNode.DataSour
 import static javax.swing.SwingConstants.RIGHT;
 import javax.swing.SwingUtilities;
 import javax.swing.table.TableColumn;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourceInfoUtilities;
-import org.sleuthkit.autopsy.datasourcesummary.ui.Bundle;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.CaseDataSourcesSummary;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.IngestJobInfo;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -154,8 +153,8 @@ final class DataSourceBrowser extends javax.swing.JPanel implements ExplorerMana
     private List<DataSourceSummary> getDataSourceSummaryList(Map<Long, String> usageMap, Map<Long, Long> fileCountsMap) {
         List<DataSourceSummary> summaryList = new ArrayList<>();
 
-        final Map<Long, Long> artifactCountsMap = DataSourceInfoUtilities.getCountsOfArtifacts();
-        final Map<Long, Long> tagCountsMap = DataSourceInfoUtilities.getCountsOfTags();
+        final Map<Long, Long> artifactCountsMap = CaseDataSourcesSummary.getCountsOfArtifacts();
+        final Map<Long, Long> tagCountsMap = CaseDataSourcesSummary.getCountsOfTags();
         try {
             SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
             for (DataSource dataSource : skCase.getDataSources()) {

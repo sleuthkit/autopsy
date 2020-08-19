@@ -27,7 +27,7 @@ import java.util.Observer;
 import java.util.Set;
 import javax.swing.event.ListSelectionEvent;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourceInfoUtilities;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.CaseDataSourcesSummary;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisCompletedEvent;
 import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisCompletedEvent.Reason;
@@ -54,8 +54,8 @@ final class DataSourceSummaryDialog extends javax.swing.JDialog implements Obser
     })
     DataSourceSummaryDialog(Frame owner) {
         super(owner, Bundle.DataSourceSummaryDialog_window_title(), true);
-        Map<Long, String> usageMap = DataSourceInfoUtilities.getDataSourceTypes();
-        Map<Long, Long> fileCountsMap = DataSourceInfoUtilities.getCountsOfFiles();
+        Map<Long, String> usageMap = CaseDataSourcesSummary.getDataSourceTypes();
+        Map<Long, Long> fileCountsMap = CaseDataSourcesSummary.getCountsOfFiles();
         dataSourcesPanel = new DataSourceBrowser(usageMap, fileCountsMap);
         dataSourceSummaryTabbedPane = new DataSourceSummaryTabbedPane();
         initComponents();
