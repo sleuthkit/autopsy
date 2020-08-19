@@ -24,6 +24,7 @@ import javax.swing.JLabel;
 import javax.swing.table.DefaultTableCellRenderer;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourceInfoUtilities;
 import org.sleuthkit.autopsy.datasourcesummary.ui.Bundle;
 import org.sleuthkit.datamodel.DataSource;
 

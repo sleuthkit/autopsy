@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datasourcesummary.ui;
+package org.sleuthkit.autopsy.datasourcesummary.datamodel;
 
 import java.io.File;
 import java.sql.ResultSet;
@@ -53,7 +53,7 @@ import org.sleuthkit.datamodel.TskData.TSK_FS_META_TYPE_ENUM;
  * Utilities for getting information about a data source or all data sources
  * from the case database.
  */
-final class DataSourceInfoUtilities {
+public final class DataSourceInfoUtilities {
 
     private static final Logger logger = Logger.getLogger(DataSourceInfoUtilities.class.getName());
 
@@ -112,7 +112,7 @@ final class DataSourceInfoUtilities {
      *
      * @return The count.
      */
-    static Long getCountOfFiles(DataSource currentDataSource) {
+    public static Long getCountOfFiles(DataSource currentDataSource) {
         return getCountOfRegularFiles(currentDataSource, null,
                 "Unable to get count of files, providing empty results");
     }
@@ -124,7 +124,7 @@ final class DataSourceInfoUtilities {
      *
      * @return The count.
      */
-    static Long getCountOfAllocatedFiles(DataSource currentDataSource) {
+    public static Long getCountOfAllocatedFiles(DataSource currentDataSource) {
         return getCountOfRegularFiles(currentDataSource,
                 getMetaFlagsContainsStatement(TSK_FS_META_FLAG_ENUM.ALLOC),
                 "Unable to get counts of unallocated files for datasource, providing empty results");
@@ -137,7 +137,7 @@ final class DataSourceInfoUtilities {
      *
      * @return The count.
      */
-    static Long getCountOfUnallocatedFiles(DataSource currentDataSource) {
+    public static Long getCountOfUnallocatedFiles(DataSource currentDataSource) {
         return getCountOfRegularFiles(currentDataSource,
                 getMetaFlagsContainsStatement(TSK_FS_META_FLAG_ENUM.UNALLOC)
                 + " AND type<>" + TSK_DB_FILES_TYPE_ENUM.SLACK.getFileType(),
@@ -151,7 +151,7 @@ final class DataSourceInfoUtilities {
      *
      * @return The count.
      */
-    static Long getCountOfDirectories(DataSource currentDataSource) {
+    public static Long getCountOfDirectories(DataSource currentDataSource) {
         return getCountOfTskFiles(currentDataSource,
                 "meta_type=" + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_DIR.getValue()
                 + " AND type<>" + TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR.getFileType(),
@@ -165,7 +165,7 @@ final class DataSourceInfoUtilities {
      *
      * @return The count.
      */
-    static Long getCountOfSlackFiles(DataSource currentDataSource) {
+    public static Long getCountOfSlackFiles(DataSource currentDataSource) {
         return getCountOfRegularFiles(currentDataSource,
                 getMetaFlagsContainsStatement(TSK_FS_META_FLAG_ENUM.UNALLOC)
                 + " AND type=" + TskData.TSK_DB_FILES_TYPE_ENUM.SLACK.getFileType(),
@@ -212,7 +212,7 @@ final class DataSourceInfoUtilities {
      *
      * @return The size or null if the query could not be executed.
      */
-    static Long getSizeOfUnallocatedFiles(DataSource currentDataSource) {
+    public static Long getSizeOfUnallocatedFiles(DataSource currentDataSource) {
         if (currentDataSource == null) {
             return null;
         }
@@ -275,7 +275,7 @@ final class DataSourceInfoUtilities {
      * @return A mapping of artifact type name to the counts or null if there
      *         was an error executing the query.
      */
-    static Map<String, Long> getCountsOfArtifactsByType(DataSource selectedDataSource) {
+    public static Map<String, Long> getCountsOfArtifactsByType(DataSource selectedDataSource) {
         if (selectedDataSource == null) {
             return Collections.emptyMap();
         }
@@ -296,7 +296,7 @@ final class DataSourceInfoUtilities {
     /**
      * Describes a result of a program run on a datasource.
      */
-    static class TopProgramsResult {
+    public static class TopProgramsResult {
 
         private final String programName;
         private final String programPath;
@@ -320,21 +320,21 @@ final class DataSourceInfoUtilities {
         /**
          * @return The name of the program
          */
-        String getProgramName() {
+        public String getProgramName() {
             return programName;
         }
 
         /**
          * @return The path of the program.
          */
-        String getProgramPath() {
+        public String getProgramPath() {
             return programPath;
         }
 
         /**
          * @return The number of run times or null if not present.
          */
-        Long getRunTimes() {
+        public Long getRunTimes() {
             return runTimes;
         }
 
@@ -453,7 +453,7 @@ final class DataSourceInfoUtilities {
      *
      * @return
      */
-    static List<TopProgramsResult> getTopPrograms(DataSource dataSource, int count) {
+    public static List<TopProgramsResult> getTopPrograms(DataSource dataSource, int count) {
         if (dataSource == null || count <= 0) {
             return Collections.emptyList();
         }
@@ -569,7 +569,7 @@ final class DataSourceInfoUtilities {
      *
      * @return The short folder name or empty string if not found.
      */
-    static String getShortFolderName(String strPath, String applicationName) {
+    public static String getShortFolderName(String strPath, String applicationName) {
         if (strPath == null) {
             return "";
         }
@@ -667,7 +667,7 @@ final class DataSourceInfoUtilities {
      * @return The concatenated value or null if the query could not be
      *         executed.
      */
-    static String getOperatingSystems(DataSource dataSource) {
+    public static String getOperatingSystems(DataSource dataSource) {
         if (dataSource == null) {
             return null;
         }
@@ -686,7 +686,7 @@ final class DataSourceInfoUtilities {
      * @return The concatenated value or null if the query could not be
      *         executed.
      */
-    static String getDataSourceType(DataSource dataSource) {
+    public static String getDataSourceType(DataSource dataSource) {
         if (dataSource == null) {
             return null;
         }
@@ -704,7 +704,7 @@ final class DataSourceInfoUtilities {
      *         comma seperated list of values of data source usage types
      *         expected to be in the datasource
      */
-    static Map<Long, String> getDataSourceTypes() {
+    public static Map<Long, String> getDataSourceTypes() {
         try {
             SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
             List<BlackboardArtifact> listOfArtifacts = skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_DATA_SOURCE_USAGE);
@@ -737,7 +737,7 @@ final class DataSourceInfoUtilities {
      *         files in the datasource, will only contain entries for
      *         datasources which have at least 1 file
      */
-    static Map<Long, Long> getCountsOfFiles() {
+    public static Map<Long, Long> getCountsOfFiles() {
         try {
             final String countFilesQuery = "data_source_obj_id, COUNT(*) AS value FROM tsk_files"
                     + " WHERE meta_type=" + TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG.getValue()
@@ -760,7 +760,7 @@ final class DataSourceInfoUtilities {
      *         artifacts in the datasource, will only contain entries for
      *         datasources which have at least 1 artifact
      */
-    static Map<Long, Long> getCountsOfArtifacts() {
+    public static Map<Long, Long> getCountsOfArtifacts() {
         try {
             final String countArtifactsQuery = "data_source_obj_id, COUNT(*) AS value"
                     + " FROM blackboard_artifacts WHERE review_status_id !=" + BlackboardArtifact.ReviewStatus.REJECTED.getID()
@@ -781,7 +781,7 @@ final class DataSourceInfoUtilities {
      *         tags which have been applied in the datasource, will only contain
      *         entries for datasources which have at least 1 item tagged.
      */
-    static Map<Long, Long> getCountsOfTags() {
+    public static Map<Long, Long> getCountsOfTags() {
         try {
             final String countFileTagsQuery = "data_source_obj_id, COUNT(*) AS value"
                     + " FROM content_tags as content_tags, tsk_files as tsk_files"
@@ -816,7 +816,7 @@ final class DataSourceInfoUtilities {
      *         specified mime types in the current case for the specified data
      *         source, null if no count was retrieved
      */
-    static Long getCountOfFilesForMimeTypes(DataSource currentDataSource, Set<String> setOfMimeTypes) {
+    public static Long getCountOfFilesForMimeTypes(DataSource currentDataSource, Set<String> setOfMimeTypes) {
         return getCountOfRegularFiles(currentDataSource,
                 "mime_type IN " + getSqlSet(setOfMimeTypes),
                 "Unable to get count of files for specified mime types");
@@ -834,7 +834,7 @@ final class DataSourceInfoUtilities {
      * @return a Long value which represents the number of files that do not
      *         have the specific mime type, but do have a mime type.
      */
-    static Long getCountOfFilesNotInMimeTypes(DataSource currentDataSource, Set<String> setOfMimeTypes) {
+    public static Long getCountOfFilesNotInMimeTypes(DataSource currentDataSource, Set<String> setOfMimeTypes) {
         return getCountOfRegularFiles(currentDataSource,
                 "mime_type NOT IN " + getSqlSet(setOfMimeTypes)
                 + " AND mime_type IS NOT NULL AND mime_type <> '' ",
@@ -850,7 +850,7 @@ final class DataSourceInfoUtilities {
      *         issue searching the data source.
      *
      */
-    static Long getCountOfFilesWithNoMimeType(DataSource currentDataSource) {
+    public static Long getCountOfFilesWithNoMimeType(DataSource currentDataSource) {
         return getCountOfRegularFiles(currentDataSource,
                 "(mime_type IS NULL OR mime_type = '') ",
                 "Unable to get count of files without a mime type");

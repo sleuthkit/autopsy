@@ -27,7 +27,7 @@ import java.util.Observer;
 import java.util.Set;
 import javax.swing.event.ListSelectionEvent;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.datasourcesummary.ui.Bundle;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourceInfoUtilities;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisCompletedEvent;
 import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisCompletedEvent.Reason;

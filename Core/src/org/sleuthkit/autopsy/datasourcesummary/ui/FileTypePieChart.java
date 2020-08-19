@@ -37,9 +37,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import javax.swing.JLabel;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.datasourcesummary.ui.Bundle;
 import org.sleuthkit.autopsy.coreutils.FileTypeUtils;
 import static org.sleuthkit.autopsy.coreutils.FileTypeUtils.FileTypeCategory;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourceInfoUtilities;
 
 /**
  * A Pie Chart that shows file mime types in a data source.

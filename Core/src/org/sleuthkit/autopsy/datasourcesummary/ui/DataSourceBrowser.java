@@ -39,6 +39,7 @@ import org.sleuthkit.autopsy.datasourcesummary.ui.DataSourceSummaryNode.DataSour
 import static javax.swing.SwingConstants.RIGHT;
 import javax.swing.SwingUtilities;
 import javax.swing.table.TableColumn;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourceInfoUtilities;
 import org.sleuthkit.autopsy.datasourcesummary.ui.Bundle;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.IngestJobInfo;
