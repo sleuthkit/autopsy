@@ -76,6 +76,7 @@ public class HEICProcessor implements PictureProcessor {
     // Windows location
     private static final String IMAGE_MAGICK_FOLDER = "ImageMagick-7.0.10-27-portable-Q16-x64";
     private static final String IMAGE_MAGICK_EXE = "magick.exe";
+    private static final String IMAGE_MAGICK_ERROR_FILE = "magick_error.txt";
 
     // Actual path of ImageMagick on the system
     private final Path IMAGE_MAGICK_PATH;
@@ -179,6 +180,9 @@ public class HEICProcessor implements PictureProcessor {
 
         final String baseFileName = FilenameUtils.getBaseName(FileUtil.escapeFileName(heicFile.getName()));
         final Path outputFile = moduleOutputFolder.resolve(baseFileName + ".jpg");
+        
+        final Path imageMagickErrorOutput = moduleOutputFolder.resolve(IMAGE_MAGICK_ERROR_FILE);
+        Files.createFile(imageMagickErrorOutput);
 
         // ImageMagick will write the primary image to the output file.
         // Any additional images found within the HEIC container will be
@@ -187,6 +191,8 @@ public class HEICProcessor implements PictureProcessor {
                 .command(IMAGE_MAGICK_PATH.toString(),
                         localDiskCopy.toString(),
                         outputFile.toString());
+        
+        processBuilder.redirectError(imageMagickErrorOutput.toFile());
 
         final long startTime = System.currentTimeMillis();
         final int exitStatus = ExecUtil.execute(processBuilder, () -> {
