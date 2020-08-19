@@ -326,17 +326,19 @@ public class HashDbManager implements PropertyChangeListener {
         }
 
         // Add the hash database to the collection
-        hashSets.add(db);
-
-        // Let any external listeners know that there's a new set   
-        try {
-            changeSupport.firePropertyChange(SetEvt.DB_ADDED.toString(), null, hashSetName);
-        } catch (Exception e) {
-            logger.log(Level.SEVERE, "HashDbManager listener threw exception", e); //NON-NLS
-            MessageNotifyUtil.Notify.show(
-                    NbBundle.getMessage(this.getClass(), "HashDbManager.moduleErr"),
-                    NbBundle.getMessage(this.getClass(), "HashDbManager.moduleErrorListeningToUpdatesMsg"),
-                    MessageNotifyUtil.MessageType.ERROR);
+        if(!hashSets.contains(db)) {
+            hashSets.add(db);
+        
+            // Let any external listeners know that there's a new set   
+            try {
+                changeSupport.firePropertyChange(SetEvt.DB_ADDED.toString(), null, hashSetName);
+            } catch (Exception e) {
+                logger.log(Level.SEVERE, "HashDbManager listener threw exception", e); //NON-NLS
+                MessageNotifyUtil.Notify.show(
+                        NbBundle.getMessage(this.getClass(), "HashDbManager.moduleErr"),
+                        NbBundle.getMessage(this.getClass(), "HashDbManager.moduleErrorListeningToUpdatesMsg"),
+                        MessageNotifyUtil.MessageType.ERROR);
+            }
         }
         return db;
 
