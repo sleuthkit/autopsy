@@ -58,6 +58,8 @@ public final class Installer extends ModuleInstall {
                 }
             }
         } catch (Exception ex) {
+            // This is a firewall exception should any issues occur 
+            // during temp directory deletion
             logger.log(Level.WARNING, "There was an error while cleaning up temp directory: " + (tempDirStr == null ? "<null>" : tempDirStr), ex);
         }
     }
