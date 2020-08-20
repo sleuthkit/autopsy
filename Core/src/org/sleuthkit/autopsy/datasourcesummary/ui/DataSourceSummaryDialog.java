@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.casemodule.datasourcesummary;
+package org.sleuthkit.autopsy.datasourcesummary.ui;
 
 import java.awt.Frame;
 import java.beans.PropertyChangeEvent;
@@ -27,6 +27,7 @@ import java.util.Observer;
 import java.util.Set;
 import javax.swing.event.ListSelectionEvent;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.CaseDataSourcesSummary;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisCompletedEvent;
 import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisCompletedEvent.Reason;
@@ -53,8 +54,8 @@ final class DataSourceSummaryDialog extends javax.swing.JDialog implements Obser
     })
     DataSourceSummaryDialog(Frame owner) {
         super(owner, Bundle.DataSourceSummaryDialog_window_title(), true);
-        Map<Long, String> usageMap = DataSourceInfoUtilities.getDataSourceTypes();
-        Map<Long, Long> fileCountsMap = DataSourceInfoUtilities.getCountsOfFiles();
+        Map<Long, String> usageMap = CaseDataSourcesSummary.getDataSourceTypes();
+        Map<Long, Long> fileCountsMap = CaseDataSourcesSummary.getCountsOfFiles();
         dataSourcesPanel = new DataSourceBrowser(usageMap, fileCountsMap);
         dataSourceSummaryTabbedPane = new DataSourceSummaryTabbedPane();
         initComponents();
@@ -125,7 +126,7 @@ final class DataSourceSummaryDialog extends javax.swing.JDialog implements Obser
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(dataSourceSummarySplitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 668, Short.MAX_VALUE)
+                    .addComponent(dataSourceSummarySplitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 860, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(closeButton)))
@@ -135,7 +136,7 @@ final class DataSourceSummaryDialog extends javax.swing.JDialog implements Obser
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(dataSourceSummarySplitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 362, Short.MAX_VALUE)
+                .addComponent(dataSourceSummarySplitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 540, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(closeButton)
                 .addContainerGap())

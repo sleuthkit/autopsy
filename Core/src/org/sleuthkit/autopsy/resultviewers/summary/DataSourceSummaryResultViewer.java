@@ -26,7 +26,7 @@ import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
-import org.sleuthkit.autopsy.casemodule.datasourcesummary.DataSourceSummaryTabbedPane;
+import org.sleuthkit.autopsy.datasourcesummary.ui.DataSourceSummaryTabbedPane;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.corecomponents.AbstractDataResultViewer;
 import org.sleuthkit.datamodel.DataSource;
