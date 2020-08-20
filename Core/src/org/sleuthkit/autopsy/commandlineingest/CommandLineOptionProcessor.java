@@ -52,6 +52,7 @@ public class CommandLineOptionProcessor extends OptionProcessor {
     private final Option ingestProfileOption = Option.requiredArgument('p', "ingestProfile");
     private final Option listAllDataSourcesCommandOption = Option.withoutArgument('l', "listAllDataSources");
     private final Option generateReportsOption = Option.withoutArgument('g', "generateReports");
+    private final Option runUICommandOption = Option.requiredArgument('u', "runUI");
 
     private boolean runFromCommandLine = false;
 
@@ -75,6 +76,7 @@ public class CommandLineOptionProcessor extends OptionProcessor {
         set.add(ingestProfileOption);
         set.add(listAllDataSourcesCommandOption);
         set.add(generateReportsOption);
+        set.add(runUICommandOption);
         return set;
     }
 
@@ -373,7 +375,7 @@ public class CommandLineOptionProcessor extends OptionProcessor {
             newCommand.addInputValue(CommandLineCommand.InputType.CASE_FOLDER_PATH.name(), caseDir);
             commands.add(newCommand);
             runFromCommandLine = true;
-        }        
+        } 
     }
 
     /**
