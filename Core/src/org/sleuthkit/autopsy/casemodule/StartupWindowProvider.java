@@ -24,6 +24,7 @@ import java.util.logging.Level;
 import org.netbeans.spi.sendopts.OptionProcessor;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.commandlineingest.CommandLineIngestManager;
+import org.sleuthkit.autopsy.commandlineingest.CommandLineOpenCaseManager;
 import org.sleuthkit.autopsy.commandlineingest.CommandLineOptionProcessor;
 import org.sleuthkit.autopsy.commandlineingest.CommandLineStartupWindow;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -58,6 +59,12 @@ public class StartupWindowProvider implements StartupWindowInterface {
 
     private void init() {
         if (startupWindowToUse == null) {
+
+            if (openCaseInUI()) {
+                new CommandLineOpenCaseManager().start();
+                return;
+            }
+
             // first check whether we are running from command line
             if (isRunningFromCommandLine()) {
                 // Autopsy is running from command line
@@ -126,6 +133,28 @@ public class StartupWindowProvider implements StartupWindowInterface {
             if ((processor instanceof CommandLineOptionProcessor)) {
                 // check if we are running from command line            
                 return ((CommandLineOptionProcessor) processor).isRunFromCommandLine();
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Checks whether Autopsy was launched from the command line with the option
+     * to open an existing case.
+     *
+     * @return True if opening an existing case.
+     */
+    private boolean openCaseInUI() {
+        // first look up all OptionProcessors and see if running from command line option is set
+        Collection<? extends OptionProcessor> optionProcessors = Lookup.getDefault().lookupAll(OptionProcessor.class);
+        Iterator<? extends OptionProcessor> optionsIterator = optionProcessors.iterator();
+        while (optionsIterator.hasNext()) {
+            // find CommandLineOptionProcessor
+            OptionProcessor processor = optionsIterator.next();
+            if ((processor instanceof OpenFromArguments)) {
+                // check if we are running from command line            
+                String arg = ((OpenFromArguments) processor).getDefaultArg();
+                return arg != null && !arg.isEmpty();
             }
         }
         return false;

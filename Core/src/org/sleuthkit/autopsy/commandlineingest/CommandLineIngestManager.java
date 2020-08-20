@@ -74,7 +74,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * cause Autopsy to create a case, add a specified data source, run ingest on
  * that data source, list all data sources in the case, and generate reports.
  */
-public class CommandLineIngestManager {
+public class CommandLineIngestManager extends CommandLineManager{
 
     private static final Logger LOGGER = Logger.getLogger(CommandLineIngestManager.class.getName());
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.CANCELLED, IngestManager.IngestJobEvent.COMPLETED);
@@ -184,7 +184,7 @@ public class CommandLineIngestManager {
                                     // open the case, if it hasn't been already opened by CREATE_CASE command
                                     if (caseForJob == null) {
                                         String caseDirPath = inputs.get(CommandLineCommand.InputType.CASE_FOLDER_PATH.name());
-                                        openCase(caseDirPath);
+                                        caseForJob = CommandLineIngestManager.this.openCase(caseDirPath);
                                     }
 
                                     String dataSourcePath = inputs.get(CommandLineCommand.InputType.DATA_SOURCE_PATH.name());
@@ -210,7 +210,7 @@ public class CommandLineIngestManager {
                                     // open the case, if it hasn't been already opened by CREATE_CASE or ADD_DATA_SOURCE commands
                                     if (caseForJob == null) {
                                         String caseDirPath = inputs.get(CommandLineCommand.InputType.CASE_FOLDER_PATH.name());
-                                        openCase(caseDirPath);
+                                        caseForJob = CommandLineIngestManager.this.openCase(caseDirPath);
                                     }
 
                                     // populate the AutoIngestDataSource structure, if that hasn't been done by ADD_DATA_SOURCE command
@@ -265,7 +265,7 @@ public class CommandLineIngestManager {
                                     // open the case, if it hasn't been already opened by previous command
                                     if (caseForJob == null) {
                                         String caseDirPath = inputs.get(CommandLineCommand.InputType.CASE_FOLDER_PATH.name());
-                                        openCase(caseDirPath);
+                                        caseForJob = CommandLineIngestManager.this.openCase(caseDirPath);
                                     }
 
                                     String outputDirPath = getOutputDirPath(caseForJob);
@@ -288,7 +288,7 @@ public class CommandLineIngestManager {
                                     // open the case, if it hasn't been already opened by previous command
                                     if (caseForJob == null) {
                                         String caseDirPath = inputs.get(CommandLineCommand.InputType.CASE_FOLDER_PATH.name());
-                                        openCase(caseDirPath);
+                                        caseForJob = CommandLineIngestManager.this.openCase(caseDirPath);
                                     }
 
                                     // generate reports
@@ -367,55 +367,6 @@ public class CommandLineIngestManager {
 
             caseForJob = Case.getCurrentCase();
             LOGGER.log(Level.INFO, "Opened case {0}", caseForJob.getName());
-        }
-
-        /**
-         * Opens existing case.
-         *
-         * @param caseFolderPath full path to case directory
-         *
-         * @throws CaseActionException
-         */
-        private void openCase(String caseFolderPath) throws CaseActionException {
-
-            LOGGER.log(Level.INFO, "Opening case in directory {0}", caseFolderPath);
-
-            String metadataFilePath = findAutFile(caseFolderPath);
-            Case.openAsCurrentCase(metadataFilePath);
-
-            caseForJob = Case.getCurrentCase();
-            LOGGER.log(Level.INFO, "Opened case {0}", caseForJob.getName());
-        }
-
-        /**
-         * Finds the path to the .aut file for the specified case directory.
-         *
-         * @param caseDirectory the directory to check for a .aut file
-         *
-         * @return the path to the first .aut file found in the directory
-         *
-         * @throws CaseActionException if there was an issue finding a .aut file
-         */
-        private String findAutFile(String caseDirectory) throws CaseActionException {
-            File caseFolder = Paths.get(caseDirectory).toFile();
-            if (caseFolder.exists()) {
-                /*
-                 * Search for '*.aut' files.
-                 */
-                File[] fileArray = caseFolder.listFiles();
-                if (fileArray == null) {
-                    throw new CaseActionException("No files found in case directory");
-                }
-                String autFilePath = null;
-                for (File file : fileArray) {
-                    String name = file.getName().toLowerCase();
-                    if (autFilePath == null && name.endsWith(getFileExtension())) {
-                        return file.getAbsolutePath();
-                    }
-                }
-                throw new CaseActionException("No .aut files found in case directory");
-            }
-            throw new CaseActionException("Case directory was not found");
         }
 
         /**
