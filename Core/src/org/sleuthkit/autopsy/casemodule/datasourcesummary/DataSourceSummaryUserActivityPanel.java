@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datasourcesummary.ui;
+package org.sleuthkit.autopsy.casemodule.datasourcesummary;
 
 import java.awt.Component;
 import java.text.DateFormat;
@@ -32,8 +32,6 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourceTopProgramsSummary;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.TopProgramsResult;
 import org.sleuthkit.datamodel.DataSource;
 
 /**
@@ -116,8 +114,8 @@ public class DataSourceSummaryUserActivityPanel extends javax.swing.JPanel {
      * @return The JTable data model of counts of program runs.
      */
     private static TopProgramsModel getTopProgramsModel(DataSource selectedDataSource) {
-        List<TopProgramsResult> topProgramList
-                = DataSourceTopProgramsSummary.getTopPrograms(selectedDataSource, TOP_PROGS_COUNT);
+        List<DataSourceInfoUtilities.TopProgramsResult> topProgramList
+                = DataSourceInfoUtilities.getTopPrograms(selectedDataSource, TOP_PROGS_COUNT);
 
         if (topProgramList == null) {
             return new TopProgramsModel(null);
@@ -196,14 +194,14 @@ public class DataSourceSummaryUserActivityPanel extends javax.swing.JPanel {
             Bundle.DataSourceSummaryUserActivityPanel_TopProgramsTableModel_lastrun_header()
         };
 
-        private final List<TopProgramsResult> programResults;
+        private final List<DataSourceInfoUtilities.TopProgramsResult> programResults;
 
         /**
          * Main constructor.
          *
          * @param programResults The results to display.
          */
-        TopProgramsModel(List<TopProgramsResult> programResults) {
+        TopProgramsModel(List<DataSourceInfoUtilities.TopProgramsResult> programResults) {
             this.programResults = programResults == null ? new ArrayList<>() : Collections.unmodifiableList(programResults);
         }
 
@@ -228,12 +226,12 @@ public class DataSourceSummaryUserActivityPanel extends javax.swing.JPanel {
                 return null;
             }
 
-            TopProgramsResult result = programResults.get(rowIndex);
+            DataSourceInfoUtilities.TopProgramsResult result = programResults.get(rowIndex);
             switch (columnIndex) {
                 case 0:
                     return new ProgramNameCellValue(result.getProgramName(), result.getProgramPath());
                 case 1:
-                    return DataSourceTopProgramsSummary.getShortFolderName(result.getProgramPath(), result.getProgramName());
+                    return DataSourceInfoUtilities.getShortFolderName(result.getProgramPath(), result.getProgramName());
                 case 2:
                     return result.getRunTimes();
                 case 3:

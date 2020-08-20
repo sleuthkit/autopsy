@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datasourcesummary.ui;
+package org.sleuthkit.autopsy.casemodule.datasourcesummary;
 
 import java.awt.EventQueue;
 import java.beans.PropertyVetoException;
@@ -35,11 +35,10 @@ import javax.swing.event.ListSelectionListener;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.datasourcesummary.ui.DataSourceSummaryNode.DataSourceSummaryEntryNode;
+import org.sleuthkit.autopsy.casemodule.datasourcesummary.DataSourceSummaryNode.DataSourceSummaryEntryNode;
 import static javax.swing.SwingConstants.RIGHT;
 import javax.swing.SwingUtilities;
 import javax.swing.table.TableColumn;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.CaseDataSourcesSummary;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.IngestJobInfo;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -153,8 +152,8 @@ final class DataSourceBrowser extends javax.swing.JPanel implements ExplorerMana
     private List<DataSourceSummary> getDataSourceSummaryList(Map<Long, String> usageMap, Map<Long, Long> fileCountsMap) {
         List<DataSourceSummary> summaryList = new ArrayList<>();
 
-        final Map<Long, Long> artifactCountsMap = CaseDataSourcesSummary.getCountsOfArtifacts();
-        final Map<Long, Long> tagCountsMap = CaseDataSourcesSummary.getCountsOfTags();
+        final Map<Long, Long> artifactCountsMap = DataSourceInfoUtilities.getCountsOfArtifacts();
+        final Map<Long, Long> tagCountsMap = DataSourceInfoUtilities.getCountsOfTags();
         try {
             SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
             for (DataSource dataSource : skCase.getDataSources()) {
