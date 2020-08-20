@@ -391,7 +391,7 @@ public final class AppSQLiteDB {
             String metaFileName) throws NoCurrentCaseException, TskCoreException, IOException {
 
         // Do not look for metaFile if this is a carved directory
-        if(sqliteFile.getParentPath().contains("carvedfiles")) {
+        if(sqliteFile.getParentPath().equalsIgnoreCase("/$carvedfiles/")) {
             return;
         }
         
