@@ -24,8 +24,8 @@ import javax.swing.JLabel;
 import javax.swing.table.DefaultTableCellRenderer;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourceInfoUtilities;
-import org.sleuthkit.autopsy.datasourcesummary.ui.Bundle;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourceCountsSummary;
+
 import org.sleuthkit.datamodel.DataSource;
 
 /**
@@ -40,8 +40,9 @@ import org.sleuthkit.datamodel.DataSource;
     "DataSourceSummaryCountsPanel.FilesByCategoryTableModel.count.header=Count"
 })
 class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
+
     private static final long serialVersionUID = 1L;
-    
+
     // Result returned for a data model if no data found.
     private static final Object[][] EMPTY_PAIRS = new Object[][]{};
 
@@ -65,7 +66,7 @@ class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
 
     private static final Logger logger = Logger.getLogger(DataSourceSummaryCountsPanel.class.getName());
     private final DefaultTableCellRenderer rightAlignedRenderer = new DefaultTableCellRenderer();
-    
+
     private final FileTypePieChart fileTypePieChart = new FileTypePieChart();
 
     private DataSource dataSource;
@@ -138,11 +139,11 @@ class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
         "DataSourceSummaryCountsPanel.FilesByCategoryTableModel.directory.row=Directory"
     })
     private static Object[][] getFileCategoryModel(DataSource selectedDataSource) {
-        Long fileCount = zeroIfNull(DataSourceInfoUtilities.getCountOfFiles(selectedDataSource));
-        Long unallocatedFiles = zeroIfNull(DataSourceInfoUtilities.getCountOfUnallocatedFiles(selectedDataSource));
-        Long allocatedFiles = zeroIfNull(DataSourceInfoUtilities.getCountOfAllocatedFiles(selectedDataSource));
-        Long slackFiles = zeroIfNull(DataSourceInfoUtilities.getCountOfSlackFiles(selectedDataSource));
-        Long directories = zeroIfNull(DataSourceInfoUtilities.getCountOfDirectories(selectedDataSource));
+        Long fileCount = zeroIfNull(DataSourceCountsSummary.getCountOfFiles(selectedDataSource));
+        Long unallocatedFiles = zeroIfNull(DataSourceCountsSummary.getCountOfUnallocatedFiles(selectedDataSource));
+        Long allocatedFiles = zeroIfNull(DataSourceCountsSummary.getCountOfAllocatedFiles(selectedDataSource));
+        Long slackFiles = zeroIfNull(DataSourceCountsSummary.getCountOfSlackFiles(selectedDataSource));
+        Long directories = zeroIfNull(DataSourceCountsSummary.getCountOfDirectories(selectedDataSource));
 
         return new Object[][]{
             new Object[]{Bundle.DataSourceSummaryCountsPanel_FilesByCategoryTableModel_all_row(), fileCount},
@@ -172,7 +173,7 @@ class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
      * @return The JTable data model of counts of artifact types.
      */
     private static Object[][] getArtifactCountsModel(DataSource selectedDataSource) {
-        Map<String, Long> artifactMapping = DataSourceInfoUtilities.getCountsOfArtifactsByType(selectedDataSource);
+        Map<String, Long> artifactMapping = DataSourceCountsSummary.getCountsOfArtifactsByType(selectedDataSource);
         if (artifactMapping == null) {
             return EMPTY_PAIRS;
         }
