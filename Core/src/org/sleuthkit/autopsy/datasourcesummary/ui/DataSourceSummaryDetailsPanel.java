@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.casemodule.datasourcesummary;
+package org.sleuthkit.autopsy.datasourcesummary.ui;
 
 import java.text.DecimalFormat;
 import java.util.logging.Level;
@@ -25,6 +25,7 @@ import javax.swing.table.DefaultTableModel;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourceDetailsSummary;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -73,9 +74,9 @@ class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
             updateDetailsPanelData(null, null, null, null);
         } else {
             updateDetailsPanelData(dataSource,
-                    DataSourceInfoUtilities.getSizeOfUnallocatedFiles(dataSource),
-                    DataSourceInfoUtilities.getOperatingSystems(dataSource),
-                    DataSourceInfoUtilities.getDataSourceType(dataSource));
+                    DataSourceDetailsSummary.getSizeOfUnallocatedFiles(dataSource),
+                    DataSourceDetailsSummary.getOperatingSystems(dataSource),
+                    DataSourceDetailsSummary.getDataSourceType(dataSource));
         }
     }
 

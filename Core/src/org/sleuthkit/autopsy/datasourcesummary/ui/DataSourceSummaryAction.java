@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.casemodule.datasourcesummary;
+package org.sleuthkit.autopsy.datasourcesummary.ui;
 
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
@@ -28,6 +28,7 @@ import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.actions.CallableSystemAction;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.datasourcesummary.ui.Bundle;
 
 @ActionID(category = "Case", id = "org.sleuthkit.autopsy.casemodule.datasourcesummary.DataSourceSummaryAction")
 @ActionRegistration(displayName = "#CTL_DataSourceSummaryAction", lazy = false)
