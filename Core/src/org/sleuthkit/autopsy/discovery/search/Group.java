@@ -30,7 +30,7 @@ public class Group implements Comparable<Group> {
 
     private final Group.GroupSortingAlgorithm groupSortingType;
     private final DiscoveryKeyUtils.GroupKey groupKey;
-    private final List<ResultFile> files;
+    private final List<Result> results;
     private final String displayName;
 
     /**
@@ -42,21 +42,23 @@ public class Group implements Comparable<Group> {
     public Group(Group.GroupSortingAlgorithm groupSortingType, DiscoveryKeyUtils.GroupKey groupKey) {
         this.groupSortingType = groupSortingType;
         this.groupKey = groupKey;
-        files = new ArrayList<>();
+        results = new ArrayList<>();
         this.displayName = groupKey.getDisplayName();
     }
 
     /**
-     * Add a ResultFile to the group. Will not be sorted at this time.
+     * Add a Result to the group. Will not be sorted at this time.
      *
-     * @param file The ResultFile to add to the FileGroup
+     * @param result The Result to add to the FileGroup
      */
-    void addFile(ResultFile file) {
-        if (files.contains(file)) {
-            ResultFile existingCopy = files.get(files.indexOf(file)); //get the copy of this which exists in the list
-            existingCopy.addDuplicate(file.getFirstInstance());
+    void addResult(Result result) {
+        if (result.getType() != SearchData.Type.DOMAIN && results.contains(result)) {
+            //dedupe files and show instances
+            ResultFile existingCopy = (ResultFile)results.get(results.indexOf(result)); //get the copy of this which exists in the list
+            existingCopy.addDuplicate(((ResultFile)result).getFirstInstance());
         } else {
-            files.add(file);
+            //Domains and non files are not being deduped currently
+            results.add(result);
         }
     }
 
@@ -82,7 +84,7 @@ public class Group implements Comparable<Group> {
      * Sort all the files in the group
      */
     public void sortFiles(FileSorter sorter) {
-        Collections.sort(files, sorter);
+        Collections.sort(results, sorter);
     }
 
     /**
@@ -128,8 +130,8 @@ public class Group implements Comparable<Group> {
      * @return -1 if group1 should be displayed before group2, 1 otherwise
      */
     private static int compareGroupsBySize(Group group1, Group group2) {
-        if (group1.getFiles().size() != group2.getFiles().size()) {
-            return -1 * Long.compare(group1.getFiles().size(), group2.getFiles().size()); // High to low
+        if (group1.getResults().size() != group2.getResults().size()) {
+            return -1 * Long.compare(group1.getResults().size(), group2.getResults().size()); // High to low
         } else {
             // If the groups have the same size, fall through to the BY_GROUP_NAME sorting
             return compareGroupsByGroupKey(group1, group2);
@@ -168,8 +170,8 @@ public class Group implements Comparable<Group> {
      *
      * @return List of ResultFile objects
      */
-    public List<ResultFile> getFiles() {
-        return Collections.unmodifiableList(files);
+    public List<Result> getResults() {
+        return Collections.unmodifiableList(results);
     }
 
 }

@@ -29,9 +29,9 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Class used to sort ResultFiles using the supplied method.
  */
-public class FileSorter implements Comparator<ResultFile> {
+public class FileSorter implements Comparator<Result> {
 
-    private final List<Comparator<ResultFile>> comparators = new ArrayList<>();
+    private final List<Comparator<Result>> comparators = new ArrayList<>();
 
     /**
      * Set up the sorter using the supplied sorting method. The sorting is
@@ -51,7 +51,7 @@ public class FileSorter implements Comparator<ResultFile> {
                 comparators.add(getFileSizeComparator());
                 break;
             case BY_FILE_TYPE:
-                comparators.add(getFileTypeComparator());
+                comparators.add(getTypeComparator());
                 comparators.add(getMIMETypeComparator());
                 break;
             case BY_FREQUENCY:
@@ -77,11 +77,11 @@ public class FileSorter implements Comparator<ResultFile> {
     }
 
     @Override
-    public int compare(ResultFile file1, ResultFile file2) {
+    public int compare(Result result1, Result result2) {
 
         int result = 0;
-        for (Comparator<ResultFile> comp : comparators) {
-            result = comp.compare(file1, file2);
+        for (Comparator<Result> comp : comparators) {
+            result = comp.compare(result1, result2);
             if (result != 0) {
                 return result;
             }
@@ -96,8 +96,8 @@ public class FileSorter implements Comparator<ResultFile> {
      *
      * @return -1 if file1 has the lower data source ID, 0 if equal, 1 otherwise
      */
-    private static Comparator<ResultFile> getDataSourceComparator() {
-        return (ResultFile file1, ResultFile file2) -> Long.compare(file1.getFirstInstance().getDataSourceObjectId(), file2.getFirstInstance().getDataSourceObjectId());
+    private static Comparator<Result> getDataSourceComparator() {
+        return (Result result1, Result result2) -> Long.compare(result1.getDataSourceObjectId(), result2.getDataSourceObjectId());
     }
 
     /**
@@ -106,8 +106,8 @@ public class FileSorter implements Comparator<ResultFile> {
      *
      * @return -1 if file1 has the lower FileType value, 0 if equal, 1 otherwise
      */
-    private static Comparator<ResultFile> getFileTypeComparator() {
-        return (ResultFile file1, ResultFile file2) -> Integer.compare(file1.getFileType().getRanking(), file2.getFileType().getRanking());
+    private static Comparator<Result> getTypeComparator() {
+        return (Result result1, Result result2) -> Integer.compare(result1.getType().getRanking(), result2.getType().getRanking());
     }
 
     /**
@@ -118,9 +118,14 @@ public class FileSorter implements Comparator<ResultFile> {
      * @return -1 if file1 has the earliest combined keyword list name, 0 if
      *         equal, 1 otherwise
      */
-    private static Comparator<ResultFile> getKeywordListNameComparator() {
-        return (ResultFile file1, ResultFile file2) -> {
+    private static Comparator<Result> getKeywordListNameComparator() {
+        return (Result result1, Result result2) -> {
             // Put empty lists at the bottom
+            if (result1.getType() == SearchData.Type.DOMAIN) {
+                return 0;
+            }
+            ResultFile file1 = (ResultFile) result1;
+            ResultFile file2 = (ResultFile) result2;
             if (file1.getKeywordListNames().isEmpty()) {
                 if (file2.getKeywordListNames().isEmpty()) {
                     return 0;
@@ -142,11 +147,16 @@ public class FileSorter implements Comparator<ResultFile> {
      * @return -1 if file1's path comes first alphabetically, 0 if equal, 1
      *         otherwise
      */
-    private static Comparator<ResultFile> getParentPathComparator() {
+    private static Comparator<Result> getParentPathComparator() {
 
-        return new Comparator<ResultFile>() {
+        return new Comparator<Result>() {
             @Override
-            public int compare(ResultFile file1, ResultFile file2) {
+            public int compare(Result result1, Result result2) {
+                if (result1.getType() == SearchData.Type.DOMAIN) {
+                    return 0;
+                }
+                ResultFile file1 = (ResultFile) result1;
+                ResultFile file2 = (ResultFile) result2;
                 String file1ParentPath;
                 try {
                     file1ParentPath = file1.getFirstInstance().getParent().getUniquePath();
@@ -170,8 +180,8 @@ public class FileSorter implements Comparator<ResultFile> {
      *
      * @return -1 if file1's rarity is lower than file2, 0 if equal, 1 otherwise
      */
-    private static Comparator<ResultFile> getFrequencyComparator() {
-        return (ResultFile file1, ResultFile file2) -> Integer.compare(file1.getFrequency().getRanking(), file2.getFrequency().getRanking());
+    private static Comparator<Result> getFrequencyComparator() {
+        return (Result result1, Result result2) -> Integer.compare(result1.getFrequency().getRanking(), result2.getFrequency().getRanking());
     }
 
     /**
@@ -180,8 +190,13 @@ public class FileSorter implements Comparator<ResultFile> {
      * @return -1 if file1's MIME type comes before file2's, 0 if equal, 1
      *         otherwise
      */
-    private static Comparator<ResultFile> getMIMETypeComparator() {
-        return (ResultFile file1, ResultFile file2) -> compareStrings(file1.getFirstInstance().getMIMEType(), file2.getFirstInstance().getMIMEType());
+    private static Comparator<Result> getMIMETypeComparator() {
+        return (Result result1, Result result2) -> {
+            if (result1.getType() == SearchData.Type.DOMAIN) {
+                return 0;
+            }
+            return compareStrings(((ResultFile) result1).getFirstInstance().getMIMEType(), ((ResultFile) result2).getFirstInstance().getMIMEType());
+        };
     }
 
     /**
@@ -189,9 +204,13 @@ public class FileSorter implements Comparator<ResultFile> {
      *
      * @return -1 if file1 is larger than file2, 0 if equal, 1 otherwise
      */
-    private static Comparator<ResultFile> getFileSizeComparator() {
-        return (ResultFile file1, ResultFile file2) -> -1 * Long.compare(file1.getFirstInstance().getSize(), file2.getFirstInstance().getSize()) // Sort large to small
-                ;
+    private static Comparator<Result> getFileSizeComparator() {
+        return (Result result1, Result result2) -> {
+            if (result1.getType() == SearchData.Type.DOMAIN) {
+                return 0;
+            }
+            return -1 * Long.compare(((ResultFile) result1).getFirstInstance().getSize(), ((ResultFile) result2).getFirstInstance().getSize()); // Sort large to small
+        };
     }
 
     /**
@@ -199,8 +218,13 @@ public class FileSorter implements Comparator<ResultFile> {
      *
      * @return -1 if file1 comes before file2, 0 if equal, 1 otherwise
      */
-    private static Comparator<ResultFile> getFileNameComparator() {
-        return (ResultFile file1, ResultFile file2) -> compareStrings(file1.getFirstInstance().getName().toLowerCase(), file2.getFirstInstance().getName().toLowerCase());
+    private static Comparator<Result> getFileNameComparator() {
+        return (Result result1, Result result2) -> {
+            if (result1.getType() == SearchData.Type.DOMAIN) {
+                return 0;
+            }
+            return compareStrings(((ResultFile) result1).getFirstInstance().getName().toLowerCase(), (((ResultFile) result2).getFirstInstance().getName().toLowerCase()));
+        };
     }
 
     /**
@@ -211,14 +235,21 @@ public class FileSorter implements Comparator<ResultFile> {
      *
      * @return -1 if file1 comes before file2, 0 if equal, 1 otherwise
      */
-    private static Comparator<ResultFile> getDefaultComparator() {
-        return (ResultFile file1, ResultFile file2) -> {
+    private static Comparator<Result> getDefaultComparator() {
+        return (Result result1, Result result2) -> {
             // Compare file names and then object ID (to ensure a consistent sort)
-            int result = getFileNameComparator().compare(file1, file2);
-            if (result == 0) {
-                return Long.compare(file1.getFirstInstance().getId(), file2.getFirstInstance().getId());
+            if (result1.getType() == SearchData.Type.DOMAIN) {
+                return getFrequencyComparator().compare(result1, result2);
+            } else {
+                ResultFile file1 = (ResultFile) result1;
+                ResultFile file2 = (ResultFile) result2;
+                int result = getFileNameComparator().compare(file1, file2);
+                if (result == 0) {
+                    return Long.compare(file1.getFirstInstance().getId(), file2.getFirstInstance().getId());
+                }
+                return result;
             }
-            return result;
+
         };
     }
 
@@ -234,6 +265,7 @@ public class FileSorter implements Comparator<ResultFile> {
         String string1 = s1 == null ? "" : s1;
         String string2 = s2 == null ? "" : s2;
         return string1.compareTo(string2);
+
     }
 
     /**
@@ -247,7 +279,7 @@ public class FileSorter implements Comparator<ResultFile> {
         "FileSorter.SortingMethod.frequency.displayName=Central Repo Frequency",
         "FileSorter.SortingMethod.keywordlist.displayName=Keyword List Names",
         "FileSorter.SortingMethod.fullPath.displayName=Full Path"})
-   public enum SortingMethod {
+    public enum SortingMethod {
         BY_FILE_NAME(new ArrayList<>(),
                 Bundle.FileSorter_SortingMethod_filename_displayName()), // Sort alphabetically by file name
         BY_DATA_SOURCE(new ArrayList<>(),

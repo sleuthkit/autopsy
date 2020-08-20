@@ -18,9 +18,67 @@
  */
 package org.sleuthkit.autopsy.discovery.search;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
+
 /**
  * Interface implemented by all types of results.
  */
-public interface Result {
+public abstract class Result {
 
+    private SearchData.Frequency frequency;
+    private final List<String> tagNames = new ArrayList<>();
+
+    public abstract long getDataSourceObjectId();
+
+    /**
+     * Get the frequency of this result in the central repository.
+     *
+     * @return The Frequency enum.
+     */
+    public SearchData.Frequency getFrequency() {
+        return frequency;
+    }
+
+    public abstract TskData.FileKnown getKnown();
+
+    /**
+     * Set the frequency of this result in the central repository.
+     *
+     * @param frequency The frequency of the result as an enum.
+     */
+    final public void setFrequency(SearchData.Frequency frequency) {
+        this.frequency = frequency;
+    }
+
+    public abstract Content getDataSource() throws TskCoreException;
+
+    public abstract SearchData.Type getType();
+
+    /**
+     * Add a tag name that matched this file.
+     *
+     * @param tagName
+     */
+    public void addTagName(String tagName) {
+        if (!tagNames.contains(tagName)) {
+            tagNames.add(tagName);
+        }
+
+        // Sort the list so the getTagNames() will be consistent regardless of the order added
+        Collections.sort(tagNames);
+    }
+
+    /**
+     * Get the tag names for this file
+     *
+     * @return the tag names that matched this file.
+     */
+    public List<String> getTagNames() {
+        return Collections.unmodifiableList(tagNames);
+    }
 }

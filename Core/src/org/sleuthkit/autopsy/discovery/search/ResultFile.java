@@ -31,6 +31,7 @@ import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import static org.sleuthkit.autopsy.discovery.search.SearchData.Type.OTHER;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.HashUtility;
 import org.sleuthkit.datamodel.Tag;
@@ -40,13 +41,11 @@ import org.sleuthkit.datamodel.TskData;
 /**
  * Container for files that holds all necessary data for grouping and sorting.
  */
-public class ResultFile implements Result{
+public class ResultFile extends Result {
 
     private final static Logger logger = Logger.getLogger(ResultFile.class.getName());
-    private SearchData.Frequency frequency;
     private final List<String> keywordListNames;
     private final List<String> hashSetNames;
-    private final List<String> tagNames;
     private final List<String> interestingSetNames;
     private final List<String> objectDetectedNames;
     private final List<AbstractFile> instances = new ArrayList<>();
@@ -73,31 +72,11 @@ public class ResultFile implements Result{
             deleted = true;
         }
         updateScoreAndDescription(abstractFile);
-        this.frequency = SearchData.Frequency.UNKNOWN;
         keywordListNames = new ArrayList<>();
         hashSetNames = new ArrayList<>();
-        tagNames = new ArrayList<>();
         interestingSetNames = new ArrayList<>();
         objectDetectedNames = new ArrayList<>();
         fileType = fromMIMEtype(abstractFile.getMIMEType());
-    }
-
-    /**
-     * Get the frequency of this file in the central repository
-     *
-     * @return The Frequency enum
-     */
-    public SearchData.Frequency getFrequency() {
-        return frequency;
-    }
-
-    /**
-     * Set the frequency of this file from the central repository
-     *
-     * @param frequency The frequency of the file as an enum
-     */
-    public void setFrequency(SearchData.Frequency frequency) {
-        this.frequency = frequency;
     }
 
     /**
@@ -219,29 +198,6 @@ public class ResultFile implements Result{
     }
 
     /**
-     * Add a tag name that matched this file.
-     *
-     * @param tagName
-     */
-    public void addTagName(String tagName) {
-        if (!tagNames.contains(tagName)) {
-            tagNames.add(tagName);
-        }
-
-        // Sort the list so the getTagNames() will be consistent regardless of the order added
-        Collections.sort(tagNames);
-    }
-
-    /**
-     * Get the tag names for this file
-     *
-     * @return the tag names that matched this file.
-     */
-    public List<String> getTagNames() {
-        return Collections.unmodifiableList(tagNames);
-    }
-
-    /**
      * Add an interesting file set name that matched this file.
      *
      * @param interestingSetName
@@ -300,7 +256,7 @@ public class ResultFile implements Result{
     public String toString() {
         return getFirstInstance().getName() + "(" + getFirstInstance().getId() + ") - "
                 + getFirstInstance().getSize() + ", " + getFirstInstance().getParentPath() + ", "
-                + getFirstInstance().getDataSourceObjectId() + ", " + frequency.toString() + ", "
+                + getFirstInstance().getDataSourceObjectId() + ", " + getFrequency().toString() + ", "
                 + String.join(",", keywordListNames) + ", " + getFirstInstance().getMIMEType();
     }
 
@@ -396,5 +352,25 @@ public class ResultFile implements Result{
             }
         }
         return OTHER;
+    }
+
+    @Override
+    public long getDataSourceObjectId() {
+        return getFirstInstance().getDataSourceObjectId();
+    }
+
+    @Override
+    public Content getDataSource() throws TskCoreException {
+        return getFirstInstance().getDataSource();
+    }
+
+    @Override
+    public TskData.FileKnown getKnown() {
+        return getFirstInstance().getKnown();
+    }
+
+    @Override
+    public Type getType() {
+        return fileType;
     }
 }

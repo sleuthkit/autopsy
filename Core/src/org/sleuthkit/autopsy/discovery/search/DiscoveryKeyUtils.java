@@ -155,11 +155,12 @@ public class DiscoveryKeyUtils {
 
         private final SearchData.FileSize fileSize;
 
-        FileSizeGroupKey(ResultFile file) {
-            if (file.getFileType() == SearchData.Type.VIDEO) {
-                fileSize = SearchData.FileSize.fromVideoSize(file.getFirstInstance().getSize());
+        FileSizeGroupKey(Result file) {
+            ResultFile resultFile = (ResultFile) file;
+            if (resultFile.getFileType() == SearchData.Type.VIDEO) {
+                fileSize = SearchData.FileSize.fromVideoSize(resultFile.getFirstInstance().getSize());
             } else {
-                fileSize = SearchData.FileSize.fromImageSize(file.getFirstInstance().getSize());
+                fileSize = SearchData.FileSize.fromImageSize(resultFile.getFirstInstance().getSize());
             }
         }
 
@@ -212,8 +213,8 @@ public class DiscoveryKeyUtils {
 
         private final SearchData.Type fileType;
 
-        FileTypeGroupKey(ResultFile file) {
-            fileType = file.getFileType();
+        FileTypeGroupKey(Result file) {
+            fileType = ((ResultFile) file).getFileType();
         }
 
         @Override
@@ -539,19 +540,19 @@ public class DiscoveryKeyUtils {
         @NbBundle.Messages({
             "# {0} - Data source name",
             "# {1} - Data source ID",
-            "FileSearch.DataSourceGroupKey.datasourceAndID={0}(ID: {1})",
+            "DiscoveryKeyUtils.DataSourceGroupKey.datasourceAndID={0}(ID: {1})",
             "# {0} - Data source ID",
-            "FileSearch.DataSourceGroupKey.idOnly=Data source (ID: {0})"})
-        DataSourceGroupKey(ResultFile file) {
-            dataSourceID = file.getFirstInstance().getDataSourceObjectId();
-
+            "DiscoveryKeyUtils.DataSourceGroupKey.idOnly=Data source (ID: {0})"})
+        DataSourceGroupKey(Result result) {
+            //get the id first so that it can be used when logging if necessary
+            dataSourceID = result.getDataSourceObjectId();
             try {
                 // The data source should be cached so this won't actually be a database query.
-                Content ds = file.getFirstInstance().getDataSource();
-                displayName = Bundle.FileSearch_DataSourceGroupKey_datasourceAndID(ds.getName(), ds.getId());
+                Content ds = result.getDataSource();
+                displayName = Bundle.DiscoveryKeyUtils_DataSourceGroupKey_datasourceAndID(ds.getName(), ds.getId());
             } catch (TskCoreException ex) {
                 logger.log(Level.WARNING, "Error looking up data source with ID " + dataSourceID, ex); // NON-NLS
-                displayName = Bundle.FileSearch_DataSourceGroupKey_idOnly(dataSourceID);
+                displayName = Bundle.DiscoveryKeyUtils_DataSourceGroupKey_idOnly(dataSourceID);
             }
         }
 
@@ -646,7 +647,7 @@ public class DiscoveryKeyUtils {
 
         private final SearchData.Frequency frequency;
 
-        FrequencyGroupKey(ResultFile file) {
+        FrequencyGroupKey(Result file) {
             frequency = file.getFrequency();
         }
 

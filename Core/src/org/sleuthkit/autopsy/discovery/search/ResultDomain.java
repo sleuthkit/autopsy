@@ -18,7 +18,34 @@
  */
 package org.sleuthkit.autopsy.discovery.search;
 
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 
-public class ResultDomain implements Result {
-    
+public class ResultDomain extends Result {
+
+    ResultDomain() {
+        this.setFrequency(SearchData.Frequency.UNKNOWN);
+    }
+
+    @Override
+    public long getDataSourceObjectId() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public Content getDataSource() throws TskCoreException {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public TskData.FileKnown getKnown() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public SearchData.Type getType() {
+        return SearchData.Type.DOMAIN;
+    }
+
 }

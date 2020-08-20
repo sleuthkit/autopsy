@@ -61,7 +61,7 @@ public abstract class AbstractFilter {
      *
      * @throws DiscoveryException
      */
-    public List<ResultFile> applyAlternateFilter(List<ResultFile> currentResults, SleuthkitCase caseDb,
+    public List<Result> applyAlternateFilter(List<Result> currentResults, SleuthkitCase caseDb,
             CentralRepository centralRepoDb) throws DiscoveryException {
         return new ArrayList<>();
     }

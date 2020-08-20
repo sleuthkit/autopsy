@@ -197,7 +197,7 @@ public final class DiscoveryEventUtils {
      */
     public static final class PageRetrievedEvent {
 
-        private final List<ResultFile> results;
+        private final List<Result> results;
         private final int page;
         private final Type resultType;
 
@@ -208,7 +208,7 @@ public final class DiscoveryEventUtils {
          * @param page       The number of the page which was retrieved.
          * @param results    The list of files in the page retrieved.
          */
-        public PageRetrievedEvent(Type resultType, int page, List<ResultFile> results) {
+        public PageRetrievedEvent(Type resultType, int page, List<Result> results) {
             this.results = results;
             this.page = page;
             this.resultType = resultType;
@@ -219,7 +219,7 @@ public final class DiscoveryEventUtils {
          *
          * @return The list of files in the page retrieved.
          */
-        public List<ResultFile> getSearchResults() {
+        public List<Result> getSearchResults() {
             return Collections.unmodifiableList(results);
         }
 

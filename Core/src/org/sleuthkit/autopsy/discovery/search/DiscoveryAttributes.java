@@ -52,19 +52,19 @@ public class DiscoveryAttributes {
          *
          * @return the key for the group this file goes in
          */
-        public abstract DiscoveryKeyUtils.GroupKey getGroupKey(ResultFile file);
+        public abstract DiscoveryKeyUtils.GroupKey getGroupKey(Result file);
 
         /**
          * Add any extra data to the ResultFile object from this attribute.
          *
-         * @param files         The list of files to enhance
+         * @param files         The list of results to enhance
          * @param caseDb        The case database
          * @param centralRepoDb The central repository database. Can be null if
          *                      not needed.
          *
          * @throws DiscoveryException
          */
-        public void addAttributeToResultFiles(List<ResultFile> files, SleuthkitCase caseDb, CentralRepository centralRepoDb) throws DiscoveryException {
+        public void addAttributeToResultFiles(List<Result> results, SleuthkitCase caseDb, CentralRepository centralRepoDb) throws DiscoveryException {
             // Default is to do nothing
         }
     }
@@ -75,8 +75,8 @@ public class DiscoveryAttributes {
     public static class FileSizeAttribute extends AttributeType {
 
         @Override
-        public DiscoveryKeyUtils.GroupKey getGroupKey(ResultFile file) {
-            return new DiscoveryKeyUtils.FileSizeGroupKey(file);
+        public DiscoveryKeyUtils.GroupKey getGroupKey(Result file) {
+            return new DiscoveryKeyUtils.FileSizeGroupKey((ResultFile) file);
         }
     }
 
@@ -86,8 +86,8 @@ public class DiscoveryAttributes {
     public static class ParentPathAttribute extends AttributeType {
 
         @Override
-        public DiscoveryKeyUtils.GroupKey getGroupKey(ResultFile file) {
-            return new DiscoveryKeyUtils.ParentPathGroupKey(file);
+        public DiscoveryKeyUtils.GroupKey getGroupKey(Result file) {
+            return new DiscoveryKeyUtils.ParentPathGroupKey((ResultFile) file);
         }
     }
 
@@ -97,7 +97,7 @@ public class DiscoveryAttributes {
     static class NoGroupingAttribute extends AttributeType {
 
         @Override
-        public DiscoveryKeyUtils.GroupKey getGroupKey(ResultFile file) {
+        public DiscoveryKeyUtils.GroupKey getGroupKey(Result result) {
             return new DiscoveryKeyUtils.NoGroupingGroupKey();
         }
     }
@@ -108,8 +108,8 @@ public class DiscoveryAttributes {
     static class DataSourceAttribute extends AttributeType {
 
         @Override
-        public DiscoveryKeyUtils.GroupKey getGroupKey(ResultFile file) {
-            return new DiscoveryKeyUtils.DataSourceGroupKey(file);
+        public DiscoveryKeyUtils.GroupKey getGroupKey(Result result) {
+            return new DiscoveryKeyUtils.DataSourceGroupKey(result);
         }
     }
 
@@ -119,7 +119,7 @@ public class DiscoveryAttributes {
     static class FileTypeAttribute extends AttributeType {
 
         @Override
-        public DiscoveryKeyUtils.GroupKey getGroupKey(ResultFile file) {
+        public DiscoveryKeyUtils.GroupKey getGroupKey(Result file) {
             return new DiscoveryKeyUtils.FileTypeGroupKey(file);
         }
     }
@@ -130,20 +130,20 @@ public class DiscoveryAttributes {
     static class KeywordListAttribute extends AttributeType {
 
         @Override
-        public DiscoveryKeyUtils.GroupKey getGroupKey(ResultFile file) {
-            return new DiscoveryKeyUtils.KeywordListGroupKey(file);
+        public DiscoveryKeyUtils.GroupKey getGroupKey(Result file) {
+            return new DiscoveryKeyUtils.KeywordListGroupKey((ResultFile) file);
         }
 
         @Override
-        public void addAttributeToResultFiles(List<ResultFile> files, SleuthkitCase caseDb,
+        public void addAttributeToResultFiles(List<Result> results, SleuthkitCase caseDb,
                 CentralRepository centralRepoDb) throws DiscoveryException {
 
             // Get pairs of (object ID, keyword list name) for all files in the list of files that have
             // keyword list hits.
-            String selectQuery = createSetNameClause(files, BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID(),
+            String selectQuery = createSetNameClause(results, BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID(),
                     BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID());
 
-            SetKeywordListNamesCallback callback = new SetKeywordListNamesCallback(files);
+            SetKeywordListNamesCallback callback = new SetKeywordListNamesCallback(results);
             try {
                 caseDb.getCaseDbAccessManager().select(selectQuery, callback);
             } catch (TskCoreException ex) {
@@ -158,14 +158,14 @@ public class DiscoveryAttributes {
          */
         private static class SetKeywordListNamesCallback implements CaseDbAccessManager.CaseDbAccessQueryCallback {
 
-            List<ResultFile> resultFiles;
+            List<Result> resultFiles;
 
             /**
              * Create the callback.
              *
              * @param resultFiles List of files to add keyword list names to
              */
-            SetKeywordListNamesCallback(List<ResultFile> resultFiles) {
+            SetKeywordListNamesCallback(List<Result> resultFiles) {
                 this.resultFiles = resultFiles;
             }
 
@@ -174,7 +174,11 @@ public class DiscoveryAttributes {
                 try {
                     // Create a temporary map of object ID to ResultFile
                     Map<Long, ResultFile> tempMap = new HashMap<>();
-                    for (ResultFile file : resultFiles) {
+                    for (Result result : resultFiles) {
+                        if (result.getType() == SearchData.Type.DOMAIN) {
+                            break;
+                        }
+                        ResultFile file = (ResultFile) result;
                         tempMap.put(file.getFirstInstance().getId(), file);
                     }
 
@@ -204,21 +208,21 @@ public class DiscoveryAttributes {
         static final int BATCH_SIZE = 50; // Number of hashes to look up at one time
 
         @Override
-        public DiscoveryKeyUtils.GroupKey getGroupKey(ResultFile file) {
+        public DiscoveryKeyUtils.GroupKey getGroupKey(Result file) {
             return new DiscoveryKeyUtils.FrequencyGroupKey(file);
         }
 
         @Override
-        public void addAttributeToResultFiles(List<ResultFile> files, SleuthkitCase caseDb,
+        public void addAttributeToResultFiles(List<Result> results, SleuthkitCase caseDb,
                 CentralRepository centralRepoDb) throws DiscoveryException {
             if (centralRepoDb == null) {
-                for (ResultFile file : files) {
-                    if (file.getFrequency() == SearchData.Frequency.UNKNOWN && file.getFirstInstance().getKnown() == TskData.FileKnown.KNOWN) {
-                        file.setFrequency(SearchData.Frequency.KNOWN);
+                for (Result result : results) {
+                    if (result.getFrequency() == SearchData.Frequency.UNKNOWN && result.getKnown() == TskData.FileKnown.KNOWN) {
+                        result.setFrequency(SearchData.Frequency.KNOWN);
                     }
                 }
             } else {
-                processResultFilesForCR(files, centralRepoDb);
+                processResultFilesForCR(results, centralRepoDb);
             }
         }
 
@@ -230,19 +234,22 @@ public class DiscoveryAttributes {
          *                      for.
          * @param centralRepoDb The central repository currently in use.
          */
-        private void processResultFilesForCR(List<ResultFile> files,
+        private void processResultFilesForCR(List<Result> results,
                 CentralRepository centralRepoDb) {
             List<ResultFile> currentFiles = new ArrayList<>();
             Set<String> hashesToLookUp = new HashSet<>();
-            for (ResultFile file : files) {
-                if (file.getFirstInstance().getKnown() == TskData.FileKnown.KNOWN) {
-                    file.setFrequency(SearchData.Frequency.KNOWN);
+            for (Result result : results) {
+                if (result.getKnown() == TskData.FileKnown.KNOWN) {
+                    result.setFrequency(SearchData.Frequency.KNOWN);
                 }
-                if (file.getFrequency() == SearchData.Frequency.UNKNOWN
-                        && file.getFirstInstance().getMd5Hash() != null
-                        && !file.getFirstInstance().getMd5Hash().isEmpty()) {
-                    hashesToLookUp.add(file.getFirstInstance().getMd5Hash());
-                    currentFiles.add(file);
+                if (result.getType() != SearchData.Type.DOMAIN) {
+                    ResultFile file = (ResultFile) result;
+                    if (file.getFrequency() == SearchData.Frequency.UNKNOWN
+                            && file.getFirstInstance().getMd5Hash() != null
+                            && !file.getFirstInstance().getMd5Hash().isEmpty()) {
+                        hashesToLookUp.add(file.getFirstInstance().getMd5Hash());
+                        currentFiles.add(file);
+                    }
                 }
                 if (hashesToLookUp.size() >= BATCH_SIZE) {
                     computeFrequency(hashesToLookUp, currentFiles, centralRepoDb);
@@ -299,20 +306,23 @@ public class DiscoveryAttributes {
     static class HashHitsAttribute extends AttributeType {
 
         @Override
-        public DiscoveryKeyUtils.GroupKey getGroupKey(ResultFile file) {
-            return new DiscoveryKeyUtils.HashHitsGroupKey(file);
+        public DiscoveryKeyUtils.GroupKey getGroupKey(Result result) {
+            if (result.getType() == SearchData.Type.DOMAIN) {
+                return null;
+            }
+            return new DiscoveryKeyUtils.HashHitsGroupKey((ResultFile) result);
         }
 
         @Override
-        public void addAttributeToResultFiles(List<ResultFile> files, SleuthkitCase caseDb,
+        public void addAttributeToResultFiles(List<Result> results, SleuthkitCase caseDb,
                 CentralRepository centralRepoDb) throws DiscoveryException {
 
             // Get pairs of (object ID, hash set name) for all files in the list of files that have
             // hash set hits.
-            String selectQuery = createSetNameClause(files, BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID(),
+            String selectQuery = createSetNameClause(results, BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID(),
                     BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID());
 
-            HashSetNamesCallback callback = new HashSetNamesCallback(files);
+            HashSetNamesCallback callback = new HashSetNamesCallback(results);
             try {
                 caseDb.getCaseDbAccessManager().select(selectQuery, callback);
             } catch (TskCoreException ex) {
@@ -326,15 +336,15 @@ public class DiscoveryAttributes {
          */
         private static class HashSetNamesCallback implements CaseDbAccessManager.CaseDbAccessQueryCallback {
 
-            List<ResultFile> resultFiles;
+            List<Result> results;
 
             /**
              * Create the callback.
              *
              * @param resultFiles List of files to add hash set names to
              */
-            HashSetNamesCallback(List<ResultFile> resultFiles) {
-                this.resultFiles = resultFiles;
+            HashSetNamesCallback(List<Result> results) {
+                this.results = results;
             }
 
             @Override
@@ -342,7 +352,11 @@ public class DiscoveryAttributes {
                 try {
                     // Create a temporary map of object ID to ResultFile
                     Map<Long, ResultFile> tempMap = new HashMap<>();
-                    for (ResultFile file : resultFiles) {
+                    for (Result result : results) {
+                        if (result.getType() == SearchData.Type.DOMAIN) {
+                            return;
+                        }
+                        ResultFile file = (ResultFile) result;
                         tempMap.put(file.getFirstInstance().getId(), file);
                     }
 
@@ -370,20 +384,20 @@ public class DiscoveryAttributes {
     static class InterestingItemAttribute extends AttributeType {
 
         @Override
-        public DiscoveryKeyUtils.GroupKey getGroupKey(ResultFile file) {
-            return new DiscoveryKeyUtils.InterestingItemGroupKey(file);
+        public DiscoveryKeyUtils.GroupKey getGroupKey(Result file) {
+            return new DiscoveryKeyUtils.InterestingItemGroupKey((ResultFile) file);
         }
 
         @Override
-        public void addAttributeToResultFiles(List<ResultFile> files, SleuthkitCase caseDb,
+        public void addAttributeToResultFiles(List<Result> results, SleuthkitCase caseDb,
                 CentralRepository centralRepoDb) throws DiscoveryException {
 
             // Get pairs of (object ID, interesting item set name) for all files in the list of files that have
             // interesting file set hits.
-            String selectQuery = createSetNameClause(files, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID(),
+            String selectQuery = createSetNameClause(results, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID(),
                     BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID());
 
-            InterestingFileSetNamesCallback callback = new InterestingFileSetNamesCallback(files);
+            InterestingFileSetNamesCallback callback = new InterestingFileSetNamesCallback(results);
             try {
                 caseDb.getCaseDbAccessManager().select(selectQuery, callback);
             } catch (TskCoreException ex) {
@@ -398,7 +412,7 @@ public class DiscoveryAttributes {
          */
         private static class InterestingFileSetNamesCallback implements CaseDbAccessManager.CaseDbAccessQueryCallback {
 
-            List<ResultFile> resultFiles;
+            List<Result> results;
 
             /**
              * Create the callback.
@@ -406,8 +420,8 @@ public class DiscoveryAttributes {
              * @param resultFiles List of files to add interesting file set
              *                    names to
              */
-            InterestingFileSetNamesCallback(List<ResultFile> resultFiles) {
-                this.resultFiles = resultFiles;
+            InterestingFileSetNamesCallback(List<Result> results) {
+                this.results = results;
             }
 
             @Override
@@ -415,7 +429,11 @@ public class DiscoveryAttributes {
                 try {
                     // Create a temporary map of object ID to ResultFile
                     Map<Long, ResultFile> tempMap = new HashMap<>();
-                    for (ResultFile file : resultFiles) {
+                    for (Result result : results) {
+                        if (result.getType() == SearchData.Type.DOMAIN) {
+                            return;
+                        }
+                        ResultFile file = (ResultFile) result;
                         tempMap.put(file.getFirstInstance().getId(), file);
                     }
 
@@ -443,20 +461,20 @@ public class DiscoveryAttributes {
     static class ObjectDetectedAttribute extends AttributeType {
 
         @Override
-        public DiscoveryKeyUtils.GroupKey getGroupKey(ResultFile file) {
-            return new DiscoveryKeyUtils.ObjectDetectedGroupKey(file);
+        public DiscoveryKeyUtils.GroupKey getGroupKey(Result file) {
+            return new DiscoveryKeyUtils.ObjectDetectedGroupKey((ResultFile) file);
         }
 
         @Override
-        public void addAttributeToResultFiles(List<ResultFile> files, SleuthkitCase caseDb,
+        public void addAttributeToResultFiles(List<Result> results, SleuthkitCase caseDb,
                 CentralRepository centralRepoDb) throws DiscoveryException {
 
             // Get pairs of (object ID, object type name) for all files in the list of files that have
             // objects detected
-            String selectQuery = createSetNameClause(files, BlackboardArtifact.ARTIFACT_TYPE.TSK_OBJECT_DETECTED.getTypeID(),
+            String selectQuery = createSetNameClause(results, BlackboardArtifact.ARTIFACT_TYPE.TSK_OBJECT_DETECTED.getTypeID(),
                     BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION.getTypeID());
 
-            ObjectDetectedNamesCallback callback = new ObjectDetectedNamesCallback(files);
+            ObjectDetectedNamesCallback callback = new ObjectDetectedNamesCallback(results);
             try {
                 caseDb.getCaseDbAccessManager().select(selectQuery, callback);
             } catch (TskCoreException ex) {
@@ -471,15 +489,15 @@ public class DiscoveryAttributes {
          */
         private static class ObjectDetectedNamesCallback implements CaseDbAccessManager.CaseDbAccessQueryCallback {
 
-            List<ResultFile> resultFiles;
+            List<Result> results;
 
             /**
              * Create the callback.
              *
              * @param resultFiles List of files to add object detected names to
              */
-            ObjectDetectedNamesCallback(List<ResultFile> resultFiles) {
-                this.resultFiles = resultFiles;
+            ObjectDetectedNamesCallback(List<Result> results) {
+                this.results = results;
             }
 
             @Override
@@ -487,7 +505,11 @@ public class DiscoveryAttributes {
                 try {
                     // Create a temporary map of object ID to ResultFile
                     Map<Long, ResultFile> tempMap = new HashMap<>();
-                    for (ResultFile file : resultFiles) {
+                    for (Result result : results) {
+                        if (result.getType() == SearchData.Type.DOMAIN) {
+                            return;
+                        }
+                        ResultFile file = (ResultFile) result;
                         tempMap.put(file.getFirstInstance().getId(), file);
                     }
 
@@ -515,20 +537,24 @@ public class DiscoveryAttributes {
     static class FileTagAttribute extends AttributeType {
 
         @Override
-        public DiscoveryKeyUtils.GroupKey getGroupKey(ResultFile file) {
-            return new DiscoveryKeyUtils.FileTagGroupKey(file);
+        public DiscoveryKeyUtils.GroupKey getGroupKey(Result file) {
+            return new DiscoveryKeyUtils.FileTagGroupKey((ResultFile) file);
         }
 
         @Override
-        public void addAttributeToResultFiles(List<ResultFile> files, SleuthkitCase caseDb,
+        public void addAttributeToResultFiles(List<Result> results, SleuthkitCase caseDb,
                 CentralRepository centralRepoDb) throws DiscoveryException {
 
             try {
-                for (ResultFile resultFile : files) {
-                    List<ContentTag> contentTags = caseDb.getContentTagsByContent(resultFile.getFirstInstance());
+                for (Result result : results) {
+                    if (result.getType() == SearchData.Type.DOMAIN) {
+                        return;
+                    }
+                    ResultFile file = (ResultFile) result;
+                    List<ContentTag> contentTags = caseDb.getContentTagsByContent(file.getFirstInstance());
 
                     for (ContentTag tag : contentTags) {
-                        resultFile.addTagName(tag.getName().getDisplayName());
+                        result.addTagName(tag.getName().getDisplayName());
                     }
                 }
             } catch (TskCoreException ex) {
@@ -625,12 +651,16 @@ public class DiscoveryAttributes {
 
     }
 
-    private static String createSetNameClause(List<ResultFile> files,
+    private static String createSetNameClause(List<Result> results,
             int artifactTypeID, int setNameAttrID) throws DiscoveryException {
 
         // Concatenate the object IDs in the list of files
         String objIdList = ""; // NON-NLS
-        for (ResultFile file : files) {
+        for (Result result : results) {
+            if (result.getType() == SearchData.Type.DOMAIN) {
+                break;
+            }
+            ResultFile file = (ResultFile) result;
             if (!objIdList.isEmpty()) {
                 objIdList += ","; // NON-NLS
             }
@@ -644,7 +674,8 @@ public class DiscoveryAttributes {
                 + "INNER JOIN blackboard_attributes ON blackboard_artifacts.artifact_id=blackboard_attributes.artifact_id "
                 + "WHERE blackboard_attributes.artifact_type_id=\'" + artifactTypeID + "\' "
                 + "AND blackboard_attributes.attribute_type_id=\'" + setNameAttrID + "\' "
-                + "AND blackboard_artifacts.obj_id IN (" + objIdList + ") "; // NON-NLS
+                + "AND blackboard_artifacts.obj_id IN (" + objIdList
+                + ") "; // NON-NLS
     }
 
     private DiscoveryAttributes() {

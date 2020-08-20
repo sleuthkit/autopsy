@@ -72,15 +72,15 @@ class SearchResults {
      *
      * @param files The list of ResultFiles to add.
      */
-    void add(List<ResultFile> files) {
-        for (ResultFile file : files) {
+    void add(List<Result> results) {
+        for (Result result : results) {
             // Add the file to the appropriate group, creating it if necessary
-            GroupKey groupKey = attrType.getGroupKey(file);
+            GroupKey groupKey = attrType.getGroupKey(result);
 
             if (!groupMap.containsKey(groupKey)) {
                 groupMap.put(groupKey, new Group(groupSortingType, groupKey));
             }
-            groupMap.get(groupKey).addFile(file);
+            groupMap.get(groupKey).addResult(result);
         }
     }
 
@@ -102,25 +102,25 @@ class SearchResults {
 
     @Override
     public String toString() {
-        String result = "";
+        String resultString = "";
         if (groupList == null) {
-            return result;
+            return resultString;
         }
 
         long count = 0;
         for (Group group : groupList) {
-            result += group.getDisplayName() + "\n";
+            resultString += group.getDisplayName() + "\n";
 
-            for (ResultFile file : group.getFiles()) {
-                result += "    " + file.toString() + "\n";
+            for (Result result : group.getResults()) {
+                resultString += "    " + result.toString() + "\n";
                 count++;
                 if (count > MAX_OUTPUT_FILES) {
-                    result += "(truncated)";
-                    return result;
+                    resultString += "(truncated)";
+                    return resultString;
                 }
             }
         }
-        return result;
+        return resultString;
     }
 
     /**
@@ -129,7 +129,7 @@ class SearchResults {
      * @return The list of group names.
      */
     List<String> getGroupNamesWithCounts() {
-        return groupList.stream().map(p -> p.getDisplayName() + " (" + p.getFiles().size() + ")").collect(Collectors.toList());
+        return groupList.stream().map(p -> p.getDisplayName() + " (" + p.getResults().size() + ")").collect(Collectors.toList());
     }
 
     /**
@@ -139,13 +139,13 @@ class SearchResults {
      *
      * @return The list of result files.
      */
-    List<ResultFile> getResultFilesInGroup(String groupName) {
+    List<Result> getResultFilesInGroup(String groupName) {
         if (groupName != null) {
             final String modifiedGroupName = groupName.replaceAll(" \\([0-9]+\\)$", "");
 
-            java.util.Optional<Group> fileGroup = groupList.stream().filter(p -> p.getDisplayName().equals(modifiedGroupName)).findFirst();
-            if (fileGroup.isPresent()) {
-                return fileGroup.get().getFiles();
+            java.util.Optional<Group> group = groupList.stream().filter(p -> p.getDisplayName().equals(modifiedGroupName)).findFirst();
+            if (group.isPresent()) {
+                return group.get().getResults();
             }
         }
         return new ArrayList<>();
@@ -156,15 +156,15 @@ class SearchResults {
      *
      * @return The grouped and sorted results.
      */
-    Map<GroupKey, List<ResultFile>> toLinkedHashMap() throws DiscoveryException {
-        Map<GroupKey, List<ResultFile>> map = new LinkedHashMap<>();
+    Map<GroupKey, List<Result>> toLinkedHashMap() throws DiscoveryException {
+        Map<GroupKey, List<Result>> map = new LinkedHashMap<>();
 
         // Sort the groups and files
         sortGroupsAndFiles();
 
         // groupList is sorted and a LinkedHashMap will preserve that order.
         for (Group group : groupList) {
-            map.put(group.getGroupKey(), group.getFiles());
+            map.put(group.getGroupKey(), group.getResults());
         }
 
         return map;

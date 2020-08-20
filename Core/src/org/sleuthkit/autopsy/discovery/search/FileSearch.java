@@ -45,7 +45,7 @@ public class FileSearch {
 
     private final static Logger logger = Logger.getLogger(FileSearch.class.getName());
     private static final int MAXIMUM_CACHE_SIZE = 10;
-    private static final Cache<SearchKey, Map<GroupKey, List<ResultFile>>> searchCache = CacheBuilder.newBuilder()
+    private static final Cache<SearchKey, Map<GroupKey, List<Result>>> searchCache = CacheBuilder.newBuilder()
             .maximumSize(MAXIMUM_CACHE_SIZE)
             .build();
 
@@ -82,18 +82,18 @@ public class FileSearch {
         attributesNeededForGroupingOrSorting.addAll(fileSortingMethod.getRequiredAttributes());
 
         // Run the queries for each filter
-        List<ResultFile> resultFiles = SearchFiltering.runQueries(filters, caseDb, centralRepoDb);
+        List<Result> results = SearchFiltering.runQueries(filters, caseDb, centralRepoDb);
 
         // Add the data to resultFiles for any attributes needed for sorting and grouping
-        addAttributes(attributesNeededForGroupingOrSorting, resultFiles, caseDb, centralRepoDb);
+        addAttributes(attributesNeededForGroupingOrSorting, results, caseDb, centralRepoDb);
 
         // Collect everything in the search results
         SearchResults searchResults = new SearchResults(groupSortingType, groupAttributeType, fileSortingMethod);
-        searchResults.add(resultFiles);
+        searchResults.add(results);
 
         // Sort and group the results
         searchResults.sortGroupsAndFiles();
-        Map<GroupKey, List<ResultFile>> resultHashMap = searchResults.toLinkedHashMap();
+        Map<GroupKey, List<Result>> resultHashMap = searchResults.toLinkedHashMap();
         SearchKey searchKey = new SearchKey(userName, filters, groupAttributeType, groupSortingType, fileSortingMethod);
         synchronized (searchCache) {
             searchCache.put(searchKey, resultHashMap);
@@ -125,7 +125,7 @@ public class FileSearch {
             Group.GroupSortingAlgorithm groupSortingType,
             FileSorter.SortingMethod fileSortingMethod,
             SleuthkitCase caseDb, CentralRepository centralRepoDb) throws DiscoveryException {
-        Map<GroupKey, List<ResultFile>> searchResults = runFileSearch(userName, filters,
+        Map<GroupKey, List<Result>> searchResults = runFileSearch(userName, filters,
                 groupAttributeType, groupSortingType, fileSortingMethod, caseDb, centralRepoDb);
         LinkedHashMap<GroupKey, Integer> groupSizes = new LinkedHashMap<>();
         for (GroupKey groupKey : searchResults.keySet()) {
@@ -156,7 +156,7 @@ public class FileSearch {
      *
      * @throws DiscoveryException
      */
-    public static List<ResultFile> getFilesInGroup(String userName,
+    public static List<Result> getFilesInGroup(String userName,
             List<AbstractFilter> filters,
             AttributeType groupAttributeType,
             Group.GroupSortingAlgorithm groupSortingType,
@@ -166,16 +166,16 @@ public class FileSearch {
             int numberOfEntries,
             SleuthkitCase caseDb, CentralRepository centralRepoDb) throws DiscoveryException {
         //the group should be in the cache at this point
-        List<ResultFile> filesInGroup = null;
+        List<Result> filesInGroup = null;
         SearchKey searchKey = new SearchKey(userName, filters, groupAttributeType, groupSortingType, fileSortingMethod);
-        Map<GroupKey, List<ResultFile>> resultsMap;
+        Map<GroupKey, List<Result>> resultsMap;
         synchronized (searchCache) {
             resultsMap = searchCache.getIfPresent(searchKey);
         }
         if (resultsMap != null) {
             filesInGroup = resultsMap.get(groupKey);
         }
-        List<ResultFile> page = new ArrayList<>();
+        List<Result> page = new ArrayList<>();
         if (filesInGroup == null) {
             logger.log(Level.INFO, "Group {0} was not cached, performing search to cache all groups again", groupKey);
             runFileSearch(userName, filters, groupAttributeType, groupSortingType, fileSortingMethod, caseDb, centralRepoDb);
@@ -252,7 +252,7 @@ public class FileSearch {
      *
      * @throws DiscoveryException
      */
-    private static Map<GroupKey, List<ResultFile>> runFileSearch(String userName,
+    private static Map<GroupKey, List<Result>> runFileSearch(String userName,
             List<AbstractFilter> filters,
             AttributeType groupAttributeType,
             Group.GroupSortingAlgorithm groupSortingType,
@@ -268,15 +268,15 @@ public class FileSearch {
         attributesNeededForGroupingOrSorting.addAll(fileSortingMethod.getRequiredAttributes());
 
         // Run the queries for each filter
-        List<ResultFile> resultFiles = SearchFiltering.runQueries(filters, caseDb, centralRepoDb);
+        List<Result> results = SearchFiltering.runQueries(filters, caseDb, centralRepoDb);
 
         // Add the data to resultFiles for any attributes needed for sorting and grouping
-        addAttributes(attributesNeededForGroupingOrSorting, resultFiles, caseDb, centralRepoDb);
+        addAttributes(attributesNeededForGroupingOrSorting, results, caseDb, centralRepoDb);
 
         // Collect everything in the search results
         SearchResults searchResults = new SearchResults(groupSortingType, groupAttributeType, fileSortingMethod);
-        searchResults.add(resultFiles);
-        Map<GroupKey, List<ResultFile>> resultHashMap = searchResults.toLinkedHashMap();
+        searchResults.add(results);
+        Map<GroupKey, List<Result>> resultHashMap = searchResults.toLinkedHashMap();
         SearchKey searchKey = new SearchKey(userName, filters, groupAttributeType, groupSortingType, fileSortingMethod);
         synchronized (searchCache) {
             searchCache.put(searchKey, resultHashMap);
@@ -298,10 +298,10 @@ public class FileSearch {
      *
      * @throws DiscoveryException
      */
-    private static void addAttributes(List<AttributeType> attrs, List<ResultFile> resultFiles, SleuthkitCase caseDb, CentralRepository centralRepoDb)
+    private static void addAttributes(List<AttributeType> attrs, List<Result> results, SleuthkitCase caseDb, CentralRepository centralRepoDb)
             throws DiscoveryException {
         for (AttributeType attr : attrs) {
-            attr.addAttributeToResultFiles(resultFiles, caseDb, centralRepoDb);
+            attr.addAttributeToResultFiles(results, caseDb, centralRepoDb);
         }
     }
 

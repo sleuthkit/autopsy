@@ -34,7 +34,7 @@ import org.sleuthkit.autopsy.discovery.search.FileSearch;
 import org.sleuthkit.autopsy.discovery.search.SearchData;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryException;
 import org.sleuthkit.autopsy.discovery.search.FileSorter;
-import org.sleuthkit.autopsy.discovery.search.ResultFile;
+import org.sleuthkit.autopsy.discovery.search.Result;
 
 /**
  * SwingWorker to retrieve the contents of a page.
@@ -52,7 +52,7 @@ final class PageWorker extends SwingWorker<Void, Void> {
     private final int pageSize;
     private final SearchData.Type resultType;
     private final CentralRepository centralRepo;
-    private final List<ResultFile> results = new ArrayList<>();
+    private final List<Result> results = new ArrayList<>();
 
     /**
      * Construct a new PageWorker.

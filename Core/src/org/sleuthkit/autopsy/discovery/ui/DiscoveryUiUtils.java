@@ -232,6 +232,7 @@ final class DiscoveryUiUtils {
      * Helper method to display an error message when the results of the
      * Discovery Top component may be incomplete.
      */
+    @NbBundle.Messages({"DiscoveryUiUtils.resultsIncomplete.text=Discovery results may be incomplete"})
     static void displayErrorMessage(DiscoveryDialog dialog) {
         //check if modules run and assemble message
         try {
@@ -258,7 +259,7 @@ final class DiscoveryUiUtils {
                 messageScrollPane.setMaximumSize(new Dimension(600, 100));
                 messageScrollPane.setPreferredSize(new Dimension(600, 100));
                 messageScrollPane.setViewportView(messageTextPane);
-                JOptionPane.showMessageDialog(dialog, messageScrollPane, Bundle.OpenDiscoveryAction_resultsIncomplete_text(), JOptionPane.PLAIN_MESSAGE);
+                JOptionPane.showMessageDialog(dialog, messageScrollPane, Bundle.DiscoveryUiUtils_resultsIncomplete_text(), JOptionPane.PLAIN_MESSAGE);
             }
         } catch (NoCurrentCaseException | TskCoreException ex) {
             logger.log(Level.WARNING, "Exception while determining which modules have been run for Discovery", ex);
