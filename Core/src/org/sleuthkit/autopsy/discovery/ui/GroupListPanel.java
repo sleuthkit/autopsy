@@ -33,8 +33,8 @@ import org.sleuthkit.autopsy.discovery.search.DiscoveryAttributes;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryKeyUtils.GroupKey;
 import org.sleuthkit.autopsy.discovery.search.Group;
+import org.sleuthkit.autopsy.discovery.search.ResultsSorter;
 import org.sleuthkit.autopsy.discovery.search.SearchData.Type;
-import org.sleuthkit.autopsy.discovery.search.FileSorter;
 
 /**
  * Panel to display the list of groups which are provided by a search.
@@ -47,7 +47,7 @@ final class GroupListPanel extends javax.swing.JPanel {
     private List<AbstractFilter> searchfilters;
     private DiscoveryAttributes.AttributeType groupingAttribute;
     private Group.GroupSortingAlgorithm groupSort;
-    private FileSorter.SortingMethod fileSortMethod;
+    private ResultsSorter.SortingMethod resultSortMethod;
     private GroupKey selectedGroupKey;
 
     /**
@@ -86,7 +86,7 @@ final class GroupListPanel extends javax.swing.JPanel {
         searchfilters = searchCompleteEvent.getFilters();
         groupingAttribute = searchCompleteEvent.getGroupingAttr();
         groupSort = searchCompleteEvent.getGroupSort();
-        fileSortMethod = searchCompleteEvent.getFileSort();
+        resultSortMethod = searchCompleteEvent.getFileSort();
         groupKeyList.setListData(groupMap.keySet().toArray(new GroupKey[groupMap.keySet().size()]));
         SwingUtilities.invokeLater(() -> {
             if (groupKeyList.getModel().getSize() > 0) {
@@ -175,7 +175,7 @@ final class GroupListPanel extends javax.swing.JPanel {
                     if (selectedGroup.equals(groupKey)) {
                         selectedGroupKey = groupKey;
                         DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.GroupSelectedEvent(
-                                searchfilters, groupingAttribute, groupSort, fileSortMethod, selectedGroupKey, groupMap.get(selectedGroupKey), type));
+                                searchfilters, groupingAttribute, groupSort, resultSortMethod, selectedGroupKey, groupMap.get(selectedGroupKey), type));
                         break;
                     }
                 }
