@@ -29,7 +29,7 @@ import javax.swing.JList;
 import javax.swing.ListCellRenderer;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.corecomponents.AutoWrappingJTextPane;
-import org.sleuthkit.autopsy.discovery.search.FileSearchData;
+import org.sleuthkit.autopsy.discovery.search.SearchData;
 
 /**
  * Class which displays a preview and details about a document.
@@ -164,7 +164,7 @@ class DocumentPanel extends javax.swing.JPanel implements ListCellRenderer<Docum
         if (value.getSummary().getNumberOfImages() > 0) {
             numberOfImagesLabel.setText(Bundle.DocumentPanel_numberOfImages_text(value.getSummary().getNumberOfImages()));
             sampleImageLabel.setIcon(new ImageIcon(value.getSummary().getSampleImage()));
-        } else if (FileSearchData.getDocTypesWithoutImageExtraction().contains(value.getResultFile().getFirstInstance().getMIMEType())) {
+        } else if (SearchData.getDocTypesWithoutImageExtraction().contains(value.getResultFile().getFirstInstance().getMIMEType())) {
             numberOfImagesLabel.setText(Bundle.DocumentPanel_noImageExtraction_text());
             sampleImageLabel.setIcon(DiscoveryUiUtils.getUnsupportedImageThumbnail());
         } else {

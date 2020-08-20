@@ -29,9 +29,9 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryKeyUtils.GroupKey;
-import org.sleuthkit.autopsy.discovery.search.FileGroup;
+import org.sleuthkit.autopsy.discovery.search.Group;
 import org.sleuthkit.autopsy.discovery.search.FileSearch;
-import org.sleuthkit.autopsy.discovery.search.FileSearchException;
+import org.sleuthkit.autopsy.discovery.search.DiscoveryException;
 import org.sleuthkit.autopsy.discovery.search.FileSorter;
 
 /**
@@ -44,7 +44,7 @@ final class SearchWorker extends SwingWorker<Void, Void> {
     private final List<AbstractFilter> filters;
     private final FileSearch.AttributeType groupingAttr;
     private final FileSorter.SortingMethod fileSort;
-    private final FileGroup.GroupSortingAlgorithm groupSortAlgorithm;
+    private final Group.GroupSortingAlgorithm groupSortAlgorithm;
     private final CentralRepository centralRepoDb;
     private final Map<GroupKey, Integer> results = new LinkedHashMap<>();
 
@@ -58,7 +58,7 @@ final class SearchWorker extends SwingWorker<Void, Void> {
      * @param groupSort         The Algorithm to sort groups by.
      * @param fileSortMethod    The SortingMethod to use for files.
      */
-    SearchWorker(CentralRepository centralRepo, List<AbstractFilter> searchfilters, FileSearch.AttributeType groupingAttribute, FileGroup.GroupSortingAlgorithm groupSort, FileSorter.SortingMethod fileSortMethod) {
+    SearchWorker(CentralRepository centralRepo, List<AbstractFilter> searchfilters, FileSearch.AttributeType groupingAttribute, Group.GroupSortingAlgorithm groupSort, FileSorter.SortingMethod fileSortMethod) {
         centralRepoDb = centralRepo;
         filters = searchfilters;
         groupingAttr = groupingAttribute;
@@ -75,7 +75,7 @@ final class SearchWorker extends SwingWorker<Void, Void> {
                     groupSortAlgorithm,
                     fileSort,
                     Case.getCurrentCase().getSleuthkitCase(), centralRepoDb));
-        } catch (FileSearchException ex) {
+        } catch (DiscoveryException ex) {
             logger.log(Level.SEVERE, "Error running file search test", ex);
             cancel(true);
         }

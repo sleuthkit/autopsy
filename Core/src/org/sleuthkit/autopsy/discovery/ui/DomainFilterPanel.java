@@ -19,8 +19,6 @@
 package org.sleuthkit.autopsy.discovery.ui;
 
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
-import org.sleuthkit.autopsy.discovery.search.AttributeSearchData;
-import org.sleuthkit.autopsy.discovery.search.FileSearchData;
 import org.sleuthkit.autopsy.discovery.search.SearchData;
 
 /**
@@ -29,7 +27,7 @@ import org.sleuthkit.autopsy.discovery.search.SearchData;
 public class DomainFilterPanel extends AbstractFiltersPanel {
 
     private static final long serialVersionUID = 1L;
-    private static final AttributeSearchData.AttributeType ARTIFACT_TYPE = AttributeSearchData.AttributeType.DOMAIN;
+    private static final SearchData.Type TYPE = SearchData.Type.DOMAIN;
 
     /**
      * Creates new form DomainFilterPanel.
@@ -44,7 +42,7 @@ public class DomainFilterPanel extends AbstractFiltersPanel {
         if (CentralRepository.isEnabled()) {
             pastOccurrencesIndices = new int[]{2, 3, 4};
         }
-        addFilter(new PastOccurrencesFilterPanel(SearchData.ResultType.ATTRIBUTE), true, pastOccurrencesIndices, 0);
+        addFilter(new PastOccurrencesFilterPanel(TYPE), true, pastOccurrencesIndices, 0);
         addPanelsToScrollPane(domainFiltersSplitPane);
     }
 
@@ -91,19 +89,10 @@ public class DomainFilterPanel extends AbstractFiltersPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     @Override
-    FileSearchData.FileType getFileType() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    SearchData.Type getType() {
+        return TYPE;
     }
 
-    @Override
-    SearchData.ResultType getResultType() {
-        return SearchData.ResultType.ATTRIBUTE;
-    }
-
-    @Override
-    AttributeSearchData.AttributeType getArtifactType() {
-        return ARTIFACT_TYPE;
-    }
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

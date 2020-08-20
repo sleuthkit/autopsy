@@ -23,7 +23,7 @@ import javax.swing.DefaultListModel;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
-import org.sleuthkit.autopsy.discovery.search.AttributeSearchData;
+import org.sleuthkit.autopsy.discovery.search.SearchData;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
@@ -49,7 +49,7 @@ class ArtifactTypeFilterPanel extends AbstractDiscoveryFilterPanel {
         int count = 0;
         DefaultListModel<ArtifactTypeItem> artifactTypeModel = (DefaultListModel<ArtifactTypeItem>) jList1.getModel();
         artifactTypeModel.removeAllElements();
-        for (BlackboardArtifact.ARTIFACT_TYPE artifactType : AttributeSearchData.AttributeType.DOMAIN.getBlackboardTypes()) {
+        for (BlackboardArtifact.ARTIFACT_TYPE artifactType : SearchData.Type.DOMAIN.getArtifactTypes()) {
             artifactTypeModel.add(count, new ArtifactTypeItem(artifactType));
             count++;
         }

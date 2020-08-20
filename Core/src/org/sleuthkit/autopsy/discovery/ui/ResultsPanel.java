@@ -40,9 +40,9 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryKeyUtils.GroupKey;
-import org.sleuthkit.autopsy.discovery.search.FileGroup;
+import org.sleuthkit.autopsy.discovery.search.Group;
 import org.sleuthkit.autopsy.discovery.search.FileSearch;
-import org.sleuthkit.autopsy.discovery.search.FileSearchData;
+import org.sleuthkit.autopsy.discovery.search.SearchData;
 import org.sleuthkit.autopsy.discovery.search.FileSorter;
 import org.sleuthkit.autopsy.discovery.search.ResultFile;
 import org.sleuthkit.autopsy.textsummarizer.TextSummary;
@@ -60,12 +60,12 @@ final class ResultsPanel extends javax.swing.JPanel {
     private final DocumentPreviewViewer documentPreviewViewer;
     private List<AbstractFilter> searchFilters;
     private FileSearch.AttributeType groupingAttribute;
-    private FileGroup.GroupSortingAlgorithm groupSort;
+    private Group.GroupSortingAlgorithm groupSort;
     private FileSorter.SortingMethod fileSortMethod;
     private GroupKey selectedGroupKey;
     private int currentPage = 0;
     private int previousPageSize = 10;
-    private FileSearchData.FileType resultType;
+    private SearchData.Type resultType;
     private int groupSize = 0;
     private PageWorker pageWorker;
     private final List<SwingWorker<Void, Void>> resultContentWorkers = new ArrayList<>();
@@ -81,7 +81,7 @@ final class ResultsPanel extends javax.swing.JPanel {
         videoThumbnailViewer = new VideoThumbnailViewer();
         documentPreviewViewer = new DocumentPreviewViewer();
         videoThumbnailViewer.addListSelectionListener((e) -> {
-            if (resultType == FileSearchData.FileType.VIDEO) {
+            if (resultType == SearchData.Type.VIDEO) {
                 if (!e.getValueIsAdjusting()) {
                     //send populateMesage
                     DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.PopulateInstancesListEvent(getInstancesForSelected()));
@@ -92,7 +92,7 @@ final class ResultsPanel extends javax.swing.JPanel {
             }
         });
         imageThumbnailViewer.addListSelectionListener((e) -> {
-            if (resultType == FileSearchData.FileType.IMAGE) {
+            if (resultType == SearchData.Type.IMAGE) {
                 if (!e.getValueIsAdjusting()) {
                     //send populateMesage
                     DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.PopulateInstancesListEvent(getInstancesForSelected()));
@@ -104,7 +104,7 @@ final class ResultsPanel extends javax.swing.JPanel {
             }
         });
         documentPreviewViewer.addListSelectionListener((e) -> {
-            if (resultType == FileSearchData.FileType.DOCUMENTS) {
+            if (resultType == SearchData.Type.DOCUMENTS) {
                 if (!e.getValueIsAdjusting()) {
                     //send populateMesage
                     DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.PopulateInstancesListEvent(getInstancesForSelected()));

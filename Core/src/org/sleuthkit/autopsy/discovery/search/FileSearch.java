@@ -40,7 +40,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.InstanceTableCallback;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.discovery.search.FileSearchData.Frequency;
+import org.sleuthkit.autopsy.discovery.search.SearchData.Frequency;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -82,14 +82,14 @@ public class FileSearch {
      *
      * @return The raw search results
      *
-     * @throws FileSearchException
+     * @throws DiscoveryException
      */
     static SearchResults runFileSearchDebug(String userName,
             List<AbstractFilter> filters,
             AttributeType groupAttributeType,
-            FileGroup.GroupSortingAlgorithm groupSortingType,
+            Group.GroupSortingAlgorithm groupSortingType,
             FileSorter.SortingMethod fileSortingMethod,
-            SleuthkitCase caseDb, CentralRepository centralRepoDb) throws FileSearchException {
+            SleuthkitCase caseDb, CentralRepository centralRepoDb) throws DiscoveryException {
         // Make a list of attributes that we want to add values for. This ensures the
         // ResultFile objects will have all needed fields set when it's time to group
         // and sort them. For example, if we're grouping by central repo frequency, we need
@@ -134,14 +134,14 @@ public class FileSearch {
      *
      * @return A LinkedHashMap grouped and sorted according to the parameters
      *
-     * @throws FileSearchException
+     * @throws DiscoveryException
      */
     public static Map<GroupKey, Integer> getGroupSizes(String userName,
             List<AbstractFilter> filters,
             AttributeType groupAttributeType,
-            FileGroup.GroupSortingAlgorithm groupSortingType,
+            Group.GroupSortingAlgorithm groupSortingType,
             FileSorter.SortingMethod fileSortingMethod,
-            SleuthkitCase caseDb, CentralRepository centralRepoDb) throws FileSearchException {
+            SleuthkitCase caseDb, CentralRepository centralRepoDb) throws DiscoveryException {
         Map<GroupKey, List<ResultFile>> searchResults = runFileSearch(userName, filters,
                 groupAttributeType, groupSortingType, fileSortingMethod, caseDb, centralRepoDb);
         LinkedHashMap<GroupKey, Integer> groupSizes = new LinkedHashMap<>();
@@ -171,17 +171,17 @@ public class FileSearch {
      *
      * @return A LinkedHashMap grouped and sorted according to the parameters
      *
-     * @throws FileSearchException
+     * @throws DiscoveryException
      */
     public static List<ResultFile> getFilesInGroup(String userName,
             List<AbstractFilter> filters,
             AttributeType groupAttributeType,
-            FileGroup.GroupSortingAlgorithm groupSortingType,
+            Group.GroupSortingAlgorithm groupSortingType,
             FileSorter.SortingMethod fileSortingMethod,
             GroupKey groupKey,
             int startingEntry,
             int numberOfEntries,
-            SleuthkitCase caseDb, CentralRepository centralRepoDb) throws FileSearchException {
+            SleuthkitCase caseDb, CentralRepository centralRepoDb) throws DiscoveryException {
         //the group should be in the cache at this point
         List<ResultFile> filesInGroup = null;
         SearchKey searchKey = new SearchKey(userName, filters, groupAttributeType, groupSortingType, fileSortingMethod);
@@ -267,14 +267,14 @@ public class FileSearch {
      *
      * @return A LinkedHashMap grouped and sorted according to the parameters
      *
-     * @throws FileSearchException
+     * @throws DiscoveryException
      */
     private static Map<GroupKey, List<ResultFile>> runFileSearch(String userName,
             List<AbstractFilter> filters,
             AttributeType groupAttributeType,
-            FileGroup.GroupSortingAlgorithm groupSortingType,
+            Group.GroupSortingAlgorithm groupSortingType,
             FileSorter.SortingMethod fileSortingMethod,
-            SleuthkitCase caseDb, CentralRepository centralRepoDb) throws FileSearchException {
+            SleuthkitCase caseDb, CentralRepository centralRepoDb) throws DiscoveryException {
 
         // Make a list of attributes that we want to add values for. This ensures the
         // ResultFile objects will have all needed fields set when it's time to group
@@ -313,10 +313,10 @@ public class FileSearch {
      * @param centralRepoDb The central repository database. Can be null if not
      *                      needed.
      *
-     * @throws FileSearchException
+     * @throws DiscoveryException
      */
     private static void addAttributes(List<AttributeType> attrs, List<ResultFile> resultFiles, SleuthkitCase caseDb, CentralRepository centralRepoDb)
-            throws FileSearchException {
+            throws DiscoveryException {
         for (AttributeType attr : attrs) {
             attr.addAttributeToResultFiles(resultFiles, caseDb, centralRepoDb);
         }
@@ -357,7 +357,7 @@ public class FileSearch {
     }
 
     private static String createSetNameClause(List<ResultFile> files,
-            int artifactTypeID, int setNameAttrID) throws FileSearchException {
+            int artifactTypeID, int setNameAttrID) throws DiscoveryException {
 
         // Concatenate the object IDs in the list of files
         String objIdList = ""; // NON-NLS
@@ -405,9 +405,9 @@ public class FileSearch {
          * @param centralRepoDb The central repository database. Can be null if
          *                      not needed.
          *
-         * @throws FileSearchException
+         * @throws DiscoveryException
          */
-        public void addAttributeToResultFiles(List<ResultFile> files, SleuthkitCase caseDb, CentralRepository centralRepoDb) throws FileSearchException {
+        public void addAttributeToResultFiles(List<ResultFile> files, SleuthkitCase caseDb, CentralRepository centralRepoDb) throws DiscoveryException {
             // Default is to do nothing
         }
     }
@@ -479,7 +479,7 @@ public class FileSearch {
 
         @Override
         public void addAttributeToResultFiles(List<ResultFile> files, SleuthkitCase caseDb,
-                CentralRepository centralRepoDb) throws FileSearchException {
+                CentralRepository centralRepoDb) throws DiscoveryException {
 
             // Get pairs of (object ID, keyword list name) for all files in the list of files that have
             // keyword list hits.
@@ -490,7 +490,7 @@ public class FileSearch {
             try {
                 caseDb.getCaseDbAccessManager().select(selectQuery, callback);
             } catch (TskCoreException ex) {
-                throw new FileSearchException("Error looking up keyword list attributes", ex); // NON-NLS
+                throw new DiscoveryException("Error looking up keyword list attributes", ex); // NON-NLS
             }
         }
 
@@ -553,7 +553,7 @@ public class FileSearch {
 
         @Override
         public void addAttributeToResultFiles(List<ResultFile> files, SleuthkitCase caseDb,
-                CentralRepository centralRepoDb) throws FileSearchException {
+                CentralRepository centralRepoDb) throws DiscoveryException {
             if (centralRepoDb == null) {
                 for (ResultFile file : files) {
                     if (file.getFrequency() == Frequency.UNKNOWN && file.getFirstInstance().getKnown() == TskData.FileKnown.KNOWN) {
@@ -648,7 +648,7 @@ public class FileSearch {
 
         @Override
         public void addAttributeToResultFiles(List<ResultFile> files, SleuthkitCase caseDb,
-                CentralRepository centralRepoDb) throws FileSearchException {
+                CentralRepository centralRepoDb) throws DiscoveryException {
 
             // Get pairs of (object ID, hash set name) for all files in the list of files that have
             // hash set hits.
@@ -659,7 +659,7 @@ public class FileSearch {
             try {
                 caseDb.getCaseDbAccessManager().select(selectQuery, callback);
             } catch (TskCoreException ex) {
-                throw new FileSearchException("Error looking up hash set attributes", ex); // NON-NLS
+                throw new DiscoveryException("Error looking up hash set attributes", ex); // NON-NLS
             }
         }
 
@@ -719,7 +719,7 @@ public class FileSearch {
 
         @Override
         public void addAttributeToResultFiles(List<ResultFile> files, SleuthkitCase caseDb,
-                CentralRepository centralRepoDb) throws FileSearchException {
+                CentralRepository centralRepoDb) throws DiscoveryException {
 
             // Get pairs of (object ID, interesting item set name) for all files in the list of files that have
             // interesting file set hits.
@@ -730,7 +730,7 @@ public class FileSearch {
             try {
                 caseDb.getCaseDbAccessManager().select(selectQuery, callback);
             } catch (TskCoreException ex) {
-                throw new FileSearchException("Error looking up interesting file set attributes", ex); // NON-NLS
+                throw new DiscoveryException("Error looking up interesting file set attributes", ex); // NON-NLS
             }
         }
 
@@ -792,7 +792,7 @@ public class FileSearch {
 
         @Override
         public void addAttributeToResultFiles(List<ResultFile> files, SleuthkitCase caseDb,
-                CentralRepository centralRepoDb) throws FileSearchException {
+                CentralRepository centralRepoDb) throws DiscoveryException {
 
             // Get pairs of (object ID, object type name) for all files in the list of files that have
             // objects detected
@@ -803,7 +803,7 @@ public class FileSearch {
             try {
                 caseDb.getCaseDbAccessManager().select(selectQuery, callback);
             } catch (TskCoreException ex) {
-                throw new FileSearchException("Error looking up object detected attributes", ex); // NON-NLS
+                throw new DiscoveryException("Error looking up object detected attributes", ex); // NON-NLS
             }
         }
 
@@ -864,7 +864,7 @@ public class FileSearch {
 
         @Override
         public void addAttributeToResultFiles(List<ResultFile> files, SleuthkitCase caseDb,
-                CentralRepository centralRepoDb) throws FileSearchException {
+                CentralRepository centralRepoDb) throws DiscoveryException {
 
             try {
                 for (ResultFile resultFile : files) {
@@ -875,7 +875,7 @@ public class FileSearch {
                     }
                 }
             } catch (TskCoreException ex) {
-                throw new FileSearchException("Error looking up file tag attributes", ex); // NON-NLS
+                throw new DiscoveryException("Error looking up file tag attributes", ex); // NON-NLS
             }
         }
     }

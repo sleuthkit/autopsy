@@ -37,15 +37,13 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.discovery.search.AttributeSearchData;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils;
-import org.sleuthkit.autopsy.discovery.search.FileGroup;
-import org.sleuthkit.autopsy.discovery.search.FileGroup.GroupSortingAlgorithm;
-import static org.sleuthkit.autopsy.discovery.search.FileGroup.GroupSortingAlgorithm.BY_GROUP_SIZE;
+import org.sleuthkit.autopsy.discovery.search.Group;
+import org.sleuthkit.autopsy.discovery.search.Group.GroupSortingAlgorithm;
+import static org.sleuthkit.autopsy.discovery.search.Group.GroupSortingAlgorithm.BY_GROUP_SIZE;
 import org.sleuthkit.autopsy.discovery.search.FileSearch;
 import org.sleuthkit.autopsy.discovery.search.FileSearch.GroupingAttributeType;
 import static org.sleuthkit.autopsy.discovery.search.FileSearch.GroupingAttributeType.PARENT_PATH;
-import org.sleuthkit.autopsy.discovery.search.FileSearchData;
 import org.sleuthkit.autopsy.discovery.search.FileSorter;
 import org.sleuthkit.autopsy.discovery.search.FileSorter.SortingMethod;
 import static org.sleuthkit.autopsy.discovery.search.FileSorter.SortingMethod.BY_FILE_NAME;
@@ -76,9 +74,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
     private SearchWorker searchWorker = null;
     private static DiscoveryDialog discDialog;
     private static volatile boolean shouldUpdate = false;
-    private SearchData.ResultType resultType = SearchData.ResultType.FILE;
-    private FileSearchData.FileType fileType = FileSearchData.FileType.IMAGE;
-    private AttributeSearchData.AttributeType artifactType = null;
+    private SearchData.Type type = SearchData.Type.IMAGE;
     private final PropertyChangeListener listener;
     private final Set<BlackboardAttribute> objectsDetected = new HashSet<>();
     private final Set<BlackboardAttribute> interestingItems = new HashSet<>();
@@ -140,9 +136,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         imagesButton.setEnabled(false);
         imagesButton.setBackground(SELECTED_COLOR);
         imagesButton.setForeground(Color.BLACK);
-        resultType = SearchData.ResultType.FILE;
-        fileType = FileSearchData.FileType.IMAGE;
-        artifactType = null;
+        type = SearchData.Type.IMAGE;
         add(imageFilterPanel, CENTER);
         imageFilterPanel.addPropertyChangeListener(listener);
         updateComboBoxes();
@@ -175,8 +169,8 @@ final class DiscoveryDialog extends javax.swing.JDialog {
     private void updateComboBoxes() {
         groupByCombobox.removeAllItems();
         // Set up the grouping attributes
-        for (FileSearch.GroupingAttributeType type : FileSearch.GroupingAttributeType.getOptionsForGrouping()) {
-            addTypeToGroupByComboBox(type);
+        for (FileSearch.GroupingAttributeType groupingType : FileSearch.GroupingAttributeType.getOptionsForGrouping()) {
+            addTypeToGroupByComboBox(groupingType);
         }
         groupByCombobox.setSelectedItem(PARENT_PATH);
         orderByCombobox.removeAllItems();
@@ -224,24 +218,10 @@ final class DiscoveryDialog extends javax.swing.JDialog {
     }
 
     /**
-     * Validate the current filter settings of the selected type.
-     */
-    synchronized void validateDialog() {
-        switch (resultType) {
-            case FILE:
-                validateFileDialog();
-                break;
-            case ATTRIBUTE:
-                validateArtifactDialog();
-                break;
-        }
-    }
-
-    /**
      * Validate the filter settings for File type filters.
      */
-    private synchronized void validateFileDialog() {
-        switch (fileType) {
+    synchronized void validateDialog() {
+        switch (type) {
             case IMAGE:
                 if (imageFilterPanel != null) {
                     imageFilterPanel.validateFields();
@@ -257,16 +237,6 @@ final class DiscoveryDialog extends javax.swing.JDialog {
                     documentFilterPanel.validateFields();
                 }
                 break;
-            default:
-                break;
-        }
-    }
-
-    /**
-     * Validate the filter settings for Artifact type filters.
-     */
-    private synchronized void validateArtifactDialog() {
-        switch (artifactType) {
             case DOMAIN:
                 if (domainFilterPanel != null) {
                     domainFilterPanel.validateFields();
@@ -497,9 +467,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         imagesButton.setEnabled(false);
         imagesButton.setBackground(SELECTED_COLOR);
         imagesButton.setForeground(Color.BLACK);
-        resultType = SearchData.ResultType.FILE;
-        artifactType = null;
-        fileType = FileSearchData.FileType.IMAGE;
+        type = SearchData.Type.IMAGE;
         imageFilterPanel.addPropertyChangeListener(listener);
         validateDialog();
         pack();
@@ -515,9 +483,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         videosButton.setBackground(SELECTED_COLOR);
         videosButton.setForeground(Color.BLACK);
         videoFilterPanel.addPropertyChangeListener(listener);
-        resultType = SearchData.ResultType.FILE;
-        artifactType = null;
-        fileType = FileSearchData.FileType.VIDEO;
+        type = SearchData.Type.VIDEO;
         validateDialog();
         pack();
         repaint();
@@ -531,9 +497,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         documentsButton.setEnabled(false);
         documentsButton.setBackground(SELECTED_COLOR);
         documentsButton.setForeground(Color.BLACK);
-        resultType = SearchData.ResultType.FILE;
-        artifactType = null;
-        fileType = FileSearchData.FileType.DOCUMENTS;
+        type = SearchData.Type.DOCUMENTS;
         documentFilterPanel.addPropertyChangeListener(listener);
         validateDialog();
         pack();
@@ -587,11 +551,11 @@ final class DiscoveryDialog extends javax.swing.JDialog {
             filters = new ArrayList<>();
         }
 
-        DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.SearchStartedEvent(resultType, fileType, artifactType));
+        DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.SearchStartedEvent(type));
 
         // Get the grouping attribute and group sorting method
         FileSearch.AttributeType groupingAttr = groupByCombobox.getItemAt(groupByCombobox.getSelectedIndex()).getAttributeType();
-        FileGroup.GroupSortingAlgorithm groupSortAlgorithm = groupSortingComboBox.getItemAt(groupSortingComboBox.getSelectedIndex());
+        Group.GroupSortingAlgorithm groupSortAlgorithm = groupSortingComboBox.getItemAt(groupSortingComboBox.getSelectedIndex());
 
         // Get the file sorting method
         FileSorter.SortingMethod fileSort = (FileSorter.SortingMethod) orderByCombobox.getSelectedItem();
@@ -619,9 +583,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         domainsButton.setEnabled(false);
         domainsButton.setBackground(SELECTED_COLOR);
         domainsButton.setForeground(Color.BLACK);
-        resultType = SearchData.ResultType.ATTRIBUTE;
-        artifactType = AttributeSearchData.AttributeType.DOMAIN;
-        fileType = null;
+        type = SearchData.Type.DOMAIN;
         documentFilterPanel.addPropertyChangeListener(listener);
         validateDialog();
         pack();

@@ -25,8 +25,8 @@ import javax.swing.DefaultListModel;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
-import org.sleuthkit.autopsy.discovery.search.FileSearchData;
-import org.sleuthkit.autopsy.discovery.search.FileSearchData.FileSize;
+import org.sleuthkit.autopsy.discovery.search.SearchData;
+import org.sleuthkit.autopsy.discovery.search.SearchData.FileSize;
 import org.sleuthkit.autopsy.discovery.search.SearchFiltering;
 
 /**
@@ -41,7 +41,7 @@ final class SizeFilterPanel extends AbstractDiscoveryFilterPanel {
      *
      * @param type The type of result being searched for.
      */
-    SizeFilterPanel(FileSearchData.FileType type) {
+    SizeFilterPanel(SearchData.Type type) {
         initComponents();
         setUpSizeFilter(type);
     }
@@ -136,7 +136,7 @@ final class SizeFilterPanel extends AbstractDiscoveryFilterPanel {
     /**
      * Initialize the file size filter.
      */
-    private void setUpSizeFilter(FileSearchData.FileType fileType) {
+    private void setUpSizeFilter(SearchData.Type fileType) {
         int count = 0;
         DefaultListModel<FileSize> sizeListModel = (DefaultListModel<FileSize>) sizeList.getModel();
         sizeListModel.removeAllElements();
@@ -145,7 +145,7 @@ final class SizeFilterPanel extends AbstractDiscoveryFilterPanel {
                 sizeListModel.add(count, size);
             }
         } else {
-            List<FileSearchData.FileSize> sizes;
+            List<SearchData.FileSize> sizes;
             switch (fileType) {
                 case VIDEO:
                     sizes = FileSize.getOptionsForVideos();

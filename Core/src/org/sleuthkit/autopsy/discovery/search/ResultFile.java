@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.discovery.search;
 
-import org.sleuthkit.autopsy.discovery.search.FileSearchData.FileType;
+import org.sleuthkit.autopsy.discovery.search.SearchData.Type;
 import org.sleuthkit.datamodel.AbstractFile;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -29,6 +29,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import static org.sleuthkit.autopsy.discovery.search.SearchData.Type.OTHER;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.HashUtility;
@@ -39,10 +40,10 @@ import org.sleuthkit.datamodel.TskData;
 /**
  * Container for files that holds all necessary data for grouping and sorting.
  */
-public class ResultFile {
+public class ResultFile implements Result{
 
     private final static Logger logger = Logger.getLogger(ResultFile.class.getName());
-    private FileSearchData.Frequency frequency;
+    private SearchData.Frequency frequency;
     private final List<String> keywordListNames;
     private final List<String> hashSetNames;
     private final List<String> tagNames;
@@ -52,7 +53,7 @@ public class ResultFile {
     private DataResultViewerTable.Score currentScore = DataResultViewerTable.Score.NO_SCORE;
     private String scoreDescription = null;
     private boolean deleted = false;
-    private FileType fileType;
+    private Type fileType;
 
     /**
      * Create a ResultFile from an AbstractFile
@@ -72,13 +73,13 @@ public class ResultFile {
             deleted = true;
         }
         updateScoreAndDescription(abstractFile);
-        this.frequency = FileSearchData.Frequency.UNKNOWN;
+        this.frequency = SearchData.Frequency.UNKNOWN;
         keywordListNames = new ArrayList<>();
         hashSetNames = new ArrayList<>();
         tagNames = new ArrayList<>();
         interestingSetNames = new ArrayList<>();
         objectDetectedNames = new ArrayList<>();
-        fileType = FileType.fromMIMEtype(abstractFile.getMIMEType());
+        fileType = fromMIMEtype(abstractFile.getMIMEType());
     }
 
     /**
@@ -86,7 +87,7 @@ public class ResultFile {
      *
      * @return The Frequency enum
      */
-    public FileSearchData.Frequency getFrequency() {
+    public SearchData.Frequency getFrequency() {
         return frequency;
     }
 
@@ -95,7 +96,7 @@ public class ResultFile {
      *
      * @param frequency The frequency of the file as an enum
      */
-    public void setFrequency(FileSearchData.Frequency frequency) {
+    public void setFrequency(SearchData.Frequency frequency) {
         this.frequency = frequency;
     }
 
@@ -109,8 +110,8 @@ public class ResultFile {
         if (deleted && !duplicate.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC)) {
             deleted = false;
         }
-        if (fileType == FileType.OTHER) {
-            fileType = FileType.fromMIMEtype(duplicate.getMIMEType());
+        if (fileType == Type.OTHER) {
+            fileType = fromMIMEtype(duplicate.getMIMEType());
         }
         updateScoreAndDescription(duplicate);
         try {
@@ -167,7 +168,7 @@ public class ResultFile {
      *
      * @return The FileType enum.
      */
-    public FileType getFileType() {
+    public Type getFileType() {
         return fileType;
     }
 
@@ -379,5 +380,21 @@ public class ResultFile {
                 }
             }
         }
+    }
+
+    /**
+     * Get the enum matching the given MIME type.
+     *
+     * @param mimeType The MIME type for the file.
+     *
+     * @return the corresponding enum (will be OTHER if no types matched)
+     */
+    public static Type fromMIMEtype(String mimeType) {
+        for (Type type : Type.values()) {
+            if (type.getMediaTypes().contains(mimeType)) {
+                return type;
+            }
+        }
+        return OTHER;
     }
 }

@@ -31,9 +31,9 @@ import javax.swing.SwingUtilities;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryKeyUtils.GroupKey;
-import org.sleuthkit.autopsy.discovery.search.FileGroup;
+import org.sleuthkit.autopsy.discovery.search.Group;
 import org.sleuthkit.autopsy.discovery.search.FileSearch;
-import org.sleuthkit.autopsy.discovery.search.FileSearchData.FileType;
+import org.sleuthkit.autopsy.discovery.search.SearchData.Type;
 import org.sleuthkit.autopsy.discovery.search.FileSorter;
 
 /**
@@ -42,11 +42,11 @@ import org.sleuthkit.autopsy.discovery.search.FileSorter;
 final class GroupListPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
-    private FileType fileType = null;
+    private Type type = null;
     private Map<GroupKey, Integer> groupMap = null;
     private List<AbstractFilter> searchfilters;
     private FileSearch.AttributeType groupingAttribute;
-    private FileGroup.GroupSortingAlgorithm groupSort;
+    private Group.GroupSortingAlgorithm groupSort;
     private FileSorter.SortingMethod fileSortMethod;
     private GroupKey selectedGroupKey;
 
@@ -64,7 +64,7 @@ final class GroupListPanel extends javax.swing.JPanel {
      */
     @Subscribe
     void handleSearchStartedEvent(DiscoveryEventUtils.SearchStartedEvent searchStartedEvent) {
-        fileType = searchStartedEvent.getFileType();
+        type = searchStartedEvent.getType();
         groupKeyList.setListData(new GroupKey[0]);
     }
 
@@ -175,7 +175,7 @@ final class GroupListPanel extends javax.swing.JPanel {
                     if (selectedGroup.equals(groupKey)) {
                         selectedGroupKey = groupKey;
                         DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.GroupSelectedEvent(
-                                searchfilters, groupingAttribute, groupSort, fileSortMethod, selectedGroupKey, groupMap.get(selectedGroupKey), fileType));
+                                searchfilters, groupingAttribute, groupSort, fileSortMethod, selectedGroupKey, groupMap.get(selectedGroupKey), type));
                         break;
                     }
                 }

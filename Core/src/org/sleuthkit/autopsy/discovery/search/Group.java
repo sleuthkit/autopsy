@@ -26,9 +26,9 @@ import org.openide.util.NbBundle.Messages;
 /**
  * Class for storing files that belong to a particular group.
  */
-public class FileGroup implements Comparable<FileGroup> {
+public class Group implements Comparable<Group> {
 
-    private final FileGroup.GroupSortingAlgorithm groupSortingType;
+    private final Group.GroupSortingAlgorithm groupSortingType;
     private final DiscoveryKeyUtils.GroupKey groupKey;
     private final List<ResultFile> files;
     private final String displayName;
@@ -39,7 +39,7 @@ public class FileGroup implements Comparable<FileGroup> {
      * @param groupSortingType The method for sorting the group
      * @param groupKey         The GroupKey for this group
      */
-    public FileGroup(FileGroup.GroupSortingAlgorithm groupSortingType, DiscoveryKeyUtils.GroupKey groupKey) {
+    public Group(Group.GroupSortingAlgorithm groupSortingType, DiscoveryKeyUtils.GroupKey groupKey) {
         this.groupSortingType = groupSortingType;
         this.groupKey = groupKey;
         files = new ArrayList<>();
@@ -95,7 +95,7 @@ public class FileGroup implements Comparable<FileGroup> {
      *         otherwise
      */
     @Override
-    public int compareTo(FileGroup otherGroup) {
+    public int compareTo(Group otherGroup) {
 
         switch (groupSortingType) {
             case BY_GROUP_SIZE:
@@ -114,7 +114,7 @@ public class FileGroup implements Comparable<FileGroup> {
      *
      * @return -1 if group1 should be displayed before group2, 1 otherwise
      */
-    private static int compareGroupsByGroupKey(FileGroup group1, FileGroup group2) {
+    private static int compareGroupsByGroupKey(Group group1, Group group2) {
         return group1.getGroupKey().compareTo(group2.getGroupKey());
     }
 
@@ -127,7 +127,7 @@ public class FileGroup implements Comparable<FileGroup> {
      *
      * @return -1 if group1 should be displayed before group2, 1 otherwise
      */
-    private static int compareGroupsBySize(FileGroup group1, FileGroup group2) {
+    private static int compareGroupsBySize(Group group1, Group group2) {
         if (group1.getFiles().size() != group2.getFiles().size()) {
             return -1 * Long.compare(group1.getFiles().size(), group2.getFiles().size()); // High to low
         } else {

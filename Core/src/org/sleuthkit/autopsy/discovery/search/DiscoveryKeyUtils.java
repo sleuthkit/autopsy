@@ -53,7 +53,7 @@ public class DiscoveryKeyUtils {
          */
         SearchKey(String userName, List<AbstractFilter> filters,
                 FileSearch.AttributeType groupAttributeType,
-                FileGroup.GroupSortingAlgorithm groupSortingType,
+                Group.GroupSortingAlgorithm groupSortingType,
                 FileSorter.SortingMethod fileSortingMethod) {
             StringBuilder searchStringBuilder = new StringBuilder();
             searchStringBuilder.append(userName);
@@ -153,13 +153,13 @@ public class DiscoveryKeyUtils {
      */
     static class FileSizeGroupKey extends GroupKey {
 
-        private final FileSearchData.FileSize fileSize;
+        private final SearchData.FileSize fileSize;
 
         FileSizeGroupKey(ResultFile file) {
-            if (file.getFileType() == FileSearchData.FileType.VIDEO) {
-                fileSize = FileSearchData.FileSize.fromVideoSize(file.getFirstInstance().getSize());
+            if (file.getFileType() == SearchData.Type.VIDEO) {
+                fileSize = SearchData.FileSize.fromVideoSize(file.getFirstInstance().getSize());
             } else {
-                fileSize = FileSearchData.FileSize.fromImageSize(file.getFirstInstance().getSize());
+                fileSize = SearchData.FileSize.fromImageSize(file.getFirstInstance().getSize());
             }
         }
 
@@ -200,7 +200,7 @@ public class DiscoveryKeyUtils {
         /**
          * @return the fileSize
          */
-        FileSearchData.FileSize getFileSize() {
+        SearchData.FileSize getFileSize() {
             return fileSize;
         }
     }
@@ -210,7 +210,7 @@ public class DiscoveryKeyUtils {
      */
     static class FileTypeGroupKey extends GroupKey {
 
-        private final FileSearchData.FileType fileType;
+        private final SearchData.Type fileType;
 
         FileTypeGroupKey(ResultFile file) {
             fileType = file.getFileType();
@@ -253,7 +253,7 @@ public class DiscoveryKeyUtils {
         /**
          * @return the fileType
          */
-        FileSearchData.FileType getFileType() {
+        SearchData.Type getFileType() {
             return fileType;
         }
     }
@@ -644,7 +644,7 @@ public class DiscoveryKeyUtils {
      */
     static class FrequencyGroupKey extends GroupKey {
 
-        private final FileSearchData.Frequency frequency;
+        private final SearchData.Frequency frequency;
 
         FrequencyGroupKey(ResultFile file) {
             frequency = file.getFrequency();
@@ -687,7 +687,7 @@ public class DiscoveryKeyUtils {
         /**
          * @return the frequency
          */
-        FileSearchData.Frequency getFrequency() {
+        SearchData.Frequency getFrequency() {
             return frequency;
         }
     }

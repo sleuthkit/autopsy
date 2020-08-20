@@ -59,10 +59,10 @@ public abstract class AbstractFilter {
      * @return The list of results that match this filter (and any that came
      *         before it)
      *
-     * @throws FileSearchException
+     * @throws DiscoveryException
      */
     public List<ResultFile> applyAlternateFilter(List<ResultFile> currentResults, SleuthkitCase caseDb,
-            CentralRepository centralRepoDb) throws FileSearchException {
+            CentralRepository centralRepoDb) throws DiscoveryException {
         return new ArrayList<>();
     }
 

@@ -21,10 +21,10 @@ package org.sleuthkit.autopsy.discovery.search;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
-import org.sleuthkit.autopsy.discovery.search.FileSearchData.FileSize;
-import org.sleuthkit.autopsy.discovery.search.FileSearchData.FileType;
-import org.sleuthkit.autopsy.discovery.search.FileSearchData.Frequency;
-import org.sleuthkit.autopsy.discovery.search.FileSearchData.Score;
+import org.sleuthkit.autopsy.discovery.search.SearchData.FileSize;
+import org.sleuthkit.autopsy.discovery.search.SearchData.Type;
+import org.sleuthkit.autopsy.discovery.search.SearchData.Frequency;
+import org.sleuthkit.autopsy.discovery.search.SearchData.Score;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -54,9 +54,9 @@ public class SearchFiltering {
      *
      * @return
      */
-    static List<ResultFile> runQueries(List<AbstractFilter> filters, SleuthkitCase caseDb, CentralRepository centralRepoDb) throws FileSearchException {
+    static List<ResultFile> runQueries(List<AbstractFilter> filters, SleuthkitCase caseDb, CentralRepository centralRepoDb) throws DiscoveryException {
         if (caseDb == null) {
-            throw new FileSearchException("Case DB parameter is null"); // NON-NLS
+            throw new DiscoveryException("Case DB parameter is null"); // NON-NLS
         }
         // Combine all the SQL queries from the filters into one query
         String combinedQuery = "";
@@ -71,12 +71,12 @@ public class SearchFiltering {
 
         if (combinedQuery.isEmpty()) {
             // The file search filter is required, so this should never be empty.
-            throw new FileSearchException("Selected filters do not include a case database query");
+            throw new DiscoveryException("Selected filters do not include a case database query");
         }
         try {
             return getResultList(filters, combinedQuery, caseDb, centralRepoDb);
         } catch (TskCoreException ex) {
-            throw new FileSearchException("Error querying case database", ex); // NON-NLS
+            throw new DiscoveryException("Error querying case database", ex); // NON-NLS
         }
     }
 
@@ -92,9 +92,9 @@ public class SearchFiltering {
      * @return An ArrayList of ResultFiles returned by the query.
      *
      * @throws TskCoreException
-     * @throws FileSearchException
+     * @throws DiscoveryException
      */
-    private static List<ResultFile> getResultList(List<AbstractFilter> filters, String combinedQuery, SleuthkitCase caseDb, CentralRepository centralRepoDb) throws TskCoreException, FileSearchException {
+    private static List<ResultFile> getResultList(List<AbstractFilter> filters, String combinedQuery, SleuthkitCase caseDb, CentralRepository centralRepoDb) throws TskCoreException, DiscoveryException {
         // Get all matching abstract files
         List<ResultFile> resultList = new ArrayList<>();
         List<AbstractFile> sqlResults = caseDb.findAllFilesWhere(combinedQuery);
@@ -431,14 +431,14 @@ public class SearchFiltering {
      */
     public static class FileTypeFilter extends AbstractFilter {
 
-        private final List<FileType> categories;
+        private final List<Type> categories;
 
         /**
          * Create the FileTypeFilter
          *
          * @param categories List of file types to filter on
          */
-        public FileTypeFilter(List<FileType> categories) {
+        public FileTypeFilter(List<Type> categories) {
             this.categories = categories;
         }
 
@@ -447,7 +447,7 @@ public class SearchFiltering {
          *
          * @param category the file type to filter on
          */
-        public FileTypeFilter(FileType category) {
+        public FileTypeFilter(Type category) {
             this.categories = new ArrayList<>();
             this.categories.add(category);
         }
@@ -455,7 +455,7 @@ public class SearchFiltering {
         @Override
         public String getWhereClause() {
             String queryStr = ""; // NON-NLS
-            for (FileType cat : categories) {
+            for (Type cat : categories) {
                 for (String type : cat.getMediaTypes()) {
                     if (!queryStr.isEmpty()) {
                         queryStr += ","; // NON-NLS
@@ -474,7 +474,7 @@ public class SearchFiltering {
         @Override
         public String getDesc() {
             String desc = "";
-            for (FileType cat : categories) {
+            for (Type cat : categories) {
                 if (!desc.isEmpty()) {
                     desc += Bundle.SearchFiltering_FileTypeFilter_or();
                 }
@@ -515,12 +515,12 @@ public class SearchFiltering {
 
         @Override
         public List<ResultFile> applyAlternateFilter(List<ResultFile> currentResults, SleuthkitCase caseDb,
-                CentralRepository centralRepoDb) throws FileSearchException {
+                CentralRepository centralRepoDb) throws DiscoveryException {
 
             // We have to have run some kind of SQL filter before getting to this point,
             // and should have checked afterward to see if the results were empty.
             if (currentResults.isEmpty()) {
-                throw new FileSearchException("Can not run on empty list"); // NON-NLS
+                throw new DiscoveryException("Can not run on empty list"); // NON-NLS
             }
 
             // Set the frequency for each file
@@ -835,16 +835,16 @@ public class SearchFiltering {
 
         @Override
         public List<ResultFile> applyAlternateFilter(List<ResultFile> currentResults, SleuthkitCase caseDb,
-                CentralRepository centralRepoDb) throws FileSearchException {
+                CentralRepository centralRepoDb) throws DiscoveryException {
 
             if (centralRepoDb == null) {
-                throw new FileSearchException("Can not run Previously Notable filter with null Central Repository DB"); // NON-NLS
+                throw new DiscoveryException("Can not run Previously Notable filter with null Central Repository DB"); // NON-NLS
             }
 
             // We have to have run some kind of SQL filter before getting to this point,
             // and should have checked afterward to see if the results were empty.
             if (currentResults.isEmpty()) {
-                throw new FileSearchException("Can not run on empty list"); // NON-NLS
+                throw new DiscoveryException("Can not run on empty list"); // NON-NLS
             }
 
             // The matching files
@@ -865,7 +865,7 @@ public class SearchFiltering {
                 }
                 return notableResults;
             } catch (CentralRepoException | CorrelationAttributeNormalizationException ex) {
-                throw new FileSearchException("Error querying central repository", ex); // NON-NLS
+                throw new DiscoveryException("Error querying central repository", ex); // NON-NLS
             }
         }
 
