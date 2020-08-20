@@ -27,7 +27,7 @@ import org.sleuthkit.autopsy.discovery.search.SearchData;
 final class DocumentFilterPanel extends AbstractFiltersPanel {
 
     private static final long serialVersionUID = 1L;
-    private static final SearchData.Type TYPE = SearchData.Type.DOCUMENTS;
+    private static final SearchData.Type TYPE = SearchData.Type.DOCUMENT;
 
     /**
      * Constructs a new DocumentFilterPanel.

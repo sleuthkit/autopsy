@@ -45,6 +45,7 @@ import org.sleuthkit.autopsy.discovery.search.Group;
 import org.sleuthkit.autopsy.discovery.search.FileSearch;
 import org.sleuthkit.autopsy.discovery.search.SearchData;
 import org.sleuthkit.autopsy.discovery.search.FileSorter;
+import org.sleuthkit.autopsy.discovery.search.Result;
 import org.sleuthkit.autopsy.discovery.search.ResultFile;
 import org.sleuthkit.autopsy.textsummarizer.TextSummary;
 
@@ -105,7 +106,7 @@ final class ResultsPanel extends javax.swing.JPanel {
             }
         });
         documentPreviewViewer.addListSelectionListener((e) -> {
-            if (resultType == SearchData.Type.DOCUMENTS) {
+            if (resultType == SearchData.Type.DOCUMENT) {
                 if (!e.getValueIsAdjusting()) {
                     //send populateMesage
                     DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.PopulateInstancesListEvent(getInstancesForSelected()));
@@ -131,7 +132,7 @@ final class ResultsPanel extends javax.swing.JPanel {
                     return videoThumbnailViewer.getInstancesForSelected();
                 case IMAGE:
                     return imageThumbnailViewer.getInstancesForSelected();
-                case DOCUMENTS:
+                case DOCUMENT:
                     return documentPreviewViewer.getInstancesForSelected();
                 default:
                     break;
@@ -176,9 +177,11 @@ final class ResultsPanel extends javax.swing.JPanel {
                         populateVideoViewer(pageRetrievedEvent.getSearchResults());
                         resultsViewerPanel.add(videoThumbnailViewer);
                         break;
-                    case DOCUMENTS:
+                    case DOCUMENT:
                         populateDocumentViewer(pageRetrievedEvent.getSearchResults());
                         resultsViewerPanel.add(documentPreviewViewer);
+                        break;
+                    case DOMAIN:
                         break;
                     default:
                         break;
@@ -217,9 +220,9 @@ final class ResultsPanel extends javax.swing.JPanel {
      *
      * @param files The list of ResultFiles to populate the video viewer with.
      */
-    synchronized void populateVideoViewer(List<ResultFile> files) {
-        for (ResultFile file : files) {
-            VideoThumbnailWorker thumbWorker = new VideoThumbnailWorker(file);
+    synchronized void populateVideoViewer(List<Result> results) {
+        for (Result result : results) {
+            VideoThumbnailWorker thumbWorker = new VideoThumbnailWorker((ResultFile) result);
             thumbWorker.execute();
             //keep track of thumb worker for possible cancelation 
             resultContentWorkers.add(thumbWorker);
@@ -232,9 +235,9 @@ final class ResultsPanel extends javax.swing.JPanel {
      *
      * @param files The list of ResultFiles to populate the image viewer with.
      */
-    synchronized void populateImageViewer(List<ResultFile> files) {
-        for (ResultFile file : files) {
-            ImageThumbnailWorker thumbWorker = new ImageThumbnailWorker(file);
+    synchronized void populateImageViewer(List<Result> results) {
+        for (Result result : results) {
+            ImageThumbnailWorker thumbWorker = new ImageThumbnailWorker((ResultFile) result);
             thumbWorker.execute();
             //keep track of thumb worker for possible cancelation 
             resultContentWorkers.add(thumbWorker);
@@ -247,9 +250,9 @@ final class ResultsPanel extends javax.swing.JPanel {
      *
      * @param files The list of ResultFiles to populate the image viewer with.
      */
-    synchronized void populateDocumentViewer(List<ResultFile> files) {
-        for (ResultFile file : files) {
-            DocumentPreviewWorker documentWorker = new DocumentPreviewWorker(file);
+    synchronized void populateDocumentViewer(List<Result> results) {
+        for (Result result : results) {
+            DocumentPreviewWorker documentWorker = new DocumentPreviewWorker((ResultFile) result);
             documentWorker.execute();
             //keep track of thumb worker for possible cancelation 
             resultContentWorkers.add(documentWorker);

@@ -1,25 +1,25 @@
+DiscoveryAttributes.GroupingAttributeType.datasource.displayName=Data Source
+DiscoveryAttributes.GroupingAttributeType.fileType.displayName=File Type
+DiscoveryAttributes.GroupingAttributeType.frequency.displayName=Past Occurrences
+DiscoveryAttributes.GroupingAttributeType.hash.displayName=Hash Set
+DiscoveryAttributes.GroupingAttributeType.interestingItem.displayName=Interesting Item
+DiscoveryAttributes.GroupingAttributeType.keywordList.displayName=Keyword
+DiscoveryAttributes.GroupingAttributeType.none.displayName=None
+DiscoveryAttributes.GroupingAttributeType.object.displayName=Object Detected
+DiscoveryAttributes.GroupingAttributeType.parent.displayName=Parent Folder
+DiscoveryAttributes.GroupingAttributeType.size.displayName=File Size
+DiscoveryAttributes.GroupingAttributeType.tag.displayName=Tag
+# {0} - Data source name
+# {1} - Data source ID
+DiscoveryKeyUtils.DataSourceGroupKey.datasourceAndID={0}(ID: {1})
+# {0} - Data source ID
+DiscoveryKeyUtils.DataSourceGroupKey.idOnly=Data source (ID: {0})
 DiscoveryKeyUtils.FileTagGroupKey.noSets=None
 DiscoveryKeyUtils.NoGroupingGroupKey.allFiles=All Files
 FileGroup.groupSortingAlgorithm.groupName.text=Group Name
 FileGroup.groupSortingAlgorithm.groupSize.text=Group Size
-# {0} - Data source name
-# {1} - Data source ID
-FileSearch.DataSourceGroupKey.datasourceAndID={0}(ID: {1})
-# {0} - Data source ID
-FileSearch.DataSourceGroupKey.idOnly=Data source (ID: {0})
 FileSearch.documentSummary.noBytes=No bytes read for document, unable to display preview.
 FileSearch.documentSummary.noPreview=No preview available.
-FileSearch.GroupingAttributeType.datasource.displayName=Data Source
-FileSearch.GroupingAttributeType.fileType.displayName=File Type
-FileSearch.GroupingAttributeType.frequency.displayName=Past Occurrences
-FileSearch.GroupingAttributeType.hash.displayName=Hash Set
-FileSearch.GroupingAttributeType.interestingItem.displayName=Interesting Item
-FileSearch.GroupingAttributeType.keywordList.displayName=Keyword
-FileSearch.GroupingAttributeType.none.displayName=None
-FileSearch.GroupingAttributeType.object.displayName=Object Detected
-FileSearch.GroupingAttributeType.parent.displayName=Parent Folder
-FileSearch.GroupingAttributeType.size.displayName=File Size
-FileSearch.GroupingAttributeType.tag.displayName=Tag
 FileSearch.HashHitsGroupKey.noHashHits=None
 FileSearch.InterestingItemGroupKey.noSets=None
 FileSearch.KeywordListGroupKey.noKeywords=None

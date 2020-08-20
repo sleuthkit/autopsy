@@ -324,9 +324,9 @@ public final class SearchData {
         "SearchData.FileType.Audio.displayName=Audio",
         "SearchData.FileType.Video.displayName=Video",
         "SearchData.FileType.Image.displayName=Image",
-        "SearchData.FileType.Documents.displayName=Documents",
-        "SearchData.FileType.Executables.displayName=Executables",
-        "SearchData.AttributeType.Domain.displayName=Domains",
+        "SearchData.FileType.Documents.displayName=Document",
+        "SearchData.FileType.Executables.displayName=Executable",
+        "SearchData.AttributeType.Domain.displayName=Domain",
         "SearchData.FileType.Other.displayName=Other/Unknown"})
     public enum Type {
 
@@ -334,7 +334,7 @@ public final class SearchData {
         AUDIO(1, Bundle.SearchData_FileType_Audio_displayName(), FileTypeUtils.FileTypeCategory.AUDIO.getMediaTypes(), new ArrayList<>()),
         VIDEO(2, Bundle.SearchData_FileType_Video_displayName(), FileTypeUtils.FileTypeCategory.VIDEO.getMediaTypes(), new ArrayList<>()),
         EXECUTABLE(3, Bundle.SearchData_FileType_Executables_displayName(), FileTypeUtils.FileTypeCategory.EXECUTABLE.getMediaTypes(),new ArrayList<>()),
-        DOCUMENTS(4, Bundle.SearchData_FileType_Documents_displayName(), DOCUMENT_MIME_TYPES, new ArrayList<>()),
+        DOCUMENT(4, Bundle.SearchData_FileType_Documents_displayName(), DOCUMENT_MIME_TYPES, new ArrayList<>()),
         DOMAIN(6, Bundle.SearchData_AttributeType_Domain_displayName(), new ArrayList<>(), DOMAIN_ARTIFACT_TYPES),
         OTHER(5, Bundle.SearchData_FileType_Other_displayName(), new ArrayList<>(), new ArrayList<>());
         

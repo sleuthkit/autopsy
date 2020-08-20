@@ -153,7 +153,7 @@ final class SizeFilterPanel extends AbstractDiscoveryFilterPanel {
                 case IMAGE:
                     sizes = FileSize.getDefaultSizeOptions();
                     break;
-                case DOCUMENTS:
+                case DOCUMENT:
                     sizes = FileSize.getDefaultSizeOptions();
                     break;
                 default:

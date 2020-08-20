@@ -28,6 +28,7 @@ DiscoveryUiUtility.terraBytes.text=TB
 # {0} - file name
 DiscoveryUiUtils.genVideoThumb.progress.text=extracting temporary file {0}
 DiscoveryUiUtils.isDeleted.text=All instances of file are deleted.
+DiscoveryUiUtils.resultsIncomplete.text=Discovery results may be incomplete
 # {0} - otherInstanceCount
 DocumentPanel.nameLabel.more.text=\ and {0} more
 DocumentPanel.noImageExtraction.text=0 of ? images
@@ -40,7 +41,6 @@ GroupsListPanel.noResults.title.text=No results found
 ImageThumbnailPanel.isDeleted.text=All instances of file are deleted.
 # {0} - otherInstanceCount
 ImageThumbnailPanel.nameLabel.more.text=\ and {0} more
-OpenDiscoveryAction.resultsIncomplete.text=Discovery results may be incomplete
 # {0} - currentPage
 # {1} - totalPages
 ResultsPanel.currentPage.displayValue=Page: {0} of {1}
