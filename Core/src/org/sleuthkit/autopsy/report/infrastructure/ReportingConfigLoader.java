@@ -29,6 +29,8 @@ import java.nio.file.Paths;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.logging.Level;
 import org.openide.util.io.NbObjectInputStream;
 import org.openide.util.io.NbObjectOutputStream;
@@ -218,6 +220,28 @@ final class ReportingConfigLoader {
                 throw new ReportConfigException("Unable to save module settings " + filePath, ex);
             }
         }
+    }
+    
+    /**
+     * Return a list of the names of the report profiles in the
+     * REPORT_CONFIG_FOLDER_PATH.
+     *
+     * @return Naturally ordered list of report profile names. If none were found
+     *         the list will be empty.
+     */
+    static synchronized Set<String> getListOfReportConfigs() {
+        File reportDirPath = new File(ReportingConfigLoader.REPORT_CONFIG_FOLDER_PATH);
+        Set<String> reportNameList = new TreeSet<>();
+
+        if (!reportDirPath.exists()) {
+            return reportNameList;
+        }
+
+        for (File file : reportDirPath.listFiles()) {
+            reportNameList.add(file.getName());
+        }
+
+        return reportNameList;
     }
 
 }

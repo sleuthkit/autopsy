@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019-2019 Basis Technology Corp.
+ * Copyright 2019-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -42,7 +42,6 @@ import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.casemodule.CaseDetails;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
-import static org.sleuthkit.autopsy.casemodule.CaseMetadata.getFileExtension;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import static org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS;
@@ -166,7 +165,7 @@ public class CommandLineIngestManager extends CommandLineManager{
                                     openCase(baseCaseName, rootOutputDirectory, caseType);
 
                                     String outputDirPath = getOutputDirPath(caseForJob);
-                                    OutputGenerator.saveCreateCaseOutput(caseForJob, outputDirPath, baseCaseName);
+                                        OutputGenerator.saveCreateCaseOutput(caseForJob, outputDirPath, baseCaseName);
                                 } catch (CaseActionException ex) {
                                     String baseCaseName = command.getInputs().get(CommandLineCommand.InputType.CASE_NAME.name());
                                     LOGGER.log(Level.SEVERE, "Error creating or opening case " + baseCaseName, ex);
@@ -290,10 +289,15 @@ public class CommandLineIngestManager extends CommandLineManager{
                                         String caseDirPath = inputs.get(CommandLineCommand.InputType.CASE_FOLDER_PATH.name());
                                         caseForJob = CommandLineIngestManager.this.openCase(caseDirPath);
                                     }
+                                    // generate reports
+                                    String reportName = inputs.get(CommandLineCommand.InputType.REPORT_PROFILE_NAME.name());
+                                    if (reportName == null) {
+                                        reportName = CommandLineIngestSettingsPanel.getDefaultReportingConfigName();
+                                    }
 
                                     // generate reports
                                     ReportProgressIndicator progressIndicator = new ReportProgressIndicator(new LoggingProgressIndicator());
-                                    ReportGenerator generator = new ReportGenerator(CommandLineIngestSettingsPanel.getReportingConfigName(), progressIndicator);
+                                    ReportGenerator generator = new ReportGenerator(reportName, progressIndicator);
                                     generator.generateReports();
                                 } catch (CaseActionException ex) {
                                     String caseDirPath = command.getInputs().get(CommandLineCommand.InputType.CASE_FOLDER_PATH.name());
@@ -343,7 +347,7 @@ public class CommandLineIngestManager extends CommandLineManager{
          * @param baseCaseName        Case name
          * @param rootOutputDirectory Full path to directory in which case
          *                            output folder will be created
-         * @param caseType            Type of case being created 
+         * @param caseType            Type of case being created
          *
          * @throws CaseActionException
          */
@@ -376,17 +380,11 @@ public class CommandLineIngestManager extends CommandLineManager{
          * @param caseForJob The case
          * @param dataSource The data source.
          *
-         * @throws
-         * AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorExceptioif
-         *                                                                     there
-         *                                                                     was
-         *                                                                     a
-         *                                                                     DSP
-         *                                                                     processing
-         *                                                                     error
+         * @throws AutoIngestDataSourceProcessorException if there was a DSP
+         * processing error.
          *
-         * @throws ead running the job processing task is interrupted while
-         * blocked, i.e., if auto ingest is shutting down.
+         * @throws InterruptedException running the job processing task while
+         * blocking, i.e., if auto ingest is shutting down.
          */
         private void runDataSourceProcessor(Case caseForJob, AutoIngestDataSource dataSource) throws InterruptedException, AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException {
 
