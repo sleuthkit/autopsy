@@ -24,7 +24,7 @@ import java.util.List;
 import javax.swing.Action;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.DeleteDataSourceAction;
-import org.sleuthkit.autopsy.casemodule.datasourcesummary.ViewSummaryInformationAction;
+import org.sleuthkit.autopsy.datasourcesummary.ui.ViewSummaryInformationAction;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.directorytree.ExportCSVAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
