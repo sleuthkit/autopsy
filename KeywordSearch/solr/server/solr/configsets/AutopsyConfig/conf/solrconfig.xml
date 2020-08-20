@@ -140,7 +140,7 @@
     -->
 	
     <!-- Maximum time to wait for a write lock (ms) for an IndexWriter. Default: 1000 -->
-     <writeLockTimeout>1000</writeLockTimeout>  
+     <writeLockTimeout>10000</writeLockTimeout>  
 
     <!-- Expert: Enabling compound file will use less files for the index, 
          using fewer file descriptors on the expense of performance decrease. 
@@ -299,7 +299,7 @@
          searcher to be opened to make those changes visible.
       -->
      <autoCommit> 
-       <maxTime>3000000</maxTime>
+       <maxTime>300000</maxTime>
 	   <!-- maxDocs>15000</maxDocs --> 
        <openSearcher>true</openSearcher> 
      </autoCommit>

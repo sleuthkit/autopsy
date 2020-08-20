@@ -73,6 +73,7 @@ import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.util.NamedList;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.modules.Places;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -1879,6 +1880,7 @@ public class Server {
         
         private ScheduledThreadPoolExecutor periodicTasksExecutor = null;
         private static final long PERIODIC_BATCH_SEND_INTERVAL_MINUTES = 10;
+        private static final int NUM_BATCH_UPDATE_RETRIES = 10;
 
         private Collection(String name, Case theCase, Index index) throws TimeoutException, InterruptedException, SolrServerException, IOException {
             this.name = name;
@@ -1889,7 +1891,8 @@ public class Server {
             if (caseType == CaseType.SINGLE_USER_CASE) {
                 // get SolrJ client
                 queryClient = getSolrClient("http://localhost:" + localSolrServerPort + "/solr/" + name); // HttpClient
-                indexingClient = getConcurrentClient("http://localhost:" + localSolrServerPort + "/solr/" + name); // ConcurrentClient
+                indexingClient = getSolrClient("http://localhost:" + localSolrServerPort + "/solr/" + name); // HttpClient
+                // ELTODO indexingClient = getConcurrentClient("http://localhost:" + localSolrServerPort + "/solr/" + name); // ConcurrentClient
             } else {
                 // read Solr connection info from user preferences, unless "solrserver.txt" is present
                 queryClient = configureMultiUserConnection(theCase, index, name);
@@ -1996,13 +1999,13 @@ public class Server {
                 throw new SolrServerException(NbBundle.getMessage(this.getClass(), "Server.commit.exception.msg"), ex);
             }
 
-            try {
+            /* ELTODO try {
                 //commit and block
                 indexingClient.commit(true, true);
             } catch (IOException e) {
                 logger.log(Level.WARNING, "Could not commit index. ", e); //NON-NLS
                 throw new SolrServerException(NbBundle.getMessage(this.getClass(), "Server.commit.exception.msg"), e);
-            }
+            }*/
         }
 
         private void deleteDataSource(Long dsObjId) throws IOException, SolrServerException {
@@ -2047,13 +2050,50 @@ public class Server {
          *
          * @throws KeywordSearchModuleException
          */
-        private void sendBufferedDocs(List<SolrInputDocument> docBuffer) throws KeywordSearchModuleException {
+        // ELTODO SYNCHRONIZATION
+        private synchronized void sendBufferedDocs(List<SolrInputDocument> docBuffer) throws KeywordSearchModuleException {
             
             if (docBuffer.isEmpty()) {
                 return;
             }
-            
+
             try {
+                boolean doRetry = false;
+                for (int reTryAttempt = 0; reTryAttempt < NUM_BATCH_UPDATE_RETRIES; reTryAttempt++) {
+                    try {
+                        doRetry = false;
+                        indexingClient.add(docBuffer);
+                    } catch (Exception ex) {
+                        if (reTryAttempt >= NUM_BATCH_UPDATE_RETRIES) {
+                            logger.log(Level.SEVERE, "Could not add buffered documents to index", ex); //NON-NLS
+                            throw new KeywordSearchModuleException(
+                                    NbBundle.getMessage(this.getClass(), "Server.addDocBatch.exception.msg"), ex); //NON-NLS
+                        } else {
+                            logger.log(Level.SEVERE, "Unable to send document batch to Solr. Re-trying...", ex); //NON-NLS
+                            try {
+                                Thread.sleep(10000L);
+                            } catch (InterruptedException ex1) {
+                                throw new KeywordSearchModuleException(
+                                    NbBundle.getMessage(this.getClass(), "Server.addDocBatch.exception.msg"), ex1); //NON-NLS
+                            }
+                            doRetry = true;
+                        }
+                    }
+                    if (!doRetry) {
+                        if (reTryAttempt > 0) {
+                            logger.log(Level.INFO, "Batch update suceeded after {0} re-try", reTryAttempt); //NON-NLS
+                        }
+                        return;
+                    }
+                }
+                // if we are here, it means all re-try attempts failed
+                logger.log(Level.SEVERE, "Unable to send document batch to Solr. All re-try attempts failed!"); //NON-NLS
+            } finally {
+                docBuffer.clear();
+            }
+        
+
+            /* ELTODO try {
                 indexingClient.add(docBuffer);
             } catch (SolrServerException | RemoteSolrException | IOException ex) {
                 logger.log(Level.SEVERE, "Could not add buffered documents to index", ex); //NON-NLS
@@ -2061,7 +2101,7 @@ public class Server {
                         NbBundle.getMessage(this.getClass(), "Server.addDocBatch.exception.msg"), ex); //NON-NLS
             } finally {
                 docBuffer.clear();
-            }
+            }*/
         }
 
         /**

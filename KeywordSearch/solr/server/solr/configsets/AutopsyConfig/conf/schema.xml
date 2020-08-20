@@ -64,6 +64,8 @@
            content_str will be populated with lowercase content by Autopsy.
        2.2 added text_ja type, content_ja and language fields to support Japanese text search
      -->
+	 
+	<schemaFactory class="ClassicIndexSchemaFactory"/>
 
   <types>
     <!-- field type definitions. The "name" attribute is
