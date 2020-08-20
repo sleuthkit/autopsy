@@ -36,7 +36,7 @@ import org.openide.windows.RetainLocation;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.discovery.FileSearchFiltering.FileFilter;
+import org.sleuthkit.autopsy.discovery.SearchData.ResultType;
 
 /**
  * Create a dialog for displaying the Discovery results.
@@ -278,12 +278,19 @@ public final class DiscoveryTopComponent extends TopComponent {
      */
     @Messages({"DiscoveryTopComponent.cancelButton.text=Cancel Search",
         "# {0} - searchType",
-        "DiscoveryTopComponent.searchInProgress.text=Performing search for results of type {0}. Please wait."})
+        "DiscoveryTopComponent.searchInProgress.text=Performing search for results of type {0}. Please wait.",
+        "DiscoveryTopComponent.searchError.text=Error no type specified for search."})
     @Subscribe
     void handleSearchStartedEvent(DiscoveryEventUtils.SearchStartedEvent searchStartedEvent) {
         newSearchButton.setText(Bundle.DiscoveryTopComponent_cancelButton_text());
         progressMessageTextArea.setForeground(Color.red);
-        progressMessageTextArea.setText(Bundle.DiscoveryTopComponent_searchInProgress_text(searchStartedEvent.getType().name()));
+        String text = Bundle.DiscoveryTopComponent_searchError_text();
+        if (searchStartedEvent.getResultType() == ResultType.FILE) {
+            text = Bundle.DiscoveryTopComponent_searchInProgress_text(searchStartedEvent.getFileType().name());
+        } else if (searchStartedEvent.getResultType() == ResultType.ATTRIBUTE) {
+            text = Bundle.DiscoveryTopComponent_searchInProgress_text(searchStartedEvent.getAttributeType().name());
+        }
+        progressMessageTextArea.setText(text);
     }
 
     /**
@@ -299,7 +306,7 @@ public final class DiscoveryTopComponent extends TopComponent {
     void handleSearchCompleteEvent(DiscoveryEventUtils.SearchCompleteEvent searchCompleteEvent) {
         newSearchButton.setText(Bundle.DiscoveryTopComponent_newSearch_text());
         progressMessageTextArea.setForeground(Color.black);
-        progressMessageTextArea.setText(Bundle.DiscoveryTopComponent_searchComplete_text(searchCompleteEvent.getFilters().stream().map(FileFilter::getDesc).collect(Collectors.joining("; "))));
+        progressMessageTextArea.setText(Bundle.DiscoveryTopComponent_searchComplete_text(searchCompleteEvent.getFilters().stream().map(AbstractFilter::getDesc).collect(Collectors.joining("; "))));
         progressMessageTextArea.setCaretPosition(0);
     }
 

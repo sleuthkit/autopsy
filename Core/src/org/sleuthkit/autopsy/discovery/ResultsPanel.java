@@ -51,7 +51,7 @@ final class ResultsPanel extends javax.swing.JPanel {
     private final VideoThumbnailViewer videoThumbnailViewer;
     private final ImageThumbnailViewer imageThumbnailViewer;
     private final DocumentPreviewViewer documentPreviewViewer;
-    private List<FileSearchFiltering.FileFilter> searchFilters;
+    private List<AbstractFilter> searchFilters;
     private FileSearch.AttributeType groupingAttribute;
     private FileGroup.GroupSortingAlgorithm groupSort;
     private FileSorter.SortingMethod fileSortMethod;

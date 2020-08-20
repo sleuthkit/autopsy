@@ -22,8 +22,10 @@ import com.google.common.eventbus.EventBus;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import org.sleuthkit.autopsy.discovery.AttributeSearchData.AttributeType;
 import org.sleuthkit.autopsy.discovery.FileSearch.GroupKey;
 import org.sleuthkit.autopsy.discovery.FileSearchData.FileType;
+import org.sleuthkit.autopsy.discovery.SearchData.ResultType;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
@@ -54,15 +56,28 @@ final class DiscoveryEventUtils {
      */
     static final class SearchStartedEvent {
 
+        private final ResultType resultType;
         private final FileType fileType;
+        private final AttributeType attributeType;
 
         /**
          * Construct a new SearchStartedEvent
          *
          * @param type The type of file the search event is for.
          */
-        SearchStartedEvent(FileType type) {
-            this.fileType = type;
+        SearchStartedEvent(ResultType resultType, FileType fileType, AttributeType attributeType) {
+            this.resultType = resultType;
+            this.fileType = fileType;
+            this.attributeType = attributeType;
+        }
+
+        /**
+         * Get the broad search type.
+         *
+         * @return The result type, either FILES, or ATTRIBUTES.
+         */
+        ResultType getResultType() {
+            return resultType;
         }
 
         /**
@@ -70,8 +85,17 @@ final class DiscoveryEventUtils {
          *
          * @return The type of files being searched for.
          */
-        FileType getType() {
+        FileType getFileType() {
             return fileType;
+        }
+
+        /**
+         * Get the type of attribute the search is being performed for.
+         *
+         * @return The type of attribute being searched for.
+         */
+        AttributeType getAttributeType() {
+            return attributeType;
         }
     }
 
@@ -116,7 +140,7 @@ final class DiscoveryEventUtils {
     static final class SearchCompleteEvent {
 
         private final Map<GroupKey, Integer> groupMap;
-        private final List<FileSearchFiltering.FileFilter> searchFilters;
+        private final List<AbstractFilter> searchFilters;
         private final FileSearch.AttributeType groupingAttribute;
         private final FileGroup.GroupSortingAlgorithm groupSort;
         private final FileSorter.SortingMethod fileSortMethod;
@@ -132,7 +156,7 @@ final class DiscoveryEventUtils {
          * @param groupSort         The sorting algorithm used for groups.
          * @param fileSortMethod    The sorting method used for files.
          */
-        SearchCompleteEvent(Map<GroupKey, Integer> groupMap, List<FileSearchFiltering.FileFilter> searchfilters,
+        SearchCompleteEvent(Map<GroupKey, Integer> groupMap, List<AbstractFilter> searchfilters,
                 FileSearch.AttributeType groupingAttribute, FileGroup.GroupSortingAlgorithm groupSort,
                 FileSorter.SortingMethod fileSortMethod) {
             this.groupMap = groupMap;
@@ -156,7 +180,7 @@ final class DiscoveryEventUtils {
          *
          * @return The search filters which were used by the search.
          */
-        List<FileSearchFiltering.FileFilter> getFilters() {
+        List<AbstractFilter> getFilters() {
             return Collections.unmodifiableList(searchFilters);
         }
 
@@ -275,7 +299,7 @@ final class DiscoveryEventUtils {
         private final FileType resultType;
         private final GroupKey groupKey;
         private final int groupSize;
-        private final List<FileSearchFiltering.FileFilter> searchfilters;
+        private final List<AbstractFilter> searchfilters;
         private final FileSearch.AttributeType groupingAttribute;
         private final FileGroup.GroupSortingAlgorithm groupSort;
         private final FileSorter.SortingMethod fileSortMethod;
@@ -294,7 +318,7 @@ final class DiscoveryEventUtils {
          *                          selected.
          * @param resultType        The type of files which exist in the group.
          */
-        GroupSelectedEvent(List<FileSearchFiltering.FileFilter> searchfilters,
+        GroupSelectedEvent(List<AbstractFilter> searchfilters,
                 FileSearch.AttributeType groupingAttribute, FileGroup.GroupSortingAlgorithm groupSort,
                 FileSorter.SortingMethod fileSortMethod, GroupKey groupKey, int groupSize, FileType resultType) {
             this.searchfilters = searchfilters;
@@ -358,7 +382,7 @@ final class DiscoveryEventUtils {
          *
          * @return The search filters which were used by the search.
          */
-        List<FileSearchFiltering.FileFilter> getFilters() {
+        List<AbstractFilter> getFilters() {
             return Collections.unmodifiableList(searchfilters);
         }
 

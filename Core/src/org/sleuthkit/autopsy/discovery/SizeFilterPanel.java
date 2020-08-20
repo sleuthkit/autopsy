@@ -178,9 +178,9 @@ final class SizeFilterPanel extends AbstractDiscoveryFilterPanel {
     }
 
     @Override
-    FileSearchFiltering.FileFilter getFilter() {
+    AbstractFilter getFilter() {
         if (sizeCheckbox.isSelected()) {
-            return new FileSearchFiltering.SizeFilter(sizeList.getSelectedValuesList());
+            return new SearchFiltering.SizeFilter(sizeList.getSelectedValuesList());
         }
         return null;
     }

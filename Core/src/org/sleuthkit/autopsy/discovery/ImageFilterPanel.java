@@ -103,4 +103,14 @@ final class ImageFilterPanel extends AbstractFiltersPanel {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JSplitPane imageFiltersSplitPane;
     // End of variables declaration//GEN-END:variables
+
+    @Override
+    SearchData.ResultType getResultType() {
+        return SearchData.ResultType.FILE;
+    }
+
+    @Override
+    AttributeSearchData.AttributeType getArtifactType() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
 }

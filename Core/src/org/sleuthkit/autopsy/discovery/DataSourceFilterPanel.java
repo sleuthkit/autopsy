@@ -140,6 +140,7 @@ final class DataSourceFilterPanel extends AbstractDiscoveryFilterPanel {
             dsListModel.removeAllElements();
             for (DataSource ds : Case.getCurrentCase().getSleuthkitCase().getDataSources()) {
                 dsListModel.add(count, new DataSourceItem(ds));
+                count++;
             }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error loading data sources", ex);
@@ -194,10 +195,10 @@ final class DataSourceFilterPanel extends AbstractDiscoveryFilterPanel {
     }
 
     @Override
-    FileSearchFiltering.FileFilter getFilter() {
+    AbstractFilter getFilter() {
         if (dataSourceCheckbox.isSelected()) {
             List<DataSource> dataSources = dataSourceList.getSelectedValuesList().stream().map(t -> t.getDataSource()).collect(Collectors.toList());
-            return new FileSearchFiltering.DataSourceFilter(dataSources);
+            return new SearchFiltering.DataSourceFilter(dataSources);
         }
         return null;
     }

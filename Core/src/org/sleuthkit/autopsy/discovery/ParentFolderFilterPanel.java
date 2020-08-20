@@ -24,7 +24,7 @@ import javax.swing.DefaultListModel;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
-import org.sleuthkit.autopsy.discovery.FileSearchFiltering.ParentSearchTerm;
+import org.sleuthkit.autopsy.discovery.SearchFiltering.ParentSearchTerm;
 
 /**
  * Panel to allow configuration of the Parent Folder filter.
@@ -32,7 +32,7 @@ import org.sleuthkit.autopsy.discovery.FileSearchFiltering.ParentSearchTerm;
 final class ParentFolderFilterPanel extends AbstractDiscoveryFilterPanel {
 
     private static final long serialVersionUID = 1L;
-    private DefaultListModel<FileSearchFiltering.ParentSearchTerm> parentListModel;
+    private DefaultListModel<SearchFiltering.ParentSearchTerm> parentListModel;
     private static final String[] DEFAULT_IGNORED_PATHS = {"/Windows/", "/Program Files/"}; //NON-NLS
 
     /**
@@ -49,7 +49,7 @@ final class ParentFolderFilterPanel extends AbstractDiscoveryFilterPanel {
     private void setUpParentPathFilter() {
         fullRadioButton.setSelected(true);
         includeRadioButton.setSelected(true);
-        parentListModel = (DefaultListModel<FileSearchFiltering.ParentSearchTerm>) parentList.getModel();
+        parentListModel = (DefaultListModel<SearchFiltering.ParentSearchTerm>) parentList.getModel();
         for (String ignorePath : DEFAULT_IGNORED_PATHS) {
             parentListModel.add(parentListModel.size(), new ParentSearchTerm(ignorePath, false, false));
         }
@@ -291,8 +291,8 @@ final class ParentFolderFilterPanel extends AbstractDiscoveryFilterPanel {
      *
      * @return The list of entered ParentSearchTerm objects
      */
-    private List<FileSearchFiltering.ParentSearchTerm> getParentPaths() {
-        List<FileSearchFiltering.ParentSearchTerm> results = new ArrayList<>();
+    private List<SearchFiltering.ParentSearchTerm> getParentPaths() {
+        List<SearchFiltering.ParentSearchTerm> results = new ArrayList<>();
         for (int i = 0; i < parentListModel.getSize(); i++) {
             results.add(parentListModel.get(i));
         }
@@ -305,9 +305,9 @@ final class ParentFolderFilterPanel extends AbstractDiscoveryFilterPanel {
     }
 
     @Override
-    FileSearchFiltering.FileFilter getFilter() {
+    AbstractFilter getFilter() {
         if (parentCheckbox.isSelected()) {
-            return new FileSearchFiltering.ParentFilter(getParentPaths());
+            return new SearchFiltering.ParentFilter(getParentPaths());
         }
         return null;
     }

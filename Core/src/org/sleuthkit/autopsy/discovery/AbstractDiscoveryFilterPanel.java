@@ -90,12 +90,12 @@ abstract class AbstractDiscoveryFilterPanel extends javax.swing.JPanel {
     }
 
     /**
-     * Get the FileFilter which is represented by this Panel.
+     * Get the AbstractFilter which is represented by this Panel.
      *
-     * @return The FileFilter for the selected settings, null if the settings
+     * @return The AbstractFilter for the selected settings, null if the settings
      *         are not in use.
      */
-    abstract FileSearchFiltering.FileFilter getFilter();
+    abstract AbstractFilter getFilter();
 
     /**
      * Remove listeners from the checkbox and the list if they exist.

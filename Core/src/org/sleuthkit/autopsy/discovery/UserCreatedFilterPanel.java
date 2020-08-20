@@ -98,9 +98,9 @@ final class UserCreatedFilterPanel extends AbstractDiscoveryFilterPanel {
     }
 
     @Override
-    FileSearchFiltering.FileFilter getFilter() {
+    AbstractFilter getFilter() {
         if (userCreatedCheckbox.isSelected()) {
-            return new FileSearchFiltering.UserCreatedFilter();
+            return new SearchFiltering.UserCreatedFilter();
         }
         return null;
     }

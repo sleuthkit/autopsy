@@ -42,7 +42,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 /**
  * Run various filters to return a subset of files from the current case.
  */
-class FileSearchFiltering {
+class SearchFiltering {
 
     /**
      * Run the given filters to get a list of matching files.
@@ -54,13 +54,13 @@ class FileSearchFiltering {
      *
      * @return
      */
-    static List<ResultFile> runQueries(List<FileFilter> filters, SleuthkitCase caseDb, CentralRepository centralRepoDb) throws FileSearchException {
+    static List<ResultFile> runQueries(List<AbstractFilter> filters, SleuthkitCase caseDb, CentralRepository centralRepoDb) throws FileSearchException {
         if (caseDb == null) {
             throw new FileSearchException("Case DB parameter is null"); // NON-NLS
         }
         // Combine all the SQL queries from the filters into one query
         String combinedQuery = "";
-        for (FileFilter filter : filters) {
+        for (AbstractFilter filter : filters) {
             if (!filter.getWhereClause().isEmpty()) {
                 if (!combinedQuery.isEmpty()) {
                     combinedQuery += " AND "; // NON-NLS
@@ -94,7 +94,7 @@ class FileSearchFiltering {
      * @throws TskCoreException
      * @throws FileSearchException
      */
-    private static List<ResultFile> getResultList(List<FileFilter> filters, String combinedQuery, SleuthkitCase caseDb, CentralRepository centralRepoDb) throws TskCoreException, FileSearchException {
+    private static List<ResultFile> getResultList(List<AbstractFilter> filters, String combinedQuery, SleuthkitCase caseDb, CentralRepository centralRepoDb) throws TskCoreException, FileSearchException {
         // Get all matching abstract files
         List<ResultFile> resultList = new ArrayList<>();
         List<AbstractFile> sqlResults = caseDb.findAllFilesWhere(combinedQuery);
@@ -110,7 +110,7 @@ class FileSearchFiltering {
         }
 
         // Now run any non-SQL filters. 
-        for (FileFilter filter : filters) {
+        for (AbstractFilter filter : filters) {
             if (filter.useAlternateFilter()) {
                 resultList = filter.applyAlternateFilter(resultList, caseDb, centralRepoDb);
             }
@@ -123,60 +123,9 @@ class FileSearchFiltering {
     }
 
     /**
-     * Base class for the filters.
-     */
-    static abstract class FileFilter {
-
-        /**
-         * Returns part of a query on the tsk_files table that can be AND-ed
-         * with other pieces
-         *
-         * @return the SQL query or an empty string if there is no SQL query for
-         *         this filter.
-         */
-        abstract String getWhereClause();
-
-        /**
-         * Indicates whether this filter needs to use the secondary, non-SQL
-         * method applyAlternateFilter().
-         *
-         * @return false by default
-         */
-        boolean useAlternateFilter() {
-            return false;
-        }
-
-        /**
-         * Run a secondary filter that does not operate on tsk_files.
-         *
-         * @param currentResults The current list of matching files; empty if no
-         *                       filters have yet been run.
-         * @param caseDb         The case database
-         * @param centralRepoDb  The central repo database. Can be null if the
-         *                       filter does not require it.
-         *
-         * @return The list of files that match this filter (and any that came
-         *         before it)
-         *
-         * @throws FileSearchException
-         */
-        List<ResultFile> applyAlternateFilter(List<ResultFile> currentResults, SleuthkitCase caseDb,
-                CentralRepository centralRepoDb) throws FileSearchException {
-            return new ArrayList<>();
-        }
-
-        /**
-         * Get a description of the selected filter.
-         *
-         * @return A description of the filter
-         */
-        abstract String getDesc();
-    }
-
-    /**
      * A filter for specifying the file size
      */
-    static class SizeFilter extends FileFilter {
+    static class SizeFilter extends AbstractFilter {
 
         private final List<FileSize> fileSizes;
 
@@ -207,18 +156,18 @@ class FileSearchFiltering {
 
         @NbBundle.Messages({
             "# {0} - filters",
-            "FileSearchFiltering.SizeFilter.desc=Size(s): {0}",
-            "FileSearchFiltering.SizeFilter.or=, "})
+            "SearchFiltering.SizeFilter.desc=Size(s): {0}",
+            "SearchFiltering.SizeFilter.or=, "})
         @Override
         String getDesc() {
             String desc = ""; // NON-NLS
             for (FileSize size : fileSizes) {
                 if (!desc.isEmpty()) {
-                    desc += Bundle.FileSearchFiltering_SizeFilter_or();
+                    desc += Bundle.SearchFiltering_SizeFilter_or();
                 }
                 desc += size.getSizeGroup();
             }
-            desc = Bundle.FileSearchFiltering_SizeFilter_desc(desc);
+            desc = Bundle.SearchFiltering_SizeFilter_desc(desc);
             return desc;
         }
     }
@@ -271,22 +220,22 @@ class FileSearchFiltering {
         }
 
         @NbBundle.Messages({
-            "FileSearchFiltering.ParentSearchTerm.fullString= (exact)",
-            "FileSearchFiltering.ParentSearchTerm.subString= (substring)",
-            "FileSearchFiltering.ParentSearchTerm.includeString= (include)",
-            "FileSearchFiltering.ParentSearchTerm.excludeString= (exclude)",})
+            "SearchFiltering.ParentSearchTerm.fullString= (exact)",
+            "SearchFiltering.ParentSearchTerm.subString= (substring)",
+            "SearchFiltering.ParentSearchTerm.includeString= (include)",
+            "SearchFiltering.ParentSearchTerm.excludeString= (exclude)",})
         @Override
         public String toString() {
             String returnString = getSearchStr();
             if (isFullPath()) {
-                returnString += Bundle.FileSearchFiltering_ParentSearchTerm_fullString();
+                returnString += Bundle.SearchFiltering_ParentSearchTerm_fullString();
             } else {
-                returnString += Bundle.FileSearchFiltering_ParentSearchTerm_subString();
+                returnString += Bundle.SearchFiltering_ParentSearchTerm_subString();
             }
             if (isIncluded()) {
-                returnString += Bundle.FileSearchFiltering_ParentSearchTerm_includeString();
+                returnString += Bundle.SearchFiltering_ParentSearchTerm_includeString();
             } else {
-                returnString += Bundle.FileSearchFiltering_ParentSearchTerm_excludeString();
+                returnString += Bundle.SearchFiltering_ParentSearchTerm_excludeString();
             }
             return returnString;
         }
@@ -316,7 +265,7 @@ class FileSearchFiltering {
     /**
      * A filter for specifying parent path (either full path or substring)
      */
-    static class ParentFilter extends FileFilter {
+    static class ParentFilter extends AbstractFilter {
 
         private final List<ParentSearchTerm> parentSearchTerms;
 
@@ -361,31 +310,31 @@ class FileSearchFiltering {
 
         @NbBundle.Messages({
             "# {0} - filters",
-            "FileSearchFiltering.ParentFilter.desc=Paths matching: {0}",
-            "FileSearchFiltering.ParentFilter.or=, ",
-            "FileSearchFiltering.ParentFilter.exact=(exact match)",
-            "FileSearchFiltering.ParentFilter.substring=(substring)",
-            "FileSearchFiltering.ParentFilter.included=(included)",
-            "FileSearchFiltering.ParentFilter.excluded=(excluded)"})
+            "SearchFiltering.ParentFilter.desc=Paths matching: {0}",
+            "SearchFiltering.ParentFilter.or=, ",
+            "SearchFiltering.ParentFilter.exact=(exact match)",
+            "SearchFiltering.ParentFilter.substring=(substring)",
+            "SearchFiltering.ParentFilter.included=(included)",
+            "SearchFiltering.ParentFilter.excluded=(excluded)"})
         @Override
         String getDesc() {
             String desc = ""; // NON-NLS
             for (ParentSearchTerm searchTerm : parentSearchTerms) {
                 if (!desc.isEmpty()) {
-                    desc += Bundle.FileSearchFiltering_ParentFilter_or();
+                    desc += Bundle.SearchFiltering_ParentFilter_or();
                 }
                 if (searchTerm.isFullPath()) {
-                    desc += searchTerm.getSearchStr() + Bundle.FileSearchFiltering_ParentFilter_exact();
+                    desc += searchTerm.getSearchStr() + Bundle.SearchFiltering_ParentFilter_exact();
                 } else {
-                    desc += searchTerm.getSearchStr() + Bundle.FileSearchFiltering_ParentFilter_substring();
+                    desc += searchTerm.getSearchStr() + Bundle.SearchFiltering_ParentFilter_substring();
                 }
                 if (searchTerm.isIncluded()) {
-                    desc += Bundle.FileSearchFiltering_ParentFilter_included();                           
+                    desc += Bundle.SearchFiltering_ParentFilter_included();                           
                 } else {
-                    desc += Bundle.FileSearchFiltering_ParentFilter_excluded();
+                    desc += Bundle.SearchFiltering_ParentFilter_excluded();
                 }
             }
-            desc = Bundle.FileSearchFiltering_ParentFilter_desc(desc);
+            desc = Bundle.SearchFiltering_ParentFilter_desc(desc);
             return desc;
         }
     }
@@ -393,7 +342,7 @@ class FileSearchFiltering {
     /**
      * A filter for specifying data sources
      */
-    static class DataSourceFilter extends FileFilter {
+    static class DataSourceFilter extends AbstractFilter {
 
         private final List<DataSource> dataSources;
 
@@ -421,21 +370,21 @@ class FileSearchFiltering {
 
         @NbBundle.Messages({
             "# {0} - filters",
-            "FileSearchFiltering.DataSourceFilter.desc=Data source(s): {0}",
-            "FileSearchFiltering.DataSourceFilter.or=, ",
+            "SearchFiltering.DataSourceFilter.desc=Data source(s): {0}",
+            "SearchFiltering.DataSourceFilter.or=, ",
             "# {0} - Data source name",
             "# {1} - Data source ID",
-            "FileSearchFiltering.DataSourceFilter.datasource={0}({1})",})
+            "SearchFiltering.DataSourceFilter.datasource={0}({1})",})
         @Override
         String getDesc() {
             String desc = ""; // NON-NLS
             for (DataSource ds : dataSources) {
                 if (!desc.isEmpty()) {
-                    desc += Bundle.FileSearchFiltering_DataSourceFilter_or();
+                    desc += Bundle.SearchFiltering_DataSourceFilter_or();
                 }
-                desc += Bundle.FileSearchFiltering_DataSourceFilter_datasource(ds.getName(), ds.getId());
+                desc += Bundle.SearchFiltering_DataSourceFilter_datasource(ds.getName(), ds.getId());
             }
-            desc = Bundle.FileSearchFiltering_DataSourceFilter_desc(desc);
+            desc = Bundle.SearchFiltering_DataSourceFilter_desc(desc);
             return desc;
         }
     }
@@ -444,7 +393,7 @@ class FileSearchFiltering {
      * A filter for specifying keyword list names. A file must contain a keyword
      * from one of the given lists to pass.
      */
-    static class KeywordListFilter extends FileFilter {
+    static class KeywordListFilter extends AbstractFilter {
 
         private final List<String> listNames;
 
@@ -470,17 +419,17 @@ class FileSearchFiltering {
 
         @NbBundle.Messages({
             "# {0} - filters",
-            "FileSearchFiltering.KeywordListFilter.desc=Keywords in list(s): {0}",})
+            "SearchFiltering.KeywordListFilter.desc=Keywords in list(s): {0}",})
         @Override
         String getDesc() {
-            return Bundle.FileSearchFiltering_KeywordListFilter_desc(concatenateSetNamesForDisplay(listNames));
+            return Bundle.SearchFiltering_KeywordListFilter_desc(concatenateSetNamesForDisplay(listNames));
         }
     }
 
     /**
      * A filter for specifying file types.
      */
-    static class FileTypeFilter extends FileFilter {
+    static class FileTypeFilter extends AbstractFilter {
 
         private final List<FileType> categories;
 
@@ -520,18 +469,18 @@ class FileSearchFiltering {
 
         @NbBundle.Messages({
             "# {0} - filters",
-            "FileSearchFiltering.FileTypeFilter.desc=Type: {0}",
-            "FileSearchFiltering.FileTypeFilter.or=, ",})
+            "SearchFiltering.FileTypeFilter.desc=Type: {0}",
+            "SearchFiltering.FileTypeFilter.or=, ",})
         @Override
         String getDesc() {
             String desc = "";
             for (FileType cat : categories) {
                 if (!desc.isEmpty()) {
-                    desc += Bundle.FileSearchFiltering_FileTypeFilter_or();
+                    desc += Bundle.SearchFiltering_FileTypeFilter_or();
                 }
                 desc += cat.toString();
             }
-            desc = Bundle.FileSearchFiltering_FileTypeFilter_desc(desc);
+            desc = Bundle.SearchFiltering_FileTypeFilter_desc(desc);
             return desc;
         }
     }
@@ -539,7 +488,7 @@ class FileSearchFiltering {
     /**
      * A filter for specifying frequency in the central repository.
      */
-    static class FrequencyFilter extends FileFilter {
+    static class FrequencyFilter extends AbstractFilter {
 
         private final List<Frequency> frequencies;
 
@@ -590,18 +539,18 @@ class FileSearchFiltering {
 
         @NbBundle.Messages({
             "# {0} - filters",
-            "FileSearchFiltering.FrequencyFilter.desc=Past occurrences: {0}",
-            "FileSearchFiltering.FrequencyFilter.or=, ",})
+            "SearchFiltering.FrequencyFilter.desc=Past occurrences: {0}",
+            "SearchFiltering.FrequencyFilter.or=, ",})
         @Override
         String getDesc() {
             String desc = ""; // NON-NLS
             for (Frequency freq : frequencies) {
                 if (!desc.isEmpty()) {
-                    desc += Bundle.FileSearchFiltering_FrequencyFilter_or();
+                    desc += Bundle.SearchFiltering_FrequencyFilter_or();
                 }
                 desc += freq.toString();
             }
-            return Bundle.FileSearchFiltering_FrequencyFilter_desc(desc);
+            return Bundle.SearchFiltering_FrequencyFilter_desc(desc);
         }
     }
 
@@ -609,7 +558,7 @@ class FileSearchFiltering {
      * A filter for specifying hash set names. A file must match one of the
      * given sets to pass.
      */
-    static class HashSetFilter extends FileFilter {
+    static class HashSetFilter extends AbstractFilter {
 
         private final List<String> setNames;
 
@@ -647,7 +596,7 @@ class FileSearchFiltering {
      * A filter for specifying interesting file set names. A file must match one
      * of the given sets to pass.
      */
-    static class InterestingFileSetFilter extends FileFilter {
+    static class InterestingFileSetFilter extends AbstractFilter {
 
         private final List<String> setNames;
 
@@ -674,10 +623,10 @@ class FileSearchFiltering {
 
         @NbBundle.Messages({
             "# {0} - filters",
-            "FileSearchFiltering.InterestingItemSetFilter.desc=Interesting item hits in set(s): {0}",})
+            "SearchFiltering.InterestingItemSetFilter.desc=Interesting item hits in set(s): {0}",})
         @Override
         String getDesc() {
-            return Bundle.FileSearchFiltering_InterestingItemSetFilter_desc(concatenateSetNamesForDisplay(setNames));
+            return Bundle.SearchFiltering_InterestingItemSetFilter_desc(concatenateSetNamesForDisplay(setNames));
         }
     }
 
@@ -685,7 +634,7 @@ class FileSearchFiltering {
      * A filter for specifying object types detected. A file must match one of
      * the given types to pass.
      */
-    static class ObjectDetectionFilter extends FileFilter {
+    static class ObjectDetectionFilter extends AbstractFilter {
 
         private final List<String> typeNames;
 
@@ -712,10 +661,10 @@ class FileSearchFiltering {
 
         @NbBundle.Messages({
             "# {0} - filters",
-            "FileSearchFiltering.ObjectDetectionFilter.desc=Objects detected in set(s): {0}",})
+            "SearchFiltering.ObjectDetectionFilter.desc=Objects detected in set(s): {0}",})
         @Override
         String getDesc() {
-            return Bundle.FileSearchFiltering_ObjectDetectionFilter_desc(concatenateSetNamesForDisplay(typeNames));
+            return Bundle.SearchFiltering_ObjectDetectionFilter_desc(concatenateSetNamesForDisplay(typeNames));
         }
     }
 
@@ -723,7 +672,7 @@ class FileSearchFiltering {
      * A filter for specifying the score. A file must have one of the given
      * scores to pass
      */
-    static class ScoreFilter extends FileFilter {
+    static class ScoreFilter extends AbstractFilter {
 
         private final List<Score> scores;
 
@@ -788,10 +737,10 @@ class FileSearchFiltering {
 
         @NbBundle.Messages({
             "# {0} - filters",
-            "FileSearchFiltering.ScoreFilter.desc=Score(s) of : {0}",})
+            "SearchFiltering.ScoreFilter.desc=Score(s) of : {0}",})
         @Override
         String getDesc() {
-            return Bundle.FileSearchFiltering_ScoreFilter_desc(
+            return Bundle.SearchFiltering_ScoreFilter_desc(
                     concatenateSetNamesForDisplay(scores.stream().map(p -> p.toString()).collect(Collectors.toList())));
         }
     }
@@ -800,7 +749,7 @@ class FileSearchFiltering {
      * A filter for specifying tag names. A file must contain one of the given
      * tags to pass.
      */
-    static class TagsFilter extends FileFilter {
+    static class TagsFilter extends AbstractFilter {
 
         private final List<TagName> tagNames;
 
@@ -849,7 +798,7 @@ class FileSearchFiltering {
      * A filter for specifying that the file must have user content suspected
      * data.
      */
-    static class UserCreatedFilter extends FileFilter {
+    static class UserCreatedFilter extends AbstractFilter {
 
         /**
          * Create the ExifFilter
@@ -877,7 +826,7 @@ class FileSearchFiltering {
      * A filter for specifying that the file must have been marked as notable in
      * the CR.
      */
-    static class NotableFilter extends FileFilter {
+    static class NotableFilter extends AbstractFilter {
 
         /**
          * Create the NotableFilter
@@ -945,7 +894,7 @@ class FileSearchFiltering {
     /**
      * A filter for specifying if known files should be included.
      */
-    static class KnownFilter extends FileFilter {
+    static class KnownFilter extends AbstractFilter {
 
         @Override
         String getWhereClause() {
@@ -992,7 +941,7 @@ class FileSearchFiltering {
         return result;
     }
 
-    private FileSearchFiltering() {
+    private SearchFiltering(){
         // Class should not be instantiated
     }
 }

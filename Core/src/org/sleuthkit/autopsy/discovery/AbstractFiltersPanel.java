@@ -62,11 +62,25 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
     }
 
     /**
-     * Get the type of results this filters panel is for.
+     * Get the broad ResultType, such as files or attributes.
      *
-     * @return The type of results this panel filters.
+     * @return
+     */
+    abstract SearchData.ResultType getResultType();
+
+    /**
+     * Get the file type of results this filters panel is for.
+     *
+     * @return The file type of results this panel filters.
      */
     abstract FileSearchData.FileType getFileType();
+
+    /**
+     * Get the attribute type of results this filters panel is for.
+     *
+     * @return The attribute type of results this panel filters.
+     */
+    abstract AttributeSearchData.AttributeType getArtifactType();
 
     /**
      * Add a DiscoveryFilterPanel to the specified column with the specified
@@ -242,12 +256,18 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
      *
      * @return The list of filters selected by the user.
      */
-    synchronized List<FileSearchFiltering.FileFilter> getFilters() {
-        List<FileSearchFiltering.FileFilter> filtersToUse = new ArrayList<>();
-        filtersToUse.add(new FileSearchFiltering.FileTypeFilter(getFileType()));
+    synchronized List<AbstractFilter> getFilters() {
+
+        List<AbstractFilter> filtersToUse = new ArrayList<>();
+        if (getResultType().equals(SearchData.ResultType.FILE)) {
+            filtersToUse.add(new SearchFiltering.FileTypeFilter(getFileType()));
+        } else if (getResultType().equals(SearchData.ResultType.ATTRIBUTE)) {
+
+        }
+
         for (AbstractDiscoveryFilterPanel filterPanel : filters) {
             if (filterPanel.getCheckbox().isSelected()) {
-                FileSearchFiltering.FileFilter filter = filterPanel.getFilter();
+                AbstractFilter filter = filterPanel.getFilter();
                 if (filter != null) {
                     filtersToUse.add(filter);
                 }
