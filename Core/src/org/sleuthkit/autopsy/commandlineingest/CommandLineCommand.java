@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019-2019 Basis Technology Corp.
+ * Copyright 2019-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -48,7 +48,8 @@ class CommandLineCommand {
         CASE_FOLDER_PATH,
         DATA_SOURCE_PATH,
         DATA_SOURCE_ID,
-        INGEST_PROFILE_NAME;
+        INGEST_PROFILE_NAME,
+        REPORT_PROFILE_NAME;
     }
 
     private final CommandType type;
