@@ -141,6 +141,7 @@ import org.sleuthkit.datamodel.TskUnsupportedSchemaVersionException;
  */
 public class Case {
 
+    private static final String CASE_TEMP_DIR = Case.class.getSimpleName();
     private static final int CASE_LOCK_TIMEOUT_MINS = 1;
     private static final int CASE_RESOURCES_LOCK_TIMEOUT_HOURS = 1;
     private static final String SINGLE_USER_CASE_DB_NAME = "autopsy.db";
@@ -150,7 +151,6 @@ public class Case {
     private static final String LOG_FOLDER = "Log"; //NON-NLS
     private static final String REPORTS_FOLDER = "Reports"; //NON-NLS
     private static final String CONFIG_FOLDER = "Config"; // NON-NLS
-    private static final String TEMP_FOLDER = "Temp"; //NON-NLS
     private static final String MODULE_FOLDER = "ModuleOutput"; //NON-NLS
     private static final String CASE_ACTION_THREAD_NAME = "%s-case-action";
     private static final String CASE_RESOURCES_THREAD_NAME = "%s-manage-case-resources";
@@ -988,11 +988,6 @@ public class Case {
             throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.createCaseDir.exception.cantCreateCaseDir", logsDir));
         }
 
-        Path tempDir = Paths.get(caseDirPath, hostPathComponent, TEMP_FOLDER);
-        if (!tempDir.toFile().mkdirs()) {
-            throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.createCaseDir.exception.cantCreateCaseDir", tempDir));
-        }
-
         Path cacheDir = Paths.get(caseDirPath, hostPathComponent, CACHE_FOLDER);
         if (!cacheDir.toFile().mkdirs()) {
             throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.createCaseDir.exception.cantCreateCaseDir", cacheDir));
@@ -1197,25 +1192,6 @@ public class Case {
     }
 
     /**
-     * Empties the temp subdirectory for the current case.
-     */
-    private static void clearTempSubDir(String tempSubDirPath) {
-        File tempFolder = new File(tempSubDirPath);
-        if (tempFolder.isDirectory()) {
-            File[] files = tempFolder.listFiles();
-            if (files.length > 0) {
-                for (File file : files) {
-                    if (file.isDirectory()) {
-                        FileUtil.deleteDir(file);
-                    } else {
-                        file.delete();
-                    }
-                }
-            }
-        }
-    }
-
-    /**
      * Gets the case database.
      *
      * @return The case database.
@@ -1352,7 +1328,16 @@ public class Case {
      * @return The temp subdirectory path.
      */
     public String getTempDirectory() {
-        return getOrCreateSubdirectory(TEMP_FOLDER);
+        // get temp folder scoped to the combination of case name and timestamp 
+        // provided by getName()
+        Path path = Paths.get(UserPreferences.getAppTempDirectory(), CASE_TEMP_DIR, getName());
+        File f = path.toFile();
+        // verify that the folder exists
+        if (!f.exists()) {
+            f.mkdirs();
+        }
+
+        return path.toAbsolutePath().toString();
     }
 
     /**
@@ -1563,9 +1548,9 @@ public class Case {
      *
      * This should not be called from the event dispatch thread (EDT)
      *
-     * @param newTag            The added ContentTag.
-     * @param deletedTagList    List of ContentTags that were removed as a result 
-     *                          of the addition of newTag.
+     * @param newTag         The added ContentTag.
+     * @param deletedTagList List of ContentTags that were removed as a result
+     *                       of the addition of newTag.
      */
     public void notifyContentTagAdded(ContentTag newTag, List<ContentTag> deletedTagList) {
         eventPublisher.publish(new ContentTagAddedEvent(newTag, deletedTagList));
@@ -1628,9 +1613,9 @@ public class Case {
      *
      * This should not be called from the event dispatch thread (EDT)
      *
-     * @param newTag            The added ContentTag.
-     * @param removedTagList    List of ContentTags that were removed as a result 
-     *                          of the addition of newTag.
+     * @param newTag         The added ContentTag.
+     * @param removedTagList List of ContentTags that were removed as a result
+     *                       of the addition of newTag.
      */
     public void notifyBlackBoardArtifactTagAdded(BlackboardArtifactTag newTag, List<BlackboardArtifactTag> removedTagList) {
         eventPublisher.publish(new BlackBoardArtifactTagAddedEvent(newTag, removedTagList));
@@ -2120,7 +2105,7 @@ public class Case {
          */
         private void openFileSystems(List<Image> images) throws TskCoreException, InterruptedException {
             byte[] tempBuff = new byte[512];
-            
+
             for (Image image : images) {
                 String imageStr = image.getName();
 
@@ -2144,12 +2129,12 @@ public class Case {
                 if (images == null) {
                     return;
                 }
-                
+
                 if (images.size() > MAX_IMAGE_THRESHOLD) {
                     // If we have a large number of images, don't try to preload anything
                     logger.log(
-                        Level.INFO,
-                        String.format("Skipping background load of file systems due to large number of images in case (%d)", images.size()));
+                            Level.INFO,
+                            String.format("Skipping background load of file systems due to large number of images in case (%d)", images.size()));
                     return;
                 }
 
@@ -2396,7 +2381,7 @@ public class Case {
          * Clear the temp subdirectory of the case directory.
          */
         progressIndicator.progress(Bundle.Case_progressMessage_clearingTempDirectory());
-        Case.clearTempSubDir(this.getTempDirectory());
+        FileUtil.deleteDir(new File(this.getTempDirectory()));
     }
 
     /**
@@ -2506,7 +2491,7 @@ public class Case {
      * specific to this case.
      *
      * @param progressIndicator A progress indicator.
-     * @param isNewCase True if case is new
+     * @param isNewCase         True if case is new
      *
      * @throws CaseActionException If there is a problem completing the
      *                             operation. The exception will have a
@@ -2763,6 +2748,11 @@ public class Case {
             caseDb.unregisterForEvents(sleuthkitEventListener);
             caseDb.close();
         }
+
+        /**
+         * Delete files from temp directory if any exist.
+         */
+        deleteTempfilesFromCaseDirectory(progressIndicator);
 
         /*
          * Switch the log directory.
