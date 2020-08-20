@@ -354,20 +354,22 @@ public class ServicesMonitor {
         KeywordSearchService kwsService = Lookup.getDefault().lookup(KeywordSearchService.class);
         try {
             if (kwsService != null) {
+                ServiceStatus status = ServiceStatus.DOWN;
+                // check Solr 8
                 String kwsHostName = UserPreferences.getIndexingServerHost();
-                if (kwsHostName.isEmpty()) {
-                    // Solr 8 host name is not configured. This could be the first time user 
-                    // runs Autopsy with Solr 8. Display a message.
-                    String serviceDisplayName = Service.REMOTE_KEYWORD_SEARCH.getDisplayName();
-                    MessageNotifyUtil.Notify.error(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.failedService.notify.title"),
-                            NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.EmptyKeywordSearchHostName", serviceDisplayName));
-                    setServiceStatus(Service.REMOTE_KEYWORD_SEARCH.toString(), ServiceStatus.DOWN.toString(),
-                            NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.EmptyKeywordSearchHostName"));
-                    return;
+                if (!kwsHostName.isEmpty()) {
+                    int port = Integer.parseUnsignedInt(UserPreferences.getIndexingServerPort());
+                    kwsService.tryConnect(UserPreferences.getIndexingServerHost(), port);
+                    status = ServiceStatus.UP;
                 }
-                int port = Integer.parseUnsignedInt(UserPreferences.getIndexingServerPort());
-                kwsService.tryConnect(UserPreferences.getIndexingServerHost(), port);
-                setServiceStatus(Service.REMOTE_KEYWORD_SEARCH.toString(), ServiceStatus.UP.toString(), "");
+                
+                // check Solr 4
+                if (!UserPreferences.getSolr4ServerHost().trim().isEmpty()) {
+                    int port = Integer.parseUnsignedInt(UserPreferences.getSolr4ServerPort().trim());
+                    kwsService.tryConnect(UserPreferences.getSolr4ServerHost().trim(), port);
+                    status = ServiceStatus.UP;
+                }
+                setServiceStatus(Service.REMOTE_KEYWORD_SEARCH.toString(), status.toString(), "");
             } else {
                 setServiceStatus(Service.REMOTE_KEYWORD_SEARCH.toString(), ServiceStatus.DOWN.toString(),
                         NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.KeywordSearchNull"));

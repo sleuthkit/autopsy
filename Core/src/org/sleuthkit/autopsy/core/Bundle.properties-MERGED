@@ -25,7 +25,6 @@ ServicesMonitor.statusChange.notify.msg=Status for {0} is {1}
 ServicesMonitor.nullServiceName.excepton.txt=Requested service name is null
 ServicesMonitor.unknownServiceName.excepton.txt=Requested service name {0} is unknown
 ServicesMonitor.KeywordSearchNull=Cannot find Keyword Search service
-ServicesMonitor.EmptyKeywordSearchHostName=Solr 8 connection parameters are not configured. Please go to Tools->Options->Multi User.
 ServicesMonitor.InvalidPortNumber=Invalid Solr 8 port number.
 ServicesMonitor.remoteCaseDatabase.displayName.text=Multi-user case database service
 ServicesMonitor.remoteKeywordSearch.displayName.text=Multi-user keyword search service

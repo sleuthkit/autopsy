@@ -35,8 +35,12 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.AccountDeviceInstance;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME;
 import org.sleuthkit.datamodel.CommunicationsFilter;
 import org.sleuthkit.datamodel.CommunicationsManager;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Node to represent an Account Device Instance in the CVT
@@ -48,6 +52,8 @@ final class AccountDeviceInstanceNode extends AbstractNode {
     private final AccountDeviceInstanceKey accountDeviceInstanceKey;
     private final CommunicationsManager commsManager;
     private final Account account;
+
+    private static final BlackboardAttribute.Type NAME_ATTRIBUTE = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.fromID(TSK_NAME.getTypeID()));
 
     AccountDeviceInstanceNode(AccountDeviceInstanceKey accountDeviceInstanceKey, CommunicationsManager commsManager) {
         super(Children.LEAF, Lookups.fixed(accountDeviceInstanceKey, commsManager));
@@ -122,15 +128,17 @@ final class AccountDeviceInstanceNode extends AbstractNode {
     @Override
     public String getShortDescription() {
         List<PersonaAccount> personaList;
+        List<BlackboardArtifact> contactArtifactList;
         try {
             personaList = CVTPersonaCache.getPersonaAccounts(account);
+            contactArtifactList = ContactCache.getContacts(account);
         } catch (ExecutionException ex) {
             logger.log(Level.WARNING, "Failed to retrieve Persona details for node.", ex);
             return getDisplayName();
         }
 
         String personaName;
-        if (!personaList.isEmpty()) {
+        if (personaList != null && !personaList.isEmpty()) {
             personaName = personaList.get(0).getPersona().getName();
             if (personaList.size() > 1) {
                 personaName += Bundle.AccountInstanceNode_Tooltip_suffix(Integer.toString(personaList.size()));
@@ -139,6 +147,19 @@ final class AccountDeviceInstanceNode extends AbstractNode {
             personaName = "None";
         }
 
-        return Bundle.AccountInstanceNode_Tooltip_Template(getDisplayName(), personaName);
+        String contactName = getDisplayName();
+        if (contactArtifactList != null && !contactArtifactList.isEmpty()) {
+            try {
+                BlackboardArtifact contactArtifact = contactArtifactList.get(0);
+                BlackboardAttribute attribute = contactArtifact.getAttribute(NAME_ATTRIBUTE);
+                if (attribute != null) {
+                    contactName = attribute.getValueString();
+                }
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, "Failed to retrive name attribute from contact artifact.", ex);
+            }
+        }
+
+        return Bundle.AccountInstanceNode_Tooltip_Template(contactName, personaName);
     }
 }

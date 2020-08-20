@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2011-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeListener;
 import java.io.BufferedReader;
@@ -42,21 +43,26 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import org.apache.commons.io.FileUtils;
+import java.util.concurrent.TimeoutException;
+import static java.util.stream.Collectors.toList;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.client.solrj.SolrClient;
+import org.apache.solr.client.solrj.impl.HttpSolrClient;
+import org.apache.solr.client.solrj.impl.CloudSolrClient;
 import org.apache.solr.client.solrj.impl.ConcurrentUpdateSolrClient;
 import org.apache.solr.client.solrj.impl.XMLResponseParser;
 import org.apache.solr.client.solrj.request.CollectionAdminRequest;
 import org.apache.solr.client.solrj.response.CollectionAdminResponse;
 import org.apache.solr.client.solrj.request.CoreAdminRequest;
 import org.apache.solr.client.solrj.response.CoreAdminResponse;
-import java.util.concurrent.TimeoutException;
 import org.apache.solr.client.solrj.impl.BaseHttpSolrClient.RemoteSolrException;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.response.TermsResponse;
@@ -77,6 +83,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.coreutils.ThreadUtils;
 import org.sleuthkit.autopsy.healthmonitor.HealthMonitor;
 import org.sleuthkit.autopsy.healthmonitor.TimingMetric;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
@@ -223,8 +230,8 @@ public class Server {
     static final String DEFAULT_SOLR_SERVER_HOST = "localhost"; //NON-NLS
     static final int DEFAULT_SOLR_SERVER_PORT = 23232;
     static final int DEFAULT_SOLR_STOP_PORT = 34343;
-    private int currentSolrServerPort = 0;
-    private int currentSolrStopPort = 0;
+    private int localSolrServerPort = 0;
+    private int localSolrStopPort = 0;
     private static final boolean DEBUG = false;//(Version.getBuildType() == Version.Type.DEVELOPMENT);
     private static final int NUM_COLLECTION_CREATION_RETRIES = 5;
 
@@ -239,12 +246,11 @@ public class Server {
     };
 
     // A reference to the locally running Solr instance.
-    private final ConcurrentUpdateSolrClient localSolrServer;
+    private HttpSolrClient localSolrServer = null;
     private SOLR_VERSION localServerVersion = SOLR_VERSION.SOLR8; // start local Solr 8 by default
 
-    // A reference to the Solr server we are currently connected to for the Case.
-    // This could be a local or remote server.
-    private ConcurrentUpdateSolrClient currentSolrServer;
+    // A reference to the remote/network running Solr instance.
+    private HttpSolrClient remoteSolrServer;
 
     private Collection currentCollection;
     private final ReentrantReadWriteLock currentCoreLock;
@@ -259,7 +265,8 @@ public class Server {
     Server() {
         initSettings();
 
-        this.localSolrServer = getSolrClient("http://localhost:" + currentSolrServerPort + "/solr"); //NON-NLS
+        this.localSolrServer = getSolrClient("http://localhost:" + localSolrServerPort + "/solr");
+
         serverAction = new ServerAction();
         File solr8Folder = InstalledFileLocator.getDefault().locate("solr", Server.class.getPackage().getName(), false); //NON-NLS
         File solr4Folder = InstalledFileLocator.getDefault().locate("solr4", Server.class.getPackage().getName(), false); //NON-NLS
@@ -301,40 +308,74 @@ public class Server {
 
         if (ModuleSettings.settingExists(PROPERTIES_FILE, PROPERTIES_CURRENT_SERVER_PORT)) {
             try {
-                currentSolrServerPort = Integer.decode(ModuleSettings.getConfigSetting(PROPERTIES_FILE, PROPERTIES_CURRENT_SERVER_PORT));
+                localSolrServerPort = Integer.decode(ModuleSettings.getConfigSetting(PROPERTIES_FILE, PROPERTIES_CURRENT_SERVER_PORT));
             } catch (NumberFormatException nfe) {
                 logger.log(Level.WARNING, "Could not decode indexing server port, value was not a valid port number, using the default. ", nfe); //NON-NLS
-                currentSolrServerPort = DEFAULT_SOLR_SERVER_PORT;
+                localSolrServerPort = DEFAULT_SOLR_SERVER_PORT;
             }
         } else {
-            currentSolrServerPort = DEFAULT_SOLR_SERVER_PORT;
-            ModuleSettings.setConfigSetting(PROPERTIES_FILE, PROPERTIES_CURRENT_SERVER_PORT, String.valueOf(currentSolrServerPort));
+            localSolrServerPort = DEFAULT_SOLR_SERVER_PORT;
+            ModuleSettings.setConfigSetting(PROPERTIES_FILE, PROPERTIES_CURRENT_SERVER_PORT, String.valueOf(localSolrServerPort));
         }
 
         if (ModuleSettings.settingExists(PROPERTIES_FILE, PROPERTIES_CURRENT_STOP_PORT)) {
             try {
-                currentSolrStopPort = Integer.decode(ModuleSettings.getConfigSetting(PROPERTIES_FILE, PROPERTIES_CURRENT_STOP_PORT));
+                localSolrStopPort = Integer.decode(ModuleSettings.getConfigSetting(PROPERTIES_FILE, PROPERTIES_CURRENT_STOP_PORT));
             } catch (NumberFormatException nfe) {
                 logger.log(Level.WARNING, "Could not decode indexing server stop port, value was not a valid port number, using default", nfe); //NON-NLS
-                currentSolrStopPort = DEFAULT_SOLR_STOP_PORT;
+                localSolrStopPort = DEFAULT_SOLR_STOP_PORT;
             }
         } else {
-            currentSolrStopPort = DEFAULT_SOLR_STOP_PORT;
-            ModuleSettings.setConfigSetting(PROPERTIES_FILE, PROPERTIES_CURRENT_STOP_PORT, String.valueOf(currentSolrStopPort));
+            localSolrStopPort = DEFAULT_SOLR_STOP_PORT;
+            ModuleSettings.setConfigSetting(PROPERTIES_FILE, PROPERTIES_CURRENT_STOP_PORT, String.valueOf(localSolrStopPort));
         }
     }
-
-    private ConcurrentUpdateSolrClient getSolrClient(String solrUrl) {
-        int numThreads = org.sleuthkit.autopsy.keywordsearch.UserPreferences.getNumThreads();
-        int numDocs = org.sleuthkit.autopsy.keywordsearch.UserPreferences.getDocumentsQueueSize();
-        logger.log(Level.INFO, "Creating new ConcurrentUpdateSolrClient. Queue size = {0}, Number of threads = {1}", new Object[]{numDocs, numThreads}); //NON-NLS
-        ConcurrentUpdateSolrClient client = new ConcurrentUpdateSolrClient.Builder(solrUrl)
-                .withQueueSize(numDocs)
-                .withThreadCount(numThreads)
-                .withConnectionTimeout(1000)
+    
+    private HttpSolrClient getSolrClient(String solrUrl) {
+        int connectionTimeoutMs = org.sleuthkit.autopsy.keywordsearch.UserPreferences.getConnectionTimeout();
+        HttpSolrClient client = new HttpSolrClient.Builder(solrUrl)
+                .withConnectionTimeout(connectionTimeoutMs)
                 .withResponseParser(new XMLResponseParser())
                 .build();
 
+        return client;
+    }
+
+    private ConcurrentUpdateSolrClient getConcurrentClient(String solrUrl) {
+        int numThreads = org.sleuthkit.autopsy.keywordsearch.UserPreferences.getNumThreads();
+        int numDocs = org.sleuthkit.autopsy.keywordsearch.UserPreferences.getDocumentsQueueSize();
+        int connectionTimeoutMs = org.sleuthkit.autopsy.keywordsearch.UserPreferences.getConnectionTimeout();
+        logger.log(Level.INFO, "Creating new ConcurrentUpdateSolrClient: {0}", solrUrl); //NON-NLS
+        logger.log(Level.INFO, "Queue size = {0}, Number of threads = {1}, Connection Timeout (ms) = {2}", new Object[]{numDocs, numThreads, connectionTimeoutMs}); //NON-NLS
+        ConcurrentUpdateSolrClient client = new ConcurrentUpdateSolrClient.Builder(solrUrl)
+                .withQueueSize(numDocs)
+                .withThreadCount(numThreads)
+                .withConnectionTimeout(connectionTimeoutMs)
+                .withResponseParser(new XMLResponseParser())
+                .build();
+
+        return client;
+    }
+    
+    private CloudSolrClient getCloudSolrClient(String host, String port, String defaultCollectionName) throws SolrServerException, IOException {
+        List<String> solrServerList = getSolrServerList(host, port);
+        List<String> solrUrls = new ArrayList<>();
+        for (String server : solrServerList) {
+            solrUrls.add("http://" + server + "/solr");
+            logger.log(Level.INFO, "Using Solr server: {0}", server);
+        }
+        
+        logger.log(Level.INFO, "Creating new CloudSolrClient"); //NON-NLS
+        int connectionTimeoutMs = org.sleuthkit.autopsy.keywordsearch.UserPreferences.getConnectionTimeout();
+        CloudSolrClient client = new CloudSolrClient.Builder(solrUrls)
+                .withConnectionTimeout(connectionTimeoutMs)
+                .withSocketTimeout(connectionTimeoutMs)
+                .withResponseParser(new XMLResponseParser())
+                .build();
+        if (!defaultCollectionName.isEmpty()) {
+            client.setDefaultCollection(defaultCollectionName);
+        }
+        client.connect();
         return client;
     }
 
@@ -348,12 +389,12 @@ public class Server {
         serverAction.addPropertyChangeListener(l);
     }
 
-    int getCurrentSolrServerPort() {
-        return currentSolrServerPort;
+    int getLocalSolrServerPort() {
+        return localSolrServerPort;
     }
 
-    int getCurrentSolrStopPort() {
-        return currentSolrStopPort;
+    int getLocalSolrStopPort() {
+        return localSolrStopPort;
     }
 
     /**
@@ -481,8 +522,8 @@ public class Server {
         List<String> commandLine = new ArrayList<>();
         commandLine.add(javaPath);
         commandLine.add(MAX_SOLR_MEM_MB_PAR);
-        commandLine.add("-DSTOP.PORT=" + currentSolrStopPort); //NON-NLS
-        commandLine.add("-Djetty.port=" + currentSolrServerPort); //NON-NLS
+        commandLine.add("-DSTOP.PORT=" + localSolrStopPort); //NON-NLS
+        commandLine.add("-Djetty.port=" + localSolrServerPort); //NON-NLS
         commandLine.add("-DSTOP.KEY=" + KEY); //NON-NLS
         commandLine.add("-jar"); //NON-NLS
         commandLine.add("start.jar"); //NON-NLS
@@ -538,13 +579,12 @@ public class Server {
         }
     }
     
-    void start() throws KeywordSearchModuleException, SolrServerNoPortException {
+    void start() throws KeywordSearchModuleException, SolrServerNoPortException {        
         startLocalSolr(SOLR_VERSION.SOLR8);
     }
     
-    private ConcurrentUpdateSolrClient configureSolrConnection(Case theCase, Index index) throws KeywordSearchModuleException, SolrServerNoPortException {
+    private void configureSolrConnection(Case theCase, Index index) throws KeywordSearchModuleException, SolrServerNoPortException {
         
-        ConcurrentUpdateSolrClient solrClient = null;
         try {
             if (theCase.getCaseType() == CaseType.SINGLE_USER_CASE) {
 
@@ -555,40 +595,44 @@ public class Server {
                     startLocalSolr(SOLR_VERSION.SOLR4);
                 }
 
-                solrClient = this.localSolrServer;
-
                 // check if the local Solr server is running
                 if (!this.isLocalSolrRunning()) {
                     logger.log(Level.SEVERE, "Local Solr server is not running"); //NON-NLS
                     throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.msg")); 
                 }              
             } else {
-                
-                String solrUrl;
-                if (IndexFinder.getCurrentSolrVersion().equals(index.getSolrVersion())) {
-                    // Solr 8
-                    
-                    // read Solr conenction info from user preferences, unless "solrserver.txt" is present
-                    IndexingServerProperties properties = getMultiUserServerProperties(theCase.getCaseDirectory());
-                    solrUrl = "http://" + properties.getHost() + ":" + properties.getPort() + "/solr";
-                } else {
-                    // Solr 4
-                    String solr4ServerHost = UserPreferences.getSolr4ServerHost().trim();
-                    String solr4ServerPort = UserPreferences.getSolr4ServerPort().trim();
-                    solrUrl = "http://" + solr4ServerHost + ":" + solr4ServerPort + "/solr";
-                }
-
                 // create SolrJ client to connect to remore Solr server
-                solrClient = getSolrClient(solrUrl);
+                remoteSolrServer = configureMultiUserConnection(theCase, index, "");
 
                 // test the connection
-                connectToSolrServer(solrClient);
+                connectToSolrServer(remoteSolrServer);
             }
         } catch (SolrServerException | IOException ex) {
             throw new KeywordSearchModuleException(NbBundle.getMessage(Server.class, "Server.connect.exception.msg", ex.getLocalizedMessage()), ex);
-        }        
-        
-        return solrClient;
+        }
+    }
+    
+    private HttpSolrClient configureMultiUserConnection(Case theCase, Index index, String name) {
+        String solrUrl;
+        if (IndexFinder.getCurrentSolrVersion().equals(index.getSolrVersion())) {
+            // Solr 8
+
+            // read Solr connection info from user preferences, unless "solrserver.txt" is present
+            IndexingServerProperties properties = getMultiUserServerProperties(theCase.getCaseDirectory());
+            solrUrl = "http://" + properties.host + ":" + properties.port + "/solr";
+        } else {
+            // Solr 4
+            String solr4ServerHost = UserPreferences.getSolr4ServerHost().trim();
+            String solr4ServerPort = UserPreferences.getSolr4ServerPort().trim();
+            solrUrl = "http://" + solr4ServerHost + ":" + solr4ServerPort + "/solr";
+        }
+
+        if (!name.isEmpty()) {
+            solrUrl = solrUrl + "/" + name;
+        }
+
+        // create SolrJ client to connect to remore Solr server
+        return getSolrClient(solrUrl);
     }
 
     /**
@@ -613,7 +657,7 @@ public class Server {
         // set which version of local server is currently running
         localServerVersion = version;
 
-        if (!isPortAvailable(currentSolrServerPort)) {
+        if (!isPortAvailable(localSolrServerPort)) {
             // There is something already listening on our port. Let's see if
             // this is from an earlier run that didn't successfully shut down
             // and if so kill it.
@@ -622,7 +666,7 @@ public class Server {
             // If the culprit listening on the port is not a Solr process
             // we refuse to start.
             if (pids.isEmpty()) {
-                throw new SolrServerNoPortException(currentSolrServerPort);
+                throw new SolrServerNoPortException(localSolrServerPort);
             }
 
             // Ok, we've tried to stop it above but there still appears to be
@@ -631,23 +675,21 @@ public class Server {
 
             // If either of the ports are still in use after our attempt to kill 
             // previously running processes we give up and throw an exception.
-            if (!isPortAvailable(currentSolrServerPort)) {
-                throw new SolrServerNoPortException(currentSolrServerPort);
+            if (!isPortAvailable(localSolrServerPort)) {
+                throw new SolrServerNoPortException(localSolrServerPort);
             }
-            if (!isPortAvailable(currentSolrStopPort)) {
-                throw new SolrServerNoPortException(currentSolrStopPort);
+            if (!isPortAvailable(localSolrStopPort)) {
+                throw new SolrServerNoPortException(localSolrStopPort);
             }
         }        
 
-        if (isPortAvailable(currentSolrServerPort)) {
-            logger.log(Level.INFO, "Port [{0}] available, starting Solr", currentSolrServerPort); //NON-NLS
+        if (isPortAvailable(localSolrServerPort)) {
+            logger.log(Level.INFO, "Port [{0}] available, starting Solr", localSolrServerPort); //NON-NLS
             try {
                 if (version == SOLR_VERSION.SOLR8) {
                     logger.log(Level.INFO, "Starting Solr 8 server"); //NON-NLS
                     curSolrProcess = runLocalSolr8ControlCommand(new ArrayList<>(Arrays.asList("start", "-p", //NON-NLS
-					Integer.toString(currentSolrServerPort),
-                        		"-Dbootstrap_confdir=../solr/configsets/AutopsyConfig/conf", //NON-NLS
-                                        "-Dcollection.configName=AutopsyConfig"))); //NON-NLS
+                    Integer.toString(localSolrServerPort)))); //NON-NLS
                 } else {
                     // solr4
                     logger.log(Level.INFO, "Starting Solr 4 server"); //NON-NLS
@@ -733,7 +775,7 @@ public class Server {
      * @param port Port to change to
      */
     void changeSolrServerPort(int port) {
-        currentSolrServerPort = port;
+        localSolrServerPort = port;
         ModuleSettings.setConfigSetting(PROPERTIES_FILE, PROPERTIES_CURRENT_SERVER_PORT, String.valueOf(port));
     }
 
@@ -743,7 +785,7 @@ public class Server {
      * @param port Port to change to
      */
     void changeSolrStopPort(int port) {
-        currentSolrStopPort = port;
+        localSolrStopPort = port;
         ModuleSettings.setConfigSetting(PROPERTIES_FILE, PROPERTIES_CURRENT_STOP_PORT, String.valueOf(port));
     }
 
@@ -773,7 +815,7 @@ public class Server {
             Process process;
             if (localServerVersion == SOLR_VERSION.SOLR8) {
                 logger.log(Level.INFO, "Stopping Solr 8 server"); //NON-NLS
-                process = runLocalSolr8ControlCommand(new ArrayList<>(Arrays.asList("stop", "-k", KEY, "-p", Integer.toString(currentSolrServerPort)))); //NON-NLS
+                process = runLocalSolr8ControlCommand(new ArrayList<>(Arrays.asList("stop", "-k", KEY, "-p", Integer.toString(localSolrServerPort)))); //NON-NLS
             } else {
                 // solr 4
                 logger.log(Level.INFO, "Stopping Solr 4 server"); //NON-NLS
@@ -817,14 +859,14 @@ public class Server {
     synchronized boolean isLocalSolrRunning() throws KeywordSearchModuleException {
         try {
 
-            if (isPortAvailable(currentSolrServerPort)) {
+            if (isPortAvailable(localSolrServerPort)) {
                 return false;
             }
 
             // making a statusRequest request here instead of just doing solrServer.ping(), because
             // that doesn't work when there are no cores
             //TODO handle timeout in cases when some other type of server on that port
-            connectToEbmeddedSolrServer(localSolrServer);
+            connectToEbmeddedSolrServer();
 
             logger.log(Level.INFO, "Solr server is running"); //NON-NLS
         } catch (SolrServerException ex) {
@@ -914,10 +956,10 @@ public class Server {
         try {
             if (null != currentCollection) {
                 currentCollection.close();
-                currentCollection = null;
                 serverAction.putValue(CORE_EVT, CORE_EVT_STATES.STOPPED);
             }
         } finally {
+            currentCollection = null;
             currentCoreLock.writeLock().unlock();
         }
     }
@@ -949,8 +991,7 @@ public class Server {
     void deleteCollection(String coreName, CaseMetadata metadata) throws KeywordSearchServiceException {
         try {
             IndexingServerProperties properties = getMultiUserServerProperties(metadata.getCaseDirectory());
-            String solrUrl = "http://" + properties.getHost() + ":" + properties.getPort() + "/solr";
-            ConcurrentUpdateSolrClient solrServer = getSolrClient(solrUrl);
+            HttpSolrClient solrServer = getSolrClient("http://" + properties.getHost() + ":" + properties.getPort() + "/solr");
             connectToSolrServer(solrServer);
             
             CollectionAdminRequest.Delete deleteCollectionRequest = CollectionAdminRequest.deleteCollection(coreName);
@@ -990,7 +1031,7 @@ public class Server {
         int numShardsToUse = 1;
         try {
             // connect to proper Solr server
-            currentSolrServer = configureSolrConnection(theCase, index);
+            configureSolrConnection(theCase, index);
 
             if (theCase.getCaseType() == CaseType.MULTI_USER_CASE) {
                 // select number of shards to use
@@ -1029,23 +1070,25 @@ public class Server {
                     }
                 }
             } else {
-                // In single user mode, the index is stored in case output directory
-                File dataDir = new File(new File(index.getIndexPath()).getParent()); // "data dir" is the parent of the index directory
-                if (!dataDir.exists()) {
-                    dataDir.mkdirs();
-                }
+                if (!coreIsLoaded(collectionName)) {
+                    // In single user mode, the index is stored in case output directory
+                    File dataDir = new File(new File(index.getIndexPath()).getParent()); // "data dir" is the parent of the index directory
+                    if (!dataDir.exists()) {
+                        dataDir.mkdirs();
+                    }
 
-                // for single user cases, we unload the core when we close the case. So we have to load the core again. 
-                CoreAdminRequest.Create createCoreRequest = new CoreAdminRequest.Create();
-                createCoreRequest.setDataDir(dataDir.getAbsolutePath());
-                createCoreRequest.setCoreName(collectionName);
-                createCoreRequest.setConfigSet("AutopsyConfig"); //NON-NLS
-                createCoreRequest.setIsLoadOnStartup(false);
-                createCoreRequest.setIsTransient(true);
-                currentSolrServer.request(createCoreRequest);
+                    // for single user cases, we unload the core when we close the case. So we have to load the core again. 
+                    CoreAdminRequest.Create createCoreRequest = new CoreAdminRequest.Create();
+                    createCoreRequest.setDataDir(dataDir.getAbsolutePath());
+                    createCoreRequest.setCoreName(collectionName);
+                    createCoreRequest.setConfigSet("AutopsyConfig"); //NON-NLS
+                    createCoreRequest.setIsLoadOnStartup(false);
+                    createCoreRequest.setIsTransient(true);
+                    localSolrServer.request(createCoreRequest);
 
-                if (!coreIndexFolderExists(collectionName)) {
-                    throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.noIndexDir.msg"));
+                    if (!coreIndexFolderExists(collectionName)) {
+                        throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.noIndexDir.msg"));
+                    }
                 }
             }
 
@@ -1065,7 +1108,7 @@ public class Server {
         }
 
         // otherwise get list of all live Solr servers in the cluster
-        List<String> solrServerList = getSolrServerList();
+        List<String> solrServerList = getSolrServerList(remoteSolrServer);
         // shard across all available servers
         return solrServerList.size();
     }
@@ -1078,7 +1121,7 @@ public class Server {
         CollectionAdminRequest.ClusterStatus statusRequest = CollectionAdminRequest.getClusterStatus().setCollectionName(collectionName);
         CollectionAdminResponse statusResponse;
         try {
-            statusResponse = statusRequest.process(currentSolrServer);
+            statusResponse = statusRequest.process(remoteSolrServer);
         } catch (RemoteSolrException ex) {
             // collection doesn't exist
             return false;
@@ -1118,7 +1161,7 @@ public class Server {
         Integer numPullReplicas = 0;
         CollectionAdminRequest.Create createCollectionRequest = CollectionAdminRequest.createCollection(collectionName, "AutopsyConfig", numShards, numNrtReplicas, numTlogReplicas, numPullReplicas);
 
-        CollectionAdminResponse createResponse = createCollectionRequest.process(currentSolrServer);
+        CollectionAdminResponse createResponse = createCollectionRequest.process(remoteSolrServer);
         if (createResponse.isSuccess()) {
             logger.log(Level.INFO, "Collection {0} successfully created.", collectionName);
         } else {
@@ -1138,7 +1181,7 @@ public class Server {
         CollectionAdminRequest.Backup backup = CollectionAdminRequest.backupCollection(collectionName, backupName)
                 .setLocation(pathToBackupLocation);
         
-        CollectionAdminResponse backupResponse = backup.process(currentSolrServer);
+        CollectionAdminResponse backupResponse = backup.process(remoteSolrServer);
         if (backupResponse.isSuccess()) {
             logger.log(Level.INFO, "Collection {0} successfully backep up.", collectionName);
         } else {
@@ -1152,7 +1195,7 @@ public class Server {
         CollectionAdminRequest.Restore restore = CollectionAdminRequest.restoreCollection(restoreCollectionName, backupName)
                 .setLocation(pathToBackupLocation);
         
-        CollectionAdminResponse restoreResponse = restore.process(currentSolrServer);
+        CollectionAdminResponse restoreResponse = restore.process(remoteSolrServer);
         if (restoreResponse.isSuccess()) {
             logger.log(Level.INFO, "Collection {0} successfully resored.", restoreCollectionName);
         } else {
@@ -1162,7 +1205,8 @@ public class Server {
     }
     
     /**
-     * Determines whether or not a particular Solr core exists and is loaded.
+     * Determines whether or not a particular Solr core exists and is loaded.  
+     * This is used only with embedded Solr server running in non-cloud mode.
      *
      * @param coreName The name of the core.
      *
@@ -1175,13 +1219,14 @@ public class Server {
      * server.
      */
     private boolean coreIsLoaded(String coreName) throws SolrServerException, IOException {
-        CoreAdminResponse response = CoreAdminRequest.getStatus(coreName, currentSolrServer);
+        CoreAdminResponse response = CoreAdminRequest.getStatus(coreName, localSolrServer);
         return response.getCoreStatus(coreName).get("instanceDir") != null; //NON-NLS
     }
     
     /**
      * Determines whether or not the index files folder for a Solr core
-     * exists.
+     * exists. This is used only with embedded Solr server running in non-cloud
+     * mode.
      *
      * @param coreName the name of the core.
      *
@@ -1191,7 +1236,7 @@ public class Server {
      * @throws IOException
      */
     private boolean coreIndexFolderExists(String coreName) throws SolrServerException, IOException {
-        CoreAdminResponse response = CoreAdminRequest.getStatus(coreName, currentSolrServer);
+        CoreAdminResponse response = CoreAdminRequest.getStatus(coreName, localSolrServer);
         Object dataDirPath = response.getCoreStatus(coreName).get("dataDir"); //NON-NLS
         if (null != dataDirPath) {
             File indexDir = Paths.get((String) dataDirPath, "index").toFile();  //NON-NLS
@@ -1706,10 +1751,18 @@ public class Server {
      * @throws SolrServerException
      * @throws IOException
      */
-    void connectToEbmeddedSolrServer(ConcurrentUpdateSolrClient solrServer) throws SolrServerException, IOException {
+    private void connectToEbmeddedSolrServer() throws SolrServerException, IOException {
+        HttpSolrClient solrServer = getSolrClient("http://localhost:" + localSolrServerPort + "/solr");
         TimingMetric metric = HealthMonitor.getTimingMetric("Solr: Connectivity check");
         CoreAdminRequest.getStatus(null, solrServer);
         HealthMonitor.submitTimingMetric(metric);
+    }
+    
+    
+    void connectToSolrServer(String host, String port) throws SolrServerException, IOException {
+        try (HttpSolrClient solrServer = getSolrClient("http://" + host + ":" + port + "/solr")) {
+            connectToSolrServer(solrServer);
+        }
     }
 
     /**
@@ -1721,7 +1774,7 @@ public class Server {
      * @throws SolrServerException
      * @throws IOException
      */
-    void connectToSolrServer(ConcurrentUpdateSolrClient solrServer) throws SolrServerException, IOException {
+    private void connectToSolrServer(HttpSolrClient solrServer) throws SolrServerException, IOException {
         TimingMetric metric = HealthMonitor.getTimingMetric("Solr: Connectivity check");
         CollectionAdminRequest.ClusterStatus statusRequest = CollectionAdminRequest.getClusterStatus();
         CollectionAdminResponse statusResponse = statusRequest.process(solrServer);
@@ -1734,12 +1787,17 @@ public class Server {
         HealthMonitor.submitTimingMetric(metric);
     }
     
-    private List<String> getSolrServerList() throws SolrServerException, IOException {
+    private List<String> getSolrServerList(String host, String port) throws SolrServerException, IOException {
+        HttpSolrClient solrServer = getSolrClient("http://" + host + ":" + port + "/solr");
+        return getSolrServerList(solrServer);
+    }
+    
+    private List<String> getSolrServerList(HttpSolrClient solrServer) throws SolrServerException, IOException {
         
         CollectionAdminRequest.ClusterStatus statusRequest = CollectionAdminRequest.getClusterStatus();
         CollectionAdminResponse statusResponse;
         try {
-            statusResponse = statusRequest.process(currentSolrServer);
+            statusResponse = statusRequest.process(solrServer);
         } catch (RemoteSolrException ex) {
             // collection doesn't exist
             return Collections.emptyList();
@@ -1809,25 +1867,80 @@ public class Server {
 
         private final Index textIndex;
 
-        // the server to access a collection needs to be built from a URL with the
-        // collection in it, and is only good for collection-specific operations
-        private final ConcurrentUpdateSolrClient solrClient;
+        // We use different Solr clients for different operations. HttpSolrClient is geared towards query performance.
+        // ConcurrentUpdateSolrClient is geared towards batching solr documents for better indexing throughput. 
+        // CloudSolrClient is gaered towards SolrCloud deployments. These are only good for collection-specific operations.
+        private HttpSolrClient queryClient;        
+        private SolrClient indexingClient;
+        
+        private final int maxBufferSize;
+        private final List<SolrInputDocument> buffer;
+        private final Object bufferLock;
+        
+        private ScheduledThreadPoolExecutor periodicTasksExecutor = null;
+        private static final long PERIODIC_BATCH_SEND_INTERVAL_MINUTES = 10;
 
-        private Collection(String name, Case theCase, Index index) throws TimeoutException, InterruptedException {
+        private Collection(String name, Case theCase, Index index) throws TimeoutException, InterruptedException, SolrServerException, IOException {
             this.name = name;
             this.caseType = theCase.getCaseType();
             this.textIndex = index;
-
-            String solrUrl;
+            bufferLock = new Object();
+            
             if (caseType == CaseType.SINGLE_USER_CASE) {
-                solrUrl = "http://localhost:" + currentSolrServerPort + "/solr/" + name;
+                // get SolrJ client
+                queryClient = getSolrClient("http://localhost:" + localSolrServerPort + "/solr/" + name); // HttpClient
+                indexingClient = getConcurrentClient("http://localhost:" + localSolrServerPort + "/solr/" + name); // ConcurrentClient
             } else {
-                // read Solr conenction info from user preferences, unless "solrserver.txt" is present
-                IndexingServerProperties properties = getMultiUserServerProperties(theCase.getCaseDirectory());
-                solrUrl = "http://" + properties.getHost() + ":" + properties.getPort() + "/solr/" + name;
+                // read Solr connection info from user preferences, unless "solrserver.txt" is present
+                queryClient = configureMultiUserConnection(theCase, index, name);
+                
+                // for MU cases, use CloudSolrClient for indexing. Indexing is only supported for Solr 8.
+                if (IndexFinder.getCurrentSolrVersion().equals(index.getSolrVersion())) {
+                    IndexingServerProperties properties = getMultiUserServerProperties(theCase.getCaseDirectory());
+                    indexingClient = getCloudSolrClient(properties.getHost(), properties.getPort(), name); // CloudClient
+                } else {
+                    indexingClient = configureMultiUserConnection(theCase, index, name); // HttpClient
+                }
             }
-            // get SolrJ client
-            solrClient = getSolrClient(solrUrl);
+            
+            // document batching
+            maxBufferSize = org.sleuthkit.autopsy.keywordsearch.UserPreferences.getDocumentsQueueSize();
+            logger.log(Level.INFO, "Using Solr document queue size = {0}", maxBufferSize); //NON-NLS
+            buffer = new ArrayList<>(maxBufferSize);
+            periodicTasksExecutor = new ScheduledThreadPoolExecutor(1, new ThreadFactoryBuilder().setNameFormat("periodic-batched-document-task-%d").build()); //NON-NLS
+            periodicTasksExecutor.scheduleWithFixedDelay(new SendBatchedDocumentsTask(), PERIODIC_BATCH_SEND_INTERVAL_MINUTES, PERIODIC_BATCH_SEND_INTERVAL_MINUTES, TimeUnit.MINUTES);
+        }
+
+        /**
+         * A task that periodically sends batched documents to Solr. Batched documents
+         * get sent automatically as soon as the batching buffer is gets full. However,
+         * if the buffer is not full, we want to periodically send the batched documents
+         * so that users are able to see them in their keyword searches.
+         */
+        private final class SendBatchedDocumentsTask implements Runnable {
+
+            @Override
+            public void run() {
+                List<SolrInputDocument> clone;
+                synchronized (bufferLock) {
+                    
+                    if (buffer.isEmpty()) {
+                        return;
+                    }
+                    
+                    // Buffer is full. Make a clone and release the lock, so that we don't
+                    // hold other ingest threads
+                    clone = buffer.stream().collect(toList());
+                    buffer.clear();
+                }
+
+                try {
+                    // send the cloned list to Solr
+                    sendBufferedDocs(clone);
+                } catch (KeywordSearchModuleException ex) {
+                    logger.log(Level.SEVERE, "Periodic  batched document update failed", ex); //NON-NLS
+                }
+            }
         }
 
         /**
@@ -1844,12 +1957,12 @@ public class Server {
         }
 
         private QueryResponse query(SolrQuery sq) throws SolrServerException, IOException {
-            return solrClient.query(sq);
+            return queryClient.query(sq);
         }
 
         private NamedList<Object> request(SolrRequest request) throws SolrServerException, RemoteSolrException {
             try {
-                return solrClient.request(request);
+                return queryClient.request(request);
             } catch (IOException e) {
                 logger.log(Level.WARNING, "Could not issue Solr request. ", e); //NON-NLS
                 throw new SolrServerException(
@@ -1859,18 +1972,33 @@ public class Server {
         }
 
         private QueryResponse query(SolrQuery sq, SolrRequest.METHOD method) throws SolrServerException, IOException {
-            return solrClient.query(sq, method);
+            return queryClient.query(sq, method);
         }
 
         private TermsResponse queryTerms(SolrQuery sq) throws SolrServerException, IOException {
-            QueryResponse qres = solrClient.query(sq);
+            QueryResponse qres = queryClient.query(sq);
             return qres.getTermsResponse();
         }
 
         private void commit() throws SolrServerException {
+
+            List<SolrInputDocument> clone;
+            synchronized (bufferLock) {
+                // Make a clone and release the lock, so that we don't
+                // hold other ingest threads
+                clone = buffer.stream().collect(toList());
+                buffer.clear();
+            }
+
+            try {
+                sendBufferedDocs(clone);
+            } catch (KeywordSearchModuleException ex) {
+                throw new SolrServerException(NbBundle.getMessage(this.getClass(), "Server.commit.exception.msg"), ex);
+            }
+
             try {
                 //commit and block
-                solrClient.commit(true, true);
+                indexingClient.commit(true, true);
             } catch (IOException e) {
                 logger.log(Level.WARNING, "Could not commit index. ", e); //NON-NLS
                 throw new SolrServerException(NbBundle.getMessage(this.getClass(), "Server.commit.exception.msg"), e);
@@ -1881,20 +2009,58 @@ public class Server {
             String dataSourceId = Long.toString(dsObjId);
             String deleteQuery = "image_id:" + dataSourceId;
 
-            solrClient.deleteByQuery(deleteQuery);
+            queryClient.deleteByQuery(deleteQuery);
         }
 
+        /**
+         * Add a Solr document for indexing. Documents get batched instead of
+         * being immediately sent to Solr (unless batch size = 1).
+         *
+         * @param doc Solr document to be indexed.
+         *
+         * @throws KeywordSearchModuleException
+         */
         void addDocument(SolrInputDocument doc) throws KeywordSearchModuleException {
+
+            List<SolrInputDocument> clone;
+            synchronized (bufferLock) {
+                buffer.add(doc);
+                // buffer documents if the buffer is not full
+                if (buffer.size() < maxBufferSize) {
+                    return;
+                }
+
+                // Buffer is full. Make a clone and release the lock, so that we don't
+                // hold other ingest threads
+                clone = buffer.stream().collect(toList());
+                buffer.clear();
+            }
+            
+            // send the cloned list to Solr
+            sendBufferedDocs(clone);
+        }
+        
+        /**
+         * Send a list of buffered documents to Solr.
+         *
+         * @param docBuffer List of buffered Solr documents
+         *
+         * @throws KeywordSearchModuleException
+         */
+        private void sendBufferedDocs(List<SolrInputDocument> docBuffer) throws KeywordSearchModuleException {
+            
+            if (docBuffer.isEmpty()) {
+                return;
+            }
+            
             try {
-                solrClient.add(doc);
-            } catch (SolrServerException | RemoteSolrException ex) {
-                logger.log(Level.SEVERE, "Could not add document to index via update handler: " + doc.getField("id"), ex); //NON-NLS
+                indexingClient.add(docBuffer);
+            } catch (SolrServerException | RemoteSolrException | IOException ex) {
+                logger.log(Level.SEVERE, "Could not add buffered documents to index", ex); //NON-NLS
                 throw new KeywordSearchModuleException(
-                        NbBundle.getMessage(this.getClass(), "Server.addDoc.exception.msg", doc.getField("id")), ex); //NON-NLS
-            } catch (IOException ex) {
-                logger.log(Level.SEVERE, "Could not add document to index via update handler: " + doc.getField("id"), ex); //NON-NLS
-                throw new KeywordSearchModuleException(
-                        NbBundle.getMessage(this.getClass(), "Server.addDoc.exception.msg2", doc.getField("id")), ex); //NON-NLS
+                        NbBundle.getMessage(this.getClass(), "Server.addDocBatch.exception.msg"), ex); //NON-NLS
+            } finally {
+                docBuffer.clear();
             }
         }
 
@@ -1919,7 +2085,7 @@ public class Server {
             q.setFields(Schema.TEXT.toString());
             try {
                 // Get the first result. 
-                SolrDocumentList solrDocuments = solrClient.query(q).getResults();
+                SolrDocumentList solrDocuments = queryClient.query(q).getResults();
 
                 if (!solrDocuments.isEmpty()) {
                     SolrDocument solrDocument = solrDocuments.get(0);
@@ -1944,20 +2110,33 @@ public class Server {
         }
 
         synchronized void close() throws KeywordSearchModuleException {
-            // We only unload cores for "single-user" cases.
-            if (this.caseType == CaseType.MULTI_USER_CASE) {
-                solrClient.close();
-                return;
-            }
-
             try {
-                CoreAdminRequest.unloadCore(this.name, currentSolrServer);
-            } catch (SolrServerException ex) {
+                // stop the periodic batch update task. If the task is already running, 
+                // allow it to finish.
+                ThreadUtils.shutDownTaskExecutor(periodicTasksExecutor);
+
+                // We only unload cores for "single-user" cases.
+                if (this.caseType == CaseType.MULTI_USER_CASE) {
+                    return;
+                }
+                
+                CoreAdminRequest.unloadCore(this.name, localSolrServer);
+            } catch (SolrServerException | RemoteSolrException ex) {
                 throw new KeywordSearchModuleException(
                         NbBundle.getMessage(this.getClass(), "Server.close.exception.msg"), ex);
             } catch (IOException ex) {
                 throw new KeywordSearchModuleException(
                         NbBundle.getMessage(this.getClass(), "Server.close.exception.msg2"), ex);
+            } finally {
+                try {
+                    queryClient.close();
+                    queryClient = null;
+                    indexingClient.close();
+                    indexingClient = null;
+                } catch (IOException ex) {
+                    throw new KeywordSearchModuleException(
+                        NbBundle.getMessage(this.getClass(), "Server.close.exception.msg2"), ex);
+                }
             }
         }
 

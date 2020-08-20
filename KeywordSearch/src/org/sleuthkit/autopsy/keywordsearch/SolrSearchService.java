@@ -22,24 +22,18 @@ import com.google.common.eventbus.Subscribe;
 import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
-import java.lang.reflect.InvocationTargetException;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.MissingResourceException;
 import java.util.logging.Level;
-import javax.swing.JDialog;
-import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
 import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.client.solrj.impl.ConcurrentUpdateSolrClient;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
 import org.sleuthkit.autopsy.appservices.AutopsyService;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
-import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
@@ -150,16 +144,16 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
      */
     @Override
     public void tryConnect(String host, int port) throws KeywordSearchServiceException {
-        ConcurrentUpdateSolrClient solrServer = null;
         if (host == null || host.isEmpty()) {
             throw new KeywordSearchServiceException(NbBundle.getMessage(SolrSearchService.class, "SolrConnectionCheck.MissingHostname")); //NON-NLS
         }
-        try {
-            solrServer = new ConcurrentUpdateSolrClient.Builder("http://" + host + ":" + Integer.toString(port) + "/solr").build(); //NON-NLS            
-            KeywordSearch.getServer().connectToSolrServer(solrServer);
+        try {         
+            KeywordSearch.getServer().connectToSolrServer(host, Integer.toString(port));
         } catch (SolrServerException ex) {
+            logger.log(Level.SEVERE, "Unable to connect to Solr server. Host: " + host + ", port: " + port, ex);
             throw new KeywordSearchServiceException(NbBundle.getMessage(SolrSearchService.class, "SolrConnectionCheck.HostnameOrPort")); //NON-NLS*/
         } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Unable to connect to Solr server. Host: " + host + ", port: " + port, ex);
             String result = NbBundle.getMessage(SolrSearchService.class, "SolrConnectionCheck.HostnameOrPort"); //NON-NLS
             String message = ex.getCause().getMessage().toLowerCase();
             if (message.startsWith(SERVER_REFUSED_CONNECTION)) {
@@ -179,13 +173,11 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
             }
             throw new KeywordSearchServiceException(result);
         } catch (NumberFormatException ex) {
+            logger.log(Level.SEVERE, "Unable to connect to Solr server. Host: " + host + ", port: " + port, ex);
             throw new KeywordSearchServiceException(Bundle.SolrConnectionCheck_Port());
         } catch (IllegalArgumentException ex) {
+            logger.log(Level.SEVERE, "Unable to connect to Solr server. Host: " + host + ", port: " + port, ex);
             throw new KeywordSearchServiceException(ex.getMessage());
-        } finally {
-            if (null != solrServer) {
-                solrServer.close();
-            }
         }
     }
 
