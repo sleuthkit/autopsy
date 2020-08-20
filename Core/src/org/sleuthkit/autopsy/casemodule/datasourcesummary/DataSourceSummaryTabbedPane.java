@@ -16,12 +16,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datasourcesummary.ui;
+package org.sleuthkit.autopsy.casemodule.datasourcesummary;
 
 import javax.swing.JTabbedPane;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.IngestJobInfoPanel;
-import org.sleuthkit.autopsy.datasourcesummary.ui.Bundle;
 import org.sleuthkit.datamodel.DataSource;
 
 /**
