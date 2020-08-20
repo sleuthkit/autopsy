@@ -33,6 +33,11 @@ public abstract class Result {
     private SearchData.Frequency frequency;
     private final List<String> tagNames = new ArrayList<>();
 
+    /**
+     * Get the Object ID for the data source the result is in.
+     *
+     * @return The Object ID of the data source the result is in.
+     */
     public abstract long getDataSourceObjectId();
 
     /**
@@ -44,6 +49,11 @@ public abstract class Result {
         return frequency;
     }
 
+    /**
+     * Get the known status of the result.
+     *
+     * @return The Known status of the result.
+     */
     public abstract TskData.FileKnown getKnown();
 
     /**
