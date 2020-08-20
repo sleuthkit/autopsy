@@ -121,7 +121,7 @@ public final class DiscoveryEventUtils {
         private final List<AbstractFilter> searchFilters;
         private final DiscoveryAttributes.AttributeType groupingAttribute;
         private final Group.GroupSortingAlgorithm groupSort;
-        private final FileSorter.SortingMethod fileSortMethod;
+        private final ResultsSorter.SortingMethod fileSortMethod;
 
         /**
          * Construct a new SearchCompleteEvent,
@@ -136,7 +136,7 @@ public final class DiscoveryEventUtils {
          */
         public SearchCompleteEvent(Map<GroupKey, Integer> groupMap, List<AbstractFilter> searchfilters,
                 DiscoveryAttributes.AttributeType groupingAttribute, Group.GroupSortingAlgorithm groupSort,
-                FileSorter.SortingMethod fileSortMethod) {
+                ResultsSorter.SortingMethod fileSortMethod) {
             this.groupMap = groupMap;
             this.searchFilters = searchfilters;
             this.groupingAttribute = groupingAttribute;
@@ -185,7 +185,7 @@ public final class DiscoveryEventUtils {
          *
          * @return The sorting method used for files.
          */
-        public FileSorter.SortingMethod getFileSort() {
+        public ResultsSorter.SortingMethod getFileSort() {
             return fileSortMethod;
         }
 
@@ -280,7 +280,7 @@ public final class DiscoveryEventUtils {
         private final List<AbstractFilter> searchfilters;
         private final DiscoveryAttributes.AttributeType groupingAttribute;
         private final Group.GroupSortingAlgorithm groupSort;
-        private final FileSorter.SortingMethod fileSortMethod;
+        private final ResultsSorter.SortingMethod fileSortMethod;
 
         /**
          * Construct a new GroupSelectedEvent.
@@ -298,7 +298,7 @@ public final class DiscoveryEventUtils {
          */
         public GroupSelectedEvent(List<AbstractFilter> searchfilters,
                 DiscoveryAttributes.AttributeType groupingAttribute, Group.GroupSortingAlgorithm groupSort,
-                FileSorter.SortingMethod fileSortMethod, GroupKey groupKey, int groupSize, Type resultType) {
+                ResultsSorter.SortingMethod fileSortMethod, GroupKey groupKey, int groupSize, Type resultType) {
             this.searchfilters = searchfilters;
             this.groupingAttribute = groupingAttribute;
             this.groupSort = groupSort;
@@ -351,7 +351,7 @@ public final class DiscoveryEventUtils {
          *
          * @return The sorting method used for files.
          */
-        public FileSorter.SortingMethod getFileSort() {
+        public ResultsSorter.SortingMethod getFileSort() {
             return fileSortMethod;
         }
 

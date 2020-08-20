@@ -33,7 +33,8 @@ import org.sleuthkit.autopsy.discovery.search.Group;
 import org.sleuthkit.autopsy.discovery.search.FileSearch;
 import org.sleuthkit.autopsy.discovery.search.SearchData;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryException;
-import org.sleuthkit.autopsy.discovery.search.FileSorter;
+import org.sleuthkit.autopsy.discovery.search.DomainSearch;
+import org.sleuthkit.autopsy.discovery.search.ResultsSorter;
 import org.sleuthkit.autopsy.discovery.search.Result;
 
 /**
@@ -46,7 +47,7 @@ final class PageWorker extends SwingWorker<Void, Void> {
     private final List<AbstractFilter> searchfilters;
     private final DiscoveryAttributes.AttributeType groupingAttribute;
     private final Group.GroupSortingAlgorithm groupSort;
-    private final FileSorter.SortingMethod fileSortMethod;
+    private final ResultsSorter.SortingMethod fileSortMethod;
     private final GroupKey groupKey;
     private final int startingEntry;
     private final int pageSize;
@@ -71,7 +72,7 @@ final class PageWorker extends SwingWorker<Void, Void> {
      * @param centralRepo       The central repository to be used.
      */
     PageWorker(List<AbstractFilter> searchfilters, DiscoveryAttributes.AttributeType groupingAttribute,
-            Group.GroupSortingAlgorithm groupSort, FileSorter.SortingMethod fileSortMethod, GroupKey groupKey,
+            Group.GroupSortingAlgorithm groupSort, ResultsSorter.SortingMethod fileSortMethod, GroupKey groupKey,
             int startingEntry, int pageSize, SearchData.Type resultType, CentralRepository centralRepo) {
         this.searchfilters = searchfilters;
         this.groupingAttribute = groupingAttribute;
@@ -89,11 +90,19 @@ final class PageWorker extends SwingWorker<Void, Void> {
 
         try {
             // Run the search
-            results.addAll(FileSearch.getFilesInGroup(System.getProperty(USER_NAME_PROPERTY), searchfilters,
-                    groupingAttribute,
-                    groupSort,
-                    fileSortMethod, groupKey, startingEntry, pageSize,
-                    Case.getCurrentCase().getSleuthkitCase(), centralRepo));
+            if (resultType == SearchData.Type.DOMAIN) {
+                results.addAll(DomainSearch.getDomainsInGroup(System.getProperty(USER_NAME_PROPERTY), searchfilters,
+                        groupingAttribute,
+                        groupSort,
+                        fileSortMethod, groupKey, startingEntry, pageSize,
+                        Case.getCurrentCase().getSleuthkitCase(), centralRepo));
+            } else {
+                results.addAll(FileSearch.getFilesInGroup(System.getProperty(USER_NAME_PROPERTY), searchfilters,
+                        groupingAttribute,
+                        groupSort,
+                        fileSortMethod, groupKey, startingEntry, pageSize,
+                        Case.getCurrentCase().getSleuthkitCase(), centralRepo));
+            }
         } catch (DiscoveryException ex) {
             logger.log(Level.SEVERE, "Error running file search test", ex);
             cancel(true);

@@ -59,7 +59,7 @@ public class ResultFile extends Result {
      *
      * @param abstractFile
      */
-    public ResultFile(AbstractFile abstractFile) {
+    public ResultFile(BlackboardA abstractFile) {
         try {
             //call get uniquePath to cache the path
             abstractFile.getUniquePath();

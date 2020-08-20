@@ -34,7 +34,7 @@ class SearchResults {
 
     private final Group.GroupSortingAlgorithm groupSortingType;
     private final DiscoveryAttributes.AttributeType attrType;
-    private final FileSorter fileSorter;
+    private final ResultsSorter fileSorter;
 
     private final Map<GroupKey, Group> groupMap = new HashMap<>();
     private List<Group> groupList = new ArrayList<>();
@@ -51,10 +51,10 @@ class SearchResults {
      *                          sortGroupsAndFiles the files in each group.
      */
     SearchResults(Group.GroupSortingAlgorithm groupSortingType, DiscoveryAttributes.AttributeType attrType,
-            FileSorter.SortingMethod fileSortingMethod) {
+            ResultsSorter.SortingMethod fileSortingMethod) {
         this.groupSortingType = groupSortingType;
         this.attrType = attrType;
-        this.fileSorter = new FileSorter(fileSortingMethod);
+        this.fileSorter = new ResultsSorter(fileSortingMethod);
     }
 
     /**
@@ -64,7 +64,7 @@ class SearchResults {
     SearchResults() {
         this.groupSortingType = Group.GroupSortingAlgorithm.BY_GROUP_NAME;
         this.attrType = new DiscoveryAttributes.FileSizeAttribute();
-        this.fileSorter = new FileSorter(FileSorter.SortingMethod.BY_FILE_NAME);
+        this.fileSorter = new ResultsSorter(ResultsSorter.SortingMethod.BY_FILE_NAME);
     }
 
     /**

@@ -54,7 +54,7 @@ public class DiscoveryKeyUtils {
         SearchKey(String userName, List<AbstractFilter> filters,
                 DiscoveryAttributes.AttributeType groupAttributeType,
                 Group.GroupSortingAlgorithm groupSortingType,
-                FileSorter.SortingMethod fileSortingMethod) {
+                ResultsSorter.SortingMethod fileSortingMethod) {
             StringBuilder searchStringBuilder = new StringBuilder();
             searchStringBuilder.append(userName);
             for (AbstractFilter filter : filters) {

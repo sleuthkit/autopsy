@@ -71,7 +71,7 @@ public class FileSearch {
             List<AbstractFilter> filters,
             AttributeType groupAttributeType,
             Group.GroupSortingAlgorithm groupSortingType,
-            FileSorter.SortingMethod fileSortingMethod,
+            ResultsSorter.SortingMethod fileSortingMethod,
             SleuthkitCase caseDb, CentralRepository centralRepoDb) throws DiscoveryException {
         // Make a list of attributes that we want to add values for. This ensures the
         // ResultFile objects will have all needed fields set when it's time to group
@@ -123,7 +123,7 @@ public class FileSearch {
             List<AbstractFilter> filters,
             AttributeType groupAttributeType,
             Group.GroupSortingAlgorithm groupSortingType,
-            FileSorter.SortingMethod fileSortingMethod,
+            ResultsSorter.SortingMethod fileSortingMethod,
             SleuthkitCase caseDb, CentralRepository centralRepoDb) throws DiscoveryException {
         Map<GroupKey, List<Result>> searchResults = runFileSearch(userName, filters,
                 groupAttributeType, groupSortingType, fileSortingMethod, caseDb, centralRepoDb);
@@ -160,7 +160,7 @@ public class FileSearch {
             List<AbstractFilter> filters,
             AttributeType groupAttributeType,
             Group.GroupSortingAlgorithm groupSortingType,
-            FileSorter.SortingMethod fileSortingMethod,
+            ResultsSorter.SortingMethod fileSortingMethod,
             GroupKey groupKey,
             int startingEntry,
             int numberOfEntries,
@@ -256,7 +256,7 @@ public class FileSearch {
             List<AbstractFilter> filters,
             AttributeType groupAttributeType,
             Group.GroupSortingAlgorithm groupSortingType,
-            FileSorter.SortingMethod fileSortingMethod,
+            ResultsSorter.SortingMethod fileSortingMethod,
             SleuthkitCase caseDb, CentralRepository centralRepoDb) throws DiscoveryException {
 
         // Make a list of attributes that we want to add values for. This ensures the
@@ -304,7 +304,6 @@ public class FileSearch {
             attr.addAttributeToResultFiles(results, caseDb, centralRepoDb);
         }
     }
-
 
     private FileSearch() {
         // Class should not be instantiated

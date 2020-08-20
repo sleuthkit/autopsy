@@ -29,7 +29,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Class used to sort ResultFiles using the supplied method.
  */
-public class FileSorter implements Comparator<Result> {
+public class ResultsSorter implements Comparator<Result> {
 
     private final List<Comparator<Result>> comparators = new ArrayList<>();
 
@@ -40,7 +40,7 @@ public class FileSorter implements Comparator<Result> {
      *
      * @param method The method that should be used to sort the files
      */
-    public FileSorter(SortingMethod method) {
+    public ResultsSorter(SortingMethod method) {
 
         // Set up the primary comparators that should applied to the files
         switch (method) {

@@ -1,7 +1,20 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy
+ *
+ * Copyright 2020 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.discovery.search;
 
@@ -32,8 +45,8 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
 /**
- *
- * @author wschaefer
+ * Class which contains the search attributes which can be specified for
+ * Discovery.
  */
 public class DiscoveryAttributes {
 
@@ -75,8 +88,8 @@ public class DiscoveryAttributes {
     public static class FileSizeAttribute extends AttributeType {
 
         @Override
-        public DiscoveryKeyUtils.GroupKey getGroupKey(Result file) {
-            return new DiscoveryKeyUtils.FileSizeGroupKey((ResultFile) file);
+        public DiscoveryKeyUtils.GroupKey getGroupKey(Result result) {
+            return new DiscoveryKeyUtils.FileSizeGroupKey(result);
         }
     }
 
@@ -678,6 +691,9 @@ public class DiscoveryAttributes {
                 + ") "; // NON-NLS
     }
 
+    /**
+     * Private constructor for DiscoveryAttributes class.
+     */
     private DiscoveryAttributes() {
         // Class should not be instantiated
     }

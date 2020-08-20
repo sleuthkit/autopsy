@@ -44,9 +44,9 @@ import org.sleuthkit.autopsy.discovery.search.Group.GroupSortingAlgorithm;
 import static org.sleuthkit.autopsy.discovery.search.Group.GroupSortingAlgorithm.BY_GROUP_SIZE;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryAttributes.GroupingAttributeType;
 import static org.sleuthkit.autopsy.discovery.search.DiscoveryAttributes.GroupingAttributeType.PARENT_PATH;
-import org.sleuthkit.autopsy.discovery.search.FileSorter;
-import org.sleuthkit.autopsy.discovery.search.FileSorter.SortingMethod;
-import static org.sleuthkit.autopsy.discovery.search.FileSorter.SortingMethod.BY_FILE_NAME;
+import org.sleuthkit.autopsy.discovery.search.ResultsSorter;
+import org.sleuthkit.autopsy.discovery.search.ResultsSorter.SortingMethod;
+import static org.sleuthkit.autopsy.discovery.search.ResultsSorter.SortingMethod.BY_FILE_NAME;
 import org.sleuthkit.autopsy.discovery.search.SearchData;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
@@ -175,7 +175,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         groupByCombobox.setSelectedItem(PARENT_PATH);
         orderByCombobox.removeAllItems();
         // Set up the file order list
-        for (FileSorter.SortingMethod method : FileSorter.SortingMethod.getOptionsForOrdering()) {
+        for (ResultsSorter.SortingMethod method : ResultsSorter.SortingMethod.getOptionsForOrdering()) {
             if (method != SortingMethod.BY_FREQUENCY || CentralRepository.isEnabled()) {
                 orderByCombobox.addItem(method);
             }
@@ -232,7 +232,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
                     videoFilterPanel.validateFields();
                 }
                 break;
-            case DOCUMENTS:
+            case DOCUMENT:
                 if (documentFilterPanel != null) {
                     documentFilterPanel.validateFields();
                 }
@@ -497,7 +497,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         documentsButton.setEnabled(false);
         documentsButton.setBackground(SELECTED_COLOR);
         documentsButton.setForeground(Color.BLACK);
-        type = SearchData.Type.DOCUMENTS;
+        type = SearchData.Type.DOCUMENT;
         documentFilterPanel.addPropertyChangeListener(listener);
         validateDialog();
         pack();
@@ -558,7 +558,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         Group.GroupSortingAlgorithm groupSortAlgorithm = groupSortingComboBox.getItemAt(groupSortingComboBox.getSelectedIndex());
 
         // Get the file sorting method
-        FileSorter.SortingMethod fileSort = (FileSorter.SortingMethod) orderByCombobox.getSelectedItem();
+        ResultsSorter.SortingMethod fileSort = (ResultsSorter.SortingMethod) orderByCombobox.getSelectedItem();
         CentralRepository centralRepoDb = null;
         if (CentralRepository.isEnabled()) {
             try {

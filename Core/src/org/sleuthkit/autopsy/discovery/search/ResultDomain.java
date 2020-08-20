@@ -22,9 +22,18 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
+/**
+ * Container for domains that holds all necessary data for grouping and sorting.
+ */
 public class ResultDomain extends Result {
-
-    ResultDomain() {
+    private String domain;
+    /**
+     * Create a ResultDomain from a String.
+     *
+     * @param domain The domain the result is being created from.
+     */
+    ResultDomain(String domain) {
+        this.domain = domain;
         this.setFrequency(SearchData.Frequency.UNKNOWN);
     }
 

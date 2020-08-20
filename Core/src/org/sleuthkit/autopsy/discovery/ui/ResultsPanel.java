@@ -44,7 +44,7 @@ import org.sleuthkit.autopsy.discovery.search.DiscoveryKeyUtils.GroupKey;
 import org.sleuthkit.autopsy.discovery.search.Group;
 import org.sleuthkit.autopsy.discovery.search.FileSearch;
 import org.sleuthkit.autopsy.discovery.search.SearchData;
-import org.sleuthkit.autopsy.discovery.search.FileSorter;
+import org.sleuthkit.autopsy.discovery.search.ResultsSorter;
 import org.sleuthkit.autopsy.discovery.search.Result;
 import org.sleuthkit.autopsy.discovery.search.ResultFile;
 import org.sleuthkit.autopsy.textsummarizer.TextSummary;
@@ -63,7 +63,7 @@ final class ResultsPanel extends javax.swing.JPanel {
     private List<AbstractFilter> searchFilters;
     private DiscoveryAttributes.AttributeType groupingAttribute;
     private Group.GroupSortingAlgorithm groupSort;
-    private FileSorter.SortingMethod fileSortMethod;
+    private ResultsSorter.SortingMethod fileSortMethod;
     private GroupKey selectedGroupKey;
     private int currentPage = 0;
     private int previousPageSize = 10;

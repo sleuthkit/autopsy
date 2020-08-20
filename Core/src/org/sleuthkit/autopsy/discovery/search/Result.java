@@ -55,8 +55,20 @@ public abstract class Result {
         this.frequency = frequency;
     }
 
+    /**
+     * Get the data source associated with this result.
+     *
+     * @return The data source this result came from.
+     *
+     * @throws TskCoreException
+     */
     public abstract Content getDataSource() throws TskCoreException;
 
+    /**
+     * Get the type of this result.
+     *
+     * @return The type of items being searched for.
+     */
     public abstract SearchData.Type getType();
 
     /**

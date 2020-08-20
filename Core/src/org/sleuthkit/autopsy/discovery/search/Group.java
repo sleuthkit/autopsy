@@ -83,7 +83,7 @@ public class Group implements Comparable<Group> {
     /**
      * Sort all the files in the group
      */
-    public void sortFiles(FileSorter sorter) {
+    public void sortFiles(ResultsSorter sorter) {
         Collections.sort(results, sorter);
     }
 
