@@ -524,7 +524,7 @@ public class SearchFiltering {
             }
 
             // Set the frequency for each file
-            FileSearch.FrequencyAttribute freqAttr = new FileSearch.FrequencyAttribute();
+            DiscoveryAttributes.FrequencyAttribute freqAttr = new DiscoveryAttributes.FrequencyAttribute();
             freqAttr.addAttributeToResultFiles(currentResults, caseDb, centralRepoDb);
 
             // If the frequency matches the filter, add the file to the results

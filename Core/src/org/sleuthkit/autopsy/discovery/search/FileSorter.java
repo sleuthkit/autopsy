@@ -254,19 +254,19 @@ public class FileSorter implements Comparator<ResultFile> {
                 Bundle.FileSorter_SortingMethod_datasource_displayName()), // Sort in increasing order of data source ID
         BY_FILE_SIZE(new ArrayList<>(),
                 Bundle.FileSorter_SortingMethod_filesize_displayName()), // Sort in decreasing order of size
-        BY_FILE_TYPE(Arrays.asList(new FileSearch.FileTypeAttribute()),
+        BY_FILE_TYPE(Arrays.asList(new DiscoveryAttributes.FileTypeAttribute()),
                 Bundle.FileSorter_SortingMethod_filetype_displayName()), // Sort in order of file type (defined in FileType enum), with secondary sort on MIME type
-        BY_FREQUENCY(Arrays.asList(new FileSearch.FrequencyAttribute()),
+        BY_FREQUENCY(Arrays.asList(new DiscoveryAttributes.FrequencyAttribute()),
                 Bundle.FileSorter_SortingMethod_frequency_displayName()), // Sort by decreasing rarity in the central repository
-        BY_KEYWORD_LIST_NAMES(Arrays.asList(new FileSearch.KeywordListAttribute()),
+        BY_KEYWORD_LIST_NAMES(Arrays.asList(new DiscoveryAttributes.KeywordListAttribute()),
                 Bundle.FileSorter_SortingMethod_keywordlist_displayName()), // Sort alphabetically by list of keyword list names found
         BY_FULL_PATH(new ArrayList<>(),
                 Bundle.FileSorter_SortingMethod_fullPath_displayName());       // Sort alphabetically by path
 
         private final String displayName;
-        private final List<FileSearch.AttributeType> requiredAttributes;
+        private final List<DiscoveryAttributes.AttributeType> requiredAttributes;
 
-        SortingMethod(List<FileSearch.AttributeType> attributes, String displayName) {
+        SortingMethod(List<DiscoveryAttributes.AttributeType> attributes, String displayName) {
             this.requiredAttributes = attributes;
             this.displayName = displayName;
         }
@@ -276,7 +276,7 @@ public class FileSorter implements Comparator<ResultFile> {
             return displayName;
         }
 
-        public List<FileSearch.AttributeType> getRequiredAttributes() {
+        public List<DiscoveryAttributes.AttributeType> getRequiredAttributes() {
             return Collections.unmodifiableList(requiredAttributes);
         }
 

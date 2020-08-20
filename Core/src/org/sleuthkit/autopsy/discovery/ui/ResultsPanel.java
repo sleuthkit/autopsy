@@ -38,6 +38,7 @@ import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.autopsy.discovery.search.DiscoveryAttributes;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryKeyUtils.GroupKey;
 import org.sleuthkit.autopsy.discovery.search.Group;
@@ -59,7 +60,7 @@ final class ResultsPanel extends javax.swing.JPanel {
     private final ImageThumbnailViewer imageThumbnailViewer;
     private final DocumentPreviewViewer documentPreviewViewer;
     private List<AbstractFilter> searchFilters;
-    private FileSearch.AttributeType groupingAttribute;
+    private DiscoveryAttributes.AttributeType groupingAttribute;
     private Group.GroupSortingAlgorithm groupSort;
     private FileSorter.SortingMethod fileSortMethod;
     private GroupKey selectedGroupKey;

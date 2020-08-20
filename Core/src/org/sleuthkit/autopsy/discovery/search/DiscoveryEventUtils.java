@@ -119,7 +119,7 @@ public final class DiscoveryEventUtils {
 
         private final Map<GroupKey, Integer> groupMap;
         private final List<AbstractFilter> searchFilters;
-        private final FileSearch.AttributeType groupingAttribute;
+        private final DiscoveryAttributes.AttributeType groupingAttribute;
         private final Group.GroupSortingAlgorithm groupSort;
         private final FileSorter.SortingMethod fileSortMethod;
 
@@ -135,7 +135,7 @@ public final class DiscoveryEventUtils {
          * @param fileSortMethod    The sorting method used for files.
          */
         public SearchCompleteEvent(Map<GroupKey, Integer> groupMap, List<AbstractFilter> searchfilters,
-                FileSearch.AttributeType groupingAttribute, Group.GroupSortingAlgorithm groupSort,
+                DiscoveryAttributes.AttributeType groupingAttribute, Group.GroupSortingAlgorithm groupSort,
                 FileSorter.SortingMethod fileSortMethod) {
             this.groupMap = groupMap;
             this.searchFilters = searchfilters;
@@ -167,7 +167,7 @@ public final class DiscoveryEventUtils {
          *
          * @return The grouping attribute used by the search.
          */
-        public FileSearch.AttributeType getGroupingAttr() {
+        public DiscoveryAttributes.AttributeType getGroupingAttr() {
             return groupingAttribute;
         }
 
@@ -278,7 +278,7 @@ public final class DiscoveryEventUtils {
         private final GroupKey groupKey;
         private final int groupSize;
         private final List<AbstractFilter> searchfilters;
-        private final FileSearch.AttributeType groupingAttribute;
+        private final DiscoveryAttributes.AttributeType groupingAttribute;
         private final Group.GroupSortingAlgorithm groupSort;
         private final FileSorter.SortingMethod fileSortMethod;
 
@@ -297,7 +297,7 @@ public final class DiscoveryEventUtils {
          * @param resultType        The type of files which exist in the group.
          */
         public GroupSelectedEvent(List<AbstractFilter> searchfilters,
-                FileSearch.AttributeType groupingAttribute, Group.GroupSortingAlgorithm groupSort,
+                DiscoveryAttributes.AttributeType groupingAttribute, Group.GroupSortingAlgorithm groupSort,
                 FileSorter.SortingMethod fileSortMethod, GroupKey groupKey, int groupSize, Type resultType) {
             this.searchfilters = searchfilters;
             this.groupingAttribute = groupingAttribute;
@@ -369,7 +369,7 @@ public final class DiscoveryEventUtils {
          *
          * @return The grouping attribute used by the search.
          */
-        public FileSearch.AttributeType getGroupingAttr() {
+        public DiscoveryAttributes.AttributeType getGroupingAttr() {
             return groupingAttribute;
         }
 

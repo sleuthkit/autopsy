@@ -26,6 +26,7 @@ import javax.swing.SwingWorker;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.autopsy.discovery.search.DiscoveryAttributes;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryKeyUtils.GroupKey;
 import org.sleuthkit.autopsy.discovery.search.Group;
@@ -43,7 +44,7 @@ final class PageWorker extends SwingWorker<Void, Void> {
     private final static Logger logger = Logger.getLogger(PageWorker.class.getName());
     private static final String USER_NAME_PROPERTY = "user.name"; //NON-NLS
     private final List<AbstractFilter> searchfilters;
-    private final FileSearch.AttributeType groupingAttribute;
+    private final DiscoveryAttributes.AttributeType groupingAttribute;
     private final Group.GroupSortingAlgorithm groupSort;
     private final FileSorter.SortingMethod fileSortMethod;
     private final GroupKey groupKey;
@@ -69,7 +70,7 @@ final class PageWorker extends SwingWorker<Void, Void> {
      * @param resultType        The type of files which exist in the group.
      * @param centralRepo       The central repository to be used.
      */
-    PageWorker(List<AbstractFilter> searchfilters, FileSearch.AttributeType groupingAttribute,
+    PageWorker(List<AbstractFilter> searchfilters, DiscoveryAttributes.AttributeType groupingAttribute,
             Group.GroupSortingAlgorithm groupSort, FileSorter.SortingMethod fileSortMethod, GroupKey groupKey,
             int startingEntry, int pageSize, SearchData.Type resultType, CentralRepository centralRepo) {
         this.searchfilters = searchfilters;

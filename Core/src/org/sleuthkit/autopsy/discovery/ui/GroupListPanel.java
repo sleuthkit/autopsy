@@ -29,10 +29,10 @@ import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.discovery.search.DiscoveryAttributes;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryKeyUtils.GroupKey;
 import org.sleuthkit.autopsy.discovery.search.Group;
-import org.sleuthkit.autopsy.discovery.search.FileSearch;
 import org.sleuthkit.autopsy.discovery.search.SearchData.Type;
 import org.sleuthkit.autopsy.discovery.search.FileSorter;
 
@@ -45,7 +45,7 @@ final class GroupListPanel extends javax.swing.JPanel {
     private Type type = null;
     private Map<GroupKey, Integer> groupMap = null;
     private List<AbstractFilter> searchfilters;
-    private FileSearch.AttributeType groupingAttribute;
+    private DiscoveryAttributes.AttributeType groupingAttribute;
     private Group.GroupSortingAlgorithm groupSort;
     private FileSorter.SortingMethod fileSortMethod;
     private GroupKey selectedGroupKey;
@@ -210,7 +210,7 @@ final class GroupListPanel extends javax.swing.JPanel {
                 String valueString = newValue.toString();
                 setToolTipText(valueString);
                 //if paths would be longer than 37 characters shorten them to be 37 characters 
-                if (groupingAttribute instanceof FileSearch.ParentPathAttribute && valueString.length() > 37) {
+                if (groupingAttribute instanceof DiscoveryAttributes.ParentPathAttribute && valueString.length() > 37) {
                     valueString = valueString.substring(0, 16) + " ... " + valueString.substring(valueString.length() - 16);
                 }
                 newValue = valueString + " (" + groupMap.get(newValue) + ")";

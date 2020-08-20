@@ -33,7 +33,7 @@ import org.sleuthkit.autopsy.discovery.search.DiscoveryKeyUtils.GroupKey;
 class SearchResults {
 
     private final Group.GroupSortingAlgorithm groupSortingType;
-    private final FileSearch.AttributeType attrType;
+    private final DiscoveryAttributes.AttributeType attrType;
     private final FileSorter fileSorter;
 
     private final Map<GroupKey, Group> groupMap = new HashMap<>();
@@ -50,7 +50,7 @@ class SearchResults {
      * @param fileSortingMethod The method that should be used to
      *                          sortGroupsAndFiles the files in each group.
      */
-    SearchResults(Group.GroupSortingAlgorithm groupSortingType, FileSearch.AttributeType attrType,
+    SearchResults(Group.GroupSortingAlgorithm groupSortingType, DiscoveryAttributes.AttributeType attrType,
             FileSorter.SortingMethod fileSortingMethod) {
         this.groupSortingType = groupSortingType;
         this.attrType = attrType;
@@ -63,7 +63,7 @@ class SearchResults {
      */
     SearchResults() {
         this.groupSortingType = Group.GroupSortingAlgorithm.BY_GROUP_NAME;
-        this.attrType = new FileSearch.FileSizeAttribute();
+        this.attrType = new DiscoveryAttributes.FileSizeAttribute();
         this.fileSorter = new FileSorter(FileSorter.SortingMethod.BY_FILE_NAME);
     }
 

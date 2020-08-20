@@ -27,6 +27,7 @@ import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.autopsy.discovery.search.DiscoveryAttributes;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryKeyUtils.GroupKey;
 import org.sleuthkit.autopsy.discovery.search.Group;
@@ -42,7 +43,7 @@ final class SearchWorker extends SwingWorker<Void, Void> {
     private final static Logger logger = Logger.getLogger(SearchWorker.class.getName());
     private static final String USER_NAME_PROPERTY = "user.name"; //NON-NLS
     private final List<AbstractFilter> filters;
-    private final FileSearch.AttributeType groupingAttr;
+    private final DiscoveryAttributes.AttributeType groupingAttr;
     private final FileSorter.SortingMethod fileSort;
     private final Group.GroupSortingAlgorithm groupSortAlgorithm;
     private final CentralRepository centralRepoDb;
@@ -58,7 +59,7 @@ final class SearchWorker extends SwingWorker<Void, Void> {
      * @param groupSort         The Algorithm to sort groups by.
      * @param fileSortMethod    The SortingMethod to use for files.
      */
-    SearchWorker(CentralRepository centralRepo, List<AbstractFilter> searchfilters, FileSearch.AttributeType groupingAttribute, Group.GroupSortingAlgorithm groupSort, FileSorter.SortingMethod fileSortMethod) {
+    SearchWorker(CentralRepository centralRepo, List<AbstractFilter> searchfilters, DiscoveryAttributes.AttributeType groupingAttribute, Group.GroupSortingAlgorithm groupSort, FileSorter.SortingMethod fileSortMethod) {
         centralRepoDb = centralRepo;
         filters = searchfilters;
         groupingAttr = groupingAttribute;

@@ -37,13 +37,13 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.discovery.search.DiscoveryAttributes;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils;
 import org.sleuthkit.autopsy.discovery.search.Group;
 import org.sleuthkit.autopsy.discovery.search.Group.GroupSortingAlgorithm;
 import static org.sleuthkit.autopsy.discovery.search.Group.GroupSortingAlgorithm.BY_GROUP_SIZE;
-import org.sleuthkit.autopsy.discovery.search.FileSearch;
-import org.sleuthkit.autopsy.discovery.search.FileSearch.GroupingAttributeType;
-import static org.sleuthkit.autopsy.discovery.search.FileSearch.GroupingAttributeType.PARENT_PATH;
+import org.sleuthkit.autopsy.discovery.search.DiscoveryAttributes.GroupingAttributeType;
+import static org.sleuthkit.autopsy.discovery.search.DiscoveryAttributes.GroupingAttributeType.PARENT_PATH;
 import org.sleuthkit.autopsy.discovery.search.FileSorter;
 import org.sleuthkit.autopsy.discovery.search.FileSorter.SortingMethod;
 import static org.sleuthkit.autopsy.discovery.search.FileSorter.SortingMethod.BY_FILE_NAME;
@@ -169,7 +169,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
     private void updateComboBoxes() {
         groupByCombobox.removeAllItems();
         // Set up the grouping attributes
-        for (FileSearch.GroupingAttributeType groupingType : FileSearch.GroupingAttributeType.getOptionsForGrouping()) {
+        for (DiscoveryAttributes.GroupingAttributeType groupingType : DiscoveryAttributes.GroupingAttributeType.getOptionsForGrouping()) {
             addTypeToGroupByComboBox(groupingType);
         }
         groupByCombobox.setSelectedItem(PARENT_PATH);
@@ -554,7 +554,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.SearchStartedEvent(type));
 
         // Get the grouping attribute and group sorting method
-        FileSearch.AttributeType groupingAttr = groupByCombobox.getItemAt(groupByCombobox.getSelectedIndex()).getAttributeType();
+        DiscoveryAttributes.AttributeType groupingAttr = groupByCombobox.getItemAt(groupByCombobox.getSelectedIndex()).getAttributeType();
         Group.GroupSortingAlgorithm groupSortAlgorithm = groupSortingComboBox.getItemAt(groupSortingComboBox.getSelectedIndex());
 
         // Get the file sorting method

@@ -52,7 +52,7 @@ public class DiscoveryKeyUtils {
          * @param fileSortingMethod  The method to sort the files by.
          */
         SearchKey(String userName, List<AbstractFilter> filters,
-                FileSearch.AttributeType groupAttributeType,
+                DiscoveryAttributes.AttributeType groupAttributeType,
                 Group.GroupSortingAlgorithm groupSortingType,
                 FileSorter.SortingMethod fileSortingMethod) {
             StringBuilder searchStringBuilder = new StringBuilder();
