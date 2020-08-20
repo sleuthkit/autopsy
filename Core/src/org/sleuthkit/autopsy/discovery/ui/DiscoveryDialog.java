@@ -568,7 +568,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
                 logger.log(Level.SEVERE, "Error loading central repository database, no central repository options will be available for Discovery", ex);
             }
         }
-        searchWorker = new SearchWorker(centralRepoDb, filters, groupingAttr, groupSortAlgorithm, fileSort);
+        searchWorker = new SearchWorker(centralRepoDb, type, filters, groupingAttr, groupSortAlgorithm, fileSort);
         searchWorker.execute();
         dispose();
         tc.toFront();
