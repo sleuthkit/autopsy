@@ -220,4 +220,5 @@ FileReportDataTypes.knownStatus.text=Known Status
 FileReportDataTypes.perms.text=Permissions
 FileReportDataTypes.path.text=Full Path
 ReportWizardPortableCaseOptionsVisualPanel.getName.title=Choose Portable Case settings
+ReportWizardPortableCaseOptionsVisualPanel.includeAppCheckbox.text=Include application in folder (may add up to 1GB of files)
 TableReportGenerator.StatusColumn.Header=Review Status

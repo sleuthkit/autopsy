@@ -391,7 +391,7 @@ public class CommandLineOptionProcessor extends OptionProcessor {
             }
             commands.add(newCommand);
             runFromCommandLine = true;
-        }
+        } 
     }
 
     /**

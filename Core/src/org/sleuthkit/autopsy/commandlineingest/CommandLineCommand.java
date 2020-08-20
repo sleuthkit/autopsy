@@ -34,7 +34,8 @@ class CommandLineCommand {
         ADD_DATA_SOURCE,
         RUN_INGEST,
         LIST_ALL_DATA_SOURCES,
-        GENERATE_REPORTS;
+        GENERATE_REPORTS,
+        OPEN_CASE_IN_UI;
     }
 
     /**
