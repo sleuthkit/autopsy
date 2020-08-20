@@ -36,6 +36,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.guiutils.ContactCache;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
@@ -66,7 +67,7 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
 
     private GridBagLayout m_gridBagLayout = new GridBagLayout();
     private GridBagConstraints m_constraints = new GridBagConstraints();
-    
+
     private PersonaAccountFetcher currentAccountFetcher = null;
 
     /**
@@ -106,9 +107,9 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
         // update the view with the call log data
         if (callLogViewData != null) {
             List<AccountPersonaSearcherData> personaSearchDataList = updateView(callLogViewData);
-            if(!personaSearchDataList.isEmpty()) {
+            if (!personaSearchDataList.isEmpty()) {
                 currentAccountFetcher = new PersonaAccountFetcher(artifact, personaSearchDataList, this);
-                currentAccountFetcher.execute();                
+                currentAccountFetcher.execute();
             } else {
                 currentAccountFetcher = null;
             }
@@ -143,6 +144,8 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
         String fromAccountIdentifier = null;
         String toAccountIdentifier = null;
         List<String> otherParties = null;
+        List<String> toContactNames = null;
+        List<String> fromContactNames = null;
 
         Content dataSource = artifact.getDataSource();
         String deviceId = ((DataSource) dataSource).getDeviceId();
@@ -186,6 +189,7 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
             String fromAccountAttrValue = fromAccountAttr.getValueString();
             if (fromAccountAttrValue.equalsIgnoreCase(deviceId) == false) {
                 fromAccountIdentifier = fromAccountAttrValue;
+                fromContactNames = ContactCache.getContactNameList(fromAccountIdentifier);
             }
         }
 
@@ -195,6 +199,7 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
             String toAccountAttrValue = StringUtils.trim(numbers[0]);
             if (toAccountAttrValue.equalsIgnoreCase(deviceId) == false) {
                 toAccountIdentifier = toAccountAttrValue;
+                toContactNames = ContactCache.getContactNameList(toAccountIdentifier);
             }
 
             // if more than one To address, then stick the rest of them in the 
@@ -228,6 +233,9 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
             }
 
             callLogViewData.setOtherAttributes(extractOtherAttributes(artifact));
+
+            callLogViewData.setFromContactNameList(fromContactNames);
+            callLogViewData.setToContactNameList(toContactNames);
         }
 
         return callLogViewData;
@@ -237,9 +245,9 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
      * Extract the call time and duration from the artifact and saves in the
      * CallLogViewData.
      *
-     * @param artifact Call log artifact.
+     * @param artifact        Call log artifact.
      * @param callLogViewData CallLogViewData object to save the time & duration
-     * in.
+     *                        in.
      *
      * @throws TskCoreException
      */
@@ -290,7 +298,7 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
      * Update the viewer with the call log data.
      *
      * @param callLogViewData Call log data to update the view with.
-     * 
+     *
      * @return List of AccountPersonaSearcherData objects.
      */
     @NbBundle.Messages({
@@ -312,8 +320,13 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
             String accountDisplayString = getAccountDisplayString(callLogViewData.getFromAccount(), callLogViewData);
             CommunicationArtifactViewerHelper.addValue(this, m_gridBagLayout, this.m_constraints, accountDisplayString);
 
+            List<String> contactNames = callLogViewData.getFromContactNameList();
+            for (String name : contactNames) {
+                CommunicationArtifactViewerHelper.addContactRow(this, m_gridBagLayout, m_constraints, name);
+            }
+
             // show persona
-            dataList.addAll( CommunicationArtifactViewerHelper.addPersonaRow(this, m_gridBagLayout, this.m_constraints, callLogViewData.getFromAccount()));
+            dataList.addAll(CommunicationArtifactViewerHelper.addPersonaRow(this, m_gridBagLayout, this.m_constraints, callLogViewData.getFromAccount()));
         } else {
             CommunicationArtifactViewerHelper.addValue(this, m_gridBagLayout, this.m_constraints, Bundle.CallLogArtifactViewer_value_unknown());
         }
@@ -324,8 +337,13 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
             String accountDisplayString = getAccountDisplayString(callLogViewData.getToAccount(), callLogViewData);
             CommunicationArtifactViewerHelper.addValue(this, m_gridBagLayout, this.m_constraints, accountDisplayString);
 
-            dataList.addAll( CommunicationArtifactViewerHelper.addPersonaRow(this, m_gridBagLayout, this.m_constraints, callLogViewData.getToAccount()));
-           
+            List<String> contactNames = callLogViewData.getToContactNameList();
+            for (String name : contactNames) {
+                CommunicationArtifactViewerHelper.addContactRow(this, m_gridBagLayout, m_constraints, name);
+            }
+
+            dataList.addAll(CommunicationArtifactViewerHelper.addPersonaRow(this, m_gridBagLayout, this.m_constraints, callLogViewData.getToAccount()));
+
         } else {
             CommunicationArtifactViewerHelper.addValue(this, m_gridBagLayout, this.m_constraints, Bundle.CallLogArtifactViewer_value_unknown());
         }
@@ -335,7 +353,7 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
             CommunicationArtifactViewerHelper.addKey(this, m_gridBagLayout, this.m_constraints, Bundle.CallLogArtifactViewer_label_to());
             CommunicationArtifactViewerHelper.addValue(this, m_gridBagLayout, this.m_constraints, otherParty);
 
-            dataList.addAll( CommunicationArtifactViewerHelper.addPersonaRow(this, m_gridBagLayout, this.m_constraints, otherParty));
+            dataList.addAll(CommunicationArtifactViewerHelper.addPersonaRow(this, m_gridBagLayout, this.m_constraints, otherParty));
         }
 
         updateMetadataView(callLogViewData);
@@ -353,7 +371,7 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
         this.setLayout(m_gridBagLayout);
         this.revalidate();
         this.repaint();
-        
+
         return dataList;
     }
 
@@ -441,7 +459,7 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
      * local account, if it is known. If it is, it appends a "(Local)" suffix to
      * account display string.
      *
-     * @param accountIdentifier Account identifier to check.
+     * @param accountIdentifier  Account identifier to check.
      * @param callLogViewDataNew Call log data which may have the lock account.
      *
      * @return Account string to display.
@@ -474,7 +492,7 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
     private void resetComponent() {
 
         // cancel any outstanding persona searching threads.
-        if(currentAccountFetcher != null && !currentAccountFetcher.isDone()) {
+        if (currentAccountFetcher != null && !currentAccountFetcher.isDone()) {
             currentAccountFetcher.cancel(true);
             currentAccountFetcher = null;
         }

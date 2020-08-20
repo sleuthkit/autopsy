@@ -27,7 +27,6 @@ import java.util.Observer;
 import java.util.Set;
 import javax.swing.event.ListSelectionEvent;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.casemodule.IngestJobInfoPanel;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisCompletedEvent;
 import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisCompletedEvent.Reason;
@@ -41,10 +40,8 @@ final class DataSourceSummaryDialog extends javax.swing.JDialog implements Obser
 
     private static final long serialVersionUID = 1L;
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.DATA_SOURCE_ANALYSIS_COMPLETED);
-    private final DataSourceSummaryCountsPanel countsPanel;
-    private final DataSourceSummaryDetailsPanel detailsPanel;
     private final DataSourceBrowser dataSourcesPanel;
-    private final IngestJobInfoPanel ingestHistoryPanel;
+    private final DataSourceSummaryTabbedPane dataSourceSummaryTabbedPane;
 
     /**
      * Creates new form DataSourceSummaryDialog for displaying a summary of the
@@ -52,30 +49,20 @@ final class DataSourceSummaryDialog extends javax.swing.JDialog implements Obser
      * datasource.
      */
     @Messages({
-        "DataSourceSummaryDialog.window.title=Data Sources Summary",
-        "DataSourceSummaryDialog.countsTab.title=Counts",
-        "DataSourceSummaryDialog.detailsTab.title=Details",
-        "DataSourceSummaryDialog.ingestHistoryTab.title=Ingest History"
+        "DataSourceSummaryDialog.window.title=Data Sources Summary"
     })
     DataSourceSummaryDialog(Frame owner) {
         super(owner, Bundle.DataSourceSummaryDialog_window_title(), true);
         Map<Long, String> usageMap = DataSourceInfoUtilities.getDataSourceTypes();
         Map<Long, Long> fileCountsMap = DataSourceInfoUtilities.getCountsOfFiles();
-        countsPanel = new DataSourceSummaryCountsPanel(fileCountsMap);
-        detailsPanel = new DataSourceSummaryDetailsPanel(usageMap);
         dataSourcesPanel = new DataSourceBrowser(usageMap, fileCountsMap);
-        ingestHistoryPanel = new IngestJobInfoPanel();
+        dataSourceSummaryTabbedPane = new DataSourceSummaryTabbedPane();
         initComponents();
         dataSourceSummarySplitPane.setLeftComponent(dataSourcesPanel);
-        dataSourceTabbedPane.addTab(Bundle.DataSourceSummaryDialog_detailsTab_title(), detailsPanel);
-        dataSourceTabbedPane.addTab(Bundle.DataSourceSummaryDialog_countsTab_title(), countsPanel);
-        dataSourceTabbedPane.addTab(Bundle.DataSourceSummaryDialog_ingestHistoryTab_title(), ingestHistoryPanel);
         dataSourcesPanel.addListSelectionListener((ListSelectionEvent e) -> {
             if (!e.getValueIsAdjusting()) {
                 DataSource selectedDataSource = dataSourcesPanel.getSelectedDataSource();
-                countsPanel.updateCountsTableData(selectedDataSource);
-                detailsPanel.updateDetailsPanelData(selectedDataSource);
-                ingestHistoryPanel.setDataSource(selectedDataSource);
+                dataSourceSummaryTabbedPane.setDataSource(selectedDataSource);
                 this.repaint();
             }
         });
@@ -116,7 +103,7 @@ final class DataSourceSummaryDialog extends javax.swing.JDialog implements Obser
 
         closeButton = new javax.swing.JButton();
         dataSourceSummarySplitPane = new javax.swing.JSplitPane();
-        dataSourceTabbedPane = new javax.swing.JTabbedPane();
+        javax.swing.JTabbedPane dataSourceTabbedPane = dataSourceSummaryTabbedPane;
 
         org.openide.awt.Mnemonics.setLocalizedText(closeButton, org.openide.util.NbBundle.getMessage(DataSourceSummaryDialog.class, "DataSourceSummaryDialog.closeButton.text")); // NOI18N
         closeButton.addActionListener(new java.awt.event.ActionListener() {
@@ -173,6 +160,5 @@ final class DataSourceSummaryDialog extends javax.swing.JDialog implements Obser
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton closeButton;
     private javax.swing.JSplitPane dataSourceSummarySplitPane;
-    private javax.swing.JTabbedPane dataSourceTabbedPane;
     // End of variables declaration//GEN-END:variables
 }
