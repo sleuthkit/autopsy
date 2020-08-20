@@ -42,8 +42,8 @@ public class CentralRepositoryService implements AutopsyService {
     }
 
     @NbBundle.Messages({
-        "CentralRepositoryService.progressMsg.updatingSchema=Updating schema...",
-        "CentralRepositoryService.progressMsg.updatingDataSourcesTable=Checking for v1.2 data updates...",})
+        "CentralRepositoryService.progressMsg.updatingSchema=Updating schema..."
+    })
     @Override
     public void openCaseResources(CaseContext context) throws AutopsyServiceException {
         if (!CentralRepository.isEnabled()) {
@@ -58,7 +58,6 @@ public class CentralRepositoryService implements AutopsyService {
             return;
         }
 
-        progress.progress(Bundle.CentralRepositoryService_progressMsg_updatingDataSourcesTable());
         dataUpgradeForVersion1dot2(context.getCase());
     }
 
