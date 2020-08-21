@@ -1,0 +1,427 @@
+/*
+ * Autopsy
+ *
+ * Copyright 2019-2020 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.sleuthkit.autopsy.discovery.search;
+
+import com.google.common.eventbus.EventBus;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import org.sleuthkit.autopsy.discovery.search.AttributeSearchData.AttributeType;
+import org.sleuthkit.autopsy.discovery.search.DiscoveryKeyUtils.GroupKey;
+import org.sleuthkit.autopsy.discovery.search.FileSearchData.FileType;
+import org.sleuthkit.autopsy.discovery.search.SearchData.ResultType;
+import org.sleuthkit.datamodel.AbstractFile;
+
+/**
+ * Class to handle event bus and events for discovery tool.
+ */
+public final class DiscoveryEventUtils {
+
+    private final static EventBus discoveryEventBus = new EventBus();
+
+    /**
+     * Get the discovery event bus.
+     *
+     * @return The discovery event bus.
+     */
+    public static EventBus getDiscoveryEventBus() {
+        return discoveryEventBus;
+    }
+
+    /**
+     * Private no arg constructor for Utility class.
+     */
+    private DiscoveryEventUtils() {
+        //Utility class private constructor intentionally left blank.
+    }
+
+    /**
+     * Event to signal the start of a search being performed.
+     */
+    public static final class SearchStartedEvent {
+
+        private final ResultType resultType;
+        private final FileType fileType;
+        private final AttributeType attributeType;
+
+        /**
+         * Construct a new SearchStartedEvent
+         *
+         * @param type The type of file the search event is for.
+         */
+        public SearchStartedEvent(ResultType resultType, FileType fileType, AttributeType attributeType) {
+            this.resultType = resultType;
+            this.fileType = fileType;
+            this.attributeType = attributeType;
+        }
+
+        /**
+         * Get the broad search type.
+         *
+         * @return The result type, either FILES, or ATTRIBUTES.
+         */
+        public ResultType getResultType() {
+            return resultType;
+        }
+
+        /**
+         * Get the type of file the search is being performed for.
+         *
+         * @return The type of files being searched for.
+         */
+        public FileType getFileType() {
+            return fileType;
+        }
+
+        /**
+         * Get the type of attribute the search is being performed for.
+         *
+         * @return The type of attribute being searched for.
+         */
+        public AttributeType getAttributeType() {
+            return attributeType;
+        }
+    }
+
+    /**
+     * Event to signal that the Instances list should have selection cleared.
+     */
+    public static final class ClearInstanceSelectionEvent {
+
+        /**
+         * Construct a new ClearInstanceSelectionEvent.
+         */
+        public ClearInstanceSelectionEvent() {
+            //no arg constructor
+        }
+    }
+
+    /**
+     * Event to signal that the Instances list should be populated.
+     */
+    public static final class PopulateInstancesListEvent {
+
+        private final List<AbstractFile> instances;
+
+        /**
+         * Construct a new PopulateInstancesListEvent.
+         */
+        public PopulateInstancesListEvent(List<AbstractFile> files) {
+            instances = files;
+        }
+
+        /**
+         * @return the instances
+         */
+        public List<AbstractFile> getInstances() {
+            return Collections.unmodifiableList(instances);
+        }
+    }
+
+    /**
+     * Event to signal the completion of a search being performed.
+     */
+    public static final class SearchCompleteEvent {
+
+        private final Map<GroupKey, Integer> groupMap;
+        private final List<AbstractFilter> searchFilters;
+        private final FileSearch.AttributeType groupingAttribute;
+        private final FileGroup.GroupSortingAlgorithm groupSort;
+        private final FileSorter.SortingMethod fileSortMethod;
+
+        /**
+         * Construct a new SearchCompleteEvent,
+         *
+         * @param groupMap          The map of groups which were found by the
+         *                          search.
+         * @param searchFilters     The search filters which were used by the
+         *                          search.
+         * @param groupingAttribute The grouping attribute used by the search.
+         * @param groupSort         The sorting algorithm used for groups.
+         * @param fileSortMethod    The sorting method used for files.
+         */
+        public SearchCompleteEvent(Map<GroupKey, Integer> groupMap, List<AbstractFilter> searchfilters,
+                FileSearch.AttributeType groupingAttribute, FileGroup.GroupSortingAlgorithm groupSort,
+                FileSorter.SortingMethod fileSortMethod) {
+            this.groupMap = groupMap;
+            this.searchFilters = searchfilters;
+            this.groupingAttribute = groupingAttribute;
+            this.groupSort = groupSort;
+            this.fileSortMethod = fileSortMethod;
+        }
+
+        /**
+         * Get the map of groups found by the search.
+         *
+         * @return The map of groups which were found by the search.
+         */
+        public Map<GroupKey, Integer> getGroupMap() {
+            return Collections.unmodifiableMap(groupMap);
+        }
+
+        /**
+         * Get the file filters used by the search.
+         *
+         * @return The search filters which were used by the search.
+         */
+        public List<AbstractFilter> getFilters() {
+            return Collections.unmodifiableList(searchFilters);
+        }
+
+        /**
+         * Get the grouping attribute used by the search.
+         *
+         * @return The grouping attribute used by the search.
+         */
+        public FileSearch.AttributeType getGroupingAttr() {
+            return groupingAttribute;
+        }
+
+        /**
+         * Get the sorting algorithm used for groups.
+         *
+         * @return The sorting algorithm used for groups.
+         */
+        public FileGroup.GroupSortingAlgorithm getGroupSort() {
+            return groupSort;
+        }
+
+        /**
+         * Get the sorting method used for files.
+         *
+         * @return The sorting method used for files.
+         */
+        public FileSorter.SortingMethod getFileSort() {
+            return fileSortMethod;
+        }
+
+    }
+
+    /**
+     * Event to signal the completion of page retrieval and include the page
+     * contents.
+     */
+    public static final class PageRetrievedEvent {
+
+        private final List<ResultFile> results;
+        private final int page;
+        private final FileType resultType;
+
+        /**
+         * Construct a new PageRetrievedEvent.
+         *
+         * @param resultType The type of files which exist in the page.
+         * @param page       The number of the page which was retrieved.
+         * @param results    The list of files in the page retrieved.
+         */
+        public PageRetrievedEvent(FileType resultType, int page, List<ResultFile> results) {
+            this.results = results;
+            this.page = page;
+            this.resultType = resultType;
+        }
+
+        /**
+         * Get the list of files in the page retrieved.
+         *
+         * @return The list of files in the page retrieved.
+         */
+        public List<ResultFile> getSearchResults() {
+            return Collections.unmodifiableList(results);
+        }
+
+        /**
+         * Get the page number which was retrieved.
+         *
+         * @return The number of the page which was retrieved.
+         */
+        public int getPageNumber() {
+            return page;
+        }
+
+        /**
+         * Get the type of files which exist in the page.
+         *
+         * @return The type of files which exist in the page.
+         */
+        public FileType getType() {
+            return resultType;
+        }
+    }
+
+    /**
+     * Event to signal that there were no results for the search.
+     */
+    public static final class NoResultsEvent {
+
+        /**
+         * Construct a new NoResultsEvent.
+         */
+        public NoResultsEvent() {
+            //no arg constructor
+        }
+    }
+
+    /**
+     * Event to signal that a search has been cancelled
+     */
+    public static final class SearchCancelledEvent {
+
+        /**
+         * Construct a new SearchCancelledEvent.
+         */
+        public SearchCancelledEvent() {
+            //no arg constructor
+        }
+
+    }
+
+    /**
+     * Event to signal that a group has been selected.
+     */
+    public static final class GroupSelectedEvent {
+
+        private final FileType resultType;
+        private final GroupKey groupKey;
+        private final int groupSize;
+        private final List<AbstractFilter> searchfilters;
+        private final FileSearch.AttributeType groupingAttribute;
+        private final FileGroup.GroupSortingAlgorithm groupSort;
+        private final FileSorter.SortingMethod fileSortMethod;
+
+        /**
+         * Construct a new GroupSelectedEvent.
+         *
+         * @param searchfilters     The search filters which were used by the
+         *                          search.
+         * @param groupingAttribute The grouping attribute used by the search.
+         * @param groupSort         The sorting algorithm used for groups.
+         * @param fileSortMethod    The sorting method used for files.
+         * @param groupKey          The key associated with the group which was
+         *                          selected.
+         * @param groupSize         The number of files in the group which was
+         *                          selected.
+         * @param resultType        The type of files which exist in the group.
+         */
+        public GroupSelectedEvent(List<AbstractFilter> searchfilters,
+                FileSearch.AttributeType groupingAttribute, FileGroup.GroupSortingAlgorithm groupSort,
+                FileSorter.SortingMethod fileSortMethod, GroupKey groupKey, int groupSize, FileType resultType) {
+            this.searchfilters = searchfilters;
+            this.groupingAttribute = groupingAttribute;
+            this.groupSort = groupSort;
+            this.fileSortMethod = fileSortMethod;
+            this.groupKey = groupKey;
+            this.groupSize = groupSize;
+            this.resultType = resultType;
+        }
+
+        /**
+         * Get the type of files which exist in the group.
+         *
+         * @return The type of files which exist in the group.
+         */
+        public FileType getResultType() {
+            return resultType;
+        }
+
+        /**
+         * Get the group key which is used to uniquely identify the group
+         * selected.
+         *
+         * @return The group key which is used to uniquely identify the group
+         *         selected.
+         */
+        public GroupKey getGroupKey() {
+            return groupKey;
+        }
+
+        /**
+         * Get the number of files in the group which was selected.
+         *
+         * @return The number of files in the group which was selected.
+         */
+        public int getGroupSize() {
+            return groupSize;
+        }
+
+        /**
+         * Get the sorting algorithm used in the group which was selected.
+         *
+         * @return The sorting algorithm used for groups.
+         */
+        public FileGroup.GroupSortingAlgorithm getGroupSort() {
+            return groupSort;
+        }
+
+        /**
+         * Get the sorting method used for files in the group.
+         *
+         * @return The sorting method used for files.
+         */
+        public FileSorter.SortingMethod getFileSort() {
+            return fileSortMethod;
+        }
+
+        /**
+         * Get the file filters which were used by the search
+         *
+         * @return The search filters which were used by the search.
+         */
+        public List<AbstractFilter> getFilters() {
+            return Collections.unmodifiableList(searchfilters);
+        }
+
+        /**
+         * Get the grouping attribute used to create the groups.
+         *
+         * @return The grouping attribute used by the search.
+         */
+        public FileSearch.AttributeType getGroupingAttr() {
+            return groupingAttribute;
+        }
+
+    }
+
+    /**
+     * Event to signal that the visibility of the Details area should change.
+     */
+    public static class DetailsVisibleEvent {
+
+        private final boolean showDetailsArea;
+
+        /**
+         * Construct a new DetailsVisibleEvent.
+         *
+         * @param isVisible True if the details area should be visible, false
+         *                  otherwise.
+         */
+        public DetailsVisibleEvent(boolean isVisible) {
+            showDetailsArea = isVisible;
+        }
+
+        /**
+         * Get the visibility of the Details area.
+         *
+         * @return True if the details area should be visible, false otherwise.
+         */
+        public boolean isShowDetailsArea() {
+            return showDetailsArea;
+        }
+    }
+
+}
