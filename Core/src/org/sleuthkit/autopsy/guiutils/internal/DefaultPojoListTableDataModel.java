@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datasourcesummary.datafetching;
+package org.sleuthkit.autopsy.guiutils.internal;
 
 import java.awt.Component;
 import java.util.Collections;
@@ -32,21 +32,47 @@ import javax.swing.table.TableColumnModel;
 import org.apache.commons.lang3.StringUtils;
 
 /**
- *
- * @author gregd
+ * The default implementation of a table model for the DataResultJTable. This
+ * class provides a TableModel and TableColumnModel to be used with that class.
  */
-class DefaultPojoListTableDataModel<T> extends AbstractTableModel implements PojoListTableDataModel<T> {
-    enum HorizontalAlign { LEFT, CENTER, RIGHT }
-        
-    interface CellModel {
+public class DefaultPojoListTableDataModel<T> extends AbstractTableModel implements PojoListTableDataModel<T> {
+
+    /**
+     * Describes the horizontal alignment.
+     */
+    public enum HorizontalAlign {
+        LEFT, CENTER, RIGHT
+    }
+
+    /**
+     * Basic interface for a cell model.
+     */
+    public interface CellModel {
+
+        /**
+         * @return The text to be shown in the cell.
+         */
         String getText();
+
+        /**
+         * @return The tooltip (if any) to be displayed in the cell.
+         */
         String getTooltip();
     }
 
-    static class DefaultCellModel implements CellModel {
+    /**
+     * The default cell model.
+     */
+    public static class DefaultCellModel implements CellModel {
+
         private final String text;
         private String tooltip;
 
+        /**
+         * Main constructor.
+         *
+         * @param text The text to be displayed in the cell.
+         */
         public DefaultCellModel(String text) {
             this.text = text;
         }
@@ -60,7 +86,14 @@ class DefaultPojoListTableDataModel<T> extends AbstractTableModel implements Poj
         public String getTooltip() {
             return tooltip;
         }
-        
+
+        /**
+         * Sets the tooltip for this cell model.
+         *
+         * @param tooltip The tooltip for the cell model.
+         *
+         * @return As a utility, returns this.
+         */
         public DefaultCellModel setTooltip(String tooltip) {
             this.tooltip = tooltip;
             return this;
@@ -72,49 +105,119 @@ class DefaultPojoListTableDataModel<T> extends AbstractTableModel implements Poj
         }
     }
 
-    interface ColumnModel<T> {
+    /**
+     * The column model for the table.
+     */
+    public interface ColumnModel<T> {
+
+        /**
+         * @return The column header title.
+         */
         String getTitle();
+
+        /**
+         * @return A function to generate the contents for the cell based on the
+         *         data in the POJO.
+         */
         Function<T, CellModel> getCellCreator();
+
+        /**
+         * @return The width of the column to provide to the JTable. This can be
+         *         left as null.
+         */
         Integer getWidth();
+
+        /**
+         * @return The horizontal alignment for the text in the cell.
+         */
         HorizontalAlign getCellHorizontalAlignment();
     }
 
-    static class DefaultColumnModel<T> implements ColumnModel<T> {
+    /**
+     * The default implementation for the column model.
+     */
+    public static class DefaultColumnModel<T> implements ColumnModel<T> {
+
         private final String title;
         private final Function<T, CellModel> cellCreator;
         private Integer width;
         private HorizontalAlign cellHorizontalAlignment;
-        
+
+        /**
+         * Main constructor.
+         *
+         * @param title     The title for the column header.
+         * @param retriever Retrieves the value for cell from the POJO provided
+         *                  in the row.
+         */
         public DefaultColumnModel(String title, Function<T, String> retriever) {
             this((obj) -> new DefaultCellModel(retriever.apply(obj)), title);
         }
 
+        /**
+         * Main constructor.
+         *
+         * @param retriever Generates a cell model based on the POJO provided
+         *                  for the row.
+         * @param title     The title for the column header.
+         */
         public DefaultColumnModel(Function<T, CellModel> retriever, String title) {
             this.title = title;
             this.cellCreator = retriever;
         }
 
+        /**
+         * @return The title for the column header.
+         */
         public String getTitle() {
             return title;
         }
 
+        /**
+         * @return The means of converting the POJO for a row into a cell model
+         *         for this column.
+         */
         public Function<T, CellModel> getCellCreator() {
             return cellCreator;
         }
 
+        /**
+         * @return The width (if any) to specify for this column in the jtable.
+         */
         public Integer getWidth() {
             return width;
         }
 
+        /**
+         * @return The horizontal alignment of the text in the cells if any.
+         */
         public HorizontalAlign getCellHorizontalAlignment() {
             return cellHorizontalAlignment;
         }
 
+        /**
+         * Sets the width of the column to provide to the jtable. This method
+         * should be called prior to being provided as an argument to the
+         * DefaultPojoListTableDataModel.
+         *
+         * @param width The width of the column.
+         *
+         * @return As a utility, returns this.
+         */
         public DefaultColumnModel<T> setWidth(Integer width) {
             this.width = width;
             return this;
         }
 
+        /**
+         * Sets the cell horizontal alignment for the cells in this column. This
+         * method should be called prior to being provided as an argument to the
+         * DefaultPojoListTableDataModel.
+         *
+         * @param cellHorizontalAlignment The alignment of text in the cell.
+         *
+         * @return As a utility, returns this.
+         */
         public DefaultColumnModel<T> setCellHorizontalAlignment(HorizontalAlign cellHorizontalAlignment) {
             this.cellHorizontalAlignment = cellHorizontalAlignment;
             return this;
@@ -124,7 +227,12 @@ class DefaultPojoListTableDataModel<T> extends AbstractTableModel implements Poj
     private final List<ColumnModel<T>> columns;
     private List<T> dataRows = Collections.emptyList();
 
-    DefaultPojoListTableDataModel(List<ColumnModel<T>> columns) {
+    /**
+     * Main constructor
+     *
+     * @param columns The model for the columns in this table.
+     */
+    public DefaultPojoListTableDataModel(List<ColumnModel<T>> columns) {
         this.columns = Collections.unmodifiableList(columns);
     }
 
@@ -137,7 +245,7 @@ class DefaultPojoListTableDataModel<T> extends AbstractTableModel implements Poj
             if (model.getWidth() != null && model.getWidth() >= 0) {
                 col.setWidth(model.getWidth());
             }
-            
+
             col.setHeaderValue(model.getTitle());
 
             col.setCellRenderer(new DefaultTableCellRenderer() {
@@ -159,7 +267,13 @@ class DefaultPojoListTableDataModel<T> extends AbstractTableModel implements Poj
         return toRet;
     }
 
-    
+    /**
+     * Customizes the jlabel to match the column model and cell model provided.
+     * @param defaultCell The cell to customize that will be displayed in the jtable.
+     * @param columnModel The column model for this cell.
+     * @param cellModel The cell model for this cell.
+     * @return The provided defaultCell.
+     */
     protected Component getTableCellRendererComponent(JLabel defaultCell, ColumnModel columnModel, CellModel cellModel) {
         String text = cellModel.getText();
         if (StringUtils.isNotBlank(text)) {
@@ -170,7 +284,7 @@ class DefaultPojoListTableDataModel<T> extends AbstractTableModel implements Poj
         if (StringUtils.isNotBlank(tooltip)) {
             defaultCell.setToolTipText(tooltip);
         }
-        
+
         if (columnModel.getCellHorizontalAlignment() != null) {
             switch (columnModel.getCellHorizontalAlignment()) {
                 case LEFT:

@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datasourcesummary.datafetching;
+package org.sleuthkit.autopsy.guiutils.internal;
 
 import java.util.Collections;
 import java.util.List;
@@ -24,24 +24,43 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
+import javax.swing.SwingWorker;
 
-// taken from https://stackoverflow.com/questions/31580805/java-swingworker-one-after-another-and-update-gui
-class DataSequentialLoader {
+/**
+ * Runs a list of swing workers in sequential order. Also, provides the ability
+ * to reset or cancel a run.
+ *
+ * Based on:
+ * https://stackoverflow.com/questions/31580805/java-swingworker-one-after-another-and-update-gui
+ */
+public class SwingWorkerSequentialRunner {
+
     private final ExecutorService executorService = Executors.newFixedThreadPool(1);
-    private List<DataFetchWorker<?,?>> workers = Collections.emptyList();
+    private List<? extends SwingWorker<?, ?>> workers = Collections.emptyList();
     private List<Future<?>> futures = Collections.emptyList();
 
-    DataSequentialLoader() {}
-
-    synchronized void resetLoad(List<DataFetchWorker<?,?>> submittedWorkers) {
+    /**
+     * Cancels currently running operations and starts running the new list of
+     * swing workers.
+     *
+     * @param submittedWorkers The list of submitted swing workers.
+     */
+    public synchronized void resetLoad(List<? extends SwingWorker<?, ?>> submittedWorkers) {
         cancelRunning();
+        if (submittedWorkers == null) {
+            return;
+        }
+
         this.workers = Collections.unmodifiableList(submittedWorkers);
         this.futures = this.workers.stream()
                 .map((w) -> executorService.submit(w))
                 .collect(Collectors.toList());
     }
 
-    synchronized void cancelRunning() {
+    /**
+     * Cancels currently running items.
+     */
+    public synchronized void cancelRunning() {
         futures.forEach((f) -> f.cancel(true));
         workers = Collections.emptyList();
         futures = Collections.emptyList();

@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datasourcesummary.datafetching;
+package org.sleuthkit.autopsy.guiutils.internal;
 
 import java.awt.BorderLayout;
 import java.awt.Graphics;
@@ -41,7 +41,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
     "DataResultJTable_loadingMessage_defaultText=Loading results...",
     "DataResultJTable_errorMessage_defaultText=There was an error loading results."
 })
-class DataResultJTable<T> extends JPanel {
+public class DataResultJTable<T> extends JPanel {
 
     /**
      * JTables don't allow display messages. So this LayerUI is used to display
@@ -131,6 +131,10 @@ class DataResultJTable<T> extends JPanel {
 
     private PojoListTableDataModel<T> tableModel = null;
 
+    /**
+     * Main constructor.
+     * @param tableModel The model to use for the table. 
+     */
     public DataResultJTable(PojoListTableDataModel<T> tableModel) {
         this.tableModel = tableModel;
         this.table = new JTable(tableModel, tableModel.getTableColumnModel());
@@ -143,37 +147,69 @@ class DataResultJTable<T> extends JPanel {
         add(dualLayer, BorderLayout.CENTER);
     }
 
-    String getLoadingMessage() {
+    /**
+     * @return The message shown when loading.
+     */
+    public String getLoadingMessage() {
         return loadingMessage;
     }
 
+    /**
+     * @return The message shown when there is an exception.
+     */
     String getErrorMessage() {
         return errorMessage;
     }
 
+    /**
+     * @return The message shown when there are no results.
+     */
     String getNoResultsMessage() {
         return noResultsMessage;
     }
 
+    /**
+     * @return The message shown when the table has not been loaded.
+     */
     String getNotLoadedMessage() {
         return notLoadedMessage;
     }
 
+    /**
+     * Sets the loading message.
+     * @param loadingMessage The loading message.
+     * @return As a utility, returns this.
+     */
     public DataResultJTable<T> setLoadingMessage(String loadingMessage) {
         this.loadingMessage = loadingMessage;
         return this;
     }
 
+    /**
+     * Sets the error message
+     * @param errorMessage The error message.
+     * @return As a utility, returns this.
+     */
     public DataResultJTable<T> setErrorMessage(String errorMessage) {
         this.errorMessage = errorMessage;
         return this;
     }
 
+    /**
+     * Sets the message to be shown when no results are present.
+     * @param noResultsMessage The 'no results' message.
+     * @return As a utility, returns this.
+     */
     public DataResultJTable<T> setNoResultsMessage(String noResultsMessage) {
         this.noResultsMessage = noResultsMessage;
         return this;
     }
 
+    /**
+     * Sets the 'not loaded' message.
+     * @param notLoadedMessage The message to be shown when results are not loaded.
+     * @return As a utility, returns this.
+     */
     public DataResultJTable<T> setNotLoadedMessage(String notLoadedMessage) {
         this.notLoadedMessage = notLoadedMessage;
         return this;
@@ -195,10 +231,15 @@ class DataResultJTable<T> extends JPanel {
         repaint();
     }
 
-    public void setResult(DataLoadingResult<List<T>> result) {
+    /**
+     * Sets the result to be displayed.
+     * @param result The loading result to be displayed.
+     * @return As a utility, returns this.
+     */
+    public DataResultJTable<T> setResult(DataLoadingResult<List<T>> result) {
         if (result == null) {
             logger.log(Level.SEVERE, "Null data processor result received.");
-            return;
+            return this;
         }
 
         switch (result.getState()) {
@@ -209,7 +250,6 @@ class DataResultJTable<T> extends JPanel {
                 } else {
                     setResultList(result.getData());
                     setOverlay(false, null);
-
                 }
                 break;
             case NOT_LOADED:
@@ -221,6 +261,7 @@ class DataResultJTable<T> extends JPanel {
                 setOverlay(true, getLoadingMessage());
                 break;
             case LOAD_ERROR:
+                logger.log(Level.WARNING, "An exception was caused while results were loaded.", result.getException());
                 setResultList(null);
                 setOverlay(true, getErrorMessage());
                 break;
@@ -228,5 +269,7 @@ class DataResultJTable<T> extends JPanel {
                 logger.log(Level.SEVERE, "No known loading state was found in result.");
                 break;
         }
+        
+        return this;
     }
 }

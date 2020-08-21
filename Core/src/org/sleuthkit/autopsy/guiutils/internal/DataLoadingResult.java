@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datasourcesummary.datafetching;
+package org.sleuthkit.autopsy.guiutils.internal;
 
 /**
  * The intermediate or end result of a loading process.
