@@ -23,7 +23,9 @@ package org.sleuthkit.autopsy.guiutils.internal;
  */
 public final class DataLoadingResult<R> {
 
-    // The state of loading in the result.
+    /**
+     * The state of loading in the result.
+     */
     public enum ProcessorState {
         LOADING, NOT_LOADED, LOADED, LOAD_ERROR
     }
