@@ -121,24 +121,35 @@ public class DataFetchWorker<A, R> extends SwingWorker<R, Void> {
 
     @Override
     protected void done() {
+        // if cancelled, simply return
+        if (Thread.interrupted() || isCancelled()) {
+            return;
+        }
+                
         R result = null;
         try {
             result = get();
         } catch (InterruptedException ignored) {
-            // if cancelled, set not loaded andt return
-            resultHandler.accept(DataLoadingResult.getNotLoaded());
+            // if cancelled, simply return
             return;
         } catch (ExecutionException ex) {
-            logger.log(Level.WARNING, "There was an error while fetching results.", ex);
             Throwable inner = ex.getCause();
+            // if cancelled during operation, simply return
+            if (inner != null && inner instanceof InterruptedException) {
+                return;
+            }
+            
+            // otherwise, there is an error to log
+            logger.log(Level.WARNING, "There was an error while fetching results.", ex);
+
             if (inner != null && inner instanceof DataProcessorException) {
                 resultHandler.accept(DataLoadingResult.getLoadError((DataProcessorException) inner));
             }
             return;
         }
 
+        // if cancelled, simply return
         if (Thread.interrupted() || isCancelled()) {
-            resultHandler.accept(DataLoadingResult.getNotLoaded());
             return;
         }
 

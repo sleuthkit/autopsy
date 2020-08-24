@@ -108,7 +108,24 @@ final class DataSourceInfoUtilities {
      *         obtained.
      */
     static <T> T getBaseQueryResult(String query, ResultSetHandler<T> processor, String errorMessage) {
-        try (SleuthkitCase.CaseDbQuery dbQuery = Case.getCurrentCaseThrows().getSleuthkitCase().executeQuery(query)) {
+        return getBaseQueryResult(SleuthkitCaseProvider.DEFAULT, query, processor, errorMessage);
+    }
+        
+        
+    /**
+     * Retrieves a result based on the provided query.
+     *
+     * @param provider     The means of obtaining a SleuthkitCase.
+     * @param query        The query.
+     * @param processor    The result set handler.
+     * @param errorMessage The error message to display if there is an error
+     *                     retrieving the resultset.
+     *
+     * @return The ResultSetHandler value or null if no ResultSet could be
+     *         obtained.
+     */
+    static <T> T getBaseQueryResult(SleuthkitCaseProvider provider, String query, ResultSetHandler<T> processor, String errorMessage) {
+        try (SleuthkitCase.CaseDbQuery dbQuery = provider.get().executeQuery(query)) {
             ResultSet resultSet = dbQuery.getResultSet();
             try {
                 return processor.process(resultSet);

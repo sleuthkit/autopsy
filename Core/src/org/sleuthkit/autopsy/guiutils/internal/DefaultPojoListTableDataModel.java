@@ -243,7 +243,7 @@ public class DefaultPojoListTableDataModel<T> extends AbstractTableModel impleme
             TableColumn col = new TableColumn(i);
             ColumnModel<T> model = columns.get(i);
             if (model.getWidth() != null && model.getWidth() >= 0) {
-                col.setWidth(model.getWidth());
+                col.setPreferredWidth(model.getWidth());
             }
 
             col.setHeaderValue(model.getTitle());
@@ -278,11 +278,15 @@ public class DefaultPojoListTableDataModel<T> extends AbstractTableModel impleme
         String text = cellModel.getText();
         if (StringUtils.isNotBlank(text)) {
             defaultCell.setText(text);
+        } else {
+            defaultCell.setText(null);
         }
 
         String tooltip = cellModel.getTooltip();
         if (StringUtils.isNotBlank(tooltip)) {
             defaultCell.setToolTipText(tooltip);
+        } else {
+            defaultCell.setToolTipText(null);
         }
 
         if (columnModel.getCellHorizontalAlignment() != null) {
@@ -297,6 +301,8 @@ public class DefaultPojoListTableDataModel<T> extends AbstractTableModel impleme
                     defaultCell.setHorizontalAlignment(JLabel.RIGHT);
                     break;
             }
+        } else {
+            defaultCell.setHorizontalAlignment(JLabel.LEFT);   
         }
 
         return defaultCell;

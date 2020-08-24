@@ -67,6 +67,36 @@ public class DataSourceTopProgramsSummary {
     private static final String QUERY_SUFFIX = "_query";
 
     /**
+     * Functions that determine the folder name of a list of path elements. If
+     * not matched, function returns null.
+     */
+    private static final List<Function<List<String>, String>> SHORT_FOLDER_MATCHERS = Arrays.asList(
+            // handle Program Files and Program Files (x86) - if true, return the next folder
+            (pathList) -> {
+                if (pathList.size() < 2) {
+                    return null;
+                }
+
+                String rootParent = pathList.get(0).toUpperCase();
+                if ("PROGRAM FILES".equals(rootParent) || "PROGRAM FILES (X86)".equals(rootParent)) {
+                    return pathList.get(1);
+                } else {
+                    return null;
+                }
+            },
+            // if there is a folder named "APPLICATION DATA" or "APPDATA"
+            (pathList) -> {
+                for (String pathEl : pathList) {
+                    String uppered = pathEl.toUpperCase();
+                    if ("APPLICATION DATA".equals(uppered) || "APPDATA".equals(uppered)) {
+                        return "AppData";
+                    }
+                }
+                return null;
+            }
+    );
+    
+    /**
      * Creates a sql statement querying the blackboard attributes table for a
      * particular attribute type and returning a specified value. That query
      * also joins with the blackboard artifact table.
@@ -138,6 +168,17 @@ public class DataSourceTopProgramsSummary {
     private static String getLikeClause(String column, String likeString, boolean isLike) {
         return column + (isLike ? "" : " NOT") + " LIKE '" + likeString + "'";
     }
+    
+    
+    private final SleuthkitCaseProvider provider;
+    
+    public DataSourceTopProgramsSummary() {
+        this(SleuthkitCaseProvider.DEFAULT);
+    }
+        
+    public DataSourceTopProgramsSummary(SleuthkitCaseProvider provider) {
+        this.provider = provider;
+    }
 
     /**
      * Retrieves a list of the top programs used on the data source. Currently
@@ -149,7 +190,7 @@ public class DataSourceTopProgramsSummary {
      *
      * @return
      */
-    public static List<TopProgramsResult> getTopPrograms(DataSource dataSource, int count) {
+    public List<TopProgramsResult> getTopPrograms(DataSource dataSource, int count) {
         if (dataSource == null || count <= 0) {
             return Collections.emptyList();
         }
@@ -225,38 +266,9 @@ public class DataSourceTopProgramsSummary {
             return progResults;
         };
 
-        return getBaseQueryResult(query, handler, errorMessage);
+        return getBaseQueryResult(provider, query, handler, errorMessage);
     }
-
-    /**
-     * Functions that determine the folder name of a list of path elements. If
-     * not matched, function returns null.
-     */
-    private static final List<Function<List<String>, String>> SHORT_FOLDER_MATCHERS = Arrays.asList(
-            // handle Program Files and Program Files (x86) - if true, return the next folder
-            (pathList) -> {
-                if (pathList.size() < 2) {
-                    return null;
-                }
-
-                String rootParent = pathList.get(0).toUpperCase();
-                if ("PROGRAM FILES".equals(rootParent) || "PROGRAM FILES (X86)".equals(rootParent)) {
-                    return pathList.get(1);
-                } else {
-                    return null;
-                }
-            },
-            // if there is a folder named "APPLICATION DATA" or "APPDATA"
-            (pathList) -> {
-                for (String pathEl : pathList) {
-                    String uppered = pathEl.toUpperCase();
-                    if ("APPLICATION DATA".equals(uppered) || "APPDATA".equals(uppered)) {
-                        return "AppData";
-                    }
-                }
-                return null;
-            }
-    );
+    
 
     /**
      * Determines a short folder name if any. Otherwise, returns empty string.
@@ -288,8 +300,5 @@ public class DataSourceTopProgramsSummary {
         }
 
         return "";
-    }
-
-    private DataSourceTopProgramsSummary() {
     }
 }
