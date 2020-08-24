@@ -29,7 +29,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.apache.commons.lang.StringUtils;
-import org.bouncycastle.util.Arrays;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -139,18 +138,20 @@ final class DataSourceInfoUtilities {
     static String getMetaFlagsContainsStatement(TSK_FS_META_FLAG_ENUM flag) {
         return "meta_flags & " + flag.getValue() + " > 0";
     }
-    
+
+    /**
+     * Enum for specifying the sort order for getAttributes.
+     */
     enum SortOrder {
         DECENDING,
         ASCENDING
     }
-    
+
     /**
-     * Return a list of artifacts that have been sorted by their attribute
-     * of attributeType.  
-     * 
-     * Sorting on attributes of type byte[] and JSON is not currently
-     * supported.
+     * Return a list of artifacts that have been sorted by their attribute of
+     * attributeType.
+     *
+     * Sorting on attributes of type byte[] and JSON is not currently supported.
      *
      * @param skCase        SleuthkitCase instance.
      * @param artifactType  Type of artifacts to sort.
@@ -189,7 +190,7 @@ final class DataSourceInfoUtilities {
             if (maxCount != -1 && artifactList.size() == maxCount - 1) {
                 break;
             }
-        } 
+        }
         return artifactList;
     }
 
@@ -198,12 +199,15 @@ final class DataSourceInfoUtilities {
      */
     private DataSourceInfoUtilities() {
     }
-    
+
     /**
      * Compares the value of two BlackboardAttributes that are of the same type.
      * This comparator is specialized for data source summary and only supports
      * the basic attribute types of string, integer, long, datetime (long), and
      * double.
+     * 
+     * Note: A runtime exception will be thrown from the compare if the attributes
+     * are not of the same type or if their type is not supported.
      */
     private static class AttributeComparator implements Comparator<BlackboardAttribute> {
 
@@ -219,32 +223,42 @@ final class DataSourceInfoUtilities {
                 throw new IllegalArgumentException("Unable to compare attributes of different types");
             }
 
-            int result;
-            switch (attribute1.getValueType()) {
-                case STRING:
-                    result = attribute1.getValueString().compareTo(attribute2.getValueString());
-                    break;
-                case INTEGER:
-                    result = Integer.compare(attribute1.getValueInt(), attribute2.getValueInt());
-                    break;
-                case LONG:
-                case DATETIME:
-                    result = Long.compare(attribute1.getValueLong(), attribute2.getValueLong());
-                    break;
-                case DOUBLE:
-                    result = Double.compare(attribute1.getValueDouble(), attribute2.getValueDouble());
-                    break;
-                case BYTE:
-                case JSON:
-                default:
-                    throw new IllegalArgumentException("Unable to compare attributes of type " + attribute1.getAttributeType().getTypeName());
-            }
+            int result = compare(attribute1.getAttributeType(), attribute1, attribute2);
 
             if (direction == SortOrder.DECENDING) {
                 result *= -1;
             }
 
             return result;
+        }
+
+        /**
+         * Compared two attributes of the given type. Note, that not all
+         * attribute types are supported. A runtime exception will be thrown
+         * if an unsupported attribute is supplied.
+         * 
+         * @param type Attribute type.
+         * @param attribute1 First attribute to compare.
+         * @param attribute2 Second attribute to compare.
+         * 
+         * @return Compare result.
+         */
+        private int compare(BlackboardAttribute.Type type, BlackboardAttribute attribute1, BlackboardAttribute attribute2) {
+            switch (type.getValueType()) {
+                case STRING:
+                    return attribute1.getValueString().compareTo(attribute2.getValueString());
+                case INTEGER:
+                    return Integer.compare(attribute1.getValueInt(), attribute2.getValueInt());
+                case LONG:
+                case DATETIME:
+                    return Long.compare(attribute1.getValueLong(), attribute2.getValueLong());
+                case DOUBLE:
+                    return Double.compare(attribute1.getValueDouble(), attribute2.getValueDouble());
+                case BYTE:
+                case JSON:
+                default:
+                    throw new IllegalArgumentException("Unable to compare attributes of type " + attribute1.getAttributeType().getTypeName());
+            }
         }
     }
 }
