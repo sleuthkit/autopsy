@@ -42,6 +42,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
     "DataResultJTable_errorMessage_defaultText=There was an error loading results."
 })
 public class DataResultJTable<T> extends JPanel {
+    private static final long serialVersionUID = 1L;
 
     /**
      * JTables don't allow display messages. So this LayerUI is used to display
@@ -50,7 +51,8 @@ public class DataResultJTable<T> extends JPanel {
      * https://docs.oracle.com/javase/tutorial/uiswing/misc/jlayer.html.
      */
     private static class Overlay extends LayerUI<JComponent> {
-
+        private static final long serialVersionUID = 1L;
+        
         private final JLabel child;
         private boolean visible;
 
@@ -96,9 +98,6 @@ public class DataResultJTable<T> extends JPanel {
 
         @Override
         public void paint(Graphics g, JComponent c) {
-            int w = c.getWidth();
-            int h = c.getHeight();
-
             // Paint the underlying view.
             super.paint(g, c);
 
@@ -106,6 +105,9 @@ public class DataResultJTable<T> extends JPanel {
                 return;
             }
 
+            int w = c.getWidth();
+            int h = c.getHeight();
+            
             // paint the jlabel if visible.
             child.setBounds(0, 0, w, h);
             child.paint(g);
@@ -119,17 +121,16 @@ public class DataResultJTable<T> extends JPanel {
     private static final String DEFAULT_NO_RESULTS_MESSAGE = "";
     private static final String DEFAULT_NOT_LOADED_MESSAGE = "";
 
-    private final JTable table;
     private final JScrollPane tableScrollPane;
-    private final JLayer<JComponent> dualLayer;
     private final Overlay overlayLayer;
+    private final PojoListTableDataModel<T> tableModel;
 
     private String loadingMessage = DEFAULT_LOADING_MESSAGE;
     private String errorMessage = DEFAULT_ERROR_MESSAGE;
     private String noResultsMessage = DEFAULT_NO_RESULTS_MESSAGE;
     private String notLoadedMessage = DEFAULT_NOT_LOADED_MESSAGE;
 
-    private PojoListTableDataModel<T> tableModel = null;
+    
 
     /**
      * Main constructor.
@@ -137,12 +138,12 @@ public class DataResultJTable<T> extends JPanel {
      */
     public DataResultJTable(PojoListTableDataModel<T> tableModel) {
         this.tableModel = tableModel;
-        this.table = new JTable(tableModel, tableModel.getTableColumnModel());
-        this.table.getTableHeader().setReorderingAllowed(false);
+        JTable table = new JTable(tableModel, tableModel.getTableColumnModel());
+        table.getTableHeader().setReorderingAllowed(false);
 
         this.overlayLayer = new Overlay();
         this.tableScrollPane = new JScrollPane(table);
-        this.dualLayer = new JLayer<JComponent>(tableScrollPane, overlayLayer);
+        JLayer<JComponent> dualLayer = new JLayer<JComponent>(tableScrollPane, overlayLayer);
         setLayout(new BorderLayout());
         add(dualLayer, BorderLayout.CENTER);
     }
@@ -157,21 +158,21 @@ public class DataResultJTable<T> extends JPanel {
     /**
      * @return The message shown when there is an exception.
      */
-    String getErrorMessage() {
+    public String getErrorMessage() {
         return errorMessage;
     }
 
     /**
      * @return The message shown when there are no results.
      */
-    String getNoResultsMessage() {
+    public String getNoResultsMessage() {
         return noResultsMessage;
     }
 
     /**
      * @return The message shown when the table has not been loaded.
      */
-    String getNotLoadedMessage() {
+    public String getNotLoadedMessage() {
         return notLoadedMessage;
     }
 

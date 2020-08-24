@@ -36,7 +36,8 @@ import org.apache.commons.lang3.StringUtils;
  * class provides a TableModel and TableColumnModel to be used with that class.
  */
 public class DefaultPojoListTableDataModel<T> extends AbstractTableModel implements PojoListTableDataModel<T> {
-
+    private static final long serialVersionUID = 1L;
+    
     /**
      * Describes the horizontal alignment.
      */
@@ -63,8 +64,7 @@ public class DefaultPojoListTableDataModel<T> extends AbstractTableModel impleme
     /**
      * The default cell model.
      */
-    public static class DefaultCellModel implements CellModel {
-
+    public static class DefaultCellModel implements CellModel {       
         private final String text;
         private String tooltip;
 
@@ -300,6 +300,9 @@ public class DefaultPojoListTableDataModel<T> extends AbstractTableModel impleme
                 case RIGHT:
                     defaultCell.setHorizontalAlignment(JLabel.RIGHT);
                     break;
+                default:
+                    throw new IllegalArgumentException("Unknown horizontal alignment choice: " + 
+                            columnModel.getCellHorizontalAlignment());
             }
         } else {
             defaultCell.setHorizontalAlignment(JLabel.LEFT);   

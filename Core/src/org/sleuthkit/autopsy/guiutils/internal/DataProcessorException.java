@@ -23,7 +23,8 @@ package org.sleuthkit.autopsy.guiutils.internal;
  * DataProcessor.
  */
 public class DataProcessorException extends Exception {
-
+    private static final long serialVersionUID = 1L;
+    
     /**
      * Main constructor.
      * @param string The error message.

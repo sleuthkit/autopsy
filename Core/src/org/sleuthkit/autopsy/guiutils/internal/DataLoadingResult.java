@@ -21,7 +21,7 @@ package org.sleuthkit.autopsy.guiutils.internal;
 /**
  * The intermediate or end result of a loading process.
  */
-public class DataLoadingResult<R> {
+public final class DataLoadingResult<R> {
 
     // The state of loading in the result.
     public enum ProcessorState {

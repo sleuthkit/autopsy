@@ -26,35 +26,6 @@ package org.sleuthkit.autopsy.guiutils.internal;
  */
 @FunctionalInterface
 public interface DataProcessor<I, O> {
-
-    /**
-     * Wraps a DataProcessor in statements looking to see if the thread has been
-     * interrupted and throws an InterruptedException in that event.
-     *
-     * @param toBeWrapped The data processor to be wrapped.
-     *
-     * @return The wrapped data processor that will throw an interrupted
-     *         exception before or after the toBeWrapped data processor has been
-     *         run.
-     */
-    public static <I1, O1> DataProcessor<I1, O1> wrap(DataProcessor<I1, O1> toBeWrapped) {
-        return new DataProcessor<I1, O1>() {
-            @Override
-            public O1 process(I1 input) throws InterruptedException, DataProcessorException {
-                if (Thread.interrupted()) {
-                    throw new InterruptedException();
-                }
-
-                O1 output = toBeWrapped.process(input);
-                if (Thread.interrupted()) {
-                    throw new InterruptedException();
-                }
-
-                return output;
-            }
-        };
-    }
-
     /**
      * A function that accepts an input argument and outputs a result. Since it
      * is meant to be used with the DataFetchWorker, it throws an interrupted

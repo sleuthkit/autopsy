@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.datamodel;
 
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -41,6 +40,9 @@ public class DataSourceTopDomainsSummary {
 //        this.provider = provider;
 //    }
     
+    /*
+     * a function to calculate a result from 2 paramaters
+     */
     interface Function2<A1,A2,O> {
         O apply(A1 a1, A2 a2);
     }

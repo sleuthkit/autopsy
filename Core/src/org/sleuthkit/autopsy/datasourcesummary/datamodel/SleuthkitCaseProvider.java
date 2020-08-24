@@ -27,7 +27,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  * uses Case.getCurrentCaseThrows().getSleuthkkitCase().
  */
 public interface SleuthkitCaseProvider {
-    public static final SleuthkitCaseProvider DEFAULT = () -> Case.getCurrentCaseThrows().getSleuthkitCase();
+    SleuthkitCaseProvider DEFAULT = () -> Case.getCurrentCaseThrows().getSleuthkitCase();
     
     SleuthkitCase get() throws NoCurrentCaseException;
 }
