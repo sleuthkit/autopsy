@@ -78,6 +78,7 @@ import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
 import javafx.scene.layout.Pane;
 import javax.swing.AbstractAction;
+import javax.swing.GroupLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -93,7 +94,6 @@ import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.apache.commons.lang3.StringUtils;
 import org.controlsfx.control.Notifications;
-import org.jdesktop.layout.GroupLayout;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -162,7 +162,9 @@ final public class VisualizationPanel extends JPanel {
         this.relationshipBrowser = relationshipBrowser;
         initComponents();
         //initialize invisible JFXPanel that is used to show JFXNotifications over this window.
-        notificationsJFXPanel.setScene(new Scene(new Pane()));
+        Platform.runLater(() -> {
+            notificationsJFXPanel.setScene(new Scene(new Pane()));
+        });
 
         graph = new CommunicationsGraph(pinnedAccountModel, lockedVertexModel);
 
@@ -403,16 +405,16 @@ final public class VisualizationPanel extends JPanel {
 
         GroupLayout placeHolderPanelLayout = new GroupLayout(placeHolderPanel);
         placeHolderPanel.setLayout(placeHolderPanelLayout);
-        placeHolderPanelLayout.setHorizontalGroup(placeHolderPanelLayout.createParallelGroup(GroupLayout.LEADING)
-            .add(placeHolderPanelLayout.createSequentialGroup()
+        placeHolderPanelLayout.setHorizontalGroup(placeHolderPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+            .addGroup(placeHolderPanelLayout.createSequentialGroup()
                 .addContainerGap(316, Short.MAX_VALUE)
-                .add(jTextArea1, GroupLayout.PREFERRED_SIZE, 424, GroupLayout.PREFERRED_SIZE)
+                .addComponent(jTextArea1, GroupLayout.PREFERRED_SIZE, 424, GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(481, Short.MAX_VALUE))
         );
-        placeHolderPanelLayout.setVerticalGroup(placeHolderPanelLayout.createParallelGroup(GroupLayout.LEADING)
-            .add(placeHolderPanelLayout.createSequentialGroup()
+        placeHolderPanelLayout.setVerticalGroup(placeHolderPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+            .addGroup(placeHolderPanelLayout.createSequentialGroup()
                 .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .add(jTextArea1, GroupLayout.PREFERRED_SIZE, 47, GroupLayout.PREFERRED_SIZE)
+                .addComponent(jTextArea1, GroupLayout.PREFERRED_SIZE, 47, GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
