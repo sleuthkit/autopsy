@@ -38,12 +38,14 @@ import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.autopsy.discovery.search.DiscoveryAttributes;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryKeyUtils.GroupKey;
-import org.sleuthkit.autopsy.discovery.search.FileGroup;
+import org.sleuthkit.autopsy.discovery.search.Group;
 import org.sleuthkit.autopsy.discovery.search.FileSearch;
-import org.sleuthkit.autopsy.discovery.search.FileSearchData;
-import org.sleuthkit.autopsy.discovery.search.FileSorter;
+import org.sleuthkit.autopsy.discovery.search.SearchData;
+import org.sleuthkit.autopsy.discovery.search.ResultsSorter;
+import org.sleuthkit.autopsy.discovery.search.Result;
 import org.sleuthkit.autopsy.discovery.search.ResultFile;
 import org.sleuthkit.autopsy.textsummarizer.TextSummary;
 
@@ -59,13 +61,13 @@ final class ResultsPanel extends javax.swing.JPanel {
     private final ImageThumbnailViewer imageThumbnailViewer;
     private final DocumentPreviewViewer documentPreviewViewer;
     private List<AbstractFilter> searchFilters;
-    private FileSearch.AttributeType groupingAttribute;
-    private FileGroup.GroupSortingAlgorithm groupSort;
-    private FileSorter.SortingMethod fileSortMethod;
+    private DiscoveryAttributes.AttributeType groupingAttribute;
+    private Group.GroupSortingAlgorithm groupSort;
+    private ResultsSorter.SortingMethod fileSortMethod;
     private GroupKey selectedGroupKey;
     private int currentPage = 0;
     private int previousPageSize = 10;
-    private FileSearchData.FileType resultType;
+    private SearchData.Type resultType;
     private int groupSize = 0;
     private PageWorker pageWorker;
     private final List<SwingWorker<Void, Void>> resultContentWorkers = new ArrayList<>();
@@ -81,7 +83,7 @@ final class ResultsPanel extends javax.swing.JPanel {
         videoThumbnailViewer = new VideoThumbnailViewer();
         documentPreviewViewer = new DocumentPreviewViewer();
         videoThumbnailViewer.addListSelectionListener((e) -> {
-            if (resultType == FileSearchData.FileType.VIDEO) {
+            if (resultType == SearchData.Type.VIDEO) {
                 if (!e.getValueIsAdjusting()) {
                     //send populateMesage
                     DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.PopulateInstancesListEvent(getInstancesForSelected()));
@@ -92,7 +94,7 @@ final class ResultsPanel extends javax.swing.JPanel {
             }
         });
         imageThumbnailViewer.addListSelectionListener((e) -> {
-            if (resultType == FileSearchData.FileType.IMAGE) {
+            if (resultType == SearchData.Type.IMAGE) {
                 if (!e.getValueIsAdjusting()) {
                     //send populateMesage
                     DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.PopulateInstancesListEvent(getInstancesForSelected()));
@@ -104,7 +106,7 @@ final class ResultsPanel extends javax.swing.JPanel {
             }
         });
         documentPreviewViewer.addListSelectionListener((e) -> {
-            if (resultType == FileSearchData.FileType.DOCUMENTS) {
+            if (resultType == SearchData.Type.DOCUMENT) {
                 if (!e.getValueIsAdjusting()) {
                     //send populateMesage
                     DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.PopulateInstancesListEvent(getInstancesForSelected()));
@@ -130,7 +132,7 @@ final class ResultsPanel extends javax.swing.JPanel {
                     return videoThumbnailViewer.getInstancesForSelected();
                 case IMAGE:
                     return imageThumbnailViewer.getInstancesForSelected();
-                case DOCUMENTS:
+                case DOCUMENT:
                     return documentPreviewViewer.getInstancesForSelected();
                 default:
                     break;
@@ -175,9 +177,11 @@ final class ResultsPanel extends javax.swing.JPanel {
                         populateVideoViewer(pageRetrievedEvent.getSearchResults());
                         resultsViewerPanel.add(videoThumbnailViewer);
                         break;
-                    case DOCUMENTS:
+                    case DOCUMENT:
                         populateDocumentViewer(pageRetrievedEvent.getSearchResults());
                         resultsViewerPanel.add(documentPreviewViewer);
+                        break;
+                    case DOMAIN:
                         break;
                     default:
                         break;
@@ -216,9 +220,9 @@ final class ResultsPanel extends javax.swing.JPanel {
      *
      * @param files The list of ResultFiles to populate the video viewer with.
      */
-    synchronized void populateVideoViewer(List<ResultFile> files) {
-        for (ResultFile file : files) {
-            VideoThumbnailWorker thumbWorker = new VideoThumbnailWorker(file);
+    synchronized void populateVideoViewer(List<Result> results) {
+        for (Result result : results) {
+            VideoThumbnailWorker thumbWorker = new VideoThumbnailWorker((ResultFile) result);
             thumbWorker.execute();
             //keep track of thumb worker for possible cancelation 
             resultContentWorkers.add(thumbWorker);
@@ -231,9 +235,9 @@ final class ResultsPanel extends javax.swing.JPanel {
      *
      * @param files The list of ResultFiles to populate the image viewer with.
      */
-    synchronized void populateImageViewer(List<ResultFile> files) {
-        for (ResultFile file : files) {
-            ImageThumbnailWorker thumbWorker = new ImageThumbnailWorker(file);
+    synchronized void populateImageViewer(List<Result> results) {
+        for (Result result : results) {
+            ImageThumbnailWorker thumbWorker = new ImageThumbnailWorker((ResultFile) result);
             thumbWorker.execute();
             //keep track of thumb worker for possible cancelation 
             resultContentWorkers.add(thumbWorker);
@@ -246,9 +250,9 @@ final class ResultsPanel extends javax.swing.JPanel {
      *
      * @param files The list of ResultFiles to populate the image viewer with.
      */
-    synchronized void populateDocumentViewer(List<ResultFile> files) {
-        for (ResultFile file : files) {
-            DocumentPreviewWorker documentWorker = new DocumentPreviewWorker(file);
+    synchronized void populateDocumentViewer(List<Result> results) {
+        for (Result result : results) {
+            DocumentPreviewWorker documentWorker = new DocumentPreviewWorker((ResultFile) result);
             documentWorker.execute();
             //keep track of thumb worker for possible cancelation 
             resultContentWorkers.add(documentWorker);

@@ -32,12 +32,12 @@ import org.sleuthkit.autopsy.discovery.search.DiscoveryKeyUtils.GroupKey;
  */
 class SearchResults {
 
-    private final FileGroup.GroupSortingAlgorithm groupSortingType;
-    private final FileSearch.AttributeType attrType;
-    private final FileSorter fileSorter;
+    private final Group.GroupSortingAlgorithm groupSortingType;
+    private final DiscoveryAttributes.AttributeType attrType;
+    private final ResultsSorter fileSorter;
 
-    private final Map<GroupKey, FileGroup> groupMap = new HashMap<>();
-    private List<FileGroup> groupList = new ArrayList<>();
+    private final Map<GroupKey, Group> groupMap = new HashMap<>();
+    private List<Group> groupList = new ArrayList<>();
 
     private static final long MAX_OUTPUT_FILES = 2000; // For debug UI - maximum number of lines to print
 
@@ -50,11 +50,11 @@ class SearchResults {
      * @param fileSortingMethod The method that should be used to
      *                          sortGroupsAndFiles the files in each group.
      */
-    SearchResults(FileGroup.GroupSortingAlgorithm groupSortingType, FileSearch.AttributeType attrType,
-            FileSorter.SortingMethod fileSortingMethod) {
+    SearchResults(Group.GroupSortingAlgorithm groupSortingType, DiscoveryAttributes.AttributeType attrType,
+            ResultsSorter.SortingMethod fileSortingMethod) {
         this.groupSortingType = groupSortingType;
         this.attrType = attrType;
-        this.fileSorter = new FileSorter(fileSortingMethod);
+        this.fileSorter = new ResultsSorter(fileSortingMethod);
     }
 
     /**
@@ -62,9 +62,9 @@ class SearchResults {
      * the search is finished.
      */
     SearchResults() {
-        this.groupSortingType = FileGroup.GroupSortingAlgorithm.BY_GROUP_NAME;
-        this.attrType = new FileSearch.FileSizeAttribute();
-        this.fileSorter = new FileSorter(FileSorter.SortingMethod.BY_FILE_NAME);
+        this.groupSortingType = Group.GroupSortingAlgorithm.BY_GROUP_NAME;
+        this.attrType = new DiscoveryAttributes.FileSizeAttribute();
+        this.fileSorter = new ResultsSorter(ResultsSorter.SortingMethod.BY_FILE_NAME);
     }
 
     /**
@@ -72,15 +72,15 @@ class SearchResults {
      *
      * @param files The list of ResultFiles to add.
      */
-    void add(List<ResultFile> files) {
-        for (ResultFile file : files) {
+    void add(List<Result> results) {
+        for (Result result : results) {
             // Add the file to the appropriate group, creating it if necessary
-            GroupKey groupKey = attrType.getGroupKey(file);
+            GroupKey groupKey = attrType.getGroupKey(result);
 
             if (!groupMap.containsKey(groupKey)) {
-                groupMap.put(groupKey, new FileGroup(groupSortingType, groupKey));
+                groupMap.put(groupKey, new Group(groupSortingType, groupKey));
             }
-            groupMap.get(groupKey).addFile(file);
+            groupMap.get(groupKey).addResult(result);
         }
     }
 
@@ -91,7 +91,7 @@ class SearchResults {
     void sortGroupsAndFiles() {
 
         // First sortGroupsAndFiles the files
-        for (FileGroup group : groupMap.values()) {
+        for (Group group : groupMap.values()) {
             group.sortFiles(fileSorter);
         }
 
@@ -102,25 +102,25 @@ class SearchResults {
 
     @Override
     public String toString() {
-        String result = "";
+        String resultString = "";
         if (groupList == null) {
-            return result;
+            return resultString;
         }
 
         long count = 0;
-        for (FileGroup group : groupList) {
-            result += group.getDisplayName() + "\n";
+        for (Group group : groupList) {
+            resultString += group.getDisplayName() + "\n";
 
-            for (ResultFile file : group.getFiles()) {
-                result += "    " + file.toString() + "\n";
+            for (Result result : group.getResults()) {
+                resultString += "    " + result.toString() + "\n";
                 count++;
                 if (count > MAX_OUTPUT_FILES) {
-                    result += "(truncated)";
-                    return result;
+                    resultString += "(truncated)";
+                    return resultString;
                 }
             }
         }
-        return result;
+        return resultString;
     }
 
     /**
@@ -129,7 +129,7 @@ class SearchResults {
      * @return The list of group names.
      */
     List<String> getGroupNamesWithCounts() {
-        return groupList.stream().map(p -> p.getDisplayName() + " (" + p.getFiles().size() + ")").collect(Collectors.toList());
+        return groupList.stream().map(p -> p.getDisplayName() + " (" + p.getResults().size() + ")").collect(Collectors.toList());
     }
 
     /**
@@ -139,13 +139,13 @@ class SearchResults {
      *
      * @return The list of result files.
      */
-    List<ResultFile> getResultFilesInGroup(String groupName) {
+    List<Result> getResultFilesInGroup(String groupName) {
         if (groupName != null) {
             final String modifiedGroupName = groupName.replaceAll(" \\([0-9]+\\)$", "");
 
-            java.util.Optional<FileGroup> fileGroup = groupList.stream().filter(p -> p.getDisplayName().equals(modifiedGroupName)).findFirst();
-            if (fileGroup.isPresent()) {
-                return fileGroup.get().getFiles();
+            java.util.Optional<Group> group = groupList.stream().filter(p -> p.getDisplayName().equals(modifiedGroupName)).findFirst();
+            if (group.isPresent()) {
+                return group.get().getResults();
             }
         }
         return new ArrayList<>();
@@ -156,15 +156,15 @@ class SearchResults {
      *
      * @return The grouped and sorted results.
      */
-    Map<GroupKey, List<ResultFile>> toLinkedHashMap() throws FileSearchException {
-        Map<GroupKey, List<ResultFile>> map = new LinkedHashMap<>();
+    Map<GroupKey, List<Result>> toLinkedHashMap() throws DiscoveryException {
+        Map<GroupKey, List<Result>> map = new LinkedHashMap<>();
 
         // Sort the groups and files
         sortGroupsAndFiles();
 
         // groupList is sorted and a LinkedHashMap will preserve that order.
-        for (FileGroup group : groupList) {
-            map.put(group.getGroupKey(), group.getFiles());
+        for (Group group : groupList) {
+            map.put(group.getGroupKey(), group.getResults());
         }
 
         return map;

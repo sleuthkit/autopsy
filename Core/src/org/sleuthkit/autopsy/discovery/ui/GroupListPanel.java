@@ -29,12 +29,12 @@ import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.discovery.search.DiscoveryAttributes;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryKeyUtils.GroupKey;
-import org.sleuthkit.autopsy.discovery.search.FileGroup;
-import org.sleuthkit.autopsy.discovery.search.FileSearch;
-import org.sleuthkit.autopsy.discovery.search.FileSearchData.FileType;
-import org.sleuthkit.autopsy.discovery.search.FileSorter;
+import org.sleuthkit.autopsy.discovery.search.Group;
+import org.sleuthkit.autopsy.discovery.search.ResultsSorter;
+import org.sleuthkit.autopsy.discovery.search.SearchData.Type;
 
 /**
  * Panel to display the list of groups which are provided by a search.
@@ -42,12 +42,12 @@ import org.sleuthkit.autopsy.discovery.search.FileSorter;
 final class GroupListPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
-    private FileType fileType = null;
+    private Type type = null;
     private Map<GroupKey, Integer> groupMap = null;
     private List<AbstractFilter> searchfilters;
-    private FileSearch.AttributeType groupingAttribute;
-    private FileGroup.GroupSortingAlgorithm groupSort;
-    private FileSorter.SortingMethod fileSortMethod;
+    private DiscoveryAttributes.AttributeType groupingAttribute;
+    private Group.GroupSortingAlgorithm groupSort;
+    private ResultsSorter.SortingMethod resultSortMethod;
     private GroupKey selectedGroupKey;
 
     /**
@@ -64,7 +64,7 @@ final class GroupListPanel extends javax.swing.JPanel {
      */
     @Subscribe
     void handleSearchStartedEvent(DiscoveryEventUtils.SearchStartedEvent searchStartedEvent) {
-        fileType = searchStartedEvent.getFileType();
+        type = searchStartedEvent.getType();
         groupKeyList.setListData(new GroupKey[0]);
     }
 
@@ -86,7 +86,7 @@ final class GroupListPanel extends javax.swing.JPanel {
         searchfilters = searchCompleteEvent.getFilters();
         groupingAttribute = searchCompleteEvent.getGroupingAttr();
         groupSort = searchCompleteEvent.getGroupSort();
-        fileSortMethod = searchCompleteEvent.getFileSort();
+        resultSortMethod = searchCompleteEvent.getFileSort();
         groupKeyList.setListData(groupMap.keySet().toArray(new GroupKey[groupMap.keySet().size()]));
         SwingUtilities.invokeLater(() -> {
             if (groupKeyList.getModel().getSize() > 0) {
@@ -175,7 +175,7 @@ final class GroupListPanel extends javax.swing.JPanel {
                     if (selectedGroup.equals(groupKey)) {
                         selectedGroupKey = groupKey;
                         DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.GroupSelectedEvent(
-                                searchfilters, groupingAttribute, groupSort, fileSortMethod, selectedGroupKey, groupMap.get(selectedGroupKey), fileType));
+                                searchfilters, groupingAttribute, groupSort, resultSortMethod, selectedGroupKey, groupMap.get(selectedGroupKey), type));
                         break;
                     }
                 }
@@ -210,7 +210,7 @@ final class GroupListPanel extends javax.swing.JPanel {
                 String valueString = newValue.toString();
                 setToolTipText(valueString);
                 //if paths would be longer than 37 characters shorten them to be 37 characters 
-                if (groupingAttribute instanceof FileSearch.ParentPathAttribute && valueString.length() > 37) {
+                if (groupingAttribute instanceof DiscoveryAttributes.ParentPathAttribute && valueString.length() > 37) {
                     valueString = valueString.substring(0, 16) + " ... " + valueString.substring(valueString.length() - 16);
                 }
                 newValue = valueString + " (" + groupMap.get(newValue) + ")";

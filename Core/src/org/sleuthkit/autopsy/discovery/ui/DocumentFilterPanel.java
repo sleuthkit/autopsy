@@ -19,8 +19,6 @@
 package org.sleuthkit.autopsy.discovery.ui;
 
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
-import org.sleuthkit.autopsy.discovery.search.AttributeSearchData;
-import org.sleuthkit.autopsy.discovery.search.FileSearchData;
 import org.sleuthkit.autopsy.discovery.search.SearchData;
 
 /**
@@ -29,7 +27,7 @@ import org.sleuthkit.autopsy.discovery.search.SearchData;
 final class DocumentFilterPanel extends AbstractFiltersPanel {
 
     private static final long serialVersionUID = 1L;
-    private static final FileSearchData.FileType FILE_TYPE = FileSearchData.FileType.DOCUMENTS;
+    private static final SearchData.Type TYPE = SearchData.Type.DOCUMENT;
 
     /**
      * Constructs a new DocumentFilterPanel.
@@ -37,7 +35,7 @@ final class DocumentFilterPanel extends AbstractFiltersPanel {
     DocumentFilterPanel() {
         super();
         initComponents();
-        SizeFilterPanel sizeFilterPanel = new SizeFilterPanel(FILE_TYPE);
+        SizeFilterPanel sizeFilterPanel = new SizeFilterPanel(TYPE);
         int[] sizeIndicesSelected = {3, 4, 5};
         addFilter(sizeFilterPanel, true, sizeIndicesSelected, 0);
         addFilter(new DataSourceFilterPanel(), false, null, 0);
@@ -47,7 +45,7 @@ final class DocumentFilterPanel extends AbstractFiltersPanel {
         } else {
             pastOccurrencesIndices = new int[]{2, 3, 4};
         }
-        addFilter(new PastOccurrencesFilterPanel(), true, pastOccurrencesIndices, 0);
+        addFilter(new PastOccurrencesFilterPanel(TYPE), true, pastOccurrencesIndices, 0);
         addFilter(new HashSetFilterPanel(), false, null, 1);
         addFilter(new InterestingItemsFilterPanel(), false, null, 1);
         addFilter(new ParentFolderFilterPanel(), false, null, 1);
@@ -94,21 +92,11 @@ final class DocumentFilterPanel extends AbstractFiltersPanel {
         add(documentFiltersScrollPane, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
     @Override
-    FileSearchData.FileType getFileType() {
-        return FILE_TYPE;
+    SearchData.Type getType() {
+        return TYPE;
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JSplitPane documentsFiltersSplitPane;
     // End of variables declaration//GEN-END:variables
-
-    @Override
-    SearchData.ResultType getResultType() {
-        return SearchData.ResultType.FILE;
-    }
-
-    @Override
-    AttributeSearchData.AttributeType getArtifactType() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
 
 }

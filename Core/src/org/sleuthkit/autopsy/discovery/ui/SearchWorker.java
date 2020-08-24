@@ -27,12 +27,15 @@ import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.autopsy.discovery.search.DiscoveryAttributes;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryKeyUtils.GroupKey;
-import org.sleuthkit.autopsy.discovery.search.FileGroup;
+import org.sleuthkit.autopsy.discovery.search.Group;
 import org.sleuthkit.autopsy.discovery.search.FileSearch;
-import org.sleuthkit.autopsy.discovery.search.FileSearchException;
-import org.sleuthkit.autopsy.discovery.search.FileSorter;
+import org.sleuthkit.autopsy.discovery.search.DiscoveryException;
+import org.sleuthkit.autopsy.discovery.search.DomainSearch;
+import org.sleuthkit.autopsy.discovery.search.ResultsSorter;
+import org.sleuthkit.autopsy.discovery.search.SearchData;
 
 /**
  * SwingWorker to perform search on a background thread.
@@ -42,10 +45,11 @@ final class SearchWorker extends SwingWorker<Void, Void> {
     private final static Logger logger = Logger.getLogger(SearchWorker.class.getName());
     private static final String USER_NAME_PROPERTY = "user.name"; //NON-NLS
     private final List<AbstractFilter> filters;
-    private final FileSearch.AttributeType groupingAttr;
-    private final FileSorter.SortingMethod fileSort;
-    private final FileGroup.GroupSortingAlgorithm groupSortAlgorithm;
+    private final DiscoveryAttributes.AttributeType groupingAttr;
+    private final ResultsSorter.SortingMethod fileSort;
+    private final Group.GroupSortingAlgorithm groupSortAlgorithm;
     private final CentralRepository centralRepoDb;
+    private final SearchData.Type searchType;
     private final Map<GroupKey, Integer> results = new LinkedHashMap<>();
 
     /**
@@ -58,8 +62,9 @@ final class SearchWorker extends SwingWorker<Void, Void> {
      * @param groupSort         The Algorithm to sort groups by.
      * @param fileSortMethod    The SortingMethod to use for files.
      */
-    SearchWorker(CentralRepository centralRepo, List<AbstractFilter> searchfilters, FileSearch.AttributeType groupingAttribute, FileGroup.GroupSortingAlgorithm groupSort, FileSorter.SortingMethod fileSortMethod) {
+    SearchWorker(CentralRepository centralRepo, SearchData.Type type, List<AbstractFilter> searchfilters, DiscoveryAttributes.AttributeType groupingAttribute, Group.GroupSortingAlgorithm groupSort, ResultsSorter.SortingMethod fileSortMethod) {
         centralRepoDb = centralRepo;
+        searchType = type;
         filters = searchfilters;
         groupingAttr = groupingAttribute;
         groupSortAlgorithm = groupSort;
@@ -70,12 +75,20 @@ final class SearchWorker extends SwingWorker<Void, Void> {
     protected Void doInBackground() throws Exception {
         try {
             // Run the search
-            results.putAll(FileSearch.getGroupSizes(System.getProperty(USER_NAME_PROPERTY), filters,
-                    groupingAttr,
-                    groupSortAlgorithm,
-                    fileSort,
-                    Case.getCurrentCase().getSleuthkitCase(), centralRepoDb));
-        } catch (FileSearchException ex) {
+            if (searchType == SearchData.Type.DOMAIN) {
+                results.putAll(DomainSearch.getGroupSizes(System.getProperty(USER_NAME_PROPERTY), filters,
+                        groupingAttr,
+                        groupSortAlgorithm,
+                        fileSort,
+                        Case.getCurrentCase().getSleuthkitCase(), centralRepoDb));
+            } else {
+                results.putAll(FileSearch.getGroupSizes(System.getProperty(USER_NAME_PROPERTY), filters,
+                        groupingAttr,
+                        groupSortAlgorithm,
+                        fileSort,
+                        Case.getCurrentCase().getSleuthkitCase(), centralRepoDb));
+            }
+        } catch (DiscoveryException ex) {
             logger.log(Level.SEVERE, "Error running file search test", ex);
             cancel(true);
         }

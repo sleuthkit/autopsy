@@ -26,14 +26,16 @@ import javax.swing.SwingWorker;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.autopsy.discovery.search.DiscoveryAttributes;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryKeyUtils.GroupKey;
-import org.sleuthkit.autopsy.discovery.search.FileGroup;
+import org.sleuthkit.autopsy.discovery.search.Group;
 import org.sleuthkit.autopsy.discovery.search.FileSearch;
-import org.sleuthkit.autopsy.discovery.search.FileSearchData;
-import org.sleuthkit.autopsy.discovery.search.FileSearchException;
-import org.sleuthkit.autopsy.discovery.search.FileSorter;
-import org.sleuthkit.autopsy.discovery.search.ResultFile;
+import org.sleuthkit.autopsy.discovery.search.SearchData;
+import org.sleuthkit.autopsy.discovery.search.DiscoveryException;
+import org.sleuthkit.autopsy.discovery.search.DomainSearch;
+import org.sleuthkit.autopsy.discovery.search.ResultsSorter;
+import org.sleuthkit.autopsy.discovery.search.Result;
 
 /**
  * SwingWorker to retrieve the contents of a page.
@@ -43,15 +45,15 @@ final class PageWorker extends SwingWorker<Void, Void> {
     private final static Logger logger = Logger.getLogger(PageWorker.class.getName());
     private static final String USER_NAME_PROPERTY = "user.name"; //NON-NLS
     private final List<AbstractFilter> searchfilters;
-    private final FileSearch.AttributeType groupingAttribute;
-    private final FileGroup.GroupSortingAlgorithm groupSort;
-    private final FileSorter.SortingMethod fileSortMethod;
+    private final DiscoveryAttributes.AttributeType groupingAttribute;
+    private final Group.GroupSortingAlgorithm groupSort;
+    private final ResultsSorter.SortingMethod fileSortMethod;
     private final GroupKey groupKey;
     private final int startingEntry;
     private final int pageSize;
-    private final FileSearchData.FileType resultType;
+    private final SearchData.Type resultType;
     private final CentralRepository centralRepo;
-    private final List<ResultFile> results = new ArrayList<>();
+    private final List<Result> results = new ArrayList<>();
 
     /**
      * Construct a new PageWorker.
@@ -69,9 +71,9 @@ final class PageWorker extends SwingWorker<Void, Void> {
      * @param resultType        The type of files which exist in the group.
      * @param centralRepo       The central repository to be used.
      */
-    PageWorker(List<AbstractFilter> searchfilters, FileSearch.AttributeType groupingAttribute,
-            FileGroup.GroupSortingAlgorithm groupSort, FileSorter.SortingMethod fileSortMethod, GroupKey groupKey,
-            int startingEntry, int pageSize, FileSearchData.FileType resultType, CentralRepository centralRepo) {
+    PageWorker(List<AbstractFilter> searchfilters, DiscoveryAttributes.AttributeType groupingAttribute,
+            Group.GroupSortingAlgorithm groupSort, ResultsSorter.SortingMethod fileSortMethod, GroupKey groupKey,
+            int startingEntry, int pageSize, SearchData.Type resultType, CentralRepository centralRepo) {
         this.searchfilters = searchfilters;
         this.groupingAttribute = groupingAttribute;
         this.groupSort = groupSort;
@@ -88,12 +90,20 @@ final class PageWorker extends SwingWorker<Void, Void> {
 
         try {
             // Run the search
-            results.addAll(FileSearch.getFilesInGroup(System.getProperty(USER_NAME_PROPERTY), searchfilters,
-                    groupingAttribute,
-                    groupSort,
-                    fileSortMethod, groupKey, startingEntry, pageSize,
-                    Case.getCurrentCase().getSleuthkitCase(), centralRepo));
-        } catch (FileSearchException ex) {
+            if (resultType == SearchData.Type.DOMAIN) {
+                results.addAll(DomainSearch.getDomainsInGroup(System.getProperty(USER_NAME_PROPERTY), searchfilters,
+                        groupingAttribute,
+                        groupSort,
+                        fileSortMethod, groupKey, startingEntry, pageSize,
+                        Case.getCurrentCase().getSleuthkitCase(), centralRepo));
+            } else {
+                results.addAll(FileSearch.getFilesInGroup(System.getProperty(USER_NAME_PROPERTY), searchfilters,
+                        groupingAttribute,
+                        groupSort,
+                        fileSortMethod, groupKey, startingEntry, pageSize,
+                        Case.getCurrentCase().getSleuthkitCase(), centralRepo));
+            }
+        } catch (DiscoveryException ex) {
             logger.log(Level.SEVERE, "Error running file search test", ex);
             cancel(true);
         }

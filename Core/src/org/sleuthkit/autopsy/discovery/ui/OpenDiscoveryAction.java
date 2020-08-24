@@ -62,8 +62,6 @@ public final class OpenDiscoveryAction extends CallableSystemAction implements P
         return Case.isCaseOpen();
     }
 
-    @NbBundle.Messages({"OpenDiscoveryAction.resultsIncomplete.text=Discovery results may be incomplete"})
-
     @Override
     public void performAction() {
         SwingUtilities.invokeLater(() -> {

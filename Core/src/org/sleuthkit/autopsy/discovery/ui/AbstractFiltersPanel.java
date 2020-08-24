@@ -32,8 +32,6 @@ import javax.swing.JSplitPane;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.apache.commons.lang3.StringUtils;
-import org.sleuthkit.autopsy.discovery.search.AttributeSearchData;
-import org.sleuthkit.autopsy.discovery.search.FileSearchData;
 import org.sleuthkit.autopsy.discovery.search.SearchData;
 import org.sleuthkit.autopsy.discovery.search.SearchFiltering;
 
@@ -67,25 +65,11 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
     }
 
     /**
-     * Get the broad ResultType, such as files or attributes.
+     * Get the type of results this filters panel is for.
      *
-     * @return
+     * @return The type of results this panel filters.
      */
-    abstract SearchData.ResultType getResultType();
-
-    /**
-     * Get the file type of results this filters panel is for.
-     *
-     * @return The file type of results this panel filters.
-     */
-    abstract FileSearchData.FileType getFileType();
-
-    /**
-     * Get the attribute type of results this filters panel is for.
-     *
-     * @return The attribute type of results this panel filters.
-     */
-    abstract AttributeSearchData.AttributeType getArtifactType();
+    abstract SearchData.Type getType();
 
     /**
      * Add a DiscoveryFilterPanel to the specified column with the specified
@@ -264,10 +248,10 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
     synchronized List<AbstractFilter> getFilters() {
 
         List<AbstractFilter> filtersToUse = new ArrayList<>();
-        if (getResultType().equals(SearchData.ResultType.FILE)) {
-            filtersToUse.add(new SearchFiltering.FileTypeFilter(getFileType()));
-        } else if (getResultType().equals(SearchData.ResultType.ATTRIBUTE)) {
+        if (getType().equals(SearchData.Type.DOMAIN)) {
 
+        } else {
+            filtersToUse.add(new SearchFiltering.FileTypeFilter(getType()));
         }
 
         for (AbstractDiscoveryFilterPanel filterPanel : filters) {

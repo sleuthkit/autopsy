@@ -38,7 +38,6 @@ import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils;
-import org.sleuthkit.autopsy.discovery.search.SearchData.ResultType;
 
 /**
  * Create a dialog for displaying the Discovery results.
@@ -286,13 +285,7 @@ public final class DiscoveryTopComponent extends TopComponent {
     void handleSearchStartedEvent(DiscoveryEventUtils.SearchStartedEvent searchStartedEvent) {
         newSearchButton.setText(Bundle.DiscoveryTopComponent_cancelButton_text());
         progressMessageTextArea.setForeground(Color.red);
-        String text = Bundle.DiscoveryTopComponent_searchError_text();
-        if (searchStartedEvent.getResultType() == ResultType.FILE) {
-            text = Bundle.DiscoveryTopComponent_searchInProgress_text(searchStartedEvent.getFileType().name());
-        } else if (searchStartedEvent.getResultType() == ResultType.ATTRIBUTE) {
-            text = Bundle.DiscoveryTopComponent_searchInProgress_text(searchStartedEvent.getAttributeType().name());
-        }
-        progressMessageTextArea.setText(text);
+        progressMessageTextArea.setText(Bundle.DiscoveryTopComponent_searchInProgress_text(searchStartedEvent.getType().name()));
     }
 
     /**
