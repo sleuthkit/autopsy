@@ -58,9 +58,8 @@ class DataLoadingResult<R> {
     }
 
     /**
-     * 
-     * @param <R>
-     * @param e
+     * Returns a load error result.
+     * @param e The exception (if any) present with the error.
      * @return 
      */
     static <R> DataLoadingResult<R> getLoadError(DataProcessorException e) {
