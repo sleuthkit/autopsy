@@ -38,7 +38,6 @@ services:
 build_script:
   - cd %TSK_HOME%
   - nuget restore win32\libtsk -PackagesDirectory win32\packages
-  - python setupDevRepos.py
   - python win32\updateAndBuildAll.py -m
   - ps: pushd bindings/java
   - ps: ant -version
