@@ -63,6 +63,11 @@
         <copy todir="${basedir}/release/OfficialHashSets" >
             <fileset dir="${thirdparty.dir}/OfficialHashSets"/>
         </copy>
+        
+        <!--Copy ImageMagick to release-->
+        <copy todir="${basedir}/release/ImageMagick-7.0.10-27-portable-Q16-x64" >
+            <fileset dir="${thirdparty.dir}/ImageMagick-7.0.10-27-portable-Q16-x64"/>
+        </copy>
 
         <!-- The 'libgstlibav.dll' file is too big to store on GitHub, so we
         have it stored in a ZIP file. We'll extract it in place and remove

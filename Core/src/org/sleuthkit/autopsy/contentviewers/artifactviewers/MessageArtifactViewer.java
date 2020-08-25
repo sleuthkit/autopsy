@@ -447,10 +447,8 @@ public class MessageArtifactViewer extends javax.swing.JPanel implements Artifac
             resetComponent();
         }
         
-        msgbodyTabbedPane.setEnabledAt(ACCT_TAB_INDEX, CentralRepository.isEnabled());
-        if(CentralRepository.isEnabled()) {
-            accountsPanel.setArtifact(artifact);
-        }
+        msgbodyTabbedPane.setEnabledAt(ACCT_TAB_INDEX, true);
+        accountsPanel.setArtifact(artifact);
     }
 
     /**

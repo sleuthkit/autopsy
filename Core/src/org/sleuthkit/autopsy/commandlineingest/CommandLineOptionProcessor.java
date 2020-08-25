@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019-2019 Basis Technology Corp.
+ * Copyright 2019-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -51,7 +51,7 @@ public class CommandLineOptionProcessor extends OptionProcessor {
     private final Option runIngestCommandOption = Option.withoutArgument('r', "runIngest");
     private final Option ingestProfileOption = Option.requiredArgument('p', "ingestProfile");
     private final Option listAllDataSourcesCommandOption = Option.withoutArgument('l', "listAllDataSources");
-    private final Option generateReportsOption = Option.withoutArgument('g', "generateReports");
+    private final Option generateReportsOption = Option.optionalArgument('g', "generateReports");
 
     private boolean runFromCommandLine = false;
 
@@ -59,7 +59,7 @@ public class CommandLineOptionProcessor extends OptionProcessor {
 
     final static String CASETYPE_MULTI = "multi";
     final static String CASETYPE_SINGLE = "single";
-    
+
     @Override
     protected Set<Option> getOptions() {
         Set<Option> set = new HashSet<>();
@@ -113,7 +113,6 @@ public class CommandLineOptionProcessor extends OptionProcessor {
             }
         }
 
-        
         String caseType = "";
         if (values.containsKey(caseTypeOption)) {
             argDirs = values.get(caseTypeOption);
@@ -134,16 +133,16 @@ public class CommandLineOptionProcessor extends OptionProcessor {
             if (!caseType.equalsIgnoreCase(CASETYPE_MULTI) && !caseType.equalsIgnoreCase(CASETYPE_SINGLE)) {
                 logger.log(Level.SEVERE, "'caseType' argument is invalid");
                 System.err.println("'caseType' argument is invalid");
-                return;                
+                return;
             }
-            
+
             if (caseType.equalsIgnoreCase(CASETYPE_MULTI) && !FeatureAccessUtils.canCreateMultiUserCases()) {
                 logger.log(Level.SEVERE, "Unable to create multi user case.");
                 System.err.println("Unable to create multi user case. Confirm that multi user settings are configured correctly.");
-                return;                                
+                return;
             }
         }
-        
+
         String caseBaseDir = "";
         if (values.containsKey(caseBaseDirOption)) {
             argDirs = values.get(caseBaseDirOption);
@@ -356,8 +355,9 @@ public class CommandLineOptionProcessor extends OptionProcessor {
             commands.add(newCommand);
             runFromCommandLine = true;
         }
-        
+
         // Add "GENERATE_REPORTS" command, if present
+        String reportProfile = null;
         if (values.containsKey(generateReportsOption)) {
 
             // 'caseDir' must only be specified if the case is not being created during the current run
@@ -369,11 +369,29 @@ public class CommandLineOptionProcessor extends OptionProcessor {
                 return;
             }
 
+            argDirs = values.get(generateReportsOption);
+            if (argDirs.length > 0) {
+                reportProfile = argDirs[0];
+            }
+            
+            // If the user doesn't supply an options for generateReports the
+            // argsDirs length will be 0, so if reportProfile is empty
+            // something is not right.
+            if (reportProfile != null && reportProfile.isEmpty()) {
+                logger.log(Level.SEVERE, "'generateReports' argument is empty");
+                System.err.println("'generateReports' argument is empty");
+                runFromCommandLine = false;
+                return;
+            }
+
             CommandLineCommand newCommand = new CommandLineCommand(CommandLineCommand.CommandType.GENERATE_REPORTS);
             newCommand.addInputValue(CommandLineCommand.InputType.CASE_FOLDER_PATH.name(), caseDir);
+            if (reportProfile != null) {
+                newCommand.addInputValue(CommandLineCommand.InputType.REPORT_PROFILE_NAME.name(), reportProfile);
+            }
             commands.add(newCommand);
             runFromCommandLine = true;
-        }        
+        } 
     }
 
     /**

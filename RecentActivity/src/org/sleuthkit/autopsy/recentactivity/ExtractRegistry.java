@@ -83,9 +83,12 @@ import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_OS_AC
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_MODIFIED;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_ID;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_USER_ID;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_USER_NAME;
@@ -353,12 +356,10 @@ class ExtractRegistry extends Extract {
                     } catch (IOException | TskCoreException ex) {
                         logger.log(Level.WARNING, String.format("Unable to get shell bags from file %s", regOutputFiles.fullPlugins), ex);
                     }
-                } else if (regFileNameLocal.toLowerCase().contains("system")) {
-                    try {
-                        createSystemArtifacts(regOutputFiles.fullPlugins, regFile);
-                    } catch (IOException ex) {
-                        logger.log(Level.WARNING, String.format("Unable to get artifacts from file %s", regOutputFiles.fullPlugins), ex);
-                    }
+                } else if (regFileNameLocal.toLowerCase().contains("system") && parseSystemPluginOutput(regOutputFiles.fullPlugins, regFile) == false) {
+                    this.addErrorMessage(
+                            NbBundle.getMessage(this.getClass(), "ExtractRegistry.analyzeRegFiles.failedParsingResults",
+                                    this.getName(), regFileName));
                 }
                 try {
                     Report report = currentCase.addReport(regOutputFiles.fullPlugins,
@@ -952,6 +953,119 @@ class ExtractRegistry extends Extract {
         return false;
     }
 
+    
+    private boolean parseSystemPluginOutput(String regfilePath, AbstractFile regAbstractFile) {
+        File regfile = new File(regfilePath);
+        try (BufferedReader reader = new BufferedReader(new FileReader(regfile))) {
+            String line = reader.readLine();
+            while (line != null) {
+                line = line.trim();
+
+                if (line.toLowerCase().matches("^bam v.*")) {
+                    parseBamKey(regAbstractFile, reader, Bundle.Registry_System_Bam());
+                } else if (line.toLowerCase().matches("^bthport v..*")) {
+                    parseBlueToothDevices(regAbstractFile, reader);
+                }  
+                line = reader.readLine();
+            }
+            return true;
+        } catch (FileNotFoundException ex) {
+            logger.log(Level.WARNING, "Error finding the registry file.", ex); //NON-NLS
+        } catch (IOException ex) {
+            logger.log(Level.WARNING, "Error reading the system hive: {0}", ex); //NON-NLS
+        }
+        
+        return false;
+        
+    }
+    
+    /**
+     * Create recently used artifacts to parse the regripper plugin output, this 
+     * format is used in several diffent plugins
+     * 
+     * @param regFile registry file the artifact is associated with
+     * 
+     * @param reader buffered reader to parse adobemru records
+     * 
+     * @param comment string that will populate attribute TSK_COMMENT
+     * 
+     * @throws FileNotFound and IOException
+     */
+    private void parseBlueToothDevices(AbstractFile regFile, BufferedReader reader) throws FileNotFoundException, IOException {
+        List<BlackboardArtifact> bbartifacts = new ArrayList<>();
+        String line = reader.readLine();
+        while ((line != null) && (!line.contains(SECTION_DIVIDER))) {
+            line = reader.readLine();
+            
+            if (line != null) {
+                line = line.trim();
+            }
+            
+            if ((line != null) && (line.toLowerCase().contains("device unique id"))) {
+                // Columns are seperated by colons :
+                // Data : Values
+                // Record is 4 lines in length (Device Unique Id, Name, Last Seen,  LastConnected
+                while (line != null && !line.contains(SECTION_DIVIDER) && !line.isEmpty() && !line.toLowerCase().contains("radio support not found")) {
+                    Collection<BlackboardAttribute> attributes = new ArrayList<>();
+                    addBlueToothAttribute(line, attributes, TSK_DEVICE_ID);
+                    line = reader.readLine();
+                    // Name may not exist, check for it to make sure.
+                    if ((line != null) && (line.toLowerCase().contains("name"))) {
+                        addBlueToothAttribute(line, attributes, TSK_NAME);
+                        line = reader.readLine();
+                    }
+                    addBlueToothAttribute(line, attributes, TSK_DATETIME);
+                    line = reader.readLine();
+                    addBlueToothAttribute(line, attributes, TSK_DATETIME_ACCESSED);
+                    BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_BLUETOOTH_PAIRING, regFile, attributes);
+                    if(bba != null) {
+                         bbartifacts.add(bba);
+                    }
+                    // Read blank line between records then next read line is start of next block
+                    reader.readLine();
+                    line = reader.readLine();
+                }
+                
+                if (line != null) {
+                    line = line.trim();
+                }
+            }
+        }
+        if (!bbartifacts.isEmpty()) {
+            postArtifacts(bbartifacts);
+        }
+    }
+
+
+    private void addBlueToothAttribute(String line, Collection<BlackboardAttribute> attributes, ATTRIBUTE_TYPE attributeType) {
+	if (line == null) {
+		return;
+	}
+	
+	String tokens[] = line.split(": ");
+	if (tokens.length > 1 && !tokens[1].isEmpty()) {
+            String tokenString = tokens[1];
+            if (attributeType.getDisplayName().toLowerCase().contains("date")) {
+                String dateString = tokenString.toLowerCase().replace(" z", "");
+                // date format for plugin Tue Jun 23 10:27:54 2020 Z
+                SimpleDateFormat dateFormat = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy", US);
+                Long dateLong = Long.valueOf(0);
+                try {
+                    Date newDate = dateFormat.parse(dateString);
+                    dateLong = newDate.getTime()/1000;
+                } catch (ParseException ex) {
+                    // catching error and displaying date that could not be parsed
+                    // we set the timestamp to 0 and continue on processing
+                    logger.log(Level.WARNING, String.format("Failed to parse date/time %s for Bluetooth Last Seen attribute.", dateString), ex); //NON-NLS
+                }
+	        attributes.add(new BlackboardAttribute(attributeType, getName(), dateLong));                   
+            } else {
+		attributes.add(new BlackboardAttribute(attributeType, getName(), tokenString));
+            }
+	}
+}
+
+    
     /**
      * Parse the output of the SAM regripper plugin to get additional Account
      * information
@@ -1274,30 +1388,6 @@ class ExtractRegistry extends Extract {
                     parseWinRARMRUList(regFile, reader, Bundle.Recently_Used_Artifacts_Winrar());
                 } else if (line.matches("^officedocs2010 v.*")) {
                     parseOfficeDocs2010MRUList(regFile, reader, Bundle.Recently_Used_Artifacts_Officedocs());
-                } 
-                line = reader.readLine();
-            }
-        }     
-    }
-    
-    /**
-     * Create artifacts from the System registry Hive
-     * 
-     * @param regFileName name of the regripper output file
-     * 
-     * @param regFile registry file the artifact is associated with
-     * 
-     * @throws FileNotFound and IOException
-     */
-    private void createSystemArtifacts(String regFileName, AbstractFile regFile) throws FileNotFoundException, IOException {
-        File regfile = new File(regFileName);
-        try (BufferedReader reader = new BufferedReader(new FileReader(regfile))) {
-            String line = reader.readLine();
-            while (line != null) {
-                line = line.trim();
-
-                if (line.matches("^bam v.*")) {
-                    parseBamKey(regFile, reader, Bundle.Registry_System_Bam());
                 } 
                 line = reader.readLine();
             }
