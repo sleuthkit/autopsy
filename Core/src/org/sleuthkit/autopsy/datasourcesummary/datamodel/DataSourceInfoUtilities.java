@@ -143,13 +143,38 @@ final class DataSourceInfoUtilities {
      * Enum for specifying the sort order for getAttributes.
      */
     enum SortOrder {
-        DECENDING,
+        DESCENDING,
         ASCENDING
+    }
+    
+     /**
+     * Returns a list of all artifacts of the given type that have an attribute
+     * of the given type sorted by given attribute type value. Artifacts that
+     * do not have the given attribute will not be included in the list.
+     * 
+     * Sorting on attributes of type byte[] and JSON is not currently supported.
+     *
+     * @param skCase        SleuthkitCase instance.
+     * @param artifactType  Type of artifacts to sort.
+     * @param dataSource    Data Source that the artifact belongs to.
+     * @param attributeType Attribute type to sort by.
+     * @param sortOrder     Sort order of the attributes, either ascending or
+     *                      descending.
+     *
+     * @return A list of artifacts of type artifactType sorted by the attribute
+     *         of attributeType in the given sortOrder. If no artifacts are
+     *         found an empty list will be returned.
+     *
+     * @throws TskCoreException
+     */
+    static List<BlackboardArtifact> getArtifacts(SleuthkitCase skCase, BlackboardArtifact.Type artifactType, DataSource dataSource, BlackboardAttribute.Type attributeType, SortOrder sortOrder) throws TskCoreException {
+        return getArtifacts(skCase, artifactType, dataSource, attributeType, sortOrder, 0);
     }
 
     /**
      * Return a list of artifacts that have been sorted by their attribute of
-     * attributeType.
+     * attributeType. If an artifact of the given type does not have the 
+     * given attribute it will not be included in the returned list.
      *
      * Sorting on attributes of type byte[] and JSON is not currently supported.
      *
@@ -160,7 +185,7 @@ final class DataSourceInfoUtilities {
      * @param sortOrder     Sort order of the attributes, either ascending or
      *                      descending.
      * @param maxCount      Maximum number of results to return. To return all
-     *                      values maxCount should be -1.
+     *                      values maxCount should be 0.
      *
      * @return A list of artifacts of type artifactType sorted by the attribute
      *         of attributeType in the given sortOrder. If no artifacts are
@@ -169,26 +194,47 @@ final class DataSourceInfoUtilities {
      * @throws TskCoreException
      */
     static List<BlackboardArtifact> getArtifacts(SleuthkitCase skCase, BlackboardArtifact.Type artifactType, DataSource dataSource, BlackboardAttribute.Type attributeType, SortOrder sortOrder, int maxCount) throws TskCoreException {
-        if (maxCount < 1 && maxCount != -1) {
+        if (maxCount < 0 ) {
             throw new IllegalArgumentException("Invalid maxCount passed to getArtifacts, value must be at greater 0");
         }
 
-        TreeMap<BlackboardAttribute, BlackboardArtifact> sortedMap = new TreeMap<>(new AttributeComparator(sortOrder));
+        TreeMap<BlackboardAttribute, List<BlackboardArtifact>> sortedMap = new TreeMap<>(new AttributeComparator(sortOrder));
         List<BlackboardArtifact> artifactList = skCase.getBlackboard().getArtifacts(artifactType.getTypeID(), dataSource.getId());
 
         for (BlackboardArtifact artifact : artifactList) {
             BlackboardAttribute attribute = artifact.getAttribute(attributeType);
-            if (attribute != null) {
-                sortedMap.put(attribute, artifact);
+            if (attribute == null) {
+                continue;
             }
+            
+            List<BlackboardArtifact> mapArtifactList = sortedMap.get(attribute);
+            if(mapArtifactList == null) {
+                mapArtifactList = new ArrayList<>();
+                sortedMap.put(attribute, mapArtifactList);
+            }
+            
+            mapArtifactList.add(artifact);
         }
 
         artifactList = new ArrayList<>();
 
-        for (BlackboardArtifact artifact : sortedMap.values()) {
-            artifactList.add(artifact);
-            if (maxCount != -1 && artifactList.size() == maxCount - 1) {
+        for (List<BlackboardArtifact> mapArtifactList : sortedMap.values()) {
+            
+            if(maxCount == artifactList.size()) {
                 break;
+            }
+            
+            if(maxCount == 0 || (artifactList.size() + mapArtifactList.size()) <= maxCount ) {
+                artifactList.addAll(mapArtifactList);
+                continue;
+            }
+            
+            for(BlackboardArtifact artifact: mapArtifactList) {
+                if(artifactList.size() < maxCount) {
+                    artifactList.add(artifact);
+                } else {
+                    break;
+                }
             }
         }
         return artifactList;
@@ -225,7 +271,7 @@ final class DataSourceInfoUtilities {
 
             int result = compare(attribute1.getAttributeType(), attribute1, attribute2);
 
-            if (direction == SortOrder.DECENDING) {
+            if (direction == SortOrder.DESCENDING) {
                 result *= -1;
             }
 
