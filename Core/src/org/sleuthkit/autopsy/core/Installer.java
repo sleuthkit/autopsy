@@ -165,19 +165,22 @@ public class Installer extends ModuleInstall {
                 logger.log(Level.SEVERE, "Error loading VHDI library, ", e); //NON-NLS
             }
             
-            // libcrypto must be loaded before libssl to make sure it's the correct dll
-            try {
-                System.loadLibrary("libcrypto-1_1-x64"); //NON-NLS
-                logger.log(Level.INFO, "Crypto library loaded"); //NON-NLS
-            } catch (UnsatisfiedLinkError e) {
-                logger.log(Level.SEVERE, "Error loading Crypto library, ", e); //NON-NLS
-            }  
-            
-            try {
-                System.loadLibrary("libssl-1_1-x64"); //NON-NLS
-                logger.log(Level.INFO, "OpenSSL library loaded"); //NON-NLS
-            } catch (UnsatisfiedLinkError e) {
-                logger.log(Level.SEVERE, "Error loading OpenSSL library, ", e); //NON-NLS
+            // Only attempt to load OpenSSL if we're in 64 bit mode
+            if(System.getProperty("sun.arch.data.model").contains("64")) {
+                // libcrypto must be loaded before libssl to make sure it's the correct version
+                try {
+                    System.loadLibrary("libcrypto-1_1-x64"); //NON-NLS
+                    logger.log(Level.INFO, "Crypto library loaded"); //NON-NLS
+                } catch (UnsatisfiedLinkError e) {
+                    logger.log(Level.SEVERE, "Error loading Crypto library, ", e); //NON-NLS
+                }  
+
+                try {
+                    System.loadLibrary("libssl-1_1-x64"); //NON-NLS
+                    logger.log(Level.INFO, "OpenSSL library loaded"); //NON-NLS
+                } catch (UnsatisfiedLinkError e) {
+                    logger.log(Level.SEVERE, "Error loading OpenSSL library, ", e); //NON-NLS
+                }
             }
         }
     }
