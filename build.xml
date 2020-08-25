@@ -114,7 +114,7 @@
         </copy>
 
         <property name="app.property.file" value="${zip-tmp}/${app.name}/etc/${app.name}.conf" />
-        <var name="jvm-value" value="--branding ${app.name} -J-Xms24m -J-Xmx4G -J-Xverify:none -J-XX:+UseG1GC -J-XX:+UseStringDeduplication"/>
+        <var name="jvm-value" value="--branding ${app.name} -J-Xms24m -J-Xmx4G -J--illegal-access=warn -J-Xverify:none -J-XX:+UseG1GC -J-XX:+UseStringDeduplication -J--add-opens=javafx.controls/javafx.scene.control.skin=ALL-UNNAMED -J--add-exports=javafx.controls/com.sun.javafx.scene.control.inputmap=ALL-UNNAMED"/>
         <!-- for Japanese localized version add option:  -Duser.language=ja -->
         
             
