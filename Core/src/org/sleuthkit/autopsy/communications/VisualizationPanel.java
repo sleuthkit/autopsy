@@ -46,7 +46,10 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Frame;
 import java.awt.Graphics;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -86,8 +89,8 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
-import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.JTextPane;
 import javax.swing.JToolBar;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
@@ -372,10 +375,11 @@ final public class VisualizationPanel extends JPanel {
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
+        GridBagConstraints gridBagConstraints;
 
         borderLayoutPanel = new JPanel();
         placeHolderPanel = new JPanel();
-        jTextArea1 = new JTextArea();
+        jTextPane1 = new JTextPane();
         notificationsJFXPanel = new JFXPanel();
         toolbar = new JToolBar();
         backButton = new JButton();
@@ -397,26 +401,16 @@ final public class VisualizationPanel extends JPanel {
 
         borderLayoutPanel.setLayout(new BorderLayout());
 
-        jTextArea1.setBackground(new Color(240, 240, 240));
-        jTextArea1.setColumns(20);
-        jTextArea1.setLineWrap(true);
-        jTextArea1.setRows(5);
-        jTextArea1.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.jTextArea1.text")); // NOI18N
+        placeHolderPanel.setLayout(new GridBagLayout());
 
-        GroupLayout placeHolderPanelLayout = new GroupLayout(placeHolderPanel);
-        placeHolderPanel.setLayout(placeHolderPanelLayout);
-        placeHolderPanelLayout.setHorizontalGroup(placeHolderPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-            .addGroup(placeHolderPanelLayout.createSequentialGroup()
-                .addContainerGap(316, Short.MAX_VALUE)
-                .addComponent(jTextArea1, GroupLayout.PREFERRED_SIZE, 424, GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(481, Short.MAX_VALUE))
-        );
-        placeHolderPanelLayout.setVerticalGroup(placeHolderPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-            .addGroup(placeHolderPanelLayout.createSequentialGroup()
-                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(jTextArea1, GroupLayout.PREFERRED_SIZE, 47, GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
+        jTextPane1.setEditable(false);
+        jTextPane1.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.jTextPane1.text")); // NOI18N
+        jTextPane1.setOpaque(false);
+        gridBagConstraints = new GridBagConstraints();
+        gridBagConstraints.anchor = GridBagConstraints.NORTH;
+        gridBagConstraints.weighty = 1.0;
+        gridBagConstraints.insets = new Insets(50, 0, 0, 0);
+        placeHolderPanel.add(jTextPane1, gridBagConstraints);
 
         borderLayoutPanel.add(placeHolderPanel, BorderLayout.CENTER);
         borderLayoutPanel.add(notificationsJFXPanel, BorderLayout.PAGE_END);
@@ -856,7 +850,7 @@ final public class VisualizationPanel extends JPanel {
     private JToolBar.Separator jSeparator1;
     private JToolBar.Separator jSeparator2;
     private JToolBar.Separator jSeparator3;
-    private JTextArea jTextArea1;
+    private JTextPane jTextPane1;
     private JFXPanel notificationsJFXPanel;
     private JPanel placeHolderPanel;
     private JButton snapshotButton;
