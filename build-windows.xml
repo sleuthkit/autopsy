@@ -21,7 +21,8 @@
         <mkdir dir="${i686}"/>
     </target>
     
-    <target name="checkTskLibDirs">        
+    <target name="checkTskLibDirs">
+        <property environment="env"/>	
         <property name="tskLogicalImager.path" value="${env.TSK_HOME}/win32/Release_NoLibs/tsk_logical_imager.exe" />
         <property name="win64.TskLib.path" value="${env.TSK_HOME}/win32/x64/Release"/>
         <property name="win32.TskLib.path" value="${env.TSK_HOME}/win32/Release" />
