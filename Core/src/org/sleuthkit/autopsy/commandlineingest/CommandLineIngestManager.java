@@ -296,7 +296,7 @@ public class CommandLineIngestManager extends CommandLineManager{
                                     }
 
                                     // generate reports
-                                    ReportProgressIndicator progressIndicator = new ReportProgressIndicator(new LoggingProgressIndicator());
+                                    ReportProgressIndicator progressIndicator = new ReportProgressIndicator(new CommandLineProgressIndicator());
                                     ReportGenerator generator = new ReportGenerator(reportName, progressIndicator);
                                     generator.generateReports();
                                 } catch (CaseActionException ex) {
