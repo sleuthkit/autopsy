@@ -55,12 +55,12 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
     private static final int ATTRIBUTE_STR_MAX_LEN = 200;
 
     // defines a list of artifacts that provide context for a file
-    private static final List<BlackboardArtifact.ARTIFACT_TYPE> SOURCE_CONTEXT_ARTIFACTS = new ArrayList<>();
+    private static final List<BlackboardArtifact.ARTIFACT_TYPE> CONTEXT_ARTIFACTS = new ArrayList<>();
     private final List<javax.swing.JPanel> contextSourcePanels = new ArrayList<>();
     private final List<javax.swing.JPanel> contextUsagePanels = new ArrayList<>();
 
     static {
-        SOURCE_CONTEXT_ARTIFACTS.add(TSK_ASSOCIATED_OBJECT);
+        CONTEXT_ARTIFACTS.add(TSK_ASSOCIATED_OBJECT);
     }
 
     /**
@@ -180,7 +180,7 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
 
         AbstractFile file = selectedNode.getLookup().lookup(AbstractFile.class);
         try {
-            populateSourceContextData(file);
+            populatePanels(file);
         } catch (NoCurrentCaseException | TskCoreException ex) {
             logger.log(Level.SEVERE, String.format("Exception displaying context for file %s", file.getName()), ex); //NON-NLS
         }
@@ -223,7 +223,7 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
         // check if the node has an abstract file and the file has any context defining artifacts.
         if (node.getLookup().lookup(AbstractFile.class) != null) {
             AbstractFile abstractFile = node.getLookup().lookup(AbstractFile.class);
-            for (BlackboardArtifact.ARTIFACT_TYPE artifactType : SOURCE_CONTEXT_ARTIFACTS) {
+            for (BlackboardArtifact.ARTIFACT_TYPE artifactType : CONTEXT_ARTIFACTS) {
                 List<BlackboardArtifact> artifactsList;
                 try {
                     artifactsList = abstractFile.getArtifacts(artifactType);
@@ -258,18 +258,18 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
      * @throws NoCurrentCaseException
      * @throws TskCoreException
      */
-    private void populateSourceContextData(AbstractFile sourceFile) throws NoCurrentCaseException, TskCoreException {
+    private void populatePanels(AbstractFile sourceFile) throws NoCurrentCaseException, TskCoreException {
 
         SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
         
         // Check for all context artifacts
         boolean foundASource = false;
-        for (BlackboardArtifact.ARTIFACT_TYPE artifactType : SOURCE_CONTEXT_ARTIFACTS) {
+        for (BlackboardArtifact.ARTIFACT_TYPE artifactType : CONTEXT_ARTIFACTS) {
             List<BlackboardArtifact> artifactsList = tskCase.getBlackboardArtifacts(artifactType, sourceFile.getId());
 
             foundASource = !artifactsList.isEmpty();
             for (BlackboardArtifact contextArtifact : artifactsList) {
-                addSourceEntry(contextArtifact);
+                addAssociatedArtifactToPanel(contextArtifact);
             }
         }
         javax.swing.JPanel contextContainer = new javax.swing.JPanel();
@@ -304,15 +304,14 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
     }
 
     /**
-     * Adds a source context entry for the selected file based on the given
-     * context providing artifact.
+     * Resolves an TSK_ASSOCIATED_OBJECT artifact and adds it to the appropriate panel
      *
      * @param artifact Artifact that may provide context.
      *
      * @throws NoCurrentCaseException
      * @throws TskCoreException
      */
-    private void addSourceEntry(BlackboardArtifact artifact) throws TskCoreException {
+    private void addAssociatedArtifactToPanel(BlackboardArtifact artifact) throws TskCoreException {
 
         if (BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT.getTypeID() == artifact.getArtifactTypeID()) {
             BlackboardAttribute associatedArtifactAttribute = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT));
@@ -320,14 +319,13 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
                 long artifactId = associatedArtifactAttribute.getValueLong();
                 BlackboardArtifact associatedArtifact = artifact.getSleuthkitCase().getBlackboardArtifact(artifactId);
 
-                setSourceFields(associatedArtifact);
+                addArtifactToPanels(associatedArtifact);
             }
         }
     }
 
     /**
-     * Sets the source label and text fields based on the given associated
-     * artifact.
+     * Adds th passed in artifact to the appropriate source or usage panel
      *
      * @param associatedArtifact - associated artifact
      *
@@ -339,7 +337,7 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
         "ContextViewer.recentDocs=Recent Documents: ",
         "ContextViewer.programExecution=Program Execution: "
     })
-    private void setSourceFields(BlackboardArtifact associatedArtifact) throws TskCoreException {
+    private void addArtifactToPanels(BlackboardArtifact associatedArtifact) throws TskCoreException {
         if (BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE.getTypeID() == associatedArtifact.getArtifactTypeID()
                 || BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID() == associatedArtifact.getArtifactTypeID()) {
             String sourceName = Bundle.ContextViewer_attachmentSource();
