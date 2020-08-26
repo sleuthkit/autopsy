@@ -4,6 +4,6 @@
         <conf name="tika"/>
     </configurations>
     <dependencies >
-        <dependency conf="tika->default" org="org.apache.tika" name="tika-parsers" rev="1.24.1"/>
+        <dependency conf="tika->default" org="org.apache.tika" name="tika-parsers" rev="1.23"/>
     </dependencies>
 </ivy-module>
