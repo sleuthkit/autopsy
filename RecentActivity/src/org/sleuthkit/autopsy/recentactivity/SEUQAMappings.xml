@@ -113,9 +113,6 @@ splitToken:
 	<SearchEngine engine="GIbiru" domainSubstring=".gibiru.com">
 		<splitToken plainToken="?q=" regexToken="\\?q="/>
 	</SearchEngine>
-	<SearchEngine engine="GIbiru" domainSubstring=".gibiru.com">
-		<splitToken plainToken="?q=" regexToken="\\?q="/>
-	</SearchEngine>
 	<SearchEngine engine="Wiki" domainSubstring=".wiki.">
 		<splitToken plainToken="?search=" regexToken="\\?search="/>
 	</SearchEngine>
