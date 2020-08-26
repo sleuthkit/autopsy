@@ -24,16 +24,15 @@ import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
-import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
-import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
-import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
+import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
+import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;;
 
 /**
- * A factory that creates data source ingest modules that will run iLeapp against an
+ * A factory that creates data source ingest modules that will run iLeapp against 
  * logical files and saves the output to module output.
  */
 @ServiceProvider(service = IngestModuleFactory.class)
-public class IosAnalyserModuleFactory implements IngestModuleFactory {
+public class IosAnalyserModuleFactory extends IngestModuleFactoryAdapter {
 
     @NbBundle.Messages({"IosAnalyserModuleFactory_moduleName=iOSAnalyser"})
     static String getModuleName() {
@@ -62,32 +61,8 @@ public class IosAnalyserModuleFactory implements IngestModuleFactory {
     }
 
     @Override
-    public boolean hasGlobalSettingsPanel() {
-        return false;
+    public DataSourceIngestModule createDataSourceIngestModule(IngestModuleIngestJobSettings ingestJobOptions) {
+        return new IosAnalyserIngestModule();
     }
 
-    @Override
-    public IngestModuleGlobalSettingsPanel getGlobalSettingsPanel() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public IngestModuleIngestJobSettings getDefaultIngestJobSettings() {
-        return new PlasoModuleSettings();
-    }
-
-    @Override
-    public boolean hasIngestJobSettingsPanel() {
-        return false;
-    }
-
-    @Override
-    public boolean isFileIngestModuleFactory() {
-        return false;
-    }
-
-    @Override
-    public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings settings) {
-        throw new UnsupportedOperationException();
-    }
 }

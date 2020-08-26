@@ -1,0 +1,11 @@
+IosAnalyserIngestModule.completed=iLeapp Processing Completed
+IosAnalyserIngestModule.error.creating.output.dir=Error creating iLeapp module output directory.
+IosAnalyserIngestModule.error.running.iLeapp=Error running iLeapp, see log file.
+IosAnalyserIngestModule.executable.not.found=iLeapp Executable Not Found.
+IosAnalyserIngestModule.has.run=iLeapp
+IosAnalyserIngestModule.iLeapp.cancelled=iLeapp run was canceled
+IosAnalyserIngestModule.requires.windows=iLeapp module requires windows.
+IosAnalyserIngestModule.running.iLeapp=Running iLeapp
+IosAnalyserIngestModule.starting.iLeapp=Starting iLeapp
+IosAnalyserModuleFactory_moduleDesc=Runs iLeapp against files.
+IosAnalyserModuleFactory_moduleName=iOSAnalyser

@@ -18,38 +18,25 @@
  */
 package org.sleuthkit.autopsy.modules.iosanalyser;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Locale;
-import static java.util.Objects.nonNull;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 import org.openide.modules.InstalledFileLocator;
-import org.openide.util.Cancellable;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import static org.sleuthkit.autopsy.casemodule.Case.getCurrentCase;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
-import org.sleuthkit.autopsy.coreutils.SQLiteDBConnect;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProcessTerminator;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
@@ -57,18 +44,9 @@ import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.Blackboard;
-import org.sleuthkit.datamodel.Blackboard.BlackboardException;
-import org.sleuthkit.datamodel.BlackboardArtifact;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_TL_EVENT;
-import org.sleuthkit.datamodel.BlackboardAttribute;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TL_EVENT_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TimelineEventType;
 
 /**
  * Data source ingest module that runs Plaso against the image.
@@ -78,8 +56,8 @@ public class IosAnalyserIngestModule implements DataSourceIngestModule {
     private static final Logger logger = Logger.getLogger(IosAnalyserIngestModule.class.getName());
     private static final String MODULE_NAME = IosAnalyserModuleFactory.getModuleName();
 
-    private static final String ILEAPP = "ILEAPP"; //NON-NLS
-    private static final String ILEAPP_EXECUTABLE = "iLeapp.exe";//NON-NLS
+    private static final String ILEAPP = "iLeapp"; //NON-NLS
+    private static final String ILEAPP_EXECUTABLE = "ileapp.exe";//NON-NLS
 
     private File iLeappExecutable;
 
@@ -95,8 +73,8 @@ public class IosAnalyserIngestModule implements DataSourceIngestModule {
     }
 
     @NbBundle.Messages({
-        "IosAnalyserIngestModule.executable.not.found=Plaso Executable Not Found.",
-        "IosAnalyserIngestModule.requires.windows=Plaso module requires windows."})
+        "IosAnalyserIngestModule.executable.not.found=iLeapp Executable Not Found.",
+        "IosAnalyserIngestModule.requires.windows=iLeapp module requires windows."})
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
         this.context = context;
@@ -115,15 +93,13 @@ public class IosAnalyserIngestModule implements DataSourceIngestModule {
     }
 
     @NbBundle.Messages({
-        "IosAnalyserIngestModule.error.running.log2timeline=Error running log2timeline, see log file.",
-        "IosAnalyserIngestModule.error.running.psort=Error running Psort, see log file.",
-        "IosAnalyserIngestModule.error.creating.output.dir=Error creating Plaso module output directory.",
-        "IosAnalyserIngestModule.starting.log2timeline=Starting Log2timeline",
-        "IosAnalyserIngestModule.running.psort=Running Psort",
-        "IosAnalyserIngestModule.log2timeline.cancelled=Log2timeline run was canceled",
-        "IosAnalyserIngestModule.psort.cancelled=psort run was canceled",
-        "IosAnalyserIngestModule.bad.imageFile=Cannot find image file name and path",
-        "IosAnalyserIngestModule.completed=Plaso Processing Completed"})
+        "IosAnalyserIngestModule.error.running.iLeapp=Error running iLeapp, see log file.",
+        "IosAnalyserIngestModule.error.creating.output.dir=Error creating iLeapp module output directory.",
+        "IosAnalyserIngestModule.starting.iLeapp=Starting iLeapp",
+        "IosAnalyserIngestModule.running.iLeapp=Running iLeapp",
+        "IosAnalyserIngestModule.has.run=iLeapp",
+        "IosAnalyserIngestModule.iLeapp.cancelled=iLeapp run was canceled",
+        "IosAnalyserIngestModule.completed=iLeapp Processing Completed"})
     @Override
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress statusHelper) {
 
@@ -145,7 +121,7 @@ public class IosAnalyserIngestModule implements DataSourceIngestModule {
             // Run iLeapp
             for (AbstractFile iLeappFile: iLeappFilesToProcess) {
                 logger.log(Level.INFO, "Starting iLeapp Run.");//NON-NLS
-                statusHelper.progress(Bundle.IosAnalyserIngestModule_starting_log2timeline(), 0);
+                statusHelper.progress(Bundle.IosAnalyserIngestModule_starting_iLeapp(), 0);
                 ProcessBuilder iLeappCommand = buildiLeappCommand(moduleOutputPath, iLeappFile.getLocalAbsPath(), iLeappFile.getNameExtension());
                 try {
                     int result = ExecUtil.execute(iLeappCommand, new DataSourceIngestModuleProcessTerminator(context));
@@ -209,11 +185,12 @@ public class IosAnalyserIngestModule implements DataSourceIngestModule {
 
         ProcessBuilder processBuilder = buildProcessWithRunAsInvoker(
                 "\"" + iLeappExecutable + "\"", //NON-NLS
-                "-fs", iLeappFileSystemType, //NON-NLS
+                "-t", iLeappFileSystemType, //NON-NLS
                 "-i", sourceFilePath, //NON-NLS
                 "-o", moduleOutputPath.toString()
         );
         processBuilder.redirectError(moduleOutputPath.resolve("iLeapp_err.txt").toFile());  //NON-NLS
+        processBuilder.redirectOutput(moduleOutputPath.resolve("iLeapp_out.txt").toFile());  //NON-NLS
         return processBuilder;
     }
 
@@ -228,7 +205,7 @@ public class IosAnalyserIngestModule implements DataSourceIngestModule {
     }
 
     private static File locateExecutable(String executableName) throws FileNotFoundException {
-        String executableToFindName = Paths.get(ILEAPP, ILEAPP, executableName).toString();
+        String executableToFindName = Paths.get(ILEAPP, executableName).toString();
 
         File exeFile = InstalledFileLocator.getDefault().locate(executableToFindName, IosAnalyserIngestModule.class.getPackage().getName(), false);
         if (null == exeFile || exeFile.canExecute() == false) {
