@@ -25,7 +25,8 @@ import javax.swing.SwingWorker;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
- * A Swing worker data-fetching with result-handler class.
+ * A Swing worker that accepts an argument of a data processor and a result
+ * handler.
  */
 public class DataFetchWorker<A, R> extends SwingWorker<R, Void> {
 
@@ -133,7 +134,7 @@ public class DataFetchWorker<A, R> extends SwingWorker<R, Void> {
             logger.log(Level.WARNING, "There was an error while fetching results.", ex);
 
             if (inner instanceof DataProcessorException) {
-                resultHandler.accept(DataLoadingResult.getLoadError((DataProcessorException) inner));
+                resultHandler.accept(DataLoadingResult.getLoadErrorResult((DataProcessorException) inner));
             }
             return;
         }
@@ -144,6 +145,6 @@ public class DataFetchWorker<A, R> extends SwingWorker<R, Void> {
         }
 
         // if the data is loaded, send the data to the consumer.
-        resultHandler.accept(DataLoadingResult.getLoaded(result));
+        resultHandler.accept(DataLoadingResult.getLoadedResult(result));
     }
 }

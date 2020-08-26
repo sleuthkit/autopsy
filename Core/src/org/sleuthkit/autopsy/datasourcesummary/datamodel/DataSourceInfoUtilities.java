@@ -110,8 +110,7 @@ final class DataSourceInfoUtilities {
     static <T> T getBaseQueryResult(String query, ResultSetHandler<T> processor, String errorMessage) {
         return getBaseQueryResult(SleuthkitCaseProvider.DEFAULT, query, processor, errorMessage);
     }
-        
-        
+
     /**
      * Retrieves a result based on the provided query.
      *

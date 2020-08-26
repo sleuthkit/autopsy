@@ -23,7 +23,7 @@ import javax.swing.table.TableModel;
 
 /**
  * An interface to be used with the DataResultTable that specifies a TableModel
- * to be used with a JTable based on a list of object type T.
+ * to be used with the underlying JTable based on a list of object type T.
  */
 public interface ListTableModel<T> extends TableModel {
 

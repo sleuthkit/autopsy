@@ -23,10 +23,11 @@ import org.sleuthkit.autopsy.datasourcesummary.uiutils.SwingWorkerSequentialRunn
 import org.sleuthkit.datamodel.DataSource;
 
 /**
- *
- * @author gregd
+ * Base class from which other tabs in data source summary derive.
  */
 abstract class BaseDataSourceSummaryTab extends JPanel {
+
+    private static final long serialVersionUID = 1L;
 
     private final SwingWorkerSequentialRunner loader = new SwingWorkerSequentialRunner();
     private DataSource dataSource;

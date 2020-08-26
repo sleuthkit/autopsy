@@ -46,12 +46,17 @@ public class SwingWorkerSequentialRunner {
      * @param submittedWorkers The list of submitted swing workers.
      */
     public synchronized void submit(List<? extends SwingWorker<?, ?>> submittedWorkers) {
+        // cancel currently running operations
         cancelRunning();
+
+        // if no workers, there is nothing to run
         if (submittedWorkers == null) {
             return;
         }
 
         this.workers = Collections.unmodifiableList(submittedWorkers);
+
+        // start running the workers and capture the futures if there is a need to cancel them.
         this.futures = this.workers.stream()
                 .map((w) -> executorService.submit(w))
                 .collect(Collectors.toList());

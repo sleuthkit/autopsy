@@ -68,10 +68,13 @@ public class DefaultListTableModel<T> extends AbstractTableModel implements List
 
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
+        // if index requested is null, return null
         if (rowIndex < 0 || rowIndex >= dataRows.size() || columnIndex < 0 || columnIndex >= columns.size()) {
             return null;
         }
 
+        // otherwise, get the corresponding row and use the corresponding 
+        // column function to get the value
         return columns.get(columnIndex).apply(dataRows.get(rowIndex));
     }
 }

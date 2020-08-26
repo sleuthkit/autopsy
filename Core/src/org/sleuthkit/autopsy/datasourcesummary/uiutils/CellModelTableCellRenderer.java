@@ -26,7 +26,7 @@ import org.apache.commons.lang3.StringUtils;
 
 /**
  * A Table cell renderer that renders a cell of a table based off of the
- * CellModel interface provided in the code.
+ * CellModel interface provided within this class.
  */
 public class CellModelTableCellRenderer extends DefaultTableCellRenderer {
 
@@ -168,6 +168,7 @@ public class CellModelTableCellRenderer extends DefaultTableCellRenderer {
      * @return The provided defaultCell.
      */
     protected Component getTableCellRendererComponent(JLabel defaultCell, CellModel cellModel) {
+        // sets the text for the cell or null if not present.
         String text = cellModel.getText();
         if (StringUtils.isNotBlank(text)) {
             defaultCell.setText(text);
@@ -175,6 +176,7 @@ public class CellModelTableCellRenderer extends DefaultTableCellRenderer {
             defaultCell.setText(null);
         }
 
+        // sets the tooltip for the cell if present.
         String tooltip = cellModel.getTooltip();
         if (StringUtils.isNotBlank(tooltip)) {
             defaultCell.setToolTipText(tooltip);
@@ -182,6 +184,8 @@ public class CellModelTableCellRenderer extends DefaultTableCellRenderer {
             defaultCell.setToolTipText(null);
         }
 
+        // sets the JLabel alignment (left, center, right) or default alignment
+        // if no alignment is specified
         int alignment = (cellModel.getHorizontalAlignment() == null)
                 ? DEFAULT_ALIGNMENT
                 : cellModel.getHorizontalAlignment().getJLabelAlignment();

@@ -37,8 +37,8 @@ import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataLoadingResult;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataResultTable;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataResultTableUtility;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataResultTableUtility.DataResultColumnModel;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataResultTableUtils;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataResultTableUtils.DataResultColumnModel;
 import org.sleuthkit.datamodel.DataSource;
 
 /**
@@ -53,8 +53,7 @@ import org.sleuthkit.datamodel.DataSource;
     "DataSourceSummaryUserActivityPanel_TopDomainsTableModel_domain_header=Domain",
     "DataSourceSummaryUserActivityPanel_TopDomainsTableModel_url_header=URL",
     "DataSourceSummaryUserActivityPanel_TopDomainsTableModel_lastAccess_header=Last Access",
-    "DataSourceSummaryUserActivityPanel_noDataExists=No communication data exists",
-})
+    "DataSourceSummaryUserActivityPanel_noDataExists=No communication data exists",})
 public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryTab {
 
     private static final long serialVersionUID = 1L;
@@ -81,7 +80,7 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryTab
      */
     public DataSourceSummaryUserActivityPanel(DataSourceTopProgramsSummary topProgramsData, DataSourceTopDomainsSummary topDomainsData) {
         // set up recent programs table 
-        this.topProgramsTable = DataResultTableUtility.getDataResultTable(Arrays.asList(
+        this.topProgramsTable = DataResultTableUtils.getDataResultTable(Arrays.asList(
                 new DataResultColumnModel<>(
                         Bundle.DataSourceSummaryUserActivityPanel_TopProgramsTableModel_name_header(),
                         (prog) -> {
@@ -118,7 +117,7 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryTab
         this.topProgramsTable.setNoResultsMessage(Bundle.DataSourceSummaryUserActivityPanel_noDataExists());
 
         // set up recent domains table
-        this.recentDomainsTable = DataResultTableUtility.getDataResultTable(Arrays.asList(
+        this.recentDomainsTable = DataResultTableUtils.getDataResultTable(Arrays.asList(
                 new DataResultColumnModel<>(
                         Bundle.DataSourceSummaryUserActivityPanel_TopDomainsTableModel_domain_header(),
                         (d) -> new DefaultCellModel(d.getDomain()),
@@ -153,19 +152,24 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryTab
 
     @Override
     protected void onNewDataSource(DataSource dataSource) {
+        // if no data source is present or the case is not open,
+        // set results for tables to null.
         if (dataSource == null || !Case.isCaseOpen()) {
             dataFetchComponents.forEach((item) -> item.getResultHandler()
-                    .accept(DataLoadingResult.getLoaded(null)));
+                    .accept(DataLoadingResult.getLoadedResult(null)));
 
         } else {
+            // set tables to display loading screen
             dataFetchComponents.forEach((item) -> item.getResultHandler()
-                    .accept(DataLoadingResult.getLoading()));
+                    .accept(DataLoadingResult.getLoadingResult()));
 
+            // create swing workers to run for each table
             List<DataFetchWorker<?, ?>> workers = dataFetchComponents
                     .stream()
                     .map((components) -> new DataFetchWorker<>(components, dataSource))
                     .collect(Collectors.toList());
 
+            // submit swing workers to run
             getLoader().submit(workers);
         }
     }

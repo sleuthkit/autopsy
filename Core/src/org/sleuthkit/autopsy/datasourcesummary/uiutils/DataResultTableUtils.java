@@ -27,9 +27,9 @@ import javax.swing.table.TableColumn;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer.CellModel;
 
 /**
- * Utilitie methods for instantiating aspects of a DataResultTable.
+ * Utility methods for instantiating aspects of a DataResultTable.
  */
-public class DataResultTableUtility {
+public class DataResultTableUtils {
 
     /**
      * Describes aspects of a column which can be used with getTableModel or
@@ -105,11 +105,16 @@ public class DataResultTableUtility {
         for (int i = 0; i < columns.size(); i++) {
             TableColumn col = new TableColumn(i);
             DataResultColumnModel<T> model = columns.get(i);
+            // if a preferred width is specified in the column definition, 
+            // set the underlying TableColumn preferred width.
             if (model.getWidth() != null && model.getWidth() >= 0) {
                 col.setPreferredWidth(model.getWidth());
             }
 
+            // set the title
             col.setHeaderValue(model.getHeaderTitle());
+
+            // use the cell model renderer in this instance
             col.setCellRenderer(renderer);
 
             tableModel.addColumn(col);

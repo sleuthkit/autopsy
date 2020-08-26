@@ -35,7 +35,7 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
- * A JTable that displays a list of POJO items and also can display messages for
+ * A table that displays a list of items and also can display messages for
  * loading, load error, and not loaded.
  */
 @Messages({
@@ -45,9 +45,9 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 public class DataResultTable<T> extends JPanel {
 
     /**
-     * JTables don't allow display messages. So this LayerUI is used to display
-     * the contents of a child JLabel. Inspired by TableWaitLayerTest (Animating
-     * a Busy Indicator):
+     * JTables don't allow displaying messages. So this LayerUI is used to
+     * display the contents of a child JLabel. Inspired by TableWaitLayerTest
+     * (Animating a Busy Indicator):
      * https://docs.oracle.com/javase/tutorial/uiswing/misc/jlayer.html.
      */
     private static class Overlay extends LayerUI<JComponent> {
@@ -251,20 +251,34 @@ public class DataResultTable<T> extends JPanel {
         return this;
     }
 
+    /**
+     * Sets the data to be shown in the JTable.
+     *
+     * @param data The list of data objects to be shown.
+     */
     private void setResultList(List<T> data) {
+        // set the list of data to be shown as either the data or an empty list 
+        // on null.
         List<T> dataToSet = (data != null)
                 ? Collections.unmodifiableList(data)
                 : Collections.emptyList();
 
+        // since the data is being reset, scroll to the top.
         tableScrollPane.getVerticalScrollBar().setValue(0);
+
+        // set the underlying table model's data.
         this.tableModel.setDataRows(dataToSet);
-        repaint();
     }
 
+    /**
+     * Sets the message and visibility of the overlay.
+     *
+     * @param visible The visibility of the overlay.
+     * @param message The message in the overlay.
+     */
     private void setOverlay(boolean visible, String message) {
         this.overlayLayer.setVisible(visible);
         this.overlayLayer.setMessage(message);
-        repaint();
     }
 
     /**
@@ -283,30 +297,43 @@ public class DataResultTable<T> extends JPanel {
         switch (result.getState()) {
             case LOADED:
                 if (result.getData() == null || result.getData().size() <= 0) {
+                    // if loaded and there is no data, set an empty result list
+                    // and set the overlay to show no results message.
                     setResultList(null);
                     setOverlay(true, getNoResultsMessage());
                 } else {
+                    // otherwise show the data and remove the overlay.
                     setResultList(result.getData());
                     setOverlay(false, null);
                 }
                 break;
             case NOT_LOADED:
+                // if results are not loaded, empty results list and display 
+                // not loaded message
                 setResultList(null);
                 setOverlay(true, getNotLoadedMessage());
                 break;
             case LOADING:
+                // if this table is loading, then set the results to empty and 
+                // display the loading message.
                 setResultList(null);
                 setOverlay(true, getLoadingMessage());
                 break;
             case LOAD_ERROR:
+                // if there is an error, log accordingly, set result list to 
+                // empty and display error message
                 logger.log(Level.WARNING, "An exception was caused while results were loaded.", result.getException());
                 setResultList(null);
                 setOverlay(true, getErrorMessage());
                 break;
             default:
+                // an unknown loading state was specified.  log accordingly.
                 logger.log(Level.SEVERE, "No known loading state was found in result.");
                 break;
         }
+
+        // repaint to capture changes.
+        repaint();
 
         return this;
     }

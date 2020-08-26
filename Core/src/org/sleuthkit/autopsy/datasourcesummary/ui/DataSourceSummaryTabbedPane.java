@@ -60,6 +60,8 @@ public class DataSourceSummaryTabbedPane extends JTabbedPane {
             addTab(tab.getKey(), tab.getValue());
         }
 
+        // IngestJobInfoPanel is not specifically a data source summary panel 
+        // and is called separately for that reason.
         addTab(Bundle.DataSourceSummaryTabbedPane_ingestHistoryTab_title(), ingestHistoryPanel);
     }
 
@@ -84,6 +86,8 @@ public class DataSourceSummaryTabbedPane extends JTabbedPane {
             tab.getValue().setDataSource(dataSource);
         }
 
+        // IngestJobInfoPanel is not specifically a data source summary panel 
+        // and is called separately for that reason.
         ingestHistoryPanel.setDataSource(dataSource);
     }
 }

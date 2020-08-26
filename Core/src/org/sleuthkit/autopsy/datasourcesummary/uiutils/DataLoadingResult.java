@@ -39,14 +39,14 @@ public final class DataLoadingResult<R> {
     /**
      * @return Returns a data loading result.
      */
-    public static <R> DataLoadingResult<R> getLoading() {
+    public static <R> DataLoadingResult<R> getLoadingResult() {
         return (DataLoadingResult<R>) LOADING;
     }
 
     /**
      * @return Returns a 'not loaded' result.
      */
-    public static <R> DataLoadingResult<R> getNotLoaded() {
+    public static <R> DataLoadingResult<R> getNotLoadedResult() {
         return (DataLoadingResult<R>) NOT_LOADED;
     }
 
@@ -57,7 +57,7 @@ public final class DataLoadingResult<R> {
      *
      * @return The loaded data result.
      */
-    public static <R> DataLoadingResult<R> getLoaded(R data) {
+    public static <R> DataLoadingResult<R> getLoadedResult(R data) {
         return new DataLoadingResult<>(ProcessorState.LOADED, data, null);
     }
 
@@ -68,7 +68,7 @@ public final class DataLoadingResult<R> {
      *
      * @return
      */
-    public static <R> DataLoadingResult<R> getLoadError(DataProcessorException e) {
+    public static <R> DataLoadingResult<R> getLoadErrorResult(DataProcessorException e) {
         return new DataLoadingResult<>(ProcessorState.LOAD_ERROR, null, e);
     }
 

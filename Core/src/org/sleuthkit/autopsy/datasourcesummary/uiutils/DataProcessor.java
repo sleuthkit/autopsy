@@ -30,15 +30,16 @@ public interface DataProcessor<I, O> {
     /**
      * A function that accepts an input argument and outputs a result. Since it
      * is meant to be used with the DataFetchWorker, it throws an interrupted
-     * exception if the thread has been interrupted and data processing
+     * exception if the thread has been interrupted. It throws a data processing
      * exception if there is an error during processing.
      *
      * @param input The input argument.
      *
      * @return The output result.
      *
-     * @throws InterruptedException
-     * @throws DataProcessorException
+     * @throws InterruptedException   Thrown if the operation is cancelled.
+     * @throws DataProcessorException Thrown if there is an issue processing the
+     *                                request.
      */
     O process(I input) throws InterruptedException, DataProcessorException;
 }
