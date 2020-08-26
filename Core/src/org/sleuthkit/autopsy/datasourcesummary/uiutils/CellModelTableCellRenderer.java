@@ -30,6 +30,8 @@ import org.apache.commons.lang3.StringUtils;
  */
 public class CellModelTableCellRenderer extends DefaultTableCellRenderer {
 
+    private static final long serialVersionUID = 1L;
+
     /**
      * Describes the horizontal alignment.
      */

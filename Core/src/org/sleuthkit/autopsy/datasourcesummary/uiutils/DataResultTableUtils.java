@@ -152,4 +152,7 @@ public class DataResultTableUtils {
         DataResultTable<T> resultTable = new DataResultTable<>(tableModel);
         return resultTable.setColumnModel(getTableColumnModel(columns));
     }
+
+    private DataResultTableUtils() {
+    }
 }
