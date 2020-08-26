@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.guiutils.internal;
+package org.sleuthkit.autopsy.datasourcesummary.uiutils;
 
 /**
  * The intermediate or end result of a loading process.
@@ -52,26 +52,38 @@ public final class DataLoadingResult<R> {
 
     /**
      * Creates a DataLoadingResult of loaded data including the data.
+     *
      * @param data The data.
+     *
      * @return The loaded data result.
      */
     public static <R> DataLoadingResult<R> getLoaded(R data) {
-        return new DataLoadingResult<R>(ProcessorState.LOADED, data, null);
+        return new DataLoadingResult<>(ProcessorState.LOADED, data, null);
     }
 
     /**
      * Returns a load error result.
+     *
      * @param e The exception (if any) present with the error.
-     * @return 
+     *
+     * @return
      */
-    static <R> DataLoadingResult<R> getLoadError(DataProcessorException e) {
-        return new DataLoadingResult<R>(ProcessorState.LOAD_ERROR, null, e);
+    public static <R> DataLoadingResult<R> getLoadError(DataProcessorException e) {
+        return new DataLoadingResult<>(ProcessorState.LOAD_ERROR, null, e);
     }
 
     private final ProcessorState state;
     private final R data;
     private final DataProcessorException exception;
 
+    /**
+     * Main constructor for the DataLoadingResult.
+     *
+     * @param state     The state of the result.
+     * @param data      If the result is LOADED, the data related to this
+     *                  result.
+     * @param exception If the result is LOAD_ERROR, the related exception.
+     */
     private DataLoadingResult(ProcessorState state, R data, DataProcessorException exception) {
         this.state = state;
         this.data = data;

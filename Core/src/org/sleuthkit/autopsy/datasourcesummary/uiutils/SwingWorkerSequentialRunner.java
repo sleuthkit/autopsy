@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.guiutils.internal;
+package org.sleuthkit.autopsy.datasourcesummary.uiutils;
 
 import java.util.Collections;
 import java.util.List;
@@ -45,7 +45,7 @@ public class SwingWorkerSequentialRunner {
      *
      * @param submittedWorkers The list of submitted swing workers.
      */
-    public synchronized void resetLoad(List<? extends SwingWorker<?, ?>> submittedWorkers) {
+    public synchronized void submit(List<? extends SwingWorker<?, ?>> submittedWorkers) {
         cancelRunning();
         if (submittedWorkers == null) {
             return;

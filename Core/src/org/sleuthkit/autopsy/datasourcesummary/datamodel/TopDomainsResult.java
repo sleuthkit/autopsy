@@ -30,6 +30,14 @@ public class TopDomainsResult {
     private final Long visitTimes;
     private final Date lastVisit;
 
+    /**
+     * Describes a top domain result.
+     *
+     * @param domain     The domain.
+     * @param url        The url.
+     * @param visitTimes The number of times it was visited.
+     * @param lastVisit  The date of the last visit.
+     */
     public TopDomainsResult(String domain, String url, Long visitTimes, Date lastVisit) {
         this.domain = domain;
         this.url = url;
@@ -37,21 +45,32 @@ public class TopDomainsResult {
         this.lastVisit = lastVisit;
     }
 
+    /**
+     * @return The domain for the result.
+     */
     public String getDomain() {
         return domain;
     }
 
+    /**
+     * @return The url for the result.
+     */
     public String getUrl() {
         return url;
     }
 
+    /**
+     * @return The number of times this site is visited.
+     */
     public Long getVisitTimes() {
         return visitTimes;
     }
 
+    /**
+     * @return The date of the last visit.
+     */
     public Date getLastVisit() {
         return lastVisit;
     }
 
-    
 }

@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.guiutils.internal;
+package org.sleuthkit.autopsy.datasourcesummary.uiutils;
 
 import java.awt.BorderLayout;
 import java.awt.Graphics;
@@ -30,6 +30,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.plaf.LayerUI;
+import javax.swing.table.TableColumnModel;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
@@ -38,11 +39,10 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * loading, load error, and not loaded.
  */
 @Messages({
-    "DataResultJTable_loadingMessage_defaultText=Loading results...",
-    "DataResultJTable_errorMessage_defaultText=There was an error loading results."
+    "DataResultTable_loadingMessage_defaultText=Loading results...",
+    "DataResultTable_errorMessage_defaultText=There was an error loading results."
 })
-public class DataResultJTable<T> extends JPanel {
-    private static final long serialVersionUID = 1L;
+public class DataResultTable<T> extends JPanel {
 
     /**
      * JTables don't allow display messages. So this LayerUI is used to display
@@ -51,11 +51,15 @@ public class DataResultJTable<T> extends JPanel {
      * https://docs.oracle.com/javase/tutorial/uiswing/misc/jlayer.html.
      */
     private static class Overlay extends LayerUI<JComponent> {
+
         private static final long serialVersionUID = 1L;
-        
+
         private final JLabel child;
         private boolean visible;
 
+        /**
+         * Main constructor for the Overlay.
+         */
         Overlay() {
             child = new JLabel();
             child.setHorizontalAlignment(JLabel.CENTER);
@@ -90,6 +94,7 @@ public class DataResultJTable<T> extends JPanel {
 
         /**
          * Sets the message to be displayed in the child jlabel.
+         *
          * @param message The message to be displayed.
          */
         void setMessage(String message) {
@@ -107,45 +112,66 @@ public class DataResultJTable<T> extends JPanel {
 
             int w = c.getWidth();
             int h = c.getHeight();
-            
+
             // paint the jlabel if visible.
             child.setBounds(0, 0, w, h);
             child.paint(g);
         }
     }
 
-    private static final Logger logger = Logger.getLogger(DataResultJTable.class.getName());
+    private static final long serialVersionUID = 1L;
 
-    private static final String DEFAULT_LOADING_MESSAGE = Bundle.DataResultJTable_loadingMessage_defaultText();
-    private static final String DEFAULT_ERROR_MESSAGE = Bundle.DataResultJTable_errorMessage_defaultText();
+    private static final Logger logger = Logger.getLogger(DataResultTable.class.getName());
+
+    private static final String DEFAULT_LOADING_MESSAGE = Bundle.DataResultTable_loadingMessage_defaultText();
+    private static final String DEFAULT_ERROR_MESSAGE = Bundle.DataResultTable_errorMessage_defaultText();
     private static final String DEFAULT_NO_RESULTS_MESSAGE = "";
     private static final String DEFAULT_NOT_LOADED_MESSAGE = "";
 
     private final JScrollPane tableScrollPane;
     private final Overlay overlayLayer;
-    private final PojoListTableDataModel<T> tableModel;
+    private final ListTableModel<T> tableModel;
+    private final JTable table;
 
     private String loadingMessage = DEFAULT_LOADING_MESSAGE;
     private String errorMessage = DEFAULT_ERROR_MESSAGE;
     private String noResultsMessage = DEFAULT_NO_RESULTS_MESSAGE;
     private String notLoadedMessage = DEFAULT_NOT_LOADED_MESSAGE;
 
-    
-
     /**
      * Main constructor.
-     * @param tableModel The model to use for the table. 
+     *
+     * @param tableModel The model to use for the table.
      */
-    public DataResultJTable(PojoListTableDataModel<T> tableModel) {
+    public DataResultTable(ListTableModel<T> tableModel) {
         this.tableModel = tableModel;
-        JTable table = new JTable(tableModel, tableModel.getTableColumnModel());
-        table.getTableHeader().setReorderingAllowed(false);
+        this.table = new JTable(tableModel);
+        this.table.getTableHeader().setReorderingAllowed(false);
 
         this.overlayLayer = new Overlay();
         this.tableScrollPane = new JScrollPane(table);
         JLayer<JComponent> dualLayer = new JLayer<JComponent>(tableScrollPane, overlayLayer);
         setLayout(new BorderLayout());
         add(dualLayer, BorderLayout.CENTER);
+    }
+
+    /**
+     * @return The underlying JTable's column model.
+     */
+    public TableColumnModel getColumnModel() {
+        return this.table.getColumnModel();
+    }
+
+    /**
+     * Sets the underlying JTable's column model.
+     *
+     * @param columnModel The table column model to use with the JTable.
+     *
+     * @return As a utility, returns this.
+     */
+    public DataResultTable<T> setColumnModel(TableColumnModel columnModel) {
+        this.table.setColumnModel(columnModel);
+        return this;
     }
 
     /**
@@ -178,40 +204,49 @@ public class DataResultJTable<T> extends JPanel {
 
     /**
      * Sets the loading message.
+     *
      * @param loadingMessage The loading message.
+     *
      * @return As a utility, returns this.
      */
-    public DataResultJTable<T> setLoadingMessage(String loadingMessage) {
+    public DataResultTable<T> setLoadingMessage(String loadingMessage) {
         this.loadingMessage = loadingMessage;
         return this;
     }
 
     /**
      * Sets the error message
+     *
      * @param errorMessage The error message.
+     *
      * @return As a utility, returns this.
      */
-    public DataResultJTable<T> setErrorMessage(String errorMessage) {
+    public DataResultTable<T> setErrorMessage(String errorMessage) {
         this.errorMessage = errorMessage;
         return this;
     }
 
     /**
      * Sets the message to be shown when no results are present.
+     *
      * @param noResultsMessage The 'no results' message.
+     *
      * @return As a utility, returns this.
      */
-    public DataResultJTable<T> setNoResultsMessage(String noResultsMessage) {
+    public DataResultTable<T> setNoResultsMessage(String noResultsMessage) {
         this.noResultsMessage = noResultsMessage;
         return this;
     }
 
     /**
      * Sets the 'not loaded' message.
-     * @param notLoadedMessage The message to be shown when results are not loaded.
+     *
+     * @param notLoadedMessage The message to be shown when results are not
+     *                         loaded.
+     *
      * @return As a utility, returns this.
      */
-    public DataResultJTable<T> setNotLoadedMessage(String notLoadedMessage) {
+    public DataResultTable<T> setNotLoadedMessage(String notLoadedMessage) {
         this.notLoadedMessage = notLoadedMessage;
         return this;
     }
@@ -234,10 +269,12 @@ public class DataResultJTable<T> extends JPanel {
 
     /**
      * Sets the result to be displayed.
+     *
      * @param result The loading result to be displayed.
+     *
      * @return As a utility, returns this.
      */
-    public DataResultJTable<T> setResult(DataLoadingResult<List<T>> result) {
+    public DataResultTable<T> setResult(DataLoadingResult<List<T>> result) {
         if (result == null) {
             logger.log(Level.SEVERE, "Null data processor result received.");
             return this;
@@ -270,7 +307,7 @@ public class DataResultJTable<T> extends JPanel {
                 logger.log(Level.SEVERE, "No known loading state was found in result.");
                 break;
         }
-        
+
         return this;
     }
 }

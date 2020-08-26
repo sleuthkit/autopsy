@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.guiutils.internal;
+package org.sleuthkit.autopsy.datasourcesummary.uiutils;
 
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
@@ -115,7 +115,7 @@ public class DataFetchWorker<A, R> extends SwingWorker<R, Void> {
         if (Thread.interrupted() || isCancelled()) {
             return;
         }
-                
+
         R result = null;
         try {
             result = get();
@@ -128,7 +128,7 @@ public class DataFetchWorker<A, R> extends SwingWorker<R, Void> {
             if (inner instanceof InterruptedException) {
                 return;
             }
-            
+
             // otherwise, there is an error to log
             logger.log(Level.WARNING, "There was an error while fetching results.", ex);
 
@@ -143,6 +143,7 @@ public class DataFetchWorker<A, R> extends SwingWorker<R, Void> {
             return;
         }
 
+        // if the data is loaded, send the data to the consumer.
         resultHandler.accept(DataLoadingResult.getLoaded(result));
     }
 }

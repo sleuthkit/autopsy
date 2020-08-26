@@ -28,36 +28,38 @@ import org.sleuthkit.datamodel.DataSource;
  * Provides summary information about top domains in a datasource.
  */
 public class DataSourceTopDomainsSummary {
+
     private static final long SLEEP_TIME = 5000;
-        
-//    private final SleuthkitCaseProvider provider;
-//    
-//    public DataSourceTopDomainsSummary() {
-//        this(SleuthkitCaseProvider.DEFAULT);
-//    }
-//        
-//    public DataSourceTopDomainsSummary(SleuthkitCaseProvider provider) {
-//        this.provider = provider;
-//    }
-    
+
     /**
      * A function to calculate a result from 2 parameters.
      */
-    interface Function2<A1,A2,O> {
+    interface Function2<A1, A2, O> {
+
         O apply(A1 a1, A2 a2);
     }
-    
+
+    /**
+     * Gets a list of recent domains based on the datasource.
+     *
+     * @param dataSource The datasource to query for recent domains.
+     * @param count      The max count of items to return.
+     *
+     * @return The list of items retrieved from the database.
+     *
+     * @throws InterruptedException
+     */
     public List<TopDomainsResult> getRecentDomains(DataSource dataSource, int count) throws InterruptedException {
         Thread.sleep(SLEEP_TIME);
         final String dId = Long.toString(dataSource.getId());
-        final Function2<String, Integer, String> getId = (s,idx) -> String.format("d:%s, f:%s, i:%d", dId, s, idx);
+        final Function2<String, Integer, String> getId = (s, idx) -> String.format("d:%s, f:%s, i:%d", dId, s, idx);
         return IntStream.range(0, count)
                 .mapToObj(num -> new TopDomainsResult(
-                    getId.apply("domain", num),
-                    getId.apply("url", num),
-                    (long)num,
-                    new Date(120, 1, num)
-                ))
+                getId.apply("domain", num),
+                getId.apply("url", num),
+                (long) num,
+                new Date(120, 1, num)
+        ))
                 .collect(Collectors.toList());
     }
 }

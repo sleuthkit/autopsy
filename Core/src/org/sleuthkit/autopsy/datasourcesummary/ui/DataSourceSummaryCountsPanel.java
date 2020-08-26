@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.datasourcesummary.ui;
 
 import java.util.Map;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JLabel;
 import javax.swing.table.DefaultTableCellRenderer;
 import org.openide.util.NbBundle.Messages;
@@ -39,7 +38,7 @@ import org.sleuthkit.datamodel.DataSource;
     "DataSourceSummaryCountsPanel.FilesByCategoryTableModel.type.header=File Type",
     "DataSourceSummaryCountsPanel.FilesByCategoryTableModel.count.header=Count"
 })
-class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
+class DataSourceSummaryCountsPanel extends BaseDataSourceSummaryTab {
 
     private static final long serialVersionUID = 1L;
 
@@ -64,12 +63,9 @@ class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
         Bundle.DataSourceSummaryCountsPanel_ArtifactCountsTableModel_count_header()
     };
 
-    private static final Logger logger = Logger.getLogger(DataSourceSummaryCountsPanel.class.getName());
     private final DefaultTableCellRenderer rightAlignedRenderer = new DefaultTableCellRenderer();
 
     private final FileTypePieChart fileTypePieChart = new FileTypePieChart();
-
-    private DataSource dataSource;
 
     /**
      * Creates new form DataSourceSummaryCountsPanel
@@ -82,22 +78,8 @@ class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
         setDataSource(null);
     }
 
-    /**
-     * The datasource currently used as the model in this panel.
-     *
-     * @return The datasource currently being used as the model in this panel.
-     */
-    public DataSource getDataSource() {
-        return dataSource;
-    }
-
-    /**
-     * Sets datasource to visualize in the panel.
-     *
-     * @param dataSource The datasource to use in this panel.
-     */
-    public void setDataSource(DataSource dataSource) {
-        this.dataSource = dataSource;
+    @Override
+    protected void onNewDataSource(DataSource dataSource) {
         if (dataSource == null || !Case.isCaseOpen()) {
             updateCountsTableData(EMPTY_PAIRS, EMPTY_PAIRS);
         } else {

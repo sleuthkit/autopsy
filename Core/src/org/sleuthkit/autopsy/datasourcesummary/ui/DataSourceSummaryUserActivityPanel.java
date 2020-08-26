@@ -31,16 +31,15 @@ import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourceTopDomainsSum
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourceTopProgramsSummary;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.TopDomainsResult;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.TopProgramsResult;
-import org.sleuthkit.autopsy.guiutils.internal.DataFetchWorker;
-import org.sleuthkit.autopsy.guiutils.internal.DataFetchWorker.DataFetchComponents;
-import org.sleuthkit.autopsy.guiutils.internal.DataLoadingResult;
-import org.sleuthkit.autopsy.guiutils.internal.DataResultJTable;
-import org.sleuthkit.autopsy.guiutils.internal.DefaultPojoListTableDataModel;
-import org.sleuthkit.autopsy.guiutils.internal.DefaultPojoListTableDataModel.DefaultCellModel;
-import org.sleuthkit.autopsy.guiutils.internal.DefaultPojoListTableDataModel.DefaultColumnModel;
-import org.sleuthkit.autopsy.guiutils.internal.DefaultPojoListTableDataModel.HorizontalAlign;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer.DefaultCellModel;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer.HorizontalAlign;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataLoadingResult;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataResultTable;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataResultTableUtility;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataResultTableUtility.DataResultColumnModel;
 import org.sleuthkit.datamodel.DataSource;
-import org.sleuthkit.autopsy.guiutils.internal.SwingWorkerSequentialRunner;
 
 /**
  * A panel to display user activity.
@@ -54,69 +53,88 @@ import org.sleuthkit.autopsy.guiutils.internal.SwingWorkerSequentialRunner;
     "DataSourceSummaryUserActivityPanel_TopDomainsTableModel_domain_header=Domain",
     "DataSourceSummaryUserActivityPanel_TopDomainsTableModel_url_header=URL",
     "DataSourceSummaryUserActivityPanel_TopDomainsTableModel_lastAccess_header=Last Access",})
-public class DataSourceSummaryUserActivityPanel extends javax.swing.JPanel {
+public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryTab {
 
     private static final long serialVersionUID = 1L;
     private static final DateFormat DATETIME_FORMAT = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss", Locale.getDefault());
     private static final int TOP_PROGS_COUNT = 10;
     private static final int TOP_DOMAINS_COUNT = 10;
 
-    private final SwingWorkerSequentialRunner loader = new SwingWorkerSequentialRunner();
-    private final DataResultJTable<TopProgramsResult> topProgramsTable;
-    private final DataResultJTable<TopDomainsResult> recentDomainsTable;
+    private final DataResultTable<TopProgramsResult> topProgramsTable;
+    private final DataResultTable<TopDomainsResult> recentDomainsTable;
     private final List<DataFetchComponents<DataSource, ?>> dataFetchComponents;
 
-    private DataSource dataSource;
-
     /**
-     * Creates new form DataSourceUserActivityPanel
+     * Creates a new DataSourceUserActivityPanel.
      */
     public DataSourceSummaryUserActivityPanel() {
         this(new DataSourceTopProgramsSummary(), new DataSourceTopDomainsSummary());
     }
 
+    /**
+     * Creates a new DataSourceSummaryUserActivityPanel.
+     *
+     * @param topProgramsData Class from which to obtain top programs data.
+     * @param topDomainsData  Class from which to obtain recent domains data.
+     */
     public DataSourceSummaryUserActivityPanel(DataSourceTopProgramsSummary topProgramsData, DataSourceTopDomainsSummary topDomainsData) {
         // set up recent programs table 
-        this.topProgramsTable = new DataResultJTable<>(new DefaultPojoListTableDataModel<>(Arrays.asList(
-                new DefaultColumnModel<TopProgramsResult>(
-                        (prog) -> new DefaultCellModel(prog.getProgramName())
-                                .setTooltip(prog.getProgramPath()),
-                        Bundle.DataSourceSummaryUserActivityPanel_TopProgramsTableModel_name_header())
-                        .setWidth(250),
-                new DefaultColumnModel<TopProgramsResult>(
+        this.topProgramsTable = DataResultTableUtility.getDataResultTable(Arrays.asList(
+                new DataResultColumnModel<>(
+                        Bundle.DataSourceSummaryUserActivityPanel_TopProgramsTableModel_name_header(),
+                        (prog) -> {
+                            return new DefaultCellModel(prog.getProgramName())
+                                    .setTooltip(prog.getProgramPath());
+                        },
+                        250),
+                new DataResultColumnModel<>(
                         Bundle.DataSourceSummaryUserActivityPanel_TopProgramsTableModel_folder_header(),
-                        (prog) -> topProgramsData.getShortFolderName(prog.getProgramPath(), prog.getProgramName()))
-                        .setWidth(150),
-                new DefaultColumnModel<TopProgramsResult>(
+                        (prog) -> {
+                            return new DefaultCellModel(
+                                    topProgramsData.getShortFolderName(
+                                            prog.getProgramPath(),
+                                            prog.getProgramName()));
+                        },
+                        150),
+                new DataResultColumnModel<>(
                         Bundle.DataSourceSummaryUserActivityPanel_TopProgramsTableModel_count_header(),
-                        (prog) -> prog.getRunTimes() == null ? "" : Long.toString(prog.getRunTimes()))
-                        .setWidth(80)
-                        .setCellHorizontalAlignment(HorizontalAlign.RIGHT),
-                new DefaultColumnModel<TopProgramsResult>(
+                        (prog) -> {
+                            String runTimes = prog.getRunTimes() == null ? "" : Long.toString(prog.getRunTimes());
+                            return new DefaultCellModel(runTimes)
+                                    .setHorizontalAlignment(HorizontalAlign.RIGHT);
+                        },
+                        80),
+                new DataResultColumnModel<>(
                         Bundle.DataSourceSummaryUserActivityPanel_TopProgramsTableModel_lastrun_header(),
-                        (prog) -> prog.getLastRun() == null ? "" : DATETIME_FORMAT.format(prog.getLastRun()))
-                        .setWidth(150)
-                        .setCellHorizontalAlignment(HorizontalAlign.RIGHT)
-        )));
+                        (prog) -> {
+                            String date = prog.getLastRun() == null ? "" : DATETIME_FORMAT.format(prog.getLastRun());
+                            return new DefaultCellModel(date)
+                                    .setHorizontalAlignment(HorizontalAlign.RIGHT);
+                        },
+                        150)
+        ));
 
         // set up recent domains table
-        recentDomainsTable = new DataResultJTable<>(new DefaultPojoListTableDataModel<>(Arrays.asList(
-                new DefaultColumnModel<TopDomainsResult>(
+        this.recentDomainsTable = DataResultTableUtility.getDataResultTable(Arrays.asList(
+                new DataResultColumnModel<>(
                         Bundle.DataSourceSummaryUserActivityPanel_TopDomainsTableModel_domain_header(),
-                        (d) -> d.getDomain())
-                        .setWidth(250),
-                new DefaultColumnModel<TopDomainsResult>(
+                        (d) -> new DefaultCellModel(d.getDomain()),
+                        250),
+                new DataResultColumnModel<>(
                         Bundle.DataSourceSummaryUserActivityPanel_TopDomainsTableModel_url_header(),
-                        (d) -> d.getUrl())
-                        .setWidth(250),
-                new DefaultColumnModel<TopDomainsResult>(
+                        (d) -> new DefaultCellModel(d.getUrl()),
+                        250),
+                new DataResultColumnModel<>(
                         Bundle.DataSourceSummaryUserActivityPanel_TopDomainsTableModel_lastAccess_header(),
-                        (d) -> DATETIME_FORMAT.format(d.getLastVisit()))
-                        .setWidth(150)
-                        .setCellHorizontalAlignment(HorizontalAlign.RIGHT)
-        )));
+                        (prog) -> {
+                            String lastVisit = prog.getLastVisit() == null ? "" : DATETIME_FORMAT.format(prog.getLastVisit());
+                            return new DefaultCellModel(lastVisit)
+                                    .setHorizontalAlignment(HorizontalAlign.RIGHT);
+                        },
+                        150)
+        ));
 
-        // set up acquisition methods
+        // set up data acquisition methods
         dataFetchComponents = Arrays.asList(
                 new DataFetchComponents<DataSource, List<TopProgramsResult>>(
                         (dataSource) -> topProgramsData.getTopPrograms(dataSource, TOP_PROGS_COUNT),
@@ -129,22 +147,8 @@ public class DataSourceSummaryUserActivityPanel extends javax.swing.JPanel {
         initComponents();
     }
 
-    /**
-     * The datasource currently used as the model in this panel.
-     *
-     * @return The datasource currently being used as the model in this panel.
-     */
-    public DataSource getDataSource() {
-        return dataSource;
-    }
-
-    /**
-     * Sets datasource to visualize in the panel.
-     *
-     * @param dataSource The datasource to use in this panel.
-     */
-    public void setDataSource(final DataSource dataSource) {
-        this.dataSource = dataSource;
+    @Override
+    protected void onNewDataSource(DataSource dataSource) {
         if (dataSource == null || !Case.isCaseOpen()) {
             dataFetchComponents.forEach((item) -> item.getResultHandler()
                     .accept(DataLoadingResult.getLoaded(null)));
@@ -158,7 +162,7 @@ public class DataSourceSummaryUserActivityPanel extends javax.swing.JPanel {
                     .map((components) -> new DataFetchWorker<>(components, dataSource))
                     .collect(Collectors.toList());
 
-            loader.resetLoad(workers);
+            getLoader().submit(workers);
         }
     }
 
@@ -220,7 +224,6 @@ public class DataSourceSummaryUserActivityPanel extends javax.swing.JPanel {
 
         add(contentScrollPane, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
-
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     // End of variables declaration//GEN-END:variables

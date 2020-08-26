@@ -16,23 +16,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.guiutils.internal;
+package org.sleuthkit.autopsy.datasourcesummary.uiutils;
 
 import java.util.List;
-import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 
 /**
- * An interface to be used with the DataResultJTable that specifies a TableModel
- * and TableColumnModel to be used with a JTable based on a list of object type
- * T.
+ * An interface to be used with the DataResultTable that specifies a TableModel
+ * to be used with a JTable based on a list of object type T.
  */
-public interface PojoListTableDataModel<T> extends TableModel {
-
-    /**
-     * @return The TableColumnModel to be used with the jtable.
-     */
-    TableColumnModel getTableColumnModel();
+public interface ListTableModel<T> extends TableModel {
 
     /**
      * @return The list of objects supporting the rows to be displayed in the
@@ -42,6 +35,7 @@ public interface PojoListTableDataModel<T> extends TableModel {
 
     /**
      * Sets the list of objects to be displayed in the table.
+     *
      * @param dataRows The datarows to be displayed.
      */
     void setDataRows(List<T> dataRows);

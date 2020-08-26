@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.guiutils.internal;
+package org.sleuthkit.autopsy.datasourcesummary.uiutils;
 
 /**
  * A function that accepts input of type I and outputs type O. This function is
@@ -26,6 +26,7 @@ package org.sleuthkit.autopsy.guiutils.internal;
  */
 @FunctionalInterface
 public interface DataProcessor<I, O> {
+
     /**
      * A function that accepts an input argument and outputs a result. Since it
      * is meant to be used with the DataFetchWorker, it throws an interrupted

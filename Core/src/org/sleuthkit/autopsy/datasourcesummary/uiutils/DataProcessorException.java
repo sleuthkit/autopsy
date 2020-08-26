@@ -16,17 +16,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.guiutils.internal;
+package org.sleuthkit.autopsy.datasourcesummary.uiutils;
 
 /**
  * An Exception that is thrown when there is an issue processing data in a
  * DataProcessor.
  */
 public class DataProcessorException extends Exception {
+
     private static final long serialVersionUID = 1L;
-    
+
     /**
      * Main constructor.
+     *
      * @param string The error message.
      */
     public DataProcessorException(String string) {
@@ -35,6 +37,7 @@ public class DataProcessorException extends Exception {
 
     /**
      * Main constructor.
+     *
      * @param string The error message.
      * @param thrwbl The inner exception.
      */
