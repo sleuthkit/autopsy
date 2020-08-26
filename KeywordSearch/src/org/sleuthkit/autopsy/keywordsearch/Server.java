@@ -73,7 +73,6 @@ import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.util.NamedList;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.modules.Places;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -335,6 +334,7 @@ public class Server {
     private HttpSolrClient getSolrClient(String solrUrl) {
         int connectionTimeoutMs = org.sleuthkit.autopsy.keywordsearch.UserPreferences.getConnectionTimeout();
         HttpSolrClient client = new HttpSolrClient.Builder(solrUrl)
+                .withSocketTimeout(connectionTimeoutMs)
                 .withConnectionTimeout(connectionTimeoutMs)
                 .withResponseParser(new XMLResponseParser())
                 .build();
@@ -351,6 +351,7 @@ public class Server {
         ConcurrentUpdateSolrClient client = new ConcurrentUpdateSolrClient.Builder(solrUrl)
                 .withQueueSize(numDocs)
                 .withThreadCount(numThreads)
+                .withSocketTimeout(connectionTimeoutMs)
                 .withConnectionTimeout(connectionTimeoutMs)
                 .withResponseParser(new XMLResponseParser())
                 .build();
@@ -600,7 +601,7 @@ public class Server {
                 if (!this.isLocalSolrRunning()) {
                     logger.log(Level.SEVERE, "Local Solr server is not running"); //NON-NLS
                     throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.msg")); 
-                }              
+                }
             } else {
                 // create SolrJ client to connect to remore Solr server
                 remoteSolrServer = configureMultiUserConnection(theCase, index, "");
@@ -1869,7 +1870,8 @@ public class Server {
         private final Index textIndex;
 
         // We use different Solr clients for different operations. HttpSolrClient is geared towards query performance.
-        // ConcurrentUpdateSolrClient is geared towards batching solr documents for better indexing throughput. 
+        // ConcurrentUpdateSolrClient is geared towards batching solr documents for better indexing throughput. We
+        // have implemented our own batching algorithm so we will probably not use ConcurrentUpdateSolrClient.
         // CloudSolrClient is gaered towards SolrCloud deployments. These are only good for collection-specific operations.
         private HttpSolrClient queryClient;        
         private SolrClient indexingClient;
@@ -1881,6 +1883,7 @@ public class Server {
         private ScheduledThreadPoolExecutor periodicTasksExecutor = null;
         private static final long PERIODIC_BATCH_SEND_INTERVAL_MINUTES = 10;
         private static final int NUM_BATCH_UPDATE_RETRIES = 10;
+        private static final long SLEEP_BETWEEN_RETRIES_MS = 10000; // 10 seconds
 
         private Collection(String name, Case theCase, Index index) throws TimeoutException, InterruptedException, SolrServerException, IOException {
             this.name = name;
@@ -1892,7 +1895,6 @@ public class Server {
                 // get SolrJ client
                 queryClient = getSolrClient("http://localhost:" + localSolrServerPort + "/solr/" + name); // HttpClient
                 indexingClient = getSolrClient("http://localhost:" + localSolrServerPort + "/solr/" + name); // HttpClient
-                // ELTODO indexingClient = getConcurrentClient("http://localhost:" + localSolrServerPort + "/solr/" + name); // ConcurrentClient
             } else {
                 // read Solr connection info from user preferences, unless "solrserver.txt" is present
                 queryClient = configureMultiUserConnection(theCase, index, name);
@@ -1999,13 +2001,13 @@ public class Server {
                 throw new SolrServerException(NbBundle.getMessage(this.getClass(), "Server.commit.exception.msg"), ex);
             }
 
-            /* ELTODO try {
+            try {
                 //commit and block
                 indexingClient.commit(true, true);
             } catch (IOException e) {
                 logger.log(Level.WARNING, "Could not commit index. ", e); //NON-NLS
                 throw new SolrServerException(NbBundle.getMessage(this.getClass(), "Server.commit.exception.msg"), e);
-            }*/
+            }
         }
 
         private void deleteDataSource(Long dsObjId) throws IOException, SolrServerException {
@@ -2058,28 +2060,24 @@ public class Server {
             }
 
             try {
-                boolean doRetry = false;
+                boolean success = true;
                 for (int reTryAttempt = 0; reTryAttempt < NUM_BATCH_UPDATE_RETRIES; reTryAttempt++) {
                     try {
-                        doRetry = false;
+                        success = true;
                         indexingClient.add(docBuffer);
                     } catch (Exception ex) {
-                        if (reTryAttempt >= NUM_BATCH_UPDATE_RETRIES) {
-                            logger.log(Level.SEVERE, "Could not add buffered documents to index", ex); //NON-NLS
-                            throw new KeywordSearchModuleException(
-                                    NbBundle.getMessage(this.getClass(), "Server.addDocBatch.exception.msg"), ex); //NON-NLS
-                        } else {
-                            logger.log(Level.SEVERE, "Unable to send document batch to Solr. Re-trying...", ex); //NON-NLS
+                        success = false;
+                        if (reTryAttempt < NUM_BATCH_UPDATE_RETRIES - 1) {
+                            logger.log(Level.WARNING, "Unable to send document batch to Solr. Re-trying...", ex); //NON-NLS
                             try {
-                                Thread.sleep(10000L);
+                                Thread.sleep(SLEEP_BETWEEN_RETRIES_MS);
                             } catch (InterruptedException ex1) {
                                 throw new KeywordSearchModuleException(
-                                    NbBundle.getMessage(this.getClass(), "Server.addDocBatch.exception.msg"), ex1); //NON-NLS
+                                        NbBundle.getMessage(this.getClass(), "Server.addDocBatch.exception.msg"), ex1); //NON-NLS
                             }
-                            doRetry = true;
-                        }
+                        }                        
                     }
-                    if (!doRetry) {
+                    if (success) {
                         if (reTryAttempt > 0) {
                             logger.log(Level.INFO, "Batch update suceeded after {0} re-try", reTryAttempt); //NON-NLS
                         }
@@ -2088,6 +2086,7 @@ public class Server {
                 }
                 // if we are here, it means all re-try attempts failed
                 logger.log(Level.SEVERE, "Unable to send document batch to Solr. All re-try attempts failed!"); //NON-NLS
+                throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.addDocBatch.exception.msg")); //NON-NLS
             } finally {
                 docBuffer.clear();
             }
