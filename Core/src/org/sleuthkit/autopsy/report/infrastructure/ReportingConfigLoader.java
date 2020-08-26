@@ -243,5 +243,22 @@ final class ReportingConfigLoader {
 
         return reportNameList;
     }
+    
+    /**
+     * Returns whether or not a config with the given name exists. The config is
+     * assumed to exist if there is a folder in 
+     * ReportingConfigLoader.REPORT_CONFIG_FOLDER_PATH with the given name.
+     * 
+     * @param configName Name of the report config.
+     * 
+     * @return True if the report config exists.
+     */
+    static synchronized boolean configExists(String configName) {
+        // construct the configuration directory path
+        Path reportDirPath = Paths.get(ReportingConfigLoader.REPORT_CONFIG_FOLDER_PATH, configName);
+        File reportDirectory = reportDirPath.toFile();
+        
+        return reportDirectory.exists();
+    }
 
 }
