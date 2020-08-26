@@ -232,6 +232,9 @@ public class Server {
     static final int DEFAULT_SOLR_STOP_PORT = 34343;
     private int localSolrServerPort = 0;
     private int localSolrStopPort = 0;
+    private File localSolrFolder;
+    private static final String SOLR = "solr";
+    private static final String CORE_PROPERTIES = "core.properties";
     private static final boolean DEBUG = false;//(Version.getBuildType() == Version.Type.DEVELOPMENT);
     private static final int NUM_COLLECTION_CREATION_RETRIES = 5;
 
@@ -690,10 +693,12 @@ public class Server {
             try {
                 if (version == SOLR_VERSION.SOLR8) {
                     logger.log(Level.INFO, "Starting Solr 8 server"); //NON-NLS
+                    localSolrFolder = InstalledFileLocator.getDefault().locate("solr", Server.class.getPackage().getName(), false); //NON-NLS
                     curSolrProcess = runLocalSolr8ControlCommand(new ArrayList<>(Arrays.asList("start", "-p", //NON-NLS
                     Integer.toString(localSolrServerPort)))); //NON-NLS
                 } else {
                     // solr4
+                    localSolrFolder = InstalledFileLocator.getDefault().locate("solr4", Server.class.getPackage().getName(), false); //NON-NLS
                     logger.log(Level.INFO, "Starting Solr 4 server"); //NON-NLS
                     curSolrProcess = runLocalSolr4ControlCommand(new ArrayList<>(
                         Arrays.asList("-Dbootstrap_confdir=../solr/configsets/AutopsyConfig/conf", //NON-NLS
@@ -1077,6 +1082,19 @@ public class Server {
                     File dataDir = new File(new File(index.getIndexPath()).getParent()); // "data dir" is the parent of the index directory
                     if (!dataDir.exists()) {
                         dataDir.mkdirs();
+                    }
+                    
+                    // In single user mode, if there is a core.properties file already,
+                    // we've hit a solr bug. Compensate by deleting it.
+                    if (theCase.getCaseType() == CaseType.SINGLE_USER_CASE) {
+                        Path corePropertiesFile = Paths.get(localSolrFolder.toString(), SOLR, collectionName, CORE_PROPERTIES);
+                        if (corePropertiesFile.toFile().exists()) {
+                            try {
+                                corePropertiesFile.toFile().delete();
+                            } catch (Exception ex) {
+                                logger.log(Level.INFO, "Could not delete pre-existing core.properties prior to opening the core."); //NON-NLS
+                            }
+                        }
                     }
 
                     // for single user cases, we unload the core when we close the case. So we have to load the core again. 
@@ -1901,6 +1919,8 @@ public class Server {
                 
                 // for MU cases, use CloudSolrClient for indexing. Indexing is only supported for Solr 8.
                 if (IndexFinder.getCurrentSolrVersion().equals(index.getSolrVersion())) {
+                    // ELTODO THERE IS A BUG!!! If we are trying to open Solr4 MU case and Solr4 is not specified,
+                    // we end up using empty strings as host name and port.
                     IndexingServerProperties properties = getMultiUserServerProperties(theCase.getCaseDirectory());
                     indexingClient = getCloudSolrClient(properties.getHost(), properties.getPort(), name); // CloudClient
                 } else {
