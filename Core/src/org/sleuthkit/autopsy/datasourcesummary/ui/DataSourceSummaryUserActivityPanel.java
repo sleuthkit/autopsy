@@ -52,7 +52,9 @@ import org.sleuthkit.datamodel.DataSource;
     "DataSourceSummaryUserActivityPanel_TopProgramsTableModel_lastrun_header=Last Run",
     "DataSourceSummaryUserActivityPanel_TopDomainsTableModel_domain_header=Domain",
     "DataSourceSummaryUserActivityPanel_TopDomainsTableModel_url_header=URL",
-    "DataSourceSummaryUserActivityPanel_TopDomainsTableModel_lastAccess_header=Last Access",})
+    "DataSourceSummaryUserActivityPanel_TopDomainsTableModel_lastAccess_header=Last Access",
+    "DataSourceSummaryUserActivityPanel_noDataExists=No communication data exists",
+})
 public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryTab {
 
     private static final long serialVersionUID = 1L;
@@ -113,6 +115,7 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryTab
                         },
                         150)
         ));
+        this.topProgramsTable.setNoResultsMessage(Bundle.DataSourceSummaryUserActivityPanel_noDataExists());
 
         // set up recent domains table
         this.recentDomainsTable = DataResultTableUtility.getDataResultTable(Arrays.asList(
@@ -133,6 +136,7 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryTab
                         },
                         150)
         ));
+        this.recentDomainsTable.setNoResultsMessage(Bundle.DataSourceSummaryUserActivityPanel_noDataExists());
 
         // set up data acquisition methods
         dataFetchComponents = Arrays.asList(

@@ -27,7 +27,17 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  * uses Case.getCurrentCaseThrows().getSleuthkkitCase().
  */
 public interface SleuthkitCaseProvider {
+
+    /**
+     * The default SleuthkitCaseProvider. This uses
+     * Case.getCurrentCaseThrows().getSleuthkitCase().
+     */
     SleuthkitCaseProvider DEFAULT = () -> Case.getCurrentCaseThrows().getSleuthkitCase();
-    
+
+    /**
+     * @return Returns the current SleuthkitCase object.
+     *
+     * @throws NoCurrentCaseException Thrown if no case is open.
+     */
     SleuthkitCase get() throws NoCurrentCaseException;
 }
