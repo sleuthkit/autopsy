@@ -36,7 +36,7 @@ import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRendere
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataLoadingResult;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataResultTable;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataResultTableUtils;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataResultTableUtils.DataResultColumnModel;
 import org.sleuthkit.datamodel.DataSource;
@@ -54,15 +54,15 @@ import org.sleuthkit.datamodel.DataSource;
     "DataSourceSummaryUserActivityPanel_TopDomainsTableModel_url_header=URL",
     "DataSourceSummaryUserActivityPanel_TopDomainsTableModel_lastAccess_header=Last Access",
     "DataSourceSummaryUserActivityPanel_noDataExists=No communication data exists",})
-public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryTab {
+public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPanel {
 
     private static final long serialVersionUID = 1L;
     private static final DateFormat DATETIME_FORMAT = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss", Locale.getDefault());
     private static final int TOP_PROGS_COUNT = 10;
     private static final int TOP_DOMAINS_COUNT = 10;
 
-    private final DataResultTable<TopProgramsResult> topProgramsTable;
-    private final DataResultTable<TopDomainsResult> recentDomainsTable;
+    private final JTablePanel<TopProgramsResult> topProgramsTable;
+    private final JTablePanel<TopDomainsResult> recentDomainsTable;
     private final List<DataFetchComponents<DataSource, ?>> dataFetchComponents;
 
     /**
@@ -170,7 +170,7 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryTab
                     .collect(Collectors.toList());
 
             // submit swing workers to run
-            getLoader().submit(workers);
+            submit(workers);
         }
     }
 

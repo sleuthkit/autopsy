@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.ui;
 
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.NonEditableTableModel;
 import java.util.Map;
 import javax.swing.JLabel;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -37,7 +38,7 @@ import org.sleuthkit.datamodel.DataSource;
     "DataSourceSummaryCountsPanel.FilesByCategoryTableModel.type.header=File Type",
     "DataSourceSummaryCountsPanel.FilesByCategoryTableModel.count.header=Count"
 })
-class DataSourceSummaryCountsPanel extends BaseDataSourceSummaryTab {
+class DataSourceSummaryCountsPanel extends BaseDataSourceSummaryPanel {
 
     private static final long serialVersionUID = 1L;
 

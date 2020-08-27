@@ -147,9 +147,9 @@ public class DataResultTableUtils {
      *
      * @return The corresponding DataResultTable.
      */
-    public static <T> DataResultTable<T> getDataResultTable(List<DataResultColumnModel<T>> columns) {
+    public static <T> JTablePanel<T> getDataResultTable(List<DataResultColumnModel<T>> columns) {
         ListTableModel<T> tableModel = getTableModel(columns);
-        DataResultTable<T> resultTable = new DataResultTable<>(tableModel);
+        JTablePanel<T> resultTable = new JTablePanel<>(tableModel);
         return resultTable.setColumnModel(getTableColumnModel(columns));
     }
 

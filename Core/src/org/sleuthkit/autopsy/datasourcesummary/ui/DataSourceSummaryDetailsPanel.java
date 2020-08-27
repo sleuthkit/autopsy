@@ -33,7 +33,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Panel to display additional details associated with a specific DataSource
  */
-class DataSourceSummaryDetailsPanel extends BaseDataSourceSummaryTab {
+class DataSourceSummaryDetailsPanel extends BaseDataSourceSummaryPanel {
 
     //Because this panel was made using the gridbaglayout and netbean's Customize Layout tool it will be best to continue to modify it through that
     private static final long serialVersionUID = 1L;

@@ -25,7 +25,8 @@ import java.util.stream.IntStream;
 import org.sleuthkit.datamodel.DataSource;
 
 /**
- * Provides summary information about top domains in a datasource.
+ * Provides summary information about top domains in a datasource. At this time,
+ * the data being provided is fictitious and is done as a placeholder.
  */
 public class DataSourceTopDomainsSummary {
 

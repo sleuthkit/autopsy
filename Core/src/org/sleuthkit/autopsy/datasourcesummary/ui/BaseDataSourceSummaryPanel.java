@@ -18,18 +18,20 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.ui;
 
+import java.util.List;
 import javax.swing.JPanel;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.SwingWorkerSequentialRunner;
+import javax.swing.SwingWorker;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.SwingWorkerSequentialExecutor;
 import org.sleuthkit.datamodel.DataSource;
 
 /**
  * Base class from which other tabs in data source summary derive.
  */
-abstract class BaseDataSourceSummaryTab extends JPanel {
+abstract class BaseDataSourceSummaryPanel extends JPanel {
 
     private static final long serialVersionUID = 1L;
 
-    private final SwingWorkerSequentialRunner loader = new SwingWorkerSequentialRunner();
+    private final SwingWorkerSequentialExecutor executor = new SwingWorkerSequentialExecutor();
     private DataSource dataSource;
 
     /**
@@ -37,7 +39,7 @@ abstract class BaseDataSourceSummaryTab extends JPanel {
      *
      * @return The datasource currently being used as the model in this panel.
      */
-    DataSource getDataSource() {
+    synchronized DataSource getDataSource() {
         return dataSource;
     }
 
@@ -46,7 +48,7 @@ abstract class BaseDataSourceSummaryTab extends JPanel {
      *
      * @param dataSource The datasource to use in this panel.
      */
-    void setDataSource(DataSource dataSource) {
+    synchronized void setDataSource(DataSource dataSource) {
         DataSource oldDataSource = this.dataSource;
         this.dataSource = dataSource;
         if (this.dataSource != oldDataSource) {
@@ -55,10 +57,13 @@ abstract class BaseDataSourceSummaryTab extends JPanel {
     }
 
     /**
-     * @return The sequential runner associated with this panel.
+     * Submits the following swing workers for execution in sequential order. If
+     * there are any previous workers, those workers are cancelled.
+     *
+     * @param workers The workers to submit for execution.
      */
-    protected SwingWorkerSequentialRunner getLoader() {
-        return loader;
+    protected void submit(List<? extends SwingWorker<?, ?>> workers) {
+        executor.submit(workers);
     }
 
     /**

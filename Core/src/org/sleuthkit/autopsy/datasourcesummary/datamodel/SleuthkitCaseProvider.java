@@ -23,21 +23,57 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
- * An interface to provide the current SleuthkitCase object. By default, this
- * uses Case.getCurrentCaseThrows().getSleuthkkitCase().
+ * An interface to provide the current SleuthkitCase object. This is to allow
+ * for SleuthkitCase objects to be created and injected in a testing scenario
+ * outside of the context of Case.
+ *
+ * By default, this uses Case.getCurrentCaseThrows().getSleuthkitCase().
  */
 public interface SleuthkitCaseProvider {
+
+    /**
+     * Exception thrown in the event that the SleuthkitCase object cannot be
+     * provided.
+     */
+    public static class SleuthkitCaseProviderException extends Exception {
+
+        /**
+         * Main constructor.
+         *
+         * @param string The message for the exception.
+         */
+        public SleuthkitCaseProviderException(String string) {
+            super(string);
+        }
+
+        /**
+         * Main constructor.
+         *
+         * @param string The message for the exception.
+         * @param thrwbl The inner exception.
+         */
+        public SleuthkitCaseProviderException(String string, Throwable thrwbl) {
+            super(string, thrwbl);
+        }
+    }
 
     /**
      * The default SleuthkitCaseProvider. This uses
      * Case.getCurrentCaseThrows().getSleuthkitCase().
      */
-    SleuthkitCaseProvider DEFAULT = () -> Case.getCurrentCaseThrows().getSleuthkitCase();
+    SleuthkitCaseProvider DEFAULT = () -> {
+        try {
+            return Case.getCurrentCaseThrows().getSleuthkitCase();
+        } catch (NoCurrentCaseException e) {
+            throw new SleuthkitCaseProviderException("No currently open case.", e);
+        }
+    };
 
     /**
      * @return Returns the current SleuthkitCase object.
      *
-     * @throws NoCurrentCaseException Thrown if no case is open.
+     * @throws SleuthkitCaseProviderException Thrown if there is an error
+     *                                        providing the case.
      */
-    SleuthkitCase get() throws NoCurrentCaseException;
+    SleuthkitCase get() throws SleuthkitCaseProviderException;
 }

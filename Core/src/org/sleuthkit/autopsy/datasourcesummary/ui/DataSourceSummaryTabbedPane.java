@@ -42,7 +42,7 @@ public class DataSourceSummaryTabbedPane extends JTabbedPane {
     private static final long serialVersionUID = 1L;
 
     // A pair of the tab name and the corresponding BaseDataSourceSummaryTabs to be displayed.
-    private final List<Pair<String, BaseDataSourceSummaryTab>> tabs = Arrays.asList(
+    private final List<Pair<String, BaseDataSourceSummaryPanel>> tabs = Arrays.asList(
             Pair.of(Bundle.DataSourceSummaryTabbedPane_detailsTab_title(), new DataSourceSummaryDetailsPanel()),
             Pair.of(Bundle.DataSourceSummaryTabbedPane_countsTab_title(), new DataSourceSummaryCountsPanel()),
             Pair.of(Bundle.DataSourceSummaryTabbedPane_detailsTab_title(), new DataSourceSummaryUserActivityPanel())
@@ -56,7 +56,7 @@ public class DataSourceSummaryTabbedPane extends JTabbedPane {
      * Constructs a tabbed pane showing the summary of a data source.
      */
     public DataSourceSummaryTabbedPane() {
-        for (Pair<String, BaseDataSourceSummaryTab> tab : tabs) {
+        for (Pair<String, BaseDataSourceSummaryPanel> tab : tabs) {
             addTab(tab.getKey(), tab.getValue());
         }
 
@@ -82,7 +82,7 @@ public class DataSourceSummaryTabbedPane extends JTabbedPane {
     public void setDataSource(DataSource dataSource) {
         this.dataSource = dataSource;
 
-        for (Pair<String, BaseDataSourceSummaryTab> tab : tabs) {
+        for (Pair<String, BaseDataSourceSummaryPanel> tab : tabs) {
             tab.getValue().setDataSource(dataSource);
         }
 

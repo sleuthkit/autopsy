@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.uiutils;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -33,7 +34,7 @@ import javax.swing.SwingWorker;
  * Based on:
  * https://stackoverflow.com/questions/31580805/java-swingworker-one-after-another-and-update-gui
  */
-public class SwingWorkerSequentialRunner {
+public class SwingWorkerSequentialExecutor {
 
     private final ExecutorService executorService = Executors.newFixedThreadPool(1);
     private List<? extends SwingWorker<?, ?>> workers = Collections.emptyList();
@@ -54,7 +55,7 @@ public class SwingWorkerSequentialRunner {
             return;
         }
 
-        this.workers = Collections.unmodifiableList(submittedWorkers);
+        this.workers = new ArrayList<>(submittedWorkers);
 
         // start running the workers and capture the futures if there is a need to cancel them.
         this.futures = this.workers.stream()

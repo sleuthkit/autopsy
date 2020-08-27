@@ -42,7 +42,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
     "DataResultTable_loadingMessage_defaultText=Loading results...",
     "DataResultTable_errorMessage_defaultText=There was an error loading results."
 })
-public class DataResultTable<T> extends JPanel {
+public class JTablePanel<T> extends JPanel {
 
     /**
      * JTables don't allow displaying messages. So this LayerUI is used to
@@ -121,7 +121,7 @@ public class DataResultTable<T> extends JPanel {
 
     private static final long serialVersionUID = 1L;
 
-    private static final Logger logger = Logger.getLogger(DataResultTable.class.getName());
+    private static final Logger logger = Logger.getLogger(JTablePanel.class.getName());
 
     private static final String DEFAULT_LOADING_MESSAGE = Bundle.DataResultTable_loadingMessage_defaultText();
     private static final String DEFAULT_ERROR_MESSAGE = Bundle.DataResultTable_errorMessage_defaultText();
@@ -143,7 +143,7 @@ public class DataResultTable<T> extends JPanel {
      *
      * @param tableModel The model to use for the table.
      */
-    public DataResultTable(ListTableModel<T> tableModel) {
+    public JTablePanel(ListTableModel<T> tableModel) {
         this.tableModel = tableModel;
         this.table = new JTable(tableModel);
         this.table.getTableHeader().setReorderingAllowed(false);
@@ -169,7 +169,7 @@ public class DataResultTable<T> extends JPanel {
      *
      * @return As a utility, returns this.
      */
-    public DataResultTable<T> setColumnModel(TableColumnModel columnModel) {
+    public JTablePanel<T> setColumnModel(TableColumnModel columnModel) {
         this.table.setColumnModel(columnModel);
         return this;
     }
@@ -209,7 +209,7 @@ public class DataResultTable<T> extends JPanel {
      *
      * @return As a utility, returns this.
      */
-    public DataResultTable<T> setLoadingMessage(String loadingMessage) {
+    public JTablePanel<T> setLoadingMessage(String loadingMessage) {
         this.loadingMessage = loadingMessage;
         return this;
     }
@@ -221,7 +221,7 @@ public class DataResultTable<T> extends JPanel {
      *
      * @return As a utility, returns this.
      */
-    public DataResultTable<T> setErrorMessage(String errorMessage) {
+    public JTablePanel<T> setErrorMessage(String errorMessage) {
         this.errorMessage = errorMessage;
         return this;
     }
@@ -233,7 +233,7 @@ public class DataResultTable<T> extends JPanel {
      *
      * @return As a utility, returns this.
      */
-    public DataResultTable<T> setNoResultsMessage(String noResultsMessage) {
+    public JTablePanel<T> setNoResultsMessage(String noResultsMessage) {
         this.noResultsMessage = noResultsMessage;
         return this;
     }
@@ -246,7 +246,7 @@ public class DataResultTable<T> extends JPanel {
      *
      * @return As a utility, returns this.
      */
-    public DataResultTable<T> setNotLoadedMessage(String notLoadedMessage) {
+    public JTablePanel<T> setNotLoadedMessage(String notLoadedMessage) {
         this.notLoadedMessage = notLoadedMessage;
         return this;
     }
@@ -288,7 +288,7 @@ public class DataResultTable<T> extends JPanel {
      *
      * @return As a utility, returns this.
      */
-    public DataResultTable<T> setResult(DataLoadingResult<List<T>> result) {
+    public JTablePanel<T> setResult(DataLoadingResult<List<T>> result) {
         if (result == null) {
             logger.log(Level.SEVERE, "Null data processor result received.");
             return this;
