@@ -91,13 +91,6 @@ public class JTablePanel<T> extends JPanel {
         }
 
         /**
-         * @return The child JLabel component.
-         */
-        JLabel getLabel() {
-            return label;
-        }
-
-        /**
          * Sets the message to be displayed in the child jlabel.
          *
          * @param message The message to be displayed.
@@ -391,15 +384,15 @@ public class JTablePanel<T> extends JPanel {
             return;
         }
 
-        switch (result.getState()) {
-            case LOADED:
+        switch (result.getResultType()) {
+            case SUCCESS:
                 if (result.getData() == null || result.getData().isEmpty()) {
                     showMessage(noResultsMessage);
                 } else {
                     showResults(result.getData());
                 }
                 break;
-            case LOAD_ERROR:
+            case ERROR:
                 // if there is an error, log accordingly, set result list to 
                 // empty and display error message
                 logger.log(Level.WARNING, "An exception was caused while results were loaded.", result.getException());

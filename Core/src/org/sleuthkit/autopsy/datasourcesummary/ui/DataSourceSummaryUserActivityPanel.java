@@ -159,7 +159,7 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPan
         // set results for tables to null.
         if (dataSource == null || !Case.isCaseOpen()) {
             this.dataFetchComponents.forEach((item) -> item.getResultHandler()
-                    .accept(DataFetchResult.getLoadedResult(null)));
+                    .accept(DataFetchResult.getSuccessResult(null)));
 
         } else {
             // set tables to display loading screen

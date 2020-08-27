@@ -19,52 +19,52 @@
 package org.sleuthkit.autopsy.datasourcesummary.uiutils;
 
 /**
- * The intermediate or end result of a loading process.
+ * The result of a loading process.
  */
 public final class DataFetchResult<R> {
 
     /**
-     * The state of loading in the result.
+     * The type of result.
      */
-    public enum ProcessorState {
-        LOADED, LOAD_ERROR
+    public enum ResultType {
+        SUCCESS, ERROR
     }
 
     /**
-     * Creates a DataLoadingResult of loaded data including the data.
+     * Creates a DataFetchResult of loaded data including the data.
      *
      * @param data The data.
      *
      * @return The loaded data result.
      */
-    public static <R> DataFetchResult<R> getLoadedResult(R data) {
-        return new DataFetchResult<>(ProcessorState.LOADED, data, null);
+    public static <R> DataFetchResult<R> getSuccessResult(R data) {
+        return new DataFetchResult<>(ResultType.SUCCESS, data, null);
     }
 
     /**
-     * Returns a load error result.
+     * Returns an error result.
      *
      * @param e The exception (if any) present with the error.
      *
-     * @return
+     * @return The error result.
      */
-    public static <R> DataFetchResult<R> getLoadErrorResult(DataFetcherException e) {
-        return new DataFetchResult<>(ProcessorState.LOAD_ERROR, null, e);
+    public static <R> DataFetchResult<R> getErrorResult(Throwable e) {
+        return new DataFetchResult<>(ResultType.ERROR, null, e);
     }
 
-    private final ProcessorState state;
+    private final ResultType state;
     private final R data;
-    private final DataFetcherException exception;
+    private final Throwable exception;
 
     /**
      * Main constructor for the DataLoadingResult.
      *
      * @param state     The state of the result.
-     * @param data      If the result is LOADED, the data related to this
+     * @param data      If the result is SUCCESS, the data related to this
      *                  result.
-     * @param exception If the result is LOAD_ERROR, the related exception.
+     * @param exception If the result is ERROR, the related exception.
      */
-    private DataFetchResult(ProcessorState state, R data, DataFetcherException exception) {
+    private DataFetchResult(ResultType state, R data, Throwable exception) {
         this.state = state;
         this.data = data;
         this.exception = exception;
@@ -73,21 +73,21 @@ public final class DataFetchResult<R> {
     /**
      * @return The current loading state.
      */
-    public ProcessorState getState() {
+    public ResultType getResultType() {
         return state;
     }
 
     /**
-     * @return The data if the state is LOADED.
+     * @return The data if the state is SUCCESS.
      */
     public R getData() {
         return data;
     }
 
     /**
-     * @return The exception if the state is LOAD_ERROR.
+     * @return The exception if the state is ERROR.
      */
-    public DataFetcherException getException() {
+    public Throwable getException() {
         return exception;
     }
 }

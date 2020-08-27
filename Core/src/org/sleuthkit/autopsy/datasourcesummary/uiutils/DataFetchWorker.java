@@ -25,39 +25,40 @@ import javax.swing.SwingWorker;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
- * A Swing worker that accepts an argument of a data processor and a result
- * handler.
+ * A Swing worker that accepts an argument of a data fetcher and a result
+ * handler. If the data fetcher throws an InterruptedException, it is treated as
+ * a cancellation and not passed to the result handler.
  */
 public class DataFetchWorker<A, R> extends SwingWorker<R, Void> {
 
     /**
-     * Holds the functions necessary for a DataFetchWorker. Includes the
-     * processor and result handler. The args are not included since they are
-     * likely dynamic.
+     * Holds the functions necessary for a DataFetchWorker. Includes the fetcher
+     * and result handler. The args are not included since they are likely
+     * dynamic.
      */
     public static class DataFetchComponents<A1, R1> {
 
-        private final DataFetcher<A1, R1> processor;
+        private final DataFetcher<A1, R1> fetcher;
         private final Consumer<DataFetchResult<R1>> resultHandler;
 
         /**
          * Main constructor.
          *
-         * @param processor     The processor to be used as an argument for the
+         * @param fetcher       The fetcher to be used as an argument for the
          *                      DataFetchWorker.
          * @param resultHandler The result handler to be used as an argument for
          *                      the DataFetchWorker.
          */
-        public DataFetchComponents(DataFetcher<A1, R1> processor, Consumer<DataFetchResult<R1>> resultHandler) {
-            this.processor = processor;
+        public DataFetchComponents(DataFetcher<A1, R1> fetcher, Consumer<DataFetchResult<R1>> resultHandler) {
+            this.fetcher = fetcher;
             this.resultHandler = resultHandler;
         }
 
         /**
-         * @return The function that processes or fetches the data.
+         * @return The function that fetches the data.
          */
-        public DataFetcher<A1, R1> getProcessor() {
-            return processor;
+        public DataFetcher<A1, R1> getFetcher() {
+            return fetcher;
         }
 
         /**
@@ -83,14 +84,16 @@ public class DataFetchWorker<A, R> extends SwingWorker<R, Void> {
      * @param args       The argument to be provided to the data processor.
      */
     public DataFetchWorker(DataFetchComponents<A, R> components, A args) {
-        this(components.getProcessor(), components.getResultHandler(), args);
+        this(components.getFetcher(), components.getResultHandler(), args);
     }
 
     /**
      * Main constructor for this swing worker.
      *
-     * @param processor     The function that will do the processing of the data
-     *                      provided the given args.
+     * @param processor     The function that will do the fetching of the data
+     *                      provided the given args. InterruptedException's are
+     *                      treated as cancellations and are not passed to the
+     *                      result handler.
      * @param resultHandler The ui function that will handle the result of the
      *                      data processing.
      * @param args          The args provided to the data processor.
@@ -133,9 +136,8 @@ public class DataFetchWorker<A, R> extends SwingWorker<R, Void> {
             // otherwise, there is an error to log
             logger.log(Level.WARNING, "There was an error while fetching results.", ex);
 
-            if (inner instanceof DataFetcherException) {
-                resultHandler.accept(DataFetchResult.getLoadErrorResult((DataFetcherException) inner));
-            }
+            // and pass the result to the client
+            resultHandler.accept(DataFetchResult.getErrorResult(inner));
             return;
         }
 
@@ -145,6 +147,6 @@ public class DataFetchWorker<A, R> extends SwingWorker<R, Void> {
         }
 
         // if the data is loaded, send the data to the consumer.
-        resultHandler.accept(DataFetchResult.getLoadedResult(result));
+        resultHandler.accept(DataFetchResult.getSuccessResult(result));
     }
 }

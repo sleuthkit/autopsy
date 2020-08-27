@@ -35,15 +35,6 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
     private DataSource dataSource;
 
     /**
-     * The datasource currently used as the model in this panel.
-     *
-     * @return The datasource currently being used as the model in this panel.
-     */
-    synchronized DataSource getDataSource() {
-        return dataSource;
-    }
-
-    /**
      * Sets datasource to visualize in the panel.
      *
      * @param dataSource The datasource to use in this panel.
@@ -52,6 +43,7 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
         DataSource oldDataSource = this.dataSource;
         this.dataSource = dataSource;
         if (this.dataSource != oldDataSource) {
+            this.executor.cancelRunning();
             onNewDataSource(this.dataSource);
         }
     }

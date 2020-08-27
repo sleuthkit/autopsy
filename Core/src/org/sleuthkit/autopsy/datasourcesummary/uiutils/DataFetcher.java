@@ -21,25 +21,23 @@ package org.sleuthkit.autopsy.datasourcesummary.uiutils;
 /**
  * A function that accepts input of type I and outputs type O. This function is
  * meant to be utilized with DataFetchWorker and can therefore, throw an
- * interrupted exception if the processing is cancelled or a
- * DataProcessorException in the event that the processing encountered an error.
+ * interrupted exception if the processing is cancelled or an Exception of on
+ * another type in the event that the fetching encountered an error.
  */
 @FunctionalInterface
 public interface DataFetcher<I, O> {
 
     /**
      * A function that accepts an input argument and outputs a result. Since it
-     * is meant to be used with the DataFetchWorker, it throws an interrupted
-     * exception if the thread has been interrupted. It throws a data processing
-     * exception if there is an error during processing.
+     * is meant to be used with the DataFetchWorker, it may throw an interrupted
+     * exception if the thread has been interrupted. It throws another type of
+     * exception if there is an error during fetching.
      *
      * @param input The input argument.
      *
      * @return The output result.
      *
-     * @throws InterruptedException Thrown if the operation is cancelled.
-     * @throws DataFetcherException Thrown if there is an issue processing the
-     *                              request.
+     * @throws Exception
      */
-    O runQuery(I input) throws InterruptedException, DataFetcherException;
+    O runQuery(I input) throws Exception;
 }
