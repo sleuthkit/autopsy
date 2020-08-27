@@ -23,6 +23,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -223,8 +225,8 @@ final class DataSourceInfoUtilities {
      *
      * @throws TskCoreException
      */
-    static private TreeMap<BlackboardAttribute, List<BlackboardArtifact>> getArtifactMap(SleuthkitCase skCase, BlackboardArtifact.Type artifactType, DataSource dataSource, BlackboardAttribute.Type attributeType, SortOrder sortOrder) throws TskCoreException {
-        TreeMap<BlackboardAttribute, List<BlackboardArtifact>> sortedMap = new TreeMap<>(new AttributeComparator(sortOrder));
+    static private SortedMap<BlackboardAttribute, List<BlackboardArtifact>> getArtifactMap(SleuthkitCase skCase, BlackboardArtifact.Type artifactType, DataSource dataSource, BlackboardAttribute.Type attributeType, SortOrder sortOrder) throws TskCoreException {
+        SortedMap<BlackboardAttribute, List<BlackboardArtifact>> sortedMap = new TreeMap<>(new AttributeComparator(sortOrder));
         List<BlackboardArtifact> artifactList = skCase.getBlackboard().getArtifacts(artifactType.getTypeID(), dataSource.getId());
 
         for (BlackboardArtifact artifact : artifactList) {
@@ -253,7 +255,7 @@ final class DataSourceInfoUtilities {
      *
      * @return List of artifacts, list will be empty if none were found.
      */
-    static private List<BlackboardArtifact> createListFromMap(TreeMap<BlackboardAttribute, List<BlackboardArtifact>> sortedMap, int maxCount) {
+    static private List<BlackboardArtifact> createListFromMap(SortedMap<BlackboardAttribute, List<BlackboardArtifact>> sortedMap, int maxCount) {
         List<BlackboardArtifact> artifactList = new ArrayList<>();
 
         for (List<BlackboardArtifact> mapArtifactList : sortedMap.values()) {
