@@ -35,7 +35,7 @@ public interface SleuthkitCaseProvider {
      * Exception thrown in the event that the SleuthkitCase object cannot be
      * provided.
      */
-    static class SleuthkitCaseProviderException extends Exception {
+    class SleuthkitCaseProviderException extends Exception {
 
         private static final long serialVersionUID = 1L;
 
