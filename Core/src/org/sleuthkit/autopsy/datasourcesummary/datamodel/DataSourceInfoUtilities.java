@@ -146,12 +146,12 @@ final class DataSourceInfoUtilities {
         DESCENDING,
         ASCENDING
     }
-    
-     /**
+
+    /**
      * Returns a list of all artifacts of the given type that have an attribute
-     * of the given type sorted by given attribute type value. Artifacts that
-     * do not have the given attribute will not be included in the list.
-     * 
+     * of the given type sorted by given attribute type value. Artifacts that do
+     * not have the given attribute will not be included in the list.
+     *
      * Sorting on attributes of type byte[] and JSON is not currently supported.
      *
      * @param skCase        SleuthkitCase instance.
@@ -173,8 +173,8 @@ final class DataSourceInfoUtilities {
 
     /**
      * Return a list of artifacts that have been sorted by their attribute of
-     * attributeType. If an artifact of the given type does not have the 
-     * given attribute it will not be included in the returned list.
+     * attributeType. If an artifact of the given type does not have the given
+     * attribute it will not be included in the returned list.
      *
      * Sorting on attributes of type byte[] and JSON is not currently supported.
      *
@@ -194,10 +194,36 @@ final class DataSourceInfoUtilities {
      * @throws TskCoreException
      */
     static List<BlackboardArtifact> getArtifacts(SleuthkitCase skCase, BlackboardArtifact.Type artifactType, DataSource dataSource, BlackboardAttribute.Type attributeType, SortOrder sortOrder, int maxCount) throws TskCoreException {
-        if (maxCount < 0 ) {
+        if (maxCount < 0) {
             throw new IllegalArgumentException("Invalid maxCount passed to getArtifacts, value must be at greater 0");
         }
 
+        return createListFromMap(getArtifactMap(skCase, artifactType, dataSource, attributeType, sortOrder), maxCount);
+    }
+
+    /**
+     * Empty private constructor
+     */
+    private DataSourceInfoUtilities() {
+    }
+    
+     /**
+     * Create a Map of lists of artifacts sorted by the given attribute.
+     *
+     * @param skCase        SleuthkitCase instance.
+     * @param artifactType  Type of artifacts to sort.
+     * @param dataSource    Data Source that the artifact belongs to.
+     * @param attributeType Attribute type to sort by.
+     * @param sortOrder     Sort order of the attributes, either ascending or
+     *                      descending.
+     *
+     * @return A Map of lists of artifacts sorted by the value of attribute
+     *         given type. Artifacts that do not have an attribute of the given
+     *         type will not be included.
+     *
+     * @throws TskCoreException
+     */
+    static private TreeMap<BlackboardAttribute, List<BlackboardArtifact>> getArtifactMap(SleuthkitCase skCase, BlackboardArtifact.Type artifactType, DataSource dataSource, BlackboardAttribute.Type attributeType, SortOrder sortOrder) throws TskCoreException {
         TreeMap<BlackboardAttribute, List<BlackboardArtifact>> sortedMap = new TreeMap<>(new AttributeComparator(sortOrder));
         List<BlackboardArtifact> artifactList = skCase.getBlackboard().getArtifacts(artifactType.getTypeID(), dataSource.getId());
 
@@ -206,31 +232,43 @@ final class DataSourceInfoUtilities {
             if (attribute == null) {
                 continue;
             }
-            
+
             List<BlackboardArtifact> mapArtifactList = sortedMap.get(attribute);
-            if(mapArtifactList == null) {
+            if (mapArtifactList == null) {
                 mapArtifactList = new ArrayList<>();
                 sortedMap.put(attribute, mapArtifactList);
             }
-            
+
             mapArtifactList.add(artifact);
         }
 
-        artifactList = new ArrayList<>();
+        return sortedMap;
+    }
+
+    /**
+     * Creates the list of artifacts from the sorted map and the given count.
+     *
+     * @param sortedMap Sorted map of artifact lists.
+     * @param maxCount  Maximum number of artifacts to return.
+     *
+     * @return List of artifacts, list will be empty if none were found.
+     */
+    static private List<BlackboardArtifact> createListFromMap(TreeMap<BlackboardAttribute, List<BlackboardArtifact>> sortedMap, int maxCount) {
+        List<BlackboardArtifact> artifactList = new ArrayList<>();
 
         for (List<BlackboardArtifact> mapArtifactList : sortedMap.values()) {
-            
-            if(maxCount == artifactList.size()) {
+
+            if (maxCount == artifactList.size()) {
                 break;
             }
-            
-            if(maxCount == 0 || (artifactList.size() + mapArtifactList.size()) <= maxCount ) {
+
+            if (maxCount == 0 || (artifactList.size() + mapArtifactList.size()) <= maxCount) {
                 artifactList.addAll(mapArtifactList);
                 continue;
             }
-            
-            for(BlackboardArtifact artifact: mapArtifactList) {
-                if(artifactList.size() < maxCount) {
+
+            for (BlackboardArtifact artifact : mapArtifactList) {
+                if (artifactList.size() < maxCount) {
                     artifactList.add(artifact);
                 } else {
                     break;
@@ -241,19 +279,13 @@ final class DataSourceInfoUtilities {
     }
 
     /**
-     * Empty private constructor
-     */
-    private DataSourceInfoUtilities() {
-    }
-
-    /**
      * Compares the value of two BlackboardAttributes that are of the same type.
      * This comparator is specialized for data source summary and only supports
      * the basic attribute types of string, integer, long, datetime (long), and
      * double.
-     * 
-     * Note: A runtime exception will be thrown from the compare if the attributes
-     * are not of the same type or if their type is not supported.
+     *
+     * Note: A runtime exception will be thrown from the compare if the
+     * attributes are not of the same type or if their type is not supported.
      */
     private static class AttributeComparator implements Comparator<BlackboardAttribute> {
 
@@ -280,13 +312,13 @@ final class DataSourceInfoUtilities {
 
         /**
          * Compared two attributes of the given type. Note, that not all
-         * attribute types are supported. A runtime exception will be thrown
-         * if an unsupported attribute is supplied.
-         * 
-         * @param type Attribute type.
+         * attribute types are supported. A runtime exception will be thrown if
+         * an unsupported attribute is supplied.
+         *
+         * @param type       Attribute type.
          * @param attribute1 First attribute to compare.
          * @param attribute2 Second attribute to compare.
-         * 
+         *
          * @return Compare result.
          */
         private int compare(BlackboardAttribute.Type type, BlackboardAttribute attribute1, BlackboardAttribute attribute2) {
