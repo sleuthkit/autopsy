@@ -75,7 +75,7 @@ final class ReportingConfigLoader {
 
         // Return null if a reporting configuration for the given name does not exist.
         if (!reportDirectory.exists()) {
-            throw new ReportConfigException("Unable to find report configuration folder " + reportDirPath.toString());
+            throw new ReportConfigException("Unable to find report configuration folder for " + reportDirPath.toString() + ". Please configure in the application Options panel.");
         }
 
         if (!reportDirectory.isDirectory() || !reportDirectory.canRead()) {
