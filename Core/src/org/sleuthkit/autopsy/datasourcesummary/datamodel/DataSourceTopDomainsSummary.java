@@ -59,7 +59,7 @@ public class DataSourceTopDomainsSummary {
                 getId.apply("domain", num),
                 getId.apply("url", num),
                 (long) num,
-                new Date(120, 1, num)
+                new Date(((long) num) * 1000 * 60 * 60 * 24)
         ))
                 .collect(Collectors.toList());
     }

@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.uiutils;
 
+import java.util.Collections;
+
 /**
  * The intermediate or end result of a loading process.
  */
@@ -31,14 +33,15 @@ public final class DataLoadingResult<R> {
     }
 
     // Since loading doesn't have any typed arguments, a static final instance is used.
-    private static final DataLoadingResult<Object> LOADING = new DataLoadingResult(ProcessorState.LOADING, null, null);
+    private static final DataLoadingResult<Object> LOADING = new DataLoadingResult<>(ProcessorState.LOADING, null, null);
 
     // Since not loaded doesn't have any typed arguments, a static final instance is used.
-    private static final DataLoadingResult<Object> NOT_LOADED = new DataLoadingResult(ProcessorState.LOADED, null, null);
+    private static final DataLoadingResult<Object> NOT_LOADED = new DataLoadingResult<>(ProcessorState.LOADED, null, null);
 
     /**
      * @return Returns a data loading result.
      */
+    @SuppressWarnings("unchecked")
     public static <R> DataLoadingResult<R> getLoadingResult() {
         return (DataLoadingResult<R>) LOADING;
     }
@@ -46,6 +49,7 @@ public final class DataLoadingResult<R> {
     /**
      * @return Returns a 'not loaded' result.
      */
+    @SuppressWarnings("unchecked")
     public static <R> DataLoadingResult<R> getNotLoadedResult() {
         return (DataLoadingResult<R>) NOT_LOADED;
     }

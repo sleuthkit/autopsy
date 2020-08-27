@@ -277,7 +277,7 @@ public class DataSourceTopProgramsSummary {
      *
      * @return The short folder name or empty string if not found.
      */
-    public static String getShortFolderName(String strPath, String applicationName) {
+    public String getShortFolderName(String strPath, String applicationName) {
         if (strPath == null) {
             return "";
         }

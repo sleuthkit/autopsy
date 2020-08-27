@@ -27,6 +27,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.apache.commons.lang.StringUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskData.TSK_FS_META_FLAG_ENUM;
@@ -131,7 +132,7 @@ final class DataSourceInfoUtilities {
             } catch (SQLException ex) {
                 logger.log(Level.WARNING, errorMessage, ex);
             }
-        } catch (TskCoreException | NoCurrentCaseException ex) {
+        } catch (TskCoreException | SleuthkitCaseProviderException ex) {
             logger.log(Level.WARNING, errorMessage, ex);
         }
         return null;
