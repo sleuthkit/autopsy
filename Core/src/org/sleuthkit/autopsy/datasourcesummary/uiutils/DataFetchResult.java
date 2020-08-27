@@ -21,35 +21,13 @@ package org.sleuthkit.autopsy.datasourcesummary.uiutils;
 /**
  * The intermediate or end result of a loading process.
  */
-public final class DataLoadingResult<R> {
+public final class DataFetchResult<R> {
 
     /**
      * The state of loading in the result.
      */
     public enum ProcessorState {
-        LOADING, NOT_LOADED, LOADED, LOAD_ERROR
-    }
-
-    // Since loading doesn't have any typed arguments, a static final instance is used.
-    private static final DataLoadingResult<Object> LOADING = new DataLoadingResult<>(ProcessorState.LOADING, null, null);
-
-    // Since not loaded doesn't have any typed arguments, a static final instance is used.
-    private static final DataLoadingResult<Object> NOT_LOADED = new DataLoadingResult<>(ProcessorState.LOADED, null, null);
-
-    /**
-     * @return Returns a data loading result.
-     */
-    @SuppressWarnings("unchecked")
-    public static <R> DataLoadingResult<R> getLoadingResult() {
-        return (DataLoadingResult<R>) LOADING;
-    }
-
-    /**
-     * @return Returns a 'not loaded' result.
-     */
-    @SuppressWarnings("unchecked")
-    public static <R> DataLoadingResult<R> getNotLoadedResult() {
-        return (DataLoadingResult<R>) NOT_LOADED;
+        LOADED, LOAD_ERROR
     }
 
     /**
@@ -59,8 +37,8 @@ public final class DataLoadingResult<R> {
      *
      * @return The loaded data result.
      */
-    public static <R> DataLoadingResult<R> getLoadedResult(R data) {
-        return new DataLoadingResult<>(ProcessorState.LOADED, data, null);
+    public static <R> DataFetchResult<R> getLoadedResult(R data) {
+        return new DataFetchResult<>(ProcessorState.LOADED, data, null);
     }
 
     /**
@@ -70,13 +48,13 @@ public final class DataLoadingResult<R> {
      *
      * @return
      */
-    public static <R> DataLoadingResult<R> getLoadErrorResult(DataProcessorException e) {
-        return new DataLoadingResult<>(ProcessorState.LOAD_ERROR, null, e);
+    public static <R> DataFetchResult<R> getLoadErrorResult(DataFetcherException e) {
+        return new DataFetchResult<>(ProcessorState.LOAD_ERROR, null, e);
     }
 
     private final ProcessorState state;
     private final R data;
-    private final DataProcessorException exception;
+    private final DataFetcherException exception;
 
     /**
      * Main constructor for the DataLoadingResult.
@@ -86,7 +64,7 @@ public final class DataLoadingResult<R> {
      *                  result.
      * @param exception If the result is LOAD_ERROR, the related exception.
      */
-    private DataLoadingResult(ProcessorState state, R data, DataProcessorException exception) {
+    private DataFetchResult(ProcessorState state, R data, DataFetcherException exception) {
         this.state = state;
         this.data = data;
         this.exception = exception;
@@ -109,7 +87,7 @@ public final class DataLoadingResult<R> {
     /**
      * @return The exception if the state is LOAD_ERROR.
      */
-    public DataProcessorException getException() {
+    public DataFetcherException getException() {
         return exception;
     }
 }

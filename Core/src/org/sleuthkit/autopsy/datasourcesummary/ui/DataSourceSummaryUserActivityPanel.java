@@ -35,10 +35,9 @@ import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRendere
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer.HorizontalAlign;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataLoadingResult;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataResultTableUtils;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataResultTableUtils.DataResultColumnModel;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel.ColumnModel;
 import org.sleuthkit.datamodel.DataSource;
 
 /**
@@ -64,6 +63,7 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPan
     private final JTablePanel<TopProgramsResult> topProgramsTable;
     private final JTablePanel<TopDomainsResult> recentDomainsTable;
     private final List<DataFetchComponents<DataSource, ?>> dataFetchComponents;
+    private final List<JTablePanel<?>> tables;
 
     /**
      * Creates a new DataSourceUserActivityPanel.
@@ -80,15 +80,14 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPan
      */
     public DataSourceSummaryUserActivityPanel(DataSourceTopProgramsSummary topProgramsData, DataSourceTopDomainsSummary topDomainsData) {
         // set up recent programs table 
-        this.topProgramsTable = DataResultTableUtils.getDataResultTable(Arrays.asList(
-                new DataResultColumnModel<>(
-                        Bundle.DataSourceSummaryUserActivityPanel_TopProgramsTableModel_name_header(),
-                        (prog) -> {
-                            return new DefaultCellModel(prog.getProgramName())
-                                    .setTooltip(prog.getProgramPath());
-                        },
-                        250),
-                new DataResultColumnModel<>(
+        this.topProgramsTable = JTablePanel.getJTablePanel(Arrays.asList(new ColumnModel<>(
+                Bundle.DataSourceSummaryUserActivityPanel_TopProgramsTableModel_name_header(),
+                (prog) -> {
+                    return new DefaultCellModel(prog.getProgramName())
+                            .setTooltip(prog.getProgramPath());
+                },
+                250),
+                new ColumnModel<>(
                         Bundle.DataSourceSummaryUserActivityPanel_TopProgramsTableModel_folder_header(),
                         (prog) -> {
                             return new DefaultCellModel(
@@ -97,7 +96,7 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPan
                                             prog.getProgramName()));
                         },
                         150),
-                new DataResultColumnModel<>(
+                new ColumnModel<>(
                         Bundle.DataSourceSummaryUserActivityPanel_TopProgramsTableModel_count_header(),
                         (prog) -> {
                             String runTimes = prog.getRunTimes() == null ? "" : Long.toString(prog.getRunTimes());
@@ -105,7 +104,7 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPan
                                     .setHorizontalAlignment(HorizontalAlign.RIGHT);
                         },
                         80),
-                new DataResultColumnModel<>(
+                new ColumnModel<>(
                         Bundle.DataSourceSummaryUserActivityPanel_TopProgramsTableModel_lastrun_header(),
                         (prog) -> {
                             String date = prog.getLastRun() == null ? "" : DATETIME_FORMAT.format(prog.getLastRun());
@@ -114,19 +113,17 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPan
                         },
                         150)
         ));
-        this.topProgramsTable.setNoResultsMessage(Bundle.DataSourceSummaryUserActivityPanel_noDataExists());
 
         // set up recent domains table
-        this.recentDomainsTable = DataResultTableUtils.getDataResultTable(Arrays.asList(
-                new DataResultColumnModel<>(
-                        Bundle.DataSourceSummaryUserActivityPanel_TopDomainsTableModel_domain_header(),
-                        (d) -> new DefaultCellModel(d.getDomain()),
-                        250),
-                new DataResultColumnModel<>(
+        this.recentDomainsTable = JTablePanel.getJTablePanel(Arrays.asList(new ColumnModel<>(
+                Bundle.DataSourceSummaryUserActivityPanel_TopDomainsTableModel_domain_header(),
+                (d) -> new DefaultCellModel(d.getDomain()),
+                250),
+                new ColumnModel<>(
                         Bundle.DataSourceSummaryUserActivityPanel_TopDomainsTableModel_url_header(),
                         (d) -> new DefaultCellModel(d.getUrl()),
                         250),
-                new DataResultColumnModel<>(
+                new ColumnModel<>(
                         Bundle.DataSourceSummaryUserActivityPanel_TopDomainsTableModel_lastAccess_header(),
                         (prog) -> {
                             String lastVisit = prog.getLastVisit() == null ? "" : DATETIME_FORMAT.format(prog.getLastVisit());
@@ -135,16 +132,22 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPan
                         },
                         150)
         ));
-        this.recentDomainsTable.setNoResultsMessage(Bundle.DataSourceSummaryUserActivityPanel_noDataExists());
+
+        this.tables = Arrays.asList(
+                topProgramsTable,
+                recentDomainsTable
+        );
 
         // set up data acquisition methods
         dataFetchComponents = Arrays.asList(
                 new DataFetchComponents<DataSource, List<TopProgramsResult>>(
                         (dataSource) -> topProgramsData.getTopPrograms(dataSource, TOP_PROGS_COUNT),
-                        topProgramsTable::setResult),
+                        (result) -> topProgramsTable.showDataFetchResult(result, JTablePanel.getDefaultErrorMessage(),
+                                Bundle.DataSourceSummaryUserActivityPanel_noDataExists())),
                 new DataFetchComponents<DataSource, List<TopDomainsResult>>(
                         (dataSource) -> topDomainsData.getRecentDomains(dataSource, TOP_DOMAINS_COUNT),
-                        recentDomainsTable::setResult)
+                        (result) -> recentDomainsTable.showDataFetchResult(result, JTablePanel.getDefaultErrorMessage(),
+                                Bundle.DataSourceSummaryUserActivityPanel_noDataExists()))
         );
 
         initComponents();
@@ -155,13 +158,12 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPan
         // if no data source is present or the case is not open,
         // set results for tables to null.
         if (dataSource == null || !Case.isCaseOpen()) {
-            dataFetchComponents.forEach((item) -> item.getResultHandler()
-                    .accept(DataLoadingResult.getLoadedResult(null)));
+            this.dataFetchComponents.forEach((item) -> item.getResultHandler()
+                    .accept(DataFetchResult.getLoadedResult(null)));
 
         } else {
             // set tables to display loading screen
-            dataFetchComponents.forEach((item) -> item.getResultHandler()
-                    .accept(DataLoadingResult.getLoadingResult()));
+            this.tables.forEach((table) -> table.showDefaultLoadingMessage());
 
             // create swing workers to run for each table
             List<DataFetchWorker<?, ?>> workers = dataFetchComponents

@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.uiutils;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
@@ -52,7 +53,7 @@ public class DefaultListTableModel<T> extends AbstractTableModel implements List
 
     @Override
     public void setDataRows(List<T> dataRows) {
-        this.dataRows = dataRows == null ? Collections.emptyList() : Collections.unmodifiableList(dataRows);
+        this.dataRows = dataRows == null ? Collections.emptyList() : new ArrayList<>(dataRows);
         super.fireTableDataChanged();
     }
 

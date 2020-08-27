@@ -37,8 +37,8 @@ public class DataFetchWorker<A, R> extends SwingWorker<R, Void> {
      */
     public static class DataFetchComponents<A1, R1> {
 
-        private final DataProcessor<A1, R1> processor;
-        private final Consumer<DataLoadingResult<R1>> resultHandler;
+        private final DataFetcher<A1, R1> processor;
+        private final Consumer<DataFetchResult<R1>> resultHandler;
 
         /**
          * Main constructor.
@@ -48,7 +48,7 @@ public class DataFetchWorker<A, R> extends SwingWorker<R, Void> {
          * @param resultHandler The result handler to be used as an argument for
          *                      the DataFetchWorker.
          */
-        public DataFetchComponents(DataProcessor<A1, R1> processor, Consumer<DataLoadingResult<R1>> resultHandler) {
+        public DataFetchComponents(DataFetcher<A1, R1> processor, Consumer<DataFetchResult<R1>> resultHandler) {
             this.processor = processor;
             this.resultHandler = resultHandler;
         }
@@ -56,7 +56,7 @@ public class DataFetchWorker<A, R> extends SwingWorker<R, Void> {
         /**
          * @return The function that processes or fetches the data.
          */
-        public DataProcessor<A1, R1> getProcessor() {
+        public DataFetcher<A1, R1> getProcessor() {
             return processor;
         }
 
@@ -64,7 +64,7 @@ public class DataFetchWorker<A, R> extends SwingWorker<R, Void> {
          * @return When those results are received, this function handles
          *         presenting the results in the UI.
          */
-        public Consumer<DataLoadingResult<R1>> getResultHandler() {
+        public Consumer<DataFetchResult<R1>> getResultHandler() {
             return resultHandler;
         }
     }
@@ -72,8 +72,8 @@ public class DataFetchWorker<A, R> extends SwingWorker<R, Void> {
     private static final Logger logger = Logger.getLogger(DataFetchWorker.class.getName());
 
     private final A args;
-    private final DataProcessor<A, R> processor;
-    private final Consumer<DataLoadingResult<R>> resultHandler;
+    private final DataFetcher<A, R> processor;
+    private final Consumer<DataFetchResult<R>> resultHandler;
 
     /**
      * Main constructor for this swing worker.
@@ -96,8 +96,8 @@ public class DataFetchWorker<A, R> extends SwingWorker<R, Void> {
      * @param args          The args provided to the data processor.
      */
     public DataFetchWorker(
-            DataProcessor<A, R> processor,
-            Consumer<DataLoadingResult<R>> resultHandler,
+            DataFetcher<A, R> processor,
+            Consumer<DataFetchResult<R>> resultHandler,
             A args) {
 
         this.args = args;
@@ -107,7 +107,7 @@ public class DataFetchWorker<A, R> extends SwingWorker<R, Void> {
 
     @Override
     protected R doInBackground() throws Exception {
-        return processor.process(args);
+        return processor.runQuery(args);
     }
 
     @Override
@@ -133,8 +133,8 @@ public class DataFetchWorker<A, R> extends SwingWorker<R, Void> {
             // otherwise, there is an error to log
             logger.log(Level.WARNING, "There was an error while fetching results.", ex);
 
-            if (inner instanceof DataProcessorException) {
-                resultHandler.accept(DataLoadingResult.getLoadErrorResult((DataProcessorException) inner));
+            if (inner instanceof DataFetcherException) {
+                resultHandler.accept(DataFetchResult.getLoadErrorResult((DataFetcherException) inner));
             }
             return;
         }
@@ -145,6 +145,6 @@ public class DataFetchWorker<A, R> extends SwingWorker<R, Void> {
         }
 
         // if the data is loaded, send the data to the consumer.
-        resultHandler.accept(DataLoadingResult.getLoadedResult(result));
+        resultHandler.accept(DataFetchResult.getLoadedResult(result));
     }
 }

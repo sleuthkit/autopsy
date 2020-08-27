@@ -25,7 +25,7 @@ package org.sleuthkit.autopsy.datasourcesummary.uiutils;
  * DataProcessorException in the event that the processing encountered an error.
  */
 @FunctionalInterface
-public interface DataProcessor<I, O> {
+public interface DataFetcher<I, O> {
 
     /**
      * A function that accepts an input argument and outputs a result. Since it
@@ -37,9 +37,9 @@ public interface DataProcessor<I, O> {
      *
      * @return The output result.
      *
-     * @throws InterruptedException   Thrown if the operation is cancelled.
-     * @throws DataProcessorException Thrown if there is an issue processing the
-     *                                request.
+     * @throws InterruptedException Thrown if the operation is cancelled.
+     * @throws DataFetcherException Thrown if there is an issue processing the
+     *                              request.
      */
-    O process(I input) throws InterruptedException, DataProcessorException;
+    O runQuery(I input) throws InterruptedException, DataFetcherException;
 }

@@ -22,7 +22,7 @@ package org.sleuthkit.autopsy.datasourcesummary.uiutils;
  * An Exception that is thrown when there is an issue processing data in a
  * DataProcessor.
  */
-public class DataProcessorException extends Exception {
+public class DataFetcherException extends Exception {
 
     private static final long serialVersionUID = 1L;
 
@@ -31,7 +31,7 @@ public class DataProcessorException extends Exception {
      *
      * @param string The error message.
      */
-    public DataProcessorException(String string) {
+    public DataFetcherException(String string) {
         super(string);
     }
 
@@ -41,7 +41,7 @@ public class DataProcessorException extends Exception {
      * @param string The error message.
      * @param thrwbl The inner exception.
      */
-    public DataProcessorException(String string, Throwable thrwbl) {
+    public DataFetcherException(String string, Throwable thrwbl) {
         super(string, thrwbl);
     }
 }
