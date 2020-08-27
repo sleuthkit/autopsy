@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.uiutils;
 
-import java.util.Collections;
-
 /**
  * The intermediate or end result of a loading process.
  */
