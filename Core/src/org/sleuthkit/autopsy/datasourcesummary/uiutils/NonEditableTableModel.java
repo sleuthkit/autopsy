@@ -16,17 +16,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datasourcesummary.ui;
+package org.sleuthkit.autopsy.datasourcesummary.uiutils;
 
 import javax.swing.table.DefaultTableModel;
 
 /**
  * A Table model where cells are not editable.
  */
-class NonEditableTableModel extends DefaultTableModel {
+public class NonEditableTableModel extends DefaultTableModel {
+
     private static final long serialVersionUID = 1L;
-    
-    NonEditableTableModel(Object[][] data, Object[] columnNames) {
+
+    /**
+     * Main constructor.
+     *
+     * @param data        The data to be displayed.
+     * @param columnNames The column names.
+     */
+    public NonEditableTableModel(Object[][] data, Object[] columnNames) {
         super(data, columnNames);
     }
 

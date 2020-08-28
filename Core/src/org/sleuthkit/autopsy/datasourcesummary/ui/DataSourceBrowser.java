@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.ui;
 
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.RightAlignedTableCellRenderer;
 import java.awt.EventQueue;
 import java.beans.PropertyVetoException;
 import javax.swing.ListSelectionModel;
