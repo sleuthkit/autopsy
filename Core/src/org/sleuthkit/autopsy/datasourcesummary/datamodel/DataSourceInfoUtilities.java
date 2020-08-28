@@ -23,7 +23,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.logging.Level;
@@ -197,7 +196,7 @@ final class DataSourceInfoUtilities {
      */
     static List<BlackboardArtifact> getArtifacts(SleuthkitCase skCase, BlackboardArtifact.Type artifactType, DataSource dataSource, BlackboardAttribute.Type attributeType, SortOrder sortOrder, int maxCount) throws TskCoreException {
         if (maxCount < 0) {
-            throw new IllegalArgumentException("Invalid maxCount passed to getArtifacts, value must be at greater 0");
+            throw new IllegalArgumentException("Invalid maxCount passed to getArtifacts, value must be equal to or greater than 0");
         }
 
         return createListFromMap(getArtifactMap(skCase, artifactType, dataSource, attributeType, sortOrder), maxCount);
@@ -259,14 +258,14 @@ final class DataSourceInfoUtilities {
         List<BlackboardArtifact> artifactList = new ArrayList<>();
 
         for (List<BlackboardArtifact> mapArtifactList : sortedMap.values()) {
-
-            if (maxCount == artifactList.size()) {
-                break;
-            }
-
+            
             if (maxCount == 0 || (artifactList.size() + mapArtifactList.size()) <= maxCount) {
                 artifactList.addAll(mapArtifactList);
                 continue;
+            }
+            
+            if (maxCount == artifactList.size()) {
+                break;
             }
 
             for (BlackboardArtifact artifact : mapArtifactList) {
