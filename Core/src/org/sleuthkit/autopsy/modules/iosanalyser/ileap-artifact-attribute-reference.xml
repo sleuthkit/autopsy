@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<iLeap_Files_To_Process>
+    <FileName filename="Safari Browser History.tsv" description="Safari Browser">
+        <ArtifactName artifactname="TSK_WEB_HISTORY">
+            <AttributeName attributename="TSK_DATETIME_ACCESSED" columnName="Visit Time" required="yes" />
+            <AttributeName attributename="TSK_URL" columnName="URL" required="yes" />
+            <AttributeName attributename="null" columnName="Visit Count" required="no" />
+            <AttributeName attributename="TSK_TITLE" columnName="Title" required="yes" />
+            <AttributeName attributename="null" columnName="iCloud Sync" required="no" />			
+            <AttributeName attributename="null" columnName="Load Successful" required="no" />
+            <AttributeName attributename="null" columnName="Visit ID" required="no" />			
+            <AttributeName attributename="TSK_REFERRER" columnName="Redirect Source" required="yes" />
+            <AttributeName attributename="null" columnName="Redirect Destination" required="no" />			
+            <AttributeName attributename="null" columnName="History Item ID"	 required="no" />
+        </ArtifactName>
+    </FileName>
+
+    <FileName filename="Safari Web Search.tsv" description="Safari Browser">
+        <ArtifactName artifactname="TSK_WEB_HISTORY">
+            <AttributeName attributename="TSK_DATETIME_ACCESSED" columnName="Visit Time" required="yes" />
+            <AttributeName attributename="TSK_TEXT" columnName="Search Term" required="yes" />
+            <AttributeName attributename="TSK_URL" columnName="URL" required="yes" />
+            <AttributeName attributename="null" columnName="Visit Count" required="no" />
+            <AttributeName attributename="TSK_TITLE" columnName="Title" required="yes" />
+            <AttributeName attributename="null" columnName="iCloud Sync" required="no" />			
+            <AttributeName attributename="null" columnName="Load Successful" required="no" />
+            <AttributeName attributename="null" columnName="Visit ID" required="no" />			
+            <AttributeName attributename="TSK_REFERRER" columnName="Redirect Source" required="yes" />
+            <AttributeName attributename="null" columnName="Redirect Destination" required="no" />			
+            <AttributeName attributename="null" columnName="History Item ID"	 required="no" />
+        </ArtifactName>
+    </FileName>
+
+    <FileName filename="KnowledgeC Bluetooth.tsv" description="KnowledgeC Bluetooth Connections">
+        <ArtifactName artifactname="TSK_BLUETOOTH_PAIRING">
+            <AttributeName attributename="TSK_DATETIME_START" columnName="Start" required="yes" />
+            <AttributeName attributename="TSK_DATETIME_END" columnName="End" required="yes" />
+            <AttributeName attributename="TSK_MAC_ADDRESS" columnName="Bluetooth Address" required="yes" />
+            <AttributeName attributename="TSK_DEVICE_NAME" columnName="Bluetooth Name" required="yes" />
+            <AttributeName attributename="null" columnName="Usage in Seconds" required="no" />
+            <AttributeName attributename="null" columnName="Usage in Minutes" required="no" />			
+            <AttributeName attributename="null" columnName="Day of the week" required="no" />			
+            <AttributeName attributename="null" columnName="GMT Offset" required="no" />
+            <AttributeName attributename="null" columnName="Entry Creation" required="no" />			
+            <AttributeName attributename="null" columnName="UUID"	 required="no" />
+            <AttributeName attributename="null" columnName="Zobject Table ID"	 required="no" />
+        </ArtifactName>
+    </FileName>
+
+    <FileName filename="Bluetooth paired.tsv" description="Bluetooth Paired">
+        <ArtifactName artifactname="TSK_BLUETOOTH_PAIRING">
+            <AttributeName attributename="TSK_DEVICE_ID" columnName="UUID" required="yes" />
+            <AttributeName attributename="TSK_NAME" columnName="Name" required="yes" />
+            <AttributeName attributename="null" columnName="Name Origin" required="no" />
+            <AttributeName attributename="null" columnName="Address" required="no" />
+            <AttributeName attributename="null" columnName="Resolved Address" required="no" />			
+            <AttributeName attributename="TSK_DATETIME" columnName="Last Seen TIme" required="yes" />
+            <AttributeName attributename="TSK_DATETIME_ACCESSED" columnName="Last Connection Time" required="yes" />			
+        </ArtifactName>
+    </FileName>
+
+    <FileName filename="KnowledgeC App Usage.tsv" description="KnowledgeC App Usage">
+        <ArtifactName artifactname="TSK_PROG_RUN">
+            <AttributeName attributename="TSK_DATETIME" columnName="Start" required="yes" />
+            <AttributeName attributename="null" columnName="End" required="no" />
+            <AttributeName attributename="TSK_PROG_RUN" columnName="Bundle ID" required="yes" />
+            <AttributeName attributename="null" columnName="Usage in Seconds" required="no" />
+            <AttributeName attributename="null" columnName="Usage in Minutes" required="no" />			
+            <AttributeName attributename="null" columnName="Device ID" required="no" />
+            <AttributeName attributename="null" columnName="Day of the week" required="no" />			
+            <AttributeName attributename="null" columnName="GMT Offset" required="no" />
+            <AttributeName attributename="null" columnName="Entry Creation" required="no" />			
+            <AttributeName attributename="null" columnName="UUID"	 required="no" />
+            <AttributeName attributename="null" columnName="Zobject Table ID"	 required="no" />
+        </ArtifactName>
+    </FileName>
+
+</iLeap_Files_To_Process>

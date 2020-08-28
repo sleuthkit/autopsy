@@ -18,8 +18,10 @@
  */
 package org.sleuthkit.autopsy.modules.iosanalyser;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -27,8 +29,16 @@ import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import org.apache.commons.io.FilenameUtils;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -37,16 +47,23 @@ import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.coreutils.XMLUtil;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProcessTerminator;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestServices;
+import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.w3c.dom.Document;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.NodeList;
+import org.w3c.dom.Node;
+import org.xml.sax.SAXException;
 
 /**
  * Data source ingest module that runs Plaso against the image.
@@ -58,8 +75,12 @@ public class IosAnalyserIngestModule implements DataSourceIngestModule {
 
     private static final String ILEAPP = "iLeapp"; //NON-NLS
     private static final String ILEAPP_EXECUTABLE = "ileapp.exe";//NON-NLS
+    private static final String XMLFILE = "ileap-artifact-attribute-reference.xml"; //NON-NLS
 
     private File iLeappExecutable;
+    private HashMap<String, String> tsvFiles = new HashMap<String, String>();
+    private HashMap<String, String> tsvFileArtifacts = new HashMap<String, String>();
+    private HashMap<String, List<List>> tsvFileAttributes = new HashMap<String, List<List>>();
 
     private IngestJobContext context;
     private Case currentCase;
@@ -106,36 +127,47 @@ public class IosAnalyserIngestModule implements DataSourceIngestModule {
         currentCase = Case.getCurrentCase();
         fileManager = currentCase.getServices().getFileManager();
 
-        String currentTime = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss z", Locale.US).format(System.currentTimeMillis());//NON-NLS
-        Path moduleOutputPath = Paths.get(currentCase.getModuleDirectory(), ILEAPP, currentTime);
-        try {
-            Files.createDirectories(moduleOutputPath);
-        } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Error creating iLeapp module output directory.", ex); //NON-NLS
-            return ProcessResult.ERROR;
-        }
-
         List<AbstractFile> iLeappFilesToProcess = findiLeappFilesToProcess(dataSource);
+        
+        try {
+            loadConfigFile();
+        } catch (IngestModuleException e) {
+            // Change this before impl
+            logger.log(Level.INFO, "Loading Config File Error"); //NON-NLS
+            return ProcessResult.OK;            
+        }
         
         if (!iLeappFilesToProcess.isEmpty()) {
             // Run iLeapp
             for (AbstractFile iLeappFile: iLeappFilesToProcess) {
                 logger.log(Level.INFO, "Starting iLeapp Run.");//NON-NLS
+                String currentTime = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss z", Locale.US).format(System.currentTimeMillis());//NON-NLS
+//                Path moduleOutputPath = Paths.get(currentCase.getModuleDirectory(), ILEAPP, currentTime);
+                Path moduleOutputPath = Paths.get(currentCase.getModuleDirectory(), ILEAPP, "2020-08-25 22-09-24 EDT");
                 statusHelper.progress(Bundle.IosAnalyserIngestModule_starting_iLeapp(), 0);
                 ProcessBuilder iLeappCommand = buildiLeappCommand(moduleOutputPath, iLeappFile.getLocalAbsPath(), iLeappFile.getNameExtension());
-                try {
-                    int result = ExecUtil.execute(iLeappCommand, new DataSourceIngestModuleProcessTerminator(context));
-                    if (result != 0) {
-                        logger.log(Level.SEVERE, String.format("Error running iLeapp, error code returned %d", result)); //NON-NLS
-                        return ProcessResult.ERROR;
-                    } 
-                } catch (IOException ex) {
-                     logger.log(Level.SEVERE, String.format("Error when trying to execute iLeapp program against file %s", iLeappFile.getLocalAbsPath()), ex);
-                }
+//                try {
+//                    int result = ExecUtil.execute(iLeappCommand, new DataSourceIngestModuleProcessTerminator(context));
+//                    if (result != 0) {
+//                        logger.log(Level.SEVERE, String.format("Error running iLeapp, error code returned %d", result)); //NON-NLS
+//                        return ProcessResult.ERROR;
+//                    } 
+//                } catch (IOException ex) {
+//                     logger.log(Level.SEVERE, String.format("Error when trying to execute iLeapp program against file %s", iLeappFile.getLocalAbsPath()), ex);
+//                }
 
                 if (context.dataSourceIngestIsCancelled()) {
                     logger.log(Level.INFO, "Log2timeline run was canceled"); //NON-NLS
                     return ProcessResult.OK;
+                }
+                
+                try {
+                    List<String> iLeapTsvOutputFiles = findTsvFiles(moduleOutputPath);
+                    processiLeappFiles(iLeapTsvOutputFiles);
+                } catch (IOException ex) {
+                  // Change this before impl
+                  logger.log(Level.INFO, "Loading Config File Error", ex); //NON-NLS
+ 
                 }
             }
         
@@ -213,6 +245,148 @@ public class IosAnalyserIngestModule implements DataSourceIngestModule {
         }
         return exeFile;
     }
+    
+        @NbBundle.Messages({
+        "IosAnalyserIngestModule.error.reading.iLeapp.directory=Error reading iLeapp Output directory."})
 
+    private List<String> findTsvFiles(Path iLeapOutputDir) throws IOException {
+        List<String> allTsvFiles = new ArrayList<>();
+        List<String> foundTsvFiles = new ArrayList<>();
+        
+        try (Stream<Path> walk = Files.walk(iLeapOutputDir)) {
+
+	    allTsvFiles = walk.map(x -> x.toString())
+			.filter(f -> f.endsWith(".tsv")).collect(Collectors.toList());
+
+            for (String tsvFile : allTsvFiles) {
+                if (tsvFiles.containsKey(FilenameUtils.getName(tsvFile))) {
+                    foundTsvFiles.add(tsvFile);
+                }
+            }
+            
+        } catch (IOException e) {
+            throw new IngestModuleException(Bundle.IosAnalyserIngestModule_error_reading_iLeapp_directory() + e.getLocalizedMessage(), e);
+	    
+        }  finally {
+            return foundTsvFiles;
+        }
+    }
+    
+    private void processiLeappFiles(List<String> iLeappFilesToProcess) throws FileNotFoundException, IOException {
+
+        for (String iLeapFileName : iLeappFilesToPRocess) { 
+            File regfile = new File(regFileName);
+            try (BufferedReader reader = new BufferedReader(new FileReader(regfile))) {
+                String line = reader.readLine();
+                while (line != null) {
+        
+                }
+            }
+            
+        }
+    }
+
+        @NbBundle.Messages({
+        "IosAnalyserIngestModule.cannot.load.artifact.xml=Cannor load xml artifact file.",
+        "IosAnalyserIngestModule.cannotBuildXmlParser=Cannot buld an XML parser.",
+        "IosAnalyserIngestModule_cannotParseXml=Cannot Parse XML file."
+        })
+
+    private void loadConfigFile() throws IngestModuleException {
+        Document xmlinput;
+        try {
+            String path = PlatformUtil.getUserConfigDirectory() + File.separator + XMLFILE;
+            File f = new File(path);
+            logger.log(Level.INFO, "Load successful"); //NON-NLS
+            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            DocumentBuilder db = dbf.newDocumentBuilder();
+            xmlinput = db.parse(f);
+
+        } catch (IOException e) {
+            throw new IngestModuleException(Bundle.IosAnalyserIngestModule_cannot_load_artifact_xml() + e.getLocalizedMessage(), e); //NON-NLS
+        } catch (ParserConfigurationException pce) {
+            throw new IngestModuleException(Bundle.IosAnalyserIngestModule_cannotBuildXmlParser() + pce.getLocalizedMessage(), pce); //NON-NLS
+        } catch (SAXException sxe) {
+            throw new IngestModuleException(Bundle.IosAnalyserIngestModule_cannotParseXml() + sxe.getLocalizedMessage(), sxe); //NON-NLS
+        }
+
+        NodeList nlist = xmlinput.getElementsByTagName("FileName"); //NON-NLS
+
+        for (int i = 0; i < nlist.getLength(); i++) {
+            NamedNodeMap nnm = nlist.item(i).getAttributes();
+            tsvFiles.put(nnm.getNamedItem("filename").getNodeValue(), nnm.getNamedItem("description").getNodeValue());
+        
+        }
+        
+         
+        NodeList artifactNlist = xmlinput.getElementsByTagName("ArtifactName"); //NON-NLS
+        for (int k = 0; k < artifactNlist.getLength(); k++) {
+           NamedNodeMap nnm = artifactNlist.item(k).getAttributes();
+           String artifactName = nnm.getNamedItem("artifactname").getNodeValue();
+           String parentName = artifactNlist.item(k).getParentNode().getAttributes().getNamedItem("filename").getNodeValue();
+           
+           tsvFileArtifacts.put(parentName, artifactName);
+        }
+        NodeList attributeNlist = xmlinput.getElementsByTagName("AttributeName"); //NON-NLS
+        for (int k = 0; k < attributeNlist.getLength(); k++) {
+           List<String> attributeList = new ArrayList<>();
+           NamedNodeMap nnm = attributeNlist.item(k).getAttributes();
+           String attributeName = nnm.getNamedItem("attributename").getNodeValue();
+           if (!attributeName.toLowerCase().matches("null")) {
+               String columnName = nnm.getNamedItem("columnName").getNodeValue();
+               String required = nnm.getNamedItem("required").getNodeValue();
+               String parentName = attributeNlist.item(k).getParentNode().getParentNode().getAttributes().getNamedItem("filename").getNodeValue();
+           
+               attributeList.add(attributeName);
+               attributeList.add(columnName);
+               attributeList.add(required);
+           
+               if (tsvFileAttributes.containsKey(parentName)) {
+                    List<List> attrList = tsvFileAttributes.get(parentName);
+                    attrList.add(attributeList);
+                    tsvFileAttributes.replace(parentName, attrList);
+               } else {
+                    List<List> attrList = new ArrayList<>();
+                    attrList.add(attributeList);
+                    tsvFileAttributes.put(parentName, attrList);
+               }
+           }
+        }
+        
+        logger.log(Level.WARNING, "Finished reading the XML file"); //NON-NLS
+    
+    }
+
+    /**
+     * Provides NodeList from the given Document object by the tagName
+     * @param Document - doc
+     * @param tagname
+     * @return NodeList
+     */
+    private NodeList getNodeListByTag(Document doc, String tagname){
+        NodeList nodeList = null;
+        if (doc !=null && !tagname.isEmpty()){
+            nodeList = doc.getElementsByTagName(tagname);
+        }
+        return nodeList;
+    }
+
+    /**
+     *
+     * @param nodeList
+     * @return Map
+     */
+    private Map getElementKeyValue(NodeList nodeList){
+        Map elements = new HashMap();
+        if (nodeList!=null && nodeList.getLength()>0 ){
+            for(int i=0 ; i < nodeList.getLength() ; i++){
+                Node node = nodeList.item(i); //Take the node from the list
+                NodeList valueNode = node.getChildNodes(); // get the children of the node
+                String value = (valueNode.item(0)!=null) ? valueNode.item(0).getNodeValue() : "";
+                elements.put(node.getNodeName(), value);
+            }
+        }
+        return elements;
+    }
 
 }

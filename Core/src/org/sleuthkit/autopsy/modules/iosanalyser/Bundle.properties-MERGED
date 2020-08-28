@@ -1,5 +1,8 @@
+IosAnalyserIngestModule.cannot.load.artifact.xml=Cannor load xml artifact file.
+IosAnalyserIngestModule.cannotBuildXmlParser=Cannot buld an XML parser.
 IosAnalyserIngestModule.completed=iLeapp Processing Completed
 IosAnalyserIngestModule.error.creating.output.dir=Error creating iLeapp module output directory.
+IosAnalyserIngestModule.error.reading.iLeapp.directory=Error reading iLeapp Output directory.
 IosAnalyserIngestModule.error.running.iLeapp=Error running iLeapp, see log file.
 IosAnalyserIngestModule.executable.not.found=iLeapp Executable Not Found.
 IosAnalyserIngestModule.has.run=iLeapp
@@ -7,5 +10,6 @@ IosAnalyserIngestModule.iLeapp.cancelled=iLeapp run was canceled
 IosAnalyserIngestModule.requires.windows=iLeapp module requires windows.
 IosAnalyserIngestModule.running.iLeapp=Running iLeapp
 IosAnalyserIngestModule.starting.iLeapp=Starting iLeapp
+IosAnalyserIngestModule_cannotParseXml=Cannot Parse XML file.
 IosAnalyserModuleFactory_moduleDesc=Runs iLeapp against files.
 IosAnalyserModuleFactory_moduleName=iOSAnalyser
