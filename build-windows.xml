@@ -22,12 +22,7 @@
     </target>
     
     <target name="checkTskLibDirs">
-        <property environment="env"/>
-        <condition property="ewfFound">
-            <isset property="env.LIBEWF_HOME"/>
-        </condition>
-        <fail unless="ewfFound" message="LIBEWF_HOME must be set as an environment variable."/>
-        
+        <property environment="env"/>	
         <property name="tskLogicalImager.path" value="${env.TSK_HOME}/win32/Release_NoLibs/tsk_logical_imager.exe" />
         <property name="win64.TskLib.path" value="${env.TSK_HOME}/win32/x64/Release"/>
         <property name="win32.TskLib.path" value="${env.TSK_HOME}/win32/Release" />

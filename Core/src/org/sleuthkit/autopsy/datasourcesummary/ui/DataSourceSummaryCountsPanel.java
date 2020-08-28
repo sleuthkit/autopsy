@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.datasourcesummary.ui;
 
 import java.util.Map;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JLabel;
 import javax.swing.table.DefaultTableCellRenderer;
 import org.openide.util.NbBundle.Messages;
@@ -32,25 +31,18 @@ import org.sleuthkit.datamodel.DataSource;
  * Panel for displaying summary information on the known files present in the
  * specified DataSource
  */
-@Messages({"DataSourceSummaryCountsPanel.FilesByMimeTypeTableModel.type.header=File Type",
-    "DataSourceSummaryCountsPanel.FilesByMimeTypeTableModel.count.header=Count",
+@Messages({
     "DataSourceSummaryCountsPanel.ArtifactCountsTableModel.type.header=Result Type",
     "DataSourceSummaryCountsPanel.ArtifactCountsTableModel.count.header=Count",
     "DataSourceSummaryCountsPanel.FilesByCategoryTableModel.type.header=File Type",
     "DataSourceSummaryCountsPanel.FilesByCategoryTableModel.count.header=Count"
 })
-class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
+final class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
 
     // Result returned for a data model if no data found.
     private static final Object[][] EMPTY_PAIRS = new Object[][]{};
-
-    // column headers for mime type table
-    private static final Object[] MIME_TYPE_COLUMN_HEADERS = new Object[]{
-        Bundle.DataSourceSummaryCountsPanel_FilesByMimeTypeTableModel_type_header(),
-        Bundle.DataSourceSummaryCountsPanel_FilesByMimeTypeTableModel_count_header()
-    };
 
     // column headers for file by category table
     private static final Object[] FILE_BY_CATEGORY_COLUMN_HEADERS = new Object[]{
@@ -64,7 +56,6 @@ class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
         Bundle.DataSourceSummaryCountsPanel_ArtifactCountsTableModel_count_header()
     };
 
-    private static final Logger logger = Logger.getLogger(DataSourceSummaryCountsPanel.class.getName());
     private final DefaultTableCellRenderer rightAlignedRenderer = new DefaultTableCellRenderer();
 
     private final FileTypePieChart fileTypePieChart = new FileTypePieChart();

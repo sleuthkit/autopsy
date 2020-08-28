@@ -36,15 +36,20 @@ class CommandLineManager {
     /**
      * Opens existing case.
      *
-     * @param caseFolderPath full path to case directory
+     * @param casePath full path to case directory or full path to .aut file
      *
      * @throws CaseActionException
      */
-    Case openCase(String caseFolderPath) throws CaseActionException {
+    Case openCase(String casePath) throws CaseActionException {
 
-        LOGGER.log(Level.INFO, "Opening case in directory {0}", caseFolderPath);
-
-        String metadataFilePath = findAutFile(caseFolderPath);
+        String metadataFilePath;
+        if (casePath.endsWith(".aut") && (new File(casePath)).isFile()) {
+            LOGGER.log(Level.INFO, "Opening case {0}", casePath);
+            metadataFilePath = casePath;
+        } else {
+            LOGGER.log(Level.INFO, "Opening case in directory {0}", casePath);
+            metadataFilePath = findAutFile(casePath);
+        }
         Case.openAsCurrentCase(metadataFilePath);
 
         Case newCase = Case.getCurrentCase();

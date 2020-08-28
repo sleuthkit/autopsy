@@ -64,7 +64,9 @@ final class ReportWizardIterator implements WizardDescriptor.Iterator<WizardDesc
         
         ReportingConfig config = null;
         try {
-            config = ReportingConfigLoader.loadConfig(reportingConfigurationName);
+            if(ReportingConfigLoader.configExists(reportingConfigurationName)) {
+                config = ReportingConfigLoader.loadConfig(reportingConfigurationName);
+            }
         } catch (ReportConfigException ex) {
             logger.log(Level.SEVERE, "Unable to load reporting configuration " + reportingConfigurationName + ". Using default settings", ex);
         }
