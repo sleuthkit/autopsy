@@ -75,7 +75,7 @@ final class ReportingConfigLoader {
 
         // Return null if a reporting configuration for the given name does not exist.
         if (!reportDirectory.exists()) {
-            return null;
+            throw new ReportConfigException("Unable to find report configuration folder for " + reportDirPath.toString() + ". Please configure in the application Options panel.");
         }
 
         if (!reportDirectory.isDirectory() || !reportDirectory.canRead()) {
@@ -242,6 +242,23 @@ final class ReportingConfigLoader {
         }
 
         return reportNameList;
+    }
+    
+    /**
+     * Returns whether or not a config with the given name exists. The config is
+     * assumed to exist if there is a folder in 
+     * ReportingConfigLoader.REPORT_CONFIG_FOLDER_PATH with the given name.
+     * 
+     * @param configName Name of the report config.
+     * 
+     * @return True if the report config exists.
+     */
+    static synchronized boolean configExists(String configName) {
+        // construct the configuration directory path
+        Path reportDirPath = Paths.get(ReportingConfigLoader.REPORT_CONFIG_FOLDER_PATH, configName);
+        File reportDirectory = reportDirPath.toFile();
+        
+        return reportDirectory.exists();
     }
 
 }

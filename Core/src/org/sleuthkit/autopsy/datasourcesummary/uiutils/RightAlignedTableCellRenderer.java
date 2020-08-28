@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datasourcesummary.ui;
+package org.sleuthkit.autopsy.datasourcesummary.uiutils;
 
 import java.awt.Component;
 import java.lang.reflect.InvocationTargetException;
@@ -31,7 +31,7 @@ import org.sleuthkit.autopsy.guiutils.GrayableCellRenderer;
  * cell contains a NodeProperty the value of that NodeProperty sets text to
  * empty string if null.
  */
-final class RightAlignedTableCellRenderer extends GrayableCellRenderer {
+public class RightAlignedTableCellRenderer extends GrayableCellRenderer {
 
     private static final long serialVersionUID = 1L;
 
