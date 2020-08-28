@@ -38,7 +38,7 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.centralrepository.persona.OpenPersonasAction")
 @ActionRegistration(displayName = "#CTL_OpenPersonas", lazy = false)
 @ActionReferences(value = {
-    @ActionReference(path = "Menu/Tools", position = 105)
+    @ActionReference(path = "Menu/Tools", position = 1825, separatorBefore = 1824)
 })
 public final class OpenPersonasAction extends CallableSystemAction {
 
