@@ -1,0 +1,3 @@
+JTablePanel_errorMessage_defaultText=There was an error loading results.
+JTablePanel_loadingMessage_defaultText=Loading results...
+JTablePanel_noDataExists_defaultText=No data exists.

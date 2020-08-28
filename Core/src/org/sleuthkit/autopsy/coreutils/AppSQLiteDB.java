@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -390,14 +390,17 @@ public final class AppSQLiteDB {
     private static void findAndCopySQLiteMetaFile(AbstractFile sqliteFile,
             String metaFileName) throws NoCurrentCaseException, TskCoreException, IOException {
 
+        // Do not look for metaFile if this is a carved directory
+        if(sqliteFile.getParentPath().equalsIgnoreCase("/$carvedfiles/")) {
+            return;
+        }
+        
         Case openCase = Case.getCurrentCaseThrows();
         SleuthkitCase sleuthkitCase = openCase.getSleuthkitCase();
         Services services = new Services(sleuthkitCase);
         FileManager fileManager = services.getFileManager();
-
-        List<AbstractFile> metaFiles = fileManager.findFiles(
-                sqliteFile.getDataSource(), metaFileName,
-                sqliteFile.getParent().getName());
+        
+        List<AbstractFile> metaFiles = fileManager.findFilesExactName(sqliteFile.getParent().getId(), metaFileName);
 
         if (metaFiles != null) {
             for (AbstractFile metaFile : metaFiles) {

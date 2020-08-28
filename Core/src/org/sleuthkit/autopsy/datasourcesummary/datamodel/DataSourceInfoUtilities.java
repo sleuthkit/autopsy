@@ -20,6 +20,11 @@ package org.sleuthkit.autopsy.datasourcesummary.datamodel;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -27,6 +32,9 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.apache.commons.lang.StringUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskData.TSK_FS_META_FLAG_ENUM;
@@ -108,14 +116,30 @@ final class DataSourceInfoUtilities {
      *         obtained.
      */
     static <T> T getBaseQueryResult(String query, ResultSetHandler<T> processor, String errorMessage) {
-        try (SleuthkitCase.CaseDbQuery dbQuery = Case.getCurrentCaseThrows().getSleuthkitCase().executeQuery(query)) {
+        return getBaseQueryResult(SleuthkitCaseProvider.DEFAULT, query, processor, errorMessage);
+    }
+
+    /**
+     * Retrieves a result based on the provided query.
+     *
+     * @param provider     The means of obtaining a SleuthkitCase.
+     * @param query        The query.
+     * @param processor    The result set handler.
+     * @param errorMessage The error message to display if there is an error
+     *                     retrieving the resultset.
+     *
+     * @return The ResultSetHandler value or null if no ResultSet could be
+     *         obtained.
+     */
+    static <T> T getBaseQueryResult(SleuthkitCaseProvider provider, String query, ResultSetHandler<T> processor, String errorMessage) {
+        try (SleuthkitCase.CaseDbQuery dbQuery = provider.get().executeQuery(query)) {
             ResultSet resultSet = dbQuery.getResultSet();
             try {
                 return processor.process(resultSet);
             } catch (SQLException ex) {
                 logger.log(Level.WARNING, errorMessage, ex);
             }
-        } catch (TskCoreException | NoCurrentCaseException ex) {
+        } catch (TskCoreException | SleuthkitCaseProviderException ex) {
             logger.log(Level.WARNING, errorMessage, ex);
         }
         return null;
@@ -134,8 +158,203 @@ final class DataSourceInfoUtilities {
     }
 
     /**
+     * Enum for specifying the sort order for getAttributes.
+     */
+    enum SortOrder {
+        DESCENDING,
+        ASCENDING
+    }
+
+    /**
+     * Returns a list of all artifacts of the given type that have an attribute
+     * of the given type sorted by given attribute type value. Artifacts that do
+     * not have the given attribute will not be included in the list.
+     *
+     * Sorting on attributes of type byte[] and JSON is not currently supported.
+     *
+     * @param skCase        SleuthkitCase instance.
+     * @param artifactType  Type of artifacts to sort.
+     * @param dataSource    Data Source that the artifact belongs to.
+     * @param attributeType Attribute type to sort by.
+     * @param sortOrder     Sort order of the attributes, either ascending or
+     *                      descending.
+     *
+     * @return A list of artifacts of type artifactType sorted by the attribute
+     *         of attributeType in the given sortOrder. If no artifacts are
+     *         found an empty list will be returned.
+     *
+     * @throws TskCoreException
+     */
+    static List<BlackboardArtifact> getArtifacts(SleuthkitCase skCase, BlackboardArtifact.Type artifactType, DataSource dataSource, BlackboardAttribute.Type attributeType, SortOrder sortOrder) throws TskCoreException {
+        return getArtifacts(skCase, artifactType, dataSource, attributeType, sortOrder, 0);
+    }
+
+    /**
+     * Return a list of artifacts that have been sorted by their attribute of
+     * attributeType. If an artifact of the given type does not have the given
+     * attribute it will not be included in the returned list.
+     *
+     * Sorting on attributes of type byte[] and JSON is not currently supported.
+     *
+     * @param skCase        SleuthkitCase instance.
+     * @param artifactType  Type of artifacts to sort.
+     * @param dataSource    Data Source that the artifact belongs to.
+     * @param attributeType Attribute type to sort by.
+     * @param sortOrder     Sort order of the attributes, either ascending or
+     *                      descending.
+     * @param maxCount      Maximum number of results to return. To return all
+     *                      values maxCount should be 0.
+     *
+     * @return A list of artifacts of type artifactType sorted by the attribute
+     *         of attributeType in the given sortOrder. If no artifacts are
+     *         found an empty list will be returned.
+     *
+     * @throws TskCoreException
+     */
+    static List<BlackboardArtifact> getArtifacts(SleuthkitCase skCase, BlackboardArtifact.Type artifactType, DataSource dataSource, BlackboardAttribute.Type attributeType, SortOrder sortOrder, int maxCount) throws TskCoreException {
+        if (maxCount < 0) {
+            throw new IllegalArgumentException("Invalid maxCount passed to getArtifacts, value must be equal to or greater than 0");
+        }
+
+        return createListFromMap(getArtifactMap(skCase, artifactType, dataSource, attributeType, sortOrder), maxCount);
+    }
+
+    /**
      * Empty private constructor
      */
     private DataSourceInfoUtilities() {
+    }
+    
+     /**
+     * Create a Map of lists of artifacts sorted by the given attribute.
+     *
+     * @param skCase        SleuthkitCase instance.
+     * @param artifactType  Type of artifacts to sort.
+     * @param dataSource    Data Source that the artifact belongs to.
+     * @param attributeType Attribute type to sort by.
+     * @param sortOrder     Sort order of the attributes, either ascending or
+     *                      descending.
+     *
+     * @return A Map of lists of artifacts sorted by the value of attribute
+     *         given type. Artifacts that do not have an attribute of the given
+     *         type will not be included.
+     *
+     * @throws TskCoreException
+     */
+    static private SortedMap<BlackboardAttribute, List<BlackboardArtifact>> getArtifactMap(SleuthkitCase skCase, BlackboardArtifact.Type artifactType, DataSource dataSource, BlackboardAttribute.Type attributeType, SortOrder sortOrder) throws TskCoreException {
+        SortedMap<BlackboardAttribute, List<BlackboardArtifact>> sortedMap = new TreeMap<>(new AttributeComparator(sortOrder));
+        List<BlackboardArtifact> artifactList = skCase.getBlackboard().getArtifacts(artifactType.getTypeID(), dataSource.getId());
+
+        for (BlackboardArtifact artifact : artifactList) {
+            BlackboardAttribute attribute = artifact.getAttribute(attributeType);
+            if (attribute == null) {
+                continue;
+            }
+
+            List<BlackboardArtifact> mapArtifactList = sortedMap.get(attribute);
+            if (mapArtifactList == null) {
+                mapArtifactList = new ArrayList<>();
+                sortedMap.put(attribute, mapArtifactList);
+            }
+
+            mapArtifactList.add(artifact);
+        }
+
+        return sortedMap;
+    }
+
+    /**
+     * Creates the list of artifacts from the sorted map and the given count.
+     *
+     * @param sortedMap Sorted map of artifact lists.
+     * @param maxCount  Maximum number of artifacts to return.
+     *
+     * @return List of artifacts, list will be empty if none were found.
+     */
+    static private List<BlackboardArtifact> createListFromMap(SortedMap<BlackboardAttribute, List<BlackboardArtifact>> sortedMap, int maxCount) {
+        List<BlackboardArtifact> artifactList = new ArrayList<>();
+
+        for (List<BlackboardArtifact> mapArtifactList : sortedMap.values()) {
+            
+            if (maxCount == 0 || (artifactList.size() + mapArtifactList.size()) <= maxCount) {
+                artifactList.addAll(mapArtifactList);
+                continue;
+            }
+            
+            if (maxCount == artifactList.size()) {
+                break;
+            }
+
+            for (BlackboardArtifact artifact : mapArtifactList) {
+                if (artifactList.size() < maxCount) {
+                    artifactList.add(artifact);
+                } else {
+                    break;
+                }
+            }
+        }
+        return artifactList;
+    }
+
+    /**
+     * Compares the value of two BlackboardAttributes that are of the same type.
+     * This comparator is specialized for data source summary and only supports
+     * the basic attribute types of string, integer, long, datetime (long), and
+     * double.
+     *
+     * Note: A runtime exception will be thrown from the compare if the
+     * attributes are not of the same type or if their type is not supported.
+     */
+    private static class AttributeComparator implements Comparator<BlackboardAttribute> {
+
+        private final SortOrder direction;
+
+        AttributeComparator(SortOrder direction) {
+            this.direction = direction;
+        }
+
+        @Override
+        public int compare(BlackboardAttribute attribute1, BlackboardAttribute attribute2) {
+            if (attribute1.getAttributeType() != attribute2.getAttributeType()) {
+                throw new IllegalArgumentException("Unable to compare attributes of different types");
+            }
+
+            int result = compare(attribute1.getAttributeType(), attribute1, attribute2);
+
+            if (direction == SortOrder.DESCENDING) {
+                result *= -1;
+            }
+
+            return result;
+        }
+
+        /**
+         * Compared two attributes of the given type. Note, that not all
+         * attribute types are supported. A runtime exception will be thrown if
+         * an unsupported attribute is supplied.
+         *
+         * @param type       Attribute type.
+         * @param attribute1 First attribute to compare.
+         * @param attribute2 Second attribute to compare.
+         *
+         * @return Compare result.
+         */
+        private int compare(BlackboardAttribute.Type type, BlackboardAttribute attribute1, BlackboardAttribute attribute2) {
+            switch (type.getValueType()) {
+                case STRING:
+                    return attribute1.getValueString().compareTo(attribute2.getValueString());
+                case INTEGER:
+                    return Integer.compare(attribute1.getValueInt(), attribute2.getValueInt());
+                case LONG:
+                case DATETIME:
+                    return Long.compare(attribute1.getValueLong(), attribute2.getValueLong());
+                case DOUBLE:
+                    return Double.compare(attribute1.getValueDouble(), attribute2.getValueDouble());
+                case BYTE:
+                case JSON:
+                default:
+                    throw new IllegalArgumentException("Unable to compare attributes of type " + attribute1.getAttributeType().getTypeName());
+            }
+        }
     }
 }
