@@ -36,15 +36,12 @@ build_script:
   - python win32\updateAndBuildAll.py -m
   - ps: pushd bindings/java
   - ps: ant -version
-  - java -version
-  - echo %JAVA_HOME%
   - cmd: ant dist
   - ps: popd
   - ps: pushd case-uco/java
   - cmd: ant -q
   - ps: popd
   - cd %APPVEYOR_BUILD_FOLDER%
-  - java -version
   - cmd: ant -q build
 
 test: off
