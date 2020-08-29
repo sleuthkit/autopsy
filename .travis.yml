@@ -50,8 +50,8 @@ install:
 
 before_script:
   - if [ $TRAVIS_OS_NAME = linux ]; then 
-        sudo update-alternatives --set java /usr/lib/jvm/bellsoft-java11-full/bin/java;
-        sudo update-alternatives --set javac /usr/lib/jvm/bellsoft-java11-full/bin/javac;
+        sudo update-alternatives --set java /usr/lib/jvm/bellsoft-java11-full-amd64/bin/java;
+        sudo update-alternatives --set javac /usr/lib/jvm/bellsoft-java11-full-amd64/bin/javac;
         export PATH=/usr/bin:$PATH; 
         unset JAVA_HOME;
     fi
@@ -60,7 +60,7 @@ before_script:
         brew cask uninstall java --force;
         brew tap bell-sw/liberica;
         brew cask install liberica-jdk11-full;
-        export JAVA_HOME=/Library/Java/JavaVirtualMachines/liberica-jdk-11.0.8/Contents/Home;
+        #export JAVA_HOME=/Library/Java/JavaVirtualMachines/liberica-jdk-11.0.8/Contents/Home;
     fi
   - java -version
 
