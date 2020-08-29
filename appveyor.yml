@@ -20,7 +20,6 @@ install:
   - ps: choco install ant --ignore-dependencies
   - git clone https://github.com/sleuthkit/sleuthkit
   - ps: $env:Path="C:\Program Files\Java\jdk11\bin;$($env:Path);C:\ProgramData\chocolatey\lib\ant"
-  - java -version
   - set PATH=C:\Python36-x64\';%PATH%
   - cd C:\
   - git clone https://github.com/sleuthkit/sleuthkit
@@ -35,6 +34,8 @@ build_script:
   - python win32\updateAndBuildAll.py -m
   - ps: pushd bindings/java
   - ps: ant -version
+  - ps: java -version
+  - echo %JAVA_HOME%
   - cmd: ant dist
   - ps: popd
   - ps: pushd case-uco/java
