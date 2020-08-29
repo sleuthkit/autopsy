@@ -25,10 +25,7 @@ addons:
     - ant-optional
     - libcppunit-dev
     - wget
-    - openjdk-8-jdk
-    - openjfx=8u161-b12-1ubuntu2
-    - libopenjfx-java=8u161-b12-1ubuntu2
-    - libopenjfx-jni=8u161-b12-1ubuntu2
+    - bellsoft-java11-full
   homebrew:
     update: true
     packages:
@@ -53,17 +50,17 @@ install:
 
 before_script:
   - if [ $TRAVIS_OS_NAME = linux ]; then 
-        sudo update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java;
-        sudo update-alternatives --set javac /usr/lib/jvm/java-8-openjdk-amd64/bin/javac;
+        sudo update-alternatives --set java /usr/lib/jvm/bellsoft-java11-full/bin/java;
+        sudo update-alternatives --set javac /usr/lib/jvm/bellsoft-java11-full/bin/javac;
         export PATH=/usr/bin:$PATH; 
         unset JAVA_HOME;
     fi
   - if [ $TRAVIS_OS_NAME = osx ]; then
         brew uninstall java --force;
         brew cask uninstall java --force;
-        brew tap homebrew/cask-versions;
-        brew cask install corretto8;
-        export JAVA_HOME=/Library/Java/JavaVirtualMachines/amazon-corretto-8.jdk/Contents/Home;
+        brew tap bell-sw/liberica;
+        brew cask install liberica-jdk11-full;
+        export JAVA_HOME=/Library/Java/JavaVirtualMachines/liberica-jdk-11.0.8/Contents/Home;
     fi
   - java -version
 
