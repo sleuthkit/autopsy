@@ -25,7 +25,6 @@ addons:
     - ant-optional
     - libcppunit-dev
     - wget
-    - bellsoft-java11-full
   homebrew:
     update: true
     packages:
@@ -50,10 +49,15 @@ install:
 
 before_script:
   - if [ $TRAVIS_OS_NAME = linux ]; then 
-        sudo update-alternatives --set java /usr/lib/jvm/bellsoft-java11-full-amd64/bin/java;
-        sudo update-alternatives --set javac /usr/lib/jvm/bellsoft-java11-full-amd64/bin/javac;
-        export PATH=/usr/bin:$PATH; 
-        unset JAVA_HOME;
+        wget -q -O - https://download.bell-sw.com/pki/GPG-KEY-bellsoft | sudo apt-key add -
+        echo "deb [arch=amd64] https://apt.bell-sw.com/ stable main" | sudo tee /etc/apt/sources.list.d/bellsoft.list
+        sudo apt-get update
+        sudo apt-get install bellsoft-java11-full
+        export JAVA_HOME=/usr/lib/jvm/bellsoft-java11-full-amd64
+        #sudo update-alternatives --set java /usr/lib/jvm/bellsoft-java11-full-amd64/bin/java;
+        #sudo update-alternatives --set javac /usr/lib/jvm/bellsoft-java11-full-amd64/bin/javac;
+        #export PATH=/usr/bin:$PATH; 
+        #unset JAVA_HOME;
     fi
   - if [ $TRAVIS_OS_NAME = osx ]; then
         brew uninstall java --force;
