@@ -67,7 +67,9 @@
 	wget -q -O - https://download.bell-sw.com/pki/GPG-KEY-bellsoft | sudo apt-key add -;
 	echo \"deb [arch=amd64] https://apt.bell-sw.com/ stable main\" | sudo tee /etc/apt/sources.list.d/bellsoft.list; 
 	sudo apt-get update;
-	sudo apt-get install bellsoft-java11-full; 
+	sudo apt-get install bellsoft-java11-full;
+	sudo update-alternatives --set java /usr/lib/jvm/bellsoft-java11-full-amd64/bin/java;
+	sudo update-alternatives --set javac /usr/lib/jvm/bellsoft-java11-full-amd64/bin/javac; 
 	export JAVA_HOME=/usr/lib/jvm/bellsoft-java11-full-amd64; 
     fi",
     "if [ $TRAVIS_OS_NAME = osx ]; then 
