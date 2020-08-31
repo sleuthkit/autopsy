@@ -42,10 +42,7 @@ import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DAT
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_ID;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_MAKE;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_MODEL;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MAC_ADDRESS;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT;
 
 /**
@@ -61,17 +58,13 @@ public class DataSourceUserActivitySummary {
     private static final BlackboardAttribute.Type TYPE_DEVICE_ID = new BlackboardAttribute.Type(TSK_DEVICE_ID);
     private static final BlackboardAttribute.Type TYPE_DEVICE_MAKE = new BlackboardAttribute.Type(TSK_DEVICE_MAKE);
     private static final BlackboardAttribute.Type TYPE_DEVICE_MODEL = new BlackboardAttribute.Type(TSK_DEVICE_MODEL);
-    private static final BlackboardAttribute.Type TYPE_MAC_ADDRESS = new BlackboardAttribute.Type(TSK_MAC_ADDRESS);
     private static final BlackboardAttribute.Type TYPE_MESSAGE_TYPE = new BlackboardAttribute.Type(TSK_MESSAGE_TYPE);
     private static final BlackboardAttribute.Type TYPE_TEXT = new BlackboardAttribute.Type(TSK_TEXT);
-    private static final BlackboardAttribute.Type TYPE_DOMAIN = new BlackboardAttribute.Type(TSK_DOMAIN);
-    private static final BlackboardAttribute.Type TYPE_PROG_NAME = new BlackboardAttribute.Type(TSK_PROG_NAME);
 
-    private static final Comparator<TopAccountResult> TOP_ACCOUNT_RESULT_DATE_COMPARE = (a,b) -> a.getLastAccess().compareTo(b.getLastAccess());
-    private static final Comparator<TopWebSearchResult> TOP_WEBSEARCH_RESULT_DATE_COMPARE = (a,b) -> a.getDateAccessed().compareTo(b.getDateAccessed());
+    private static final Comparator<TopAccountResult> TOP_ACCOUNT_RESULT_DATE_COMPARE = (a, b) -> a.getLastAccess().compareTo(b.getLastAccess());
+    private static final Comparator<TopWebSearchResult> TOP_WEBSEARCH_RESULT_DATE_COMPARE = (a, b) -> a.getDateAccessed().compareTo(b.getDateAccessed());
     private static final String ROOT_HUB_IDENTIFIER = "ROOT_HUB";
-    
-    
+
     private static final long SLEEP_TIME = 5000;
 
     /**
@@ -110,22 +103,58 @@ public class DataSourceUserActivitySummary {
     private final TextTranslationService translationService;
     private final java.util.logging.Logger logger;
 
+    /**
+     * Main constructor.
+     */
     public DataSourceUserActivitySummary() {
         this(SleuthkitCaseProvider.DEFAULT, TextTranslationService.getInstance(),
                 org.sleuthkit.autopsy.coreutils.Logger.getLogger(DataSourceUserActivitySummary.class.getName()));
     }
 
+    /**
+     * Main constructor with external dependencies specified. This constructor
+     * is designed with unit testing in mind since mocked dependencies can be
+     * utilized.
+     *
+     * @param provider           The object providing the current SleuthkitCase.
+     * @param translationService The translation service.
+     * @param logger             The logger to use.
+     */
     public DataSourceUserActivitySummary(SleuthkitCaseProvider provider, TextTranslationService translationService, java.util.logging.Logger logger) {
         this.caseProvider = provider;
         this.translationService = translationService;
         this.logger = logger;
     }
 
-    public List<TopWebSearchResult> getMostRecentWebSearches(DataSource dataSource, int count) throws SleuthkitCaseProviderException, TskCoreException {
+    /**
+     * Throws an IllegalArgumentException if count <= 0.
+     *
+     * @param count The count being checked.
+     */
+    private void assertValidCount(int count) {
         if (count <= 0) {
             throw new IllegalArgumentException("Count must be greater than 0");
         }
-        
+    }
+
+    /**
+     * Retrieves most recent web searches by most recent date grouped by search
+     * term.
+     *
+     * @param dataSource The data source.
+     * @param count      The maximum number of records to be shown (must be >
+     *                   0).
+     *
+     * @return The list of most recent web searches where most recent search
+     *         appears first.
+     *
+     * @throws
+     * org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException
+     * @throws TskCoreException
+     */
+    public List<TopWebSearchResult> getMostRecentWebSearches(DataSource dataSource, int count) throws SleuthkitCaseProviderException, TskCoreException {
+        assertValidCount(count);
+
         List<TopWebSearchResult> results = caseProvider.get().getBlackboard().getArtifacts(TSK_WEB_SEARCH_QUERY.getTypeID(), dataSource.getId())
                 .stream()
                 // get items where search string and date is not null
@@ -135,12 +164,10 @@ public class DataSourceUserActivitySummary {
                     if (StringUtils.isBlank(searchString) || dateAccessed == null) {
                         return null;
                     }
-                    
+
                     return new TopWebSearchResult(
-                        searchString,
-                        dateAccessed,
-                        DataSourceInfoUtilities.getStringOrNull(artifact, TYPE_DOMAIN),
-                        DataSourceInfoUtilities.getStringOrNull(artifact, TYPE_PROG_NAME)
+                            searchString,
+                            dateAccessed
                     );
                 })
                 // remove null records
@@ -156,7 +183,6 @@ public class DataSourceUserActivitySummary {
                 .limit(count)
                 // get as list
                 .collect(Collectors.toList());
-
 
         // get translation if possible
         for (TopWebSearchResult result : results) {
@@ -177,29 +203,59 @@ public class DataSourceUserActivitySummary {
 
         return results;
     }
-    
 
-
+    /**
+     * Retrieves most recent devices used by most recent date attached.
+     *
+     * @param dataSource The data source.
+     * @param count      The maximum number of records to be shown (must be >
+     *                   0).
+     *
+     * @return The list of most recent devices attached where most recent device
+     *         attached appears first.
+     *
+     * @throws
+     * org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException
+     * @throws TskCoreException
+     */
     public List<TopDeviceAttachedResult> getRecentDevices(DataSource dataSource, int count) throws SleuthkitCaseProviderException, TskCoreException {
+        assertValidCount(count);
+
         return DataSourceInfoUtilities.getArtifacts(caseProvider.get(), TYPE_DEVICE_ATTACHED, dataSource, TYPE_DATETIME, SortOrder.DESCENDING, 0)
                 .stream()
-                .map(artifact -> new TopDeviceAttachedResult(
-                        DataSourceInfoUtilities.getStringOrNull(artifact, TYPE_DEVICE_ID),
-                        DataSourceInfoUtilities.getDateOrNull(artifact, TYPE_DATETIME),
-                        DataSourceInfoUtilities.getStringOrNull(artifact, TYPE_DEVICE_MAKE),
-                        DataSourceInfoUtilities.getStringOrNull(artifact, TYPE_DEVICE_MODEL),
-                        DataSourceInfoUtilities.getStringOrNull(artifact, TYPE_MAC_ADDRESS)
-                ))
-                .filter(result -> result.getDeviceModel() == null || !result.getDeviceModel().trim().toUpperCase().equals(ROOT_HUB_IDENTIFIER))
+                .map(artifact -> {
+                    return new TopDeviceAttachedResult(
+                            DataSourceInfoUtilities.getStringOrNull(artifact, TYPE_DEVICE_ID),
+                            DataSourceInfoUtilities.getDateOrNull(artifact, TYPE_DATETIME),
+                            DataSourceInfoUtilities.getStringOrNull(artifact, TYPE_DEVICE_MAKE),
+                            DataSourceInfoUtilities.getStringOrNull(artifact, TYPE_DEVICE_MODEL)
+                    );
+                })
+                // remove Root Hub identifier
+                .filter(result -> result.getDeviceModel() == null
+                || !result.getDeviceModel().trim().toUpperCase().equals(ROOT_HUB_IDENTIFIER))
                 .limit(count)
                 .collect(Collectors.toList());
     }
-    
+
+    /**
+     * Retrieves most recent account used by most recent date for a message
+     * sent.
+     *
+     * @param dataSource The data source.
+     * @param count      The maximum number of records to be shown (must be >
+     *                   0).
+     *
+     * @return The list of most recent accounts used where the most recent
+     *         account by last message sent occurs first.
+     *
+     * @throws
+     * org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException
+     * @throws TskCoreException
+     */
     public List<TopAccountResult> getRecentAccounts(DataSource dataSource, int count) throws SleuthkitCaseProviderException, TskCoreException {
-        if (count <= 0) {
-            throw new IllegalArgumentException("Count must be greater than 0");
-        }
-        
+        assertValidCount(count);
+
         return caseProvider.get().getBlackboard().getArtifacts(TSK_MESSAGE.getTypeID(), dataSource.getId())
                 .stream()
                 // get message type and date (or null if one of those attributes does not exist)
@@ -224,97 +280,141 @@ public class DataSourceUserActivitySummary {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Object containing information about a web search artifact.
+     */
     public static class TopWebSearchResult {
 
         private final String searchString;
         private final Date dateAccessed;
-        private final String domain;
-        private final String programName;
         private String translatedResult;
 
-        public TopWebSearchResult(String searchString, Date dateAccessed, String domain, String programName) {
+        /**
+         * Main constructor.
+         *
+         * @param searchString The search string.
+         * @param dateAccessed The latest date searched.
+         */
+        public TopWebSearchResult(String searchString, Date dateAccessed) {
             this.searchString = searchString;
             this.dateAccessed = dateAccessed;
-            this.domain = domain;
-            this.programName = programName;
         }
 
+        /**
+         * @return The translated result if one was determined.
+         */
         public String getTranslatedResult() {
             return translatedResult;
         }
 
+        /**
+         * Sets the translated result for this web search.
+         *
+         * @param translatedResult The translated result.
+         */
         public void setTranslatedResult(String translatedResult) {
             this.translatedResult = translatedResult;
         }
 
+        /**
+         * @return The search string.
+         */
         public String getSearchString() {
             return searchString;
         }
 
+        /**
+         * @return The date for the search.
+         */
         public Date getDateAccessed() {
             return dateAccessed;
         }
-
-        public String getDomain() {
-            return domain;
-        }
-
-        public String getProgramName() {
-            return programName;
-        }
     }
 
+    /**
+     * A record of a device attached.
+     */
     public static class TopDeviceAttachedResult {
 
         private final String deviceId;
         private final Date dateAccessed;
         private final String deviceMake;
         private final String deviceModel;
-        private final String macAddress;
 
-        public TopDeviceAttachedResult(String deviceId, Date dateAccessed, String deviceMake, String deviceModel, String macAddress) {
+        /**
+         * Main constructor.
+         *
+         * @param deviceId     The device id.
+         * @param dateAccessed The date last attached.
+         * @param deviceMake   The device make.
+         * @param deviceModel  The device model.
+         */
+        public TopDeviceAttachedResult(String deviceId, Date dateAccessed, String deviceMake, String deviceModel) {
             this.deviceId = deviceId;
             this.dateAccessed = dateAccessed;
             this.deviceMake = deviceMake;
             this.deviceModel = deviceModel;
-            this.macAddress = macAddress;
         }
 
+        /**
+         * @return The device id.
+         */
         public String getDeviceId() {
             return deviceId;
         }
 
+        /**
+         * @return The date last attached.
+         */
         public Date getDateAccessed() {
             return dateAccessed;
         }
 
+        /**
+         * @return The device make.
+         */
         public String getDeviceMake() {
             return deviceMake;
         }
 
+        /**
+         * @return The device model.
+         */
         public String getDeviceModel() {
             return deviceModel;
         }
-
-        public String getMacAddress() {
-            return macAddress;
-        }
     }
 
+    /**
+     * A record of an account and the last time it was used determined by
+     * messages.
+     */
     public static class TopAccountResult {
 
         private final String accountType;
         private final Date lastAccess;
 
+        /**
+         * Main constructor.
+         *
+         * @param accountType The account type.
+         * @param lastAccess  The date the account was last accessed.
+         */
         public TopAccountResult(String accountType, Date lastAccess) {
             this.accountType = accountType;
             this.lastAccess = lastAccess;
         }
 
+        /**
+         * @return The account type.
+         */
         public String getAccountType() {
             return accountType;
         }
 
+        /**
+         * @return The date the account was last accessed.
+         */
         public Date getLastAccess() {
             return lastAccess;
         }

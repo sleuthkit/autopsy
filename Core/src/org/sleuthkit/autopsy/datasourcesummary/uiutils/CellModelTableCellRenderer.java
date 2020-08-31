@@ -83,7 +83,7 @@ public class CellModelTableCellRenderer extends DefaultTableCellRenderer {
          * @return The horizontal alignment for the text in the cell.
          */
         HorizontalAlign getHorizontalAlignment();
-        
+
         /**
          * @return The insets for the cell text.
          */
@@ -147,15 +147,17 @@ public class CellModelTableCellRenderer extends DefaultTableCellRenderer {
             this.horizontalAlignment = alignment;
             return this;
         }
-        
+
         @Override
         public Insets getInsets() {
             return insets;
         }
-        
+
         /**
          * Sets the insets for the text within the cell
+         *
          * @param insets The insets.
+         *
          * @return As a utility, returns this.
          */
         public DefaultCellModel setInsets(Insets insets) {
@@ -170,7 +172,7 @@ public class CellModelTableCellRenderer extends DefaultTableCellRenderer {
     }
 
     private static final int DEFAULT_ALIGNMENT = JLabel.LEFT;
-    private static final Border DEFAULT_BORDER = BorderFactory.createEmptyBorder(1,5,1,5);
+    private static final Border DEFAULT_BORDER = BorderFactory.createEmptyBorder(1, 5, 1, 5);
 
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value,
@@ -218,7 +220,7 @@ public class CellModelTableCellRenderer extends DefaultTableCellRenderer {
         } else {
             defaultCell.setBorder(DEFAULT_BORDER);
         }
-        
+
         // sets the JLabel alignment (left, center, right) or default alignment
         // if no alignment is specified
         int alignment = (cellModel.getHorizontalAlignment() == null)

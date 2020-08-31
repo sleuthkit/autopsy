@@ -226,8 +226,8 @@ final class DataSourceInfoUtilities {
      */
     private DataSourceInfoUtilities() {
     }
-    
-     /**
+
+    /**
      * Create a Map of lists of artifacts sorted by the given attribute.
      *
      * @param skCase        SleuthkitCase instance.
@@ -277,12 +277,12 @@ final class DataSourceInfoUtilities {
         List<BlackboardArtifact> artifactList = new ArrayList<>();
 
         for (List<BlackboardArtifact> mapArtifactList : sortedMap.values()) {
-            
+
             if (maxCount == 0 || (artifactList.size() + mapArtifactList.size()) <= maxCount) {
                 artifactList.addAll(mapArtifactList);
                 continue;
             }
-            
+
             if (maxCount == artifactList.size()) {
                 break;
             }
@@ -359,9 +359,16 @@ final class DataSourceInfoUtilities {
             }
         }
     }
-    
-    
-    
+
+    /**
+     * Retrieves attribute from artifact if exists. Returns null if attribute is
+     * null or underlying call throws exception.
+     *
+     * @param artifact      The artifact.
+     * @param attributeType The attribute type to retrieve from the artifact.
+     *
+     * @return The attribute or null if could not be received.
+     */
     private static BlackboardAttribute getAttributeOrNull(BlackboardArtifact artifact, Type attributeType) {
         try {
             return artifact.getAttribute(attributeType);
@@ -369,17 +376,45 @@ final class DataSourceInfoUtilities {
             return null;
         }
     }
-    
+
+    /**
+     * Retrieves the string value of a certain attribute type from an artifact.
+     *
+     * @param artifact      The artifact.
+     * @param attributeType The attribute type.
+     *
+     * @return The 'getValueString()' value or null if the attribute or String
+     *         could not be retrieved.
+     */
     static String getStringOrNull(BlackboardArtifact artifact, Type attributeType) {
         BlackboardAttribute attr = getAttributeOrNull(artifact, attributeType);
         return (attr == null) ? null : attr.getValueString();
     }
-    
+
+    /**
+     * Retrieves the long value of a certain attribute type from an artifact.
+     *
+     * @param artifact      The artifact.
+     * @param attributeType The attribute type.
+     *
+     * @return The 'getValueLong()' value or null if the attribute could not be
+     *         retrieved.
+     */
     static Long getLongOrNull(BlackboardArtifact artifact, Type attributeType) {
         BlackboardAttribute attr = getAttributeOrNull(artifact, attributeType);
         return (attr == null) ? null : attr.getValueLong();
     }
-    
+
+    /**
+     * Retrieves the long value of a certain attribute type from an artifact and
+     * converts to date (seconds since epoch).
+     *
+     * @param artifact      The artifact.
+     * @param attributeType The attribute type.
+     *
+     * @return The date determined from the 'getValueLong()' as seconds from
+     *         epoch or null if the attribute could not be retrieved.
+     */
     static Date getDateOrNull(BlackboardArtifact artifact, Type attributeType) {
         Long longVal = getLongOrNull(artifact, attributeType);
         return (longVal == null) ? null : new Date(longVal * 1000);

@@ -37,7 +37,6 @@ import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourceUserActivityS
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.TopDomainsResult;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.TopProgramsResult;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer.DefaultCellModel;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer.HorizontalAlign;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult;
@@ -50,28 +49,22 @@ import org.sleuthkit.datamodel.DataSource;
  */
 @Messages({
     "DataSourceSummaryUserActivityPanel_tab_title=User Activity",
-    
     "DataSourceSummaryUserActivityPanel_TopProgramsTableModel_name_header=Program",
     "DataSourceSummaryUserActivityPanel_TopProgramsTableModel_folder_header=Folder",
     "DataSourceSummaryUserActivityPanel_TopProgramsTableModel_count_header=Run Times",
     "DataSourceSummaryUserActivityPanel_TopProgramsTableModel_lastrun_header=Last Run",
-    
     "DataSourceSummaryUserActivityPanel_TopDomainsTableModel_domain_header=Domain",
     "DataSourceSummaryUserActivityPanel_TopDomainsTableModel_url_header=URL",
     "DataSourceSummaryUserActivityPanel_TopDomainsTableModel_lastAccess_header=Last Access",
     "DataSourceSummaryUserActivityPanel_noDataExists=No communication data exists",
-    
     "DataSourceSummaryUserActivityPanel_TopWebSearchTableModel_searchString_header=Search String",
     "DataSourceSummaryUserActivityPanel_TopWebSearchTableModel_dateAccessed_header=Date Accessed",
     "DataSourceSummaryUserActivityPanel_TopWebSearchTableModel_translatedResult_header=Translated",
-
     "DataSourceSummaryUserActivityPanel_TopDeviceAttachedTableModel_deviceId_header=Device Id",
     "DataSourceSummaryUserActivityPanel_TopDeviceAttachedTableModel_makeModel_header=Make and Model",
     "DataSourceSummaryUserActivityPanel_TopDeviceAttachedTableModel_dateAccessed_header=Last Accessed",
-
     "DataSourceSummaryUserActivityPanel_TopAccountTableModel_accountType_header=Account Type",
-    "DataSourceSummaryUserActivityPanel_TopAccountTableModel_lastAccess_header=Last Accessed",
-})
+    "DataSourceSummaryUserActivityPanel_TopAccountTableModel_lastAccess_header=Last Accessed",})
 public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPanel {
 
     private static final long serialVersionUID = 1L;
@@ -85,8 +78,7 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPan
     private static String getFormatted(Date date) {
         return date == null ? "" : DATETIME_FORMAT.format(date);
     }
-    
-    
+
     private final JTablePanel<TopProgramsResult> topProgramsTable;
     private final JTablePanel<TopDomainsResult> recentDomainsTable;
     private final JTablePanel<TopWebSearchResult> topWebSearchesTable;
@@ -152,13 +144,11 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPan
                         Bundle.DataSourceSummaryUserActivityPanel_TopDomainsTableModel_domain_header(),
                         (recentDomain) -> new DefaultCellModel(recentDomain.getDomain()),
                         250),
-                
                 // url column
                 new ColumnModel<>(
                         Bundle.DataSourceSummaryUserActivityPanel_TopDomainsTableModel_url_header(),
                         (recentDomain) -> new DefaultCellModel(recentDomain.getUrl()),
                         250),
-                
                 // last accessed column
                 new ColumnModel<>(
                         Bundle.DataSourceSummaryUserActivityPanel_TopDomainsTableModel_lastAccess_header(),
@@ -208,15 +198,15 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPan
                         (device) -> {
                             String make = StringUtils.isBlank(device.getDeviceMake()) ? "" : device.getDeviceMake().trim();
                             String model = StringUtils.isBlank(device.getDeviceModel()) ? "" : device.getDeviceModel().trim();
-                            String makeModelString = (make.isEmpty() || model.isEmpty()) ?
-                                    make + model :
-                                    String.format("%s - %s", make, model);
+                            String makeModelString = (make.isEmpty() || model.isEmpty())
+                            ? make + model
+                            : String.format("%s - %s", make, model);
                             return new DefaultCellModel(makeModelString);
                         },
                         250
                 )
         ));
-        
+
         // top accounts table
         this.topAccountsTable = JTablePanel.getJTablePanel(Arrays.asList(
                 // account type column
@@ -232,8 +222,7 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPan
                         150
                 )
         ));
-              
-                        
+
         this.tables = Arrays.asList(
                 topProgramsTable,
                 recentDomainsTable,
