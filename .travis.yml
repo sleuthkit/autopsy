@@ -65,7 +65,7 @@
   "before_script": [
     "if [ $TRAVIS_OS_NAME = linux ]; then 
 	wget -q -O - https://download.bell-sw.com/pki/GPG-KEY-bellsoft | sudo apt-key add -;
-	echo "deb [arch=amd64] https://apt.bell-sw.com/ stable main" | sudo tee /etc/apt/sources.list.d/bellsoft.list; 
+	echo \"deb [arch=amd64] https://apt.bell-sw.com/ stable main\" | sudo tee /etc/apt/sources.list.d/bellsoft.list; 
 	sudo apt-get update;
 	sudo apt-get install bellsoft-java11-full; 
 	export JAVA_HOME=/usr/lib/jvm/bellsoft-java11-full-amd64; 
