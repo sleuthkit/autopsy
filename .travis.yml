@@ -78,5 +78,6 @@
 	brew cask install liberica-jdk11-full; 
     fi",
     "java -version"
-  ]
+  ],
+  "script": ./travis_build.sh
 }
