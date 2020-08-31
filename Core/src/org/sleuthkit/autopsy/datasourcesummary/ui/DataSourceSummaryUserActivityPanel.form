@@ -97,13 +97,13 @@
               <Properties>
                 <Property name="alignmentX" type="float" value="0.0"/>
                 <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-                  <Dimension value="[700, 187]"/>
+                  <Dimension value="[700, 106]"/>
                 </Property>
                 <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-                  <Dimension value="[700, 187]"/>
+                  <Dimension value="[700, 106]"/>
                 </Property>
                 <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-                  <Dimension value="[700, 187]"/>
+                  <Dimension value="[700, 106]"/>
                 </Property>
               </Properties>
               <AuxValues>
@@ -166,13 +166,13 @@
               <Properties>
                 <Property name="alignmentX" type="float" value="0.0"/>
                 <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-                  <Dimension value="[700, 187]"/>
+                  <Dimension value="[700, 106]"/>
                 </Property>
                 <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-                  <Dimension value="[700, 187]"/>
+                  <Dimension value="[700, 106]"/>
                 </Property>
                 <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-                  <Dimension value="[700, 187]"/>
+                  <Dimension value="[700, 106]"/>
                 </Property>
               </Properties>
               <AuxValues>
@@ -201,11 +201,11 @@
                 <AuxValue name="classDetails" type="java.lang.String" value="Box.Filler.RigidArea"/>
               </AuxValues>
             </Component>
-            <Component class="javax.swing.JLabel" name="recentDomainsLabel1">
+            <Component class="javax.swing.JLabel" name="topWebSearchLabel">
               <Properties>
                 <Property name="horizontalAlignment" type="int" value="2"/>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/datasourcesummary/ui/Bundle.properties" key="DataSourceSummaryUserActivityPanel.recentDomainsLabel1.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/sleuthkit/autopsy/datasourcesummary/ui/Bundle.properties" key="DataSourceSummaryUserActivityPanel.topWebSearchLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
               <AuxValues>
@@ -231,21 +231,21 @@
                 <AuxValue name="classDetails" type="java.lang.String" value="Box.Filler.RigidArea"/>
               </AuxValues>
             </Component>
-            <Container class="javax.swing.JPanel" name="recentDomainsTablePanel1">
+            <Container class="javax.swing.JPanel" name="topWebSearches">
               <Properties>
                 <Property name="alignmentX" type="float" value="0.0"/>
                 <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-                  <Dimension value="[700, 187]"/>
+                  <Dimension value="[700, 106]"/>
                 </Property>
                 <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-                  <Dimension value="[700, 187]"/>
+                  <Dimension value="[700, 106]"/>
                 </Property>
                 <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-                  <Dimension value="[700, 187]"/>
+                  <Dimension value="[700, 106]"/>
                 </Property>
               </Properties>
               <AuxValues>
-                <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="recentDomainsTable"/>
+                <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="topWebSearchesTable"/>
                 <AuxValue name="JavaCodeGenerator_VariableLocal" type="java.lang.Boolean" value="true"/>
                 <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="0"/>
               </AuxValues>
@@ -270,11 +270,11 @@
                 <AuxValue name="classDetails" type="java.lang.String" value="Box.Filler.RigidArea"/>
               </AuxValues>
             </Component>
-            <Component class="javax.swing.JLabel" name="recentDomainsLabel2">
+            <Component class="javax.swing.JLabel" name="topDevicesAttachedLabel">
               <Properties>
                 <Property name="horizontalAlignment" type="int" value="2"/>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/datasourcesummary/ui/Bundle.properties" key="DataSourceSummaryUserActivityPanel.recentDomainsLabel2.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/sleuthkit/autopsy/datasourcesummary/ui/Bundle.properties" key="DataSourceSummaryUserActivityPanel.topDevicesAttachedLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
               <AuxValues>
@@ -300,21 +300,21 @@
                 <AuxValue name="classDetails" type="java.lang.String" value="Box.Filler.RigidArea"/>
               </AuxValues>
             </Component>
-            <Container class="javax.swing.JPanel" name="recentDomainsTablePanel2">
+            <Container class="javax.swing.JPanel" name="recentDevicesAttached">
               <Properties>
                 <Property name="alignmentX" type="float" value="0.0"/>
                 <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-                  <Dimension value="[700, 187]"/>
+                  <Dimension value="[700, 106]"/>
                 </Property>
                 <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-                  <Dimension value="[700, 187]"/>
+                  <Dimension value="[700, 106]"/>
                 </Property>
                 <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-                  <Dimension value="[700, 187]"/>
+                  <Dimension value="[700, 106]"/>
                 </Property>
               </Properties>
               <AuxValues>
-                <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="recentDomainsTable"/>
+                <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="topDevicesAttachedTable"/>
                 <AuxValue name="JavaCodeGenerator_VariableLocal" type="java.lang.Boolean" value="true"/>
                 <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="0"/>
               </AuxValues>
@@ -339,11 +339,11 @@
                 <AuxValue name="classDetails" type="java.lang.String" value="Box.Filler.RigidArea"/>
               </AuxValues>
             </Component>
-            <Component class="javax.swing.JLabel" name="recentDomainsLabel3">
+            <Component class="javax.swing.JLabel" name="recentAccountsLabel">
               <Properties>
                 <Property name="horizontalAlignment" type="int" value="2"/>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/datasourcesummary/ui/Bundle.properties" key="DataSourceSummaryUserActivityPanel.recentDomainsLabel3.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/sleuthkit/autopsy/datasourcesummary/ui/Bundle.properties" key="DataSourceSummaryUserActivityPanel.recentAccountsLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
               <AuxValues>
@@ -369,21 +369,21 @@
                 <AuxValue name="classDetails" type="java.lang.String" value="Box.Filler.RigidArea"/>
               </AuxValues>
             </Component>
-            <Container class="javax.swing.JPanel" name="recentDomainsTablePanel3">
+            <Container class="javax.swing.JPanel" name="topAccounts">
               <Properties>
                 <Property name="alignmentX" type="float" value="0.0"/>
                 <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-                  <Dimension value="[700, 187]"/>
+                  <Dimension value="[700, 106]"/>
                 </Property>
                 <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-                  <Dimension value="[700, 187]"/>
+                  <Dimension value="[700, 106]"/>
                 </Property>
                 <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-                  <Dimension value="[700, 187]"/>
+                  <Dimension value="[700, 106]"/>
                 </Property>
               </Properties>
               <AuxValues>
-                <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="recentDomainsTable"/>
+                <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="topAccountsTable"/>
                 <AuxValue name="JavaCodeGenerator_VariableLocal" type="java.lang.Boolean" value="true"/>
                 <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="0"/>
               </AuxValues>

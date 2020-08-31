@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.datamodel;
 
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
@@ -54,9 +55,7 @@ import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEX
 public class DataSourceUserActivitySummary {
 
     private static final BlackboardArtifact.Type TYPE_DEVICE_ATTACHED = new BlackboardArtifact.Type(TSK_DEVICE_ATTACHED);
-    private static final BlackboardArtifact.Type TYPE_MESSAGE = new BlackboardArtifact.Type(TSK_MESSAGE);
-    private static final BlackboardArtifact.Type TYPE_WEB_SEARCH_QUERY = new BlackboardArtifact.Type(TSK_WEB_SEARCH_QUERY);
-    
+
     private static final BlackboardAttribute.Type TYPE_DATETIME = new BlackboardAttribute.Type(TSK_DATETIME);
     private static final BlackboardAttribute.Type TYPE_DATETIME_ACCESSED = new BlackboardAttribute.Type(TSK_DATETIME_ACCESSED);
     private static final BlackboardAttribute.Type TYPE_DEVICE_ID = new BlackboardAttribute.Type(TSK_DEVICE_ID);
@@ -68,6 +67,11 @@ public class DataSourceUserActivitySummary {
     private static final BlackboardAttribute.Type TYPE_DOMAIN = new BlackboardAttribute.Type(TSK_DOMAIN);
     private static final BlackboardAttribute.Type TYPE_PROG_NAME = new BlackboardAttribute.Type(TSK_PROG_NAME);
 
+    private static final Comparator<TopAccountResult> TOP_ACCOUNT_RESULT_DATE_COMPARE = (a,b) -> a.getLastAccess().compareTo(b.getLastAccess());
+    private static final Comparator<TopWebSearchResult> TOP_WEBSEARCH_RESULT_DATE_COMPARE = (a,b) -> a.getDateAccessed().compareTo(b.getDateAccessed());
+    private static final String ROOT_HUB_IDENTIFIER = "ROOT_HUB";
+    
+    
     private static final long SLEEP_TIME = 5000;
 
     /**
@@ -107,7 +111,7 @@ public class DataSourceUserActivitySummary {
     private final java.util.logging.Logger logger;
 
     public DataSourceUserActivitySummary() {
-        this(SleuthkitCaseProvider.DEFAULT, TextTranslationService.getInstance(), 
+        this(SleuthkitCaseProvider.DEFAULT, TextTranslationService.getInstance(),
                 org.sleuthkit.autopsy.coreutils.Logger.getLogger(DataSourceUserActivitySummary.class.getName()));
     }
 
@@ -118,17 +122,43 @@ public class DataSourceUserActivitySummary {
     }
 
     public List<TopWebSearchResult> getMostRecentWebSearches(DataSource dataSource, int count) throws SleuthkitCaseProviderException, TskCoreException {
-        List<TopWebSearchResult> results =
-                DataSourceInfoUtilities.getArtifacts(caseProvider.get(), TYPE_WEB_SEARCH_QUERY, dataSource, TYPE_DATETIME_ACCESSED, SortOrder.DESCENDING, count)
+        if (count <= 0) {
+            throw new IllegalArgumentException("Count must be greater than 0");
+        }
+        
+        List<TopWebSearchResult> results = caseProvider.get().getBlackboard().getArtifacts(TSK_WEB_SEARCH_QUERY.getTypeID(), dataSource.getId())
                 .stream()
-                .map(artifact -> new TopWebSearchResult(
-                        DataSourceInfoUtilities.getStringOrNull(artifact, TYPE_TEXT),
-                        DataSourceInfoUtilities.getDateOrNull(artifact, TYPE_DATETIME_ACCESSED),
+                // get items where search string and date is not null
+                .map(artifact -> {
+                    String searchString = DataSourceInfoUtilities.getStringOrNull(artifact, TYPE_TEXT);
+                    Date dateAccessed = DataSourceInfoUtilities.getDateOrNull(artifact, TYPE_DATETIME_ACCESSED);
+                    if (StringUtils.isBlank(searchString) || dateAccessed == null) {
+                        return null;
+                    }
+                    
+                    return new TopWebSearchResult(
+                        searchString,
+                        dateAccessed,
                         DataSourceInfoUtilities.getStringOrNull(artifact, TYPE_DOMAIN),
                         DataSourceInfoUtilities.getStringOrNull(artifact, TYPE_PROG_NAME)
-                ))
+                    );
+                })
+                // remove null records
+                .filter(result -> result != null && StringUtils.isNotBlank(result.getSearchString()))
+                // get these messages grouped by search to string
+                .collect(Collectors.groupingBy((result) -> result.getSearchString().toUpperCase()))
+                .entrySet()
+                .stream()
+                // get the most recent access per account type
+                .map((entry) -> entry.getValue().stream().max(TOP_WEBSEARCH_RESULT_DATE_COMPARE).get())
+                // get most recent accounts accessed
+                .sorted(TOP_WEBSEARCH_RESULT_DATE_COMPARE.reversed())
+                .limit(count)
+                // get as list
                 .collect(Collectors.toList());
-        
+
+
+        // get translation if possible
         for (TopWebSearchResult result : results) {
             if (StringUtils.isNotBlank(result.getSearchString()) && translationService.hasProvider()) {
                 String translated = null;
@@ -137,37 +167,60 @@ public class DataSourceUserActivitySummary {
                 } catch (NoServiceProviderException | TranslationException ex) {
                     logger.log(Level.WARNING, String.format("There was an error translating text: '%s'", result.getSearchString()), ex);
                 }
-                
-                if (StringUtils.isNotBlank(translated)) {
-                    result.setTranslatedResult(translated);    
+
+                // set translation if there is a translation and that value differs from original
+                if (StringUtils.isNotBlank(translated) && !translated.toUpperCase().trim().equals(result.getSearchString().toUpperCase())) {
+                    result.setTranslatedResult(translated);
                 }
             }
         }
-        
+
         return results;
     }
+    
+
 
     public List<TopDeviceAttachedResult> getRecentDevices(DataSource dataSource, int count) throws SleuthkitCaseProviderException, TskCoreException {
-        return DataSourceInfoUtilities.getArtifacts(caseProvider.get(), TYPE_DEVICE_ATTACHED, dataSource, TYPE_DATETIME, SortOrder.DESCENDING, count)
+        return DataSourceInfoUtilities.getArtifacts(caseProvider.get(), TYPE_DEVICE_ATTACHED, dataSource, TYPE_DATETIME, SortOrder.DESCENDING, 0)
                 .stream()
                 .map(artifact -> new TopDeviceAttachedResult(
-                DataSourceInfoUtilities.getStringOrNull(artifact, TYPE_DEVICE_ID),
-                DataSourceInfoUtilities.getDateOrNull(artifact, TYPE_DATETIME),
-                DataSourceInfoUtilities.getStringOrNull(artifact, TYPE_DEVICE_MAKE),
-                DataSourceInfoUtilities.getStringOrNull(artifact, TYPE_DEVICE_MODEL),
-                DataSourceInfoUtilities.getStringOrNull(artifact, TYPE_MAC_ADDRESS)
-        ))
+                        DataSourceInfoUtilities.getStringOrNull(artifact, TYPE_DEVICE_ID),
+                        DataSourceInfoUtilities.getDateOrNull(artifact, TYPE_DATETIME),
+                        DataSourceInfoUtilities.getStringOrNull(artifact, TYPE_DEVICE_MAKE),
+                        DataSourceInfoUtilities.getStringOrNull(artifact, TYPE_DEVICE_MODEL),
+                        DataSourceInfoUtilities.getStringOrNull(artifact, TYPE_MAC_ADDRESS)
+                ))
+                .filter(result -> result.getDeviceModel() == null || !result.getDeviceModel().trim().toUpperCase().equals(ROOT_HUB_IDENTIFIER))
+                .limit(count)
                 .collect(Collectors.toList());
     }
-
+    
     public List<TopAccountResult> getRecentAccounts(DataSource dataSource, int count) throws SleuthkitCaseProviderException, TskCoreException {
-        // TODO fix this for groupings
-        return DataSourceInfoUtilities.getArtifacts(caseProvider.get(), TYPE_MESSAGE, dataSource, TYPE_DATETIME, SortOrder.DESCENDING, count)
+        if (count <= 0) {
+            throw new IllegalArgumentException("Count must be greater than 0");
+        }
+        
+        return caseProvider.get().getBlackboard().getArtifacts(TSK_MESSAGE.getTypeID(), dataSource.getId())
                 .stream()
-                .map(artifact -> new TopAccountResult(
-                DataSourceInfoUtilities.getStringOrNull(artifact, TYPE_MESSAGE_TYPE),
-                DataSourceInfoUtilities.getDateOrNull(artifact, TYPE_DATETIME)
-        ))
+                // get message type and date (or null if one of those attributes does not exist)
+                .map(artifact -> {
+                    String type = DataSourceInfoUtilities.getStringOrNull(artifact, TYPE_MESSAGE_TYPE);
+                    Date date = DataSourceInfoUtilities.getDateOrNull(artifact, TYPE_DATETIME);
+                    return (StringUtils.isNotBlank(type) && date != null) ? new TopAccountResult(type, date) : null;
+                })
+                // remove null records
+                .filter(result -> result != null)
+                // get these messages grouped by account type
+                .collect(Collectors.groupingBy(TopAccountResult::getAccountType))
+                .entrySet()
+                .stream()
+                // get the most recent access per account type
+                .map((entry) -> entry.getValue().stream().max(TOP_ACCOUNT_RESULT_DATE_COMPARE).get())
+                // get most recent accounts accessed
+                .sorted(TOP_ACCOUNT_RESULT_DATE_COMPARE.reversed())
+                // limit to count
+                .limit(count)
+                // get as list
                 .collect(Collectors.toList());
     }
 

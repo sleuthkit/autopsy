@@ -135,17 +135,13 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPan
                         Bundle.DataSourceSummaryUserActivityPanel_TopProgramsTableModel_count_header(),
                         (prog) -> {
                             String runTimes = prog.getRunTimes() == null ? "" : Long.toString(prog.getRunTimes());
-                            return new DefaultCellModel(runTimes)
-                                    .setHorizontalAlignment(HorizontalAlign.RIGHT);
+                            return new DefaultCellModel(runTimes);
                         },
                         80),
                 // last run date column
                 new ColumnModel<>(
                         Bundle.DataSourceSummaryUserActivityPanel_TopProgramsTableModel_lastrun_header(),
-                        (prog) -> {
-                            return new DefaultCellModel(getFormatted(prog.getLastRun()))
-                                    .setHorizontalAlignment(HorizontalAlign.RIGHT);
-                        },
+                        (prog) -> new DefaultCellModel(getFormatted(prog.getLastRun())),
                         150)
         ));
 
@@ -166,10 +162,7 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPan
                 // last accessed column
                 new ColumnModel<>(
                         Bundle.DataSourceSummaryUserActivityPanel_TopDomainsTableModel_lastAccess_header(),
-                        (recentDomain) -> {
-                            return new DefaultCellModel(getFormatted(recentDomain.getLastVisit()))
-                                    .setHorizontalAlignment(HorizontalAlign.RIGHT);
-                        },
+                        (recentDomain) -> new DefaultCellModel(getFormatted(recentDomain.getLastVisit())),
                         150)
         ));
 
@@ -184,8 +177,7 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPan
                 // last accessed
                 new ColumnModel<>(
                         Bundle.DataSourceSummaryUserActivityPanel_TopWebSearchTableModel_dateAccessed_header(),
-                        (webSearch) -> new DefaultCellModel(getFormatted(webSearch.getDateAccessed()))
-                                .setHorizontalAlignment(HorizontalAlign.RIGHT),
+                        (webSearch) -> new DefaultCellModel(getFormatted(webSearch.getDateAccessed())),
                         150
                 ),
                 // translated value
@@ -207,8 +199,7 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPan
                 // last accessed
                 new ColumnModel<>(
                         Bundle.DataSourceSummaryUserActivityPanel_TopDeviceAttachedTableModel_dateAccessed_header(),
-                        (device) -> new DefaultCellModel(getFormatted(device.getDateAccessed()))
-                                .setHorizontalAlignment(HorizontalAlign.RIGHT),
+                        (device) -> new DefaultCellModel(getFormatted(device.getDateAccessed())),
                         150
                 ),
                 // make and model
@@ -237,8 +228,7 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPan
                 // last accessed
                 new ColumnModel<>(
                         Bundle.DataSourceSummaryUserActivityPanel_TopAccountTableModel_lastAccess_header(),
-                        (account) -> new DefaultCellModel(getFormatted(account.getLastAccess()))
-                                .setHorizontalAlignment(HorizontalAlign.RIGHT),
+                        (account) -> new DefaultCellModel(getFormatted(account.getLastAccess())),
                         150
                 )
         ));
@@ -255,27 +245,27 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPan
         // set up data acquisition methods
         dataFetchComponents = Arrays.asList(
                 // top programs query
-                new DataFetchComponents<DataSource, List<TopProgramsResult>>(
+                new DataFetchComponents<>(
                         (dataSource) -> topProgramsData.getTopPrograms(dataSource, TOP_PROGS_COUNT),
                         (result) -> topProgramsTable.showDataFetchResult(result, JTablePanel.getDefaultErrorMessage(),
                                 Bundle.DataSourceSummaryUserActivityPanel_noDataExists())),
                 // top domains query
-                new DataFetchComponents<DataSource, List<TopDomainsResult>>(
+                new DataFetchComponents<>(
                         (dataSource) -> topDomainsData.getRecentDomains(dataSource, TOP_DOMAINS_COUNT),
                         (result) -> recentDomainsTable.showDataFetchResult(result, JTablePanel.getDefaultErrorMessage(),
                                 Bundle.DataSourceSummaryUserActivityPanel_noDataExists())),
                 // top web searches query
-                new DataFetchComponents<DataSource, List<TopWebSearchResult>>(
+                new DataFetchComponents<>(
                         (dataSource) -> topDomainsData.getMostRecentWebSearches(dataSource, TOP_SEARCHES_COUNT),
                         (result) -> topWebSearchesTable.showDataFetchResult(result, JTablePanel.getDefaultErrorMessage(),
                                 Bundle.DataSourceSummaryUserActivityPanel_noDataExists())),
                 // top devices query
-                new DataFetchComponents<DataSource, List<TopDeviceAttachedResult>>(
+                new DataFetchComponents<>(
                         (dataSource) -> topDomainsData.getRecentDevices(dataSource, TOP_DEVICES_COUNT),
                         (result) -> topDevicesAttachedTable.showDataFetchResult(result, JTablePanel.getDefaultErrorMessage(),
                                 Bundle.DataSourceSummaryUserActivityPanel_noDataExists())),
                 // top accounts query
-                new DataFetchComponents<DataSource, List<TopAccountResult>>(
+                new DataFetchComponents<>(
                         (dataSource) -> topDomainsData.getRecentAccounts(dataSource, TOP_ACCOUNTS_COUNT),
                         (result) -> topAccountsTable.showDataFetchResult(result, JTablePanel.getDefaultErrorMessage(),
                                 Bundle.DataSourceSummaryUserActivityPanel_noDataExists()))
@@ -326,17 +316,17 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPan
         javax.swing.Box.Filler filler2 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2));
         javax.swing.JPanel recentDomainsTablePanel = recentDomainsTable;
         javax.swing.Box.Filler filler4 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 20), new java.awt.Dimension(0, 20), new java.awt.Dimension(0, 20));
-        javax.swing.JLabel recentDomainsLabel1 = new javax.swing.JLabel();
+        javax.swing.JLabel topWebSearchLabel = new javax.swing.JLabel();
         javax.swing.Box.Filler filler5 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2));
-        javax.swing.JPanel recentDomainsTablePanel1 = recentDomainsTable;
+        javax.swing.JPanel topWebSearches = topWebSearchesTable;
         javax.swing.Box.Filler filler6 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 20), new java.awt.Dimension(0, 20), new java.awt.Dimension(0, 20));
-        javax.swing.JLabel recentDomainsLabel2 = new javax.swing.JLabel();
+        javax.swing.JLabel topDevicesAttachedLabel = new javax.swing.JLabel();
         javax.swing.Box.Filler filler7 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2));
-        javax.swing.JPanel recentDomainsTablePanel2 = recentDomainsTable;
+        javax.swing.JPanel recentDevicesAttached = topDevicesAttachedTable;
         javax.swing.Box.Filler filler8 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 20), new java.awt.Dimension(0, 20), new java.awt.Dimension(0, 20));
-        javax.swing.JLabel recentDomainsLabel3 = new javax.swing.JLabel();
+        javax.swing.JLabel recentAccountsLabel = new javax.swing.JLabel();
         javax.swing.Box.Filler filler9 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2));
-        javax.swing.JPanel recentDomainsTablePanel3 = recentDomainsTable;
+        javax.swing.JPanel topAccounts = topAccountsTable;
 
         setLayout(new java.awt.BorderLayout());
 
@@ -355,9 +345,9 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPan
         contentPanel.add(filler1);
 
         topProgramsTablePanel.setAlignmentX(0.0F);
-        topProgramsTablePanel.setMaximumSize(new java.awt.Dimension(700, 187));
-        topProgramsTablePanel.setMinimumSize(new java.awt.Dimension(700, 187));
-        topProgramsTablePanel.setPreferredSize(new java.awt.Dimension(700, 187));
+        topProgramsTablePanel.setMaximumSize(new java.awt.Dimension(700, 106));
+        topProgramsTablePanel.setMinimumSize(new java.awt.Dimension(700, 106));
+        topProgramsTablePanel.setPreferredSize(new java.awt.Dimension(700, 106));
         contentPanel.add(topProgramsTablePanel);
         contentPanel.add(filler3);
 
@@ -367,46 +357,46 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPan
         contentPanel.add(filler2);
 
         recentDomainsTablePanel.setAlignmentX(0.0F);
-        recentDomainsTablePanel.setMaximumSize(new java.awt.Dimension(700, 187));
-        recentDomainsTablePanel.setMinimumSize(new java.awt.Dimension(700, 187));
-        recentDomainsTablePanel.setPreferredSize(new java.awt.Dimension(700, 187));
+        recentDomainsTablePanel.setMaximumSize(new java.awt.Dimension(700, 106));
+        recentDomainsTablePanel.setMinimumSize(new java.awt.Dimension(700, 106));
+        recentDomainsTablePanel.setPreferredSize(new java.awt.Dimension(700, 106));
         contentPanel.add(recentDomainsTablePanel);
         contentPanel.add(filler4);
 
-        recentDomainsLabel1.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        org.openide.awt.Mnemonics.setLocalizedText(recentDomainsLabel1, org.openide.util.NbBundle.getMessage(DataSourceSummaryUserActivityPanel.class, "DataSourceSummaryUserActivityPanel.recentDomainsLabel1.text")); // NOI18N
-        contentPanel.add(recentDomainsLabel1);
+        topWebSearchLabel.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        org.openide.awt.Mnemonics.setLocalizedText(topWebSearchLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryUserActivityPanel.class, "DataSourceSummaryUserActivityPanel.topWebSearchLabel.text")); // NOI18N
+        contentPanel.add(topWebSearchLabel);
         contentPanel.add(filler5);
 
-        recentDomainsTablePanel1.setAlignmentX(0.0F);
-        recentDomainsTablePanel1.setMaximumSize(new java.awt.Dimension(700, 187));
-        recentDomainsTablePanel1.setMinimumSize(new java.awt.Dimension(700, 187));
-        recentDomainsTablePanel1.setPreferredSize(new java.awt.Dimension(700, 187));
-        contentPanel.add(recentDomainsTablePanel1);
+        topWebSearches.setAlignmentX(0.0F);
+        topWebSearches.setMaximumSize(new java.awt.Dimension(700, 106));
+        topWebSearches.setMinimumSize(new java.awt.Dimension(700, 106));
+        topWebSearches.setPreferredSize(new java.awt.Dimension(700, 106));
+        contentPanel.add(topWebSearches);
         contentPanel.add(filler6);
 
-        recentDomainsLabel2.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        org.openide.awt.Mnemonics.setLocalizedText(recentDomainsLabel2, org.openide.util.NbBundle.getMessage(DataSourceSummaryUserActivityPanel.class, "DataSourceSummaryUserActivityPanel.recentDomainsLabel2.text")); // NOI18N
-        contentPanel.add(recentDomainsLabel2);
+        topDevicesAttachedLabel.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        org.openide.awt.Mnemonics.setLocalizedText(topDevicesAttachedLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryUserActivityPanel.class, "DataSourceSummaryUserActivityPanel.topDevicesAttachedLabel.text")); // NOI18N
+        contentPanel.add(topDevicesAttachedLabel);
         contentPanel.add(filler7);
 
-        recentDomainsTablePanel2.setAlignmentX(0.0F);
-        recentDomainsTablePanel2.setMaximumSize(new java.awt.Dimension(700, 187));
-        recentDomainsTablePanel2.setMinimumSize(new java.awt.Dimension(700, 187));
-        recentDomainsTablePanel2.setPreferredSize(new java.awt.Dimension(700, 187));
-        contentPanel.add(recentDomainsTablePanel2);
+        recentDevicesAttached.setAlignmentX(0.0F);
+        recentDevicesAttached.setMaximumSize(new java.awt.Dimension(700, 106));
+        recentDevicesAttached.setMinimumSize(new java.awt.Dimension(700, 106));
+        recentDevicesAttached.setPreferredSize(new java.awt.Dimension(700, 106));
+        contentPanel.add(recentDevicesAttached);
         contentPanel.add(filler8);
 
-        recentDomainsLabel3.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        org.openide.awt.Mnemonics.setLocalizedText(recentDomainsLabel3, org.openide.util.NbBundle.getMessage(DataSourceSummaryUserActivityPanel.class, "DataSourceSummaryUserActivityPanel.recentDomainsLabel3.text")); // NOI18N
-        contentPanel.add(recentDomainsLabel3);
+        recentAccountsLabel.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        org.openide.awt.Mnemonics.setLocalizedText(recentAccountsLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryUserActivityPanel.class, "DataSourceSummaryUserActivityPanel.recentAccountsLabel.text")); // NOI18N
+        contentPanel.add(recentAccountsLabel);
         contentPanel.add(filler9);
 
-        recentDomainsTablePanel3.setAlignmentX(0.0F);
-        recentDomainsTablePanel3.setMaximumSize(new java.awt.Dimension(700, 187));
-        recentDomainsTablePanel3.setMinimumSize(new java.awt.Dimension(700, 187));
-        recentDomainsTablePanel3.setPreferredSize(new java.awt.Dimension(700, 187));
-        contentPanel.add(recentDomainsTablePanel3);
+        topAccounts.setAlignmentX(0.0F);
+        topAccounts.setMaximumSize(new java.awt.Dimension(700, 106));
+        topAccounts.setMinimumSize(new java.awt.Dimension(700, 106));
+        topAccounts.setPreferredSize(new java.awt.Dimension(700, 106));
+        contentPanel.add(topAccounts);
 
         contentScrollPane.setViewportView(contentPanel);
 
