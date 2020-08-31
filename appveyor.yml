@@ -19,7 +19,7 @@ environment:
 install:
   - ps: choco install nuget.commandline
   - ps: choco install ant --ignore-dependencies
-  - ps: choco install liberica11jdkfull
+  - ps: choco install liberica11jdkfull --force
   - git clone https://github.com/sleuthkit/sleuthkit
   - ps: $env:Path="$($env:JAVA_HOME)\bin;$($env:Path);C:\ProgramData\chocolatey\lib\ant"
   - set PATH=C:\Python36-x64\';%PATH%
