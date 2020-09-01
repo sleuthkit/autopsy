@@ -101,7 +101,10 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPan
      * @param topProgramsData Class from which to obtain top programs data.
      * @param topDomainsData  Class from which to obtain recent domains data.
      */
-    public DataSourceSummaryUserActivityPanel(DataSourceTopProgramsSummary topProgramsData, DataSourceUserActivitySummary topDomainsData) {
+    public DataSourceSummaryUserActivityPanel(
+            DataSourceTopProgramsSummary topProgramsData,
+            DataSourceUserActivitySummary topDomainsData) {
+
         // set up recent programs table 
         this.topProgramsTable = JTablePanel.getJTablePanel(Arrays.asList(
                 // program name column

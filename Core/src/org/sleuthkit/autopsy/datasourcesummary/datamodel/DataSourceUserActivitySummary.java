@@ -27,23 +27,14 @@ import java.util.stream.IntStream;
 import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskCoreException;
-import static org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourceInfoUtilities.SortOrder;
 import org.sleuthkit.autopsy.texttranslation.NoServiceProviderException;
 import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
 import org.sleuthkit.autopsy.texttranslation.TranslationException;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_ID;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_MAKE;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_MODEL;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 
 /**
  * Provides summary information about user activity in a datasource. At this
@@ -52,15 +43,15 @@ import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEX
  */
 public class DataSourceUserActivitySummary {
 
-    private static final BlackboardArtifact.Type TYPE_DEVICE_ATTACHED = new BlackboardArtifact.Type(TSK_DEVICE_ATTACHED);
+    private static final BlackboardArtifact.Type TYPE_DEVICE_ATTACHED = new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_DEVICE_ATTACHED);
 
-    private static final BlackboardAttribute.Type TYPE_DATETIME = new BlackboardAttribute.Type(TSK_DATETIME);
-    private static final BlackboardAttribute.Type TYPE_DATETIME_ACCESSED = new BlackboardAttribute.Type(TSK_DATETIME_ACCESSED);
-    private static final BlackboardAttribute.Type TYPE_DEVICE_ID = new BlackboardAttribute.Type(TSK_DEVICE_ID);
-    private static final BlackboardAttribute.Type TYPE_DEVICE_MAKE = new BlackboardAttribute.Type(TSK_DEVICE_MAKE);
-    private static final BlackboardAttribute.Type TYPE_DEVICE_MODEL = new BlackboardAttribute.Type(TSK_DEVICE_MODEL);
-    private static final BlackboardAttribute.Type TYPE_MESSAGE_TYPE = new BlackboardAttribute.Type(TSK_MESSAGE_TYPE);
-    private static final BlackboardAttribute.Type TYPE_TEXT = new BlackboardAttribute.Type(TSK_TEXT);
+    private static final BlackboardAttribute.Type TYPE_DATETIME = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DATETIME);
+    private static final BlackboardAttribute.Type TYPE_DATETIME_ACCESSED = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED);
+    private static final BlackboardAttribute.Type TYPE_DEVICE_ID = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DEVICE_ID);
+    private static final BlackboardAttribute.Type TYPE_DEVICE_MAKE = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DEVICE_MAKE);
+    private static final BlackboardAttribute.Type TYPE_DEVICE_MODEL = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL);
+    private static final BlackboardAttribute.Type TYPE_MESSAGE_TYPE = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE);
+    private static final BlackboardAttribute.Type TYPE_TEXT = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_TEXT);
 
     private static final Comparator<TopAccountResult> TOP_ACCOUNT_RESULT_DATE_COMPARE = (a, b) -> a.getLastAccess().compareTo(b.getLastAccess());
     private static final Comparator<TopWebSearchResult> TOP_WEBSEARCH_RESULT_DATE_COMPARE = (a, b) -> a.getDateAccessed().compareTo(b.getDateAccessed());
@@ -121,7 +112,11 @@ public class DataSourceUserActivitySummary {
      * @param translationService The translation service.
      * @param logger             The logger to use.
      */
-    public DataSourceUserActivitySummary(SleuthkitCaseProvider provider, TextTranslationService translationService, java.util.logging.Logger logger) {
+    public DataSourceUserActivitySummary(
+            SleuthkitCaseProvider provider,
+            TextTranslationService translationService,
+            java.util.logging.Logger logger) {
+
         this.caseProvider = provider;
         this.translationService = translationService;
         this.logger = logger;
@@ -156,7 +151,7 @@ public class DataSourceUserActivitySummary {
     public List<TopWebSearchResult> getMostRecentWebSearches(DataSource dataSource, int count) throws SleuthkitCaseProviderException, TskCoreException {
         assertValidCount(count);
 
-        List<TopWebSearchResult> results = caseProvider.get().getBlackboard().getArtifacts(TSK_WEB_SEARCH_QUERY.getTypeID(), dataSource.getId())
+        List<TopWebSearchResult> results = caseProvider.get().getBlackboard().getArtifacts(ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getTypeID(), dataSource.getId())
                 .stream()
                 // get items where search string and date is not null
                 .map(artifact -> {
@@ -180,37 +175,45 @@ public class DataSourceUserActivitySummary {
                 // get as list
                 .collect(Collectors.toList());
 
-        retrieveTranslations(results);
+        // get translation if possible
+        if (translationService.hasProvider()) {
+            for (TopWebSearchResult result : results) {
+                result.setTranslatedResult(getTranslationOrNull(result.getSearchString()));
+            }
+        }
 
         return results;
     }
 
     /**
-     * Retrieve translations for each of the TopWebSearchResult items and sets
-     * each object's translation if a translation that differs from the original
-     * text exists.
+     * Return the translation of the original text if possible and differs from
+     * the original. Otherwise, return null.
      *
-     * @param results The results.
+     * @param original The original text.
+     *
+     * @return The translated text or null if no translation can be determined
+     *         or exists.
      */
-    private void retrieveTranslations(List<TopWebSearchResult> results) {
-        // get translation if possible
-        if (translationService.hasProvider() && results != null) {
-            for (TopWebSearchResult result : results) {
-                if (StringUtils.isNotBlank(result.getSearchString())) {
-                    String translated = null;
-                    try {
-                        translated = translationService.translate(result.getSearchString());
-                    } catch (NoServiceProviderException | TranslationException ex) {
-                        logger.log(Level.WARNING, String.format("There was an error translating text: '%s'", result.getSearchString()), ex);
-                    }
-
-                    // set translation if there is a translation and that value differs from original
-                    if (StringUtils.isNotBlank(translated) && !translated.toUpperCase().trim().equals(result.getSearchString().toUpperCase())) {
-                        result.setTranslatedResult(translated);
-                    }
-                }
-            }
+    private String getTranslationOrNull(String original) {
+        if (!translationService.hasProvider() || StringUtils.isBlank(original)) {
+            return null;
         }
+
+        String translated = null;
+        try {
+            translated = translationService.translate(original);
+        } catch (NoServiceProviderException | TranslationException ex) {
+            logger.log(Level.WARNING, String.format("There was an error translating text: '%s'", original), ex);
+        }
+
+        // if there is no translation or the translation is the same as the original, return null.
+        if (StringUtils.isBlank(translated)
+                || translated.toUpperCase().trim().equals(original.toUpperCase().trim())) {
+
+            return null;
+        }
+
+        return translated;
     }
 
     /**
@@ -230,7 +233,8 @@ public class DataSourceUserActivitySummary {
     public List<TopDeviceAttachedResult> getRecentDevices(DataSource dataSource, int count) throws SleuthkitCaseProviderException, TskCoreException {
         assertValidCount(count);
 
-        return DataSourceInfoUtilities.getArtifacts(caseProvider.get(), TYPE_DEVICE_ATTACHED, dataSource, TYPE_DATETIME, SortOrder.DESCENDING, 0)
+        return DataSourceInfoUtilities.getArtifacts(caseProvider.get(), TYPE_DEVICE_ATTACHED,
+                dataSource, TYPE_DATETIME, DataSourceInfoUtilities.SortOrder.DESCENDING, 0)
                 .stream()
                 .map(artifact -> {
                     return new TopDeviceAttachedResult(
@@ -267,7 +271,7 @@ public class DataSourceUserActivitySummary {
     public List<TopAccountResult> getRecentAccounts(DataSource dataSource, int count) throws SleuthkitCaseProviderException, TskCoreException {
         assertValidCount(count);
 
-        return caseProvider.get().getBlackboard().getArtifacts(TSK_MESSAGE.getTypeID(), dataSource.getId())
+        return caseProvider.get().getBlackboard().getArtifacts(ARTIFACT_TYPE.TSK_MESSAGE.getTypeID(), dataSource.getId())
                 .stream()
                 // get message type and date (or null if one of those attributes does not exist)
                 .map(artifact -> {
