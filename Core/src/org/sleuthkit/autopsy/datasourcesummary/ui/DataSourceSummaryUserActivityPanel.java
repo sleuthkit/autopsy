@@ -48,24 +48,24 @@ import org.sleuthkit.datamodel.DataSource;
  * A panel to display user activity.
  */
 @Messages({
-    "DataSourceUserActivityPanel_tab_title=User Activity",
-    "DataSourceUserActivityPanel_TopProgramsTableModel_name_header=Program",
-    "DataSourceUserActivityPanel_TopProgramsTableModel_folder_header=Folder",
-    "DataSourceUserActivityPanel_TopProgramsTableModel_count_header=Run Times",
-    "DataSourceUserActivityPanel_TopProgramsTableModel_lastrun_header=Last Run",
-    "DataSourceUserActivityPanel_TopDomainsTableModel_domain_header=Domain",
-    "DataSourceUserActivityPanel_TopDomainsTableModel_url_header=URL",
-    "DataSourceUserActivityPanel_TopDomainsTableModel_lastAccess_header=Last Access",
-    "DataSourceUserActivityPanel_noDataExists=No communication data exists",
-    "DataSourceUserActivityPanel_TopWebSearchTableModel_searchString_header=Search String",
-    "DataSourceUserActivityPanel_TopWebSearchTableModel_dateAccessed_header=Date Accessed",
-    "DataSourceUserActivityPanel_TopWebSearchTableModel_translatedResult_header=Translated",
-    "DataSourceUserActivityPanel_TopDeviceAttachedTableModel_deviceId_header=Device Id",
-    "DataSourceUserActivityPanel_TopDeviceAttachedTableModel_makeModel_header=Make and Model",
-    "DataSourceUserActivityPanel_TopDeviceAttachedTableModel_dateAccessed_header=Last Accessed",
-    "DataSourceUserActivityPanel_TopAccountTableModel_accountType_header=Account Type",
-    "DataSourceUserActivityPanel_TopAccountTableModel_lastAccess_header=Last Accessed",})
-public class DataSourceUserActivityPanel extends BaseDataSourceSummaryPanel {
+    "DataSourceSummaryUserActivityPanel_tab_title=User Activity",
+    "DataSourceSummaryUserActivityPanel_TopProgramsTableModel_name_header=Program",
+    "DataSourceSummaryUserActivityPanel_TopProgramsTableModel_folder_header=Folder",
+    "DataSourceSummaryUserActivityPanel_TopProgramsTableModel_count_header=Run Times",
+    "DataSourceSummaryUserActivityPanel_TopProgramsTableModel_lastrun_header=Last Run",
+    "DataSourceSummaryUserActivityPanel_TopDomainsTableModel_domain_header=Domain",
+    "DataSourceSummaryUserActivityPanel_TopDomainsTableModel_url_header=URL",
+    "DataSourceSummaryUserActivityPanel_TopDomainsTableModel_lastAccess_header=Last Access",
+    "DataSourceSummaryUserActivityPanel_noDataExists=No communication data exists",
+    "DataSourceSummaryUserActivityPanel_TopWebSearchTableModel_searchString_header=Search String",
+    "DataSourceSummaryUserActivityPanel_TopWebSearchTableModel_dateAccessed_header=Date Accessed",
+    "DataSourceSummaryUserActivityPanel_TopWebSearchTableModel_translatedResult_header=Translated",
+    "DataSourceSummaryUserActivityPanel_TopDeviceAttachedTableModel_deviceId_header=Device Id",
+    "DataSourceSummaryUserActivityPanel_TopDeviceAttachedTableModel_makeModel_header=Make and Model",
+    "DataSourceSummaryUserActivityPanel_TopDeviceAttachedTableModel_dateAccessed_header=Last Accessed",
+    "DataSourceSummaryUserActivityPanel_TopAccountTableModel_accountType_header=Account Type",
+    "DataSourceSummaryUserActivityPanel_TopAccountTableModel_lastAccess_header=Last Accessed",})
+public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPanel {
 
     private static final long serialVersionUID = 1L;
     private static final DateFormat DATETIME_FORMAT = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss", Locale.getDefault());
@@ -75,195 +75,211 @@ public class DataSourceUserActivityPanel extends BaseDataSourceSummaryPanel {
     private static final int TOP_ACCOUNTS_COUNT = 5;
     private static final int TOP_DEVICES_COUNT = 10;
 
+    /**
+     * Gets a string formatted date or returns empty string if the date is null.
+     *
+     * @param date The date.
+     *
+     * @return The formatted date string or empty string if the date is null.
+     */
     private static String getFormatted(Date date) {
         return date == null ? "" : DATETIME_FORMAT.format(date);
     }
 
-    private final JTablePanel<TopProgramsResult> topProgramsTable;
-    private final JTablePanel<TopDomainsResult> recentDomainsTable;
-    private final JTablePanel<TopWebSearchResult> topWebSearchesTable;
-    private final JTablePanel<TopDeviceAttachedResult> topDevicesAttachedTable;
-    private final JTablePanel<TopAccountResult> topAccountsTable;
+    // set up recent programs table 
+    private final JTablePanel<TopProgramsResult> topProgramsTable = JTablePanel.getJTablePanel(Arrays.asList(
+            // program name column
+            new ColumnModel<>(
+                    Bundle.DataSourceSummaryUserActivityPanel_TopProgramsTableModel_name_header(),
+                    (prog) -> {
+                        return new DefaultCellModel(prog.getProgramName())
+                                .setTooltip(prog.getProgramPath());
+                    },
+                    250),
+            // program folder column
+            new ColumnModel<>(
+                    Bundle.DataSourceSummaryUserActivityPanel_TopProgramsTableModel_folder_header(),
+                    (prog) -> {
+                        return new DefaultCellModel(
+                                getShortFolderName(
+                                        prog.getProgramPath(),
+                                        prog.getProgramName()));
+                    },
+                    150),
+            // run count column
+            new ColumnModel<>(
+                    Bundle.DataSourceSummaryUserActivityPanel_TopProgramsTableModel_count_header(),
+                    (prog) -> {
+                        String runTimes = prog.getRunTimes() == null ? "" : Long.toString(prog.getRunTimes());
+                        return new DefaultCellModel(runTimes);
+                    },
+                    80),
+            // last run date column
+            new ColumnModel<>(
+                    Bundle.DataSourceSummaryUserActivityPanel_TopProgramsTableModel_lastrun_header(),
+                    (prog) -> new DefaultCellModel(getFormatted(prog.getLastRun())),
+                    150)
+    ));
+
+    // set up recent domains table
+    private final JTablePanel<TopDomainsResult> recentDomainsTable = JTablePanel.getJTablePanel(Arrays.asList(
+            // domain column
+            new ColumnModel<>(
+                    Bundle.DataSourceSummaryUserActivityPanel_TopDomainsTableModel_domain_header(),
+                    (recentDomain) -> new DefaultCellModel(recentDomain.getDomain()),
+                    250),
+            // url column
+            new ColumnModel<>(
+                    Bundle.DataSourceSummaryUserActivityPanel_TopDomainsTableModel_url_header(),
+                    (recentDomain) -> new DefaultCellModel(recentDomain.getUrl()),
+                    250),
+            // last accessed column
+            new ColumnModel<>(
+                    Bundle.DataSourceSummaryUserActivityPanel_TopDomainsTableModel_lastAccess_header(),
+                    (recentDomain) -> new DefaultCellModel(getFormatted(recentDomain.getLastVisit())),
+                    150)
+    ));
+
+    // top web searches table
+    private final JTablePanel<TopWebSearchResult> topWebSearchesTable = JTablePanel.getJTablePanel(Arrays.asList(
+            // search string column
+            new ColumnModel<>(
+                    Bundle.DataSourceSummaryUserActivityPanel_TopWebSearchTableModel_searchString_header(),
+                    (webSearch) -> new DefaultCellModel(webSearch.getSearchString()),
+                    250
+            ),
+            // last accessed
+            new ColumnModel<>(
+                    Bundle.DataSourceSummaryUserActivityPanel_TopWebSearchTableModel_dateAccessed_header(),
+                    (webSearch) -> new DefaultCellModel(getFormatted(webSearch.getDateAccessed())),
+                    150
+            ),
+            // translated value
+            new ColumnModel<>(
+                    Bundle.DataSourceSummaryUserActivityPanel_TopWebSearchTableModel_translatedResult_header(),
+                    (webSearch) -> new DefaultCellModel(webSearch.getTranslatedResult()),
+                    250
+            )
+    ));
+
+    // top devices attached table
+    private final JTablePanel<TopDeviceAttachedResult> topDevicesAttachedTable = JTablePanel.getJTablePanel(Arrays.asList(
+            // device id column
+            new ColumnModel<>(
+                    Bundle.DataSourceSummaryUserActivityPanel_TopDeviceAttachedTableModel_deviceId_header(),
+                    (device) -> new DefaultCellModel(device.getDeviceId()),
+                    250
+            ),
+            // last accessed
+            new ColumnModel<>(
+                    Bundle.DataSourceSummaryUserActivityPanel_TopDeviceAttachedTableModel_dateAccessed_header(),
+                    (device) -> new DefaultCellModel(getFormatted(device.getDateAccessed())),
+                    150
+            ),
+            // make and model
+            new ColumnModel<>(
+                    Bundle.DataSourceSummaryUserActivityPanel_TopDeviceAttachedTableModel_makeModel_header(),
+                    (device) -> {
+                        String make = StringUtils.isBlank(device.getDeviceMake()) ? "" : device.getDeviceMake().trim();
+                        String model = StringUtils.isBlank(device.getDeviceModel()) ? "" : device.getDeviceModel().trim();
+                        String makeModelString = (make.isEmpty() || model.isEmpty())
+                        ? make + model
+                        : String.format("%s - %s", make, model);
+                        return new DefaultCellModel(makeModelString);
+                    },
+                    250
+            )
+    ));
+
+    // top accounts table
+    private final JTablePanel<TopAccountResult> topAccountsTable = JTablePanel.getJTablePanel(Arrays.asList(
+            // account type column
+            new ColumnModel<>(
+                    Bundle.DataSourceSummaryUserActivityPanel_TopAccountTableModel_accountType_header(),
+                    (account) -> new DefaultCellModel(account.getAccountType()),
+                    250
+            ),
+            // last accessed
+            new ColumnModel<>(
+                    Bundle.DataSourceSummaryUserActivityPanel_TopAccountTableModel_lastAccess_header(),
+                    (account) -> new DefaultCellModel(getFormatted(account.getLastAccess())),
+                    150
+            )
+    ));
+
+    private final List<JTablePanel<?>> tables = Arrays.asList(
+            topProgramsTable,
+            recentDomainsTable,
+            topWebSearchesTable,
+            topDevicesAttachedTable,
+            topAccountsTable
+    );
 
     private final List<DataFetchComponents<DataSource, ?>> dataFetchComponents;
-    private final List<JTablePanel<?>> tables;
+    private final DataSourceTopProgramsSummary topProgramsData;
 
     /**
-     * Creates a new DataSourceUserActivityPanel.
+     * Creates a new DataSourceSummaryUserActivityPanel.
      */
-    public DataSourceUserActivityPanel() {
+    public DataSourceSummaryUserActivityPanel() {
         this(new DataSourceTopProgramsSummary(), new DataSourceUserActivitySummary());
     }
 
     /**
-     * Creates a new DataSourceUserActivityPanel.
+     * Creates a new DataSourceSummaryUserActivityPanel.
      *
-     * @param topProgramsData Class from which to obtain top programs data.
-     * @param topDomainsData  Class from which to obtain recent domains data.
+     * @param topProgramsData  Class from which to obtain top programs data.
+     * @param userActivityData Class from which to obtain remaining user
+     *                         activity data.
      */
-    public DataSourceUserActivityPanel(
+    public DataSourceSummaryUserActivityPanel(
             DataSourceTopProgramsSummary topProgramsData,
-            DataSourceUserActivitySummary topDomainsData) {
+            DataSourceUserActivitySummary userActivityData) {
 
-        // set up recent programs table 
-        this.topProgramsTable = JTablePanel.getJTablePanel(Arrays.asList(
-                // program name column
-                new ColumnModel<>(
-                        Bundle.DataSourceUserActivityPanel_TopProgramsTableModel_name_header(),
-                        (prog) -> {
-                            return new DefaultCellModel(prog.getProgramName())
-                                    .setTooltip(prog.getProgramPath());
-                        },
-                        250),
-                // program folder column
-                new ColumnModel<>(
-                        Bundle.DataSourceUserActivityPanel_TopProgramsTableModel_folder_header(),
-                        (prog) -> {
-                            return new DefaultCellModel(
-                                    topProgramsData.getShortFolderName(
-                                            prog.getProgramPath(),
-                                            prog.getProgramName()));
-                        },
-                        150),
-                // run count column
-                new ColumnModel<>(
-                        Bundle.DataSourceUserActivityPanel_TopProgramsTableModel_count_header(),
-                        (prog) -> {
-                            String runTimes = prog.getRunTimes() == null ? "" : Long.toString(prog.getRunTimes());
-                            return new DefaultCellModel(runTimes);
-                        },
-                        80),
-                // last run date column
-                new ColumnModel<>(
-                        Bundle.DataSourceUserActivityPanel_TopProgramsTableModel_lastrun_header(),
-                        (prog) -> new DefaultCellModel(getFormatted(prog.getLastRun())),
-                        150)
-        ));
-
-        // set up recent domains table
-        this.recentDomainsTable = JTablePanel.getJTablePanel(Arrays.asList(
-                // domain column
-                new ColumnModel<>(
-                        Bundle.DataSourceUserActivityPanel_TopDomainsTableModel_domain_header(),
-                        (recentDomain) -> new DefaultCellModel(recentDomain.getDomain()),
-                        250),
-                // url column
-                new ColumnModel<>(
-                        Bundle.DataSourceUserActivityPanel_TopDomainsTableModel_url_header(),
-                        (recentDomain) -> new DefaultCellModel(recentDomain.getUrl()),
-                        250),
-                // last accessed column
-                new ColumnModel<>(
-                        Bundle.DataSourceUserActivityPanel_TopDomainsTableModel_lastAccess_header(),
-                        (recentDomain) -> new DefaultCellModel(getFormatted(recentDomain.getLastVisit())),
-                        150)
-        ));
-
-        // top web searches table
-        this.topWebSearchesTable = JTablePanel.getJTablePanel(Arrays.asList(
-                // search string column
-                new ColumnModel<>(
-                        Bundle.DataSourceUserActivityPanel_TopWebSearchTableModel_searchString_header(),
-                        (webSearch) -> new DefaultCellModel(webSearch.getSearchString()),
-                        250
-                ),
-                // last accessed
-                new ColumnModel<>(
-                        Bundle.DataSourceUserActivityPanel_TopWebSearchTableModel_dateAccessed_header(),
-                        (webSearch) -> new DefaultCellModel(getFormatted(webSearch.getDateAccessed())),
-                        150
-                ),
-                // translated value
-                new ColumnModel<>(
-                        Bundle.DataSourceUserActivityPanel_TopWebSearchTableModel_translatedResult_header(),
-                        (webSearch) -> new DefaultCellModel(webSearch.getTranslatedResult()),
-                        250
-                )
-        ));
-
-        // top devices attached table
-        this.topDevicesAttachedTable = JTablePanel.getJTablePanel(Arrays.asList(
-                // device id column
-                new ColumnModel<>(
-                        Bundle.DataSourceUserActivityPanel_TopDeviceAttachedTableModel_deviceId_header(),
-                        (device) -> new DefaultCellModel(device.getDeviceId()),
-                        250
-                ),
-                // last accessed
-                new ColumnModel<>(
-                        Bundle.DataSourceUserActivityPanel_TopDeviceAttachedTableModel_dateAccessed_header(),
-                        (device) -> new DefaultCellModel(getFormatted(device.getDateAccessed())),
-                        150
-                ),
-                // make and model
-                new ColumnModel<>(
-                        Bundle.DataSourceUserActivityPanel_TopDeviceAttachedTableModel_makeModel_header(),
-                        (device) -> {
-                            String make = StringUtils.isBlank(device.getDeviceMake()) ? "" : device.getDeviceMake().trim();
-                            String model = StringUtils.isBlank(device.getDeviceModel()) ? "" : device.getDeviceModel().trim();
-                            String makeModelString = (make.isEmpty() || model.isEmpty())
-                            ? make + model
-                            : String.format("%s - %s", make, model);
-                            return new DefaultCellModel(makeModelString);
-                        },
-                        250
-                )
-        ));
-
-        // top accounts table
-        this.topAccountsTable = JTablePanel.getJTablePanel(Arrays.asList(
-                // account type column
-                new ColumnModel<>(
-                        Bundle.DataSourceUserActivityPanel_TopAccountTableModel_accountType_header(),
-                        (account) -> new DefaultCellModel(account.getAccountType()),
-                        250
-                ),
-                // last accessed
-                new ColumnModel<>(
-                        Bundle.DataSourceUserActivityPanel_TopAccountTableModel_lastAccess_header(),
-                        (account) -> new DefaultCellModel(getFormatted(account.getLastAccess())),
-                        150
-                )
-        ));
-
-        this.tables = Arrays.asList(
-                topProgramsTable,
-                recentDomainsTable,
-                topWebSearchesTable,
-                topDevicesAttachedTable,
-                topAccountsTable
-        );
+        this.topProgramsData = topProgramsData;
 
         // set up data acquisition methods
-        dataFetchComponents = Arrays.asList(
+        this.dataFetchComponents = Arrays.asList(
                 // top programs query
                 new DataFetchComponents<>(
                         (dataSource) -> topProgramsData.getTopPrograms(dataSource, TOP_PROGS_COUNT),
                         (result) -> topProgramsTable.showDataFetchResult(result, JTablePanel.getDefaultErrorMessage(),
-                                Bundle.DataSourceUserActivityPanel_noDataExists())),
+                                Bundle.DataSourceSummaryUserActivityPanel_noDataExists())),
                 // top domains query
                 new DataFetchComponents<>(
-                        (dataSource) -> topDomainsData.getRecentDomains(dataSource, TOP_DOMAINS_COUNT),
+                        (dataSource) -> userActivityData.getRecentDomains(dataSource, TOP_DOMAINS_COUNT),
                         (result) -> recentDomainsTable.showDataFetchResult(result, JTablePanel.getDefaultErrorMessage(),
-                                Bundle.DataSourceUserActivityPanel_noDataExists())),
+                                Bundle.DataSourceSummaryUserActivityPanel_noDataExists())),
                 // top web searches query
                 new DataFetchComponents<>(
-                        (dataSource) -> topDomainsData.getMostRecentWebSearches(dataSource, TOP_SEARCHES_COUNT),
+                        (dataSource) -> userActivityData.getMostRecentWebSearches(dataSource, TOP_SEARCHES_COUNT),
                         (result) -> topWebSearchesTable.showDataFetchResult(result, JTablePanel.getDefaultErrorMessage(),
-                                Bundle.DataSourceUserActivityPanel_noDataExists())),
+                                Bundle.DataSourceSummaryUserActivityPanel_noDataExists())),
                 // top devices query
                 new DataFetchComponents<>(
-                        (dataSource) -> topDomainsData.getRecentDevices(dataSource, TOP_DEVICES_COUNT),
+                        (dataSource) -> userActivityData.getRecentDevices(dataSource, TOP_DEVICES_COUNT),
                         (result) -> topDevicesAttachedTable.showDataFetchResult(result, JTablePanel.getDefaultErrorMessage(),
-                                Bundle.DataSourceUserActivityPanel_noDataExists())),
+                                Bundle.DataSourceSummaryUserActivityPanel_noDataExists())),
                 // top accounts query
                 new DataFetchComponents<>(
-                        (dataSource) -> topDomainsData.getRecentAccounts(dataSource, TOP_ACCOUNTS_COUNT),
+                        (dataSource) -> userActivityData.getRecentAccounts(dataSource, TOP_ACCOUNTS_COUNT),
                         (result) -> topAccountsTable.showDataFetchResult(result, JTablePanel.getDefaultErrorMessage(),
-                                Bundle.DataSourceUserActivityPanel_noDataExists()))
+                                Bundle.DataSourceSummaryUserActivityPanel_noDataExists()))
         );
 
         initComponents();
+    }
+
+    /**
+     * Queries DataSourceTopProgramsSummary instance for short folder name.
+     *
+     * @param path    The path for the application.
+     * @param appName The application name.
+     *
+     * @return The underlying short folder name if one exists.
+     */
+    private String getShortFolderName(String path, String appName) {
+        return this.topProgramsData.getShortFolderName(path, appName);
     }
 
     @Override
@@ -331,7 +347,7 @@ public class DataSourceUserActivityPanel extends BaseDataSourceSummaryPanel {
         contentPanel.setLayout(new javax.swing.BoxLayout(contentPanel, javax.swing.BoxLayout.PAGE_AXIS));
 
         programsRunLabel.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        org.openide.awt.Mnemonics.setLocalizedText(programsRunLabel, org.openide.util.NbBundle.getMessage(DataSourceUserActivityPanel.class, "DataSourceUserActivityPanel.programsRunLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(programsRunLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryUserActivityPanel.class, "DataSourceSummaryUserActivityPanel.programsRunLabel.text")); // NOI18N
         programsRunLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         contentPanel.add(programsRunLabel);
         contentPanel.add(filler1);
@@ -344,7 +360,7 @@ public class DataSourceUserActivityPanel extends BaseDataSourceSummaryPanel {
         contentPanel.add(filler3);
 
         recentDomainsLabel.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        org.openide.awt.Mnemonics.setLocalizedText(recentDomainsLabel, org.openide.util.NbBundle.getMessage(DataSourceUserActivityPanel.class, "DataSourceUserActivityPanel.recentDomainsLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(recentDomainsLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryUserActivityPanel.class, "DataSourceSummaryUserActivityPanel.recentDomainsLabel.text")); // NOI18N
         contentPanel.add(recentDomainsLabel);
         contentPanel.add(filler2);
 
@@ -356,7 +372,7 @@ public class DataSourceUserActivityPanel extends BaseDataSourceSummaryPanel {
         contentPanel.add(filler4);
 
         topWebSearchLabel.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        org.openide.awt.Mnemonics.setLocalizedText(topWebSearchLabel, org.openide.util.NbBundle.getMessage(DataSourceUserActivityPanel.class, "DataSourceUserActivityPanel.topWebSearchLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(topWebSearchLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryUserActivityPanel.class, "DataSourceSummaryUserActivityPanel.topWebSearchLabel.text")); // NOI18N
         contentPanel.add(topWebSearchLabel);
         contentPanel.add(filler5);
 
@@ -368,7 +384,7 @@ public class DataSourceUserActivityPanel extends BaseDataSourceSummaryPanel {
         contentPanel.add(filler6);
 
         topDevicesAttachedLabel.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        org.openide.awt.Mnemonics.setLocalizedText(topDevicesAttachedLabel, org.openide.util.NbBundle.getMessage(DataSourceUserActivityPanel.class, "DataSourceUserActivityPanel.topDevicesAttachedLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(topDevicesAttachedLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryUserActivityPanel.class, "DataSourceSummaryUserActivityPanel.topDevicesAttachedLabel.text")); // NOI18N
         contentPanel.add(topDevicesAttachedLabel);
         contentPanel.add(filler7);
 
@@ -380,7 +396,7 @@ public class DataSourceUserActivityPanel extends BaseDataSourceSummaryPanel {
         contentPanel.add(filler8);
 
         recentAccountsLabel.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        org.openide.awt.Mnemonics.setLocalizedText(recentAccountsLabel, org.openide.util.NbBundle.getMessage(DataSourceUserActivityPanel.class, "DataSourceUserActivityPanel.recentAccountsLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(recentAccountsLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryUserActivityPanel.class, "DataSourceSummaryUserActivityPanel.recentAccountsLabel.text")); // NOI18N
         contentPanel.add(recentAccountsLabel);
         contentPanel.add(filler9);
 
