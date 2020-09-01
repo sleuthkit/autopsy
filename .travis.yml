@@ -77,7 +77,7 @@
 	brew tap bell-sw/liberica; 
 	brew cask install liberica-jdk11-full; 
 	export JAVA_HOME=/Library/Java/JavaVirtualMachines/liberica-jdk-11.0.8/Contents/Home;
-	java_home -V;
+	/usr/libexec/java_home -V;
     fi",
     "java -version"
   ],
