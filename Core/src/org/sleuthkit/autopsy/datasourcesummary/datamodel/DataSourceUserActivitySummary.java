@@ -46,8 +46,9 @@ import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MES
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT;
 
 /**
- * Provides summary information about top domains in a datasource. At this time,
- * the data being provided is fictitious and is done as a placeholder.
+ * Provides summary information about user activity in a datasource. At this
+ * time, the data being provided for domains is fictitious and is done as a
+ * placeholder.
  */
 public class DataSourceUserActivitySummary {
 
@@ -161,17 +162,12 @@ public class DataSourceUserActivitySummary {
                 .map(artifact -> {
                     String searchString = DataSourceInfoUtilities.getStringOrNull(artifact, TYPE_TEXT);
                     Date dateAccessed = DataSourceInfoUtilities.getDateOrNull(artifact, TYPE_DATETIME_ACCESSED);
-                    if (StringUtils.isBlank(searchString) || dateAccessed == null) {
-                        return null;
-                    }
-
-                    return new TopWebSearchResult(
-                            searchString,
-                            dateAccessed
-                    );
+                    return (StringUtils.isNotBlank(searchString) && dateAccessed != null)
+                            ? new TopWebSearchResult(searchString, dateAccessed)
+                            : null;
                 })
                 // remove null records
-                .filter(result -> result != null && StringUtils.isNotBlank(result.getSearchString()))
+                .filter(result -> result != null)
                 // get these messages grouped by search to string
                 .collect(Collectors.groupingBy((result) -> result.getSearchString().toUpperCase()))
                 .entrySet()
@@ -184,24 +180,37 @@ public class DataSourceUserActivitySummary {
                 // get as list
                 .collect(Collectors.toList());
 
-        // get translation if possible
-        for (TopWebSearchResult result : results) {
-            if (StringUtils.isNotBlank(result.getSearchString()) && translationService.hasProvider()) {
-                String translated = null;
-                try {
-                    translated = translationService.translate(result.getSearchString());
-                } catch (NoServiceProviderException | TranslationException ex) {
-                    logger.log(Level.WARNING, String.format("There was an error translating text: '%s'", result.getSearchString()), ex);
-                }
+        retrieveTranslations(results);
 
-                // set translation if there is a translation and that value differs from original
-                if (StringUtils.isNotBlank(translated) && !translated.toUpperCase().trim().equals(result.getSearchString().toUpperCase())) {
-                    result.setTranslatedResult(translated);
+        return results;
+    }
+
+    /**
+     * Retrieve translations for each of the TopWebSearchResult items and sets
+     * each object's translation if a translation that differs from the original
+     * text exists.
+     *
+     * @param results The results.
+     */
+    private void retrieveTranslations(List<TopWebSearchResult> results) {
+        // get translation if possible
+        if (translationService.hasProvider() && results != null) {
+            for (TopWebSearchResult result : results) {
+                if (StringUtils.isNotBlank(result.getSearchString())) {
+                    String translated = null;
+                    try {
+                        translated = translationService.translate(result.getSearchString());
+                    } catch (NoServiceProviderException | TranslationException ex) {
+                        logger.log(Level.WARNING, String.format("There was an error translating text: '%s'", result.getSearchString()), ex);
+                    }
+
+                    // set translation if there is a translation and that value differs from original
+                    if (StringUtils.isNotBlank(translated) && !translated.toUpperCase().trim().equals(result.getSearchString().toUpperCase())) {
+                        result.setTranslatedResult(translated);
+                    }
                 }
             }
         }
-
-        return results;
     }
 
     /**
@@ -232,8 +241,10 @@ public class DataSourceUserActivitySummary {
                     );
                 })
                 // remove Root Hub identifier
-                .filter(result -> result.getDeviceModel() == null
-                || !result.getDeviceModel().trim().toUpperCase().equals(ROOT_HUB_IDENTIFIER))
+                .filter(result -> {
+                    return result.getDeviceModel() == null
+                            || !result.getDeviceModel().trim().toUpperCase().equals(ROOT_HUB_IDENTIFIER);
+                })
                 .limit(count)
                 .collect(Collectors.toList());
     }
@@ -262,7 +273,9 @@ public class DataSourceUserActivitySummary {
                 .map(artifact -> {
                     String type = DataSourceInfoUtilities.getStringOrNull(artifact, TYPE_MESSAGE_TYPE);
                     Date date = DataSourceInfoUtilities.getDateOrNull(artifact, TYPE_DATETIME);
-                    return (StringUtils.isNotBlank(type) && date != null) ? new TopAccountResult(type, date) : null;
+                    return (StringUtils.isNotBlank(type) && date != null)
+                            ? new TopAccountResult(type, date)
+                            : null;
                 })
                 // remove null records
                 .filter(result -> result != null)
