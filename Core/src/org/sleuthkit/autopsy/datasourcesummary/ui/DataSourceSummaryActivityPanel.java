@@ -48,24 +48,24 @@ import org.sleuthkit.datamodel.DataSource;
  * A panel to display user activity.
  */
 @Messages({
-    "DataSourceSummaryUserActivityPanel_tab_title=User Activity",
-    "DataSourceSummaryUserActivityPanel_TopProgramsTableModel_name_header=Program",
-    "DataSourceSummaryUserActivityPanel_TopProgramsTableModel_folder_header=Folder",
-    "DataSourceSummaryUserActivityPanel_TopProgramsTableModel_count_header=Run Times",
-    "DataSourceSummaryUserActivityPanel_TopProgramsTableModel_lastrun_header=Last Run",
-    "DataSourceSummaryUserActivityPanel_TopDomainsTableModel_domain_header=Domain",
-    "DataSourceSummaryUserActivityPanel_TopDomainsTableModel_url_header=URL",
-    "DataSourceSummaryUserActivityPanel_TopDomainsTableModel_lastAccess_header=Last Access",
-    "DataSourceSummaryUserActivityPanel_noDataExists=No communication data exists",
-    "DataSourceSummaryUserActivityPanel_TopWebSearchTableModel_searchString_header=Search String",
-    "DataSourceSummaryUserActivityPanel_TopWebSearchTableModel_dateAccessed_header=Date Accessed",
-    "DataSourceSummaryUserActivityPanel_TopWebSearchTableModel_translatedResult_header=Translated",
-    "DataSourceSummaryUserActivityPanel_TopDeviceAttachedTableModel_deviceId_header=Device Id",
-    "DataSourceSummaryUserActivityPanel_TopDeviceAttachedTableModel_makeModel_header=Make and Model",
-    "DataSourceSummaryUserActivityPanel_TopDeviceAttachedTableModel_dateAccessed_header=Last Accessed",
-    "DataSourceSummaryUserActivityPanel_TopAccountTableModel_accountType_header=Account Type",
-    "DataSourceSummaryUserActivityPanel_TopAccountTableModel_lastAccess_header=Last Accessed",})
-public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPanel {
+    "DataSourceSummaryActivityPanel_tab_title=User Activity",
+    "DataSourceSummaryActivityPanel_TopProgramsTableModel_name_header=Program",
+    "DataSourceSummaryActivityPanel_TopProgramsTableModel_folder_header=Folder",
+    "DataSourceSummaryActivityPanel_TopProgramsTableModel_count_header=Run Times",
+    "DataSourceSummaryActivityPanel_TopProgramsTableModel_lastrun_header=Last Run",
+    "DataSourceSummaryActivityPanel_TopDomainsTableModel_domain_header=Domain",
+    "DataSourceSummaryActivityPanel_TopDomainsTableModel_url_header=URL",
+    "DataSourceSummaryActivityPanel_TopDomainsTableModel_lastAccess_header=Last Access",
+    "DataSourceSummaryActivityPanel_noDataExists=No communication data exists",
+    "DataSourceSummaryActivityPanel_TopWebSearchTableModel_searchString_header=Search String",
+    "DataSourceSummaryActivityPanel_TopWebSearchTableModel_dateAccessed_header=Date Accessed",
+    "DataSourceSummaryActivityPanel_TopWebSearchTableModel_translatedResult_header=Translated",
+    "DataSourceSummaryActivityPanel_TopDeviceAttachedTableModel_deviceId_header=Device Id",
+    "DataSourceSummaryActivityPanel_TopDeviceAttachedTableModel_makeModel_header=Make and Model",
+    "DataSourceSummaryActivityPanel_TopDeviceAttachedTableModel_dateAccessed_header=Last Accessed",
+    "DataSourceSummaryActivityPanel_TopAccountTableModel_accountType_header=Account Type",
+    "DataSourceSummaryActivityPanel_TopAccountTableModel_lastAccess_header=Last Accessed",})
+public class DataSourceSummaryActivityPanel extends BaseDataSourceSummaryPanel {
 
     private static final long serialVersionUID = 1L;
     private static final DateFormat DATETIME_FORMAT = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss", Locale.getDefault());
@@ -91,17 +91,17 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPan
     /**
      * Creates a new DataSourceUserActivityPanel.
      */
-    public DataSourceSummaryUserActivityPanel() {
+    public DataSourceSummaryActivityPanel() {
         this(new DataSourceTopProgramsSummary(), new DataSourceUserActivitySummary());
     }
 
     /**
-     * Creates a new DataSourceSummaryUserActivityPanel.
+     * Creates a new DataSourceSummaryActivityPanel.
      *
      * @param topProgramsData Class from which to obtain top programs data.
      * @param topDomainsData  Class from which to obtain recent domains data.
      */
-    public DataSourceSummaryUserActivityPanel(
+    public DataSourceSummaryActivityPanel(
             DataSourceTopProgramsSummary topProgramsData,
             DataSourceUserActivitySummary topDomainsData) {
 
@@ -109,7 +109,7 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPan
         this.topProgramsTable = JTablePanel.getJTablePanel(Arrays.asList(
                 // program name column
                 new ColumnModel<>(
-                        Bundle.DataSourceSummaryUserActivityPanel_TopProgramsTableModel_name_header(),
+                        Bundle.DataSourceSummaryActivityPanel_TopProgramsTableModel_name_header(),
                         (prog) -> {
                             return new DefaultCellModel(prog.getProgramName())
                                     .setTooltip(prog.getProgramPath());
@@ -117,7 +117,7 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPan
                         250),
                 // program folder column
                 new ColumnModel<>(
-                        Bundle.DataSourceSummaryUserActivityPanel_TopProgramsTableModel_folder_header(),
+                        Bundle.DataSourceSummaryActivityPanel_TopProgramsTableModel_folder_header(),
                         (prog) -> {
                             return new DefaultCellModel(
                                     topProgramsData.getShortFolderName(
@@ -127,7 +127,7 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPan
                         150),
                 // run count column
                 new ColumnModel<>(
-                        Bundle.DataSourceSummaryUserActivityPanel_TopProgramsTableModel_count_header(),
+                        Bundle.DataSourceSummaryActivityPanel_TopProgramsTableModel_count_header(),
                         (prog) -> {
                             String runTimes = prog.getRunTimes() == null ? "" : Long.toString(prog.getRunTimes());
                             return new DefaultCellModel(runTimes);
@@ -135,7 +135,7 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPan
                         80),
                 // last run date column
                 new ColumnModel<>(
-                        Bundle.DataSourceSummaryUserActivityPanel_TopProgramsTableModel_lastrun_header(),
+                        Bundle.DataSourceSummaryActivityPanel_TopProgramsTableModel_lastrun_header(),
                         (prog) -> new DefaultCellModel(getFormatted(prog.getLastRun())),
                         150)
         ));
@@ -144,17 +144,17 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPan
         this.recentDomainsTable = JTablePanel.getJTablePanel(Arrays.asList(
                 // domain column
                 new ColumnModel<>(
-                        Bundle.DataSourceSummaryUserActivityPanel_TopDomainsTableModel_domain_header(),
+                        Bundle.DataSourceSummaryActivityPanel_TopDomainsTableModel_domain_header(),
                         (recentDomain) -> new DefaultCellModel(recentDomain.getDomain()),
                         250),
                 // url column
                 new ColumnModel<>(
-                        Bundle.DataSourceSummaryUserActivityPanel_TopDomainsTableModel_url_header(),
+                        Bundle.DataSourceSummaryActivityPanel_TopDomainsTableModel_url_header(),
                         (recentDomain) -> new DefaultCellModel(recentDomain.getUrl()),
                         250),
                 // last accessed column
                 new ColumnModel<>(
-                        Bundle.DataSourceSummaryUserActivityPanel_TopDomainsTableModel_lastAccess_header(),
+                        Bundle.DataSourceSummaryActivityPanel_TopDomainsTableModel_lastAccess_header(),
                         (recentDomain) -> new DefaultCellModel(getFormatted(recentDomain.getLastVisit())),
                         150)
         ));
@@ -163,19 +163,19 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPan
         this.topWebSearchesTable = JTablePanel.getJTablePanel(Arrays.asList(
                 // search string column
                 new ColumnModel<>(
-                        Bundle.DataSourceSummaryUserActivityPanel_TopWebSearchTableModel_searchString_header(),
+                        Bundle.DataSourceSummaryActivityPanel_TopWebSearchTableModel_searchString_header(),
                         (webSearch) -> new DefaultCellModel(webSearch.getSearchString()),
                         250
                 ),
                 // last accessed
                 new ColumnModel<>(
-                        Bundle.DataSourceSummaryUserActivityPanel_TopWebSearchTableModel_dateAccessed_header(),
+                        Bundle.DataSourceSummaryActivityPanel_TopWebSearchTableModel_dateAccessed_header(),
                         (webSearch) -> new DefaultCellModel(getFormatted(webSearch.getDateAccessed())),
                         150
                 ),
                 // translated value
                 new ColumnModel<>(
-                        Bundle.DataSourceSummaryUserActivityPanel_TopWebSearchTableModel_translatedResult_header(),
+                        Bundle.DataSourceSummaryActivityPanel_TopWebSearchTableModel_translatedResult_header(),
                         (webSearch) -> new DefaultCellModel(webSearch.getTranslatedResult()),
                         250
                 )
@@ -185,19 +185,19 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPan
         this.topDevicesAttachedTable = JTablePanel.getJTablePanel(Arrays.asList(
                 // device id column
                 new ColumnModel<>(
-                        Bundle.DataSourceSummaryUserActivityPanel_TopDeviceAttachedTableModel_deviceId_header(),
+                        Bundle.DataSourceSummaryActivityPanel_TopDeviceAttachedTableModel_deviceId_header(),
                         (device) -> new DefaultCellModel(device.getDeviceId()),
                         250
                 ),
                 // last accessed
                 new ColumnModel<>(
-                        Bundle.DataSourceSummaryUserActivityPanel_TopDeviceAttachedTableModel_dateAccessed_header(),
+                        Bundle.DataSourceSummaryActivityPanel_TopDeviceAttachedTableModel_dateAccessed_header(),
                         (device) -> new DefaultCellModel(getFormatted(device.getDateAccessed())),
                         150
                 ),
                 // make and model
                 new ColumnModel<>(
-                        Bundle.DataSourceSummaryUserActivityPanel_TopDeviceAttachedTableModel_makeModel_header(),
+                        Bundle.DataSourceSummaryActivityPanel_TopDeviceAttachedTableModel_makeModel_header(),
                         (device) -> {
                             String make = StringUtils.isBlank(device.getDeviceMake()) ? "" : device.getDeviceMake().trim();
                             String model = StringUtils.isBlank(device.getDeviceModel()) ? "" : device.getDeviceModel().trim();
@@ -214,13 +214,13 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPan
         this.topAccountsTable = JTablePanel.getJTablePanel(Arrays.asList(
                 // account type column
                 new ColumnModel<>(
-                        Bundle.DataSourceSummaryUserActivityPanel_TopAccountTableModel_accountType_header(),
+                        Bundle.DataSourceSummaryActivityPanel_TopAccountTableModel_accountType_header(),
                         (account) -> new DefaultCellModel(account.getAccountType()),
                         250
                 ),
                 // last accessed
                 new ColumnModel<>(
-                        Bundle.DataSourceSummaryUserActivityPanel_TopAccountTableModel_lastAccess_header(),
+                        Bundle.DataSourceSummaryActivityPanel_TopAccountTableModel_lastAccess_header(),
                         (account) -> new DefaultCellModel(getFormatted(account.getLastAccess())),
                         150
                 )
@@ -240,27 +240,27 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPan
                 new DataFetchComponents<>(
                         (dataSource) -> topProgramsData.getTopPrograms(dataSource, TOP_PROGS_COUNT),
                         (result) -> topProgramsTable.showDataFetchResult(result, JTablePanel.getDefaultErrorMessage(),
-                                Bundle.DataSourceSummaryUserActivityPanel_noDataExists())),
+                                Bundle.DataSourceSummaryActivityPanel_noDataExists())),
                 // top domains query
                 new DataFetchComponents<>(
                         (dataSource) -> topDomainsData.getRecentDomains(dataSource, TOP_DOMAINS_COUNT),
                         (result) -> recentDomainsTable.showDataFetchResult(result, JTablePanel.getDefaultErrorMessage(),
-                                Bundle.DataSourceSummaryUserActivityPanel_noDataExists())),
+                                Bundle.DataSourceSummaryActivityPanel_noDataExists())),
                 // top web searches query
                 new DataFetchComponents<>(
                         (dataSource) -> topDomainsData.getMostRecentWebSearches(dataSource, TOP_SEARCHES_COUNT),
                         (result) -> topWebSearchesTable.showDataFetchResult(result, JTablePanel.getDefaultErrorMessage(),
-                                Bundle.DataSourceSummaryUserActivityPanel_noDataExists())),
+                                Bundle.DataSourceSummaryActivityPanel_noDataExists())),
                 // top devices query
                 new DataFetchComponents<>(
                         (dataSource) -> topDomainsData.getRecentDevices(dataSource, TOP_DEVICES_COUNT),
                         (result) -> topDevicesAttachedTable.showDataFetchResult(result, JTablePanel.getDefaultErrorMessage(),
-                                Bundle.DataSourceSummaryUserActivityPanel_noDataExists())),
+                                Bundle.DataSourceSummaryActivityPanel_noDataExists())),
                 // top accounts query
                 new DataFetchComponents<>(
                         (dataSource) -> topDomainsData.getRecentAccounts(dataSource, TOP_ACCOUNTS_COUNT),
                         (result) -> topAccountsTable.showDataFetchResult(result, JTablePanel.getDefaultErrorMessage(),
-                                Bundle.DataSourceSummaryUserActivityPanel_noDataExists()))
+                                Bundle.DataSourceSummaryActivityPanel_noDataExists()))
         );
 
         initComponents();
@@ -331,7 +331,7 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPan
         contentPanel.setLayout(new javax.swing.BoxLayout(contentPanel, javax.swing.BoxLayout.PAGE_AXIS));
 
         programsRunLabel.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        org.openide.awt.Mnemonics.setLocalizedText(programsRunLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryUserActivityPanel.class, "DataSourceSummaryUserActivityPanel.programsRunLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(programsRunLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryActivityPanel.class, "DataSourceSummaryActivityPanel.programsRunLabel.text")); // NOI18N
         programsRunLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         contentPanel.add(programsRunLabel);
         contentPanel.add(filler1);
@@ -344,7 +344,7 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPan
         contentPanel.add(filler3);
 
         recentDomainsLabel.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        org.openide.awt.Mnemonics.setLocalizedText(recentDomainsLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryUserActivityPanel.class, "DataSourceSummaryUserActivityPanel.recentDomainsLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(recentDomainsLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryActivityPanel.class, "DataSourceSummaryActivityPanel.recentDomainsLabel.text")); // NOI18N
         contentPanel.add(recentDomainsLabel);
         contentPanel.add(filler2);
 
@@ -356,7 +356,7 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPan
         contentPanel.add(filler4);
 
         topWebSearchLabel.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        org.openide.awt.Mnemonics.setLocalizedText(topWebSearchLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryUserActivityPanel.class, "DataSourceSummaryUserActivityPanel.topWebSearchLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(topWebSearchLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryActivityPanel.class, "DataSourceSummaryActivityPanel.topWebSearchLabel.text")); // NOI18N
         contentPanel.add(topWebSearchLabel);
         contentPanel.add(filler5);
 
@@ -368,7 +368,7 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPan
         contentPanel.add(filler6);
 
         topDevicesAttachedLabel.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        org.openide.awt.Mnemonics.setLocalizedText(topDevicesAttachedLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryUserActivityPanel.class, "DataSourceSummaryUserActivityPanel.topDevicesAttachedLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(topDevicesAttachedLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryActivityPanel.class, "DataSourceSummaryActivityPanel.topDevicesAttachedLabel.text")); // NOI18N
         contentPanel.add(topDevicesAttachedLabel);
         contentPanel.add(filler7);
 
@@ -380,7 +380,7 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPan
         contentPanel.add(filler8);
 
         recentAccountsLabel.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        org.openide.awt.Mnemonics.setLocalizedText(recentAccountsLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryUserActivityPanel.class, "DataSourceSummaryUserActivityPanel.recentAccountsLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(recentAccountsLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryActivityPanel.class, "DataSourceSummaryActivityPanel.recentAccountsLabel.text")); // NOI18N
         contentPanel.add(recentAccountsLabel);
         contentPanel.add(filler9);
 
