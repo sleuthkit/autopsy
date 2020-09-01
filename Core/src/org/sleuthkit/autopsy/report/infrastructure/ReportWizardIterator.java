@@ -72,12 +72,12 @@ final class ReportWizardIterator implements WizardDescriptor.Iterator<WizardDesc
         }
         
         if (config != null) {
-            firstPanel = new ReportWizardPanel1(config.getModuleConfigs());
+            firstPanel = new ReportWizardPanel1(config.getModuleConfigs(), useCaseSpecificData);
             tableConfigPanel = new ReportWizardPanel2(useCaseSpecificData, config.getTableReportSettings());
             fileConfigPanel = new ReportWizardFileOptionsPanel(config.getFileReportSettings());
             portableCaseConfigPanel = new ReportWizardPortableCaseOptionsPanel(config.getModuleConfigs(), useCaseSpecificData);
         } else {
-            firstPanel = new ReportWizardPanel1(null);
+            firstPanel = new ReportWizardPanel1(null, useCaseSpecificData);
             tableConfigPanel = new ReportWizardPanel2(useCaseSpecificData, null);
             fileConfigPanel = new ReportWizardFileOptionsPanel(null);
             portableCaseConfigPanel = new ReportWizardPortableCaseOptionsPanel(null, useCaseSpecificData);

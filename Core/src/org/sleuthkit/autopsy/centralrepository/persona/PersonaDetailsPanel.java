@@ -399,11 +399,13 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
         commentField.setEditable(false);
         commentField.setText(org.openide.util.NbBundle.getMessage(PersonaDetailsPanel.class, "PersonaDetailsPanel.commentField.text")); // NOI18N
 
+        nameLbl.setFont(nameLbl.getFont().deriveFont(nameLbl.getFont().getStyle() | java.awt.Font.BOLD));
         org.openide.awt.Mnemonics.setLocalizedText(nameLbl, org.openide.util.NbBundle.getMessage(PersonaDetailsPanel.class, "PersonaDetailsPanel.nameLbl.text")); // NOI18N
 
         nameField.setEditable(false);
         nameField.setText(org.openide.util.NbBundle.getMessage(PersonaDetailsPanel.class, "PersonaDetailsPanel.nameField.text")); // NOI18N
 
+        accountsLbl.setFont(accountsLbl.getFont().deriveFont(accountsLbl.getFont().getStyle() | java.awt.Font.BOLD));
         org.openide.awt.Mnemonics.setLocalizedText(accountsLbl, org.openide.util.NbBundle.getMessage(PersonaDetailsPanel.class, "PersonaDetailsPanel.accountsLbl.text")); // NOI18N
 
         accountsTable.setModel(new javax.swing.table.DefaultTableModel(
@@ -428,6 +430,7 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
         org.openide.awt.Mnemonics.setLocalizedText(deleteAccountBtn, org.openide.util.NbBundle.getMessage(PersonaDetailsPanel.class, "PersonaDetailsPanel.deleteAccountBtn.text")); // NOI18N
         deleteAccountBtn.setEnabled(false);
 
+        metadataLabel.setFont(metadataLabel.getFont().deriveFont(metadataLabel.getFont().getStyle() | java.awt.Font.BOLD));
         org.openide.awt.Mnemonics.setLocalizedText(metadataLabel, org.openide.util.NbBundle.getMessage(PersonaDetailsPanel.class, "PersonaDetailsPanel.metadataLabel.text")); // NOI18N
 
         metadataTable.setModel(new javax.swing.table.DefaultTableModel(
@@ -452,6 +455,7 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
         org.openide.awt.Mnemonics.setLocalizedText(deleteMetadataBtn, org.openide.util.NbBundle.getMessage(PersonaDetailsPanel.class, "PersonaDetailsPanel.deleteMetadataBtn.text")); // NOI18N
         deleteMetadataBtn.setEnabled(false);
 
+        aliasesLabel.setFont(aliasesLabel.getFont().deriveFont(aliasesLabel.getFont().getStyle() | java.awt.Font.BOLD));
         org.openide.awt.Mnemonics.setLocalizedText(aliasesLabel, org.openide.util.NbBundle.getMessage(PersonaDetailsPanel.class, "PersonaDetailsPanel.aliasesLabel.text")); // NOI18N
 
         aliasesTable.setModel(new javax.swing.table.DefaultTableModel(
@@ -476,6 +480,7 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
         org.openide.awt.Mnemonics.setLocalizedText(deleteAliasBtn, org.openide.util.NbBundle.getMessage(PersonaDetailsPanel.class, "PersonaDetailsPanel.deleteAliasBtn.text")); // NOI18N
         deleteAliasBtn.setEnabled(false);
 
+        casesLbl.setFont(casesLbl.getFont().deriveFont(casesLbl.getFont().getStyle() | java.awt.Font.BOLD));
         org.openide.awt.Mnemonics.setLocalizedText(casesLbl, org.openide.util.NbBundle.getMessage(PersonaDetailsPanel.class, "PersonaDetailsPanel.casesLbl.text")); // NOI18N
 
         casesTable.setModel(new javax.swing.table.DefaultTableModel(
@@ -498,43 +503,14 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
             .addGroup(detailsPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(detailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(accountsTablePane, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 605, Short.MAX_VALUE)
                     .addComponent(accountsLbl, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(metadataLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(metadataTablePane, javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(aliasesLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(aliasesTablePane)
                     .addComponent(casesLbl, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(casesTablePane)
-                    .addGroup(detailsPanelLayout.createSequentialGroup()
-                        .addComponent(commentLbl)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(commentField))
                     .addGroup(detailsPanelLayout.createSequentialGroup()
                         .addComponent(nameLbl)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(nameField))
-                    .addGroup(detailsPanelLayout.createSequentialGroup()
-                        .addGroup(detailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(detailsPanelLayout.createSequentialGroup()
-                                .addComponent(addAccountBtn)
-                                .addGap(18, 18, 18)
-                                .addComponent(editAccountBtn)
-                                .addGap(18, 18, 18)
-                                .addComponent(deleteAccountBtn))
-                            .addGroup(detailsPanelLayout.createSequentialGroup()
-                                .addComponent(addMetadataBtn)
-                                .addGap(18, 18, 18)
-                                .addComponent(editMetadataBtn)
-                                .addGap(18, 18, 18)
-                                .addComponent(deleteMetadataBtn))
-                            .addGroup(detailsPanelLayout.createSequentialGroup()
-                                .addComponent(addAliasBtn)
-                                .addGap(18, 18, 18)
-                                .addComponent(editAliasBtn)
-                                .addGap(18, 18, 18)
-                                .addComponent(deleteAliasBtn)))
-                        .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(detailsPanelLayout.createSequentialGroup()
                         .addComponent(examinerLbl)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -542,13 +518,49 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
                         .addGap(18, 18, 18)
                         .addComponent(creationDateLbl)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(creationDateField)))
+                        .addComponent(creationDateField))
+                    .addGroup(detailsPanelLayout.createSequentialGroup()
+                        .addComponent(commentLbl)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(commentField))
+                    .addGroup(detailsPanelLayout.createSequentialGroup()
+                        .addGap(10, 10, 10)
+                        .addGroup(detailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(aliasesTablePane, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 595, Short.MAX_VALUE)
+                            .addComponent(metadataTablePane, javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(accountsTablePane, javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addGroup(detailsPanelLayout.createSequentialGroup()
+                                .addGroup(detailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(detailsPanelLayout.createSequentialGroup()
+                                        .addComponent(addAliasBtn)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(editAliasBtn)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(deleteAliasBtn))
+                                    .addGroup(detailsPanelLayout.createSequentialGroup()
+                                        .addComponent(addMetadataBtn)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(editMetadataBtn)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(deleteMetadataBtn))
+                                    .addGroup(detailsPanelLayout.createSequentialGroup()
+                                        .addComponent(addAccountBtn)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(editAccountBtn)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(deleteAccountBtn)))
+                                .addGap(0, 0, Short.MAX_VALUE))
+                            .addComponent(casesTablePane))))
                 .addContainerGap())
         );
         detailsPanelLayout.setVerticalGroup(
             detailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(detailsPanelLayout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap()
+                .addGroup(detailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(nameLbl)
+                    .addComponent(nameField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(18, 18, 18)
                 .addGroup(detailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(examinerLbl)
                     .addComponent(examinerField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -558,11 +570,7 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
                 .addGroup(detailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(commentField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(commentLbl))
-                .addGap(20, 20, 20)
-                .addGroup(detailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(nameLbl)
-                    .addComponent(nameField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(18, 18, 18)
                 .addComponent(accountsLbl)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(accountsTablePane, javax.swing.GroupLayout.PREFERRED_SIZE, 56, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -571,7 +579,7 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
                     .addComponent(addAccountBtn)
                     .addComponent(deleteAccountBtn)
                     .addComponent(editAccountBtn))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(metadataLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(metadataTablePane, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -580,7 +588,7 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
                     .addComponent(addMetadataBtn)
                     .addComponent(deleteMetadataBtn)
                     .addComponent(editMetadataBtn))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(aliasesLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(aliasesTablePane, javax.swing.GroupLayout.PREFERRED_SIZE, 74, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -589,7 +597,7 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
                     .addComponent(addAliasBtn)
                     .addComponent(deleteAliasBtn)
                     .addComponent(editAliasBtn))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(casesLbl)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(casesTablePane, javax.swing.GroupLayout.PREFERRED_SIZE, 63, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -606,7 +614,7 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 521, Short.MAX_VALUE)
+            .addGap(0, 583, Short.MAX_VALUE)
             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(layout.createSequentialGroup()
                     .addComponent(detailsPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
