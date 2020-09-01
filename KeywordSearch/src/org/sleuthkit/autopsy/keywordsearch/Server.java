@@ -1685,19 +1685,7 @@ public class Server {
             } finally {
                 docBuffer.clear();
             }
-        }        
-        
-        /* ELTODO 
-        void addDocument(SolrInputDocument doc) throws KeywordSearchModuleException {
-            try {
-                solrCore.add(doc);
-            } catch (Exception ex) {
-                // Solr throws a lot of unexpected exception types
-                logger.log(Level.SEVERE, "Could not add document to index via update handler: " + doc.getField("id"), ex); //NON-NLS
-                throw new KeywordSearchModuleException(
-                        NbBundle.getMessage(this.getClass(), "Server.addDoc.exception.msg", doc.getField("id")), ex); //NON-NLS
-            }
-        }*/
+        }
 
         /**
          * get the text from the content field for the given file
