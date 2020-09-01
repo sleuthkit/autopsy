@@ -18,13 +18,18 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.ui;
 
+import java.util.Arrays;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.NonEditableTableModel;
 import java.util.Map;
 import javax.swing.JLabel;
 import javax.swing.table.DefaultTableCellRenderer;
+import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourceCountsSummary;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel.ColumnModel;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.PieChartPanel;
 
 import org.sleuthkit.datamodel.DataSource;
 
@@ -33,14 +38,44 @@ import org.sleuthkit.datamodel.DataSource;
  * specified DataSource
  */
 @Messages({
-    "DataSourceSummaryCountsPanel.ArtifactCountsTableModel.type.header=Result Type",
+    "DataSourceSummaryCountsPanel.ArtifactCountsTableModel.type.header=Artifact Types",
     "DataSourceSummaryCountsPanel.ArtifactCountsTableModel.count.header=Count",
-    "DataSourceSummaryCountsPanel.FilesByCategoryTableModel.type.header=File Type",
-    "DataSourceSummaryCountsPanel.FilesByCategoryTableModel.count.header=Count"
+    "DataSourceSummaryCountsPanel.FilesByCategoryTableModel.type.header=File Types",
+    "DataSourceSummaryCountsPanel.FilesByCategoryTableModel.count.header=Count",
+    
+    "TypesPanel_fileTypesPieChart_title=File Types",
+    "TypesPanel_fileTypesPieChart_title=Artifact Types",
+    "TypesPanel_filesByCategoryTable_title=Files by Category",
+    
+    "TypesPanel_filesByCategoryTable_labelColumn_title=File Type",
+    "TypesPanel_filesByCategoryTable_countColumn_title=Count",
+    
+    "TypesPanel_filesByCategoryTable_title=Files by Category",
 })
-class DataSourceSummaryCountsPanel extends BaseDataSourceSummaryPanel {
+class TypesPanel extends BaseDataSourceSummaryPanel {
 
     private static final long serialVersionUID = 1L;
+    
+    private final PieChartPanel fileTypesPieChart = new PieChartPanel(Bundle.TypesPanel_fileTypesPieChart_title());
+    private final PieChartPanel artifactTypesPieChart = new PieChartPanel(Bundle.TypesPanel_fileTypesPieChart_title());
+    
+    private final JTablePanel<Pair<String, Long>> filesByCategoryTable = 
+            JTablePanel.getJTablePanel(Arrays.asList(
+                    new ColumnModel<>(
+                            Bundle.TypesPanel_filesByCategoryTable_labelColumn_title(),
+                            (pair) -> pair.getFirst(),
+                            250
+                    ),
+                    new ColumnModel<>(
+                            Bundle.TypesPanel_filesByCategoryTable_countColumn_title(),
+                            (pair) -> pair.getSecond(),
+                            150
+                    )
+            ));
+            
+            
+            new PieChartPanel(Bundle.TypesPanel_filesByCategoryTable_title());
+    
 
     // Result returned for a data model if no data found.
     private static final Object[][] EMPTY_PAIRS = new Object[][]{};
@@ -64,7 +99,7 @@ class DataSourceSummaryCountsPanel extends BaseDataSourceSummaryPanel {
     /**
      * Creates new form DataSourceSummaryCountsPanel
      */
-    DataSourceSummaryCountsPanel() {
+    TypesPanel() {
         rightAlignedRenderer.setHorizontalAlignment(JLabel.RIGHT);
         initComponents();
         fileCountsByCategoryTable.getTableHeader().setReorderingAllowed(false);
@@ -186,9 +221,9 @@ class DataSourceSummaryCountsPanel extends BaseDataSourceSummaryPanel {
 
         fileCountsByCategoryScrollPane.setViewportView(fileCountsByCategoryTable);
 
-        org.openide.awt.Mnemonics.setLocalizedText(byCategoryLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryCountsPanel.class, "DataSourceSummaryCountsPanel.byCategoryLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(byCategoryLabel, org.openide.util.NbBundle.getMessage(TypesPanel.class, "TypesPanel.byCategoryLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(resultsByTypeLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryCountsPanel.class, "DataSourceSummaryCountsPanel.resultsByTypeLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(resultsByTypeLabel, org.openide.util.NbBundle.getMessage(TypesPanel.class, "TypesPanel.resultsByTypeLabel.text")); // NOI18N
 
         artifactCountsTable.setAutoCreateRowSorter(true);
         artifactCountsScrollPane.setViewportView(artifactCountsTable);

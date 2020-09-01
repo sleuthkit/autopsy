@@ -32,7 +32,7 @@ import org.sleuthkit.datamodel.DataSource;
  * IngestJobInfoPanel.
  */
 @Messages({
-    "DataSourceSummaryTabbedPane_countsTab_title=Counts",
+    "DataSourceSummaryTabbedPane_typesTab_title=Types",
     "DataSourceSummaryTabbedPane_detailsTab_title=Details",
     "DataSourceSummaryTabbedPane_userActivityTab_title=User Activity",
     "DataSourceSummaryTabbedPane_ingestHistoryTab_title=Ingest History"
@@ -44,7 +44,7 @@ public class DataSourceSummaryTabbedPane extends JTabbedPane {
     // A pair of the tab name and the corresponding BaseDataSourceSummaryTabs to be displayed.
     private final List<Pair<String, BaseDataSourceSummaryPanel>> tabs = Arrays.asList(
             Pair.of(Bundle.DataSourceSummaryTabbedPane_detailsTab_title(), new DataSourceSummaryDetailsPanel()),
-            Pair.of(Bundle.DataSourceSummaryTabbedPane_countsTab_title(), new DataSourceSummaryCountsPanel()),
+            Pair.of(Bundle.DataSourceSummaryTabbedPane_typesTab_title(), new TypesPanel()),
             Pair.of(Bundle.DataSourceSummaryTabbedPane_detailsTab_title(), new DataSourceSummaryUserActivityPanel())
     );
 

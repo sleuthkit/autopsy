@@ -11,9 +11,29 @@ import java.util.List;
  *
  * @author gregd
  */
-public interface DataFetchLoadableComponent<T> {
+public interface LoadableComponent<T> {
+    
+    /**
+     * Clears the results from the underlying JTable and shows the provided
+     * message.
+     *
+     * @param message The message to be shown.
+     */
     void showMessage(String message);
+    
+    /**
+     * Shows a default loading message on the table. This will clear any results
+     * in the table.
+     */
     void showDefaultLoadingMessage();
+    
+    /**
+     * Shows the list as rows of data in the table. If overlay message will be
+     * cleared if present.
+     *
+     * @param data The data to be shown where each item represents a row of
+     *             data.
+     */
     void showResults(List<T> data);
     
     
