@@ -19,16 +19,22 @@
 package org.sleuthkit.autopsy.datasourcesummary.ui;
 
 import java.util.Arrays;
+import java.util.List;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.NonEditableTableModel;
 import java.util.Map;
-import javax.swing.JLabel;
-import javax.swing.table.DefaultTableCellRenderer;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourceCountsSummary;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.TopDomainsResult;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.TopProgramsResult;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel.ColumnModel;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.LoadableComponent;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.PieChartPanel;
 
 import org.sleuthkit.datamodel.DataSource;
@@ -42,25 +48,21 @@ import org.sleuthkit.datamodel.DataSource;
     "DataSourceSummaryCountsPanel.ArtifactCountsTableModel.count.header=Count",
     "DataSourceSummaryCountsPanel.FilesByCategoryTableModel.type.header=File Types",
     "DataSourceSummaryCountsPanel.FilesByCategoryTableModel.count.header=Count",
-    
     "TypesPanel_fileTypesPieChart_title=File Types",
     "TypesPanel_fileTypesPieChart_title=Artifact Types",
     "TypesPanel_filesByCategoryTable_title=Files by Category",
-    
     "TypesPanel_filesByCategoryTable_labelColumn_title=File Type",
     "TypesPanel_filesByCategoryTable_countColumn_title=Count",
-    
-    "TypesPanel_filesByCategoryTable_title=Files by Category",
-})
+    "TypesPanel_filesByCategoryTable_title=Files by Category",})
 class TypesPanel extends BaseDataSourceSummaryPanel {
 
     private static final long serialVersionUID = 1L;
-    
+
     private final PieChartPanel fileTypesPieChart = new PieChartPanel(Bundle.TypesPanel_fileTypesPieChart_title());
     private final PieChartPanel artifactTypesPieChart = new PieChartPanel(Bundle.TypesPanel_fileTypesPieChart_title());
-    
-    private final JTablePanel<Pair<String, Long>> filesByCategoryTable = 
-            JTablePanel.getJTablePanel(Arrays.asList(
+
+    private final JTablePanel<Pair<String, Long>> filesByCategoryTable
+            = JTablePanel.getJTablePanel(Arrays.asList(
                     new ColumnModel<>(
                             Bundle.TypesPanel_filesByCategoryTable_labelColumn_title(),
                             (pair) -> pair.getFirst(),
@@ -72,76 +74,57 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
                             150
                     )
             ));
-            
-            
-            new PieChartPanel(Bundle.TypesPanel_filesByCategoryTable_title());
+
+    private final List<LoadableComponent<?>> loadables = Arrays.asList(
+            fileTypesPieChart,
+            artifactTypesPieChart,
+            filesByCategoryTable
+    );
+
+    private final List<DataFetchComponents<DataSource, ?>> dataFetchComponents;
     
+    
+    public TypesPanel() {
 
-    // Result returned for a data model if no data found.
-    private static final Object[][] EMPTY_PAIRS = new Object[][]{};
+        // set up data acquisition methods
+        dataFetchComponents = Arrays.asList(
+                new DataFetchWorker.DataFetchComponents<DataSource, List<TopProgramsResult>>(
+                        (dataSource) -> topProgramsData.getTopPrograms(dataSource, TOP_PROGS_COUNT),
+                        (result) -> topProgramsTable.showDataFetchResult(result, JTablePanel.getDefaultErrorMessage(),
+                                Bundle.DataSourceSummaryUserActivityPanel_noDataExists())),
+                new DataFetchWorker.DataFetchComponents<DataSource, List<TopDomainsResult>>(
+                        (dataSource) -> topDomainsData.getRecentDomains(dataSource, TOP_DOMAINS_COUNT),
+                        (result) -> recentDomainsTable.showDataFetchResult(result, JTablePanel.getDefaultErrorMessage(),
+                                Bundle.DataSourceSummaryUserActivityPanel_noDataExists()))
+        );
 
-    // column headers for file by category table
-    private static final Object[] FILE_BY_CATEGORY_COLUMN_HEADERS = new Object[]{
-        Bundle.DataSourceSummaryCountsPanel_FilesByCategoryTableModel_type_header(),
-        Bundle.DataSourceSummaryCountsPanel_FilesByCategoryTableModel_count_header()
-    };
-
-    // column headers for artifact counts table
-    private static final Object[] ARTIFACT_COUNTS_COLUMN_HEADERS = new Object[]{
-        Bundle.DataSourceSummaryCountsPanel_ArtifactCountsTableModel_type_header(),
-        Bundle.DataSourceSummaryCountsPanel_ArtifactCountsTableModel_count_header()
-    };
-
-    private final DefaultTableCellRenderer rightAlignedRenderer = new DefaultTableCellRenderer();
-
-    private final FileTypePieChart fileTypePieChart = new FileTypePieChart();
-
-    /**
-     * Creates new form DataSourceSummaryCountsPanel
-     */
-    TypesPanel() {
-        rightAlignedRenderer.setHorizontalAlignment(JLabel.RIGHT);
         initComponents();
-        fileCountsByCategoryTable.getTableHeader().setReorderingAllowed(false);
-        artifactCountsTable.getTableHeader().setReorderingAllowed(false);
-        setDataSource(null);
     }
 
     @Override
     protected void onNewDataSource(DataSource dataSource) {
+        // if no data source is present or the case is not open,
+        // set results for tables to null.
         if (dataSource == null || !Case.isCaseOpen()) {
-            updateCountsTableData(EMPTY_PAIRS, EMPTY_PAIRS);
+            this.dataFetchComponents.forEach((item) -> item.getResultHandler()
+                    .accept(DataFetchResult.getSuccessResult(null)));
+
         } else {
-            updateCountsTableData(getFileCategoryModel(dataSource), getArtifactCountsModel(dataSource));
+            // set tables to display loading screen
+            this.loadables.forEach((table) -> table.showDefaultLoadingMessage());
+
+            // create swing workers to run for each table
+            List<DataFetchWorker<?, ?>> workers = dataFetchComponents
+                    .stream()
+                    .map((components) -> new DataFetchWorker<>(components, dataSource))
+                    .collect(Collectors.toList());
+
+            // submit swing workers to run
+            submit(workers);
         }
-        this.fileTypePieChart.setDataSource(dataSource);
     }
 
-    /**
-     * Specify the DataSource to display file information for.
-     *
-     * @param fileCategoryDataModel The file category data model.
-     * @param artifactDataModel     The artifact type data model.
-     */
-    private void updateCountsTableData(Object[][] fileCategoryDataModel, Object[][] artifactDataModel) {
-        fileCountsByCategoryTable.setModel(new NonEditableTableModel(fileCategoryDataModel, FILE_BY_CATEGORY_COLUMN_HEADERS));
-        fileCountsByCategoryTable.getColumnModel().getColumn(1).setCellRenderer(rightAlignedRenderer);
-        fileCountsByCategoryTable.getColumnModel().getColumn(0).setPreferredWidth(130);
-
-        artifactCountsTable.setModel(new NonEditableTableModel(artifactDataModel, ARTIFACT_COUNTS_COLUMN_HEADERS));
-        artifactCountsTable.getColumnModel().getColumn(0).setPreferredWidth(230);
-        artifactCountsTable.getColumnModel().getColumn(1).setCellRenderer(rightAlignedRenderer);
-
-        this.repaint();
-    }
-
-    /**
-     * Determines the JTable data model for datasource file categories.
-     *
-     * @param dataSource The DataSource.
-     *
-     * @return The model to be used with a JTable.
-     */
+    
     @Messages({
         "DataSourceSummaryCountsPanel.FilesByCategoryTableModel.all.row=All",
         "DataSourceSummaryCountsPanel.FilesByCategoryTableModel.allocated.row=Allocated",
