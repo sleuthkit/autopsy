@@ -76,7 +76,7 @@
 	brew cask uninstall java --force; 
 	brew tap bell-sw/liberica; 
 	brew cask install liberica-jdk11-full; 
-	export JAVA_HOME=/Library/Java/JavaVirtualMachines/liberica-jdk-11.0.8/Contents/Home;
+	export JAVA_HOME=/Library/Java/JavaVirtualMachines/liberica-jdk-11-full.jdk/Contents/Home;
 	/usr/libexec/java_home -V;
     fi",
     "java -version"
