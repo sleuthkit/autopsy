@@ -62,6 +62,6 @@ before_script:
         brew cask install liberica-jdk11-full; 
         export JAVA_HOME=/Library/Java/JavaVirtualMachines/liberica-jdk-11-full.jdk/Contents/Home;
     fi
-    java -version
+  - java -version
 
 script: ./travis_build.sh
