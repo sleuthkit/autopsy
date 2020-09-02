@@ -321,7 +321,7 @@ public class DataSourceUserActivitySummary {
                 .values();
 
         // get account type sorted by most recent date
-        List<TopAccountResult> results = groupedResults
+        return groupedResults
                 .stream()
                 // get the most recent access per account type
                 .map((accountGroup) -> accountGroup.stream().max(TOP_ACCOUNT_RESULT_DATE_COMPARE).get())
@@ -331,8 +331,6 @@ public class DataSourceUserActivitySummary {
                 .limit(count)
                 // get as list
                 .collect(Collectors.toList());
-
-        return results;
     }
 
     /**
