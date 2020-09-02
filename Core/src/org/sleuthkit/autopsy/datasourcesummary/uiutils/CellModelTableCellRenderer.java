@@ -98,6 +98,7 @@ public class CellModelTableCellRenderer extends DefaultTableCellRenderer {
          */
         public DefaultCellModel(String text) {
             this.text = text;
+            this.setTooltip(text);
         }
 
         @Override

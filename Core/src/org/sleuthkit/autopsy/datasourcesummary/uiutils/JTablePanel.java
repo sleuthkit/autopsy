@@ -231,7 +231,7 @@ public class JTablePanel<T> extends JPanel {
                 .map((colModel) -> colModel.getCellRenderer())
                 .collect(Collectors.toList());
 
-        return new DefaultListTableModel<T>(columnRenderers);
+        return new DefaultListTableModel<>(columnRenderers);
     }
 
     /**
@@ -264,24 +264,45 @@ public class JTablePanel<T> extends JPanel {
 
     private final JScrollPane tableScrollPane;
     private final Overlay overlayLayer;
-    private final ListTableModel<T> tableModel;
+    private ListTableModel<T> tableModel;
     private final JTable table;
 
     /**
-     * Main constructor.
+     * Panel constructor.
      *
      * @param tableModel The model to use for the table.
      */
     public JTablePanel(ListTableModel<T> tableModel) {
-        this.tableModel = tableModel;
-        this.table = new JTable(tableModel);
+        this();
+        setModel(tableModel);
+    }
+
+    /**
+     * Default constructor.
+     */
+    public JTablePanel() {
+        this.table = new JTable();
         this.table.getTableHeader().setReorderingAllowed(false);
 
         this.overlayLayer = new Overlay();
         this.tableScrollPane = new JScrollPane(table);
-        JLayer<JComponent> dualLayer = new JLayer<JComponent>(tableScrollPane, overlayLayer);
+        JLayer<JComponent> dualLayer = new JLayer<>(tableScrollPane, overlayLayer);
         setLayout(new BorderLayout());
         add(dualLayer, BorderLayout.CENTER);
+    }
+
+    /**
+     * Set the table model.
+     *
+     * @param tableModel
+     */
+    public void setModel(ListTableModel<T> tableModel) {
+        if (tableModel == null) {
+            throw new IllegalArgumentException("Null table model passed to setModel");
+        }
+
+        this.tableModel = tableModel;
+        table.setModel(tableModel);
     }
 
     /**
