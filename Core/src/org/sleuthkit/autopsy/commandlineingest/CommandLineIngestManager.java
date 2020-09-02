@@ -141,7 +141,7 @@ public class CommandLineIngestManager extends CommandLineManager{
 
                 if (commands == null || commands.isEmpty()) {
                     LOGGER.log(Level.SEVERE, "No command line commands specified");
-                    System.err.println("No command line commands specified");
+                    System.out.println("No command line commands specified");
                     return;
                 }
 
@@ -169,7 +169,7 @@ public class CommandLineIngestManager extends CommandLineManager{
                                 } catch (CaseActionException ex) {
                                     String baseCaseName = command.getInputs().get(CommandLineCommand.InputType.CASE_NAME.name());
                                     LOGGER.log(Level.SEVERE, "Error creating or opening case " + baseCaseName, ex);
-                                    System.err.println("Error creating or opening case " + baseCaseName);
+                                    System.out.println("Error creating or opening case " + baseCaseName);
                                     // Do not process any other commands
                                     return;
                                 }
@@ -195,7 +195,7 @@ public class CommandLineIngestManager extends CommandLineManager{
                                 } catch (InterruptedException | AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException | CaseActionException ex) {
                                     String dataSourcePath = command.getInputs().get(CommandLineCommand.InputType.DATA_SOURCE_PATH.name());
                                     LOGGER.log(Level.SEVERE, "Error adding data source " + dataSourcePath, ex);
-                                    System.err.println("Error adding data source " + dataSourcePath);
+                                    System.out.println("Error adding data source " + dataSourcePath);
                                     // Do not process any other commands
                                     return;
                                 }
@@ -224,7 +224,7 @@ public class CommandLineIngestManager extends CommandLineManager{
                                             content = Case.getCurrentCaseThrows().getSleuthkitCase().getContentById(dataSourceObjId);
                                         } catch (TskCoreException ex) {
                                             LOGGER.log(Level.SEVERE, "Exception while trying to find data source with object ID " + dataSourceId, ex);
-                                            System.err.println("Exception while trying to find data source with object ID " + dataSourceId);
+                                            System.out.println("Exception while trying to find data source with object ID " + dataSourceId);
                                             // Do not process any other commands
                                             return;
                                         }
@@ -249,7 +249,7 @@ public class CommandLineIngestManager extends CommandLineManager{
                                 } catch (InterruptedException | CaseActionException ex) {
                                     String dataSourcePath = command.getInputs().get(CommandLineCommand.InputType.DATA_SOURCE_PATH.name());
                                     LOGGER.log(Level.SEVERE, "Error running ingest on data source " + dataSourcePath, ex);
-                                    System.err.println("Error running ingest on data source " + dataSourcePath);
+                                    System.out.println("Error running ingest on data source " + dataSourcePath);
                                     // Do not process any other commands
                                     return;
                                 }
@@ -272,7 +272,7 @@ public class CommandLineIngestManager extends CommandLineManager{
                                 } catch (CaseActionException ex) {
                                     String caseDirPath = command.getInputs().get(CommandLineCommand.InputType.CASE_FOLDER_PATH.name());
                                     LOGGER.log(Level.SEVERE, "Error opening case in case directory: " + caseDirPath, ex);
-                                    System.err.println("Error opening case in case directory: " + caseDirPath);
+                                    System.out.println("Error opening case in case directory: " + caseDirPath);
                                     // Do not process any other commands
                                     return;
                                 }
@@ -302,7 +302,7 @@ public class CommandLineIngestManager extends CommandLineManager{
                                 } catch (CaseActionException ex) {
                                     String caseDirPath = command.getInputs().get(CommandLineCommand.InputType.CASE_FOLDER_PATH.name());
                                     LOGGER.log(Level.SEVERE, "Error opening case in case directory: " + caseDirPath, ex);
-                                    System.err.println("Error opening case in case directory: " + caseDirPath);
+                                    System.out.println("Error opening case in case directory: " + caseDirPath);
                                     // Do not process any other commands
                                     return;
                                 }
@@ -320,14 +320,14 @@ public class CommandLineIngestManager extends CommandLineManager{
                      * logged.
                      */
                     LOGGER.log(Level.SEVERE, "Unexpected error", ex);
-                    System.err.println("Unexpected error. Exiting...");
+                    System.out.println("Unexpected error. Exiting...");
 
                 } finally {
                     try {
                         Case.closeCurrentCase();
                     } catch (CaseActionException ex) {
                         LOGGER.log(Level.WARNING, "Exception while closing case", ex);
-                        System.err.println("Exception while closing case");
+                        System.out.println("Exception while closing case");
                     }
                 }
 
@@ -507,7 +507,7 @@ public class CommandLineIngestManager extends CommandLineManager{
                 if (selectedProfile == null) {
                     // unable to find the user specified profile
                     LOGGER.log(Level.SEVERE, "Unable to find ingest profile: {0}. Ingest cancelled!", ingestProfileName);
-                    System.err.println("Unable to find ingest profile: " + ingestProfileName + ". Ingest cancelled!");
+                    System.out.println("Unable to find ingest profile: " + ingestProfileName + ". Ingest cancelled!");
                     return;
                 }
 
@@ -516,7 +516,7 @@ public class CommandLineIngestManager extends CommandLineManager{
                 if (selectedFileSet == null) {
                     // unable to find the user specified profile
                     LOGGER.log(Level.SEVERE, "Unable to find file filter {0} for ingest profile: {1}. Ingest cancelled!", new Object[]{selectedProfile.getFileIngestFilter(), ingestProfileName});
-                    System.err.println("Unable to find file filter " + selectedProfile.getFileIngestFilter() + " for ingest profile: " + ingestProfileName + ". Ingest cancelled!");
+                    System.out.println("Unable to find file filter " + selectedProfile.getFileIngestFilter() + " for ingest profile: " + ingestProfileName + ". Ingest cancelled!");
                     return;
                 }
             }
