@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.datamodel;
 
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
@@ -134,6 +135,22 @@ public class DataSourceUserActivitySummary {
     }
 
     /**
+     * Attempts to obtain a web search result record from a blackboard artifact.
+     *
+     * @param artifact The artifact.
+     *
+     * @return The TopWebSearchResult or null if the search string or date
+     *         accessed cannot be determined.
+     */
+    private static TopWebSearchResult getWebSearchResult(BlackboardArtifact artifact) {
+        String searchString = DataSourceInfoUtilities.getStringOrNull(artifact, TYPE_TEXT);
+        Date dateAccessed = DataSourceInfoUtilities.getDateOrNull(artifact, TYPE_DATETIME_ACCESSED);
+        return (StringUtils.isNotBlank(searchString) && dateAccessed != null)
+                ? new TopWebSearchResult(searchString, dateAccessed)
+                : null;
+    }
+
+    /**
      * Retrieves most recent web searches by most recent date grouped by search
      * term.
      *
@@ -151,25 +168,27 @@ public class DataSourceUserActivitySummary {
     public List<TopWebSearchResult> getMostRecentWebSearches(DataSource dataSource, int count) throws SleuthkitCaseProviderException, TskCoreException {
         assertValidCount(count);
 
-        List<TopWebSearchResult> results = caseProvider.get().getBlackboard().getArtifacts(ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getTypeID(), dataSource.getId())
+        // get the artifacts
+        List<BlackboardArtifact> webSearchArtifacts = caseProvider.get().getBlackboard()
+                .getArtifacts(ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getTypeID(), dataSource.getId());
+
+        // group by search string (case insensitive)
+        Collection<List<TopWebSearchResult>> resultGroups = webSearchArtifacts
                 .stream()
                 // get items where search string and date is not null
-                .map(artifact -> {
-                    String searchString = DataSourceInfoUtilities.getStringOrNull(artifact, TYPE_TEXT);
-                    Date dateAccessed = DataSourceInfoUtilities.getDateOrNull(artifact, TYPE_DATETIME_ACCESSED);
-                    return (StringUtils.isNotBlank(searchString) && dateAccessed != null)
-                            ? new TopWebSearchResult(searchString, dateAccessed)
-                            : null;
-                })
+                .map(DataSourceUserActivitySummary::getWebSearchResult)
                 // remove null records
                 .filter(result -> result != null)
                 // get these messages grouped by search to string
                 .collect(Collectors.groupingBy((result) -> result.getSearchString().toUpperCase()))
-                .entrySet()
+                .values();
+
+        // get the most recent date for each search term
+        List<TopWebSearchResult> results = resultGroups
                 .stream()
-                // get the most recent access per account type
-                .map((entry) -> entry.getValue().stream().max(TOP_WEBSEARCH_RESULT_DATE_COMPARE).get())
-                // get most recent accounts accessed
+                // get the most recent access per search type
+                .map((list) -> list.stream().max(TOP_WEBSEARCH_RESULT_DATE_COMPARE).get())
+                // get most recent searches first
                 .sorted(TOP_WEBSEARCH_RESULT_DATE_COMPARE.reversed())
                 .limit(count)
                 // get as list
@@ -254,6 +273,22 @@ public class DataSourceUserActivitySummary {
     }
 
     /**
+     * Obtains a TopAccountResult from a blackboard artifact.
+     *
+     * @param artifact The artifact.
+     *
+     * @return The TopAccountResult or null if the account type or message date
+     *         cannot be determined.
+     */
+    private static TopAccountResult getAccountResult(BlackboardArtifact artifact) {
+        String type = DataSourceInfoUtilities.getStringOrNull(artifact, TYPE_MESSAGE_TYPE);
+        Date date = DataSourceInfoUtilities.getDateOrNull(artifact, TYPE_DATETIME);
+        return (StringUtils.isNotBlank(type) && date != null)
+                ? new TopAccountResult(type, date)
+                : null;
+    }
+
+    /**
      * Retrieves most recent account used by most recent date for a message
      * sent.
      *
@@ -271,30 +306,33 @@ public class DataSourceUserActivitySummary {
     public List<TopAccountResult> getRecentAccounts(DataSource dataSource, int count) throws SleuthkitCaseProviderException, TskCoreException {
         assertValidCount(count);
 
-        return caseProvider.get().getBlackboard().getArtifacts(ARTIFACT_TYPE.TSK_MESSAGE.getTypeID(), dataSource.getId())
+        // get all message artifacts
+        List<BlackboardArtifact> messageArtifacts = caseProvider.get().getBlackboard().getArtifacts(ARTIFACT_TYPE.TSK_MESSAGE.getTypeID(), dataSource.getId());
+
+        // get them grouped by account type
+        Collection<List<TopAccountResult>> groupedResults = messageArtifacts
                 .stream()
                 // get message type and date (or null if one of those attributes does not exist)
-                .map(artifact -> {
-                    String type = DataSourceInfoUtilities.getStringOrNull(artifact, TYPE_MESSAGE_TYPE);
-                    Date date = DataSourceInfoUtilities.getDateOrNull(artifact, TYPE_DATETIME);
-                    return (StringUtils.isNotBlank(type) && date != null)
-                            ? new TopAccountResult(type, date)
-                            : null;
-                })
+                .map(DataSourceUserActivitySummary::getAccountResult)
                 // remove null records
                 .filter(result -> result != null)
                 // get these messages grouped by account type
                 .collect(Collectors.groupingBy(TopAccountResult::getAccountType))
-                .entrySet()
+                .values();
+
+        // get account type sorted by most recent date
+        List<TopAccountResult> results = groupedResults
                 .stream()
                 // get the most recent access per account type
-                .map((entry) -> entry.getValue().stream().max(TOP_ACCOUNT_RESULT_DATE_COMPARE).get())
+                .map((accountGroup) -> accountGroup.stream().max(TOP_ACCOUNT_RESULT_DATE_COMPARE).get())
                 // get most recent accounts accessed
                 .sorted(TOP_ACCOUNT_RESULT_DATE_COMPARE.reversed())
                 // limit to count
                 .limit(count)
                 // get as list
                 .collect(Collectors.toList());
+
+        return results;
     }
 
     /**
