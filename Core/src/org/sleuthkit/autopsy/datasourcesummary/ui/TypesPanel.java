@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.datasourcesummary.ui;
 
 import java.util.Arrays;
 import java.util.List;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.NonEditableTableModel;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.tuple.Pair;
@@ -29,6 +28,8 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourceCountsSummary;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.TopDomainsResult;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.TopProgramsResult;
+import static org.sleuthkit.autopsy.datasourcesummary.uiutils.AbstractLoadableComponent.DEFAULT_ERROR_MESSAGE;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer.DefaultCellModel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
@@ -49,28 +50,27 @@ import org.sleuthkit.datamodel.DataSource;
     "DataSourceSummaryCountsPanel.FilesByCategoryTableModel.type.header=File Types",
     "DataSourceSummaryCountsPanel.FilesByCategoryTableModel.count.header=Count",
     "TypesPanel_fileTypesPieChart_title=File Types",
-    "TypesPanel_fileTypesPieChart_title=Artifact Types",
+    "TypesPanel_artifactsTypesPieChart_title=Artifact Types",
     "TypesPanel_filesByCategoryTable_title=Files by Category",
     "TypesPanel_filesByCategoryTable_labelColumn_title=File Type",
-    "TypesPanel_filesByCategoryTable_countColumn_title=Count",
-    "TypesPanel_filesByCategoryTable_title=Files by Category",})
+    "TypesPanel_filesByCategoryTable_countColumn_title=Count",})
 class TypesPanel extends BaseDataSourceSummaryPanel {
 
     private static final long serialVersionUID = 1L;
 
     private final PieChartPanel fileTypesPieChart = new PieChartPanel(Bundle.TypesPanel_fileTypesPieChart_title());
-    private final PieChartPanel artifactTypesPieChart = new PieChartPanel(Bundle.TypesPanel_fileTypesPieChart_title());
+    private final PieChartPanel artifactTypesPieChart = new PieChartPanel(Bundle.TypesPanel_artifactsTypesPieChart_title());
 
     private final JTablePanel<Pair<String, Long>> filesByCategoryTable
             = JTablePanel.getJTablePanel(Arrays.asList(
                     new ColumnModel<>(
                             Bundle.TypesPanel_filesByCategoryTable_labelColumn_title(),
-                            (pair) -> pair.getFirst(),
+                            (pair) -> new DefaultCellModel(pair.getLeft()),
                             250
                     ),
                     new ColumnModel<>(
                             Bundle.TypesPanel_filesByCategoryTable_countColumn_title(),
-                            (pair) -> pair.getSecond(),
+                            (pair) -> new DefaultCellModel(Long.toString(getZeroIfNull(pair.getRight()))),
                             150
                     )
             ));
@@ -88,10 +88,10 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
 
         // set up data acquisition methods
         dataFetchComponents = Arrays.asList(
+                // files by category worker
                 new DataFetchWorker.DataFetchComponents<DataSource, List<TopProgramsResult>>(
-                        (dataSource) -> topProgramsData.getTopPrograms(dataSource, TOP_PROGS_COUNT),
-                        (result) -> topProgramsTable.showDataFetchResult(result, JTablePanel.getDefaultErrorMessage(),
-                                Bundle.DataSourceSummaryUserActivityPanel_noDataExists())),
+                        TypesPanel::getFileCategoryModel,
+                        (result) -> filesByCategoryTable.showDataFetchResult(result, DEFAULT_ERROR_MESSAGE, TOOL_TIP_TEXT_KEY)),
                 new DataFetchWorker.DataFetchComponents<DataSource, List<TopDomainsResult>>(
                         (dataSource) -> topDomainsData.getRecentDomains(dataSource, TOP_DOMAINS_COUNT),
                         (result) -> recentDomainsTable.showDataFetchResult(result, JTablePanel.getDefaultErrorMessage(),
@@ -132,20 +132,20 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
         "DataSourceSummaryCountsPanel.FilesByCategoryTableModel.slack.row=Slack",
         "DataSourceSummaryCountsPanel.FilesByCategoryTableModel.directory.row=Directory"
     })
-    private static Object[][] getFileCategoryModel(DataSource selectedDataSource) {
-        Long fileCount = zeroIfNull(DataSourceCountsSummary.getCountOfFiles(selectedDataSource));
-        Long unallocatedFiles = zeroIfNull(DataSourceCountsSummary.getCountOfUnallocatedFiles(selectedDataSource));
-        Long allocatedFiles = zeroIfNull(DataSourceCountsSummary.getCountOfAllocatedFiles(selectedDataSource));
-        Long slackFiles = zeroIfNull(DataSourceCountsSummary.getCountOfSlackFiles(selectedDataSource));
-        Long directories = zeroIfNull(DataSourceCountsSummary.getCountOfDirectories(selectedDataSource));
+    private static List<Pair<String, Long>> getFileCategoryModel(DataSource selectedDataSource) {
+        Long fileCount = getZeroIfNull(DataSourceCountsSummary.getCountOfFiles(selectedDataSource));
+        Long unallocatedFiles = getZeroIfNull(DataSourceCountsSummary.getCountOfUnallocatedFiles(selectedDataSource));
+        Long allocatedFiles = getZeroIfNull(DataSourceCountsSummary.getCountOfAllocatedFiles(selectedDataSource));
+        Long slackFiles = getZeroIfNull(DataSourceCountsSummary.getCountOfSlackFiles(selectedDataSource));
+        Long directories = getZeroIfNull(DataSourceCountsSummary.getCountOfDirectories(selectedDataSource));
 
-        return new Object[][]{
-            new Object[]{Bundle.DataSourceSummaryCountsPanel_FilesByCategoryTableModel_all_row(), fileCount},
-            new Object[]{Bundle.DataSourceSummaryCountsPanel_FilesByCategoryTableModel_allocated_row(), allocatedFiles},
-            new Object[]{Bundle.DataSourceSummaryCountsPanel_FilesByCategoryTableModel_unallocated_row(), unallocatedFiles},
-            new Object[]{Bundle.DataSourceSummaryCountsPanel_FilesByCategoryTableModel_slack_row(), slackFiles},
-            new Object[]{Bundle.DataSourceSummaryCountsPanel_FilesByCategoryTableModel_directory_row(), directories}
-        };
+        return Arrays.asList(
+            Pair.of(Bundle.DataSourceSummaryCountsPanel_FilesByCategoryTableModel_all_row(), fileCount),
+            Pair.of(Bundle.DataSourceSummaryCountsPanel_FilesByCategoryTableModel_allocated_row(), allocatedFiles),
+            Pair.of(Bundle.DataSourceSummaryCountsPanel_FilesByCategoryTableModel_unallocated_row(), unallocatedFiles),
+            Pair.of(Bundle.DataSourceSummaryCountsPanel_FilesByCategoryTableModel_slack_row(), slackFiles),
+            Pair.of(Bundle.DataSourceSummaryCountsPanel_FilesByCategoryTableModel_directory_row(), directories)
+        );
     }
 
     /**
@@ -155,9 +155,11 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
      *
      * @return The value or 0 if null.
      */
-    private static Long zeroIfNull(Long origValue) {
+    private static Long getZeroIfNull(Long origValue) {
         return origValue == null ? 0 : origValue;
     }
+    
+    private static String get
 
     /**
      * The counts of different artifact types found in a DataSource.
