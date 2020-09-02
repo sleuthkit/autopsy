@@ -218,14 +218,20 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
     private void initComponents() {
         java.awt.GridBagConstraints gridBagConstraints;
 
+        javax.swing.JScrollPane scrollPane = new javax.swing.JScrollPane();
+        javax.swing.JPanel tablePanel = new javax.swing.JPanel();
         openedDocPane = new JTablePanel<RecentFileDetails>();
         downloadsPane = new JTablePanel<RecentDownloadDetails>();
         attachmentsPane = new JTablePanel<RecentAttachmentDetails>();
-        openDocsLabel = new javax.swing.JLabel();
-        downloadLabel = new javax.swing.JLabel();
-        attachmentLabel = new javax.swing.JLabel();
+        javax.swing.JLabel openDocsLabel = new javax.swing.JLabel();
+        javax.swing.JLabel downloadLabel = new javax.swing.JLabel();
+        javax.swing.JLabel attachmentLabel = new javax.swing.JLabel();
 
-        setLayout(new java.awt.GridBagLayout());
+        setLayout(new java.awt.BorderLayout());
+
+        tablePanel.setMinimumSize(new java.awt.Dimension(400, 10));
+        tablePanel.setPreferredSize(new java.awt.Dimension(600, 10));
+        tablePanel.setLayout(new java.awt.GridBagLayout());
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 1;
@@ -234,7 +240,7 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
         gridBagConstraints.weightx = 1.0;
         gridBagConstraints.weighty = 1.0;
         gridBagConstraints.insets = new java.awt.Insets(5, 5, 0, 5);
-        add(openedDocPane, gridBagConstraints);
+        tablePanel.add(openedDocPane, gridBagConstraints);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 3;
@@ -243,7 +249,7 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
         gridBagConstraints.weightx = 1.0;
         gridBagConstraints.weighty = 1.0;
         gridBagConstraints.insets = new java.awt.Insets(5, 5, 0, 5);
-        add(downloadsPane, gridBagConstraints);
+        tablePanel.add(downloadsPane, gridBagConstraints);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 5;
@@ -252,7 +258,7 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
         gridBagConstraints.weightx = 1.0;
         gridBagConstraints.weighty = 1.0;
         gridBagConstraints.insets = new java.awt.Insets(5, 5, 10, 5);
-        add(attachmentsPane, gridBagConstraints);
+        tablePanel.add(attachmentsPane, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(openDocsLabel, org.openide.util.NbBundle.getMessage(RecentFilesPanel.class, "RecentFilesPanel.openDocsLabel.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -261,7 +267,7 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTH;
         gridBagConstraints.insets = new java.awt.Insets(10, 5, 0, 5);
-        add(openDocsLabel, gridBagConstraints);
+        tablePanel.add(openDocsLabel, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(downloadLabel, org.openide.util.NbBundle.getMessage(RecentFilesPanel.class, "RecentFilesPanel.downloadLabel.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -269,7 +275,7 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
         gridBagConstraints.gridy = 2;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.insets = new java.awt.Insets(15, 5, 0, 5);
-        add(downloadLabel, gridBagConstraints);
+        tablePanel.add(downloadLabel, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(attachmentLabel, org.openide.util.NbBundle.getMessage(RecentFilesPanel.class, "RecentFilesPanel.attachmentLabel.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -278,16 +284,17 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTH;
         gridBagConstraints.insets = new java.awt.Insets(15, 5, 0, 5);
-        add(attachmentLabel, gridBagConstraints);
+        tablePanel.add(attachmentLabel, gridBagConstraints);
+
+        scrollPane.setViewportView(tablePanel);
+
+        add(scrollPane, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel attachmentLabel;
     private javax.swing.JPanel attachmentsPane;
-    private javax.swing.JLabel downloadLabel;
     private javax.swing.JPanel downloadsPane;
-    private javax.swing.JLabel openDocsLabel;
     private javax.swing.JPanel openedDocPane;
     // End of variables declaration//GEN-END:variables
 
