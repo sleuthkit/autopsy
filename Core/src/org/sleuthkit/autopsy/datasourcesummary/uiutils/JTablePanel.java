@@ -32,14 +32,13 @@ import javax.swing.plaf.LayerUI;
 import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer.CellModel;
 
 /**
  * A table that displays a list of items and also can display messages for
  * loading, load error, and not loaded.
  */
-public class JTablePanel<T> extends AbstractLoadableComponent<T> {
+public class JTablePanel<T> extends AbstractLoadableComponent<List<T>> {
 
     /**
      * JTables don't allow displaying messages. So this LayerUI is used to
@@ -139,7 +138,6 @@ public class JTablePanel<T> extends AbstractLoadableComponent<T> {
 
     private static final long serialVersionUID = 1L;
 
-    private static final Logger logger = Logger.getLogger(JTablePanel.class.getName());
     private static final CellModelTableCellRenderer DEFAULT_CELL_RENDERER = new CellModelTableCellRenderer();
 
     /**
@@ -244,8 +242,9 @@ public class JTablePanel<T> extends AbstractLoadableComponent<T> {
         return this;
     }
 
+    
     @Override
-    protected void setResultList(List<T> data) {
+    protected void setResults(List<T> data) {
         // set the list of data to be shown as either the data or an empty list 
         // on null.
         List<T> dataToSet = (data == null) ? Collections.emptyList() : data;
@@ -258,7 +257,7 @@ public class JTablePanel<T> extends AbstractLoadableComponent<T> {
     }
 
     @Override
-    protected void setOverlay(boolean visible, String message) {
+    protected void setMessage(boolean visible, String message) {
         this.overlayLayer.setVisible(visible);
         this.overlayLayer.setMessage(message);
     }

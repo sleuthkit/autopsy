@@ -5,14 +5,12 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.uiutils;
 
-import java.util.List;
-
 /**
  *
  * @author gregd
  */
 public interface LoadableComponent<T> {
-    
+
     /**
      * Clears the results from the underlying JTable and shows the provided
      * message.
@@ -20,13 +18,13 @@ public interface LoadableComponent<T> {
      * @param message The message to be shown.
      */
     void showMessage(String message);
-    
+
     /**
      * Shows a default loading message on the table. This will clear any results
      * in the table.
      */
     void showDefaultLoadingMessage();
-    
+
     /**
      * Shows the list as rows of data in the table. If overlay message will be
      * cleared if present.
@@ -34,10 +32,9 @@ public interface LoadableComponent<T> {
      * @param data The data to be shown where each item represents a row of
      *             data.
      */
-    void showResults(List<T> data);
-    
-    
-        /**
+    void showResults(T data);
+
+    /**
      * Shows the data in a DataFetchResult. If there was an error during the
      * operation, the errorMessage will be displayed. If the operation completed
      * successfully and no data is present, noResultsMessage will be shown.
@@ -49,7 +46,7 @@ public interface LoadableComponent<T> {
      * @param noResultsMessage The message to be shown if there are no results
      *                         but the operation completed successfully.
      */
-    void showDataFetchResult(DataFetchResult<List<T>> result, String errorMessage, String noResultsMessage);
+    void showDataFetchResult(DataFetchResult<T> result, String errorMessage, String noResultsMessage);
 
     /**
      * Shows the data in a DataFetchResult. If there was an error during the
@@ -59,5 +56,5 @@ public interface LoadableComponent<T> {
      *
      * @param result The DataFetchResult.
      */
-    public void showDataFetchResult(DataFetchResult<List<T>> result);
+    public void showDataFetchResult(DataFetchResult<T> result);
 }

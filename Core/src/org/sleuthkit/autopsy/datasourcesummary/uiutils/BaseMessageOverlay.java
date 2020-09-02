@@ -13,9 +13,6 @@ import javax.swing.JLabel;
  * @author gregd
  */
 public class BaseMessageOverlay {
-
-    private static final long serialVersionUID = 1L;
-
     private final JLabel label;
     private boolean visible = false;
 
@@ -57,11 +54,7 @@ public class BaseMessageOverlay {
                 message == null ? "" : message));
     }
 
-    //@Override
-    //public void paintOverlay(Graphics2D g2d, ChartPanel pnl)
     public void paintOverlay(Graphics g, int width, int height) {
-        // Paint the underlying view.
-
         if (!visible) {
             return;
         }

@@ -25,7 +25,7 @@ import org.jfree.data.general.DefaultPieDataset;
  *
  * @author gregd
  */
-public class PieChartPanel extends AbstractLoadableComponent<PieChartPanel.PieChartItem> {
+public class PieChartPanel extends AbstractLoadableComponent<List<PieChartPanel.PieChartItem>> {
 
     /**
      * 
@@ -136,13 +136,13 @@ public class PieChartPanel extends AbstractLoadableComponent<PieChartPanel.PieCh
     }
     
     @Override
-    protected void setOverlay(boolean visible, String message) {
+    protected void setMessage(boolean visible, String message) {
         this.overlay.setVisible(visible);
         this.overlay.setMessage(message);
     }
 
     @Override
-    protected void setResultList(List<PieChartPanel.PieChartItem> data) {
+    protected void setResults(List<PieChartPanel.PieChartItem> data) {
         this.dataset.clear();
         if (data != null) {
             for (PieChartPanel.PieChartItem slice : data) {

@@ -37,8 +37,6 @@ class DataSourceSummaryDetailsPanel extends BaseDataSourceSummaryPanel {
 
     //Because this panel was made using the gridbaglayout and netbean's Customize Layout tool it will be best to continue to modify it through that
     private static final long serialVersionUID = 1L;
-    private static final Integer SIZE_COVERSION_CONSTANT = 1000;
-    private static final DecimalFormat APPROXIMATE_SIZE_FORMAT = new DecimalFormat("#.##");
     private static final Logger logger = Logger.getLogger(DataSourceSummaryDetailsPanel.class.getName());
 
     /**
@@ -71,7 +69,7 @@ class DataSourceSummaryDetailsPanel extends BaseDataSourceSummaryPanel {
     private void updateDetailsPanelData(DataSource selectedDataSource, Long unallocatedFilesSize, String osDetails, String usage) {
         clearTableValues();
         if (selectedDataSource != null) {
-            unallocatedSizeValue.setText(getSizeString(unallocatedFilesSize));
+            unallocatedSizeValue.setText(SizeRepresentationUtil.getSizeString(unallocatedFilesSize));
             operatingSystemValue.setText(StringUtils.isBlank(osDetails) ? "" : osDetails);
             dataSourceUsageValue.setText(StringUtils.isBlank(usage) ? "" : usage);
 
@@ -103,8 +101,8 @@ class DataSourceSummaryDetailsPanel extends BaseDataSourceSummaryPanel {
      */
     private void setFieldsForImage(Image selectedImage) {
         imageTypeValue.setText(selectedImage.getType().getName());
-        sizeValue.setText(getSizeString(selectedImage.getSize()));
-        sectorSizeValue.setText(getSizeString(selectedImage.getSsize()));
+        sizeValue.setText(SizeRepresentationUtil.getSizeString(selectedImage.getSize()));
+        sectorSizeValue.setText(SizeRepresentationUtil.getSizeString(selectedImage.getSsize()));
 
         for (String path : selectedImage.getPaths()) {
             ((DefaultTableModel) filePathsTable.getModel()).addRow(new Object[]{path});
@@ -142,54 +140,7 @@ class DataSourceSummaryDetailsPanel extends BaseDataSourceSummaryPanel {
         }
     }
 
-    /**
-     * Get a long size in bytes as a string formated to be read by users.
-     *
-     * @param size Long value representing a size in bytes
-     *
-     * @return return a string formated with a user friendly version of the size
-     *         as a string, returns empty String when provided empty size
-     */
-    @Messages({
-        "DataSourceSummaryDetailsPanel.units.bytes= bytes",
-        "DataSourceSummaryDetailsPanel.units.kilobytes= kB",
-        "DataSourceSummaryDetailsPanel.units.megabytes= MB",
-        "DataSourceSummaryDetailsPanel.units.gigabytes= GB",
-        "DataSourceSummaryDetailsPanel.units.terabytes= TB",
-        "DataSourceSummaryDetailsPanel.units.petabytes= PB"
-    })
-    private static String getSizeString(Long size) {
-        if (size == null) {
-            return "";
-        }
-        double approximateSize = size;
-        if (approximateSize < SIZE_COVERSION_CONSTANT) {
-            return String.valueOf(size) + Bundle.DataSourceSummaryDetailsPanel_units_bytes();
-        }
-        approximateSize /= SIZE_COVERSION_CONSTANT;
-        if (approximateSize < SIZE_COVERSION_CONSTANT) {
-            return APPROXIMATE_SIZE_FORMAT.format(approximateSize) + Bundle.DataSourceSummaryDetailsPanel_units_kilobytes()
-                    + " (" + String.valueOf(size) + Bundle.DataSourceSummaryDetailsPanel_units_bytes() + ")";
-        }
-        approximateSize /= SIZE_COVERSION_CONSTANT;
-        if (approximateSize < SIZE_COVERSION_CONSTANT) {
-            return APPROXIMATE_SIZE_FORMAT.format(approximateSize) + Bundle.DataSourceSummaryDetailsPanel_units_megabytes()
-                    + " (" + String.valueOf(size) + Bundle.DataSourceSummaryDetailsPanel_units_bytes() + ")";
-        }
-        approximateSize /= SIZE_COVERSION_CONSTANT;
-        if (approximateSize < SIZE_COVERSION_CONSTANT) {
-            return APPROXIMATE_SIZE_FORMAT.format(approximateSize) + Bundle.DataSourceSummaryDetailsPanel_units_gigabytes()
-                    + " (" + String.valueOf(size) + Bundle.DataSourceSummaryDetailsPanel_units_bytes() + ")";
-        }
-        approximateSize /= SIZE_COVERSION_CONSTANT;
-        if (approximateSize < SIZE_COVERSION_CONSTANT) {
-            return APPROXIMATE_SIZE_FORMAT.format(approximateSize) + Bundle.DataSourceSummaryDetailsPanel_units_terabytes()
-                    + " (" + String.valueOf(size) + Bundle.DataSourceSummaryDetailsPanel_units_bytes() + ")";
-        }
-        approximateSize /= SIZE_COVERSION_CONSTANT;
-        return APPROXIMATE_SIZE_FORMAT.format(approximateSize) + Bundle.DataSourceSummaryDetailsPanel_units_petabytes()
-                + " (" + String.valueOf(size) + Bundle.DataSourceSummaryDetailsPanel_units_bytes() + ")";
-    }
+
 
     /**
      * Update the visibility of all fields and their labels based on whether

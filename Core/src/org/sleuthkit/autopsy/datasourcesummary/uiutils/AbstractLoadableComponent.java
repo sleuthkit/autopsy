@@ -5,7 +5,7 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.uiutils;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.logging.Level;
 import javax.swing.JPanel;
 import org.openide.util.NbBundle;
@@ -49,8 +49,8 @@ public abstract class AbstractLoadableComponent<T> extends JPanel implements Loa
      * @param message The message to be shown.
      */
     public synchronized void showMessage(String message) {
-        setResultList(null);
-        setOverlay(true, message);
+        setResults(null);
+        setMessage(true, message);
         repaint();
     }
 
@@ -69,9 +69,9 @@ public abstract class AbstractLoadableComponent<T> extends JPanel implements Loa
      * @param data The data to be shown where each item represents a row of
      *             data.
      */
-    public synchronized void showResults(List<T> data) {
-        setOverlay(false, null);
-        setResultList(data);
+    public synchronized void showResults(T data) {
+        setMessage(false, null);
+        setResults(data);
         repaint();
     }
 
@@ -87,7 +87,7 @@ public abstract class AbstractLoadableComponent<T> extends JPanel implements Loa
      * @param noResultsMessage The message to be shown if there are no results
      *                         but the operation completed successfully.
      */
-    public void showDataFetchResult(DataFetchResult<List<T>> result, String errorMessage, String noResultsMessage) {
+    public void showDataFetchResult(DataFetchResult<T> result, String errorMessage, String noResultsMessage) {
         if (result == null) {
             logger.log(Level.SEVERE, "Null data fetch result received.");
             return;
@@ -95,10 +95,11 @@ public abstract class AbstractLoadableComponent<T> extends JPanel implements Loa
 
         switch (result.getResultType()) {
             case SUCCESS:
-                if (result.getData() == null || result.getData().isEmpty()) {
+                T data = result.getData();
+                if (data == null || (data instanceof Collection<?> && ((Collection<?>) data).isEmpty())) {
                     showMessage(noResultsMessage);
                 } else {
-                    showResults(result.getData());
+                    showResults(data);
                 }
                 break;
             case ERROR:
@@ -122,18 +123,18 @@ public abstract class AbstractLoadableComponent<T> extends JPanel implements Loa
      *
      * @param result The DataFetchResult.
      */
-    public void showDataFetchResult(DataFetchResult<List<T>> result) {
+    public void showDataFetchResult(DataFetchResult<T> result) {
         showDataFetchResult(result, DEFAULT_ERROR_MESSAGE, DEFAULT_NO_RESULTS_MESSAGE);
     }
 
     /**
-     * Sets the message and visibility of the overlay. Repaint does not need to
+     * Sets the message and visibility of the message. Repaint does not need to
      * be handled in this method.
      *
-     * @param visible The visibility of the overlay.
-     * @param message The message in the overlay.
+     * @param visible The visibility of the message.
+     * @param message The message to be displayed if visible.
      */
-    protected abstract void setOverlay(boolean visible, String message);
+    protected abstract void setMessage(boolean visible, String message);
 
     /**
      * Sets the data to be shown in the JTable. Repaint does not need to be
@@ -141,5 +142,5 @@ public abstract class AbstractLoadableComponent<T> extends JPanel implements Loa
      *
      * @param data The list of data objects to be shown.
      */
-    protected abstract void setResultList(List<T> data);
+    protected abstract void setResults(T data);
 }
