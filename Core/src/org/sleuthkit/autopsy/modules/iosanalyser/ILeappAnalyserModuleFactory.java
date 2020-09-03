@@ -32,9 +32,9 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;;
  * logical files and saves the output to module output.
  */
 @ServiceProvider(service = IngestModuleFactory.class)
-public class IosAnalyserModuleFactory extends IngestModuleFactoryAdapter {
+public class ILeappAnalyserModuleFactory extends IngestModuleFactoryAdapter {
 
-    @NbBundle.Messages({"IosAnalyserModuleFactory_moduleName=iOSAnalyser"})
+    @NbBundle.Messages({"IosAnalyserModuleFactory_moduleName=ILeapp Analyser"})
     static String getModuleName() {
         return Bundle.IosAnalyserModuleFactory_moduleName();
     }
@@ -62,7 +62,7 @@ public class IosAnalyserModuleFactory extends IngestModuleFactoryAdapter {
 
     @Override
     public DataSourceIngestModule createDataSourceIngestModule(IngestModuleIngestJobSettings ingestJobOptions) {
-        return new IosAnalyserIngestModule();
+        return new ILeappAnalyserIngestModule();
     }
 
 }
