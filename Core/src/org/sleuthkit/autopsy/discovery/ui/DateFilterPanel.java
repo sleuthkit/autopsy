@@ -60,7 +60,7 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
         jPanel1 = new javax.swing.JPanel();
         daysSpinner = new javax.swing.JSpinner(numberModel);
         daysLabel = new javax.swing.JLabel();
-        mostRecentButton = new javax.swing.JRadioButton();
+        mostRecentRadioButton = new javax.swing.JRadioButton();
         startCheckBox = new javax.swing.JCheckBox();
         startDatePicker = new com.github.lgooddatepicker.components.DatePicker();
         endDatePicker = new com.github.lgooddatepicker.components.DatePicker();
@@ -68,19 +68,25 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
         rangeRadioButton = new javax.swing.JRadioButton();
 
         org.openide.awt.Mnemonics.setLocalizedText(dateFilterCheckbox, org.openide.util.NbBundle.getMessage(DateFilterPanel.class, "DateFilterPanel.dateFilterCheckbox.text")); // NOI18N
+        dateFilterCheckbox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                dateFilterCheckboxActionPerformed(evt);
+            }
+        });
 
         daysSpinner.setEnabled(false);
         daysSpinner.setPreferredSize(new java.awt.Dimension(75, 26));
+        daysSpinner.setValue(7);
 
         org.openide.awt.Mnemonics.setLocalizedText(daysLabel, org.openide.util.NbBundle.getMessage(DateFilterPanel.class, "DateFilterPanel.daysLabel.text")); // NOI18N
         daysLabel.setEnabled(false);
 
-        buttonGroup1.add(mostRecentButton);
-        org.openide.awt.Mnemonics.setLocalizedText(mostRecentButton, org.openide.util.NbBundle.getMessage(DateFilterPanel.class, "DateFilterPanel.mostRecentButton.text")); // NOI18N
-        mostRecentButton.setEnabled(false);
-        mostRecentButton.addActionListener(new java.awt.event.ActionListener() {
+        buttonGroup1.add(mostRecentRadioButton);
+        org.openide.awt.Mnemonics.setLocalizedText(mostRecentRadioButton, org.openide.util.NbBundle.getMessage(DateFilterPanel.class, "DateFilterPanel.mostRecentRadioButton.text")); // NOI18N
+        mostRecentRadioButton.setEnabled(false);
+        mostRecentRadioButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mostRecentButtonActionPerformed(evt);
+                mostRecentRadioButtonActionPerformed(evt);
             }
         });
 
@@ -121,7 +127,7 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
-                .addComponent(mostRecentButton, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(mostRecentRadioButton, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(daysSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -141,7 +147,7 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(mostRecentButton)
+                    .addComponent(mostRecentRadioButton)
                     .addComponent(daysSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(daysLabel))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -177,25 +183,48 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
 
     private void startCheckBoxStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_startCheckBoxStateChanged
         startDatePicker.setEnabled(startCheckBox.isSelected());
-//        validateFilters(); //TODO JIRA-6714 when search will begin doing something
     }//GEN-LAST:event_startCheckBoxStateChanged
 
     private void endCheckBoxStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_endCheckBoxStateChanged
         endDatePicker.setEnabled(endCheckBox.isSelected());
-//        validateFilters(); //TODO JIRA-6714 when search will begin doing something
     }//GEN-LAST:event_endCheckBoxStateChanged
 
-    private void mostRecentButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mostRecentButtonActionPerformed
-
-    }//GEN-LAST:event_mostRecentButtonActionPerformed
+    private void mostRecentRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mostRecentRadioButtonActionPerformed
+        startCheckBox.setEnabled(false);
+        endCheckBox.setEnabled(false);
+        daysSpinner.setEnabled(true);
+        daysLabel.setEnabled(true);
+    }//GEN-LAST:event_mostRecentRadioButtonActionPerformed
 
     private void rangeRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rangeRadioButtonActionPerformed
-        // TODO add your handling code here:
+        startCheckBox.setEnabled(true);
+        endCheckBox.setEnabled(true);
+        daysSpinner.setEnabled(false);
+        daysLabel.setEnabled(false);
     }//GEN-LAST:event_rangeRadioButtonActionPerformed
+
+    private void dateFilterCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_dateFilterCheckboxActionPerformed
+        mostRecentRadioButton.setEnabled(dateFilterCheckbox.isSelected());
+        rangeRadioButton.setEnabled(dateFilterCheckbox.isSelected());
+    }//GEN-LAST:event_dateFilterCheckboxActionPerformed
 
     @Override
     void configurePanel(boolean selected, int[] indicesSelected) {
         dateFilterCheckbox.setSelected(selected);
+        if (dateFilterCheckbox.isEnabled() && dateFilterCheckbox.isSelected()) {
+            mostRecentRadioButton.setEnabled(true);
+            rangeRadioButton.setEnabled(true);
+            mostRecentRadioButton.setSelected(true);
+        } else {
+            mostRecentRadioButton.setEnabled(false);
+            rangeRadioButton.setEnabled(false);
+            daysLabel.setEnabled(false);
+            daysSpinner.setEnabled(false);
+            startCheckBox.setEnabled(false);
+            endCheckBox.setEnabled(false);
+            startDatePicker.setEnabled(false);
+            endDatePicker.setEnabled(false);
+        }
     }
 
     @Override
@@ -232,7 +261,7 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
     private javax.swing.JCheckBox endCheckBox;
     private com.github.lgooddatepicker.components.DatePicker endDatePicker;
     private javax.swing.JPanel jPanel1;
-    private javax.swing.JRadioButton mostRecentButton;
+    private javax.swing.JRadioButton mostRecentRadioButton;
     private javax.swing.JRadioButton rangeRadioButton;
     private javax.swing.JCheckBox startCheckBox;
     private com.github.lgooddatepicker.components.DatePicker startDatePicker;

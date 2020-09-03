@@ -512,6 +512,10 @@ final class DiscoveryDialog extends javax.swing.JDialog {
             remove(imageFilterPanel);
             imageFilterPanel.removePropertyChangeListener(listener);
         }
+        if (domainFilterPanel != null) {
+            remove(domainFilterPanel);
+            domainFilterPanel.removePropertyChangeListener(listener);
+        }
         if (documentFilterPanel != null) {
             remove(documentFilterPanel);
             documentFilterPanel.removePropertyChangeListener(listener);
@@ -519,10 +523,6 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         if (videoFilterPanel != null) {
             remove(videoFilterPanel);
             videoFilterPanel.removePropertyChangeListener(listener);
-        }
-        if (domainFilterPanel != null) {
-            remove(domainFilterPanel);
-            domainFilterPanel.removePropertyChangeListener(listener);
         }
     }
 
@@ -584,7 +584,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         domainsButton.setBackground(SELECTED_COLOR);
         domainsButton.setForeground(Color.BLACK);
         type = SearchData.Type.DOMAIN;
-        documentFilterPanel.addPropertyChangeListener(listener);
+        domainFilterPanel.addPropertyChangeListener(listener);
         validateDialog();
         pack();
         repaint();
