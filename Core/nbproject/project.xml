@@ -7,24 +7,6 @@
             <suite-component/>
             <module-dependencies>
                 <dependency>
-                    <code-name-base>org.jdesktop.beansbinding</code-name-base>
-                    <build-prerequisite/>
-                    <compile-dependency/>
-                    <run-dependency>
-                        <release-version>1</release-version>
-                        <specification-version>1.27.1.121</specification-version>
-                    </run-dependency>
-                </dependency>
-                <dependency>
-                    <code-name-base>org.jdesktop.layout</code-name-base>
-                    <build-prerequisite/>
-                    <compile-dependency/>
-                    <run-dependency>
-                        <release-version>1</release-version>
-                        <specification-version>1.33.1</specification-version>
-                    </run-dependency>
-                </dependency>
-                <dependency>
                     <code-name-base>org.netbeans.api.progress</code-name-base>
                     <build-prerequisite/>
                     <compile-dependency/>
@@ -580,6 +562,14 @@
             <class-path-extension>
                 <runtime-relative-path>ext/sleuthkit-caseuco-4.10.0.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\sleuthkit-caseuco-4.10.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/sleuthkit-4.10.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/sleuthkit-4.10.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/sleuthkit-caseuco-4.10.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/sleuthkit-caseuco-4.10.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/gax-1.44.0.jar</runtime-relative-path>
