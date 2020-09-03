@@ -87,6 +87,7 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
             this.key = key;
             setLayout(new BorderLayout());
             add(label, BorderLayout.CENTER);
+            this.showResults(null);
         }
 
         private void setValue(String value, boolean italicize) {
@@ -168,7 +169,7 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
             // size label worker
             new DataFetchWorker.DataFetchComponents<>(
                     (dataSource) -> {
-                        Long size = dataSource == null ? dataSource.getSize() : null;
+                        Long size = dataSource == null ? null : dataSource.getSize();
                         return SizeRepresentationUtil.getSizeString(size, INTEGER_SIZE_FORMAT, false);
                     },
                     sizeLabel::showDataFetchResult),
@@ -295,163 +296,73 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
-        java.awt.GridBagConstraints gridBagConstraints;
 
         javax.swing.JScrollPane scrollParent = new javax.swing.JScrollPane();
-        jPanel1 = new javax.swing.JPanel();
+        javax.swing.JPanel contentParent = new javax.swing.JPanel();
         javax.swing.JPanel usagePanel = usageLabel;
-        osPanel = osLabel;
-        sizePanel = sizeLabel;
+        javax.swing.JPanel osPanel = osLabel;
+        javax.swing.JPanel sizePanel = sizeLabel;
         pieChartRow = new javax.swing.JPanel();
         javax.swing.JPanel fileMimeTypesPanel = fileMimeTypesChart;
         javax.swing.JPanel artifactTypesPanel = artifactTypesChart;
         javax.swing.JPanel filesByCategoryPanel = filesByCategoryTable;
 
-        jPanel1.setLayout(new java.awt.GridBagLayout());
+        setLayout(new java.awt.BorderLayout());
 
-        usagePanel.setMinimumSize(null);
+        contentParent.setBorder(javax.swing.BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        contentParent.setMaximumSize(new java.awt.Dimension(32787, 32787));
+        contentParent.setMinimumSize(new java.awt.Dimension(650, 500));
+        contentParent.setPreferredSize(null);
+        contentParent.setLayout(new javax.swing.BoxLayout(contentParent, javax.swing.BoxLayout.PAGE_AXIS));
 
-        javax.swing.GroupLayout usagePanelLayout = new javax.swing.GroupLayout(usagePanel);
-        usagePanel.setLayout(usagePanelLayout);
-        usagePanelLayout.setHorizontalGroup(
-            usagePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 815, Short.MAX_VALUE)
-        );
-        usagePanelLayout.setVerticalGroup(
-            usagePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 17, Short.MAX_VALUE)
-        );
+        usagePanel.setAlignmentX(0.0F);
+        usagePanel.setMaximumSize(new java.awt.Dimension(32767, 20));
+        usagePanel.setMinimumSize(new java.awt.Dimension(10, 20));
+        usagePanel.setName(""); // NOI18N
+        usagePanel.setPreferredSize(new java.awt.Dimension(800, 20));
+        contentParent.add(usagePanel);
 
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        jPanel1.add(usagePanel, gridBagConstraints);
+        osPanel.setAlignmentX(0.0F);
+        osPanel.setMaximumSize(new java.awt.Dimension(32767, 20));
+        osPanel.setMinimumSize(new java.awt.Dimension(10, 20));
+        osPanel.setPreferredSize(new java.awt.Dimension(800, 20));
+        contentParent.add(osPanel);
 
-        osPanel.setMinimumSize(null);
-        osPanel.setPreferredSize(null);
+        sizePanel.setAlignmentX(0.0F);
+        sizePanel.setMaximumSize(new java.awt.Dimension(32767, 20));
+        sizePanel.setMinimumSize(new java.awt.Dimension(10, 20));
+        sizePanel.setPreferredSize(new java.awt.Dimension(800, 20));
+        contentParent.add(sizePanel);
 
-        javax.swing.GroupLayout osPanelLayout = new javax.swing.GroupLayout(osPanel);
-        osPanel.setLayout(osPanelLayout);
-        osPanelLayout.setHorizontalGroup(
-            osPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
-        );
-        osPanelLayout.setVerticalGroup(
-            osPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
-        );
+        pieChartRow.setAlignmentX(0.0F);
 
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 1;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        jPanel1.add(osPanel, gridBagConstraints);
-
-        sizePanel.setMinimumSize(null);
-        sizePanel.setPreferredSize(null);
-
-        javax.swing.GroupLayout sizePanelLayout = new javax.swing.GroupLayout(sizePanel);
-        sizePanel.setLayout(sizePanelLayout);
-        sizePanelLayout.setHorizontalGroup(
-            sizePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 815, Short.MAX_VALUE)
-        );
-        sizePanelLayout.setVerticalGroup(
-            sizePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 17, Short.MAX_VALUE)
-        );
-
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 2;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        jPanel1.add(sizePanel, gridBagConstraints);
-
-        pieChartRow.setMinimumSize(null);
-        pieChartRow.setPreferredSize(null);
-
-        fileMimeTypesPanel.setMaximumSize(new java.awt.Dimension(400, 300));
-        fileMimeTypesPanel.setMinimumSize(new java.awt.Dimension(400, 300));
-        fileMimeTypesPanel.setPreferredSize(new java.awt.Dimension(400, 300));
-
-        javax.swing.GroupLayout fileMimeTypesPanelLayout = new javax.swing.GroupLayout(fileMimeTypesPanel);
-        fileMimeTypesPanel.setLayout(fileMimeTypesPanelLayout);
-        fileMimeTypesPanelLayout.setHorizontalGroup(
-            fileMimeTypesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 400, Short.MAX_VALUE)
-        );
-        fileMimeTypesPanelLayout.setVerticalGroup(
-            fileMimeTypesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 300, Short.MAX_VALUE)
-        );
-
+        fileMimeTypesPanel.setBorder(javax.swing.BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        fileMimeTypesPanel.setMaximumSize(new java.awt.Dimension(500, 375));
+        fileMimeTypesPanel.setMinimumSize(new java.awt.Dimension(500, 375));
+        fileMimeTypesPanel.setPreferredSize(new java.awt.Dimension(500, 375));
         pieChartRow.add(fileMimeTypesPanel);
 
-        artifactTypesPanel.setMaximumSize(new java.awt.Dimension(400, 300));
-        artifactTypesPanel.setMinimumSize(new java.awt.Dimension(400, 300));
-        artifactTypesPanel.setPreferredSize(new java.awt.Dimension(400, 300));
-
-        javax.swing.GroupLayout artifactTypesPanelLayout = new javax.swing.GroupLayout(artifactTypesPanel);
-        artifactTypesPanel.setLayout(artifactTypesPanelLayout);
-        artifactTypesPanelLayout.setHorizontalGroup(
-            artifactTypesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 400, Short.MAX_VALUE)
-        );
-        artifactTypesPanelLayout.setVerticalGroup(
-            artifactTypesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 300, Short.MAX_VALUE)
-        );
-
+        artifactTypesPanel.setBorder(javax.swing.BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        artifactTypesPanel.setMaximumSize(new java.awt.Dimension(650, 500));
+        artifactTypesPanel.setMinimumSize(new java.awt.Dimension(650, 500));
+        artifactTypesPanel.setPreferredSize(new java.awt.Dimension(650, 500));
         pieChartRow.add(artifactTypesPanel);
 
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 3;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        jPanel1.add(pieChartRow, gridBagConstraints);
+        contentParent.add(pieChartRow);
 
-        filesByCategoryPanel.setMinimumSize(new java.awt.Dimension(400, 187));
-        filesByCategoryPanel.setPreferredSize(new java.awt.Dimension(400, 187));
+        filesByCategoryPanel.setAlignmentX(0.0F);
+        filesByCategoryPanel.setMaximumSize(new java.awt.Dimension(32767, 106));
+        filesByCategoryPanel.setMinimumSize(new java.awt.Dimension(10, 106));
+        filesByCategoryPanel.setPreferredSize(new java.awt.Dimension(400, 106));
+        contentParent.add(filesByCategoryPanel);
 
-        javax.swing.GroupLayout filesByCategoryPanelLayout = new javax.swing.GroupLayout(filesByCategoryPanel);
-        filesByCategoryPanel.setLayout(filesByCategoryPanelLayout);
-        filesByCategoryPanelLayout.setHorizontalGroup(
-            filesByCategoryPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 400, Short.MAX_VALUE)
-        );
-        filesByCategoryPanelLayout.setVerticalGroup(
-            filesByCategoryPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 187, Short.MAX_VALUE)
-        );
+        scrollParent.setViewportView(contentParent);
 
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 4;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        jPanel1.add(filesByCategoryPanel, gridBagConstraints);
-
-        scrollParent.setViewportView(jPanel1);
-
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(scrollParent, javax.swing.GroupLayout.DEFAULT_SIZE, 840, Short.MAX_VALUE)
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(scrollParent, javax.swing.GroupLayout.DEFAULT_SIZE, 314, Short.MAX_VALUE)
-        );
+        add(scrollParent, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JPanel jPanel1;
-    private javax.swing.JPanel osPanel;
     private javax.swing.JPanel pieChartRow;
-    private javax.swing.JPanel sizePanel;
     // End of variables declaration//GEN-END:variables
 }
