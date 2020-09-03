@@ -292,7 +292,7 @@ public final class ExecUtil {
          * process is still alive when the method is called. This code is set up
          * so that the only way Process.exitValue() can be called is when it has
          * not been bypassed by an exception and the preceding loop has
-         * terminated with Process.isA;ive == false.
+         * terminated with Process.isAlive == false.
          */
         return process.exitValue();
     }
