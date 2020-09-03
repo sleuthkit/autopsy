@@ -305,14 +305,16 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
         pieChartRow = new javax.swing.JPanel();
         javax.swing.JPanel fileMimeTypesPanel = fileMimeTypesChart;
         javax.swing.JPanel artifactTypesPanel = artifactTypesChart;
+        javax.swing.Box.Filler filler2 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 5), new java.awt.Dimension(0, 5), new java.awt.Dimension(32767, 5));
+        javax.swing.JLabel filesByCategoryLabel = new javax.swing.JLabel();
+        javax.swing.Box.Filler filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2), new java.awt.Dimension(32767, 2));
         javax.swing.JPanel filesByCategoryPanel = filesByCategoryTable;
 
         setLayout(new java.awt.BorderLayout());
 
         contentParent.setBorder(javax.swing.BorderFactory.createEmptyBorder(10, 10, 10, 10));
         contentParent.setMaximumSize(new java.awt.Dimension(32787, 32787));
-        contentParent.setMinimumSize(new java.awt.Dimension(650, 500));
-        contentParent.setPreferredSize(null);
+        contentParent.setMinimumSize(new java.awt.Dimension(650, 510));
         contentParent.setLayout(new javax.swing.BoxLayout(contentParent, javax.swing.BoxLayout.PAGE_AXIS));
 
         usagePanel.setAlignmentX(0.0F);
@@ -335,6 +337,9 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
         contentParent.add(sizePanel);
 
         pieChartRow.setAlignmentX(0.0F);
+        pieChartRow.setMaximumSize(new java.awt.Dimension(1170, 895));
+        pieChartRow.setMinimumSize(null);
+        pieChartRow.setPreferredSize(null);
 
         fileMimeTypesPanel.setBorder(javax.swing.BorderFactory.createEmptyBorder(5, 5, 5, 5));
         fileMimeTypesPanel.setMaximumSize(new java.awt.Dimension(500, 375));
@@ -349,11 +354,16 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
         pieChartRow.add(artifactTypesPanel);
 
         contentParent.add(pieChartRow);
+        contentParent.add(filler2);
+
+        org.openide.awt.Mnemonics.setLocalizedText(filesByCategoryLabel, org.openide.util.NbBundle.getMessage(TypesPanel.class, "TypesPanel.filesByCategoryLabel.text")); // NOI18N
+        contentParent.add(filesByCategoryLabel);
+        contentParent.add(filler1);
 
         filesByCategoryPanel.setAlignmentX(0.0F);
-        filesByCategoryPanel.setMaximumSize(new java.awt.Dimension(32767, 106));
-        filesByCategoryPanel.setMinimumSize(new java.awt.Dimension(10, 106));
-        filesByCategoryPanel.setPreferredSize(new java.awt.Dimension(400, 106));
+        filesByCategoryPanel.setMaximumSize(new java.awt.Dimension(32767, 107));
+        filesByCategoryPanel.setMinimumSize(new java.awt.Dimension(10, 107));
+        filesByCategoryPanel.setPreferredSize(new java.awt.Dimension(400, 107));
         contentParent.add(filesByCategoryPanel);
 
         scrollParent.setViewportView(contentParent);

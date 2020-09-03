@@ -65,6 +65,7 @@ SizeRepresentationUtil_units_kilobytes=\ kB
 SizeRepresentationUtil_units_megabytes=\ MB
 SizeRepresentationUtil_units_petabytes=\ PB
 SizeRepresentationUtil_units_terabytes=\ TB
+TypesPanel.filesByCategoryLabel.text=Files by Category
 TypesPanel_artifactsTypesPieChart_title=Artifact Types
 TypesPanel_fileMimeTypesChart_audio_title=Audio
 TypesPanel_fileMimeTypesChart_documents_title=Documents
