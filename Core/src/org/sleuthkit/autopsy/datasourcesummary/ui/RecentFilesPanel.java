@@ -119,7 +119,7 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
                         }, 250),
                 new ColumnModel<>(Bundle.RecentFilesPanel_col_head_date(),
                         (prog) -> {
-                            return new DefaultCellModel(prog.getDate());
+                            return new DefaultCellModel(prog.getDateAsString());
                         }, 80));
 
         ListTableModel<RecentFileDetails> tableModel = JTablePanel.getTableModel(list);
@@ -154,7 +154,7 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
                         }, 250),
                 new ColumnModel<>(Bundle.RecentFilesPanel_col_head_date(),
                         (prog) -> {
-                            return new DefaultCellModel(prog.getDate());
+                            return new DefaultCellModel(prog.getDateAsString());
                         }, 80));
 
         ListTableModel<RecentDownloadDetails> tableModel = JTablePanel.getTableModel(list);
@@ -185,7 +185,7 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
                         }, 250),
                 new ColumnModel<>(Bundle.RecentFilesPanel_col_head_date(),
                         (prog) -> {
-                            return new DefaultCellModel(prog.getDate());
+                            return new DefaultCellModel(prog.getDateAsString());
                         }, 80),
                 new ColumnModel<>(Bundle.RecentFilePanel_col_header_sender(),
                         (prog) -> {

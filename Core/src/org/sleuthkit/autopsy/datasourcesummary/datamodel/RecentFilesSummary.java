@@ -24,6 +24,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -50,6 +51,7 @@ public class RecentFilesSummary {
     private final static BlackboardAttribute.Type DATETIME_ATT = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME);
     private final static BlackboardAttribute.Type ASSOCATED_ATT = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT);
     private final static BlackboardAttribute.Type EMAIL_FROM_ATT = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_FROM);
+    private final static BlackboardAttribute.Type MSG_DATEIME_SENT_ATT = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_SENT);
     private final static BlackboardArtifact.Type ASSOCATED_OBJ_ART = new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT);
 
     private static final DateFormat DATETIME_FORMAT = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss", Locale.getDefault());
@@ -220,7 +222,7 @@ public class RecentFilesSummary {
                 Content content = artifact.getParent();
                 if (content instanceof AbstractFile) {
                     String sender;
-                    Long date;
+                    Long date = null;
                     String path;
 
                     BlackboardAttribute senderAttribute = messageArtifact.getAttribute(EMAIL_FROM_ATT);
@@ -229,18 +231,25 @@ public class RecentFilesSummary {
                     } else {
                         sender = "";
                     }
+                    senderAttribute = messageArtifact.getAttribute(MSG_DATEIME_SENT_ATT);
+                    if (senderAttribute != null) {
+                        date = senderAttribute.getValueLong();
+                    }
+
                     AbstractFile abstractFile = (AbstractFile) content;
-                    date = getTimeFromFile(abstractFile);
+
                     path = Paths.get(abstractFile.getParentPath(), abstractFile.getName()).toString();
 
-                    if(date != 0) {
+                    if (date != null && date != 0) {
                         List<RecentAttachmentDetails> list = sortedMap.get(date);
                         if (list == null) {
                             list = new ArrayList<>();
                             sortedMap.put(date, list);
                         }
-
-                        list.add(new RecentAttachmentDetails(path, date, sender));
+                        RecentAttachmentDetails details = new RecentAttachmentDetails(path, date, sender);
+                        if(!list.contains(details)) {
+                            list.add(details);
+                        }
                     }
                 }
             }
@@ -296,31 +305,6 @@ public class RecentFilesSummary {
         return artifactTypeID == TSK_EMAIL_MSG.getTypeID()
                 || artifactTypeID == TSK_MESSAGE.getTypeID();
     }
-    
-    /**
-     * Return any non-zero file time.
-     * 
-     * @param file Abstract File to get time from.
-     * 
-     * @return A time for the file, 0 is still a possibility if none of the file 
-     * times were set.
-     */
-    private Long getTimeFromFile(AbstractFile file) {
-        Long time = file.getCrtime();
-        if(time == 0) {
-            time = file.getCtime();
-        }
-        
-        if(time == 0) {
-            time = file.getAtime();
-        }
-        
-        if(time == 0) {
-            time = file.getMtime();
-        }
-        
-        return time;
-    }
 
     /**
      * General data model object for files object.
@@ -347,8 +331,17 @@ public class RecentFilesSummary {
          *
          * @return Formatted date time.
          */
-        public String getDate() {
+        public String getDateAsString() {
             return DATETIME_FORMAT.format(date * 1000);
+        }
+        
+        /**
+         * Returns the date as the seconds from java epoch.
+         * 
+         * @return Seconds from java epoch.
+         */
+        Long getDateAsLong() {
+            return date;
         }
 
         /**
@@ -403,10 +396,10 @@ public class RecentFilesSummary {
          * Constructor for recent download files which have a path, date and
          * domain value.
          *
-         * @param path File path.
-         * @param date File crtime.
-         * @param sender The sender of the message from which the 
-         *               file was attached.
+         * @param path   File path.
+         * @param date   File crtime.
+         * @param sender The sender of the message from which the file was
+         *               attached.
          */
         RecentAttachmentDetails(String path, long date, String sender) {
             super(path, date);
@@ -421,6 +414,25 @@ public class RecentFilesSummary {
          */
         public String getSender() {
             return sender;
+        }
+        
+        @Override
+        public boolean equals(Object obj) {
+            if(!(obj instanceof RecentAttachmentDetails)) {
+                return false;
+            }
+            RecentAttachmentDetails compareObj = (RecentAttachmentDetails)obj;
+            
+            return compareObj.getSender().equals(this.sender) && 
+                    compareObj.getPath().equals(this.getPath()) &&
+                    compareObj.getDateAsLong().equals(this.getDateAsLong());           
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 5;
+            hash = 73 * hash + Objects.hashCode(this.sender);
+            return hash;
         }
     }
 }
