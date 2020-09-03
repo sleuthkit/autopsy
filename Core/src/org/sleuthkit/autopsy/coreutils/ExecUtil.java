@@ -302,8 +302,8 @@ public final class ExecUtil {
      * ensure the process is no longer alive before returning.
      *
      * IMPORTANT: This method blocks while the process is running. For legacy
-     * API reasons, if there is an interrupt the InterruptedException is wrapped
-     * in an IOException instead of being thrown. Callers that need to know
+     * API reasons, if there is an interrupt (or any other exception) the
+     * exception is logged instead of being thrown. Callers that need to know
      * about interrupts to detect backgound task cancellation can call
      * Thread.isInterrupted() or, if the thread's interrupt flag should be
      * cleared, Thread.interrupted().

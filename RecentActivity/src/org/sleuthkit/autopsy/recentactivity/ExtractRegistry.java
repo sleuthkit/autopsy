@@ -483,7 +483,7 @@ class ExtractRegistry extends Extract {
             processBuilder.redirectError(new File(errFile));
             ExecUtil.execute(processBuilder, new DataSourceIngestModuleProcessTerminator(context));
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Unable to run RegRipper", ex); //NON-NLS
+            logger.log(Level.SEVERE, String.format("Running RegRipper on %s encountered an error or was incomplete", hiveFilePath), ex); //NON-NLS
             this.addErrorMessage(NbBundle.getMessage(this.getClass(), "ExtractRegistry.execRegRip.errMsg.failedAnalyzeRegFile", this.getName()));
         }
     }
