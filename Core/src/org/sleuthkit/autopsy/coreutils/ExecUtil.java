@@ -81,7 +81,7 @@ public final class ExecUtil {
     public static class TimedProcessTerminator implements ProcessTerminator {
 
         private final long startTimeInSeconds;
-        private final long maxRunTimeInSeconds;
+        private final Long maxRunTimeInSeconds;
 
         /**
          * Creates a process terminator that can be used to kill a process after
@@ -97,22 +97,26 @@ public final class ExecUtil {
         /**
          * Creates a process terminator that can be used to kill a process after
          * it exceeds a global maximum allowable run time specified as a user
-         * preference. If the user preference is disabled then the maximum
-         * allowable run time for this terminator is set to MAX_INT seconds.
+         * preference. If the user preference is not set, this terminator has no
+         * effect.
          */
         public TimedProcessTerminator() {
             if (UserPreferences.getIsTimeOutEnabled() && UserPreferences.getProcessTimeOutHrs() > 0) {
-                this.maxRunTimeInSeconds = UserPreferences.getProcessTimeOutHrs() * 3600;
+                this.maxRunTimeInSeconds = (long) UserPreferences.getProcessTimeOutHrs() * 3600;
             } else {
-                this.maxRunTimeInSeconds = Long.MAX_VALUE;
+                this.maxRunTimeInSeconds = null;
             }
             this.startTimeInSeconds = (new Date().getTime()) / 1000;
         }
 
         @Override
         public boolean shouldTerminateProcess() {
-            long currentTimeInSeconds = (new Date().getTime()) / 1000;
-            return (currentTimeInSeconds - this.startTimeInSeconds) > this.maxRunTimeInSeconds;
+            if (maxRunTimeInSeconds != null) {
+                long currentTimeInSeconds = (new Date().getTime()) / 1000;
+                return (currentTimeInSeconds - this.startTimeInSeconds) > this.maxRunTimeInSeconds;
+            } else {
+                return false;
+            }
         }
     }
 
