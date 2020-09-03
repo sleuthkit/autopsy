@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.commandlineingest;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -90,7 +91,7 @@ public class CommandLineOptionProcessor extends OptionProcessor {
                 || values.containsKey(generateReportsOption))) {
             // not running from command line
             logger.log(Level.INFO, "No command line commands passed in as inputs. Not running from command line."); //NON-NLS
-            System.out.println("No command line commands passed in as inputs. Not running from command line.");
+            handleError("No command line commands passed in as inputs. Not running from command line.");
             return;
         }
 
@@ -100,16 +101,12 @@ public class CommandLineOptionProcessor extends OptionProcessor {
         if (values.containsKey(caseNameOption)) {
             argDirs = values.get(caseNameOption);
             if (argDirs.length < 1) {
-                logger.log(Level.SEVERE, "Missing argument 'caseName'");
-                System.out.println("Missing argument 'caseName'");
-                return;
+                handleError("Missing argument 'caseName'");
             }
             inputCaseName = argDirs[0];
 
             if (inputCaseName == null || inputCaseName.isEmpty()) {
-                logger.log(Level.SEVERE, "'caseName' argument is empty");
-                System.out.println("'caseName' argument is empty");
-                return;
+                handleError("'caseName' argument is empty");
             }
         }
 
@@ -118,28 +115,16 @@ public class CommandLineOptionProcessor extends OptionProcessor {
             argDirs = values.get(caseTypeOption);
 
             if (argDirs.length < 1) {
-                logger.log(Level.SEVERE, "Missing argument 'caseType'");
-                System.out.println("Missing argument 'caseType'");
-                return;
+                handleError("Missing argument 'caseType'");
             }
             caseType = argDirs[0];
 
             if (caseType == null || caseType.isEmpty()) {
-                logger.log(Level.SEVERE, "'caseType' argument is empty");
-                System.out.println("'caseType' argument is empty");
-                return;
-            }
-
-            if (!caseType.equalsIgnoreCase(CASETYPE_MULTI) && !caseType.equalsIgnoreCase(CASETYPE_SINGLE)) {
-                logger.log(Level.SEVERE, "'caseType' argument is invalid");
-                System.out.println("'caseType' argument is invalid");
-                return;
-            }
-
-            if (caseType.equalsIgnoreCase(CASETYPE_MULTI) && !FeatureAccessUtils.canCreateMultiUserCases()) {
-                logger.log(Level.SEVERE, "Unable to create multi user case.");
-                System.out.println("Unable to create multi user case. Confirm that multi user settings are configured correctly.");
-                return;
+                handleError("'caseType' argument is empty");
+            } else if (!caseType.equalsIgnoreCase(CASETYPE_MULTI) && !caseType.equalsIgnoreCase(CASETYPE_SINGLE)) {
+                handleError("'caseType' argument is invalid");
+            } else if (caseType.equalsIgnoreCase(CASETYPE_MULTI) && !FeatureAccessUtils.canCreateMultiUserCases()) {
+                handleError("Unable to create multi user case. Confirm that multi user settings are configured correctly.");
             }
         }
 
@@ -147,22 +132,16 @@ public class CommandLineOptionProcessor extends OptionProcessor {
         if (values.containsKey(caseBaseDirOption)) {
             argDirs = values.get(caseBaseDirOption);
             if (argDirs.length < 1) {
-                logger.log(Level.SEVERE, "Missing argument 'caseBaseDir'");
-                System.out.println("Missing argument 'caseBaseDir'");
-                return;
+                handleError("Missing argument 'caseBaseDir'");
             }
             caseBaseDir = argDirs[0];
 
             if (caseBaseDir == null || caseBaseDir.isEmpty()) {
-                logger.log(Level.SEVERE, "Missing argument 'caseBaseDir' option");
-                System.out.println("Missing argument 'caseBaseDir' option");
-                return;
+                handleError("Missing argument 'caseBaseDir' option");
             }
 
             if (!(new File(caseBaseDir).exists()) || !(new File(caseBaseDir).isDirectory())) {
-                logger.log(Level.SEVERE, "'caseBaseDir' {0} directory doesn''t exist or is not a directory", caseBaseDir);
-                System.out.println("'caseBaseDir' directory doesn't exist or is not a directory: " + caseBaseDir);
-                return;
+                handleError("'caseBaseDir' directory doesn't exist or is not a directory: " + caseBaseDir);
             }
         }
 
@@ -171,23 +150,17 @@ public class CommandLineOptionProcessor extends OptionProcessor {
 
             argDirs = values.get(dataSourcePathOption);
             if (argDirs.length < 1) {
-                logger.log(Level.SEVERE, "Missing argument 'dataSourcePath'");
-                System.out.println("Missing argument 'dataSourcePath'");
-                return;
+                handleError("Missing argument 'dataSourcePath'");
             }
             dataSourcePath = argDirs[0];
 
             // verify inputs
             if (dataSourcePath == null || dataSourcePath.isEmpty()) {
-                logger.log(Level.SEVERE, "Missing argument 'dataSourcePath'");
-                System.out.println("Missing argument 'dataSourcePath'");
-                return;
+                handleError("Missing argument 'dataSourcePath'");
             }
 
             if (!(new File(dataSourcePath).exists())) {
-                logger.log(Level.SEVERE, "Input data source file {0} doesn''t exist", dataSourcePath);
-                System.out.println("Input data source file " + dataSourcePath + " doesn't exist");
-                return;
+                handleError("Input data source file " + dataSourcePath + " doesn't exist");
             }
         }
 
@@ -196,17 +169,13 @@ public class CommandLineOptionProcessor extends OptionProcessor {
 
             argDirs = values.get(dataSourceObjectIdOption);
             if (argDirs.length < 1) {
-                logger.log(Level.SEVERE, "Missing argument 'dataSourceObjectIdOption'");
-                System.out.println("Missing argument 'dataSourceObjectIdOption'");
-                return;
+                handleError("Missing argument 'dataSourceObjectIdOption'");
             }
             dataSourceId = argDirs[0];
 
             // verify inputs
             if (dataSourceId == null || dataSourceId.isEmpty()) {
-                logger.log(Level.SEVERE, "Input data source id is empty");
-                System.out.println("Input data source id is empty");
-                return;
+                handleError("Input data source id is empty");
             }
         }
 
@@ -215,23 +184,17 @@ public class CommandLineOptionProcessor extends OptionProcessor {
 
             argDirs = values.get(caseDirOption);
             if (argDirs.length < 1) {
-                logger.log(Level.SEVERE, "Argument missing from 'caseDir' option");
-                System.out.println("Argument missing from 'caseDir' option");
-                return;
+                handleError("Argument missing from 'caseDir' option");
             }
             caseDir = argDirs[0];
 
             // verify inputs
             if (caseDir == null || caseDir.isEmpty()) {
-                logger.log(Level.SEVERE, "Argument missing from 'caseDir'");
-                System.out.println("Argument missing from 'caseDir'");
-                return;
+                handleError("Argument missing from 'caseDir'");
             }
 
             if (!(new File(caseDir).exists()) || !(new File(caseDir).isDirectory())) {
-                logger.log(Level.SEVERE, "Case directory {0} does not exist or is not a directory", caseDir);
-                System.out.println("Case directory " + caseDir + " does not exist or is not a directory");
-                return;
+                handleError("Case directory " + caseDir + " does not exist or is not a directory");
             }
         }
 
@@ -240,17 +203,13 @@ public class CommandLineOptionProcessor extends OptionProcessor {
 
             argDirs = values.get(ingestProfileOption);
             if (argDirs.length < 1) {
-                logger.log(Level.SEVERE, "Argument missing from 'ingestProfile' option");
-                System.out.println("Argument missing from 'ingestProfile' option");
-                return;
+                handleError("Argument missing from 'ingestProfile' option");
             }
             ingestProfile = argDirs[0];
 
             // verify inputs
             if (ingestProfile == null || ingestProfile.isEmpty()) {
-                logger.log(Level.SEVERE, "Missing argument 'ingestProfile'");
-                System.out.println("Missing argument 'ingestProfile'");
-                return;
+                handleError("Missing argument 'ingestProfile'");
             }
         }
 
@@ -259,19 +218,13 @@ public class CommandLineOptionProcessor extends OptionProcessor {
         if (values.containsKey(createCaseCommandOption)) {
 
             // 'caseName' must always be specified for "CREATE_CASE" command
-            if (inputCaseName.isEmpty()) {
-                logger.log(Level.SEVERE, "'caseName' argument is empty");
-                System.out.println("'caseName' argument is empty");
-                runFromCommandLine = false;
-                return;
+            if (inputCaseName == null || inputCaseName.isEmpty()) {
+                handleError("'caseName' argument is empty");
             }
 
             // 'caseBaseDir' must always be specified for "CREATE_CASE" command
-            if (caseBaseDir.isEmpty()) {
-                logger.log(Level.SEVERE, "'caseBaseDir' argument is empty");
-                System.out.println("'caseBaseDir' argument is empty");
-                runFromCommandLine = false;
-                return;
+            if (caseBaseDir == null || caseBaseDir.isEmpty()) {
+                handleError("'caseBaseDir' argument is empty");
             }
 
             CommandLineCommand newCommand = new CommandLineCommand(CommandLineCommand.CommandType.CREATE_CASE);
@@ -288,18 +241,12 @@ public class CommandLineOptionProcessor extends OptionProcessor {
             // 'caseDir' must only be specified if the case is not being created during the current run
             if (!values.containsKey(createCaseCommandOption) && caseDir.isEmpty()) {
                 // new case is not being created during this run, so 'caseDir' should have been specified
-                logger.log(Level.SEVERE, "'caseDir' argument is empty");
-                System.out.println("'caseDir' argument is empty");
-                runFromCommandLine = false;
-                return;
+                handleError("'caseDir' argument is empty");
             }
 
             // 'dataSourcePath' must always be specified for "ADD_DATA_SOURCE" command
-            if (dataSourcePath.isEmpty()) {
-                logger.log(Level.SEVERE, "'dataSourcePath' argument is empty");
-                System.out.println("'dataSourcePath' argument is empty");
-                runFromCommandLine = false;
-                return;
+            if (dataSourcePath == null || dataSourcePath.isEmpty()) {
+                handleError("'dataSourcePath' argument is empty");
             }
 
             CommandLineCommand newCommand = new CommandLineCommand(CommandLineCommand.CommandType.ADD_DATA_SOURCE);
@@ -315,19 +262,13 @@ public class CommandLineOptionProcessor extends OptionProcessor {
             // 'caseDir' must only be specified if the case is not being created during the current run
             if (!values.containsKey(createCaseCommandOption) && caseDir.isEmpty()) {
                 // new case is not being created during this run, so 'caseDir' should have been specified
-                logger.log(Level.SEVERE, "'caseDir' argument is empty");
-                System.out.println("'caseDir' argument is empty");
-                runFromCommandLine = false;
-                return;
+                handleError("'caseDir' argument is empty");
             }
 
             // if new data source is being added during this run, then 'dataSourceId' is not specified
             if (!values.containsKey(addDataSourceCommandOption) && dataSourceId.isEmpty()) {
                 // data source is not being added during this run, so 'dataSourceId' should have been specified
-                logger.log(Level.SEVERE, "'dataSourceId' argument is empty");
-                System.out.println("'dataSourceId' argument is empty");
-                runFromCommandLine = false;
-                return;
+                handleError("'dataSourceId' argument is empty");
             }
 
             CommandLineCommand newCommand = new CommandLineCommand(CommandLineCommand.CommandType.RUN_INGEST);
@@ -342,12 +283,9 @@ public class CommandLineOptionProcessor extends OptionProcessor {
         if (values.containsKey(listAllDataSourcesCommandOption)) {
 
             // 'caseDir' must only be specified if the case is not being created during the current run
-            if (!values.containsKey(createCaseCommandOption) && caseDir.isEmpty()) {
+            if (!values.containsKey(createCaseCommandOption) && (caseDir == null || caseDir.isEmpty())) {
                 // new case is not being created during this run, so 'caseDir' should have been specified
-                logger.log(Level.SEVERE, "'caseDir' argument is empty");
-                System.out.println("'caseDir' argument is empty");
-                runFromCommandLine = false;
-                return;
+                handleError("'caseDir' argument is empty");
             }
 
             CommandLineCommand newCommand = new CommandLineCommand(CommandLineCommand.CommandType.LIST_ALL_DATA_SOURCES);
@@ -363,10 +301,7 @@ public class CommandLineOptionProcessor extends OptionProcessor {
             // 'caseDir' must only be specified if the case is not being created during the current run
             if (!values.containsKey(createCaseCommandOption) && caseDir.isEmpty()) {
                 // new case is not being created during this run, so 'caseDir' should have been specified
-                logger.log(Level.SEVERE, "'caseDir' argument is empty");
-                System.out.println("'caseDir' argument is empty");
-                runFromCommandLine = false;
-                return;
+                handleError("'caseDir' argument is empty");
             }
 
             argDirs = values.get(generateReportsOption);
@@ -378,10 +313,7 @@ public class CommandLineOptionProcessor extends OptionProcessor {
             // argsDirs length will be 0, so if reportProfile is empty
             // something is not right.
             if (reportProfile != null && reportProfile.isEmpty()) {
-                logger.log(Level.SEVERE, "'generateReports' argument is empty");
-                System.out.println("'generateReports' argument is empty");
-                runFromCommandLine = false;
-                return;
+                handleError("'generateReports' argument is empty");
             }
 
             CommandLineCommand newCommand = new CommandLineCommand(CommandLineCommand.CommandType.GENERATE_REPORTS);
@@ -409,6 +341,12 @@ public class CommandLineOptionProcessor extends OptionProcessor {
      * @return list of input commands
      */
     List<CommandLineCommand> getCommands() {
-        return commands;
+        return Collections.unmodifiableList(commands);
+    }
+    
+    private void handleError(String errorMessage) throws CommandException{
+        logger.log(Level.SEVERE, errorMessage);
+        System.out.println(errorMessage);
+        throw new CommandException(1, errorMessage);
     }
 }
