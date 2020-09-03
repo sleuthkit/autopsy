@@ -68,7 +68,7 @@ public class CommandLineOpenCaseManager extends CommandLineManager {
 
             if (casePath == null || casePath.isEmpty()) {
                 LOGGER.log(Level.SEVERE, "No command line commands specified");
-                System.err.println("No command line commands specified");
+                System.out.println("No command line commands specified");
                 return;
             }
 
@@ -77,7 +77,7 @@ public class CommandLineOpenCaseManager extends CommandLineManager {
                 LOGGER.log(Level.INFO, "Opening case at " + casePath);
             } catch (CaseActionException ex) {
                 LOGGER.log(Level.SEVERE, "Error opening case from command line ", ex);
-                System.err.println("Error opening case ");
+                System.out.println("Error opening case ");
             }
         }
 
