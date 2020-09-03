@@ -229,8 +229,8 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
 
         setLayout(new java.awt.BorderLayout());
 
-        tablePanel.setMinimumSize(new java.awt.Dimension(400, 10));
-        tablePanel.setPreferredSize(new java.awt.Dimension(600, 10));
+        tablePanel.setMinimumSize(new java.awt.Dimension(400, 400));
+        tablePanel.setPreferredSize(new java.awt.Dimension(600, 400));
         tablePanel.setLayout(new java.awt.GridBagLayout());
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;

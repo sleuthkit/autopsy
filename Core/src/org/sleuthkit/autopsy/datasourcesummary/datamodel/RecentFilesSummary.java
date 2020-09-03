@@ -230,16 +230,18 @@ public class RecentFilesSummary {
                         sender = "";
                     }
                     AbstractFile abstractFile = (AbstractFile) content;
-                    date = abstractFile.getCrtime();
+                    date = getTimeFromFile(abstractFile);
                     path = Paths.get(abstractFile.getParentPath(), abstractFile.getName()).toString();
 
-                    List<RecentAttachmentDetails> list = sortedMap.get(date);
-                    if (list == null) {
-                        list = new ArrayList<>();
-                        sortedMap.put(date, list);
-                    }
+                    if(date != 0) {
+                        List<RecentAttachmentDetails> list = sortedMap.get(date);
+                        if (list == null) {
+                            list = new ArrayList<>();
+                            sortedMap.put(date, list);
+                        }
 
-                    list.add(new RecentAttachmentDetails(path, date, sender));
+                        list.add(new RecentAttachmentDetails(path, date, sender));
+                    }
                 }
             }
         }
@@ -293,6 +295,31 @@ public class RecentFilesSummary {
         final int artifactTypeID = nodeArtifact.getArtifactTypeID();
         return artifactTypeID == TSK_EMAIL_MSG.getTypeID()
                 || artifactTypeID == TSK_MESSAGE.getTypeID();
+    }
+    
+    /**
+     * Return any non-zero file time.
+     * 
+     * @param file Abstract File to get time from.
+     * 
+     * @return A time for the file, 0 is still a possibility if none of the file 
+     * times were set.
+     */
+    private Long getTimeFromFile(AbstractFile file) {
+        Long time = file.getCrtime();
+        if(time == 0) {
+            time = file.getCtime();
+        }
+        
+        if(time == 0) {
+            time = file.getAtime();
+        }
+        
+        if(time == 0) {
+            time = file.getMtime();
+        }
+        
+        return time;
     }
 
     /**
