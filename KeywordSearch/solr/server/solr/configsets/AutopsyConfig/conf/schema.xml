@@ -101,10 +101,10 @@
     <!--
       Default numeric field types. For faster range queries, consider the tint/tfloat/tlong/tdouble types.
     -->
-    <fieldType name="int" class="solr.TrieIntField" precisionStep="0" omitNorms="true" positionIncrementGap="0"/>
-    <fieldType name="float" class="solr.TrieFloatField" precisionStep="0" omitNorms="true" positionIncrementGap="0"/>
-    <fieldType name="long" class="solr.TrieLongField" precisionStep="0" omitNorms="true" positionIncrementGap="0"/>
-    <fieldType name="double" class="solr.TrieDoubleField" precisionStep="0" omitNorms="true" positionIncrementGap="0"/>
+    <fieldType name="int" class="solr.IntPointField" precisionStep="0" omitNorms="true" positionIncrementGap="0"/>
+    <fieldType name="float" class="solr.FloatPointField" precisionStep="0" omitNorms="true" positionIncrementGap="0"/>
+    <fieldType name="long" class="solr.LongPointField" precisionStep="0" omitNorms="true" positionIncrementGap="0"/>
+    <fieldType name="double" class="solr.DoublePointField" precisionStep="0" omitNorms="true" positionIncrementGap="0"/>
 
     <!--
      Numeric field types that index each value at various levels of precision
@@ -116,10 +116,10 @@
      indexed per value, slightly larger index size, and faster range queries.
      A precisionStep of 0 disables indexing at different precision levels.
     -->
-    <fieldType name="tint" class="solr.TrieIntField" precisionStep="8" omitNorms="true" positionIncrementGap="0"/>
-    <fieldType name="tfloat" class="solr.TrieFloatField" precisionStep="8" omitNorms="true" positionIncrementGap="0"/>
-    <fieldType name="tlong" class="solr.TrieLongField" precisionStep="8" omitNorms="true" positionIncrementGap="0"/>
-    <fieldType name="tdouble" class="solr.TrieDoubleField" precisionStep="8" omitNorms="true" positionIncrementGap="0"/>
+    <fieldType name="tint" class="solr.IntPointField" precisionStep="8" omitNorms="true" positionIncrementGap="0"/>
+    <fieldType name="tfloat" class="solr.FloatPointField" precisionStep="8" omitNorms="true" positionIncrementGap="0"/>
+    <fieldType name="tlong" class="solr.LongPointField" precisionStep="8" omitNorms="true" positionIncrementGap="0"/>
+    <fieldType name="tdouble" class="solr.DoublePointField" precisionStep="8" omitNorms="true" positionIncrementGap="0"/>
 
     <!-- The format for this date field is of the form 1995-12-31T23:59:59Z, and
          is a more restricted form of the canonical representation of dateTime
@@ -143,10 +143,10 @@
 
          Note: For faster range queries, consider the tdate type
       -->
-    <fieldType name="date" class="solr.TrieDateField" omitNorms="true" precisionStep="0" positionIncrementGap="0"/>
+    <fieldType name="date" class="solr.DatePointField" omitNorms="true" precisionStep="0" positionIncrementGap="0"/>
 
     <!-- A Trie based date field for faster date range queries and date faceting. -->
-    <fieldType name="tdate" class="solr.TrieDateField" omitNorms="true" precisionStep="6" positionIncrementGap="0"/>
+    <fieldType name="tdate" class="solr.DatePointField" omitNorms="true" precisionStep="6" positionIncrementGap="0"/>
 
 
     <!--
@@ -158,11 +158,11 @@
       value verbatim (and hence don't support range queries, since the
       lexicographic ordering isn't equal to the numeric ordering)
     -->
-    <fieldType name="pint" class="solr.TrieIntField" omitNorms="true"/>
-    <fieldType name="plong" class="solr.TrieLongField" omitNorms="true"/>
-    <fieldType name="pfloat" class="solr.TrieFloatField" omitNorms="true"/>
-    <fieldType name="pdouble" class="solr.TrieDoubleField" omitNorms="true"/>
-    <fieldType name="pdate" class="solr.TrieDateField" sortMissingLast="true" omitNorms="true"/>
+    <fieldType name="pint" class="solr.IntPointField" omitNorms="true"/>
+    <fieldType name="plong" class="solr.LongPointField" omitNorms="true"/>
+    <fieldType name="pfloat" class="solr.FloatPointField" omitNorms="true"/>
+    <fieldType name="pdouble" class="solr.DoublePointField" omitNorms="true"/>
+    <fieldType name="pdate" class="solr.DatePointField" sortMissingLast="true" omitNorms="true"/>
 
 
     <!--
@@ -175,10 +175,10 @@
       but with a lexicographic ordering the same as the numeric ordering,
       so that range queries work correctly.
     -->
-    <fieldType name="sint" class="solr.TrieIntField" sortMissingLast="true" omitNorms="true"/>
-    <fieldType name="slong" class="solr.TrieLongField" sortMissingLast="true" omitNorms="true"/>
-    <fieldType name="sfloat" class="solr.TrieFloatField" sortMissingLast="true" omitNorms="true"/>
-    <fieldType name="sdouble" class="solr.TrieDoubleField" sortMissingLast="true" omitNorms="true"/>
+    <fieldType name="sint" class="solr.IntPointField" sortMissingLast="true" omitNorms="true"/>
+    <fieldType name="slong" class="solr.LongPointField" sortMissingLast="true" omitNorms="true"/>
+    <fieldType name="sfloat" class="solr.FloatPointField" sortMissingLast="true" omitNorms="true"/>
+    <fieldType name="sdouble" class="solr.DoublePointField" sortMissingLast="true" omitNorms="true"/>
 
 
     <!-- The "RandomSortField" is not used to store or search any
@@ -486,7 +486,7 @@
     <fieldType name="point" class="solr.PointType" dimension="2" subFieldSuffix="_d"/>
 
     <!-- A specialized field for geospatial search. If indexed, this fieldType must not be multivalued. -->
-    <fieldType name="location" class="solr.LatLonType" subFieldSuffix="_coordinate"/>
+    <fieldType name="location" class="solr.LatLonPointSpatialField" subFieldSuffix="_coordinate"/>
 
    <!--
     A Geohash is a compact representation of a latitude longitude pair in a single field.

@@ -134,78 +134,6 @@
             </module-dependencies>
             <public-packages>
                 <package>org.apache.commons.logging.impl</package>
-                <package>org.apache.http</package>
-                <package>org.apache.http.annotation</package>
-                <package>org.apache.http.auth</package>
-                <package>org.apache.http.auth.params</package>
-                <package>org.apache.http.client</package>
-                <package>org.apache.http.client.config</package>
-                <package>org.apache.http.client.entity</package>
-                <package>org.apache.http.client.methods</package>
-                <package>org.apache.http.client.params</package>
-                <package>org.apache.http.client.protocol</package>
-                <package>org.apache.http.client.utils</package>
-                <package>org.apache.http.concurrent</package>
-                <package>org.apache.http.config</package>
-                <package>org.apache.http.conn</package>
-                <package>org.apache.http.conn.params</package>
-                <package>org.apache.http.conn.routing</package>
-                <package>org.apache.http.conn.scheme</package>
-                <package>org.apache.http.conn.socket</package>
-                <package>org.apache.http.conn.ssl</package>
-                <package>org.apache.http.conn.util</package>
-                <package>org.apache.http.cookie</package>
-                <package>org.apache.http.cookie.params</package>
-                <package>org.apache.http.entity</package>
-                <package>org.apache.http.entity.mime</package>
-                <package>org.apache.http.entity.mime.content</package>
-                <package>org.apache.http.impl</package>
-                <package>org.apache.http.impl.auth</package>
-                <package>org.apache.http.impl.bootstrap</package>
-                <package>org.apache.http.impl.client</package>
-                <package>org.apache.http.impl.conn</package>
-                <package>org.apache.http.impl.conn.tsccm</package>
-                <package>org.apache.http.impl.cookie</package>
-                <package>org.apache.http.impl.entity</package>
-                <package>org.apache.http.impl.execchain</package>
-                <package>org.apache.http.impl.io</package>
-                <package>org.apache.http.impl.pool</package>
-                <package>org.apache.http.io</package>
-                <package>org.apache.http.message</package>
-                <package>org.apache.http.params</package>
-                <package>org.apache.http.pool</package>
-                <package>org.apache.http.protocol</package>
-                <package>org.apache.http.ssl</package>
-                <package>org.apache.http.util</package>
-                <package>org.apache.solr.client.solrj</package>
-                <package>org.apache.solr.client.solrj.beans</package>
-                <package>org.apache.solr.client.solrj.cloud</package>
-                <package>org.apache.solr.client.solrj.cloud.autoscaling</package>
-                <package>org.apache.solr.client.solrj.embedded</package>
-                <package>org.apache.solr.client.solrj.impl</package>
-                <package>org.apache.solr.client.solrj.io</package>
-                <package>org.apache.solr.client.solrj.io.comp</package>
-                <package>org.apache.solr.client.solrj.io.eq</package>
-                <package>org.apache.solr.client.solrj.io.eval</package>
-                <package>org.apache.solr.client.solrj.io.graph</package>
-                <package>org.apache.solr.client.solrj.io.ops</package>
-                <package>org.apache.solr.client.solrj.io.sql</package>
-                <package>org.apache.solr.client.solrj.io.stream</package>
-                <package>org.apache.solr.client.solrj.io.stream.expr</package>
-                <package>org.apache.solr.client.solrj.io.stream.metrics</package>
-                <package>org.apache.solr.client.solrj.request</package>
-                <package>org.apache.solr.client.solrj.request.json</package>
-                <package>org.apache.solr.client.solrj.request.schema</package>
-                <package>org.apache.solr.client.solrj.response</package>
-                <package>org.apache.solr.client.solrj.response.json</package>
-                <package>org.apache.solr.client.solrj.response.schema</package>
-                <package>org.apache.solr.client.solrj.util</package>
-                <package>org.apache.solr.common</package>
-                <package>org.apache.solr.common.cloud</package>
-                <package>org.apache.solr.common.cloud.rule</package>
-                <package>org.apache.solr.common.luke</package>
-                <package>org.apache.solr.common.params</package>
-                <package>org.apache.solr.common.util</package>
                 <package>org.apache.tika.parser.txt</package>
                 <package>org.codehaus.stax2</package>
                 <package>org.codehaus.stax2.evt</package>
@@ -223,6 +151,10 @@
                 <binary-origin>release/modules/ext/lucene-sandbox-4.0.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/httpmime-4.5.10.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/httpmime-4.5.10.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/jericho-html-3.3.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/jericho-html-3.3.jar</binary-origin>
             </class-path-extension>
@@ -233,14 +165,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/httpservices-4.5.5.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/httpservices-4.5.5.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/httpcore-4.4.10.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/httpcore-4.4.10.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/hamcrest-core-1.3.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/hamcrest-core-1.3.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/boilerpipe-1.1.0.jar</runtime-relative-path>
@@ -275,10 +199,6 @@
                 <binary-origin>release/modules/ext/tika-core-1.20.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/solr-solrj-8.2.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/solr-solrj-8.2.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/tagsoup-1.2.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/tagsoup-1.2.1.jar</binary-origin>
             </class-path-extension>
@@ -301,10 +221,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/json-simple-1.1.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/json-simple-1.1.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/zookeeper-3.5.5.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/zookeeper-3.5.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/c3p0-0.9.1.1.jar</runtime-relative-path>
@@ -391,14 +307,6 @@
                 <binary-origin>release/modules/ext/poi-4.0.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/httpmime-4.5.6.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\httpmime-4.5.6.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/httpclient-4.5.6.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\httpclient-4.5.6.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/jcip-annotations-1.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/jcip-annotations-1.0.jar</binary-origin>
             </class-path-extension>
@@ -419,8 +327,16 @@
                 <binary-origin>release/modules/ext/grib-4.5.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/httpcore-4.4.12.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/httpcore-4.4.12.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/jdom-1.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/jdom-1.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/solr-solrj-8.6.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/solr-solrj-8.6.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/commons-beanutils-1.9.2.jar</runtime-relative-path>
@@ -435,8 +351,16 @@
                 <binary-origin>release/modules/ext/poi-ooxml-schemas-4.0.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/zookeeper-3.5.7.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/zookeeper-3.5.7.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/commons-exec-1.3.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/commons-exec-1.3.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/httpclient-4.5.10.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/httpclient-4.5.10.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/vorbis-java-tika-0.8.jar</runtime-relative-path>
