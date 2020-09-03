@@ -53,6 +53,7 @@ public class CommandLineOptionProcessor extends OptionProcessor {
     private final Option ingestProfileOption = Option.requiredArgument('p', "ingestProfile");
     private final Option listAllDataSourcesCommandOption = Option.withoutArgument('l', "listAllDataSources");
     private final Option generateReportsOption = Option.optionalArgument('g', "generateReports");
+    private final Option defaultArgument = Option.defaultArguments();
 
     private boolean runFromCommandLine = false;
 
@@ -60,6 +61,8 @@ public class CommandLineOptionProcessor extends OptionProcessor {
 
     final static String CASETYPE_MULTI = "multi";
     final static String CASETYPE_SINGLE = "single";
+
+    private String defaultArgumentValue = null;
 
     @Override
     protected Set<Option> getOptions() {
@@ -76,6 +79,7 @@ public class CommandLineOptionProcessor extends OptionProcessor {
         set.add(ingestProfileOption);
         set.add(listAllDataSourcesCommandOption);
         set.add(generateReportsOption);
+        set.add(defaultArgument);
         return set;
     }
 
@@ -83,16 +87,19 @@ public class CommandLineOptionProcessor extends OptionProcessor {
     protected void process(Env env, Map<Option, String[]> values) throws CommandException {
         logger.log(Level.INFO, "Processing Autopsy command line options"); //NON-NLS
         System.out.println("Processing Autopsy command line options");
-        runFromCommandLine = false;
+
+        if (values.containsKey(defaultArgument)) {
+            defaultArgumentValue = values.get(defaultArgument)[0];
+            runFromCommandLine = true;
+            return;
+        }
 
         // input arguments must contain at least one command
         if (!(values.containsKey(createCaseCommandOption) || values.containsKey(addDataSourceCommandOption)
                 || values.containsKey(runIngestCommandOption) || values.containsKey(listAllDataSourcesCommandOption)
                 || values.containsKey(generateReportsOption))) {
             // not running from command line
-            logger.log(Level.INFO, "No command line commands passed in as inputs. Not running from command line."); //NON-NLS
-            handleError("No command line commands passed in as inputs. Not running from command line.");
-            return;
+            handleError("Invalid command line, an input option must be supplied.");
         }
 
         // parse input parameters
@@ -308,7 +315,7 @@ public class CommandLineOptionProcessor extends OptionProcessor {
             if (argDirs.length > 0) {
                 reportProfile = argDirs[0];
             }
-            
+
             // If the user doesn't supply an options for generateReports the
             // argsDirs length will be 0, so if reportProfile is empty
             // something is not right.
@@ -323,7 +330,7 @@ public class CommandLineOptionProcessor extends OptionProcessor {
             }
             commands.add(newCommand);
             runFromCommandLine = true;
-        } 
+        }
     }
 
     /**
@@ -336,6 +343,15 @@ public class CommandLineOptionProcessor extends OptionProcessor {
     }
 
     /**
+     * Return the value of the default argument.
+     *
+     * @return The default argument value or null if one was not set.
+     */
+    public String getDefaultArgument() {
+        return defaultArgumentValue;
+    }
+
+    /**
      * Returns list of all commands passed in via command line.
      *
      * @return list of input commands
@@ -343,10 +359,16 @@ public class CommandLineOptionProcessor extends OptionProcessor {
     List<CommandLineCommand> getCommands() {
         return Collections.unmodifiableList(commands);
     }
-    
-    private void handleError(String errorMessage) throws CommandException{
+
+    /**
+     * Send the error message to the log file and create the exception.
+     * 
+     * @param errorMessage
+     * 
+     * @throws CommandException 
+     */
+    private void handleError(String errorMessage) throws CommandException {
         logger.log(Level.SEVERE, errorMessage);
-        System.out.println(errorMessage);
         throw new CommandException(1, errorMessage);
     }
 }
