@@ -413,10 +413,10 @@ final class DataSourceInfoUtilities {
      * @param attributeType The attribute type.
      *
      * @return The date determined from the 'getValueLong()' as seconds from
-     *         epoch or null if the attribute could not be retrieved.
+     *         epoch or null if the attribute could not be retrieved or is 0.
      */
     static Date getDateOrNull(BlackboardArtifact artifact, Type attributeType) {
         Long longVal = getLongOrNull(artifact, attributeType);
-        return (longVal == null) ? null : new Date(longVal * 1000);
+        return (longVal == null || longVal == 0) ? null : new Date(longVal * 1000);
     }
 }

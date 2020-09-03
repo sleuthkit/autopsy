@@ -25,7 +25,9 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -53,6 +55,11 @@ public class DataSourceUserActivitySummary {
     private static final BlackboardAttribute.Type TYPE_DEVICE_MODEL = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL);
     private static final BlackboardAttribute.Type TYPE_MESSAGE_TYPE = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE);
     private static final BlackboardAttribute.Type TYPE_TEXT = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_TEXT);
+
+    private static final BlackboardAttribute.Type TYPE_DATETIME_RCVD = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DATETIME_RCVD);
+    private static final BlackboardAttribute.Type TYPE_DATETIME_SENT = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DATETIME_SENT);
+    private static final BlackboardAttribute.Type TYPE_DATETIME_START = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DATETIME_START);
+    private static final BlackboardAttribute.Type TYPE_DATETIME_END = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DATETIME_END);
 
     private static final Comparator<TopAccountResult> TOP_ACCOUNT_RESULT_DATE_COMPARE = (a, b) -> a.getLastAccess().compareTo(b.getLastAccess());
     private static final Comparator<TopWebSearchResult> TOP_WEBSEARCH_RESULT_DATE_COMPARE = (a, b) -> a.getDateAccessed().compareTo(b.getDateAccessed());
@@ -273,18 +280,46 @@ public class DataSourceUserActivitySummary {
     }
 
     /**
-     * Obtains a TopAccountResult from a blackboard artifact.
+     * Obtains a TopAccountResult from a TSK_MESSAGE blackboard artifact.
      *
      * @param artifact The artifact.
      *
      * @return The TopAccountResult or null if the account type or message date
      *         cannot be determined.
      */
-    private static TopAccountResult getAccountResult(BlackboardArtifact artifact) {
+    private static TopAccountResult getMessageAccountResult(BlackboardArtifact artifact) {
         String type = DataSourceInfoUtilities.getStringOrNull(artifact, TYPE_MESSAGE_TYPE);
         Date date = DataSourceInfoUtilities.getDateOrNull(artifact, TYPE_DATETIME);
         return (StringUtils.isNotBlank(type) && date != null)
                 ? new TopAccountResult(type, date)
+                : null;
+    }
+
+    /**
+     * Obtains a TopAccountResult from a blackboard artifact. The date is
+     * maximum of any found dates for attribute types provided.
+     *
+     * @param artifact    The artifact.
+     * @param messageType The type of message this is.
+     * @param dateAttrs   The date attribute types.
+     *
+     * @return The TopAccountResult or null if the account type or max date are
+     *         not provided.
+     */
+    private static TopAccountResult getAccountResult(BlackboardArtifact artifact, String messageType, BlackboardAttribute.Type... dateAttrs) {
+        String type = messageType;
+
+        Date latestDate = null;
+        if (dateAttrs != null) {
+            latestDate = Stream.of(dateAttrs)
+                    .map((attr) -> DataSourceInfoUtilities.getDateOrNull(artifact, attr))
+                    .filter((date) -> date != null)
+                    .max((a, b) -> a.compareTo(b))
+                    .orElse(null);
+        }
+
+        return (StringUtils.isNotBlank(type) && latestDate != null)
+                ? new TopAccountResult(type, latestDate)
                 : null;
     }
 
@@ -303,17 +338,40 @@ public class DataSourceUserActivitySummary {
      * org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException
      * @throws TskCoreException
      */
+    @Messages({
+        "DataSourceUserActivitySummary_getRecentAccounts_emailMessage=Email Message",
+        "DataSourceUserActivitySummary_getRecentAccounts_calllogMessage=Call Log",})
     public List<TopAccountResult> getRecentAccounts(DataSource dataSource, int count) throws SleuthkitCaseProviderException, TskCoreException {
         assertValidCount(count);
 
-        // get all message artifacts
-        List<BlackboardArtifact> messageArtifacts = caseProvider.get().getBlackboard().getArtifacts(ARTIFACT_TYPE.TSK_MESSAGE.getTypeID(), dataSource.getId());
-
-        // get them grouped by account type
-        Collection<List<TopAccountResult>> groupedResults = messageArtifacts
+        Stream<TopAccountResult> messageResults = caseProvider.get().getBlackboard().getArtifacts(ARTIFACT_TYPE.TSK_MESSAGE.getTypeID(), dataSource.getId())
                 .stream()
-                // get message type and date (or null if one of those attributes does not exist)
-                .map(DataSourceUserActivitySummary::getAccountResult)
+                .map((art) -> getMessageAccountResult(art));
+
+        Stream<TopAccountResult> emailResults = caseProvider.get().getBlackboard().getArtifacts(ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID(), dataSource.getId())
+                .stream()
+                .map((art) -> {
+                    return getAccountResult(
+                            art,
+                            Bundle.DataSourceUserActivitySummary_getRecentAccounts_emailMessage(),
+                            TYPE_DATETIME_RCVD,
+                            TYPE_DATETIME_SENT);
+                });
+
+        Stream<TopAccountResult> calllogResults = caseProvider.get().getBlackboard().getArtifacts(ARTIFACT_TYPE.TSK_CALLLOG.getTypeID(), dataSource.getId())
+                .stream()
+                .map((art) -> {
+                    return getAccountResult(
+                            art,
+                            Bundle.DataSourceUserActivitySummary_getRecentAccounts_calllogMessage(),
+                            TYPE_DATETIME_START,
+                            TYPE_DATETIME_END);
+                });
+
+        Stream<TopAccountResult> allResults = Stream.concat(messageResults, Stream.concat(emailResults, calllogResults));
+
+        // get them grouped by account type        
+        Collection<List<TopAccountResult>> groupedResults = allResults
                 // remove null records
                 .filter(result -> result != null)
                 // get these messages grouped by account type
