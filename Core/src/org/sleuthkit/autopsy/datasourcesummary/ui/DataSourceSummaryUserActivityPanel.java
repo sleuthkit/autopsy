@@ -342,8 +342,8 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPan
         contentScrollPane.setMinimumSize(null);
 
         contentPanel.setBorder(javax.swing.BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        contentPanel.setMaximumSize(new java.awt.Dimension(720, 450));
-        contentPanel.setMinimumSize(new java.awt.Dimension(720, 450));
+        contentPanel.setMaximumSize(new java.awt.Dimension(32767, 450));
+        contentPanel.setMinimumSize(new java.awt.Dimension(10, 450));
         contentPanel.setLayout(new javax.swing.BoxLayout(contentPanel, javax.swing.BoxLayout.PAGE_AXIS));
 
         programsRunLabel.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
@@ -353,9 +353,9 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPan
         contentPanel.add(filler1);
 
         topProgramsTablePanel.setAlignmentX(0.0F);
-        topProgramsTablePanel.setMaximumSize(new java.awt.Dimension(700, 106));
-        topProgramsTablePanel.setMinimumSize(new java.awt.Dimension(700, 106));
-        topProgramsTablePanel.setPreferredSize(new java.awt.Dimension(700, 106));
+        topProgramsTablePanel.setMaximumSize(new java.awt.Dimension(32767, 106));
+        topProgramsTablePanel.setMinimumSize(new java.awt.Dimension(10, 106));
+        topProgramsTablePanel.setPreferredSize(new java.awt.Dimension(10, 106));
         contentPanel.add(topProgramsTablePanel);
         contentPanel.add(filler3);
 
@@ -365,9 +365,9 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPan
         contentPanel.add(filler2);
 
         recentDomainsTablePanel.setAlignmentX(0.0F);
-        recentDomainsTablePanel.setMaximumSize(new java.awt.Dimension(700, 106));
-        recentDomainsTablePanel.setMinimumSize(new java.awt.Dimension(700, 106));
-        recentDomainsTablePanel.setPreferredSize(new java.awt.Dimension(700, 106));
+        recentDomainsTablePanel.setMaximumSize(new java.awt.Dimension(32767, 106));
+        recentDomainsTablePanel.setMinimumSize(new java.awt.Dimension(10, 106));
+        recentDomainsTablePanel.setPreferredSize(new java.awt.Dimension(10, 106));
         contentPanel.add(recentDomainsTablePanel);
         contentPanel.add(filler4);
 
@@ -377,9 +377,9 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPan
         contentPanel.add(filler5);
 
         topWebSearches.setAlignmentX(0.0F);
-        topWebSearches.setMaximumSize(new java.awt.Dimension(700, 106));
-        topWebSearches.setMinimumSize(new java.awt.Dimension(700, 106));
-        topWebSearches.setPreferredSize(new java.awt.Dimension(700, 106));
+        topWebSearches.setMaximumSize(new java.awt.Dimension(32767, 106));
+        topWebSearches.setMinimumSize(new java.awt.Dimension(10, 106));
+        topWebSearches.setPreferredSize(new java.awt.Dimension(10, 106));
         contentPanel.add(topWebSearches);
         contentPanel.add(filler6);
 
@@ -389,9 +389,9 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPan
         contentPanel.add(filler7);
 
         recentDevicesAttached.setAlignmentX(0.0F);
-        recentDevicesAttached.setMaximumSize(new java.awt.Dimension(700, 106));
-        recentDevicesAttached.setMinimumSize(new java.awt.Dimension(700, 106));
-        recentDevicesAttached.setPreferredSize(new java.awt.Dimension(700, 106));
+        recentDevicesAttached.setMaximumSize(new java.awt.Dimension(32767, 106));
+        recentDevicesAttached.setMinimumSize(new java.awt.Dimension(10, 106));
+        recentDevicesAttached.setPreferredSize(new java.awt.Dimension(10, 106));
         contentPanel.add(recentDevicesAttached);
         contentPanel.add(filler8);
 
@@ -401,9 +401,9 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPan
         contentPanel.add(filler9);
 
         topAccounts.setAlignmentX(0.0F);
-        topAccounts.setMaximumSize(new java.awt.Dimension(700, 106));
-        topAccounts.setMinimumSize(new java.awt.Dimension(700, 106));
-        topAccounts.setPreferredSize(new java.awt.Dimension(700, 106));
+        topAccounts.setMaximumSize(new java.awt.Dimension(32767, 106));
+        topAccounts.setMinimumSize(new java.awt.Dimension(10, 106));
+        topAccounts.setPreferredSize(new java.awt.Dimension(10, 106));
         contentPanel.add(topAccounts);
 
         contentScrollPane.setViewportView(contentPanel);
