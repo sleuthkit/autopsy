@@ -1,6 +1,6 @@
 
 <ivy-module version="2.0">
-    <info organisation="org.sleuthkit.autopsy" module="keywordsearch"/>
+    <info organisation="org.sleuthkit.autopsy" module="recentactivity"/>
     <configurations >
         <!-- module dependencies -->
         <conf name="recent-activity"/>

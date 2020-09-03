@@ -51,7 +51,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.timeline.Timeline")
 @ActionRegistration(displayName = "#CTL_MakeTimeline", lazy = false)
 @ActionReferences(value = {
-    @ActionReference(path = "Menu/Tools", position = 102)
+    @ActionReference(path = "Menu/Tools", position = 104)
     ,
     @ActionReference(path = "Toolbars/Case", position = 104)})
 public final class OpenTimelineAction extends CallableSystemAction {

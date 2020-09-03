@@ -164,50 +164,23 @@ public class Installer extends ModuleInstall {
             } catch (UnsatisfiedLinkError e) {
                 logger.log(Level.SEVERE, "Error loading VHDI library, ", e); //NON-NLS
             }
+            
+            // Only attempt to load OpenSSL if we're in 64 bit mode
+            if(System.getProperty("sun.arch.data.model").contains("64")) {
+                // libcrypto must be loaded before libssl to make sure it's the correct version
+                try {
+                    System.loadLibrary("libcrypto-1_1-x64"); //NON-NLS
+                    logger.log(Level.INFO, "Crypto library loaded"); //NON-NLS
+                } catch (UnsatisfiedLinkError e) {
+                    logger.log(Level.SEVERE, "Error loading Crypto library, ", e); //NON-NLS
+                }  
 
-            /*
-             * PostgreSQL
-             */
-            try {
-                System.loadLibrary("msvcr120"); //NON-NLS
-                logger.log(Level.INFO, "MSVCR 120 library loaded"); //NON-NLS
-            } catch (UnsatisfiedLinkError e) {
-                logger.log(Level.SEVERE, "Error loading MSVCR120 library, ", e); //NON-NLS
-            }
-
-            try {
-                System.loadLibrary("libeay32"); //NON-NLS
-                logger.log(Level.INFO, "LIBEAY32 library loaded"); //NON-NLS
-            } catch (UnsatisfiedLinkError e) {
-                logger.log(Level.SEVERE, "Error loading LIBEAY32 library, ", e); //NON-NLS
-            }
-
-            try {
-                System.loadLibrary("ssleay32"); //NON-NLS
-                logger.log(Level.INFO, "SSLEAY32 library loaded"); //NON-NLS
-            } catch (UnsatisfiedLinkError e) {
-                logger.log(Level.SEVERE, "Error loading SSLEAY32 library, ", e); //NON-NLS
-            }
-
-            try {
-                System.loadLibrary("libiconv-2"); //NON-NLS
-                logger.log(Level.INFO, "libiconv-2 library loaded"); //NON-NLS
-            } catch (UnsatisfiedLinkError e) {
-                logger.log(Level.SEVERE, "Error loading libiconv-2 library, ", e); //NON-NLS
-            }
-
-            try {
-                System.loadLibrary("libintl-8"); //NON-NLS
-                logger.log(Level.INFO, "libintl-8 library loaded"); //NON-NLS
-            } catch (UnsatisfiedLinkError e) {
-                logger.log(Level.SEVERE, "Error loading libintl-8 library, ", e); //NON-NLS
-            }
-
-            try {
-                System.loadLibrary("libpq"); //NON-NLS
-                logger.log(Level.INFO, "LIBPQ library loaded"); //NON-NLS
-            } catch (UnsatisfiedLinkError e) {
-                logger.log(Level.SEVERE, "Error loading LIBPQ library, ", e); //NON-NLS
+                try {
+                    System.loadLibrary("libssl-1_1-x64"); //NON-NLS
+                    logger.log(Level.INFO, "OpenSSL library loaded"); //NON-NLS
+                } catch (UnsatisfiedLinkError e) {
+                    logger.log(Level.SEVERE, "Error loading OpenSSL library, ", e); //NON-NLS
+                }
             }
         }
     }
@@ -230,6 +203,7 @@ public class Installer extends ModuleInstall {
         packageInstallers.add(org.sleuthkit.autopsy.ingest.Installer.getDefault());
         packageInstallers.add(org.sleuthkit.autopsy.centralrepository.eventlisteners.Installer.getDefault());
         packageInstallers.add(org.sleuthkit.autopsy.healthmonitor.Installer.getDefault());
+        packageInstallers.add(org.sleuthkit.autopsy.casemodule.Installer.getDefault());
 
         /**
          * This is a temporary workaround for the following bug in Tika that

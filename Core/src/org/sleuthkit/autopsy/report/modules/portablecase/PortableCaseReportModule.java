@@ -29,6 +29,7 @@ import java.util.logging.Level;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.InputStreamReader;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -50,6 +51,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.casemodule.services.contentviewertags.ContentViewerTagManager;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
@@ -167,9 +169,9 @@ public class PortableCaseReportModule implements ReportModule {
      * exception is supplied then the error is SEVERE. Otherwise it is logged as
      * a WARNING.
      *
-     * @param logWarning Warning to write to the log
+     * @param logWarning    Warning to write to the log
      * @param dialogWarning Warning to write to a pop-up window
-     * @param ex The exception (can be null)
+     * @param ex            The exception (can be null)
      * @param progressPanel The report progress panel
      */
     private void handleError(String logWarning, String dialogWarning, Exception ex, ReportProgressPanel progressPanel) {
@@ -206,9 +208,11 @@ public class PortableCaseReportModule implements ReportModule {
         "PortableCaseReportModule.generateReport.errorCopyingInterestingFiles=Error copying interesting files",
         "PortableCaseReportModule.generateReport.errorCopyingInterestingResults=Error copying interesting results",
         "PortableCaseReportModule.generateReport.errorCreatingImageTagTable=Error creating image tags table",
+        "PortableCaseReportModule.generateReport.errorCopyingAutopsy=Error copying application",
         "# {0} - attribute type name",
         "PortableCaseReportModule.generateReport.errorLookingUpAttrType=Error looking up attribute type {0}",
-        "PortableCaseReportModule.generateReport.compressingCase=Compressing case..."
+        "PortableCaseReportModule.generateReport.compressingCase=Compressing case...",
+        "PortableCaseReportModule_generateReport_copyingAutopsy=Copying application..."
     })
 
     public void generateReport(String reportPath, PortableCaseReportModuleSettings options, ReportProgressPanel progressPanel) {
@@ -244,6 +248,10 @@ public class PortableCaseReportModule implements ReportModule {
             return;
         }
 
+        // If the applciation is included add an extra level to the directory structure
+        if (options.includeApplication()) {
+            outputDir = Paths.get(outputDir.toString(), caseName).toFile();
+        }
         // Check that there will be something to copy
         List<TagName> tagNames;
         if (options.areAllTagsSelected()) {
@@ -419,20 +427,28 @@ public class PortableCaseReportModule implements ReportModule {
         //Attempt to generate and included the CASE-UCO report.
         generateCaseUcoReport(tagNames, setNames, progressPanel);
 
+        if (options.includeApplication()) {
+            try {
+                progressPanel.updateStatusLabel(Bundle.PortableCaseReportModule_generateReport_copyingAutopsy());
+                copyApplication(getApplicationBasePath(), outputDir.getAbsolutePath());
+                createAppLaunchBatFile(outputDir.getAbsolutePath());
+            } catch (IOException ex) {
+                handleError("Error copying autopsy", Bundle.PortableCaseReportModule_generateReport_errorCopyingAutopsy(), ex, progressPanel); // NON-NLS
+            }
+        }
+
         // Compress the case (if desired)
         if (options.shouldCompress()) {
             progressPanel.updateStatusLabel(Bundle.PortableCaseReportModule_generateReport_compressingCase());
 
-            boolean success = compressCase(progressPanel);
+            if(!compressCase(progressPanel, options.includeApplication() ? outputDir.getAbsolutePath() : caseFolder.getAbsolutePath())){
+                // Errors have been handled already
+                return;
+            }
 
             // Check for cancellation 
             if (progressPanel.getStatus() == ReportProgressPanel.ReportStatus.CANCELED) {
                 handleCancellation(progressPanel);
-                return;
-            }
-
-            if (!success) {
-                // Errors have been handled already
                 return;
             }
         }
@@ -451,8 +467,8 @@ public class PortableCaseReportModule implements ReportModule {
      * Only one copy of the file will be saved in the report if it is the source
      * of more than one of the above.
      *
-     * @param tagNames TagNames to included in the report.
-     * @param setNames SET_NAMEs to include in the report.
+     * @param tagNames      TagNames to included in the report.
+     * @param setNames      SET_NAMEs to include in the report.
      * @param progressPanel ProgressPanel to relay progress messages.
      */
     @NbBundle.Messages({
@@ -506,7 +522,7 @@ public class PortableCaseReportModule implements ReportModule {
                 // Helper flag to ensure each data source is only written once in 
                 // a report.
                 boolean dataSourceHasBeenIncluded = false;
-                
+
                 //Search content tags and artifact tags that match
                 for (TagName tagName : tagNames) {
                     for (ContentTag ct : tagsManager.getContentTagsByTagName(tagName, dataSource.getId())) {
@@ -565,16 +581,19 @@ public class PortableCaseReportModule implements ReportModule {
     /**
      * Adds the content if and only if it has not already been seen.
      *
-     * @param content Content to add to the report.
-     * @param dataSource Parent dataSource of the content instance.
-     * @param tmpDir Path to the tmpDir to enforce uniqueness
+     * @param content                   Content to add to the report.
+     * @param dataSource                Parent dataSource of the content
+     *                                  instance.
+     * @param tmpDir                    Path to the tmpDir to enforce uniqueness
      * @param gson
      * @param exporter
-     * @param reportWriter Report generator instance to add the content to
+     * @param reportWriter              Report generator instance to add the
+     *                                  content to
      * @param dataSourceHasBeenIncluded Flag determining if the data source
-     * should be written to the report (false indicates that it should be written).
-     * 
-     * @throws IOException If an I/O error occurs.
+     *                                  should be written to the report (false
+     *                                  indicates that it should be written).
+     *
+     * @throws IOException      If an I/O error occurs.
      * @throws TskCoreException If an internal database error occurs.
      *
      * return True if the file was written during this operation.
@@ -630,7 +649,7 @@ public class PortableCaseReportModule implements ReportModule {
      * Create the case directory and case database. portableSkCase will be set
      * if this completes without error.
      *
-     * @param outputDir The parent for the case folder
+     * @param outputDir     The parent for the case folder
      * @param progressPanel
      */
     @NbBundle.Messages({
@@ -734,7 +753,7 @@ public class PortableCaseReportModule implements ReportModule {
     /**
      * Add all files with a given tag to the portable case.
      *
-     * @param oldTagName The TagName object from the current case
+     * @param oldTagName    The TagName object from the current case
      * @param progressPanel The progress panel
      *
      * @throws TskCoreException
@@ -779,7 +798,7 @@ public class PortableCaseReportModule implements ReportModule {
      * @param tag The ContentTag in the current case
      *
      * @return The app_data string for this content tag or an empty string if
-     * there was none
+     *         there was none
      *
      * @throws TskCoreException
      */
@@ -828,7 +847,7 @@ public class PortableCaseReportModule implements ReportModule {
      * Add an image tag to the portable case.
      *
      * @param newContentTag The content tag in the portable case
-     * @param appData The string to copy into app_data
+     * @param appData       The string to copy into app_data
      *
      * @throws TskCoreException
      */
@@ -840,7 +859,7 @@ public class PortableCaseReportModule implements ReportModule {
     /**
      * Add all artifacts with a given tag to the portable case.
      *
-     * @param oldTagName The TagName object from the current case
+     * @param oldTagName    The TagName object from the current case
      * @param progressPanel The progress panel
      *
      * @throws TskCoreException
@@ -876,8 +895,8 @@ public class PortableCaseReportModule implements ReportModule {
      * Copy an artifact into the new case. Will also copy any associated
      * artifacts
      *
-     * @param newContentId The content ID (in the portable case) of the source
-     * content
+     * @param newContentId   The content ID (in the portable case) of the source
+     *                       content
      * @param artifactToCopy The artifact to copy
      *
      * @return The new artifact in the portable case
@@ -1000,7 +1019,7 @@ public class PortableCaseReportModule implements ReportModule {
     /**
      * Top level method to copy a content object to the portable case.
      *
-     * @param content The content object to copy
+     * @param content       The content object to copy
      * @param progressPanel The progress panel
      *
      * @return The object ID of the copied content in the portable case
@@ -1144,6 +1163,76 @@ public class PortableCaseReportModule implements ReportModule {
     }
 
     /**
+     * Returns base path of the users autopsy installation.
+     *
+     * @return Path of autopsy installation.
+     */
+    private Path getApplicationBasePath() {
+        return getAutopsyExePath().getParent().getParent();
+    }
+
+    /**
+     * Find the path of the installed version of autopsy.
+     *
+     * @return Path to the installed autopsy.exe.
+     */
+    private Path getAutopsyExePath() {
+        // If this is an installed version, there should be an <appName>64.exe file in the bin folder
+        String exeName = getAutopsyExeName();
+        String installPath = PlatformUtil.getInstallPath();
+
+        return Paths.get(installPath, "bin", exeName);
+    }
+
+    /**
+     * Generate the name of the autopsy exe.
+     *
+     * @return The name of the autopsy exe.
+     */
+    private String getAutopsyExeName() {
+        String appName = UserPreferences.getAppName();
+        return appName + "64.exe";
+    }
+
+    /**
+     * Copy the sorceFolder to destBaseFolder\appName.
+     *
+     * @param sourceFolder   Autopsy installation directory.
+     * @param destBaseFolder Report base direction.
+     * @param appName        Name of the application being copied.
+     *
+     * @throws IOException
+     */
+    private void copyApplication(Path sourceFolder, String destBaseFolder) throws IOException {
+
+        // Create an appName folder in the destination 
+        Path destAppFolder = Paths.get(destBaseFolder, UserPreferences.getAppName());
+        if (!destAppFolder.toFile().exists() && !destAppFolder.toFile().mkdirs()) {
+            throw new IOException("Failed to create directory " + destAppFolder.toString());
+        }
+
+        // Now copy the files
+        FileUtils.copyDirectory(sourceFolder.toFile(), destAppFolder.toFile());
+    }
+
+    /**
+     * Create a bat file at destBaseFolder that will launch the portable case.
+     *
+     * @param destBaseFolder Folder to create the bat file in.
+     *
+     * @throws IOException
+     */
+    private void createAppLaunchBatFile(String destBaseFolder) throws IOException {
+        Path filePath = Paths.get(destBaseFolder, "open.bat");
+        String appName = UserPreferences.getAppName();
+        String exePath = "\"%~dp0" + appName + "\\bin\\" + getAutopsyExeName() + "\"";
+        String casePath = "..\\" + caseName;
+        try (FileWriter writer = new FileWriter(filePath.toFile())) {
+            writer.write(exePath + " \"" + casePath + "\"");
+        }
+    }
+
+    /**
      * Clear out the maps and other fields and close the database connections.
      */
     private void cleanup() {
@@ -1171,11 +1260,10 @@ public class PortableCaseReportModule implements ReportModule {
         }
     }
 
-    /*@Override
-    public JPanel getConfigurationPanel() {
-        configPanel = new CreatePortableCasePanel();
-        return configPanel;
-    }    */
+    /*
+     * @Override public JPanel getConfigurationPanel() { configPanel = new
+     * CreatePortableCasePanel(); return configPanel; }
+     */
     private class StoreMaxIdCallback implements CaseDbAccessManager.CaseDbAccessQueryCallback {
 
         private final String tableName;
@@ -1213,14 +1301,14 @@ public class PortableCaseReportModule implements ReportModule {
         "PortableCaseReportModule.compressCase.errorCreatingTempFolder=Could not create temporary folder {0}",
         "PortableCaseReportModule.compressCase.errorCompressingCase=Error compressing case",
         "PortableCaseReportModule.compressCase.canceled=Compression canceled by user",})
-    private boolean compressCase(ReportProgressPanel progressPanel) {
-
-        // Close the portable case database (we still need some of the variables that would be cleared by cleanup())
+    private boolean compressCase(ReportProgressPanel progressPanel, String folderToCompress) {
+        
         closePortableCaseDatabase();
 
         // Make a temporary folder for the compressed case
-        File tempZipFolder = Paths.get(currentCase.getTempDirectory(), "portableCase" + System.currentTimeMillis()).toFile(); // NON-NLS
-        if (!tempZipFolder.mkdir()) {
+        Path dirToCompress = Paths.get(folderToCompress);
+        File tempZipFolder = Paths.get(dirToCompress.getParent().toString(), "temp", "portableCase" + System.currentTimeMillis()).toFile();
+        if (!tempZipFolder.mkdirs()) {
             handleError("Error creating temporary folder " + tempZipFolder.toString(),
                     Bundle.PortableCaseReportModule_compressCase_errorCreatingTempFolder(tempZipFolder.toString()), null, progressPanel); // NON-NLS
             return false;
@@ -1245,7 +1333,7 @@ public class PortableCaseReportModule implements ReportModule {
                 sevenZipExe.getAbsolutePath(),
                 "a", // Add to archive
                 zipFile.getAbsolutePath(),
-                caseFolder.getAbsolutePath(),
+                dirToCompress.toAbsolutePath().toString(),
                 chunkOption
         );
 
@@ -1280,9 +1368,9 @@ public class PortableCaseReportModule implements ReportModule {
 
         // Delete everything in the case folder then copy over the compressed file(s)
         try {
-            FileUtils.cleanDirectory(caseFolder);
-            FileUtils.copyDirectory(tempZipFolder, caseFolder);
-            FileUtils.deleteDirectory(tempZipFolder);
+            FileUtils.cleanDirectory(dirToCompress.toFile());
+            FileUtils.copyDirectory(tempZipFolder, dirToCompress.toFile());
+            FileUtils.deleteDirectory(new File(tempZipFolder.getParent()));
         } catch (IOException ex) {
             handleError("Error compressing case", Bundle.PortableCaseReportModule_compressCase_errorCompressingCase(), ex, progressPanel); // NON-NLS
             return false;

@@ -56,7 +56,6 @@ import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.utils.DataSourceLoader;
 import org.sleuthkit.autopsy.modules.dataSourceIntegrity.DataSourceIntegrityModuleFactory;
 import org.sleuthkit.autopsy.modules.embeddedfileextractor.EmbeddedFileExtractorModuleFactory;
-import org.sleuthkit.autopsy.modules.exif.ExifParserModuleFactory;
 import org.sleuthkit.autopsy.modules.fileextmismatch.FileExtMismatchDetectorModuleFactory;
 import org.sleuthkit.autopsy.modules.interestingitems.InterestingItemsIngestModuleFactory;
 import org.sleuthkit.autopsy.modules.photoreccarver.PhotoRecCarverIngestModuleFactory;
@@ -64,6 +63,7 @@ import org.sleuthkit.autopsy.modules.vmextractor.VMExtractorIngestModuleFactory;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.centralrepository.datamodel.RdbmsCentralRepoFactory;
+import org.sleuthkit.autopsy.modules.pictureanalyzer.PictureAnalyzerIngestModuleFactory;
 
 /**
  * Utilities for testing intercase correlation feature.
@@ -168,7 +168,7 @@ class InterCaseTestUtils {
 
         this.imageDSProcessor = new ImageDSProcessor();
 
-        final IngestModuleTemplate exifTemplate = IngestUtils.getIngestModuleTemplate(new ExifParserModuleFactory());
+        final IngestModuleTemplate pictureAnalyzerTemplate = IngestUtils.getIngestModuleTemplate(new PictureAnalyzerIngestModuleFactory());
         final IngestModuleTemplate embeddedFileExtractorTemplate = IngestUtils.getIngestModuleTemplate(new EmbeddedFileExtractorModuleFactory());
         final IngestModuleTemplate interestingItemsTemplate = IngestUtils.getIngestModuleTemplate(new InterestingItemsIngestModuleFactory());
         final IngestModuleTemplate mimeTypeLookupTemplate = IngestUtils.getIngestModuleTemplate(new FileTypeIdModuleFactory());
@@ -201,7 +201,7 @@ class InterCaseTestUtils {
 
         //kitchen sink
         ArrayList<IngestModuleTemplate> kitchenSink = new ArrayList<>();
-        kitchenSink.add(exifTemplate);
+        kitchenSink.add(pictureAnalyzerTemplate);
         kitchenSink.add(embeddedFileExtractorTemplate);
         kitchenSink.add(interestingItemsTemplate);
         kitchenSink.add(mimeTypeLookupTemplate);
