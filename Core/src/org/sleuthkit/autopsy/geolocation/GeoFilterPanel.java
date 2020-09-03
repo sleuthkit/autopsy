@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.geolocation;
 
 import org.sleuthkit.autopsy.guiutils.CheckBoxListPanel;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.event.ActionListener;
@@ -34,6 +35,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javafx.util.Pair;
+import javax.swing.Box;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.SpinnerNumberModel;
@@ -82,43 +84,22 @@ class GeoFilterPanel extends javax.swing.JPanel {
         "GeoFilterPanel_DataSource_List_Title=Data Sources",
         "GeoFilterPanel_ArtifactType_List_Title=Types"
     })
+    @SuppressWarnings("unchecked")
     GeoFilterPanel() {
         // numberModel is used in initComponents
         numberModel = new SpinnerNumberModel(10, 1, Integer.MAX_VALUE, 1);
 
         initComponents();
 
-        // The gui builder cannot handle using CheckBoxListPanel due to its
-        // use of generics so we will initalize it here.
-        dsCheckboxPanel = new CheckBoxListPanel<>();
+        dsCheckboxPanel = (CheckBoxListPanel<DataSource>)dsCBPanel;
         dsCheckboxPanel.setPanelTitle(Bundle.GeoFilterPanel_DataSource_List_Title());
         dsCheckboxPanel.setPanelTitleIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/image.png")));
         dsCheckboxPanel.setSetAllSelected(true);
 
-        atCheckboxPanel = new CheckBoxListPanel<>();
+        atCheckboxPanel = (CheckBoxListPanel<ARTIFACT_TYPE>)atCBPanel;
         atCheckboxPanel.setPanelTitle(Bundle.GeoFilterPanel_ArtifactType_List_Title());
         atCheckboxPanel.setPanelTitleIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/extracted_content.png")));
         atCheckboxPanel.setSetAllSelected(true);
-
-        GridBagConstraints gridBagConstraints = new GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 3;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.weighty = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(0, 15, 0, 15);
-        add(dsCheckboxPanel, gridBagConstraints);
-
-        gridBagConstraints = new GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 4;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.weighty = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(0, 15, 0, 15);
-        add(atCheckboxPanel, gridBagConstraints);
     }
 
     @Override
@@ -221,7 +202,11 @@ class GeoFilterPanel extends javax.swing.JPanel {
         javax.swing.JPanel buttonPanel = new javax.swing.JPanel();
         applyButton = new javax.swing.JButton();
         javax.swing.JLabel optionsLabel = new javax.swing.JLabel();
+        dsCBPanel = new CheckBoxListPanel<DataSource>();
+        atCBPanel = new CheckBoxListPanel<ARTIFACT_TYPE>();
 
+        setMinimumSize(new java.awt.Dimension(10, 700));
+        setPreferredSize(new java.awt.Dimension(300, 700));
         setLayout(new java.awt.GridBagLayout());
 
         waypointSettings.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(GeoFilterPanel.class, "GeoFilterPanel.waypointSettings.border.title"))); // NOI18N
@@ -268,6 +253,7 @@ class GeoFilterPanel extends javax.swing.JPanel {
         waypointSettings.add(showWaypointsWOTSCheckBox, gridBagConstraints);
 
         daysSpinner.setEnabled(false);
+        daysSpinner.setMaximumSize(new java.awt.Dimension(100, 26));
         daysSpinner.setPreferredSize(new java.awt.Dimension(75, 26));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 2;
@@ -298,7 +284,7 @@ class GeoFilterPanel extends javax.swing.JPanel {
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(5, 15, 9, 15);
+        gridBagConstraints.insets = new java.awt.Insets(5, 15, 9, 25);
         add(waypointSettings, gridBagConstraints);
 
         buttonPanel.setLayout(new java.awt.GridBagLayout());
@@ -316,7 +302,7 @@ class GeoFilterPanel extends javax.swing.JPanel {
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(9, 15, 0, 15);
+        gridBagConstraints.insets = new java.awt.Insets(9, 15, 0, 25);
         add(buttonPanel, gridBagConstraints);
 
         optionsLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/blueGeo16.png"))); // NOI18N
@@ -327,6 +313,29 @@ class GeoFilterPanel extends javax.swing.JPanel {
         gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
         gridBagConstraints.insets = new java.awt.Insets(0, 15, 0, 0);
         add(optionsLabel, gridBagConstraints);
+
+        dsCBPanel.setMinimumSize(new java.awt.Dimension(150, 250));
+        dsCBPanel.setPreferredSize(new java.awt.Dimension(150, 250));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 3;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weighty = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(5, 15, 9, 25);
+        add(dsCBPanel, gridBagConstraints);
+
+        atCBPanel.setMinimumSize(new java.awt.Dimension(150, 250));
+        atCBPanel.setPreferredSize(new java.awt.Dimension(150, 250));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 4;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weighty = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(5, 15, 9, 25);
+        add(atCBPanel, gridBagConstraints);
+        atCBPanel.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(GeoFilterPanel.class, "GeoFilterPanel.atCBPanel.AccessibleContext.accessibleName")); // NOI18N
     }// </editor-fold>//GEN-END:initComponents
 
     private void allButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_allButtonActionPerformed
@@ -341,8 +350,10 @@ class GeoFilterPanel extends javax.swing.JPanel {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JRadioButton allButton;
     private javax.swing.JButton applyButton;
+    private javax.swing.JPanel atCBPanel;
     private javax.swing.JLabel daysLabel;
     private javax.swing.JSpinner daysSpinner;
+    private javax.swing.JPanel dsCBPanel;
     private javax.swing.JRadioButton mostRecentButton;
     private javax.swing.JLabel showLabel;
     private javax.swing.JCheckBox showWaypointsWOTSCheckBox;
