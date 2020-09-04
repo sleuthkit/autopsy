@@ -1,7 +1,20 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2019 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.datasourcesummary.uiutils;
 
@@ -22,32 +35,48 @@ import org.jfree.chart.plot.PiePlot;
 import org.jfree.data.general.DefaultPieDataset;
 
 /**
- *
- * @author gregd
+ * A pie chart panel.
  */
 public class PieChartPanel extends AbstractLoadableComponent<List<PieChartPanel.PieChartItem>> {
 
     /**
-     * 
+     * An individual pie chart slice in the pie chart.
      */
     public static class PieChartItem {
+
         private final String label;
         private final double value;
 
+        /**
+         * Main constructor.
+         *
+         * @param label The label for this pie slice.
+         * @param value The value for this item.
+         */
         public PieChartItem(String label, double value) {
             this.label = label;
             this.value = value;
         }
 
+        /**
+         * @return The label for this item.
+         */
         public String getLabel() {
             return label;
         }
 
+        /**
+         * @return The value for this item.
+         */
         public double getValue() {
             return value;
         }
     }
-    
+
+    /**
+     * A JFreeChart message overlay that can show a message for the purposes of
+     * the LoadableComponent.
+     */
     private static class MessageOverlay extends AbstractOverlay implements Overlay {
 
         private static final long serialVersionUID = 1L;
@@ -71,31 +100,38 @@ public class PieChartPanel extends AbstractLoadableComponent<List<PieChartPanel.
         void setMessage(String message) {
             overlay.setMessage(message);
         }
-        
+
         @Override
         public void paintOverlay(Graphics2D gd, ChartPanel cp) {
             overlay.paintOverlay(gd, cp.getWidth(), cp.getHeight());
         }
-        
+
     }
-    
-    
+
     private static final long serialVersionUID = 1L;
 
     private static final Font DEFAULT_FONT = new JLabel().getFont();
     private static final Font DEFAULT_HEADER_FONT = new Font(DEFAULT_FONT.getName(), DEFAULT_FONT.getStyle(), (int) (DEFAULT_FONT.getSize() * 1.5));
-    private static final PieSectionLabelGenerator DEFAULT_LABEL_GENERATOR = 
-            new StandardPieSectionLabelGenerator(
+    private static final PieSectionLabelGenerator DEFAULT_LABEL_GENERATOR
+            = new StandardPieSectionLabelGenerator(
                     "{0}: {1} ({2})", new DecimalFormat("0"), new DecimalFormat("0.0%"));
-    
+
     private final MessageOverlay overlay = new MessageOverlay();
     private final DefaultPieDataset dataset = new DefaultPieDataset();
     private final JFreeChart chart;
-    
+
+    /**
+     * Main constructor.
+     */
     public PieChartPanel() {
         this(null);
     }
-    
+
+    /**
+     * Main constructor for the pie chart.
+     *
+     * @param title The title for this pie chart.
+     */
     public PieChartPanel(String title) {
         // Create chart
         this.chart = ChartFactory.createPieChart(
@@ -108,6 +144,9 @@ public class PieChartPanel extends AbstractLoadableComponent<List<PieChartPanel.
         chart.setBackgroundPaint(null);
         chart.getLegend().setItemFont(DEFAULT_FONT);
         chart.getTitle().setFont(DEFAULT_HEADER_FONT);
+
+        // don't show a legend by default
+        chart.removeLegend();
 
         PiePlot plot = ((PiePlot) chart.getPlot());
 
@@ -123,18 +162,27 @@ public class PieChartPanel extends AbstractLoadableComponent<List<PieChartPanel.
         this.add(panel, BorderLayout.CENTER);
     }
 
+    /**
+     * @return The title for this chart if one exists.
+     */
     public String getTitle() {
-        return (this.chart == null || this.chart.getTitle() == null) ? 
-                null :
-                this.chart.getTitle().getText();
+        return (this.chart == null || this.chart.getTitle() == null)
+                ? null
+                : this.chart.getTitle().getText();
     }
 
-    
+    /**
+     * Sets the title for this pie chart.
+     *
+     * @param title The title.
+     *
+     * @return As a utility, returns this.
+     */
     public PieChartPanel setTitle(String title) {
         this.chart.getTitle().setText(title);
         return this;
     }
-    
+
     @Override
     protected void setMessage(boolean visible, String message) {
         this.overlay.setVisible(visible);

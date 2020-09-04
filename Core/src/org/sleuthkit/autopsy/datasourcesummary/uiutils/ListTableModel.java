@@ -25,8 +25,8 @@ import javax.swing.table.TableModel;
  * An interface to be used with the JTablePanel that specifies a TableModel to
  * be used with the underlying JTable based on a list of object type T.
  */
-public interface ListTableModel<T> extends TableModel {  
-    
+public interface ListTableModel<T> extends TableModel {
+
     /**
      * @return The list of objects supporting the rows to be displayed in the
      *         table.

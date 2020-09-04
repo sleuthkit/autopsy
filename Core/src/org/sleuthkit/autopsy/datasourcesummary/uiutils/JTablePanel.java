@@ -242,7 +242,6 @@ public class JTablePanel<T> extends AbstractLoadableComponent<List<T>> {
         return this;
     }
 
-    
     @Override
     protected void setResults(List<T> data) {
         // set the list of data to be shown as either the data or an empty list 

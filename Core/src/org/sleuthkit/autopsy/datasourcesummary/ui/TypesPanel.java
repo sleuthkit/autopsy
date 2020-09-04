@@ -22,7 +22,6 @@ import java.awt.BorderLayout;
 import java.text.DecimalFormat;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -46,13 +45,12 @@ import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel.ColumnModel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.LoadableComponent;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.PieChartPanel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.PieChartPanel.PieChartItem;
-import org.sleuthkit.autopsy.guiutils.WrapLayout;
 
 import org.sleuthkit.datamodel.DataSource;
 
 /**
  * Panel for displaying summary information on the known files present in the
- * specified DataSource
+ * specified DataSource.
  */
 @Messages({
     "TypesPanel_artifactsTypesPieChart_title=Artifact Types",
@@ -77,13 +75,23 @@ import org.sleuthkit.datamodel.DataSource;
     "TypesPanel_sizeLabel_title=Size"})
 class TypesPanel extends BaseDataSourceSummaryPanel {
 
+    /**
+     * A label that allows for displaying loading messages and can be used with
+     * a DataFetchResult. Text displays as "<key>:<value | message>".
+     */
     private static class LoadableLabel extends AbstractLoadableComponent<String> {
+
         private static final long serialVersionUID = 1L;
-        
+
         private final JLabel label = new JLabel();
         private final String key;
 
-        public LoadableLabel(String key) {
+        /**
+         * Main constructor for the label.
+         *
+         * @param key The key to be displayed.
+         */
+        LoadableLabel(String key) {
             this.key = key;
             setLayout(new BorderLayout());
             add(label, BorderLayout.CENTER);
@@ -96,7 +104,7 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
             String htmlFormattedValue = (italicize) ? String.format("<i>%s</i>", formattedValue) : formattedValue;
             label.setText(String.format("<html><div style='text-align: center;'>%s: %s</div></html>", formattedKey, htmlFormattedValue));
         }
-        
+
         @Override
         protected void setMessage(boolean visible, String message) {
             setValue(message, true);
@@ -107,11 +115,11 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
             setValue(data, false);
         }
     }
-    
-    
+
     private static final long serialVersionUID = 1L;
     private static final DecimalFormat INTEGER_SIZE_FORMAT = new DecimalFormat("#");
 
+    // All file type categories.
     private static final List<Pair<String, FileTypeCategory>> FILE_MIME_TYPE_CATEGORIES = Arrays.asList(
             Pair.of(Bundle.TypesPanel_fileMimeTypesChart_images_title(), FileTypeCategory.IMAGE),
             Pair.of(Bundle.TypesPanel_fileMimeTypesChart_videos_title(), FileTypeCategory.VIDEO),
@@ -120,43 +128,44 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
             Pair.of(Bundle.TypesPanel_fileMimeTypesChart_executables_title(), FileTypeCategory.EXECUTABLE)
     );
 
+    // The mime types in those categories.
     private static final Set<String> CATEGORY_MIME_TYPES = FILE_MIME_TYPE_CATEGORIES
             .stream()
             .flatMap((cat) -> cat.getRight().getMediaTypes().stream())
             .collect(Collectors.toSet());
-    
 
     private final PieChartPanel fileMimeTypesChart = new PieChartPanel(Bundle.TypesPanel_fileMimeTypesChart_title());
 
-    private final PieChartPanel artifactTypesChart = new PieChartPanel(Bundle.TypesPanel_artifactsTypesPieChart_title());
-
     private final JTablePanel<Pair<String, Long>> filesByCategoryTable
             = JTablePanel.getJTablePanel(Arrays.asList(
+                    // title column
                     new ColumnModel<>(
                             Bundle.TypesPanel_filesByCategoryTable_labelColumn_title(),
                             (pair) -> new DefaultCellModel(pair.getLeft()),
                             250
                     ),
+                    // count column
                     new ColumnModel<>(
                             Bundle.TypesPanel_filesByCategoryTable_countColumn_title(),
                             (pair) -> new DefaultCellModel(Long.toString(pair.getRight() == null ? 0 : pair.getRight())),
                             150
                     )
             ));
-    
+
     private final LoadableLabel usageLabel = new LoadableLabel(Bundle.TypesPanel_usageLabel_title());
     private final LoadableLabel osLabel = new LoadableLabel(Bundle.TypesPanel_osLabel_title());
     private final LoadableLabel sizeLabel = new LoadableLabel(Bundle.TypesPanel_sizeLabel_title());
 
+    // all loadable components
     private final List<LoadableComponent<?>> loadables = Arrays.asList(
             usageLabel,
             osLabel,
             sizeLabel,
             fileMimeTypesChart,
-            artifactTypesChart,
             filesByCategoryTable
     );
 
+    // all of the means for obtaining data for the gui components.
     private final List<DataFetchComponents<DataSource, ?>> dataFetchComponents = Arrays.asList(
             // usage label worker
             new DataFetchWorker.DataFetchComponents<>(
@@ -177,23 +186,17 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
             new DataFetchWorker.DataFetchComponents<>(
                     this::getMimeTypeCategoriesModel,
                     fileMimeTypesChart::showDataFetchResult),
-            // artifact counts worker
-            new DataFetchWorker.DataFetchComponents<>(
-                    this::getArtifactCountsModel,
-                    artifactTypesChart::showDataFetchResult),
             // files by category worker
             new DataFetchWorker.DataFetchComponents<>(
                     this::getFileCategoryModel,
                     filesByCategoryTable::showDataFetchResult)
     );
 
+    /**
+     * Main constructor.
+     */
     public TypesPanel() {
         initComponents();
-        customizeComponents();
-    }
-    
-    private void customizeComponents() {
-        this.pieChartRow.setLayout(new WrapLayout(0,5));
     }
 
     @Override
@@ -219,13 +222,19 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
         }
     }
 
+    /**
+     * Retrieves data for the file category table.
+     *
+     * @param selectedDataSource The datasource.
+     *
+     * @return The key value pairs to be displayed.
+     */
     private List<Pair<String, Long>> getFileCategoryModel(DataSource selectedDataSource) {
         if (selectedDataSource == null) {
             return null;
         }
 
-        List<Pair<String, Function<DataSource, Long>>> itemsAndRetrievers = Arrays.asList(
-                Pair.of(Bundle.TypesPanel_filesByCategoryTable_allRow_title(), DataSourceCountsSummary::getCountOfFiles),
+        List<Pair<String, Function<DataSource, Long>>> itemsAndRetrievers = Arrays.asList(Pair.of(Bundle.TypesPanel_filesByCategoryTable_allRow_title(), DataSourceCountsSummary::getCountOfFiles),
                 Pair.of(Bundle.TypesPanel_filesByCategoryTable_allocatedRow_title(), DataSourceCountsSummary::getCountOfAllocatedFiles),
                 Pair.of(Bundle.TypesPanel_filesByCategoryTable_unallocatedRow_title(), DataSourceCountsSummary::getCountOfUnallocatedFiles),
                 Pair.of(Bundle.TypesPanel_filesByCategoryTable_slackRow_title(), DataSourceCountsSummary::getCountOfSlackFiles),
@@ -241,17 +250,26 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Gets all the data for the file type pie chart.
+     *
+     * @param dataSource
+     *
+     * @return
+     */
     private List<PieChartItem> getMimeTypeCategoriesModel(DataSource dataSource) {
         if (dataSource == null) {
             return null;
         }
 
+        // for each category of file types, get the counts of files
         Stream<Pair<String, Long>> fileCategoryItems = FILE_MIME_TYPE_CATEGORIES
                 .stream()
                 .map((strCat)
                         -> Pair.of(strCat.getLeft(),
                         DataSourceMimeTypeSummary.getCountOfFilesForMimeTypes(dataSource, strCat.getRight().getMediaTypes())));
 
+        // also get counts for other and not analayzed
         Stream<Pair<String, Long>> otherItems = Stream.of(
                 Pair.of(Bundle.TypesPanel_fileMimeTypesChart_other_title(),
                         DataSourceMimeTypeSummary.getCountOfFilesNotInMimeTypes(dataSource, CATEGORY_MIME_TYPES)),
@@ -259,34 +277,12 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
                         DataSourceMimeTypeSummary.getCountOfFilesWithNoMimeType(dataSource))
         );
 
+        // create pie chart items to provide to pie chart
         return Stream.concat(fileCategoryItems, otherItems)
                 .filter(keyCount -> keyCount.getRight() != null && keyCount.getRight() > 0)
                 .map(keyCount -> new PieChartItem(keyCount.getLeft(), keyCount.getRight()))
                 .collect(Collectors.toList());
     }
-
-    /**
-     * The counts of different artifact types found in a DataSource.
-     *
-     * @param selectedDataSource The DataSource.
-     *
-     * @return The JTable data model of counts of artifact types.
-     */
-    private List<PieChartItem> getArtifactCountsModel(DataSource selectedDataSource) {
-        Map<String, Long> artifactMapping = DataSourceCountsSummary.getCountsOfArtifactsByType(selectedDataSource);
-        if (artifactMapping == null) {
-            return null;
-        }
-
-        return artifactMapping.entrySet().stream()
-                .filter((entrySet) -> entrySet != null)
-                .sorted((a, b) -> a.getKey().compareTo(b.getKey()))
-                .map((entrySet) -> new PieChartItem(entrySet.getKey(), entrySet.getValue()))
-                .collect(Collectors.toList());
-    }
-    
-    
-    
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -302,19 +298,19 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
         javax.swing.JPanel usagePanel = usageLabel;
         javax.swing.JPanel osPanel = osLabel;
         javax.swing.JPanel sizePanel = sizeLabel;
-        pieChartRow = new javax.swing.JPanel();
         javax.swing.JPanel fileMimeTypesPanel = fileMimeTypesChart;
-        javax.swing.JPanel artifactTypesPanel = artifactTypesChart;
         javax.swing.Box.Filler filler2 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 5), new java.awt.Dimension(0, 5), new java.awt.Dimension(32767, 5));
         javax.swing.JLabel filesByCategoryLabel = new javax.swing.JLabel();
         javax.swing.Box.Filler filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2), new java.awt.Dimension(32767, 2));
         javax.swing.JPanel filesByCategoryPanel = filesByCategoryTable;
+        filler3 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 32767));
 
         setLayout(new java.awt.BorderLayout());
 
         contentParent.setBorder(javax.swing.BorderFactory.createEmptyBorder(10, 10, 10, 10));
         contentParent.setMaximumSize(new java.awt.Dimension(32787, 32787));
-        contentParent.setMinimumSize(new java.awt.Dimension(650, 510));
+        contentParent.setMinimumSize(new java.awt.Dimension(400, 300));
+        contentParent.setPreferredSize(new java.awt.Dimension(400, 300));
         contentParent.setLayout(new javax.swing.BoxLayout(contentParent, javax.swing.BoxLayout.PAGE_AXIS));
 
         usagePanel.setAlignmentX(0.0F);
@@ -336,24 +332,12 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
         sizePanel.setPreferredSize(new java.awt.Dimension(800, 20));
         contentParent.add(sizePanel);
 
-        pieChartRow.setAlignmentX(0.0F);
-        pieChartRow.setMaximumSize(new java.awt.Dimension(1170, 895));
-        pieChartRow.setMinimumSize(null);
-        pieChartRow.setPreferredSize(null);
-
         fileMimeTypesPanel.setBorder(javax.swing.BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        fileMimeTypesPanel.setMaximumSize(new java.awt.Dimension(500, 375));
-        fileMimeTypesPanel.setMinimumSize(new java.awt.Dimension(500, 375));
-        fileMimeTypesPanel.setPreferredSize(new java.awt.Dimension(500, 375));
-        pieChartRow.add(fileMimeTypesPanel);
-
-        artifactTypesPanel.setBorder(javax.swing.BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        artifactTypesPanel.setMaximumSize(new java.awt.Dimension(650, 500));
-        artifactTypesPanel.setMinimumSize(new java.awt.Dimension(650, 500));
-        artifactTypesPanel.setPreferredSize(new java.awt.Dimension(650, 500));
-        pieChartRow.add(artifactTypesPanel);
-
-        contentParent.add(pieChartRow);
+        fileMimeTypesPanel.setAlignmentX(0.0F);
+        fileMimeTypesPanel.setMaximumSize(new java.awt.Dimension(400, 300));
+        fileMimeTypesPanel.setMinimumSize(new java.awt.Dimension(400, 300));
+        fileMimeTypesPanel.setPreferredSize(new java.awt.Dimension(400, 300));
+        contentParent.add(fileMimeTypesPanel);
         contentParent.add(filler2);
 
         org.openide.awt.Mnemonics.setLocalizedText(filesByCategoryLabel, org.openide.util.NbBundle.getMessage(TypesPanel.class, "TypesPanel.filesByCategoryLabel.text")); // NOI18N
@@ -365,6 +349,7 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
         filesByCategoryPanel.setMinimumSize(new java.awt.Dimension(10, 107));
         filesByCategoryPanel.setPreferredSize(new java.awt.Dimension(400, 107));
         contentParent.add(filesByCategoryPanel);
+        contentParent.add(filler3);
 
         scrollParent.setViewportView(contentParent);
 
@@ -373,6 +358,6 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JPanel pieChartRow;
+    private javax.swing.Box.Filler filler3;
     // End of variables declaration//GEN-END:variables
 }

@@ -1,7 +1,20 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2020 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.datasourcesummary.ui;
 
@@ -11,8 +24,8 @@ import java.util.List;
 import org.openide.util.NbBundle;
 
 /**
- *
- * @author gregd
+ * This class provides utilities for representing storage size in most relevant
+ * units (i.e. bytes, megabytes, etc.).
  */
 public class SizeRepresentationUtil {
 
@@ -31,16 +44,26 @@ public class SizeRepresentationUtil {
     /**
      * Get a long size in bytes as a string formated to be read by users.
      *
-     * @param size Long value representing a size in bytes
+     * @param size Long value representing a size in bytes.
      *
-     * @return return a string formated with a user friendly version of the size
-     *         as a string, returns empty String when provided empty size
+     * @return Return a string formated with a user friendly version of the size
+     *         as a string, returns empty String when provided empty size.
      */
     public static String getSizeString(Long size) {
         return getSizeString(size, APPROXIMATE_SIZE_FORMAT, true);
     }
-    
-    
+
+    /**
+     * Get a long size in bytes as a string formated to be read by users.
+     *
+     * @param size         Long value representing a size in byte.s
+     * @param format       The means of formatting the number.
+     * @param showFullSize Optionally show the number of bytes in the
+     *                     datasource.
+     *
+     * @return Return a string formated with a user friendly version of the size
+     *         as a string, returns empty String when provided empty size.
+     */
     @NbBundle.Messages({
         "SizeRepresentationUtil_units_bytes= bytes",
         "SizeRepresentationUtil_units_kilobytes= kB",
@@ -62,10 +85,10 @@ public class SizeRepresentationUtil {
                 approximateSize /= SIZE_CONVERSION_CONSTANT;
             }
         }
-        
+
         String fullSize = String.valueOf(size) + UNITS.get(0);
         String closestUnitSize = format.format(approximateSize) + UNITS.get(unitsIndex);
-        
+
         if (unitsIndex == 0) {
             return fullSize;
         } else if (showFullSize) {

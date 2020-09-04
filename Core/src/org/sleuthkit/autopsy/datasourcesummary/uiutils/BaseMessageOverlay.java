@@ -1,7 +1,20 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2019 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.datasourcesummary.uiutils;
 
@@ -9,10 +22,11 @@ import java.awt.Graphics;
 import javax.swing.JLabel;
 
 /**
- *
- * @author gregd
+ * Base class for drawing a message overlay. Contains a paint method for
+ * painting a JLabel using a java.awt.Graphics object.
  */
 public class BaseMessageOverlay {
+
     private final JLabel label;
     private boolean visible = false;
 
@@ -54,6 +68,13 @@ public class BaseMessageOverlay {
                 message == null ? "" : message));
     }
 
+    /**
+     * Paints the jlabel at full width and height with the graphics object.
+     *
+     * @param g      The graphics object.
+     * @param width  The width.
+     * @param height The height.
+     */
     public void paintOverlay(Graphics g, int width, int height) {
         if (!visible) {
             return;

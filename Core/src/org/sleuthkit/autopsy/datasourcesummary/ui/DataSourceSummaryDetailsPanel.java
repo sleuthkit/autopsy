@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.ui;
 
-import java.text.DecimalFormat;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.table.DefaultTableModel;
@@ -139,8 +138,6 @@ class DataSourceSummaryDetailsPanel extends BaseDataSourceSummaryPanel {
             logger.log(Level.WARNING, "Unable to get SHA256 for selected data source", ex);
         }
     }
-
-
 
     /**
      * Update the visibility of all fields and their labels based on whether

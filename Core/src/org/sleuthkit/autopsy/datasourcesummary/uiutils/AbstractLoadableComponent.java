@@ -1,7 +1,20 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2019 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.datasourcesummary.uiutils;
 
@@ -12,18 +25,27 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
- *
- * @author gregd
+ * Abstract class for common methods of a loadable component.
  */
 @NbBundle.Messages({
     "AbstractLoadableComponent_loadingMessage_defaultText=Loading results...",
     "AbstractLoadableComponent_errorMessage_defaultText=There was an error loading results.",
-    "AbstractLoadableComponent_noDataExists_defaultText=No data exists.",
-})
+    "AbstractLoadableComponent_noDataExists_defaultText=No data exists.",})
 public abstract class AbstractLoadableComponent<T> extends JPanel implements LoadableComponent<T> {
 
+    /**
+     * The default loading message.
+     */
     public static final String DEFAULT_LOADING_MESSAGE = Bundle.AbstractLoadableComponent_loadingMessage_defaultText();
+
+    /**
+     * The default error message.
+     */
     public static final String DEFAULT_ERROR_MESSAGE = Bundle.AbstractLoadableComponent_errorMessage_defaultText();
+
+    /**
+     * The default 'no results' message.
+     */
     public static final String DEFAULT_NO_RESULTS_MESSAGE = Bundle.AbstractLoadableComponent_noDataExists_defaultText();
 
     private static final Logger logger = Logger.getLogger(AbstractLoadableComponent.class.getName());
