@@ -84,16 +84,17 @@ public class ILeappAnalyserIngestModule implements DataSourceIngestModule {
     private static final String XMLFILE = "ileap-artifact-attribute-reference.xml"; //NON-NLS
 
     private File iLeappExecutable;
-    private final HashMap<String, String> tsvFiles = new HashMap<>();
-    private final HashMap<String, String> tsvFileArtifacts = new HashMap<>();
-    private final HashMap<String, String> tsvFileArtifactComments = new HashMap<>();
-    private final HashMap<String, List<List<String>>> tsvFileAttributes;
+    private final Map<String, String> tsvFiles;
+    private final Map<String, String> tsvFileArtifacts;
+    private final Map<String, String> tsvFileArtifactComments;
+    private final Map<String, List<List<String>>> tsvFileAttributes;
 
     private IngestJobContext context;
-    private Case currentCase;
-    private FileManager fileManager;
 
     ILeappAnalyserIngestModule() {
+        this.tsvFiles = new HashMap<>();
+        this.tsvFileArtifacts = new HashMap<>();
+        this.tsvFileArtifactComments = new HashMap<>();
         this.tsvFileAttributes = new HashMap<>();
 
     }
@@ -132,8 +133,8 @@ public class ILeappAnalyserIngestModule implements DataSourceIngestModule {
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress statusHelper) {
 
         statusHelper.progress(Bundle.ILeappAnalyserIngestModule_starting_iLeapp(), 0);
-        currentCase = Case.getCurrentCase();
-        fileManager = currentCase.getServices().getFileManager();
+        Case currentCase = Case.getCurrentCase();
+        FileManager fileManager = currentCase.getServices().getFileManager();
 
         List<AbstractFile> iLeappFilesToProcess = findiLeappFilesToProcess(dataSource);
 
@@ -323,7 +324,7 @@ public class ILeappAnalyserIngestModule implements DataSourceIngestModule {
                         String line = reader.readLine();
                         // Check first line, if it is null then no heading so nothing to match to, close and go to next file.
                         if (line != null) {
-                            HashMap<Integer, String> columnNumberToProcess = findColumnsToProcess(line, attrList);
+                            Map<Integer, String> columnNumberToProcess = findColumnsToProcess(line, attrList);
                             line = reader.readLine();
                             while (line != null) {
                                 Collection<BlackboardAttribute> bbattributes = processReadLine(line, columnNumberToProcess, fileName);
@@ -359,7 +360,7 @@ public class ILeappAnalyserIngestModule implements DataSourceIngestModule {
      *
      * @return
      */
-    private Collection<BlackboardAttribute> processReadLine(String line, HashMap<Integer, String> columnNumberToProcess, String fileName) throws IngestModuleException {
+    private Collection<BlackboardAttribute> processReadLine(String line, Map<Integer, String> columnNumberToProcess, String fileName) throws IngestModuleException {
         String[] columnValues = line.split("\\t");
 
         Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
@@ -429,7 +430,7 @@ public class ILeappAnalyserIngestModule implements DataSourceIngestModule {
      * @return the numbered column(s) and attribute(s) we want to use for the
      *         column(s)
      */
-    private HashMap<Integer, String> findColumnsToProcess(String line, List<List<String>> attrList) {
+    private Map<Integer, String> findColumnsToProcess(String line, List<List<String>> attrList) {
         String[] columnNames = line.split("\\t");
         HashMap<Integer, String> columnsToProcess = new HashMap<>();
 
