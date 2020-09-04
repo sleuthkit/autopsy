@@ -24,7 +24,6 @@ import java.awt.Graphics2D;
 import java.awt.font.FontRenderContext;
 import java.util.List;
 import java.util.Map;
-import java.awt.geom.Rectangle2D;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
 import javax.swing.JList;
@@ -206,30 +205,29 @@ final class GroupListPanel extends javax.swing.JPanel {
             Object newValue = value;
             if (newValue instanceof GroupKey) {
                 String valueString = newValue.toString();
-                setToolTipText(valueString);  
-                
+                setToolTipText(valueString);
+
                 valueString += " (" + groupMap.get(newValue) + ")";
- 
+
                 if (groupingAttribute instanceof FileSearch.ParentPathAttribute) {
                     // Using the list FontRenderContext instead of this because
                     // the label RenderContext was sometimes null, but this should work.
-                    FontRenderContext context = ((Graphics2D)list.getGraphics()).getFontRenderContext();
-                    
+                    FontRenderContext context = ((Graphics2D) list.getGraphics()).getFontRenderContext();
+
                     //Determine the width of the string with the given font.
                     double stringWidth = getFont().getStringBounds(valueString, context).getWidth();
                     // subtracting 10 from the width as a littl inset.
                     int listWidth = list.getWidth() - 10;
 
-                    if(stringWidth > listWidth ) {
-                        double avgCharWidth = Math.floor(stringWidth/valueString.length());
-                        
+                    if (stringWidth > listWidth) {
+                        double avgCharWidth = Math.floor(stringWidth / valueString.length());
+
                         // The extra 5 is to account for the " ... " that is being added back. 
-                        int charToRemove = (int)Math.ceil((stringWidth - listWidth) / avgCharWidth) + 5;
-                        int charactersToShow = (int)Math.ceil((valueString.length() - charToRemove)/2);
+                        int charToRemove = (int) Math.ceil((stringWidth - listWidth) / avgCharWidth) + 5;
+                        int charactersToShow = (int) Math.ceil((valueString.length() - charToRemove) / 2);
                         valueString = valueString.substring(0, charactersToShow) + " ... " + valueString.substring(valueString.length() - charactersToShow);
                     }
-                    
-                    
+
                 }
                 newValue = valueString;
             }
