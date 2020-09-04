@@ -48,7 +48,7 @@ public class DataSourceSummaryTabbedPane extends JTabbedPane {
             Pair.of(Bundle.DataSourceSummaryTabbedPane_countsTab_title(), new DataSourceSummaryCountsPanel()),
             Pair.of(Bundle.DataSourceSummaryTabbedPane_userActivityTab_title(), new DataSourceSummaryUserActivityPanel()),
             Pair.of(Bundle.DataSourceSummaryTabbedPane_recentFileTab_title(), new RecentFilesPanel())
-    );
+    ));
 
     private final IngestJobInfoPanel ingestHistoryPanel = new IngestJobInfoPanel();
 
