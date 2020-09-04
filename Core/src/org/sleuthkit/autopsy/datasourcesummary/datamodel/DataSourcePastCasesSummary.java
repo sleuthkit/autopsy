@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.sleuthkit.autopsy.centralrepository.ingestmodule.CentralRepoIngestModuleFactory;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
@@ -20,13 +21,18 @@ import org.sleuthkit.datamodel.DataSource;
  * @author gregd
  */
 public class DataSourcePastCasesSummary {
-
+    private static final String CENTRAL_REPO_INGEST_NAME = CentralRepoIngestModuleFactory.getModuleName();
+    
     private static final String CASE_SEPARATOR = ",";
     private static final String PREFIX_END = ":";
 
     private final SleuthkitCaseProvider caseProvider;
     private final java.util.logging.Logger logger;
 
+    
+
+            
+    
     /**
      * Main constructor.
      */
