@@ -262,10 +262,10 @@ public class JTablePanel<T> extends JPanel {
         return DEFAULT_NO_RESULTS_MESSAGE;
     }
 
-    private final JScrollPane tableScrollPane;
-    private final Overlay overlayLayer;
+    private JScrollPane tableScrollPane;
+    private Overlay overlayLayer;
     private ListTableModel<T> tableModel;
-    private final JTable table;
+    private JTable table;
 
     /**
      * Panel constructor.
@@ -281,22 +281,16 @@ public class JTablePanel<T> extends JPanel {
      * Default constructor.
      */
     public JTablePanel() {
-        this.table = new JTable();
-        this.table.getTableHeader().setReorderingAllowed(false);
-
-        this.overlayLayer = new Overlay();
-        this.tableScrollPane = new JScrollPane(table);
-        JLayer<JComponent> dualLayer = new JLayer<>(tableScrollPane, overlayLayer);
-        setLayout(new BorderLayout());
-        add(dualLayer, BorderLayout.CENTER);
+        initComponents();
     }
 
     /**
-     * Set the table model.
+     * Set the table model. This method must be called prior to calling 
+     * setResultList.
      *
      * @param tableModel
      */
-    public void setModel(ListTableModel<T> tableModel) {
+    public final void setModel(ListTableModel<T> tableModel) {
         if (tableModel == null) {
             throw new IllegalArgumentException("Null table model passed to setModel");
         }
@@ -331,6 +325,11 @@ public class JTablePanel<T> extends JPanel {
      * @param data The list of data objects to be shown.
      */
     private void setResultList(List<T> data) {
+        
+        if(tableModel == null) {
+            throw new IllegalStateException("ListTableModel has not be initialized");
+        }
+        
         // set the list of data to be shown as either the data or an empty list 
         // on null.
         List<T> dataToSet = (data == null) ? Collections.emptyList() : data;
@@ -436,5 +435,19 @@ public class JTablePanel<T> extends JPanel {
      */
     public void showDataFetchResult(DataFetchResult<List<T>> result) {
         showDataFetchResult(result, DEFAULT_ERROR_MESSAGE, DEFAULT_NO_RESULTS_MESSAGE);
+    }
+    
+    /**
+     * Initialize the gui components.
+     */
+    private void initComponents() {
+        table = new JTable();
+        table.getTableHeader().setReorderingAllowed(false);
+
+        overlayLayer = new Overlay();
+        tableScrollPane = new JScrollPane(table);
+        JLayer<JComponent> dualLayer = new JLayer<>(tableScrollPane, overlayLayer);
+        setLayout(new BorderLayout());
+        add(dualLayer, BorderLayout.CENTER);
     }
 }
