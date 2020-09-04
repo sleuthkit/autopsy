@@ -40,12 +40,9 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
      * @param dataSource The datasource to use in this panel.
      */
     synchronized void setDataSource(DataSource dataSource) {
-        DataSource oldDataSource = this.dataSource;
         this.dataSource = dataSource;
-        if (this.dataSource != oldDataSource) {
-            this.executor.cancelRunning();
-            onNewDataSource(this.dataSource);
-        }
+        this.executor.cancelRunning();
+        onNewDataSource(this.dataSource);
     }
 
     /**

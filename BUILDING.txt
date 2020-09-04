@@ -1,4 +1,4 @@
-                  Last Updated: 1 February 2019
+                  Last Updated: 5 August 2020
 
 This file outlines what it takes to build Autopsy from source.
 
@@ -15,14 +15,13 @@ STEPS:
 that we use, you'll need 1.8.0_66 or greater. You can now use 32-bit or 64-bit, 
 but special work is needed to get The Sleuth Kit to compile as 64-bit.
 
-Autopsy has been used and tested with Oracle JavaSE and the included JavaFX support
-(http://www.oracle.com/technetwork/java/javase/downloads/index.html).
+Autopsy has been used and tested with the following OpenJDK build
+(https://github.com/ojdkbuild/ojdkbuild/releases/tag/java-1.8.0-openjdk-1.8.0.222-1.b10).
 
-OpenJDK and OpenJFX might work, but they are not fully tested with Autopsy.
 
 1b) Ensure that JDK_HOME is set to the root JDK directory.
 
-1c) (optional) Download and install Netbeans IDE (http://netbeans.org/)
+1c) (optional) Download and install Netbeans IDE (https://netbeans.apache.org/download/index.html)
 Note: Netbeans IDE is not required to build and run Autopsy,
 but it is a recommended IDE to use for development of Autopsy modules.
 

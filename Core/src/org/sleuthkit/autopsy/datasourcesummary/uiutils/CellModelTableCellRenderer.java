@@ -19,8 +19,11 @@
 package org.sleuthkit.autopsy.datasourcesummary.uiutils;
 
 import java.awt.Component;
+import java.awt.Insets;
+import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JTable;
+import javax.swing.border.Border;
 import javax.swing.table.DefaultTableCellRenderer;
 import org.apache.commons.lang3.StringUtils;
 
@@ -80,6 +83,11 @@ public class CellModelTableCellRenderer extends DefaultTableCellRenderer {
          * @return The horizontal alignment for the text in the cell.
          */
         HorizontalAlign getHorizontalAlignment();
+
+        /**
+         * @return The insets for the cell text.
+         */
+        Insets getInsets();
     }
 
     /**
@@ -90,6 +98,7 @@ public class CellModelTableCellRenderer extends DefaultTableCellRenderer {
         private final String text;
         private String tooltip;
         private HorizontalAlign horizontalAlignment;
+        private Insets insets;
 
         /**
          * Main constructor.
@@ -140,12 +149,30 @@ public class CellModelTableCellRenderer extends DefaultTableCellRenderer {
         }
 
         @Override
+        public Insets getInsets() {
+            return insets;
+        }
+
+        /**
+         * Sets the insets for the text within the cell
+         *
+         * @param insets The insets.
+         *
+         * @return As a utility, returns this.
+         */
+        public DefaultCellModel setInsets(Insets insets) {
+            this.insets = insets;
+            return this;
+        }
+
+        @Override
         public String toString() {
             return getText();
         }
     }
 
-    private static int DEFAULT_ALIGNMENT = JLabel.LEFT;
+    private static final int DEFAULT_ALIGNMENT = JLabel.LEFT;
+    private static final Border DEFAULT_BORDER = BorderFactory.createEmptyBorder(1, 5, 1, 5);
 
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value,
@@ -184,6 +211,14 @@ public class CellModelTableCellRenderer extends DefaultTableCellRenderer {
             defaultCell.setToolTipText(tooltip);
         } else {
             defaultCell.setToolTipText(null);
+        }
+
+        // sets the padding for cell text within the cell.
+        Insets insets = cellModel.getInsets();
+        if (insets != null) {
+            defaultCell.setBorder(BorderFactory.createEmptyBorder(insets.top, insets.left, insets.bottom, insets.right));
+        } else {
+            defaultCell.setBorder(DEFAULT_BORDER);
         }
 
         // sets the JLabel alignment (left, center, right) or default alignment

@@ -55,6 +55,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.CommunicationsManager;
 import org.sleuthkit.datamodel.InvalidAccountIDException;
+import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -119,24 +120,26 @@ final class MessageAccountPanel extends JPanel {
                     return new ArrayList<>();
                 }
 
-                List<BlackboardArtifact> contactList = ContactCache.getContacts(account);
-                BlackboardArtifact contact = null;
+                if ( !((DataSource)(artifact.getDataSource())).getDeviceId().equals(account.getTypeSpecificID())) {
+                    List<BlackboardArtifact> contactList = ContactCache.getContacts(account);
+                    BlackboardArtifact contact = null;
 
-                if (contactList != null && !contactList.isEmpty()) {
-                    contact = contactList.get(0);
-                }
+                    if (contactList != null && !contactList.isEmpty()) {
+                        contact = contactList.get(0);
+                    }
 
-                if (CentralRepository.isEnabled()) {
-                    Collection<PersonaAccount> personAccounts = PersonaAccount.getPersonaAccountsForAccount(account);
-                    if (personAccounts != null && !personAccounts.isEmpty()) {
-                        for (PersonaAccount personaAccount : PersonaAccount.getPersonaAccountsForAccount(account)) {
-                            dataList.add(new AccountContainer(account, personaAccount, contact));
+                    if (CentralRepository.isEnabled()) {
+                        Collection<PersonaAccount> personAccounts = PersonaAccount.getPersonaAccountsForAccount(account);
+                        if (personAccounts != null && !personAccounts.isEmpty()) {
+                            for (PersonaAccount personaAccount : PersonaAccount.getPersonaAccountsForAccount(account)) {
+                                dataList.add(new AccountContainer(account, personaAccount, contact));
+                            }
+                        } else {
+                            dataList.add(new AccountContainer(account, null, contact));
                         }
                     } else {
                         dataList.add(new AccountContainer(account, null, contact));
                     }
-                } else {
-                    dataList.add(new AccountContainer(account, null, contact));
                 }
             }
 
