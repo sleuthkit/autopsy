@@ -20,9 +20,7 @@ package org.sleuthkit.autopsy.geolocation;
 
 import org.sleuthkit.autopsy.guiutils.CheckBoxListPanel;
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.Graphics;
-import java.awt.GridBagConstraints;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.sql.ResultSet;
@@ -35,7 +33,6 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javafx.util.Pair;
-import javax.swing.Box;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.SpinnerNumberModel;
