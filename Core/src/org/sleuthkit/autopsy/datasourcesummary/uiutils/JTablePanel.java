@@ -231,7 +231,7 @@ public class JTablePanel<T> extends JPanel {
                 .map((colModel) -> colModel.getCellRenderer())
                 .collect(Collectors.toList());
 
-        return new DefaultListTableModel<T>(columnRenderers);
+        return new DefaultListTableModel<>(columnRenderers);
     }
 
     /**
@@ -262,26 +262,41 @@ public class JTablePanel<T> extends JPanel {
         return DEFAULT_NO_RESULTS_MESSAGE;
     }
 
-    private final JScrollPane tableScrollPane;
-    private final Overlay overlayLayer;
-    private final ListTableModel<T> tableModel;
-    private final JTable table;
+    private JScrollPane tableScrollPane;
+    private Overlay overlayLayer;
+    private ListTableModel<T> tableModel;
+    private JTable table;
 
     /**
-     * Main constructor.
+     * Panel constructor.
      *
      * @param tableModel The model to use for the table.
      */
     public JTablePanel(ListTableModel<T> tableModel) {
-        this.tableModel = tableModel;
-        this.table = new JTable(tableModel);
-        this.table.getTableHeader().setReorderingAllowed(false);
+        this();
+        setModel(tableModel);
+    }
 
-        this.overlayLayer = new Overlay();
-        this.tableScrollPane = new JScrollPane(table);
-        JLayer<JComponent> dualLayer = new JLayer<JComponent>(tableScrollPane, overlayLayer);
-        setLayout(new BorderLayout());
-        add(dualLayer, BorderLayout.CENTER);
+    /**
+     * Default constructor.
+     */
+    public JTablePanel() {
+        initComponents();
+    }
+
+    /**
+     * Set the table model. This method must be called prior to calling 
+     * setResultList.
+     *
+     * @param tableModel
+     */
+    public final void setModel(ListTableModel<T> tableModel) {
+        if (tableModel == null) {
+            throw new IllegalArgumentException("Null table model passed to setModel");
+        }
+
+        this.tableModel = tableModel;
+        table.setModel(tableModel);
     }
 
     /**
@@ -310,6 +325,11 @@ public class JTablePanel<T> extends JPanel {
      * @param data The list of data objects to be shown.
      */
     private void setResultList(List<T> data) {
+        
+        if(tableModel == null) {
+            throw new IllegalStateException("ListTableModel has not be initialized");
+        }
+        
         // set the list of data to be shown as either the data or an empty list 
         // on null.
         List<T> dataToSet = (data == null) ? Collections.emptyList() : data;
@@ -415,5 +435,19 @@ public class JTablePanel<T> extends JPanel {
      */
     public void showDataFetchResult(DataFetchResult<List<T>> result) {
         showDataFetchResult(result, DEFAULT_ERROR_MESSAGE, DEFAULT_NO_RESULTS_MESSAGE);
+    }
+    
+    /**
+     * Initialize the gui components.
+     */
+    private void initComponents() {
+        table = new JTable();
+        table.getTableHeader().setReorderingAllowed(false);
+
+        overlayLayer = new Overlay();
+        tableScrollPane = new JScrollPane(table);
+        JLayer<JComponent> dualLayer = new JLayer<>(tableScrollPane, overlayLayer);
+        setLayout(new BorderLayout());
+        add(dualLayer, BorderLayout.CENTER);
     }
 }
