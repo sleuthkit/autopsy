@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2020 Basis Technology Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -162,16 +162,16 @@ final class ExtractEdge extends Extract {
 
         final String esedumper = getPathForESEDumper();
         if (esedumper == null) {
-            this.addErrorMessage(Bundle.ExtractEdge_process_errMsg_unableFindESEViewer());
             LOG.log(Level.SEVERE, "Error finding ESEDatabaseViewer program"); //NON-NLS
+            this.addErrorMessage(Bundle.ExtractEdge_process_errMsg_unableFindESEViewer());
             return; //If we cannot find the ESEDatabaseView we cannot proceed
         }
 
         try {
             this.processWebCacheDbFile(esedumper, webCacheFiles, progressBar);
         } catch (IOException | TskCoreException ex) {
+            LOG.log(Level.SEVERE, "Error processing 'WebCacheV01.dat' files for Microsoft Edge", ex); // NON-NLS
             this.addErrorMessage(Bundle.ExtractEdge_process_errMsg_webcacheFail());
-            LOG.log(Level.SEVERE, "Error returned from processWebCacheDbFile", ex); // NON-NLS
         }
 
         progressBar.progress(Bundle.Progress_Message_Edge_Bookmarks());
@@ -179,7 +179,7 @@ final class ExtractEdge extends Extract {
             this.processSpartanDbFile(esedumper, spartanFiles);
         } catch (IOException | TskCoreException ex) {
             this.addErrorMessage(Bundle.ExtractEdge_process_errMsg_spartanFail());
-            LOG.log(Level.SEVERE, "Error returned from processSpartanDbFile", ex); // NON-NLS
+            LOG.log(Level.SEVERE, "Error processing 'spartan.edb' files for Microsoft Edge", ex); // NON-NLS
         }
     }
 
@@ -584,7 +584,7 @@ final class ExtractEdge extends Extract {
         processBuilder.redirectOutput(outputFilePath.toFile());
         processBuilder.redirectError(errFilePath.toFile());
 
-        ExecUtil.execute(processBuilder, new DataSourceIngestModuleProcessTerminator(context));
+        ExecUtil.execute(processBuilder, new DataSourceIngestModuleProcessTerminator(context, true));
     }
 
     /**
