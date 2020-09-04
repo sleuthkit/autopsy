@@ -114,7 +114,7 @@ public class PieChartPanel extends AbstractLoadableComponent<List<PieChartPanel.
     private static final Font DEFAULT_HEADER_FONT = new Font(DEFAULT_FONT.getName(), DEFAULT_FONT.getStyle(), (int) (DEFAULT_FONT.getSize() * 1.5));
     private static final PieSectionLabelGenerator DEFAULT_LABEL_GENERATOR
             = new StandardPieSectionLabelGenerator(
-                    "{0}: {1} ({2})", new DecimalFormat("0"), new DecimalFormat("0.0%"));
+                    "{0}: {1} ({2})", new DecimalFormat("#,###"), new DecimalFormat("0.0%"));
 
     private final MessageOverlay overlay = new MessageOverlay();
     private final DefaultPieDataset dataset = new DefaultPieDataset();

@@ -110,6 +110,7 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
 
     private static final long serialVersionUID = 1L;
     private static final DecimalFormat INTEGER_SIZE_FORMAT = new DecimalFormat("#");
+    DecimalFormat COMMA_FORMATTER = new DecimalFormat("#,###");
 
     // All file type categories.
     private static final List<Pair<String, FileTypeCategory>> FILE_MIME_TYPE_CATEGORIES = Arrays.asList(
@@ -253,14 +254,14 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
     }
 
     /**
-     * Returns string value of long. If null returns a string of '0'.
+     * Returns string value of long with comma separators. If null returns a string of '0'.
      *
      * @param longVal The long value.
      *
      * @return The string value of the long.
      */
     private String getStringOrZero(Long longVal) {
-        return String.valueOf(longVal == null ? 0 : longVal);
+        return longVal == null ? "0" : COMMA_FORMATTER.format(longVal);
     }
 
     /**
