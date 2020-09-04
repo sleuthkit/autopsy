@@ -87,7 +87,7 @@ public class ILeappAnalyserIngestModule implements DataSourceIngestModule {
     private final Map<String, String> tsvFiles;
     private final Map<String, String> tsvFileArtifacts;
     private final Map<String, String> tsvFileArtifactComments;
-    private final Map<String, List<List<String>>> tsvFileAttributes;
+    private final   Map<String, List<List<String>>> tsvFileAttributes;
 
     private IngestJobContext context;
 
@@ -133,8 +133,6 @@ public class ILeappAnalyserIngestModule implements DataSourceIngestModule {
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress statusHelper) {
 
         statusHelper.progress(Bundle.ILeappAnalyserIngestModule_starting_iLeapp(), 0);
-        Case currentCase = Case.getCurrentCase();
-        FileManager fileManager = currentCase.getServices().getFileManager();
 
         List<AbstractFile> iLeappFilesToProcess = findiLeappFilesToProcess(dataSource);
 
@@ -151,6 +149,8 @@ public class ILeappAnalyserIngestModule implements DataSourceIngestModule {
 
         if (!iLeappFilesToProcess.isEmpty()) {
             // Run iLeapp
+
+            Case currentCase = Case.getCurrentCase();
             for (AbstractFile iLeappFile : iLeappFilesToProcess) {
 
                 String currentTime = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss z", Locale.US).format(System.currentTimeMillis());//NON-NLS
