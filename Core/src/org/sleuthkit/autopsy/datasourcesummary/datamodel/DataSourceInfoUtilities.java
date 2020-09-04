@@ -35,6 +35,7 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
+import org.sleuthkit.datamodel.BlackboardAttribute.Type;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskData.TSK_FS_META_FLAG_ENUM;
@@ -356,5 +357,37 @@ final class DataSourceInfoUtilities {
                     throw new IllegalArgumentException("Unable to compare attributes of type " + attribute1.getAttributeType().getTypeName());
             }
         }
+    }
+    
+
+    /**
+     * Retrieves attribute from artifact if exists. Returns null if attribute is
+     * null or underlying call throws exception.
+     *
+     * @param artifact      The artifact.
+     * @param attributeType The attribute type to retrieve from the artifact.
+     *
+     * @return The attribute or null if could not be received.
+     */
+    private static BlackboardAttribute getAttributeOrNull(BlackboardArtifact artifact, Type attributeType) {
+        try {
+            return artifact.getAttribute(attributeType);
+        } catch (TskCoreException ex) {
+            return null;
+        }
+    }
+
+    /**
+     * Retrieves the string value of a certain attribute type from an artifact.
+     *
+     * @param artifact      The artifact.
+     * @param attributeType The attribute type.
+     *
+     * @return The 'getValueString()' value or null if the attribute or String
+     *         could not be retrieved.
+     */
+    static String getStringOrNull(BlackboardArtifact artifact, Type attributeType) {
+        BlackboardAttribute attr = getAttributeOrNull(artifact, attributeType);
+        return (attr == null) ? null : attr.getValueString();
     }
 }
