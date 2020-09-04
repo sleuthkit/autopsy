@@ -27,8 +27,8 @@ import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 
 /**
- * A factory that creates data source ingest modules that will run iLeapp against 
- * logical files and saves the output to module output.
+ * A factory that creates data source ingest modules that will run iLeapp
+ * against logical files and saves the output to module output.
  */
 @ServiceProvider(service = IngestModuleFactory.class)
 public class ILeappAnalyserModuleFactory extends IngestModuleFactoryAdapter {

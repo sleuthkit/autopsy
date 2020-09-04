@@ -95,7 +95,7 @@ public class ILeappAnalyserIngestModule implements DataSourceIngestModule {
 
     ILeappAnalyserIngestModule() {
         this.tsvFileAttributes = new HashMap<>();
-        
+
     }
 
     @NbBundle.Messages({
@@ -110,7 +110,7 @@ public class ILeappAnalyserIngestModule implements DataSourceIngestModule {
         }
 
         configExtractor();
-        
+
         try {
             iLeappExecutable = locateExecutable(ILEAPP_EXECUTABLE);
         } catch (FileNotFoundException exception) {
@@ -136,21 +136,21 @@ public class ILeappAnalyserIngestModule implements DataSourceIngestModule {
         fileManager = currentCase.getServices().getFileManager();
 
         List<AbstractFile> iLeappFilesToProcess = findiLeappFilesToProcess(dataSource);
-        
+
         statusHelper.switchToDeterminate(iLeappFilesToProcess.size());
-        
+
         try {
             loadConfigFile();
         } catch (IngestModuleException ex) {
             logger.log(Level.SEVERE, String.format("Error loading config file %s", XMLFILE), ex);
-            return ProcessResult.ERROR;            
+            return ProcessResult.ERROR;
         }
-        
+
         Integer filesProcessedCount = 0;
-        
+
         if (!iLeappFilesToProcess.isEmpty()) {
             // Run iLeapp
-            for (AbstractFile iLeappFile: iLeappFilesToProcess) {
+            for (AbstractFile iLeappFile : iLeappFilesToProcess) {
 
                 String currentTime = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss z", Locale.US).format(System.currentTimeMillis());//NON-NLS
                 Path moduleOutputPath = Paths.get(currentCase.getModuleDirectory(), ILEAPP, currentTime);
@@ -168,32 +168,32 @@ public class ILeappAnalyserIngestModule implements DataSourceIngestModule {
                     if (result != 0) {
                         logger.log(Level.SEVERE, String.format("Error running iLeapp, error code returned %d", result)); //NON-NLS
                         return ProcessResult.ERROR;
-                    } 
+                    }
                 } catch (IOException ex) {
-                     logger.log(Level.SEVERE, String.format("Error when trying to execute iLeapp program against file %s", iLeappFile.getLocalAbsPath()), ex);
-                     return ProcessResult.ERROR;
+                    logger.log(Level.SEVERE, String.format("Error when trying to execute iLeapp program against file %s", iLeappFile.getLocalAbsPath()), ex);
+                    return ProcessResult.ERROR;
                 }
 
                 if (context.dataSourceIngestIsCancelled()) {
                     logger.log(Level.INFO, "ILeapp Analyser ingest module run was canceled"); //NON-NLS
                     return ProcessResult.OK;
                 }
-                
+
                 try {
                     List<String> iLeappTsvOutputFiles = findTsvFiles(moduleOutputPath);
                     if (!iLeappTsvOutputFiles.isEmpty()) {
                         processiLeappFiles(iLeappTsvOutputFiles, iLeappFile, statusHelper);
                     }
                 } catch (IOException | IngestModuleException ex) {
-                  logger.log(Level.SEVERE, String.format("Error trying to process iLeapp output files in directory %s. ", moduleOutputPath.toString()), ex); //NON-NLS
-                  return ProcessResult.ERROR;
+                    logger.log(Level.SEVERE, String.format("Error trying to process iLeapp output files in directory %s. ", moduleOutputPath.toString()), ex); //NON-NLS
+                    return ProcessResult.ERROR;
                 }
-                
+
                 filesProcessedCount++;
             }
-        
+
         }
-        
+
         IngestMessage message = IngestMessage.createMessage(IngestMessage.MessageType.DATA,
                 Bundle.ILeappAnalyserIngestModule_has_run(),
                 Bundle.ILeappAnalyserIngestModule_completed());
@@ -203,14 +203,15 @@ public class ILeappAnalyserIngestModule implements DataSourceIngestModule {
 
     /**
      * Find the files to process that will be processed by the iLeapp program
-     * 
+     *
      * @param dataSource
+     *
      * @return List of abstract files to process.
      */
     private List<AbstractFile> findiLeappFilesToProcess(Content dataSource) {
-        
+
         List<AbstractFile> iLeappFiles = new ArrayList<>();
-        
+
         FileManager fileManager = getCurrentCase().getServices().getFileManager();
 
         // findFiles use the SQL wildcard # in the file name
@@ -218,21 +219,21 @@ public class ILeappAnalyserIngestModule implements DataSourceIngestModule {
             iLeappFiles = fileManager.findFiles(dataSource, "%", "/"); //NON-NLS
         } catch (TskCoreException ex) {
             //Change this
-           logger.log(Level.WARNING, "No files found to process"); //NON-NLS
-           return iLeappFiles;
+            logger.log(Level.WARNING, "No files found to process"); //NON-NLS
+            return iLeappFiles;
         }
-        
+
         List<AbstractFile> iLeappFilesToProcess = new ArrayList<>();
-        for (AbstractFile iLeappFile: iLeappFiles) {
-            if ((iLeappFile.getName().toLowerCase().contains(".zip") || (iLeappFile.getName().toLowerCase().contains(".tar")) 
-                 || iLeappFile.getName().toLowerCase().contains(".tgz"))) {
+        for (AbstractFile iLeappFile : iLeappFiles) {
+            if ((iLeappFile.getName().toLowerCase().contains(".zip") || (iLeappFile.getName().toLowerCase().contains(".tar"))
+                    || iLeappFile.getName().toLowerCase().contains(".tgz"))) {
                 iLeappFilesToProcess.add(iLeappFile);
             }
         }
-            
+
         return iLeappFilesToProcess;
     }
-        
+
     private ProcessBuilder buildiLeappCommand(Path moduleOutputPath, String sourceFilePath, String iLeappFileSystemType) {
 
         ProcessBuilder processBuilder = buildProcessWithRunAsInvoker(
@@ -265,58 +266,59 @@ public class ILeappAnalyserIngestModule implements DataSourceIngestModule {
         }
         return exeFile;
     }
-    
-        @NbBundle.Messages({
+
+    @NbBundle.Messages({
         "ILeappAnalyserIngestModule.error.reading.iLeapp.directory=Error reading iLeapp Output directory."})
-   
+
     /**
-     * Find the tsv files in the iLeapp output directory and match them to files we know we want to process
-     * and return the list to process those files.
+     * Find the tsv files in the iLeapp output directory and match them to files
+     * we know we want to process and return the list to process those files.
      */
     private List<String> findTsvFiles(Path iLeapOutputDir) throws IngestModuleException {
         List<String> allTsvFiles = new ArrayList<>();
         List<String> foundTsvFiles = new ArrayList<>();
-        
+
         try (Stream<Path> walk = Files.walk(iLeapOutputDir)) {
 
-	    allTsvFiles = walk.map(x -> x.toString())
-			.filter(f -> f.endsWith(".tsv")).collect(Collectors.toList());
+            allTsvFiles = walk.map(x -> x.toString())
+                    .filter(f -> f.endsWith(".tsv")).collect(Collectors.toList());
 
             for (String tsvFile : allTsvFiles) {
                 if (tsvFiles.containsKey(FilenameUtils.getName(tsvFile))) {
                     foundTsvFiles.add(tsvFile);
                 }
             }
-            
+
         } catch (IOException e) {
             throw new IngestModuleException(Bundle.ILeappAnalyserIngestModule_error_reading_iLeapp_directory() + iLeapOutputDir.toString(), e);
-        } 
-        
+        }
+
         return foundTsvFiles;
-        
+
     }
-    
+
     /**
      * Process the iLeapp files that were found that match the xml mapping file
+     *
      * @param iLeappFilesToProcess List of files to process
-     * @param iLeappImageFile Abstract file to create artifact for
-     * @param statusHelper progress bar update
+     * @param iLeappImageFile      Abstract file to create artifact for
+     * @param statusHelper         progress bar update
+     *
      * @throws FileNotFoundException
-     * @throws IOException 
+     * @throws IOException
      */
     private void processiLeappFiles(List<String> iLeappFilesToProcess, AbstractFile iLeappImageFile, DataSourceIngestModuleProgress statusHelper) throws FileNotFoundException, IOException, IngestModuleException {
         List<BlackboardArtifact> bbartifacts = new ArrayList<>();
-       
-        for (String iLeappFileName : iLeappFilesToProcess) { 
+
+        for (String iLeappFileName : iLeappFilesToProcess) {
             String fileName = FilenameUtils.getName(iLeappFileName);
             statusHelper.progress(NbBundle.getMessage(this.getClass(), "ILeappAnalyserIngestModule.parsing.file", fileName));
             File iLeappFile = new File(iLeappFileName);
-//            List<List<String>> attrList = new ArrayList<>();
             if (tsvFileAttributes.containsKey(fileName)) {
                 List<List<String>> attrList = tsvFileAttributes.get(fileName);
                 try {
                     BlackboardArtifact.Type artifactType = Case.getCurrentCase().getSleuthkitCase().getArtifactType(tsvFileArtifacts.get(fileName));
-                
+
                     try (BufferedReader reader = new BufferedReader(new FileReader(iLeappFile))) {
                         String line = reader.readLine();
                         // Check first line, if it is null then no heading so nothing to match to, close and go to next file.
@@ -324,7 +326,6 @@ public class ILeappAnalyserIngestModule implements DataSourceIngestModule {
                             HashMap<Integer, String> columnNumberToProcess = findColumnsToProcess(line, attrList);
                             line = reader.readLine();
                             while (line != null) {
-//                                Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
                                 Collection<BlackboardAttribute> bbattributes = processReadLine(line, columnNumberToProcess, fileName);
                                 if (!bbattributes.isEmpty()) {
                                     BlackboardArtifact bbartifact = createArtifactWithAttributes(artifactType.getTypeID(), iLeappImageFile, bbattributes);
@@ -337,34 +338,36 @@ public class ILeappAnalyserIngestModule implements DataSourceIngestModule {
                         }
                     }
                 } catch (TskCoreException ex) {
-                   // check this
-                   throw new IngestModuleException(String.format("Error getting Blackboard Artifact Type for %s", tsvFileArtifacts.get(fileName)), ex); 
+                    // check this
+                    throw new IngestModuleException(String.format("Error getting Blackboard Artifact Type for %s", tsvFileArtifacts.get(fileName)), ex);
                 }
             }
-            
+
         }
 
         if (!bbartifacts.isEmpty()) {
             postArtifacts(bbartifacts);
         }
-        
+
     }
-    
+
     /**
      * Process the line read and create the necessary attributes for it
-     * @param line a tsv line to process that was read
+     *
+     * @param line                  a tsv line to process that was read
      * @param columnNumberToProcess Which columns to process in the tsv line
-     * @return 
+     *
+     * @return
      */
     private Collection<BlackboardAttribute> processReadLine(String line, HashMap<Integer, String> columnNumberToProcess, String fileName) throws IngestModuleException {
         String[] columnValues = line.split("\\t");
-        
+
         Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
-        
-        for (Map.Entry<Integer, String> columnToProcess: columnNumberToProcess.entrySet()) {
+
+        for (Map.Entry<Integer, String> columnToProcess : columnNumberToProcess.entrySet()) {
             Integer columnNumber = columnToProcess.getKey();
             String attributeName = columnToProcess.getValue();
-            
+
             try {
                 BlackboardAttribute.Type attributeType = Case.getCurrentCase().getSleuthkitCase().getAttributeType(attributeName.toUpperCase());
                 if (attributeType == null) {
@@ -374,58 +377,62 @@ public class ILeappAnalyserIngestModule implements DataSourceIngestModule {
                 if (attrType.matches("STRING")) {
                     bbattributes.add(new BlackboardAttribute(attributeType, MODULE_NAME, columnValues[columnNumber]));
                 } else if (attrType.matches("INTEGER")) {
-                    bbattributes.add(new BlackboardAttribute(attributeType, MODULE_NAME, Integer.valueOf(columnValues[columnNumber])));                   
+                    bbattributes.add(new BlackboardAttribute(attributeType, MODULE_NAME, Integer.valueOf(columnValues[columnNumber])));
                 } else if (attrType.matches("LONG")) {
-                    bbattributes.add(new BlackboardAttribute(attributeType, MODULE_NAME, Long.valueOf(columnValues[columnNumber])));                   
+                    bbattributes.add(new BlackboardAttribute(attributeType, MODULE_NAME, Long.valueOf(columnValues[columnNumber])));
                 } else if (attrType.matches("DOUBLE")) {
-                    bbattributes.add(new BlackboardAttribute(attributeType, MODULE_NAME, Double.valueOf(columnValues[columnNumber])));                   
+                    bbattributes.add(new BlackboardAttribute(attributeType, MODULE_NAME, Double.valueOf(columnValues[columnNumber])));
                 } else if (attrType.matches("BYTE")) {
-                    bbattributes.add(new BlackboardAttribute(attributeType, MODULE_NAME, Byte.valueOf(columnValues[columnNumber])));                   
+                    bbattributes.add(new BlackboardAttribute(attributeType, MODULE_NAME, Byte.valueOf(columnValues[columnNumber])));
                 } else if (attrType.matches("DATETIME")) {
                     // format of data should be the same in all the data and the format is 2020-03-28 01:00:17
                     SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-d HH:mm:ss", US);
                     Long dateLong = Long.valueOf(0);
                     try {
                         Date newDate = dateFormat.parse(columnValues[columnNumber]);
-                        dateLong = newDate.getTime()/1000;
-                        bbattributes.add(new BlackboardAttribute(attributeType, MODULE_NAME, dateLong));                   
+                        dateLong = newDate.getTime() / 1000;
+                        bbattributes.add(new BlackboardAttribute(attributeType, MODULE_NAME, dateLong));
                     } catch (ParseException ex) {
                         // catching error and displaying date that could not be parsed
                         // we set the timestamp to 0 and continue on processing
                         logger.log(Level.WARNING, String.format("Failed to parse date/time %s for attribute.", columnValues[columnNumber]), ex); //NON-NLS
                     }
                 } else if (attrType.matches("JSON")) {
-                    
-                    bbattributes.add(new BlackboardAttribute(attributeType, MODULE_NAME, columnValues[columnNumber]));                   
+
+                    bbattributes.add(new BlackboardAttribute(attributeType, MODULE_NAME, columnValues[columnNumber]));
                 } else {
                     // Log this and continue on with processing
                     logger.log(Level.WARNING, String.format("Attribute Type %s not defined.", attrType)); //NON-NLS                   
                 }
-   
+
             } catch (TskCoreException ex) {
                 throw new IngestModuleException(String.format("Error getting Attribute type for Attribute Name %s", attributeName), ex); //NON-NLS
             }
-        }   
+        }
 
         if (tsvFileArtifactComments.containsKey(fileName)) {
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COMMENT, MODULE_NAME, tsvFileArtifactComments.get(fileName)));    
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COMMENT, MODULE_NAME, tsvFileArtifactComments.get(fileName)));
         }
-        
-        return bbattributes;    
+
+        return bbattributes;
 
     }
-    
+
     /**
-     * Process the first line of the tsv file which has the headings.  Match the headings to the columns in the XML
-     * mapping file so we know which columns to process.
-     * @param line a tsv heading line of the columns in the file
+     * Process the first line of the tsv file which has the headings. Match the
+     * headings to the columns in the XML mapping file so we know which columns
+     * to process.
+     *
+     * @param line     a tsv heading line of the columns in the file
      * @param attrList the list of headings we want to process
-     * @return the numbered column(s) and attribute(s) we want to use for the column(s)
+     *
+     * @return the numbered column(s) and attribute(s) we want to use for the
+     *         column(s)
      */
     private HashMap<Integer, String> findColumnsToProcess(String line, List<List<String>> attrList) {
         String[] columnNames = line.split("\\t");
         HashMap<Integer, String> columnsToProcess = new HashMap<>();
-        
+
         Integer columnPosition = 0;
         for (String columnName : columnNames) {
             // for some reason the first column of the line has unprintable characters so removing them
@@ -438,27 +445,26 @@ public class ILeappAnalyserIngestModule implements DataSourceIngestModule {
             }
             columnPosition++;
         }
-        
+
         return columnsToProcess;
     }
 
-        @NbBundle.Messages({
+    @NbBundle.Messages({
         "ILeappAnalyserIngestModule.cannot.load.artifact.xml=Cannor load xml artifact file.",
         "ILeappAnalyserIngestModule.cannotBuildXmlParser=Cannot buld an XML parser.",
         "ILeappAnalyserIngestModule_cannotParseXml=Cannot Parse XML file.",
         "ILeappAnalyserIngestModule.postartifacts_error=Error posting Blackboard Artifact",
         "ILeappAnalyserIngestModule.error.creating.new.artifacts=Error creating new artifacts."
-        })
+    })
 
     /**
      * Read the XML config file and load the mappings into maps
-     */    
+     */
     private void loadConfigFile() throws IngestModuleException {
         Document xmlinput;
         try {
             String path = PlatformUtil.getUserConfigDirectory() + File.separator + XMLFILE;
             File f = new File(path);
-            logger.log(Level.INFO, "Load successful"); //NON-NLS
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
             DocumentBuilder db = dbf.newDocumentBuilder();
             xmlinput = db.parse(f);
@@ -476,49 +482,49 @@ public class ILeappAnalyserIngestModule implements DataSourceIngestModule {
         for (int i = 0; i < nlist.getLength(); i++) {
             NamedNodeMap nnm = nlist.item(i).getAttributes();
             tsvFiles.put(nnm.getNamedItem("filename").getNodeValue(), nnm.getNamedItem("description").getNodeValue());
-        
+
         }
-        
+
         NodeList artifactNlist = xmlinput.getElementsByTagName("ArtifactName"); //NON-NLS
         for (int k = 0; k < artifactNlist.getLength(); k++) {
-           NamedNodeMap nnm = artifactNlist.item(k).getAttributes();
-           String artifactName = nnm.getNamedItem("artifactname").getNodeValue();
-           String comment = nnm.getNamedItem("comment").getNodeValue();
-           String parentName = artifactNlist.item(k).getParentNode().getAttributes().getNamedItem("filename").getNodeValue();
-           
-           tsvFileArtifacts.put(parentName, artifactName);
-           
-           if (!comment.toLowerCase().matches("null")) {
-               tsvFileArtifactComments.put(parentName, comment);
-           }
+            NamedNodeMap nnm = artifactNlist.item(k).getAttributes();
+            String artifactName = nnm.getNamedItem("artifactname").getNodeValue();
+            String comment = nnm.getNamedItem("comment").getNodeValue();
+            String parentName = artifactNlist.item(k).getParentNode().getAttributes().getNamedItem("filename").getNodeValue();
+
+            tsvFileArtifacts.put(parentName, artifactName);
+
+            if (!comment.toLowerCase().matches("null")) {
+                tsvFileArtifactComments.put(parentName, comment);
+            }
         }
-        
+
         NodeList attributeNlist = xmlinput.getElementsByTagName("AttributeName"); //NON-NLS
         for (int k = 0; k < attributeNlist.getLength(); k++) {
-           List<String> attributeList = new ArrayList<>();
-           NamedNodeMap nnm = attributeNlist.item(k).getAttributes();
-           String attributeName = nnm.getNamedItem("attributename").getNodeValue();
-           if (!attributeName.toLowerCase().matches("null")) {
-               String columnName = nnm.getNamedItem("columnName").getNodeValue();
-               String required = nnm.getNamedItem("required").getNodeValue();
-               String parentName = attributeNlist.item(k).getParentNode().getParentNode().getAttributes().getNamedItem("filename").getNodeValue();
-           
-               attributeList.add(attributeName.toLowerCase());
-               attributeList.add(columnName.toLowerCase());
-               attributeList.add(required.toLowerCase());
-           
-               if (tsvFileAttributes.containsKey(parentName)) {
+            List<String> attributeList = new ArrayList<>();
+            NamedNodeMap nnm = attributeNlist.item(k).getAttributes();
+            String attributeName = nnm.getNamedItem("attributename").getNodeValue();
+            if (!attributeName.toLowerCase().matches("null")) {
+                String columnName = nnm.getNamedItem("columnName").getNodeValue();
+                String required = nnm.getNamedItem("required").getNodeValue();
+                String parentName = attributeNlist.item(k).getParentNode().getParentNode().getAttributes().getNamedItem("filename").getNodeValue();
+
+                attributeList.add(attributeName.toLowerCase());
+                attributeList.add(columnName.toLowerCase());
+                attributeList.add(required.toLowerCase());
+
+                if (tsvFileAttributes.containsKey(parentName)) {
                     List<List<String>> attrList = tsvFileAttributes.get(parentName);
                     attrList.add(attributeList);
                     tsvFileAttributes.replace(parentName, attrList);
-               } else {
+                } else {
                     List<List<String>> attrList = new ArrayList<>();
                     attrList.add(attributeList);
                     tsvFileAttributes.put(parentName, attrList);
-               }
-           }
+                }
+            }
         }
-        
+
     }
 
     /**
@@ -526,11 +532,12 @@ public class ILeappAnalyserIngestModule implements DataSourceIngestModule {
      *
      * @param type         is a blackboard.artifact_type enum to determine which
      *                     type the artifact should be
-     * @param content      is the Content object that needs to have the
-     *                     artifact added for it
+     * @param content      is the Content object that needs to have the artifact
+     *                     added for it
      * @param bbattributes is the collection of blackboard attributes that need
      *                     to be added to the artifact after the artifact has
      *                     been created
+     *
      * @return The newly-created artifact, or null on error
      */
     protected BlackboardArtifact createArtifactWithAttributes(int type, AbstractFile abstractFile, Collection<BlackboardAttribute> bbattributes) {
@@ -546,25 +553,26 @@ public class ILeappAnalyserIngestModule implements DataSourceIngestModule {
 
     /**
      * Method to post a list of BlackboardArtifacts to the blackboard.
-     * 
-     * @param artifacts A list of artifacts.  IF list is empty or null, the function will return.
+     *
+     * @param artifacts A list of artifacts. IF list is empty or null, the
+     *                  function will return.
      */
     void postArtifacts(Collection<BlackboardArtifact> artifacts) {
-        if(artifacts == null || artifacts.isEmpty()) {
+        if (artifacts == null || artifacts.isEmpty()) {
             return;
         }
-        
-        try{
+
+        try {
             Case.getCurrentCase().getSleuthkitCase().getBlackboard().postArtifacts(artifacts, MODULE_NAME);
         } catch (Blackboard.BlackboardException ex) {
             logger.log(Level.SEVERE, Bundle.ILeappAnalyserIngestModule_postartifacts_error(), ex); //NON-NLS
         }
     }
-    
+
     /**
      * Extract the iLeapp config xml file to the user directory to process
-     * 
-     * @throws org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException 
+     *
+     * @throws org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException
      */
     void configExtractor() throws IngestModuleException {
         try {
@@ -576,6 +584,5 @@ public class ILeappAnalyserIngestModule implements DataSourceIngestModule {
         }
 
     }
-    
-    
+
 }
