@@ -35,12 +35,9 @@ import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourceCountsSummary
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourceDetailsSummary;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourceMimeTypeSummary;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.AbstractLoadableComponent;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer.DefaultCellModel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel.ColumnModel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.LoadableComponent;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.PieChartPanel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.PieChartPanel.PieChartItem;
@@ -53,13 +50,10 @@ import org.sleuthkit.datamodel.DataSource;
  */
 @Messages({
     "TypesPanel_artifactsTypesPieChart_title=Artifact Types",
-    "TypesPanel_filesByCategoryTable_title=Files by Category",
-    "TypesPanel_filesByCategoryTable_labelColumn_title=File Type",
-    "TypesPanel_filesByCategoryTable_countColumn_title=Count",
-    "TypesPanel_filesByCategoryTable_allocatedRow_title=Allocated",
-    "TypesPanel_filesByCategoryTable_unallocatedRow_title=Unallocated",
-    "TypesPanel_filesByCategoryTable_slackRow_title=Slack",
-    "TypesPanel_filesByCategoryTable_directoryRow_title=Directory",
+    "TypesPanel_filesByCategoryTable_allocatedRow_title=Allocated Files",
+    "TypesPanel_filesByCategoryTable_unallocatedRow_title=Unallocated Files",
+    "TypesPanel_filesByCategoryTable_slackRow_title=Slack Files",
+    "TypesPanel_filesByCategoryTable_directoryRow_title=Directories",
     "TypesPanel_fileMimeTypesChart_title=File Types",
     "TypesPanel_fileMimeTypesChart_audio_title=Audio",
     "TypesPanel_fileMimeTypesChart_documents_title=Documents",
@@ -132,27 +126,11 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
             .flatMap((cat) -> cat.getRight().getMediaTypes().stream())
             .collect(Collectors.toSet());
 
-    private final PieChartPanel fileMimeTypesChart = new PieChartPanel(Bundle.TypesPanel_fileMimeTypesChart_title());
-
-    private final JTablePanel<Pair<String, Long>> filesByCategoryTable
-            = JTablePanel.getJTablePanel(Arrays.asList(
-                    // title column
-                    new ColumnModel<>(
-                            Bundle.TypesPanel_filesByCategoryTable_labelColumn_title(),
-                            (pair) -> new DefaultCellModel(pair.getLeft()),
-                            250
-                    ),
-                    // count column
-                    new ColumnModel<>(
-                            Bundle.TypesPanel_filesByCategoryTable_countColumn_title(),
-                            (pair) -> new DefaultCellModel(Long.toString(pair.getRight() == null ? 0 : pair.getRight())),
-                            150
-                    )
-            ));
-
     private final LoadableLabel usageLabel = new LoadableLabel(Bundle.TypesPanel_usageLabel_title());
     private final LoadableLabel osLabel = new LoadableLabel(Bundle.TypesPanel_osLabel_title());
     private final LoadableLabel sizeLabel = new LoadableLabel(Bundle.TypesPanel_sizeLabel_title());
+    
+    private final PieChartPanel fileMimeTypesChart = new PieChartPanel(Bundle.TypesPanel_fileMimeTypesChart_title());
 
     private final LoadableLabel allocatedLabel = new LoadableLabel(Bundle.TypesPanel_filesByCategoryTable_allocatedRow_title());
     private final LoadableLabel unallocatedLabel = new LoadableLabel(Bundle.TypesPanel_filesByCategoryTable_unallocatedRow_title());
@@ -165,7 +143,6 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
             osLabel,
             sizeLabel,
             fileMimeTypesChart,
-            filesByCategoryTable,
             allocatedLabel,
             unallocatedLabel,
             slackLabel,
@@ -302,19 +279,17 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
         javax.swing.JPanel sizePanel = sizeLabel;
         javax.swing.JPanel fileMimeTypesPanel = fileMimeTypesChart;
         javax.swing.Box.Filler filler2 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 5), new java.awt.Dimension(0, 5), new java.awt.Dimension(32767, 5));
-        javax.swing.JLabel filesByCategoryLabel = new javax.swing.JLabel();
         javax.swing.JPanel allocatedPanel = allocatedLabel;
         javax.swing.JPanel unallocatedPanel = unallocatedLabel;
         javax.swing.JPanel slackPanel = slackLabel;
         javax.swing.JPanel directoriesPanel = directoriesLabel;
-        filler3 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 32767));
+        javax.swing.Box.Filler filler3 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 32767));
 
         setLayout(new java.awt.BorderLayout());
 
         contentParent.setBorder(javax.swing.BorderFactory.createEmptyBorder(10, 10, 10, 10));
         contentParent.setMaximumSize(new java.awt.Dimension(32787, 32787));
         contentParent.setMinimumSize(new java.awt.Dimension(400, 490));
-        contentParent.setPreferredSize(null);
         contentParent.setLayout(new javax.swing.BoxLayout(contentParent, javax.swing.BoxLayout.PAGE_AXIS));
 
         usagePanel.setAlignmentX(0.0F);
@@ -343,13 +318,6 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
         fileMimeTypesPanel.setPreferredSize(new java.awt.Dimension(400, 300));
         contentParent.add(fileMimeTypesPanel);
         contentParent.add(filler2);
-
-        filesByCategoryLabel.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(filesByCategoryLabel, org.openide.util.NbBundle.getMessage(TypesPanel.class, "TypesPanel.filesByCategoryLabel.text")); // NOI18N
-        filesByCategoryLabel.setMaximumSize(new java.awt.Dimension(120, 20));
-        filesByCategoryLabel.setMinimumSize(new java.awt.Dimension(120, 20));
-        filesByCategoryLabel.setPreferredSize(new java.awt.Dimension(120, 20));
-        contentParent.add(filesByCategoryLabel);
 
         allocatedPanel.setAlignmentX(0.0F);
         allocatedPanel.setMaximumSize(new java.awt.Dimension(32767, 16));
@@ -383,6 +351,5 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.Box.Filler filler3;
     // End of variables declaration//GEN-END:variables
 }
