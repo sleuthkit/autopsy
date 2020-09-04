@@ -45,7 +45,8 @@ public class DataSourceSummaryTabbedPane extends JTabbedPane {
     // A pair of the tab name and the corresponding BaseDataSourceSummaryTabs to be displayed.
     private final List<Pair<String, BaseDataSourceSummaryPanel>> tabs = new ArrayList<>(Arrays.asList(
             Pair.of(Bundle.DataSourceSummaryTabbedPane_countsTab_title(), new DataSourceSummaryCountsPanel()),
-            Pair.of(Bundle.DataSourceSummaryTabbedPane_detailsTab_title(), new DataSourceSummaryUserActivityPanel())));
+            Pair.of(Bundle.DataSourceSummaryTabbedPane_userActivityTab_title(), new DataSourceSummaryUserActivityPanel())
+    ));
 
     private final IngestJobInfoPanel ingestHistoryPanel = new IngestJobInfoPanel();
 
