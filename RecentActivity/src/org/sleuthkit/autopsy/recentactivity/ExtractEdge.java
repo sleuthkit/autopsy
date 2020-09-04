@@ -178,8 +178,8 @@ final class ExtractEdge extends Extract {
         try {
             this.processSpartanDbFile(esedumper, spartanFiles);
         } catch (IOException | TskCoreException ex) {
-            this.addErrorMessage(Bundle.ExtractEdge_process_errMsg_spartanFail());
             LOG.log(Level.SEVERE, "Error processing 'spartan.edb' files for Microsoft Edge", ex); // NON-NLS
+            this.addErrorMessage(Bundle.ExtractEdge_process_errMsg_spartanFail());
         }
     }
 

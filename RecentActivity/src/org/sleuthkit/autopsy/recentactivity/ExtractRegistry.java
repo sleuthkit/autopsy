@@ -443,7 +443,7 @@ class ExtractRegistry extends Extract {
             try {
                 scanErrorLogs(errFilePath);
             } catch (IOException ex) {
-                logger.log(Level.SEVERE, "Unable to run RegRipper", ex); //NON-NLS
+                logger.log(Level.SEVERE, String.format("Unable to run RegRipper on %s", regFilePath), ex); //NON-NLS
                 this.addErrorMessage(NbBundle.getMessage(this.getClass(), "ExtractRegistry.execRegRip.errMsg.failedAnalyzeRegFile", this.getName(), regFilePath));
             }
         }
@@ -482,7 +482,7 @@ class ExtractRegistry extends Extract {
             processBuilder.redirectError(new File(errFile));
             ExecUtil.execute(processBuilder, new DataSourceIngestModuleProcessTerminator(context, true));
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, String.format("Running RegRipper on %s encountered an error or was incomplete", hiveFilePath), ex); //NON-NLS
+            logger.log(Level.SEVERE, String.format("Error running RegRipper on %s", hiveFilePath), ex); //NON-NLS
             this.addErrorMessage(NbBundle.getMessage(this.getClass(), "ExtractRegistry.execRegRip.errMsg.failedAnalyzeRegFile", this.getName(), hiveFilePath));
         }
     }
