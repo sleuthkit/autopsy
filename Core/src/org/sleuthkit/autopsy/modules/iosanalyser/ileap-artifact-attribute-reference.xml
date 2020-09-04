@@ -1,4 +1,31 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!---
+This file contains the parameters for how to map iLeapp plugin output to attributes inside Autopsy for the Ileapp Analyser module.
+
+Each FileName node corresponds to a tab seperated values (tsv) file that is produced from iLeapp.
+
+A FileName will have an associated TSK artifact assigned to it.\
+
+Each TSK artifact may have multiple attributes that correspond to the columns of the output from the iLeapp program tsv file.
+
+
+FileName:
+    filename:           The iLeapp TSV file that you want to process. 
+    description:        A description of the tsv file name, this is defined in the iLeapp plugin for each tsv file.
+    
+ArtifactName:
+    artifactname:       The artifact that is to be created for the data in the tsv file.
+    comment:            This will be the data that will be added to the TSK_COMMENT attribute for each artifact.  If the artifact 
+                        does not need/require a comment then make the value null, a null comment will be ignored.
+                        
+AttributeName:
+    attributeName:      The TSK attribute that the data corresponds to in the TSV file.  If the data has no corresponding TSK attribute then
+                        make the value null, this will make sure the data in this column is ignored.
+    columnName:         This is the column name that is defined in the tsv file and what the attributeName corresponds to.
+    required:           whether the attribute is required or not (yes or no)
+
+
+-->
 <iLeap_Files_To_Process>
     <FileName filename="Safari Browser History.tsv" description="Safari Browser">
         <ArtifactName artifactname="TSK_WEB_HISTORY" comment="null">
