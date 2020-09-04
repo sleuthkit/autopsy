@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.ui;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import javax.swing.JTabbedPane;
@@ -33,7 +34,7 @@ import org.sleuthkit.datamodel.DataSource;
  */
 @Messages({
     "DataSourceSummaryTabbedPane_countsTab_title=Counts",
-    "DataSourceSummaryTabbedPane_detailsTab_title=Details",
+    "DataSourceSummaryTabbedPane_detailsTab_title=Container",
     "DataSourceSummaryTabbedPane_userActivityTab_title=User Activity",
     "DataSourceSummaryTabbedPane_ingestHistoryTab_title=Ingest History",
     "DataSourceSummaryTabbedPane_recentFileTab_title=Recent Files"
@@ -43,8 +44,7 @@ public class DataSourceSummaryTabbedPane extends JTabbedPane {
     private static final long serialVersionUID = 1L;
 
     // A pair of the tab name and the corresponding BaseDataSourceSummaryTabs to be displayed.
-    private final List<Pair<String, BaseDataSourceSummaryPanel>> tabs = Arrays.asList(
-            Pair.of(Bundle.DataSourceSummaryTabbedPane_detailsTab_title(), new DataSourceSummaryDetailsPanel()),
+    private final List<Pair<String, BaseDataSourceSummaryPanel>> tabs = new ArrayList<>(Arrays.asList(
             Pair.of(Bundle.DataSourceSummaryTabbedPane_countsTab_title(), new DataSourceSummaryCountsPanel()),
             Pair.of(Bundle.DataSourceSummaryTabbedPane_userActivityTab_title(), new DataSourceSummaryUserActivityPanel()),
             Pair.of(Bundle.DataSourceSummaryTabbedPane_recentFileTab_title(), new RecentFilesPanel())
@@ -58,6 +58,10 @@ public class DataSourceSummaryTabbedPane extends JTabbedPane {
      * Constructs a tabbed pane showing the summary of a data source.
      */
     public DataSourceSummaryTabbedPane() {
+        initComponent();
+    }
+
+    private void initComponent() {
         for (Pair<String, BaseDataSourceSummaryPanel> tab : tabs) {
             addTab(tab.getKey(), tab.getValue());
         }
@@ -65,6 +69,11 @@ public class DataSourceSummaryTabbedPane extends JTabbedPane {
         // IngestJobInfoPanel is not specifically a data source summary panel 
         // and is called separately for that reason.
         addTab(Bundle.DataSourceSummaryTabbedPane_ingestHistoryTab_title(), ingestHistoryPanel);
+
+        // The Container tab should be last.
+        Pair<String, BaseDataSourceSummaryPanel> tab = Pair.of(Bundle.DataSourceSummaryTabbedPane_detailsTab_title(), new DataSourceSummaryDetailsPanel());
+        addTab(tab.getKey(), tab.getValue());
+        tabs.add(tab);
     }
 
     /**
