@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.modules.iosanalyser;
+package org.sleuthkit.autopsy.modules.ileappanalyser;
 
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
@@ -25,7 +25,8 @@ import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
-import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;;
+import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;import org.sleuthkit.autopsy.modules.iosanalyser.Bundle;
+;
 
 /**
  * A factory that creates data source ingest modules that will run iLeapp against 
