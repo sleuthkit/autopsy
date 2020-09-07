@@ -64,18 +64,20 @@ final class ReportWizardIterator implements WizardDescriptor.Iterator<WizardDesc
         
         ReportingConfig config = null;
         try {
-            config = ReportingConfigLoader.loadConfig(reportingConfigurationName);
+            if(ReportingConfigLoader.configExists(reportingConfigurationName)) {
+                config = ReportingConfigLoader.loadConfig(reportingConfigurationName);
+            }
         } catch (ReportConfigException ex) {
             logger.log(Level.SEVERE, "Unable to load reporting configuration " + reportingConfigurationName + ". Using default settings", ex);
         }
         
         if (config != null) {
-            firstPanel = new ReportWizardPanel1(config.getModuleConfigs());
+            firstPanel = new ReportWizardPanel1(config.getModuleConfigs(), useCaseSpecificData);
             tableConfigPanel = new ReportWizardPanel2(useCaseSpecificData, config.getTableReportSettings());
             fileConfigPanel = new ReportWizardFileOptionsPanel(config.getFileReportSettings());
             portableCaseConfigPanel = new ReportWizardPortableCaseOptionsPanel(config.getModuleConfigs(), useCaseSpecificData);
         } else {
-            firstPanel = new ReportWizardPanel1(null);
+            firstPanel = new ReportWizardPanel1(null, useCaseSpecificData);
             tableConfigPanel = new ReportWizardPanel2(useCaseSpecificData, null);
             fileConfigPanel = new ReportWizardFileOptionsPanel(null);
             portableCaseConfigPanel = new ReportWizardPortableCaseOptionsPanel(null, useCaseSpecificData);

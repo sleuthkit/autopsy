@@ -126,6 +126,24 @@ public class FileManager implements Closeable {
         }
         return caseDb.findAllFilesWhere("data_source_obj_id = " + dataSource.getId() + " AND " + createFileTypeInCondition(mimeTypes));
     }
+    
+    /**
+     * Find all files with the exact given name and parentId.
+     * 
+     * @param parentId Id of the parent folder to search.
+     * @param name Exact file name to match.
+     * 
+     * @return A list of matching files.
+     * 
+     * @throws TskCoreException 
+     */
+    public synchronized List<AbstractFile> findFilesExactName(long parentId, String name) throws TskCoreException{
+        if (null == caseDb) {
+            throw new TskCoreException("File manager has been closed");
+        }
+        String whereClause = "name = '%s'";
+        return caseDb.findAllFilesInFolderWhere(parentId, String.format(whereClause, name));
+    }
 
     /**
      * Converts a list of MIME types into an SQL "mime_type IN" condition.

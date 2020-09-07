@@ -1044,7 +1044,8 @@ public class Server {
                 // select number of shards to use
                 numShardsToUse = getNumShardsToUse();
             }
-        } catch (SolrServerException | IOException ex) {
+        } catch (Exception ex) {
+            // intentional "catch all" as Solr is known to throw all kinds of Runtime exceptions
             throw new KeywordSearchModuleException(NbBundle.getMessage(Server.class, "Server.connect.exception.msg", ex.getLocalizedMessage()), ex);
         }
 
@@ -1448,7 +1449,8 @@ public class Server {
             }
             try {
                 return currentCollection.queryNumIndexedFiles();
-            } catch (SolrServerException | RemoteSolrException | IOException ex) {
+            } catch (Exception ex) {
+                // intentional "catch all" as Solr is known to throw all kinds of Runtime exceptions
                 throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.queryNumIdxFiles.exception.msg"), ex);
             }
         } finally {
@@ -1473,7 +1475,8 @@ public class Server {
             }
             try {
                 return currentCollection.queryNumIndexedChunks();
-            } catch (SolrServerException | IOException ex) {
+            } catch (Exception ex) {
+                // intentional "catch all" as Solr is known to throw all kinds of Runtime exceptions
                 throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.queryNumIdxChunks.exception.msg"), ex);
             }
         } finally {
@@ -1498,7 +1501,8 @@ public class Server {
             }
             try {
                 return currentCollection.queryNumIndexedDocuments();
-            } catch (SolrServerException | IOException ex) {
+            } catch (Exception ex) {
+                // intentional "catch all" as Solr is known to throw all kinds of Runtime exceptions
                 throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.queryNumIdxDocs.exception.msg"), ex);
             }
         } finally {
@@ -1524,7 +1528,8 @@ public class Server {
             }
             try {
                 return currentCollection.queryIsIndexed(contentID);
-            } catch (SolrServerException | IOException ex) {
+            } catch (Exception ex) {
+                // intentional "catch all" as Solr is known to throw all kinds of Runtime exceptions
                 throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.queryIsIdxd.exception.msg"), ex);
             }
 
@@ -1552,7 +1557,8 @@ public class Server {
             }
             try {
                 return currentCollection.queryNumFileChunks(fileID);
-            } catch (SolrServerException | IOException ex) {
+            } catch (Exception ex) {
+                // intentional "catch all" as Solr is known to throw all kinds of Runtime exceptions
                 throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.queryNumFileChunks.exception.msg"), ex);
             }
         } finally {
@@ -1578,7 +1584,8 @@ public class Server {
             }
             try {
                 return currentCollection.query(sq);
-            } catch (SolrServerException ex) {
+            } catch (Exception ex) {
+                // intentional "catch all" as Solr is known to throw all kinds of Runtime exceptions
                 logger.log(Level.SEVERE, "Solr query failed: " + sq.getQuery(), ex); //NON-NLS
                 throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.query.exception.msg", sq.getQuery()), ex);
             }
@@ -1606,7 +1613,8 @@ public class Server {
             }
             try {
                 return currentCollection.query(sq, method);
-            } catch (SolrServerException | IOException ex) {
+            } catch (Exception ex) {
+                // intentional "catch all" as Solr is known to throw all kinds of Runtime exceptions
                 logger.log(Level.SEVERE, "Solr query failed: " + sq.getQuery(), ex); //NON-NLS
                 throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.query2.exception.msg", sq.getQuery()), ex);
             }
@@ -1633,7 +1641,8 @@ public class Server {
             }
             try {
                 return currentCollection.queryTerms(sq);
-            } catch (SolrServerException | IOException ex) {
+            } catch (Exception ex) {
+                // intentional "catch all" as Solr is known to throw all kinds of Runtime exceptions
                 logger.log(Level.SEVERE, "Solr terms query failed: " + sq.getQuery(), ex); //NON-NLS
                 throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.queryTerms.exception.msg", sq.getQuery()), ex);
             }
@@ -1988,7 +1997,8 @@ public class Server {
         private NamedList<Object> request(SolrRequest request) throws SolrServerException, RemoteSolrException {
             try {
                 return queryClient.request(request);
-            } catch (IOException e) {
+            } catch (Exception e) {
+                // intentional "catch all" as Solr is known to throw all kinds of Runtime exceptions
                 logger.log(Level.WARNING, "Could not issue Solr request. ", e); //NON-NLS
                 throw new SolrServerException(
                         NbBundle.getMessage(this.getClass(), "Server.request.exception.exception.msg"), e);
@@ -2024,7 +2034,8 @@ public class Server {
             try {
                 //commit and block
                 indexingClient.commit(true, true);
-            } catch (IOException e) {
+            } catch (Exception e) {
+                // intentional "catch all" as Solr is known to throw all kinds of Runtime exceptions
                 logger.log(Level.WARNING, "Could not commit index. ", e); //NON-NLS
                 throw new SolrServerException(NbBundle.getMessage(this.getClass(), "Server.commit.exception.msg"), e);
             }
@@ -2107,20 +2118,14 @@ public class Server {
                 // if we are here, it means all re-try attempts failed
                 logger.log(Level.SEVERE, "Unable to send document batch to Solr. All re-try attempts failed!"); //NON-NLS
                 throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.addDocBatch.exception.msg")); //NON-NLS
+            } catch (Exception ex) {
+                // Solr throws a lot of unexpected exception types
+                logger.log(Level.SEVERE, "Could not add batched documents to index", ex); //NON-NLS
+                throw new KeywordSearchModuleException(
+                        NbBundle.getMessage(this.getClass(), "Could not add batched documents to index"), ex); //NON-NLS
             } finally {
                 docBuffer.clear();
             }
-        
-
-            /* ELTODO try {
-                indexingClient.add(docBuffer);
-            } catch (SolrServerException | RemoteSolrException | IOException ex) {
-                logger.log(Level.SEVERE, "Could not add buffered documents to index", ex); //NON-NLS
-                throw new KeywordSearchModuleException(
-                        NbBundle.getMessage(this.getClass(), "Server.addDocBatch.exception.msg"), ex); //NON-NLS
-            } finally {
-                docBuffer.clear();
-            }*/
         }
 
         /**
@@ -2160,7 +2165,8 @@ public class Server {
                         }
                     }
                 }
-            } catch (SolrServerException | IOException ex) {
+            } catch (Exception ex) {
+                // intentional "catch all" as Solr is known to throw all kinds of Runtime exceptions
                 logger.log(Level.SEVERE, "Error getting content from Solr. Solr document id " + contentID + ", chunk id " + chunkID + ", query: " + filterQuery, ex); //NON-NLS
                 return null;
             }
@@ -2170,6 +2176,7 @@ public class Server {
 
         synchronized void close() throws KeywordSearchModuleException {
             try {
+
                 // stop the periodic batch update task. If the task is already running, 
                 // allow it to finish.
                 ThreadUtils.shutDownTaskExecutor(periodicTasksExecutor);
@@ -2180,12 +2187,10 @@ public class Server {
                 }
                 
                 CoreAdminRequest.unloadCore(this.name, localSolrServer);
-            } catch (SolrServerException | RemoteSolrException ex) {
+            } catch (Exception ex) {
+                // intentional "catch all" as Solr is known to throw all kinds of Runtime exceptions
                 throw new KeywordSearchModuleException(
                         NbBundle.getMessage(this.getClass(), "Server.close.exception.msg"), ex);
-            } catch (IOException ex) {
-                throw new KeywordSearchModuleException(
-                        NbBundle.getMessage(this.getClass(), "Server.close.exception.msg2"), ex);
             } finally {
                 try {
                     queryClient.close();
