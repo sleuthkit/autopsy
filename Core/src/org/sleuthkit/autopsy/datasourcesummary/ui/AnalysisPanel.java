@@ -155,9 +155,10 @@ public class AnalysisPanel extends BaseDataSourceSummaryPanel {
         mainContentPanel.add(hashsetHitsLabel);
         mainContentPanel.add(filler1);
 
+        hashSetHitsPanel.setAlignmentX(0.0F);
         hashSetHitsPanel.setMaximumSize(new java.awt.Dimension(32767, 106));
         hashSetHitsPanel.setMinimumSize(new java.awt.Dimension(10, 106));
-        hashSetHitsPanel.setPreferredSize(new java.awt.Dimension(32767, 106));
+        hashSetHitsPanel.setPreferredSize(new java.awt.Dimension(10, 106));
         mainContentPanel.add(hashSetHitsPanel);
         mainContentPanel.add(filler2);
 
@@ -165,9 +166,10 @@ public class AnalysisPanel extends BaseDataSourceSummaryPanel {
         mainContentPanel.add(keywordHitsLabel);
         mainContentPanel.add(filler4);
 
+        keywordHitsPanel.setAlignmentX(0.0F);
         keywordHitsPanel.setMaximumSize(new java.awt.Dimension(32767, 106));
         keywordHitsPanel.setMinimumSize(new java.awt.Dimension(10, 106));
-        keywordHitsPanel.setPreferredSize(new java.awt.Dimension(32767, 106));
+        keywordHitsPanel.setPreferredSize(new java.awt.Dimension(10, 106));
         mainContentPanel.add(keywordHitsPanel);
         mainContentPanel.add(filler5);
 
@@ -175,9 +177,10 @@ public class AnalysisPanel extends BaseDataSourceSummaryPanel {
         mainContentPanel.add(interestingItemLabel);
         mainContentPanel.add(filler6);
 
+        interestingItemPanel.setAlignmentX(0.0F);
         interestingItemPanel.setMaximumSize(new java.awt.Dimension(32767, 106));
         interestingItemPanel.setMinimumSize(new java.awt.Dimension(10, 106));
-        interestingItemPanel.setPreferredSize(new java.awt.Dimension(32767, 106));
+        interestingItemPanel.setPreferredSize(new java.awt.Dimension(10, 106));
         mainContentPanel.add(interestingItemPanel);
         mainContentPanel.add(filler3);
 

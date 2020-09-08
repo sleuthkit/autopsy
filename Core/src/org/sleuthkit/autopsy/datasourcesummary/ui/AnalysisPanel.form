@@ -88,6 +88,7 @@
             </Component>
             <Container class="javax.swing.JPanel" name="hashSetHitsPanel">
               <Properties>
+                <Property name="alignmentX" type="float" value="0.0"/>
                 <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
                   <Dimension value="[32767, 106]"/>
                 </Property>
@@ -95,7 +96,7 @@
                   <Dimension value="[10, 106]"/>
                 </Property>
                 <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-                  <Dimension value="[32767, 106]"/>
+                  <Dimension value="[10, 106]"/>
                 </Property>
               </Properties>
               <AuxValues>
@@ -155,6 +156,7 @@
             </Component>
             <Container class="javax.swing.JPanel" name="keywordHitsPanel">
               <Properties>
+                <Property name="alignmentX" type="float" value="0.0"/>
                 <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
                   <Dimension value="[32767, 106]"/>
                 </Property>
@@ -162,7 +164,7 @@
                   <Dimension value="[10, 106]"/>
                 </Property>
                 <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-                  <Dimension value="[32767, 106]"/>
+                  <Dimension value="[10, 106]"/>
                 </Property>
               </Properties>
               <AuxValues>
@@ -222,6 +224,7 @@
             </Component>
             <Container class="javax.swing.JPanel" name="interestingItemPanel">
               <Properties>
+                <Property name="alignmentX" type="float" value="0.0"/>
                 <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
                   <Dimension value="[32767, 106]"/>
                 </Property>
@@ -229,7 +232,7 @@
                   <Dimension value="[10, 106]"/>
                 </Property>
                 <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-                  <Dimension value="[32767, 106]"/>
+                  <Dimension value="[10, 106]"/>
                 </Property>
               </Properties>
               <AuxValues>
