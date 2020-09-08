@@ -18,11 +18,11 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.ui;
 
-import java.util.ArrayList;
+import java.awt.Component;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Consumer;
 import javax.swing.JTabbedPane;
-import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.IngestJobInfoPanel;
 import org.sleuthkit.datamodel.DataSource;
@@ -41,17 +41,76 @@ import org.sleuthkit.datamodel.DataSource;
 })
 public class DataSourceSummaryTabbedPane extends JTabbedPane {
 
+    /**
+     * Records of tab information (i.e. title, component, function to call on
+     * new data source).
+     */
+    private static class DataSourceTab {
+
+        private final String tabTitle;
+        private final Component component;
+        private final Consumer<DataSource> onDataSource;
+
+        /**
+         * Main constructor.
+         *
+         * @param tabTitle     The title of the tab.
+         * @param component    The component to be displayed.
+         * @param onDataSource The function to be called on a new data source.
+         */
+        DataSourceTab(String tabTitle, Component component, Consumer<DataSource> onDataSource) {
+            this.tabTitle = tabTitle;
+            this.component = component;
+            this.onDataSource = onDataSource;
+        }
+
+        /**
+         * Main constructor.
+         *
+         * @param tabTitle  The title of the tab.
+         * @param component The component to be displayed.
+         *                  BaseDataSourceSummaryPanel.setDataSource method is
+         *                  used on new data source.
+         */
+        DataSourceTab(String tabTitle, BaseDataSourceSummaryPanel panel) {
+            this.tabTitle = tabTitle;
+            this.component = panel;
+            this.onDataSource = panel::setDataSource;
+        }
+
+        /**
+         * @return The title for the tab.
+         */
+        String getTabTitle() {
+            return tabTitle;
+        }
+
+        /**
+         * @return The component to display in the tab.
+         */
+        Component getComponent() {
+            return component;
+        }
+
+        /**
+         * @return The function to be called on new data source.
+         */
+        Consumer<DataSource> getOnDataSource() {
+            return onDataSource;
+        }
+    }
+
     private static final long serialVersionUID = 1L;
 
-    // A pair of the tab name and the corresponding BaseDataSourceSummaryTabs to be displayed.
-
-    private final List<Pair<String, BaseDataSourceSummaryPanel>> tabs = new ArrayList<>(Arrays.asList(
-            Pair.of(Bundle.DataSourceSummaryTabbedPane_typesTab_title(), new TypesPanel()),
-            Pair.of(Bundle.DataSourceSummaryTabbedPane_userActivityTab_title(), new DataSourceSummaryUserActivityPanel()),
-            Pair.of(Bundle.DataSourceSummaryTabbedPane_recentFileTab_title(), new RecentFilesPanel())
-    ));
-
     private final IngestJobInfoPanel ingestHistoryPanel = new IngestJobInfoPanel();
+
+    private final List<DataSourceTab> tabs = Arrays.asList(
+            new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_typesTab_title(), new TypesPanel()),
+            new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_userActivityTab_title(), new DataSourceSummaryUserActivityPanel()),
+            new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_recentFileTab_title(), new RecentFilesPanel()),
+            new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_ingestHistoryTab_title(), ingestHistoryPanel, ingestHistoryPanel::setDataSource),
+            new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_detailsTab_title(), new DataSourceSummaryDetailsPanel())
+    );
 
     private DataSource dataSource = null;
 
@@ -63,18 +122,9 @@ public class DataSourceSummaryTabbedPane extends JTabbedPane {
     }
 
     private void initComponent() {
-        for (Pair<String, BaseDataSourceSummaryPanel> tab : tabs) {
-            addTab(tab.getKey(), tab.getValue());
+        for (DataSourceTab tab : tabs) {
+            addTab(tab.getTabTitle(), tab.getComponent());
         }
-
-        // IngestJobInfoPanel is not specifically a data source summary panel 
-        // and is called separately for that reason.
-        addTab(Bundle.DataSourceSummaryTabbedPane_ingestHistoryTab_title(), ingestHistoryPanel);
-
-        // The Container tab should be last.
-        Pair<String, BaseDataSourceSummaryPanel> tab = Pair.of(Bundle.DataSourceSummaryTabbedPane_detailsTab_title(), new DataSourceSummaryDetailsPanel());
-        addTab(tab.getKey(), tab.getValue());
-        tabs.add(tab);
     }
 
     /**
@@ -94,12 +144,8 @@ public class DataSourceSummaryTabbedPane extends JTabbedPane {
     public void setDataSource(DataSource dataSource) {
         this.dataSource = dataSource;
 
-        for (Pair<String, BaseDataSourceSummaryPanel> tab : tabs) {
-            tab.getValue().setDataSource(dataSource);
+        for (DataSourceTab tab : tabs) {
+            tab.getOnDataSource().accept(dataSource);
         }
-
-        // IngestJobInfoPanel is not specifically a data source summary panel 
-        // and is called separately for that reason.
-        ingestHistoryPanel.setDataSource(dataSource);
     }
 }
