@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.ui;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import javax.swing.JTabbedPane;
@@ -32,21 +33,35 @@ import org.sleuthkit.datamodel.DataSource;
  * IngestJobInfoPanel.
  */
 @Messages({
+<<<<<<< HEAD
     "DataSourceSummaryTabbedPane_typesTab_title=Types",
     "DataSourceSummaryTabbedPane_detailsTab_title=Details",
+=======
+    "DataSourceSummaryTabbedPane_countsTab_title=Counts",
+    "DataSourceSummaryTabbedPane_detailsTab_title=Container",
+>>>>>>> fa0ae98de088d3573878927c94690af0154e5b00
     "DataSourceSummaryTabbedPane_userActivityTab_title=User Activity",
-    "DataSourceSummaryTabbedPane_ingestHistoryTab_title=Ingest History"
+    "DataSourceSummaryTabbedPane_ingestHistoryTab_title=Ingest History",
+    "DataSourceSummaryTabbedPane_recentFileTab_title=Recent Files"
 })
 public class DataSourceSummaryTabbedPane extends JTabbedPane {
 
     private static final long serialVersionUID = 1L;
 
     // A pair of the tab name and the corresponding BaseDataSourceSummaryTabs to be displayed.
+<<<<<<< HEAD
     private final List<Pair<String, BaseDataSourceSummaryPanel>> tabs = Arrays.asList(
             Pair.of(Bundle.DataSourceSummaryTabbedPane_detailsTab_title(), new DataSourceSummaryDetailsPanel()),
             Pair.of(Bundle.DataSourceSummaryTabbedPane_typesTab_title(), new TypesPanel()),
             Pair.of(Bundle.DataSourceSummaryTabbedPane_detailsTab_title(), new DataSourceSummaryUserActivityPanel())
     );
+=======
+    private final List<Pair<String, BaseDataSourceSummaryPanel>> tabs = new ArrayList<>(Arrays.asList(
+            Pair.of(Bundle.DataSourceSummaryTabbedPane_countsTab_title(), new DataSourceSummaryCountsPanel()),
+            Pair.of(Bundle.DataSourceSummaryTabbedPane_userActivityTab_title(), new DataSourceSummaryUserActivityPanel()),
+            Pair.of(Bundle.DataSourceSummaryTabbedPane_recentFileTab_title(), new RecentFilesPanel())
+    ));
+>>>>>>> fa0ae98de088d3573878927c94690af0154e5b00
 
     private final IngestJobInfoPanel ingestHistoryPanel = new IngestJobInfoPanel();
 
@@ -56,6 +71,10 @@ public class DataSourceSummaryTabbedPane extends JTabbedPane {
      * Constructs a tabbed pane showing the summary of a data source.
      */
     public DataSourceSummaryTabbedPane() {
+        initComponent();
+    }
+
+    private void initComponent() {
         for (Pair<String, BaseDataSourceSummaryPanel> tab : tabs) {
             addTab(tab.getKey(), tab.getValue());
         }
@@ -63,6 +82,11 @@ public class DataSourceSummaryTabbedPane extends JTabbedPane {
         // IngestJobInfoPanel is not specifically a data source summary panel 
         // and is called separately for that reason.
         addTab(Bundle.DataSourceSummaryTabbedPane_ingestHistoryTab_title(), ingestHistoryPanel);
+
+        // The Container tab should be last.
+        Pair<String, BaseDataSourceSummaryPanel> tab = Pair.of(Bundle.DataSourceSummaryTabbedPane_detailsTab_title(), new DataSourceSummaryDetailsPanel());
+        addTab(tab.getKey(), tab.getValue());
+        tabs.add(tab);
     }
 
     /**

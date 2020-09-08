@@ -184,7 +184,7 @@ public class JTablePanel<T> extends AbstractLoadableComponent<List<T>> {
                 .map((colModel) -> colModel.getCellRenderer())
                 .collect(Collectors.toList());
 
-        return new DefaultListTableModel<T>(columnRenderers);
+        return new DefaultListTableModel<>(columnRenderers);
     }
 
     /**
@@ -201,26 +201,62 @@ public class JTablePanel<T> extends AbstractLoadableComponent<List<T>> {
         return resultTable.setColumnModel(getTableColumnModel(columns));
     }
 
+<<<<<<< HEAD
     private final JScrollPane tableScrollPane;
     private final Overlay overlayLayer;
     private final ListTableModel<T> tableModel;
     private final JTable table;
+=======
+    /**
+     * @return The default error message.
+     */
+    public static String getDefaultErrorMessage() {
+        return DEFAULT_ERROR_MESSAGE;
+    }
 
     /**
-     * Main constructor.
+     * @return The default message for no results.
+     */
+    public static String getDefaultNoResultsMessage() {
+        return DEFAULT_NO_RESULTS_MESSAGE;
+    }
+
+    private JScrollPane tableScrollPane;
+    private Overlay overlayLayer;
+    private ListTableModel<T> tableModel;
+    private JTable table;
+>>>>>>> fa0ae98de088d3573878927c94690af0154e5b00
+
+    /**
+     * Panel constructor.
      *
      * @param tableModel The model to use for the table.
      */
     public JTablePanel(ListTableModel<T> tableModel) {
-        this.tableModel = tableModel;
-        this.table = new JTable(tableModel);
-        this.table.getTableHeader().setReorderingAllowed(false);
+        this();
+        setModel(tableModel);
+    }
 
-        this.overlayLayer = new Overlay();
-        this.tableScrollPane = new JScrollPane(table);
-        JLayer<JComponent> dualLayer = new JLayer<JComponent>(tableScrollPane, overlayLayer);
-        setLayout(new BorderLayout());
-        add(dualLayer, BorderLayout.CENTER);
+    /**
+     * Default constructor.
+     */
+    public JTablePanel() {
+        initComponents();
+    }
+
+    /**
+     * Set the table model. This method must be called prior to calling 
+     * setResultList.
+     *
+     * @param tableModel
+     */
+    public final void setModel(ListTableModel<T> tableModel) {
+        if (tableModel == null) {
+            throw new IllegalArgumentException("Null table model passed to setModel");
+        }
+
+        this.tableModel = tableModel;
+        table.setModel(tableModel);
     }
 
     /**
@@ -242,8 +278,23 @@ public class JTablePanel<T> extends AbstractLoadableComponent<List<T>> {
         return this;
     }
 
+<<<<<<< HEAD
     @Override
     protected void setResults(List<T> data) {
+=======
+    /**
+     * Sets the data to be shown in the JTable. Repaint is not handled in this
+     * method and should be handled separately.
+     *
+     * @param data The list of data objects to be shown.
+     */
+    private void setResultList(List<T> data) {
+        
+        if(tableModel == null) {
+            throw new IllegalStateException("ListTableModel has not be initialized");
+        }
+        
+>>>>>>> fa0ae98de088d3573878927c94690af0154e5b00
         // set the list of data to be shown as either the data or an empty list 
         // on null.
         List<T> dataToSet = (data == null) ? Collections.emptyList() : data;
@@ -260,4 +311,105 @@ public class JTablePanel<T> extends AbstractLoadableComponent<List<T>> {
         this.overlayLayer.setVisible(visible);
         this.overlayLayer.setMessage(message);
     }
+<<<<<<< HEAD
+=======
+
+    /**
+     * Clears the results from the underlying JTable and shows the provided
+     * message.
+     *
+     * @param message The message to be shown.
+     */
+    public synchronized void showMessage(String message) {
+        setResultList(null);
+        setOverlay(true, message);
+        repaint();
+    }
+
+    /**
+     * Shows a default loading message on the table. This will clear any results
+     * in the table.
+     */
+    public void showDefaultLoadingMessage() {
+        showMessage(DEFAULT_LOADING_MESSAGE);
+    }
+
+    /**
+     * Shows the list as rows of data in the table. If overlay message will be
+     * cleared if present.
+     *
+     * @param data The data to be shown where each item represents a row of
+     *             data.
+     */
+    public synchronized void showResults(List<T> data) {
+        setOverlay(false, null);
+        setResultList(data);
+        repaint();
+    }
+
+    /**
+     * Shows the data in a DataFetchResult. If there was an error during the
+     * operation, the errorMessage will be displayed. If the operation completed
+     * successfully and no data is present, noResultsMessage will be shown.
+     * Otherwise, the data will be shown as rows in the table.
+     *
+     * @param result           The DataFetchResult.
+     * @param errorMessage     The error message to be shown in the event of an
+     *                         error.
+     * @param noResultsMessage The message to be shown if there are no results
+     *                         but the operation completed successfully.
+     */
+    public void showDataFetchResult(DataFetchResult<List<T>> result, String errorMessage, String noResultsMessage) {
+        if (result == null) {
+            logger.log(Level.SEVERE, "Null data processor result received.");
+            return;
+        }
+
+        switch (result.getResultType()) {
+            case SUCCESS:
+                if (result.getData() == null || result.getData().isEmpty()) {
+                    showMessage(noResultsMessage);
+                } else {
+                    showResults(result.getData());
+                }
+                break;
+            case ERROR:
+                // if there is an error, log accordingly, set result list to 
+                // empty and display error message
+                logger.log(Level.WARNING, "An exception was caused while results were loaded.", result.getException());
+                showMessage(errorMessage);
+                break;
+            default:
+                // an unknown loading state was specified.  log accordingly.
+                logger.log(Level.SEVERE, "No known loading state was found in result.");
+                break;
+        }
+    }
+
+    /**
+     * Shows the data in a DataFetchResult. If there was an error during the
+     * operation, the DEFAULT_ERROR_MESSAGE will be displayed. If the operation
+     * completed successfully and no data is present, DEFAULT_NO_RESULTS_MESSAGE
+     * will be shown. Otherwise, the data will be shown as rows in the table.
+     *
+     * @param result The DataFetchResult.
+     */
+    public void showDataFetchResult(DataFetchResult<List<T>> result) {
+        showDataFetchResult(result, DEFAULT_ERROR_MESSAGE, DEFAULT_NO_RESULTS_MESSAGE);
+    }
+    
+    /**
+     * Initialize the gui components.
+     */
+    private void initComponents() {
+        table = new JTable();
+        table.getTableHeader().setReorderingAllowed(false);
+
+        overlayLayer = new Overlay();
+        tableScrollPane = new JScrollPane(table);
+        JLayer<JComponent> dualLayer = new JLayer<>(tableScrollPane, overlayLayer);
+        setLayout(new BorderLayout());
+        add(dualLayer, BorderLayout.CENTER);
+    }
+>>>>>>> fa0ae98de088d3573878927c94690af0154e5b00
 }

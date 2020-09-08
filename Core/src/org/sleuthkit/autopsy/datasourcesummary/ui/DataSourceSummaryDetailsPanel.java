@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.datasourcesummary.ui;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.table.DefaultTableModel;
-import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourceDetailsSummary;
@@ -69,9 +68,6 @@ class DataSourceSummaryDetailsPanel extends BaseDataSourceSummaryPanel {
         clearTableValues();
         if (selectedDataSource != null) {
             unallocatedSizeValue.setText(SizeRepresentationUtil.getSizeString(unallocatedFilesSize));
-            operatingSystemValue.setText(StringUtils.isBlank(osDetails) ? "" : osDetails);
-            dataSourceUsageValue.setText(StringUtils.isBlank(usage) ? "" : usage);
-
             timeZoneValue.setText(selectedDataSource.getTimeZone());
             displayNameValue.setText(selectedDataSource.getName());
             originalNameValue.setText(selectedDataSource.getName());
@@ -150,10 +146,6 @@ class DataSourceSummaryDetailsPanel extends BaseDataSourceSummaryPanel {
         originalNameLabel.setVisible(!originalNameValue.getText().isEmpty());
         deviceIdValue.setVisible(!deviceIdValue.getText().isEmpty());
         deviceIdLabel.setVisible(!deviceIdValue.getText().isEmpty());
-        dataSourceUsageValue.setVisible(!dataSourceUsageValue.getText().isEmpty());
-        dataSourceUsageLabel.setVisible(!dataSourceUsageValue.getText().isEmpty());
-        operatingSystemValue.setVisible(!operatingSystemValue.getText().isEmpty());
-        operatingSystemLabel.setVisible(!operatingSystemValue.getText().isEmpty());
         timeZoneValue.setVisible(!timeZoneValue.getText().isEmpty());
         timeZoneLabel.setVisible(!timeZoneValue.getText().isEmpty());
         acquisitionDetailsTextArea.setVisible(!acquisitionDetailsTextArea.getText().isEmpty());
@@ -185,8 +177,6 @@ class DataSourceSummaryDetailsPanel extends BaseDataSourceSummaryPanel {
         displayNameValue.setText("");
         originalNameValue.setText("");
         deviceIdValue.setText("");
-        dataSourceUsageValue.setText("");
-        operatingSystemValue.setText("");
         timeZoneValue.setText("");
         acquisitionDetailsTextArea.setText("");
         imageTypeValue.setText("");
@@ -211,18 +201,15 @@ class DataSourceSummaryDetailsPanel extends BaseDataSourceSummaryPanel {
 
         jScrollPane1 = new javax.swing.JScrollPane();
         jPanel1 = new javax.swing.JPanel();
-        operatingSystemLabel = new javax.swing.JLabel();
         displayNameLabel = new javax.swing.JLabel();
         originalNameLabel = new javax.swing.JLabel();
         sha1HashValue = new javax.swing.JLabel();
-        operatingSystemValue = new javax.swing.JLabel();
         displayNameValue = new javax.swing.JLabel();
         sha256HashValue = new javax.swing.JLabel();
         originalNameValue = new javax.swing.JLabel();
         deviceIdValue = new javax.swing.JLabel();
         filePathsScrollPane = new javax.swing.JScrollPane();
         filePathsTable = new javax.swing.JTable();
-        dataSourceUsageValue = new javax.swing.JLabel();
         timeZoneValue = new javax.swing.JLabel();
         imageTypeValue = new javax.swing.JLabel();
         md5HashValue = new javax.swing.JLabel();
@@ -237,7 +224,6 @@ class DataSourceSummaryDetailsPanel extends BaseDataSourceSummaryPanel {
         imageTypeLabel = new javax.swing.JLabel();
         acquisitionDetailsLabel = new javax.swing.JLabel();
         timeZoneLabel = new javax.swing.JLabel();
-        dataSourceUsageLabel = new javax.swing.JLabel();
         deviceIdLabel = new javax.swing.JLabel();
         acquisitionDetailsScrollPane = new javax.swing.JScrollPane();
         acquisitionDetailsTextArea = new javax.swing.JTextArea();
@@ -247,15 +233,6 @@ class DataSourceSummaryDetailsPanel extends BaseDataSourceSummaryPanel {
         unallocatedSizeValue = new javax.swing.JLabel();
 
         jPanel1.setLayout(new java.awt.GridBagLayout());
-
-        org.openide.awt.Mnemonics.setLocalizedText(operatingSystemLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryDetailsPanel.class, "DataSourceSummaryDetailsPanel.operatingSystemLabel.text")); // NOI18N
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 4;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(0, 10, 0, 4);
-        jPanel1.add(operatingSystemLabel, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(displayNameLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryDetailsPanel.class, "DataSourceSummaryDetailsPanel.displayNameLabel.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -285,18 +262,6 @@ class DataSourceSummaryDetailsPanel extends BaseDataSourceSummaryPanel {
         gridBagConstraints.weightx = 0.5;
         gridBagConstraints.insets = new java.awt.Insets(0, 0, 0, 10);
         jPanel1.add(sha1HashValue, gridBagConstraints);
-
-        org.openide.awt.Mnemonics.setLocalizedText(operatingSystemValue, org.openide.util.NbBundle.getMessage(DataSourceSummaryDetailsPanel.class, "DataSourceSummaryDetailsPanel.operatingSystemValue.text")); // NOI18N
-        operatingSystemValue.setToolTipText(org.openide.util.NbBundle.getMessage(DataSourceSummaryDetailsPanel.class, "DataSourceSummaryDetailsPanel.operatingSystemValue.toolTipText")); // NOI18N
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 4;
-        gridBagConstraints.gridwidth = 4;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
-        gridBagConstraints.weightx = 0.5;
-        gridBagConstraints.insets = new java.awt.Insets(0, 0, 0, 10);
-        jPanel1.add(operatingSystemValue, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(displayNameValue, org.openide.util.NbBundle.getMessage(DataSourceSummaryDetailsPanel.class, "DataSourceSummaryDetailsPanel.displayNameValue.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -377,17 +342,6 @@ class DataSourceSummaryDetailsPanel extends BaseDataSourceSummaryPanel {
         gridBagConstraints.weighty = 1.2;
         gridBagConstraints.insets = new java.awt.Insets(6, 0, 10, 10);
         jPanel1.add(filePathsScrollPane, gridBagConstraints);
-
-        org.openide.awt.Mnemonics.setLocalizedText(dataSourceUsageValue, org.openide.util.NbBundle.getMessage(DataSourceSummaryDetailsPanel.class, "DataSourceSummaryDetailsPanel.dataSourceUsageValue.text")); // NOI18N
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 3;
-        gridBagConstraints.gridwidth = 4;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
-        gridBagConstraints.weightx = 0.5;
-        gridBagConstraints.insets = new java.awt.Insets(6, 0, 0, 10);
-        jPanel1.add(dataSourceUsageValue, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(timeZoneValue, org.openide.util.NbBundle.getMessage(DataSourceSummaryDetailsPanel.class, "DataSourceSummaryDetailsPanel.timeZoneValue.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -529,15 +483,6 @@ class DataSourceSummaryDetailsPanel extends BaseDataSourceSummaryPanel {
         gridBagConstraints.insets = new java.awt.Insets(0, 10, 6, 4);
         jPanel1.add(timeZoneLabel, gridBagConstraints);
 
-        org.openide.awt.Mnemonics.setLocalizedText(dataSourceUsageLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryDetailsPanel.class, "DataSourceSummaryDetailsPanel.dataSourceUsageLabel.text")); // NOI18N
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 3;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
-        gridBagConstraints.insets = new java.awt.Insets(6, 10, 0, 4);
-        jPanel1.add(dataSourceUsageLabel, gridBagConstraints);
-
         org.openide.awt.Mnemonics.setLocalizedText(deviceIdLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryDetailsPanel.class, "DataSourceSummaryDetailsPanel.deviceIdLabel.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
@@ -620,8 +565,6 @@ class DataSourceSummaryDetailsPanel extends BaseDataSourceSummaryPanel {
     private javax.swing.JLabel acquisitionDetailsLabel;
     private javax.swing.JScrollPane acquisitionDetailsScrollPane;
     private javax.swing.JTextArea acquisitionDetailsTextArea;
-    private javax.swing.JLabel dataSourceUsageLabel;
-    private javax.swing.JLabel dataSourceUsageValue;
     private javax.swing.JLabel deviceIdLabel;
     private javax.swing.JLabel deviceIdValue;
     private javax.swing.JLabel displayNameLabel;
@@ -637,8 +580,6 @@ class DataSourceSummaryDetailsPanel extends BaseDataSourceSummaryPanel {
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel md5HashLabel;
     private javax.swing.JLabel md5HashValue;
-    private javax.swing.JLabel operatingSystemLabel;
-    private javax.swing.JLabel operatingSystemValue;
     private javax.swing.JLabel originalNameLabel;
     private javax.swing.JLabel originalNameValue;
     private javax.swing.JLabel sectorSizeLabel;
