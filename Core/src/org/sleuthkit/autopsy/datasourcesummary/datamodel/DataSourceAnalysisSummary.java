@@ -140,10 +140,12 @@ public class DataSourceAnalysisSummary {
         List<BlackboardArtifact> artifacts = new ArrayList<>();
         SleuthkitCase skCase = provider.get();
 
+        // get all artifacts in one list for each artifact type
         for (ARTIFACT_TYPE type : artifactTypes) {
             artifacts.addAll(skCase.getBlackboard().getArtifacts(type.getTypeID(), dataSource.getId()));
         }
 
+        // group those based on the value of the attribute type that should serve as a key
         Map<String, Long> countedKeys = artifacts.stream()
                 .map((art) -> {
                     String key = DataSourceInfoUtilities.getStringOrNull(art, keyType);
@@ -152,6 +154,7 @@ public class DataSourceAnalysisSummary {
                 .filter((key) -> key != null)
                 .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
 
+        // sort from max to min counts
         return countedKeys.entrySet().stream()
                 .map((e) -> Pair.of(e.getKey(), e.getValue()))
                 .sorted((a, b) -> -a.getValue().compareTo(b.getValue()))
