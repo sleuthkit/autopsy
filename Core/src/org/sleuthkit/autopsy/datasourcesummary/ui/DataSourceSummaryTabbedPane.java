@@ -33,13 +33,8 @@ import org.sleuthkit.datamodel.DataSource;
  * IngestJobInfoPanel.
  */
 @Messages({
-<<<<<<< HEAD
     "DataSourceSummaryTabbedPane_typesTab_title=Types",
-    "DataSourceSummaryTabbedPane_detailsTab_title=Details",
-=======
-    "DataSourceSummaryTabbedPane_countsTab_title=Counts",
     "DataSourceSummaryTabbedPane_detailsTab_title=Container",
->>>>>>> fa0ae98de088d3573878927c94690af0154e5b00
     "DataSourceSummaryTabbedPane_userActivityTab_title=User Activity",
     "DataSourceSummaryTabbedPane_ingestHistoryTab_title=Ingest History",
     "DataSourceSummaryTabbedPane_recentFileTab_title=Recent Files"
@@ -49,19 +44,12 @@ public class DataSourceSummaryTabbedPane extends JTabbedPane {
     private static final long serialVersionUID = 1L;
 
     // A pair of the tab name and the corresponding BaseDataSourceSummaryTabs to be displayed.
-<<<<<<< HEAD
-    private final List<Pair<String, BaseDataSourceSummaryPanel>> tabs = Arrays.asList(
-            Pair.of(Bundle.DataSourceSummaryTabbedPane_detailsTab_title(), new DataSourceSummaryDetailsPanel()),
-            Pair.of(Bundle.DataSourceSummaryTabbedPane_typesTab_title(), new TypesPanel()),
-            Pair.of(Bundle.DataSourceSummaryTabbedPane_detailsTab_title(), new DataSourceSummaryUserActivityPanel())
-    );
-=======
+
     private final List<Pair<String, BaseDataSourceSummaryPanel>> tabs = new ArrayList<>(Arrays.asList(
-            Pair.of(Bundle.DataSourceSummaryTabbedPane_countsTab_title(), new DataSourceSummaryCountsPanel()),
+            Pair.of(Bundle.DataSourceSummaryTabbedPane_typesTab_title(), new TypesPanel()),
             Pair.of(Bundle.DataSourceSummaryTabbedPane_userActivityTab_title(), new DataSourceSummaryUserActivityPanel()),
             Pair.of(Bundle.DataSourceSummaryTabbedPane_recentFileTab_title(), new RecentFilesPanel())
     ));
->>>>>>> fa0ae98de088d3573878927c94690af0154e5b00
 
     private final IngestJobInfoPanel ingestHistoryPanel = new IngestJobInfoPanel();
 
