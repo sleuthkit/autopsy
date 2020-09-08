@@ -44,19 +44,21 @@ public class AnalysisPanel extends BaseDataSourceSummaryPanel {
 
     private static final long serialVersionUID = 1L;
 
-    private static final ColumnModel<Pair<String, Long>> KEY_COL = new ColumnModel<>(
-            Bundle.AnalysisPanel_keyColumn_title(),
-            (pair) -> new DefaultCellModel(pair.getKey()),
-            300
+    /**
+     * Default Column definitions for each table
+     */
+    private static final List<ColumnModel<Pair<String, Long>>> DEFAULT_COLUMNS = Arrays.asList(
+            new ColumnModel<>(
+                    Bundle.AnalysisPanel_keyColumn_title(),
+                    (pair) -> new DefaultCellModel(pair.getKey()),
+                    300
+            ),
+            new ColumnModel<>(
+                    Bundle.AnalysisPanel_countColumn_title(),
+                    (pair) -> new DefaultCellModel(String.valueOf(pair.getValue())),
+                    100
+            )
     );
-
-    private static final ColumnModel<Pair<String, Long>> COUNT_COL = new ColumnModel<>(
-            Bundle.AnalysisPanel_countColumn_title(),
-            (pair) -> new DefaultCellModel(String.valueOf(pair.getValue())),
-            100
-    );
-
-    private static final List<ColumnModel<Pair<String, Long>>> DEFAULT_COLUMNS = Arrays.asList(KEY_COL, COUNT_COL);
 
     private final JTablePanel<Pair<String, Long>> hashsetHitsTable = JTablePanel.getJTablePanel(DEFAULT_COLUMNS);
 
@@ -70,6 +72,10 @@ public class AnalysisPanel extends BaseDataSourceSummaryPanel {
             interestingItemsTable
     );
 
+    /**
+     * All of the components necessary for data fetch swing workers to load data
+     * for each table.
+     */
     private final List<DataFetchWorker.DataFetchComponents<DataSource, ?>> dataFetchComponents;
 
     /**
