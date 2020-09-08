@@ -358,11 +358,11 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     private void showErrorNode(String errorMessage, AbstractFile file) {
         final Button externalViewerButton = new Button(Bundle.MediaViewImagePanel_externalViewerButton_text(), new ImageView(externalImage));
         /*
-         * TODO: why is the name passed into the action constructor? it means we
-         * duplicate this string all over the place -jm
+         * Tie a Swing action (ExternalViewerAction) to a JFX button action.
          */
-        externalViewerButton.setOnAction(actionEvent -> new ExternalViewerAction(Bundle.MediaViewImagePanel_externalViewerButton_text(), new FileNode(file))
-                .actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "")) //Swing ActionEvent 
+        externalViewerButton.setOnAction(actionEvent ->
+                new ExternalViewerAction(Bundle.MediaViewImagePanel_externalViewerButton_text(), new FileNode(file))
+                .actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "")) 
         );
 
         final VBox errorNode = new VBox(10, new Label(errorMessage), externalViewerButton);
