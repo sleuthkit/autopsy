@@ -126,7 +126,8 @@ public class SearchFiltering {
     }
             
     /**
-     * A filter to specify date range for artifacts.
+     * A filter to specify date range for artifacts, start and end times should
+     * be in epoch seconds.
      */
     public static class ArtifactDateRangeFilter extends AbstractFilter {
         

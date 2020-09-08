@@ -30,8 +30,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.StringJoiner;
 import org.apache.commons.lang3.tuple.Pair;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryAttributes.AttributeType;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryAttributes.DataSourceAttribute;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryKeyUtils.GroupKey;
@@ -56,8 +54,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<Result>>> {
         
     @Override
-    public Map<GroupKey, List<Result>> load(SearchKey key) throws DiscoveryException, SQLException, TskCoreException, 
-            CentralRepoException, CorrelationAttributeNormalizationException {
+    public Map<GroupKey, List<Result>> load(SearchKey key) throws DiscoveryException, SQLException, TskCoreException {
 
         List<Result> domainResults = getResultDomainsFromDatabase(key);
         
@@ -134,9 +131,15 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
                /*SELECT */" domain," + 
                 "           MIN(date) AS activity_start," + 
                 "           MAX(date) AS activity_end," + 
-                "           SUM(CASE WHEN artifact_type_id = " + TSK_WEB_DOWNLOAD.getTypeID() + " THEN 1 ELSE 0 END) AS fileDownloads," + 
-                "           SUM(CASE WHEN artifact_type_id = " + TSK_WEB_HISTORY.getTypeID() + " AND" +
-                "               date BETWEEN " + sixtyDaysAgo.getEpochSecond() + " AND " + currentTime.getEpochSecond() + " THEN 1 ELSE 0 END) AS last60," + 
+                "           SUM(CASE " +
+                "                 WHEN artifact_type_id = " + TSK_WEB_DOWNLOAD.getTypeID() + " THEN 1 " +
+                "                 ELSE 0 " +
+                "               END) AS fileDownloads," + 
+                "           SUM(CASE " +
+                "                 WHEN artifact_type_id = " + TSK_WEB_HISTORY.getTypeID() + " AND" +
+                "                      date BETWEEN " + sixtyDaysAgo.getEpochSecond() + " AND " + currentTime.getEpochSecond() + " THEN 1 " +
+                "                 ELSE 0 " +
+                "               END) AS last60," + 
                 "           data_source_obj_id AS dataSource " + 
                 
                 "FROM blackboard_artifacts" +
@@ -164,18 +167,17 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
 
         return domainCallback.getResultDomains();
     }
-    
+
     /**
      * A utility method to transform filters into the necessary SQL statements
      * for the domainsTable query. The complexity of that query requires this
      * transformation process to be conditional. The date time filter is a good
      * example of the type of conditional handling that follows in the method
      * below. If no dateTime filter is supplied, then in order for the query to
-     * be correct, an special clause needs to be added in.
+     * be correct, an additional clause needs to be added in.
      *
-     * @return The whereClause and havingClause as a pair. These methods were
-     * combined into one in order to stress that these clauses are tightly
-     * coupled.
+     * @return The whereClause and havingClause as a pair. These methods are one
+     * to stress that these clauses are tightly coupled.
      */
     Pair<String, String> createWhereAndHavingClause(List<AbstractFilter> filters) {        
         final StringJoiner whereClause = new StringJoiner(" OR ");

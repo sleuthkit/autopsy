@@ -91,7 +91,8 @@ final class PageWorker extends SwingWorker<Void, Void> {
         try {
             // Run the search
             if (resultType == SearchData.Type.DOMAIN) {
-                results.addAll(DomainSearch.getDomainsInGroup(System.getProperty(USER_NAME_PROPERTY), searchfilters,
+                DomainSearch domainSearch = new DomainSearch();
+                results.addAll(domainSearch.getDomainsInGroup(System.getProperty(USER_NAME_PROPERTY), searchfilters,
                         groupingAttribute,
                         groupSort,
                         fileSortMethod, groupKey, startingEntry, pageSize,
