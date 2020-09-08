@@ -27,7 +27,7 @@ import org.openide.util.NbBundle;
  * This class provides utilities for representing storage size in most relevant
  * units (i.e. bytes, megabytes, etc.).
  */
-public class SizeRepresentationUtil {
+public final class SizeRepresentationUtil {
 
     private static final int SIZE_CONVERSION_CONSTANT = 1000;
     private static final DecimalFormat APPROXIMATE_SIZE_FORMAT = new DecimalFormat("#.##");
