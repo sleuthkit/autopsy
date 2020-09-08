@@ -31,13 +31,16 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.StringJoiner;
 import java.util.stream.Collectors;
 import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 
 /**
  * Run various filters to return a subset of files from the current case.
@@ -120,6 +123,79 @@ public class SearchFiltering {
             }
         }
         return resultList;
+    }
+            
+    /**
+     * A filter to specify date range for artifacts.
+     */
+    public static class ArtifactDateRangeFilter extends AbstractFilter {
+        
+        private final Long startDate;
+        private final Long endDate;
+        
+        // Attributes to search for date
+        private static List<BlackboardAttribute.ATTRIBUTE_TYPE> dateAttributes = 
+                Arrays.asList(
+                    BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME,
+                    BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
+                    BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED
+            );
+        
+        public ArtifactDateRangeFilter(Long startDate, Long endDate) {
+            this.startDate = startDate;
+            this.endDate = endDate;
+        }
+        
+        /**
+         * Create a SQL clause containing the date time attribute types
+         * to search.
+         */
+        static String createAttributeTypeClause() {
+            StringJoiner joiner = new StringJoiner(",");
+            for(BlackboardAttribute.ATTRIBUTE_TYPE type : dateAttributes) {
+                joiner.add("\'" + type.getTypeID() + "\'");
+            }
+            return "attribute_type_id IN (" + joiner.toString() + ")";
+        }
+
+        @Override
+        public String getWhereClause() {
+            return createAttributeTypeClause() + 
+                    " AND (value_int64 BETWEEN " + startDate + " AND " + endDate + ")";
+        }
+
+        @Override
+        public String getDesc() {
+            return "ArtifactDateRangeFilter Stub";
+        }
+    }
+    
+    /**
+     * A filter to specify artifact types
+     */
+    public static class ArtifactTypeFilter extends AbstractFilter {
+        
+        private final List<ARTIFACT_TYPE> types;
+        
+        public ArtifactTypeFilter(List<ARTIFACT_TYPE> types) {
+            this.types = types;
+        }
+
+        @Override
+        public String getWhereClause() {
+            StringJoiner joiner = new StringJoiner(",");
+            for(ARTIFACT_TYPE type : types) {
+                joiner.add("\'" + type.getTypeID() + "\'");
+            }
+            
+            return "artifact_type_id IN (" + joiner + ")";
+        }
+
+        @Override
+        public String getDesc() {
+            return "ArtifactTypeFilter Stub";
+        }
+        
     }
 
     /**

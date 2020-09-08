@@ -26,25 +26,61 @@ import org.sleuthkit.datamodel.TskData;
  * Container for domains that holds all necessary data for grouping and sorting.
  */
 public class ResultDomain extends Result {
-    private String domain;
+    private final String domain;
+    private final Long activityStart;
+    private final Long activityEnd;
+    private final Long visitsInLast60;
+    private final Long filesDownloaded;
+    
+    private final Content dataSource;
+    private final long dataSourceId;
+    
     /**
      * Create a ResultDomain from a String.
      *
      * @param domain The domain the result is being created from.
      */
-    ResultDomain(String domain) {
+    ResultDomain(String domain, Long activityStart, Long activityEnd, 
+            Long visitsInLast60, Long filesDownloaded, Content dataSource) {
         this.domain = domain;
+        this.dataSource = dataSource;
+        this.dataSourceId = dataSource.getId();
+        this.activityStart = activityStart;
+        this.activityEnd = activityEnd;
+        this.visitsInLast60 = visitsInLast60;
+        this.filesDownloaded = filesDownloaded;
+        
         this.setFrequency(SearchData.Frequency.UNKNOWN);
+    }
+    
+    public String getDomain() {
+        return this.domain;
+    }
+
+    public Long getActivityStart() {
+        return activityStart;
+    }
+
+    public Long getActivityEnd() {
+        return activityEnd;
+    }
+
+    public Long getVisitsInLast60() {
+        return visitsInLast60;
+    }
+
+    public Long getFilesDownloaded() {
+        return filesDownloaded;
     }
 
     @Override
     public long getDataSourceObjectId() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return this.dataSourceId;
     }
 
     @Override
     public Content getDataSource() throws TskCoreException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return this.dataSource;
     }
 
     @Override
@@ -56,5 +92,12 @@ public class ResultDomain extends Result {
     public SearchData.Type getType() {
         return SearchData.Type.DOMAIN;
     }
-
+    
+    @Override
+    public String toString() {
+        return "[" + this.domain + ", " + this.dataSourceId + ", "
+                + this.activityStart + ", " + this.activityEnd + ", " 
+                + this.visitsInLast60 + ", " + this.filesDownloaded + ", " 
+                + this.getFrequency() + "]";
+    }
 }
