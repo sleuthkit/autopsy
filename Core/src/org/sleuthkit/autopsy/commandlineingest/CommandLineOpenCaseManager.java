@@ -18,14 +18,8 @@
  */
 package org.sleuthkit.autopsy.commandlineingest;
 
-import java.nio.file.Paths;
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.logging.Level;
-import org.netbeans.spi.sendopts.OptionProcessor;
-import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.casemodule.CaseActionException;
-import org.sleuthkit.autopsy.casemodule.OpenFromArguments;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
@@ -35,7 +29,12 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 public class CommandLineOpenCaseManager extends CommandLineManager {
 
     private static final Logger LOGGER = Logger.getLogger(CommandLineOpenCaseManager.class.getName());
-
+    private final String casePath;
+    
+    public CommandLineOpenCaseManager(String casePath) {
+        this.casePath = casePath;
+    }
+    
     /**
      * Starts the thread to open the case.
      */
@@ -51,21 +50,6 @@ public class CommandLineOpenCaseManager extends CommandLineManager {
 
         @Override
         public void run() {
-            String casePath = "";
-
-            // first look up all OptionProcessors and get input data from CommandLineOptionProcessor
-            Collection<? extends OptionProcessor> optionProcessors = Lookup.getDefault().lookupAll(OptionProcessor.class);
-            Iterator<? extends OptionProcessor> optionsIterator = optionProcessors.iterator();
-            while (optionsIterator.hasNext()) {
-                // find CommandLineOptionProcessor
-                OptionProcessor processor = optionsIterator.next();
-                if (processor instanceof OpenFromArguments) {
-                    // check if we are running from command line
-                    casePath = Paths.get(((OpenFromArguments) processor).getDefaultArg()).toAbsolutePath().toString();
-                    break;
-                }
-            }
-
             if (casePath == null || casePath.isEmpty()) {
                 LOGGER.log(Level.SEVERE, "No command line commands specified");
                 System.out.println("No command line commands specified");

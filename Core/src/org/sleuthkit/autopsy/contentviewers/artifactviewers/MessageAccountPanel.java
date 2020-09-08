@@ -36,8 +36,11 @@ import javax.swing.JPanel;
 import javax.swing.LayoutStyle.ComponentPlacement;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
+import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoAccount;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.centralrepository.datamodel.Persona;
 import org.sleuthkit.autopsy.centralrepository.datamodel.PersonaAccount;
@@ -51,6 +54,8 @@ import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.CommunicationsManager;
+import org.sleuthkit.datamodel.InvalidAccountIDException;
+import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -115,24 +120,26 @@ final class MessageAccountPanel extends JPanel {
                     return new ArrayList<>();
                 }
 
-                List<BlackboardArtifact> contactList = ContactCache.getContacts(account);
-                BlackboardArtifact contact = null;
+                if ( !((DataSource)(artifact.getDataSource())).getDeviceId().equals(account.getTypeSpecificID())) {
+                    List<BlackboardArtifact> contactList = ContactCache.getContacts(account);
+                    BlackboardArtifact contact = null;
 
-                if (contactList != null && !contactList.isEmpty()) {
-                    contact = contactList.get(0);
-                }
+                    if (contactList != null && !contactList.isEmpty()) {
+                        contact = contactList.get(0);
+                    }
 
-                if (CentralRepository.isEnabled()) {
-                    Collection<PersonaAccount> personAccounts = PersonaAccount.getPersonaAccountsForAccount(account);
-                    if (personAccounts != null && !personAccounts.isEmpty()) {
-                        for (PersonaAccount personaAccount : PersonaAccount.getPersonaAccountsForAccount(account)) {
-                            dataList.add(new AccountContainer(account, personaAccount, contact));
+                    if (CentralRepository.isEnabled()) {
+                        Collection<PersonaAccount> personAccounts = PersonaAccount.getPersonaAccountsForAccount(account);
+                        if (personAccounts != null && !personAccounts.isEmpty()) {
+                            for (PersonaAccount personaAccount : PersonaAccount.getPersonaAccountsForAccount(account)) {
+                                dataList.add(new AccountContainer(account, personaAccount, contact));
+                            }
+                        } else {
+                            dataList.add(new AccountContainer(account, null, contact));
                         }
                     } else {
                         dataList.add(new AccountContainer(account, null, contact));
                     }
-                } else {
-                    dataList.add(new AccountContainer(account, null, contact));
                 }
             }
 
@@ -450,6 +457,9 @@ final class MessageAccountPanel extends JPanel {
             this.accountContainer = accountContainer;
         }
 
+        @NbBundle.Messages({
+            "MessageAccountPanel.account.justification=Account found in Message artifact"
+        })
         @Override
         public void actionPerformed(ActionEvent e) {
             Persona persona = accountContainer.getPersona();
@@ -464,7 +474,27 @@ final class MessageAccountPanel extends JPanel {
                 // Pre populate the persona name and accounts if we have them.
                 PersonaDetailsPanel personaPanel = createPersonaDialog.getDetailsPanel();
 
+                // Set a default name
                 personaPanel.setPersonaName(accountContainer.getAccount().getTypeSpecificID());
+
+                // Set up each matching account. We don't know what type of account we have, so check all the types to 
+                // find any matches.
+                try {
+                    for (CentralRepoAccount.CentralRepoAccountType type : CentralRepository.getInstance().getAllAccountTypes()) {
+                        try {
+                            // Try to load any matching accounts of this type. Throws an InvalidAccountIDException if the account is the
+                            // wrong format (i.e., when we try to load email accounts for a phone number-type string).
+                            CentralRepoAccount account = CentralRepository.getInstance().getAccount(type, accountContainer.getAccount().getTypeSpecificID());
+                            if (account != null) {
+                                personaPanel.addAccount(account, Bundle.MessageAccountPanel_account_justification(), Persona.Confidence.HIGH);
+                            }
+                        } catch (InvalidAccountIDException ex2) {
+                            // These are expected when the account identifier doesn't match the format of the account type.
+                        }
+                    }
+                } catch (CentralRepoException ex) {
+                    logger.log(Level.SEVERE, "Error looking up account types in the central repository", ex);
+                }
 
                 // display the dialog now
                 createPersonaDialog.display();

@@ -61,6 +61,7 @@ DefaultArtifactContentViewer.attrsTableHeader.type=Type
 DefaultArtifactContentViewer.attrsTableHeader.value=Value
 DefaultArtifactContentViewer.copyMenuItem.text=Copy
 DefaultArtifactContentViewer.selectAllMenuItem.text=Select All
+MessageAccountPanel.account.justification=Account found in Message artifact
 MessageAccountPanel_button_create_label=Create
 MessageAccountPanel_button_view_label=View
 MessageAccountPanel_contact_label=Contact:
@@ -85,5 +86,6 @@ MessageArtifactViewer.subjectLabel.text=Subject:
 MessageArtifactViewer.attachmentsPanel.TabConstraints.tabTitle=Attachments
 MessageArtifactViewer.ccText.text=cc list goes here
 MessageArtifactViewer.textbodyScrollPane.TabConstraints.tabTitle=Text
+PersonaAccountFetcher.account.justification=Account found in Call Log artifact
 # {0} - Persona count
 PersonaDisplayTask_persona_count_suffix=(1 of {0})
