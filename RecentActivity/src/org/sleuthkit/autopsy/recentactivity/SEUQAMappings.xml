@@ -12,7 +12,7 @@ Each splitToken contains a single mapping of a raw URL substring to its regex eq
 
 SearchEngine:
     engine:             The engines basic name
-    domainSubstring:    The domain of the URL such that it can uniquely be identified as given engine. Should not have leading or trailing '.'
+    domainSubstring:    The domain of the URL such that it can be identified as given engine. Should not have leading or trailing '.'
     
 splitToken:
     plainToken:         The string in the URL that is immediately followed by the actual query. 
