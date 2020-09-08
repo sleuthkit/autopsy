@@ -148,7 +148,6 @@ public class PastCasesPanel extends BaseDataSourceSummaryPanel {
         notableFilePanel.setMaximumSize(new java.awt.Dimension(32767, 106));
         notableFilePanel.setMinimumSize(new java.awt.Dimension(100, 106));
         notableFilePanel.setPreferredSize(new java.awt.Dimension(32767, 106));
-        notableFilePanel.setLayout(null);
         mainContentPanel.add(notableFilePanel);
         mainContentPanel.add(filler2);
 
@@ -159,7 +158,6 @@ public class PastCasesPanel extends BaseDataSourceSummaryPanel {
         sameIdPanel.setMaximumSize(new java.awt.Dimension(32767, 106));
         sameIdPanel.setMinimumSize(new java.awt.Dimension(100, 106));
         sameIdPanel.setPreferredSize(new java.awt.Dimension(32767, 106));
-        sameIdPanel.setLayout(null);
         mainContentPanel.add(sameIdPanel);
         mainContentPanel.add(filler5);
 
