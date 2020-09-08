@@ -130,7 +130,7 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
     private final LoadableLabel usageLabel = new LoadableLabel(Bundle.TypesPanel_usageLabel_title());
     private final LoadableLabel osLabel = new LoadableLabel(Bundle.TypesPanel_osLabel_title());
     private final LoadableLabel sizeLabel = new LoadableLabel(Bundle.TypesPanel_sizeLabel_title());
-    
+
     private final PieChartPanel fileMimeTypesChart = new PieChartPanel(Bundle.TypesPanel_fileMimeTypesChart_title());
 
     private final LoadableLabel allocatedLabel = new LoadableLabel(Bundle.TypesPanel_filesByCategoryTable_allocatedRow_title());
@@ -254,7 +254,8 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
     }
 
     /**
-     * Returns string value of long with comma separators. If null returns a string of '0'.
+     * Returns string value of long with comma separators. If null returns a
+     * string of '0'.
      *
      * @param longVal The long value.
      *

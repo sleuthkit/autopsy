@@ -224,7 +224,7 @@ public class JTablePanel<T> extends AbstractLoadableComponent<List<T>> {
     }
 
     /**
-     * Set the table model. This method must be called prior to calling 
+     * Set the table model. This method must be called prior to calling
      * setResultList.
      *
      * @param tableModel
@@ -237,8 +237,7 @@ public class JTablePanel<T> extends AbstractLoadableComponent<List<T>> {
         this.tableModel = tableModel;
         table.setModel(tableModel);
     }
-    
-    
+
     /**
      * @return The underlying JTable's column model.
      */
@@ -276,7 +275,7 @@ public class JTablePanel<T> extends AbstractLoadableComponent<List<T>> {
         this.overlayLayer.setVisible(visible);
         this.overlayLayer.setMessage(message);
     }
-    
+
     /**
      * Initialize the gui components.
      */
