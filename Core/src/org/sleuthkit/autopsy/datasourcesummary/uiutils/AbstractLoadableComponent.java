@@ -33,6 +33,8 @@ import org.sleuthkit.autopsy.coreutils.Logger;
     "AbstractLoadableComponent_noDataExists_defaultText=No data exists.",})
 public abstract class AbstractLoadableComponent<T> extends JPanel implements LoadableComponent<T> {
 
+    private static final long serialVersionUID = 1L;
+    
     /**
      * The default loading message.
      */

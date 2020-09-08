@@ -49,7 +49,7 @@ public class JTablePanel<T> extends AbstractLoadableComponent<List<T>> {
     private static class Overlay extends LayerUI<JComponent> {
 
         private static final long serialVersionUID = 1L;
-        private BaseMessageOverlay overlay = new BaseMessageOverlay();
+        private final BaseMessageOverlay overlayDelegate = new BaseMessageOverlay();
 
         /**
          * Sets this layer visible when painted. In order to be shown in UI,
@@ -58,7 +58,7 @@ public class JTablePanel<T> extends AbstractLoadableComponent<List<T>> {
          * @param visible Whether or not it is visible.
          */
         void setVisible(boolean visible) {
-            overlay.setVisible(visible);
+            overlayDelegate.setVisible(visible);
         }
 
         /**
@@ -67,13 +67,13 @@ public class JTablePanel<T> extends AbstractLoadableComponent<List<T>> {
          * @param message The message to be displayed.
          */
         void setMessage(String message) {
-            overlay.setMessage(message);
+            overlayDelegate.setMessage(message);
         }
 
         @Override
         public void paint(Graphics g, JComponent c) {
             super.paint(g, c);
-            overlay.paintOverlay(g, c.getWidth(), c.getHeight());
+            overlayDelegate.paintOverlay(g, c.getWidth(), c.getHeight());
         }
     }
 

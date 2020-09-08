@@ -80,7 +80,7 @@ public class PieChartPanel extends AbstractLoadableComponent<List<PieChartPanel.
     private static class MessageOverlay extends AbstractOverlay implements Overlay {
 
         private static final long serialVersionUID = 1L;
-        private BaseMessageOverlay overlay = new BaseMessageOverlay();
+        private final BaseMessageOverlay overlay = new BaseMessageOverlay();
 
         /**
          * Sets this layer visible when painted. In order to be shown in UI,

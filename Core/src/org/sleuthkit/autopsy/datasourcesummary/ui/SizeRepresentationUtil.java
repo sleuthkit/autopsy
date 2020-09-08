@@ -86,7 +86,7 @@ public class SizeRepresentationUtil {
             }
         }
 
-        String fullSize = String.valueOf(size) + UNITS.get(0);
+        String fullSize = size + UNITS.get(0);
         String closestUnitSize = format.format(approximateSize) + UNITS.get(unitsIndex);
 
         if (unitsIndex == 0) {
@@ -96,5 +96,8 @@ public class SizeRepresentationUtil {
         } else {
             return closestUnitSize;
         }
+    }
+
+    private SizeRepresentationUtil() {
     }
 }
