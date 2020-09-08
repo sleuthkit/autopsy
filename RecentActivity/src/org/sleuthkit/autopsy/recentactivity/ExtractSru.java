@@ -1,4 +1,4 @@
- /*
+/*
  *
  * Autopsy Forensic Browser
  *
@@ -54,10 +54,9 @@ import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASS
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
-
 /**
- * Extract the System Resource Usage database to a temp directory so it can be parsed into a SQLite db
- * and then brought into extracted content
+ * Extract the System Resource Usage database to a temp directory so it can be
+ * parsed into a SQLite db and then brought into extracted content
  */
 final class ExtractSru extends Extract {
 
@@ -69,7 +68,6 @@ final class ExtractSru extends Extract {
     private static final String NETWORK_USAGE_SOURCE_NAME = "System Resource Usage - Network Usage";
 
 //    private static final String ARTIFACT_ATTRIBUTE_NAME = "TSK_ARTIFACT_NAME"; //NON-NLS
-
     private static final String MODULE_NAME = "extractSRU"; //NON-NLS
 
     private static final String SRU_TOOL_FOLDER = "markmckinnon"; //NON-NLS
@@ -79,7 +77,7 @@ final class ExtractSru extends Extract {
     private static final String SRU_TOOL_NAME_MAC = "Export_srudb_macos"; //NON-NLS
     private static final String SRU_OUTPUT_FILE_NAME = "Output.txt"; //NON-NLS
     private static final String SRU_ERROR_FILE_NAME = "Error.txt"; //NON-NLS
-    
+
     private static final Map<String, AbstractFile> applicationFilesFound = new HashMap<>();
 
     @Messages({
@@ -93,7 +91,7 @@ final class ExtractSru extends Extract {
         "ExtractSru_error_finding_export_srudb_program=Error finding export_srudb program",
         "ExtractSru_process_error_executing_export_srudb_program=Error running export_srudb program"
     })
-    
+
     @Override
     void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
 
@@ -107,11 +105,11 @@ final class ExtractSru extends Extract {
 
         String tempDirPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), "sru"); //NON-NLS
         String softwareHiveFileName = getSoftwareHiveFile(dataSource, tempDirPath);
-      
-        if (softwareHiveFileName  == null) {
+
+        if (softwareHiveFileName == null) {
             return;
         }
-    
+
         AbstractFile sruAbstractFile = getSruFile(dataSource, tempDirPath);
 
         if (sruAbstractFile == null) {
@@ -130,7 +128,7 @@ final class ExtractSru extends Extract {
         }
 
         try {
-            String modOutFile =  modOutPath + File.separator + sruAbstractFile.getId() + "_srudb.db3";
+            String modOutFile = modOutPath + File.separator + sruAbstractFile.getId() + "_srudb.db3";
             String sruFileName = tempDirPath + File.separator + sruAbstractFile.getId() + "_" + sruAbstractFile.getName();
 
             extractSruFiles(sruDumper, sruFileName, modOutFile, tempDirPath, softwareHiveFileName);
@@ -142,9 +140,9 @@ final class ExtractSru extends Extract {
         } catch (IOException ex) {
             this.addErrorMessage(Bundle.ExtractSru_process_error_executing_export_srudb_program());
             logger.log(Level.SEVERE, "SRUDB.dat file not found"); //NON-NLS
-        } 
+        }
     }
-    
+
     @Messages({
         "ExtractSru_process_errormsg_find_software_hive=Unable to find SOFTWARE HIVE file",
         "ExtractSru_process_errormsg_write_software_hive=Unable to write SOFTWARE HIVE file"
@@ -152,11 +150,11 @@ final class ExtractSru extends Extract {
 
     /**
      * Extract the SOFTWARE hive file to the temp directory
-     * 
-     * @param dataSource datasource where software hiive is
+     *
+     * @param dataSource  datasource where software hiive is
      * @param tempDirPath temp directory to write file to
-     * 
-     * @return Software hive file location 
+     *
+     * @return Software hive file location
      */
     String getSoftwareHiveFile(Content dataSource, String tempDirPath) {
         FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
@@ -196,17 +194,17 @@ final class ExtractSru extends Extract {
     })
     /**
      * Extract the SOFTWARE hive file to the temp directory
-     * 
-     * @param dataSource datasource where software hiive is
+     *
+     * @param dataSource  datasource where software hiive is
      * @param tempDirPath temp directory to write file to
-     * 
-     * @return Software hive file location 
+     *
+     * @return Software hive file location
      */
     AbstractFile getSruFile(Content dataSource, String tempDirPath) {
         FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
-        
+
         List<AbstractFile> sruFiles;
-        
+
         try {
             sruFiles = fileManager.findFiles(dataSource, "SRUDB.DAT"); //NON-NLS            
         } catch (TskCoreException ex) {
@@ -216,7 +214,7 @@ final class ExtractSru extends Extract {
         }
 
         AbstractFile sruAbstractFile = null;
-        
+
         for (AbstractFile sruFile : sruFiles) {
 
             String sruFileName = tempDirPath + File.separator + sruFile.getId() + "_" + sruFile.getName();
@@ -267,13 +265,13 @@ final class ExtractSru extends Extract {
             if (PlatformUtil.is64BitOS()) {
                 path = Paths.get(SRU_TOOL_FOLDER, SRU_TOOL_NAME_WINDOWS_64);
             } else {
-                path = Paths.get(SRU_TOOL_FOLDER, SRU_TOOL_NAME_WINDOWS_32);            
+                path = Paths.get(SRU_TOOL_FOLDER, SRU_TOOL_NAME_WINDOWS_32);
             }
         } else {
             if ("Linux".equals(PlatformUtil.getOSName())) {
                 path = Paths.get(SRU_TOOL_FOLDER, SRU_TOOL_NAME_LINUX);
             } else {
-                path = Paths.get(SRU_TOOL_FOLDER, SRU_TOOL_NAME_MAC);                
+                path = Paths.get(SRU_TOOL_FOLDER, SRU_TOOL_NAME_MAC);
             }
         }
         File sruToolFile = InstalledFileLocator.getDefault().locate(path.toString(),
@@ -288,9 +286,9 @@ final class ExtractSru extends Extract {
     private void findSruExecutedFiles(String sruDb, Content dataSource) {
 
         org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
-        
+
         String sqlStatement = "SELECT DISTINCT SUBSTR(LTRIM(IdBlob, '\\Device\\HarddiskVolume'), INSTR(LTRIM(IdBlob, '\\Device\\HarddiskVolume'), '\\'))  "
-                              + " application_name, idBlob source_name FROM SruDbIdMapTable WHERE idType = 0 AND idBlob NOT LIKE '!!%'"; //NON-NLS
+                + " application_name, idBlob source_name FROM SruDbIdMapTable WHERE idType = 0 AND idBlob NOT LIKE '!!%'"; //NON-NLS
 
         try (SQLiteDBConnect tempdbconnect = new SQLiteDBConnect("org.sqlite.JDBC", "jdbc:sqlite:" + sruDb); //NON-NLS
                 ResultSet resultSet = tempdbconnect.executeQry(sqlStatement)) {
@@ -316,10 +314,10 @@ final class ExtractSru extends Extract {
                     sourceFiles = fileManager.findFiles(dataSource, fileName, filePath); //NON-NLS
                     for (AbstractFile sourceFile : sourceFiles) {
                         if (sourceFile.getParentPath().endsWith(filePath)) {
-                                applicationFilesFound.put(sourceName.toLowerCase(), sourceFile);
+                            applicationFilesFound.put(sourceName.toLowerCase(), sourceFile);
                         }
                     }
-            
+
                 } catch (TskCoreException ex) {
                     logger.log(Level.WARNING, String.format("Error finding actual file %s. file may not exist", normalizePathName)); //NON-NLS
                 }
@@ -329,12 +327,12 @@ final class ExtractSru extends Extract {
         }
 
     }
- 
+
     private void createNetUsageArtifacts(String sruDb, AbstractFile sruAbstractFile) {
         List<BlackboardArtifact> bba = new ArrayList<>();
 
         String sqlStatement = "SELECT STRFTIME('%s', timestamp) ExecutionTime, Application_Name, User_Name, "
-                + " bytesSent, BytesRecvd FROM network_Usage , SruDbIdMapTable " 
+                + " bytesSent, BytesRecvd FROM network_Usage , SruDbIdMapTable "
                 + " where appId = IdIndex and IdType = 0 order by ExecutionTime;"; //NON-NLS
 
         try (SQLiteDBConnect tempdbconnect = new SQLiteDBConnect("org.sqlite.JDBC", "jdbc:sqlite:" + sruDb); //NON-NLS
@@ -359,7 +357,7 @@ final class ExtractSru extends Extract {
                                 applicationName),//NON-NLS
                         new BlackboardAttribute(
                                 BlackboardAttribute.ATTRIBUTE_TYPE.TSK_USER_NAME, getName(),
-                                userName), 
+                                userName),
                         new BlackboardAttribute(
                                 BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME, getName(),
                                 executionTime),
@@ -425,7 +423,7 @@ final class ExtractSru extends Extract {
                         new BlackboardAttribute(
                                 BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME, getName(),
                                 executionTime),
-                         new BlackboardAttribute(
+                        new BlackboardAttribute(
                                 BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, getName(), APPLICATION_USAGE_SOURCE_NAME));
 
                 try {
@@ -444,37 +442,38 @@ final class ExtractSru extends Extract {
         } catch (SQLException ex) {
             logger.log(Level.SEVERE, "Error while trying to read into a sqlite db.", ex);//NON-NLS
         }
-        
+
         try {
             blackboard.postArtifacts(bba, MODULE_NAME);
         } catch (Blackboard.BlackboardException ex) {
             logger.log(Level.SEVERE, "Error Posting Artifact.", ex);//NON-NLS
         }
     }
-    
+
     /**
-     * Create associated artifacts using file path name and the artifact it associates with
-     * 
+     * Create associated artifacts using file path name and the artifact it
+     * associates with
+     *
      * @param filePathName file and path of object being associated with
-     * 
-     * @param bba blackboard artifact to associate with
-     * 
-     * @returnv BlackboardArtifact or a null value 
-     */  
+     *
+     * @param bba          blackboard artifact to associate with
+     *
+     * @returnv BlackboardArtifact or a null value
+     */
     private BlackboardArtifact createAssociatedArtifact(String filePathName, BlackboardArtifact bba) {
         if (applicationFilesFound.containsKey(filePathName)) {
             AbstractFile sourceFile = applicationFilesFound.get(filePathName);
             Collection<BlackboardAttribute> bbattributes2 = new ArrayList<>();
             bbattributes2.addAll(Arrays.asList(
-                 new BlackboardAttribute(TSK_ASSOCIATED_ARTIFACT, this.getName(),
-                 bba.getArtifactID())));
+                    new BlackboardAttribute(TSK_ASSOCIATED_ARTIFACT, this.getName(),
+                            bba.getArtifactID())));
 
             BlackboardArtifact associatedObjectBba = createArtifactWithAttributes(TSK_ASSOCIATED_OBJECT, sourceFile, bbattributes2);
             if (associatedObjectBba != null) {
                 return associatedObjectBba;
             }
         }
-       
+
         return null;
     }
 

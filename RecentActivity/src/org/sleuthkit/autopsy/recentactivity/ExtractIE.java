@@ -73,7 +73,7 @@ class ExtractIE extends Extract {
     private static final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
     private Content dataSource;
     private IngestJobContext context;
-    
+
     @Messages({
         "Progress_Message_IE_History=IE History",
         "Progress_Message_IE_Bookmarks=IE Bookmarks",
@@ -81,8 +81,7 @@ class ExtractIE extends Extract {
         "Progress_Message_IE_Downloads=IE Downloads",
         "Progress_Message_IE_FormHistory=IE Form History",
         "Progress_Message_IE_AutoFill=IE Auto Fill",
-        "Progress_Message_IE_Logins=IE Logins",
-    })
+        "Progress_Message_IE_Logins=IE Logins",})
 
     ExtractIE() throws NoCurrentCaseException {
         moduleName = NbBundle.getMessage(ExtractIE.class, "ExtractIE.moduleName.text");
@@ -95,13 +94,13 @@ class ExtractIE extends Extract {
         this.dataSource = dataSource;
         this.context = context;
         dataFound = false;
-        
+
         progressBar.progress(Bundle.Progress_Message_IE_Bookmarks());
         this.getBookmark();
-        
+
         progressBar.progress(Bundle.Progress_Message_IE_Cookies());
         this.getCookie();
-        
+
         progressBar.progress(Bundle.Progress_Message_IE_History());
         this.getHistory();
     }
@@ -148,7 +147,7 @@ class ExtractIE extends Extract {
 
             Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
-                   RecentActivityExtracterModuleFactory.getModuleName(), url));
+                    RecentActivityExtracterModuleFactory.getModuleName(), url));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TITLE,
                     RecentActivityExtracterModuleFactory.getModuleName(), name));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
@@ -166,7 +165,7 @@ class ExtractIE extends Extract {
                 bbartifacts.add(bbart);
             }
         }
-        
+
         postArtifacts(bbartifacts);
     }
 
@@ -277,7 +276,7 @@ class ExtractIE extends Extract {
             }
         }
 
-        postArtifacts(bbartifacts); 
+        postArtifacts(bbartifacts);
     }
 
     /**
@@ -376,7 +375,7 @@ class ExtractIE extends Extract {
                         NbBundle.getMessage(this.getClass(), "ExtractIE.getHistory.errMsg.errProcHist", this.getName()));
             }
         }
-        
+
         postArtifacts(bbartifacts);
     }
 
@@ -463,11 +462,11 @@ class ExtractIE extends Extract {
             return bbartifacts;
         }
         while (fileScanner.hasNext()) {
-            
+
             if (context.dataSourceIngestIsCancelled()) {
                 return bbartifacts;
             }
-            
+
             String line = fileScanner.nextLine();
             if (!line.startsWith("URL")) {   //NON-NLS
                 continue;
@@ -492,12 +491,12 @@ class ExtractIE extends Extract {
              */
             if (lineBuff[1].contains("@")) {
                 String url[] = lineBuff[1].split("@", 2);
-                
+
                 /*
                  * Verify the left portion of the URL is valid.
                  */
                 domain = extractDomain(url[0]);
-                
+
                 if (domain != null && domain.isEmpty() == false) {
                     /*
                      * Use the entire input for the URL.
@@ -550,7 +549,7 @@ class ExtractIE extends Extract {
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
                         RecentActivityExtracterModuleFactory.getModuleName(), ftime));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_REFERRER,
-                       RecentActivityExtracterModuleFactory.getModuleName(), ""));
+                        RecentActivityExtracterModuleFactory.getModuleName(), ""));
                 // @@@ NOte that other browser modules are adding TITLE in hre for the title
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
                         RecentActivityExtracterModuleFactory.getModuleName(),
@@ -572,27 +571,27 @@ class ExtractIE extends Extract {
         fileScanner.close();
         return bbartifacts;
     }
-    
+
     /**
      * Extract the domain from the supplied URL. This method does additional
      * checks to detect invalid URLs.
-     * 
+     *
      * @param url The URL from which to extract the domain.
-     * 
+     *
      * @return The domain.
      */
     private String extractDomain(String url) {
         if (url == null || url.isEmpty()) {
             return url;
         }
-        
+
         if (url.toLowerCase().startsWith(RESOURCE_URL_PREFIX)) {
             /*
              * Ignore URLs that begin with the matched text.
              */
             return null;
         }
-        
+
         return NetworkUtils.extractDomain(url);
     }
 }
