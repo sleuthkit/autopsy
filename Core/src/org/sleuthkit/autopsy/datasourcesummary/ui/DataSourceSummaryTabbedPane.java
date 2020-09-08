@@ -67,10 +67,8 @@ public class DataSourceSummaryTabbedPane extends JTabbedPane {
         /**
          * Main constructor.
          *
-         * @param tabTitle  The title of the tab.
-         * @param component The component to be displayed.
-         *                  BaseDataSourceSummaryPanel.setDataSource method is
-         *                  used on new data source.
+         * @param tabTitle The title of the tab.
+         * @param panel    The component to be displayed in the tab.
          */
         DataSourceTab(String tabTitle, BaseDataSourceSummaryPanel panel) {
             this.tabTitle = tabTitle;
