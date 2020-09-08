@@ -59,7 +59,7 @@ import org.xml.sax.SAXException;
  * artifacts, and extracting search text from them.
  *
  *
- * To add search engines, edit SearchEngines.xml under RecentActivity
+ * To add search engines, edit SEUQAMappings.xml under RecentActivity
  *
  */
 @NbBundle.Messages({
