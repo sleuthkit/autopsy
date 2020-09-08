@@ -66,6 +66,17 @@ public class DataSourceMimeTypeSummary {
                 + " AND mime_type IS NOT NULL AND mime_type <> '' ",
                 "Unable to get count of files without specified mime types");
     }
+    
+    
+    /**
+     * Get a count of all regular files in a datasource.
+     * @param dataSource The datasource.
+     * @return The count of regular files.
+     */
+    public static Long getCountOfAllRegularFiles(DataSource dataSource) {
+        return DataSourceInfoUtilities.getCountOfRegularFiles(dataSource, null, 
+                "Unable to get count of all regular files");
+    }
 
     /**
      * Gets the number of files in the data source with no assigned mime type.

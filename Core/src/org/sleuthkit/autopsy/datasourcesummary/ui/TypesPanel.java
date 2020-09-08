@@ -22,9 +22,7 @@ import java.awt.BorderLayout;
 import java.text.DecimalFormat;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.swing.JLabel;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -110,7 +108,7 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
 
     private static final long serialVersionUID = 1L;
     private static final DecimalFormat INTEGER_SIZE_FORMAT = new DecimalFormat("#");
-    DecimalFormat COMMA_FORMATTER = new DecimalFormat("#,###");
+    private static final DecimalFormat COMMA_FORMATTER = new DecimalFormat("#,###");
 
     // All file type categories.
     private static final List<Pair<String, FileTypeCategory>> FILE_MIME_TYPE_CATEGORIES = Arrays.asList(
@@ -120,12 +118,6 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
             Pair.of(Bundle.TypesPanel_fileMimeTypesChart_documents_title(), FileTypeCategory.DOCUMENTS),
             Pair.of(Bundle.TypesPanel_fileMimeTypesChart_executables_title(), FileTypeCategory.EXECUTABLE)
     );
-
-    // The mime types in those categories.
-    private static final Set<String> CATEGORY_MIME_TYPES = FILE_MIME_TYPE_CATEGORIES
-            .stream()
-            .flatMap((cat) -> cat.getRight().getMediaTypes().stream())
-            .collect(Collectors.toSet());
 
     private final LoadableLabel usageLabel = new LoadableLabel(Bundle.TypesPanel_usageLabel_title());
     private final LoadableLabel osLabel = new LoadableLabel(Bundle.TypesPanel_osLabel_title());
@@ -232,25 +224,49 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
         }
 
         // for each category of file types, get the counts of files
-        Stream<Pair<String, Long>> fileCategoryItems = FILE_MIME_TYPE_CATEGORIES
+        List<Pair<String, Long>> fileCategoryItems = FILE_MIME_TYPE_CATEGORIES
                 .stream()
-                .map((strCat)
-                        -> Pair.of(strCat.getLeft(),
-                        DataSourceMimeTypeSummary.getCountOfFilesForMimeTypes(dataSource, strCat.getRight().getMediaTypes())));
+                .map((strCat) -> {
+                    return Pair.of(strCat.getLeft(),
+                            getLongOrZero(DataSourceMimeTypeSummary.getCountOfFilesForMimeTypes(
+                                    dataSource, strCat.getRight().getMediaTypes())));
+                })
+                .collect(Collectors.toList());
 
-        // also get counts for other and not analayzed
-        Stream<Pair<String, Long>> otherItems = Stream.of(
-                Pair.of(Bundle.TypesPanel_fileMimeTypesChart_other_title(),
-                        DataSourceMimeTypeSummary.getCountOfFilesNotInMimeTypes(dataSource, CATEGORY_MIME_TYPES)),
-                Pair.of(Bundle.TypesPanel_fileMimeTypesChart_notAnalyzed_title(),
-                        DataSourceMimeTypeSummary.getCountOfFilesWithNoMimeType(dataSource))
-        );
+        // get a count of all files with no mime type
+        Long noMimeTypeCount = getLongOrZero(DataSourceMimeTypeSummary.getCountOfFilesWithNoMimeType(dataSource));
+
+        // get the sum of all counts for the known categories
+        Long categoryTotalCount = getLongOrZero(fileCategoryItems.stream()
+                .collect(Collectors.summingLong((pair) -> pair.getValue())));
+
+        // get a count of all regular files
+        Long allRegularFiles = getLongOrZero(DataSourceMimeTypeSummary.getCountOfAllRegularFiles(dataSource));
+
+        // create entry for mime types in other category
+        fileCategoryItems.add(Pair.of(Bundle.TypesPanel_fileMimeTypesChart_other_title(),
+                allRegularFiles - (categoryTotalCount + noMimeTypeCount)));
+
+        // create entry for not analyzed mime types category
+        fileCategoryItems.add(Pair.of(Bundle.TypesPanel_fileMimeTypesChart_notAnalyzed_title(),
+                noMimeTypeCount));
 
         // create pie chart items to provide to pie chart
-        return Stream.concat(fileCategoryItems, otherItems)
+        return fileCategoryItems.stream()
                 .filter(keyCount -> keyCount.getRight() != null && keyCount.getRight() > 0)
                 .map(keyCount -> new PieChartItem(keyCount.getLeft(), keyCount.getRight()))
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Returns the long value or zero if longVal is null.
+     *
+     * @param longVal The long value.
+     *
+     * @return The long value or 0 if provided value is null.
+     */
+    private static long getLongOrZero(Long longVal) {
+        return longVal == null ? 0 : longVal;
     }
 
     /**
@@ -261,7 +277,7 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
      *
      * @return The string value of the long.
      */
-    private String getStringOrZero(Long longVal) {
+    private static String getStringOrZero(Long longVal) {
         return longVal == null ? "0" : COMMA_FORMATTER.format(longVal);
     }
 
