@@ -77,8 +77,7 @@ public class DataSourceAnalysisSummary {
      *
      * @return The hashset set name with the number of hits in descending order.
      *
-     * @throws
-     * org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException
+     * @throws SleuthkitCaseProviderException
      * @throws TskCoreException
      */
     public List<Pair<String, Long>> getHashsetCounts(DataSource dataSource) throws SleuthkitCaseProviderException, TskCoreException {
@@ -92,8 +91,7 @@ public class DataSourceAnalysisSummary {
      *
      * @return The keyword set name with the number of hits in descending order.
      *
-     * @throws
-     * org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException
+     * @throws SleuthkitCaseProviderException
      * @throws TskCoreException
      */
     public List<Pair<String, Long>> getKeywordCounts(DataSource dataSource) throws SleuthkitCaseProviderException, TskCoreException {
@@ -112,8 +110,7 @@ public class DataSourceAnalysisSummary {
      * @return The interesting item set name with the number of hits in
      *         descending order.
      *
-     * @throws
-     * org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException
+     * @throws SleuthkitCaseProviderException
      * @throws TskCoreException
      */
     public List<Pair<String, Long>> getInterestingItemCounts(DataSource dataSource) throws SleuthkitCaseProviderException, TskCoreException {
@@ -131,8 +128,7 @@ public class DataSourceAnalysisSummary {
      *         value and the value is the count of items found. This list is
      *         sorted by the count descending max to min.
      *
-     * @throws
-     * org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException
+     * @throws SleuthkitCaseProviderException
      * @throws TskCoreException
      */
     private List<Pair<String, Long>> getCountsData(DataSource dataSource, BlackboardAttribute.Type keyType, ARTIFACT_TYPE... artifactTypes)
