@@ -26,13 +26,13 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.sleuthkit.autopsy.centralrepository.ingestmodule.CentralRepoIngestModuleFactory;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.IngestJobInfo;
-import org.sleuthkit.datamodel.IngestModuleInfo;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -160,8 +160,7 @@ public class DataSourcePastCasesSummary {
      *         instances that case appeared for the given artifact type. The
      *         case is sorted from max to min descending.
      *
-     * @throws
-     * org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException
+     * @throws SleuthkitCaseProviderException
      * @throws TskCoreException
      */
     private List<Pair<String, Long>> getPastCases(DataSource dataSource, ARTIFACT_TYPE artifactType)
@@ -215,8 +214,7 @@ public class DataSourcePastCasesSummary {
      *         where an ingest module matches the central repo ingest module
      *         display name.
      *
-     * @throws
-     * org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException
+     * @throws SleuthkitCaseProviderException
      * @throws TskCoreException
      */
     public boolean isCentralRepoIngested(DataSource dataSource)
@@ -245,8 +243,7 @@ public class DataSourcePastCasesSummary {
      *         instances that case appeared. The case is sorted from max to min
      *         descending.
      *
-     * @throws
-     * org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException
+     * @throws SleuthkitCaseProviderException
      * @throws TskCoreException
      */
     public List<Pair<String, Long>> getPastCasesWithNotableFile(DataSource dataSource)
@@ -264,8 +261,7 @@ public class DataSourcePastCasesSummary {
      *         instances that case appeared. The case is sorted from max to min
      *         descending.
      *
-     * @throws
-     * org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException
+     * @throws SleuthkitCaseProviderException
      * @throws TskCoreException
      */
     public List<Pair<String, Long>> getPastCasesWithSameId(DataSource dataSource)

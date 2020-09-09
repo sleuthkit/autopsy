@@ -45,7 +45,7 @@ import org.sleuthkit.datamodel.TskCoreException;
     "PastCasesPanel_caseColumn_title=Case",
     "PastCasesPanel_countColumn_title=Count",
     "PastCasesPanel_onNoCrIngest_message=No results will be shown because the Central Repository module was not run."
-    
+
 })
 public class PastCasesPanel extends BaseDataSourceSummaryPanel {
 
@@ -80,7 +80,7 @@ public class PastCasesPanel extends BaseDataSourceSummaryPanel {
     public PastCasesPanel() {
         this(new DataSourcePastCasesSummary());
     }
-    
+
     private final DataSourcePastCasesSummary pastCaseData;
 
     /**
@@ -88,7 +88,7 @@ public class PastCasesPanel extends BaseDataSourceSummaryPanel {
      */
     public PastCasesPanel(DataSourcePastCasesSummary pastCaseData) {
         this.pastCaseData = pastCaseData;
-        
+
         // set up data acquisition methods
         dataFetchComponents = Arrays.asList(
                 // hashset hits loading components
@@ -103,7 +103,7 @@ public class PastCasesPanel extends BaseDataSourceSummaryPanel {
 
         initComponents();
     }
-    
+
     @Override
     protected void onNewDataSource(DataSource dataSource) {
         // if no data source is present or the case is not open,
@@ -120,13 +120,13 @@ public class PastCasesPanel extends BaseDataSourceSummaryPanel {
         } catch (SleuthkitCaseProvider.SleuthkitCaseProviderException | TskCoreException ex) {
             logger.log(Level.WARNING, "There was an error while determining if dataSource has been central repo ingested.", ex);
         }
-        
+
         if (!centralRepoIngested) {
             // set tables to display loading screen
             this.tables.forEach((table) -> table.showMessage(Bundle.PastCasesPanel_onNoCrIngest_message()));
             return;
         }
-        
+
         // set tables to display loading screen
         this.tables.forEach((table) -> table.showDefaultLoadingMessage());
 
