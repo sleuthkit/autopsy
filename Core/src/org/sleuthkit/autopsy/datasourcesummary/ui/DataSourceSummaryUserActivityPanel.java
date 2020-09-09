@@ -66,7 +66,7 @@ import org.sleuthkit.datamodel.DataSource;
     "DataSourceSummaryUserActivityPanel_TopAccountTableModel_accountType_header=Account Type",
     "DataSourceSummaryUserActivityPanel_TopAccountTableModel_lastAccess_header=Last Accessed",})
 public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPanel {
-    
+
     private static final long serialVersionUID = 1L;
     private static final DateFormat DATETIME_FORMAT = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss", Locale.getDefault());
     private static final int TOP_PROGS_COUNT = 10;
@@ -207,7 +207,7 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPan
                     150
             )
     ));
-    
+
     private final List<JTablePanel<?>> tables = Arrays.asList(
             topProgramsTable,
             recentDomainsTable,
@@ -215,7 +215,7 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPan
             topDevicesAttachedTable,
             topAccountsTable
     );
-    
+
     private final List<DataFetchComponents<DataSource, ?>> dataFetchComponents;
     private final DataSourceTopProgramsSummary topProgramsData;
 
@@ -236,7 +236,7 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPan
     public DataSourceSummaryUserActivityPanel(
             DataSourceTopProgramsSummary topProgramsData,
             DataSourceUserActivitySummary userActivityData) {
-        
+
         this.topProgramsData = topProgramsData;
 
         // set up data acquisition methods
@@ -267,7 +267,7 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPan
                         (result) -> topAccountsTable.showDataFetchResult(result, JTablePanel.getDefaultErrorMessage(),
                                 Bundle.DataSourceSummaryUserActivityPanel_noDataExists()))
         );
-        
+
         initComponents();
     }
 
@@ -282,7 +282,7 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPan
     private String getShortFolderName(String path, String appName) {
         return this.topProgramsData.getShortFolderName(path, appName);
     }
-    
+
     @Override
     protected void onNewDataSource(DataSource dataSource) {
         // if no data source is present or the case is not open,
@@ -290,7 +290,7 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPan
         if (dataSource == null || !Case.isCaseOpen()) {
             this.dataFetchComponents.forEach((item) -> item.getResultHandler()
                     .accept(DataFetchResult.getSuccessResult(null)));
-            
+
         } else {
             // set tables to display loading screen
             this.tables.forEach((table) -> table.showDefaultLoadingMessage());
