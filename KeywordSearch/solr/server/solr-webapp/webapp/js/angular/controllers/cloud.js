@@ -381,7 +381,7 @@ var nodesSubController = function($scope, Collections, System, Metrics) {
           nodes[node]['jvmUptime'] = secondsForHumans(jvmUptime);
           nodes[node]['jvmUptimeSec'] = jvmUptime;
 
-          nodes[node]['uptime'] = s.system.uptime.replace(/.*up (.*?,.*?),.*/, "$1");
+          nodes[node]['uptime'] = (s.system.uptime || "unknown").replace(/.*up (.*?,.*?),.*/, "$1");
           nodes[node]['loadAvg'] = Math.round(s.system.systemLoadAverage * 100) / 100;
           nodes[node]['cpuPct'] = Math.ceil(s.system.processCpuLoad);
           nodes[node]['cpuPctStyle'] = styleForPct(Math.ceil(s.system.processCpuLoad));
@@ -530,15 +530,21 @@ var zkStatusSubController = function($scope, ZookeeperStatus) {
     $scope.initZookeeper = function() {
       ZookeeperStatus.monitor({}, function(data) {
         $scope.zkState = data.zkStatus;
-        $scope.mainKeys = ["ok", "clientPort", "zk_server_state", "zk_version", 
+        $scope.mainKeys = ["ok", "clientPort", "secureClientPort", "zk_server_state", "zk_version",
           "zk_approximate_data_size", "zk_znode_count", "zk_num_alive_connections"];
         $scope.detailKeys = ["dataDir", "dataLogDir", 
           "zk_avg_latency", "zk_max_file_descriptor_count", "zk_watch_count", 
           "zk_packets_sent", "zk_packets_received",
           "tickTime", "maxClientCnxns", "minSessionTimeout", "maxSessionTimeout"];
-        $scope.ensembleMainKeys = ["serverId", "electionPort", "quorumPort"];
+        $scope.ensembleMainKeys = ["serverId", "electionPort", "quorumPort", "role"];
         $scope.ensembleDetailKeys = ["peerType", "electionAlg", "initLimit", "syncLimit",
           "zk_followers", "zk_synced_followers", "zk_pending_syncs"];
+        $scope.notEmptyRow = function(key) {
+          for (hostId in $scope.zkState.details) {
+            if (key in $scope.zkState.details[hostId]) return true;
+          }
+          return false;
+        };
       });
     };
 
@@ -644,7 +650,7 @@ var graphSubController = function ($scope, Zookeeper) {
         Zookeeper.liveNodes(function (data) {
             var live_nodes = {};
             for (var c in data.tree[0].children) {
-                live_nodes[data.tree[0].children[c].data.title] = true;
+                live_nodes[data.tree[0].children[c].text] = true;
             }
 
             var params = {view: "graph"};
@@ -661,7 +667,7 @@ var graphSubController = function ($scope, Zookeeper) {
             }
 
             Zookeeper.clusterState(params, function (data) {
-                    eval("var state=" + data.znode.data); // @todo fix horrid means to parse JSON
+                    var state = $.parseJSON(data.znode.data);
 
                     var leaf_count = 0;
                     var graph_data = {

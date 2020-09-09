@@ -101,25 +101,21 @@
     <!--
       Default numeric field types. For faster range queries, consider the tint/tfloat/tlong/tdouble types.
     -->
-    <fieldType name="int" class="solr.IntPointField" precisionStep="0" omitNorms="true" positionIncrementGap="0"/>
-    <fieldType name="float" class="solr.FloatPointField" precisionStep="0" omitNorms="true" positionIncrementGap="0"/>
-    <fieldType name="long" class="solr.LongPointField" precisionStep="0" omitNorms="true" positionIncrementGap="0"/>
-    <fieldType name="double" class="solr.DoublePointField" precisionStep="0" omitNorms="true" positionIncrementGap="0"/>
+    <fieldType name="int" class="solr.IntPointField" omitNorms="true" positionIncrementGap="0"/>
+    <fieldType name="float" class="solr.FloatPointField" omitNorms="true" positionIncrementGap="0"/>
+    <fieldType name="long" class="solr.LongPointField" omitNorms="true" positionIncrementGap="0"/>
+    <fieldType name="double" class="solr.DoublePointField" omitNorms="true" positionIncrementGap="0"/>
 
     <!--
      Numeric field types that index each value at various levels of precision
      to accelerate range queries when the number of values between the range
      endpoints is large. See the javadoc for NumericRangeQuery for internal
      implementation details.
-
-     Smaller precisionStep values (specified in bits) will lead to more tokens
-     indexed per value, slightly larger index size, and faster range queries.
-     A precisionStep of 0 disables indexing at different precision levels.
     -->
-    <fieldType name="tint" class="solr.IntPointField" precisionStep="8" omitNorms="true" positionIncrementGap="0"/>
-    <fieldType name="tfloat" class="solr.FloatPointField" precisionStep="8" omitNorms="true" positionIncrementGap="0"/>
-    <fieldType name="tlong" class="solr.LongPointField" precisionStep="8" omitNorms="true" positionIncrementGap="0"/>
-    <fieldType name="tdouble" class="solr.DoublePointField" precisionStep="8" omitNorms="true" positionIncrementGap="0"/>
+    <fieldType name="tint" class="solr.IntPointField" omitNorms="true" positionIncrementGap="0"/>
+    <fieldType name="tfloat" class="solr.FloatPointField" omitNorms="true" positionIncrementGap="0"/>
+    <fieldType name="tlong" class="solr.LongPointField" omitNorms="true" positionIncrementGap="0"/>
+    <fieldType name="tdouble" class="solr.DoublePointField" omitNorms="true" positionIncrementGap="0"/>
 
     <!-- The format for this date field is of the form 1995-12-31T23:59:59Z, and
          is a more restricted form of the canonical representation of dateTime
@@ -143,10 +139,10 @@
 
          Note: For faster range queries, consider the tdate type
       -->
-    <fieldType name="date" class="solr.DatePointField" omitNorms="true" precisionStep="0" positionIncrementGap="0"/>
+    <fieldType name="date" class="solr.DatePointField" omitNorms="true" positionIncrementGap="0"/>
 
     <!-- A Trie based date field for faster date range queries and date faceting. -->
-    <fieldType name="tdate" class="solr.DatePointField" omitNorms="true" precisionStep="6" positionIncrementGap="0"/>
+    <fieldType name="tdate" class="solr.DatePointField" omitNorms="true" positionIncrementGap="0"/>
 
 
     <!--
@@ -486,7 +482,7 @@
     <fieldType name="point" class="solr.PointType" dimension="2" subFieldSuffix="_d"/>
 
     <!-- A specialized field for geospatial search. If indexed, this fieldType must not be multivalued. -->
-    <fieldType name="location" class="solr.LatLonPointSpatialField" subFieldSuffix="_coordinate"/>
+    <fieldType name="location" class="solr.LatLonType" subFieldSuffix="_coordinate"/>
 
    <!--
     A Geohash is a compact representation of a latitude longitude pair in a single field.
