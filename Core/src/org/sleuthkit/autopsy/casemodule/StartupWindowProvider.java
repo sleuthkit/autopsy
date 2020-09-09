@@ -59,20 +59,21 @@ public class StartupWindowProvider implements StartupWindowInterface {
 
     private void init() {
         if (startupWindowToUse == null) {
-
-            if (openCaseInUI()) {
-                new CommandLineOpenCaseManager().start();
-                return;
-            }
-
             // first check whether we are running from command line
             if (isRunningFromCommandLine()) {
-                // Autopsy is running from command line
-                logger.log(Level.INFO, "Running from command line"); //NON-NLS
-                startupWindowToUse = new CommandLineStartupWindow();
-                // kick off command line processing
-                new CommandLineIngestManager().start();
-                return;
+                
+                String defaultArg = getDefaultArgument();
+                if(defaultArg != null) {
+                   new CommandLineOpenCaseManager(defaultArg).start(); 
+                   return;
+                } else {
+                    // Autopsy is running from command line
+                    logger.log(Level.INFO, "Running from command line"); //NON-NLS
+                    startupWindowToUse = new CommandLineStartupWindow();
+                    // kick off command line processing
+                    new CommandLineIngestManager().start();
+                    return;
+                }
             }
 
             //discover the registered windows
@@ -123,41 +124,25 @@ public class StartupWindowProvider implements StartupWindowInterface {
      * @return True if running from command line, false otherwise
      */
     private boolean isRunningFromCommandLine() {
-
-        // first look up all OptionProcessors and see if running from command line option is set
-        Collection<? extends OptionProcessor> optionProcessors = Lookup.getDefault().lookupAll(OptionProcessor.class);
-        Iterator<? extends OptionProcessor> optionsIterator = optionProcessors.iterator();
-        while (optionsIterator.hasNext()) {
-            // find CommandLineOptionProcessor
-            OptionProcessor processor = optionsIterator.next();
-            if ((processor instanceof CommandLineOptionProcessor)) {
-                // check if we are running from command line            
-                return ((CommandLineOptionProcessor) processor).isRunFromCommandLine();
-            }
+        
+        CommandLineOptionProcessor processor = Lookup.getDefault().lookup(CommandLineOptionProcessor.class);
+         if(processor != null) {
+            return processor.isRunFromCommandLine();
         }
         return false;
     }
 
     /**
-     * Checks whether Autopsy was launched from the command line with the option
-     * to open an existing case.
-     *
-     * @return True if opening an existing case.
+     * Get the default argument from the CommandLineOptionProcessor.
+     * 
+     * @return If set, the default argument otherwise null. 
      */
-    private boolean openCaseInUI() {
-        // first look up all OptionProcessors and see if running from command line option is set
-        Collection<? extends OptionProcessor> optionProcessors = Lookup.getDefault().lookupAll(OptionProcessor.class);
-        Iterator<? extends OptionProcessor> optionsIterator = optionProcessors.iterator();
-        while (optionsIterator.hasNext()) {
-            // find CommandLineOptionProcessor
-            OptionProcessor processor = optionsIterator.next();
-            if ((processor instanceof OpenFromArguments)) {
-                // check if we are running from command line            
-                String arg = ((OpenFromArguments) processor).getDefaultArg();
-                return arg != null && !arg.isEmpty();
-            }
+    private String getDefaultArgument() {  
+        CommandLineOptionProcessor processor = Lookup.getDefault().lookup(CommandLineOptionProcessor.class);
+        if(processor != null) {
+            return processor.getDefaultArgument();
         }
-        return false;
+        return null;
     }
 
     @Override

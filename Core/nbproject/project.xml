@@ -748,8 +748,8 @@
                 <binary-origin>release\modules\ext\icepdf-core-6.2.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/activemq-all-5.11.1.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\activemq-all-5.11.1.jar</binary-origin>
+                <runtime-relative-path>ext/activemq-all-5.16.0.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\activemq-all-5.16.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/google-cloud-core-http-1.70.0.jar</runtime-relative-path>

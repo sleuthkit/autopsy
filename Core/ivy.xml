@@ -8,7 +8,7 @@
     <dependencies >
         <dependency conf="core->default" org="com.github.vlsi.mxgraph" name="jgraphx" rev="4.1.0" />
         
-        <dependency conf="core->default" org="org.apache.activemq" name="activemq-all" rev="5.11.1"/>
+        <dependency conf="core->default" org="org.apache.activemq" name="activemq-all" rev="5.16.0"/>
         <dependency conf="core->default" org="org.apache.curator" name="curator-client" rev="2.8.0"/>
         <dependency conf="core->default" org="org.apache.curator" name="curator-framework" rev="2.8.0"/>
         <dependency conf="core->default" org="org.apache.curator" name="curator-recipes" rev="2.8.0"/>
