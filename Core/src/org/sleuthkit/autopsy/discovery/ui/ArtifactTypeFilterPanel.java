@@ -106,6 +106,9 @@ class ArtifactTypeFilterPanel extends AbstractDiscoveryFilterPanel {
         if (artifactTypeCheckbox.isEnabled() && artifactTypeCheckbox.isSelected()) {
             artifactTypeScrollPane.setEnabled(true);
             artifactList.setEnabled(true);
+             if (indicesSelected != null) {
+                artifactList.setSelectedIndices(indicesSelected);
+            }
         } else {
             artifactTypeScrollPane.setEnabled(false);
             artifactList.setEnabled(false);
@@ -119,7 +122,7 @@ class ArtifactTypeFilterPanel extends AbstractDiscoveryFilterPanel {
 
     @Override
     JList<?> getList() {
-        return null;
+        return artifactList;
     }
 
     @Override
@@ -129,7 +132,10 @@ class ArtifactTypeFilterPanel extends AbstractDiscoveryFilterPanel {
 
     @Override
     String checkForError() {
-        return "Domain search is not implemented.";
+        if (artifactTypeCheckbox.isSelected() && artifactList.getSelectedValuesList().isEmpty()) {
+              return "At least one Result type must be selected.";
+        }
+        return "";
     }
 
     @Override

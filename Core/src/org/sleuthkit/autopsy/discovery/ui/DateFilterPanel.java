@@ -17,7 +17,6 @@
  * limitations under the License.
  */
 package org.sleuthkit.autopsy.discovery.ui;
-
 import org.sleuthkit.autopsy.discovery.search.AbstractFilter;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
@@ -74,6 +73,7 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
             }
         });
 
+        daysSpinner.setModel(new javax.swing.SpinnerNumberModel(1, 1, null, 1));
         daysSpinner.setEnabled(false);
         daysSpinner.setPreferredSize(new java.awt.Dimension(75, 26));
         daysSpinner.setValue(7);
@@ -82,11 +82,12 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
         daysLabel.setEnabled(false);
 
         buttonGroup1.add(mostRecentRadioButton);
+        mostRecentRadioButton.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(mostRecentRadioButton, org.openide.util.NbBundle.getMessage(DateFilterPanel.class, "DateFilterPanel.mostRecentRadioButton.text")); // NOI18N
         mostRecentRadioButton.setEnabled(false);
-        mostRecentRadioButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mostRecentRadioButtonActionPerformed(evt);
+        mostRecentRadioButton.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                mostRecentRadioButtonStateChanged(evt);
             }
         });
 
@@ -116,9 +117,9 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
 
         buttonGroup1.add(rangeRadioButton);
         rangeRadioButton.setEnabled(false);
-        rangeRadioButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                rangeRadioButtonActionPerformed(evt);
+        rangeRadioButton.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                rangeRadioButtonStateChanged(evt);
             }
         });
 
@@ -182,31 +183,31 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void startCheckBoxStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_startCheckBoxStateChanged
-        startDatePicker.setEnabled(startCheckBox.isSelected());
+        startDatePicker.setEnabled(startCheckBox.isEnabled() && startCheckBox.isSelected());
     }//GEN-LAST:event_startCheckBoxStateChanged
 
     private void endCheckBoxStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_endCheckBoxStateChanged
-        endDatePicker.setEnabled(endCheckBox.isSelected());
+        endDatePicker.setEnabled(endCheckBox.isEnabled() && endCheckBox.isSelected());
     }//GEN-LAST:event_endCheckBoxStateChanged
 
-    private void mostRecentRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mostRecentRadioButtonActionPerformed
-        startCheckBox.setEnabled(false);
-        endCheckBox.setEnabled(false);
-        daysSpinner.setEnabled(true);
-        daysLabel.setEnabled(true);
-    }//GEN-LAST:event_mostRecentRadioButtonActionPerformed
-
-    private void rangeRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rangeRadioButtonActionPerformed
-        startCheckBox.setEnabled(true);
-        endCheckBox.setEnabled(true);
-        daysSpinner.setEnabled(false);
-        daysLabel.setEnabled(false);
-    }//GEN-LAST:event_rangeRadioButtonActionPerformed
-
     private void dateFilterCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_dateFilterCheckboxActionPerformed
-        mostRecentRadioButton.setEnabled(dateFilterCheckbox.isSelected());
         rangeRadioButton.setEnabled(dateFilterCheckbox.isSelected());
+        mostRecentRadioButton.setEnabled(dateFilterCheckbox.isSelected());
+        rangeRadioButton.firePropertyChange("DateFilterChange", true, false);
+        mostRecentRadioButton.firePropertyChange("DateFilterChange", true, false);
     }//GEN-LAST:event_dateFilterCheckboxActionPerformed
+
+    private void mostRecentRadioButtonStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_mostRecentRadioButtonStateChanged
+        daysSpinner.setEnabled(mostRecentRadioButton.isSelected());
+        daysLabel.setEnabled(mostRecentRadioButton.isSelected());
+    }//GEN-LAST:event_mostRecentRadioButtonStateChanged
+
+    private void rangeRadioButtonStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_rangeRadioButtonStateChanged
+        startCheckBox.setEnabled(rangeRadioButton.isEnabled() && rangeRadioButton.isSelected());
+        endCheckBox.setEnabled(rangeRadioButton.isEnabled() &&rangeRadioButton.isSelected());
+        endCheckBoxStateChanged(evt);
+        startCheckBoxStateChanged(evt);
+    }//GEN-LAST:event_rangeRadioButtonStateChanged
 
     @Override
     void configurePanel(boolean selected, int[] indicesSelected) {
@@ -218,12 +219,6 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
         } else {
             mostRecentRadioButton.setEnabled(false);
             rangeRadioButton.setEnabled(false);
-            daysLabel.setEnabled(false);
-            daysSpinner.setEnabled(false);
-            startCheckBox.setEnabled(false);
-            endCheckBox.setEnabled(false);
-            startDatePicker.setEnabled(false);
-            endDatePicker.setEnabled(false);
         }
     }
 
@@ -244,15 +239,26 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
 
     @Override
     String checkForError() {
-        return "Domain search is not implemented.";
+        if (dateFilterCheckbox.isSelected()) {
+            if (!(rangeRadioButton.isSelected() || mostRecentRadioButton.isSelected())) {
+                return "Range or Only Last must be selected";
+            } else if (rangeRadioButton.isSelected()) {
+                if (!startCheckBox.isSelected() && !endCheckBox.isSelected()) {
+                    return "A start or end date must be specified to use the range filter";
+                } else if (startCheckBox.isSelected() && startDatePicker.getDate() == null) {
+                    return "A start date must be specified to use the start date option of the range filter";
+                } else if (endCheckBox.isSelected() && endDatePicker.getDate() == null) {
+                    return "An end date must be specified to use the end date option of the range filter";
+                }
+            }
+        }
+        return "";
     }
 
     @Override
     AbstractFilter getFilter() {
         return null;
     }
-
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.JCheckBox dateFilterCheckbox;
