@@ -76,7 +76,8 @@ final class SearchWorker extends SwingWorker<Void, Void> {
         try {
             // Run the search
             if (searchType == SearchData.Type.DOMAIN) {
-                results.putAll(DomainSearch.getGroupSizes(System.getProperty(USER_NAME_PROPERTY), filters,
+                DomainSearch domainSearch = new DomainSearch();
+                results.putAll(domainSearch.getGroupSizes(System.getProperty(USER_NAME_PROPERTY), filters,
                         groupingAttr,
                         groupSortAlgorithm,
                         fileSort,

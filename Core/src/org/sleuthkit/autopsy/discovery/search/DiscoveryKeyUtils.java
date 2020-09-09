@@ -23,9 +23,11 @@ import java.util.List;
 import java.util.Objects;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -41,6 +43,12 @@ public class DiscoveryKeyUtils {
     static class SearchKey implements Comparable<SearchKey> {
 
         private final String keyString;
+        private final Group.GroupSortingAlgorithm groupSortingType;
+        private final DiscoveryAttributes.AttributeType groupAttributeType;
+        private final ResultsSorter.SortingMethod fileSortingMethod;
+        private final List<AbstractFilter> filters;
+        private final SleuthkitCase sleuthkitCase;
+        private final CentralRepository centralRepository;
 
         /**
          * Construct a new SearchKey with all information that defines a search.
@@ -50,11 +58,19 @@ public class DiscoveryKeyUtils {
          * @param groupAttributeType The AttributeType to group by.
          * @param groupSortingType   The algorithm to sort the groups by.
          * @param fileSortingMethod  The method to sort the files by.
+         * @param sleuthkitCase      The SleuthkitCase being searched.
+         * @param centralRepository  The Central Repository being searched.
          */
         SearchKey(String userName, List<AbstractFilter> filters,
                 DiscoveryAttributes.AttributeType groupAttributeType,
                 Group.GroupSortingAlgorithm groupSortingType,
-                ResultsSorter.SortingMethod fileSortingMethod) {
+                ResultsSorter.SortingMethod fileSortingMethod, 
+                SleuthkitCase sleuthkitCase, CentralRepository centralRepository) {
+            this.groupAttributeType = groupAttributeType;
+            this.groupSortingType = groupSortingType;
+            this.fileSortingMethod = fileSortingMethod;
+            this.filters = filters;
+            
             StringBuilder searchStringBuilder = new StringBuilder();
             searchStringBuilder.append(userName);
             for (AbstractFilter filter : filters) {
@@ -62,6 +78,19 @@ public class DiscoveryKeyUtils {
             }
             searchStringBuilder.append(groupAttributeType).append(groupSortingType).append(fileSortingMethod);
             keyString = searchStringBuilder.toString();
+            this.sleuthkitCase = sleuthkitCase;
+            this.centralRepository = centralRepository;
+        }
+        
+        /**
+         * Construct a SearchKey without a SleuthkitCase or CentralRepositry instance.
+         */
+        SearchKey(String userName, List<AbstractFilter> filters,
+                DiscoveryAttributes.AttributeType groupAttributeType,
+                Group.GroupSortingAlgorithm groupSortingType,
+                ResultsSorter.SortingMethod fileSortingMethod) {
+            this(userName, filters, groupAttributeType, groupSortingType, 
+                    fileSortingMethod, null, null);
         }
 
         @Override
@@ -80,6 +109,11 @@ public class DiscoveryKeyUtils {
             }
 
             SearchKey otherSearchKey = (SearchKey) otherKey;
+            if (this.sleuthkitCase != otherSearchKey.getSleuthkitCase() || 
+                    this.centralRepository != otherSearchKey.getCentralRepository()) {
+                return false;
+            }
+            
             return getKeyString().equals(otherSearchKey.getKeyString());
         }
 
@@ -95,6 +129,30 @@ public class DiscoveryKeyUtils {
          */
         String getKeyString() {
             return keyString;
+        }
+        
+        List<AbstractFilter> getFilters() {
+            return Collections.unmodifiableList(this.filters);
+        }
+        
+        Group.GroupSortingAlgorithm getGroupSortingType() {
+            return groupSortingType;
+        }
+
+        DiscoveryAttributes.AttributeType getGroupAttributeType() {
+            return groupAttributeType;
+        }
+
+        ResultsSorter.SortingMethod getFileSortingMethod() {
+            return fileSortingMethod;
+        }
+        
+        SleuthkitCase getSleuthkitCase() {
+            return this.sleuthkitCase;
+        }
+        
+        CentralRepository getCentralRepository() {
+            return this.centralRepository;
         }
     }
 

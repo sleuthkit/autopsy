@@ -18,25 +18,30 @@
  */
 package org.sleuthkit.autopsy.discovery.search;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
-import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.discovery.search.DiscoveryKeyUtils.GroupKey;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
  * Main class to perform the domain search.
  */
 public class DomainSearch {
-
-    private final static Logger logger = Logger.getLogger(DomainSearch.class.getName());
-    private static final int MAXIMUM_CACHE_SIZE = 10;
-    private static final Cache<DiscoveryKeyUtils.SearchKey, Map<DiscoveryKeyUtils.GroupKey, List<Result>>> searchCache = CacheBuilder.newBuilder()
-            .maximumSize(MAXIMUM_CACHE_SIZE)
-            .build();
-
+    
+    private final DomainSearchCache searchCache;
+    
+    public DomainSearch() {
+        this(new DomainSearchCache());
+    }
+    
+    DomainSearch(DomainSearchCache cache) {
+        this.searchCache = cache;
+    }
+    
     /**
      * Run the domain search to get the group keys and sizes. Clears cache of
      * search results, caching new results for access at later time.
@@ -55,13 +60,24 @@ public class DomainSearch {
      *
      * @throws DiscoveryException
      */
-    public static Map<DiscoveryKeyUtils.GroupKey, Integer> getGroupSizes(String userName,
+    public Map<GroupKey, Integer> getGroupSizes(String userName,
             List<AbstractFilter> filters,
             DiscoveryAttributes.AttributeType groupAttributeType,
             Group.GroupSortingAlgorithm groupSortingType,
             ResultsSorter.SortingMethod domainSortingMethod,
             SleuthkitCase caseDb, CentralRepository centralRepoDb) throws DiscoveryException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        
+        final Map<GroupKey, List<Result>> searchResults = searchCache.get(
+                userName, filters, groupAttributeType, groupSortingType, 
+                domainSortingMethod, caseDb, centralRepoDb);
+
+        // Transform the cached results into a map of group key to group size.
+        final LinkedHashMap<GroupKey, Integer> groupSizes = new LinkedHashMap<>();
+        for (GroupKey groupKey : searchResults.keySet()) {
+            groupSizes.put(groupKey, searchResults.get(groupKey).size());
+        }
+
+        return groupSizes;
     }
 
     /**
@@ -86,49 +102,25 @@ public class DomainSearch {
      *
      * @throws DiscoveryException
      */
-    public static List<Result> getDomainsInGroup(String userName,
+    public List<Result> getDomainsInGroup(String userName,
             List<AbstractFilter> filters,
             DiscoveryAttributes.AttributeType groupAttributeType,
             Group.GroupSortingAlgorithm groupSortingType,
             ResultsSorter.SortingMethod domainSortingMethod,
-            DiscoveryKeyUtils.GroupKey groupKey,
-            int startingEntry,
-            int numberOfEntries,
+            GroupKey groupKey, int startingEntry, int numberOfEntries,
             SleuthkitCase caseDb, CentralRepository centralRepoDb) throws DiscoveryException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
+        
+        final Map<GroupKey, List<Result>> searchResults = searchCache.get(
+                userName, filters, groupAttributeType, groupSortingType, 
+                domainSortingMethod, caseDb, centralRepoDb);
+        final List<Result> domainsInGroup = searchResults.get(groupKey);
 
-    /**
-     * Run the Domain search. Caching new results for access at later time.
-     *
-     * @param userName           The name of the user performing the search.
-     * @param filters            The filters to apply
-     * @param groupAttributeType The attribute to use for grouping
-     * @param groupSortingType   The method to use to sort the groups
-     * @param domainSortingMethod  The method to use to sort the domains within
-     *                           the groups
-     * @param caseDb             The case database
-     * @param centralRepoDb      The central repository database. Can be null if
-     *                           not needed.
-     *
-     * @return A LinkedHashMap grouped and sorted according to the parameters
-     *
-     * @throws DiscoveryException
-     */
-    private static Map<DiscoveryKeyUtils.GroupKey, List<Result>> runDomainSearch(String userName,
-            List<AbstractFilter> filters,
-            DiscoveryAttributes.AttributeType groupAttributeType,
-            Group.GroupSortingAlgorithm groupSortingType,
-            ResultsSorter.SortingMethod domainSortingMethod,
-            SleuthkitCase caseDb, CentralRepository centralRepoDb) throws DiscoveryException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
+        final List<Result> page = new ArrayList<>();
+        for (int i = startingEntry; (i < startingEntry + numberOfEntries)
+                && (i < domainsInGroup.size()); i++) {
+            page.add(domainsInGroup.get(i));
+        }
 
-    /**
-     * Private constructor for DomainSearch class.
-     */
-    private DomainSearch() {
-        // Class should not be instantiated
+        return page;
     }
-
 }

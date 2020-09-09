@@ -34,6 +34,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.InstanceTableCallback;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -248,9 +249,10 @@ public class DiscoveryAttributes {
          * @param centralRepoDb The central repository currently in use.
          */
         private void processResultFilesForCR(List<Result> results,
-                CentralRepository centralRepoDb) {
+                CentralRepository centralRepoDb) throws DiscoveryException {
             List<ResultFile> currentFiles = new ArrayList<>();
             Set<String> hashesToLookUp = new HashSet<>();
+            
             for (Result result : results) {
                 if (result.getKnown() == TskData.FileKnown.KNOWN) {
                     result.setFrequency(SearchData.Frequency.KNOWN);
@@ -263,7 +265,20 @@ public class DiscoveryAttributes {
                         hashesToLookUp.add(file.getFirstInstance().getMd5Hash());
                         currentFiles.add(file);
                     }
+                } else {
+                    ResultDomain domain = (ResultDomain) result;
+                    try {
+                        CorrelationAttributeInstance.Type domainAttributeType =
+                                centralRepoDb.getCorrelationTypeById(CorrelationAttributeInstance.DOMAIN_TYPE_ID);
+                        Long count = centralRepoDb.getCountArtifactInstancesByTypeValue(domainAttributeType, domain.getDomain());
+                        domain.setFrequency(SearchData.Frequency.fromCount(count));
+                    } catch (CentralRepoException ex) {
+                        throw new DiscoveryException("Error encountered querying the central repository.", ex);
+                    } catch (CorrelationAttributeNormalizationException ex) {
+                        logger.log(Level.INFO, "Domain [%s] could not be normalized for central repository querying, skipping...", domain.getDomain());
+                    }
                 }
+                
                 if (hashesToLookUp.size() >= BATCH_SIZE) {
                     computeFrequency(hashesToLookUp, currentFiles, centralRepoDb);
 

@@ -66,6 +66,9 @@ public class ResultsSorter implements Comparator<Result> {
             case BY_FILE_NAME:
                 comparators.add(getFileNameComparator());
                 break;
+            case BY_DOMAIN_NAME:
+                comparators.add(getDomainNameComparator());
+                break;
             default:
                 // The default comparator will be added afterward
                 break;
@@ -226,6 +229,21 @@ public class ResultsSorter implements Comparator<Result> {
             return compareStrings(((ResultFile) result1).getFirstInstance().getName().toLowerCase(), (((ResultFile) result2).getFirstInstance().getName().toLowerCase()));
         };
     }
+    
+    /**
+     * Sorts domain names in lexographical order, ignoring case.
+     */
+    private static Comparator<Result> getDomainNameComparator() {
+        return (Result domain1, Result domain2) -> {
+            if(domain1.getType() != SearchData.Type.DOMAIN) {
+                return 0;
+            }
+            
+            ResultDomain first = (ResultDomain) domain1;
+            ResultDomain second = (ResultDomain) domain2;
+            return compareStrings(first.getDomain().toLowerCase(), second.getDomain().toLowerCase());
+        };
+    }
 
     /**
      * A final default comparison between two ResultFile objects. Currently this
@@ -278,7 +296,8 @@ public class ResultsSorter implements Comparator<Result> {
         "FileSorter.SortingMethod.filetype.displayName=File Type",
         "FileSorter.SortingMethod.frequency.displayName=Central Repo Frequency",
         "FileSorter.SortingMethod.keywordlist.displayName=Keyword List Names",
-        "FileSorter.SortingMethod.fullPath.displayName=Full Path"})
+        "FileSorter.SortingMethod.fullPath.displayName=Full Path",
+        "FileSorter.SortingMethod.domain.displayName=Domain"})
     public enum SortingMethod {
         BY_FILE_NAME(new ArrayList<>(),
                 Bundle.FileSorter_SortingMethod_filename_displayName()), // Sort alphabetically by file name
@@ -293,7 +312,9 @@ public class ResultsSorter implements Comparator<Result> {
         BY_KEYWORD_LIST_NAMES(Arrays.asList(new DiscoveryAttributes.KeywordListAttribute()),
                 Bundle.FileSorter_SortingMethod_keywordlist_displayName()), // Sort alphabetically by list of keyword list names found
         BY_FULL_PATH(new ArrayList<>(),
-                Bundle.FileSorter_SortingMethod_fullPath_displayName());       // Sort alphabetically by path
+                Bundle.FileSorter_SortingMethod_fullPath_displayName()),       // Sort alphabetically by path
+        BY_DOMAIN_NAME(new ArrayList<>(),
+                Bundle.FileSorter_SortingMethod_domain_displayName());
 
         private final String displayName;
         private final List<DiscoveryAttributes.AttributeType> requiredAttributes;
