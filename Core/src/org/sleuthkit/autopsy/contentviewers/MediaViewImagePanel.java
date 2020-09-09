@@ -117,17 +117,21 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     private static final List<String> supportedExtensions = ImageUtils.getSupportedImageExtensions().stream()
             .map("."::concat) //NOI18N
             .collect(Collectors.toList());
-
-    private final boolean fxInited;
     
     /*
-     * JFX
+     * JFX components
      */
     private final ProgressBar progressBar = new ProgressBar();
     private final MaskerPane maskerPane = new MaskerPane();
+    private Group masterGroup;
+    private ImageTagsGroup tagsGroup;
+    private ImageTagCreator imageTagCreator;
+    private ImageView fxImageView;
+    private ScrollPane scrollPane;
+    private Task<Image> readImageTask;
     
     /*
-     * Swing
+     * Swing components
      */
     private final JPopupMenu imageTaggingOptions = new JPopupMenu();
     private final JMenuItem createTagMenuItem;
@@ -136,22 +140,12 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     private final JMenuItem exportTagsMenuItem;
     private final JFileChooser exportChooser;
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
-
-    /*
-     * JFX
-     */
-    private Group masterGroup;
-    private ImageTagsGroup tagsGroup;
-    private ImageTagCreator imageTagCreator;
-    private ImageView fxImageView;
-    private ScrollPane scrollPane;
-    private Task<Image> readImageTask;
-
-    /*
-     * Swing
-     */    
     private JFXPanel fxPanel;
         
+    /*
+     * State
+     */
+    private final boolean fxInited;
     private double zoomRatio;
     private double rotation; // Can be 0, 90, 180, and 270.
     private boolean autoResize = true; // Auto resize when the user changes the size of the content viewer unless the user has used the zoom buttons.
