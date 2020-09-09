@@ -77,4 +77,5 @@ MapPanel.zoomInBtn.text=
 MapPanel.zoomOutBtn.text=
 GeoFilterPanel.showLabel.text=Show:
 GeoFilterPanel.showLabel.toolTipText=Show:
+GeoFilterPanel.atCBPanel.AccessibleContext.accessibleName=
 WaypointExtractAction_label=Extract Files(s)

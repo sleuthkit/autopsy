@@ -275,6 +275,21 @@ final class AutoIngestJobLogger {
     void logIngestJobSettingsErrors() throws AutoIngestJobLoggerException, InterruptedException {
         log(MessageCategory.ERROR, "Failed to analyze data source due to settings errors");
     }
+    
+    /**
+     * Logs failure to analyze a data source, possibly due to ingest job settings errors.
+     * Used with streaming ingest since incorrect settings are the most likely cause
+     * of the error.
+     *
+     * @throws AutoIngestJobLoggerException if there is an error writing the log
+     *                                      message.
+     * @throws InterruptedException         if interrupted while blocked waiting
+     *                                      to acquire an exclusive lock on the
+     *                                      log file.
+     */
+    void logProbableIngestJobSettingsErrors() throws AutoIngestJobLoggerException, InterruptedException {
+        log(MessageCategory.ERROR, "Failed to analyze data source, probably due to ingest settings errors");
+    }    
 
     /**
      * Logs failure to analyze a data source due to ingest module startup
