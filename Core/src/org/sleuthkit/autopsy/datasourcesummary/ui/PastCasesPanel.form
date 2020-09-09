@@ -35,6 +35,13 @@
       <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
       <SubComponents>
         <Container class="javax.swing.JPanel" name="mainContentPanel">
+          <Properties>
+            <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
+              <Border info="org.netbeans.modules.form.compat2.border.EmptyBorderInfo">
+                <EmptyBorder bottom="10" left="10" right="10" top="10"/>
+              </Border>
+            </Property>
+          </Properties>
           <AuxValues>
             <AuxValue name="JavaCodeGenerator_VariableLocal" type="java.lang.Boolean" value="true"/>
             <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="0"/>
@@ -80,6 +87,7 @@
             </Component>
             <Container class="javax.swing.JPanel" name="notableFilePanel">
               <Properties>
+                <Property name="alignmentX" type="float" value="0.0"/>
                 <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
                   <Dimension value="[32767, 106]"/>
                 </Property>
@@ -87,7 +95,7 @@
                   <Dimension value="[100, 106]"/>
                 </Property>
                 <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-                  <Dimension value="[32767, 106]"/>
+                  <Dimension value="[100, 106]"/>
                 </Property>
               </Properties>
               <AuxValues>
@@ -147,6 +155,7 @@
             </Component>
             <Container class="javax.swing.JPanel" name="sameIdPanel">
               <Properties>
+                <Property name="alignmentX" type="float" value="0.0"/>
                 <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
                   <Dimension value="[32767, 106]"/>
                 </Property>
@@ -154,7 +163,7 @@
                   <Dimension value="[100, 106]"/>
                 </Property>
                 <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-                  <Dimension value="[32767, 106]"/>
+                  <Dimension value="[100, 106]"/>
                 </Property>
               </Properties>
               <AuxValues>

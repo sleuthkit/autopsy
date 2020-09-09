@@ -20,11 +20,14 @@ package org.sleuthkit.autopsy.datasourcesummary.ui;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourcePastCasesSummary;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer.DefaultCellModel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
@@ -32,6 +35,7 @@ import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetch
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel.ColumnModel;
 import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * A tab shown in data source summary displaying information about a datasource
@@ -39,11 +43,14 @@ import org.sleuthkit.datamodel.DataSource;
  */
 @Messages({
     "PastCasesPanel_caseColumn_title=Case",
-    "PastCasesPanel_countColumn_title=Count"
+    "PastCasesPanel_countColumn_title=Count",
+    "PastCasesPanel_onNoCrIngest_message=No results will be shown because the Central Repository module was not run."
+    
 })
 public class PastCasesPanel extends BaseDataSourceSummaryPanel {
 
     private static final long serialVersionUID = 1L;
+    private static final Logger logger = Logger.getLogger(PastCasesPanel.class.getName());
 
     private static final ColumnModel<Pair<String, Long>> CASE_COL = new ColumnModel<>(
             Bundle.PastCasesPanel_caseColumn_title(),
@@ -74,12 +81,15 @@ public class PastCasesPanel extends BaseDataSourceSummaryPanel {
         this(new DataSourcePastCasesSummary());
     }
     
-    
+    private final DataSourcePastCasesSummary pastCaseData;
+
     /**
      * Creates new form PastCasesPanel
      */
     public PastCasesPanel(DataSourcePastCasesSummary pastCaseData) {
-                // set up data acquisition methods
+        this.pastCaseData = pastCaseData;
+        
+        // set up data acquisition methods
         dataFetchComponents = Arrays.asList(
                 // hashset hits loading components
                 new DataFetchWorker.DataFetchComponents<>(
@@ -90,10 +100,10 @@ public class PastCasesPanel extends BaseDataSourceSummaryPanel {
                         (dataSource) -> pastCaseData.getPastCasesWithSameId(dataSource),
                         (result) -> sameIdTable.showDataFetchResult(result))
         );
-        
+
         initComponents();
     }
-
+    
     @Override
     protected void onNewDataSource(DataSource dataSource) {
         // if no data source is present or the case is not open,
@@ -101,20 +111,34 @@ public class PastCasesPanel extends BaseDataSourceSummaryPanel {
         if (dataSource == null || !Case.isCaseOpen()) {
             this.dataFetchComponents.forEach((item) -> item.getResultHandler()
                     .accept(DataFetchResult.getSuccessResult(null)));
-
-        } else {
-            // set tables to display loading screen
-            this.tables.forEach((table) -> table.showDefaultLoadingMessage());
-
-            // create swing workers to run for each table
-            List<DataFetchWorker<?, ?>> workers = dataFetchComponents
-                    .stream()
-                    .map((components) -> new DataFetchWorker<>(components, dataSource))
-                    .collect(Collectors.toList());
-
-            // submit swing workers to run
-            submit(workers);
+            return;
         }
+
+        boolean centralRepoIngested = false;
+        try {
+            centralRepoIngested = this.pastCaseData.isCentralRepoIngested(dataSource);
+        } catch (SleuthkitCaseProvider.SleuthkitCaseProviderException | TskCoreException ex) {
+            logger.log(Level.WARNING, "There was an error while determining if dataSource has been central repo ingested.", ex);
+        }
+        
+        if (!centralRepoIngested) {
+            // set tables to display loading screen
+            this.tables.forEach((table) -> table.showMessage(Bundle.PastCasesPanel_onNoCrIngest_message()));
+            return;
+        }
+        
+        // set tables to display loading screen
+        this.tables.forEach((table) -> table.showDefaultLoadingMessage());
+
+        // create swing workers to run for each table
+        List<DataFetchWorker<?, ?>> workers = dataFetchComponents
+                .stream()
+                .map((components) -> new DataFetchWorker<>(components, dataSource))
+                .collect(Collectors.toList());
+
+        // submit swing workers to run
+        submit(workers);
+
     }
 
     /**
@@ -137,6 +161,7 @@ public class PastCasesPanel extends BaseDataSourceSummaryPanel {
         javax.swing.JPanel sameIdPanel = sameIdTable;
         javax.swing.Box.Filler filler5 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 32767));
 
+        mainContentPanel.setBorder(javax.swing.BorderFactory.createEmptyBorder(10, 10, 10, 10));
         mainContentPanel.setLayout(new javax.swing.BoxLayout(mainContentPanel, javax.swing.BoxLayout.PAGE_AXIS));
 
         org.openide.awt.Mnemonics.setLocalizedText(notableFileLabel, org.openide.util.NbBundle.getMessage(PastCasesPanel.class, "PastCasesPanel.notableFileLabel.text")); // NOI18N
@@ -145,9 +170,10 @@ public class PastCasesPanel extends BaseDataSourceSummaryPanel {
 
         mainContentPanel.add(filler1);
 
+        notableFilePanel.setAlignmentX(0.0F);
         notableFilePanel.setMaximumSize(new java.awt.Dimension(32767, 106));
         notableFilePanel.setMinimumSize(new java.awt.Dimension(100, 106));
-        notableFilePanel.setPreferredSize(new java.awt.Dimension(32767, 106));
+        notableFilePanel.setPreferredSize(new java.awt.Dimension(100, 106));
         mainContentPanel.add(notableFilePanel);
         mainContentPanel.add(filler2);
 
@@ -155,9 +181,10 @@ public class PastCasesPanel extends BaseDataSourceSummaryPanel {
         mainContentPanel.add(sameIdLabel);
         mainContentPanel.add(filler3);
 
+        sameIdPanel.setAlignmentX(0.0F);
         sameIdPanel.setMaximumSize(new java.awt.Dimension(32767, 106));
         sameIdPanel.setMinimumSize(new java.awt.Dimension(100, 106));
-        sameIdPanel.setPreferredSize(new java.awt.Dimension(32767, 106));
+        sameIdPanel.setPreferredSize(new java.awt.Dimension(100, 106));
         mainContentPanel.add(sameIdPanel);
         mainContentPanel.add(filler5);
 
