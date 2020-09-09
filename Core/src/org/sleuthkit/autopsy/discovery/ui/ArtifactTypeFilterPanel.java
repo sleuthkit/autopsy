@@ -18,12 +18,15 @@
  */
 package org.sleuthkit.autopsy.discovery.ui;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.sleuthkit.autopsy.discovery.search.AbstractFilter;
 import javax.swing.DefaultListModel;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import org.sleuthkit.autopsy.discovery.search.SearchData;
+import org.sleuthkit.autopsy.discovery.search.SearchFiltering.ArtifactTypeFilter;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
@@ -106,7 +109,7 @@ class ArtifactTypeFilterPanel extends AbstractDiscoveryFilterPanel {
         if (artifactTypeCheckbox.isEnabled() && artifactTypeCheckbox.isSelected()) {
             artifactTypeScrollPane.setEnabled(true);
             artifactList.setEnabled(true);
-             if (indicesSelected != null) {
+            if (indicesSelected != null) {
                 artifactList.setSelectedIndices(indicesSelected);
             }
         } else {
@@ -133,13 +136,20 @@ class ArtifactTypeFilterPanel extends AbstractDiscoveryFilterPanel {
     @Override
     String checkForError() {
         if (artifactTypeCheckbox.isSelected() && artifactList.getSelectedValuesList().isEmpty()) {
-              return "At least one Result type must be selected.";
+            return "At least one Result type must be selected.";
         }
         return "";
     }
 
     @Override
     AbstractFilter getFilter() {
+        if (artifactTypeCheckbox.isSelected() && !artifactList.getSelectedValuesList().isEmpty()) {
+            List<BlackboardArtifact.ARTIFACT_TYPE> artifactTypeList = new ArrayList<>();
+            for (ArtifactTypeItem item : artifactList.getSelectedValuesList()) {
+                artifactTypeList.add(item.getArtifactType());
+            }
+            return new ArtifactTypeFilter(artifactTypeList);
+        }
         return null;
     }
 
