@@ -17,6 +17,11 @@
  * limitations under the License.
  */
 package org.sleuthkit.autopsy.discovery.ui;
+
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.temporal.TemporalUnit;
 import org.sleuthkit.autopsy.discovery.search.AbstractFilter;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
@@ -24,6 +29,7 @@ import javax.swing.JList;
 import javax.swing.SpinnerNumberModel;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.communications.Utils;
+import org.sleuthkit.autopsy.discovery.search.SearchFiltering;
 
 /**
  * Filter panel for allowing the user to filter on date.
@@ -32,6 +38,7 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
 
     private static final long serialVersionUID = 1L;
     private final SpinnerNumberModel numberModel;
+    private static final long SECS_PER_DAY = 86400;
 
     /**
      * Creates new form DateFilterPanel.
@@ -204,7 +211,7 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
 
     private void rangeRadioButtonStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_rangeRadioButtonStateChanged
         startCheckBox.setEnabled(rangeRadioButton.isEnabled() && rangeRadioButton.isSelected());
-        endCheckBox.setEnabled(rangeRadioButton.isEnabled() &&rangeRadioButton.isSelected());
+        endCheckBox.setEnabled(rangeRadioButton.isEnabled() && rangeRadioButton.isSelected());
         endCheckBoxStateChanged(evt);
         startCheckBoxStateChanged(evt);
     }//GEN-LAST:event_rangeRadioButtonStateChanged
@@ -257,6 +264,24 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
 
     @Override
     AbstractFilter getFilter() {
+
+        if (dateFilterCheckbox.isSelected()) {
+            LocalDate startDate = LocalDate.MIN;
+            LocalDate endDate = LocalDate.MAX;
+            ZoneId zone = Utils.getUserPreferredZoneId();
+            if (rangeRadioButton.isSelected()) {
+                if (startCheckBox.isSelected() && startDatePicker.getDate() != null) {
+                    startDate = startDatePicker.getDate();
+                }
+                if (endCheckBox.isSelected() && endDatePicker.getDate() != null) {
+                    endDate = endDatePicker.getDate();
+                }
+            } else if (dateFilterCheckbox.isSelected() && mostRecentRadioButton.isSelected()) {
+                endDate = LocalDate.now();
+                startDate = LocalDate.now().minus(Duration.ofDays((long)daysSpinner.getValue()));
+            }
+            return new SearchFiltering.ArtifactDateRangeFilter(startDate.atStartOfDay(zone).toEpochSecond(), endDate.atStartOfDay(zone).toEpochSecond() + SECS_PER_DAY);//to insure end date is inclusive
+        }
         return null;
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
