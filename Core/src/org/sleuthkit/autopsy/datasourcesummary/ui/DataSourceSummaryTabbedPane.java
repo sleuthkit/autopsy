@@ -19,12 +19,15 @@
 package org.sleuthkit.autopsy.datasourcesummary.ui;
 
 import java.awt.Component;
+import java.beans.PropertyChangeEvent;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 import javax.swing.JTabbedPane;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.IngestJobInfoPanel;
+import org.sleuthkit.autopsy.guiutils.RefreshThrottler;
+import org.sleuthkit.autopsy.guiutils.RefreshThrottler.Refresher;
 import org.sleuthkit.datamodel.DataSource;
 
 /**
@@ -50,6 +53,7 @@ public class DataSourceSummaryTabbedPane extends JTabbedPane {
         private final String tabTitle;
         private final Component component;
         private final Consumer<DataSource> onDataSource;
+        private final Runnable onRefresh;
 
         /**
          * Main constructor.
@@ -58,10 +62,11 @@ public class DataSourceSummaryTabbedPane extends JTabbedPane {
          * @param component    The component to be displayed.
          * @param onDataSource The function to be called on a new data source.
          */
-        DataSourceTab(String tabTitle, Component component, Consumer<DataSource> onDataSource) {
+        DataSourceTab(String tabTitle, Component component, Consumer<DataSource> onDataSource, Runnable onRefresh) {
             this.tabTitle = tabTitle;
             this.component = component;
             this.onDataSource = onDataSource;
+            this.onRefresh = onRefresh;
         }
 
         /**
@@ -74,6 +79,7 @@ public class DataSourceSummaryTabbedPane extends JTabbedPane {
             this.tabTitle = tabTitle;
             this.component = panel;
             this.onDataSource = panel::setDataSource;
+            this.onRefresh = panel::onRefresh;
         }
 
         /**
@@ -96,17 +102,36 @@ public class DataSourceSummaryTabbedPane extends JTabbedPane {
         Consumer<DataSource> getOnDataSource() {
             return onDataSource;
         }
+        
+        /**
+         * @return The function to be called when refreshing data.
+         */
+        Runnable getOnRefresh() {
+            return onRefresh;
+        }
     }
 
     private static final long serialVersionUID = 1L;
 
     private final IngestJobInfoPanel ingestHistoryPanel = new IngestJobInfoPanel();
+    private final RefreshThrottler refreshThrottler = new RefreshThrottler(new Refresher() {
+        @Override
+        public void refresh() {
+            refreshTabs();
+        }
+
+        @Override
+        public boolean isRefreshRequired(PropertyChangeEvent evt) {
+            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        }
+        
+    });
 
     private final List<DataSourceTab> tabs = Arrays.asList(
             new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_typesTab_title(), new TypesPanel()),
             new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_userActivityTab_title(), new DataSourceSummaryUserActivityPanel()),
             new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_recentFileTab_title(), new RecentFilesPanel()),
-            new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_ingestHistoryTab_title(), ingestHistoryPanel, ingestHistoryPanel::setDataSource),
+            new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_ingestHistoryTab_title(), ingestHistoryPanel, ingestHistoryPanel::setDataSource, () -> {}),
             new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_detailsTab_title(), new DataSourceSummaryDetailsPanel())
     );
 
@@ -144,6 +169,12 @@ public class DataSourceSummaryTabbedPane extends JTabbedPane {
 
         for (DataSourceTab tab : tabs) {
             tab.getOnDataSource().accept(dataSource);
+        }
+    }
+    
+    private void refreshTabs() {
+        for (DataSourceTab tab : tabs) {
+            tab.getOnRefresh().run();
         }
     }
 }

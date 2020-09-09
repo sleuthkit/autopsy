@@ -71,4 +71,22 @@ public class SwingWorkerSequentialExecutor {
         workers = Collections.emptyList();
         futures = Collections.emptyList();
     }
+
+    /**
+     * Returns whether or not any of the workers provided are still running.
+     *
+     * @return Whether or not any of the submitted workers are still running.
+     */
+    public synchronized boolean isRunning() {
+        // borrowed from this stack overflow answer: 
+        // https://stackoverflow.com/a/33845730
+
+        for (Future<?> future : futures) {
+            if (!future.isDone()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }

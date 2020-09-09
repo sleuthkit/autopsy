@@ -186,30 +186,10 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
      */
     public TypesPanel() {
         initComponents();
+        setDataFetchComponents(this.dataFetchComponents);
+        setLoadableComponents(this.loadables);
     }
 
-    @Override
-    protected void onNewDataSource(DataSource dataSource) {
-        // if no data source is present or the case is not open,
-        // set results for tables to null.
-        if (dataSource == null || !Case.isCaseOpen()) {
-            this.dataFetchComponents.forEach((item) -> item.getResultHandler()
-                    .accept(DataFetchResult.getSuccessResult(null)));
-
-        } else {
-            // set tables to display loading screen
-            this.loadables.forEach((table) -> table.showDefaultLoadingMessage());
-
-            // create swing workers to run for each table
-            List<DataFetchWorker<?, ?>> workers = dataFetchComponents
-                    .stream()
-                    .map((components) -> new DataFetchWorker<>(components, dataSource))
-                    .collect(Collectors.toList());
-
-            // submit swing workers to run
-            submit(workers);
-        }
-    }
 
     /**
      * Gets all the data for the file type pie chart.

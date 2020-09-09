@@ -267,6 +267,8 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPan
                                 Bundle.DataSourceSummaryUserActivityPanel_noDataExists()))
         );
 
+        setDataFetchComponents(this.dataFetchComponents);
+        setLoadableComponents(this.tables);
         initComponents();
     }
 
@@ -280,29 +282,6 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPan
      */
     private String getShortFolderName(String path, String appName) {
         return this.topProgramsData.getShortFolderName(path, appName);
-    }
-
-    @Override
-    protected void onNewDataSource(DataSource dataSource) {
-        // if no data source is present or the case is not open,
-        // set results for tables to null.
-        if (dataSource == null || !Case.isCaseOpen()) {
-            this.dataFetchComponents.forEach((item) -> item.getResultHandler()
-                    .accept(DataFetchResult.getSuccessResult(null)));
-
-        } else {
-            // set tables to display loading screen
-            this.tables.forEach((table) -> table.showDefaultLoadingMessage());
-
-            // create swing workers to run for each table
-            List<DataFetchWorker<?, ?>> workers = dataFetchComponents
-                    .stream()
-                    .map((components) -> new DataFetchWorker<>(components, dataSource))
-                    .collect(Collectors.toList());
-
-            // submit swing workers to run
-            submit(workers);
-        }
     }
 
     /**
