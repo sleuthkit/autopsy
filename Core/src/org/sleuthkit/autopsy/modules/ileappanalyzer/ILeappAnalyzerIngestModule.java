@@ -143,10 +143,7 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
                     }
                     
                     addILeappReportToReports(moduleOutputPath, currentCase);
-//                    String reportFileName = findReportFile(moduleOutputPath);
-//                    if (reportFileName.length() > 2) {
-//                        currentCase.addReport(reportFileName, MODULE_NAME, Bundle.ILeappAnalyzerIngestModule_report_name());
-//                    }
+
                 } catch (IOException ex) {
                     logger.log(Level.SEVERE, String.format("Error when trying to execute iLeapp program against file %s", iLeappFile.getLocalAbsPath()), ex);
                     return ProcessResult.ERROR;
