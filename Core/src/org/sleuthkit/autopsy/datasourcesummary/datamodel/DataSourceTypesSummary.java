@@ -43,7 +43,8 @@ public class DataSourceTypesSummary {
      * @return The count.
      */
     public static Long getCountOfFiles(DataSource currentDataSource) {
-        return DataSourceInfoUtilities.getCountOfRegularFiles(currentDataSource, null,
+        return DataSourceInfoUtilities.getCountOfRegularFiles(currentDataSource,
+                null,
                 "Unable to get count of files, providing empty results");
     }
 
@@ -55,7 +56,7 @@ public class DataSourceTypesSummary {
      * @return The count.
      */
     public static Long getCountOfAllocatedFiles(DataSource currentDataSource) {
-        return DataSourceInfoUtilities.getCountOfRegularFiles(currentDataSource,
+        return DataSourceInfoUtilities.getCountOfRegNonSlackFiles(currentDataSource,
                 DataSourceInfoUtilities.getMetaFlagsContainsStatement(TskData.TSK_FS_META_FLAG_ENUM.ALLOC),
                 "Unable to get counts of unallocated files for datasource, providing empty results");
     }
@@ -68,7 +69,7 @@ public class DataSourceTypesSummary {
      * @return The count.
      */
     public static Long getCountOfUnallocatedFiles(DataSource currentDataSource) {
-        return DataSourceInfoUtilities.getCountOfRegularFiles(currentDataSource,
+        return DataSourceInfoUtilities.getCountOfRegNonSlackFiles(currentDataSource,
                 DataSourceInfoUtilities.getMetaFlagsContainsStatement(TskData.TSK_FS_META_FLAG_ENUM.UNALLOC),
                 "Unable to get counts of unallocated files for datasource, providing empty results");
     }
