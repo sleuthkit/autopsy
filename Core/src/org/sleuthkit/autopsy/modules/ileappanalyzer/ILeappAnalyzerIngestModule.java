@@ -62,23 +62,14 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
 
     private static final String ILEAPP = "iLeapp"; //NON-NLS
     private static final String ILEAPP_EXECUTABLE = "ileapp.exe";//NON-NLS
-    private static final String XMLFILE = "ileap-artifact-attribute-reference.xml"; //NON-NLS
 
     private File iLeappExecutable;
-    private final Map<String, String> tsvFiles;
-    private final Map<String, String> tsvFileArtifacts;
-    private final Map<String, String> tsvFileArtifactComments;
-    private final   Map<String, List<List<String>>> tsvFileAttributes;
 
     private IngestJobContext context;
     
     private ILeappFileProcessor iLeappFileProcessor;
 
     ILeappAnalyzerIngestModule() {
-        this.tsvFiles = new HashMap<>();
-        this.tsvFileArtifacts = new HashMap<>();
-        this.tsvFileArtifactComments = new HashMap<>();
-        this.tsvFileAttributes = new HashMap<>();
 
     }
 

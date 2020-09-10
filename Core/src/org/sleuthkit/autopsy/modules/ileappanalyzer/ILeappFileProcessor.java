@@ -71,12 +71,10 @@ public final class ILeappFileProcessor {
 
     private static final String XMLFILE = "ileap-artifact-attribute-reference.xml"; //NON-NLS
 
-    private Map<String, String> tsvFiles;
-    private Map<String, String> tsvFileArtifacts;
-    private Map<String, String> tsvFileArtifactComments;
-    private Map<String, List<List<String>>> tsvFileAttributes;
-
-    private IngestJobContext context;
+    private final Map<String, String> tsvFiles;
+    private final Map<String, String> tsvFileArtifacts;
+    private final Map<String, String> tsvFileArtifactComments;
+    private final Map<String, List<List<String>>> tsvFileAttributes;
 
     public ILeappFileProcessor() throws IOException, IngestModuleException {
         this.tsvFiles = new HashMap<>();
