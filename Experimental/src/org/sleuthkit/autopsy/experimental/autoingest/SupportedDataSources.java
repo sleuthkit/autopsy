@@ -27,7 +27,7 @@ import org.apache.commons.io.FilenameUtils;
  * in an automated setting. The goal is to not spend time analyzing large 
  * files that Autopsy can not handle yet. 
  */
-public class SupportedDataSources {
+public final class SupportedDataSources {
     
     private static final List<String> UNSUPPORTED_EXTENSIONS = Arrays.asList("xry", "dar");
     
