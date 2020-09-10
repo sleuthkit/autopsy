@@ -2109,7 +2109,7 @@ public class Server {
          *
          * @throws KeywordSearchModuleException
          */
-        // ELTODO SYNCHRONIZATION
+        // ELTODO DECIDE ON SYNCHRONIZATION
         private synchronized void sendBufferedDocs(List<SolrInputDocument> docBuffer) throws KeywordSearchModuleException {
             
             if (docBuffer.isEmpty()) {
