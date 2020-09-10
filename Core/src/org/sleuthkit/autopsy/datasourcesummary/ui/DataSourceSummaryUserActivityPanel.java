@@ -25,10 +25,8 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.stream.Collectors;
 import org.apache.commons.lang.StringUtils;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourceUserActivitySummary;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourceTopProgramsSummary;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourceUserActivitySummary.TopAccountResult;
@@ -37,9 +35,7 @@ import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourceUserActivityS
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.TopDomainsResult;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.TopProgramsResult;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer.DefaultCellModel;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel.ColumnModel;
 import org.sleuthkit.datamodel.DataSource;
@@ -267,9 +263,7 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPan
                         (result) -> topAccountsTable.showDataFetchResult(result, JTablePanel.getDefaultErrorMessage(),
                                 Bundle.DataSourceSummaryUserActivityPanel_noDataExists()))
         );
-
-        setDataFetchComponents(this.dataFetchComponents);
-        setLoadableComponents(this.tables);
+        
         initComponents();
     }
 

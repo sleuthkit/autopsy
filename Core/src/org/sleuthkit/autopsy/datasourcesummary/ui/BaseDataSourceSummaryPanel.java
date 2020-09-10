@@ -19,8 +19,8 @@
 package org.sleuthkit.autopsy.datasourcesummary.ui;
 
 import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -35,7 +35,6 @@ import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetch
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.LoadableComponent;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.SwingWorkerSequentialExecutor;
 import org.sleuthkit.autopsy.guiutils.RefreshThrottler;
-import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
@@ -50,9 +49,7 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
 
     private final SwingWorkerSequentialExecutor executor = new SwingWorkerSequentialExecutor();
 
-    private List<DataFetchComponents<DataSource, ?>> dataFetchComponents = Collections.emptyList();
-    private List<LoadableComponent> loadableComponents = Collections.emptyList();
-    private DataSource dataSource;
+
 
     private final RefreshThrottler refreshThrottler = new RefreshThrottler(new RefreshThrottler.Refresher() {
         @Override
@@ -75,47 +72,53 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
             return false;
         }
     });
-    
 
-    
-    
+    private final PropertyChangeListener caseEventsListener = (evt) -> {
+        switch (Case.Events.valueOf(evt.getPropertyName())) {
+
+            default:
+                if (isRefreshRequiredForCaseEvent(evt)) {
+                    onRefresh();
+                }
+                break;
+        }
+    };
+
+    private final Set<Integer> artifactTypesForRefresh;
+    private final boolean refreshOnNewContent;
+
+    private DataSource dataSource;
     
     /**
      * Main constructor
      */
-    protected BaseDataSourceSummaryPanel() {
-        refreshThrottler.registerForIngestModuleEvents();
+    protected BaseDataSourceSummaryPanel(Set<Case.Events> caseEvents, Set<Integer> artifactTypesForRefresh, boolean refreshOnNewContent) {
+        this.artifactTypesForRefresh = (artifactTypesForRefresh == null)
+                ? new HashSet<>()
+                : new HashSet<>(artifactTypesForRefresh);
+        
+        this.refreshOnNewContent = refreshOnNewContent;
+
+        if (refreshOnNewContent || this.artifactTypesForRefresh.size() > 0) {
+            refreshThrottler.registerForIngestModuleEvents();
+        }
+
+        if (caseEvents != null) {
+            Case.addEventTypeSubscriber(caseEvents, caseEventsListener);
+        }
+
     }
-    
+
     protected boolean isRefreshRequired(ModuleDataEvent evt) {
-        return isRefreshRequiredForArtifactTypeId(evt.getBlackboardArtifactType().getTypeID());
-    }
-    
-    protected abstract boolean isRefreshRequiredForArtifactTypeId(int id);
-    
-    
-    protected abstract boolean isRefreshRequired(ModuleContentEvent evt);
-   
-    
-
-    /**
-     * Sets the means for obtaining workers to load data for this panel.
-     *
-     * @param dataFetchComponents The data fetch components to trigger when
-     *                            loading data.
-     */
-    protected final void setDataFetchComponents(List<? extends DataFetchComponents<DataSource, ?>> dataFetchComponents) {
-        this.dataFetchComponents = dataFetchComponents == null ? Collections.emptyList() : new ArrayList<>(dataFetchComponents);
+        return artifactTypesForRefresh.contains(evt.getBlackboardArtifactType().getTypeID());
     }
 
-    /**
-     * Sets the components that will need to be loaded. In particular, set them
-     * to loading when workers are submitted for run.
-     *
-     * @param loadableComponents The loadable components.
-     */
-    protected final void setLoadableComponents(List<? extends LoadableComponent> loadableComponents) {
-        this.loadableComponents = loadableComponents == null ? Collections.emptyList() : new ArrayList<>(loadableComponents);
+    protected boolean isRefreshRequired(ModuleContentEvent evt) {
+        return refreshOnNewContent;
+    }
+
+    protected boolean isRefreshRequiredForCaseEvent(PropertyChangeEvent evt) {
+        return true;
     }
 
     /**
@@ -148,36 +151,56 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
         // don't update the data source if it is already trying to load
         if (!executor.isRunning()) {
             // trigger on new data source with the current data source
-            onNewDataSource(this.dataSource);
+            fetchInformation(this.dataSource);
         }
     }
 
+    /**
+     * Action that is called when information needs to be retrieved (on refresh
+     * or on new data source).
+     *
+     * @param dataSource The datasource to fetch information about.
+     */
+    protected abstract void fetchInformation(DataSource dataSource);
+    
+    
+    
+    
+    
+    protected void fetchInformation(List<DataFetchComponents<DataSource, ?>> dataFetchComponents, DataSource dataSource) {
+        // create swing workers to run for each loadable item
+        List<DataFetchWorker<?, ?>> workers = dataFetchComponents
+                .stream()
+                .map((components) -> new DataFetchWorker<>(components, dataSource))
+                .collect(Collectors.toList());
+
+        // submit swing workers to run
+        if (workers.size() > 0) {
+            submit(workers);
+        }
+    }
+    
     /**
      * When a new dataSource is added, this method is called.
      *
      * @param dataSource The new dataSource.
      */
-    protected void onNewDataSource(DataSource dataSource) {
+    protected abstract void onNewDataSource(DataSource dataSource);
+    
+    
+
+    protected void onNewDataSource(List<DataFetchComponents<DataSource, ?>> dataFetchComponents, List<LoadableComponent<?>> loadableComponents, DataSource dataSource) {
         // if no data source is present or the case is not open,
         // set results for tables to null.
         if (dataSource == null || !Case.isCaseOpen()) {
-            this.dataFetchComponents.forEach((item) -> item.getResultHandler()
+            dataFetchComponents.forEach((item) -> item.getResultHandler()
                     .accept(DataFetchResult.getSuccessResult(null)));
 
         } else {
             // set tables to display loading screen
-            this.loadableComponents.forEach((table) -> table.showDefaultLoadingMessage());
+            loadableComponents.forEach((table) -> table.showDefaultLoadingMessage());
 
-            // create swing workers to run for each loadable item
-            List<DataFetchWorker<?, ?>> workers = dataFetchComponents
-                    .stream()
-                    .map((components) -> new DataFetchWorker<>(components, dataSource))
-                    .collect(Collectors.toList());
-
-            // submit swing workers to run
-            if (workers.size() > 0) {
-                submit(workers);
-            }
+            fetchInformation(dataSource);
         }
     }
 }
