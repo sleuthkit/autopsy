@@ -29,6 +29,7 @@ public class ResultDomain extends Result {
     private final String domain;
     private final Long activityStart;
     private final Long activityEnd;
+    private final Long totalVisits;
     private final Long visitsInLast60;
     private final Long filesDownloaded;
     
@@ -41,12 +42,14 @@ public class ResultDomain extends Result {
      * @param domain The domain the result is being created from.
      */
     ResultDomain(String domain, Long activityStart, Long activityEnd, 
-            Long visitsInLast60, Long filesDownloaded, Content dataSource) {
+            Long totalVisits, Long visitsInLast60, Long filesDownloaded, 
+            Content dataSource) {
         this.domain = domain;
         this.dataSource = dataSource;
         this.dataSourceId = dataSource.getId();
         this.activityStart = activityStart;
         this.activityEnd = activityEnd;
+        this.totalVisits = totalVisits;
         this.visitsInLast60 = visitsInLast60;
         this.filesDownloaded = filesDownloaded;
         
@@ -63,6 +66,10 @@ public class ResultDomain extends Result {
 
     public Long getActivityEnd() {
         return activityEnd;
+    }
+    
+    public Long getTotalVisits() {
+        return this.totalVisits;
     }
 
     public Long getVisitsInLast60() {
@@ -85,7 +92,7 @@ public class ResultDomain extends Result {
 
     @Override
     public TskData.FileKnown getKnown() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return TskData.FileKnown.UNKNOWN;
     }
 
     @Override
@@ -95,9 +102,9 @@ public class ResultDomain extends Result {
     
     @Override
     public String toString() {
-        return "[" + this.domain + ", " + this.dataSourceId + ", "
-                + this.activityStart + ", " + this.activityEnd + ", " 
-                + this.visitsInLast60 + ", " + this.filesDownloaded + ", " 
+        return "[domain=" + this.domain + ", data_source=" + this.dataSourceId + ", start="
+                + this.activityStart + ", end=" + this.activityEnd + ", visits=" + this.totalVisits + ", visitsLast60=" 
+                + this.visitsInLast60 + ", downloads=" + this.filesDownloaded + ", frequency=" 
                 + this.getFrequency() + "]";
     }
 }

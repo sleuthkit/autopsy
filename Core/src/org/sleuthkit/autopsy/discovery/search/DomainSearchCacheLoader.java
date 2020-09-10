@@ -95,7 +95,7 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
         // table in hand, we can simply group by domain and apply aggregate functions
         // to get, for example, # of downloads, # of visits in last 60, etc.
         final String domainsTable = 
-                "SELECT MAX(value_text)  AS domain," +
+                "SELECT LOWER(MAX(value_text))  AS domain," +
                 "       MAX(value_int64) AS date," + 
                 "       artifact_id AS parent_artifact_id," +
                 "       MAX(artifact_type_id) AS parent_artifact_type_id " +
@@ -135,6 +135,10 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
                 "                 WHEN artifact_type_id = " + TSK_WEB_DOWNLOAD.getTypeID() + " THEN 1 " +
                 "                 ELSE 0 " +
                 "               END) AS fileDownloads," + 
+                "           SUM(CASE " +
+                "                 WHEN artifact_type_id = " + TSK_WEB_HISTORY.getTypeID() + " THEN 1 " +
+                "                 ELSE 0 " +
+                "               END) AS totalVisits," +
                 "           SUM(CASE " +
                 "                 WHEN artifact_type_id = " + TSK_WEB_HISTORY.getTypeID() + " AND" +
                 "                      date BETWEEN " + sixtyDaysAgo.getEpochSecond() + " AND " + currentTime.getEpochSecond() + " THEN 1 " +
@@ -227,7 +231,7 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
         private SQLException sqlCause;
         private TskCoreException coreCause;
         
-        public DomainCallback(SleuthkitCase skc) {
+        private DomainCallback(SleuthkitCase skc) {
             this.resultDomains = new ArrayList<>();
             this.skc = skc;
         }
@@ -235,6 +239,8 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
         @Override
         public void process(ResultSet resultSet) {
             try {
+                resultSet.setFetchSize(500);
+                
                 while (resultSet.next()) {
                     String domain = resultSet.getString("domain");
                     Long activityStart = resultSet.getLong("activity_start");
@@ -249,6 +255,11 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
                     if (resultSet.wasNull()) {
                         filesDownloaded = null;
                     }
+                    Long totalVisits = resultSet.getLong("totalVisits");
+                    if (resultSet.wasNull()) {
+                        totalVisits = null;
+                    }
+                    
                     Long visitsInLast60 = resultSet.getLong("last60");
                     if (resultSet.wasNull()) {
                         visitsInLast60 = null;
@@ -258,7 +269,7 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
                     Content dataSource = skc.getContentById(dataSourceID);
                     
                     resultDomains.add(new ResultDomain(domain, activityStart,
-                            activityEnd, visitsInLast60, filesDownloaded, dataSource));
+                            activityEnd, totalVisits, visitsInLast60, filesDownloaded, dataSource));
                 }
             } catch (SQLException ex) {
                 this.sqlCause = ex;
@@ -271,11 +282,11 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
             return Collections.unmodifiableList(this.resultDomains);
         }
         
-        public SQLException getSQLException() {
+        private SQLException getSQLException() {
             return this.sqlCause;
         }
         
-        public TskCoreException getTskCoreException() {
+        private TskCoreException getTskCoreException() {
             return this.coreCause;
         }
     }

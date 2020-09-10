@@ -36,17 +36,10 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 class DomainSearchCache {
 
     private static final int MAXIMUM_CACHE_SIZE = 10;
-    private final LoadingCache<SearchKey, Map<GroupKey, List<Result>>> cache;
-
-    DomainSearchCache() {
-        this(new DomainSearchCacheLoader());
-    }
-
-    DomainSearchCache(DomainSearchCacheLoader cacheLoader) {
-        this.cache = CacheBuilder.newBuilder()
+    private static final LoadingCache<SearchKey, Map<GroupKey, List<Result>>> cache = 
+            CacheBuilder.newBuilder()
                 .maximumSize(MAXIMUM_CACHE_SIZE)
-                .build(cacheLoader);
-    }
+                .build(new DomainSearchCacheLoader());
 
     /**
      * Get domain search results matching the given parameters. If no results
