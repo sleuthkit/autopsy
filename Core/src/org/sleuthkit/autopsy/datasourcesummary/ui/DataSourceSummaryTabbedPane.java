@@ -37,7 +37,8 @@ import org.sleuthkit.datamodel.DataSource;
     "DataSourceSummaryTabbedPane_detailsTab_title=Container",
     "DataSourceSummaryTabbedPane_userActivityTab_title=User Activity",
     "DataSourceSummaryTabbedPane_ingestHistoryTab_title=Ingest History",
-    "DataSourceSummaryTabbedPane_recentFileTab_title=Recent Files"
+    "DataSourceSummaryTabbedPane_recentFileTab_title=Recent Files",
+    "DataSourceSummaryTabbedPane_analysisTab_title=Analysis"
 })
 public class DataSourceSummaryTabbedPane extends JTabbedPane {
 
@@ -116,6 +117,7 @@ public class DataSourceSummaryTabbedPane extends JTabbedPane {
             new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_typesTab_title(), new TypesPanel()),
             new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_userActivityTab_title(), new DataSourceSummaryUserActivityPanel()),
             new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_recentFileTab_title(), new RecentFilesPanel()),
+            new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_analysisTab_title(), new AnalysisPanel()),
             new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_ingestHistoryTab_title(), ingestHistoryPanel, ingestHistoryPanel::setDataSource, () -> {
             }),
             new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_detailsTab_title(), new DataSourceSummaryDetailsPanel())
@@ -128,7 +130,7 @@ public class DataSourceSummaryTabbedPane extends JTabbedPane {
      */
     public DataSourceSummaryTabbedPane() {
         initComponent();
-        
+
     }
 
     private void initComponent() {

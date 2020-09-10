@@ -47,11 +47,6 @@ import org.sleuthkit.datamodel.DataSource;
 abstract class BaseDataSourceSummaryPanel extends JPanel {
 
     private static final long serialVersionUID = 1L;
-    
-    private static final Set<String> INGEST_MODULE_EVENTS = new HashSet<String>(Arrays.asList(
-        IngestManager.IngestModuleEvent.DATA_ADDED.toString(),
-        IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString()
-    ));
 
     private final SwingWorkerSequentialExecutor executor = new SwingWorkerSequentialExecutor();
 
@@ -81,14 +76,7 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
         }
     });
     
-    protected boolean isRefreshRequired(ModuleDataEvent evt) {
-        return isRefreshRequiredForArtifactTypeId(evt.getBlackboardArtifactType().getTypeID());
-    }
-    
-    protected abstract boolean isRefreshRequiredForArtifactTypeId(int id);
-    
-    
-    protected abstract boolean isRefreshRequired(ModuleContentEvent evt);
+
     
     
     
@@ -98,6 +86,15 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
     protected BaseDataSourceSummaryPanel() {
         refreshThrottler.registerForIngestModuleEvents();
     }
+    
+    protected boolean isRefreshRequired(ModuleDataEvent evt) {
+        return isRefreshRequiredForArtifactTypeId(evt.getBlackboardArtifactType().getTypeID());
+    }
+    
+    protected abstract boolean isRefreshRequiredForArtifactTypeId(int id);
+    
+    
+    protected abstract boolean isRefreshRequired(ModuleContentEvent evt);
    
     
 

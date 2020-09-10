@@ -103,7 +103,8 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPan
                         return new DefaultCellModel(
                                 getShortFolderName(
                                         prog.getProgramPath(),
-                                        prog.getProgramName()));
+                                        prog.getProgramName()))
+                                .setTooltip(prog.getProgramPath());
                     },
                     150),
             // run count column
