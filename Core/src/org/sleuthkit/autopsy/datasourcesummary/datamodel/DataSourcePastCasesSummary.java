@@ -59,6 +59,21 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class DataSourcePastCasesSummary {
 
+    /**
+     * Exception that is thrown in the event that a data source has not been
+     * ingested with the Central Repository Ingest Module.
+     */
+    public static class NotCentralRepoIngestedException extends Exception {
+
+        /**
+         * Main constructor.
+         * @param string Error message.
+         */
+        public NotCentralRepoIngestedException(String string) {
+            super(string);
+        }
+    }
+
     private static final String CENTRAL_REPO_INGEST_NAME = CentralRepoIngestModuleFactory.getModuleName().toUpperCase().trim();
     private static final BlackboardAttribute.Type TYPE_COMMENT = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_COMMENT);
 
@@ -162,9 +177,12 @@ public class DataSourcePastCasesSummary {
      *
      * @throws SleuthkitCaseProviderException
      * @throws TskCoreException
+     * @throws NotCentralRepoIngestedException
      */
     private List<Pair<String, Long>> getPastCases(DataSource dataSource, ARTIFACT_TYPE artifactType)
-            throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException {
+            throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, NotCentralRepoIngestedException {
+
+        throwOnNotCentralRepoIngested(dataSource);
 
         Collection<List<String>> cases = this.caseProvider.get().getBlackboard().getArtifacts(artifactType.getTypeID(), dataSource.getId())
                 .stream()
@@ -235,6 +253,27 @@ public class DataSourcePastCasesSummary {
     }
 
     /**
+     * Throws an exception if the current data source has not been ingested with
+     * the Central Repository Ingest Module.
+     *
+     * @param dataSource The data source to check if it has been ingested with
+     *                   the Central Repository Ingest Module.
+     *
+     * @throws SleuthkitCaseProviderException
+     * @throws TskCoreException
+     * @throws NotCentralRepoIngestedException
+     */
+    private void throwOnNotCentralRepoIngested(DataSource dataSource)
+            throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, NotCentralRepoIngestedException {
+
+        if (!isCentralRepoIngested(dataSource)) {
+            String objectId = (dataSource == null) ? "<null>" : String.valueOf(dataSource.getId());
+            String message = String.format("Data source: %s has not been ingested with the Central Repository Ingest Module.", objectId);
+            throw new NotCentralRepoIngestedException(message);
+        }
+    }
+
+    /**
      * Get all cases that share notable files with the given data source.
      *
      * @param dataSource The data source.
@@ -245,9 +284,10 @@ public class DataSourcePastCasesSummary {
      *
      * @throws SleuthkitCaseProviderException
      * @throws TskCoreException
+     * @throws NotCentralRepoIngestedException
      */
     public List<Pair<String, Long>> getPastCasesWithNotableFile(DataSource dataSource)
-            throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException {
+            throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, NotCentralRepoIngestedException {
         return getPastCases(dataSource, ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
     }
 
@@ -263,9 +303,10 @@ public class DataSourcePastCasesSummary {
      *
      * @throws SleuthkitCaseProviderException
      * @throws TskCoreException
+     * @throws NotCentralRepoIngestedException
      */
     public List<Pair<String, Long>> getPastCasesWithSameId(DataSource dataSource)
-            throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException {
+            throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, NotCentralRepoIngestedException {
         return getPastCases(dataSource, ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT);
     }
 }

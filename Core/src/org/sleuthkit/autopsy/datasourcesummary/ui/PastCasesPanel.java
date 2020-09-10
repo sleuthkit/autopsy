@@ -20,22 +20,21 @@ package org.sleuthkit.autopsy.datasourcesummary.ui;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourcePastCasesSummary;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourcePastCasesSummary.NotCentralRepoIngestedException;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer.DefaultCellModel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult.ResultType;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel.ColumnModel;
 import org.sleuthkit.datamodel.DataSource;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * A tab shown in data source summary displaying information about a datasource
@@ -81,27 +80,40 @@ public class PastCasesPanel extends BaseDataSourceSummaryPanel {
         this(new DataSourcePastCasesSummary());
     }
 
-    private final DataSourcePastCasesSummary pastCaseData;
-
     /**
      * Creates new form PastCasesPanel
      */
     public PastCasesPanel(DataSourcePastCasesSummary pastCaseData) {
-        this.pastCaseData = pastCaseData;
-
         // set up data acquisition methods
         dataFetchComponents = Arrays.asList(
                 // hashset hits loading components
                 new DataFetchWorker.DataFetchComponents<>(
                         (dataSource) -> pastCaseData.getPastCasesWithNotableFile(dataSource),
-                        (result) -> notableFileTable.showDataFetchResult(result)),
+                        (result) -> handleResult(notableFileTable, result)),
                 // keyword hits loading components
                 new DataFetchWorker.DataFetchComponents<>(
                         (dataSource) -> pastCaseData.getPastCasesWithSameId(dataSource),
-                        (result) -> sameIdTable.showDataFetchResult(result))
+                        (result) -> handleResult(sameIdTable, result))
         );
 
         initComponents();
+    }
+
+    /**
+     * handles displaying the result for the table. If a
+     * NotCentralRepoIngestedException is thrown, then an appropriate message is
+     * shown. Otherwise, this method uses the tables default showDataFetchResult
+     * method.
+     *
+     * @param table The table.
+     * @param result The result.
+     */
+    private <T> void handleResult(JTablePanel<T> table, DataFetchResult<List<T>> result) {
+        if (result.getResultType() == ResultType.ERROR && result.getException() instanceof NotCentralRepoIngestedException) {
+            table.showMessage(Bundle.PastCasesPanel_onNoCrIngest_message());
+        } else {
+            table.showDataFetchResult(result);
+        }
     }
 
     @Override
@@ -111,34 +123,20 @@ public class PastCasesPanel extends BaseDataSourceSummaryPanel {
         if (dataSource == null || !Case.isCaseOpen()) {
             this.dataFetchComponents.forEach((item) -> item.getResultHandler()
                     .accept(DataFetchResult.getSuccessResult(null)));
-            return;
-        }
 
-        boolean centralRepoIngested = false;
-        try {
-            centralRepoIngested = this.pastCaseData.isCentralRepoIngested(dataSource);
-        } catch (SleuthkitCaseProvider.SleuthkitCaseProviderException | TskCoreException ex) {
-            logger.log(Level.WARNING, "There was an error while determining if dataSource has been central repo ingested.", ex);
-        }
-
-        if (!centralRepoIngested) {
+        } else {
             // set tables to display loading screen
-            this.tables.forEach((table) -> table.showMessage(Bundle.PastCasesPanel_onNoCrIngest_message()));
-            return;
+            this.tables.forEach((table) -> table.showDefaultLoadingMessage());
+
+            // create swing workers to run for each table
+            List<DataFetchWorker<?, ?>> workers = dataFetchComponents
+                    .stream()
+                    .map((components) -> new DataFetchWorker<>(components, dataSource))
+                    .collect(Collectors.toList());
+
+            // submit swing workers to run
+            submit(workers);
         }
-
-        // set tables to display loading screen
-        this.tables.forEach((table) -> table.showDefaultLoadingMessage());
-
-        // create swing workers to run for each table
-        List<DataFetchWorker<?, ?>> workers = dataFetchComponents
-                .stream()
-                .map((components) -> new DataFetchWorker<>(components, dataSource))
-                .collect(Collectors.toList());
-
-        // submit swing workers to run
-        submit(workers);
-
     }
 
     /**
