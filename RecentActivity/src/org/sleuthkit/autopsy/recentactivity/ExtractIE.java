@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2012-2020 Basis Technology Corp.
  *
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -46,7 +46,6 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
-import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -56,7 +55,9 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProcessTerminator;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
-import org.sleuthkit.datamodel.*;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.ReadContentInputStream;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Extracts activity from Internet Explorer browser, as well as recent documents
@@ -65,7 +66,6 @@ import org.sleuthkit.datamodel.*;
 class ExtractIE extends Extract {
 
     private static final Logger logger = Logger.getLogger(ExtractIE.class.getName());
-    private final IngestServices services = IngestServices.getInstance();
     private final String moduleTempResultsDir;
     private String PASCO_LIB_PATH;
     private final String JAVA_PATH;
@@ -387,6 +387,10 @@ class ExtractIE extends Extract {
      *
      * @return false on error
      */
+    @Messages({
+        "# {0} - sub module name", 
+        "ExtractIE_executePasco_errMsg_errorRunningPasco={0}: Error analyzing Internet Explorer web history",
+    })
     private boolean executePasco(String indexFilePath, String outputFileName) {
         boolean success = true;
         try {
@@ -413,11 +417,12 @@ class ExtractIE extends Extract {
              * contains a lot of useful data and only the last entry is
              * corrupted.
              */
-            ExecUtil.execute(processBuilder, new DataSourceIngestModuleProcessTerminator(context));
+            ExecUtil.execute(processBuilder, new DataSourceIngestModuleProcessTerminator(context, true));
             // @@@ Investigate use of history versus cache as type.
         } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Error executing Pasco to process Internet Explorer web history", ex); //NON-NLS
+            addErrorMessage(Bundle.ExtractIE_executePasco_errMsg_errorRunningPasco(getName()));            
             success = false;
-            logger.log(Level.SEVERE, "Unable to execute Pasco to process Internet Explorer web history.", ex); //NON-NLS
         }
         return success;
     }
