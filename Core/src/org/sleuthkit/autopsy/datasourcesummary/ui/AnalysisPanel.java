@@ -22,7 +22,7 @@ import java.util.Arrays;
 import java.util.List;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourceAnalysisSummary;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.AnalysisSummary;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer.DefaultCellModel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel;
@@ -79,10 +79,12 @@ public class AnalysisPanel extends BaseDataSourceSummaryPanel {
      * Creates a new DataSourceUserActivityPanel.
      */
     public AnalysisPanel() {
-        this(new DataSourceAnalysisSummary());
+        this(new AnalysisSummary());
     }
 
-    public AnalysisPanel(DataSourceAnalysisSummary analysisData) {
+    public AnalysisPanel(AnalysisSummary analysisData) {
+        super(analysisData);
+        
         // set up data acquisition methods
         dataFetchComponents = Arrays.asList(
                 // hashset hits loading components
@@ -100,6 +102,16 @@ public class AnalysisPanel extends BaseDataSourceSummaryPanel {
         );
 
         initComponents();
+    }
+    
+    @Override
+    protected void fetchInformation(DataSource dataSource) {
+        fetchInformation(dataFetchComponents, dataSource);
+    }
+
+    @Override
+    protected void onNewDataSource(DataSource dataSource) {
+        onNewDataSource(dataFetchComponents, tables, dataSource);
     }
 
     /**
@@ -177,6 +189,7 @@ public class AnalysisPanel extends BaseDataSourceSummaryPanel {
             .addComponent(mainScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     // End of variables declaration//GEN-END:variables

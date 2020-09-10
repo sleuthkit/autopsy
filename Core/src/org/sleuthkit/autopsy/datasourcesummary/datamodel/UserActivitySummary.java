@@ -18,10 +18,13 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.datamodel;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -44,7 +47,7 @@ import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
  * time, the data being provided for domains is fictitious and is done as a
  * placeholder.
  */
-public class DataSourceUserActivitySummary {
+public class UserActivitySummary implements DataSourceSummaryDataModel {
 
     private static final BlackboardArtifact.Type TYPE_DEVICE_ATTACHED = new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_DEVICE_ATTACHED);
 
@@ -65,6 +68,16 @@ public class DataSourceUserActivitySummary {
     private static final Comparator<TopWebSearchResult> TOP_WEBSEARCH_RESULT_DATE_COMPARE = (a, b) -> a.getDateAccessed().compareTo(b.getDateAccessed());
     private static final String ROOT_HUB_IDENTIFIER = "ROOT_HUB";
 
+    private static final Set<Integer> ARTIFACT_UPDATE_TYPE_IDS = new HashSet<>(Arrays.asList(
+            ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getTypeID(),
+            
+            ARTIFACT_TYPE.TSK_MESSAGE.getTypeID(),
+            ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID(),
+            ARTIFACT_TYPE.TSK_CALLLOG.getTypeID(),
+            
+            ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID()
+    ));
+    
     private static final long SLEEP_TIME = 5000;
 
     /**
@@ -106,9 +119,9 @@ public class DataSourceUserActivitySummary {
     /**
      * Main constructor.
      */
-    public DataSourceUserActivitySummary() {
+    public UserActivitySummary() {
         this(SleuthkitCaseProvider.DEFAULT, TextTranslationService.getInstance(),
-                org.sleuthkit.autopsy.coreutils.Logger.getLogger(DataSourceUserActivitySummary.class.getName()));
+                org.sleuthkit.autopsy.coreutils.Logger.getLogger(UserActivitySummary.class.getName()));
     }
 
     /**
@@ -120,7 +133,7 @@ public class DataSourceUserActivitySummary {
      * @param translationService The translation service.
      * @param logger             The logger to use.
      */
-    public DataSourceUserActivitySummary(
+    public UserActivitySummary(
             SleuthkitCaseProvider provider,
             TextTranslationService translationService,
             java.util.logging.Logger logger) {
@@ -128,6 +141,11 @@ public class DataSourceUserActivitySummary {
         this.caseProvider = provider;
         this.translationService = translationService;
         this.logger = logger;
+    }
+    
+    @Override
+    public Set<Integer> getArtifactIdUpdates() {
+        return ARTIFACT_UPDATE_TYPE_IDS;
     }
 
     /**
@@ -183,7 +201,7 @@ public class DataSourceUserActivitySummary {
         Collection<List<TopWebSearchResult>> resultGroups = webSearchArtifacts
                 .stream()
                 // get items where search string and date is not null
-                .map(DataSourceUserActivitySummary::getWebSearchResult)
+                .map(UserActivitySummary::getWebSearchResult)
                 // remove null records
                 .filter(result -> result != null)
                 // get these messages grouped by search to string

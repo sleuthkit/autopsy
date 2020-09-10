@@ -22,9 +22,12 @@ import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -39,11 +42,12 @@ import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
+import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 
 /**
  * Helper class for getting data for the Recent Files Data Summary tab.
  */
-public class RecentFilesSummary {
+public class RecentFilesSummary implements DataSourceSummaryDataModel {
 
     private final static BlackboardAttribute.Type DATETIME_ACCESSED_ATT = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED);
     private final static BlackboardAttribute.Type DOMAIN_ATT = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN);
@@ -56,6 +60,15 @@ public class RecentFilesSummary {
 
     private static final DateFormat DATETIME_FORMAT = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss", Locale.getDefault());
 
+    private static final Set<Integer> ARTIFACT_UPDATE_TYPE_IDS = new HashSet<>(Arrays.asList(
+            ARTIFACT_TYPE.TSK_RECENT_OBJECT.getTypeID(),
+            ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID(),
+            ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT.getTypeID(),
+            ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID(),
+            ARTIFACT_TYPE.TSK_MESSAGE.getTypeID()
+    ));
+    
+    
     private final SleuthkitCaseProvider provider;
 
     /**
@@ -77,6 +90,13 @@ public class RecentFilesSummary {
 
         this.provider = provider;
     }
+
+    @Override
+    public Set<Integer> getArtifactIdUpdates() {
+        return ARTIFACT_UPDATE_TYPE_IDS;
+    }
+    
+    
 
     /**
      * Return a list of the most recently opened documents based on the

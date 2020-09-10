@@ -29,7 +29,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.FileTypeUtils.FileTypeCategory;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourceCountsSummary;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourceTypesSummary;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourceDetailsSummary;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourceMimeTypeSummary;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.AbstractLoadableComponent;
@@ -143,8 +143,7 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
     );
 
     // all of the means for obtaining data for the gui components.
-    private final List<DataFetchComponents<DataSource, ?>> dataFetchComponents = Arrays.asList(
-            // usage label worker
+    private final List<DataFetchComponents<DataSource, ?>> dataFetchComponents = Arrays.asList(// usage label worker
             new DataFetchWorker.DataFetchComponents<>(
                     DataSourceDetailsSummary::getDataSourceType,
                     usageLabel::showDataFetchResult),
@@ -165,19 +164,19 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
                     fileMimeTypesChart::showDataFetchResult),
             // allocated files worker
             new DataFetchWorker.DataFetchComponents<>(
-                    (dataSource) -> getStringOrZero(DataSourceCountsSummary.getCountOfAllocatedFiles(dataSource)),
+                    (dataSource) -> getStringOrZero(DataSourceTypesSummary.getCountOfAllocatedFiles(dataSource)),
                     allocatedLabel::showDataFetchResult),
             // unallocated files worker
             new DataFetchWorker.DataFetchComponents<>(
-                    (dataSource) -> getStringOrZero(DataSourceCountsSummary.getCountOfUnallocatedFiles(dataSource)),
+                    (dataSource) -> getStringOrZero(DataSourceTypesSummary.getCountOfUnallocatedFiles(dataSource)),
                     unallocatedLabel::showDataFetchResult),
             // slack files worker
             new DataFetchWorker.DataFetchComponents<>(
-                    (dataSource) -> getStringOrZero(DataSourceCountsSummary.getCountOfSlackFiles(dataSource)),
+                    (dataSource) -> getStringOrZero(DataSourceTypesSummary.getCountOfSlackFiles(dataSource)),
                     slackLabel::showDataFetchResult),
             // directories worker
             new DataFetchWorker.DataFetchComponents<>(
-                    (dataSource) -> getStringOrZero(DataSourceCountsSummary.getCountOfDirectories(dataSource)),
+                    (dataSource) -> getStringOrZero(DataSourceTypesSummary.getCountOfDirectories(dataSource)),
                     directoriesLabel::showDataFetchResult)
     );
 
@@ -186,8 +185,6 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
      */
     public TypesPanel() {
         initComponents();
-        setDataFetchComponents(this.dataFetchComponents);
-        setLoadableComponents(this.loadables);
     }
 
 

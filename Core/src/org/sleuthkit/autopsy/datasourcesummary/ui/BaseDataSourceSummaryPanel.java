@@ -20,15 +20,17 @@ package org.sleuthkit.autopsy.datasourcesummary.ui;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.swing.JPanel;
 import javax.swing.SwingWorker;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourceSummaryDataModel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
@@ -48,8 +50,6 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
     private static final long serialVersionUID = 1L;
 
     private final SwingWorkerSequentialExecutor executor = new SwingWorkerSequentialExecutor();
-
-
 
     private final RefreshThrottler refreshThrottler = new RefreshThrottler(new RefreshThrottler.Refresher() {
         @Override
@@ -88,15 +88,26 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
     private final boolean refreshOnNewContent;
 
     private DataSource dataSource;
-    
-    /**
-     * Main constructor
-     */
+
+    private static <I, O> Set<O> getUnionSet(Function<I, Collection<? extends O>> mapper, I... items) {
+        return Stream.of(items)
+                .flatMap((item) -> mapper.apply(item).stream())
+                .collect(Collectors.toSet());
+    }
+
+    protected BaseDataSourceSummaryPanel(DataSourceSummaryDataModel...dataModels) {
+        this(
+                getUnionSet(DataSourceSummaryDataModel::getCaseEventUpdates, dataModels),
+                getUnionSet(DataSourceSummaryDataModel::getArtifactIdUpdates, dataModels),
+                Stream.of(dataModels).anyMatch(DataSourceSummaryDataModel::shouldRefreshOnNewContent)
+        );
+    }
+
     protected BaseDataSourceSummaryPanel(Set<Case.Events> caseEvents, Set<Integer> artifactTypesForRefresh, boolean refreshOnNewContent) {
         this.artifactTypesForRefresh = (artifactTypesForRefresh == null)
                 ? new HashSet<>()
                 : new HashSet<>(artifactTypesForRefresh);
-        
+
         this.refreshOnNewContent = refreshOnNewContent;
 
         if (refreshOnNewContent || this.artifactTypesForRefresh.size() > 0) {
@@ -162,11 +173,7 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
      * @param dataSource The datasource to fetch information about.
      */
     protected abstract void fetchInformation(DataSource dataSource);
-    
-    
-    
-    
-    
+
     protected void fetchInformation(List<DataFetchComponents<DataSource, ?>> dataFetchComponents, DataSource dataSource) {
         // create swing workers to run for each loadable item
         List<DataFetchWorker<?, ?>> workers = dataFetchComponents
@@ -179,17 +186,18 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
             submit(workers);
         }
     }
-    
+
     /**
      * When a new dataSource is added, this method is called.
      *
      * @param dataSource The new dataSource.
      */
     protected abstract void onNewDataSource(DataSource dataSource);
-    
-    
 
-    protected void onNewDataSource(List<DataFetchComponents<DataSource, ?>> dataFetchComponents, List<LoadableComponent<?>> loadableComponents, DataSource dataSource) {
+    protected void onNewDataSource(
+            List<DataFetchComponents<DataSource, ?>> dataFetchComponents, 
+            List<? extends LoadableComponent<?>> loadableComponents, 
+            DataSource dataSource) {
         // if no data source is present or the case is not open,
         // set results for tables to null.
         if (dataSource == null || !Case.isCaseOpen()) {

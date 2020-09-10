@@ -31,9 +31,9 @@ import org.sleuthkit.datamodel.TskData;
 /**
  * Provides information for the DataSourceSummaryCountsPanel.
  */
-public class DataSourceCountsSummary {
+public class DataSourceTypesSummary {
 
-    private static final Logger logger = Logger.getLogger(DataSourceCountsSummary.class.getName());
+    private static final Logger logger = Logger.getLogger(DataSourceTypesSummary.class.getName());
 
     /**
      * Get count of regular files (not directories) in a data source.
@@ -153,6 +153,6 @@ public class DataSourceCountsSummary {
         };
     }
 
-    private DataSourceCountsSummary() {
+    private DataSourceTypesSummary() {
     }
 }

@@ -40,7 +40,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Providing data for the data source analysis tab.
  */
-public class DataSourceAnalysisSummary {
+public class AnalysisSummary implements DataSourceSummaryDataModel {
 
     private static final BlackboardAttribute.Type TYPE_SET_NAME = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_SET_NAME);
 
@@ -51,13 +51,20 @@ public class DataSourceAnalysisSummary {
             "URLS",
             "CREDIT CARD NUMBERS"
     ));
+    
+    private static final Set<Integer> ARTIFACT_UPDATE_TYPE_IDS = new HashSet<>(Arrays.asList(
+        ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID(), 
+        ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID(),
+        ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID(),
+        ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()
+    ));
 
     private final SleuthkitCaseProvider provider;
 
     /**
      * Main constructor.
      */
-    public DataSourceAnalysisSummary() {
+    public AnalysisSummary() {
         this(SleuthkitCaseProvider.DEFAULT);
     }
 
@@ -66,8 +73,13 @@ public class DataSourceAnalysisSummary {
      *
      * @param provider The means of obtaining a sleuthkit case.
      */
-    public DataSourceAnalysisSummary(SleuthkitCaseProvider provider) {
+    public AnalysisSummary(SleuthkitCaseProvider provider) {
         this.provider = provider;
+    }
+    
+    @Override
+    public Set<Integer> getArtifactIdUpdates() {
+        return ARTIFACT_UPDATE_TYPE_IDS;
     }
 
     /**

@@ -63,11 +63,23 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
      * Creates new form RecentFilesPanel
      */
     public RecentFilesPanel(RecentFilesSummary dataHandler) {
+        super(dataHandler);
         this.dataHandler = dataHandler;
 
         initComponents();
         initalizeTables();
     }
+    
+    @Override
+    protected void fetchInformation(DataSource dataSource) {
+        fetchInformation(dataFetchComponents, dataSource);
+    }
+
+    @Override
+    protected void onNewDataSource(DataSource dataSource) {
+        onNewDataSource(dataFetchComponents, tablePanelList, dataSource);
+    }
+    
 
     /**
      * Setup the data model and columns for the panel tables.
@@ -271,5 +283,4 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
     private javax.swing.JPanel downloadsPane;
     private javax.swing.JPanel openedDocPane;
     // End of variables declaration//GEN-END:variables
-
 }
