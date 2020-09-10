@@ -176,7 +176,7 @@ public final class ILeappFileProcessor {
     }
 
     private void processFile(File iLeappFile, List<List<String>> attrList, String fileName, BlackboardArtifact.Type artifactType,
-            List<BlackboardArtifact> bbartifacts, AbstractFile iLeappImageFile) throws FileNotFoundException, IOException, IngestModuleException {
+        List<BlackboardArtifact> bbartifacts, AbstractFile iLeappImageFile) throws FileNotFoundException, IOException, IngestModuleException {
         try (BufferedReader reader = new BufferedReader(new FileReader(iLeappFile))) {
             String line = reader.readLine();
             // Check first line, if it is null then no heading so nothing to match to, close and go to next file.
