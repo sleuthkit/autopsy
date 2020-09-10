@@ -27,9 +27,7 @@ import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Locale;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -70,7 +68,7 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
     private ILeappFileProcessor iLeappFileProcessor;
 
     ILeappAnalyzerIngestModule() {
-
+        // This constructor is intentionally empty. Nothing special is needed here.     
     }
 
     @NbBundle.Messages({
@@ -88,7 +86,7 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
         try {
             iLeappFileProcessor = new ILeappFileProcessor();
         } catch (IOException | IngestModuleException ex) {
-            throw new IngestModuleException(Bundle.ILeappAnalyzerIngestModule_error_ileapp_file_processor_init());
+            throw new IngestModuleException(Bundle.ILeappAnalyzerIngestModule_error_ileapp_file_processor_init(), ex);
         }
 
         try {
@@ -143,16 +141,15 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
                         logger.log(Level.SEVERE, String.format("Error running iLeapp, error code returned %d", result)); //NON-NLS
                         return ProcessResult.ERROR;
                     }
-                    String reportFileName = findReportFile(moduleOutputPath);
-                    if (reportFileName.length() > 2) {
-                        currentCase.addReport(reportFileName, MODULE_NAME, Bundle.ILeappAnalyzerIngestModule_report_name());
-                    }
+                    
+                    addILeappReportToReports(moduleOutputPath, currentCase);
+//                    String reportFileName = findReportFile(moduleOutputPath);
+//                    if (reportFileName.length() > 2) {
+//                        currentCase.addReport(reportFileName, MODULE_NAME, Bundle.ILeappAnalyzerIngestModule_report_name());
+//                    }
                 } catch (IOException ex) {
                     logger.log(Level.SEVERE, String.format("Error when trying to execute iLeapp program against file %s", iLeappFile.getLocalAbsPath()), ex);
                     return ProcessResult.ERROR;
-                } catch (TskCoreException ex) {
-                    // Error trying to add report, continue on 
-                    logger.log(Level.WARNING, String.format("Error when trying to add report in ModuleOuput %s", moduleOutputPath.toString()), ex);
                 }
 
                 if (context.dataSourceIngestIsCancelled()) {
@@ -245,10 +242,9 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
     }
 
     /**
-     * Find the tsv files in the iLeapp output directory and match them to files
-     * we know we want to process and return the list to process those files.
+     * Find the index.html file in the iLeapp output directory so it can be added to reports
      */
-    private String findReportFile(Path iLeappOutputDir) {
+    private void addILeappReportToReports(Path iLeappOutputDir, Case currentCase) {
         List<String> allIndexFiles = new ArrayList<>();
 
         try (Stream<Path> walk = Files.walk(iLeappOutputDir)) {
@@ -256,14 +252,14 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
             allIndexFiles = walk.map(x -> x.toString())
                     .filter(f -> f.toLowerCase().endsWith("index.html")).collect(Collectors.toList());
 
-            return allIndexFiles.get(0);
+            if (allIndexFiles.get(0).length() > 2) {
+                currentCase.addReport(allIndexFiles.get(0), MODULE_NAME, Bundle.ILeappAnalyzerIngestModule_report_name());
+            }
 
-        } catch (IOException ex) {
+        } catch (IOException | TskCoreException ex) {
             // catch the error and continue on
             logger.log(Level.WARNING, String.format("Error finding index file in path %s", iLeappOutputDir.toString()), ex);
         }
-
-        return "";
 
     }
 
