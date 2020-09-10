@@ -43,7 +43,7 @@ public class DataSourceMimeTypeSummary {
      *         source, null if no count was retrieved
      */
     public static Long getCountOfFilesForMimeTypes(DataSource currentDataSource, Set<String> setOfMimeTypes) {
-        return DataSourceInfoUtilities.getCountOfRegularFiles(currentDataSource,
+        return DataSourceInfoUtilities.getCountOfRegNonSlackFiles(currentDataSource,
                 "mime_type IN " + getSqlSet(setOfMimeTypes),
                 "Unable to get count of files for specified mime types");
     }
@@ -61,7 +61,7 @@ public class DataSourceMimeTypeSummary {
      *         have the specific mime type, but do have a mime type.
      */
     public static Long getCountOfFilesNotInMimeTypes(DataSource currentDataSource, Set<String> setOfMimeTypes) {
-        return DataSourceInfoUtilities.getCountOfRegularFiles(currentDataSource,
+        return DataSourceInfoUtilities.getCountOfRegNonSlackFiles(currentDataSource,
                 "mime_type NOT IN " + getSqlSet(setOfMimeTypes)
                 + " AND mime_type IS NOT NULL AND mime_type <> '' ",
                 "Unable to get count of files without specified mime types");
@@ -74,7 +74,7 @@ public class DataSourceMimeTypeSummary {
      * @return The count of regular files.
      */
     public static Long getCountOfAllRegularFiles(DataSource dataSource) {
-        return DataSourceInfoUtilities.getCountOfRegularFiles(dataSource, null, 
+        return DataSourceInfoUtilities.getCountOfRegNonSlackFiles(dataSource, null, 
                 "Unable to get count of all regular files");
     }
 
@@ -88,7 +88,7 @@ public class DataSourceMimeTypeSummary {
      *
      */
     public static Long getCountOfFilesWithNoMimeType(DataSource currentDataSource) {
-        return DataSourceInfoUtilities.getCountOfRegularFiles(currentDataSource,
+        return DataSourceInfoUtilities.getCountOfRegNonSlackFiles(currentDataSource,
                 "(mime_type IS NULL OR mime_type = '') ",
                 "Unable to get count of files without a mime type");
     }
