@@ -21,7 +21,9 @@ package org.sleuthkit.autopsy.datasourcesummary.ui;
 import java.awt.BorderLayout;
 import java.text.DecimalFormat;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.swing.JLabel;
 import org.apache.commons.lang3.StringUtils;
@@ -59,6 +61,7 @@ import org.sleuthkit.datamodel.DataSource;
     "TypesPanel_fileMimeTypesChart_images_title=Images",
     "TypesPanel_fileMimeTypesChart_videos_title=Videos",
     "TypesPanel_fileMimeTypesChart_other_title=Other",
+    "TypesPanel_fileMimeTypesChart_unknown_title=Unknown",
     "TypesPanel_fileMimeTypesChart_notAnalyzed_title=Not Analyzed",
     "TypesPanel_usageLabel_title=Usage",
     "TypesPanel_osLabel_title=OS",
@@ -111,12 +114,13 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
     private static final DecimalFormat COMMA_FORMATTER = new DecimalFormat("#,###");
 
     // All file type categories.
-    private static final List<Pair<String, FileTypeCategory>> FILE_MIME_TYPE_CATEGORIES = Arrays.asList(
-            Pair.of(Bundle.TypesPanel_fileMimeTypesChart_images_title(), FileTypeCategory.IMAGE),
-            Pair.of(Bundle.TypesPanel_fileMimeTypesChart_videos_title(), FileTypeCategory.VIDEO),
-            Pair.of(Bundle.TypesPanel_fileMimeTypesChart_audio_title(), FileTypeCategory.AUDIO),
-            Pair.of(Bundle.TypesPanel_fileMimeTypesChart_documents_title(), FileTypeCategory.DOCUMENTS),
-            Pair.of(Bundle.TypesPanel_fileMimeTypesChart_executables_title(), FileTypeCategory.EXECUTABLE)
+    private static final List<Pair<String, Set<String>>> FILE_MIME_TYPE_CATEGORIES = Arrays.asList(
+            Pair.of(Bundle.TypesPanel_fileMimeTypesChart_images_title(), FileTypeCategory.IMAGE.getMediaTypes()),
+            Pair.of(Bundle.TypesPanel_fileMimeTypesChart_videos_title(), FileTypeCategory.VIDEO.getMediaTypes()),
+            Pair.of(Bundle.TypesPanel_fileMimeTypesChart_audio_title(), FileTypeCategory.AUDIO.getMediaTypes()),
+            Pair.of(Bundle.TypesPanel_fileMimeTypesChart_documents_title(), FileTypeCategory.DOCUMENTS.getMediaTypes()),
+            Pair.of(Bundle.TypesPanel_fileMimeTypesChart_executables_title(), FileTypeCategory.EXECUTABLE.getMediaTypes()),
+            Pair.of(Bundle.TypesPanel_fileMimeTypesChart_unknown_title(), new HashSet<>(Arrays.asList("application/octet-stream")))
     );
 
     private final LoadableLabel usageLabel = new LoadableLabel(Bundle.TypesPanel_usageLabel_title());
@@ -229,7 +233,7 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
                 .map((strCat) -> {
                     return Pair.of(strCat.getLeft(),
                             getLongOrZero(DataSourceMimeTypeSummary.getCountOfFilesForMimeTypes(
-                                    dataSource, strCat.getRight().getMediaTypes())));
+                                    dataSource, strCat.getRight())));
                 })
                 .collect(Collectors.toList());
 
