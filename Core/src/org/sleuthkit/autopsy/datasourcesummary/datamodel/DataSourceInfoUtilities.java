@@ -31,7 +31,6 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.apache.commons.lang.StringUtils;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.datamodel.BlackboardAttribute.Type;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
@@ -47,13 +46,12 @@ final class DataSourceInfoUtilities {
     /**
      * Gets a count of tsk_files for a particular datasource.
      *
+     * @param skCase            The current SleuthkitCase.
      * @param currentDataSource The datasource.
      * @param additionalWhere   Additional sql where clauses.
-     * @param onError           The message to log on error.
      *
      * @return The count of files or null on error.
      *
-     * @throws SleuthkitCaseProviderException
      * @throws TskCoreException
      * @throws SQLException
      */
@@ -93,13 +91,17 @@ final class DataSourceInfoUtilities {
     /**
      * Gets a count of regular non-slack files for a particular datasource.
      *
+     * @param skCase            The current SleuthkitCase.
      * @param currentDataSource The datasource.
      * @param additionalWhere   Additional sql where clauses.
-     * @param onError           The message to log on error.
      *
      * @return The count of files or null on error.
+     * 
+     * @throws TskCoreException
+     * @throws SQLException
      */
-    static Long getCountOfRegNonSlackFiles(DataSource currentDataSource, String additionalWhere, String onError) {
+    static Long getCountOfRegNonSlackFiles(SleuthkitCase skCase, DataSource currentDataSource, String additionalWhere) 
+            throws TskCoreException, SQLException {
         String whereClause = "meta_type=" + TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG.getValue()
                 + " AND type<>" + TSK_DB_FILES_TYPE_ENUM.SLACK.getFileType();
 
@@ -107,7 +109,7 @@ final class DataSourceInfoUtilities {
             whereClause += " AND " + additionalWhere;
         }
 
-        return getCountOfTskFiles(currentDataSource, whereClause, onError);
+        return getCountOfTskFiles(skCase, currentDataSource, whereClause);
     }
 
     /**
