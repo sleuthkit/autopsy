@@ -18,7 +18,9 @@
  */
 package org.sleuthkit.autopsy.discovery.search;
 
+import java.text.SimpleDateFormat;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.logging.Level;
@@ -64,13 +66,13 @@ public class DiscoveryKeyUtils {
         SearchKey(String userName, List<AbstractFilter> filters,
                 DiscoveryAttributes.AttributeType groupAttributeType,
                 Group.GroupSortingAlgorithm groupSortingType,
-                ResultsSorter.SortingMethod fileSortingMethod, 
+                ResultsSorter.SortingMethod fileSortingMethod,
                 SleuthkitCase sleuthkitCase, CentralRepository centralRepository) {
             this.groupAttributeType = groupAttributeType;
             this.groupSortingType = groupSortingType;
             this.fileSortingMethod = fileSortingMethod;
             this.filters = filters;
-            
+
             StringBuilder searchStringBuilder = new StringBuilder();
             searchStringBuilder.append(userName);
             for (AbstractFilter filter : filters) {
@@ -81,15 +83,16 @@ public class DiscoveryKeyUtils {
             this.sleuthkitCase = sleuthkitCase;
             this.centralRepository = centralRepository;
         }
-        
+
         /**
-         * Construct a SearchKey without a SleuthkitCase or CentralRepositry instance.
+         * Construct a SearchKey without a SleuthkitCase or CentralRepositry
+         * instance.
          */
         SearchKey(String userName, List<AbstractFilter> filters,
                 DiscoveryAttributes.AttributeType groupAttributeType,
                 Group.GroupSortingAlgorithm groupSortingType,
                 ResultsSorter.SortingMethod fileSortingMethod) {
-            this(userName, filters, groupAttributeType, groupSortingType, 
+            this(userName, filters, groupAttributeType, groupSortingType,
                     fileSortingMethod, null, null);
         }
 
@@ -109,11 +112,11 @@ public class DiscoveryKeyUtils {
             }
 
             SearchKey otherSearchKey = (SearchKey) otherKey;
-            if (this.sleuthkitCase != otherSearchKey.getSleuthkitCase() || 
-                    this.centralRepository != otherSearchKey.getCentralRepository()) {
+            if (this.sleuthkitCase != otherSearchKey.getSleuthkitCase()
+                    || this.centralRepository != otherSearchKey.getCentralRepository()) {
                 return false;
             }
-            
+
             return getKeyString().equals(otherSearchKey.getKeyString());
         }
 
@@ -130,11 +133,11 @@ public class DiscoveryKeyUtils {
         String getKeyString() {
             return keyString;
         }
-        
+
         List<AbstractFilter> getFilters() {
             return Collections.unmodifiableList(this.filters);
         }
-        
+
         Group.GroupSortingAlgorithm getGroupSortingType() {
             return groupSortingType;
         }
@@ -146,11 +149,11 @@ public class DiscoveryKeyUtils {
         ResultsSorter.SortingMethod getFileSortingMethod() {
             return fileSortingMethod;
         }
-        
+
         SleuthkitCase getSleuthkitCase() {
             return this.sleuthkitCase;
         }
-        
+
         CentralRepository getCentralRepository() {
             return this.centralRepository;
         }
@@ -326,12 +329,12 @@ public class DiscoveryKeyUtils {
         private final String keywordListNamesString;
 
         @NbBundle.Messages({
-            "FileSearch.KeywordListGroupKey.noKeywords=None"})
+            "DiscoveryKeyUtils.KeywordListGroupKey.noKeywords=None"})
         KeywordListGroupKey(ResultFile file) {
             keywordListNames = file.getKeywordListNames();
 
             if (keywordListNames.isEmpty()) {
-                keywordListNamesString = Bundle.FileSearch_KeywordListGroupKey_noKeywords();
+                keywordListNamesString = Bundle.DiscoveryKeyUtils_KeywordListGroupKey_noKeywords();
             } else {
                 keywordListNamesString = String.join(",", keywordListNames); // NON-NLS
             }
@@ -760,12 +763,12 @@ public class DiscoveryKeyUtils {
         private final String hashSetNamesString;
 
         @NbBundle.Messages({
-            "FileSearch.HashHitsGroupKey.noHashHits=None"})
+            "DiscoveryKeyUtils.HashHitsGroupKey.noHashHits=None"})
         HashHitsGroupKey(ResultFile file) {
             hashSetNames = file.getHashSetNames();
 
             if (hashSetNames.isEmpty()) {
-                hashSetNamesString = Bundle.FileSearch_HashHitsGroupKey_noHashHits();
+                hashSetNamesString = Bundle.DiscoveryKeyUtils_HashHitsGroupKey_noHashHits();
             } else {
                 hashSetNamesString = String.join(",", hashSetNames); // NON-NLS
             }
@@ -841,12 +844,12 @@ public class DiscoveryKeyUtils {
         private final String interestingItemSetNamesString;
 
         @NbBundle.Messages({
-            "FileSearch.InterestingItemGroupKey.noSets=None"})
+            "DiscoveryKeyUtils.InterestingItemGroupKey.noSets=None"})
         InterestingItemGroupKey(ResultFile file) {
             interestingItemSetNames = file.getInterestingSetNames();
 
             if (interestingItemSetNames.isEmpty()) {
-                interestingItemSetNamesString = Bundle.FileSearch_InterestingItemGroupKey_noSets();
+                interestingItemSetNamesString = Bundle.DiscoveryKeyUtils_InterestingItemGroupKey_noSets();
             } else {
                 interestingItemSetNamesString = String.join(",", interestingItemSetNames); // NON-NLS
             }
@@ -913,6 +916,170 @@ public class DiscoveryKeyUtils {
         }
     }
 
+    static class MostRecentActivityDateGroupKey extends GroupKey {
+
+        private final Long epochDate;
+        private final String dateNameString;
+
+        @NbBundle.Messages({
+            "DiscoveryKeyUtils.MostRecentActivityDateGroupKey.noDate=No Date Available"})
+        MostRecentActivityDateGroupKey(Result result) {
+            if (result instanceof ResultDomain) {
+                epochDate = ((ResultDomain) result).getActivityEnd();
+                dateNameString = new SimpleDateFormat("yyyy/MM/dd").format(new Date(epochDate*1000));
+            } else {
+                epochDate = Long.MAX_VALUE;
+                dateNameString = Bundle.DiscoveryKeyUtils_MostRecentActivityDateGroupKey_noDate();
+            }
+        }
+
+        @Override
+        String getDisplayName() {
+            return getDateNameString();
+        }
+
+        @Override
+        public boolean equals(Object otherKey) {
+            if (otherKey == this) {
+                return true;
+            }
+
+            if (!(otherKey instanceof MostRecentActivityDateGroupKey)) {
+                return false;
+            }
+
+            MostRecentActivityDateGroupKey dateGroupKey = (MostRecentActivityDateGroupKey) otherKey;
+            return getDateNameString().equals(dateGroupKey.getDateNameString());
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(getDateNameString());
+        }
+
+        @Override
+        public int compareTo(GroupKey otherGroupKey) {
+            if (otherGroupKey instanceof MostRecentActivityDateGroupKey) {
+                MostRecentActivityDateGroupKey otherDateGroupKey = (MostRecentActivityDateGroupKey) otherGroupKey;
+
+                // Put the empty list at the end
+                if (this.getEpochDate().equals(Long.MAX_VALUE)) {
+                    if (otherDateGroupKey.getEpochDate().equals(Long.MAX_VALUE)) {
+                        return 0;
+                    } else {
+                        return 1;
+                    }
+                } else if (otherDateGroupKey.getEpochDate().equals(Long.MAX_VALUE)) {
+                    return -1;
+                }
+
+                return getDateNameString().compareTo(otherDateGroupKey.getDateNameString());
+            } else {
+                return compareClassNames(otherGroupKey);
+            }
+        }
+
+        /**
+         * Get the date this group is for as a Long.
+         *
+         * @return The date.
+         */
+        Long getEpochDate() {
+            return epochDate;
+        }
+
+        /**
+         * Get the name which identifies this group.
+         *
+         * @return The dateNameString
+         */
+        String getDateNameString() {
+            return dateNameString;
+        }
+    }
+
+    static class FirstActivityDateGroupKey extends GroupKey {
+
+        private final Long epochDate;
+        private final String dateNameString;
+
+        @NbBundle.Messages({
+            "DiscoveryKeyUtils.FirstActivityDateGroupKey.noDate=No Date Available"})
+        FirstActivityDateGroupKey(Result result) {
+            if (result instanceof ResultDomain) {
+                epochDate = ((ResultDomain) result).getActivityStart();
+                dateNameString = new SimpleDateFormat("yyyy/MM/dd").format(new Date(epochDate*1000));
+            } else {
+                epochDate = Long.MAX_VALUE;
+                dateNameString = Bundle.DiscoveryKeyUtils_FirstActivityDateGroupKey_noDate();
+            }
+        }
+
+        @Override
+        String getDisplayName() {
+            return getDateNameString();
+        }
+
+        @Override
+        public boolean equals(Object otherKey) {
+            if (otherKey == this) {
+                return true;
+            }
+
+            if (!(otherKey instanceof FirstActivityDateGroupKey)) {
+                return false;
+            }
+
+            FirstActivityDateGroupKey dateGroupKey = (FirstActivityDateGroupKey) otherKey;
+            return getDateNameString().equals(dateGroupKey.getDateNameString());
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(getDateNameString());
+        }
+
+        @Override
+        public int compareTo(GroupKey otherGroupKey) {
+            if (otherGroupKey instanceof FirstActivityDateGroupKey) {
+                FirstActivityDateGroupKey otherDateGroupKey = (FirstActivityDateGroupKey) otherGroupKey;
+
+                // Put the empty list at the end
+                if (this.getEpochDate().equals(Long.MAX_VALUE)) {
+                    if (otherDateGroupKey.getEpochDate().equals(Long.MAX_VALUE)) {
+                        return 0;
+                    } else {
+                        return 1;
+                    }
+                } else if (otherDateGroupKey.getEpochDate().equals(Long.MAX_VALUE)) {
+                    return -1;
+                }
+
+                return getDateNameString().compareTo(otherDateGroupKey.getDateNameString());
+            } else {
+                return compareClassNames(otherGroupKey);
+            }
+        }
+
+        /**
+         * Get the date this group is for as a Long.
+         *
+         * @return The date.
+         */
+        Long getEpochDate() {
+            return epochDate;
+        }
+
+        /**
+         * Get the name which identifies this group.
+         *
+         * @return The dateNameString
+         */
+        String getDateNameString() {
+            return dateNameString;
+        }
+    }
+
     /**
      * Key representing an object detected group
      */
@@ -922,12 +1089,12 @@ public class DiscoveryKeyUtils {
         private final String objectDetectedNamesString;
 
         @NbBundle.Messages({
-            "FileSearch.ObjectDetectedGroupKey.noSets=None"})
+            "DiscoveryKeyUtils.ObjectDetectedGroupKey.noSets=None"})
         ObjectDetectedGroupKey(ResultFile file) {
             objectDetectedNames = file.getObjectDetectedNames();
 
             if (objectDetectedNames.isEmpty()) {
-                objectDetectedNamesString = Bundle.FileSearch_ObjectDetectedGroupKey_noSets();
+                objectDetectedNamesString = Bundle.DiscoveryKeyUtils_ObjectDetectedGroupKey_noSets();
             } else {
                 objectDetectedNamesString = String.join(",", objectDetectedNames); // NON-NLS
             }

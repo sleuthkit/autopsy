@@ -64,7 +64,7 @@ class DomainSearchCache {
                     groupSortingType, domainSortingMethod, caseDb, centralRepoDb);
 
             return cache.get(searchKey);
-        } catch (ExecutionException ex) {
+        } catch (Throwable ex) {
             throw new DiscoveryException("Error fetching results from cache", ex.getCause());
         }
     }

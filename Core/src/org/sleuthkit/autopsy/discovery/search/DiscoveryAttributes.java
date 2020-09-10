@@ -252,7 +252,7 @@ public class DiscoveryAttributes {
                 CentralRepository centralRepoDb) throws DiscoveryException {
             List<ResultFile> currentFiles = new ArrayList<>();
             Set<String> hashesToLookUp = new HashSet<>();
-            
+
             for (Result result : results) {
                 if (result.getKnown() == TskData.FileKnown.KNOWN) {
                     result.setFrequency(SearchData.Frequency.KNOWN);
@@ -268,8 +268,8 @@ public class DiscoveryAttributes {
                 } else {
                     ResultDomain domain = (ResultDomain) result;
                     try {
-                        CorrelationAttributeInstance.Type domainAttributeType =
-                                centralRepoDb.getCorrelationTypeById(CorrelationAttributeInstance.DOMAIN_TYPE_ID);
+                        CorrelationAttributeInstance.Type domainAttributeType
+                                = centralRepoDb.getCorrelationTypeById(CorrelationAttributeInstance.DOMAIN_TYPE_ID);
                         Long count = centralRepoDb.getCountArtifactInstancesByTypeValue(domainAttributeType, domain.getDomain());
                         domain.setFrequency(SearchData.Frequency.fromCount(count));
                     } catch (CentralRepoException ex) {
@@ -278,7 +278,7 @@ public class DiscoveryAttributes {
                         logger.log(Level.INFO, "Domain [%s] could not be normalized for central repository querying, skipping...", domain.getDomain());
                     }
                 }
-                
+
                 if (hashesToLookUp.size() >= BATCH_SIZE) {
                     computeFrequency(hashesToLookUp, currentFiles, centralRepoDb);
 
@@ -483,6 +483,24 @@ public class DiscoveryAttributes {
         }
     }
 
+    static class MostRecentActivityDateAttribute extends AttributeType {
+
+        @Override
+        public DiscoveryKeyUtils.GroupKey getGroupKey(Result result) {
+            return new DiscoveryKeyUtils.MostRecentActivityDateGroupKey(result);
+        }
+
+    }
+
+    static class FirstActivityDateAttribute extends AttributeType {
+
+        @Override
+        public DiscoveryKeyUtils.GroupKey getGroupKey(Result result) {
+            return new DiscoveryKeyUtils.FirstActivityDateGroupKey(result);
+        }
+
+    }
+
     /**
      * Attribute for grouping/sorting by objects detected
      */
@@ -605,6 +623,8 @@ public class DiscoveryAttributes {
         "DiscoveryAttributes.GroupingAttributeType.interestingItem.displayName=Interesting Item",
         "DiscoveryAttributes.GroupingAttributeType.tag.displayName=Tag",
         "DiscoveryAttributes.GroupingAttributeType.object.displayName=Object Detected",
+        "DiscoveryAttributes.GroupingAttributeType.mostRecentDate.displayName=Most Recent Activity Date",
+        "DiscoveryAttributes.GroupingAttributeType.firstDate.displayName=First Activity Date",
         "DiscoveryAttributes.GroupingAttributeType.none.displayName=None"})
     public enum GroupingAttributeType {
         FILE_SIZE(new FileSizeAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_size_displayName()),
@@ -616,6 +636,8 @@ public class DiscoveryAttributes {
         INTERESTING_ITEM_SET(new InterestingItemAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_interestingItem_displayName()),
         FILE_TAG(new FileTagAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_tag_displayName()),
         OBJECT_DETECTED(new ObjectDetectedAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_object_displayName()),
+        MOST_RECENT_DATE(new MostRecentActivityDateAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_mostRecentDate_displayName()),
+        FIRST_DATE(new MostRecentActivityDateAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_firstDate_displayName()),
         NO_GROUPING(new NoGroupingAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_none_displayName());
 
         private final AttributeType attributeType;
@@ -641,7 +663,7 @@ public class DiscoveryAttributes {
          * @return enums that can be used to group images
          */
         public static List<GroupingAttributeType> getOptionsForGrouping() {
-            return Arrays.asList(FILE_SIZE, FREQUENCY, PARENT_PATH, OBJECT_DETECTED, HASH_LIST_NAME, INTERESTING_ITEM_SET);
+            return Arrays.asList(FILE_SIZE, FREQUENCY, PARENT_PATH, OBJECT_DETECTED, HASH_LIST_NAME, INTERESTING_ITEM_SET, FIRST_DATE, MOST_RECENT_DATE);
         }
     }
 

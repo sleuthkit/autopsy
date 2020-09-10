@@ -1,9 +1,11 @@
 DiscoveryAttributes.GroupingAttributeType.datasource.displayName=Data Source
 DiscoveryAttributes.GroupingAttributeType.fileType.displayName=File Type
+DiscoveryAttributes.GroupingAttributeType.firstDate.displayName=First Activity Date
 DiscoveryAttributes.GroupingAttributeType.frequency.displayName=Past Occurrences
 DiscoveryAttributes.GroupingAttributeType.hash.displayName=Hash Set
 DiscoveryAttributes.GroupingAttributeType.interestingItem.displayName=Interesting Item
 DiscoveryAttributes.GroupingAttributeType.keywordList.displayName=Keyword
+DiscoveryAttributes.GroupingAttributeType.mostRecentDate.displayName=Most Recent Activity Date
 DiscoveryAttributes.GroupingAttributeType.none.displayName=None
 DiscoveryAttributes.GroupingAttributeType.object.displayName=Object Detected
 DiscoveryAttributes.GroupingAttributeType.parent.displayName=Parent Folder
@@ -15,15 +17,17 @@ DiscoveryKeyUtils.DataSourceGroupKey.datasourceAndID={0}(ID: {1})
 # {0} - Data source ID
 DiscoveryKeyUtils.DataSourceGroupKey.idOnly=Data source (ID: {0})
 DiscoveryKeyUtils.FileTagGroupKey.noSets=None
+DiscoveryKeyUtils.FirstActivityDateGroupKey.noDate=No Date Available
+DiscoveryKeyUtils.HashHitsGroupKey.noHashHits=None
+DiscoveryKeyUtils.InterestingItemGroupKey.noSets=None
+DiscoveryKeyUtils.KeywordListGroupKey.noKeywords=None
+DiscoveryKeyUtils.MostRecentActivityDateGroupKey.noDate=No Date Available
 DiscoveryKeyUtils.NoGroupingGroupKey.allFiles=All Files
+DiscoveryKeyUtils.ObjectDetectedGroupKey.noSets=None
 FileGroup.groupSortingAlgorithm.groupName.text=Group Name
 FileGroup.groupSortingAlgorithm.groupSize.text=Group Size
 FileSearch.documentSummary.noBytes=No bytes read for document, unable to display preview.
 FileSearch.documentSummary.noPreview=No preview available.
-FileSearch.HashHitsGroupKey.noHashHits=None
-FileSearch.InterestingItemGroupKey.noSets=None
-FileSearch.KeywordListGroupKey.noKeywords=None
-FileSearch.ObjectDetectedGroupKey.noSets=None
 FileSearchFiltering.concatenateSetNamesForDisplay.comma=, 
 # {0} - filters
 FileSearchFiltering.HashSetFilter.desc=Hash set hits in set(s): {0}

@@ -248,7 +248,9 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
     synchronized List<AbstractFilter> getFilters() {
 
         List<AbstractFilter> filtersToUse = new ArrayList<>();
-        filtersToUse.add(new SearchFiltering.FileTypeFilter(getType()));
+        if (getType() != SearchData.Type.DOMAIN) { //Domain type does not have a file type
+            filtersToUse.add(new SearchFiltering.FileTypeFilter(getType()));
+        }
         for (AbstractDiscoveryFilterPanel filterPanel : filters) {
             if (filterPanel.getCheckbox().isSelected()) {
                 AbstractFilter filter = filterPanel.getFilter();
