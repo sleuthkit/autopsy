@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.ParseException;
@@ -61,7 +62,7 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 /**
- * Data source ingest module that runs Plaso against the image.
+ * Find and process output from iLeapp program and bring into Autopsy
  */
 public final class ILeappFileProcessor {
 
@@ -100,9 +101,7 @@ public final class ILeappFileProcessor {
 
         try {
             List<String> iLeappTsvOutputFiles = findTsvFiles(moduleOutputPath);
-            if (!iLeappTsvOutputFiles.isEmpty()) {
-                processiLeappFiles(iLeappTsvOutputFiles, iLeappFile);
-            }
+            processiLeappFiles(iLeappTsvOutputFiles, iLeappFile);
         } catch (IOException | IngestModuleException ex) {
             logger.log(Level.SEVERE, String.format("Error trying to process iLeapp output files in directory %s. ", moduleOutputPath.toString()), ex); //NON-NLS
             return ProcessResult.ERROR;
@@ -130,7 +129,7 @@ public final class ILeappFileProcessor {
                 }
             }
 
-        } catch (IOException e) {
+        } catch (IOException | UncheckedIOException e) {
             throw new IngestModuleException(Bundle.ILeappFileProcessor_error_reading_iLeapp_directory() + iLeappOutputDir.toString(), e);
         }
 
