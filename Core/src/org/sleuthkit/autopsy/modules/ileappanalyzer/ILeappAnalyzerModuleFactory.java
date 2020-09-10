@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.modules.ileappanalyser;
+package org.sleuthkit.autopsy.modules.ileappanalyzer;
 
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
@@ -25,17 +25,18 @@ import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
+import org.sleuthkit.autopsy.modules.ileappanalyzer.Bundle;
 
 /**
  * A factory that creates data source ingest modules that will run iLeapp
  * against logical files and saves the output to module output.
  */
 @ServiceProvider(service = IngestModuleFactory.class)
-public class ILeappAnalyserModuleFactory extends IngestModuleFactoryAdapter {
+public class ILeappAnalyzerModuleFactory extends IngestModuleFactoryAdapter {
 
-    @NbBundle.Messages({"IosAnalyserModuleFactory_moduleName=ILeapp Analyser"})
+    @NbBundle.Messages({"ILeappAnalyzerModuleFactory_moduleName=ILeapp Analyzer"})
     static String getModuleName() {
-        return Bundle.IosAnalyserModuleFactory_moduleName();
+        return Bundle.ILeappAnalyzerModuleFactory_moduleName();
     }
 
     @Override
@@ -43,10 +44,10 @@ public class ILeappAnalyserModuleFactory extends IngestModuleFactoryAdapter {
         return getModuleName();
     }
 
-    @NbBundle.Messages({"IosAnalyserModuleFactory_moduleDesc=Runs iLeapp against files."})
+    @NbBundle.Messages({"ILeappAnalyzerModuleFactory_moduleDesc=Runs iLeapp against files."})
     @Override
     public String getModuleDescription() {
-        return Bundle.IosAnalyserModuleFactory_moduleDesc();
+        return Bundle.ILeappAnalyzerModuleFactory_moduleDesc();
     }
 
     @Override
@@ -61,7 +62,7 @@ public class ILeappAnalyserModuleFactory extends IngestModuleFactoryAdapter {
 
     @Override
     public DataSourceIngestModule createDataSourceIngestModule(IngestModuleIngestJobSettings ingestJobOptions) {
-        return new ILeappAnalyserIngestModule();
+        return new ILeappAnalyzerIngestModule();
     }
 
 }

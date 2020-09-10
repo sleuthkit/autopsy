@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.modules.ileappanalyser;
+package org.sleuthkit.autopsy.modules.ileappanalyzer;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -58,6 +58,8 @@ import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
+import org.sleuthkit.autopsy.ingest.IngestModule.ProcessResult;
+import org.sleuthkit.autopsy.modules.ileappanalyzer.Bundle;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -74,215 +76,68 @@ import org.xml.sax.SAXException;
 /**
  * Data source ingest module that runs Plaso against the image.
  */
-public class ILeappAnalyserIngestModule implements DataSourceIngestModule {
+public final class ILeappFileProcessor {
 
-    private static final Logger logger = Logger.getLogger(ILeappAnalyserIngestModule.class.getName());
-    private static final String MODULE_NAME = ILeappAnalyserModuleFactory.getModuleName();
+    private static final Logger logger = Logger.getLogger(ILeappFileProcessor.class.getName());
+    private static final String MODULE_NAME = ILeappAnalyzerModuleFactory.getModuleName();
 
-    private static final String ILEAPP = "iLeapp"; //NON-NLS
-    private static final String ILEAPP_EXECUTABLE = "ileapp.exe";//NON-NLS
     private static final String XMLFILE = "ileap-artifact-attribute-reference.xml"; //NON-NLS
 
-    private File iLeappExecutable;
-    private final Map<String, String> tsvFiles;
-    private final Map<String, String> tsvFileArtifacts;
-    private final Map<String, String> tsvFileArtifactComments;
-    private final   Map<String, List<List<String>>> tsvFileAttributes;
+    private Map<String, String> tsvFiles;
+    private Map<String, String> tsvFileArtifacts;
+    private Map<String, String> tsvFileArtifactComments;
+    private Map<String, List<List<String>>> tsvFileAttributes;
 
     private IngestJobContext context;
 
-    ILeappAnalyserIngestModule() {
+    public ILeappFileProcessor() throws IOException, IngestModuleException {
         this.tsvFiles = new HashMap<>();
         this.tsvFileArtifacts = new HashMap<>();
         this.tsvFileArtifactComments = new HashMap<>();
         this.tsvFileAttributes = new HashMap<>();
 
-    }
-
-    @NbBundle.Messages({
-        "ILeappAnalyserIngestModule.executable.not.found=iLeapp Executable Not Found.",
-        "ILeappAnalyserIngestModule.requires.windows=iLeapp module requires windows."})
-    @Override
-    public void startUp(IngestJobContext context) throws IngestModuleException {
-        this.context = context;
-
-        if (false == PlatformUtil.isWindowsOS()) {
-            throw new IngestModuleException(Bundle.ILeappAnalyserIngestModule_requires_windows());
-        }
-
         configExtractor();
-
-        try {
-            iLeappExecutable = locateExecutable(ILEAPP_EXECUTABLE);
-        } catch (FileNotFoundException exception) {
-            logger.log(Level.WARNING, "iLeapp executable not found.", exception); //NON-NLS
-            throw new IngestModuleException(Bundle.ILeappAnalyserIngestModule_executable_not_found(), exception);
-        }
-
+        loadConfigFile();
+        
     }
 
     @NbBundle.Messages({
-        "ILeappAnalyserIngestModule.error.running.iLeapp=Error running iLeapp, see log file.",
-        "ILeappAnalyserIngestModule.error.creating.output.dir=Error creating iLeapp module output directory.",
-        "ILeappAnalyserIngestModule.starting.iLeapp=Starting iLeapp",
-        "ILeappAnalyserIngestModule.running.iLeapp=Running iLeapp",
-        "ILeappAnalyserIngestModule.has.run=iLeapp",
-        "ILeappAnalyserIngestModule.iLeapp.cancelled=iLeapp run was canceled",
-        "ILeappAnalyserIngestModule.completed=iLeapp Processing Completed"})
-    @Override
-    public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress statusHelper) {
-
-        statusHelper.progress(Bundle.ILeappAnalyserIngestModule_starting_iLeapp(), 0);
-
-        List<AbstractFile> iLeappFilesToProcess = findiLeappFilesToProcess(dataSource);
-
-        statusHelper.switchToDeterminate(iLeappFilesToProcess.size());
-
-        try {
-            loadConfigFile();
-        } catch (IngestModuleException ex) {
-            logger.log(Level.SEVERE, String.format("Error loading config file %s", XMLFILE), ex);
-            return ProcessResult.ERROR;
-        }
-
-        Integer filesProcessedCount = 0;
-
-        if (!iLeappFilesToProcess.isEmpty()) {
-            // Run iLeapp
-
-            Case currentCase = Case.getCurrentCase();
-            for (AbstractFile iLeappFile : iLeappFilesToProcess) {
-
-                String currentTime = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss z", Locale.US).format(System.currentTimeMillis());//NON-NLS
-                Path moduleOutputPath = Paths.get(currentCase.getModuleDirectory(), ILEAPP, currentTime);
-                try {
-                    Files.createDirectories(moduleOutputPath);
-                } catch (IOException ex) {
-                    logger.log(Level.SEVERE, String.format("Error creating iLeapp output directory %s", moduleOutputPath.toString()), ex);
-                    return ProcessResult.ERROR;
-                }
-
-                statusHelper.progress(NbBundle.getMessage(this.getClass(), "ILeappAnalyserIngestModule.processing.file", iLeappFile.getName()), filesProcessedCount);
-                ProcessBuilder iLeappCommand = buildiLeappCommand(moduleOutputPath, iLeappFile.getLocalAbsPath(), iLeappFile.getNameExtension());
-                try {
-                    int result = ExecUtil.execute(iLeappCommand, new DataSourceIngestModuleProcessTerminator(context));
-                    if (result != 0) {
-                        logger.log(Level.SEVERE, String.format("Error running iLeapp, error code returned %d", result)); //NON-NLS
-                        return ProcessResult.ERROR;
-                    }
-                } catch (IOException ex) {
-                    logger.log(Level.SEVERE, String.format("Error when trying to execute iLeapp program against file %s", iLeappFile.getLocalAbsPath()), ex);
-                    return ProcessResult.ERROR;
-                }
-
-                if (context.dataSourceIngestIsCancelled()) {
-                    logger.log(Level.INFO, "ILeapp Analyser ingest module run was canceled"); //NON-NLS
-                    return ProcessResult.OK;
-                }
+        "ILeappFileProcessor.error.running.iLeapp=Error running iLeapp, see log file.",
+        "ILeappFileProcessor.error.creating.output.dir=Error creating iLeapp module output directory.",
+        "ILeappFileProcessor.starting.iLeapp=Starting iLeapp",
+        "ILeappFileProcessor.running.iLeapp=Running iLeapp",
+        "ILeappFileProcessor.has.run=iLeapp",
+        "ILeappFileProcessor.iLeapp.cancelled=iLeapp run was canceled",
+        "ILeappFileProcessor.completed=iLeapp Processing Completed",
+        "ILeappFileProcessor.error.reading.iLeapp.directory=Error reading iLeapp Output Directory"})
+    
+    public ProcessResult processFiles(Content dataSource, Path moduleOutputPath, AbstractFile iLeappFile) {
 
                 try {
                     List<String> iLeappTsvOutputFiles = findTsvFiles(moduleOutputPath);
                     if (!iLeappTsvOutputFiles.isEmpty()) {
-                        processiLeappFiles(iLeappTsvOutputFiles, iLeappFile, statusHelper);
+                        processiLeappFiles(iLeappTsvOutputFiles, iLeappFile);
                     }
                 } catch (IOException | IngestModuleException ex) {
                     logger.log(Level.SEVERE, String.format("Error trying to process iLeapp output files in directory %s. ", moduleOutputPath.toString()), ex); //NON-NLS
                     return ProcessResult.ERROR;
                 }
-
-                filesProcessedCount++;
-            }
-
-        }
-
-        IngestMessage message = IngestMessage.createMessage(IngestMessage.MessageType.DATA,
-                Bundle.ILeappAnalyserIngestModule_has_run(),
-                Bundle.ILeappAnalyserIngestModule_completed());
-        IngestServices.getInstance().postMessage(message);
+            
         return ProcessResult.OK;
     }
-
-    /**
-     * Find the files to process that will be processed by the iLeapp program
-     *
-     * @param dataSource
-     *
-     * @return List of abstract files to process.
-     */
-    private List<AbstractFile> findiLeappFilesToProcess(Content dataSource) {
-
-        List<AbstractFile> iLeappFiles = new ArrayList<>();
-
-        FileManager fileManager = getCurrentCase().getServices().getFileManager();
-
-        // findFiles use the SQL wildcard # in the file name
-        try {
-            iLeappFiles = fileManager.findFiles(dataSource, "%", "/"); //NON-NLS
-        } catch (TskCoreException ex) {
-            //Change this
-            logger.log(Level.WARNING, "No files found to process"); //NON-NLS
-            return iLeappFiles;
-        }
-
-        List<AbstractFile> iLeappFilesToProcess = new ArrayList<>();
-        for (AbstractFile iLeappFile : iLeappFiles) {
-            if ((iLeappFile.getName().toLowerCase().contains(".zip") || (iLeappFile.getName().toLowerCase().contains(".tar"))
-                    || iLeappFile.getName().toLowerCase().contains(".tgz"))) {
-                iLeappFilesToProcess.add(iLeappFile);
-            }
-        }
-
-        return iLeappFilesToProcess;
-    }
-
-    private ProcessBuilder buildiLeappCommand(Path moduleOutputPath, String sourceFilePath, String iLeappFileSystemType) {
-
-        ProcessBuilder processBuilder = buildProcessWithRunAsInvoker(
-                "\"" + iLeappExecutable + "\"", //NON-NLS
-                "-t", iLeappFileSystemType, //NON-NLS
-                "-i", sourceFilePath, //NON-NLS
-                "-o", moduleOutputPath.toString()
-        );
-        processBuilder.redirectError(moduleOutputPath.resolve("iLeapp_err.txt").toFile());  //NON-NLS
-        processBuilder.redirectOutput(moduleOutputPath.resolve("iLeapp_out.txt").toFile());  //NON-NLS
-        return processBuilder;
-    }
-
-    static private ProcessBuilder buildProcessWithRunAsInvoker(String... commandLine) {
-        ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
-        /*
-         * Add an environment variable to force log2timeline/psort to run with
-         * the same permissions Autopsy uses.
-         */
-        processBuilder.environment().put("__COMPAT_LAYER", "RunAsInvoker"); //NON-NLS
-        return processBuilder;
-    }
-
-    private static File locateExecutable(String executableName) throws FileNotFoundException {
-        String executableToFindName = Paths.get(ILEAPP, executableName).toString();
-
-        File exeFile = InstalledFileLocator.getDefault().locate(executableToFindName, ILeappAnalyserIngestModule.class.getPackage().getName(), false);
-        if (null == exeFile || exeFile.canExecute() == false) {
-            throw new FileNotFoundException(executableName + " executable not found.");
-        }
-        return exeFile;
-    }
-
-    @NbBundle.Messages({
-        "ILeappAnalyserIngestModule.error.reading.iLeapp.directory=Error reading iLeapp Output directory."})
 
     /**
      * Find the tsv files in the iLeapp output directory and match them to files
      * we know we want to process and return the list to process those files.
      */
-    private List<String> findTsvFiles(Path iLeapOutputDir) throws IngestModuleException {
+    private List<String> findTsvFiles(Path iLeappOutputDir) throws IngestModuleException {
         List<String> allTsvFiles = new ArrayList<>();
         List<String> foundTsvFiles = new ArrayList<>();
 
-        try (Stream<Path> walk = Files.walk(iLeapOutputDir)) {
+        try (Stream<Path> walk = Files.walk(iLeappOutputDir)) {
 
             allTsvFiles = walk.map(x -> x.toString())
-                    .filter(f -> f.endsWith(".tsv")).collect(Collectors.toList());
+                    .filter(f -> f.toLowerCase().endsWith(".tsv")).collect(Collectors.toList());
 
             for (String tsvFile : allTsvFiles) {
                 if (tsvFiles.containsKey(FilenameUtils.getName(tsvFile))) {
@@ -291,7 +146,7 @@ public class ILeappAnalyserIngestModule implements DataSourceIngestModule {
             }
 
         } catch (IOException e) {
-            throw new IngestModuleException(Bundle.ILeappAnalyserIngestModule_error_reading_iLeapp_directory() + iLeapOutputDir.toString(), e);
+            throw new IngestModuleException(Bundle.ILeappFileProcessor_error_reading_iLeapp_directory() + iLeappOutputDir.toString(), e);
         }
 
         return foundTsvFiles;
@@ -308,12 +163,11 @@ public class ILeappAnalyserIngestModule implements DataSourceIngestModule {
      * @throws FileNotFoundException
      * @throws IOException
      */
-    private void processiLeappFiles(List<String> iLeappFilesToProcess, AbstractFile iLeappImageFile, DataSourceIngestModuleProgress statusHelper) throws FileNotFoundException, IOException, IngestModuleException {
+    private void processiLeappFiles(List<String> iLeappFilesToProcess, AbstractFile iLeappImageFile) throws FileNotFoundException, IOException, IngestModuleException {
         List<BlackboardArtifact> bbartifacts = new ArrayList<>();
 
         for (String iLeappFileName : iLeappFilesToProcess) {
             String fileName = FilenameUtils.getName(iLeappFileName);
-            statusHelper.progress(NbBundle.getMessage(this.getClass(), "ILeappAnalyserIngestModule.parsing.file", fileName));
             File iLeappFile = new File(iLeappFileName);
             if (tsvFileAttributes.containsKey(fileName)) {
                 List<List<String>> attrList = tsvFileAttributes.get(fileName);
@@ -451,11 +305,11 @@ public class ILeappAnalyserIngestModule implements DataSourceIngestModule {
     }
 
     @NbBundle.Messages({
-        "ILeappAnalyserIngestModule.cannot.load.artifact.xml=Cannor load xml artifact file.",
-        "ILeappAnalyserIngestModule.cannotBuildXmlParser=Cannot buld an XML parser.",
-        "ILeappAnalyserIngestModule_cannotParseXml=Cannot Parse XML file.",
-        "ILeappAnalyserIngestModule.postartifacts_error=Error posting Blackboard Artifact",
-        "ILeappAnalyserIngestModule.error.creating.new.artifacts=Error creating new artifacts."
+        "ILeappFileProcessor.cannot.load.artifact.xml=Cannor load xml artifact file.",
+        "ILeappFileProcessor.cannotBuildXmlParser=Cannot buld an XML parser.",
+        "ILeappFileProcessor_cannotParseXml=Cannot Parse XML file.",
+        "ILeappFileProcessor.postartifacts_error=Error posting Blackboard Artifact",
+        "ILeappFileProcessor.error.creating.new.artifacts=Error creating new artifacts."
     })
 
     /**
@@ -471,11 +325,11 @@ public class ILeappAnalyserIngestModule implements DataSourceIngestModule {
             xmlinput = db.parse(f);
 
         } catch (IOException e) {
-            throw new IngestModuleException(Bundle.ILeappAnalyserIngestModule_cannot_load_artifact_xml() + e.getLocalizedMessage(), e); //NON-NLS
+            throw new IngestModuleException(Bundle.ILeappFileProcessor_cannot_load_artifact_xml() + e.getLocalizedMessage(), e); //NON-NLS
         } catch (ParserConfigurationException pce) {
-            throw new IngestModuleException(Bundle.ILeappAnalyserIngestModule_cannotBuildXmlParser() + pce.getLocalizedMessage(), pce); //NON-NLS
+            throw new IngestModuleException(Bundle.ILeappFileProcessor_cannotBuildXmlParser() + pce.getLocalizedMessage(), pce); //NON-NLS
         } catch (SAXException sxe) {
-            throw new IngestModuleException(Bundle.ILeappAnalyserIngestModule_cannotParseXml() + sxe.getLocalizedMessage(), sxe); //NON-NLS
+            throw new IngestModuleException(Bundle.ILeappFileProcessor_cannotParseXml() + sxe.getLocalizedMessage(), sxe); //NON-NLS
         }
 
         NodeList nlist = xmlinput.getElementsByTagName("FileName"); //NON-NLS
@@ -547,7 +401,7 @@ public class ILeappAnalyserIngestModule implements DataSourceIngestModule {
             bbart.addAttributes(bbattributes);
             return bbart;
         } catch (TskException ex) {
-            logger.log(Level.WARNING, Bundle.ILeappAnalyserIngestModule_error_creating_new_artifacts(), ex); //NON-NLS
+            logger.log(Level.WARNING, Bundle.ILeappFileProcessor_error_creating_new_artifacts(), ex); //NON-NLS
         }
         return null;
     }
@@ -566,7 +420,7 @@ public class ILeappAnalyserIngestModule implements DataSourceIngestModule {
         try {
             Case.getCurrentCase().getSleuthkitCase().getBlackboard().postArtifacts(artifacts, MODULE_NAME);
         } catch (Blackboard.BlackboardException ex) {
-            logger.log(Level.SEVERE, Bundle.ILeappAnalyserIngestModule_postartifacts_error(), ex); //NON-NLS
+            logger.log(Level.SEVERE, Bundle.ILeappFileProcessor_postartifacts_error(), ex); //NON-NLS
         }
     }
 
@@ -575,15 +429,8 @@ public class ILeappAnalyserIngestModule implements DataSourceIngestModule {
      *
      * @throws org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException
      */
-    void configExtractor() throws IngestModuleException {
-        try {
-            PlatformUtil.extractResourceToUserConfigDir(ILeappAnalyserIngestModule.class, XMLFILE, true);
-        } catch (IOException e) {
-            String message = NbBundle.getMessage(this.getClass(), "ILeappAnalyserIngestModule.init.exception_msg", XMLFILE);
-            logger.log(Level.SEVERE, message, e);
-            throw new IngestModuleException(message, e);
-        }
-
+    private void configExtractor() throws IOException {
+            PlatformUtil.extractResourceToUserConfigDir(ILeappFileProcessor.class, XMLFILE, true);
     }
 
 }
