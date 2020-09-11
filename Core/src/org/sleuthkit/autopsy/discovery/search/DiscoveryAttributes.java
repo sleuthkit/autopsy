@@ -672,7 +672,7 @@ public class DiscoveryAttributes {
          * @return Enums that can be used to group files.
          */
         public static List<GroupingAttributeType> getOptionsForGroupingForDomains() {
-            return Arrays.asList(MOST_RECENT_DATE, FIRST_DATE);
+            return Arrays.asList(FREQUENCY, MOST_RECENT_DATE, FIRST_DATE);
         }
     }
 

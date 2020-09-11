@@ -31,6 +31,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
+import javax.swing.SwingUtilities;
 import org.apache.commons.lang.StringUtils;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
@@ -115,7 +116,10 @@ final class DiscoveryDialog extends javax.swing.JDialog {
             @Override
             public void itemStateChanged(ItemEvent event) {
                 if (event.getStateChange() == ItemEvent.SELECTED) {
-                    getSelectedFilterPanel().setLastGroupingAttributeType(groupByCombobox.getItemAt(groupByCombobox.getSelectedIndex()));
+                    SwingUtilities.invokeLater(() -> {
+                        getSelectedFilterPanel().setLastGroupingAttributeType(groupByCombobox.getItemAt(groupByCombobox.getSelectedIndex()));
+                    });
+
                 }
             }
         });
@@ -123,7 +127,9 @@ final class DiscoveryDialog extends javax.swing.JDialog {
             @Override
             public void itemStateChanged(ItemEvent event) {
                 if (event.getStateChange() == ItemEvent.SELECTED) {
-                    getSelectedFilterPanel().setLastSortingMethod(orderByCombobox.getItemAt(orderByCombobox.getSelectedIndex()));
+                    SwingUtilities.invokeLater(() -> {
+                        getSelectedFilterPanel().setLastSortingMethod(orderByCombobox.getItemAt(orderByCombobox.getSelectedIndex()));
+                    });
                 }
             }
         });
@@ -131,7 +137,9 @@ final class DiscoveryDialog extends javax.swing.JDialog {
             @Override
             public void itemStateChanged(ItemEvent event) {
                 if (event.getStateChange() == ItemEvent.SELECTED) {
-                    getSelectedFilterPanel().setLastGroupSortingAlg(groupSortingComboBox.getItemAt(groupSortingComboBox.getSelectedIndex()));
+                    SwingUtilities.invokeLater(() -> {
+                        getSelectedFilterPanel().setLastGroupSortingAlg(groupSortingComboBox.getItemAt(groupSortingComboBox.getSelectedIndex()));
+                    });
                 }
             }
         });
@@ -210,12 +218,18 @@ final class DiscoveryDialog extends javax.swing.JDialog {
             }
         }
         orderByCombobox.setSelectedItem(getSelectedFilterPanel().getLastGroupSortingAlg());
+        groupSortingComboBox.removeAllItems();
         for (GroupSortingAlgorithm groupSortAlgorithm : GroupSortingAlgorithm.values()) {
             groupSortingComboBox.addItem(groupSortAlgorithm);
         }
         groupSortingComboBox.setSelectedItem(getSelectedFilterPanel().getLastGroupSortingAlg());
     }
 
+    /**
+     * Private helper method to get the correct panel for the selected type.
+     *
+     * @return The panel that corresponds to the currently selected type.
+     */
     private AbstractFiltersPanel getSelectedFilterPanel() {
         switch (type) {
             case IMAGE:
