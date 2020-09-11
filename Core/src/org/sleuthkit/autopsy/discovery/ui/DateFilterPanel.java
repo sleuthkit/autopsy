@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.discovery.ui;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.time.temporal.TemporalUnit;
 import org.sleuthkit.autopsy.discovery.search.AbstractFilter;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
@@ -106,10 +105,12 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
             }
         });
 
+        startDatePicker.setDate(LocalDate.now());
         startDatePicker.setEnabled(false);
         startDatePicker.setMinimumSize(new java.awt.Dimension(60, 22));
         startDatePicker.setPreferredSize(new java.awt.Dimension(110, 22));
 
+        endDatePicker.setDate(LocalDate.now());
         endDatePicker.setEnabled(false);
         endDatePicker.setMinimumSize(new java.awt.Dimension(60, 22));
         endDatePicker.setPreferredSize(new java.awt.Dimension(110, 22));
@@ -270,7 +271,7 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
             LocalDate endDate = LocalDate.MAX;
             ZoneId zone = Utils.getUserPreferredZoneId();
             if (rangeRadioButton.isSelected()) {
-                if (startCheckBox.isSelected() && startDatePicker.getDate() != null) {
+                if (startCheckBox.isSelected() && startDatePicker.getDate().equals(startDate)) {
                     startDate = startDatePicker.getDate();
                 }
                 if (endCheckBox.isSelected() && endDatePicker.getDate() != null) {

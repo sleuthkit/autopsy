@@ -154,6 +154,9 @@
         </Component>
         <Component class="com.github.lgooddatepicker.components.DatePicker" name="startDatePicker">
           <Properties>
+            <Property name="date" type="java.time.LocalDate" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
+              <Connection code="LocalDate.now()" type="code"/>
+            </Property>
             <Property name="enabled" type="boolean" value="false"/>
             <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
               <Dimension value="[60, 22]"/>
@@ -165,6 +168,9 @@
         </Component>
         <Component class="com.github.lgooddatepicker.components.DatePicker" name="endDatePicker">
           <Properties>
+            <Property name="date" type="java.time.LocalDate" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
+              <Connection code="LocalDate.now()" type="code"/>
+            </Property>
             <Property name="enabled" type="boolean" value="false"/>
             <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
               <Dimension value="[60, 22]"/>

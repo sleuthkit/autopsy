@@ -149,8 +149,8 @@ final class DiscoveryDialog extends javax.swing.JDialog {
      * Set the type buttons to a default state where none are selected.
      */
     private void unselectAllButtons() {
-        imagesButton.setSelected(false);
-        imagesButton.setEnabled(true);
+        imagesButton.setSelected(false); 
+       imagesButton.setEnabled(true);
         imagesButton.setBackground(UNSELECTED_COLOR);
         videosButton.setSelected(false);
         videosButton.setEnabled(true);
