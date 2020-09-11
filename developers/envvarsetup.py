@@ -62,9 +62,6 @@ def add_path(paths):
 set_var("JAVA_HOME", open_jdk_home)
 set_var("JRE_HOME", path_join(open_jdk_home, "jre"))
 set_var("JDK_HOME", open_jdk_home)
-set_var("LIBEWF_HOME", path_join(source_base_path, "libewf_64bit"))
-set_var("LIBVHDI_HOME", path_join(source_base_path, "libvhdi_64bit"))
-set_var("LIBVMDK_HOME", path_join(source_base_path, "libvmdk_64bit", "libvmdk"))
 set_var("POSTGRESQL_HOME_64", postgres_home)
 set_var("TSK_HOME", path_join(source_base_path, "sleuthkit"))
 

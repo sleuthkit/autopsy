@@ -58,6 +58,11 @@ class IngestJobInputStream implements IngestStream {
         }
         ingestJob.addStreamingIngestFiles(fileObjectIds);
     }
+    
+    @Override
+    public IngestJob getIngestJob() {
+        return ingestJob;
+    }
 
     @Override
     public synchronized void close() {

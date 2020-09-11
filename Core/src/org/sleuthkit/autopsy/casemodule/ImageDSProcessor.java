@@ -464,6 +464,42 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
         
         doAddImageProcess(deviceId, dataSourcePath.toString(), sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, progressMonitor, callBack);
     }
+    
+    @Override
+    public IngestStream processWithIngestStream(String deviceId, Path dataSourcePath, IngestJobSettings settings, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) {
+        this.deviceId = deviceId;
+        this.imagePath = dataSourcePath.toString();
+        this.sectorSize = 0;
+        this.timeZone = Calendar.getInstance().getTimeZone().getID();
+        this.ignoreFatOrphanFiles = false;
+        setDataSourceOptionsCalled = true;
+    
+        // Set up the data source before creating the ingest stream
+        try {
+            image = SleuthkitJNI.addImageToDatabase(Case.getCurrentCase().getSleuthkitCase(),
+                new String[]{imagePath}, sectorSize, timeZone, md5, sha1, sha256, deviceId);
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error adding data source with path " + imagePath + " to database", ex);
+            final List<String> errors = new ArrayList<>();
+            errors.add(ex.getMessage());
+            callBack.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errors, new ArrayList<>());
+            return null;
+        }
+
+        // Now initialize the ingest stream
+        try {
+            ingestStream = IngestManager.getInstance().openIngestStream(image, settings);
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error starting ingest modules", ex);
+            final List<String> errors = new ArrayList<>();
+            errors.add(ex.getMessage());
+            callBack.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errors, new ArrayList<>());
+            return null;
+        }        
+        
+        doAddImageProcess(deviceId, dataSourcePath.toString(), sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, progressMonitor, callBack);
+        return ingestStream;
+    }
 
     /**
      * Sets the configuration of the data source processor without using the

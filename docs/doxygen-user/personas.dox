@@ -37,10 +37,10 @@ By default, when the Personas Editor is launched, all the personas in the Centra
 To create a new persona, click the "New Persona" button.  A "Create Persona" dialog box will pop up. The following is a description of each field:
 
 <ul>
+<li><b>Name</b>: The name of the persona
 <li><b>Created by</b>: Will be automatically filled in with the current user
 <li><b>Created on</b>: Will be automatically filled in after saving the persona
 <li><b>Comment</b>: A description of the persona
-<li><b>Name</b>: The name of the persona
 <li><b>Accounts</b>: At least one account belonging to the persona
 <li><b>Metadata</b>: (Optional) Name/value pairs of data related to the persona
 <li><b>Aliases</b>: (Optional) Any aliases for this persona

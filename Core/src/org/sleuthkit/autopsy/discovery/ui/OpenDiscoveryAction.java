@@ -38,7 +38,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
  */
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.newpackage.OpenDiscoveryAction")
 @ActionReferences(value = {
-    @ActionReference(path = "Menu/Tools", position = 103)
+    @ActionReference(path = "Menu/Tools", position = 105)
     ,
     @ActionReference(path = "Toolbars/Case", position = 105)})
 @ActionRegistration(displayName = "#CTL_OpenDiscoveryAction", lazy = false)
