@@ -103,7 +103,7 @@ public class DataSourcePastCasesSummary {
 
     /**
      * Given the provided sources for an attribute, aims to determine if one of
-     * those sources is the
+     * those sources is the Central Repository Ingest Module.
      *
      * @param sources The list of sources found on an attribute.
      *
@@ -127,7 +127,7 @@ public class DataSourcePastCasesSummary {
      * string is expected to be of a form of "Previous Case:
      * case1,case2...caseN".
      *
-     * @param artifact The artifact
+     * @param artifact The artifact.
      *
      * @return The list of cases if found or empty list if not.
      */
@@ -224,7 +224,7 @@ public class DataSourcePastCasesSummary {
     }
 
     /**
-     * Returns true if there is an ingest module
+     * Returns true if the central repository ingest module has been run on the datasource.
      *
      * @param dataSource The data source.
      *
