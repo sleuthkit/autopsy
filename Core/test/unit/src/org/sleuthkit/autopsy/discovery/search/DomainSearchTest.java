@@ -125,7 +125,7 @@ public class DomainSearchTest {
         DomainSearch domainSearch = new DomainSearch(cache);
         List<Result> firstPage = domainSearch.getDomainsInGroup(null, 
                 new ArrayList<>(), null, null, null, groupOne, 0, 3, null, null);
-        assertEquals(4, firstPage.size());
+        assertEquals(3, firstPage.size());
         for (int i = 0; i < firstPage.size(); i++) {
             assertEquals(domains.get(i), firstPage.get(i));
         }
@@ -235,10 +235,7 @@ public class DomainSearchTest {
         DomainSearch domainSearch = new DomainSearch(cache);
         List<Result> firstPage = domainSearch.getDomainsInGroup(null, 
                 new ArrayList<>(), null, null, null, groupOne, 20, 5, null, null);
-        assertEquals(4, firstPage.size());
-        for (int i = 0; i < firstPage.size(); i++) {
-            assertEquals(domains.get(i), firstPage.get(i));
-        }
+        assertEquals(0, firstPage.size());
     }
     
     @Test
@@ -298,7 +295,7 @@ public class DomainSearchTest {
         DomainSearch domainSearch = new DomainSearch(cache);
         List<Result> firstPage = domainSearch.getDomainsInGroup(null, 
                 new ArrayList<>(), null, null, null, groupOne, 0, 3, null, null);
-        assertEquals(4, firstPage.size());
+        assertEquals(3, firstPage.size());
     }
     
     @Test
