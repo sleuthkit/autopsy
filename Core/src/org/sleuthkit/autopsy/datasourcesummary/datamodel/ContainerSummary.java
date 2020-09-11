@@ -19,20 +19,40 @@
 package org.sleuthkit.autopsy.datasourcesummary.datamodel;
 
 import java.sql.SQLException;
-import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
-import static org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourceInfoUtilities.getBaseQueryResult;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
 /**
  * Provides methods to query for data source overview details.
  */
-public class DetailsSummary {
+public class ContainerSummary implements DataSourceSummaryDataModel {
 
-    private static final Logger logger = Logger.getLogger(DetailsSummary.class.getName());
+    private final SleuthkitCaseProvider provider;
+
+    /**
+     * Main constructor.
+     */
+    public ContainerSummary() {
+        this(SleuthkitCaseProvider.DEFAULT);
+    }
+
+    /**
+     * Main constructor.
+     *
+     * @param provider The means of obtaining a sleuthkit case.
+     */
+    public ContainerSummary(SleuthkitCaseProvider provider) {
+        this.provider = provider;
+    }
+
+    @Override
+    public boolean shouldRefreshOnNewContent() {
+        return true;
+    }
 
     /**
      * Gets the size of unallocated files in a particular datasource.
@@ -40,8 +60,13 @@ public class DetailsSummary {
      * @param currentDataSource The data source.
      *
      * @return The size or null if the query could not be executed.
+     *
+     * @throws SleuthkitCaseProviderException
+     * @throws TskCoreException
+     * @throws SQLException
      */
-    public static Long getSizeOfUnallocatedFiles(DataSource currentDataSource) {
+    public Long getSizeOfUnallocatedFiles(DataSource currentDataSource)
+            throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, SQLException {
         if (currentDataSource == null) {
             return null;
         }
@@ -66,9 +91,8 @@ public class DetailsSummary {
                 return null;
             }
         };
-        String errorMessage = "Unable to get size of unallocated files; returning null.";
 
-        return DataSourceInfoUtilities.getBaseQueryResult(query, handler, errorMessage);
+        return DataSourceInfoUtilities.getBaseQueryResult(provider.get(), query, handler);
     }
 
     /**
@@ -79,8 +103,14 @@ public class DetailsSummary {
      *
      * @return The concatenated value or null if the query could not be
      *         executed.
+     *
+     * @throws SleuthkitCaseProviderException
+     * @throws TskCoreException
+     * @throws SQLException
      */
-    public static String getOperatingSystems(DataSource dataSource) {
+    public String getOperatingSystems(DataSource dataSource)
+            throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, SQLException {
+        
         if (dataSource == null) {
             return null;
         }
@@ -98,8 +128,14 @@ public class DetailsSummary {
      *
      * @return The concatenated value or null if the query could not be
      *         executed.
+     *
+     * @throws SleuthkitCaseProviderException
+     * @throws TskCoreException
+     * @throws SQLException
      */
-    public static String getDataSourceType(DataSource dataSource) {
+    public String getDataSourceType(DataSource dataSource)
+            throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, SQLException {
+
         if (dataSource == null) {
             return null;
         }
@@ -123,8 +159,14 @@ public class DetailsSummary {
      *
      * @return The concatenated string or null if the query could not be
      *         executed.
+     *
+     * @throws SleuthkitCaseProviderException
+     * @throws TskCoreException
+     * @throws SQLException
      */
-    private static String getConcattedStringsResult(String query, String valueParam, String separator) {
+    private String getConcattedStringsResult(String query, String valueParam, String separator)
+            throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, SQLException {
+        
         DataSourceInfoUtilities.ResultSetHandler<String> handler = (resultSet) -> {
             String toRet = "";
             boolean first = true;
@@ -153,8 +195,14 @@ public class DetailsSummary {
      *
      * @return The concatenated value or null if the query could not be
      *         executed.
+     *
+     * @throws SleuthkitCaseProviderException
+     * @throws TskCoreException
+     * @throws SQLException
      */
-    private String getConcattedAttrValue(long dataSourceId, int artifactTypeId, int attributeTypeId) {
+    private String getConcattedAttrValue(long dataSourceId, int artifactTypeId, int attributeTypeId)
+            throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, SQLException {
+        
         final String valueParam = "concatted_attribute_value";
         String query = "SELECT attr.value_text AS " + valueParam
                 + " FROM blackboard_artifacts bba "

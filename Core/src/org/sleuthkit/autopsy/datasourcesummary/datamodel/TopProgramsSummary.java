@@ -43,6 +43,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Provides information to populate Top Programs Summary queries.
  */
 public class TopProgramsSummary implements DataSourceSummaryDataModel {
+
     private static final Set<Integer> ARTIFACT_UPDATE_TYPE_IDS = new HashSet<>(Arrays.asList(
             ARTIFACT_TYPE.TSK_PROG_RUN.getTypeID()
     ));
@@ -279,7 +280,6 @@ public class TopProgramsSummary implements DataSourceSummaryDataModel {
         }
     }
 
-
     /**
      * Determines a short folder name if any. Otherwise, returns empty string.
      *
@@ -310,5 +310,58 @@ public class TopProgramsSummary implements DataSourceSummaryDataModel {
         }
 
         return "";
+    }
+
+    /**
+     * Describes a result of a program run on a datasource.
+     */
+    public static class TopProgramsResult {
+
+        private final String programName;
+        private final String programPath;
+        private final Long runTimes;
+        private final Date lastRun;
+
+        /**
+         * Main constructor.
+         *
+         * @param programName The name of the program.
+         * @param programPath The path of the program.
+         * @param runTimes    The number of runs.
+         */
+        TopProgramsResult(String programName, String programPath, Long runTimes, Date lastRun) {
+            this.programName = programName;
+            this.programPath = programPath;
+            this.runTimes = runTimes;
+            this.lastRun = lastRun;
+        }
+
+        /**
+         * @return The name of the program
+         */
+        public String getProgramName() {
+            return programName;
+        }
+
+        /**
+         * @return The path of the program.
+         */
+        public String getProgramPath() {
+            return programPath;
+        }
+
+        /**
+         * @return The number of run times or null if not present.
+         */
+        public Long getRunTimes() {
+            return runTimes;
+        }
+
+        /**
+         * @return The last time the program was run or null if not present.
+         */
+        public Date getLastRun() {
+            return lastRun;
+        }
     }
 }

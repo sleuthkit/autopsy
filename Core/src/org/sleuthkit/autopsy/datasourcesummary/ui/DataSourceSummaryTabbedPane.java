@@ -29,7 +29,7 @@ import org.sleuthkit.datamodel.DataSource;
 
 /**
  * A tabbed pane showing the summary of a data source including tabs of:
- * DataSourceSummaryCountsPanel, DataSourceSummaryDetailsPanel, and
+ * DataSourceSummaryCountsPanel, ContainerPanel, and
  * IngestJobInfoPanel.
  */
 @Messages({
@@ -120,7 +120,7 @@ public class DataSourceSummaryTabbedPane extends JTabbedPane {
             new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_analysisTab_title(), new AnalysisPanel()),
             new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_ingestHistoryTab_title(), ingestHistoryPanel, ingestHistoryPanel::setDataSource, () -> {
             }),
-            new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_detailsTab_title(), new DataSourceSummaryDetailsPanel())
+            new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_detailsTab_title(), new ContainerPanel())
     );
 
     private DataSource dataSource = null;

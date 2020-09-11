@@ -32,8 +32,8 @@ import org.sleuthkit.autopsy.datasourcesummary.datamodel.TopProgramsSummary;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopAccountResult;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopDeviceAttachedResult;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopWebSearchResult;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.TopDomainsResult;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.TopProgramsResult;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.TopProgramsSummary.TopProgramsResult;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopDomainsResult;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer.DefaultCellModel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel;
@@ -234,7 +234,7 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
             UserActivitySummary userActivityData) {
 
         super(topProgramsData, userActivityData);
-        
+
         this.topProgramsData = topProgramsData;
 
         // set up data acquisition methods
@@ -265,7 +265,7 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
                         (result) -> topAccountsTable.showDataFetchResult(result, JTablePanel.getDefaultErrorMessage(),
                                 Bundle.UserActivityPanel_noDataExists()))
         );
-        
+
         initComponents();
     }
 
@@ -280,7 +280,7 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
     private String getShortFolderName(String path, String appName) {
         return this.topProgramsData.getShortFolderName(path, appName);
     }
-    
+
     @Override
     protected void fetchInformation(DataSource dataSource) {
         fetchInformation(dataFetchComponents, dataSource);

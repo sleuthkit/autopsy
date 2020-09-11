@@ -29,13 +29,11 @@ import javax.swing.JLabel;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.FileTypeUtils.FileTypeCategory;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.TypesSummary;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.DetailsSummary;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.ContainerSummary;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.MimeTypeSummary;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.AbstractLoadableComponent;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.LoadableComponent;
@@ -67,6 +65,7 @@ import org.sleuthkit.datamodel.DataSource;
     "TypesPanel_osLabel_title=OS",
     "TypesPanel_sizeLabel_title=Size"})
 class TypesPanel extends BaseDataSourceSummaryPanel {
+
 
     /**
      * A label that allows for displaying loading messages and can be used with
@@ -147,51 +146,74 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
     );
 
     // all of the means for obtaining data for the gui components.
-    private final List<DataFetchComponents<DataSource, ?>> dataFetchComponents = Arrays.asList(// usage label worker
-            new DataFetchWorker.DataFetchComponents<>(
-                    DetailsSummary::getDataSourceType,
-                    usageLabel::showDataFetchResult),
-            // os label worker
-            new DataFetchWorker.DataFetchComponents<>(
-                    DetailsSummary::getOperatingSystems,
-                    osLabel::showDataFetchResult),
-            // size label worker
-            new DataFetchWorker.DataFetchComponents<>(
-                    (dataSource) -> {
-                        Long size = dataSource == null ? null : dataSource.getSize();
-                        return SizeRepresentationUtil.getSizeString(size, INTEGER_SIZE_FORMAT, false);
-                    },
-                    sizeLabel::showDataFetchResult),
-            // file types worker
-            new DataFetchWorker.DataFetchComponents<>(
-                    this::getMimeTypeCategoriesModel,
-                    fileMimeTypesChart::showDataFetchResult),
-            // allocated files worker
-            new DataFetchWorker.DataFetchComponents<>(
-                    (dataSource) -> getStringOrZero(TypesSummary.getCountOfAllocatedFiles(dataSource)),
-                    allocatedLabel::showDataFetchResult),
-            // unallocated files worker
-            new DataFetchWorker.DataFetchComponents<>(
-                    (dataSource) -> getStringOrZero(TypesSummary.getCountOfUnallocatedFiles(dataSource)),
-                    unallocatedLabel::showDataFetchResult),
-            // slack files worker
-            new DataFetchWorker.DataFetchComponents<>(
-                    (dataSource) -> getStringOrZero(TypesSummary.getCountOfSlackFiles(dataSource)),
-                    slackLabel::showDataFetchResult),
-            // directories worker
-            new DataFetchWorker.DataFetchComponents<>(
-                    (dataSource) -> getStringOrZero(TypesSummary.getCountOfDirectories(dataSource)),
-                    directoriesLabel::showDataFetchResult)
-    );
+    private final List<DataFetchComponents<DataSource, ?>> dataFetchComponents;
 
     /**
-     * Main constructor.
+     * Creates a new TypesPanel.
      */
     public TypesPanel() {
+        this(new MimeTypeSummary(), new TypesSummary());
+    }
+
+    public TypesPanel(
+            MimeTypeSummary mimeTypeData,
+            TypesSummary typeData) {
+
+        super(mimeTypeData, typeData);
+        
+        this.dataFetchComponents = Arrays.asList(
+                // usage label worker
+                new DataFetchWorker.DataFetchComponents<>(
+                        ContainerSummary::getDataSourceType,
+                        usageLabel::showDataFetchResult),
+                // os label worker
+                new DataFetchWorker.DataFetchComponents<>(
+                        ContainerSummary::getOperatingSystems,
+                        osLabel::showDataFetchResult),
+                // size label worker
+                new DataFetchWorker.DataFetchComponents<>(
+                        (dataSource) -> {
+                            Long size = dataSource == null ? null : dataSource.getSize();
+                            return SizeRepresentationUtil.getSizeString(size, INTEGER_SIZE_FORMAT, false);
+                        },
+                        sizeLabel::showDataFetchResult),
+                // file types worker
+                new DataFetchWorker.DataFetchComponents<>(
+                        this::getMimeTypeCategoriesModel,
+                        fileMimeTypesChart::showDataFetchResult),
+                // allocated files worker
+                new DataFetchWorker.DataFetchComponents<>(
+                        (dataSource) -> getStringOrZero(TypesSummary.getCountOfAllocatedFiles(dataSource)),
+                        allocatedLabel::showDataFetchResult),
+                // unallocated files worker
+                new DataFetchWorker.DataFetchComponents<>(
+                        (dataSource) -> getStringOrZero(TypesSummary.getCountOfUnallocatedFiles(dataSource)),
+                        unallocatedLabel::showDataFetchResult),
+                // slack files worker
+                new DataFetchWorker.DataFetchComponents<>(
+                        (dataSource) -> getStringOrZero(TypesSummary.getCountOfSlackFiles(dataSource)),
+                        slackLabel::showDataFetchResult),
+                // directories worker
+                new DataFetchWorker.DataFetchComponents<>(
+                        (dataSource) -> getStringOrZero(TypesSummary.getCountOfDirectories(dataSource)),
+                        directoriesLabel::showDataFetchResult)
+        );
+        
         initComponents();
     }
 
+    
+    @Override
+    protected void fetchInformation(DataSource dataSource) {
+        fetchInformation(dataFetchComponents, dataSource);
+    }
 
+    @Override
+    protected void onNewDataSource(DataSource dataSource) {
+        onNewDataSource(dataFetchComponents, loadables, dataSource);
+    }
+    
+    
     /**
      * Gets all the data for the file type pie chart.
      *

@@ -70,14 +70,12 @@ public class UserActivitySummary implements DataSourceSummaryDataModel {
 
     private static final Set<Integer> ARTIFACT_UPDATE_TYPE_IDS = new HashSet<>(Arrays.asList(
             ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getTypeID(),
-            
             ARTIFACT_TYPE.TSK_MESSAGE.getTypeID(),
             ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID(),
             ARTIFACT_TYPE.TSK_CALLLOG.getTypeID(),
-            
             ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID()
     ));
-    
+
     private static final long SLEEP_TIME = 5000;
 
     /**
@@ -142,7 +140,7 @@ public class UserActivitySummary implements DataSourceSummaryDataModel {
         this.translationService = translationService;
         this.logger = logger;
     }
-    
+
     @Override
     public Set<Integer> getArtifactIdUpdates() {
         return ARTIFACT_UPDATE_TYPE_IDS;
@@ -547,5 +545,60 @@ public class UserActivitySummary implements DataSourceSummaryDataModel {
         public Date getLastAccess() {
             return lastAccess;
         }
+    }
+
+    /**
+     * Describes a result of a program run on a datasource.
+     */
+    public static class TopDomainsResult {
+
+        private final String domain;
+        private final String url;
+        private final Long visitTimes;
+        private final Date lastVisit;
+
+        /**
+         * Describes a top domain result.
+         *
+         * @param domain     The domain.
+         * @param url        The url.
+         * @param visitTimes The number of times it was visited.
+         * @param lastVisit  The date of the last visit.
+         */
+        public TopDomainsResult(String domain, String url, Long visitTimes, Date lastVisit) {
+            this.domain = domain;
+            this.url = url;
+            this.visitTimes = visitTimes;
+            this.lastVisit = lastVisit;
+        }
+
+        /**
+         * @return The domain for the result.
+         */
+        public String getDomain() {
+            return domain;
+        }
+
+        /**
+         * @return The url for the result.
+         */
+        public String getUrl() {
+            return url;
+        }
+
+        /**
+         * @return The number of times this site is visited.
+         */
+        public Long getVisitTimes() {
+            return visitTimes;
+        }
+
+        /**
+         * @return The date of the last visit.
+         */
+        public Date getLastVisit() {
+            return lastVisit;
+        }
+
     }
 }
