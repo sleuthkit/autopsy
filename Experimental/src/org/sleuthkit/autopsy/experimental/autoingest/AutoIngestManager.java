@@ -2443,6 +2443,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 Manifest manifest = currentJob.getManifest();
                 AutoIngestJobLogger jobLogger = new AutoIngestJobLogger(manifest.getFilePath(), manifest.getDataSourceFileName(), currentJob.getCaseDirectoryPath());
                 jobLogger.logSkippingDataSource(dataSource.getPath().toString());
+                sysLogger.log(Level.INFO, "Skipping data source that can not be processed ({0})", dataSource.getPath().toString());
                 currentJob.setProcessingStage(AutoIngestJob.Stage.COMPLETED, Date.from(Instant.now()));
                 return;
             }
