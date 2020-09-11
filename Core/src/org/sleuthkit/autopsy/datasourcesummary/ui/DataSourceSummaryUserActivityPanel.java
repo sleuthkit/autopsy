@@ -54,9 +54,8 @@ import org.sleuthkit.datamodel.DataSource;
     "DataSourceSummaryUserActivityPanel_TopProgramsTableModel_count_header=Run Times",
     "DataSourceSummaryUserActivityPanel_TopProgramsTableModel_lastrun_header=Last Run",
     "DataSourceSummaryUserActivityPanel_TopDomainsTableModel_domain_header=Domain",
-    "DataSourceSummaryUserActivityPanel_TopDomainsTableModel_count_header=Count",
-    "DataSourceSummaryUserActivityPanel_TopDomainsTableModel_lastAccess_header=Last Access",
-    "DataSourceSummaryUserActivityPanel_noDataExists=No communication data exists",
+    "DataSourceSummaryUserActivityPanel_TopDomainsTableModel_count_header=Visits",
+    "DataSourceSummaryUserActivityPanel_TopDomainsTableModel_lastAccess_header=Last Accessed",
     "DataSourceSummaryUserActivityPanel_TopWebSearchTableModel_searchString_header=Search String",
     "DataSourceSummaryUserActivityPanel_TopWebSearchTableModel_dateAccessed_header=Date Accessed",
     "DataSourceSummaryUserActivityPanel_TopWebSearchTableModel_translatedResult_header=Translated",
@@ -64,7 +63,8 @@ import org.sleuthkit.datamodel.DataSource;
     "DataSourceSummaryUserActivityPanel_TopDeviceAttachedTableModel_makeModel_header=Make and Model",
     "DataSourceSummaryUserActivityPanel_TopDeviceAttachedTableModel_dateAccessed_header=Last Accessed",
     "DataSourceSummaryUserActivityPanel_TopAccountTableModel_accountType_header=Account Type",
-    "DataSourceSummaryUserActivityPanel_TopAccountTableModel_lastAccess_header=Last Accessed",})
+    "DataSourceSummaryUserActivityPanel_TopAccountTableModel_lastAccess_header=Last Accessed",
+    "DataSourceSummaryUserActivityPanel_noDataExists=No communication data exists"})
 public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPanel {
 
     private static final long serialVersionUID = 1L;
@@ -129,11 +129,6 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPan
                     Bundle.DataSourceSummaryUserActivityPanel_TopDomainsTableModel_domain_header(),
                     (recentDomain) -> new DefaultCellModel(recentDomain.getDomain()),
                     250),
-            // last accessed column
-            new ColumnModel<>(
-                    Bundle.DataSourceSummaryUserActivityPanel_TopDomainsTableModel_lastAccess_header(),
-                    (recentDomain) -> new DefaultCellModel(getFormatted(recentDomain.getLastVisit())),
-                    150),
             // count column
             new ColumnModel<>(
                     Bundle.DataSourceSummaryUserActivityPanel_TopDomainsTableModel_count_header(),
@@ -141,7 +136,12 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPan
                         String visitTimes = recentDomain.getVisitTimes() == null ? "" : Long.toString(recentDomain.getVisitTimes());
                         return new DefaultCellModel(visitTimes);
                     },
-                    100)
+                    100),
+            // last accessed column
+            new ColumnModel<>(
+                    Bundle.DataSourceSummaryUserActivityPanel_TopDomainsTableModel_lastAccess_header(),
+                    (recentDomain) -> new DefaultCellModel(getFormatted(recentDomain.getLastVisit())),
+                    150)
     ));
 
     // top web searches table

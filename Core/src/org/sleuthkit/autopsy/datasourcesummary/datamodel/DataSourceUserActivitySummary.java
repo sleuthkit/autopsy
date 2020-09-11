@@ -19,13 +19,16 @@
 package org.sleuthkit.autopsy.datasourcesummary.datamodel;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -68,7 +71,9 @@ public class DataSourceUserActivitySummary {
 
     private static final Comparator<TopAccountResult> TOP_ACCOUNT_RESULT_DATE_COMPARE = (a, b) -> a.getLastAccess().compareTo(b.getLastAccess());
     private static final Comparator<TopWebSearchResult> TOP_WEBSEARCH_RESULT_DATE_COMPARE = (a, b) -> a.getDateAccessed().compareTo(b.getDateAccessed());
-    private static final String ROOT_HUB_IDENTIFIER = "ROOT_HUB";
+    private static final Set<String> DEVICE_EXCLUDE_LIST = new HashSet<>(Arrays.asList("ROOT_HUB", "ROOT_HUB20"));
+
+    private static final String LOOPBACK_ADDRESS = "127.0.0.1";
 
     private static final long MS_PER_DAY = 1000 * 60 * 60 * 24;
     private static final long DOMAIN_WINDOW_DAYS = 30;
@@ -209,7 +214,8 @@ public class DataSourceUserActivitySummary {
             String domain = DataSourceInfoUtilities.getStringOrNull(art, TYPE_DOMAIN);
 
             // if there isn't a last access date or domain for this artifact, it can be ignored.
-            if (artifactDateSecs == null || StringUtils.isBlank(domain)) {
+            // Also, ignore the loopback address.
+            if (artifactDateSecs == null || StringUtils.isBlank(domain) || LOOPBACK_ADDRESS.equals(domain.toUpperCase().trim())) {
                 continue;
             }
 
@@ -384,7 +390,7 @@ public class DataSourceUserActivitySummary {
                 // remove Root Hub identifier
                 .filter(result -> {
                     return result.getDeviceModel() == null
-                            || !result.getDeviceModel().trim().toUpperCase().equals(ROOT_HUB_IDENTIFIER);
+                            || !DEVICE_EXCLUDE_LIST.contains(result.getDeviceModel().trim().toUpperCase());
                 })
                 .limit(count)
                 .collect(Collectors.toList());
