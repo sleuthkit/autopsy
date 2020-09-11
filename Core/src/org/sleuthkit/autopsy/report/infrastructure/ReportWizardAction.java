@@ -33,6 +33,7 @@ import java.text.MessageFormat;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.ImageIcon;
@@ -202,6 +203,21 @@ public final class ReportWizardAction extends CallableSystemAction implements Pr
         toolbarButton.setIcon(icon);
         toolbarButton.setText(NbBundle.getMessage(this.getClass(), "ReportWizardAction.toolBarButton.text"));
         return toolbarButton;
+    }
+    
+    /**
+     * Returns a set of the existing report profile names, removing the special
+     * named ReportAction.
+     *
+     * @return A set of user configurable report profiles, empty list is
+     *         returned if none were found.
+     */
+    public static Set<String> getReportConfigNames() {
+        Set<String> nameList = ReportingConfigLoader.getListOfReportConfigs();
+        //Remove this default name, users cannot change this report.
+        nameList.remove(REPORTING_CONFIGURATION_NAME);
+
+        return nameList;
     }
 
     /**

@@ -827,6 +827,10 @@
                 <binary-origin>release/modules/ext/imgscalr-lib-4.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/commons-lang3-3.4.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\commons-lang3-3.4.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/common-io-3.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/common-io-3.2.jar</binary-origin>
             </class-path-extension>
@@ -985,10 +989,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/controlsfx-8.40.11.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/controlsfx-8.40.11.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/commons-lang3-3.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-lang3-3.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/javaee-api-5.0-2.jar</runtime-relative-path>

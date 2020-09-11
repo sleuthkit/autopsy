@@ -44,7 +44,7 @@ import org.sleuthkit.autopsy.core.RuntimeProperties;
         id = "org.sleuthkit.autopsy.geolocation.OpenGeolocationAction")
 @ActionRegistration(displayName = "#CTL_OpenGeolocation", lazy = false)
 @ActionReferences(value = {
-    @ActionReference(path = "Menu/Tools", position = 102),
+    @ActionReference(path = "Menu/Tools", position = 103),
 @ActionReference(path = "Toolbars/Case", position = 103)})
 public class OpenGeolocationAction extends CallableSystemAction {
     
