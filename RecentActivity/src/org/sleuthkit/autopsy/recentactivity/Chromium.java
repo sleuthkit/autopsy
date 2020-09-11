@@ -200,7 +200,8 @@ class Chromium extends Extract {
             String temps = RAImageIngestModule.getRATempPath(currentCase, browser) + File.separator + allocatedHistoryFiles.get(j).getName() + j + ".db"; //NON-NLS
             final AbstractFile historyFile = allocatedHistoryFiles.get(j++);
             if ((historyFile.getSize() == 0) || (historyFile.getName().toLowerCase().contains("-slack"))
-                    || (historyFile.getName().toLowerCase().contains("cache")) || (historyFile.getName().toLowerCase().contains("media"))) {
+                    || (historyFile.getName().toLowerCase().contains("cache")) || (historyFile.getName().toLowerCase().contains("media"))
+                    || (historyFile.getName().toLowerCase().contains("index"))) {
                 continue;
             }
             try {
@@ -287,7 +288,8 @@ class Chromium extends Extract {
             AbstractFile bookmarkFile = bookmarkFiles.get(j++);
             if ((bookmarkFile.getSize() == 0) || (bookmarkFile.getName().toLowerCase().contains("-slack"))
                     || (bookmarkFile.getName().toLowerCase().contains("extras")) || (bookmarkFile.getName().toLowerCase().contains("log"))
-                    || (bookmarkFile.getName().toLowerCase().contains("backup")) || (bookmarkFile.getName().toLowerCase().contains("visualized"))) {
+                    || (bookmarkFile.getName().toLowerCase().contains("backup")) || (bookmarkFile.getName().toLowerCase().contains("visualized"))
+                    || (bookmarkFile.getName().toLowerCase().contains("bak")) || (bookmarkFile.getParentPath().toLowerCase().contains("backup"))) {
                 continue;
             }
             String temps = RAImageIngestModule.getRATempPath(currentCase, browser) + File.separator + bookmarkFile.getName() + j + ".db"; //NON-NLS
@@ -511,7 +513,7 @@ class Chromium extends Extract {
         while (j < downloadFiles.size()) {
             AbstractFile downloadFile = downloadFiles.get(j++);
             if ((downloadFile.getSize() == 0) || (downloadFile.getName().toLowerCase().contains("-slack")) 
-                    || (downloadFile.getName().toLowerCase().contains("cache"))) {
+                    || (downloadFile.getName().toLowerCase().contains("cache"))  || (downloadFile.getName().toLowerCase().contains("index"))) {
                 continue;
             }
             

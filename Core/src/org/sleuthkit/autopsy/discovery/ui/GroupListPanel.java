@@ -21,6 +21,8 @@ package org.sleuthkit.autopsy.discovery.ui;
 import org.sleuthkit.autopsy.discovery.search.AbstractFilter;
 import com.google.common.eventbus.Subscribe;
 import java.awt.Cursor;
+import java.awt.Graphics2D;
+import java.awt.font.FontRenderContext;
 import java.util.List;
 import java.util.Map;
 import javax.swing.DefaultListCellRenderer;
@@ -209,11 +211,28 @@ final class GroupListPanel extends javax.swing.JPanel {
             if (newValue instanceof GroupKey) {
                 String valueString = newValue.toString();
                 setToolTipText(valueString);
-                //if paths would be longer than 37 characters shorten them to be 37 characters 
-                if (groupingAttribute instanceof DiscoveryAttributes.ParentPathAttribute && valueString.length() > 37) {
-                    valueString = valueString.substring(0, 16) + " ... " + valueString.substring(valueString.length() - 16);
+                valueString += " (" + groupMap.get(newValue) + ")";
+
+                if (groupingAttribute instanceof DiscoveryAttributes.ParentPathAttribute) {
+                    // Using the list FontRenderContext instead of this because
+                    // the label RenderContext was sometimes null, but this should work.
+                    FontRenderContext context = ((Graphics2D) list.getGraphics()).getFontRenderContext();
+
+                    //Determine the width of the string with the given font.
+                    double stringWidth = getFont().getStringBounds(valueString, context).getWidth();
+                    // subtracting 10 from the width as a littl inset.
+                    int listWidth = list.getWidth() - 10;
+
+                    if (stringWidth > listWidth) {
+                        double avgCharWidth = Math.floor(stringWidth / valueString.length());
+
+                        // The extra 5 is to account for the " ... " that is being added back. 
+                        int charToRemove = (int) Math.ceil((stringWidth - listWidth) / avgCharWidth) + 5;
+                        int charactersToShow = (int) Math.ceil((valueString.length() - charToRemove) / 2);
+                        valueString = valueString.substring(0, charactersToShow) + " ... " + valueString.substring(valueString.length() - charactersToShow);
+                    }
                 }
-                newValue = valueString + " (" + groupMap.get(newValue) + ")";
+                newValue = valueString;
             }
             super.getListCellRendererComponent(list, newValue, index, isSelected, cellHasFocus);
             return this;
