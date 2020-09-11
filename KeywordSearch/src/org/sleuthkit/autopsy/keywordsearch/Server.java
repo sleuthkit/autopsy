@@ -1476,7 +1476,7 @@ public class Server {
         private final List<SolrInputDocument> buffer;
         private final Object bufferLock;
         
-        private ScheduledThreadPoolExecutor periodicTasksExecutor = null;
+        private final ScheduledThreadPoolExecutor periodicTasksExecutor;
         private static final long PERIODIC_BATCH_SEND_INTERVAL_MINUTES = 10;
         private static final int NUM_BATCH_UPDATE_RETRIES = 10;
         private static final long SLEEP_BETWEEN_RETRIES_MS = 10000; // 10 seconds
@@ -1666,9 +1666,9 @@ public class Server {
                             logger.log(Level.WARNING, "Unable to send document batch to Solr. Re-trying...", ex); //NON-NLS
                             try {
                                 Thread.sleep(SLEEP_BETWEEN_RETRIES_MS);
-                            } catch (InterruptedException ex1) {
+                            } catch (InterruptedException ignore) {
                                 throw new KeywordSearchModuleException(
-                                        NbBundle.getMessage(this.getClass(), "Server.addDocBatch.exception.msg"), ex1); //NON-NLS
+                                        NbBundle.getMessage(this.getClass(), "Server.addDocBatch.exception.msg"), ex); //NON-NLS
                             }
                         }                        
                     }
