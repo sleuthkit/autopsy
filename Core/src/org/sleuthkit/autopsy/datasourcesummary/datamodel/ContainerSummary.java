@@ -19,6 +19,9 @@
 package org.sleuthkit.autopsy.datasourcesummary.datamodel;
 
 import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -30,7 +33,11 @@ import org.sleuthkit.datamodel.TskData;
  * Provides methods to query for data source overview details.
  */
 public class ContainerSummary implements DataSourceSummaryDataModel {
-
+    private static final Set<Integer> ARTIFACT_UPDATE_TYPE_IDS = new HashSet<>(Arrays.asList(
+        BlackboardArtifact.ARTIFACT_TYPE.TSK_OS_INFO.getTypeID(), 
+        BlackboardArtifact.ARTIFACT_TYPE.TSK_DATA_SOURCE_USAGE.getTypeID()
+    ));
+    
     private final SleuthkitCaseProvider provider;
 
     /**
@@ -53,6 +60,13 @@ public class ContainerSummary implements DataSourceSummaryDataModel {
     public boolean shouldRefreshOnNewContent() {
         return true;
     }
+
+    @Override
+    public Set<Integer> getArtifactIdUpdates() {
+        return ARTIFACT_UPDATE_TYPE_IDS;
+    }
+    
+    
 
     /**
      * Gets the size of unallocated files in a particular datasource.

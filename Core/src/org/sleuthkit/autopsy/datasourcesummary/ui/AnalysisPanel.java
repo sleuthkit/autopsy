@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.datasourcesummary.ui;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Function;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.AnalysisSummary;
@@ -57,11 +58,20 @@ public class AnalysisPanel extends BaseDataSourceSummaryPanel {
             )
     );
 
-    private final JTablePanel<Pair<String, Long>> hashsetHitsTable = JTablePanel.getJTablePanel(DEFAULT_COLUMNS);
+    private static final Function<Pair<String, Long>, String> DEFAULT_KEY_PROVIDER = (pair) -> pair.getKey();
 
-    private final JTablePanel<Pair<String, Long>> keywordHitsTable = JTablePanel.getJTablePanel(DEFAULT_COLUMNS);
+    private final JTablePanel<Pair<String, Long>> hashsetHitsTable
+            = JTablePanel.getJTablePanel(DEFAULT_COLUMNS)
+                    .setKeyFunction(DEFAULT_KEY_PROVIDER);
 
-    private final JTablePanel<Pair<String, Long>> interestingItemsTable = JTablePanel.getJTablePanel(DEFAULT_COLUMNS);
+    private final JTablePanel<Pair<String, Long>> keywordHitsTable
+            = JTablePanel.getJTablePanel(DEFAULT_COLUMNS)
+                    .setKeyFunction(DEFAULT_KEY_PROVIDER);
+
+    private final JTablePanel<Pair<String, Long>> interestingItemsTable
+            = JTablePanel.getJTablePanel(DEFAULT_COLUMNS)
+                    .setKeyFunction(DEFAULT_KEY_PROVIDER);
+    
 
     private final List<JTablePanel<?>> tables = Arrays.asList(
             hashsetHitsTable,
@@ -84,7 +94,7 @@ public class AnalysisPanel extends BaseDataSourceSummaryPanel {
 
     public AnalysisPanel(AnalysisSummary analysisData) {
         super(analysisData);
-        
+
         // set up data acquisition methods
         dataFetchComponents = Arrays.asList(
                 // hashset hits loading components
@@ -103,7 +113,7 @@ public class AnalysisPanel extends BaseDataSourceSummaryPanel {
 
         initComponents();
     }
-    
+
     @Override
     protected void fetchInformation(DataSource dataSource) {
         fetchInformation(dataFetchComponents, dataSource);

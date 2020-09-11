@@ -18,12 +18,15 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.ui;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.table.DefaultTableModel;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.ContainerSummary;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult.ResultType;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -33,30 +36,122 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 class ContainerPanel extends BaseDataSourceSummaryPanel {
 
+    /**
+     * Data payload for the Container panel.
+     */
+    private static class ContainerPanelData {
+
+        private final DataSource dataSource;
+        private final Long unallocatedFilesSize;
+        private final String operatingSystem;
+        private final String dataSourceType;
+
+        /**
+         * Main constructor.
+         *
+         * @param dataSource           The original datasource.
+         * @param unallocatedFilesSize The unallocated file size.
+         * @param operatingSystem      The string representing the operating
+         *                             system.
+         * @param dataSourceType       The datasource type as a string.
+         */
+        ContainerPanelData(DataSource dataSource, Long unallocatedFilesSize, String operatingSystem, String dataSourceType) {
+            this.dataSource = dataSource;
+            this.unallocatedFilesSize = unallocatedFilesSize;
+            this.operatingSystem = operatingSystem;
+            this.dataSourceType = dataSourceType;
+        }
+
+        /**
+         * @return The original datasource.
+         */
+        DataSource getDataSource() {
+            return dataSource;
+        }
+
+        /**
+         * @return The unallocated file size.
+         */
+        Long getUnallocatedFilesSize() {
+            return unallocatedFilesSize;
+        }
+
+        /**
+         * @return The string representing the operating system.
+         */
+        String getOperatingSystem() {
+            return operatingSystem;
+        }
+
+        /**
+         * @return The datasource type as a string.
+         */
+        String getDataSourceType() {
+            return dataSourceType;
+        }
+
+    }
+
     //Because this panel was made using the gridbaglayout and netbean's Customize Layout tool it will be best to continue to modify it through that
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(ContainerPanel.class.getName());
 
+    private final List<DataFetchComponents<DataSource, ?>> dataFetchComponents;
+
     /**
-     * Creates new form ContainerPanel
+     * Creates a new form ContainerPanel.
+     */
+    ContainerPanel() {
+        this(new ContainerSummary());
+    }
+
+    /**
+     * Creates new form ContainerPanel.
      */
     @Messages({"ContainerPanel.getDataSources.error.text=Failed to get the list of datasources for the current case.",
         "ContainerPanel.getDataSources.error.title=Load Failure"})
-    ContainerPanel() {
+    ContainerPanel(ContainerSummary containerSummary) {
+        super(containerSummary);
+
+        dataFetchComponents = Arrays.asList(
+                new DataFetchComponents<>(
+                        (dataSource) -> {
+                            return new ContainerPanelData(
+                                dataSource,
+                                containerSummary.getSizeOfUnallocatedFiles(dataSource),
+                                containerSummary.getOperatingSystems(dataSource),
+                                containerSummary.getDataSourceType(dataSource)
+                            );
+                        },
+                        (result) -> {
+                            if (result.getResultType() == ResultType.SUCCESS) {
+                                ContainerPanelData data = result.getData();
+                                updateDetailsPanelData(
+                                        data.getDataSource(), 
+                                        data.getUnallocatedFilesSize(), 
+                                        data.getOperatingSystem(), 
+                                        data.getDataSourceType());
+                            } else {
+                                logger.log(Level.WARNING, "An exception occurred while attempting to fetch data for the ContainerPanel.", 
+                                        result.getException());
+                                updateDetailsPanelData(null, null, null, null);
+                            }
+                        }
+                )
+        );
+        
         initComponents();
         setDataSource(null);
     }
 
     @Override
     protected void onNewDataSource(DataSource dataSource) {
-        if (dataSource == null || !Case.isCaseOpen()) {
-            updateDetailsPanelData(null, null, null, null);
-        } else {
-            updateDetailsPanelData(dataSource,
-                    ContainerSummary.getSizeOfUnallocatedFiles(dataSource),
-                    ContainerSummary.getOperatingSystems(dataSource),
-                    ContainerSummary.getDataSourceType(dataSource));
-        }
+        fetchInformation(dataSource);
+    }
+
+    @Override
+    protected void fetchInformation(DataSource dataSource) {
+        fetchInformation(dataFetchComponents, dataSource);
     }
 
     /**

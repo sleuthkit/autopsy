@@ -32,10 +32,6 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
@@ -56,7 +52,7 @@ public class RecentFilesSummary implements DataSourceSummaryDataModel {
     private final static BlackboardAttribute.Type ASSOCATED_ATT = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT);
     private final static BlackboardAttribute.Type EMAIL_FROM_ATT = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_FROM);
     private final static BlackboardAttribute.Type MSG_DATEIME_SENT_ATT = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_SENT);
-    private final static BlackboardArtifact.Type ASSOCATED_OBJ_ART = new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT);
+    private final static BlackboardArtifact.Type ASSOCATED_OBJ_ART = new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT);
 
     private static final DateFormat DATETIME_FORMAT = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss", Locale.getDefault());
 
@@ -119,7 +115,7 @@ public class RecentFilesSummary implements DataSourceSummaryDataModel {
 
         List<BlackboardArtifact> artifactList
                 = DataSourceInfoUtilities.getArtifacts(provider.get(),
-                        new BlackboardArtifact.Type(TSK_RECENT_OBJECT),
+                        new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_RECENT_OBJECT),
                         dataSource,
                         DATETIME_ATT,
                         DataSourceInfoUtilities.SortOrder.DESCENDING,
@@ -167,7 +163,7 @@ public class RecentFilesSummary implements DataSourceSummaryDataModel {
     public List<RecentDownloadDetails> getRecentDownloads(DataSource dataSource, int maxCount) throws TskCoreException, SleuthkitCaseProviderException {
         List<BlackboardArtifact> artifactList
                 = DataSourceInfoUtilities.getArtifacts(provider.get(),
-                        new BlackboardArtifact.Type(TSK_WEB_DOWNLOAD),
+                        new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD),
                         dataSource,
                         DATETIME_ACCESSED_ATT,
                         DataSourceInfoUtilities.SortOrder.DESCENDING,
@@ -322,8 +318,8 @@ public class RecentFilesSummary implements DataSourceSummaryDataModel {
      */
     private boolean isMessageArtifact(BlackboardArtifact nodeArtifact) {
         final int artifactTypeID = nodeArtifact.getArtifactTypeID();
-        return artifactTypeID == TSK_EMAIL_MSG.getTypeID()
-                || artifactTypeID == TSK_MESSAGE.getTypeID();
+        return artifactTypeID == ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()
+                || artifactTypeID == ARTIFACT_TYPE.TSK_MESSAGE.getTypeID();
     }
 
     /**

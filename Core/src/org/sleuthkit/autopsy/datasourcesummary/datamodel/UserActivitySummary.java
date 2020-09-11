@@ -73,7 +73,8 @@ public class UserActivitySummary implements DataSourceSummaryDataModel {
             ARTIFACT_TYPE.TSK_MESSAGE.getTypeID(),
             ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID(),
             ARTIFACT_TYPE.TSK_CALLLOG.getTypeID(),
-            ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID()
+            ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID(),
+            ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID()
     ));
 
     private static final long SLEEP_TIME = 5000;
