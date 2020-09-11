@@ -497,6 +497,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         imagesButton.setForeground(Color.BLACK);
         type = SearchData.Type.IMAGE;
         imageFilterPanel.addPropertyChangeListener(listener);
+        updateComboBoxes();
         validateDialog();
         pack();
         repaint();
@@ -512,6 +513,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         videosButton.setForeground(Color.BLACK);
         videoFilterPanel.addPropertyChangeListener(listener);
         type = SearchData.Type.VIDEO;
+        updateComboBoxes();
         validateDialog();
         pack();
         repaint();
@@ -527,6 +529,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         documentsButton.setForeground(Color.BLACK);
         type = SearchData.Type.DOCUMENT;
         documentFilterPanel.addPropertyChangeListener(listener);
+        updateComboBoxes();
         validateDialog();
         pack();
         repaint();
