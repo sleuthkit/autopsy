@@ -67,6 +67,7 @@ public class DataSourcePastCasesSummary {
 
         /**
          * Main constructor.
+         *
          * @param string Error message.
          */
         public NotCentralRepoIngestedException(String string) {
@@ -224,7 +225,8 @@ public class DataSourcePastCasesSummary {
     }
 
     /**
-     * Returns true if the central repository ingest module has been run on the datasource.
+     * Returns true if the central repository ingest module has been run on the
+     * datasource.
      *
      * @param dataSource The data source.
      *

@@ -105,7 +105,7 @@ public class PastCasesPanel extends BaseDataSourceSummaryPanel {
      * shown. Otherwise, this method uses the tables default showDataFetchResult
      * method.
      *
-     * @param table The table.
+     * @param table  The table.
      * @param result The result.
      */
     private <T> void handleResult(JTablePanel<T> table, DataFetchResult<List<T>> result) {
