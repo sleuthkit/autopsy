@@ -30,9 +30,9 @@ import org.sleuthkit.datamodel.TskData;
 /**
  * Provides methods to query for data source overview details.
  */
-public class DataSourceDetailsSummary {
+public class DetailsSummary {
 
-    private static final Logger logger = Logger.getLogger(DataSourceDetailsSummary.class.getName());
+    private static final Logger logger = Logger.getLogger(DetailsSummary.class.getName());
 
     /**
      * Gets the size of unallocated files in a particular datasource.
@@ -124,27 +124,23 @@ public class DataSourceDetailsSummary {
      * @return The concatenated string or null if the query could not be
      *         executed.
      */
-    private static String getConcattedStringsResult(String query, String valueParam, String separator, String errorMessage, String singleErrorMessage) {
+    private static String getConcattedStringsResult(String query, String valueParam, String separator) {
         DataSourceInfoUtilities.ResultSetHandler<String> handler = (resultSet) -> {
             String toRet = "";
             boolean first = true;
             while (resultSet.next()) {
-                try {
-                    if (first) {
-                        first = false;
-                    } else {
-                        toRet += separator;
-                    }
-                    toRet += resultSet.getString(valueParam);
-                } catch (SQLException ex) {
-                    logger.log(Level.WARNING, singleErrorMessage, ex);
+                if (first) {
+                    first = false;
+                } else {
+                    toRet += separator;
                 }
+                toRet += resultSet.getString(valueParam);
             }
 
             return toRet;
         };
 
-        return getBaseQueryResult(query, handler, errorMessage);
+        return DataSourceInfoUtilities.getBaseQueryResult(provider.get(), query, handler);
     }
 
     /**
@@ -158,7 +154,7 @@ public class DataSourceDetailsSummary {
      * @return The concatenated value or null if the query could not be
      *         executed.
      */
-    private static String getConcattedAttrValue(long dataSourceId, int artifactTypeId, int attributeTypeId) {
+    private String getConcattedAttrValue(long dataSourceId, int artifactTypeId, int attributeTypeId) {
         final String valueParam = "concatted_attribute_value";
         String query = "SELECT attr.value_text AS " + valueParam
                 + " FROM blackboard_artifacts bba "
@@ -167,12 +163,7 @@ public class DataSourceDetailsSummary {
                 + " AND bba.artifact_type_id = " + artifactTypeId
                 + " AND attr.attribute_type_id = " + attributeTypeId;
 
-        String errorMessage = "Unable to execute query to retrieve concatted attribute values.";
-        String singleErrorMessage = "There was an error retrieving one of the results.  That result will be omitted from concatted value.";
         String separator = ", ";
-        return getConcattedStringsResult(query, valueParam, separator, errorMessage, singleErrorMessage);
-    }
-
-    private DataSourceDetailsSummary() {
+        return getConcattedStringsResult(query, valueParam, separator);
     }
 }

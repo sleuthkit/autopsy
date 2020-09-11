@@ -23,7 +23,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.table.DefaultTableModel;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourceDetailsSummary;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.DetailsSummary;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -53,9 +53,9 @@ class DataSourceSummaryDetailsPanel extends BaseDataSourceSummaryPanel {
             updateDetailsPanelData(null, null, null, null);
         } else {
             updateDetailsPanelData(dataSource,
-                    DataSourceDetailsSummary.getSizeOfUnallocatedFiles(dataSource),
-                    DataSourceDetailsSummary.getOperatingSystems(dataSource),
-                    DataSourceDetailsSummary.getDataSourceType(dataSource));
+                    DetailsSummary.getSizeOfUnallocatedFiles(dataSource),
+                    DetailsSummary.getOperatingSystems(dataSource),
+                    DetailsSummary.getDataSourceType(dataSource));
         }
     }
 

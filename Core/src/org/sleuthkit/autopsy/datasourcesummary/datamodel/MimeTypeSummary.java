@@ -18,15 +18,40 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.datamodel;
 
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Provides methods to query for datasource files by mime type.
  */
-public class DataSourceMimeTypeSummary {
+public class MimeTypeSummary implements DataSourceSummaryDataModel {
+
+    private final SleuthkitCaseProvider provider;
+
+    /**
+     * Main constructor.
+     */
+    public MimeTypeSummary() {
+        this(SleuthkitCaseProvider.DEFAULT);
+    }
+
+    /**
+     * Main constructor.
+     *
+     * @param provider The means of obtaining a sleuthkit case.
+     */
+    public MimeTypeSummary(SleuthkitCaseProvider provider) {
+        this.provider = provider;
+    }
+
+    @Override
+    public boolean shouldRefreshOnNewContent() {
+        return true;
+    }
 
     /**
      * Get the number of files in the case database for the current data source
@@ -41,11 +66,19 @@ public class DataSourceMimeTypeSummary {
      * @return a Long value which represents the number of occurrences of the
      *         specified mime types in the current case for the specified data
      *         source, null if no count was retrieved
+     *
+     * @throws SleuthkitCaseProviderException
+     * @throws TskCoreException
+     * @throws SQLException
      */
-    public static Long getCountOfFilesForMimeTypes(DataSource currentDataSource, Set<String> setOfMimeTypes) {
-        return DataSourceInfoUtilities.getCountOfRegNonSlackFiles(currentDataSource,
-                "mime_type IN " + getSqlSet(setOfMimeTypes),
-                "Unable to get count of files for specified mime types");
+    public Long getCountOfFilesForMimeTypes(DataSource currentDataSource, Set<String> setOfMimeTypes)
+            throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, SQLException {
+
+        return DataSourceInfoUtilities.getCountOfRegNonSlackFiles(
+                provider.get(),
+                currentDataSource,
+                "mime_type IN " + getSqlSet(setOfMimeTypes)
+        );
     }
 
     /**
@@ -59,23 +92,37 @@ public class DataSourceMimeTypeSummary {
      *
      * @return a Long value which represents the number of files that do not
      *         have the specific mime type, but do have a mime type.
+     *
+     * @throws SleuthkitCaseProviderException
+     * @throws TskCoreException
+     * @throws SQLException
      */
-    public static Long getCountOfFilesNotInMimeTypes(DataSource currentDataSource, Set<String> setOfMimeTypes) {
-        return DataSourceInfoUtilities.getCountOfRegNonSlackFiles(currentDataSource,
+    public Long getCountOfFilesNotInMimeTypes(DataSource currentDataSource, Set<String> setOfMimeTypes)
+            throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, SQLException {
+
+        return DataSourceInfoUtilities.getCountOfRegNonSlackFiles(
+                provider.get(),
+                currentDataSource,
                 "mime_type NOT IN " + getSqlSet(setOfMimeTypes)
-                + " AND mime_type IS NOT NULL AND mime_type <> '' ",
-                "Unable to get count of files without specified mime types");
+                + " AND mime_type IS NOT NULL AND mime_type <> '' "
+        );
     }
-    
-    
+
     /**
      * Get a count of all regular files in a datasource.
+     *
      * @param dataSource The datasource.
+     *
      * @return The count of regular files.
+     *
+     * @throws SleuthkitCaseProviderException
+     * @throws TskCoreException
+     * @throws SQLException
      */
-    public static Long getCountOfAllRegularFiles(DataSource dataSource) {
-        return DataSourceInfoUtilities.getCountOfRegNonSlackFiles(dataSource, null, 
-                "Unable to get count of all regular files");
+    public Long getCountOfAllRegularFiles(DataSource dataSource)
+            throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, SQLException {
+
+        return DataSourceInfoUtilities.getCountOfRegNonSlackFiles(provider.get(), dataSource, null);
     }
 
     /**
@@ -86,11 +133,18 @@ public class DataSourceMimeTypeSummary {
      * @return The number of files with no mime type or null if there is an
      *         issue searching the data source.
      *
+     * @throws SleuthkitCaseProviderException
+     * @throws TskCoreException
+     * @throws SQLException
      */
-    public static Long getCountOfFilesWithNoMimeType(DataSource currentDataSource) {
-        return DataSourceInfoUtilities.getCountOfRegNonSlackFiles(currentDataSource,
-                "(mime_type IS NULL OR mime_type = '') ",
-                "Unable to get count of files without a mime type");
+    public Long getCountOfFilesWithNoMimeType(DataSource currentDataSource)
+            throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, SQLException {
+        
+        return DataSourceInfoUtilities.getCountOfRegNonSlackFiles(
+                provider.get(),
+                currentDataSource,
+                "(mime_type IS NULL OR mime_type = '') "
+        );
     }
 
     /**
@@ -103,7 +157,7 @@ public class DataSourceMimeTypeSummary {
      *
      * @return The sql set string.
      */
-    private static String getSqlSet(Set<String> setValues) {
+    private String getSqlSet(Set<String> setValues) {
         List<String> quotedValues = setValues
                 .stream()
                 .map(str -> String.format("'%s'", str.replace("'", "")))
@@ -111,8 +165,5 @@ public class DataSourceMimeTypeSummary {
 
         String commaSeparatedQuoted = String.join(", ", quotedValues);
         return String.format("(%s) ", commaSeparatedQuoted);
-    }
-
-    private DataSourceMimeTypeSummary() {
     }
 }
