@@ -401,7 +401,7 @@
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/byte-buddy-1.10.13.jar</runtime-relative-path>
-                <binary-origin>C:\cygwin64\home\dsmyda\autopsy\Core\release\modules\ext\byte-buddy-1.10.13.jar</binary-origin>
+                <binary-origin>release\modules\ext\byte-buddy-1.10.13.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/error_prone_annotations-2.3.2.jar</runtime-relative-path>
@@ -601,7 +601,7 @@
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/mockito-core-3.5.7.jar</runtime-relative-path>
-                <binary-origin>C:\cygwin64\home\dsmyda\autopsy\Core\release\modules\ext\mockito-core-3.5.7.jar</binary-origin>
+                <binary-origin>release\modules\ext\mockito-core-3.5.7.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/httpclient-4.5.5.jar</runtime-relative-path>
@@ -617,7 +617,7 @@
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/objenesis-3.1.jar</runtime-relative-path>
-                <binary-origin>C:\cygwin64\home\dsmyda\autopsy\Core\release\modules\ext\objenesis-3.1.jar</binary-origin>
+                <binary-origin>release\modules\ext\objenesis-3.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jackson-core-2.9.7.jar</runtime-relative-path>
@@ -801,7 +801,7 @@
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/byte-buddy-agent-1.10.13.jar</runtime-relative-path>
-                <binary-origin>C:\cygwin64\home\dsmyda\autopsy\Core\release\modules\ext\byte-buddy-agent-1.10.13.jar</binary-origin>
+                <binary-origin>release\modules\ext\byte-buddy-agent-1.10.13.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/batik-awt-util-1.6.jar</runtime-relative-path>
