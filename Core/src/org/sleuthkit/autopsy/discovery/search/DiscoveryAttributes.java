@@ -483,6 +483,9 @@ public class DiscoveryAttributes {
         }
     }
 
+    /**
+     * Attribute for grouping/sorting by date of most recent activity.
+     */
     static class MostRecentActivityDateAttribute extends AttributeType {
 
         @Override
@@ -492,6 +495,9 @@ public class DiscoveryAttributes {
 
     }
 
+    /**
+     * Attribute for grouping/sorting by date of first activity.
+     */
     static class FirstActivityDateAttribute extends AttributeType {
 
         @Override
