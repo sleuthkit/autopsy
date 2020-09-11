@@ -54,7 +54,7 @@ import org.sleuthkit.datamodel.DataSource;
     "DataSourceSummaryUserActivityPanel_TopProgramsTableModel_count_header=Run Times",
     "DataSourceSummaryUserActivityPanel_TopProgramsTableModel_lastrun_header=Last Run",
     "DataSourceSummaryUserActivityPanel_TopDomainsTableModel_domain_header=Domain",
-    "DataSourceSummaryUserActivityPanel_TopDomainsTableModel_url_header=URL",
+    "DataSourceSummaryUserActivityPanel_TopDomainsTableModel_count_header=Count",
     "DataSourceSummaryUserActivityPanel_TopDomainsTableModel_lastAccess_header=Last Access",
     "DataSourceSummaryUserActivityPanel_noDataExists=No communication data exists",
     "DataSourceSummaryUserActivityPanel_TopWebSearchTableModel_searchString_header=Search String",
@@ -129,16 +129,19 @@ public class DataSourceSummaryUserActivityPanel extends BaseDataSourceSummaryPan
                     Bundle.DataSourceSummaryUserActivityPanel_TopDomainsTableModel_domain_header(),
                     (recentDomain) -> new DefaultCellModel(recentDomain.getDomain()),
                     250),
-            // url column
-            new ColumnModel<>(
-                    Bundle.DataSourceSummaryUserActivityPanel_TopDomainsTableModel_url_header(),
-                    (recentDomain) -> new DefaultCellModel(recentDomain.getUrl()),
-                    250),
             // last accessed column
             new ColumnModel<>(
                     Bundle.DataSourceSummaryUserActivityPanel_TopDomainsTableModel_lastAccess_header(),
                     (recentDomain) -> new DefaultCellModel(getFormatted(recentDomain.getLastVisit())),
-                    150)
+                    150),
+            // count column
+            new ColumnModel<>(
+                    Bundle.DataSourceSummaryUserActivityPanel_TopDomainsTableModel_count_header(),
+                    (recentDomain) -> {
+                        String visitTimes = recentDomain.getVisitTimes() == null ? "" : Long.toString(recentDomain.getVisitTimes());
+                        return new DefaultCellModel(visitTimes);
+                    },
+                    100)
     ));
 
     // top web searches table

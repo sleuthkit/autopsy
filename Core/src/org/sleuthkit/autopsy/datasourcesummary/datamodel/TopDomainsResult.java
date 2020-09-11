@@ -26,7 +26,6 @@ import java.util.Date;
 public class TopDomainsResult {
 
     private final String domain;
-    private final String url;
     private final Long visitTimes;
     private final Date lastVisit;
 
@@ -38,9 +37,8 @@ public class TopDomainsResult {
      * @param visitTimes The number of times it was visited.
      * @param lastVisit  The date of the last visit.
      */
-    public TopDomainsResult(String domain, String url, Long visitTimes, Date lastVisit) {
+    public TopDomainsResult(String domain, Long visitTimes, Date lastVisit) {
         this.domain = domain;
-        this.url = url;
         this.visitTimes = visitTimes;
         this.lastVisit = lastVisit;
     }
@@ -50,13 +48,6 @@ public class TopDomainsResult {
      */
     public String getDomain() {
         return domain;
-    }
-
-    /**
-     * @return The url for the result.
-     */
-    public String getUrl() {
-        return url;
     }
 
     /**

@@ -18,15 +18,19 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.datamodel;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -47,6 +51,7 @@ import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 public class DataSourceUserActivitySummary {
 
     private static final BlackboardArtifact.Type TYPE_DEVICE_ATTACHED = new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_DEVICE_ATTACHED);
+    private static final BlackboardArtifact.Type TYPE_WEB_HISTORY = new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_WEB_HISTORY);
 
     private static final BlackboardAttribute.Type TYPE_DATETIME = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DATETIME);
     private static final BlackboardAttribute.Type TYPE_DATETIME_ACCESSED = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED);
@@ -55,49 +60,19 @@ public class DataSourceUserActivitySummary {
     private static final BlackboardAttribute.Type TYPE_DEVICE_MODEL = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL);
     private static final BlackboardAttribute.Type TYPE_MESSAGE_TYPE = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE);
     private static final BlackboardAttribute.Type TYPE_TEXT = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_TEXT);
-
     private static final BlackboardAttribute.Type TYPE_DATETIME_RCVD = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DATETIME_RCVD);
     private static final BlackboardAttribute.Type TYPE_DATETIME_SENT = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DATETIME_SENT);
     private static final BlackboardAttribute.Type TYPE_DATETIME_START = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DATETIME_START);
     private static final BlackboardAttribute.Type TYPE_DATETIME_END = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DATETIME_END);
+    private static final BlackboardAttribute.Type TYPE_DOMAIN = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DOMAIN);
 
     private static final Comparator<TopAccountResult> TOP_ACCOUNT_RESULT_DATE_COMPARE = (a, b) -> a.getLastAccess().compareTo(b.getLastAccess());
     private static final Comparator<TopWebSearchResult> TOP_WEBSEARCH_RESULT_DATE_COMPARE = (a, b) -> a.getDateAccessed().compareTo(b.getDateAccessed());
     private static final String ROOT_HUB_IDENTIFIER = "ROOT_HUB";
 
-    private static final long SLEEP_TIME = 5000;
-
-    /**
-     * A function to calculate a result from 2 parameters.
-     */
-    interface Function2<A1, A2, O> {
-
-        O apply(A1 a1, A2 a2);
-    }
-
-    /**
-     * Gets a list of recent domains based on the datasource.
-     *
-     * @param dataSource The datasource to query for recent domains.
-     * @param count      The max count of items to return.
-     *
-     * @return The list of items retrieved from the database.
-     *
-     * @throws InterruptedException
-     */
-    public List<TopDomainsResult> getRecentDomains(DataSource dataSource, int count) throws InterruptedException {
-        Thread.sleep(SLEEP_TIME);
-        final String dId = Long.toString(dataSource.getId());
-        final Function2<String, Integer, String> getId = (s, idx) -> String.format("d:%s, f:%s, i:%d", dId, s, idx);
-        return IntStream.range(0, count)
-                .mapToObj(num -> new TopDomainsResult(
-                getId.apply("domain", num),
-                getId.apply("url", num),
-                (long) num,
-                new Date(((long) num) * 1000 * 60 * 60 * 24)
-        ))
-                .collect(Collectors.toList());
-    }
+    private static final long MS_PER_DAY = 1000 * 60 * 60 * 24;
+    private static final long DOMAIN_WINDOW_DAYS = 30;
+    private static final long DOMAIN_WINDOW_MS = DOMAIN_WINDOW_DAYS * MS_PER_DAY;
 
     private final SleuthkitCaseProvider caseProvider;
     private final TextTranslationService translationService;
@@ -138,6 +113,142 @@ public class DataSourceUserActivitySummary {
     private void assertValidCount(int count) {
         if (count <= 0) {
             throw new IllegalArgumentException("Count must be greater than 0");
+        }
+    }
+
+    /**
+     * Gets a list of recent domains based on the datasource.
+     *
+     * @param dataSource The datasource to query for recent domains.
+     * @param count      The max count of items to return.
+     *
+     * @return The list of items retrieved from the database.
+     *
+     * @throws InterruptedException
+     */
+    public List<TopDomainsResult> getRecentDomains(DataSource dataSource, int count) throws TskCoreException, SleuthkitCaseProviderException {
+        assertValidCount(count);
+
+        Pair<Long, Map<String, List<Long>>> mostRecentAndGroups = getDomainGroupsAndMostRecent(dataSource);
+        // if no recent domains, return accordingly
+        if (mostRecentAndGroups.getKey() == null || mostRecentAndGroups.getValue().size() == 0) {
+            return Collections.emptyList();
+        }
+
+        final long mostRecentMs = mostRecentAndGroups.getLeft();
+        Map<String, List<Long>> groups = mostRecentAndGroups.getRight();
+
+        return groups.entrySet().stream()
+                .map(entry -> getDomainsResult(entry.getKey(), entry.getValue(), mostRecentMs))
+                .filter(result -> result != null)
+                // sort by number of visit times in those 30 days (max to min)
+                .sorted((a, b) -> -Long.compare(a.getVisitTimes(), b.getVisitTimes()))
+                // limit the result number to the parameter provided
+                .limit(count)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Creates a TopDomainsResult from data or null if no visit date exists
+     * within DOMAIN_WINDOW_MS of mostRecentMs.
+     *
+     * @param domain       The domain.
+     * @param visits       The number of visits.
+     * @param mostRecentMs The most recent visit of any domain.
+     *
+     * @return The TopDomainsResult or null if no visits to this domain within
+     *         30 days of mostRecentMs.
+     */
+    private TopDomainsResult getDomainsResult(String domain, List<Long> visits, long mostRecentMs) {
+        long visitCount = 0;
+        Long thisMostRecentMs = null;
+
+        for (Long visitMs : visits) {
+            // make sure that visit is within window of mostRecentMS; otherwise skip it.
+            if (visitMs + DOMAIN_WINDOW_MS < mostRecentMs) {
+                continue;
+            }
+
+            // if visit is within window, increment the count and get most recent
+            visitCount++;
+            thisMostRecentMs = getMax(thisMostRecentMs, visitMs);
+        }
+
+        // if there are no visits within the window, return null
+        if (visitCount <= 0 || thisMostRecentMs == null) {
+            return null;
+        } else {
+            // create a top domain result with the domain, count, and most recent visit date
+            return new TopDomainsResult(domain, visitCount, new Date(thisMostRecentMs));
+        }
+    }
+
+    /**
+     * Queries TSK_WEB_HISTORY artifacts and returning the latest web history
+     * date accessed and a mapping of domains to all of their visits.
+     *
+     * @param dataSource The datasource.
+     *
+     * @return A tuple where the first value is the latest web history accessed
+     *         date in milliseconds and the second value maps normalized
+     *         (lowercase; trimmed) domain names to when those domains were
+     *         visited.
+     *
+     * @throws TskCoreException
+     * @throws SleuthkitCaseProviderException
+     */
+    private Pair<Long, Map<String, List<Long>>> getDomainGroupsAndMostRecent(DataSource dataSource) throws TskCoreException, SleuthkitCaseProviderException {
+        List<BlackboardArtifact> artifacts = DataSourceInfoUtilities.getArtifacts(caseProvider.get(), TYPE_WEB_HISTORY,
+                dataSource, TYPE_DATETIME_ACCESSED, DataSourceInfoUtilities.SortOrder.DESCENDING, 0);
+
+        Long mostRecentMs = null;
+        Map<String, List<Long>> domainVisits = new HashMap<>();
+
+        for (BlackboardArtifact art : artifacts) {
+            Long artifactDateSecs = DataSourceInfoUtilities.getLongOrNull(art, TYPE_DATETIME_ACCESSED);
+            String domain = DataSourceInfoUtilities.getStringOrNull(art, TYPE_DOMAIN);
+
+            // if there isn't a last access date or domain for this artifact, it can be ignored.
+            if (artifactDateSecs == null || StringUtils.isBlank(domain)) {
+                continue;
+            }
+
+            Long artifactDateMs = artifactDateSecs * 1000;
+
+            // update the most recent visit date overall
+            mostRecentMs = getMax(mostRecentMs, artifactDateMs);
+
+            //Normalize the domain to lower case.
+            domain = domain.toLowerCase().trim();
+
+            // add this visit date to the list of dates for the domain
+            List<Long> domainVisitList = domainVisits.get(domain);
+            if (domainVisitList == null) {
+                domainVisitList = new ArrayList<>();
+                domainVisits.put(domain, domainVisitList);
+            }
+
+            domainVisitList.add(artifactDateMs);
+        }
+
+        return Pair.of(mostRecentMs, domainVisits);
+    }
+
+    /**
+     * Returns the maximum value given two longs handling possible null values.
+     *
+     * @param num1 The first number.
+     * @param num2 The second number.
+     *
+     * @return The maximum non-null number or null if both numbers are null.
+     */
+    private static Long getMax(Long num1, Long num2) {
+        if (num1 == null) {
+            return num2;
+        } else if (num2 == null) {
+            return num1;
+        } else {
+            return num2 > num1 ? num2 : num1;
         }
     }
 
