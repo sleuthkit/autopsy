@@ -54,6 +54,9 @@
         <!-- map support for geolocation -->
         <dependency conf="core->default" org="org.jxmapviewer" name="jxmapviewer2" rev="2.4"/> 
         
+        <!-- For Discovery testing -->
+        <dependency conf="core->default" org="org.mockito" name="mockito-core" rev="3.5.7"/>
+        
         <!-- https://mvnrepository.com/artifact/javax.ws.rs/javax.ws.rs-api -->
         <dependency org="javax.ws.rs" name="javax.ws.rs-api" rev="2.0"/>
         <override org="jakarta.ws.rs" module="jakarta.ws.rs-api" rev="2.1.5"/>

@@ -29,7 +29,6 @@ public class ResultDomain extends Result {
     private final String domain;
     private final Long activityStart;
     private final Long activityEnd;
-    private final Long totalVisits;
     private final Long visitsInLast60;
     private final Long filesDownloaded;
     
@@ -42,14 +41,12 @@ public class ResultDomain extends Result {
      * @param domain The domain the result is being created from.
      */
     ResultDomain(String domain, Long activityStart, Long activityEnd, 
-            Long totalVisits, Long visitsInLast60, Long filesDownloaded, 
-            Content dataSource) {
+            Long visitsInLast60, Long filesDownloaded, Content dataSource) {
         this.domain = domain;
         this.dataSource = dataSource;
         this.dataSourceId = dataSource.getId();
         this.activityStart = activityStart;
         this.activityEnd = activityEnd;
-        this.totalVisits = totalVisits;
         this.visitsInLast60 = visitsInLast60;
         this.filesDownloaded = filesDownloaded;
         
@@ -66,10 +63,6 @@ public class ResultDomain extends Result {
 
     public Long getActivityEnd() {
         return activityEnd;
-    }
-    
-    public Long getTotalVisits() {
-        return this.totalVisits;
     }
 
     public Long getVisitsInLast60() {
@@ -103,7 +96,7 @@ public class ResultDomain extends Result {
     @Override
     public String toString() {
         return "[domain=" + this.domain + ", data_source=" + this.dataSourceId + ", start="
-                + this.activityStart + ", end=" + this.activityEnd + ", visits=" + this.totalVisits + ", visitsLast60=" 
+                + this.activityStart + ", end=" + this.activityEnd + ", visitsLast60=" 
                 + this.visitsInLast60 + ", downloads=" + this.filesDownloaded + ", frequency=" 
                 + this.getFrequency() + "]";
     }

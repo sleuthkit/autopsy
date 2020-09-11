@@ -424,6 +424,10 @@
                 <binary-origin>release/modules/ext/okhttp-2.7.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/byte-buddy-1.10.13.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\byte-buddy-1.10.13.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/libphonenumber-3.5.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/libphonenumber-3.5.jar</binary-origin>
             </class-path-extension>
@@ -470,10 +474,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/commons-pool2-2.4.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/commons-pool2-2.4.2.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/sleuthkit-4.10.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/sleuthkit-4.10.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jxmapviewer2-2.4.jar</runtime-relative-path>
@@ -612,6 +612,14 @@
                 <binary-origin>release\modules\ext\grib-4.5.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/sleuthkit-4.10.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/sleuthkit-4.10.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/sleuthkit-caseuco-4.10.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/sleuthkit-caseuco-4.10.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/gax-1.44.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/gax-1.44.0.jar</binary-origin>
             </class-path-extension>
@@ -648,6 +656,10 @@
                 <binary-origin>release/modules/ext/decodetect-core-0.3.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/mockito-core-3.5.7.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\mockito-core-3.5.7.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/jbig2-imageio-3.0.2.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\jbig2-imageio-3.0.2.jar</binary-origin>
             </class-path-extension>
@@ -666,6 +678,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/curator-recipes-2.8.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/curator-recipes-2.8.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/objenesis-3.1.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\objenesis-3.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/tagsoup-1.2.1.jar</runtime-relative-path>
@@ -780,10 +796,6 @@
                 <binary-origin>release/modules/ext/curator-client-2.8.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/sleuthkit-caseuco-4.10.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/sleuthkit-caseuco-4.10.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/fontbox-2.0.13.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\fontbox-2.0.13.jar</binary-origin>
             </class-path-extension>
@@ -830,6 +842,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/jutf7-1.0.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/jutf7-1.0.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/byte-buddy-agent-1.10.13.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\byte-buddy-agent-1.10.13.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/batik-awt-util-1.6.jar</runtime-relative-path>

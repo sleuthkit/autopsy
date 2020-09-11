@@ -69,9 +69,6 @@ public class ResultsSorter implements Comparator<Result> {
             case BY_DOMAIN_NAME:
                 comparators.add(getDomainNameComparator());
                 break;
-            case BY_MOST_RECENT_DATE_TIME:
-                comparators.add(getMostRecentDateTimeComparator());
-                break;
             default:
                 // The default comparator will be added afterward
                 break;
@@ -315,8 +312,7 @@ public class ResultsSorter implements Comparator<Result> {
         "FileSorter.SortingMethod.frequency.displayName=Central Repo Frequency",
         "FileSorter.SortingMethod.keywordlist.displayName=Keyword List Names",
         "FileSorter.SortingMethod.fullPath.displayName=Full Path",
-        "FileSorter.SortingMethod.domain.displayName=Domain",
-        "FileSorter.SortingMethod.dateTime.displayName=Most Recent Date"})
+        "FileSorter.SortingMethod.domain.displayName=Domain"})
     public enum SortingMethod {
         BY_FILE_NAME(new ArrayList<>(),
                 Bundle.FileSorter_SortingMethod_filename_displayName()), // Sort alphabetically by file name
@@ -333,9 +329,7 @@ public class ResultsSorter implements Comparator<Result> {
         BY_FULL_PATH(new ArrayList<>(),
                 Bundle.FileSorter_SortingMethod_fullPath_displayName()),       // Sort alphabetically by path
         BY_DOMAIN_NAME(new ArrayList<>(),
-                Bundle.FileSorter_SortingMethod_domain_displayName()),
-        BY_MOST_RECENT_DATE_TIME(new ArrayList<>(),
-                Bundle.FileSorter_SortingMethod_dateTime_displayName());
+                Bundle.FileSorter_SortingMethod_domain_displayName());
 
         private final String displayName;
         private final List<DiscoveryAttributes.AttributeType> requiredAttributes;

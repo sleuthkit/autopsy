@@ -34,6 +34,7 @@ FileSearchFiltering.TagsFilter.desc=Tagged {0}
 FileSearchFiltering.TagsFilter.or=, 
 FileSearchFiltering.UserCreatedFilter.desc=that contain EXIF data
 FileSorter.SortingMethod.datasource.displayName=Data Source
+FileSorter.SortingMethod.domain.displayName=Domain
 FileSorter.SortingMethod.filename.displayName=File Name
 FileSorter.SortingMethod.filesize.displayName=File Size
 FileSorter.SortingMethod.filetype.displayName=File Type
