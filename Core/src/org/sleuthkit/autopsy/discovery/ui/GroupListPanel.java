@@ -82,7 +82,6 @@ final class GroupListPanel extends javax.swing.JPanel {
      */
     @Subscribe
     void handleSearchCompleteEvent(DiscoveryEventUtils.SearchCompleteEvent searchCompleteEvent) {
-        System.out.println("SEARCH COMPLETE EVENT");
         groupMap = searchCompleteEvent.getGroupMap();
         searchfilters = searchCompleteEvent.getFilters();
         groupingAttribute = searchCompleteEvent.getGroupingAttr();
@@ -109,7 +108,6 @@ final class GroupListPanel extends javax.swing.JPanel {
      */
     @Subscribe
     void handleSearchCancelledEvent(DiscoveryEventUtils.SearchCancelledEvent searchCancelledEvent) {
-        System.out.println("SEARCH CANCELLED EVENT");
         SwingUtilities.invokeLater(() -> {
             setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         });
