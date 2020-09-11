@@ -115,7 +115,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
             @Override
             public void itemStateChanged(ItemEvent event) {
                 if (event.getStateChange() == ItemEvent.SELECTED) {
-                    getSelectedFilterPanel().setLastGroupingAttributeType((GroupingAttributeType) groupByCombobox.getSelectedItem());
+                    getSelectedFilterPanel().setLastGroupingAttributeType((Grouping) groupByCombobox.getSelectedItem());
                 }
             }
         });
@@ -123,7 +123,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
             @Override
             public void itemStateChanged(ItemEvent event) {
                 if (event.getStateChange() == ItemEvent.SELECTED) {
-                    getSelectedFilterPanel().setLastSortingMethod((SortingMethod) groupByCombobox.getSelectedItem());
+                    getSelectedFilterPanel().setLastSortingMethod((SortingMethod) orderByCombobox.getSelectedItem());
                 }
             }
         });
@@ -131,7 +131,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
             @Override
             public void itemStateChanged(ItemEvent event) {
                 if (event.getStateChange() == ItemEvent.SELECTED) {
-                    getSelectedFilterPanel().setLastGroupSortingAlg((GroupSortingAlgorithm) groupByCombobox.getSelectedItem());
+                    getSelectedFilterPanel().setLastGroupSortingAlg((GroupingAttributeType) groupSortingComboBox.getSelectedItem());
                 }
             }
         });
