@@ -658,12 +658,21 @@ public class DiscoveryAttributes {
         }
 
         /**
-         * Get the list of enums that are valid for grouping images.
+         * Get the list of enums that are valid for grouping files.
          *
-         * @return enums that can be used to group images
+         * @return Enums that can be used to group files.
          */
-        public static List<GroupingAttributeType> getOptionsForGrouping() {
-            return Arrays.asList(FILE_SIZE, FREQUENCY, PARENT_PATH, OBJECT_DETECTED, HASH_LIST_NAME, INTERESTING_ITEM_SET, FIRST_DATE, MOST_RECENT_DATE);
+        public static List<GroupingAttributeType> getOptionsForGroupingForFiles() {
+            return Arrays.asList(FILE_SIZE, FREQUENCY, PARENT_PATH, OBJECT_DETECTED, HASH_LIST_NAME, INTERESTING_ITEM_SET);
+        }
+
+        /**
+         * Get the list of enums that are valid for grouping files.
+         *
+         * @return Enums that can be used to group files.
+         */
+        public static List<GroupingAttributeType> getOptionsForGroupingForDomains() {
+            return Arrays.asList(MOST_RECENT_DATE, FIRST_DATE);
         }
     }
 

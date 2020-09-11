@@ -32,6 +32,9 @@ import javax.swing.JSplitPane;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.apache.commons.lang3.StringUtils;
+import org.sleuthkit.autopsy.discovery.search.DiscoveryAttributes.GroupingAttributeType;
+import org.sleuthkit.autopsy.discovery.search.Group;
+import org.sleuthkit.autopsy.discovery.search.ResultsSorter.SortingMethod;
 import org.sleuthkit.autopsy.discovery.search.SearchData;
 import org.sleuthkit.autopsy.discovery.search.SearchFiltering;
 
@@ -55,6 +58,9 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
     private final JPanel secondColumnPanel = new JPanel();
     private int firstColumnY = 0;
     private int secondColumnY = 0;
+    private SortingMethod lastSortingMethod = SortingMethod.BY_FILE_NAME;
+    private GroupingAttributeType lastGroupingAttributeType = GroupingAttributeType.PARENT_PATH;
+    private Group.GroupSortingAlgorithm lastGroupSortingAlg = Group.GroupSortingAlgorithm.BY_GROUP_SIZE;
 
     /**
      * Setup necessary for implementations of this abstract class.
@@ -64,6 +70,7 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
         secondColumnPanel.setLayout(new GridBagLayout());
     }
 
+    
     /**
      * Get the type of results this filters panel is for.
      *
@@ -269,6 +276,48 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
             validate();
             repaint();
         }
+    }
+
+    /**
+     * @return the lastSortingMethod
+     */
+    SortingMethod getLastSortingMethod() {
+        return lastSortingMethod;
+    }
+
+    /**
+     * @param lastSortingMethod the lastSortingMethod to set
+     */
+    final void setLastSortingMethod(SortingMethod lastSortingMethod) {
+        this.lastSortingMethod = lastSortingMethod;
+    }
+
+    /**
+     * @return the lastGroupingAttributeType
+     */
+    GroupingAttributeType getLastGroupingAttributeType() {
+        return lastGroupingAttributeType;
+    }
+
+    /**
+     * @param lastGroupingAttributeType the lastGroupingAttributeType to set
+     */
+    final void setLastGroupingAttributeType(GroupingAttributeType lastGroupingAttributeType) {
+        this.lastGroupingAttributeType = lastGroupingAttributeType;
+    }
+
+    /**
+     * @return the lastGroupSortingAlg
+     */
+    Group.GroupSortingAlgorithm getLastGroupSortingAlg() {
+        return lastGroupSortingAlg;
+    }
+
+    /**
+     * @param lastGroupSortingAlg the lastGroupSortingAlg to set
+     */
+    final void setLastGroupSortingAlg(Group.GroupSortingAlgorithm lastGroupSortingAlg) {
+        this.lastGroupSortingAlg = lastGroupSortingAlg;
     }
 
 }

@@ -19,6 +19,8 @@
 package org.sleuthkit.autopsy.discovery.ui;
 
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.autopsy.discovery.search.DiscoveryAttributes;
+import org.sleuthkit.autopsy.discovery.search.ResultsSorter;
 import org.sleuthkit.autopsy.discovery.search.SearchData;
 
 /**
@@ -44,6 +46,8 @@ public class DomainFilterPanel extends AbstractFiltersPanel {
         }
         addFilter(new PastOccurrencesFilterPanel(TYPE), true, pastOccurrencesIndices, 0);
         addPanelsToScrollPane(domainFiltersSplitPane);
+        setLastGroupingAttributeType(DiscoveryAttributes.GroupingAttributeType.MOST_RECENT_DATE);
+        setLastSortingMethod(ResultsSorter.SortingMethod.BY_DOMAIN_NAME);
     }
 
     /**

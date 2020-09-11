@@ -229,16 +229,16 @@ public class ResultsSorter implements Comparator<Result> {
             return compareStrings(((ResultFile) result1).getFirstInstance().getName().toLowerCase(), (((ResultFile) result2).getFirstInstance().getName().toLowerCase()));
         };
     }
-    
+
     /**
      * Sorts domain names in lexographical order, ignoring case.
      */
     private static Comparator<Result> getDomainNameComparator() {
         return (Result domain1, Result domain2) -> {
-            if(domain1.getType() != SearchData.Type.DOMAIN) {
+            if (domain1.getType() != SearchData.Type.DOMAIN) {
                 return 0;
             }
-            
+
             ResultDomain first = (ResultDomain) domain1;
             ResultDomain second = (ResultDomain) domain2;
             return compareStrings(first.getDomain().toLowerCase(), second.getDomain().toLowerCase());
@@ -312,7 +312,7 @@ public class ResultsSorter implements Comparator<Result> {
         BY_KEYWORD_LIST_NAMES(Arrays.asList(new DiscoveryAttributes.KeywordListAttribute()),
                 Bundle.FileSorter_SortingMethod_keywordlist_displayName()), // Sort alphabetically by list of keyword list names found
         BY_FULL_PATH(new ArrayList<>(),
-                Bundle.FileSorter_SortingMethod_fullPath_displayName()),       // Sort alphabetically by path
+                Bundle.FileSorter_SortingMethod_fullPath_displayName()), // Sort alphabetically by path
         BY_DOMAIN_NAME(new ArrayList<>(),
                 Bundle.FileSorter_SortingMethod_domain_displayName());
 
@@ -334,12 +334,22 @@ public class ResultsSorter implements Comparator<Result> {
         }
 
         /**
-         * Get the list of enums that are valid for ordering images.
+         * Get the list of enums that are valid for ordering files.
          *
-         * @return enums that can be used to ordering images.
+         * @return Enums that can be used to ordering files.
          */
-        public static List<SortingMethod> getOptionsForOrdering() {
+        public static List<SortingMethod> getOptionsForOrderingFiles() {
             return Arrays.asList(BY_FILE_SIZE, BY_FULL_PATH, BY_FILE_NAME, BY_DATA_SOURCE);
         }
+
+        /**
+         * Get the list of enums that are valid for ordering files.
+         *
+         * @return Enums that can be used to ordering files.
+         */
+        public static List<SortingMethod> getOptionsForOrderingDomains() {
+            return Arrays.asList(BY_DOMAIN_NAME, BY_DATA_SOURCE);
+        }
+
     }
 }
