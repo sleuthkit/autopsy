@@ -128,13 +128,11 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
                                 ContainerPanelData data = result.getData();
                                 updateDetailsPanelData(
                                         data.getDataSource(), 
-                                        data.getUnallocatedFilesSize(), 
-                                        data.getOperatingSystem(), 
-                                        data.getDataSourceType());
+                                        data.getUnallocatedFilesSize());
                             } else {
                                 logger.log(Level.WARNING, "An exception occurred while attempting to fetch data for the ContainerPanel.", 
                                         result.getException());
-                                updateDetailsPanelData(null, null, null, null);
+                                updateDetailsPanelData(null, null);
                             }
                         }
                 )
@@ -159,7 +157,7 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
      *
      * @param selectedDataSource the DataSource to display details about.
      */
-    private void updateDetailsPanelData(DataSource selectedDataSource, Long unallocatedFilesSize, String osDetails, String usage) {
+    private void updateDetailsPanelData(DataSource selectedDataSource, Long unallocatedFilesSize) {
         clearTableValues();
         if (selectedDataSource != null) {
             unallocatedSizeValue.setText(SizeRepresentationUtil.getSizeString(unallocatedFilesSize));

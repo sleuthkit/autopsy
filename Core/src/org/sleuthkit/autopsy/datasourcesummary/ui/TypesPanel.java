@@ -33,6 +33,7 @@ import org.sleuthkit.autopsy.coreutils.FileTypeUtils.FileTypeCategory;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.TypesSummary;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.ContainerSummary;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.MimeTypeSummary;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.AbstractLoadableComponent;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
@@ -41,6 +42,7 @@ import org.sleuthkit.autopsy.datasourcesummary.uiutils.PieChartPanel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.PieChartPanel.PieChartItem;
 
 import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Panel for displaying summary information on the known files present in the
@@ -161,6 +163,7 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
 
         super(mimeTypeData, typeData);
         
+        
         this.dataFetchComponents = Arrays.asList(
                 // usage label worker
                 new DataFetchWorker.DataFetchComponents<>(
@@ -179,23 +182,23 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
                         sizeLabel::showDataFetchResult),
                 // file types worker
                 new DataFetchWorker.DataFetchComponents<>(
-                        this::getMimeTypeCategoriesModel,
+                        (dataSource) -> getMimeTypeCategoriesModel(mimeTypeData, dataSource),
                         fileMimeTypesChart::showDataFetchResult),
                 // allocated files worker
                 new DataFetchWorker.DataFetchComponents<>(
-                        (dataSource) -> getStringOrZero(TypesSummary.getCountOfAllocatedFiles(dataSource)),
+                        (dataSource) -> getStringOrZero(typeData.getCountOfAllocatedFiles(dataSource)),
                         allocatedLabel::showDataFetchResult),
                 // unallocated files worker
                 new DataFetchWorker.DataFetchComponents<>(
-                        (dataSource) -> getStringOrZero(TypesSummary.getCountOfUnallocatedFiles(dataSource)),
+                        (dataSource) -> getStringOrZero(typeData.getCountOfUnallocatedFiles(dataSource)),
                         unallocatedLabel::showDataFetchResult),
                 // slack files worker
                 new DataFetchWorker.DataFetchComponents<>(
-                        (dataSource) -> getStringOrZero(TypesSummary.getCountOfSlackFiles(dataSource)),
+                        (dataSource) -> getStringOrZero(typeData.getCountOfSlackFiles(dataSource)),
                         slackLabel::showDataFetchResult),
                 // directories worker
                 new DataFetchWorker.DataFetchComponents<>(
-                        (dataSource) -> getStringOrZero(TypesSummary.getCountOfDirectories(dataSource)),
+                        (dataSource) -> getStringOrZero(typeData.getCountOfDirectories(dataSource)),
                         directoriesLabel::showDataFetchResult)
         );
         
@@ -221,7 +224,9 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
      *
      * @return The pie chart items.
      */
-    private List<PieChartItem> getMimeTypeCategoriesModel(DataSource dataSource) {
+    private List<PieChartItem> getMimeTypeCategoriesModel(MimeTypeSummary mimeTypeData, DataSource dataSource) 
+            throws SleuthkitCaseProviderException, TskCoreException {
+        
         if (dataSource == null) {
             return null;
         }
@@ -231,20 +236,20 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
                 .stream()
                 .map((strCat) -> {
                     return Pair.of(strCat.getLeft(),
-                            getLongOrZero(MimeTypeSummary.getCountOfFilesForMimeTypes(
+                            getLongOrZero(mimeTypeData.getCountOfFilesForMimeTypes(
                                     dataSource, strCat.getRight())));
                 })
                 .collect(Collectors.toList());
 
         // get a count of all files with no mime type
-        Long noMimeTypeCount = getLongOrZero(MimeTypeSummary.getCountOfFilesWithNoMimeType(dataSource));
+        Long noMimeTypeCount = getLongOrZero(mimeTypeData.getCountOfFilesWithNoMimeType(dataSource));
 
         // get the sum of all counts for the known categories
         Long categoryTotalCount = getLongOrZero(fileCategoryItems.stream()
                 .collect(Collectors.summingLong((pair) -> pair.getValue())));
 
         // get a count of all regular files
-        Long allRegularFiles = getLongOrZero(MimeTypeSummary.getCountOfAllRegularFiles(dataSource));
+        Long allRegularFiles = getLongOrZero(mimeTypeData.getCountOfAllRegularFiles(dataSource));
 
         // create entry for mime types in other category
         fileCategoryItems.add(Pair.of(Bundle.TypesPanel_fileMimeTypesChart_other_title(),
