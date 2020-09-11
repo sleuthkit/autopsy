@@ -365,7 +365,7 @@ public class GroupManager {
         } else { //group == null
             // It may be that this was the last unanalyzed file in the group, so test
             // whether the group is now fully analyzed.
-            return popuplateIfAnalyzed(groupKey, null);
+            return populateIfAnalyzed(groupKey, null);
         }
     }
 
@@ -574,7 +574,7 @@ public class GroupManager {
              * 'populateIfAnalyzed' will still not return a group and therefore
              * this method will never mark the group as unseen.
              */
-            group = popuplateIfAnalyzed(groupKey, null);
+            group = populateIfAnalyzed(groupKey, null);
         } else {
             //if there is aleady a group that was previously deemed fully analyzed, then add this newly analyzed file to it.
             group.addFile(fileID);
@@ -680,7 +680,7 @@ public class GroupManager {
                 } else if (groupKey.getValue().toString().equalsIgnoreCase(this.currentPathGroup.getValue().toString()) == false) {
                     // mark the last path group as analyzed
                     getDrawableDB().markGroupAnalyzed(currentPathGroup);
-                    popuplateIfAnalyzed(currentPathGroup, null);
+                    populateIfAnalyzed(currentPathGroup, null);
 
                     currentPathGroup = groupKey;
                 }
@@ -698,7 +698,7 @@ public class GroupManager {
         try {
             if (currentPathGroup != null) {
                 getDrawableDB().markGroupAnalyzed(currentPathGroup);
-                popuplateIfAnalyzed(currentPathGroup, null);
+                populateIfAnalyzed(currentPathGroup, null);
                 currentPathGroup = null;
             }
         } catch (TskCoreException ex) {
@@ -713,7 +713,7 @@ public class GroupManager {
      *
      * @returns null if Group is not ready to be viewed
      */
-    synchronized private DrawableGroup popuplateIfAnalyzed(GroupKey<?> groupKey, ReGroupTask<?> task) {
+    synchronized private DrawableGroup populateIfAnalyzed(GroupKey<?> groupKey, ReGroupTask<?> task) {
         /*
          * If this method call is part of a ReGroupTask and that task is
          * cancelled, no-op.
@@ -735,7 +735,7 @@ public class GroupManager {
             if (groupKey.getAttribute() != DrawableAttribute.PATH
                     || getDrawableDB().isGroupAnalyzed(groupKey)) {
                 Set<Long> fileIDs = getFileIDsInGroup(groupKey);
-                if (Objects.nonNull(fileIDs)) {
+                if (Objects.nonNull(fileIDs) && ! fileIDs.isEmpty()) {
 
                     long examinerID = collaborativeModeProp.get() ? -1 : controller.getCaseDatabase().getCurrentExaminer().getId();
                     final boolean groupSeen = getDrawableDB().isGroupSeenByExaminer(groupKey, examinerID);
@@ -866,7 +866,7 @@ public class GroupManager {
                     p++;
                     updateMessage(Bundle.ReGroupTask_displayTitle(groupBy.attrName.toString()) + valForDataSource.getValue());
                     updateProgress(p, valsByDataSource.size());
-                    popuplateIfAnalyzed(new GroupKey<>(groupBy, valForDataSource.getValue(), valForDataSource.getKey()), this);
+                    populateIfAnalyzed(new GroupKey<>(groupBy, valForDataSource.getValue(), valForDataSource.getKey()), this);
                 }
 
                 Optional<DrawableGroup> viewedGroup

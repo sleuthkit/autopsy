@@ -138,8 +138,8 @@ final class ExtractSru extends Extract {
             createNetUsageArtifacts(modOutFile, sruAbstractFile);
             createAppUsageArtifacts(modOutFile, sruAbstractFile);
         } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Error processing SRUDB.dat file", ex); //NON-NLS=
             this.addErrorMessage(Bundle.ExtractSru_process_error_executing_export_srudb_program());
-            logger.log(Level.SEVERE, "SRUDB.dat file not found"); //NON-NLS
         }
     }
 
@@ -256,7 +256,7 @@ final class ExtractSru extends Extract {
         processBuilder.redirectOutput(outputFilePath.toFile());
         processBuilder.redirectError(errFilePath.toFile());
 
-        ExecUtil.execute(processBuilder, new DataSourceIngestModuleProcessTerminator(context));
+        ExecUtil.execute(processBuilder, new DataSourceIngestModuleProcessTerminator(context, true));
     }
 
     private String getPathForSruDumper() {
