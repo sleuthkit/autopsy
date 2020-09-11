@@ -440,7 +440,7 @@ final class CommunicationArtifactViewerHelper {
      * @return A JLabel with the contact information.
      */
     @NbBundle.Messages({
-        "#{0} - contact name",
+        "# {0} - contact name",
         "CommunicationArtifactViewerHelper_contact_label=Contact: {0}",
         "CommunicationArtifactViewerHelper_contact_label_unknown=Unknown"
     })
