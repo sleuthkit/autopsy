@@ -155,7 +155,6 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
         final CaseDbAccessManager dbManager = caseDb.getCaseDbAccessManager();   
         
         final DomainCallback domainCallback = new DomainCallback(caseDb);
-        System.out.println("Domains Query: " + domainsQuery);
         dbManager.select(domainsQuery, domainCallback);
         
         if (domainCallback.getSQLException() != null) {

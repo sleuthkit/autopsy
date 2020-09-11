@@ -215,8 +215,8 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
     private void rangeRadioButtonStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_rangeRadioButtonStateChanged
         startCheckBox.setEnabled(rangeRadioButton.isEnabled() && rangeRadioButton.isSelected());
         endCheckBox.setEnabled(rangeRadioButton.isEnabled() && rangeRadioButton.isSelected());
-        endCheckBoxStateChanged(evt);
-        startCheckBoxStateChanged(evt);
+        startCheckBox.firePropertyChange("StartButtonChange", true, false);
+        endCheckBox.firePropertyChange("EndButtonChange", true, false);
     }//GEN-LAST:event_rangeRadioButtonStateChanged
 
     @Override
@@ -252,12 +252,23 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
         dateFilterCheckBox.addActionListener(actionListener);
         startCheckBox.addActionListener(actionListener);
         endCheckBox.addActionListener(actionListener);
+        rangeRadioButton.addActionListener(actionListener);
+        mostRecentRadioButton.addActionListener(actionListener);
     }
 
     @Override
     void removeListeners() {
         for (ActionListener listener : dateFilterCheckBox.getActionListeners()) {
             dateFilterCheckBox.removeActionListener(listener);
+        }
+        for (ActionListener listener : rangeRadioButton.getActionListeners()) {
+            rangeRadioButton.removeActionListener(listener);
+        }
+        for (ActionListener listener : mostRecentRadioButton.getActionListeners()) {
+            mostRecentRadioButton.removeActionListener(listener);
+        }
+        for (ActionListener listener : rangeRadioButton.getActionListeners()) {
+            rangeRadioButton.removeActionListener(listener);
         }
         for (ActionListener listener : startCheckBox.getActionListeners()) {
             startCheckBox.removeActionListener(listener);

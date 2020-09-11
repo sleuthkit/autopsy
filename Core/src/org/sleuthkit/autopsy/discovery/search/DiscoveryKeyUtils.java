@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
@@ -926,7 +927,7 @@ public class DiscoveryKeyUtils {
         MostRecentActivityDateGroupKey(Result result) {
             if (result instanceof ResultDomain) {
                 epochDate = ((ResultDomain) result).getActivityEnd();
-                dateNameString = new SimpleDateFormat("yyyy/MM/dd").format(new Date(epochDate*1000));
+                dateNameString = new SimpleDateFormat("yyyy/MM/dd").format(new Date(TimeUnit.SECONDS.toMillis(epochDate)));
             } else {
                 epochDate = Long.MAX_VALUE;
                 dateNameString = Bundle.DiscoveryKeyUtils_MostRecentActivityDateGroupKey_noDate();
@@ -1008,7 +1009,7 @@ public class DiscoveryKeyUtils {
         FirstActivityDateGroupKey(Result result) {
             if (result instanceof ResultDomain) {
                 epochDate = ((ResultDomain) result).getActivityStart();
-                dateNameString = new SimpleDateFormat("yyyy/MM/dd").format(new Date(epochDate*1000));
+                dateNameString = new SimpleDateFormat("yyyy/MM/dd").format(new Date(TimeUnit.SECONDS.toMillis(epochDate)));
             } else {
                 epochDate = Long.MAX_VALUE;
                 dateNameString = Bundle.DiscoveryKeyUtils_FirstActivityDateGroupKey_noDate();

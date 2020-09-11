@@ -120,7 +120,7 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
             secondColumnY += constraints.gridheight;
         }
     }
-
+    
     /**
      * Add the panels representing the two columns to the specified JSplitPane.
      *

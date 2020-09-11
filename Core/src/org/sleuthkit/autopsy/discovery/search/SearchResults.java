@@ -73,7 +73,6 @@ class SearchResults {
      * @param files The list of ResultFiles to add.
      */
     void add(List<Result> results) {
-        System.out.println("RESULT SIZE: "+ results.size());
         for (Result result : results) {
             // Add the file to the appropriate group, creating it if necessary
             GroupKey groupKey = attrType.getGroupKey(result);
