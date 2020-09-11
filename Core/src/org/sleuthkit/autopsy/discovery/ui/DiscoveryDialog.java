@@ -208,7 +208,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
                 orderByCombobox.addItem(method);
             }
         }
-        orderByCombobox.setSelectedItem(getSelectedFilterPanel().getLastGroupSortingAlg())
+        orderByCombobox.setSelectedItem(getSelectedFilterPanel().getLastGroupSortingAlg());
         );
         for (GroupSortingAlgorithm groupSortAlgorithm : GroupSortingAlgorithm.values()) {
             groupSortingComboBox.addItem(groupSortAlgorithm);
