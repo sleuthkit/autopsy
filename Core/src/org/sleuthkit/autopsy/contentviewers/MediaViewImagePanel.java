@@ -87,6 +87,7 @@ import org.sleuthkit.autopsy.corelibs.OpenCvLoader;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -94,8 +95,9 @@ import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Image viewer part of the Media View layered pane. Uses JavaFX to display the
- * image.
+ * A media image file viewer implemented as a Swing panel that uses JavaFX (JFX)
+ * components in a child JFX panel to render the image. Images can be zoomed and
+ * rotated and a "rubber band box" can be used to select and tag regions.
  */
 @NbBundle.Messages({
     "MediaViewImagePanel.externalViewerButton.text=Open in External Viewer  Ctrl+E",
@@ -107,56 +109,93 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
 
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(MediaViewImagePanel.class.getName());
+    private static final SortedSet<String> supportedMimes = ImageUtils.getSupportedImageMimeTypes();
+    private static final List<String> supportedExtensions = ImageUtils.getSupportedImageExtensions().stream()
+            .map("."::concat) //NOI18N
+            .collect(Collectors.toList());
     private static final double[] ZOOM_STEPS = {
         0.0625, 0.125, 0.25, 0.375, 0.5, 0.75,
         1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10};
     private static final double MIN_ZOOM_RATIO = 0.0625; // 6.25%
     private static final double MAX_ZOOM_RATIO = 10.0; // 1000%
-    private static final Image externalImage = new Image(MediaViewImagePanel.class.getResource("/org/sleuthkit/autopsy/images/external.png").toExternalForm());
-    private static final SortedSet<String> supportedMimes = ImageUtils.getSupportedImageMimeTypes();
-    private static final List<String> supportedExtensions = ImageUtils.getSupportedImageExtensions().stream()
-            .map("."::concat) //NOI18N
-            .collect(Collectors.toList());
-    
-    /*
-     * JFX components
-     */
-    private final ProgressBar progressBar = new ProgressBar();
-    private final MaskerPane maskerPane = new MaskerPane();
-    private Group masterGroup;
-    private ImageTagsGroup tagsGroup;
-    private ImageTagCreator imageTagCreator;
-    private ImageView fxImageView;
-    private ScrollPane scrollPane;
-    private Task<Image> readImageTask;
-    
-    /*
-     * Swing components
-     */
-    private final JPopupMenu imageTaggingOptions = new JPopupMenu();
-    private final JMenuItem createTagMenuItem;
-    private final JMenuItem deleteTagMenuItem;
-    private final JMenuItem hideTagsMenuItem;
-    private final JMenuItem exportTagsMenuItem;
-    private final JFileChooser exportChooser;
+    private static final boolean JFX_INITED = org.sleuthkit.autopsy.core.Installer.isJavaFxInited();
+    private static final Image openInExternalViewerButtonImage = new Image(MediaViewImagePanel.class.getResource("/org/sleuthkit/autopsy/images/external.png").toExternalForm()); //NOI18N
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
-    private JFXPanel fxPanel;
-        
+
     /*
-     * State
+     * JFX UI components, must be accessed in JFX thread only.
      */
-    private final boolean fxInited;
-    private double zoomRatio;
-    private double rotation; // Can be 0, 90, 180, and 270.
-    private boolean autoResize = true; // Auto resize when the user changes the size of the content viewer unless the user has used the zoom buttons.
-    private AbstractFile file;
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    private final ProgressBar progressBar = new ProgressBar();
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    private final MaskerPane maskerPane = new MaskerPane();
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    private Group masterGroup;
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    private ImageTagsGroup tagsGroup;
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    private ImageTagCreator imageTagCreator;
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    private ImageView fxImageView;
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    private ScrollPane scrollPane;
+
+    /*
+     * Swing UI components, must be accessed in EDT only.
+     */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    private final JPopupMenu imageTaggingOptions;
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    private final JMenuItem createTagMenuItem;
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    private final JMenuItem deleteTagMenuItem;
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    private final JMenuItem hideTagsMenuItem;
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    private final JMenuItem exportTagsMenuItem;
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    private final JFileChooser exportChooser;
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    private final JFXPanel fxPanel;
+
+    /*
+     * Panel state.
+     *
+     * currentFile: The loadFile() method kicks off a JFX background task to
+     * read the content of the currently selected file into a JFX Image object.
+     * If the task succeeds and is not cancelled, the AbstractFile reference is
+     * saved as currentFile. The reference is used for tagging operations which
+     * are done in the JFX thread. IMPORTANT: Thread confinement is maintained
+     * by capturing the reference in a local variable before dispatching a tag
+     * export task to the SwingWorker thread pool.
+     *
+     * readImageFileTask: This is a reference to a JFX background task that
+     * reads the content of the currently selected file into a JFX Image object.
+     * A reference is maintained so that the task can be cancelled if it is
+     * running when the selected file changes.
+     *
+     * zoomRatio, rotation, autoResize: These values are set in the EDT based on
+     * user interaction with Swing components and are used in the JFX thread
+     * when rendering the image. They are volatile to ensure visibility of
+     * changes in both threads.
+     */
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    private AbstractFile currentFile;
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    private Task<Image> readImageFileTask;
+    private volatile double zoomRatio;
+    private volatile double rotation; // Can be 0, 90, 180, and 270.
+    private volatile boolean autoResize = true; // Auto resize when the user changes the size of the content viewer unless the user has used the zoom buttons.
 
     static {
         ImageIO.scanForPlugins();
     }
 
     /**
-     * Creates new form MediaViewImagePanel
+     * Constructs a media image file viewer implemented as a Swing panel that
+     * uses JavaFX (JFX) components in a child JFX panel to render the image.
+     * Images can be zoomed and rotated and a "rubber band box" can be used to
+     * select and tag regions.
      */
     @NbBundle.Messages({
         "MediaViewImagePanel.createTagOption=Create",
@@ -166,12 +205,12 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     })
     MediaViewImagePanel() {
         initComponents();
-        fxInited = org.sleuthkit.autopsy.core.Installer.isJavaFxInited();
 
         exportChooser = new JFileChooser();
         exportChooser.setDialogTitle(Bundle.MediaViewImagePanel_fileChooserTitle());
 
         //Build popupMenu when Tags Menu button is pressed.
+        imageTaggingOptions = new JPopupMenu();
         createTagMenuItem = new JMenuItem(Bundle.MediaViewImagePanel_createTagOption());
         createTagMenuItem.addActionListener((event) -> createTag());
         imageTaggingOptions.add(createTagMenuItem);
@@ -202,7 +241,8 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
             imageTaggingOptions.setEnabled(false);
         }
 
-        if (fxInited) {
+        fxPanel = new JFXPanel();
+        if (JFX_INITED) {
             Platform.runLater(new Runnable() {
                 @Override
                 public void run() {
@@ -217,6 +257,14 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
                         }
                     });
 
+                    /*
+                     * RC: I'm not sure exactly why this is located precisely
+                     * here. At least putting this call outside of the
+                     * constructor avoids leaking the "this" reference of a
+                     * partially constructed instance of this class that is
+                     * given to the PropertyChangeSupport object created at the
+                     * very beginning of construction.
+                     */
                     subscribeTagMenuItemsToStateChanges();
 
                     masterGroup.getChildren().add(tagsGroup);
@@ -246,7 +294,6 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
                     scrollPane.setVbarPolicy(ScrollBarPolicy.AS_NEEDED);
                     scrollPane.setHbarPolicy(ScrollBarPolicy.AS_NEEDED);
 
-                    fxPanel = new JFXPanel(); // bridge jfx-swing
                     Scene scene = new Scene(scrollPane); //root of jfx tree
                     scene.getStylesheets().add(MediaViewImagePanel.class.getResource("MediaViewImagePanel.css").toExternalForm()); //NOI18N
                     fxPanel.setScene(scene);
@@ -272,57 +319,75 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
             State currentState = (State) event.getNewValue();
             switch (currentState) {
                 case CREATE:
-                    createTagMenuItem.setEnabled(true);
-                    deleteTagMenuItem.setEnabled(false);
-                    hideTagsMenuItem.setEnabled(true);
-                    exportTagsMenuItem.setEnabled(true);
+                    SwingUtilities.invokeLater(() -> {
+                        createTagMenuItem.setEnabled(true);
+                        deleteTagMenuItem.setEnabled(false);
+                        hideTagsMenuItem.setEnabled(true);
+                        exportTagsMenuItem.setEnabled(true);
+                    });
                     break;
                 case SELECTED:
-                    if (masterGroup.getChildren().contains(imageTagCreator)) {
-                        imageTagCreator.disconnect();
-                        masterGroup.getChildren().remove(imageTagCreator);
-                    }
-                    createTagMenuItem.setEnabled(false);
-                    deleteTagMenuItem.setEnabled(true);
-                    hideTagsMenuItem.setEnabled(true);
-                    exportTagsMenuItem.setEnabled(true);
+                    Platform.runLater(() -> {
+                        if (masterGroup.getChildren().contains(imageTagCreator)) {
+                            imageTagCreator.disconnect();
+                            masterGroup.getChildren().remove(imageTagCreator);
+                        }
+                        SwingUtilities.invokeLater(() -> {
+                            createTagMenuItem.setEnabled(false);
+                            deleteTagMenuItem.setEnabled(true);
+                            hideTagsMenuItem.setEnabled(true);
+                            exportTagsMenuItem.setEnabled(true);
+                        });
+                    });
                     break;
                 case HIDDEN:
-                    createTagMenuItem.setEnabled(false);
-                    deleteTagMenuItem.setEnabled(false);
-                    hideTagsMenuItem.setEnabled(true);
-                    hideTagsMenuItem.setText(DisplayOptions.SHOW_TAGS.getName());
-                    exportTagsMenuItem.setEnabled(false);
+                    SwingUtilities.invokeLater(() -> {
+                        createTagMenuItem.setEnabled(false);
+                        deleteTagMenuItem.setEnabled(false);
+                        hideTagsMenuItem.setEnabled(true);
+                        hideTagsMenuItem.setText(DisplayOptions.SHOW_TAGS.getName());
+                        exportTagsMenuItem.setEnabled(false);
+                    });
                     break;
                 case VISIBLE:
-                    createTagMenuItem.setEnabled(true);
-                    deleteTagMenuItem.setEnabled(false);
-                    hideTagsMenuItem.setEnabled(true);
-                    hideTagsMenuItem.setText(DisplayOptions.HIDE_TAGS.getName());
-                    exportTagsMenuItem.setEnabled(true);
+                    SwingUtilities.invokeLater(() -> {
+                        createTagMenuItem.setEnabled(true);
+                        deleteTagMenuItem.setEnabled(false);
+                        hideTagsMenuItem.setEnabled(true);
+                        hideTagsMenuItem.setText(DisplayOptions.HIDE_TAGS.getName());
+                        exportTagsMenuItem.setEnabled(true);
+                    });
                     break;
                 case DEFAULT:
                 case EMPTY:
-                    if (masterGroup.getChildren().contains(imageTagCreator)) {
-                        imageTagCreator.disconnect();
-                    }
-                    createTagMenuItem.setEnabled(true);
-                    deleteTagMenuItem.setEnabled(false);
-                    hideTagsMenuItem.setEnabled(false);
-                    hideTagsMenuItem.setText(DisplayOptions.HIDE_TAGS.getName());
-                    exportTagsMenuItem.setEnabled(false);
+                    Platform.runLater(() -> {
+                        if (masterGroup.getChildren().contains(imageTagCreator)) {
+                            imageTagCreator.disconnect();
+                        }
+                        SwingUtilities.invokeLater(() -> {
+                            createTagMenuItem.setEnabled(true);
+                            deleteTagMenuItem.setEnabled(false);
+                            hideTagsMenuItem.setEnabled(false);
+                            hideTagsMenuItem.setText(DisplayOptions.HIDE_TAGS.getName());
+                            exportTagsMenuItem.setEnabled(false);
+                        });
+                    });
                     break;
                 case NONEMPTY:
-                    createTagMenuItem.setEnabled(true);
-                    deleteTagMenuItem.setEnabled(false);
-                    hideTagsMenuItem.setEnabled(true);
-                    exportTagsMenuItem.setEnabled(true);
+                    SwingUtilities.invokeLater(() -> {
+                        createTagMenuItem.setEnabled(true);
+                        deleteTagMenuItem.setEnabled(false);
+                        hideTagsMenuItem.setEnabled(true);
+                        exportTagsMenuItem.setEnabled(true);
+                    });
                     break;
                 case DISABLE:
-                    createTagMenuItem.setEnabled(false);
-                    deleteTagMenuItem.setEnabled(false);
-                    hideTagsMenuItem.setEnabled(false);
-                    exportTagsMenuItem.setEnabled(false);
+                    SwingUtilities.invokeLater(() -> {
+                        createTagMenuItem.setEnabled(false);
+                        deleteTagMenuItem.setEnabled(false);
+                        hideTagsMenuItem.setEnabled(false);
+                        exportTagsMenuItem.setEnabled(false);
+                    });
                     break;
                 default:
                     break;
@@ -331,7 +396,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     }
 
     public boolean isInited() {
-        return fxInited;
+        return JFX_INITED;
     }
 
     /**
@@ -349,111 +414,157 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         });
     }
 
-    private void showErrorNode(String errorMessage, AbstractFile file) {
-        final Button externalViewerButton = new Button(Bundle.MediaViewImagePanel_externalViewerButton_text(), new ImageView(externalImage));
-        /*
-         * Tie a Swing action (ExternalViewerAction) to a JFX button action.
-         */
-        externalViewerButton.setOnAction(actionEvent ->
-                new ExternalViewerAction(Bundle.MediaViewImagePanel_externalViewerButton_text(), new FileNode(file))
-                .actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "")) 
+    /**
+     * Displays a button with an error message label and a view in external
+     * viewer action.
+     *
+     * @param errorMessage The error message.
+     * @param file         The file that could not be viewed.
+     */
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    private void showErrorButton(String errorMessage, AbstractFile file) {
+        ensureInJfxThread();
+        final Button externalViewerButton = new Button(Bundle.MediaViewImagePanel_externalViewerButton_text(), new ImageView(openInExternalViewerButtonImage));
+        externalViewerButton.setOnAction(actionEvent
+                -> new ExternalViewerAction(Bundle.MediaViewImagePanel_externalViewerButton_text(), new FileNode(file))
+                        .actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, ""))
         );
-
         final VBox errorNode = new VBox(10, new Label(errorMessage), externalViewerButton);
         errorNode.setAlignment(Pos.CENTER);
     }
 
     /**
-     * Show the contents of the given AbstractFile as a visual image.
+     * Loads an image file into this panel.
      *
-     * @param file image file to show
+     * @param file The image file.
      */
-    void showImageFx(final AbstractFile file) {
-        if (!fxInited) {
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    void loadFile(final AbstractFile file) {
+        ensureInSwingThread();
+        if (!JFX_INITED) {
             return;
         }
 
+        final double panelWidth = fxPanel.getWidth();
+        final double panelHeight = fxPanel.getHeight();
         Platform.runLater(() -> {
-            if (readImageTask != null) {
-                readImageTask.cancel();
+            /*
+             * Set up a new task to get the contents of the image file in
+             * displayable form and cancel any previous task in progress.
+             */
+            if (readImageFileTask != null) {
+                readImageFileTask.cancel();
             }
-            readImageTask = ImageUtils.newReadImageTask(file);
-            readImageTask.setOnSucceeded(succeeded -> {
-                if (!Case.isCaseOpen()) {
-                    /*
-                     * Handle the in-between condition when case is being closed
-                     * and an image was previously selected
-                     *
-                     * NOTE: I think this is unnecessary -jm
-                     */
-                    reset();
-                    return;
-                }
-
-                try {
-                    autoResize = true;
-                    Image fxImage = readImageTask.get();
-                    masterGroup.getChildren().clear();
-                    tagsGroup.getChildren().clear();
-                    this.file = file;
-                    if (nonNull(fxImage)) {
-                        // We have a non-null image, so let's show it.
-                        fxImageView.setImage(fxImage);
-                        resetView();
-                        masterGroup.getChildren().add(fxImageView);
-                        masterGroup.getChildren().add(tagsGroup);
-
-                        try {
-                            List<ContentTag> tags = Case.getCurrentCase().getServices()
-                                    .getTagsManager().getContentTagsByContent(file);
-
-                            List<ContentViewerTag<ImageTagRegion>> contentViewerTags = getContentViewerTags(tags);
-                            //Add all image tags                            
-                            tagsGroup = buildImageTagsGroup(contentViewerTags);
-                            if (!tagsGroup.getChildren().isEmpty()) {
-                                pcs.firePropertyChange(new PropertyChangeEvent(this,
-                                        "state", null, State.NONEMPTY));
-                            }
-                        } catch (TskCoreException | NoCurrentCaseException ex) {
-                            logger.log(Level.WARNING, "Could not retrieve image tags for file in case db", ex); //NON-NLS
-                        }
-                        scrollPane.setContent(masterGroup);
-                    } else {
-                        showErrorNode(Bundle.MediaViewImagePanel_errorLabel_text(), file);
-                    }
-                } catch (InterruptedException | ExecutionException ex) {
-                    showErrorNode(Bundle.MediaViewImagePanel_errorLabel_text(), file);
-                }
-                scrollPane.setCursor(Cursor.DEFAULT);
+            readImageFileTask = ImageUtils.newReadImageTask(file);
+            readImageFileTask.setOnSucceeded(succeeded -> {
+                onReadImageTaskSucceeded(file, panelWidth, panelHeight);
             });
-            readImageTask.setOnFailed(failed -> {
-                if (!Case.isCaseOpen()) {
-                    /*
-                     * Handle in-between condition when case is being closed and
-                     * an image was previously selected
-                     *
-                     * NOTE: I think this is unnecessary -jm
-                     */
-                    reset();
-                    return;
-                }
-                Throwable exception = readImageTask.getException();
-                if (exception instanceof OutOfMemoryError
-                        && exception.getMessage().contains("Java heap space")) {
-                    showErrorNode(Bundle.MediaViewImagePanel_errorLabel_OOMText(), file);
-                } else {
-                    showErrorNode(Bundle.MediaViewImagePanel_errorLabel_text(), file);
-                }
-
-                scrollPane.setCursor(Cursor.DEFAULT);
+            readImageFileTask.setOnFailed(failed -> {
+                onReadImageTaskFailed(file);
             });
 
+            /*
+             * Update the JFX components to a "task in progress" state and start
+             * the task.
+             */
             maskerPane.setProgressNode(progressBar);
-            progressBar.progressProperty().bind(readImageTask.progressProperty());
-            maskerPane.textProperty().bind(readImageTask.messageProperty());
+            progressBar.progressProperty().bind(readImageFileTask.progressProperty());
+            maskerPane.textProperty().bind(readImageFileTask.messageProperty());
             scrollPane.setContent(null); // Prevent content display issues.
             scrollPane.setCursor(Cursor.WAIT);
-            new Thread(readImageTask).start();
+            new Thread(readImageFileTask).start();
+        });
+    }
+
+    /**
+     * Implements a JFX background task state change handler called on read
+     * image task success that loads the file content into this panel.
+     *
+     * @param file        The file.
+     * @param panelWidth  The width of the child panel that contains the JFX
+     *                    components of this panel.
+     * @param panelHeight The height of the child panel that contains the JFX
+     *                    components of this panel.
+     */
+    private void onReadImageTaskSucceeded(AbstractFile file, double panelWidth, double panelHeight) {
+        Platform.runLater(() -> {
+            if (!Case.isCaseOpen()) {
+                /*
+                 * Handle the in-between condition when case is being closed and
+                 * an image was previously selected
+                 *
+                 * NOTE: I think this is unnecessary -jm
+                 */
+                reset();
+                return;
+            }
+
+            try {
+                autoResize = true;
+                Image fxImage = readImageFileTask.get();
+                masterGroup.getChildren().clear();
+                tagsGroup.getChildren().clear();
+                this.currentFile = file;
+                if (nonNull(fxImage)) {
+                    // We have a non-null image, so let's show it.
+                    fxImageView.setImage(fxImage);
+                    resetView(panelWidth, panelHeight);
+                    masterGroup.getChildren().add(fxImageView);
+                    masterGroup.getChildren().add(tagsGroup);
+
+                    try {
+                        List<ContentTag> tags = Case.getCurrentCase().getServices()
+                                .getTagsManager().getContentTagsByContent(file);
+
+                        List<ContentViewerTag<ImageTagRegion>> contentViewerTags = getContentViewerTags(tags);
+                        //Add all image tags                            
+                        tagsGroup = buildImageTagsGroup(contentViewerTags);
+                        if (!tagsGroup.getChildren().isEmpty()) {
+                            pcs.firePropertyChange(new PropertyChangeEvent(this,
+                                    "state", null, State.NONEMPTY));
+                        }
+                    } catch (TskCoreException | NoCurrentCaseException ex) {
+                        logger.log(Level.WARNING, "Could not retrieve image tags for file in case db", ex); //NON-NLS
+                    }
+                    scrollPane.setContent(masterGroup);
+                } else {
+                    showErrorButton(Bundle.MediaViewImagePanel_errorLabel_text(), file);
+                }
+            } catch (InterruptedException | ExecutionException ex) {
+                showErrorButton(Bundle.MediaViewImagePanel_errorLabel_text(), file);
+            }
+            scrollPane.setCursor(Cursor.DEFAULT);
+        });
+    }
+
+    /**
+     * Implements a JFX background task state change handler called on read
+     * image file task failure that displays a button with an error message
+     * label and a view in external viewer action.
+     *
+     * @param file The image file.
+     */
+    private void onReadImageTaskFailed(AbstractFile file) {
+        Platform.runLater(() -> {
+            if (!Case.isCaseOpen()) {
+                /*
+                 * Handle in-between condition when case is being closed and an
+                 * image was previously selected
+                 *
+                 * NOTE: I think this is unnecessary -jm
+                 */
+                reset();
+                return;
+            }
+            Throwable exception = readImageFileTask.getException();
+            if (exception instanceof OutOfMemoryError
+                    && exception.getMessage().contains("Java heap space")) {  //NON-NLS
+                showErrorButton(Bundle.MediaViewImagePanel_errorLabel_OOMText(), file);
+            } else {
+                showErrorButton(Bundle.MediaViewImagePanel_errorLabel_text(), file);
+            }
+
+            scrollPane.setCursor(Cursor.DEFAULT);
         });
     }
 
@@ -495,7 +606,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
      * @throws NoCurrentCaseException
      */
     private ImageTagsGroup buildImageTagsGroup(List<ContentViewerTag<ImageTagRegion>> contentViewerTags) {
-
+        ensureInJfxThread();
         contentViewerTags.forEach(contentViewerTag -> {
             /**
              * Build the image tag, add an edit event call back to persist all
@@ -503,7 +614,6 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
              */
             tagsGroup.getChildren().add(buildImageTag(contentViewerTag));
         });
-
         return tagsGroup;
     }
 
@@ -688,14 +798,12 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
 
     private void rotateLeftButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rotateLeftButtonActionPerformed
         autoResize = false;
-
         rotation = (rotation + 270) % 360;
         updateView();
     }//GEN-LAST:event_rotateLeftButtonActionPerformed
 
     private void rotateRightButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rotateRightButtonActionPerformed
         autoResize = false;
-
         rotation = (rotation + 90) % 360;
         updateView();
     }//GEN-LAST:event_rotateRightButtonActionPerformed
@@ -772,42 +880,44 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     private void createTag() {
         pcs.firePropertyChange(new PropertyChangeEvent(this,
                 "state", null, State.DISABLE));
-        imageTagCreator = new ImageTagCreator(fxImageView);
+        Platform.runLater(() -> {
+            imageTagCreator = new ImageTagCreator(fxImageView);
 
-        PropertyChangeListener newTagListener = (event) -> {
-            SwingUtilities.invokeLater(() -> {
-                ImageTagRegion tag = (ImageTagRegion) event.getNewValue();
-                //Ask the user for tag name and comment
-                TagNameAndComment result = GetTagNameAndCommentDialog.doDialog();
-                if (result != null) {
-                    //Persist and build image tag
-                    Platform.runLater(() -> {
-                        try {
-                            scrollPane.setCursor(Cursor.WAIT);
-                            ContentViewerTag<ImageTagRegion> contentViewerTag = storeImageTag(tag, result);
-                            ImageTag imageTag = buildImageTag(contentViewerTag);
-                            tagsGroup.getChildren().add(imageTag);
-                        } catch (TskCoreException | SerializationException | NoCurrentCaseException ex) {
-                            logger.log(Level.WARNING, "Could not save new image tag in case db", ex); //NON-NLS
-                        }
+            PropertyChangeListener newTagListener = (event) -> {
+                SwingUtilities.invokeLater(() -> {
+                    ImageTagRegion tag = (ImageTagRegion) event.getNewValue();
+                    //Ask the user for tag name and comment
+                    TagNameAndComment result = GetTagNameAndCommentDialog.doDialog();
+                    if (result != null) {
+                        //Persist and build image tag
+                        Platform.runLater(() -> {
+                            try {
+                                scrollPane.setCursor(Cursor.WAIT);
+                                ContentViewerTag<ImageTagRegion> contentViewerTag = storeImageTag(tag, result);
+                                ImageTag imageTag = buildImageTag(contentViewerTag);
+                                tagsGroup.getChildren().add(imageTag);
+                            } catch (TskCoreException | SerializationException | NoCurrentCaseException ex) {
+                                logger.log(Level.WARNING, "Could not save new image tag in case db", ex); //NON-NLS
+                            }
 
-                        scrollPane.setCursor(Cursor.DEFAULT);
-                    });
-                }
+                            scrollPane.setCursor(Cursor.DEFAULT);
+                        });
+                    }
 
-                pcs.firePropertyChange(new PropertyChangeEvent(this,
-                        "state", null, State.CREATE));
-            });
+                    pcs.firePropertyChange(new PropertyChangeEvent(this,
+                            "state", null, State.CREATE));
+                });
 
-            //Remove image tag creator from panel
-            Platform.runLater(() -> {
-                imageTagCreator.disconnect();
-                masterGroup.getChildren().remove(imageTagCreator);
-            });
-        };
+                //Remove image tag creator from panel
+                Platform.runLater(() -> {
+                    imageTagCreator.disconnect();
+                    masterGroup.getChildren().remove(imageTagCreator);
+                });
+            };
 
-        imageTagCreator.addNewTagListener(newTagListener);
-        Platform.runLater(() -> masterGroup.getChildren().add(imageTagCreator));
+            imageTagCreator.addNewTagListener(newTagListener);
+            masterGroup.getChildren().add(imageTagCreator);
+        });
     }
 
     /**
@@ -818,6 +928,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
      * @return
      */
     private ImageTag buildImageTag(ContentViewerTag<ImageTagRegion> contentViewerTag) {
+        ensureInJfxThread();
         ImageTag imageTag = new ImageTag(contentViewerTag, fxImageView);
 
         //Automatically persist edits made by user
@@ -841,12 +952,12 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
      * @param data
      * @param result
      */
-    private ContentViewerTag<ImageTagRegion> storeImageTag(ImageTagRegion data, TagNameAndComment result)
-            throws TskCoreException, SerializationException, NoCurrentCaseException {
+    private ContentViewerTag<ImageTagRegion> storeImageTag(ImageTagRegion data, TagNameAndComment result) throws TskCoreException, SerializationException, NoCurrentCaseException {
+        ensureInJfxThread();
         scrollPane.setCursor(Cursor.WAIT);
         try {
             ContentTag contentTag = Case.getCurrentCaseThrows().getServices().getTagsManager()
-                    .addContentTag(file, result.getTagName(), result.getComment());
+                    .addContentTag(currentFile, result.getTagName(), result.getComment());
             return ContentViewerTagManager.saveTag(contentTag, data);
         } finally {
             scrollPane.setCursor(Cursor.DEFAULT);
@@ -883,41 +994,46 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         "MediaViewImagePanel.fileChooserTitle=Choose a save location"
     })
     private void exportTags() {
-        tagsGroup.clearFocus();
-        exportChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        //Always base chooser location to export folder
-        exportChooser.setCurrentDirectory(new File(Case.getCurrentCase().getExportDirectory()));
-        int returnVal = exportChooser.showDialog(this, Bundle.MediaViewImagePanel_exportSaveText());
-        if (returnVal == JFileChooser.APPROVE_OPTION) {
-            new SwingWorker<Void, Void>() {
-                @Override
-                protected Void doInBackground() {
-                    try {
-                        //Retrieve content viewer tags
-                        List<ContentTag> tags = Case.getCurrentCase().getServices()
-                                .getTagsManager().getContentTagsByContent(file);
-                        List<ContentViewerTag<ImageTagRegion>> contentViewerTags = getContentViewerTags(tags);
+        Platform.runLater(() -> {
+            final AbstractFile file = currentFile;
+            tagsGroup.clearFocus();
+            SwingUtilities.invokeLater(() -> {
+                exportChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+                //Always base chooser location to export folder
+                exportChooser.setCurrentDirectory(new File(Case.getCurrentCase().getExportDirectory()));
+                int returnVal = exportChooser.showDialog(this, Bundle.MediaViewImagePanel_exportSaveText());
+                if (returnVal == JFileChooser.APPROVE_OPTION) {
+                    new SwingWorker<Void, Void>() {
+                        @Override
+                        protected Void doInBackground() {
+                            try {
+                                //Retrieve content viewer tags
+                                List<ContentTag> tags = Case.getCurrentCase().getServices()
+                                        .getTagsManager().getContentTagsByContent(file);
+                                List<ContentViewerTag<ImageTagRegion>> contentViewerTags = getContentViewerTags(tags);
 
-                        //Pull out image tag regions
-                        Collection<ImageTagRegion> regions = contentViewerTags.stream()
-                                .map(cvTag -> cvTag.getDetails()).collect(Collectors.toList());
+                                //Pull out image tag regions
+                                Collection<ImageTagRegion> regions = contentViewerTags.stream()
+                                        .map(cvTag -> cvTag.getDetails()).collect(Collectors.toList());
 
-                        //Apply tags to image and write to file
-                        BufferedImage taggedImage = ImageTagsUtil.getImageWithTags(file, regions);
-                        Path output = Paths.get(exportChooser.getSelectedFile().getPath(),
-                                FilenameUtils.getBaseName(file.getName()) + "-with_tags.png"); //NON-NLS
-                        ImageIO.write(taggedImage, "png", output.toFile());
+                                //Apply tags to image and write to file
+                                BufferedImage taggedImage = ImageTagsUtil.getImageWithTags(file, regions);
+                                Path output = Paths.get(exportChooser.getSelectedFile().getPath(),
+                                        FilenameUtils.getBaseName(file.getName()) + "-with_tags.png"); //NON-NLS
+                                ImageIO.write(taggedImage, "png", output.toFile());
 
-                        JOptionPane.showMessageDialog(null, Bundle.MediaViewImagePanel_successfulExport());
-                    } catch (Exception ex) { //Runtime exceptions may spill out of ImageTagsUtil from JavaFX.
-                        //This ensures we (devs and users) have something when it doesn't work.
-                        logger.log(Level.WARNING, "Unable to export tagged image to disk", ex); //NON-NLS
-                        JOptionPane.showMessageDialog(null, Bundle.MediaViewImagePanel_unsuccessfulExport());
-                    }
-                    return null;
+                                JOptionPane.showMessageDialog(null, Bundle.MediaViewImagePanel_successfulExport());
+                            } catch (Exception ex) { //Runtime exceptions may spill out of ImageTagsUtil from JavaFX.
+                                //This ensures we (devs and users) have something when it doesn't work.
+                                logger.log(Level.WARNING, "Unable to export tagged image to disk", ex); //NON-NLS
+                                JOptionPane.showMessageDialog(null, Bundle.MediaViewImagePanel_unsuccessfulExport());
+                            }
+                            return null;
+                        }
+                    }.execute();
                 }
-            }.execute();
-        }
+            });
+        });
     }
 
     private void tagsMenuMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tagsMenuMousePressed
@@ -977,14 +1093,31 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     // End of variables declaration//GEN-END:variables
 
     /**
-     * Reset the zoom and rotation values to their defaults. The zoom level gets
-     * defaulted to the current size of the panel. The rotation will be set to
-     * zero.
-     *
-     * Note: This method will make a call to 'updateView()' after the values
-     * have been reset.
+     * Gets the dimensions of the Swing container of the JFX components and then
+     * resets the components used to display the image to their default state.
      */
     private void resetView() {
+        ensureInSwingThread();
+        final double panelWidth = fxPanel.getWidth();
+        final double panelHeight = fxPanel.getHeight();
+        Platform.runLater(() -> {
+            resetView(panelWidth, panelHeight);
+        });
+    }
+
+    /**
+     * Resets the zoom and rotation values to their defaults. The zoom level
+     * gets defaulted to the current size of the panel. The rotation will be set
+     * to zero.
+     *
+     * @param panelWidth  The width of the child panel that contains the JFX
+     *                    components of this panel.
+     * @param panelHeight The height of the child panel that contains the JFX
+     *                    components of this panel.
+     */
+    private void resetView(double panelWidth, double panelHeight) {
+        ensureInJfxThread();
+
         Image image = fxImageView.getImage();
         if (image == null) {
             return;
@@ -992,8 +1125,8 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
 
         double imageWidth = image.getWidth();
         double imageHeight = image.getHeight();
-        double scrollPaneWidth = fxPanel.getWidth();
-        double scrollPaneHeight = fxPanel.getHeight();
+        double scrollPaneWidth = panelWidth;
+        double scrollPaneHeight = panelHeight;
         double zoomRatioWidth = scrollPaneWidth / imageWidth;
         double zoomRatioHeight = scrollPaneHeight / imageHeight;
 
@@ -1005,11 +1138,24 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         scrollPane.setHvalue(0);
         scrollPane.setVvalue(0);
 
-        updateView();
+        updateView(panelWidth, panelHeight);
     }
 
     /**
-     * Update the image to use the current zoom and rotation values.
+     * Gets the dimensions of the Swing container of the JFX components and then
+     * updates the display of the image to use the current zoom and rotation
+     * values.
+     */
+    private void updateView() {
+        ensureInSwingThread();
+        final double panelWidth = fxPanel.getWidth();
+        final double panelHeight = fxPanel.getHeight();
+        updateView(panelWidth, panelHeight);
+    }
+
+    /**
+     * Updates the display of the image to use the current zoom and rotation
+     * values.
      *
      * Note: For zoom levels less than 100%, special accomodations are made in
      * order to keep the image fully visible. This is because the viewport size
@@ -1017,118 +1163,146 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
      * the image. So the viewport is kept the same size. Scrolling adjustments
      * are also made to try and ensure when the user zooms out, they don't find
      * themselves looking at an entire screen of dead space.
+     *
+     * @param panelWidth  The width of the child panel that contains the JFX
+     *                    components of this panel.
+     * @param panelHeight The height of the child panel that contains the JFX
+     *                    components of this panel.
      */
-    private void updateView() {
-        Image image = fxImageView.getImage();
-        if (image == null) {
-            return;
-        }
-
-        // Image dimensions
-        double imageWidth = image.getWidth();
-        double imageHeight = image.getHeight();
-
-        // Image dimensions with zooming applied
-        double adjustedImageWidth = imageWidth * zoomRatio;
-        double adjustedImageHeight = imageHeight * zoomRatio;
-
-        // ImageView viewport dimensions
-        double viewportWidth;
-        double viewportHeight;
-
-        // Panel dimensions
-        double panelWidth = fxPanel.getWidth();
-        double panelHeight = fxPanel.getHeight();
-
-        // Coordinates to center the image on the panel
-        double centerOffsetX = (panelWidth / 2) - (imageWidth / 2);
-        double centerOffsetY = (panelHeight / 2) - (imageHeight / 2);
-
-        // Coordinates to keep the image inside the left/top boundaries
-        double leftOffsetX;
-        double topOffsetY;
-
-        // Scroll bar positions
-        double scrollX = scrollPane.getHvalue();
-        double scrollY = scrollPane.getVvalue();
-
-        // Scroll bar position boundaries (work-around for viewport size bug)
-        double maxScrollX;
-        double maxScrollY;
-
-        // Set viewport size and translation offsets.
-        if ((rotation % 180) == 0) {
-            // Rotation is 0 or 180.
-            viewportWidth = adjustedImageWidth;
-            viewportHeight = adjustedImageHeight;
-            leftOffsetX = (adjustedImageWidth - imageWidth) / 2;
-            topOffsetY = (adjustedImageHeight - imageHeight) / 2;
-            maxScrollX = (adjustedImageWidth - panelWidth) / (imageWidth - panelWidth);
-            maxScrollY = (adjustedImageHeight - panelHeight) / (imageHeight - panelHeight);
-        } else {
-            // Rotation is 90 or 270.
-            viewportWidth = adjustedImageHeight;
-            viewportHeight = adjustedImageWidth;
-            leftOffsetX = (adjustedImageHeight - imageWidth) / 2;
-            topOffsetY = (adjustedImageWidth - imageHeight) / 2;
-            maxScrollX = (adjustedImageHeight - panelWidth) / (imageWidth - panelWidth);
-            maxScrollY = (adjustedImageWidth - panelHeight) / (imageHeight - panelHeight);
-        }
-
-        // Work around bug that truncates image if dimensions are too small.
-        if (viewportWidth < imageWidth) {
-            viewportWidth = imageWidth;
-            if (scrollX > maxScrollX) {
-                scrollX = maxScrollX;
+    private void updateView(double panelWidth, double panelHeight) {
+        Platform.runLater(() -> {
+            Image image = fxImageView.getImage();
+            if (image == null) {
+                return;
             }
-        }
-        if (viewportHeight < imageHeight) {
-            viewportHeight = imageHeight;
-            if (scrollY > maxScrollY) {
-                scrollY = maxScrollY;
+
+            // Image dimensions
+            double imageWidth = image.getWidth();
+            double imageHeight = image.getHeight();
+
+            // Image dimensions with zooming applied
+            double adjustedImageWidth = imageWidth * zoomRatio;
+            double adjustedImageHeight = imageHeight * zoomRatio;
+
+            // ImageView viewport dimensions
+            double viewportWidth;
+            double viewportHeight;
+
+            // Coordinates to center the image on the panel
+            double centerOffsetX = (panelWidth / 2) - (imageWidth / 2);
+            double centerOffsetY = (panelHeight / 2) - (imageHeight / 2);
+
+            // Coordinates to keep the image inside the left/top boundaries
+            double leftOffsetX;
+            double topOffsetY;
+
+            // Scroll bar positions
+            double scrollX = scrollPane.getHvalue();
+            double scrollY = scrollPane.getVvalue();
+
+            // Scroll bar position boundaries (work-around for viewport size bug)
+            double maxScrollX;
+            double maxScrollY;
+
+            // Set viewport size and translation offsets.
+            if ((rotation % 180) == 0) {
+                // Rotation is 0 or 180.
+                viewportWidth = adjustedImageWidth;
+                viewportHeight = adjustedImageHeight;
+                leftOffsetX = (adjustedImageWidth - imageWidth) / 2;
+                topOffsetY = (adjustedImageHeight - imageHeight) / 2;
+                maxScrollX = (adjustedImageWidth - panelWidth) / (imageWidth - panelWidth);
+                maxScrollY = (adjustedImageHeight - panelHeight) / (imageHeight - panelHeight);
+            } else {
+                // Rotation is 90 or 270.
+                viewportWidth = adjustedImageHeight;
+                viewportHeight = adjustedImageWidth;
+                leftOffsetX = (adjustedImageHeight - imageWidth) / 2;
+                topOffsetY = (adjustedImageWidth - imageHeight) / 2;
+                maxScrollX = (adjustedImageHeight - panelWidth) / (imageWidth - panelWidth);
+                maxScrollY = (adjustedImageWidth - panelHeight) / (imageHeight - panelHeight);
             }
-        }
 
-        // Update the viewport size.
-        fxImageView.setViewport(new Rectangle2D(
-                0, 0, viewportWidth, viewportHeight));
+            // Work around bug that truncates image if dimensions are too small.
+            if (viewportWidth < imageWidth) {
+                viewportWidth = imageWidth;
+                if (scrollX > maxScrollX) {
+                    scrollX = maxScrollX;
+                }
+            }
+            if (viewportHeight < imageHeight) {
+                viewportHeight = imageHeight;
+                if (scrollY > maxScrollY) {
+                    scrollY = maxScrollY;
+                }
+            }
 
-        // Step 1: Zoom
-        Scale scale = new Scale();
-        scale.setX(zoomRatio);
-        scale.setY(zoomRatio);
-        scale.setPivotX(imageWidth / 2);
-        scale.setPivotY(imageHeight / 2);
+            // Update the viewport size.
+            fxImageView.setViewport(new Rectangle2D(
+                    0, 0, viewportWidth, viewportHeight));
 
-        // Step 2: Rotate
-        Rotate rotate = new Rotate();
-        rotate.setPivotX(imageWidth / 2);
-        rotate.setPivotY(imageHeight / 2);
-        rotate.setAngle(rotation);
+            // Step 1: Zoom
+            Scale scale = new Scale();
+            scale.setX(zoomRatio);
+            scale.setY(zoomRatio);
+            scale.setPivotX(imageWidth / 2);
+            scale.setPivotY(imageHeight / 2);
 
-        // Step 3: Position
-        Translate translate = new Translate();
-        translate.setX(viewportWidth > fxPanel.getWidth() ? leftOffsetX : centerOffsetX);
-        translate.setY(viewportHeight > fxPanel.getHeight() ? topOffsetY : centerOffsetY);
+            // Step 2: Rotate
+            Rotate rotate = new Rotate();
+            rotate.setPivotX(imageWidth / 2);
+            rotate.setPivotY(imageHeight / 2);
+            rotate.setAngle(rotation);
 
-        // Add the transforms in reverse order of intended execution.
-        // Note: They MUST be added in this order to ensure translate is
-        // executed last.
-        masterGroup.getTransforms().clear();
-        masterGroup.getTransforms().addAll(translate, rotate, scale);
+            // Step 3: Position
+            Translate translate = new Translate();
+            translate.setX(viewportWidth > fxPanel.getWidth() ? leftOffsetX : centerOffsetX);
+            translate.setY(viewportHeight > fxPanel.getHeight() ? topOffsetY : centerOffsetY);
 
-        // Adjust scroll bar positions for view changes.
-        if (viewportWidth > fxPanel.getWidth()) {
-            scrollPane.setHvalue(scrollX);
-        }
-        if (viewportHeight > fxPanel.getHeight()) {
-            scrollPane.setVvalue(scrollY);
-        }
+            // Add the transforms in reverse order of intended execution.
+            // Note: They MUST be added in this order to ensure translate is
+            // executed last.
+            masterGroup.getTransforms().clear();
+            masterGroup.getTransforms().addAll(translate, rotate, scale);
 
-        // Update all image controls to reflect the current values.
-        zoomOutButton.setEnabled(zoomRatio > MIN_ZOOM_RATIO);
-        zoomInButton.setEnabled(zoomRatio < MAX_ZOOM_RATIO);
-        rotationTextField.setText((int) rotation + "°");
-        zoomTextField.setText((Math.round(zoomRatio * 100.0)) + "%");
+            // Adjust scroll bar positions for view changes.
+            if (viewportWidth > fxPanel.getWidth()) {
+                scrollPane.setHvalue(scrollX);
+            }
+            if (viewportHeight > fxPanel.getHeight()) {
+                scrollPane.setVvalue(scrollY);
+            }
+
+            SwingUtilities.invokeLater(() -> {
+                // Update all image controls to reflect the current values.
+                zoomOutButton.setEnabled(zoomRatio > MIN_ZOOM_RATIO);
+                zoomInButton.setEnabled(zoomRatio < MAX_ZOOM_RATIO);
+                rotationTextField.setText((int) rotation + "°");
+                zoomTextField.setText((Math.round(zoomRatio * 100.0)) + "%");
+            });
+        });
     }
+
+    /**
+     * Checks that the calling code is running in the JFX thread and throws an
+     * IllegalStateException if it is not. The intent of this method is to make
+     * thread confinement errors obvious at development time.
+     */
+    private void ensureInJfxThread() {
+        if (!Platform.isFxApplicationThread()) {
+            throw new IllegalStateException("Attempt to execute JFX code outside of JFX thread"); //NON-NLS
+        }
+    }
+
+    /**
+     * Checks that the calling code is running in the JFX thread and throws an
+     * IllegalStateException if it is not. The intent of this method is to make
+     * thread confinement errors obvious at development time.
+     */
+    private void ensureInSwingThread() {
+        if (!SwingUtilities.isEventDispatchThread()) {
+            throw new IllegalStateException("Attempt to execute Swing code outside of EDT"); //NON-NLS
+        }
+    }
+
 }
