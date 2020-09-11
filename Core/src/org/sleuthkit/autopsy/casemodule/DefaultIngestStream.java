@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.util.List;
+import org.sleuthkit.autopsy.ingest.IngestJob;
 import org.sleuthkit.autopsy.ingest.IngestStream;
 import org.sleuthkit.autopsy.ingest.IngestStreamClosedException;
 
@@ -34,6 +35,11 @@ class DefaultIngestStream implements IngestStream {
     @Override
     public void addFiles(List<Long> fileObjectIds) throws IngestStreamClosedException {
         // Do nothing
+    }
+    
+    @Override
+    public IngestJob getIngestJob() {
+        throw new UnsupportedOperationException("DefaultIngestStream has no associated IngestJob");
     }
 
     @Override
