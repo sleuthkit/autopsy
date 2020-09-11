@@ -95,7 +95,7 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
         // table in hand, we can simply group by domain and apply aggregate functions
         // to get, for example, # of downloads, # of visits in last 60, etc.
         final String domainsTable = 
-                "SELECT MAX(value_text)  AS domain," +
+                "SELECT LOWER(MAX(value_text))  AS domain," +
                 "       MAX(value_int64) AS date," + 
                 "       artifact_id AS parent_artifact_id," +
                 "       MAX(artifact_type_id) AS parent_artifact_type_id " +
@@ -227,7 +227,7 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
         private SQLException sqlCause;
         private TskCoreException coreCause;
         
-        public DomainCallback(SleuthkitCase skc) {
+        private DomainCallback(SleuthkitCase skc) {
             this.resultDomains = new ArrayList<>();
             this.skc = skc;
         }
@@ -235,6 +235,8 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
         @Override
         public void process(ResultSet resultSet) {
             try {
+                resultSet.setFetchSize(500);
+                
                 while (resultSet.next()) {
                     String domain = resultSet.getString("domain");
                     Long activityStart = resultSet.getLong("activity_start");
@@ -271,11 +273,11 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
             return Collections.unmodifiableList(this.resultDomains);
         }
         
-        public SQLException getSQLException() {
+        private SQLException getSQLException() {
             return this.sqlCause;
         }
         
-        public TskCoreException getTskCoreException() {
+        private TskCoreException getTskCoreException() {
             return this.coreCause;
         }
     }

@@ -112,7 +112,7 @@ public class ResultsSorter implements Comparator<Result> {
     private static Comparator<Result> getTypeComparator() {
         return (Result result1, Result result2) -> Integer.compare(result1.getType().getRanking(), result2.getType().getRanking());
     }
-
+    
     /**
      * Compare files using a concatenated version of keyword list names.
      * Alphabetical by the list names with files with no keyword list hits going
@@ -242,6 +242,21 @@ public class ResultsSorter implements Comparator<Result> {
             ResultDomain first = (ResultDomain) domain1;
             ResultDomain second = (ResultDomain) domain2;
             return compareStrings(first.getDomain().toLowerCase(), second.getDomain().toLowerCase());
+        };
+    }
+    
+    /**
+     * Sorts results by most recent date time
+     */
+    private static Comparator<Result> getMostRecentDateTimeComparator() {
+        return (Result result1, Result result2) -> {
+            if(result1.getType() != SearchData.Type.DOMAIN) {
+                return 0;
+            }
+            
+            ResultDomain first = (ResultDomain) result1;
+            ResultDomain second = (ResultDomain) result2;
+            return Long.compare(second.getActivityEnd(), first.getActivityEnd());
         };
     }
 

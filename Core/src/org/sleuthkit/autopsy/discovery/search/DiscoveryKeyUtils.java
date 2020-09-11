@@ -129,24 +129,45 @@ public class DiscoveryKeyUtils {
         }
 
         /**
-         * @return the keyString
+         * Get the String representation of this key.
+         *
+         * @return The String representation of this key.
          */
         String getKeyString() {
             return keyString;
         }
 
+        /**
+         * Get the list of filters associated with this key.
+         *
+         * @return The list of filters associated with this key.
+         */
         List<AbstractFilter> getFilters() {
             return Collections.unmodifiableList(this.filters);
         }
 
+        /**
+         * Get the group sorting type for this key.
+         *
+         * @return The group sorting type for this key.
+         */
         Group.GroupSortingAlgorithm getGroupSortingType() {
             return groupSortingType;
         }
 
+        /**
+         * Get the grouping attribute for this key.
+         *
+         * @return The grouping attribute for this key.
+         */
         DiscoveryAttributes.AttributeType getGroupAttributeType() {
             return groupAttributeType;
         }
 
+        /**
+         * Get the fileSorting
+         * @return 
+         */
         ResultsSorter.SortingMethod getFileSortingMethod() {
             return fileSortingMethod;
         }

@@ -85,7 +85,7 @@ public class ResultDomain extends Result {
 
     @Override
     public TskData.FileKnown getKnown() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return TskData.FileKnown.UNKNOWN;
     }
 
     @Override
@@ -95,9 +95,9 @@ public class ResultDomain extends Result {
     
     @Override
     public String toString() {
-        return "[" + this.domain + ", " + this.dataSourceId + ", "
-                + this.activityStart + ", " + this.activityEnd + ", " 
-                + this.visitsInLast60 + ", " + this.filesDownloaded + ", " 
+        return "[domain=" + this.domain + ", data_source=" + this.dataSourceId + ", start="
+                + this.activityStart + ", end=" + this.activityEnd + ", visitsLast60=" 
+                + this.visitsInLast60 + ", downloads=" + this.filesDownloaded + ", frequency=" 
                 + this.getFrequency() + "]";
     }
 }
