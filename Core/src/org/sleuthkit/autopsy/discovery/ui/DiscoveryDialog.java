@@ -220,19 +220,14 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         switch (type) {
             case IMAGE:
                 return imageFilterPanel;
-                break;
             case VIDEO:
                 return videoFilterPanel;
-                break;
             case DOCUMENT:
                 return documentFilterPanel;
-                break;
             case DOMAIN:
                 return domainFilterPanel;
-                break;
             default:
                 return imageFilterPanel;
-                break;
         }
     }
 
