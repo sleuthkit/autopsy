@@ -20,13 +20,15 @@ package org.sleuthkit.autopsy.datasourcesummary.ui;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourcePastCasesSummary;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourcePastCasesSummary.NotCentralRepoIngestedException;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.PastCasesSummary;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.PastCasesSummary.NotIngestedWithModuleException;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.PastCasesSummary.PastCasesResult;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer.DefaultCellModel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult.ResultType;
@@ -77,23 +79,18 @@ public class PastCasesPanel extends BaseDataSourceSummaryPanel {
     private final List<DataFetchComponents<DataSource, ?>> dataFetchComponents;
 
     public PastCasesPanel() {
-        this(new DataSourcePastCasesSummary());
+        this(new PastCasesSummary());
     }
 
     /**
      * Creates new form PastCasesPanel
      */
-    public PastCasesPanel(DataSourcePastCasesSummary pastCaseData) {
+    public PastCasesPanel(PastCasesSummary pastCaseData) {
         // set up data acquisition methods
         dataFetchComponents = Arrays.asList(
-                // hashset hits loading components
                 new DataFetchWorker.DataFetchComponents<>(
-                        (dataSource) -> pastCaseData.getPastCasesWithNotableFile(dataSource),
-                        (result) -> handleResult(notableFileTable, result)),
-                // keyword hits loading components
-                new DataFetchWorker.DataFetchComponents<>(
-                        (dataSource) -> pastCaseData.getPastCasesWithSameId(dataSource),
-                        (result) -> handleResult(sameIdTable, result))
+                        (dataSource) -> pastCaseData.getPastCasesData(dataSource),
+                        (result) -> handleResult(result))
         );
 
         initComponents();
@@ -105,14 +102,35 @@ public class PastCasesPanel extends BaseDataSourceSummaryPanel {
      * shown. Otherwise, this method uses the tables default showDataFetchResult
      * method.
      *
-     * @param table  The table.
      * @param result The result.
      */
-    private <T> void handleResult(JTablePanel<T> table, DataFetchResult<List<T>> result) {
-        if (result.getResultType() == ResultType.ERROR && result.getException() instanceof NotCentralRepoIngestedException) {
-            table.showMessage(Bundle.PastCasesPanel_onNoCrIngest_message());
+    private void handleResult(DataFetchResult<PastCasesResult> result) {
+        if (result.getResultType() == ResultType.ERROR && result.getException() instanceof NotIngestedWithModuleException) {
+            notableFileTable.showMessage(Bundle.PastCasesPanel_onNoCrIngest_message());
+            sameIdTable.showMessage(Bundle.PastCasesPanel_onNoCrIngest_message());
         } else {
-            table.showDataFetchResult(result);
+            notableFileTable.showDataFetchResult(getSubResult(result, (res) -> res.getTaggedNotable()));
+            sameIdTable.showDataFetchResult(getSubResult(result, (res) -> res.getSameIdsResults()));
+        }
+    }
+
+    /**
+     * Given an input data fetch result, creates an error result if the original
+     * is an error. Otherwise, uses the getSubResult function on the underlying
+     * data to create a new DataFetchResult.
+     *
+     * @param inputResult     The input result.
+     * @param getSubComponent The means of getting the data given the original
+     *                        data.
+     *
+     * @return The new result with the error of the original or the processed
+     *         data.
+     */
+    private <I, O> DataFetchResult<O> getSubResult(DataFetchResult<I> inputResult, Function<I, O> getSubResult) {
+        if (inputResult.getResultType() == ResultType.SUCCESS) {
+            return DataFetchResult.getSuccessResult(getSubResult.apply(inputResult.getData()));
+        } else {
+            return DataFetchResult.getErrorResult(inputResult.getException());
         }
     }
 

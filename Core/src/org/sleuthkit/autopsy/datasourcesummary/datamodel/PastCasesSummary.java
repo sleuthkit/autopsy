@@ -18,13 +18,24 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.datamodel;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeUtil;
 import org.sleuthkit.autopsy.centralrepository.ingestmodule.CentralRepoIngestModuleFactory;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -33,6 +44,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.IngestJobInfo;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -57,37 +69,109 @@ import org.sleuthkit.datamodel.TskCoreException;
  * d) The content of that TSK_COMMENT attribute will be of the form "Previous
  * Case: case1,case2...caseN"
  */
-public class DataSourcePastCasesSummary {
+public class PastCasesSummary {
 
     /**
      * Exception that is thrown in the event that a data source has not been
-     * ingested with the Central Repository Ingest Module.
+     * ingested with a particular ingest module.
      */
-    public static class NotCentralRepoIngestedException extends Exception {
+    public static class NotIngestedWithModuleException extends Exception {
+
+        private final String moduleDisplayName;
+
+        /**
+         * Constructor.
+         *
+         * @param moduleName The module name.
+         * @param message    The message for the exception.
+         */
+        public NotIngestedWithModuleException(String moduleName, String message) {
+            super(message);
+            this.moduleDisplayName = moduleName;
+        }
+
+        /**
+         * Constructor.
+         *
+         * @param moduleName The module name.
+         * @param message    The message for the exception.
+         * @param thrwbl     Inner exception if applicable.
+         */
+        public NotIngestedWithModuleException(String moduleName, String message, Throwable thrwbl) {
+            super(message, thrwbl);
+            this.moduleDisplayName = moduleName;
+        }
+
+        /**
+         * @return The module display name.
+         */
+        public String getModuleDisplayName() {
+            return moduleDisplayName;
+        }
+    }
+
+    /**
+     * Return type for results items in the past cases tab.
+     */
+    public static class PastCasesResult {
+
+        private final List<Pair<String, Long>> sameIdsResults;
+        private final List<Pair<String, Long>> taggedNotable;
 
         /**
          * Main constructor.
          *
-         * @param string Error message.
+         * @param sameIdsResults Data for the cases with same id table.
+         * @param taggedNotable  Data for the tagged notable table.
          */
-        public NotCentralRepoIngestedException(String string) {
-            super(string);
+        public PastCasesResult(List<Pair<String, Long>> sameIdsResults, List<Pair<String, Long>> taggedNotable) {
+            this.sameIdsResults = sameIdsResults;
+            this.taggedNotable = taggedNotable;
+        }
+
+        /**
+         * @return Data for the cases with same id table.
+         */
+        public List<Pair<String, Long>> getSameIdsResults() {
+            return sameIdsResults;
+        }
+
+        /**
+         * @return Data for the tagged notable table.
+         */
+        public List<Pair<String, Long>> getTaggedNotable() {
+            return taggedNotable;
         }
     }
 
     private static final String CENTRAL_REPO_INGEST_NAME = CentralRepoIngestModuleFactory.getModuleName().toUpperCase().trim();
     private static final BlackboardAttribute.Type TYPE_COMMENT = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_COMMENT);
+    private static final BlackboardAttribute.Type TYPE_ASSOCIATED_ARTIFACT = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT);
+
+    private static final Set<Integer> CR_DEVICE_TYPE_IDS = new HashSet<>(Arrays.asList(
+            CorrelationAttributeInstance.USBID_TYPE_ID,
+            CorrelationAttributeInstance.ICCID_TYPE_ID,
+            CorrelationAttributeInstance.IMEI_TYPE_ID,
+            CorrelationAttributeInstance.IMSI_TYPE_ID,
+            CorrelationAttributeInstance.MAC_TYPE_ID
+    ));
 
     private static final String CASE_SEPARATOR = ",";
     private static final String PREFIX_END = ":";
 
     private final SleuthkitCaseProvider caseProvider;
+    private final java.util.logging.Logger logger;
+    private final Function<BlackboardArtifact, List<CorrelationAttributeInstance>> corrAttrRetriever;
 
     /**
      * Main constructor.
      */
-    public DataSourcePastCasesSummary() {
-        this(SleuthkitCaseProvider.DEFAULT);
+    public PastCasesSummary() {
+        this(
+                SleuthkitCaseProvider.DEFAULT,
+                (artifact) -> CorrelationAttributeUtil.makeCorrAttrsForCorrelation(artifact),
+                org.sleuthkit.autopsy.coreutils.Logger.getLogger(DataSourceUserActivitySummary.class.getName())
+        );
 
     }
 
@@ -96,10 +180,19 @@ public class DataSourcePastCasesSummary {
      * is designed with unit testing in mind since mocked dependencies can be
      * utilized.
      *
-     * @param provider The object providing the current SleuthkitCase.
+     * @param provider           The object providing the current SleuthkitCase.
+     * @param corrAttrRetriever  Obtains a list of CorrelationAttributeInstance
+     *                           objects for the given artifact.
+     * @param logger             The logger to use.
      */
-    public DataSourcePastCasesSummary(SleuthkitCaseProvider provider) {
+    public PastCasesSummary(
+            SleuthkitCaseProvider provider,
+            Function<BlackboardArtifact, List<CorrelationAttributeInstance>> corrAttrRetriever,
+            java.util.logging.Logger logger) {
+
         this.caseProvider = provider;
+        this.corrAttrRetriever = corrAttrRetriever;
+        this.logger = logger;
     }
 
     /**
@@ -167,33 +260,21 @@ public class DataSourcePastCasesSummary {
     }
 
     /**
-     * Retrieves past cases associated with a specific artifact type.
+     * Given a stream of case ids, groups the strings in a case-insensitive
+     * manner, and then provides a list of cases and the occurrence count sorted
+     * from max to min.
      *
-     * @param dataSource   The datasource.
-     * @param artifactType The artifact type.
+     * @param cases A stream of cases.
      *
-     * @return A list of key value pairs mapping the case to the count of
-     *         instances that case appeared for the given artifact type. The
-     *         case is sorted from max to min descending.
-     *
-     * @throws SleuthkitCaseProviderException
-     * @throws TskCoreException
-     * @throws NotCentralRepoIngestedException
+     * @return The list of unique cases and their occurrences sorted from max to min.
      */
-    private List<Pair<String, Long>> getPastCases(DataSource dataSource, ARTIFACT_TYPE artifactType)
-            throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, NotCentralRepoIngestedException {
-
-        throwOnNotCentralRepoIngested(dataSource);
-
-        Collection<List<String>> cases = this.caseProvider.get().getBlackboard().getArtifacts(artifactType.getTypeID(), dataSource.getId())
-                .stream()
-                // convert to list of cases where there is a TSK_COMMENT from the central repo
-                .flatMap((art) -> getCasesFromArtifact(art).stream())
+    private List<Pair<String, Long>> getCaseCounts(Stream<String> cases) {
+        Collection<List<String>> groupedCases = cases
                 // group by case insensitive compare of cases
                 .collect(Collectors.groupingBy((caseStr) -> caseStr.toUpperCase().trim()))
                 .values();
 
-        return cases
+        return groupedCases
                 .stream()
                 // get any cases where an actual case is found
                 .filter((lst) -> lst != null && lst.size() > 0)
@@ -203,6 +284,93 @@ public class DataSourcePastCasesSummary {
                 .sorted((a, b) -> -Long.compare(a.getValue(), b.getValue()))
                 .collect(Collectors.toList());
     }
+
+    /**
+     * Given an artifact with a TYPE_ASSOCIATED_ARTIFACT attribute, retrieves the related artifact.
+     * @param skCase The sleuthkit case.
+     * @param artifact The artifact with the TYPE_ASSOCIATED_ARTIFACT attribute.
+     * @return The artifact if found or null if not.
+     * @throws SleuthkitCaseProviderException 
+     */
+    private BlackboardArtifact getParentArtifact(BlackboardArtifact artifact) throws SleuthkitCaseProviderException {
+        Long parentId = DataSourceInfoUtilities.getLongOrNull(artifact, TYPE_ASSOCIATED_ARTIFACT);
+        if (parentId == null) {
+            return null;
+        }
+
+        SleuthkitCase skCase = caseProvider.get();
+        try {
+            return skCase.getArtifactByArtifactId(parentId);
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING,
+                    String.format("There was an error fetching the parent artifact of a TSK_INTERESTING_ARTIFACT_HIT (parent id: %d)", parentId),
+                    ex);
+            return null;
+        }
+    }
+    
+    /**
+     * Returns true if the artifact has an associated artifact of a device type.
+     * @param artifact The artifact.
+     * @return True if there is a device associated artifact.
+     * @throws SleuthkitCaseProviderException 
+     */
+    private boolean hasDeviceAssociatedArtifact(BlackboardArtifact artifact) throws SleuthkitCaseProviderException {
+        BlackboardArtifact parent = getParentArtifact(artifact);
+        if (parent == null) {
+            return false;
+        }
+        
+        List<CorrelationAttributeInstance> correlationAttributes = corrAttrRetriever.apply(parent);
+        if (correlationAttributes == null) {
+            return false;
+        }
+
+        return correlationAttributes.stream()
+                .anyMatch((attrInstance) -> CR_DEVICE_TYPE_IDS.contains(attrInstance.getCorrelationType()));
+    }
+    
+    
+    /**
+     * Returns the past cases data to be shown in the past cases tab.
+     * @param dataSource The data source.
+     * @return The retrieved data.
+     * @throws SleuthkitCaseProviderException
+     * @throws TskCoreException
+     * @throws NotIngestedWithModuleException
+     */
+    public PastCasesResult getPastCasesData(DataSource dataSource)
+            throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, NotIngestedWithModuleException {
+
+        throwOnNotCentralRepoIngested(dataSource);
+
+        SleuthkitCase skCase = caseProvider.get();
+
+        List<String> deviceArtifactCases = new ArrayList<>();
+        List<String> nonDeviceArtifactCases = new ArrayList<>();
+
+        for (BlackboardArtifact artifact : skCase.getBlackboardArtifacts(ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT, dataSource.getId())) {
+            List<String> cases = getCasesFromArtifact(artifact);
+            if (cases == null || cases.isEmpty()) {
+                continue;
+            }
+
+            if (hasDeviceAssociatedArtifact(artifact)) {
+                deviceArtifactCases.addAll(cases);
+            } else {
+                nonDeviceArtifactCases.addAll(cases);
+            }
+        }
+
+        Stream<String> filesCases = skCase.getBlackboardArtifacts(ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, dataSource.getId()).stream()
+                .flatMap((art) -> getCasesFromArtifact(art).stream());
+
+        return new PastCasesResult(
+                getCaseCounts(deviceArtifactCases.stream()),
+                getCaseCounts(Stream.concat(filesCases, nonDeviceArtifactCases.stream()))
+        );
+    }
+    
 
     /**
      * Returns true if the ingest job info contains an ingest module that
@@ -263,52 +431,15 @@ public class DataSourcePastCasesSummary {
      *
      * @throws SleuthkitCaseProviderException
      * @throws TskCoreException
-     * @throws NotCentralRepoIngestedException
+     * @throws NotIngestedWithModuleException
      */
     private void throwOnNotCentralRepoIngested(DataSource dataSource)
-            throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, NotCentralRepoIngestedException {
+            throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, NotIngestedWithModuleException {
 
         if (!isCentralRepoIngested(dataSource)) {
             String objectId = (dataSource == null) ? "<null>" : String.valueOf(dataSource.getId());
             String message = String.format("Data source: %s has not been ingested with the Central Repository Ingest Module.", objectId);
-            throw new NotCentralRepoIngestedException(message);
+            throw new NotIngestedWithModuleException(CENTRAL_REPO_INGEST_NAME, message);
         }
-    }
-
-    /**
-     * Get all cases that share notable files with the given data source.
-     *
-     * @param dataSource The data source.
-     *
-     * @return A list of key value pairs mapping the case to the count of
-     *         instances that case appeared. The case is sorted from max to min
-     *         descending.
-     *
-     * @throws SleuthkitCaseProviderException
-     * @throws TskCoreException
-     * @throws NotCentralRepoIngestedException
-     */
-    public List<Pair<String, Long>> getPastCasesWithNotableFile(DataSource dataSource)
-            throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, NotCentralRepoIngestedException {
-        return getPastCases(dataSource, ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
-    }
-
-    /**
-     * Get all cases that share a common central repository id with the given
-     * data source.
-     *
-     * @param dataSource The data source.
-     *
-     * @return A list of key value pairs mapping the case to the count of
-     *         instances that case appeared. The case is sorted from max to min
-     *         descending.
-     *
-     * @throws SleuthkitCaseProviderException
-     * @throws TskCoreException
-     * @throws NotCentralRepoIngestedException
-     */
-    public List<Pair<String, Long>> getPastCasesWithSameId(DataSource dataSource)
-            throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, NotCentralRepoIngestedException {
-        return getPastCases(dataSource, ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT);
     }
 }
