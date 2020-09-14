@@ -18,8 +18,10 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.datamodel;
 
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultUpdateGovernor;
 import java.sql.SQLException;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
+import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -27,7 +29,7 @@ import org.sleuthkit.datamodel.TskData;
 /**
  * Provides information for the DataSourceSummaryCountsPanel.
  */
-public class TypesSummary implements EventUpdateGovernor {
+public class TypesSummary implements DefaultUpdateGovernor {
 
     private final SleuthkitCaseProvider provider;
 
@@ -48,9 +50,11 @@ public class TypesSummary implements EventUpdateGovernor {
     }
 
     @Override
-    public boolean shouldRefreshOnNewContent() {
+    public boolean isRefreshRequired(ModuleContentEvent evt) {
         return true;
     }
+
+    
 
     /**
      * Get count of regular files (not directories) in a data source.

@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.datamodel;
 
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultArtifactUpdateGovernor;
 import java.io.File;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -42,7 +43,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Provides information to populate Top Programs Summary queries.
  */
-public class TopProgramsSummary implements EventUpdateGovernor {
+public class TopProgramsSummary implements DefaultArtifactUpdateGovernor {
 
     private static final Set<Integer> ARTIFACT_UPDATE_TYPE_IDS = new HashSet<>(Arrays.asList(
             ARTIFACT_TYPE.TSK_PROG_RUN.getTypeID()
@@ -186,7 +187,7 @@ public class TopProgramsSummary implements EventUpdateGovernor {
     }
 
     @Override
-    public Set<Integer> getArtifactIdUpdates() {
+    public Set<Integer> getArtifactTypeIdsForRefresh() {
         return ARTIFACT_UPDATE_TYPE_IDS;
     }
 

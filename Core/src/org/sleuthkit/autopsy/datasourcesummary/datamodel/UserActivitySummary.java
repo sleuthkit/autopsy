@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.datamodel;
 
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultArtifactUpdateGovernor;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
@@ -47,7 +48,7 @@ import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
  * time, the data being provided for domains is fictitious and is done as a
  * placeholder.
  */
-public class UserActivitySummary implements EventUpdateGovernor {
+public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
 
     private static final BlackboardArtifact.Type TYPE_DEVICE_ATTACHED = new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_DEVICE_ATTACHED);
 
@@ -143,7 +144,7 @@ public class UserActivitySummary implements EventUpdateGovernor {
     }
 
     @Override
-    public Set<Integer> getArtifactIdUpdates() {
+    public Set<Integer> getArtifactTypeIdsForRefresh() {
         return ARTIFACT_UPDATE_TYPE_IDS;
     }
 

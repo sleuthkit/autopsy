@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.datamodel;
 
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultArtifactUpdateGovernor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -40,7 +41,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Providing data for the data source analysis tab.
  */
-public class AnalysisSummary implements EventUpdateGovernor {
+public class AnalysisSummary implements DefaultArtifactUpdateGovernor {
 
     private static final BlackboardAttribute.Type TYPE_SET_NAME = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_SET_NAME);
 
@@ -78,7 +79,7 @@ public class AnalysisSummary implements EventUpdateGovernor {
     }
     
     @Override
-    public Set<Integer> getArtifactIdUpdates() {
+    public Set<Integer> getArtifactTypeIdsForRefresh() {
         return ARTIFACT_UPDATE_TYPE_IDS;
     }
 

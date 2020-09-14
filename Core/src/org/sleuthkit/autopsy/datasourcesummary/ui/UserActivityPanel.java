@@ -85,7 +85,7 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
     // set up recent programs table 
     private final JTablePanel<TopProgramsResult> topProgramsTable = JTablePanel.getJTablePanel(Arrays.asList(
             // program name column
-            new ColumnModel<>(
+            new ColumnModel<TopProgramsResult>(
                     Bundle.UserActivityPanel_TopProgramsTableModel_name_header(),
                     (prog) -> {
                         return new DefaultCellModel(prog.getProgramName())
@@ -117,12 +117,12 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
                     (prog) -> new DefaultCellModel(getFormatted(prog.getLastRun())),
                     150)
     ))
-    .setKeyFunction((prog) -> prog.getProgramPath() + prog.getProgramName());
+    .setKeyFunction((prog) -> prog.getProgramPath() + ":" + prog.getProgramName());
 
     // set up recent domains table
     private final JTablePanel<TopDomainsResult> recentDomainsTable = JTablePanel.getJTablePanel(Arrays.asList(
             // domain column
-            new ColumnModel<>(
+            new ColumnModel<TopDomainsResult>(
                     Bundle.UserActivityPanel_TopDomainsTableModel_domain_header(),
                     (recentDomain) -> new DefaultCellModel(recentDomain.getDomain()),
                     250),
@@ -142,7 +142,7 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
     // top web searches table
     private final JTablePanel<TopWebSearchResult> topWebSearchesTable = JTablePanel.getJTablePanel(Arrays.asList(
             // search string column
-            new ColumnModel<>(
+            new ColumnModel<TopWebSearchResult>(
                     Bundle.UserActivityPanel_TopWebSearchTableModel_searchString_header(),
                     (webSearch) -> new DefaultCellModel(webSearch.getSearchString()),
                     250
@@ -165,7 +165,7 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
     // top devices attached table
     private final JTablePanel<TopDeviceAttachedResult> topDevicesAttachedTable = JTablePanel.getJTablePanel(Arrays.asList(
             // device id column
-            new ColumnModel<>(
+            new ColumnModel<TopDeviceAttachedResult>(
                     Bundle.UserActivityPanel_TopDeviceAttachedTableModel_deviceId_header(),
                     (device) -> new DefaultCellModel(device.getDeviceId()),
                     250
@@ -195,7 +195,7 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
     // top accounts table
     private final JTablePanel<TopAccountResult> topAccountsTable = JTablePanel.getJTablePanel(Arrays.asList(
             // account type column
-            new ColumnModel<>(
+            new ColumnModel<TopAccountResult>(
                     Bundle.UserActivityPanel_TopAccountTableModel_accountType_header(),
                     (account) -> new DefaultCellModel(account.getAccountType()),
                     250
@@ -245,27 +245,27 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
         // set up data acquisition methods
         this.dataFetchComponents = Arrays.asList(
                 // top programs query
-                new DataFetchComponents<>(
+                new DataFetchComponents<DataSource, List<TopProgramsResult>>(
                         (dataSource) -> topProgramsData.getTopPrograms(dataSource, TOP_PROGS_COUNT),
                         (result) -> topProgramsTable.showDataFetchResult(result, JTablePanel.getDefaultErrorMessage(),
                                 Bundle.UserActivityPanel_noDataExists())),
                 // top domains query
-                new DataFetchComponents<>(
+                new DataFetchComponents<DataSource, List<TopDomainsResult>>(
                         (dataSource) -> userActivityData.getRecentDomains(dataSource, TOP_DOMAINS_COUNT),
                         (result) -> recentDomainsTable.showDataFetchResult(result, JTablePanel.getDefaultErrorMessage(),
                                 Bundle.UserActivityPanel_noDataExists())),
                 // top web searches query
-                new DataFetchComponents<>(
+                new DataFetchComponents<DataSource, List<TopWebSearchResult>>(
                         (dataSource) -> userActivityData.getMostRecentWebSearches(dataSource, TOP_SEARCHES_COUNT),
                         (result) -> topWebSearchesTable.showDataFetchResult(result, JTablePanel.getDefaultErrorMessage(),
                                 Bundle.UserActivityPanel_noDataExists())),
                 // top devices query
-                new DataFetchComponents<>(
+                new DataFetchComponents<DataSource, List<TopDeviceAttachedResult>>(
                         (dataSource) -> userActivityData.getRecentDevices(dataSource, TOP_DEVICES_COUNT),
                         (result) -> topDevicesAttachedTable.showDataFetchResult(result, JTablePanel.getDefaultErrorMessage(),
                                 Bundle.UserActivityPanel_noDataExists())),
                 // top accounts query
-                new DataFetchComponents<>(
+                new DataFetchComponents<DataSource, List<TopAccountResult>>(
                         (dataSource) -> userActivityData.getRecentAccounts(dataSource, TOP_ACCOUNTS_COUNT),
                         (result) -> topAccountsTable.showDataFetchResult(result, JTablePanel.getDefaultErrorMessage(),
                                 Bundle.UserActivityPanel_noDataExists()))

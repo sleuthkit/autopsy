@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datasourcesummary.datamodel;
+package org.sleuthkit.autopsy.datasourcesummary.uiutils;
 
 import java.beans.PropertyChangeEvent;
 import java.util.Collections;
@@ -29,7 +29,7 @@ import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
  * Interface for determiining when data should update based on autopsy (i.e.
  * case/ingest) events.
  */
-public interface EventUpdateGovernor {
+public interface UpdateGovernor {
 
     /**
      * @return The set of Case Events for which data should be updated.

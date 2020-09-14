@@ -18,17 +18,20 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.datamodel;
 
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultUpdateGovernor;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
+import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Provides methods to query for datasource files by mime type.
  */
-public class MimeTypeSummary implements EventUpdateGovernor {
+public class MimeTypeSummary implements DefaultUpdateGovernor {
 
     private final SleuthkitCaseProvider provider;
 
@@ -49,7 +52,7 @@ public class MimeTypeSummary implements EventUpdateGovernor {
     }
 
     @Override
-    public boolean shouldRefreshOnNewContent() {
+    public boolean isRefreshRequired(ModuleContentEvent evt) {
         return true;
     }
 
@@ -139,7 +142,7 @@ public class MimeTypeSummary implements EventUpdateGovernor {
      */
     public Long getCountOfFilesWithNoMimeType(DataSource currentDataSource)
             throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, SQLException {
-        
+
         return DataSourceInfoUtilities.getCountOfRegNonSlackFiles(
                 provider.get(),
                 currentDataSource,

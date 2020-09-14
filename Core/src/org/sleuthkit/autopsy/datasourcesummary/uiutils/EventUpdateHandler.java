@@ -3,11 +3,17 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.sleuthkit.autopsy.datasourcesummary.ui;
+package org.sleuthkit.autopsy.datasourcesummary.uiutils;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.guiutils.RefreshThrottler;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -18,8 +24,7 @@ import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
  *
  * @author gregd
  */
-public class EventUpdateHandler {
-    
+public class EventUpdateHandler {       
     private final RefreshThrottler refreshThrottler = new RefreshThrottler(new RefreshThrottler.Refresher() {
         @Override
         public void refresh() {
@@ -48,27 +53,60 @@ public class EventUpdateHandler {
         }
     };
     
+    private final List<UpdateGovernor> governors;
     private final Set<Case.Events> caseEvents;
+    private final Runnable onUpdate;
     
-    protected EventUpdateHandler(Set<Case.Events> caseEvents) {
-        this.caseEvents = caseEvents;
+    
+    public EventUpdateHandler(Runnable onUpdate, UpdateGovernor...governors) {
+        if (onUpdate == null) {
+            throw new IllegalArgumentException("onUpdate parameter must be non-null.");
+        }
+        
+        this.onUpdate = onUpdate;
+        
+        this.governors = governors == null ? Collections.emptyList() : Arrays.asList(governors);
+        
+        this.caseEvents = Stream.of(governors)
+                .filter(governor -> governor.getCaseEventUpdates() != null)
+                .flatMap(governor -> governor.getCaseEventUpdates().stream())
+                .collect(Collectors.toSet());
+        
     }
         
     protected boolean isRefreshRequired(ModuleDataEvent evt) {
-        //return artifactTypesForRefresh.contains(evt.getBlackboardArtifactType().getTypeID());
+        for (UpdateGovernor governor: governors) {
+            if (governor.isRefreshRequired(evt)) {
+                return true;
+            }
+        }
+        
+        return false;
     }
 
     protected boolean isRefreshRequired(ModuleContentEvent evt) {
-        //return refreshOnNewContent;
+        for (UpdateGovernor governor: governors) {
+            if (governor.isRefreshRequired(evt)) {
+                return true;
+            }
+        }
+        
+        return false;
     }
 
     protected boolean isRefreshRequiredForCaseEvent(PropertyChangeEvent evt) {
-        //return true;
+        for (UpdateGovernor governor: governors) {
+            if (governor.isRefreshRequiredForCaseEvent(evt)) {
+                return true;
+            }
+        }
+        
+        return false;
     }
     
     
-    public void onRefresh() {
-        // to go here
+    protected void onRefresh() {
+        onUpdate.run();
     }
     
     public void register() {
@@ -80,38 +118,4 @@ public class EventUpdateHandler {
         Case.removeEventTypeSubscriber(caseEvents, caseEventsListener);
         refreshThrottler.unregisterEventListener();
     }
-
-    
-//    protected BaseDataSourceSummaryPanel(EventUpdateGovernor...dataModels) {
-//        this(getUnionSet(EventUpdateGovernor::getCaseEventUpdates, dataModels),
-//                getUnionSet(EventUpdateGovernor::getArtifactIdUpdates, dataModels),
-//                Stream.of(dataModels).anyMatch(EventUpdateGovernor::shouldRefreshOnNewContent)
-//        );
-//        
-//        
-//        this.artifactTypesForRefresh = (artifactTypesForRefresh == null)
-//                ? new HashSet<>()
-//                : new HashSet<>(artifactTypesForRefresh);
-//
-//        this.refreshOnNewContent = refreshOnNewContent;
-//
-//        if (refreshOnNewContent || this.artifactTypesForRefresh.size() > 0) {
-//            refreshThrottler.registerForIngestModuleEvents();
-//        }
-//
-//        if (caseEvents != null) {
-//            Case.addEventTypeSubscriber(caseEvents, caseEventsListener);
-//        }
-//    }
-//    
-//    
-//    private final Set<Integer> artifactTypesForRefresh;
-//    private final boolean refreshOnNewContent;
-//    
-//    private static <I, O> Set<O> getUnionSet(Function<I, Collection<? extends O>> mapper, I... items) {
-//        return Stream.of(items)
-//                .flatMap((item) -> mapper.apply(item).stream())
-//                .collect(Collectors.toSet());
-//    }  
-
 }

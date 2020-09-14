@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.datamodel;
 
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultArtifactUpdateGovernor;
 import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -43,7 +44,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 /**
  * Helper class for getting data for the Recent Files Data Summary tab.
  */
-public class RecentFilesSummary implements EventUpdateGovernor {
+public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
 
     private final static BlackboardAttribute.Type DATETIME_ACCESSED_ATT = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED);
     private final static BlackboardAttribute.Type DOMAIN_ATT = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN);
@@ -88,7 +89,7 @@ public class RecentFilesSummary implements EventUpdateGovernor {
     }
 
     @Override
-    public Set<Integer> getArtifactIdUpdates() {
+    public Set<Integer> getArtifactTypeIdsForRefresh() {
         return ARTIFACT_UPDATE_TYPE_IDS;
     }
     

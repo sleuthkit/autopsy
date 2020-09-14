@@ -19,7 +19,9 @@
 package org.sleuthkit.autopsy.datasourcesummary.ui;
 
 import java.awt.BorderLayout;
+import java.sql.SQLException;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -154,24 +156,25 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
      * Creates a new TypesPanel.
      */
     public TypesPanel() {
-        this(new MimeTypeSummary(), new TypesSummary());
+        this(new MimeTypeSummary(), new TypesSummary(), new ContainerSummary());
     }
 
     public TypesPanel(
             MimeTypeSummary mimeTypeData,
-            TypesSummary typeData) {
+            TypesSummary typeData,
+            ContainerSummary containerData) {
 
-        super(mimeTypeData, typeData);
+        super(mimeTypeData, typeData, containerData);
         
         
         this.dataFetchComponents = Arrays.asList(
                 // usage label worker
                 new DataFetchWorker.DataFetchComponents<>(
-                        ContainerSummary::getDataSourceType,
+                        containerData::getDataSourceType,
                         usageLabel::showDataFetchResult),
                 // os label worker
                 new DataFetchWorker.DataFetchComponents<>(
-                        ContainerSummary::getOperatingSystems,
+                        containerData::getOperatingSystems,
                         osLabel::showDataFetchResult),
                 // size label worker
                 new DataFetchWorker.DataFetchComponents<>(
@@ -225,21 +228,19 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
      * @return The pie chart items.
      */
     private List<PieChartItem> getMimeTypeCategoriesModel(MimeTypeSummary mimeTypeData, DataSource dataSource) 
-            throws SleuthkitCaseProviderException, TskCoreException {
+            throws SQLException, SleuthkitCaseProviderException, TskCoreException {
         
         if (dataSource == null) {
             return null;
         }
 
         // for each category of file types, get the counts of files
-        List<Pair<String, Long>> fileCategoryItems = FILE_MIME_TYPE_CATEGORIES
-                .stream()
-                .map((strCat) -> {
-                    return Pair.of(strCat.getLeft(),
+        List<Pair<String, Long>> fileCategoryItems = new ArrayList<>();
+        for (Pair<String, Set<String>> strCat : FILE_MIME_TYPE_CATEGORIES) {
+            fileCategoryItems.add(Pair.of(strCat.getLeft(),
                             getLongOrZero(mimeTypeData.getCountOfFilesForMimeTypes(
-                                    dataSource, strCat.getRight())));
-                })
-                .collect(Collectors.toList());
+                                    dataSource, strCat.getRight()))));
+        }
 
         // get a count of all files with no mime type
         Long noMimeTypeCount = getLongOrZero(mimeTypeData.getCountOfFilesWithNoMimeType(dataSource));

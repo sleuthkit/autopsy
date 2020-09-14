@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.sleuthkit.autopsy.datasourcesummary.datamodel;
+package org.sleuthkit.autopsy.datasourcesummary.uiutils;
 
 import java.beans.PropertyChangeEvent;
 import java.util.Collections;
@@ -16,7 +16,7 @@ import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
  *
  * @author gregd
  */
-public interface DefaultArtifactUpdateGovernor extends EventUpdateGovernor {
+public interface DefaultUpdateGovernor extends UpdateGovernor {
 
     @Override
     default boolean isRefreshRequiredForCaseEvent(PropertyChangeEvent evt) {
@@ -29,14 +29,13 @@ public interface DefaultArtifactUpdateGovernor extends EventUpdateGovernor {
     }
 
     @Override
+    default boolean isRefreshRequired(ModuleDataEvent evt) {
+        return false;
+    }
+
+    @Override
     default Set<Case.Events> getCaseEventUpdates() {
         return Collections.emptySet();
     }
-    
-    @Override
-    default boolean isRefreshRequired(ModuleDataEvent evt) {
-        return getArtifactTypeIdsForRefresh().contains(evt.getBlackboardArtifactType().getTypeID());
-    }
-    
-    Set<Integer> getArtifactTypeIdsForRefresh();
+
 }

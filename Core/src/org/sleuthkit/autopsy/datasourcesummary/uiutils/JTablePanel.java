@@ -136,16 +136,6 @@ public class JTablePanel<T> extends AbstractLoadableComponent<List<T>> {
         }
     }
 
-    /**
-     * Checks if two objects are equal for the purposes of identifying which row
-     * should be selected.
-     */
-    @FunctionalInterface
-    public static interface EqualityComparer<O> {
-
-        boolean equal(O o1, O o2);
-    }
-
     private static final long serialVersionUID = 1L;
 
     private static final CellModelTableCellRenderer DEFAULT_CELL_RENDERER = new CellModelTableCellRenderer();
@@ -305,7 +295,8 @@ public class JTablePanel<T> extends AbstractLoadableComponent<List<T>> {
         T prevValue = (tableRows != null && prevSelectedRow >= 0 && prevSelectedRow < tableRows.size())
                 ? this.tableModel.getDataRows().get(prevSelectedRow)
                 : null;
-        Object prevKeyValue = this.keyFunction.apply(prevValue);
+        
+        Object prevKeyValue = (prevValue == null) ? null : this.keyFunction.apply(prevValue);
 
         // set the list of data to be shown as either the data or an empty list 
         // on null.

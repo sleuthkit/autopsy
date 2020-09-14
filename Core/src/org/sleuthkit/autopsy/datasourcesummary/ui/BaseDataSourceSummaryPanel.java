@@ -26,8 +26,10 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.EventUpdateHandler;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.LoadableComponent;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.SwingWorkerSequentialExecutor;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.UpdateGovernor;
 import org.sleuthkit.datamodel.DataSource;
 
 /**
@@ -38,10 +40,15 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
     private static final long serialVersionUID = 1L;
 
     private final SwingWorkerSequentialExecutor executor = new SwingWorkerSequentialExecutor();
-
-
+    private final EventUpdateHandler updateHandler;
+    
 
     private DataSource dataSource;
+    
+    protected BaseDataSourceSummaryPanel(UpdateGovernor...governors) {
+        this.updateHandler = new EventUpdateHandler(this::onRefresh, governors);
+        this.updateHandler.register();
+    }
 
     /**
      * Sets datasource to visualize in the panel.

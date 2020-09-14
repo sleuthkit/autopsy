@@ -51,7 +51,6 @@ public class DataSourceSummaryTabbedPane extends JTabbedPane {
         private final String tabTitle;
         private final Component component;
         private final Consumer<DataSource> onDataSource;
-        private final Runnable onRefresh;
 
         /**
          * Main constructor.
@@ -60,11 +59,10 @@ public class DataSourceSummaryTabbedPane extends JTabbedPane {
          * @param component    The component to be displayed.
          * @param onDataSource The function to be called on a new data source.
          */
-        DataSourceTab(String tabTitle, Component component, Consumer<DataSource> onDataSource, Runnable onRefresh) {
+        DataSourceTab(String tabTitle, Component component, Consumer<DataSource> onDataSource) {
             this.tabTitle = tabTitle;
             this.component = component;
             this.onDataSource = onDataSource;
-            this.onRefresh = onRefresh;
         }
 
         /**
@@ -77,7 +75,6 @@ public class DataSourceSummaryTabbedPane extends JTabbedPane {
             this.tabTitle = tabTitle;
             this.component = panel;
             this.onDataSource = panel::setDataSource;
-            this.onRefresh = panel::onRefresh;
         }
 
         /**
@@ -100,13 +97,6 @@ public class DataSourceSummaryTabbedPane extends JTabbedPane {
         Consumer<DataSource> getOnDataSource() {
             return onDataSource;
         }
-
-        /**
-         * @return The function to be called when refreshing data.
-         */
-        Runnable getOnRefresh() {
-            return onRefresh;
-        }
     }
 
     private static final long serialVersionUID = 1L;
@@ -118,8 +108,7 @@ public class DataSourceSummaryTabbedPane extends JTabbedPane {
             new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_userActivityTab_title(), new UserActivityPanel()),
             new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_recentFileTab_title(), new RecentFilesPanel()),
             new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_analysisTab_title(), new AnalysisPanel()),
-            new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_ingestHistoryTab_title(), ingestHistoryPanel, ingestHistoryPanel::setDataSource, () -> {
-            }),
+            new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_ingestHistoryTab_title(), ingestHistoryPanel, ingestHistoryPanel::setDataSource),
             new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_detailsTab_title(), new ContainerPanel())
     );
 
@@ -130,7 +119,6 @@ public class DataSourceSummaryTabbedPane extends JTabbedPane {
      */
     public DataSourceSummaryTabbedPane() {
         initComponent();
-
     }
 
     private void initComponent() {
