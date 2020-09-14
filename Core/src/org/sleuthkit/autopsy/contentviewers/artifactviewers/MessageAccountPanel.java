@@ -18,8 +18,13 @@
  */
 package org.sleuthkit.autopsy.contentviewers.artifactviewers;
 
+import java.awt.Dimension;
+import java.awt.Toolkit;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -32,7 +37,10 @@ import javax.swing.GroupLayout.ParallelGroup;
 import javax.swing.GroupLayout.SequentialGroup;
 import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.JTextPane;
 import javax.swing.LayoutStyle.ComponentPlacement;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
@@ -120,7 +128,7 @@ final class MessageAccountPanel extends JPanel {
                     return new ArrayList<>();
                 }
 
-                if ( !((DataSource)(artifact.getDataSource())).getDeviceId().equals(account.getTypeSpecificID())) {
+                if (!((DataSource) (artifact.getDataSource())).getDeviceId().equals(account.getTypeSpecificID())) {
                     List<BlackboardArtifact> contactList = ContactCache.getContacts(account);
                     BlackboardArtifact contact = null;
 
@@ -278,10 +286,15 @@ final class MessageAccountPanel extends JPanel {
 
         private JLabel accountLabel;
         private JLabel personaHeader;
-        private JLabel personaDisplayName;
+        private JTextPane personaDisplayName;
         private JLabel contactHeader;
-        private JLabel contactDisplayName;
+        private JTextPane contactDisplayName;
         private JButton button;
+
+        private JMenuItem contactCopyMenuItem;
+        private JMenuItem personaCopyMenuItem;
+        JPopupMenu contactPopupMenu = new JPopupMenu();
+        JPopupMenu personaPopupMenu = new JPopupMenu();
 
         /**
          * Construct a new AccountContainer
@@ -304,7 +317,8 @@ final class MessageAccountPanel extends JPanel {
             "MessageAccountPanel_unknown_label=Unknown",
             "MessageAccountPanel_button_view_label=View",
             "MessageAccountPanel_button_create_label=Create",
-            "MessageAccountPanel_contact_label=Contact:"
+            "MessageAccountPanel_contact_label=Contact:",
+            "MessageAccountPanel_copy_label=Copy"
         })
         /**
          * Swing components will not be initialized until this method is called.
@@ -313,15 +327,72 @@ final class MessageAccountPanel extends JPanel {
             accountLabel = new JLabel();
             personaHeader = new JLabel(Bundle.MessageAccountPanel_persona_label());
             contactHeader = new JLabel(Bundle.MessageAccountPanel_contact_label());
-            personaDisplayName = new JLabel();
-            contactDisplayName = new JLabel();
+            personaDisplayName = new JTextPane();
+            personaDisplayName.setOpaque(false);
+            personaDisplayName.setEditable(false);
+            personaDisplayName.setPreferredSize(new Dimension(100, 26));
+            personaDisplayName.setMaximumSize(new Dimension(100, 26));
+            contactDisplayName = new JTextPane();
+            contactDisplayName.setOpaque(false);
+            contactDisplayName.setEditable(false);
+            contactDisplayName.setPreferredSize(new Dimension(100, 26));
             button = new JButton();
             button.addActionListener(new PersonaButtonListener(this));
 
             accountLabel.setText(account.getTypeSpecificID());
             contactDisplayName.setText(contactName);
             personaDisplayName.setText(persona != null ? persona.getName() : Bundle.MessageAccountPanel_unknown_label());
+
+            //This is a bit of a hack to size the JTextPane correctly, but it gets the job done.
+            personaDisplayName.setMaximumSize((new JLabel(personaDisplayName.getText()).getMaximumSize()));
+            contactDisplayName.setMaximumSize((new JLabel(contactDisplayName.getText()).getMaximumSize()));
+
             button.setText(persona != null ? Bundle.MessageAccountPanel_button_view_label() : Bundle.MessageAccountPanel_button_create_label());
+            
+            initalizePopupMenus();
+        }
+
+        /**
+         * Initialize the copy popup menus for the persona and the contact label. 
+         */
+        private void initalizePopupMenus() {
+            contactCopyMenuItem = new JMenuItem(Bundle.MessageAccountPanel_copy_label());
+            personaCopyMenuItem = new JMenuItem(Bundle.MessageAccountPanel_copy_label());
+            personaPopupMenu.add(personaCopyMenuItem);
+            contactPopupMenu.add(contactCopyMenuItem);
+
+            personaDisplayName.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent evt) {
+                    if (SwingUtilities.isRightMouseButton(evt)) {
+                        personaPopupMenu.show(personaDisplayName, evt.getX(), evt.getY());
+                    }
+                }
+            });
+
+            personaCopyMenuItem.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(personaDisplayName.getText()), null);
+                }
+            });
+
+            contactDisplayName.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent evt) {
+                    if (SwingUtilities.isRightMouseButton(evt)) {
+                        contactPopupMenu.show(contactDisplayName, evt.getX(), evt.getY());
+                    }
+                }
+            });
+
+            contactCopyMenuItem.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(contactDisplayName.getText()), null);
+                }
+            });
+
         }
 
         private String getNameFromContactArtifact(BlackboardArtifact contactArtifact) throws TskCoreException {
@@ -349,6 +420,9 @@ final class MessageAccountPanel extends JPanel {
                 public void run() {
                     personaDisplayName.setText(persona != null ? persona.getName() : Bundle.MessageAccountPanel_unknown_label());
                     button.setText(persona != null ? Bundle.MessageAccountPanel_button_view_label() : Bundle.MessageAccountPanel_button_create_label());
+
+                    //This is a bit of a hack to size the JTextPane correctly, but it gets the job done.
+                    personaDisplayName.setMaximumSize((new JLabel(personaDisplayName.getText()).getMaximumSize()));
                     revalidate();
                     repaint();
                 }
@@ -408,8 +482,8 @@ final class MessageAccountPanel extends JPanel {
 
             return group;
         }
-        
-         private SequentialGroup getContactSequentialGroup(GroupLayout layout) {
+
+        private SequentialGroup getContactSequentialGroup(GroupLayout layout) {
             SequentialGroup group = layout.createSequentialGroup();
 
             group
@@ -428,14 +502,21 @@ final class MessageAccountPanel extends JPanel {
          * @return A group for the personal controls.
          */
         private ParallelGroup getPersonLineVerticalGroup(GroupLayout layout) {
-            return layout.createParallelGroup(Alignment.BASELINE)
+            return layout.createParallelGroup(Alignment.CENTER)
                     .addComponent(personaHeader)
                     .addComponent(personaDisplayName)
                     .addComponent(button);
         }
-        
+
+         /**
+         * Generates the vertical layout code for the contact line.
+         *
+         * @param layout Instance of GroupLayout to update.
+         *
+         * @return A group for the personal controls.
+         */
         private ParallelGroup getContactLineVerticalGroup(GroupLayout layout) {
-            return layout.createParallelGroup(Alignment.BASELINE)
+            return layout.createParallelGroup(Alignment.CENTER)
                     .addComponent(contactHeader)
                     .addComponent(contactDisplayName);
         }
