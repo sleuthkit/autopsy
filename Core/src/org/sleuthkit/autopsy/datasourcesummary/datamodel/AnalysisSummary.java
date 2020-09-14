@@ -40,7 +40,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Providing data for the data source analysis tab.
  */
-public class AnalysisSummary implements DataSourceSummaryDataModel {
+public class AnalysisSummary implements EventUpdateGovernor {
 
     private static final BlackboardAttribute.Type TYPE_SET_NAME = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_SET_NAME);
 

@@ -28,7 +28,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Provides methods to query for datasource files by mime type.
  */
-public class MimeTypeSummary implements DataSourceSummaryDataModel {
+public class MimeTypeSummary implements EventUpdateGovernor {
 
     private final SleuthkitCaseProvider provider;
 

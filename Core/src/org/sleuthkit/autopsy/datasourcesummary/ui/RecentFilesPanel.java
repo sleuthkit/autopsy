@@ -113,6 +113,7 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
         JTablePanel<RecentFileDetails> pane = (JTablePanel<RecentFileDetails>) openedDocPane;
         pane.setModel(tableModel);
         pane.setColumnModel(JTablePanel.getTableColumnModel(list));
+        pane.setKeyFunction((recentFile) -> recentFile.getPath());
         tablePanelList.add(pane);
 
         DataFetchWorker.DataFetchComponents<DataSource, List<RecentFileDetails>> worker
@@ -147,6 +148,7 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
 
         JTablePanel<RecentDownloadDetails> pane = (JTablePanel<RecentDownloadDetails>) downloadsPane;
         pane.setModel(tableModel);
+        pane.setKeyFunction((download) -> download.getPath());
         pane.setColumnModel(JTablePanel.getTableColumnModel(list));
         tablePanelList.add(pane);
 
@@ -182,6 +184,7 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
 
         JTablePanel<RecentAttachmentDetails> pane = (JTablePanel<RecentAttachmentDetails>) attachmentsPane;
         pane.setModel(tableModel);
+        pane.setKeyFunction((attachment) -> attachment.getPath());
         pane.setColumnModel(JTablePanel.getTableColumnModel(list));
         tablePanelList.add(pane);
 

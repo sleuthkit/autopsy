@@ -42,7 +42,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Provides information to populate Top Programs Summary queries.
  */
-public class TopProgramsSummary implements DataSourceSummaryDataModel {
+public class TopProgramsSummary implements EventUpdateGovernor {
 
     private static final Set<Integer> ARTIFACT_UPDATE_TYPE_IDS = new HashSet<>(Arrays.asList(
             ARTIFACT_TYPE.TSK_PROG_RUN.getTypeID()

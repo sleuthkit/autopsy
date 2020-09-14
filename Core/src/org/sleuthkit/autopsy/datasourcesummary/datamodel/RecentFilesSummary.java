@@ -43,7 +43,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 /**
  * Helper class for getting data for the Recent Files Data Summary tab.
  */
-public class RecentFilesSummary implements DataSourceSummaryDataModel {
+public class RecentFilesSummary implements EventUpdateGovernor {
 
     private final static BlackboardAttribute.Type DATETIME_ACCESSED_ATT = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED);
     private final static BlackboardAttribute.Type DOMAIN_ATT = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN);

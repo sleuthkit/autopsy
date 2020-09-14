@@ -32,7 +32,7 @@ import org.sleuthkit.datamodel.TskData;
 /**
  * Provides methods to query for data source overview details.
  */
-public class ContainerSummary implements DataSourceSummaryDataModel {
+public class ContainerSummary implements EventUpdateGovernor {
     private static final Set<Integer> ARTIFACT_UPDATE_TYPE_IDS = new HashSet<>(Arrays.asList(
         BlackboardArtifact.ARTIFACT_TYPE.TSK_OS_INFO.getTypeID(), 
         BlackboardArtifact.ARTIFACT_TYPE.TSK_DATA_SOURCE_USAGE.getTypeID()

@@ -23,9 +23,11 @@ import java.util.Set;
 import org.sleuthkit.autopsy.casemodule.Case;
 
 /**
- * Interface for data model classes in data source summary.
+ * Interface for determiining when data should update based on autopsy (i.e.
+ * case/ingest) events.
  */
-public interface DataSourceSummaryDataModel {
+public interface EventUpdateGovernor {
+
     /**
      * @return The set of Case Events for which data should be updated.
      */
@@ -34,14 +36,16 @@ public interface DataSourceSummaryDataModel {
     }
 
     /**
-     * @return The set of BlackboardArtifact id's for which data shoulde be updated.
-     */    
+     * @return The set of BlackboardArtifact id's for which data shoulde be
+     *         updated.
+     */
     default Set<Integer> getArtifactIdUpdates() {
         return Collections.emptySet();
     }
-    
+
     /**
      * Whether or not the content should be updated on receiving new content.
+     *
      * @return True if it should refresh on new content.
      */
     default boolean shouldRefreshOnNewContent() {

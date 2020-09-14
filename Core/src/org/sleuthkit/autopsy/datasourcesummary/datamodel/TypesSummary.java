@@ -27,7 +27,7 @@ import org.sleuthkit.datamodel.TskData;
 /**
  * Provides information for the DataSourceSummaryCountsPanel.
  */
-public class TypesSummary implements DataSourceSummaryDataModel {
+public class TypesSummary implements EventUpdateGovernor {
 
     private final SleuthkitCaseProvider provider;
 

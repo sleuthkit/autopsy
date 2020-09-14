@@ -30,7 +30,6 @@ import java.util.stream.Stream;
 import javax.swing.JPanel;
 import javax.swing.SwingWorker;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourceSummaryDataModel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
@@ -41,6 +40,7 @@ import org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.EventUpdateGovernor;
 
 /**
  * Base class from which other tabs in data source summary derive.
@@ -95,11 +95,10 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
                 .collect(Collectors.toSet());
     }
 
-    protected BaseDataSourceSummaryPanel(DataSourceSummaryDataModel...dataModels) {
-        this(
-                getUnionSet(DataSourceSummaryDataModel::getCaseEventUpdates, dataModels),
-                getUnionSet(DataSourceSummaryDataModel::getArtifactIdUpdates, dataModels),
-                Stream.of(dataModels).anyMatch(DataSourceSummaryDataModel::shouldRefreshOnNewContent)
+    protected BaseDataSourceSummaryPanel(EventUpdateGovernor...dataModels) {
+        this(getUnionSet(EventUpdateGovernor::getCaseEventUpdates, dataModels),
+                getUnionSet(EventUpdateGovernor::getArtifactIdUpdates, dataModels),
+                Stream.of(dataModels).anyMatch(EventUpdateGovernor::shouldRefreshOnNewContent)
         );
     }
 

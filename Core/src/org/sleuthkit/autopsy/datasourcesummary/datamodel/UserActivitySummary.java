@@ -47,7 +47,7 @@ import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
  * time, the data being provided for domains is fictitious and is done as a
  * placeholder.
  */
-public class UserActivitySummary implements DataSourceSummaryDataModel {
+public class UserActivitySummary implements EventUpdateGovernor {
 
     private static final BlackboardArtifact.Type TYPE_DEVICE_ATTACHED = new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_DEVICE_ATTACHED);
 
