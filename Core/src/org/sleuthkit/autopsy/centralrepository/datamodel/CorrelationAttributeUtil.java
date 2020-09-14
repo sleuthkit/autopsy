@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.centralrepository.datamodel;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -46,6 +47,7 @@ import org.sleuthkit.datamodel.TskData;
 public class CorrelationAttributeUtil {
 
     private static final Logger logger = Logger.getLogger(CorrelationAttributeUtil.class.getName());
+    private static final List<String> domainsToSkip = Arrays.asList("localhost", "127.0.0.1");
 
     /**
      * Gets a string that is expected to be the same string that is stored in
@@ -148,8 +150,10 @@ public class CorrelationAttributeUtil {
                         || artifactTypeID == ARTIFACT_TYPE.TSK_WEB_COOKIE.getTypeID()
                         || artifactTypeID == ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID()
                         || artifactTypeID == ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID()) {
-                    makeCorrAttrFromArtifactAttr(correlationAttrs, sourceArtifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN, CorrelationAttributeInstance.DOMAIN_TYPE_ID);
-
+                    String domain = sourceArtifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DOMAIN)).getValueString();
+                    if (! domainsToSkip.contains(domain)) {
+                        makeCorrAttrFromArtifactAttr(correlationAttrs, sourceArtifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN, CorrelationAttributeInstance.DOMAIN_TYPE_ID);
+                    }
                 } else if (artifactTypeID == ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID()) {
                     makeCorrAttrFromArtifactAttr(correlationAttrs, sourceArtifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_ID, CorrelationAttributeInstance.USBID_TYPE_ID);
                     makeCorrAttrFromArtifactAttr(correlationAttrs, sourceArtifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MAC_ADDRESS, CorrelationAttributeInstance.MAC_TYPE_ID);
