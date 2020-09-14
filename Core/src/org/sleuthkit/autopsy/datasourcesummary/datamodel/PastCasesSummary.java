@@ -73,7 +73,8 @@ public class PastCasesSummary {
      * ingested with a particular ingest module.
      */
     public static class NotIngestedWithModuleException extends Exception {
-
+        private static final long serialVersionUID = 1L;
+        
         private final String moduleDisplayName;
 
         /**
@@ -202,9 +203,7 @@ public class PastCasesSummary {
         }
 
         return sources.stream().anyMatch((str) -> {
-            return (str == null)
-                    ? false
-                    : CENTRAL_REPO_INGEST_NAME.equals(str.toUpperCase().trim());
+            return str != null && CENTRAL_REPO_INGEST_NAME.equalsIgnoreCase(str.trim());
         });
     }
 
@@ -335,7 +334,7 @@ public class PastCasesSummary {
         List<String> deviceArtifactCases = new ArrayList<>();
         List<String> nonDeviceArtifactCases = new ArrayList<>();
 
-        for (BlackboardArtifact artifact : skCase.getBlackboardArtifacts(ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT, dataSource.getId())) {
+        for (BlackboardArtifact artifact : skCase.getBlackboard().getArtifacts(ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID(), dataSource.getId())) {
             List<String> cases = getCasesFromArtifact(artifact);
             if (cases == null || cases.isEmpty()) {
                 continue;
@@ -348,7 +347,7 @@ public class PastCasesSummary {
             }
         }
 
-        Stream<String> filesCases = skCase.getBlackboardArtifacts(ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, dataSource.getId()).stream()
+        Stream<String> filesCases = skCase.getBlackboard().getArtifacts(ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID(), dataSource.getId()).stream()
                 .flatMap((art) -> getCasesFromArtifact(art).stream());
 
         return new PastCasesResult(
@@ -374,7 +373,7 @@ public class PastCasesSummary {
         return info.getIngestModuleInfo().stream()
                 .anyMatch((moduleInfo) -> {
                     return StringUtils.isNotBlank(moduleInfo.getDisplayName())
-                            && moduleInfo.getDisplayName().toUpperCase().trim().equals(CENTRAL_REPO_INGEST_NAME);
+                            && moduleInfo.getDisplayName().trim().equalsIgnoreCase(CENTRAL_REPO_INGEST_NAME);
                 });
     }
 

@@ -51,7 +51,6 @@ import org.sleuthkit.datamodel.DataSource;
 public class PastCasesPanel extends BaseDataSourceSummaryPanel {
 
     private static final long serialVersionUID = 1L;
-    private static final Logger logger = Logger.getLogger(PastCasesPanel.class.getName());
 
     private static final ColumnModel<Pair<String, Long>> CASE_COL = new ColumnModel<>(
             Bundle.PastCasesPanel_caseColumn_title(),
