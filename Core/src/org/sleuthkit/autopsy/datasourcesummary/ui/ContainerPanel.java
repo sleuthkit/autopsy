@@ -18,15 +18,21 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.ui;
 
+import java.beans.PropertyChangeEvent;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.table.DefaultTableModel;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.ContainerSummary;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult.ResultType;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultUpdateGovernor;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.UpdateGovernor;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -92,6 +98,26 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
 
     }
 
+    // set of case events for which to call update (if the name changes, that will impact data shown)
+    private static final Set<Case.Events> CASE_EVENT_SET = new HashSet<>(Arrays.asList(
+            Case.Events.DATA_SOURCE_NAME_CHANGED
+    ));
+
+    // governor for handling these updates
+    private static final UpdateGovernor CONTAINER_UPDATES = new DefaultUpdateGovernor() {
+
+        @Override
+        public Set<Case.Events> getCaseEventUpdates() {
+            return CASE_EVENT_SET;
+        }
+
+        @Override
+        public boolean isRefreshRequiredForCaseEvent(PropertyChangeEvent evt) {
+            return true;
+        }
+
+    };
+
     //Because this panel was made using the gridbaglayout and netbean's Customize Layout tool it will be best to continue to modify it through that
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(ContainerPanel.class.getName());
@@ -102,7 +128,7 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
      * Creates a new form ContainerPanel.
      */
     ContainerPanel() {
-        this(new ContainerSummary());
+        this(new ContainerSummary(), CONTAINER_UPDATES);
     }
 
     /**
@@ -117,27 +143,27 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
                 new DataFetchComponents<>(
                         (dataSource) -> {
                             return new ContainerPanelData(
-                                dataSource,
-                                containerSummary.getSizeOfUnallocatedFiles(dataSource),
-                                containerSummary.getOperatingSystems(dataSource),
-                                containerSummary.getDataSourceType(dataSource)
+                                    dataSource,
+                                    containerSummary.getSizeOfUnallocatedFiles(dataSource),
+                                    containerSummary.getOperatingSystems(dataSource),
+                                    containerSummary.getDataSourceType(dataSource)
                             );
                         },
                         (result) -> {
                             if (result.getResultType() == ResultType.SUCCESS) {
                                 ContainerPanelData data = result.getData();
                                 updateDetailsPanelData(
-                                        data.getDataSource(), 
+                                        data.getDataSource(),
                                         data.getUnallocatedFilesSize());
                             } else {
-                                logger.log(Level.WARNING, "An exception occurred while attempting to fetch data for the ContainerPanel.", 
+                                logger.log(Level.WARNING, "An exception occurred while attempting to fetch data for the ContainerPanel.",
                                         result.getException());
                                 updateDetailsPanelData(null, null);
                             }
                         }
                 )
         );
-        
+
         initComponents();
         setDataSource(null);
     }
