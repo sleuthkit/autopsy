@@ -25,15 +25,12 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeUtil;
 import org.sleuthkit.autopsy.centralrepository.ingestmodule.CentralRepoIngestModuleFactory;
@@ -149,11 +146,10 @@ public class PastCasesSummary {
     private static final BlackboardAttribute.Type TYPE_ASSOCIATED_ARTIFACT = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT);
 
     private static final Set<Integer> CR_DEVICE_TYPE_IDS = new HashSet<>(Arrays.asList(
-            CorrelationAttributeInstance.USBID_TYPE_ID,
-            CorrelationAttributeInstance.ICCID_TYPE_ID,
-            CorrelationAttributeInstance.IMEI_TYPE_ID,
-            CorrelationAttributeInstance.IMSI_TYPE_ID,
-            CorrelationAttributeInstance.MAC_TYPE_ID
+            ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID(),
+            ARTIFACT_TYPE.TSK_DEVICE_INFO.getTypeID(),
+            ARTIFACT_TYPE.TSK_SIM_ATTACHED.getTypeID(),
+            ARTIFACT_TYPE.TSK_WIFI_NETWORK_ADAPTER.getTypeID()
     ));
 
     private static final String CASE_SEPARATOR = ",";
@@ -161,7 +157,6 @@ public class PastCasesSummary {
 
     private final SleuthkitCaseProvider caseProvider;
     private final java.util.logging.Logger logger;
-    private final Function<BlackboardArtifact, List<CorrelationAttributeInstance>> corrAttrRetriever;
 
     /**
      * Main constructor.
@@ -181,8 +176,6 @@ public class PastCasesSummary {
      * utilized.
      *
      * @param provider           The object providing the current SleuthkitCase.
-     * @param corrAttrRetriever  Obtains a list of CorrelationAttributeInstance
-     *                           objects for the given artifact.
      * @param logger             The logger to use.
      */
     public PastCasesSummary(
@@ -191,7 +184,6 @@ public class PastCasesSummary {
             java.util.logging.Logger logger) {
 
         this.caseProvider = provider;
-        this.corrAttrRetriever = corrAttrRetriever;
         this.logger = logger;
     }
 
@@ -321,13 +313,7 @@ public class PastCasesSummary {
             return false;
         }
         
-        List<CorrelationAttributeInstance> correlationAttributes = corrAttrRetriever.apply(parent);
-        if (correlationAttributes == null) {
-            return false;
-        }
-
-        return correlationAttributes.stream()
-                .anyMatch((attrInstance) -> CR_DEVICE_TYPE_IDS.contains(attrInstance.getCorrelationType()));
+        return CR_DEVICE_TYPE_IDS.contains(parent.getArtifactTypeID());
     }
     
     
