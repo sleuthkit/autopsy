@@ -34,6 +34,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.InstanceTableCallback;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -43,6 +44,8 @@ import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
+import java.util.StringJoiner;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizer;
 
 /**
  * Class which contains the search attributes which can be specified for
@@ -219,6 +222,8 @@ public class DiscoveryAttributes {
     static class FrequencyAttribute extends AttributeType {
 
         static final int BATCH_SIZE = 50; // Number of hashes to look up at one time
+        
+        static final int DOMAIN_BATCH_SIZE = 500; // Number of domains to look up at one time
 
         @Override
         public DiscoveryKeyUtils.GroupKey getGroupKey(Result file) {
@@ -248,13 +253,17 @@ public class DiscoveryAttributes {
          * @param centralRepoDb The central repository currently in use.
          */
         private void processResultFilesForCR(List<Result> results,
-                CentralRepository centralRepoDb) {
+                CentralRepository centralRepoDb) throws DiscoveryException {
             List<ResultFile> currentFiles = new ArrayList<>();
             Set<String> hashesToLookUp = new HashSet<>();
+            
+            List<ResultDomain> domainsToQuery = new ArrayList<>();
+            
             for (Result result : results) {
                 if (result.getKnown() == TskData.FileKnown.KNOWN) {
                     result.setFrequency(SearchData.Frequency.KNOWN);
                 }
+                
                 if (result.getType() != SearchData.Type.DOMAIN) {
                     ResultFile file = (ResultFile) result;
                     if (file.getFrequency() == SearchData.Frequency.UNKNOWN
@@ -263,15 +272,98 @@ public class DiscoveryAttributes {
                         hashesToLookUp.add(file.getFirstInstance().getMd5Hash());
                         currentFiles.add(file);
                     }
-                }
-                if (hashesToLookUp.size() >= BATCH_SIZE) {
-                    computeFrequency(hashesToLookUp, currentFiles, centralRepoDb);
+                    
+                    if (hashesToLookUp.size() >= BATCH_SIZE) {
+                            computeFrequency(hashesToLookUp, currentFiles, centralRepoDb);
 
-                    hashesToLookUp.clear();
-                    currentFiles.clear();
+                            hashesToLookUp.clear();
+                            currentFiles.clear();
+                    }
+                } else {
+                    ResultDomain domainInstance = (ResultDomain) result;
+                    domainsToQuery.add(domainInstance);
+                    
+                    if (domainsToQuery.size() == DOMAIN_BATCH_SIZE) {
+                        queryDomainFrequency(domainsToQuery, centralRepoDb);
+                        
+                        domainsToQuery.clear();
+                    }
                 }
             }
+            
+            queryDomainFrequency(domainsToQuery, centralRepoDb);
             computeFrequency(hashesToLookUp, currentFiles, centralRepoDb);
+        }
+    }
+    
+    private static void queryDomainFrequency(List<ResultDomain> domainsToQuery, CentralRepository centralRepository) throws DiscoveryException {
+        if (domainsToQuery.isEmpty()) {
+            return;
+        }
+        
+        try {
+            final Map<String, List<ResultDomain>> resultDomainTable = new HashMap<>();
+            final StringJoiner joiner = new StringJoiner(", ");
+
+            final CorrelationAttributeInstance.Type attributeType = centralRepository.getCorrelationTypeById(CorrelationAttributeInstance.DOMAIN_TYPE_ID);
+            for(ResultDomain domainInstance : domainsToQuery) {
+                try {
+                    final String domainValue = domainInstance.getDomain();
+                    final String normalizedDomain = CorrelationAttributeNormalizer.normalize(attributeType, domainValue);
+                    final List<ResultDomain> bucket = resultDomainTable.getOrDefault(normalizedDomain, new ArrayList<>());
+                    bucket.add(domainInstance);
+                    resultDomainTable.put(normalizedDomain, bucket);
+                    joiner.add("'" + normalizedDomain + "'");
+                } catch (CorrelationAttributeNormalizationException ex) {
+                    logger.log(Level.INFO, String.format("Domain [%s] failed normalization, skipping...", domainInstance.getDomain()));
+                }
+            }
+
+            final String tableName = CentralRepoDbUtil.correlationTypeToInstanceTableName(attributeType);
+            final String domainFrequencyQuery = " value AS domain_name, COUNT(*) AS frequency " +
+                                                "FROM " + tableName + " " +
+                                                "WHERE value IN (" + joiner + ") " +
+                                                "GROUP BY value";
+
+            final DomainFrequencyCallback frequencyCallback = new DomainFrequencyCallback(resultDomainTable);
+            centralRepository.processSelectClause(domainFrequencyQuery, frequencyCallback);
+
+            if (frequencyCallback.getCause() != null) {
+                throw frequencyCallback.getCause();
+            }
+        } catch (CentralRepoException | SQLException ex) {
+            throw new DiscoveryException("Fatal exception encountered querying the CR.", ex);
+        }
+    }
+    
+    private static class DomainFrequencyCallback implements InstanceTableCallback {
+        
+        private final Map<String, List<ResultDomain>> domainLookup;
+        private SQLException sqlCause;
+        
+        private DomainFrequencyCallback(Map<String, List<ResultDomain>> domainLookup) {
+            this.domainLookup = domainLookup;
+        } 
+
+        @Override
+        public void process(ResultSet resultSet) {
+            try {
+                while (resultSet.next()) {
+                    String domain = resultSet.getString("domain_name");
+                    Long frequency = resultSet.getLong("frequency");
+                    
+                    List<ResultDomain> domainInstances = domainLookup.get(domain);
+                    for(ResultDomain domainInstance : domainInstances) {
+                        domainInstance.setFrequency(SearchData.Frequency.fromCount(frequency));
+                    }
+                }
+            } catch (SQLException ex) {
+                this.sqlCause = ex;
+            }
+        }
+        
+        SQLException getCause() {
+            return this.sqlCause;
         }
     }
 
@@ -629,7 +721,7 @@ public class DiscoveryAttributes {
             return Arrays.asList(FILE_SIZE, FREQUENCY, PARENT_PATH, OBJECT_DETECTED, HASH_LIST_NAME, INTERESTING_ITEM_SET);
         }
     }
-
+    
     /**
      * Computes the CR frequency of all the given hashes and updates the list of
      * files.
