@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.discovery.search;
 
+import java.util.Objects;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
@@ -47,5 +48,26 @@ public class DomainSearchThumbnailRequest {
 
     public int getIconSize() {
         return iconSize;
+    }
+    
+    @Override
+    public boolean equals(Object other) {
+        if (other == this) {
+            return true;
+        }
+
+        if (!(other instanceof DomainSearchThumbnailRequest)) {
+            return false;
+        }
+
+        DomainSearchThumbnailRequest otherRequest = (DomainSearchThumbnailRequest) other;
+        return this.sleuthkitCase == otherRequest.getSleuthkitCase()
+                && this.domain.equals(otherRequest.getDomain())
+                && this.iconSize == otherRequest.getIconSize();
+    }
+
+    @Override
+    public int hashCode() {
+        return 79 * 5 + Objects.hash(this.domain, this.iconSize);
     }
 }

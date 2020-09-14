@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.discovery.search;
 
+import com.google.common.cache.CacheLoader;
 import java.awt.Image;
 import java.util.List;
 import java.util.ArrayList;
@@ -41,7 +42,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * sorted by size if sourced from TSK_WEB_CACHE artifacts. Artifacts are first
  * loaded from the DomainSearchArtifactsCache and then further analyzed.
  */
-public class DomainSearchThumbnailLoader {
+public class DomainSearchThumbnailLoader extends CacheLoader<DomainSearchThumbnailRequest, Image> {
 
     private static final String JPG_EXTENSION = "jpg";
     private static final String JPG_MIME_TYPE = "image/jpeg";
@@ -55,6 +56,7 @@ public class DomainSearchThumbnailLoader {
         this.artifactsCache = artifactsCache;
     }
 
+    @Override
     public Image load(DomainSearchThumbnailRequest thumbnailRequest) throws TskCoreException, DiscoveryException {
 
         final SleuthkitCase caseDb = thumbnailRequest.getSleuthkitCase();

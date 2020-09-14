@@ -27,7 +27,6 @@ import java.util.Map;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryKeyUtils.GroupKey;
 import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Main class to perform the domain search.
@@ -35,15 +34,15 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class DomainSearch {
     
     private final DomainSearchCache searchCache;
-    private final DomainSearchThumbnailLoader thumbnailLoader;
+    private final DomainSearchThumbnailCache thumbnailCache;
     
     public DomainSearch() {
-        this(new DomainSearchCache(), new DomainSearchThumbnailLoader());
+        this(new DomainSearchCache(), new DomainSearchThumbnailCache());
     }
     
-    DomainSearch(DomainSearchCache cache, DomainSearchThumbnailLoader thumbnailLoader) {
+    DomainSearch(DomainSearchCache cache, DomainSearchThumbnailCache thumbnailCache) {
         this.searchCache = cache;
-        this.thumbnailLoader = thumbnailLoader;
+        this.thumbnailCache = thumbnailCache;
     }
     
     /**
@@ -135,11 +134,10 @@ public class DomainSearch {
      * @param thumbnailRequest Thumbnail request for domain
      * @return An Image instance or null if no thumbnail is available.
      *
-     * @throws TskCoreException If there is an error reaching the case databases
      * @throws DiscoveryException If there is an error with Discovery related
      * processing
      */
-    public Image getThumbnail(DomainSearchThumbnailRequest thumbnailRequest) throws TskCoreException, DiscoveryException {
-        return thumbnailLoader.load(thumbnailRequest);
+    public Image getThumbnail(DomainSearchThumbnailRequest thumbnailRequest) throws DiscoveryException {
+        return thumbnailCache.get(thumbnailRequest);
     }
 }

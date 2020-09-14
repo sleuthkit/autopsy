@@ -20,32 +20,30 @@ package org.sleuthkit.autopsy.discovery.search;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.LoadingCache;
-import java.util.List;
+import java.awt.Image;
 import java.util.concurrent.ExecutionException;
-import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
- * Caches artifact requests.
+ * Caches thumbnail requests.
  */
-public class DomainSearchArtifactsCache {
-
-    private static final int MAXIMUM_CACHE_SIZE = 5;
-    private static final LoadingCache<DomainSearchArtifactsRequest, List<BlackboardArtifact>> cache
+public class DomainSearchThumbnailCache {
+    
+    private static final int MAXIMUM_CACHE_SIZE = 500;
+    private static final LoadingCache<DomainSearchThumbnailRequest, Image> cache
             = CacheBuilder.newBuilder()
                     .maximumSize(MAXIMUM_CACHE_SIZE)
-                    .build(new DomainSearchArtifactsLoader());
+                    .build(new DomainSearchThumbnailLoader());
 
     /**
-     * Get artifact instances that match the requested criteria. If the request
-     * is new, the results will be automatically loaded.
-     *
-     * @param request Artifact request, specifies type, Case, and domain name.
-     * @return A list of matching artifacts
-     *
-     * @throws DiscoveryException Any error that occurs during the loading
-     * process.
+     * Get a thumbnail for the requested domain. If the request is new, the
+     * thumbnail will be automatically loaded.
+     * 
+     * @param request Requested domain to thumbnail
+     * @return The thumbnail Image instance, or null if no thumbnail is available
+     * 
+     * @throws DiscoveryException If any error occurs during thumbnail generation.
      */
-    public List<BlackboardArtifact> get(DomainSearchArtifactsRequest request) throws DiscoveryException {
+    public Image get(DomainSearchThumbnailRequest request) throws DiscoveryException {
         try {
             return cache.get(request);
         } catch (ExecutionException ex) {
