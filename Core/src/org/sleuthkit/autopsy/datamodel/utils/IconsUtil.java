@@ -104,7 +104,7 @@ public final class IconsUtil {
         } else if (typeID == ARTIFACT_TYPE.TSK_VERIFICATION_FAILED.getTypeID()) {
             imageFile = "validationFailed.png"; //NON-NLS
         } else if (typeID == ARTIFACT_TYPE.TSK_WEB_ACCOUNT_TYPE.getTypeID()) {
-            imageFile = "domain_role.png"; //NON-NLS
+            imageFile = "web-account-type.png"; //NON-NLS
         } else {
             imageFile = "artifact-icon.png"; //NON-NLS
         }

@@ -358,7 +358,7 @@ public class HTMLReport implements TableReportModule {
                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/validationFailed.png"); //NON-NLS
                     break;
                 case TSK_WEB_ACCOUNT_TYPE:
-                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/domain_role.png"); //NON-NLS
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/web-account-type.png.png"); //NON-NLS
                     break;
                 default:
                     logger.log(Level.WARNING, "useDataTypeIcon: unhandled artifact type = {0}", dataType); //NON-NLS
