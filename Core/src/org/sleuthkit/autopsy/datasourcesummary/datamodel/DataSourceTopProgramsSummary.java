@@ -274,6 +274,7 @@ public class DataSourceTopProgramsSummary {
      * Determines a short folder name if any. Otherwise, returns empty string.
      *
      * @param strPath The string path.
+     * @param applicationName The application name.
      *
      * @return The short folder name or empty string if not found.
      */
