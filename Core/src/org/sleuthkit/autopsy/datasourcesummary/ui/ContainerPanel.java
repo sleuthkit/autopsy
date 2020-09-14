@@ -128,7 +128,7 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
      * Creates a new form ContainerPanel.
      */
     ContainerPanel() {
-        this(new ContainerSummary(), CONTAINER_UPDATES);
+        this(new ContainerSummary());
     }
 
     /**
@@ -137,7 +137,7 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
     @Messages({"ContainerPanel.getDataSources.error.text=Failed to get the list of datasources for the current case.",
         "ContainerPanel.getDataSources.error.title=Load Failure"})
     ContainerPanel(ContainerSummary containerSummary) {
-        super(containerSummary);
+        super(containerSummary, CONTAINER_UPDATES);
 
         dataFetchComponents = Arrays.asList(
                 new DataFetchComponents<>(
