@@ -18,15 +18,8 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.ui;
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.swing.JPanel;
 import javax.swing.SwingWorker;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -35,12 +28,7 @@ import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.LoadableComponent;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.SwingWorkerSequentialExecutor;
-import org.sleuthkit.autopsy.guiutils.RefreshThrottler;
-import org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent;
-import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.DataSource;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.EventUpdateGovernor;
 
 /**
  * Base class from which other tabs in data source summary derive.
@@ -51,85 +39,9 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
 
     private final SwingWorkerSequentialExecutor executor = new SwingWorkerSequentialExecutor();
 
-    private final RefreshThrottler refreshThrottler = new RefreshThrottler(new RefreshThrottler.Refresher() {
-        @Override
-        public void refresh() {
-            onRefresh();
-        }
 
-        @Override
-        public boolean isRefreshRequired(PropertyChangeEvent evt) {
-            String eventType = evt.getPropertyName();
-            if (Case.isCaseOpen()) {
-                if (IngestModuleEvent.DATA_ADDED.toString().equals(eventType) && evt.getOldValue() instanceof ModuleDataEvent) {
-                    ModuleDataEvent dataEvent = (ModuleDataEvent) evt.getOldValue();
-                    return BaseDataSourceSummaryPanel.this.isRefreshRequired(dataEvent);
-                } else if (IngestModuleEvent.CONTENT_CHANGED.toString().equals(eventType) && evt.getOldValue() instanceof ModuleContentEvent) {
-                    ModuleContentEvent contentEvent = (ModuleContentEvent) evt.getOldValue();
-                    return BaseDataSourceSummaryPanel.this.isRefreshRequired(contentEvent);
-                }
-            }
-            return false;
-        }
-    });
-
-    private final PropertyChangeListener caseEventsListener = (evt) -> {
-        switch (Case.Events.valueOf(evt.getPropertyName())) {
-
-            default:
-                if (isRefreshRequiredForCaseEvent(evt)) {
-                    onRefresh();
-                }
-                break;
-        }
-    };
-
-    private final Set<Integer> artifactTypesForRefresh;
-    private final boolean refreshOnNewContent;
 
     private DataSource dataSource;
-
-    private static <I, O> Set<O> getUnionSet(Function<I, Collection<? extends O>> mapper, I... items) {
-        return Stream.of(items)
-                .flatMap((item) -> mapper.apply(item).stream())
-                .collect(Collectors.toSet());
-    }
-
-    protected BaseDataSourceSummaryPanel(EventUpdateGovernor...dataModels) {
-        this(getUnionSet(EventUpdateGovernor::getCaseEventUpdates, dataModels),
-                getUnionSet(EventUpdateGovernor::getArtifactIdUpdates, dataModels),
-                Stream.of(dataModels).anyMatch(EventUpdateGovernor::shouldRefreshOnNewContent)
-        );
-    }
-
-    protected BaseDataSourceSummaryPanel(Set<Case.Events> caseEvents, Set<Integer> artifactTypesForRefresh, boolean refreshOnNewContent) {
-        this.artifactTypesForRefresh = (artifactTypesForRefresh == null)
-                ? new HashSet<>()
-                : new HashSet<>(artifactTypesForRefresh);
-
-        this.refreshOnNewContent = refreshOnNewContent;
-
-        if (refreshOnNewContent || this.artifactTypesForRefresh.size() > 0) {
-            refreshThrottler.registerForIngestModuleEvents();
-        }
-
-        if (caseEvents != null) {
-            Case.addEventTypeSubscriber(caseEvents, caseEventsListener);
-        }
-
-    }
-
-    protected boolean isRefreshRequired(ModuleDataEvent evt) {
-        return artifactTypesForRefresh.contains(evt.getBlackboardArtifactType().getTypeID());
-    }
-
-    protected boolean isRefreshRequired(ModuleContentEvent evt) {
-        return refreshOnNewContent;
-    }
-
-    protected boolean isRefreshRequiredForCaseEvent(PropertyChangeEvent evt) {
-        return true;
-    }
 
     /**
      * Sets datasource to visualize in the panel.

@@ -18,9 +18,12 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.datamodel;
 
+import java.beans.PropertyChangeEvent;
 import java.util.Collections;
 import java.util.Set;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
+import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 
 /**
  * Interface for determiining when data should update based on autopsy (i.e.
@@ -35,20 +38,9 @@ public interface EventUpdateGovernor {
         return Collections.emptySet();
     }
 
-    /**
-     * @return The set of BlackboardArtifact id's for which data shoulde be
-     *         updated.
-     */
-    default Set<Integer> getArtifactIdUpdates() {
-        return Collections.emptySet();
-    }
+    boolean isRefreshRequired(ModuleDataEvent evt);
 
-    /**
-     * Whether or not the content should be updated on receiving new content.
-     *
-     * @return True if it should refresh on new content.
-     */
-    default boolean shouldRefreshOnNewContent() {
-        return false;
-    }
+    boolean isRefreshRequired(ModuleContentEvent evt);
+
+    boolean isRefreshRequiredForCaseEvent(PropertyChangeEvent evt);
 }
