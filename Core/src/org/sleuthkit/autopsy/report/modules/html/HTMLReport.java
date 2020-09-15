@@ -337,25 +337,25 @@ public class HTMLReport implements TableReportModule {
                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/drive_network.png"); //NON-NLS
                     break;
                 case TSK_OS_ACCOUNT:
-                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/os-account.png"); //NON-NLS
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/os-account.png"); //NON-NLS
                     break;    
                 case TSK_OBJECT_DETECTED:
-                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/objects.png"); //NON-NLS
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/objects.png"); //NON-NLS
                     break; 
                 case TSK_WEB_FORM_AUTOFILL:
-                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/web-form.png"); //NON-NLS
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/web-form.png"); //NON-NLS
                     break; 
                 case TSK_WEB_CACHE:
-                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/cache.png"); //NON-NLS
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/cache.png"); //NON-NLS
                     break; 
                 case TSK_USER_CONTENT_SUSPECTED:
-                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/user-content.png"); //NON-NLS
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/user-content.png"); //NON-NLS
                     break; 
                 case TSK_METADATA:
-                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/metadata.png"); //NON-NLS
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/metadata.png"); //NON-NLS
                     break; 
                 case TSK_CLIPBOARD_CONTENT:
-                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/clipboard.png"); //NON-NLS
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/clipboard.png"); //NON-NLS
                     break; 
                 case TSK_ACCOUNT:
                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/accounts.png"); //NON-NLS
