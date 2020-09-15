@@ -32,6 +32,7 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
+import org.sleuthkit.autopsy.guiutils.SimpleTableCellRenderer;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearchIngestModule.StringsExtractOptions;
@@ -84,7 +85,6 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
             if (i == 0) {
                 column.setPreferredWidth(((int) (width * 0.07)));
             } else {
-                column.setCellRenderer(new KeywordTableCellRenderer());
                 column.setPreferredWidth(((int) (width * 0.92)));
             }
         }
@@ -183,25 +183,6 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
         displayEncodings();
         tableModel.fireTableDataChanged();
     }
-    
-    /**
-     * Simple TableCellRenderer to add tool tips to cells.
-     */
-    private static final class KeywordTableCellRenderer extends DefaultTableCellRenderer{
-        
-        private static final long serialVersionUID = 1L;
-
-        @Override
-        public Component getTableCellRendererComponent(
-                JTable table, Object value,
-                boolean isSelected, boolean hasFocus,
-                int row, int column) {
-            JLabel label = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-            label.setToolTipText(label.getText());
-            return label;
-        }
-
-    }
 
     private class KeywordListsTableModel extends AbstractTableModel {
 
@@ -278,6 +259,7 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
         listsTable.setShowHorizontalLines(false);
         listsTable.setShowVerticalLines(false);
         listsScrollPane.setViewportView(listsTable);
+        listsTable.setDefaultRenderer(String.class, new SimpleTableCellRenderer());
 
         titleLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchJobSettingsPanel.class, "KeywordSearchJobSettingsPanel.titleLabel.text")); // NOI18N
 
