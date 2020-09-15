@@ -284,7 +284,7 @@ final class MessageAccountPanel extends JPanel {
         private Persona persona = null;
         private final String contactName;
 
-        private JLabel accountLabel;
+        private JTextPane accountLabel;
         private JLabel personaHeader;
         private JTextPane personaDisplayName;
         private JLabel contactHeader;
@@ -293,8 +293,10 @@ final class MessageAccountPanel extends JPanel {
 
         private JMenuItem contactCopyMenuItem;
         private JMenuItem personaCopyMenuItem;
+        private JMenuItem accountCopyMenuItem;
         JPopupMenu contactPopupMenu = new JPopupMenu();
         JPopupMenu personaPopupMenu = new JPopupMenu();
+        JPopupMenu accountPopupMenu = new JPopupMenu();
 
         /**
          * Construct a new AccountContainer
@@ -324,7 +326,9 @@ final class MessageAccountPanel extends JPanel {
          * Swing components will not be initialized until this method is called.
          */
         private void initalizeSwingControls() {
-            accountLabel = new JLabel();
+            accountLabel = new JTextPane();
+            accountLabel.setEditable(false);
+            accountLabel.setOpaque(false);
             personaHeader = new JLabel(Bundle.MessageAccountPanel_persona_label());
             contactHeader = new JLabel(Bundle.MessageAccountPanel_contact_label());
             personaDisplayName = new JTextPane();
@@ -346,6 +350,7 @@ final class MessageAccountPanel extends JPanel {
             //This is a bit of a hack to size the JTextPane correctly, but it gets the job done.
             personaDisplayName.setMaximumSize((new JLabel(personaDisplayName.getText()).getMaximumSize()));
             contactDisplayName.setMaximumSize((new JLabel(contactDisplayName.getText()).getMaximumSize()));
+            accountLabel.setMaximumSize((new JLabel(accountLabel.getText()).getMaximumSize()));
 
             button.setText(persona != null ? Bundle.MessageAccountPanel_button_view_label() : Bundle.MessageAccountPanel_button_create_label());
             
@@ -358,8 +363,10 @@ final class MessageAccountPanel extends JPanel {
         private void initalizePopupMenus() {
             contactCopyMenuItem = new JMenuItem(Bundle.MessageAccountPanel_copy_label());
             personaCopyMenuItem = new JMenuItem(Bundle.MessageAccountPanel_copy_label());
+            accountCopyMenuItem = new JMenuItem(Bundle.MessageAccountPanel_copy_label());
             personaPopupMenu.add(personaCopyMenuItem);
             contactPopupMenu.add(contactCopyMenuItem);
+            accountPopupMenu.add(accountCopyMenuItem);
 
             personaDisplayName.addMouseListener(new MouseAdapter() {
                 @Override
@@ -390,6 +397,22 @@ final class MessageAccountPanel extends JPanel {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(contactDisplayName.getText()), null);
+                }
+            });
+            
+            accountLabel.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent evt) {
+                    if (SwingUtilities.isRightMouseButton(evt)) {
+                        accountPopupMenu.show(accountLabel, evt.getX(), evt.getY());
+                    }
+                }
+            });
+
+            accountCopyMenuItem.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(accountLabel.getText()), null);
                 }
             });
 
@@ -452,7 +475,7 @@ final class MessageAccountPanel extends JPanel {
          *
          * @return JLabel object
          */
-        private JLabel getAccountLabel() {
+        private JTextPane getAccountLabel() {
             return accountLabel;
         }
 
