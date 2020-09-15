@@ -1108,6 +1108,8 @@ public class DiscoveryKeyUtils {
         private final Long visits;
         
         @NbBundle.Messages({
+            "# {0} - totalVisits",
+            "DiscoveryKeyUtils.NumberOfVisitsGroupKey.displayName={0} visits",
             "DiscoveryKeyUtils.NumberOfVisitsGroupKey.noVisits=No visits"})
         NumberOfVisitsGroupKey(Result result) {
             if (result instanceof ResultDomain) {
@@ -1115,8 +1117,8 @@ public class DiscoveryKeyUtils {
                 if (totalVisits == null) {
                     totalVisits = 0L;
                 }
-                displayName = Long.toString(totalVisits);
                 visits = totalVisits;
+                displayName = Bundle.DiscoveryKeyUtils_NumberOfVisitsGroupKey_displayName(Long.toString(visits));
             } else {
                 displayName = Bundle.DiscoveryKeyUtils_NumberOfVisitsGroupKey_noVisits();
                 visits = -1L;
@@ -1124,11 +1126,8 @@ public class DiscoveryKeyUtils {
         }
         
         @Override
-        @NbBundle.Messages({
-            "# {0} - totalVisits",
-            "DiscoveryKeyUtils.NumberOfVisitsGroupKey.displayName={0} visits"})
         String getDisplayName() {
-            return Bundle.DiscoveryKeyUtils_NumberOfVisitsGroupKey_displayName(Long.toString(visits));
+            return displayName;
         }
         
         @Override
