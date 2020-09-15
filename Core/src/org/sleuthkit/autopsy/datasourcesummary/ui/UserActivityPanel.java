@@ -50,9 +50,8 @@ import org.sleuthkit.datamodel.DataSource;
     "UserActivityPanel_TopProgramsTableModel_count_header=Run Times",
     "UserActivityPanel_TopProgramsTableModel_lastrun_header=Last Run",
     "UserActivityPanel_TopDomainsTableModel_domain_header=Domain",
-    "UserActivityPanel_TopDomainsTableModel_url_header=URL",
-    "UserActivityPanel_TopDomainsTableModel_lastAccess_header=Last Access",
-    "UserActivityPanel_noDataExists=No communication data exists",
+    "UserActivityPanel_TopDomainsTableModel_count_header=Visits",
+    "UserActivityPanel_TopDomainsTableModel_lastAccess_header=Last Accessed",
     "UserActivityPanel_TopWebSearchTableModel_searchString_header=Search String",
     "UserActivityPanel_TopWebSearchTableModel_dateAccessed_header=Date Accessed",
     "UserActivityPanel_TopWebSearchTableModel_translatedResult_header=Translated",
@@ -60,7 +59,8 @@ import org.sleuthkit.datamodel.DataSource;
     "UserActivityPanel_TopDeviceAttachedTableModel_makeModel_header=Make and Model",
     "UserActivityPanel_TopDeviceAttachedTableModel_dateAccessed_header=Last Accessed",
     "UserActivityPanel_TopAccountTableModel_accountType_header=Account Type",
-    "UserActivityPanel_TopAccountTableModel_lastAccess_header=Last Accessed",})
+    "UserActivityPanel_TopAccountTableModel_lastAccess_header=Last Accessed",
+    "UserActivityPanel_noDataExists=No communication data exists"})
 public class UserActivityPanel extends BaseDataSourceSummaryPanel {
 
     private static final long serialVersionUID = 1L;
@@ -126,11 +126,14 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
                     Bundle.UserActivityPanel_TopDomainsTableModel_domain_header(),
                     (recentDomain) -> new DefaultCellModel(recentDomain.getDomain()),
                     250),
-            // url column
+            // count column
             new ColumnModel<>(
-                    Bundle.UserActivityPanel_TopDomainsTableModel_url_header(),
-                    (recentDomain) -> new DefaultCellModel(recentDomain.getUrl()),
-                    250),
+                    Bundle.UserActivityPanel_TopDomainsTableModel_count_header(),
+                    (recentDomain) -> {
+                        String visitTimes = recentDomain.getVisitTimes() == null ? "" : Long.toString(recentDomain.getVisitTimes());
+                        return new DefaultCellModel(visitTimes);
+                    },
+                    100),
             // last accessed column
             new ColumnModel<>(
                     Bundle.UserActivityPanel_TopDomainsTableModel_lastAccess_header(),

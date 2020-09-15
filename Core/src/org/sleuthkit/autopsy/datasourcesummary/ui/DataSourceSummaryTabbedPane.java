@@ -37,9 +37,10 @@ import org.sleuthkit.datamodel.DataSource;
     "DataSourceSummaryTabbedPane_userActivityTab_title=User Activity",
     "DataSourceSummaryTabbedPane_ingestHistoryTab_title=Ingest History",
     "DataSourceSummaryTabbedPane_recentFileTab_title=Recent Files",
+    "DataSourceSummaryTabbedPane_pastCasesTab_title=Past Cases",
     "DataSourceSummaryTabbedPane_analysisTab_title=Analysis"
 })
-public class DataSourceSummaryTabbedPane extends JTabbedPane implements AutoCloseable {
+public class DataSourceSummaryTabbedPane extends JTabbedPane {
 
     /**
      * Records of tab information (i.e. title, component, function to call on
@@ -50,7 +51,7 @@ public class DataSourceSummaryTabbedPane extends JTabbedPane implements AutoClos
         private final String tabTitle;
         private final Component component;
         private final Consumer<DataSource> onDataSource;
-        private final AutoCloseable onClose;
+        private final Runnable onClose;
 
         /**
          * Main constructor.
@@ -60,7 +61,7 @@ public class DataSourceSummaryTabbedPane extends JTabbedPane implements AutoClos
          * @param onDataSource The function to be called on a new data source.
          * @param onClose      Called to cleanup resources when closing tabs.
          */
-        DataSourceTab(String tabTitle, Component component, Consumer<DataSource> onDataSource, AutoCloseable onClose) {
+        DataSourceTab(String tabTitle, Component component, Consumer<DataSource> onDataSource, Runnable onClose) {
             this.tabTitle = tabTitle;
             this.component = component;
             this.onDataSource = onDataSource;
@@ -77,7 +78,7 @@ public class DataSourceSummaryTabbedPane extends JTabbedPane implements AutoClos
             this.tabTitle = tabTitle;
             this.component = panel;
             this.onDataSource = panel::setDataSource;
-            this.onClose = panel;
+            this.onClose = panel::close;
         }
 
         /**
@@ -102,9 +103,9 @@ public class DataSourceSummaryTabbedPane extends JTabbedPane implements AutoClos
         }
 
         /**
-         * @return The object for closing when closing the tab.
+         * @return The action for closing resources in the tab.
          */
-        public AutoCloseable getOnClose() {
+        public Runnable getOnClose() {
             return onClose;
         }
     }
@@ -116,8 +117,9 @@ public class DataSourceSummaryTabbedPane extends JTabbedPane implements AutoClos
     private final List<DataSourceTab> tabs = Arrays.asList(
             new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_typesTab_title(), new TypesPanel()),
             new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_userActivityTab_title(), new UserActivityPanel()),
-            new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_recentFileTab_title(), new RecentFilesPanel()),
             new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_analysisTab_title(), new AnalysisPanel()),
+            new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_recentFileTab_title(), new RecentFilesPanel()),
+            new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_pastCasesTab_title(), new PastCasesPanel()),
             // do nothing on closing 
             new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_ingestHistoryTab_title(), ingestHistoryPanel, ingestHistoryPanel::setDataSource, () -> {
             }),
@@ -163,13 +165,10 @@ public class DataSourceSummaryTabbedPane extends JTabbedPane implements AutoClos
 
     /**
      * Handle close events on each tab.
-     *
-     * @throws Exception
      */
-    @Override
-    public void close() throws Exception {
+    public void close() {
         for (DataSourceTab tab : tabs) {
-            tab.getOnClose().close();
+            tab.getOnClose().run();
         }
     }
 }

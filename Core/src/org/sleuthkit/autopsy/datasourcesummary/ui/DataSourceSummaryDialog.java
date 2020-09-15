@@ -97,12 +97,7 @@ final class DataSourceSummaryDialog extends javax.swing.JDialog implements Obser
     @Override
     public void dispose() {
         IngestManager.getInstance().removeIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, ingestEventListener);
-        try {
-            this.dataSourceSummaryTabbedPane.close();
-        } catch (Exception ex) {
-            logger.log(Level.WARNING, "There was an error disposing of resources in the tabbed pange for data source summary.", ex);
-        }
-
+        this.dataSourceSummaryTabbedPane.close();
         super.dispose();
     }
 

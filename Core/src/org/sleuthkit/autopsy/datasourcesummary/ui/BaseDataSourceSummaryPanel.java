@@ -35,7 +35,7 @@ import org.sleuthkit.datamodel.DataSource;
 /**
  * Base class from which other tabs in data source summary derive.
  */
-abstract class BaseDataSourceSummaryPanel extends JPanel implements AutoCloseable {
+abstract class BaseDataSourceSummaryPanel extends JPanel {
 
     private static final long serialVersionUID = 1L;
 
@@ -57,11 +57,8 @@ abstract class BaseDataSourceSummaryPanel extends JPanel implements AutoCloseabl
 
     /**
      * Closes listeners and resources.
-     *
-     * @throws Exception
      */
-    @Override
-    public void close() throws Exception {
+    public void close() {
         executor.cancelRunning();
         updateHandler.unregister();
     }

@@ -137,16 +137,8 @@ public class DataSourceSummaryResultViewer extends AbstractDataResultViewer {
 
     @Override
     public void clearComponent() {
-        // clear resources for summary panel
-        if (summaryPanel != null) {
-            try {
-                summaryPanel.close();
-            } catch (Exception e) {
-                LOGGER.log(Level.WARNING, "There was an error closing the datasource summary tabbed panel.", e);
-            }
-
-            summaryPanel = null;
-        }
+        summaryPanel.close();
+        summaryPanel = null;
     }
 
     private DataSourceSummaryTabbedPane summaryPanel;

@@ -33,7 +33,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 @ServiceProvider(service = IngestModuleFactory.class)
 public class ILeappAnalyzerModuleFactory extends IngestModuleFactoryAdapter {
 
-    @NbBundle.Messages({"ILeappAnalyzerModuleFactory_moduleName=ILeapp Analyzer"})
+    @NbBundle.Messages({"ILeappAnalyzerModuleFactory_moduleName=iOS Analyzer (iLEAPP)"})
     static String getModuleName() {
         return Bundle.ILeappAnalyzerModuleFactory_moduleName();
     }
@@ -43,7 +43,7 @@ public class ILeappAnalyzerModuleFactory extends IngestModuleFactoryAdapter {
         return getModuleName();
     }
 
-    @NbBundle.Messages({"ILeappAnalyzerModuleFactory_moduleDesc=Runs iLeapp against files."})
+    @NbBundle.Messages({"ILeappAnalyzerModuleFactory_moduleDesc=Uses iLEAPP to analyze logical acquisitions of iOS devices."})
     @Override
     public String getModuleDescription() {
         return Bundle.ILeappAnalyzerModuleFactory_moduleDesc();
