@@ -69,8 +69,8 @@ public class EXIFProcessor implements PictureProcessor {
 
     @Override
     @NbBundle.Messages({
-        "ExifProcessor.indexError.message=Failed to post EXIF Metadata artifact(s).",
-        "ExifProcessor.userContent.description=EXIF metadata exists for this file.",
+        "ExifProcessor.indexError.message=Failed to post Picture Analzyer artifact(s).",
+        "ExifProcessor.userContent.description=Picture Analyzer data exists for this file.",
         "ExifProcessor.module_name=Exif Parser"
     })
     public void process(IngestJobContext context, AbstractFile file) {
