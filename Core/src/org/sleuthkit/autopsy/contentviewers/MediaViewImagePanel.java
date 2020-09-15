@@ -124,7 +124,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
     /*
-     * JFX UI components, must be accessed in JFX thread only.
+     * Threading policy: JFX UI components, must be accessed in JFX thread only.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private final ProgressBar progressBar = new ProgressBar();
@@ -142,7 +142,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     private ScrollPane scrollPane;
 
     /*
-     * Swing UI components, must be accessed in EDT only.
+     * Threading policy: Swing UI components, must be accessed in EDT only.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private final JPopupMenu imageTaggingOptions;
@@ -160,7 +160,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     private final JFXPanel fxPanel;
 
     /*
-     * Panel state: currently selected image file.
+     * Panel state variables threading policy:
      *
      * imageFile: The loadFile() method kicks off a JFX background task to read
      * the content of the currently selected file into a JFX Image object. If
@@ -174,7 +174,8 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
      * readImageFileTask: This is a reference to a JFX background task that
      * reads the content of the currently selected file into a JFX Image object.
      * A reference is maintained so that the task can be cancelled if it is
-     * running when the selected image file changes.
+     * running when the selected image file changes. Only accessed in the JFX
+     * thread.
      *
      * imageTransforms: These values are mostly written in the EDT based on user
      * interactions with Swing components and then read in the JFX thread when
@@ -846,15 +847,15 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         if (direction == ZoomDirection.IN) {
             newZoomRatio = zoomImageIn(currentTransforms.getZoomRatio());
         } else {
-            newZoomRatio = zoomImageOut(currentTransforms.getZoomRatio());            
+            newZoomRatio = zoomImageOut(currentTransforms.getZoomRatio());
         }
         final ImageTransforms newTransforms = new ImageTransforms(newZoomRatio, currentTransforms.getRotation(), false);
         imageTransforms = newTransforms;
         Platform.runLater(() -> {
             updateView(panelWidth, panelHeight, newTransforms);
-        });             
-    }    
-    
+        });
+    }
+
     private double zoomImageIn(double zoomRatio) {
         double newZoomRatio = zoomRatio;
         for (int i = 0; i < ZOOM_STEPS.length; i++) {
@@ -862,10 +863,10 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
                 newZoomRatio = ZOOM_STEPS[i];
                 break;
             }
-        } 
+        }
         return newZoomRatio;
     }
-    
+
     private double zoomImageOut(double zoomRatio) {
         double newZoomRatio = zoomRatio;
         for (int i = ZOOM_STEPS.length - 1; i >= 0; i--) {
@@ -875,8 +876,8 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
             }
         }
         return newZoomRatio;
-    }    
-    
+    }
+
     private void zoomResetButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zoomResetButtonActionPerformed
         final ImageTransforms currentTransforms = imageTransforms;
         final ImageTransforms newTransforms = new ImageTransforms(0, currentTransforms.getRotation(), true);
@@ -1355,8 +1356,10 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         }
     }
 
-    private enum ZoomDirection {IN, OUT};
-        
+    private enum ZoomDirection {
+        IN, OUT
+    };
+
     /**
      * Records a snapshot of the image transforms specified by the user.
      */
