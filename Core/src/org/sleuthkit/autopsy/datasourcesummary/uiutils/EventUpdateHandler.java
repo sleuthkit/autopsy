@@ -20,12 +20,7 @@ package org.sleuthkit.autopsy.datasourcesummary.uiutils;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.guiutils.RefreshThrottler;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -73,7 +68,7 @@ public class EventUpdateHandler {
         }
     };
 
-    private final List<UpdateGovernor> governors;
+    private final UpdateGovernor governor;
     private final Set<Case.Events> caseEvents;
     private final Runnable onUpdate;
 
@@ -81,23 +76,18 @@ public class EventUpdateHandler {
      * Constructor.
      *
      * @param onUpdate  The function to call if an update should be required.
-     * @param governors The items used to determine if an update is required. If
-     *                  any governor requires an update, then onUpdate is
+     * @param governor The item used to determine if an update is required. If
+     *                  the governor requires an update, then onUpdate is
      *                  triggered.
      */
-    public EventUpdateHandler(Runnable onUpdate, UpdateGovernor... governors) {
+    public EventUpdateHandler(Runnable onUpdate, UpdateGovernor governor) {
         if (onUpdate == null) {
             throw new IllegalArgumentException("onUpdate parameter must be non-null.");
         }
 
         this.onUpdate = onUpdate;
-
-        this.governors = governors == null ? Collections.emptyList() : Arrays.asList(governors);
-
-        this.caseEvents = Stream.of(governors)
-                .filter(governor -> governor.getCaseEventUpdates() != null)
-                .flatMap(governor -> governor.getCaseEventUpdates().stream())
-                .collect(Collectors.toSet());
+        this.governor = governor;
+        this.caseEvents = governor.getCaseEventUpdates();
 
     }
 
@@ -109,13 +99,7 @@ public class EventUpdateHandler {
      * @return True if an update should occur.
      */
     protected boolean isRefreshRequired(ModuleDataEvent evt) {
-        for (UpdateGovernor governor : governors) {
-            if (governor.isRefreshRequired(evt)) {
-                return true;
-            }
-        }
-
-        return false;
+        return governor.isRefreshRequired(evt);
     }
 
     /**
@@ -126,13 +110,7 @@ public class EventUpdateHandler {
      * @return True if an update should occur.
      */
     protected boolean isRefreshRequired(ModuleContentEvent evt) {
-        for (UpdateGovernor governor : governors) {
-            if (governor.isRefreshRequired(evt)) {
-                return true;
-            }
-        }
-
-        return false;
+        return governor.isRefreshRequired(evt);
     }
 
     /**
@@ -143,13 +121,7 @@ public class EventUpdateHandler {
      * @return True if an update should occur.
      */
     protected boolean isRefreshRequiredForCaseEvent(PropertyChangeEvent evt) {
-        for (UpdateGovernor governor : governors) {
-            if (governor.isRefreshRequiredForCaseEvent(evt)) {
-                return true;
-            }
-        }
-
-        return false;
+        return governor.isRefreshRequiredForCaseEvent(evt);
     }
 
     /**
