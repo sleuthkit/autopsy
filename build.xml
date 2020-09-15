@@ -107,7 +107,7 @@
         <copy file="${basedir}/Running_Linux_OSX.txt" tofile="${zip-tmp}/${app.name}/Running_Linux_OSX.txt"/>
         <copy file="${basedir}/unix_setup.sh" tofile="${zip-tmp}/${app.name}/unix_setup.sh"/>
         <copy file="${basedir}/ManifestTool/ManifestTool.exe" todir="${zip-tmp}/${app.name}/bin"/>
-            
+        
         
         <copy file="${basedir}/icons/icon.ico" tofile="${zip-tmp}/${app.name}/icon.ico" overwrite="true"/>
         
@@ -115,6 +115,12 @@
         <copy flatten="true" todir="${zip-tmp}/${app.name}/docs">
             <fileset dir="${basedir}/docs/doxygen-user/user-docs"/>
         </copy>
+        
+        <!-- Copy the ZooKeeper migration tool, it's JAR files, and documentation -->
+        <copy flatten="false" todir="${zip-tmp}/${app.name}/autopsy/ZookeeperNodeMigration">
+            <fileset dir="${basedir}/ZookeeperNodeMigration/dist"/>
+        </copy>
+        <copy file="${basedir}/ZookeeperNodeMigration/docs/README.TXT" todir="${zip-tmp}/${app.name}/autopsy/ZookeeperNodeMigration"/>
 
         <property name="app.property.file" value="${zip-tmp}/${app.name}/etc/${app.name}.conf" />
         <var name="jvm-value" value="--branding ${app.name} -J-Xms24m -J-Xmx4G -J-Xverify:none -J-XX:+UseG1GC -J-XX:+UseStringDeduplication"/>
