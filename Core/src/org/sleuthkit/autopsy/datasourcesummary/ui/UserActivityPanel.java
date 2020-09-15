@@ -117,7 +117,7 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
                     (prog) -> new DefaultCellModel(getFormatted(prog.getLastRun())),
                     150)
     ))
-    .setKeyFunction((prog) -> prog.getProgramPath() + ":" + prog.getProgramName());
+            .setKeyFunction((prog) -> prog.getProgramPath() + ":" + prog.getProgramName());
 
     // set up recent domains table
     private final JTablePanel<TopDomainsResult> recentDomainsTable = JTablePanel.getJTablePanel(Arrays.asList(
@@ -137,7 +137,7 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
                     (recentDomain) -> new DefaultCellModel(getFormatted(recentDomain.getLastVisit())),
                     150)
     ))
-    .setKeyFunction((domain) -> domain.getDomain());
+            .setKeyFunction((domain) -> domain.getDomain());
 
     // top web searches table
     private final JTablePanel<TopWebSearchResult> topWebSearchesTable = JTablePanel.getJTablePanel(Arrays.asList(
@@ -160,7 +160,7 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
                     250
             )
     ))
-    .setKeyFunction((query) -> query.getSearchString());
+            .setKeyFunction((query) -> query.getSearchString());
 
     // top devices attached table
     private final JTablePanel<TopDeviceAttachedResult> topDevicesAttachedTable = JTablePanel.getJTablePanel(Arrays.asList(
@@ -190,7 +190,7 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
                     250
             )
     ))
-    .setKeyFunction((topDevice) -> topDevice.getDeviceId());
+            .setKeyFunction((topDevice) -> topDevice.getDeviceId());
 
     // top accounts table
     private final JTablePanel<TopAccountResult> topAccountsTable = JTablePanel.getJTablePanel(Arrays.asList(
@@ -207,7 +207,7 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
                     150
             )
     ))
-    .setKeyFunction((topAccount) -> topAccount.getAccountType());
+            .setKeyFunction((topAccount) -> topAccount.getAccountType());
 
     private final List<JTablePanel<?>> tables = Arrays.asList(
             topProgramsTable,

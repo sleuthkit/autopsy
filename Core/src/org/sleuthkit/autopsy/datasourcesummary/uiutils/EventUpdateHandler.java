@@ -1,13 +1,25 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2020 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.datasourcesummary.uiutils;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -21,13 +33,18 @@ import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 
 /**
- *
- * @author gregd
+ * Handles ingest and case events, and determines whether they should trigger an
+ * update.
  */
-public class EventUpdateHandler {       
+public class EventUpdateHandler {
+
+    /**
+     * The refresh throttler that handles ingest events.
+     */
     private final RefreshThrottler refreshThrottler = new RefreshThrottler(new RefreshThrottler.Refresher() {
         @Override
         public void refresh() {
+            // delegate to EventUpdateHandler method.
             EventUpdateHandler.this.onRefresh();
         }
 
@@ -46,74 +63,113 @@ public class EventUpdateHandler {
             return false;
         }
     });
-    
+
+    /**
+     * Handler for case event updates.
+     */
     private final PropertyChangeListener caseEventsListener = (evt) -> {
         if (isRefreshRequiredForCaseEvent(evt)) {
             onRefresh();
         }
     };
-    
+
     private final List<UpdateGovernor> governors;
     private final Set<Case.Events> caseEvents;
     private final Runnable onUpdate;
-    
-    
-    public EventUpdateHandler(Runnable onUpdate, UpdateGovernor...governors) {
+
+    /**
+     * Constructor.
+     *
+     * @param onUpdate  The function to call if an update should be required.
+     * @param governors The items used to determine if an update is required. If
+     *                  any governor requires an update, then onUpdate is
+     *                  triggered.
+     */
+    public EventUpdateHandler(Runnable onUpdate, UpdateGovernor... governors) {
         if (onUpdate == null) {
             throw new IllegalArgumentException("onUpdate parameter must be non-null.");
         }
-        
+
         this.onUpdate = onUpdate;
-        
+
         this.governors = governors == null ? Collections.emptyList() : Arrays.asList(governors);
-        
+
         this.caseEvents = Stream.of(governors)
                 .filter(governor -> governor.getCaseEventUpdates() != null)
                 .flatMap(governor -> governor.getCaseEventUpdates().stream())
                 .collect(Collectors.toSet());
-        
+
     }
-        
+
+    /**
+     * Handles whether or not a ModuleDataEvent should trigger an update.
+     *
+     * @param evt The ModuleDataEvent.
+     *
+     * @return True if an update should occur.
+     */
     protected boolean isRefreshRequired(ModuleDataEvent evt) {
-        for (UpdateGovernor governor: governors) {
+        for (UpdateGovernor governor : governors) {
             if (governor.isRefreshRequired(evt)) {
                 return true;
             }
         }
-        
+
         return false;
     }
 
+    /**
+     * Handles whether or not a ModuleContentEvent should trigger an update.
+     *
+     * @param evt The ModuleContentEvent.
+     *
+     * @return True if an update should occur.
+     */
     protected boolean isRefreshRequired(ModuleContentEvent evt) {
-        for (UpdateGovernor governor: governors) {
+        for (UpdateGovernor governor : governors) {
             if (governor.isRefreshRequired(evt)) {
                 return true;
             }
         }
-        
+
         return false;
     }
 
+    /**
+     * Handles whether or not a case event should trigger an update.
+     *
+     * @param evt The case event.
+     *
+     * @return True if an update should occur.
+     */
     protected boolean isRefreshRequiredForCaseEvent(PropertyChangeEvent evt) {
-        for (UpdateGovernor governor: governors) {
+        for (UpdateGovernor governor : governors) {
             if (governor.isRefreshRequiredForCaseEvent(evt)) {
                 return true;
             }
         }
-        
+
         return false;
     }
-    
-    
+
+    /**
+     * Method called that triggers refresh.
+     */
     protected void onRefresh() {
         onUpdate.run();
     }
-    
+
+    /**
+     * Registers ingest and case event listeners.
+     */
     public void register() {
         Case.addEventTypeSubscriber(caseEvents, caseEventsListener);
         refreshThrottler.registerForIngestModuleEvents();
     }
-    
+
+    /**
+     * Unregisters ingest and case event listeners.
+     */
     public void unregister() {
         Case.removeEventTypeSubscriber(caseEvents, caseEventsListener);
         refreshThrottler.unregisterEventListener();

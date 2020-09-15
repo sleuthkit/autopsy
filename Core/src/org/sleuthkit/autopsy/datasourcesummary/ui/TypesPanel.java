@@ -70,7 +70,6 @@ import org.sleuthkit.datamodel.TskCoreException;
     "TypesPanel_sizeLabel_title=Size"})
 class TypesPanel extends BaseDataSourceSummaryPanel {
 
-
     /**
      * A label that allows for displaying loading messages and can be used with
      * a DataFetchResult. Text displays as "<key>:<value | message>".
@@ -159,14 +158,20 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
         this(new MimeTypeSummary(), new TypesSummary(), new ContainerSummary());
     }
 
+    /**
+     * Creates a new TypesPanel.
+     *
+     * @param mimeTypeData  The service for mime types.
+     * @param typeData      The service for file types data.
+     * @param containerData The service for container information.
+     */
     public TypesPanel(
             MimeTypeSummary mimeTypeData,
             TypesSummary typeData,
             ContainerSummary containerData) {
 
         super(mimeTypeData, typeData, containerData);
-        
-        
+
         this.dataFetchComponents = Arrays.asList(
                 // usage label worker
                 new DataFetchWorker.DataFetchComponents<>(
@@ -204,11 +209,10 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
                         (dataSource) -> getStringOrZero(typeData.getCountOfDirectories(dataSource)),
                         directoriesLabel::showDataFetchResult)
         );
-        
+
         initComponents();
     }
 
-    
     @Override
     protected void fetchInformation(DataSource dataSource) {
         fetchInformation(dataFetchComponents, dataSource);
@@ -218,8 +222,7 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
     protected void onNewDataSource(DataSource dataSource) {
         onNewDataSource(dataFetchComponents, loadables, dataSource);
     }
-    
-    
+
     /**
      * Gets all the data for the file type pie chart.
      *
@@ -227,9 +230,9 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
      *
      * @return The pie chart items.
      */
-    private List<PieChartItem> getMimeTypeCategoriesModel(MimeTypeSummary mimeTypeData, DataSource dataSource) 
+    private List<PieChartItem> getMimeTypeCategoriesModel(MimeTypeSummary mimeTypeData, DataSource dataSource)
             throws SQLException, SleuthkitCaseProviderException, TskCoreException {
-        
+
         if (dataSource == null) {
             return null;
         }
@@ -238,8 +241,8 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
         List<Pair<String, Long>> fileCategoryItems = new ArrayList<>();
         for (Pair<String, Set<String>> strCat : FILE_MIME_TYPE_CATEGORIES) {
             fileCategoryItems.add(Pair.of(strCat.getLeft(),
-                            getLongOrZero(mimeTypeData.getCountOfFilesForMimeTypes(
-                                    dataSource, strCat.getRight()))));
+                    getLongOrZero(mimeTypeData.getCountOfFilesForMimeTypes(
+                            dataSource, strCat.getRight()))));
         }
 
         // get a count of all files with no mime type

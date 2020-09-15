@@ -41,11 +41,16 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
 
     private final SwingWorkerSequentialExecutor executor = new SwingWorkerSequentialExecutor();
     private final EventUpdateHandler updateHandler;
-    
 
     private DataSource dataSource;
-    
-    protected BaseDataSourceSummaryPanel(UpdateGovernor...governors) {
+
+    /**
+     * Main constructor.
+     *
+     * @param governors The items governing when this panel should receive
+     *                  updates.
+     */
+    protected BaseDataSourceSummaryPanel(UpdateGovernor... governors) {
         this.updateHandler = new EventUpdateHandler(this::onRefresh, governors);
         this.updateHandler.register();
     }
@@ -92,6 +97,14 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
      */
     protected abstract void fetchInformation(DataSource dataSource);
 
+    /**
+     * Utility method to be called when solely updating information (not showing
+     * a loading screen) that creates swing workers from the data source
+     * argument and data fetch components and then submits them to run.
+     *
+     * @param dataFetchComponents The components to be run.
+     * @param dataSource          The data source argument.
+     */
     protected void fetchInformation(List<DataFetchComponents<DataSource, ?>> dataFetchComponents, DataSource dataSource) {
         // create swing workers to run for each loadable item
         List<DataFetchWorker<?, ?>> workers = dataFetchComponents
@@ -112,9 +125,18 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
      */
     protected abstract void onNewDataSource(DataSource dataSource);
 
+    /**
+     * Utility method that shows a loading screen with loadable components,
+     * create swing workers from the datafetch components and data source
+     * argument and submits them to be executed.
+     *
+     * @param dataFetchComponents The components to register.
+     * @param loadableComponents  The components to set to a loading screen.
+     * @param dataSource          The data source argument.
+     */
     protected void onNewDataSource(
-            List<DataFetchComponents<DataSource, ?>> dataFetchComponents, 
-            List<? extends LoadableComponent<?>> loadableComponents, 
+            List<DataFetchComponents<DataSource, ?>> dataFetchComponents,
+            List<? extends LoadableComponent<?>> loadableComponents,
             DataSource dataSource) {
         // if no data source is present or the case is not open,
         // set results for tables to null.

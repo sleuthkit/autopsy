@@ -69,7 +69,7 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
         initComponents();
         initalizeTables();
     }
-    
+
     @Override
     protected void fetchInformation(DataSource dataSource) {
         fetchInformation(dataFetchComponents, dataSource);
@@ -79,7 +79,6 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
     protected void onNewDataSource(DataSource dataSource) {
         onNewDataSource(dataFetchComponents, tablePanelList, dataSource);
     }
-    
 
     /**
      * Setup the data model and columns for the panel tables.

@@ -54,8 +54,6 @@ public class TypesSummary implements DefaultUpdateGovernor {
         return true;
     }
 
-    
-
     /**
      * Get count of regular files (not directories) in a data source.
      *

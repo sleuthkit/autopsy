@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,9 +38,30 @@ public interface UpdateGovernor {
         return Collections.emptySet();
     }
 
+    /**
+     * Given a module data event, whether or not an update should occur.
+     *
+     * @param evt The ModuleDataEvent that is occurring.
+     *
+     * @return Whether or not this event should trigger an update.
+     */
     boolean isRefreshRequired(ModuleDataEvent evt);
 
+    /**
+     * Given a module content event, whether or not an update should occur.
+     *
+     * @param evt The ModuleContentEvent.
+     *
+     * @return Whether or not this event should trigger an update.
+     */
     boolean isRefreshRequired(ModuleContentEvent evt);
 
+    /**
+     * Given a case event, whether or not an update should occur.
+     *
+     * @param evt The event.
+     *
+     * @return Whether or not this event should trigger an update.
+     */
     boolean isRefreshRequiredForCaseEvent(PropertyChangeEvent evt);
 }

@@ -64,8 +64,7 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
             ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID(),
             ARTIFACT_TYPE.TSK_MESSAGE.getTypeID()
     ));
-    
-    
+
     private final SleuthkitCaseProvider provider;
 
     /**
@@ -92,8 +91,6 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
     public Set<Integer> getArtifactTypeIdsForRefresh() {
         return ARTIFACT_UPDATE_TYPE_IDS;
     }
-    
-    
 
     /**
      * Return a list of the most recently opened documents based on the
@@ -264,7 +261,7 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
                             sortedMap.put(date, list);
                         }
                         RecentAttachmentDetails details = new RecentAttachmentDetails(path, date, sender);
-                        if(!list.contains(details)) {
+                        if (!list.contains(details)) {
                             list.add(details);
                         }
                     }
@@ -351,10 +348,10 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
         public String getDateAsString() {
             return DATETIME_FORMAT.format(date * 1000);
         }
-        
+
         /**
          * Returns the date as the seconds from java epoch.
-         * 
+         *
          * @return Seconds from java epoch.
          */
         Long getDateAsLong() {
@@ -432,17 +429,17 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
         public String getSender() {
             return sender;
         }
-        
+
         @Override
         public boolean equals(Object obj) {
-            if(!(obj instanceof RecentAttachmentDetails)) {
+            if (!(obj instanceof RecentAttachmentDetails)) {
                 return false;
             }
-            RecentAttachmentDetails compareObj = (RecentAttachmentDetails)obj;
-            
-            return compareObj.getSender().equals(this.sender) && 
-                    compareObj.getPath().equals(this.getPath()) &&
-                    compareObj.getDateAsLong().equals(this.getDateAsLong());           
+            RecentAttachmentDetails compareObj = (RecentAttachmentDetails) obj;
+
+            return compareObj.getSender().equals(this.sender)
+                    && compareObj.getPath().equals(this.getPath())
+                    && compareObj.getDateAsLong().equals(this.getDateAsLong());
         }
 
         @Override

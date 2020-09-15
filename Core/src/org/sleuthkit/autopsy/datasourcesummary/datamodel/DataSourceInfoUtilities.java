@@ -96,11 +96,11 @@ final class DataSourceInfoUtilities {
      * @param additionalWhere   Additional sql where clauses.
      *
      * @return The count of files or null on error.
-     * 
+     *
      * @throws TskCoreException
      * @throws SQLException
      */
-    static Long getCountOfRegNonSlackFiles(SleuthkitCase skCase, DataSource currentDataSource, String additionalWhere) 
+    static Long getCountOfRegNonSlackFiles(SleuthkitCase skCase, DataSource currentDataSource, String additionalWhere)
             throws TskCoreException, SQLException {
         String whereClause = "meta_type=" + TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG.getValue()
                 + " AND type<>" + TSK_DB_FILES_TYPE_ENUM.SLACK.getFileType();

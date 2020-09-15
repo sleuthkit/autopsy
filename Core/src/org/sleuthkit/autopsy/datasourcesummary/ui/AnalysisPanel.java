@@ -71,7 +71,6 @@ public class AnalysisPanel extends BaseDataSourceSummaryPanel {
     private final JTablePanel<Pair<String, Long>> interestingItemsTable
             = JTablePanel.getJTablePanel(DEFAULT_COLUMNS)
                     .setKeyFunction(DEFAULT_KEY_PROVIDER);
-    
 
     private final List<JTablePanel<?>> tables = Arrays.asList(
             hashsetHitsTable,

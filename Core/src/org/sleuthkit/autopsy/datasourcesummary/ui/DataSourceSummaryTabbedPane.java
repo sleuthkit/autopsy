@@ -29,8 +29,7 @@ import org.sleuthkit.datamodel.DataSource;
 
 /**
  * A tabbed pane showing the summary of a data source including tabs of:
- * DataSourceSummaryCountsPanel, ContainerPanel, and
- * IngestJobInfoPanel.
+ * DataSourceSummaryCountsPanel, ContainerPanel, and IngestJobInfoPanel.
  */
 @Messages({
     "DataSourceSummaryTabbedPane_typesTab_title=Types",

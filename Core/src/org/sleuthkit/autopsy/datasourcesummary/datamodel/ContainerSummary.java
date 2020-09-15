@@ -35,11 +35,12 @@ import org.sleuthkit.datamodel.TskData;
  * Provides methods to query for data source overview details.
  */
 public class ContainerSummary implements DefaultArtifactUpdateGovernor {
+
     private static final Set<Integer> ARTIFACT_UPDATE_TYPE_IDS = new HashSet<>(Arrays.asList(
-        BlackboardArtifact.ARTIFACT_TYPE.TSK_OS_INFO.getTypeID(), 
-        BlackboardArtifact.ARTIFACT_TYPE.TSK_DATA_SOURCE_USAGE.getTypeID()
+            BlackboardArtifact.ARTIFACT_TYPE.TSK_OS_INFO.getTypeID(),
+            BlackboardArtifact.ARTIFACT_TYPE.TSK_DATA_SOURCE_USAGE.getTypeID()
     ));
-    
+
     private final SleuthkitCaseProvider provider;
 
     /**
@@ -67,8 +68,6 @@ public class ContainerSummary implements DefaultArtifactUpdateGovernor {
     public Set<Integer> getArtifactTypeIdsForRefresh() {
         return ARTIFACT_UPDATE_TYPE_IDS;
     }
-    
-    
 
     /**
      * Gets the size of unallocated files in a particular datasource.
@@ -126,7 +125,7 @@ public class ContainerSummary implements DefaultArtifactUpdateGovernor {
      */
     public String getOperatingSystems(DataSource dataSource)
             throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, SQLException {
-        
+
         if (dataSource == null) {
             return null;
         }
@@ -182,7 +181,7 @@ public class ContainerSummary implements DefaultArtifactUpdateGovernor {
      */
     private String getConcattedStringsResult(String query, String valueParam, String separator)
             throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, SQLException {
-        
+
         DataSourceInfoUtilities.ResultSetHandler<String> handler = (resultSet) -> {
             String toRet = "";
             boolean first = true;
@@ -218,7 +217,7 @@ public class ContainerSummary implements DefaultArtifactUpdateGovernor {
      */
     private String getConcattedAttrValue(long dataSourceId, int artifactTypeId, int attributeTypeId)
             throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, SQLException {
-        
+
         final String valueParam = "concatted_attribute_value";
         String query = "SELECT attr.value_text AS " + valueParam
                 + " FROM blackboard_artifacts bba "
