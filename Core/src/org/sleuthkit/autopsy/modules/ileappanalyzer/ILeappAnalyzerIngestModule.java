@@ -49,6 +49,7 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.LocalFilesDataSource;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -110,6 +111,10 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
         "ILeappAnalyzerIngestModule.report.name=iLeapp Html Report"})
     @Override
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress statusHelper) {
+
+        if (!(context.getDataSource() instanceof LocalFilesDataSource)) {
+            return ProcessResult.OK;
+        }
 
         statusHelper.progress(Bundle.ILeappAnalyzerIngestModule_starting_iLeapp(), 0);
 
