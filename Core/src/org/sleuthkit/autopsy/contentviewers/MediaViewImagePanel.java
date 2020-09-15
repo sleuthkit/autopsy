@@ -1322,7 +1322,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         /*
          * RC: There is a race condition here, but it will probably be corrected
          * so fast the user will never see it. See Jira-6848 for details and a
-         * soluton that will simplify this class greatly in terms of thread
+         * solution that will simplify this class greatly in terms of thread
          * safety.
          */
         SwingUtilities.invokeLater(() -> {
