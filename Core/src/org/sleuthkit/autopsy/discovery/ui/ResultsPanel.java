@@ -46,6 +46,7 @@ import org.sleuthkit.autopsy.discovery.search.FileSearch;
 import org.sleuthkit.autopsy.discovery.search.SearchData;
 import org.sleuthkit.autopsy.discovery.search.ResultsSorter;
 import org.sleuthkit.autopsy.discovery.search.Result;
+import org.sleuthkit.autopsy.discovery.search.ResultDomain;
 import org.sleuthkit.autopsy.discovery.search.ResultFile;
 import org.sleuthkit.autopsy.textsummarizer.TextSummary;
 
@@ -60,6 +61,7 @@ final class ResultsPanel extends javax.swing.JPanel {
     private final VideoThumbnailViewer videoThumbnailViewer;
     private final ImageThumbnailViewer imageThumbnailViewer;
     private final DocumentPreviewViewer documentPreviewViewer;
+    private final DomainSummaryViewer domainSummaryViewer;
     private List<AbstractFilter> searchFilters;
     private DiscoveryAttributes.AttributeType groupingAttribute;
     private Group.GroupSortingAlgorithm groupSort;
@@ -82,6 +84,7 @@ final class ResultsPanel extends javax.swing.JPanel {
         imageThumbnailViewer = new ImageThumbnailViewer();
         videoThumbnailViewer = new VideoThumbnailViewer();
         documentPreviewViewer = new DocumentPreviewViewer();
+        domainSummaryViewer = new DomainSummaryViewer();
         videoThumbnailViewer.addListSelectionListener((e) -> {
             if (resultType == SearchData.Type.VIDEO) {
                 if (!e.getValueIsAdjusting()) {
@@ -116,6 +119,7 @@ final class ResultsPanel extends javax.swing.JPanel {
                 }
             }
         });
+        //JIRA-TODO 
     }
 
     /**
@@ -182,6 +186,8 @@ final class ResultsPanel extends javax.swing.JPanel {
                         resultsViewerPanel.add(documentPreviewViewer);
                         break;
                     case DOMAIN:
+                        populateDomainViewer(pageRetrievedEvent.getSearchResults());
+                        resultsViewerPanel.add(domainSummaryViewer);
                         break;
                     default:
                         break;
@@ -201,6 +207,7 @@ final class ResultsPanel extends javax.swing.JPanel {
         resultsViewerPanel.remove(imageThumbnailViewer);
         resultsViewerPanel.remove(videoThumbnailViewer);
         resultsViewerPanel.remove(documentPreviewViewer);
+        resultsViewerPanel.remove(domainSummaryViewer);
         //cancel any unfished thumb workers
         for (SwingWorker<Void, Void> thumbWorker : resultContentWorkers) {
             if (!thumbWorker.isDone()) {
@@ -212,13 +219,14 @@ final class ResultsPanel extends javax.swing.JPanel {
         videoThumbnailViewer.clearViewer();
         imageThumbnailViewer.clearViewer();
         documentPreviewViewer.clearViewer();
+        domainSummaryViewer.clearViewer();
     }
 
     /**
      * Populate the video thumbnail viewer, cancelling any thumbnails which are
      * currently being created first.
      *
-     * @param files The list of ResultFiles to populate the video viewer with.
+     * @param results The list of ResultFiles to populate the video viewer with.
      */
     synchronized void populateVideoViewer(List<Result> results) {
         for (Result result : results) {
@@ -233,7 +241,7 @@ final class ResultsPanel extends javax.swing.JPanel {
      * Populate the image thumbnail viewer, cancelling any thumbnails which are
      * currently being created first.
      *
-     * @param files The list of ResultFiles to populate the image viewer with.
+     * @param results The list of ResultFiles to populate the image viewer with.
      */
     synchronized void populateImageViewer(List<Result> results) {
         for (Result result : results) {
@@ -248,7 +256,7 @@ final class ResultsPanel extends javax.swing.JPanel {
      * Populate the document preview viewer, cancelling any content which is
      * currently being created first.
      *
-     * @param files The list of ResultFiles to populate the image viewer with.
+     * @param results The list of ResultFiles to populate the document viewer with.
      */
     synchronized void populateDocumentViewer(List<Result> results) {
         for (Result result : results) {
@@ -259,6 +267,21 @@ final class ResultsPanel extends javax.swing.JPanel {
         }
     }
 
+        /**
+     * Populate the domain summary viewer, cancelling any content which is
+     * currently being created first.
+     *
+     * @param results The list of ResultDomains to populate the domain summary viewer with.
+     */
+    synchronized void populateDomainViewer(List<Result> results) {
+        for (Result result : results) {
+            DomainThumbnailWorker domainWorker = new DomainThumbnailWorker((ResultDomain) result);
+            domainWorker.execute();
+            //keep track of thumb worker for possible cancelation 
+            resultContentWorkers.add(domainWorker);
+        }
+    }
+    
     /**
      * Subscribe and respond to GroupSelectedEvents.
      *
@@ -293,6 +316,7 @@ final class ResultsPanel extends javax.swing.JPanel {
             videoThumbnailViewer.clearViewer();
             imageThumbnailViewer.clearViewer();
             documentPreviewViewer.clearViewer();
+            domainSummaryViewer.clearViewer();
             resultsViewerPanel.revalidate();
             resultsViewerPanel.repaint();
         });
@@ -763,4 +787,44 @@ final class ResultsPanel extends javax.swing.JPanel {
 
     }
 
+    /**
+     * Swing worker to handle the retrieval of domain thumbnails and population
+     * of the Domain Summary Viewer.
+     */
+    private class DomainThumbnailWorker extends SwingWorker<Void, Void> {
+
+        private final DomainWrapper domainWrapper;
+
+        /**
+         * Construct a new DomainThumbnailWorker.
+         *
+         * @param file The ResultFile which represents the domain attribute the
+         *             preview is being retrieved for.
+         */
+        DomainThumbnailWorker(ResultDomain domain) {
+            domainWrapper = new DomainWrapper(domain);
+            domainSummaryViewer.addDomain(domainWrapper);
+        }
+
+        @Override
+        protected Void doInBackground() throws Exception {
+            domainWrapper.setThumnail(null);
+            return null;
+        }
+
+        @Override
+        protected void done() {
+            try {
+                get();
+            } catch (InterruptedException | ExecutionException ex) {
+                domainWrapper.setThumnail(null);
+                logger.log(Level.WARNING, "Document Worker Exception", ex);
+            } catch (CancellationException ignored) {
+                domainWrapper.setThumnail(null);
+                //we want to do nothing in response to this since we allow it to be cancelled
+            }
+            documentPreviewViewer.repaint();
+        }
+
+    }
 }
