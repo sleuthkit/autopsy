@@ -61,6 +61,7 @@ public class DomainSummaryViewer extends javax.swing.JPanel {
 
         setLayout(new java.awt.BorderLayout());
 
+        domainList.setModel(domainListModel);
         domainScrollPane.setViewportView(domainList);
 
         add(domainScrollPane, java.awt.BorderLayout.CENTER);
@@ -68,7 +69,7 @@ public class DomainSummaryViewer extends javax.swing.JPanel {
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JList<String> domainList;
+    private javax.swing.JList<DomainWrapper> domainList;
     private javax.swing.JScrollPane domainScrollPane;
     // End of variables declaration//GEN-END:variables
 

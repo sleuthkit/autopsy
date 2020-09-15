@@ -48,6 +48,7 @@ import org.sleuthkit.autopsy.discovery.search.ResultsSorter;
 import org.sleuthkit.autopsy.discovery.search.Result;
 import org.sleuthkit.autopsy.discovery.search.ResultDomain;
 import org.sleuthkit.autopsy.discovery.search.ResultFile;
+import static org.sleuthkit.autopsy.discovery.search.SearchData.Type.DOMAIN;
 import org.sleuthkit.autopsy.textsummarizer.TextSummary;
 
 /**
@@ -166,8 +167,9 @@ final class ResultsPanel extends javax.swing.JPanel {
     void handlePageRetrievedEvent(DiscoveryEventUtils.PageRetrievedEvent pageRetrievedEvent) {
         SwingUtilities.invokeLater(() -> {
             //send populateMesage
-            DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.PopulateInstancesListEvent(getInstancesForSelected()));
-
+            if (pageRetrievedEvent.getType() != DOMAIN) {
+                DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.PopulateInstancesListEvent(getInstancesForSelected()));
+            }
             currentPage = pageRetrievedEvent.getPageNumber();
             updateControls();
             resetResultViewer();
@@ -256,7 +258,8 @@ final class ResultsPanel extends javax.swing.JPanel {
      * Populate the document preview viewer, cancelling any content which is
      * currently being created first.
      *
-     * @param results The list of ResultFiles to populate the document viewer with.
+     * @param results The list of ResultFiles to populate the document viewer
+     *                with.
      */
     synchronized void populateDocumentViewer(List<Result> results) {
         for (Result result : results) {
@@ -267,11 +270,12 @@ final class ResultsPanel extends javax.swing.JPanel {
         }
     }
 
-        /**
+    /**
      * Populate the domain summary viewer, cancelling any content which is
      * currently being created first.
      *
-     * @param results The list of ResultDomains to populate the domain summary viewer with.
+     * @param results The list of ResultDomains to populate the domain summary
+     *                viewer with.
      */
     synchronized void populateDomainViewer(List<Result> results) {
         for (Result result : results) {
@@ -281,7 +285,7 @@ final class ResultsPanel extends javax.swing.JPanel {
             resultContentWorkers.add(domainWorker);
         }
     }
-    
+
     /**
      * Subscribe and respond to GroupSelectedEvents.
      *

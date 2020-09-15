@@ -24,7 +24,6 @@ import java.awt.Point;
 import java.awt.event.MouseEvent;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import javax.swing.GroupLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JList;
@@ -33,7 +32,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 
 /**
- * Class which displays a preview and details about a document.
+ * Class which displays a preview and details about a domain.
  */
 class DomainSummaryPanel extends javax.swing.JPanel implements ListCellRenderer<DomainWrapper> {
 
@@ -43,7 +42,7 @@ class DomainSummaryPanel extends javax.swing.JPanel implements ListCellRenderer<
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd yyyy");
 
     /**
-     * Creates new form DocumentPanel.
+     * Creates new form DomainPanel.
      */
     DomainSummaryPanel() {
         initComponents();
