@@ -46,7 +46,7 @@ class DomainSummaryPanel extends javax.swing.JPanel implements ListCellRenderer<
      */
     DomainSummaryPanel() {
         initComponents();
-        domainNameLabel.setFont(domainNameLabel.getFont().deriveFont(domainNameLabel.getFont().getSize() + 6));
+        domainNameLabel.setFont(domainNameLabel.getFont().deriveFont(domainNameLabel.getFont().getStyle(), domainNameLabel.getFont().getSize() + 6));
     }
 
     /**
@@ -136,8 +136,8 @@ class DomainSummaryPanel extends javax.swing.JPanel implements ListCellRenderer<
     @Override
     public Component getListCellRendererComponent(JList<? extends DomainWrapper> list, DomainWrapper value, int index, boolean isSelected, boolean cellHasFocus) {
         domainNameLabel.setText(value.getResultDomain().getDomain());
-        String startDate = dateFormat.format(new Date(value.getResultDomain().getActivityStart()*1000));
-        String endDate =dateFormat.format(new Date(value.getResultDomain().getActivityEnd()*1000));
+        String startDate = dateFormat.format(new Date(value.getResultDomain().getActivityStart() * 1000));
+        String endDate = dateFormat.format(new Date(value.getResultDomain().getActivityEnd() * 1000));
         activityLabel.setText(Bundle.DomainSummaryPanel_activity_text(startDate, endDate));
         pagesLabel.setText(Bundle.DomainSummaryPanel_pages_text() + value.getResultDomain().getVisitsInLast60());
         filesDownloadedLabel.setText(Bundle.DomainSummaryPanel_downloads_text() + value.getResultDomain().getFilesDownloaded());
