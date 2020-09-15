@@ -89,6 +89,20 @@ public final class IconsUtil {
             imageFile = "gps_trackpoint.png"; //NON-NLS
         } else if (typeID == ARTIFACT_TYPE.TSK_REMOTE_DRIVE.getTypeID()) {
             imageFile = "drive_network.png"; //NON-NLS
+        } else if (typeID == ARTIFACT_TYPE.TSK_OS_ACCOUNT.getTypeID()) {
+            imageFile = "os-account.png"; //NON-NLS
+        } else if (typeID == ARTIFACT_TYPE.TSK_OBJECT_DETECTED.getTypeID()) {
+            imageFile = "objects.png"; //NON-NLS
+        } else if (typeID == ARTIFACT_TYPE.TSK_WEB_FORM_AUTOFILL.getTypeID()) {
+            imageFile = "web-form.png"; //NON-NLS
+        } else if (typeID == ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID()) {
+            imageFile = "cache.png"; //NON-NLS
+        } else if (typeID == ARTIFACT_TYPE.TSK_USER_CONTENT_SUSPECTED.getTypeID()) {
+            imageFile = "user-content.png"; //NON-NLS
+        } else if (typeID == ARTIFACT_TYPE.TSK_METADATA.getTypeID()) {
+            imageFile = "metadata.png"; //NON-NLS
+        } else if (typeID == ARTIFACT_TYPE.TSK_CLIPBOARD_CONTENT.getTypeID()) {
+            imageFile = "clipboard.png"; //NON-NLS
         } else if (typeID == ARTIFACT_TYPE.TSK_FACE_DETECTED.getTypeID()) {
             imageFile = "face.png"; //NON-NLS
         } else if (typeID == ARTIFACT_TYPE.TSK_WIFI_NETWORK.getTypeID()) {
