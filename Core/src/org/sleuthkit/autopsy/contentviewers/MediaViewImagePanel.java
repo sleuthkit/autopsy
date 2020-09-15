@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2018-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -97,67 +97,63 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Image viewer part of the Media View layered pane. Uses JavaFX to display the
  * image.
  */
-@NbBundle.Messages({"MediaViewImagePanel.externalViewerButton.text=Open in External Viewer  Ctrl+E",
+@NbBundle.Messages({
+    "MediaViewImagePanel.externalViewerButton.text=Open in External Viewer  Ctrl+E",
     "MediaViewImagePanel.errorLabel.text=Could not load file into Media View.",
-    "MediaViewImagePanel.errorLabel.OOMText=Could not load file into Media View: insufficent memory."})
+    "MediaViewImagePanel.errorLabel.OOMText=Could not load file into Media View: insufficent memory."
+})
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPanel {
 
-    private static final Image EXTERNAL = new Image(MediaViewImagePanel.class.getResource("/org/sleuthkit/autopsy/images/external.png").toExternalForm());
-    private final static Logger LOGGER = Logger.getLogger(MediaViewImagePanel.class.getName());
-
-    private final boolean fxInited;
-
-    private JFXPanel fxPanel;
-    private AbstractFile file;
+    private static final long serialVersionUID = 1L;
+    private static final Logger logger = Logger.getLogger(MediaViewImagePanel.class.getName());
+    private static final double[] ZOOM_STEPS = {
+        0.0625, 0.125, 0.25, 0.375, 0.5, 0.75,
+        1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10};
+    private static final double MIN_ZOOM_RATIO = 0.0625; // 6.25%
+    private static final double MAX_ZOOM_RATIO = 10.0; // 1000%
+    private static final Image externalImage = new Image(MediaViewImagePanel.class.getResource("/org/sleuthkit/autopsy/images/external.png").toExternalForm());
+    private static final SortedSet<String> supportedMimes = ImageUtils.getSupportedImageMimeTypes();
+    private static final List<String> supportedExtensions = ImageUtils.getSupportedImageExtensions().stream()
+            .map("."::concat) //NOI18N
+            .collect(Collectors.toList());
+    
+    /*
+     * JFX components
+     */
+    private final ProgressBar progressBar = new ProgressBar();
+    private final MaskerPane maskerPane = new MaskerPane();
     private Group masterGroup;
     private ImageTagsGroup tagsGroup;
     private ImageTagCreator imageTagCreator;
     private ImageView fxImageView;
     private ScrollPane scrollPane;
-    private final ProgressBar progressBar = new ProgressBar();
-    private final MaskerPane maskerPane = new MaskerPane();
-
+    private Task<Image> readImageTask;
+    
+    /*
+     * Swing components
+     */
     private final JPopupMenu imageTaggingOptions = new JPopupMenu();
     private final JMenuItem createTagMenuItem;
     private final JMenuItem deleteTagMenuItem;
     private final JMenuItem hideTagsMenuItem;
     private final JMenuItem exportTagsMenuItem;
-
     private final JFileChooser exportChooser;
-
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
-
+    private JFXPanel fxPanel;
+        
+    /*
+     * State
+     */
+    private final boolean fxInited;
     private double zoomRatio;
     private double rotation; // Can be 0, 90, 180, and 270.
-
-    private boolean autoResize = true; // Auto resize when the user changes the size
-    // of the content viewer unless the user has used the zoom buttons.
-    private static final double[] ZOOM_STEPS = {
-        0.0625, 0.125, 0.25, 0.375, 0.5, 0.75,
-        1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10};
-
-    private static final double MIN_ZOOM_RATIO = 0.0625; // 6.25%
-    private static final double MAX_ZOOM_RATIO = 10.0; // 1000%
+    private boolean autoResize = true; // Auto resize when the user changes the size of the content viewer unless the user has used the zoom buttons.
+    private AbstractFile file;
 
     static {
         ImageIO.scanForPlugins();
     }
-
-    /**
-     * mime types we should be able to display. if the mimetype is unknown we
-     * will fall back on extension and jpg/png header
-     */
-    static private final SortedSet<String> supportedMimes = ImageUtils.getSupportedImageMimeTypes();
-
-    /**
-     * extensions we should be able to display
-     */
-    static private final List<String> supportedExtensions = ImageUtils.getSupportedImageExtensions().stream()
-            .map("."::concat) //NOI18N
-            .collect(Collectors.toList());
-
-    private Task<Image> readImageTask;
 
     /**
      * Creates new form MediaViewImagePanel
@@ -168,7 +164,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         "MediaViewImagePanel.hideTagOption=Hide",
         "MediaViewImagePanel.exportTagOption=Export"
     })
-    public MediaViewImagePanel() {
+    MediaViewImagePanel() {
         initComponents();
         fxInited = org.sleuthkit.autopsy.core.Installer.isJavaFxInited();
 
@@ -354,14 +350,13 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     }
 
     private void showErrorNode(String errorMessage, AbstractFile file) {
-        final Button externalViewerButton = new Button(Bundle.MediaViewImagePanel_externalViewerButton_text(), new ImageView(EXTERNAL));
-        externalViewerButton.setOnAction(actionEvent
-                -> //fx ActionEvent
-                /*
-                 * TODO: why is the name passed into the action constructor? it
-                 * means we duplicate this string all over the place -jm
-                 */ new ExternalViewerAction(Bundle.MediaViewImagePanel_externalViewerButton_text(), new FileNode(file))
-                        .actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "")) //Swing ActionEvent 
+        final Button externalViewerButton = new Button(Bundle.MediaViewImagePanel_externalViewerButton_text(), new ImageView(externalImage));
+        /*
+         * Tie a Swing action (ExternalViewerAction) to a JFX button action.
+         */
+        externalViewerButton.setOnAction(actionEvent ->
+                new ExternalViewerAction(Bundle.MediaViewImagePanel_externalViewerButton_text(), new FileNode(file))
+                .actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "")) 
         );
 
         final VBox errorNode = new VBox(10, new Label(errorMessage), externalViewerButton);
@@ -420,7 +415,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
                                         "state", null, State.NONEMPTY));
                             }
                         } catch (TskCoreException | NoCurrentCaseException ex) {
-                            LOGGER.log(Level.WARNING, "Could not retrieve image tags for file in case db", ex); //NON-NLS
+                            logger.log(Level.WARNING, "Could not retrieve image tags for file in case db", ex); //NON-NLS
                         }
                         scrollPane.setContent(masterGroup);
                     } else {
@@ -693,14 +688,14 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
 
     private void rotateLeftButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rotateLeftButtonActionPerformed
         autoResize = false;
-        
+
         rotation = (rotation + 270) % 360;
         updateView();
     }//GEN-LAST:event_rotateLeftButtonActionPerformed
 
     private void rotateRightButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rotateRightButtonActionPerformed
         autoResize = false;
-        
+
         rotation = (rotation + 90) % 360;
         updateView();
     }//GEN-LAST:event_rotateRightButtonActionPerformed
@@ -760,7 +755,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
                 Case.getCurrentCase().getServices().getTagsManager().deleteContentTag(contentViewerTag.getContentTag());
                 tagsGroup.getChildren().remove(tagInFocus);
             } catch (TskCoreException | NoCurrentCaseException ex) {
-                LOGGER.log(Level.WARNING, "Could not delete image tag in case db", ex); //NON-NLS
+                logger.log(Level.WARNING, "Could not delete image tag in case db", ex); //NON-NLS
             }
 
             scrollPane.setCursor(Cursor.DEFAULT);
@@ -793,7 +788,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
                             ImageTag imageTag = buildImageTag(contentViewerTag);
                             tagsGroup.getChildren().add(imageTag);
                         } catch (TskCoreException | SerializationException | NoCurrentCaseException ex) {
-                            LOGGER.log(Level.WARNING, "Could not save new image tag in case db", ex); //NON-NLS
+                            logger.log(Level.WARNING, "Could not save new image tag in case db", ex); //NON-NLS
                         }
 
                         scrollPane.setCursor(Cursor.DEFAULT);
@@ -832,7 +827,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
                 ImageTagRegion newRegion = (ImageTagRegion) edit.getNewValue();
                 ContentViewerTagManager.updateTag(contentViewerTag, newRegion);
             } catch (SerializationException | TskCoreException | NoCurrentCaseException ex) {
-                LOGGER.log(Level.WARNING, "Could not save edit for image tag in case db", ex); //NON-NLS
+                logger.log(Level.WARNING, "Could not save edit for image tag in case db", ex); //NON-NLS
             }
             scrollPane.setCursor(Cursor.DEFAULT);
         });
@@ -916,7 +911,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
                         JOptionPane.showMessageDialog(null, Bundle.MediaViewImagePanel_successfulExport());
                     } catch (Exception ex) { //Runtime exceptions may spill out of ImageTagsUtil from JavaFX.
                         //This ensures we (devs and users) have something when it doesn't work.
-                        LOGGER.log(Level.WARNING, "Unable to export tagged image to disk", ex); //NON-NLS
+                        logger.log(Level.WARNING, "Unable to export tagged image to disk", ex); //NON-NLS
                         JOptionPane.showMessageDialog(null, Bundle.MediaViewImagePanel_unsuccessfulExport());
                     }
                     return null;
