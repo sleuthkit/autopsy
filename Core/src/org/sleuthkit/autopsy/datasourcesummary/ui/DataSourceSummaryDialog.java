@@ -20,13 +20,17 @@ package org.sleuthkit.autopsy.datasourcesummary.ui;
 
 import java.awt.Frame;
 import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Set;
+import java.util.logging.Level;
+import javax.swing.WindowConstants;
 import javax.swing.event.ListSelectionEvent;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.CaseDataSourcesSummary;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisCompletedEvent;
@@ -40,9 +44,11 @@ import org.sleuthkit.datamodel.IngestJobInfo;
 final class DataSourceSummaryDialog extends javax.swing.JDialog implements Observer {
 
     private static final long serialVersionUID = 1L;
+    private static final Logger logger = Logger.getLogger(DataSourceSummaryDialog.class.getName());
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.DATA_SOURCE_ANALYSIS_COMPLETED);
     private final DataSourceBrowser dataSourcesPanel;
     private final DataSourceSummaryTabbedPane dataSourceSummaryTabbedPane;
+    private final PropertyChangeListener ingestEventListener;
 
     /**
      * Creates new form DataSourceSummaryDialog for displaying a summary of the
@@ -67,8 +73,8 @@ final class DataSourceSummaryDialog extends javax.swing.JDialog implements Obser
                 this.repaint();
             }
         });
-        //add listener to refresh jobs with Started status when they complete
-        IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, (PropertyChangeEvent evt) -> {
+
+        ingestEventListener = (PropertyChangeEvent evt) -> {
             if (evt instanceof DataSourceAnalysisCompletedEvent) {
                 DataSourceAnalysisCompletedEvent dsEvent = (DataSourceAnalysisCompletedEvent) evt;
                 if (dsEvent.getResult() == Reason.ANALYSIS_COMPLETED) {
@@ -77,8 +83,27 @@ final class DataSourceSummaryDialog extends javax.swing.JDialog implements Obser
                     dataSourcesPanel.refresh(dsEvent.getDataSource().getId(), null);
                 }
             }
-        });
+        };
+
+        //add listener to refresh jobs with Started status when they complete
+        IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, ingestEventListener);
+
+        // verify that dialog will call dispose on close:
+        // https://docs.oracle.com/javase/tutorial/uiswing/components/frame.html#windowevents
+        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         this.pack();
+    }
+
+    @Override
+    public void dispose() {
+        IngestManager.getInstance().removeIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, ingestEventListener);
+        try {
+            this.dataSourceSummaryTabbedPane.close();
+        } catch (Exception ex) {
+            logger.log(Level.WARNING, "There was an error disposing of resources in the tabbed pange for data source summary.", ex);
+        }
+
+        super.dispose();
     }
 
     /**
