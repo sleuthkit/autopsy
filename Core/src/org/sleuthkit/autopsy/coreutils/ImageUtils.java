@@ -38,6 +38,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import static java.util.Objects.nonNull;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -962,7 +963,7 @@ public class ImageUtils {
                     LOGGER.log(Level.WARNING, IMAGEIO_COULD_NOT_READ_UNSUPPORTED_OR_CORRUPT, ImageUtils.getContentPathSafe(file));
                 } else if (fxImage.isError()) {
                     //if there was somekind of error, log it
-                    LOGGER.log(Level.WARNING, IMAGEIO_COULD_NOT_READ_UNSUPPORTED_OR_CORRUPT + ": " + ObjectUtils.toString(fxImage.getException()), ImageUtils.getContentPathSafe(file));
+                    LOGGER.log(Level.WARNING, IMAGEIO_COULD_NOT_READ_UNSUPPORTED_OR_CORRUPT + ": " + Objects.toString(fxImage.getException()), ImageUtils.getContentPathSafe(file));
                 }
             } catch (InterruptedException | ExecutionException ex) {
                 failed();
@@ -972,7 +973,7 @@ public class ImageUtils {
         @Override
         protected void failed() {
             super.failed();
-            LOGGER.log(Level.WARNING, IMAGEIO_COULD_NOT_READ_UNSUPPORTED_OR_CORRUPT + ": " + ObjectUtils.toString(getException()), ImageUtils.getContentPathSafe(file));
+            LOGGER.log(Level.WARNING, IMAGEIO_COULD_NOT_READ_UNSUPPORTED_OR_CORRUPT + ": " + Objects.toString(getException()), ImageUtils.getContentPathSafe(file));
         }
 
         @Override
