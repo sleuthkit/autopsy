@@ -26,11 +26,9 @@ import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Set;
-import java.util.logging.Level;
 import javax.swing.WindowConstants;
 import javax.swing.event.ListSelectionEvent;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.CaseDataSourcesSummary;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisCompletedEvent;
@@ -44,7 +42,6 @@ import org.sleuthkit.datamodel.IngestJobInfo;
 final class DataSourceSummaryDialog extends javax.swing.JDialog implements Observer {
 
     private static final long serialVersionUID = 1L;
-    private static final Logger logger = Logger.getLogger(DataSourceSummaryDialog.class.getName());
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.DATA_SOURCE_ANALYSIS_COMPLETED);
     private final DataSourceBrowser dataSourcesPanel;
     private final DataSourceSummaryTabbedPane dataSourceSummaryTabbedPane;

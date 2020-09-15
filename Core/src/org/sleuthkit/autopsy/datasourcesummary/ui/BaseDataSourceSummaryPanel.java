@@ -242,7 +242,7 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
                 .collect(Collectors.toList());
 
         // submit swing workers to run
-        if (workers.size() > 0) {
+        if (!workers.isEmpty()) {
             submit(workers);
         }
     }
