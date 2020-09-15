@@ -59,6 +59,7 @@ import javafx.scene.transform.Translate;
 import javax.imageio.ImageIO;
 import javax.swing.JFileChooser;
 import javafx.scene.Node;
+import javax.annotation.concurrent.Immutable;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -118,8 +119,8 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10};
     private static final double MIN_ZOOM_RATIO = 0.0625; // 6.25%
     private static final double MAX_ZOOM_RATIO = 10.0; // 1000%
-    private static final boolean JFX_INITED = org.sleuthkit.autopsy.core.Installer.isJavaFxInited();
     private static final Image openInExternalViewerButtonImage = new Image(MediaViewImagePanel.class.getResource("/org/sleuthkit/autopsy/images/external.png").toExternalForm()); //NOI18N
+    private final boolean jfxIsInited = org.sleuthkit.autopsy.core.Installer.isJavaFxInited();
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
     /*
@@ -159,33 +160,39 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     private final JFXPanel fxPanel;
 
     /*
-     * Panel state.
+     * Panel state: currently selected image file.
      *
-     * currentFile: The loadFile() method kicks off a JFX background task to
-     * read the content of the currently selected file into a JFX Image object.
-     * If the task succeeds and is not cancelled, the AbstractFile reference is
-     * saved as currentFile. The reference is used for tagging operations which
+     * imageFile: The loadFile() method kicks off a JFX background task to read
+     * the content of the currently selected file into a JFX Image object. If
+     * the task succeeds and is not cancelled, the AbstractFile reference is
+     * saved as imageFile. The reference is used for tagging operations which
      * are done in the JFX thread. IMPORTANT: Thread confinement is maintained
      * by capturing the reference in a local variable before dispatching a tag
-     * export task to the SwingWorker thread pool.
+     * export task to the SwingWorker thread pool. The imageFile field should
+     * not be read directly in the JFX thread.
      *
      * readImageFileTask: This is a reference to a JFX background task that
      * reads the content of the currently selected file into a JFX Image object.
      * A reference is maintained so that the task can be cancelled if it is
-     * running when the selected file changes.
+     * running when the selected image file changes.
      *
-     * zoomRatio, rotation, autoResize: These values are set in the EDT based on
-     * user interaction with Swing components and are used in the JFX thread
-     * when rendering the image. They are volatile to ensure visibility of
-     * changes in both threads.
+     * imageTransforms: These values are mostly written in the EDT based on user
+     * interactions with Swing components and then read in the JFX thread when
+     * rendering the image. The exception is recalculation of the zoom ratio
+     * based on the image size when a) the selected image file is changed, b)
+     * the panel is resized or c) the user pushes the reset button to clear any
+     * transforms they have specified. In these three cases, the zoom ratio
+     * update happens in the JFX thread since the image must be accessed.
+     * IMPORTANT: The image transforms are bundled as atomic state and a
+     * snapshot should be captured for each rendering operation on the JFX
+     * thread so that the image transforms do not change during rendering due to
+     * user interactions in the EDT.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    private AbstractFile currentFile;
+    private AbstractFile imageFile;
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private Task<Image> readImageFileTask;
-    private volatile double zoomRatio;
-    private volatile double rotation; // Can be 0, 90, 180, and 270.
-    private volatile boolean autoResize = true; // Auto resize when the user changes the size of the content viewer unless the user has used the zoom buttons.
+    private volatile ImageTransforms imageTransforms;
 
     static {
         ImageIO.scanForPlugins();
@@ -205,6 +212,8 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     })
     MediaViewImagePanel() {
         initComponents();
+
+        imageTransforms = new ImageTransforms(0, 0, true);
 
         exportChooser = new JFileChooser();
         exportChooser.setDialogTitle(Bundle.MediaViewImagePanel_fileChooserTitle());
@@ -242,7 +251,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         }
 
         fxPanel = new JFXPanel();
-        if (JFX_INITED) {
+        if (isInited()) {
             Platform.runLater(new Runnable() {
                 @Override
                 public void run() {
@@ -395,14 +404,18 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         });
     }
 
-    public boolean isInited() {
-        return JFX_INITED;
+    /*
+     * Indicates whether or not the panel can be used, i.e., JavaFX has been
+     * intitialized.
+     */
+    boolean isInited() {
+        return jfxIsInited;
     }
 
     /**
-     * Clear the displayed image
+     * Clear the displayed image.
      */
-    public void reset() {
+    void reset() {
         Platform.runLater(() -> {
             fxImageView.setViewport(new Rectangle2D(0, 0, 0, 0));
             fxImageView.setImage(null);
@@ -441,7 +454,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     void loadFile(final AbstractFile file) {
         ensureInSwingThread();
-        if (!JFX_INITED) {
+        if (!isInited()) {
             return;
         }
 
@@ -487,24 +500,23 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
      *                    components of this panel.
      */
     private void onReadImageTaskSucceeded(AbstractFile file, double panelWidth, double panelHeight) {
-        Platform.runLater(() -> {
-            if (!Case.isCaseOpen()) {
-                /*
-                 * Handle the in-between condition when case is being closed and
-                 * an image was previously selected
-                 *
-                 * NOTE: I think this is unnecessary -jm
-                 */
-                reset();
-                return;
-            }
+        if (!Case.isCaseOpen()) {
+            /*
+             * Handle the in-between condition when case is being closed and an
+             * image was previously selected
+             *
+             * NOTE: I think this is unnecessary -jm
+             */
+            reset();
+            return;
+        }
 
+        Platform.runLater(() -> {
             try {
-                autoResize = true;
                 Image fxImage = readImageFileTask.get();
                 masterGroup.getChildren().clear();
                 tagsGroup.getChildren().clear();
-                this.currentFile = file;
+                this.imageFile = file;
                 if (nonNull(fxImage)) {
                     // We have a non-null image, so let's show it.
                     fxImageView.setImage(fxImage);
@@ -545,17 +557,18 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
      * @param file The image file.
      */
     private void onReadImageTaskFailed(AbstractFile file) {
+        if (!Case.isCaseOpen()) {
+            /*
+             * Handle in-between condition when case is being closed and an
+             * image was previously selected
+             *
+             * NOTE: I think this is unnecessary -jm
+             */
+            reset();
+            return;
+        }
+
         Platform.runLater(() -> {
-            if (!Case.isCaseOpen()) {
-                /*
-                 * Handle in-between condition when case is being closed and an
-                 * image was previously selected
-                 *
-                 * NOTE: I think this is unnecessary -jm
-                 */
-                reset();
-                return;
-            }
             Throwable exception = readImageFileTask.getException();
             if (exception instanceof OutOfMemoryError
                     && exception.getMessage().contains("Java heap space")) {  //NON-NLS
@@ -797,51 +810,90 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     }// </editor-fold>//GEN-END:initComponents
 
     private void rotateLeftButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rotateLeftButtonActionPerformed
-        autoResize = false;
-        rotation = (rotation + 270) % 360;
-        updateView();
+        rotateImage(270);
     }//GEN-LAST:event_rotateLeftButtonActionPerformed
 
     private void rotateRightButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rotateRightButtonActionPerformed
-        autoResize = false;
-        rotation = (rotation + 90) % 360;
-        updateView();
+        rotateImage(90);
     }//GEN-LAST:event_rotateRightButtonActionPerformed
 
+    private void rotateImage(int angle) {
+        final double panelWidth = fxPanel.getWidth();
+        final double panelHeight = fxPanel.getHeight();
+        ImageTransforms currentTransforms = imageTransforms;
+        double newRotation = (currentTransforms.getRotation() + angle) % 360;
+        final ImageTransforms newTransforms = new ImageTransforms(currentTransforms.getZoomRatio(), newRotation, false);
+        imageTransforms = newTransforms;
+        Platform.runLater(() -> {
+            updateView(panelWidth, panelHeight, newTransforms);
+        });
+    }
+
     private void zoomInButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zoomInButtonActionPerformed
-        autoResize = false;
-        // Find the next zoom step.
-        for (int i = 0; i < ZOOM_STEPS.length; i++) {
-            if (zoomRatio < ZOOM_STEPS[i]) {
-                zoomRatio = ZOOM_STEPS[i];
-                break;
-            }
-        }
-        updateView();
+        zoomImage(ZoomDirection.IN);
     }//GEN-LAST:event_zoomInButtonActionPerformed
 
     private void zoomOutButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zoomOutButtonActionPerformed
-        autoResize = false;
-        // Find the next zoom step.
+        zoomImage(ZoomDirection.OUT);
+    }//GEN-LAST:event_zoomOutButtonActionPerformed
+
+    private void zoomImage(ZoomDirection direction) {
+        ensureInSwingThread();
+        final double panelWidth = fxPanel.getWidth();
+        final double panelHeight = fxPanel.getHeight();
+        final ImageTransforms currentTransforms = imageTransforms;
+        double newZoomRatio;
+        if (direction == ZoomDirection.IN) {
+            newZoomRatio = zoomImageIn(currentTransforms.getZoomRatio());
+        } else {
+            newZoomRatio = zoomImageOut(currentTransforms.getZoomRatio());            
+        }
+        final ImageTransforms newTransforms = new ImageTransforms(newZoomRatio, currentTransforms.getRotation(), false);
+        imageTransforms = newTransforms;
+        Platform.runLater(() -> {
+            updateView(panelWidth, panelHeight, newTransforms);
+        });             
+    }    
+    
+    private double zoomImageIn(double zoomRatio) {
+        double newZoomRatio = zoomRatio;
+        for (int i = 0; i < ZOOM_STEPS.length; i++) {
+            if (newZoomRatio < ZOOM_STEPS[i]) {
+                newZoomRatio = ZOOM_STEPS[i];
+                break;
+            }
+        } 
+        return newZoomRatio;
+    }
+    
+    private double zoomImageOut(double zoomRatio) {
+        double newZoomRatio = zoomRatio;
         for (int i = ZOOM_STEPS.length - 1; i >= 0; i--) {
-            if (zoomRatio > ZOOM_STEPS[i]) {
-                zoomRatio = ZOOM_STEPS[i];
+            if (newZoomRatio > ZOOM_STEPS[i]) {
+                newZoomRatio = ZOOM_STEPS[i];
                 break;
             }
         }
-        updateView();
-    }//GEN-LAST:event_zoomOutButtonActionPerformed
-
+        return newZoomRatio;
+    }    
+    
     private void zoomResetButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zoomResetButtonActionPerformed
-        autoResize = true;
+        final ImageTransforms currentTransforms = imageTransforms;
+        final ImageTransforms newTransforms = new ImageTransforms(0, currentTransforms.getRotation(), true);
+        imageTransforms = newTransforms;
         resetView();
     }//GEN-LAST:event_zoomResetButtonActionPerformed
 
     private void formComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentResized
-        if (autoResize) {
+        final ImageTransforms currentTransforms = imageTransforms;
+        if (currentTransforms.shouldAutoResize()) {
             resetView();
         } else {
-            updateView();
+            final double panelWidth = fxPanel.getWidth();
+            final double panelHeight = fxPanel.getHeight();
+            Platform.runLater(() -> {
+                updateView(panelWidth, panelHeight, currentTransforms);
+            });
         }
     }//GEN-LAST:event_formComponentResized
 
@@ -957,7 +1009,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         scrollPane.setCursor(Cursor.WAIT);
         try {
             ContentTag contentTag = Case.getCurrentCaseThrows().getServices().getTagsManager()
-                    .addContentTag(currentFile, result.getTagName(), result.getComment());
+                    .addContentTag(imageFile, result.getTagName(), result.getComment());
             return ContentViewerTagManager.saveTag(contentTag, data);
         } finally {
             scrollPane.setCursor(Cursor.DEFAULT);
@@ -995,7 +1047,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     })
     private void exportTags() {
         Platform.runLater(() -> {
-            final AbstractFile file = currentFile;
+            final AbstractFile file = imageFile;
             tagsGroup.clearFocus();
             SwingUtilities.invokeLater(() -> {
                 exportChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
@@ -1129,28 +1181,14 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         double scrollPaneHeight = panelHeight;
         double zoomRatioWidth = scrollPaneWidth / imageWidth;
         double zoomRatioHeight = scrollPaneHeight / imageHeight;
-
-        // Use the smallest ratio size to fit the entire image in the view area.
-        zoomRatio = zoomRatioWidth < zoomRatioHeight ? zoomRatioWidth : zoomRatioHeight;
-
-        rotation = 0;
+        double newZoomRatio = zoomRatioWidth < zoomRatioHeight ? zoomRatioWidth : zoomRatioHeight; // Use the smallest ratio size to fit the entire image in the view area.
+        final ImageTransforms newTransforms = new ImageTransforms(newZoomRatio, 0, true);
+        imageTransforms = newTransforms;
 
         scrollPane.setHvalue(0);
         scrollPane.setVvalue(0);
 
-        updateView(panelWidth, panelHeight);
-    }
-
-    /**
-     * Gets the dimensions of the Swing container of the JFX components and then
-     * updates the display of the image to use the current zoom and rotation
-     * values.
-     */
-    private void updateView() {
-        ensureInSwingThread();
-        final double panelWidth = fxPanel.getWidth();
-        final double panelHeight = fxPanel.getHeight();
-        updateView(panelWidth, panelHeight);
+        updateView(panelWidth, panelHeight, newTransforms);
     }
 
     /**
@@ -1169,117 +1207,129 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
      * @param panelHeight The height of the child panel that contains the JFX
      *                    components of this panel.
      */
-    private void updateView(double panelWidth, double panelHeight) {
-        Platform.runLater(() -> {
-            Image image = fxImageView.getImage();
-            if (image == null) {
-                return;
+    /**
+     *
+     * @param panelWidth
+     * @param panelHeight
+     * @param imageTransforms
+     */
+    private void updateView(double panelWidth, double panelHeight, ImageTransforms imageTransforms) {
+        Image image = fxImageView.getImage();
+        if (image == null) {
+            return;
+        }
+
+        // Image dimensions
+        double imageWidth = image.getWidth();
+        double imageHeight = image.getHeight();
+
+        // Image dimensions with zooming applied
+        double currentZoomRatio = imageTransforms.getZoomRatio();
+        double adjustedImageWidth = imageWidth * currentZoomRatio;
+        double adjustedImageHeight = imageHeight * currentZoomRatio;
+
+        // ImageView viewport dimensions
+        double viewportWidth;
+        double viewportHeight;
+
+        // Coordinates to center the image on the panel
+        double centerOffsetX = (panelWidth / 2) - (imageWidth / 2);
+        double centerOffsetY = (panelHeight / 2) - (imageHeight / 2);
+
+        // Coordinates to keep the image inside the left/top boundaries
+        double leftOffsetX;
+        double topOffsetY;
+
+        // Scroll bar positions
+        double scrollX = scrollPane.getHvalue();
+        double scrollY = scrollPane.getVvalue();
+
+        // Scroll bar position boundaries (work-around for viewport size bug)
+        double maxScrollX;
+        double maxScrollY;
+
+        // Set viewport size and translation offsets.
+        final double currentRotation = imageTransforms.getRotation();
+        if ((currentRotation % 180) == 0) {
+            // Rotation is 0 or 180.
+            viewportWidth = adjustedImageWidth;
+            viewportHeight = adjustedImageHeight;
+            leftOffsetX = (adjustedImageWidth - imageWidth) / 2;
+            topOffsetY = (adjustedImageHeight - imageHeight) / 2;
+            maxScrollX = (adjustedImageWidth - panelWidth) / (imageWidth - panelWidth);
+            maxScrollY = (adjustedImageHeight - panelHeight) / (imageHeight - panelHeight);
+        } else {
+            // Rotation is 90 or 270.
+            viewportWidth = adjustedImageHeight;
+            viewportHeight = adjustedImageWidth;
+            leftOffsetX = (adjustedImageHeight - imageWidth) / 2;
+            topOffsetY = (adjustedImageWidth - imageHeight) / 2;
+            maxScrollX = (adjustedImageHeight - panelWidth) / (imageWidth - panelWidth);
+            maxScrollY = (adjustedImageWidth - panelHeight) / (imageHeight - panelHeight);
+        }
+
+        // Work around bug that truncates image if dimensions are too small.
+        if (viewportWidth < imageWidth) {
+            viewportWidth = imageWidth;
+            if (scrollX > maxScrollX) {
+                scrollX = maxScrollX;
             }
-
-            // Image dimensions
-            double imageWidth = image.getWidth();
-            double imageHeight = image.getHeight();
-
-            // Image dimensions with zooming applied
-            double adjustedImageWidth = imageWidth * zoomRatio;
-            double adjustedImageHeight = imageHeight * zoomRatio;
-
-            // ImageView viewport dimensions
-            double viewportWidth;
-            double viewportHeight;
-
-            // Coordinates to center the image on the panel
-            double centerOffsetX = (panelWidth / 2) - (imageWidth / 2);
-            double centerOffsetY = (panelHeight / 2) - (imageHeight / 2);
-
-            // Coordinates to keep the image inside the left/top boundaries
-            double leftOffsetX;
-            double topOffsetY;
-
-            // Scroll bar positions
-            double scrollX = scrollPane.getHvalue();
-            double scrollY = scrollPane.getVvalue();
-
-            // Scroll bar position boundaries (work-around for viewport size bug)
-            double maxScrollX;
-            double maxScrollY;
-
-            // Set viewport size and translation offsets.
-            if ((rotation % 180) == 0) {
-                // Rotation is 0 or 180.
-                viewportWidth = adjustedImageWidth;
-                viewportHeight = adjustedImageHeight;
-                leftOffsetX = (adjustedImageWidth - imageWidth) / 2;
-                topOffsetY = (adjustedImageHeight - imageHeight) / 2;
-                maxScrollX = (adjustedImageWidth - panelWidth) / (imageWidth - panelWidth);
-                maxScrollY = (adjustedImageHeight - panelHeight) / (imageHeight - panelHeight);
-            } else {
-                // Rotation is 90 or 270.
-                viewportWidth = adjustedImageHeight;
-                viewportHeight = adjustedImageWidth;
-                leftOffsetX = (adjustedImageHeight - imageWidth) / 2;
-                topOffsetY = (adjustedImageWidth - imageHeight) / 2;
-                maxScrollX = (adjustedImageHeight - panelWidth) / (imageWidth - panelWidth);
-                maxScrollY = (adjustedImageWidth - panelHeight) / (imageHeight - panelHeight);
+        }
+        if (viewportHeight < imageHeight) {
+            viewportHeight = imageHeight;
+            if (scrollY > maxScrollY) {
+                scrollY = maxScrollY;
             }
+        }
 
-            // Work around bug that truncates image if dimensions are too small.
-            if (viewportWidth < imageWidth) {
-                viewportWidth = imageWidth;
-                if (scrollX > maxScrollX) {
-                    scrollX = maxScrollX;
-                }
-            }
-            if (viewportHeight < imageHeight) {
-                viewportHeight = imageHeight;
-                if (scrollY > maxScrollY) {
-                    scrollY = maxScrollY;
-                }
-            }
+        // Update the viewport size.
+        fxImageView.setViewport(new Rectangle2D(
+                0, 0, viewportWidth, viewportHeight));
 
-            // Update the viewport size.
-            fxImageView.setViewport(new Rectangle2D(
-                    0, 0, viewportWidth, viewportHeight));
+        // Step 1: Zoom
+        Scale scale = new Scale();
+        scale.setX(currentZoomRatio);
+        scale.setY(currentZoomRatio);
+        scale.setPivotX(imageWidth / 2);
+        scale.setPivotY(imageHeight / 2);
 
-            // Step 1: Zoom
-            Scale scale = new Scale();
-            scale.setX(zoomRatio);
-            scale.setY(zoomRatio);
-            scale.setPivotX(imageWidth / 2);
-            scale.setPivotY(imageHeight / 2);
+        // Step 2: Rotate
+        Rotate rotate = new Rotate();
+        rotate.setPivotX(imageWidth / 2);
+        rotate.setPivotY(imageHeight / 2);
+        rotate.setAngle(currentRotation);
 
-            // Step 2: Rotate
-            Rotate rotate = new Rotate();
-            rotate.setPivotX(imageWidth / 2);
-            rotate.setPivotY(imageHeight / 2);
-            rotate.setAngle(rotation);
+        // Step 3: Position
+        Translate translate = new Translate();
+        translate.setX(viewportWidth > fxPanel.getWidth() ? leftOffsetX : centerOffsetX);
+        translate.setY(viewportHeight > fxPanel.getHeight() ? topOffsetY : centerOffsetY);
 
-            // Step 3: Position
-            Translate translate = new Translate();
-            translate.setX(viewportWidth > fxPanel.getWidth() ? leftOffsetX : centerOffsetX);
-            translate.setY(viewportHeight > fxPanel.getHeight() ? topOffsetY : centerOffsetY);
+        // Add the transforms in reverse order of intended execution.
+        // Note: They MUST be added in this order to ensure translate is
+        // executed last.
+        masterGroup.getTransforms().clear();
+        masterGroup.getTransforms().addAll(translate, rotate, scale);
 
-            // Add the transforms in reverse order of intended execution.
-            // Note: They MUST be added in this order to ensure translate is
-            // executed last.
-            masterGroup.getTransforms().clear();
-            masterGroup.getTransforms().addAll(translate, rotate, scale);
+        // Adjust scroll bar positions for view changes.
+        if (viewportWidth > fxPanel.getWidth()) {
+            scrollPane.setHvalue(scrollX);
+        }
+        if (viewportHeight > fxPanel.getHeight()) {
+            scrollPane.setVvalue(scrollY);
+        }
 
-            // Adjust scroll bar positions for view changes.
-            if (viewportWidth > fxPanel.getWidth()) {
-                scrollPane.setHvalue(scrollX);
-            }
-            if (viewportHeight > fxPanel.getHeight()) {
-                scrollPane.setVvalue(scrollY);
-            }
-
-            SwingUtilities.invokeLater(() -> {
-                // Update all image controls to reflect the current values.
-                zoomOutButton.setEnabled(zoomRatio > MIN_ZOOM_RATIO);
-                zoomInButton.setEnabled(zoomRatio < MAX_ZOOM_RATIO);
-                rotationTextField.setText((int) rotation + "°");
-                zoomTextField.setText((Math.round(zoomRatio * 100.0)) + "%");
-            });
+        /*
+         * RC: There is a race condition here, but it will probably be corrected
+         * so fast the user will never see it. See Jira-6848 for details and a
+         * soluton that will simplify this class greatly in terms of thread
+         * safety.
+         */
+        SwingUtilities.invokeLater(() -> {
+            // Update all image controls to reflect the current values.
+            zoomOutButton.setEnabled(currentZoomRatio > MIN_ZOOM_RATIO);
+            zoomInButton.setEnabled(currentZoomRatio < MAX_ZOOM_RATIO);
+            rotationTextField.setText((int) currentRotation + "°");
+            zoomTextField.setText((Math.round(currentZoomRatio * 100.0)) + "%");
         });
     }
 
@@ -1303,6 +1353,56 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         if (!SwingUtilities.isEventDispatchThread()) {
             throw new IllegalStateException("Attempt to execute Swing code outside of EDT"); //NON-NLS
         }
+    }
+
+    private enum ZoomDirection {IN, OUT};
+        
+    /**
+     * Records a snapshot of the image transforms specified by the user.
+     */
+    @Immutable
+    private static class ImageTransforms {
+
+        private final double zoomRatio;
+        private final double rotation;
+        private final boolean autoResize;
+
+        ImageTransforms(double zoomRatio, double rotation, boolean autoResize) {
+            this.zoomRatio = zoomRatio;
+            this.rotation = rotation;
+            this.autoResize = autoResize;
+        }
+
+        /**
+         * Gets the current zoom ratio.
+         *
+         * @return The zoom ratio.
+         */
+        private double getZoomRatio() {
+            return zoomRatio;
+        }
+
+        /**
+         * Gets the current image rotation value. Can be 0, 90, 180, or 270
+         * degrees.
+         *
+         * @return The rotaion, in degrees.
+         */
+        private double getRotation() {
+            return rotation;
+        }
+
+        /**
+         * Indicates whether or not auto resizing is in effect when the user
+         * resizes the panel. Should always be true unless the user has used the
+         * zoom buttons.
+         *
+         * @return True or false.
+         */
+        boolean shouldAutoResize() {
+            return autoResize;
+        }
+
     }
 
 }
