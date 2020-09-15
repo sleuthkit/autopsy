@@ -64,6 +64,7 @@ class DomainSummaryPanel extends javax.swing.JPanel implements ListCellRenderer<
         activityLabel = new javax.swing.JLabel();
         pagesLabel = new javax.swing.JLabel();
         filesDownloadedLabel = new javax.swing.JLabel();
+        totalVisitsLabel = new javax.swing.JLabel();
 
         setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
@@ -79,6 +80,8 @@ class DomainSummaryPanel extends javax.swing.JPanel implements ListCellRenderer<
 
         org.openide.awt.Mnemonics.setLocalizedText(filesDownloadedLabel, org.openide.util.NbBundle.getMessage(DomainSummaryPanel.class, "DomainSummaryPanel.filesDownloadedLabel.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(totalVisitsLabel, org.openide.util.NbBundle.getMessage(DomainSummaryPanel.class, "DomainSummaryPanel.totalVisitsLabel.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -86,10 +89,13 @@ class DomainSummaryPanel extends javax.swing.JPanel implements ListCellRenderer<
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(domainNameLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 586, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(domainNameLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 539, Short.MAX_VALUE)
+                        .addGap(47, 47, 47))
                     .addComponent(activityLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(pagesLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(filesDownloadedLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(filesDownloadedLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(totalVisitsLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(numberOfImagesLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -104,17 +110,19 @@ class DomainSummaryPanel extends javax.swing.JPanel implements ListCellRenderer<
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(numberOfImagesLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 17, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(sampleImageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addContainerGap())
+                        .addComponent(sampleImageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(domainNameLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(activityLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGap(11, 11, 11)
+                        .addComponent(totalVisitsLabel)
+                        .addGap(11, 11, 11)
                         .addComponent(pagesLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(filesDownloadedLabel)
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -126,12 +134,14 @@ class DomainSummaryPanel extends javax.swing.JPanel implements ListCellRenderer<
     private javax.swing.JLabel numberOfImagesLabel;
     private javax.swing.JLabel pagesLabel;
     private javax.swing.JLabel sampleImageLabel;
+    private javax.swing.JLabel totalVisitsLabel;
     // End of variables declaration//GEN-END:variables
 
     @NbBundle.Messages({"# {0} - startDate",
         "# {1} - endDate",
         "DomainSummaryPanel.activity.text=Activity: {0} to {1}",
         "DomainSummaryPanel.pages.text=Pages in past 60 days: ",
+        "DomainSummaryPanel.totalPages.text=Total visits: ",
         "DomainSummaryPanel.downloads.text=Files downloaded: "})
     @Override
     public Component getListCellRendererComponent(JList<? extends DomainWrapper> list, DomainWrapper value, int index, boolean isSelected, boolean cellHasFocus) {
@@ -139,6 +149,7 @@ class DomainSummaryPanel extends javax.swing.JPanel implements ListCellRenderer<
         String startDate = dateFormat.format(new Date(value.getResultDomain().getActivityStart() * 1000));
         String endDate = dateFormat.format(new Date(value.getResultDomain().getActivityEnd() * 1000));
         activityLabel.setText(Bundle.DomainSummaryPanel_activity_text(startDate, endDate));
+        totalVisitsLabel.setText(Bundle.DomainSummaryPanel_totalPages_text() + value.getResultDomain().getTotalVisits());
         pagesLabel.setText(Bundle.DomainSummaryPanel_pages_text() + value.getResultDomain().getVisitsInLast60());
         filesDownloadedLabel.setText(Bundle.DomainSummaryPanel_downloads_text() + value.getResultDomain().getFilesDownloaded());
         if (value.getThumbnail() == null) {

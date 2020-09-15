@@ -1101,6 +1101,69 @@ public class DiscoveryKeyUtils {
             return dateNameString;
         }
     }
+    
+    static class NumberOfVisitsGroupKey extends GroupKey {
+        
+        private final String displayName;
+        private final Long visits;
+        
+        @NbBundle.Messages({
+            "DiscoveryKeyUtils.NumberOfVisitsGroupKey.noVisits=No visits"})
+        NumberOfVisitsGroupKey(Result result) {
+            if (result instanceof ResultDomain) {
+                Long totalVisits = ((ResultDomain) result).getTotalVisits();
+                if (totalVisits == null) {
+                    totalVisits = 0L;
+                }
+                displayName = Long.toString(totalVisits);
+                visits = totalVisits;
+            } else {
+                displayName = Bundle.DiscoveryKeyUtils_NumberOfVisitsGroupKey_noVisits();
+                visits = -1L;
+            }
+        }
+        
+        @Override
+        @NbBundle.Messages({
+            "# {0} - totalVisits",
+            "DiscoveryKeyUtils.NumberOfVisitsGroupKey.displayName={0} visits"})
+        String getDisplayName() {
+            return Bundle.DiscoveryKeyUtils_NumberOfVisitsGroupKey_displayName(Long.toString(visits));
+        }
+        
+        @Override
+        public int hashCode() {
+            return Objects.hash(displayName);
+        }
+        
+        Long getVisits() {
+            return visits;
+        }
+        
+        @Override
+        public boolean equals(Object otherKey) {
+            if (otherKey == this) {
+                return true;
+            }
+
+            if (!(otherKey instanceof NumberOfVisitsGroupKey)) {
+                return false;
+            }
+
+            NumberOfVisitsGroupKey visitsKey = (NumberOfVisitsGroupKey) otherKey;
+            return visits.equals(visitsKey.getVisits());
+        }
+        
+        @Override
+        public int compareTo(GroupKey otherGroupKey) {
+            if (otherGroupKey instanceof NumberOfVisitsGroupKey) {
+                NumberOfVisitsGroupKey visitsKey = (NumberOfVisitsGroupKey) otherGroupKey;
+                return Long.compare(getVisits(), visitsKey.getVisits());
+            } else {
+                return compareClassNames(otherGroupKey);
+            }
+        }
+    }
 
     /**
      * Key representing an object detected group

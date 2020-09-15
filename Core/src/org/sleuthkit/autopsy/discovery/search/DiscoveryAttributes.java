@@ -596,6 +596,14 @@ public class DiscoveryAttributes {
         }
 
     }
+    
+    static class NumberOfVisitsAttribute extends AttributeType {
+        
+        @Override
+        public DiscoveryKeyUtils.GroupKey getGroupKey(Result result) {
+            return new DiscoveryKeyUtils.NumberOfVisitsGroupKey(result);
+        }
+    }
 
     /**
      * Attribute for grouping/sorting by objects detected
@@ -721,6 +729,7 @@ public class DiscoveryAttributes {
         "DiscoveryAttributes.GroupingAttributeType.object.displayName=Object Detected",
         "DiscoveryAttributes.GroupingAttributeType.mostRecentDate.displayName=Most Recent Activity Date",
         "DiscoveryAttributes.GroupingAttributeType.firstDate.displayName=First Activity Date",
+        "DiscoveryAttributes.GroupingAttributeType.numberOfVisits.displayName=Number of Visits",
         "DiscoveryAttributes.GroupingAttributeType.none.displayName=None"})
     public enum GroupingAttributeType {
         FILE_SIZE(new FileSizeAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_size_displayName()),
@@ -734,6 +743,7 @@ public class DiscoveryAttributes {
         OBJECT_DETECTED(new ObjectDetectedAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_object_displayName()),
         MOST_RECENT_DATE(new MostRecentActivityDateAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_mostRecentDate_displayName()),
         FIRST_DATE(new MostRecentActivityDateAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_firstDate_displayName()),
+        NUMBER_OF_VISITS(new NumberOfVisitsAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_numberOfVisits_displayName()),
         NO_GROUPING(new NoGroupingAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_none_displayName());
 
         private final AttributeType attributeType;
@@ -768,7 +778,7 @@ public class DiscoveryAttributes {
          * @return Enums that can be used to group files.
          */
         public static List<GroupingAttributeType> getOptionsForGroupingForDomains() {
-            return Arrays.asList(FREQUENCY, MOST_RECENT_DATE, FIRST_DATE);
+            return Arrays.asList(FREQUENCY, MOST_RECENT_DATE, FIRST_DATE, NUMBER_OF_VISITS);
         }
     }
     
