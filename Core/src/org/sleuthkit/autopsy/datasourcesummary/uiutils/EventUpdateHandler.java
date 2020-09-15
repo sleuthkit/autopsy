@@ -163,7 +163,10 @@ public class EventUpdateHandler {
      * Registers ingest and case event listeners.
      */
     public void register() {
-        Case.addEventTypeSubscriber(caseEvents, caseEventsListener);
+        if (!caseEvents.isEmpty()) {
+            Case.addEventTypeSubscriber(caseEvents, caseEventsListener);
+        }
+
         refreshThrottler.registerForIngestModuleEvents();
     }
 
@@ -171,7 +174,10 @@ public class EventUpdateHandler {
      * Unregisters ingest and case event listeners.
      */
     public void unregister() {
-        Case.removeEventTypeSubscriber(caseEvents, caseEventsListener);
+        if (!caseEvents.isEmpty()) {
+            Case.removeEventTypeSubscriber(caseEvents, caseEventsListener);
+        }
+        
         refreshThrottler.unregisterEventListener();
     }
 }
