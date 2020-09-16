@@ -38,6 +38,7 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 })
 public class IngestRunningLabel extends JPanel {
 
+    private static final long serialVersionUID = 1L;
     public static final String DEFAULT_MESSAGE = Bundle.IngestRunningLabel_defaultMessage();
     private static final URL DEFAULT_ICON = IngestRunningLabel.class.getResource("/org/sleuthkit/autopsy/modules/filetypeid/warning16.png");
 
@@ -130,7 +131,7 @@ public class IngestRunningLabel extends JPanel {
         if (showWarningIcon) {
             jlabel.setIcon(new ImageIcon(DEFAULT_ICON));
         }
-        
+
         setLayout(new BorderLayout());
         add(jlabel, BorderLayout.NORTH);
 
