@@ -278,21 +278,6 @@ public class DiscoveryAttributes {
                         currentFiles.clear();
                     }
                 } else {
-                    ResultDomain domain = (ResultDomain) result;
-                    try {
-                        CorrelationAttributeInstance.Type domainAttributeType
-                                = centralRepoDb.getCorrelationTypeById(CorrelationAttributeInstance.DOMAIN_TYPE_ID);
-                        Long count = centralRepoDb.getCountArtifactInstancesByTypeValue(domainAttributeType, domain.getDomain());
-                        domain.setFrequency(SearchData.Frequency.fromCount(count));
-                    } catch (CentralRepoException ex) {
-                        throw new DiscoveryException("Error encountered querying the central repository.", ex);
-                    } catch (CorrelationAttributeNormalizationException ex) {
-                        logger.log(Level.INFO, "Domain [%s] could not be normalized for central repository querying, skipping...", domain.getDomain());
-                    }
-                }
-
-                if (hashesToLookUp.size() >= BATCH_SIZE) {
-                    computeFrequency(hashesToLookUp, currentFiles, centralRepoDb);
                     ResultDomain domainInstance = (ResultDomain) result;
                     domainsToQuery.add(domainInstance);
 
