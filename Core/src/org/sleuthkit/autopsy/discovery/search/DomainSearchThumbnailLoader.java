@@ -36,6 +36,8 @@ import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
+import org.openide.util.ImageUtilities;
+
 /**
  * Loads a thumbnail for the given request. Thumbnail candidates are JPEG files
  * that are either TSK_WEB_DOWNLOAD or TSK_WEB_CACHE artifacts. JPEG files are
@@ -44,6 +46,8 @@ import org.sleuthkit.datamodel.TskCoreException;
  * loaded from the DomainSearchArtifactsCache and then further analyzed.
  */
 public class DomainSearchThumbnailLoader extends CacheLoader<DomainSearchThumbnailRequest, Image> {
+    
+    private static final String UNSUPPORTED_IMAGE = "org/sleuthkit/autopsy/images/image-extraction-not-supported.png";
 
     private static final String JPG_EXTENSION = "jpg";
     private static final String JPG_MIME_TYPE = "image/jpeg";
