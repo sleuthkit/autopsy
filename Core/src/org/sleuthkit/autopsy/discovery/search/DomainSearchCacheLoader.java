@@ -136,6 +136,10 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
                 "                 ELSE 0 " +
                 "               END) AS fileDownloads," + 
                 "           SUM(CASE " +
+                "                 WHEN artifact_type_id = " + TSK_WEB_HISTORY.getTypeID() + " THEN 1 " +
+                "                 ELSE 0 " +
+                "               END) AS totalVisits," + 
+                "           SUM(CASE " +
                 "                 WHEN artifact_type_id = " + TSK_WEB_HISTORY.getTypeID() + " AND" +
                 "                      date BETWEEN " + sixtyDaysAgo.getEpochSecond() + " AND " + currentTime.getEpochSecond() + " THEN 1 " +
                 "                 ELSE 0 " +
@@ -251,6 +255,11 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
                     if (resultSet.wasNull()) {
                         filesDownloaded = null;
                     }
+                    Long totalVisits = resultSet.getLong("totalVisits");
+                    if (resultSet.wasNull()) {
+                        totalVisits = null;
+                    }
+                    
                     Long visitsInLast60 = resultSet.getLong("last60");
                     if (resultSet.wasNull()) {
                         visitsInLast60 = null;
@@ -260,7 +269,7 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
                     Content dataSource = skc.getContentById(dataSourceID);
                     
                     resultDomains.add(new ResultDomain(domain, activityStart,
-                            activityEnd, visitsInLast60, filesDownloaded, dataSource));
+                            activityEnd, totalVisits, visitsInLast60, filesDownloaded, dataSource));
                 }
             } catch (SQLException ex) {
                 this.sqlCause = ex;

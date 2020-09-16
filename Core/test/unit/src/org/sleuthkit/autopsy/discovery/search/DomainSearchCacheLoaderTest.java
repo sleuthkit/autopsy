@@ -36,12 +36,12 @@ public class DomainSearchCacheLoaderTest {
     public void load_GroupByDataSourceSortByGroupNameAndDomain() throws DiscoveryException, TskCoreException, SQLException {
         DomainSearchCacheLoader loader = mock(DomainSearchCacheLoader.class);
         List<Result> domains = Arrays.asList(
-                DomainSearchTestUtils.mockDomainResult("google.com", 10, 100, 5, 4, 110),
-                DomainSearchTestUtils.mockDomainResult("yahoo.com", 1, 5, 7, 20, 100),
-                DomainSearchTestUtils.mockDomainResult("google.com", 5, 20, 1, 4, 105),
-                DomainSearchTestUtils.mockDomainResult("facebook.com", 2, 2, 1, 3, 110),
-                DomainSearchTestUtils.mockDomainResult("abc.com", 1, 2, 3, 4, 100),
-                DomainSearchTestUtils.mockDomainResult("xyz.com", 1, 2, 3, 4, 20)
+                DomainSearchTestUtils.mockDomainResult("google.com", 10, 100, 3, 5, 4, 110),
+                DomainSearchTestUtils.mockDomainResult("yahoo.com", 1, 5, 3, 7, 20, 100),
+                DomainSearchTestUtils.mockDomainResult("google.com", 5, 20, 3, 1, 4, 105),
+                DomainSearchTestUtils.mockDomainResult("facebook.com", 2, 2, 3, 1, 3, 110),
+                DomainSearchTestUtils.mockDomainResult("abc.com", 1, 2, 3, 3, 4, 100),
+                DomainSearchTestUtils.mockDomainResult("xyz.com", 1, 2, 3, 3, 4, 20)
         );
         
         SearchKey key = new SearchKey(null, new ArrayList<>(),
@@ -69,11 +69,11 @@ public class DomainSearchCacheLoaderTest {
     public void load_GroupByNothingByGroupNameAndDomain() throws DiscoveryException, TskCoreException, SQLException {
         DomainSearchCacheLoader loader = mock(DomainSearchCacheLoader.class);
         List<Result> domains = Arrays.asList(
-                DomainSearchTestUtils.mockDomainResult("google.com", 10, 100, 5, 4, 110),
-                DomainSearchTestUtils.mockDomainResult("yahoo.com", 1, 5, 7, 20, 100),
-                DomainSearchTestUtils.mockDomainResult("facebook.com", 2, 2, 1, 3, 110),
-                DomainSearchTestUtils.mockDomainResult("abc.com", 1, 2, 3, 4, 100),
-                DomainSearchTestUtils.mockDomainResult("xyz.com", 1, 2, 3, 4, 20)
+                DomainSearchTestUtils.mockDomainResult("google.com", 10, 100, 1, 5, 4, 110),
+                DomainSearchTestUtils.mockDomainResult("yahoo.com", 1, 5, 1, 7, 20, 100),
+                DomainSearchTestUtils.mockDomainResult("facebook.com", 2, 2, 1, 1, 3, 110),
+                DomainSearchTestUtils.mockDomainResult("abc.com", 1, 2, 1, 3, 4, 100),
+                DomainSearchTestUtils.mockDomainResult("xyz.com", 1, 2, 1, 3, 4, 20)
         );
         
         SearchKey key = new SearchKey(null, new ArrayList<>(),
@@ -101,8 +101,8 @@ public class DomainSearchCacheLoaderTest {
     public void load_GroupByNothingSortByNameAndDataSource() throws DiscoveryException, TskCoreException, SQLException {
         DomainSearchCacheLoader loader = mock(DomainSearchCacheLoader.class);
         List<Result> domains = Arrays.asList(
-                DomainSearchTestUtils.mockDomainResult("google.com", 10, 100, 5, 4, 110),
-                DomainSearchTestUtils.mockDomainResult("yahoo.com", 1, 5, 7, 20, 100)
+                DomainSearchTestUtils.mockDomainResult("google.com", 10, 100, 7, 5, 4, 110),
+                DomainSearchTestUtils.mockDomainResult("yahoo.com", 1, 5, 7, 7, 20, 100)
         );
         
         SearchKey key = new SearchKey(null, new ArrayList<>(),
@@ -130,8 +130,8 @@ public class DomainSearchCacheLoaderTest {
     public void load_GroupByDataSourceBySizeAndName() throws DiscoveryException, TskCoreException, SQLException {
         DomainSearchCacheLoader loader = mock(DomainSearchCacheLoader.class);
         List<Result> domains = Arrays.asList(
-                DomainSearchTestUtils.mockDomainResult("google.com", 10, 100, 5, 4, 110),
-                DomainSearchTestUtils.mockDomainResult("yahoo.com", 1, 5, 7, 20, 100)
+                DomainSearchTestUtils.mockDomainResult("google.com", 10, 100, 7, 5, 4, 110),
+                DomainSearchTestUtils.mockDomainResult("yahoo.com", 1, 5, 7, 7, 20, 100)
         );
         
         SearchKey key = new SearchKey(null, new ArrayList<>(),

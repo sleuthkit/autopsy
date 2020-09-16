@@ -7,6 +7,7 @@ DiscoveryAttributes.GroupingAttributeType.interestingItem.displayName=Interestin
 DiscoveryAttributes.GroupingAttributeType.keywordList.displayName=Keyword
 DiscoveryAttributes.GroupingAttributeType.mostRecentDate.displayName=Most Recent Activity Date
 DiscoveryAttributes.GroupingAttributeType.none.displayName=None
+DiscoveryAttributes.GroupingAttributeType.numberOfVisits.displayName=Number of Visits
 DiscoveryAttributes.GroupingAttributeType.object.displayName=Object Detected
 DiscoveryAttributes.GroupingAttributeType.parent.displayName=Parent Folder
 DiscoveryAttributes.GroupingAttributeType.size.displayName=File Size
@@ -23,6 +24,9 @@ DiscoveryKeyUtils.InterestingItemGroupKey.noSets=None
 DiscoveryKeyUtils.KeywordListGroupKey.noKeywords=None
 DiscoveryKeyUtils.MostRecentActivityDateGroupKey.noDate=No Date Available
 DiscoveryKeyUtils.NoGroupingGroupKey.allFiles=All Files
+# {0} - totalVisits
+DiscoveryKeyUtils.NumberOfVisitsGroupKey.displayName={0} visits
+DiscoveryKeyUtils.NumberOfVisitsGroupKey.noVisits=No visits
 DiscoveryKeyUtils.ObjectDetectedGroupKey.noSets=None
 FileGroup.groupSortingAlgorithm.groupName.text=Group Name
 FileGroup.groupSortingAlgorithm.groupSize.text=Group Size
