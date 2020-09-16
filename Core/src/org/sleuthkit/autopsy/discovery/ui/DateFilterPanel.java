@@ -19,8 +19,8 @@
 package org.sleuthkit.autopsy.discovery.ui;
 
 import java.awt.event.ActionListener;
-import java.time.Duration;
 import java.time.LocalDate;
+import java.time.Period;
 import java.time.ZoneId;
 import org.sleuthkit.autopsy.discovery.search.AbstractFilter;
 import javax.swing.JCheckBox;
@@ -299,7 +299,7 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
             LocalDate endDate = LocalDate.MAX;
             ZoneId zone = Utils.getUserPreferredZoneId();
             if (rangeRadioButton.isSelected() && (startCheckBox.isSelected() || endCheckBox.isSelected())) {
-                if (startCheckBox.isSelected() && startDatePicker.getDate().equals(startDate)) {
+                if (startCheckBox.isSelected() && startDatePicker.getDate() != null) {
                     startDate = startDatePicker.getDate();
                 }
                 if (endCheckBox.isSelected() && endDatePicker.getDate() != null) {
@@ -307,7 +307,7 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
                 }
             } else if (dateFilterCheckBox.isSelected() && mostRecentRadioButton.isSelected()) {
                 endDate = LocalDate.now();
-                startDate = LocalDate.now().minus(Duration.ofDays((long) daysSpinner.getValue()));
+                startDate = LocalDate.now().minus(Period.ofDays((Integer) daysSpinner.getValue()));
             }
             return new SearchFiltering.ArtifactDateRangeFilter(startDate.atStartOfDay(zone).toEpochSecond(), endDate.atStartOfDay(zone).toEpochSecond() + SECS_PER_DAY);//to insure end date is inclusive
         }
