@@ -275,8 +275,9 @@ public class TopProgramsSummary implements DefaultArtifactUpdateGovernor {
             return progResults;
         };
 
-        try (SleuthkitCase.CaseDbQuery dbQuery = provider.get().executeQuery(query)) {
-            ResultSet resultSet = dbQuery.getResultSet();
+        try (SleuthkitCase.CaseDbQuery dbQuery = provider.get().executeQuery(query);
+                ResultSet resultSet = dbQuery.getResultSet()) {
+
             return handler.process(resultSet);
         }
     }
