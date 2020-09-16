@@ -1,3 +1,4 @@
+ArtifactTypeFilterPanel.selectionNeeded.text=At least one Result type must be selected.
 CTL_OpenDiscoveryAction=Discovery
 # {0} - dataSourceName
 DataSourceModuleWrapper.exifModule.text=Exif Parser module was not run on data source: {0}\n
@@ -7,6 +8,8 @@ DataSourceModuleWrapper.fileTypeModule.text=File Type Identification module was 
 DataSourceModuleWrapper.hashModule.text=Hash Lookup module was not run on data source: {0}\n
 # {0} - timeZone
 DateFilterPanel.dateRange.text=Date Range ({0}):
+DateFilterPanel.invalidRange.text=Range or Only Last must be selected
+DateFilterPanel.startOrEndNeeded.text=A start or end date must be specified to use the range filter
 DiscoveryDialog.name.text=Discovery
 DiscoveryTopComponent.cancelButton.text=Cancel Search
 DiscoveryTopComponent.name=\ Discovery
