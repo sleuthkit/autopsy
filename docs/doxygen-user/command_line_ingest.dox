@@ -178,7 +178,7 @@ If you've entered everything correctly, Autopsy will load and you'll see this di
 
 \image html command_line_ingest_dialog.png
 
-If you instead see the normal case open dialog, it most likely means that your command line is malformed. Verify that there are no typos and that you have the appropriate parameters for the operation(s) you're attempting. 
+If you entered something incorrectly you will likely see an error in the output. You may also see the normal case open dialog if your combination of commands and parameters was invalid. In either case you'll want to compare what you ran with the descriptions and examples above to try to find the error.
 
 If everything works correctly, you'll see a log of the processing being done and Autopsy will close when finished.
 
