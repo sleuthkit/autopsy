@@ -23,6 +23,7 @@ import java.sql.SQLException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -34,6 +35,7 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.FileTypeUtils.FileTypeCategory;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.TypesSummary;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.ContainerSummary;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.IngestModuleCheckUtil;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.MimeTypeSummary;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.AbstractLoadableComponent;
@@ -42,6 +44,7 @@ import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetch
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.LoadableComponent;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.PieChartPanel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.PieChartPanel.PieChartItem;
+import org.sleuthkit.autopsy.modules.filetypeid.FileTypeIdModuleFactory;
 
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -114,7 +117,9 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
     private static final long serialVersionUID = 1L;
     private static final DecimalFormat INTEGER_SIZE_FORMAT = new DecimalFormat("#");
     private static final DecimalFormat COMMA_FORMATTER = new DecimalFormat("#,###");
-
+    private static final String FILE_TYPE_FACTORY = FileTypeIdModuleFactory.class.getCanonicalName();
+    private static final String FILE_TYPE_MODULE_NAME = FileTypeIdModuleFactory.getModuleName();
+  
     // All file type categories.
     private static final List<Pair<String, Set<String>>> FILE_MIME_TYPE_CATEGORIES = Arrays.asList(
             Pair.of(Bundle.TypesPanel_fileMimeTypesChart_images_title(), FileTypeCategory.IMAGE.getMediaTypes()),
@@ -176,11 +181,25 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
                 // usage label worker
                 new DataFetchWorker.DataFetchComponents<>(
                         containerData::getDataSourceType,
-                        usageLabel::showDataFetchResult),
+                        (result) -> {
+                            showResultWithModuleCheck(
+                                    usageLabel,
+                                    result,
+                                    StringUtils::isBlank,
+                                    IngestModuleCheckUtil.RECENT_ACTIVITY_FACTORY,
+                                    IngestModuleCheckUtil.RECENT_ACTIVITY_MODULE_NAME);
+                        }),
                 // os label worker
                 new DataFetchWorker.DataFetchComponents<>(
                         containerData::getOperatingSystems,
-                        osLabel::showDataFetchResult),
+                        (result) -> {
+                            showResultWithModuleCheck(
+                                    osLabel,
+                                    result,
+                                    StringUtils::isBlank,
+                                    IngestModuleCheckUtil.RECENT_ACTIVITY_FACTORY,
+                                    IngestModuleCheckUtil.RECENT_ACTIVITY_MODULE_NAME);
+                        }),
                 // size label worker
                 new DataFetchWorker.DataFetchComponents<>(
                         (dataSource) -> {
@@ -191,7 +210,7 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
                 // file types worker
                 new DataFetchWorker.DataFetchComponents<>(
                         (dataSource) -> getMimeTypeCategoriesModel(mimeTypeData, dataSource),
-                        fileMimeTypesChart::showDataFetchResult),
+                        (result) -> showResultWithModuleCheck(fileMimeTypesChart, result, FILE_TYPE_FACTORY, FILE_TYPE_MODULE_NAME)),
                 // allocated files worker
                 new DataFetchWorker.DataFetchComponents<>(
                         (dataSource) -> getStringOrZero(typeData.getCountOfAllocatedFiles(dataSource)),
@@ -234,7 +253,7 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
             throws SQLException, SleuthkitCaseProviderException, TskCoreException {
 
         if (dataSource == null) {
-            return null;
+            return Collections.emptyList();
         }
 
         // for each category of file types, get the counts of files
@@ -259,6 +278,11 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
         fileCategoryItems.add(Pair.of(Bundle.TypesPanel_fileMimeTypesChart_other_title(),
                 allRegularFiles - (categoryTotalCount + noMimeTypeCount)));
 
+        // check at this point to see if these are all 0, if so we don't have results; return empty list
+        if (!fileCategoryItems.stream().anyMatch((pair) -> pair.getValue() != null && pair.getValue() > 0)) {
+            return Collections.emptyList();
+        }
+        
         // create entry for not analyzed mime types category
         fileCategoryItems.add(Pair.of(Bundle.TypesPanel_fileMimeTypesChart_notAnalyzed_title(),
                 noMimeTypeCount));

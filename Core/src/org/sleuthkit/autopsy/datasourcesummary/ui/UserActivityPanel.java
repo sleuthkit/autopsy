@@ -70,6 +70,8 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
     private static final int TOP_SEARCHES_COUNT = 10;
     private static final int TOP_ACCOUNTS_COUNT = 5;
     private static final int TOP_DEVICES_COUNT = 10;
+    private static final String ANDROID_FACTORY = "org.python.proxies.module$AndroidModuleFactory";
+    private static final String ANDROID_MODULE_NAME = "Android Analyzer";
 
     /**
      * Gets a string formatted date or returns empty string if the date is null.
@@ -250,28 +252,43 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
                 // top programs query
                 new DataFetchComponents<DataSource, List<TopProgramsResult>>(
                         (dataSource) -> topProgramsData.getTopPrograms(dataSource, TOP_PROGS_COUNT),
-                        (result) -> topProgramsTable.showDataFetchResult(result, JTablePanel.getDefaultErrorMessage(),
-                                Bundle.UserActivityPanel_noDataExists())),
+                        (result) -> {
+                            showResultWithModuleCheck(topProgramsTable, result,
+                                    IngestModuleCheckUtil.RECENT_ACTIVITY_FACTORY,
+                                    IngestModuleCheckUtil.RECENT_ACTIVITY_MODULE_NAME);
+                        }),
                 // top domains query
                 new DataFetchComponents<DataSource, List<TopDomainsResult>>(
                         (dataSource) -> userActivityData.getRecentDomains(dataSource, TOP_DOMAINS_COUNT),
-                        (result) -> recentDomainsTable.showDataFetchResult(result, JTablePanel.getDefaultErrorMessage(),
-                                Bundle.UserActivityPanel_noDataExists())),
+                        (result) -> {
+                            showResultWithModuleCheck(recentDomainsTable, result,
+                                    IngestModuleCheckUtil.RECENT_ACTIVITY_FACTORY,
+                                    IngestModuleCheckUtil.RECENT_ACTIVITY_MODULE_NAME);
+                        }),
                 // top web searches query
                 new DataFetchComponents<DataSource, List<TopWebSearchResult>>(
                         (dataSource) -> userActivityData.getMostRecentWebSearches(dataSource, TOP_SEARCHES_COUNT),
-                        (result) -> topWebSearchesTable.showDataFetchResult(result, JTablePanel.getDefaultErrorMessage(),
-                                Bundle.UserActivityPanel_noDataExists())),
+                        (result) -> {
+                            showResultWithModuleCheck(topWebSearchesTable, result,
+                                    IngestModuleCheckUtil.RECENT_ACTIVITY_FACTORY,
+                                    IngestModuleCheckUtil.RECENT_ACTIVITY_MODULE_NAME);
+                        }),
                 // top devices query
                 new DataFetchComponents<DataSource, List<TopDeviceAttachedResult>>(
                         (dataSource) -> userActivityData.getRecentDevices(dataSource, TOP_DEVICES_COUNT),
-                        (result) -> topDevicesAttachedTable.showDataFetchResult(result, JTablePanel.getDefaultErrorMessage(),
-                                Bundle.UserActivityPanel_noDataExists())),
+                        (result) -> {
+                            showResultWithModuleCheck(topDevicesAttachedTable, result,
+                                    IngestModuleCheckUtil.RECENT_ACTIVITY_FACTORY,
+                                    IngestModuleCheckUtil.RECENT_ACTIVITY_MODULE_NAME);
+                        }),
                 // top accounts query
                 new DataFetchComponents<DataSource, List<TopAccountResult>>(
                         (dataSource) -> userActivityData.getRecentAccounts(dataSource, TOP_ACCOUNTS_COUNT),
-                        (result) -> topAccountsTable.showDataFetchResult(result, JTablePanel.getDefaultErrorMessage(),
-                                Bundle.UserActivityPanel_noDataExists()))
+                        (result) -> {
+                            showResultWithModuleCheck(topAccountsTable, result,
+                                    ANDROID_FACTORY,
+                                    ANDROID_MODULE_NAME);
+                        })
         );
 
         initComponents();

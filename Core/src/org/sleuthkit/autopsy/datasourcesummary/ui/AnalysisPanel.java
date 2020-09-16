@@ -28,6 +28,8 @@ import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRendere
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel.ColumnModel;
+import org.sleuthkit.autopsy.modules.hashdatabase.HashLookupModuleFactory;
+import org.sleuthkit.autopsy.modules.interestingitems.InterestingItemsIngestModuleFactory;
 import org.sleuthkit.datamodel.DataSource;
 
 /**
@@ -36,11 +38,21 @@ import org.sleuthkit.datamodel.DataSource;
  */
 @Messages({
     "AnalysisPanel_keyColumn_title=Name",
-    "AnalysisPanel_countColumn_title=Count"
+    "AnalysisPanel_countColumn_title=Count",
+    "AnalysisPanel_keywordSearchModuleName=Keyword Search"
 })
 public class AnalysisPanel extends BaseDataSourceSummaryPanel {
 
     private static final long serialVersionUID = 1L;
+
+    private static final String KEYWORD_SEARCH_MODULE_NAME = Bundle.AnalysisPanel_keywordSearchModuleName();
+    private static final String KEYWORD_SEARCH_FACTORY = "org.sleuthkit.autopsy.keywordsearch.KeywordSearchModuleFactory";
+
+    private static final String INTERESTING_ITEM_MODULE_NAME = new InterestingItemsIngestModuleFactory().getModuleDisplayName();
+    private static final String INTERESTING_ITEM_FACTORY = InterestingItemsIngestModuleFactory.class.getCanonicalName();
+
+    private static final String HASHSET_MODULE_NAME = HashLookupModuleFactory.getModuleName();
+    private static final String HASHSET_FACTORY = HashLookupModuleFactory.class.getCanonicalName();
 
     /**
      * Default Column definitions for each table
@@ -99,15 +111,15 @@ public class AnalysisPanel extends BaseDataSourceSummaryPanel {
                 // hashset hits loading components
                 new DataFetchWorker.DataFetchComponents<>(
                         (dataSource) -> analysisData.getHashsetCounts(dataSource),
-                        (result) -> hashsetHitsTable.showDataFetchResult(result)),
+                        (result) -> showResultWithModuleCheck(hashsetHitsTable, result, HASHSET_FACTORY, HASHSET_MODULE_NAME)),
                 // keyword hits loading components
                 new DataFetchWorker.DataFetchComponents<>(
                         (dataSource) -> analysisData.getKeywordCounts(dataSource),
-                        (result) -> keywordHitsTable.showDataFetchResult(result)),
+                        (result) -> showResultWithModuleCheck(keywordHitsTable, result, KEYWORD_SEARCH_FACTORY, KEYWORD_SEARCH_MODULE_NAME)),
                 // interesting item hits loading components
                 new DataFetchWorker.DataFetchComponents<>(
                         (dataSource) -> analysisData.getInterestingItemCounts(dataSource),
-                        (result) -> interestingItemsTable.showDataFetchResult(result))
+                        (result) -> showResultWithModuleCheck(interestingItemsTable, result, INTERESTING_ITEM_FACTORY, INTERESTING_ITEM_MODULE_NAME))
         );
 
         initComponents();

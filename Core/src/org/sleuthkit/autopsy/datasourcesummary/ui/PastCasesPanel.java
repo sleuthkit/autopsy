@@ -21,12 +21,10 @@ package org.sleuthkit.autopsy.datasourcesummary.ui;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.centralrepository.ingestmodule.CentralRepoIngestModuleFactory;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.PastCasesSummary;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.PastCasesSummary.NotIngestedWithModuleException;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.PastCasesSummary.PastCasesResult;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer.DefaultCellModel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult;
@@ -45,11 +43,12 @@ import org.sleuthkit.datamodel.DataSource;
     "PastCasesPanel_caseColumn_title=Case",
     "PastCasesPanel_countColumn_title=Count",
     "PastCasesPanel_onNoCrIngest_message=No results will be shown because the Central Repository module was not run."
-
 })
 public class PastCasesPanel extends BaseDataSourceSummaryPanel {
 
     private static final long serialVersionUID = 1L;
+    private static final String CR_FACTORY = CentralRepoIngestModuleFactory.class.getName();
+    private static final String CR_NAME = CentralRepoIngestModuleFactory.getModuleName();
 
     private static final ColumnModel<Pair<String, Long>> CASE_COL = new ColumnModel<>(
             Bundle.PastCasesPanel_caseColumn_title(),
@@ -95,21 +94,14 @@ public class PastCasesPanel extends BaseDataSourceSummaryPanel {
     }
 
     /**
-     * handles displaying the result for the table. If a
-     * NotCentralRepoIngestedException is thrown, then an appropriate message is
-     * shown. Otherwise, this method uses the tables default showDataFetchResult
-     * method.
+     * Handles displaying the result for each table by breaking apart subdata
+     * items into seperate results for each table.
      *
      * @param result The result.
      */
     private void handleResult(DataFetchResult<PastCasesResult> result) {
-        if (result.getResultType() == ResultType.ERROR && result.getException() instanceof NotIngestedWithModuleException) {
-            notableFileTable.showMessage(Bundle.PastCasesPanel_onNoCrIngest_message());
-            sameIdTable.showMessage(Bundle.PastCasesPanel_onNoCrIngest_message());
-        } else {
-            notableFileTable.showDataFetchResult(getSubResult(result, (res) -> (res == null) ? null : res.getTaggedNotable()));
-            sameIdTable.showDataFetchResult(getSubResult(result, (res) -> (res == null) ? null : res.getSameIdsResults()));
-        }
+        showResultWithModuleCheck(notableFileTable, getSubResult(result, (res) -> res.getTaggedNotable()), CR_FACTORY, CR_NAME);
+        showResultWithModuleCheck(sameIdTable, getSubResult(result, (res) -> res.getSameIdsResults()), CR_FACTORY, CR_NAME);
     }
 
     /**
@@ -124,9 +116,10 @@ public class PastCasesPanel extends BaseDataSourceSummaryPanel {
      * @return The new result with the error of the original or the processed
      *         data.
      */
-    private <I, O> DataFetchResult<O> getSubResult(DataFetchResult<I> inputResult, Function<I, O> getSubResult) {
+    private <O> DataFetchResult<O> getSubResult(DataFetchResult<PastCasesResult> inputResult, Function<PastCasesResult, O> getSubResult) {
         if (inputResult.getResultType() == ResultType.SUCCESS) {
-            return DataFetchResult.getSuccessResult(getSubResult.apply(inputResult.getData()));
+            O innerData = (inputResult == null) ? null : getSubResult.apply(inputResult.getData());
+            return DataFetchResult.getSuccessResult(innerData);
         } else {
             return DataFetchResult.getErrorResult(inputResult.getException());
         }

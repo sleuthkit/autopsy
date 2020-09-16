@@ -28,7 +28,6 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.sleuthkit.autopsy.centralrepository.ingestmodule.CentralRepoIngestModuleFactory;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
@@ -38,7 +37,6 @@ import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.DataSource;
-import org.sleuthkit.datamodel.IngestJobInfo;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -65,46 +63,6 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Case: case1,case2...caseN"
  */
 public class PastCasesSummary implements DefaultArtifactUpdateGovernor {
-
-    /**
-     * Exception that is thrown in the event that a data source has not been
-     * ingested with a particular ingest module.
-     */
-    public static class NotIngestedWithModuleException extends Exception {
-        private static final long serialVersionUID = 1L;
-        
-        private final String moduleDisplayName;
-
-        /**
-         * Constructor.
-         *
-         * @param moduleName The module name.
-         * @param message    The message for the exception.
-         */
-        public NotIngestedWithModuleException(String moduleName, String message) {
-            super(message);
-            this.moduleDisplayName = moduleName;
-        }
-
-        /**
-         * Constructor.
-         *
-         * @param moduleName The module name.
-         * @param message    The message for the exception.
-         * @param thrwbl     Inner exception if applicable.
-         */
-        public NotIngestedWithModuleException(String moduleName, String message, Throwable thrwbl) {
-            super(message, thrwbl);
-            this.moduleDisplayName = moduleName;
-        }
-
-        /**
-         * @return The module display name.
-         */
-        public String getModuleDisplayName() {
-            return moduleDisplayName;
-        }
-    }
 
     /**
      * Return type for results items in the past cases tab.
@@ -139,12 +97,11 @@ public class PastCasesSummary implements DefaultArtifactUpdateGovernor {
             return taggedNotable;
         }
     }
-    
-    private static final Set<Integer> ARTIFACT_UPDATE_TYPE_IDS = new HashSet<>(Arrays.asList(
-        ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID(), 
-        ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()
-    ));
 
+    private static final Set<Integer> ARTIFACT_UPDATE_TYPE_IDS = new HashSet<>(Arrays.asList(
+            ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID(),
+            ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()
+    ));
 
     private static final String CENTRAL_REPO_INGEST_NAME = CentralRepoIngestModuleFactory.getModuleName().toUpperCase().trim();
     private static final BlackboardAttribute.Type TYPE_COMMENT = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_COMMENT);
@@ -179,8 +136,8 @@ public class PastCasesSummary implements DefaultArtifactUpdateGovernor {
      * is designed with unit testing in mind since mocked dependencies can be
      * utilized.
      *
-     * @param provider           The object providing the current SleuthkitCase.
-     * @param logger             The logger to use.
+     * @param provider The object providing the current SleuthkitCase.
+     * @param logger   The logger to use.
      */
     public PastCasesSummary(
             SleuthkitCaseProvider provider,
@@ -189,8 +146,7 @@ public class PastCasesSummary implements DefaultArtifactUpdateGovernor {
         this.caseProvider = provider;
         this.logger = logger;
     }
-    
-    
+
     @Override
     public Set<Integer> getArtifactTypeIdsForRefresh() {
         return ARTIFACT_UPDATE_TYPE_IDS;
@@ -265,7 +221,8 @@ public class PastCasesSummary implements DefaultArtifactUpdateGovernor {
      *
      * @param cases A stream of cases.
      *
-     * @return The list of unique cases and their occurrences sorted from max to min.
+     * @return The list of unique cases and their occurrences sorted from max to
+     *         min.
      */
     private List<Pair<String, Long>> getCaseCounts(Stream<String> cases) {
         Collection<List<String>> groupedCases = cases
@@ -285,11 +242,15 @@ public class PastCasesSummary implements DefaultArtifactUpdateGovernor {
     }
 
     /**
-     * Given an artifact with a TYPE_ASSOCIATED_ARTIFACT attribute, retrieves the related artifact.
-     * @param skCase The sleuthkit case.
+     * Given an artifact with a TYPE_ASSOCIATED_ARTIFACT attribute, retrieves
+     * the related artifact.
+     *
+     * @param skCase   The sleuthkit case.
      * @param artifact The artifact with the TYPE_ASSOCIATED_ARTIFACT attribute.
+     *
      * @return The artifact if found or null if not.
-     * @throws SleuthkitCaseProviderException 
+     *
+     * @throws SleuthkitCaseProviderException
      */
     private BlackboardArtifact getParentArtifact(BlackboardArtifact artifact) throws SleuthkitCaseProviderException {
         Long parentId = DataSourceInfoUtilities.getLongOrNull(artifact, TYPE_ASSOCIATED_ARTIFACT);
@@ -307,35 +268,37 @@ public class PastCasesSummary implements DefaultArtifactUpdateGovernor {
             return null;
         }
     }
-    
+
     /**
      * Returns true if the artifact has an associated artifact of a device type.
+     *
      * @param artifact The artifact.
+     *
      * @return True if there is a device associated artifact.
-     * @throws SleuthkitCaseProviderException 
+     *
+     * @throws SleuthkitCaseProviderException
      */
     private boolean hasDeviceAssociatedArtifact(BlackboardArtifact artifact) throws SleuthkitCaseProviderException {
         BlackboardArtifact parent = getParentArtifact(artifact);
         if (parent == null) {
             return false;
         }
-        
+
         return CR_DEVICE_TYPE_IDS.contains(parent.getArtifactTypeID());
     }
-    
-    
+
     /**
      * Returns the past cases data to be shown in the past cases tab.
+     *
      * @param dataSource The data source.
+     *
      * @return The retrieved data.
+     *
      * @throws SleuthkitCaseProviderException
      * @throws TskCoreException
-     * @throws NotIngestedWithModuleException
      */
     public PastCasesResult getPastCasesData(DataSource dataSource)
-            throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, NotIngestedWithModuleException {
-
-        throwOnNotCentralRepoIngested(dataSource);
+            throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException {
 
         SleuthkitCase skCase = caseProvider.get();
 
@@ -362,77 +325,5 @@ public class PastCasesSummary implements DefaultArtifactUpdateGovernor {
                 getCaseCounts(deviceArtifactCases.stream()),
                 getCaseCounts(Stream.concat(filesCases, nonDeviceArtifactCases.stream()))
         );
-    }
-    
-
-    /**
-     * Returns true if the ingest job info contains an ingest module that
-     * matches the Central Repo Module ingest display name.
-     *
-     * @param info The info.
-     *
-     * @return True if there is a central repo ingest match.
-     */
-    private boolean hasCentralRepoIngest(IngestJobInfo info) {
-        if (info == null || info.getIngestModuleInfo() == null) {
-            return false;
-        }
-
-        return info.getIngestModuleInfo().stream()
-                .anyMatch((moduleInfo) -> {
-                    return StringUtils.isNotBlank(moduleInfo.getDisplayName())
-                            && moduleInfo.getDisplayName().trim().equalsIgnoreCase(CENTRAL_REPO_INGEST_NAME);
-                });
-    }
-
-    /**
-     * Returns true if the central repository ingest module has been run on the
-     * datasource.
-     *
-     * @param dataSource The data source.
-     *
-     * @return True if there is an ingest job pertaining to the data source
-     *         where an ingest module matches the central repo ingest module
-     *         display name.
-     *
-     * @throws SleuthkitCaseProviderException
-     * @throws TskCoreException
-     */
-    public boolean isCentralRepoIngested(DataSource dataSource)
-            throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException {
-        if (dataSource == null) {
-            return false;
-        }
-
-        long dataSourceId = dataSource.getId();
-
-        return this.caseProvider.get().getIngestJobs().stream()
-                .anyMatch((ingestJob) -> {
-                    return ingestJob != null
-                            && ingestJob.getObjectId() == dataSourceId
-                            && hasCentralRepoIngest(ingestJob);
-                });
-
-    }
-
-    /**
-     * Throws an exception if the current data source has not been ingested with
-     * the Central Repository Ingest Module.
-     *
-     * @param dataSource The data source to check if it has been ingested with
-     *                   the Central Repository Ingest Module.
-     *
-     * @throws SleuthkitCaseProviderException
-     * @throws TskCoreException
-     * @throws NotIngestedWithModuleException
-     */
-    private void throwOnNotCentralRepoIngested(DataSource dataSource)
-            throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, NotIngestedWithModuleException {
-
-        if (!isCentralRepoIngested(dataSource)) {
-            String objectId = (dataSource == null) ? "<null>" : String.valueOf(dataSource.getId());
-            String message = String.format("Data source: %s has not been ingested with the Central Repository Ingest Module.", objectId);
-            throw new NotIngestedWithModuleException(CENTRAL_REPO_INGEST_NAME, message);
-        }
     }
 }

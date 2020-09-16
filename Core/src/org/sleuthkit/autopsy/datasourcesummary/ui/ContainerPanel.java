@@ -26,9 +26,11 @@ import java.util.Set;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.table.DefaultTableModel;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.ContainerSummary;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult.ResultType;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultUpdateGovernor;
@@ -49,23 +51,16 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
 
         private final DataSource dataSource;
         private final Long unallocatedFilesSize;
-        private final String operatingSystem;
-        private final String dataSourceType;
 
         /**
          * Main constructor.
          *
          * @param dataSource           The original datasource.
          * @param unallocatedFilesSize The unallocated file size.
-         * @param operatingSystem      The string representing the operating
-         *                             system.
-         * @param dataSourceType       The datasource type as a string.
          */
-        ContainerPanelData(DataSource dataSource, Long unallocatedFilesSize, String operatingSystem, String dataSourceType) {
+        ContainerPanelData(DataSource dataSource, Long unallocatedFilesSize) {
             this.dataSource = dataSource;
             this.unallocatedFilesSize = unallocatedFilesSize;
-            this.operatingSystem = operatingSystem;
-            this.dataSourceType = dataSourceType;
         }
 
         /**
@@ -81,21 +76,6 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
         Long getUnallocatedFilesSize() {
             return unallocatedFilesSize;
         }
-
-        /**
-         * @return The string representing the operating system.
-         */
-        String getOperatingSystem() {
-            return operatingSystem;
-        }
-
-        /**
-         * @return The datasource type as a string.
-         */
-        String getDataSourceType() {
-            return dataSourceType;
-        }
-
     }
 
     // set of case events for which to call update (if the name changes, that will impact data shown)
@@ -144,9 +124,7 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
                         (dataSource) -> {
                             return new ContainerPanelData(
                                     dataSource,
-                                    containerSummary.getSizeOfUnallocatedFiles(dataSource),
-                                    containerSummary.getOperatingSystems(dataSource),
-                                    containerSummary.getDataSourceType(dataSource)
+                                    containerSummary.getSizeOfUnallocatedFiles(dataSource)
                             );
                         },
                         (result) -> {
@@ -167,6 +145,7 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
         initComponents();
         setDataSource(null);
     }
+
 
     @Override
     protected void onNewDataSource(DataSource dataSource) {
