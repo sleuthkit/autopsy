@@ -278,13 +278,15 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
         }
     }
 
+    @NbBundle.Messages({"DateFilterPanel.invalidRange.text=Range or Only Last must be selected",
+        "DateFilterPanel.startOrEndNeeded.text=A start or end date must be specified to use the range filter"})
     @Override
     String checkForError() {
         if (dateFilterCheckBox.isSelected()) {
             if (!(rangeRadioButton.isSelected() || mostRecentRadioButton.isSelected())) {
-                return "Range or Only Last must be selected";
+                return Bundle.DateFilterPanel_invalidRange_text();
             } else if (rangeRadioButton.isSelected() && !(startCheckBox.isSelected() || endCheckBox.isSelected())) {
-                return "A start or end date must be specified to use the range filter";
+                return Bundle.DateFilterPanel_startOrEndNeeded_text();
             }
         }
         return "";
@@ -292,7 +294,6 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
 
     @Override
     AbstractFilter getFilter() {
-
         if (dateFilterCheckBox.isSelected()) {
             LocalDate startDate = LocalDate.MIN;
             LocalDate endDate = LocalDate.MAX;

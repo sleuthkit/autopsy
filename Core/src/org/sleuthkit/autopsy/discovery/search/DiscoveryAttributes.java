@@ -222,7 +222,7 @@ public class DiscoveryAttributes {
     static class FrequencyAttribute extends AttributeType {
 
         static final int BATCH_SIZE = 50; // Number of hashes to look up at one time
-        
+
         static final int DOMAIN_BATCH_SIZE = 500; // Number of domains to look up at one time
 
         @Override
@@ -255,13 +255,13 @@ public class DiscoveryAttributes {
         private void processResultFilesForCR(List<Result> results,
                 CentralRepository centralRepoDb) throws DiscoveryException {
             List<ResultFile> currentFiles = new ArrayList<>();
-            Set<String> hashesToLookUp = new HashSet<>();        
+            Set<String> hashesToLookUp = new HashSet<>();
             List<ResultDomain> domainsToQuery = new ArrayList<>();
             for (Result result : results) {
                 if (result.getKnown() == TskData.FileKnown.KNOWN) {
                     result.setFrequency(SearchData.Frequency.KNOWN);
                 }
-                
+
                 if (result.getType() != SearchData.Type.DOMAIN) {
                     ResultFile file = (ResultFile) result;
                     if (file.getFrequency() == SearchData.Frequency.UNKNOWN
@@ -270,12 +270,12 @@ public class DiscoveryAttributes {
                         hashesToLookUp.add(file.getFirstInstance().getMd5Hash());
                         currentFiles.add(file);
                     }
-                    
-                    if (hashesToLookUp.size() >= BATCH_SIZE) {
-                            computeFrequency(hashesToLookUp, currentFiles, centralRepoDb);
 
-                            hashesToLookUp.clear();
-                            currentFiles.clear();
+                    if (hashesToLookUp.size() >= BATCH_SIZE) {
+                        computeFrequency(hashesToLookUp, currentFiles, centralRepoDb);
+
+                        hashesToLookUp.clear();
+                        currentFiles.clear();
                     }
                 } else {
                     ResultDomain domain = (ResultDomain) result;
@@ -295,31 +295,31 @@ public class DiscoveryAttributes {
                     computeFrequency(hashesToLookUp, currentFiles, centralRepoDb);
                     ResultDomain domainInstance = (ResultDomain) result;
                     domainsToQuery.add(domainInstance);
-                    
+
                     if (domainsToQuery.size() == DOMAIN_BATCH_SIZE) {
                         queryDomainFrequency(domainsToQuery, centralRepoDb);
-                        
+
                         domainsToQuery.clear();
                     }
                 }
             }
-            
+
             queryDomainFrequency(domainsToQuery, centralRepoDb);
             computeFrequency(hashesToLookUp, currentFiles, centralRepoDb);
         }
     }
-    
+
     private static void queryDomainFrequency(List<ResultDomain> domainsToQuery, CentralRepository centralRepository) throws DiscoveryException {
         if (domainsToQuery.isEmpty()) {
             return;
         }
-        
+
         try {
             final Map<String, List<ResultDomain>> resultDomainTable = new HashMap<>();
             final StringJoiner joiner = new StringJoiner(", ");
 
             final CorrelationAttributeInstance.Type attributeType = centralRepository.getCorrelationTypeById(CorrelationAttributeInstance.DOMAIN_TYPE_ID);
-            for(ResultDomain domainInstance : domainsToQuery) {
+            for (ResultDomain domainInstance : domainsToQuery) {
                 try {
                     final String domainValue = domainInstance.getDomain();
                     final String normalizedDomain = CorrelationAttributeNormalizer.normalize(attributeType, domainValue);
@@ -333,10 +333,10 @@ public class DiscoveryAttributes {
             }
 
             final String tableName = CentralRepoDbUtil.correlationTypeToInstanceTableName(attributeType);
-            final String domainFrequencyQuery = " value AS domain_name, COUNT(*) AS frequency " +
-                                                "FROM " + tableName + " " +
-                                                "WHERE value IN (" + joiner + ") " +
-                                                "GROUP BY value";
+            final String domainFrequencyQuery = " value AS domain_name, COUNT(*) AS frequency "
+                    + "FROM " + tableName + " "
+                    + "WHERE value IN (" + joiner + ") "
+                    + "GROUP BY value";
 
             final DomainFrequencyCallback frequencyCallback = new DomainFrequencyCallback(resultDomainTable);
             centralRepository.processSelectClause(domainFrequencyQuery, frequencyCallback);
@@ -348,15 +348,15 @@ public class DiscoveryAttributes {
             throw new DiscoveryException("Fatal exception encountered querying the CR.", ex);
         }
     }
-    
+
     private static class DomainFrequencyCallback implements InstanceTableCallback {
-        
+
         private final Map<String, List<ResultDomain>> domainLookup;
         private SQLException sqlCause;
-        
+
         private DomainFrequencyCallback(Map<String, List<ResultDomain>> domainLookup) {
             this.domainLookup = domainLookup;
-        } 
+        }
 
         @Override
         public void process(ResultSet resultSet) {
@@ -364,9 +364,9 @@ public class DiscoveryAttributes {
                 while (resultSet.next()) {
                     String domain = resultSet.getString("domain_name");
                     Long frequency = resultSet.getLong("frequency");
-                    
+
                     List<ResultDomain> domainInstances = domainLookup.get(domain);
-                    for(ResultDomain domainInstance : domainInstances) {
+                    for (ResultDomain domainInstance : domainInstances) {
                         domainInstance.setFrequency(SearchData.Frequency.fromCount(frequency));
                     }
                 }
@@ -374,7 +374,7 @@ public class DiscoveryAttributes {
                 this.sqlCause = ex;
             }
         }
-        
+
         SQLException getCause() {
             return this.sqlCause;
         }
@@ -733,7 +733,7 @@ public class DiscoveryAttributes {
         FILE_TAG(new FileTagAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_tag_displayName()),
         OBJECT_DETECTED(new ObjectDetectedAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_object_displayName()),
         MOST_RECENT_DATE(new MostRecentActivityDateAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_mostRecentDate_displayName()),
-        FIRST_DATE(new MostRecentActivityDateAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_firstDate_displayName()),
+        FIRST_DATE(new FirstActivityDateAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_firstDate_displayName()),
         NO_GROUPING(new NoGroupingAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_none_displayName());
 
         private final AttributeType attributeType;
@@ -771,7 +771,7 @@ public class DiscoveryAttributes {
             return Arrays.asList(FREQUENCY, MOST_RECENT_DATE, FIRST_DATE);
         }
     }
-    
+
     /**
      * Computes the CR frequency of all the given hashes and updates the list of
      * files.
