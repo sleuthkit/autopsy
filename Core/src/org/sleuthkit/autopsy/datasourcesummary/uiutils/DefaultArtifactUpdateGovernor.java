@@ -31,7 +31,7 @@ import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
  */
 public interface DefaultArtifactUpdateGovernor extends DefaultUpdateGovernor {
 
-    static final Set<IngestJobEvent> INGEST_JOB_EVENTS = new HashSet<>(
+    Set<IngestJobEvent> INGEST_JOB_EVENTS = new HashSet<>(
             Arrays.asList(IngestJobEvent.COMPLETED, IngestJobEvent.CANCELLED));
 
     @Override
