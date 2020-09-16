@@ -841,7 +841,7 @@ final class ResultsPanel extends javax.swing.JPanel {
             );
             
             Image thumbnail = domainSearch.getThumbnail(request);
-            domainWrapper.setThumnail(thumbnail);
+            domainWrapper.setThumbnail(thumbnail);
             return null;
         }
 
@@ -850,10 +850,10 @@ final class ResultsPanel extends javax.swing.JPanel {
             try {
                 get();
             } catch (ExecutionException ex) {
-                domainWrapper.setThumnail(null);
+                domainWrapper.setThumbnail(null);
                 logger.log(Level.WARNING, "Fatal error getting thumbnail for domain.", ex);
             } catch (InterruptedException | CancellationException ignored) {
-                domainWrapper.setThumnail(null);
+                domainWrapper.setThumbnail(null);
                 //we want to do nothing in response to this since we allow it to be cancelled
             }
             domainSummaryViewer.repaint();
