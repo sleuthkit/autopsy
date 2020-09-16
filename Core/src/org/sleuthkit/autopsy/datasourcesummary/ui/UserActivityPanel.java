@@ -368,11 +368,10 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
         contentPanel.setMinimumSize(new java.awt.Dimension(10, 450));
         contentPanel.setLayout(new javax.swing.BoxLayout(contentPanel, javax.swing.BoxLayout.PAGE_AXIS));
 
-        ingestRunningPanel.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 5, 1));
         ingestRunningPanel.setAlignmentX(0.0F);
-        ingestRunningPanel.setMaximumSize(new java.awt.Dimension(32767, 20));
-        ingestRunningPanel.setMinimumSize(new java.awt.Dimension(10, 20));
-        ingestRunningPanel.setPreferredSize(new java.awt.Dimension(32767, 20));
+        ingestRunningPanel.setMaximumSize(new java.awt.Dimension(32767, 25));
+        ingestRunningPanel.setMinimumSize(new java.awt.Dimension(10, 25));
+        ingestRunningPanel.setPreferredSize(new java.awt.Dimension(10, 25));
         contentPanel.add(ingestRunningPanel);
 
         programsRunLabel.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);

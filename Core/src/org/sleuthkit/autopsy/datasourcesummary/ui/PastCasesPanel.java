@@ -120,8 +120,10 @@ public class PastCasesPanel extends BaseDataSourceSummaryPanel {
      *         data.
      */
     private <O> DataFetchResult<O> getSubResult(DataFetchResult<PastCasesResult> inputResult, Function<PastCasesResult, O> getSubResult) {
-        if (inputResult.getResultType() == ResultType.SUCCESS) {
-            O innerData = (inputResult == null) ? null : getSubResult.apply(inputResult.getData());
+        if (inputResult == null) {
+            return null;
+        } else if (inputResult.getResultType() == ResultType.SUCCESS) {
+            O innerData = (inputResult.getData() == null) ? null : getSubResult.apply(inputResult.getData());
             return DataFetchResult.getSuccessResult(innerData);
         } else {
             return DataFetchResult.getErrorResult(inputResult.getException());
@@ -168,11 +170,10 @@ public class PastCasesPanel extends BaseDataSourceSummaryPanel {
         mainContentPanel.setBorder(javax.swing.BorderFactory.createEmptyBorder(10, 10, 10, 10));
         mainContentPanel.setLayout(new javax.swing.BoxLayout(mainContentPanel, javax.swing.BoxLayout.PAGE_AXIS));
 
-        ingestRunningPanel.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 5, 1));
         ingestRunningPanel.setAlignmentX(0.0F);
-        ingestRunningPanel.setMaximumSize(new java.awt.Dimension(32767, 20));
-        ingestRunningPanel.setMinimumSize(new java.awt.Dimension(10, 20));
-        ingestRunningPanel.setPreferredSize(new java.awt.Dimension(10, 20));
+        ingestRunningPanel.setMaximumSize(new java.awt.Dimension(32767, 25));
+        ingestRunningPanel.setMinimumSize(new java.awt.Dimension(10, 25));
+        ingestRunningPanel.setPreferredSize(new java.awt.Dimension(10, 25));
         mainContentPanel.add(ingestRunningPanel);
 
         org.openide.awt.Mnemonics.setLocalizedText(notableFileLabel, org.openide.util.NbBundle.getMessage(PastCasesPanel.class, "PastCasesPanel.notableFileLabel.text")); // NOI18N

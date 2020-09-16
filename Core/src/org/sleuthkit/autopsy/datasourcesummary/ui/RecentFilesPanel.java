@@ -243,15 +243,14 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
         tablePanel.setLayout(new java.awt.GridBagLayout());
 
         ingestRunningPanel.setAlignmentX(0.0F);
-        ingestRunningPanel.setMaximumSize(new java.awt.Dimension(32767, 20));
-        ingestRunningPanel.setMinimumSize(new java.awt.Dimension(10, 20));
-        ingestRunningPanel.setPreferredSize(new java.awt.Dimension(32767, 20));
+        ingestRunningPanel.setMaximumSize(new java.awt.Dimension(32767, 25));
+        ingestRunningPanel.setMinimumSize(new java.awt.Dimension(10, 25));
+        ingestRunningPanel.setPreferredSize(new java.awt.Dimension(10, 25));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 0;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(0, 0, 5, 0);
         tablePanel.add(ingestRunningPanel, gridBagConstraints);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
@@ -287,7 +286,6 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
         gridBagConstraints.gridy = 1;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTH;
-        gridBagConstraints.insets = new java.awt.Insets(5, 0, 0, 0);
         tablePanel.add(openDocsLabel, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(downloadLabel, org.openide.util.NbBundle.getMessage(RecentFilesPanel.class, "RecentFilesPanel.downloadLabel.text")); // NOI18N

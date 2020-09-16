@@ -177,11 +177,10 @@ public class AnalysisPanel extends BaseDataSourceSummaryPanel {
         mainContentPanel.setMinimumSize(new java.awt.Dimension(200, 452));
         mainContentPanel.setLayout(new javax.swing.BoxLayout(mainContentPanel, javax.swing.BoxLayout.PAGE_AXIS));
 
-        ingestRunningPanel.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 5, 1));
         ingestRunningPanel.setAlignmentX(0.0F);
-        ingestRunningPanel.setMaximumSize(new java.awt.Dimension(32767, 20));
-        ingestRunningPanel.setMinimumSize(new java.awt.Dimension(10, 20));
-        ingestRunningPanel.setPreferredSize(new java.awt.Dimension(32767, 20));
+        ingestRunningPanel.setMaximumSize(new java.awt.Dimension(32767, 25));
+        ingestRunningPanel.setMinimumSize(new java.awt.Dimension(10, 25));
+        ingestRunningPanel.setPreferredSize(new java.awt.Dimension(10, 25));
         mainContentPanel.add(ingestRunningPanel);
 
         org.openide.awt.Mnemonics.setLocalizedText(hashsetHitsLabel, org.openide.util.NbBundle.getMessage(AnalysisPanel.class, "AnalysisPanel.hashsetHitsLabel.text")); // NOI18N

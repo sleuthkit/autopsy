@@ -126,16 +126,13 @@ public class IngestRunningLabel extends JPanel {
     public IngestRunningLabel(String message, boolean showWarningIcon) {
         JLabel jlabel = new JLabel();
         jlabel.setText(message);
-        jlabel.setVerticalAlignment(JLabel.TOP);
-        jlabel.setVerticalTextPosition(JLabel.TOP);
-        jlabel.setHorizontalAlignment(JLabel.LEFT);
-        jlabel.setHorizontalTextPosition(JLabel.LEFT);
+
         if (showWarningIcon) {
             jlabel.setIcon(new ImageIcon(DEFAULT_ICON));
         }
         
         setLayout(new BorderLayout());
-        add(jlabel, BorderLayout.CENTER);
+        add(jlabel, BorderLayout.NORTH);
 
         setupListener(this);
         refreshState();
