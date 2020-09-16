@@ -24,6 +24,7 @@ import java.awt.Point;
 import java.awt.event.MouseEvent;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JList;
@@ -37,7 +38,7 @@ class DomainSummaryPanel extends javax.swing.JPanel implements ListCellRenderer<
 
     private static final long serialVersionUID = 1L;
     private static final Color SELECTION_COLOR = new Color(0, 120, 215);
-    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd yyyy");
+    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd yyyy", Locale.getDefault());
 
     /**
      * Creates new form DomainPanel.

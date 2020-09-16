@@ -125,7 +125,7 @@ final class ResultsPanel extends javax.swing.JPanel {
                 }
             }
         });
-        //JIRA-TODO 
+        //JIRA-TODO 6307 Add listener for domainSummaryViewer when 6782, 6773, and the other details area related stories are done
     }
     
     SearchData.Type getActiveType() {

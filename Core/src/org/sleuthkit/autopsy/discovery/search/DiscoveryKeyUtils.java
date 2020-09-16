@@ -22,6 +22,7 @@ import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -166,7 +167,8 @@ public class DiscoveryKeyUtils {
 
         /**
          * Get the fileSorting
-         * @return 
+         *
+         * @return
          */
         ResultsSorter.SortingMethod getFileSortingMethod() {
             return fileSortingMethod;
@@ -938,6 +940,9 @@ public class DiscoveryKeyUtils {
         }
     }
 
+    /**
+     * Key representing a date of most recent activity.
+     */
     static class MostRecentActivityDateGroupKey extends GroupKey {
 
         private final Long epochDate;
@@ -948,7 +953,7 @@ public class DiscoveryKeyUtils {
         MostRecentActivityDateGroupKey(Result result) {
             if (result instanceof ResultDomain) {
                 epochDate = ((ResultDomain) result).getActivityEnd();
-                dateNameString = new SimpleDateFormat("yyyy/MM/dd").format(new Date(TimeUnit.SECONDS.toMillis(epochDate)));
+                dateNameString = new SimpleDateFormat("yyyy/MM/dd", Locale.getDefault()).format(new Date(TimeUnit.SECONDS.toMillis(epochDate)));
             } else {
                 epochDate = Long.MAX_VALUE;
                 dateNameString = Bundle.DiscoveryKeyUtils_MostRecentActivityDateGroupKey_noDate();
@@ -1020,6 +1025,9 @@ public class DiscoveryKeyUtils {
         }
     }
 
+    /**
+     * Key representing a date of first activity.
+     */
     static class FirstActivityDateGroupKey extends GroupKey {
 
         private final Long epochDate;
@@ -1030,7 +1038,7 @@ public class DiscoveryKeyUtils {
         FirstActivityDateGroupKey(Result result) {
             if (result instanceof ResultDomain) {
                 epochDate = ((ResultDomain) result).getActivityStart();
-                dateNameString = new SimpleDateFormat("yyyy/MM/dd").format(new Date(TimeUnit.SECONDS.toMillis(epochDate)));
+                dateNameString = new SimpleDateFormat("yyyy/MM/dd", Locale.getDefault()).format(new Date(TimeUnit.SECONDS.toMillis(epochDate)));
             } else {
                 epochDate = Long.MAX_VALUE;
                 dateNameString = Bundle.DiscoveryKeyUtils_FirstActivityDateGroupKey_noDate();
@@ -1102,6 +1110,9 @@ public class DiscoveryKeyUtils {
         }
     }
     
+    /**
+     * Key representing the number of visits.
+     */
     static class NumberOfVisitsGroupKey extends GroupKey {
         
         private final String displayName;
