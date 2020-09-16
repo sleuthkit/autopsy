@@ -1,3 +1,2 @@
 ExifProcessor.indexError.message=Failed to post Picture Analzyer artifact(s).
-ExifProcessor.module_name=Exif Parser
 ExifProcessor.userContent.description=Picture Analyzer data exists for this file.
