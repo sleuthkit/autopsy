@@ -18,29 +18,36 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.datamodel;
 
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultArtifactUpdateGovernor;
 import java.io.File;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.apache.commons.lang.StringUtils;
-import org.sleuthkit.autopsy.coreutils.Logger;
-import static org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourceInfoUtilities.getBaseQueryResult;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Provides information to populate Top Programs Summary queries.
  */
-public class DataSourceTopProgramsSummary {
+public class TopProgramsSummary implements DefaultArtifactUpdateGovernor {
 
-    private static final Logger logger = Logger.getLogger(DataSourceTopProgramsSummary.class.getName());
+    private static final Set<Integer> ARTIFACT_UPDATE_TYPE_IDS = new HashSet<>(Arrays.asList(
+            ARTIFACT_TYPE.TSK_PROG_RUN.getTypeID()
+    ));
 
     /**
      * A SQL join type.
@@ -95,7 +102,7 @@ public class DataSourceTopProgramsSummary {
                 return null;
             }
     );
-    
+
     /**
      * Creates a sql statement querying the blackboard attributes table for a
      * particular attribute type and returning a specified value. That query
@@ -168,16 +175,20 @@ public class DataSourceTopProgramsSummary {
     private static String getLikeClause(String column, String likeString, boolean isLike) {
         return column + (isLike ? "" : " NOT") + " LIKE '" + likeString + "'";
     }
-    
-    
+
     private final SleuthkitCaseProvider provider;
-    
-    public DataSourceTopProgramsSummary() {
+
+    public TopProgramsSummary() {
         this(SleuthkitCaseProvider.DEFAULT);
     }
-        
-    public DataSourceTopProgramsSummary(SleuthkitCaseProvider provider) {
+
+    public TopProgramsSummary(SleuthkitCaseProvider provider) {
         this.provider = provider;
+    }
+
+    @Override
+    public Set<Integer> getArtifactTypeIdsForRefresh() {
+        return ARTIFACT_UPDATE_TYPE_IDS;
     }
 
     /**
@@ -188,9 +199,14 @@ public class DataSourceTopProgramsSummary {
      * @param dataSource The data source.
      * @param count      The number of programs to return.
      *
-     * @return
+     * @return The top results objects found.
+     *
+     * @throws SleuthkitCaseProviderException
+     * @throws TskCoreException
+     * @throws SQLException
      */
-    public List<TopProgramsResult> getTopPrograms(DataSource dataSource, int count) {
+    public List<TopProgramsResult> getTopPrograms(DataSource dataSource, int count)
+            throws SleuthkitCaseProviderException, TskCoreException, SQLException {
         if (dataSource == null || count <= 0) {
             return Collections.emptyList();
         }
@@ -231,49 +247,45 @@ public class DataSourceTopProgramsSummary {
                 + "    MAX(" + getFullKey(lastRunParam) + ") DESC,\n"
                 + "    " + getFullKey(nameParam) + " ASC";
 
-        final String errorMessage = "Unable to get top program results; returning null.";
-
         DataSourceInfoUtilities.ResultSetHandler<List<TopProgramsResult>> handler = (resultSet) -> {
             List<TopProgramsResult> progResults = new ArrayList<>();
 
             boolean quitAtCount = false;
 
             while (resultSet.next() && (!quitAtCount || progResults.size() < count)) {
-                try {
-                    long lastRunEpoch = resultSet.getLong(lastRunParam);
-                    Date lastRun = (resultSet.wasNull()) ? null : new Date(lastRunEpoch * 1000);
+                long lastRunEpoch = resultSet.getLong(lastRunParam);
+                Date lastRun = (resultSet.wasNull()) ? null : new Date(lastRunEpoch * 1000);
 
-                    Long runCount = resultSet.getLong(runCountParam);
-                    if (resultSet.wasNull()) {
-                        runCount = null;
-                    }
-
-                    if (lastRun != null || runCount != null) {
-                        quitAtCount = true;
-                    }
-
-                    progResults.add(new TopProgramsResult(
-                            resultSet.getString(nameParam),
-                            resultSet.getString(pathParam),
-                            runCount,
-                            lastRun));
-
-                } catch (SQLException ex) {
-                    logger.log(Level.WARNING, "Failed to get a top program result from the result set.", ex);
+                Long runCount = resultSet.getLong(runCountParam);
+                if (resultSet.wasNull()) {
+                    runCount = null;
                 }
+
+                if (lastRun != null || runCount != null) {
+                    quitAtCount = true;
+                }
+
+                progResults.add(new TopProgramsResult(
+                        resultSet.getString(nameParam),
+                        resultSet.getString(pathParam),
+                        runCount,
+                        lastRun));
             }
 
             return progResults;
         };
 
-        return getBaseQueryResult(provider, query, handler, errorMessage);
+        try (SleuthkitCase.CaseDbQuery dbQuery = provider.get().executeQuery(query);
+                ResultSet resultSet = dbQuery.getResultSet()) {
+
+            return handler.process(resultSet);
+        }
     }
-    
 
     /**
      * Determines a short folder name if any. Otherwise, returns empty string.
      *
-     * @param strPath The string path.
+     * @param strPath         The string path.
      * @param applicationName The application name.
      *
      * @return The short folder name or empty string if not found.
@@ -301,5 +313,58 @@ public class DataSourceTopProgramsSummary {
         }
 
         return "";
+    }
+
+    /**
+     * Describes a result of a program run on a datasource.
+     */
+    public static class TopProgramsResult {
+
+        private final String programName;
+        private final String programPath;
+        private final Long runTimes;
+        private final Date lastRun;
+
+        /**
+         * Main constructor.
+         *
+         * @param programName The name of the program.
+         * @param programPath The path of the program.
+         * @param runTimes    The number of runs.
+         */
+        TopProgramsResult(String programName, String programPath, Long runTimes, Date lastRun) {
+            this.programName = programName;
+            this.programPath = programPath;
+            this.runTimes = runTimes;
+            this.lastRun = lastRun;
+        }
+
+        /**
+         * @return The name of the program
+         */
+        public String getProgramName() {
+            return programName;
+        }
+
+        /**
+         * @return The path of the program.
+         */
+        public String getProgramPath() {
+            return programPath;
+        }
+
+        /**
+         * @return The number of run times or null if not present.
+         */
+        public Long getRunTimes() {
+            return runTimes;
+        }
+
+        /**
+         * @return The last time the program was run or null if not present.
+         */
+        public Date getLastRun() {
+            return lastRun;
+        }
     }
 }

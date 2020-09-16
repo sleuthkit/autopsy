@@ -20,13 +20,11 @@ package org.sleuthkit.autopsy.datasourcesummary.ui;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.function.Function;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourceAnalysisSummary;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.AnalysisSummary;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer.DefaultCellModel;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel.ColumnModel;
@@ -60,11 +58,19 @@ public class AnalysisPanel extends BaseDataSourceSummaryPanel {
             )
     );
 
-    private final JTablePanel<Pair<String, Long>> hashsetHitsTable = JTablePanel.getJTablePanel(DEFAULT_COLUMNS);
+    private static final Function<Pair<String, Long>, String> DEFAULT_KEY_PROVIDER = (pair) -> pair.getKey();
 
-    private final JTablePanel<Pair<String, Long>> keywordHitsTable = JTablePanel.getJTablePanel(DEFAULT_COLUMNS);
+    private final JTablePanel<Pair<String, Long>> hashsetHitsTable
+            = JTablePanel.getJTablePanel(DEFAULT_COLUMNS)
+                    .setKeyFunction(DEFAULT_KEY_PROVIDER);
 
-    private final JTablePanel<Pair<String, Long>> interestingItemsTable = JTablePanel.getJTablePanel(DEFAULT_COLUMNS);
+    private final JTablePanel<Pair<String, Long>> keywordHitsTable
+            = JTablePanel.getJTablePanel(DEFAULT_COLUMNS)
+                    .setKeyFunction(DEFAULT_KEY_PROVIDER);
+
+    private final JTablePanel<Pair<String, Long>> interestingItemsTable
+            = JTablePanel.getJTablePanel(DEFAULT_COLUMNS)
+                    .setKeyFunction(DEFAULT_KEY_PROVIDER);
 
     private final List<JTablePanel<?>> tables = Arrays.asList(
             hashsetHitsTable,
@@ -82,10 +88,12 @@ public class AnalysisPanel extends BaseDataSourceSummaryPanel {
      * Creates a new DataSourceUserActivityPanel.
      */
     public AnalysisPanel() {
-        this(new DataSourceAnalysisSummary());
+        this(new AnalysisSummary());
     }
 
-    public AnalysisPanel(DataSourceAnalysisSummary analysisData) {
+    public AnalysisPanel(AnalysisSummary analysisData) {
+        super(analysisData);
+
         // set up data acquisition methods
         dataFetchComponents = Arrays.asList(
                 // hashset hits loading components
@@ -106,26 +114,13 @@ public class AnalysisPanel extends BaseDataSourceSummaryPanel {
     }
 
     @Override
+    protected void fetchInformation(DataSource dataSource) {
+        fetchInformation(dataFetchComponents, dataSource);
+    }
+
+    @Override
     protected void onNewDataSource(DataSource dataSource) {
-        // if no data source is present or the case is not open,
-        // set results for tables to null.
-        if (dataSource == null || !Case.isCaseOpen()) {
-            this.dataFetchComponents.forEach((item) -> item.getResultHandler()
-                    .accept(DataFetchResult.getSuccessResult(null)));
-
-        } else {
-            // set tables to display loading screen
-            this.tables.forEach((table) -> table.showDefaultLoadingMessage());
-
-            // create swing workers to run for each table
-            List<DataFetchWorker<?, ?>> workers = dataFetchComponents
-                    .stream()
-                    .map((components) -> new DataFetchWorker<>(components, dataSource))
-                    .collect(Collectors.toList());
-
-            // submit swing workers to run
-            submit(workers);
-        }
+        onNewDataSource(dataFetchComponents, tables, dataSource);
     }
 
     /**
@@ -203,6 +198,7 @@ public class AnalysisPanel extends BaseDataSourceSummaryPanel {
             .addComponent(mainScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     // End of variables declaration//GEN-END:variables

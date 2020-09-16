@@ -18,12 +18,21 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.ui;
 
+import java.beans.PropertyChangeEvent;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.table.DefaultTableModel;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourceDetailsSummary;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.ContainerSummary;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult.ResultType;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultUpdateGovernor;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.UpdateGovernor;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -31,32 +40,142 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Panel to display additional details associated with a specific DataSource
  */
-class DataSourceSummaryDetailsPanel extends BaseDataSourceSummaryPanel {
+class ContainerPanel extends BaseDataSourceSummaryPanel {
+
+    /**
+     * Data payload for the Container panel.
+     */
+    private static class ContainerPanelData {
+
+        private final DataSource dataSource;
+        private final Long unallocatedFilesSize;
+        private final String operatingSystem;
+        private final String dataSourceType;
+
+        /**
+         * Main constructor.
+         *
+         * @param dataSource           The original datasource.
+         * @param unallocatedFilesSize The unallocated file size.
+         * @param operatingSystem      The string representing the operating
+         *                             system.
+         * @param dataSourceType       The datasource type as a string.
+         */
+        ContainerPanelData(DataSource dataSource, Long unallocatedFilesSize, String operatingSystem, String dataSourceType) {
+            this.dataSource = dataSource;
+            this.unallocatedFilesSize = unallocatedFilesSize;
+            this.operatingSystem = operatingSystem;
+            this.dataSourceType = dataSourceType;
+        }
+
+        /**
+         * @return The original datasource.
+         */
+        DataSource getDataSource() {
+            return dataSource;
+        }
+
+        /**
+         * @return The unallocated file size.
+         */
+        Long getUnallocatedFilesSize() {
+            return unallocatedFilesSize;
+        }
+
+        /**
+         * @return The string representing the operating system.
+         */
+        String getOperatingSystem() {
+            return operatingSystem;
+        }
+
+        /**
+         * @return The datasource type as a string.
+         */
+        String getDataSourceType() {
+            return dataSourceType;
+        }
+
+    }
+
+    // set of case events for which to call update (if the name changes, that will impact data shown)
+    private static final Set<Case.Events> CASE_EVENT_SET = new HashSet<>(Arrays.asList(
+            Case.Events.DATA_SOURCE_NAME_CHANGED
+    ));
+
+    // governor for handling these updates
+    private static final UpdateGovernor CONTAINER_UPDATES = new DefaultUpdateGovernor() {
+
+        @Override
+        public Set<Case.Events> getCaseEventUpdates() {
+            return CASE_EVENT_SET;
+        }
+
+        @Override
+        public boolean isRefreshRequiredForCaseEvent(PropertyChangeEvent evt) {
+            return true;
+        }
+
+    };
 
     //Because this panel was made using the gridbaglayout and netbean's Customize Layout tool it will be best to continue to modify it through that
     private static final long serialVersionUID = 1L;
-    private static final Logger logger = Logger.getLogger(DataSourceSummaryDetailsPanel.class.getName());
+    private static final Logger logger = Logger.getLogger(ContainerPanel.class.getName());
+
+    private final List<DataFetchComponents<DataSource, ?>> dataFetchComponents;
 
     /**
-     * Creates new form DataSourceSummaryDetailsPanel
+     * Creates a new form ContainerPanel.
      */
-    @Messages({"DataSourceSummaryDetailsPanel.getDataSources.error.text=Failed to get the list of datasources for the current case.",
-        "DataSourceSummaryDetailsPanel.getDataSources.error.title=Load Failure"})
-    DataSourceSummaryDetailsPanel() {
+    ContainerPanel() {
+        this(new ContainerSummary());
+    }
+
+    /**
+     * Creates new form ContainerPanel.
+     */
+    @Messages({"ContainerPanel.getDataSources.error.text=Failed to get the list of datasources for the current case.",
+        "ContainerPanel.getDataSources.error.title=Load Failure"})
+    ContainerPanel(ContainerSummary containerSummary) {
+        super(containerSummary, CONTAINER_UPDATES);
+
+        dataFetchComponents = Arrays.asList(
+                new DataFetchComponents<>(
+                        (dataSource) -> {
+                            return new ContainerPanelData(
+                                    dataSource,
+                                    containerSummary.getSizeOfUnallocatedFiles(dataSource),
+                                    containerSummary.getOperatingSystems(dataSource),
+                                    containerSummary.getDataSourceType(dataSource)
+                            );
+                        },
+                        (result) -> {
+                            if (result.getResultType() == ResultType.SUCCESS) {
+                                ContainerPanelData data = result.getData();
+                                updateDetailsPanelData(
+                                        data.getDataSource(),
+                                        data.getUnallocatedFilesSize());
+                            } else {
+                                logger.log(Level.WARNING, "An exception occurred while attempting to fetch data for the ContainerPanel.",
+                                        result.getException());
+                                updateDetailsPanelData(null, null);
+                            }
+                        }
+                )
+        );
+
         initComponents();
         setDataSource(null);
     }
 
     @Override
     protected void onNewDataSource(DataSource dataSource) {
-        if (dataSource == null || !Case.isCaseOpen()) {
-            updateDetailsPanelData(null, null, null, null);
-        } else {
-            updateDetailsPanelData(dataSource,
-                    DataSourceDetailsSummary.getSizeOfUnallocatedFiles(dataSource),
-                    DataSourceDetailsSummary.getOperatingSystems(dataSource),
-                    DataSourceDetailsSummary.getDataSourceType(dataSource));
-        }
+        fetchInformation(dataSource);
+    }
+
+    @Override
+    protected void fetchInformation(DataSource dataSource) {
+        fetchInformation(dataFetchComponents, dataSource);
     }
 
     /**
@@ -64,7 +183,7 @@ class DataSourceSummaryDetailsPanel extends BaseDataSourceSummaryPanel {
      *
      * @param selectedDataSource the DataSource to display details about.
      */
-    private void updateDetailsPanelData(DataSource selectedDataSource, Long unallocatedFilesSize, String osDetails, String usage) {
+    private void updateDetailsPanelData(DataSource selectedDataSource, Long unallocatedFilesSize) {
         clearTableValues();
         if (selectedDataSource != null) {
             unallocatedSizeValue.setText(SizeRepresentationUtil.getSizeString(unallocatedFilesSize));
@@ -234,7 +353,7 @@ class DataSourceSummaryDetailsPanel extends BaseDataSourceSummaryPanel {
 
         jPanel1.setLayout(new java.awt.GridBagLayout());
 
-        org.openide.awt.Mnemonics.setLocalizedText(displayNameLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryDetailsPanel.class, "DataSourceSummaryDetailsPanel.displayNameLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(displayNameLabel, org.openide.util.NbBundle.getMessage(ContainerPanel.class, "ContainerPanel.displayNameLabel.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 0;
@@ -243,7 +362,7 @@ class DataSourceSummaryDetailsPanel extends BaseDataSourceSummaryPanel {
         gridBagConstraints.insets = new java.awt.Insets(10, 10, 0, 4);
         jPanel1.add(displayNameLabel, gridBagConstraints);
 
-        org.openide.awt.Mnemonics.setLocalizedText(originalNameLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryDetailsPanel.class, "DataSourceSummaryDetailsPanel.originalNameLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(originalNameLabel, org.openide.util.NbBundle.getMessage(ContainerPanel.class, "ContainerPanel.originalNameLabel.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 1;
@@ -252,7 +371,7 @@ class DataSourceSummaryDetailsPanel extends BaseDataSourceSummaryPanel {
         gridBagConstraints.insets = new java.awt.Insets(0, 10, 0, 4);
         jPanel1.add(originalNameLabel, gridBagConstraints);
 
-        org.openide.awt.Mnemonics.setLocalizedText(sha1HashValue, org.openide.util.NbBundle.getMessage(DataSourceSummaryDetailsPanel.class, "DataSourceSummaryDetailsPanel.sha1HashValue.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(sha1HashValue, org.openide.util.NbBundle.getMessage(ContainerPanel.class, "ContainerPanel.sha1HashValue.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
         gridBagConstraints.gridy = 12;
@@ -263,7 +382,7 @@ class DataSourceSummaryDetailsPanel extends BaseDataSourceSummaryPanel {
         gridBagConstraints.insets = new java.awt.Insets(0, 0, 0, 10);
         jPanel1.add(sha1HashValue, gridBagConstraints);
 
-        org.openide.awt.Mnemonics.setLocalizedText(displayNameValue, org.openide.util.NbBundle.getMessage(DataSourceSummaryDetailsPanel.class, "DataSourceSummaryDetailsPanel.displayNameValue.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(displayNameValue, org.openide.util.NbBundle.getMessage(ContainerPanel.class, "ContainerPanel.displayNameValue.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
         gridBagConstraints.gridy = 0;
@@ -274,7 +393,7 @@ class DataSourceSummaryDetailsPanel extends BaseDataSourceSummaryPanel {
         gridBagConstraints.insets = new java.awt.Insets(10, 0, 0, 10);
         jPanel1.add(displayNameValue, gridBagConstraints);
 
-        org.openide.awt.Mnemonics.setLocalizedText(sha256HashValue, org.openide.util.NbBundle.getMessage(DataSourceSummaryDetailsPanel.class, "DataSourceSummaryDetailsPanel.sha256HashValue.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(sha256HashValue, org.openide.util.NbBundle.getMessage(ContainerPanel.class, "ContainerPanel.sha256HashValue.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
         gridBagConstraints.gridy = 13;
@@ -285,7 +404,7 @@ class DataSourceSummaryDetailsPanel extends BaseDataSourceSummaryPanel {
         gridBagConstraints.insets = new java.awt.Insets(0, 0, 6, 10);
         jPanel1.add(sha256HashValue, gridBagConstraints);
 
-        org.openide.awt.Mnemonics.setLocalizedText(originalNameValue, org.openide.util.NbBundle.getMessage(DataSourceSummaryDetailsPanel.class, "DataSourceSummaryDetailsPanel.originalNameValue.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(originalNameValue, org.openide.util.NbBundle.getMessage(ContainerPanel.class, "ContainerPanel.originalNameValue.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
         gridBagConstraints.gridy = 1;
@@ -296,8 +415,8 @@ class DataSourceSummaryDetailsPanel extends BaseDataSourceSummaryPanel {
         gridBagConstraints.insets = new java.awt.Insets(0, 0, 0, 10);
         jPanel1.add(originalNameValue, gridBagConstraints);
 
-        org.openide.awt.Mnemonics.setLocalizedText(deviceIdValue, org.openide.util.NbBundle.getMessage(DataSourceSummaryDetailsPanel.class, "DataSourceSummaryDetailsPanel.deviceIdValue.text")); // NOI18N
-        deviceIdValue.setToolTipText(org.openide.util.NbBundle.getMessage(DataSourceSummaryDetailsPanel.class, "DataSourceSummaryDetailsPanel.deviceIdValue.toolTipText")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(deviceIdValue, org.openide.util.NbBundle.getMessage(ContainerPanel.class, "ContainerPanel.deviceIdValue.text")); // NOI18N
+        deviceIdValue.setToolTipText(org.openide.util.NbBundle.getMessage(ContainerPanel.class, "ContainerPanel.deviceIdValue.toolTipText")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
         gridBagConstraints.gridy = 2;
@@ -329,7 +448,7 @@ class DataSourceSummaryDetailsPanel extends BaseDataSourceSummaryPanel {
         filePathsTable.setTableHeader(null);
         filePathsScrollPane.setViewportView(filePathsTable);
         if (filePathsTable.getColumnModel().getColumnCount() > 0) {
-            filePathsTable.getColumnModel().getColumn(0).setHeaderValue(org.openide.util.NbBundle.getMessage(DataSourceSummaryDetailsPanel.class, "DataSourceSummaryDetailsPanel.filePathsTable.columnModel.title0")); // NOI18N
+            filePathsTable.getColumnModel().getColumn(0).setHeaderValue(org.openide.util.NbBundle.getMessage(ContainerPanel.class, "ContainerPanel.filePathsTable.columnModel.title0")); // NOI18N
         }
 
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -343,7 +462,7 @@ class DataSourceSummaryDetailsPanel extends BaseDataSourceSummaryPanel {
         gridBagConstraints.insets = new java.awt.Insets(6, 0, 10, 10);
         jPanel1.add(filePathsScrollPane, gridBagConstraints);
 
-        org.openide.awt.Mnemonics.setLocalizedText(timeZoneValue, org.openide.util.NbBundle.getMessage(DataSourceSummaryDetailsPanel.class, "DataSourceSummaryDetailsPanel.timeZoneValue.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(timeZoneValue, org.openide.util.NbBundle.getMessage(ContainerPanel.class, "ContainerPanel.timeZoneValue.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
         gridBagConstraints.gridy = 5;
@@ -354,8 +473,8 @@ class DataSourceSummaryDetailsPanel extends BaseDataSourceSummaryPanel {
         gridBagConstraints.insets = new java.awt.Insets(0, 0, 6, 10);
         jPanel1.add(timeZoneValue, gridBagConstraints);
 
-        org.openide.awt.Mnemonics.setLocalizedText(imageTypeValue, org.openide.util.NbBundle.getMessage(DataSourceSummaryDetailsPanel.class, "DataSourceSummaryDetailsPanel.imageTypeValue.text")); // NOI18N
-        imageTypeValue.setToolTipText(org.openide.util.NbBundle.getMessage(DataSourceSummaryDetailsPanel.class, "DataSourceSummaryDetailsPanel.imageTypeValue.toolTipText")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(imageTypeValue, org.openide.util.NbBundle.getMessage(ContainerPanel.class, "ContainerPanel.imageTypeValue.text")); // NOI18N
+        imageTypeValue.setToolTipText(org.openide.util.NbBundle.getMessage(ContainerPanel.class, "ContainerPanel.imageTypeValue.toolTipText")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
         gridBagConstraints.gridy = 7;
@@ -366,8 +485,8 @@ class DataSourceSummaryDetailsPanel extends BaseDataSourceSummaryPanel {
         gridBagConstraints.insets = new java.awt.Insets(6, 0, 0, 10);
         jPanel1.add(imageTypeValue, gridBagConstraints);
 
-        org.openide.awt.Mnemonics.setLocalizedText(md5HashValue, org.openide.util.NbBundle.getMessage(DataSourceSummaryDetailsPanel.class, "DataSourceSummaryDetailsPanel.md5HashValue.text")); // NOI18N
-        md5HashValue.setToolTipText(org.openide.util.NbBundle.getMessage(DataSourceSummaryDetailsPanel.class, "DataSourceSummaryDetailsPanel.md5HashValue.toolTipText")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(md5HashValue, org.openide.util.NbBundle.getMessage(ContainerPanel.class, "ContainerPanel.md5HashValue.text")); // NOI18N
+        md5HashValue.setToolTipText(org.openide.util.NbBundle.getMessage(ContainerPanel.class, "ContainerPanel.md5HashValue.toolTipText")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
         gridBagConstraints.gridy = 11;
@@ -378,7 +497,7 @@ class DataSourceSummaryDetailsPanel extends BaseDataSourceSummaryPanel {
         gridBagConstraints.insets = new java.awt.Insets(0, 0, 0, 10);
         jPanel1.add(md5HashValue, gridBagConstraints);
 
-        org.openide.awt.Mnemonics.setLocalizedText(sectorSizeValue, org.openide.util.NbBundle.getMessage(DataSourceSummaryDetailsPanel.class, "DataSourceSummaryDetailsPanel.sectorSizeValue.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(sectorSizeValue, org.openide.util.NbBundle.getMessage(ContainerPanel.class, "ContainerPanel.sectorSizeValue.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
         gridBagConstraints.gridy = 10;
@@ -389,7 +508,7 @@ class DataSourceSummaryDetailsPanel extends BaseDataSourceSummaryPanel {
         gridBagConstraints.insets = new java.awt.Insets(0, 0, 0, 10);
         jPanel1.add(sectorSizeValue, gridBagConstraints);
 
-        org.openide.awt.Mnemonics.setLocalizedText(sizeValue, org.openide.util.NbBundle.getMessage(DataSourceSummaryDetailsPanel.class, "DataSourceSummaryDetailsPanel.sizeValue.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(sizeValue, org.openide.util.NbBundle.getMessage(ContainerPanel.class, "ContainerPanel.sizeValue.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
         gridBagConstraints.gridy = 8;
@@ -400,7 +519,7 @@ class DataSourceSummaryDetailsPanel extends BaseDataSourceSummaryPanel {
         gridBagConstraints.insets = new java.awt.Insets(0, 0, 0, 10);
         jPanel1.add(sizeValue, gridBagConstraints);
 
-        org.openide.awt.Mnemonics.setLocalizedText(filePathsLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryDetailsPanel.class, "DataSourceSummaryDetailsPanel.filePathsLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(filePathsLabel, org.openide.util.NbBundle.getMessage(ContainerPanel.class, "ContainerPanel.filePathsLabel.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 14;
@@ -410,7 +529,7 @@ class DataSourceSummaryDetailsPanel extends BaseDataSourceSummaryPanel {
         gridBagConstraints.insets = new java.awt.Insets(6, 10, 10, 4);
         jPanel1.add(filePathsLabel, gridBagConstraints);
 
-        org.openide.awt.Mnemonics.setLocalizedText(sha256HashLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryDetailsPanel.class, "DataSourceSummaryDetailsPanel.sha256HashLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(sha256HashLabel, org.openide.util.NbBundle.getMessage(ContainerPanel.class, "ContainerPanel.sha256HashLabel.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 13;
@@ -419,7 +538,7 @@ class DataSourceSummaryDetailsPanel extends BaseDataSourceSummaryPanel {
         gridBagConstraints.insets = new java.awt.Insets(0, 10, 6, 4);
         jPanel1.add(sha256HashLabel, gridBagConstraints);
 
-        org.openide.awt.Mnemonics.setLocalizedText(sha1HashLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryDetailsPanel.class, "DataSourceSummaryDetailsPanel.sha1HashLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(sha1HashLabel, org.openide.util.NbBundle.getMessage(ContainerPanel.class, "ContainerPanel.sha1HashLabel.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 12;
@@ -428,7 +547,7 @@ class DataSourceSummaryDetailsPanel extends BaseDataSourceSummaryPanel {
         gridBagConstraints.insets = new java.awt.Insets(0, 10, 0, 4);
         jPanel1.add(sha1HashLabel, gridBagConstraints);
 
-        org.openide.awt.Mnemonics.setLocalizedText(md5HashLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryDetailsPanel.class, "DataSourceSummaryDetailsPanel.md5HashLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(md5HashLabel, org.openide.util.NbBundle.getMessage(ContainerPanel.class, "ContainerPanel.md5HashLabel.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 11;
@@ -437,7 +556,7 @@ class DataSourceSummaryDetailsPanel extends BaseDataSourceSummaryPanel {
         gridBagConstraints.insets = new java.awt.Insets(0, 10, 0, 4);
         jPanel1.add(md5HashLabel, gridBagConstraints);
 
-        org.openide.awt.Mnemonics.setLocalizedText(sectorSizeLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryDetailsPanel.class, "DataSourceSummaryDetailsPanel.sectorSizeLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(sectorSizeLabel, org.openide.util.NbBundle.getMessage(ContainerPanel.class, "ContainerPanel.sectorSizeLabel.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 10;
@@ -446,7 +565,7 @@ class DataSourceSummaryDetailsPanel extends BaseDataSourceSummaryPanel {
         gridBagConstraints.insets = new java.awt.Insets(0, 10, 0, 4);
         jPanel1.add(sectorSizeLabel, gridBagConstraints);
 
-        org.openide.awt.Mnemonics.setLocalizedText(sizeLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryDetailsPanel.class, "DataSourceSummaryDetailsPanel.sizeLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(sizeLabel, org.openide.util.NbBundle.getMessage(ContainerPanel.class, "ContainerPanel.sizeLabel.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 8;
@@ -455,7 +574,7 @@ class DataSourceSummaryDetailsPanel extends BaseDataSourceSummaryPanel {
         gridBagConstraints.insets = new java.awt.Insets(0, 10, 0, 4);
         jPanel1.add(sizeLabel, gridBagConstraints);
 
-        org.openide.awt.Mnemonics.setLocalizedText(imageTypeLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryDetailsPanel.class, "DataSourceSummaryDetailsPanel.imageTypeLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(imageTypeLabel, org.openide.util.NbBundle.getMessage(ContainerPanel.class, "ContainerPanel.imageTypeLabel.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 7;
@@ -464,7 +583,7 @@ class DataSourceSummaryDetailsPanel extends BaseDataSourceSummaryPanel {
         gridBagConstraints.insets = new java.awt.Insets(6, 10, 0, 4);
         jPanel1.add(imageTypeLabel, gridBagConstraints);
 
-        org.openide.awt.Mnemonics.setLocalizedText(acquisitionDetailsLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryDetailsPanel.class, "DataSourceSummaryDetailsPanel.acquisitionDetailsLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(acquisitionDetailsLabel, org.openide.util.NbBundle.getMessage(ContainerPanel.class, "ContainerPanel.acquisitionDetailsLabel.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 6;
@@ -474,7 +593,7 @@ class DataSourceSummaryDetailsPanel extends BaseDataSourceSummaryPanel {
         gridBagConstraints.insets = new java.awt.Insets(6, 10, 6, 4);
         jPanel1.add(acquisitionDetailsLabel, gridBagConstraints);
 
-        org.openide.awt.Mnemonics.setLocalizedText(timeZoneLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryDetailsPanel.class, "DataSourceSummaryDetailsPanel.timeZoneLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(timeZoneLabel, org.openide.util.NbBundle.getMessage(ContainerPanel.class, "ContainerPanel.timeZoneLabel.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 5;
@@ -483,7 +602,7 @@ class DataSourceSummaryDetailsPanel extends BaseDataSourceSummaryPanel {
         gridBagConstraints.insets = new java.awt.Insets(0, 10, 6, 4);
         jPanel1.add(timeZoneLabel, gridBagConstraints);
 
-        org.openide.awt.Mnemonics.setLocalizedText(deviceIdLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryDetailsPanel.class, "DataSourceSummaryDetailsPanel.deviceIdLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(deviceIdLabel, org.openide.util.NbBundle.getMessage(ContainerPanel.class, "ContainerPanel.deviceIdLabel.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 2;
@@ -496,7 +615,7 @@ class DataSourceSummaryDetailsPanel extends BaseDataSourceSummaryPanel {
         acquisitionDetailsTextArea.setBackground(javax.swing.UIManager.getDefaults().getColor("TextArea.disabledBackground"));
         acquisitionDetailsTextArea.setColumns(20);
         acquisitionDetailsTextArea.setRows(4);
-        acquisitionDetailsTextArea.setText(org.openide.util.NbBundle.getMessage(DataSourceSummaryDetailsPanel.class, "DataSourceSummaryDetailsPanel.acquisitionDetailsTextArea.text")); // NOI18N
+        acquisitionDetailsTextArea.setText(org.openide.util.NbBundle.getMessage(ContainerPanel.class, "ContainerPanel.acquisitionDetailsTextArea.text")); // NOI18N
         acquisitionDetailsTextArea.setBorder(null);
         acquisitionDetailsScrollPane.setViewportView(acquisitionDetailsTextArea);
 
@@ -524,7 +643,7 @@ class DataSourceSummaryDetailsPanel extends BaseDataSourceSummaryPanel {
         gridBagConstraints.weighty = 0.1;
         jPanel1.add(filler2, gridBagConstraints);
 
-        org.openide.awt.Mnemonics.setLocalizedText(unallocatedSizeLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryDetailsPanel.class, "DataSourceSummaryDetailsPanel.unallocatedSizeLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(unallocatedSizeLabel, org.openide.util.NbBundle.getMessage(ContainerPanel.class, "ContainerPanel.unallocatedSizeLabel.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 9;
@@ -533,7 +652,7 @@ class DataSourceSummaryDetailsPanel extends BaseDataSourceSummaryPanel {
         gridBagConstraints.insets = new java.awt.Insets(0, 10, 0, 4);
         jPanel1.add(unallocatedSizeLabel, gridBagConstraints);
 
-        org.openide.awt.Mnemonics.setLocalizedText(unallocatedSizeValue, org.openide.util.NbBundle.getMessage(DataSourceSummaryDetailsPanel.class, "DataSourceSummaryDetailsPanel.unallocatedSizeValue.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(unallocatedSizeValue, org.openide.util.NbBundle.getMessage(ContainerPanel.class, "ContainerPanel.unallocatedSizeValue.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
         gridBagConstraints.gridy = 9;

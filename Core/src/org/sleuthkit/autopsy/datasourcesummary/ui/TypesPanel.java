@@ -19,7 +19,9 @@
 package org.sleuthkit.autopsy.datasourcesummary.ui;
 
 import java.awt.BorderLayout;
+import java.sql.SQLException;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -29,13 +31,12 @@ import javax.swing.JLabel;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.FileTypeUtils.FileTypeCategory;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourceCountsSummary;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourceDetailsSummary;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourceMimeTypeSummary;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.TypesSummary;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.ContainerSummary;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.MimeTypeSummary;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.AbstractLoadableComponent;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.LoadableComponent;
@@ -43,6 +44,7 @@ import org.sleuthkit.autopsy.datasourcesummary.uiutils.PieChartPanel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.PieChartPanel.PieChartItem;
 
 import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Panel for displaying summary information on the known files present in the
@@ -147,72 +149,78 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
     );
 
     // all of the means for obtaining data for the gui components.
-    private final List<DataFetchComponents<DataSource, ?>> dataFetchComponents = Arrays.asList(
-            // usage label worker
-            new DataFetchWorker.DataFetchComponents<>(
-                    DataSourceDetailsSummary::getDataSourceType,
-                    usageLabel::showDataFetchResult),
-            // os label worker
-            new DataFetchWorker.DataFetchComponents<>(
-                    DataSourceDetailsSummary::getOperatingSystems,
-                    osLabel::showDataFetchResult),
-            // size label worker
-            new DataFetchWorker.DataFetchComponents<>(
-                    (dataSource) -> {
-                        Long size = dataSource == null ? null : dataSource.getSize();
-                        return SizeRepresentationUtil.getSizeString(size, INTEGER_SIZE_FORMAT, false);
-                    },
-                    sizeLabel::showDataFetchResult),
-            // file types worker
-            new DataFetchWorker.DataFetchComponents<>(
-                    this::getMimeTypeCategoriesModel,
-                    fileMimeTypesChart::showDataFetchResult),
-            // allocated files worker
-            new DataFetchWorker.DataFetchComponents<>(
-                    (dataSource) -> getStringOrZero(DataSourceCountsSummary.getCountOfAllocatedFiles(dataSource)),
-                    allocatedLabel::showDataFetchResult),
-            // unallocated files worker
-            new DataFetchWorker.DataFetchComponents<>(
-                    (dataSource) -> getStringOrZero(DataSourceCountsSummary.getCountOfUnallocatedFiles(dataSource)),
-                    unallocatedLabel::showDataFetchResult),
-            // slack files worker
-            new DataFetchWorker.DataFetchComponents<>(
-                    (dataSource) -> getStringOrZero(DataSourceCountsSummary.getCountOfSlackFiles(dataSource)),
-                    slackLabel::showDataFetchResult),
-            // directories worker
-            new DataFetchWorker.DataFetchComponents<>(
-                    (dataSource) -> getStringOrZero(DataSourceCountsSummary.getCountOfDirectories(dataSource)),
-                    directoriesLabel::showDataFetchResult)
-    );
+    private final List<DataFetchComponents<DataSource, ?>> dataFetchComponents;
 
     /**
-     * Main constructor.
+     * Creates a new TypesPanel.
      */
     public TypesPanel() {
+        this(new MimeTypeSummary(), new TypesSummary(), new ContainerSummary());
+    }
+
+    /**
+     * Creates a new TypesPanel.
+     *
+     * @param mimeTypeData  The service for mime types.
+     * @param typeData      The service for file types data.
+     * @param containerData The service for container information.
+     */
+    public TypesPanel(
+            MimeTypeSummary mimeTypeData,
+            TypesSummary typeData,
+            ContainerSummary containerData) {
+
+        super(mimeTypeData, typeData, containerData);
+
+        this.dataFetchComponents = Arrays.asList(
+                // usage label worker
+                new DataFetchWorker.DataFetchComponents<>(
+                        containerData::getDataSourceType,
+                        usageLabel::showDataFetchResult),
+                // os label worker
+                new DataFetchWorker.DataFetchComponents<>(
+                        containerData::getOperatingSystems,
+                        osLabel::showDataFetchResult),
+                // size label worker
+                new DataFetchWorker.DataFetchComponents<>(
+                        (dataSource) -> {
+                            Long size = dataSource == null ? null : dataSource.getSize();
+                            return SizeRepresentationUtil.getSizeString(size, INTEGER_SIZE_FORMAT, false);
+                        },
+                        sizeLabel::showDataFetchResult),
+                // file types worker
+                new DataFetchWorker.DataFetchComponents<>(
+                        (dataSource) -> getMimeTypeCategoriesModel(mimeTypeData, dataSource),
+                        fileMimeTypesChart::showDataFetchResult),
+                // allocated files worker
+                new DataFetchWorker.DataFetchComponents<>(
+                        (dataSource) -> getStringOrZero(typeData.getCountOfAllocatedFiles(dataSource)),
+                        allocatedLabel::showDataFetchResult),
+                // unallocated files worker
+                new DataFetchWorker.DataFetchComponents<>(
+                        (dataSource) -> getStringOrZero(typeData.getCountOfUnallocatedFiles(dataSource)),
+                        unallocatedLabel::showDataFetchResult),
+                // slack files worker
+                new DataFetchWorker.DataFetchComponents<>(
+                        (dataSource) -> getStringOrZero(typeData.getCountOfSlackFiles(dataSource)),
+                        slackLabel::showDataFetchResult),
+                // directories worker
+                new DataFetchWorker.DataFetchComponents<>(
+                        (dataSource) -> getStringOrZero(typeData.getCountOfDirectories(dataSource)),
+                        directoriesLabel::showDataFetchResult)
+        );
+
         initComponents();
     }
 
     @Override
+    protected void fetchInformation(DataSource dataSource) {
+        fetchInformation(dataFetchComponents, dataSource);
+    }
+
+    @Override
     protected void onNewDataSource(DataSource dataSource) {
-        // if no data source is present or the case is not open,
-        // set results for tables to null.
-        if (dataSource == null || !Case.isCaseOpen()) {
-            this.dataFetchComponents.forEach((item) -> item.getResultHandler()
-                    .accept(DataFetchResult.getSuccessResult(null)));
-
-        } else {
-            // set tables to display loading screen
-            this.loadables.forEach((table) -> table.showDefaultLoadingMessage());
-
-            // create swing workers to run for each table
-            List<DataFetchWorker<?, ?>> workers = dataFetchComponents
-                    .stream()
-                    .map((components) -> new DataFetchWorker<>(components, dataSource))
-                    .collect(Collectors.toList());
-
-            // submit swing workers to run
-            submit(workers);
-        }
+        onNewDataSource(dataFetchComponents, loadables, dataSource);
     }
 
     /**
@@ -222,30 +230,30 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
      *
      * @return The pie chart items.
      */
-    private List<PieChartItem> getMimeTypeCategoriesModel(DataSource dataSource) {
+    private List<PieChartItem> getMimeTypeCategoriesModel(MimeTypeSummary mimeTypeData, DataSource dataSource)
+            throws SQLException, SleuthkitCaseProviderException, TskCoreException {
+
         if (dataSource == null) {
             return null;
         }
 
         // for each category of file types, get the counts of files
-        List<Pair<String, Long>> fileCategoryItems = FILE_MIME_TYPE_CATEGORIES
-                .stream()
-                .map((strCat) -> {
-                    return Pair.of(strCat.getLeft(),
-                            getLongOrZero(DataSourceMimeTypeSummary.getCountOfFilesForMimeTypes(
-                                    dataSource, strCat.getRight())));
-                })
-                .collect(Collectors.toList());
+        List<Pair<String, Long>> fileCategoryItems = new ArrayList<>();
+        for (Pair<String, Set<String>> strCat : FILE_MIME_TYPE_CATEGORIES) {
+            fileCategoryItems.add(Pair.of(strCat.getLeft(),
+                    getLongOrZero(mimeTypeData.getCountOfFilesForMimeTypes(
+                            dataSource, strCat.getRight()))));
+        }
 
         // get a count of all files with no mime type
-        Long noMimeTypeCount = getLongOrZero(DataSourceMimeTypeSummary.getCountOfFilesWithNoMimeType(dataSource));
+        Long noMimeTypeCount = getLongOrZero(mimeTypeData.getCountOfFilesWithNoMimeType(dataSource));
 
         // get the sum of all counts for the known categories
         Long categoryTotalCount = getLongOrZero(fileCategoryItems.stream()
                 .collect(Collectors.summingLong((pair) -> pair.getValue())));
 
         // get a count of all regular files
-        Long allRegularFiles = getLongOrZero(DataSourceMimeTypeSummary.getCountOfAllRegularFiles(dataSource));
+        Long allRegularFiles = getLongOrZero(mimeTypeData.getCountOfAllRegularFiles(dataSource));
 
         // create entry for mime types in other category
         fileCategoryItems.add(Pair.of(Bundle.TypesPanel_fileMimeTypesChart_other_title(),

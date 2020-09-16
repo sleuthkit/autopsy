@@ -18,21 +18,62 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.datamodel;
 
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultArtifactUpdateGovernor;
 import java.sql.SQLException;
-import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
-import static org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourceInfoUtilities.getBaseQueryResult;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
+import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
 /**
  * Provides methods to query for data source overview details.
  */
-public class DataSourceDetailsSummary {
+public class ContainerSummary implements DefaultArtifactUpdateGovernor {
 
-    private static final Logger logger = Logger.getLogger(DataSourceDetailsSummary.class.getName());
+    private static final Set<Integer> ARTIFACT_UPDATE_TYPE_IDS = new HashSet<>(Arrays.asList(
+            BlackboardArtifact.ARTIFACT_TYPE.TSK_OS_INFO.getTypeID(),
+            BlackboardArtifact.ARTIFACT_TYPE.TSK_DATA_SOURCE_USAGE.getTypeID()
+    ));
+
+    private final SleuthkitCaseProvider provider;
+
+    /**
+     * Main constructor.
+     */
+    public ContainerSummary() {
+        this(SleuthkitCaseProvider.DEFAULT);
+    }
+
+    /**
+     * Main constructor.
+     *
+     * @param provider The means of obtaining a sleuthkit case.
+     */
+    public ContainerSummary(SleuthkitCaseProvider provider) {
+        this.provider = provider;
+    }
+
+    @Override
+    public boolean isRefreshRequired(ModuleContentEvent evt) {
+        return true;
+    }
+
+    @Override
+    public boolean isRefreshRequired(AbstractFile file) {
+        return true;
+    }
+
+    @Override
+    public Set<Integer> getArtifactTypeIdsForRefresh() {
+        return ARTIFACT_UPDATE_TYPE_IDS;
+    }
 
     /**
      * Gets the size of unallocated files in a particular datasource.
@@ -40,8 +81,13 @@ public class DataSourceDetailsSummary {
      * @param currentDataSource The data source.
      *
      * @return The size or null if the query could not be executed.
+     *
+     * @throws SleuthkitCaseProviderException
+     * @throws TskCoreException
+     * @throws SQLException
      */
-    public static Long getSizeOfUnallocatedFiles(DataSource currentDataSource) {
+    public Long getSizeOfUnallocatedFiles(DataSource currentDataSource)
+            throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, SQLException {
         if (currentDataSource == null) {
             return null;
         }
@@ -66,9 +112,8 @@ public class DataSourceDetailsSummary {
                 return null;
             }
         };
-        String errorMessage = "Unable to get size of unallocated files; returning null.";
 
-        return DataSourceInfoUtilities.getBaseQueryResult(query, handler, errorMessage);
+        return DataSourceInfoUtilities.getBaseQueryResult(provider.get(), query, handler);
     }
 
     /**
@@ -79,8 +124,14 @@ public class DataSourceDetailsSummary {
      *
      * @return The concatenated value or null if the query could not be
      *         executed.
+     *
+     * @throws SleuthkitCaseProviderException
+     * @throws TskCoreException
+     * @throws SQLException
      */
-    public static String getOperatingSystems(DataSource dataSource) {
+    public String getOperatingSystems(DataSource dataSource)
+            throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, SQLException {
+
         if (dataSource == null) {
             return null;
         }
@@ -98,8 +149,14 @@ public class DataSourceDetailsSummary {
      *
      * @return The concatenated value or null if the query could not be
      *         executed.
+     *
+     * @throws SleuthkitCaseProviderException
+     * @throws TskCoreException
+     * @throws SQLException
      */
-    public static String getDataSourceType(DataSource dataSource) {
+    public String getDataSourceType(DataSource dataSource)
+            throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, SQLException {
+
         if (dataSource == null) {
             return null;
         }
@@ -123,28 +180,30 @@ public class DataSourceDetailsSummary {
      *
      * @return The concatenated string or null if the query could not be
      *         executed.
+     *
+     * @throws SleuthkitCaseProviderException
+     * @throws TskCoreException
+     * @throws SQLException
      */
-    private static String getConcattedStringsResult(String query, String valueParam, String separator, String errorMessage, String singleErrorMessage) {
+    private String getConcattedStringsResult(String query, String valueParam, String separator)
+            throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, SQLException {
+
         DataSourceInfoUtilities.ResultSetHandler<String> handler = (resultSet) -> {
             String toRet = "";
             boolean first = true;
             while (resultSet.next()) {
-                try {
-                    if (first) {
-                        first = false;
-                    } else {
-                        toRet += separator;
-                    }
-                    toRet += resultSet.getString(valueParam);
-                } catch (SQLException ex) {
-                    logger.log(Level.WARNING, singleErrorMessage, ex);
+                if (first) {
+                    first = false;
+                } else {
+                    toRet += separator;
                 }
+                toRet += resultSet.getString(valueParam);
             }
 
             return toRet;
         };
 
-        return getBaseQueryResult(query, handler, errorMessage);
+        return DataSourceInfoUtilities.getBaseQueryResult(provider.get(), query, handler);
     }
 
     /**
@@ -157,8 +216,14 @@ public class DataSourceDetailsSummary {
      *
      * @return The concatenated value or null if the query could not be
      *         executed.
+     *
+     * @throws SleuthkitCaseProviderException
+     * @throws TskCoreException
+     * @throws SQLException
      */
-    private static String getConcattedAttrValue(long dataSourceId, int artifactTypeId, int attributeTypeId) {
+    private String getConcattedAttrValue(long dataSourceId, int artifactTypeId, int attributeTypeId)
+            throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, SQLException {
+
         final String valueParam = "concatted_attribute_value";
         String query = "SELECT attr.value_text AS " + valueParam
                 + " FROM blackboard_artifacts bba "
@@ -167,12 +232,7 @@ public class DataSourceDetailsSummary {
                 + " AND bba.artifact_type_id = " + artifactTypeId
                 + " AND attr.attribute_type_id = " + attributeTypeId;
 
-        String errorMessage = "Unable to execute query to retrieve concatted attribute values.";
-        String singleErrorMessage = "There was an error retrieving one of the results.  That result will be omitted from concatted value.";
         String separator = ", ";
-        return getConcattedStringsResult(query, valueParam, separator, errorMessage, singleErrorMessage);
-    }
-
-    private DataSourceDetailsSummary() {
+        return getConcattedStringsResult(query, valueParam, separator);
     }
 }

@@ -26,16 +26,11 @@ import java.util.Date;
 import java.util.List;
 import java.util.SortedMap;
 import java.util.TreeMap;
-import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.apache.commons.lang.StringUtils;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.datamodel.BlackboardAttribute.Type;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
@@ -48,28 +43,24 @@ import org.sleuthkit.datamodel.TskData.TSK_FS_META_TYPE_ENUM;
  */
 final class DataSourceInfoUtilities {
 
-    private static final Logger logger = Logger.getLogger(DataSourceInfoUtilities.class.getName());
-
     /**
      * Gets a count of tsk_files for a particular datasource.
      *
+     * @param skCase            The current SleuthkitCase.
      * @param currentDataSource The datasource.
      * @param additionalWhere   Additional sql where clauses.
-     * @param onError           The message to log on error.
      *
      * @return The count of files or null on error.
+     *
+     * @throws TskCoreException
+     * @throws SQLException
      */
-    static Long getCountOfTskFiles(DataSource currentDataSource, String additionalWhere, String onError) {
+    static Long getCountOfTskFiles(SleuthkitCase skCase, DataSource currentDataSource, String additionalWhere)
+            throws TskCoreException, SQLException {
         if (currentDataSource != null) {
-            try {
-                SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-                return skCase.countFilesWhere(
-                        "data_source_obj_id=" + currentDataSource.getId()
-                        + (StringUtils.isBlank(additionalWhere) ? "" : (" AND " + additionalWhere)));
-            } catch (TskCoreException | NoCurrentCaseException ex) {
-                logger.log(Level.WARNING, onError, ex);
-                //unable to get count of files for the specified types cell will be displayed as empty
-            }
+            return skCase.countFilesWhere(
+                    "data_source_obj_id=" + currentDataSource.getId()
+                    + (StringUtils.isBlank(additionalWhere) ? "" : (" AND " + additionalWhere)));
         }
         return null;
     }
@@ -77,32 +68,40 @@ final class DataSourceInfoUtilities {
     /**
      * Gets a count of regular files for a particular datasource.
      *
+     * @param skCase            The current SleuthkitCase.
      * @param currentDataSource The datasource.
      * @param additionalWhere   Additional sql where clauses.
-     * @param onError           The message to log on error.
      *
      * @return The count of files or null on error.
+     *
+     * @throws TskCoreException
+     * @throws SQLException
      */
-    static Long getCountOfRegularFiles(DataSource currentDataSource, String additionalWhere, String onError) {
+    static Long getCountOfRegularFiles(SleuthkitCase skCase, DataSource currentDataSource, String additionalWhere)
+            throws TskCoreException, SQLException {
         String whereClause = "meta_type=" + TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG.getValue();
 
         if (StringUtils.isNotBlank(additionalWhere)) {
             whereClause += " AND " + additionalWhere;
         }
 
-        return getCountOfTskFiles(currentDataSource, whereClause, onError);
+        return getCountOfTskFiles(skCase, currentDataSource, whereClause);
     }
 
     /**
      * Gets a count of regular non-slack files for a particular datasource.
      *
+     * @param skCase            The current SleuthkitCase.
      * @param currentDataSource The datasource.
      * @param additionalWhere   Additional sql where clauses.
-     * @param onError           The message to log on error.
      *
      * @return The count of files or null on error.
+     *
+     * @throws TskCoreException
+     * @throws SQLException
      */
-    static Long getCountOfRegNonSlackFiles(DataSource currentDataSource, String additionalWhere, String onError) {
+    static Long getCountOfRegNonSlackFiles(SleuthkitCase skCase, DataSource currentDataSource, String additionalWhere)
+            throws TskCoreException, SQLException {
         String whereClause = "meta_type=" + TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG.getValue()
                 + " AND type<>" + TSK_DB_FILES_TYPE_ENUM.SLACK.getFileType();
 
@@ -110,7 +109,7 @@ final class DataSourceInfoUtilities {
             whereClause += " AND " + additionalWhere;
         }
 
-        return getCountOfTskFiles(currentDataSource, whereClause, onError);
+        return getCountOfTskFiles(skCase, currentDataSource, whereClause);
     }
 
     /**
@@ -124,42 +123,22 @@ final class DataSourceInfoUtilities {
     /**
      * Retrieves a result based on the provided query.
      *
-     * @param query        The query.
-     * @param processor    The result set handler.
-     * @param errorMessage The error message to display if there is an error
-     *                     retrieving the resultset.
+     * @param skCase    The current SleuthkitCase.
+     * @param query     The query.
+     * @param processor The result set handler.
      *
      * @return The ResultSetHandler value or null if no ResultSet could be
      *         obtained.
-     */
-    static <T> T getBaseQueryResult(String query, ResultSetHandler<T> processor, String errorMessage) {
-        return getBaseQueryResult(SleuthkitCaseProvider.DEFAULT, query, processor, errorMessage);
-    }
-
-    /**
-     * Retrieves a result based on the provided query.
      *
-     * @param provider     The means of obtaining a SleuthkitCase.
-     * @param query        The query.
-     * @param processor    The result set handler.
-     * @param errorMessage The error message to display if there is an error
-     *                     retrieving the resultset.
-     *
-     * @return The ResultSetHandler value or null if no ResultSet could be
-     *         obtained.
+     * @throws TskCoreException
+     * @throws SQLException
      */
-    static <T> T getBaseQueryResult(SleuthkitCaseProvider provider, String query, ResultSetHandler<T> processor, String errorMessage) {
-        try (SleuthkitCase.CaseDbQuery dbQuery = provider.get().executeQuery(query)) {
+    static <T> T getBaseQueryResult(SleuthkitCase skCase, String query, ResultSetHandler<T> processor)
+            throws TskCoreException, SQLException {
+        try (SleuthkitCase.CaseDbQuery dbQuery = skCase.executeQuery(query)) {
             ResultSet resultSet = dbQuery.getResultSet();
-            try {
-                return processor.process(resultSet);
-            } catch (SQLException ex) {
-                logger.log(Level.WARNING, errorMessage, ex);
-            }
-        } catch (TskCoreException | SleuthkitCaseProviderException ex) {
-            logger.log(Level.WARNING, errorMessage, ex);
+            return processor.process(resultSet);
         }
-        return null;
     }
 
     /**

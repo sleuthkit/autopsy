@@ -107,8 +107,8 @@ public class PastCasesPanel extends BaseDataSourceSummaryPanel {
             notableFileTable.showMessage(Bundle.PastCasesPanel_onNoCrIngest_message());
             sameIdTable.showMessage(Bundle.PastCasesPanel_onNoCrIngest_message());
         } else {
-            notableFileTable.showDataFetchResult(getSubResult(result, (res) -> res.getTaggedNotable()));
-            sameIdTable.showDataFetchResult(getSubResult(result, (res) -> res.getSameIdsResults()));
+            notableFileTable.showDataFetchResult(getSubResult(result, (res) -> (res == null) ? null : res.getTaggedNotable()));
+            sameIdTable.showDataFetchResult(getSubResult(result, (res) -> (res == null) ? null : res.getSameIdsResults()));
         }
     }
 
@@ -133,26 +133,13 @@ public class PastCasesPanel extends BaseDataSourceSummaryPanel {
     }
 
     @Override
+    protected void fetchInformation(DataSource dataSource) {
+        fetchInformation(dataFetchComponents, dataSource);
+    }
+
+    @Override
     protected void onNewDataSource(DataSource dataSource) {
-        // if no data source is present or the case is not open,
-        // set results for tables to null.
-        if (dataSource == null || !Case.isCaseOpen()) {
-            this.dataFetchComponents.forEach((item) -> item.getResultHandler()
-                    .accept(DataFetchResult.getSuccessResult(null)));
-
-        } else {
-            // set tables to display loading screen
-            this.tables.forEach((table) -> table.showDefaultLoadingMessage());
-
-            // create swing workers to run for each table
-            List<DataFetchWorker<?, ?>> workers = dataFetchComponents
-                    .stream()
-                    .map((components) -> new DataFetchWorker<>(components, dataSource))
-                    .collect(Collectors.toList());
-
-            // submit swing workers to run
-            submit(workers);
-        }
+        onNewDataSource(dataFetchComponents, tables, dataSource);
     }
 
     /**

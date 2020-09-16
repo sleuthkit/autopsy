@@ -21,15 +21,12 @@ package org.sleuthkit.autopsy.datasourcesummary.ui;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.RecentFilesSummary;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.RecentFilesSummary.RecentAttachmentDetails;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.RecentFilesSummary.RecentDownloadDetails;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.RecentFilesSummary.RecentFileDetails;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer.DefaultCellModel;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel.ColumnModel;
@@ -66,6 +63,7 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
      * Creates new form RecentFilesPanel
      */
     public RecentFilesPanel(RecentFilesSummary dataHandler) {
+        super(dataHandler);
         this.dataHandler = dataHandler;
 
         initComponents();
@@ -73,26 +71,13 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
     }
 
     @Override
+    protected void fetchInformation(DataSource dataSource) {
+        fetchInformation(dataFetchComponents, dataSource);
+    }
+
+    @Override
     protected void onNewDataSource(DataSource dataSource) {
-        // if no data source is present or the case is not open,
-        // set results for tables to null.
-        if (dataSource == null || !Case.isCaseOpen()) {
-            this.dataFetchComponents.forEach((item) -> item.getResultHandler()
-                    .accept(DataFetchResult.getSuccessResult(null)));
-
-        } else {
-            // set tables to display loading screen
-            tablePanelList.forEach((table) -> table.showDefaultLoadingMessage());
-
-            // create swing workers to run for each table
-            List<DataFetchWorker<?, ?>> workers = dataFetchComponents
-                    .stream()
-                    .map((components) -> new DataFetchWorker<>(components, dataSource))
-                    .collect(Collectors.toList());
-
-            // submit swing workers to run
-            submit(workers);
-        }
+        onNewDataSource(dataFetchComponents, tablePanelList, dataSource);
     }
 
     /**
@@ -127,6 +112,7 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
         JTablePanel<RecentFileDetails> pane = (JTablePanel<RecentFileDetails>) openedDocPane;
         pane.setModel(tableModel);
         pane.setColumnModel(JTablePanel.getTableColumnModel(list));
+        pane.setKeyFunction((recentFile) -> recentFile.getPath());
         tablePanelList.add(pane);
 
         DataFetchWorker.DataFetchComponents<DataSource, List<RecentFileDetails>> worker
@@ -161,6 +147,7 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
 
         JTablePanel<RecentDownloadDetails> pane = (JTablePanel<RecentDownloadDetails>) downloadsPane;
         pane.setModel(tableModel);
+        pane.setKeyFunction((download) -> download.getPath());
         pane.setColumnModel(JTablePanel.getTableColumnModel(list));
         tablePanelList.add(pane);
 
@@ -196,6 +183,7 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
 
         JTablePanel<RecentAttachmentDetails> pane = (JTablePanel<RecentAttachmentDetails>) attachmentsPane;
         pane.setModel(tableModel);
+        pane.setKeyFunction((attachment) -> attachment.getPath());
         pane.setColumnModel(JTablePanel.getTableColumnModel(list));
         tablePanelList.add(pane);
 
@@ -297,5 +285,4 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
     private javax.swing.JPanel downloadsPane;
     private javax.swing.JPanel openedDocPane;
     // End of variables declaration//GEN-END:variables
-
 }

@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.datamodel;
 
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultArtifactUpdateGovernor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -51,7 +52,7 @@ import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
  * time, the data being provided for domains is fictitious and is done as a
  * placeholder.
  */
-public class DataSourceUserActivitySummary {
+public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
 
     private static final BlackboardArtifact.Type TYPE_DEVICE_ATTACHED = new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_DEVICE_ATTACHED);
     private static final BlackboardArtifact.Type TYPE_WEB_HISTORY = new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_WEB_HISTORY);
@@ -71,7 +72,16 @@ public class DataSourceUserActivitySummary {
 
     private static final Comparator<TopAccountResult> TOP_ACCOUNT_RESULT_DATE_COMPARE = (a, b) -> a.getLastAccess().compareTo(b.getLastAccess());
     private static final Comparator<TopWebSearchResult> TOP_WEBSEARCH_RESULT_DATE_COMPARE = (a, b) -> a.getDateAccessed().compareTo(b.getDateAccessed());
-    
+
+    private static final Set<Integer> ARTIFACT_UPDATE_TYPE_IDS = new HashSet<>(Arrays.asList(
+            ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getTypeID(),
+            ARTIFACT_TYPE.TSK_MESSAGE.getTypeID(),
+            ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID(),
+            ARTIFACT_TYPE.TSK_CALLLOG.getTypeID(),
+            ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID(),
+            ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID()
+    ));
+
     private static final Set<String> DEVICE_EXCLUDE_LIST = new HashSet<>(Arrays.asList("ROOT_HUB", "ROOT_HUB20"));
     private static final Set<String> DOMAIN_EXCLUDE_LIST = new HashSet<>(Arrays.asList("127.0.0.1", "LOCALHOST"));
 
@@ -86,9 +96,9 @@ public class DataSourceUserActivitySummary {
     /**
      * Main constructor.
      */
-    public DataSourceUserActivitySummary() {
+    public UserActivitySummary() {
         this(SleuthkitCaseProvider.DEFAULT, TextTranslationService.getInstance(),
-                org.sleuthkit.autopsy.coreutils.Logger.getLogger(DataSourceUserActivitySummary.class.getName()));
+                org.sleuthkit.autopsy.coreutils.Logger.getLogger(UserActivitySummary.class.getName()));
     }
 
     /**
@@ -100,7 +110,7 @@ public class DataSourceUserActivitySummary {
      * @param translationService The translation service.
      * @param logger             The logger to use.
      */
-    public DataSourceUserActivitySummary(
+    public UserActivitySummary(
             SleuthkitCaseProvider provider,
             TextTranslationService translationService,
             java.util.logging.Logger logger) {
@@ -108,6 +118,11 @@ public class DataSourceUserActivitySummary {
         this.caseProvider = provider;
         this.translationService = translationService;
         this.logger = logger;
+    }
+
+    @Override
+    public Set<Integer> getArtifactTypeIdsForRefresh() {
+        return ARTIFACT_UPDATE_TYPE_IDS;
     }
 
     /**
@@ -300,7 +315,7 @@ public class DataSourceUserActivitySummary {
         Collection<List<TopWebSearchResult>> resultGroups = webSearchArtifacts
                 .stream()
                 // get items where search string and date is not null
-                .map(DataSourceUserActivitySummary::getWebSearchResult)
+                .map(UserActivitySummary::getWebSearchResult)
                 // remove null records
                 .filter(result -> result != null)
                 // get these messages grouped by search to string
@@ -645,6 +660,51 @@ public class DataSourceUserActivitySummary {
          */
         public Date getLastAccess() {
             return lastAccess;
+        }
+    }
+
+    /**
+     * Describes a result of a program run on a datasource.
+     */
+    public static class TopDomainsResult {
+
+        private final String domain;
+        private final Long visitTimes;
+        private final Date lastVisit;
+
+        /**
+         * Describes a top domain result.
+         *
+         * @param domain     The domain.
+         * @param url        The url.
+         * @param visitTimes The number of times it was visited.
+         * @param lastVisit  The date of the last visit.
+         */
+        public TopDomainsResult(String domain, Long visitTimes, Date lastVisit) {
+            this.domain = domain;
+            this.visitTimes = visitTimes;
+            this.lastVisit = lastVisit;
+        }
+
+        /**
+         * @return The domain for the result.
+         */
+        public String getDomain() {
+            return domain;
+        }
+
+        /**
+         * @return The number of times this site is visited.
+         */
+        public Long getVisitTimes() {
+            return visitTimes;
+        }
+
+        /**
+         * @return The date of the last visit.
+         */
+        public Date getLastVisit() {
+            return lastVisit;
         }
     }
 }

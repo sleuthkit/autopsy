@@ -205,6 +205,7 @@ public class JTablePanel<T> extends AbstractLoadableComponent<List<T>> {
     private Overlay overlayLayer;
     private ListTableModel<T> tableModel;
     private JTable table;
+    private Function<T, ? extends Object> keyFunction = (rowItem) -> rowItem;
 
     /**
      * Panel constructor.
@@ -228,14 +229,17 @@ public class JTablePanel<T> extends AbstractLoadableComponent<List<T>> {
      * setResultList.
      *
      * @param tableModel
+     *
+     * @return As a utility, returns this.
      */
-    public final void setModel(ListTableModel<T> tableModel) {
+    public final JTablePanel<T> setModel(ListTableModel<T> tableModel) {
         if (tableModel == null) {
             throw new IllegalArgumentException("Null table model passed to setModel");
         }
 
         this.tableModel = tableModel;
         table.setModel(tableModel);
+        return this;
     }
 
     /**
@@ -257,17 +261,61 @@ public class JTablePanel<T> extends AbstractLoadableComponent<List<T>> {
         return this;
     }
 
+    /**
+     * @return The function for determining the key for a data row. This key is
+     *         used to maintain current selection in the table despite changing
+     *         rows.
+     */
+    public Function<T, ? extends Object> getKeyFunction() {
+        return keyFunction;
+    }
+
+    /**
+     * Sets the function for determining the key for a data row. This key is
+     * used to maintain current selection in the table despite changing rows.
+     *
+     * @param keyFunction The function to determine the key of a row.
+     *
+     * @return As a utility, returns this.
+     */
+    public JTablePanel<T> setKeyFunction(Function<T, ? extends Object> keyFunction) {
+        if (keyFunction == null) {
+            throw new IllegalArgumentException("Key function must be non-null");
+        }
+
+        this.keyFunction = keyFunction;
+        return this;
+    }
+
     @Override
-    protected void setResults(List<T> data) {
+    protected synchronized void setResults(List<T> data) {
+        // get previously selected value
+        int prevSelectedRow = this.table.getSelectedRow();
+        List<T> tableRows = this.tableModel.getDataRows();
+        T prevValue = (tableRows != null && prevSelectedRow >= 0 && prevSelectedRow < tableRows.size())
+                ? this.tableModel.getDataRows().get(prevSelectedRow)
+                : null;
+        
+        Object prevKeyValue = (prevValue == null) ? null : this.keyFunction.apply(prevValue);
+
         // set the list of data to be shown as either the data or an empty list 
         // on null.
         List<T> dataToSet = (data == null) ? Collections.emptyList() : data;
 
-        // since the data is being reset, scroll to the top.
-        tableScrollPane.getVerticalScrollBar().setValue(0);
-
         // set the underlying table model's data.
         this.tableModel.setDataRows(dataToSet);
+
+        // set the row to selected value if the value is found
+        if (prevKeyValue != null) {
+            for (int objIndex = 0; objIndex < dataToSet.size(); objIndex++) {
+                Object thisKey = this.keyFunction.apply(dataToSet.get(objIndex));
+                if (prevKeyValue.equals(thisKey)) {
+                    this.table.setRowSelectionInterval(objIndex, objIndex);
+                    break;
+                }
+            }
+        }
+
     }
 
     @Override

@@ -64,7 +64,7 @@
               <Properties>
                 <Property name="horizontalAlignment" type="int" value="2"/>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/datasourcesummary/ui/Bundle.properties" key="DataSourceSummaryUserActivityPanel.programsRunLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/sleuthkit/autopsy/datasourcesummary/ui/Bundle.properties" key="UserActivityPanel.programsRunLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
                 <Property name="alignmentX" type="float" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
                   <Connection code="Component.LEFT_ALIGNMENT" type="code"/>
@@ -136,7 +136,7 @@
               <Properties>
                 <Property name="horizontalAlignment" type="int" value="2"/>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/datasourcesummary/ui/Bundle.properties" key="DataSourceSummaryUserActivityPanel.recentDomainsLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/sleuthkit/autopsy/datasourcesummary/ui/Bundle.properties" key="UserActivityPanel.recentDomainsLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
               <AuxValues>
@@ -205,7 +205,7 @@
               <Properties>
                 <Property name="horizontalAlignment" type="int" value="2"/>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/datasourcesummary/ui/Bundle.properties" key="DataSourceSummaryUserActivityPanel.topWebSearchLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/sleuthkit/autopsy/datasourcesummary/ui/Bundle.properties" key="UserActivityPanel.topWebSearchLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
               <AuxValues>
@@ -274,7 +274,7 @@
               <Properties>
                 <Property name="horizontalAlignment" type="int" value="2"/>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/datasourcesummary/ui/Bundle.properties" key="DataSourceSummaryUserActivityPanel.topDevicesAttachedLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/sleuthkit/autopsy/datasourcesummary/ui/Bundle.properties" key="UserActivityPanel.topDevicesAttachedLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
               <AuxValues>
@@ -343,7 +343,7 @@
               <Properties>
                 <Property name="horizontalAlignment" type="int" value="2"/>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/datasourcesummary/ui/Bundle.properties" key="DataSourceSummaryUserActivityPanel.recentAccountsLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/sleuthkit/autopsy/datasourcesummary/ui/Bundle.properties" key="UserActivityPanel.recentAccountsLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
               <AuxValues>
