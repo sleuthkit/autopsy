@@ -22,6 +22,7 @@ import java.beans.PropertyChangeEvent;
 import java.util.Collections;
 import java.util.Set;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 
@@ -47,8 +48,17 @@ public interface DefaultUpdateGovernor extends UpdateGovernor {
     }
 
     @Override
+    default boolean isRefreshRequired(IngestManager.IngestJobEvent evt) {
+        return false;
+    }
+
+    @Override
     default Set<Case.Events> getCaseEventUpdates() {
         return Collections.emptySet();
     }
 
+    @Override
+    default Set<IngestManager.IngestJobEvent> getIngestJobEventUpdates() {
+        return Collections.emptySet();
+    }
 }

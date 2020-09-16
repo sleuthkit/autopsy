@@ -19,9 +19,9 @@
 package org.sleuthkit.autopsy.datasourcesummary.uiutils;
 
 import java.beans.PropertyChangeEvent;
-import java.util.Collections;
 import java.util.Set;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.ingest.IngestManager.IngestJobEvent;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 
@@ -34,9 +34,12 @@ public interface UpdateGovernor {
     /**
      * @return The set of Case Events for which data should be updated.
      */
-    default Set<Case.Events> getCaseEventUpdates() {
-        return Collections.emptySet();
-    }
+    Set<Case.Events> getCaseEventUpdates();
+
+    /**
+     * @return The set of Ingest Job Events for which data should be updated.
+     */
+    Set<IngestJobEvent> getIngestJobEventUpdates();
 
     /**
      * Given a module data event, whether or not an update should occur.
@@ -55,6 +58,16 @@ public interface UpdateGovernor {
      * @return Whether or not this event should trigger an update.
      */
     boolean isRefreshRequired(ModuleContentEvent evt);
+
+    /**
+     * Given an ingest job event, determines whether or not an update should
+     * occur.
+     *
+     * @param evt The event.
+     *
+     * @return Whether or not this event should trigger an update.
+     */
+    boolean isRefreshRequired(IngestJobEvent evt);
 
     /**
      * Given a case event, whether or not an update should occur.

@@ -18,7 +18,11 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.uiutils;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
+import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.ingest.IngestManager.IngestJobEvent;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 
 /**
@@ -27,9 +31,22 @@ import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
  */
 public interface DefaultArtifactUpdateGovernor extends DefaultUpdateGovernor {
 
+    Set<IngestJobEvent> INGEST_JOB_EVENTS = new HashSet<>(
+            Arrays.asList(IngestJobEvent.COMPLETED, IngestJobEvent.CANCELLED));
+
     @Override
     default boolean isRefreshRequired(ModuleDataEvent evt) {
         return getArtifactTypeIdsForRefresh().contains(evt.getBlackboardArtifactType().getTypeID());
+    }
+
+    @Override
+    default boolean isRefreshRequired(IngestManager.IngestJobEvent evt) {
+        return (evt != null && INGEST_JOB_EVENTS.contains(evt));
+    }
+
+    @Override
+    default Set<IngestJobEvent> getIngestJobEventUpdates() {
+        return INGEST_JOB_EVENTS;
     }
 
     /**

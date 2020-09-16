@@ -41,6 +41,7 @@ import org.sleuthkit.autopsy.datasourcesummary.uiutils.EventUpdateHandler;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.LoadableComponent;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.SwingWorkerSequentialExecutor;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.UpdateGovernor;
+import org.sleuthkit.autopsy.ingest.IngestManager.IngestJobEvent;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -146,6 +147,17 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
         }
 
         @Override
+        public boolean isRefreshRequired(IngestJobEvent evt) {
+            for (UpdateGovernor governor : governors) {
+                if (governor.isRefreshRequired(evt)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        @Override
         public boolean isRefreshRequiredForCaseEvent(PropertyChangeEvent evt) {
             for (UpdateGovernor governor : governors) {
                 if (governor.isRefreshRequiredForCaseEvent(evt)) {
@@ -162,6 +174,15 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
             return governors.stream()
                     .filter(governor -> governor.getCaseEventUpdates() != null)
                     .flatMap(governor -> governor.getCaseEventUpdates().stream())
+                    .collect(Collectors.toSet());
+        }
+
+        @Override
+        public Set<IngestJobEvent> getIngestJobEventUpdates() {
+            // return the union of all case events sets from delegates.
+            return governors.stream()
+                    .filter(governor -> governor.getIngestJobEventUpdates() != null)
+                    .flatMap(governor -> governor.getIngestJobEventUpdates().stream())
                     .collect(Collectors.toSet());
         }
     };
