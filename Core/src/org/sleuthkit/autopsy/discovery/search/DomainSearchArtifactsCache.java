@@ -49,7 +49,7 @@ public class DomainSearchArtifactsCache {
         try {
             return cache.get(request);
         } catch (ExecutionException ex) {
-            throw new DiscoveryException("Error fetching artifacts from cache", ex.getCause());
+            throw new DiscoveryException("Error fetching artifacts from cache", ex);
         }
     }
 }
