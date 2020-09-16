@@ -29,7 +29,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
  */
 public class DomainSearchArtifactsCache {
 
-    private static final int MAXIMUM_CACHE_SIZE = 5;
+    private static final int MAXIMUM_CACHE_SIZE = 500;
     private static final LoadingCache<DomainSearchArtifactsRequest, List<BlackboardArtifact>> cache
             = CacheBuilder.newBuilder()
                     .maximumSize(MAXIMUM_CACHE_SIZE)
