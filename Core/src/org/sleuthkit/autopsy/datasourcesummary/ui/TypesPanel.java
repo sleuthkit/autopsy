@@ -23,22 +23,25 @@ import java.sql.SQLException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.swing.JLabel;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.FileTypeUtils.FileTypeCategory;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.TypesSummary;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.ContainerSummary;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.IngestModuleCheckUtil;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.MimeTypeSummary;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.AbstractLoadableComponent;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult.ResultType;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.IngestRunningLabel;
@@ -115,11 +118,47 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
         }
     }
 
+    /**
+     * Data for types pie chart.
+     */
+    private static class TypesPieChartData {
+
+        private final List<PieChartItem> pieSlices;
+        private final boolean usefulContent;
+
+        /**
+         * Main constructor.
+         *
+         * @param pieSlices     The pie slices.
+         * @param usefulContent True if this is useful content; false if there
+         *                      is 0 mime type information.
+         */
+        public TypesPieChartData(List<PieChartItem> pieSlices, boolean usefulContent) {
+            this.pieSlices = pieSlices;
+            this.usefulContent = usefulContent;
+        }
+
+        /**
+         * @return The pie chart data.
+         */
+        public List<PieChartItem> getPieSlices() {
+            return pieSlices;
+        }
+
+        /**
+         * @return Whether or not the data is usefulContent.
+         */
+        public boolean isUsefulContent() {
+            return usefulContent;
+        }
+    }
+
     private static final long serialVersionUID = 1L;
     private static final DecimalFormat INTEGER_SIZE_FORMAT = new DecimalFormat("#");
     private static final DecimalFormat COMMA_FORMATTER = new DecimalFormat("#,###");
     private static final String FILE_TYPE_FACTORY = FileTypeIdModuleFactory.class.getCanonicalName();
     private static final String FILE_TYPE_MODULE_NAME = FileTypeIdModuleFactory.getModuleName();
+    private static final Logger logger = Logger.getLogger(TypesPanel.class.getName());
 
     // All file type categories.
     private static final List<Pair<String, Set<String>>> FILE_MIME_TYPE_CATEGORIES = Arrays.asList(
@@ -219,7 +258,7 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
                 // file types worker
                 new DataFetchWorker.DataFetchComponents<>(
                         (dataSource) -> getMimeTypeCategoriesModel(mimeTypeData, dataSource),
-                        (result) -> showResultWithModuleCheck(fileMimeTypesChart, result, FILE_TYPE_FACTORY, FILE_TYPE_MODULE_NAME)),
+                        this::showMimeTypeCategories),
                 // allocated files worker
                 new DataFetchWorker.DataFetchComponents<>(
                         (dataSource) -> getStringOrZero(typeData.getCountOfAllocatedFiles(dataSource)),
@@ -258,11 +297,11 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
      *
      * @return The pie chart items.
      */
-    private List<PieChartItem> getMimeTypeCategoriesModel(MimeTypeSummary mimeTypeData, DataSource dataSource)
+    private TypesPieChartData getMimeTypeCategoriesModel(MimeTypeSummary mimeTypeData, DataSource dataSource)
             throws SQLException, SleuthkitCaseProviderException, TskCoreException {
 
         if (dataSource == null) {
-            return Collections.emptyList();
+            return null;
         }
 
         // for each category of file types, get the counts of files
@@ -287,20 +326,73 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
         fileCategoryItems.add(Pair.of(Bundle.TypesPanel_fileMimeTypesChart_other_title(),
                 allRegularFiles - (categoryTotalCount + noMimeTypeCount)));
 
-        // check at this point to see if these are all 0, if so we don't have results; return empty list
-        if (!fileCategoryItems.stream().anyMatch((pair) -> pair.getValue() != null && pair.getValue() > 0)) {
-            return Collections.emptyList();
-        }
+        // check at this point to see if these are all 0; if so, we don't have useful content.
+        boolean usefulContent = fileCategoryItems.stream().anyMatch((pair) -> pair.getValue() != null && pair.getValue() > 0);
 
         // create entry for not analyzed mime types category
         fileCategoryItems.add(Pair.of(Bundle.TypesPanel_fileMimeTypesChart_notAnalyzed_title(),
                 noMimeTypeCount));
 
         // create pie chart items to provide to pie chart
-        return fileCategoryItems.stream()
+        List<PieChartItem> items = fileCategoryItems.stream()
                 .filter(keyCount -> keyCount.getRight() != null && keyCount.getRight() > 0)
                 .map(keyCount -> new PieChartItem(keyCount.getLeft(), keyCount.getRight()))
                 .collect(Collectors.toList());
+
+        return new TypesPieChartData(items, usefulContent);
+    }
+
+    /**
+     * Handles properly showing data for the mime type categories pie chart
+     * accounting for whether there are any files with mime types specified and
+     * whether or not the current data source has been ingested with the file
+     * type ingest module.
+     *
+     * @param result The result to be shown.
+     */
+    private void showMimeTypeCategories(DataFetchResult<TypesPieChartData> result) {
+        // if result is null check for ingest module and show empty results.
+        if (result == null) {
+            showPieResultWithModuleCheck(null);
+            return;
+        }
+
+        // if error, show error
+        if (result.getResultType() == ResultType.ERROR) {
+            this.fileMimeTypesChart.showDataFetchResult(DataFetchResult.getErrorResult(result.getException()));
+            return;
+        }
+
+        // if no useful data, do an ingest module check and show data.
+        TypesPieChartData data = result.getData();
+        if (data == null || !data.isUsefulContent()) {
+            showPieResultWithModuleCheck(data.getPieSlices());
+            return;
+        }
+
+        this.fileMimeTypesChart.showDataFetchResult(DataFetchResult.getSuccessResult(data.getPieSlices()));
+    }
+
+    /**
+     * Shows a message in the fileMimeTypesChart about the data source not being
+     * ingested with the file type ingest module if the data source has not been
+     * ingested with that module. Also shows data if present.
+     *
+     * @param items The list of items to show.
+     */
+    private void showPieResultWithModuleCheck(List<PieChartItem> items) {
+        boolean hasBeenIngested = false;
+        try {
+            hasBeenIngested = this.getIngestModuleCheckUtil().isModuleIngested(getDataSource(), FILE_TYPE_FACTORY);
+        } catch (TskCoreException | SleuthkitCaseProviderException ex) {
+            logger.log(Level.WARNING, "There was an error fetching whether or not the current data source has been ingested with the file type ingest module.", ex);
+        }
+
+        if (hasBeenIngested) {
+            this.fileMimeTypesChart.showDataFetchResult(DataFetchResult.getSuccessResult(items));
+        } else {
+            this.fileMimeTypesChart.showDataWithMessage(items, getDefaultNoIngestMessage(FILE_TYPE_MODULE_NAME));
+        }
     }
 
     /**

@@ -33,10 +33,14 @@ import org.jfree.chart.panel.AbstractOverlay;
 import org.jfree.chart.panel.Overlay;
 import org.jfree.chart.plot.PiePlot;
 import org.jfree.data.general.DefaultPieDataset;
+import org.openide.util.NbBundle.Messages;
 
 /**
  * A pie chart panel.
  */
+@Messages({
+    "PieChartPanel_noDataLabel=No Data"
+})
 public class PieChartPanel extends AbstractLoadableComponent<List<PieChartPanel.PieChartItem>> {
 
     /**
@@ -192,14 +196,25 @@ public class PieChartPanel extends AbstractLoadableComponent<List<PieChartPanel.
     @Override
     protected void setResults(List<PieChartPanel.PieChartItem> data) {
         this.dataset.clear();
-        if (data != null) {
+        if (data != null && !data.isEmpty()) {
             for (PieChartPanel.PieChartItem slice : data) {
                 this.dataset.setValue(slice.getLabel(), slice.getValue());
             }
+        } else {
+            // show a no data label if no data.
+            this.dataset.setValue(Bundle.PieChartPanel_noDataLabel(), 0);
         }
     }
-    
-    public void showMessageWithData(String message, List<PieChartPanel.PieChartItem> data) {
-        
+
+    /**
+     * Shows a message on top of data.
+     *
+     * @param data    The data.
+     * @param message The message.
+     */
+    public synchronized void showDataWithMessage(List<PieChartPanel.PieChartItem> data, String message) {
+        setResults(data);
+        setMessage(true, message);
+        repaint();
     }
 }
