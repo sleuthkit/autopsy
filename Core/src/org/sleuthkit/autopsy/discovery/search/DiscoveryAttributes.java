@@ -582,6 +582,9 @@ public class DiscoveryAttributes {
 
     }
     
+    /**
+     * Attribute for grouping/sorting by number of visits.
+     */
     static class NumberOfVisitsAttribute extends AttributeType {
         
         @Override

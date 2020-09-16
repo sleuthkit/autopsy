@@ -1110,6 +1110,9 @@ public class DiscoveryKeyUtils {
         }
     }
     
+    /**
+     * Key representing the number of visits.
+     */
     static class NumberOfVisitsGroupKey extends GroupKey {
         
         private final String displayName;
