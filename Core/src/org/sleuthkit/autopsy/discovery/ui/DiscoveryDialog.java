@@ -21,6 +21,8 @@ package org.sleuthkit.autopsy.discovery.ui;
 import org.sleuthkit.autopsy.discovery.search.AbstractFilter;
 import static java.awt.BorderLayout.CENTER;
 import java.awt.Color;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
@@ -29,6 +31,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
+import javax.swing.SwingUtilities;
 import org.apache.commons.lang.StringUtils;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
@@ -41,12 +44,9 @@ import org.sleuthkit.autopsy.discovery.search.DiscoveryAttributes;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils;
 import org.sleuthkit.autopsy.discovery.search.Group;
 import org.sleuthkit.autopsy.discovery.search.Group.GroupSortingAlgorithm;
-import static org.sleuthkit.autopsy.discovery.search.Group.GroupSortingAlgorithm.BY_GROUP_SIZE;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryAttributes.GroupingAttributeType;
-import static org.sleuthkit.autopsy.discovery.search.DiscoveryAttributes.GroupingAttributeType.PARENT_PATH;
 import org.sleuthkit.autopsy.discovery.search.ResultsSorter;
 import org.sleuthkit.autopsy.discovery.search.ResultsSorter.SortingMethod;
-import static org.sleuthkit.autopsy.discovery.search.ResultsSorter.SortingMethod.BY_FILE_NAME;
 import org.sleuthkit.autopsy.discovery.search.SearchData;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
@@ -111,12 +111,41 @@ final class DiscoveryDialog extends javax.swing.JDialog {
                 }
             }
         };
-        for (GroupSortingAlgorithm groupSortAlgorithm : GroupSortingAlgorithm.values()) {
-            groupSortingComboBox.addItem(groupSortAlgorithm);
-        }
         updateSearchSettings();
+        groupByCombobox.addItemListener(new ItemListener() {
+            @Override
+            public void itemStateChanged(ItemEvent event) {
+                if (event.getStateChange() == ItemEvent.SELECTED) {
+                    SwingUtilities.invokeLater(() -> {
+                        getSelectedFilterPanel().setLastGroupingAttributeType(groupByCombobox.getItemAt(groupByCombobox.getSelectedIndex()));
+                    });
+
+                }
+            }
+        });
+        orderByCombobox.addItemListener(new ItemListener() {
+            @Override
+            public void itemStateChanged(ItemEvent event) {
+                if (event.getStateChange() == ItemEvent.SELECTED) {
+                    SwingUtilities.invokeLater(() -> {
+                        getSelectedFilterPanel().setLastSortingMethod(orderByCombobox.getItemAt(orderByCombobox.getSelectedIndex()));
+                    });
+                }
+            }
+        });
+        groupSortingComboBox.addItemListener(new ItemListener() {
+            @Override
+            public void itemStateChanged(ItemEvent event) {
+                if (event.getStateChange() == ItemEvent.SELECTED) {
+                    SwingUtilities.invokeLater(() -> {
+                        getSelectedFilterPanel().setLastGroupSortingAlg(groupSortingComboBox.getItemAt(groupSortingComboBox.getSelectedIndex()));
+                    });
+                }
+            }
+        });
         Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, this.new CasePropertyChangeListener());
         IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, this.new ModuleChangeListener());
+
     }
 
     /**
@@ -140,7 +169,6 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         add(imageFilterPanel, CENTER);
         imageFilterPanel.addPropertyChangeListener(listener);
         updateComboBoxes();
-        groupSortingComboBox.setSelectedItem(BY_GROUP_SIZE);
         pack();
         repaint();
     }
@@ -167,20 +195,54 @@ final class DiscoveryDialog extends javax.swing.JDialog {
      * Private helper method to perform update of comboboxes update.
      */
     private void updateComboBoxes() {
-        groupByCombobox.removeAllItems();
         // Set up the grouping attributes
-        for (DiscoveryAttributes.GroupingAttributeType groupingType : DiscoveryAttributes.GroupingAttributeType.getOptionsForGrouping()) {
+        List<GroupingAttributeType> groupingAttrs = new ArrayList<>();
+        List<SortingMethod> sortingMethods = new ArrayList<>();
+        groupByCombobox.removeAllItems();
+        if (type == SearchData.Type.DOMAIN) {
+            groupingAttrs.addAll(GroupingAttributeType.getOptionsForGroupingForDomains());
+            sortingMethods.addAll(SortingMethod.getOptionsForOrderingDomains());
+        } else {
+            groupingAttrs.addAll(GroupingAttributeType.getOptionsForGroupingForFiles());
+            sortingMethods.addAll(SortingMethod.getOptionsForOrderingFiles());
+        }
+        for (GroupingAttributeType groupingType : groupingAttrs) {
             addTypeToGroupByComboBox(groupingType);
         }
-        groupByCombobox.setSelectedItem(PARENT_PATH);
+        groupByCombobox.setSelectedItem(getSelectedFilterPanel().getLastGroupingAttributeType());
         orderByCombobox.removeAllItems();
         // Set up the file order list
-        for (ResultsSorter.SortingMethod method : ResultsSorter.SortingMethod.getOptionsForOrdering()) {
+        for (SortingMethod method : sortingMethods) {
             if (method != SortingMethod.BY_FREQUENCY || CentralRepository.isEnabled()) {
                 orderByCombobox.addItem(method);
             }
         }
-        orderByCombobox.setSelectedItem(BY_FILE_NAME);
+        orderByCombobox.setSelectedItem(getSelectedFilterPanel().getLastSortingMethod());
+        groupSortingComboBox.removeAllItems();
+        for (GroupSortingAlgorithm groupSortAlgorithm : GroupSortingAlgorithm.values()) {
+            groupSortingComboBox.addItem(groupSortAlgorithm);
+        }
+        groupSortingComboBox.setSelectedItem(getSelectedFilterPanel().getLastGroupSortingAlg());
+    }
+
+    /**
+     * Private helper method to get the correct panel for the selected type.
+     *
+     * @return The panel that corresponds to the currently selected type.
+     */
+    private AbstractFiltersPanel getSelectedFilterPanel() {
+        switch (type) {
+            case IMAGE:
+                return imageFilterPanel;
+            case VIDEO:
+                return videoFilterPanel;
+            case DOCUMENT:
+                return documentFilterPanel;
+            case DOMAIN:
+                return domainFilterPanel;
+            default:
+                return imageFilterPanel;
+        }
     }
 
     /**
@@ -221,29 +283,9 @@ final class DiscoveryDialog extends javax.swing.JDialog {
      * Validate the filter settings for File type filters.
      */
     synchronized void validateDialog() {
-        switch (type) {
-            case IMAGE:
-                if (imageFilterPanel != null) {
-                    imageFilterPanel.validateFields();
-                }
-                break;
-            case VIDEO:
-                if (videoFilterPanel != null) {
-                    videoFilterPanel.validateFields();
-                }
-                break;
-            case DOCUMENT:
-                if (documentFilterPanel != null) {
-                    documentFilterPanel.validateFields();
-                }
-                break;
-            case DOMAIN:
-                if (domainFilterPanel != null) {
-                    domainFilterPanel.validateFields();
-                }
-                break;
-            default:
-                break;
+        AbstractFiltersPanel panel = getSelectedFilterPanel();
+        if (panel != null) {
+            panel.validateFields();
         }
     }
 
@@ -469,6 +511,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         imagesButton.setForeground(Color.BLACK);
         type = SearchData.Type.IMAGE;
         imageFilterPanel.addPropertyChangeListener(listener);
+        updateComboBoxes();
         validateDialog();
         pack();
         repaint();
@@ -484,6 +527,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         videosButton.setForeground(Color.BLACK);
         videoFilterPanel.addPropertyChangeListener(listener);
         type = SearchData.Type.VIDEO;
+        updateComboBoxes();
         validateDialog();
         pack();
         repaint();
@@ -499,6 +543,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         documentsButton.setForeground(Color.BLACK);
         type = SearchData.Type.DOCUMENT;
         documentFilterPanel.addPropertyChangeListener(listener);
+        updateComboBoxes();
         validateDialog();
         pack();
         repaint();
@@ -512,6 +557,10 @@ final class DiscoveryDialog extends javax.swing.JDialog {
             remove(imageFilterPanel);
             imageFilterPanel.removePropertyChangeListener(listener);
         }
+        if (domainFilterPanel != null) {
+            remove(domainFilterPanel);
+            domainFilterPanel.removePropertyChangeListener(listener);
+        }
         if (documentFilterPanel != null) {
             remove(documentFilterPanel);
             documentFilterPanel.removePropertyChangeListener(listener);
@@ -519,10 +568,6 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         if (videoFilterPanel != null) {
             remove(videoFilterPanel);
             videoFilterPanel.removePropertyChangeListener(listener);
-        }
-        if (domainFilterPanel != null) {
-            remove(domainFilterPanel);
-            domainFilterPanel.removePropertyChangeListener(listener);
         }
     }
 
@@ -584,7 +629,8 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         domainsButton.setBackground(SELECTED_COLOR);
         domainsButton.setForeground(Color.BLACK);
         type = SearchData.Type.DOMAIN;
-        documentFilterPanel.addPropertyChangeListener(listener);
+        domainFilterPanel.addPropertyChangeListener(listener);
+        updateComboBoxes();
         validateDialog();
         pack();
         repaint();

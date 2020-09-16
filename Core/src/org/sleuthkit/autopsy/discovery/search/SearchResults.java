@@ -76,7 +76,7 @@ class SearchResults {
         for (Result result : results) {
             // Add the file to the appropriate group, creating it if necessary
             GroupKey groupKey = attrType.getGroupKey(result);
-
+            
             if (!groupMap.containsKey(groupKey)) {
                 groupMap.put(groupKey, new Group(groupSortingType, groupKey));
             }

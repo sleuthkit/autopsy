@@ -18,12 +18,16 @@
  */
 package org.sleuthkit.autopsy.discovery.ui;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.sleuthkit.autopsy.discovery.search.AbstractFilter;
 import javax.swing.DefaultListModel;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.discovery.search.SearchData;
+import org.sleuthkit.autopsy.discovery.search.SearchFiltering.ArtifactTypeFilter;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
@@ -47,7 +51,7 @@ class ArtifactTypeFilterPanel extends AbstractDiscoveryFilterPanel {
      */
     private void setUpArtifactTypeFilter() {
         int count = 0;
-        DefaultListModel<ArtifactTypeItem> artifactTypeModel = (DefaultListModel<ArtifactTypeItem>) jList1.getModel();
+        DefaultListModel<ArtifactTypeItem> artifactTypeModel = (DefaultListModel<ArtifactTypeItem>) artifactList.getModel();
         artifactTypeModel.removeAllElements();
         for (BlackboardArtifact.ARTIFACT_TYPE artifactType : SearchData.Type.DOMAIN.getArtifactTypes()) {
             artifactTypeModel.add(count, new ArtifactTypeItem(artifactType));
@@ -66,17 +70,22 @@ class ArtifactTypeFilterPanel extends AbstractDiscoveryFilterPanel {
 
         artifactTypeCheckbox = new javax.swing.JCheckBox();
         artifactTypeScrollPane = new javax.swing.JScrollPane();
-        jList1 = new javax.swing.JList<>();
+        artifactList = new javax.swing.JList<>();
 
         org.openide.awt.Mnemonics.setLocalizedText(artifactTypeCheckbox, org.openide.util.NbBundle.getMessage(ArtifactTypeFilterPanel.class, "ArtifactTypeFilterPanel.artifactTypeCheckbox.text")); // NOI18N
+        artifactTypeCheckbox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                artifactTypeCheckboxActionPerformed(evt);
+            }
+        });
 
         setPreferredSize(new java.awt.Dimension(27, 27));
 
         artifactTypeScrollPane.setPreferredSize(new java.awt.Dimension(27, 27));
 
-        jList1.setModel(new DefaultListModel<ArtifactTypeItem>());
-        jList1.setEnabled(false);
-        artifactTypeScrollPane.setViewportView(jList1);
+        artifactList.setModel(new DefaultListModel<ArtifactTypeItem>());
+        artifactList.setEnabled(false);
+        artifactTypeScrollPane.setViewportView(artifactList);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -90,9 +99,24 @@ class ArtifactTypeFilterPanel extends AbstractDiscoveryFilterPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
 
+    private void artifactTypeCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_artifactTypeCheckboxActionPerformed
+        artifactTypeScrollPane.setEnabled(artifactTypeCheckbox.isSelected());
+        artifactList.setEnabled(artifactTypeCheckbox.isSelected());
+    }//GEN-LAST:event_artifactTypeCheckboxActionPerformed
+
     @Override
     void configurePanel(boolean selected, int[] indicesSelected) {
         artifactTypeCheckbox.setSelected(selected);
+        if (artifactTypeCheckbox.isEnabled() && artifactTypeCheckbox.isSelected()) {
+            artifactTypeScrollPane.setEnabled(true);
+            artifactList.setEnabled(true);
+            if (indicesSelected != null) {
+                artifactList.setSelectedIndices(indicesSelected);
+            }
+        } else {
+            artifactTypeScrollPane.setEnabled(false);
+            artifactList.setEnabled(false);
+        }
     }
 
     @Override
@@ -102,7 +126,7 @@ class ArtifactTypeFilterPanel extends AbstractDiscoveryFilterPanel {
 
     @Override
     JList<?> getList() {
-        return null;
+        return artifactList;
     }
 
     @Override
@@ -110,13 +134,24 @@ class ArtifactTypeFilterPanel extends AbstractDiscoveryFilterPanel {
         return null;
     }
 
+    @NbBundle.Messages({"ArtifactTypeFilterPanel.selectionNeeded.text=At least one Result type must be selected."})
     @Override
     String checkForError() {
-        return "Domain search is not implemented.";
+        if (artifactTypeCheckbox.isSelected() && artifactList.getSelectedValuesList().isEmpty()) {
+            return Bundle.ArtifactTypeFilterPanel_selectionNeeded_text();
+        }
+        return "";
     }
 
     @Override
     AbstractFilter getFilter() {
+        if (artifactTypeCheckbox.isSelected() && !artifactList.getSelectedValuesList().isEmpty()) {
+            List<BlackboardArtifact.ARTIFACT_TYPE> artifactTypeList = new ArrayList<>();
+            for (ArtifactTypeItem item : artifactList.getSelectedValuesList()) {
+                artifactTypeList.add(item.getArtifactType());
+            }
+            return new ArtifactTypeFilter(artifactTypeList);
+        }
         return null;
     }
 
@@ -153,8 +188,8 @@ class ArtifactTypeFilterPanel extends AbstractDiscoveryFilterPanel {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JList<ArtifactTypeItem> artifactList;
     private javax.swing.JCheckBox artifactTypeCheckbox;
     private javax.swing.JScrollPane artifactTypeScrollPane;
-    private javax.swing.JList<ArtifactTypeItem> jList1;
     // End of variables declaration//GEN-END:variables
 }
