@@ -65,6 +65,7 @@ MessageAccountPanel.account.justification=Account found in Message artifact
 MessageAccountPanel_button_create_label=Create
 MessageAccountPanel_button_view_label=View
 MessageAccountPanel_contact_label=Contact:
+MessageAccountPanel_copy_label=Copy
 MessageAccountPanel_no_matches=No matches found.
 MessageAccountPanel_persona_label=Persona:
 MessageAccountPanel_unknown_label=Unknown
