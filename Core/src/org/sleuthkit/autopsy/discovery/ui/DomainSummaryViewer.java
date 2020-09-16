@@ -21,8 +21,7 @@ package org.sleuthkit.autopsy.discovery.ui;
 import javax.swing.DefaultListModel;
 
 /**
- *
- * @author wschaefer
+ * A JPanel to display domain summaries.
  */
 public class DomainSummaryViewer extends javax.swing.JPanel {
 

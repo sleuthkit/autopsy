@@ -22,12 +22,12 @@ import java.awt.Image;
 import org.sleuthkit.autopsy.discovery.search.ResultDomain;
 
 /**
- *
- * @author wschaefer
+ * Class to wrap all the information necessary for a domain summary to be
+ * displayed.
  */
 public class DomainWrapper {
 
-    private ResultDomain domain;
+    private final ResultDomain domain;
     private Image thumbnail = null;
 
     /**
@@ -43,10 +43,10 @@ public class DomainWrapper {
     /**
      * Set the thumbnail which exists.
      *
-     * @param thumbnail The Image object which will be used to represent this
+     * @param thumbnail The image object which will be used to represent this
      *                  domain object.
      */
-    void setThumnail(Image thumbnail) {
+    void setThumbnail(Image thumbnail) {
         this.thumbnail = thumbnail;
     }
 
@@ -64,7 +64,7 @@ public class DomainWrapper {
     /**
      * Get the image to be used for the domain.
      *
-     * @return The Image which represents the domain.
+     * @return The image which represents the domain.
      */
     Image getThumbnail() {
         return thumbnail;
