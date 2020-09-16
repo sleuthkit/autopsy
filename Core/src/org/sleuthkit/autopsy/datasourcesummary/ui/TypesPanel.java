@@ -103,8 +103,7 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
         private void setValue(String value, boolean italicize) {
             String formattedKey = StringUtils.isBlank(key) ? "" : key;
             String formattedValue = StringUtils.isBlank(value) ? "" : value;
-            String htmlFormattedValue = (italicize) ? String.format("<i>%s</i>", formattedValue) : formattedValue;
-            label.setText(String.format("%s: %s", formattedKey, htmlFormattedValue));
+            label.setText(String.format("%s: %s", formattedKey, formattedValue));
         }
 
         @Override
