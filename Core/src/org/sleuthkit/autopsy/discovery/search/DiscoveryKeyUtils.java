@@ -953,7 +953,7 @@ public class DiscoveryKeyUtils {
         MostRecentActivityDateGroupKey(Result result) {
             if (result instanceof ResultDomain) {
                 epochDate = ((ResultDomain) result).getActivityEnd();
-                dateNameString = new SimpleDateFormat("yyyy/MM/dd").format(new Date(TimeUnit.SECONDS.toMillis(epochDate)));
+                dateNameString = new SimpleDateFormat("yyyy/MM/dd", Locale.getDefault()).format(new Date(TimeUnit.SECONDS.toMillis(epochDate)));
             } else {
                 epochDate = Long.MAX_VALUE;
                 dateNameString = Bundle.DiscoveryKeyUtils_MostRecentActivityDateGroupKey_noDate();
