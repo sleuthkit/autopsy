@@ -100,7 +100,7 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
             this.showResults(null);
         }
 
-        private void setValue(String value, boolean italicize) {
+        private void setValue(String value) {
             String formattedKey = StringUtils.isBlank(key) ? "" : key;
             String formattedValue = StringUtils.isBlank(value) ? "" : value;
             label.setText(String.format("%s: %s", formattedKey, formattedValue));
@@ -108,12 +108,12 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
 
         @Override
         protected void setMessage(boolean visible, String message) {
-            setValue(message, true);
+            setValue(message);
         }
 
         @Override
         protected void setResults(String data) {
-            setValue(data, false);
+            setValue(data);
         }
     }
 
