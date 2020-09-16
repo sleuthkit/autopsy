@@ -26,7 +26,6 @@ import java.util.Set;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.table.DefaultTableModel;
-import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.ContainerSummary;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult.ResultType;
@@ -112,8 +111,6 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
     /**
      * Creates new form ContainerPanel.
      */
-    @Messages({"ContainerPanel.getDataSources.error.text=Failed to get the list of datasources for the current case.",
-        "ContainerPanel.getDataSources.error.title=Load Failure"})
     ContainerPanel(ContainerSummary containerSummary) {
         super(containerSummary, CONTAINER_UPDATES);
 
