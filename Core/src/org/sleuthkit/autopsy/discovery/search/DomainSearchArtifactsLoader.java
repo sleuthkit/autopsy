@@ -49,7 +49,7 @@ public class DomainSearchArtifactsLoader extends CacheLoader<DomainSearchArtifac
             final BlackboardAttribute tskDomain = artifact.getAttribute(TSK_DOMAIN);
             final BlackboardAttribute tskUrl = artifact.getAttribute(TSK_URL);
 
-            if (tskDomain != null && tskDomain.getValueString().toLowerCase().equals(normalizedDomain)) {
+            if (tskDomain != null && tskDomain.getValueString().equalsIgnoreCase(normalizedDomain)) {
                 matchingDomainArtifacts.add(artifact);
             } else if (tskUrl != null && tskUrl.getValueString().toLowerCase().contains(normalizedDomain)) {
                 matchingDomainArtifacts.add(artifact);
