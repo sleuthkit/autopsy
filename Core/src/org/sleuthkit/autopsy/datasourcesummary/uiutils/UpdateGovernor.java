@@ -78,7 +78,7 @@ public interface UpdateGovernor {
      * @return Whether or not this event should trigger an update.
      */
     boolean isRefreshRequiredForCaseEvent(PropertyChangeEvent evt);
-    
+
     /**
      * Whether or not a newly added AbstractFile should trigger an update.
      *

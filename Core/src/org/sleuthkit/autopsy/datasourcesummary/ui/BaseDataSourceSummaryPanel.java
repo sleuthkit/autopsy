@@ -27,7 +27,6 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.swing.JPanel;
 import javax.swing.SwingWorker;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult;

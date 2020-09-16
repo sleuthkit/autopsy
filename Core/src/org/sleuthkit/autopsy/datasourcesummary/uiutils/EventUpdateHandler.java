@@ -27,7 +27,6 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestManager.IngestJobEvent;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
-import org.sleuthkit.autopsy.ingest.events.FileAnalyzedEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
@@ -132,9 +131,10 @@ public class EventUpdateHandler {
     protected boolean isRefreshRequired(ModuleContentEvent evt) {
         return governor.isRefreshRequired(evt);
     }
-    
+
     /**
-     * Handles whether or not a newly added AbstractFile should trigger an update.
+     * Handles whether or not a newly added AbstractFile should trigger an
+     * update.
      *
      * @param evt The AbstractFile.
      *

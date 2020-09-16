@@ -62,7 +62,7 @@ public interface DefaultUpdateGovernor extends UpdateGovernor {
     default Set<IngestManager.IngestJobEvent> getIngestJobEventUpdates() {
         return Collections.emptySet();
     }
-    
+
     @Override
     default boolean isRefreshRequired(AbstractFile evt) {
         return false;
