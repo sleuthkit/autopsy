@@ -53,8 +53,6 @@ public class DomainSearchThumbnailLoader extends CacheLoader<DomainSearchThumbna
     private static final String JPG_MIME_TYPE = "image/jpeg";
     private final DomainSearchArtifactsCache artifactsCache;
     
-    private static final String UNSUPPORTED_IMAGE = "org/sleuthkit/autopsy/images/image-extraction-not-supported.png";
-
     public DomainSearchThumbnailLoader() {
         this(new DomainSearchArtifactsCache());
     }
