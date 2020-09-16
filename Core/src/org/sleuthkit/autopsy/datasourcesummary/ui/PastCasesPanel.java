@@ -157,27 +157,29 @@ public class PastCasesPanel extends BaseDataSourceSummaryPanel {
         javax.swing.JPanel mainContentPanel = new javax.swing.JPanel();
         javax.swing.JPanel ingestRunningPanel = ingestRunningLabel;
         javax.swing.JLabel notableFileLabel = new javax.swing.JLabel();
-        javax.swing.Box.Filler filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2), new java.awt.Dimension(32767, 2));
+        javax.swing.Box.Filler filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2));
         javax.swing.JPanel notableFilePanel = notableFileTable;
-        javax.swing.Box.Filler filler2 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 20), new java.awt.Dimension(0, 20), new java.awt.Dimension(32767, 20));
+        javax.swing.Box.Filler filler2 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 20), new java.awt.Dimension(0, 20), new java.awt.Dimension(0, 20));
         javax.swing.JLabel sameIdLabel = new javax.swing.JLabel();
-        javax.swing.Box.Filler filler3 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2), new java.awt.Dimension(32767, 2));
+        javax.swing.Box.Filler filler3 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2));
         javax.swing.JPanel sameIdPanel = sameIdTable;
         javax.swing.Box.Filler filler5 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 32767));
 
         mainContentPanel.setBorder(javax.swing.BorderFactory.createEmptyBorder(10, 10, 10, 10));
         mainContentPanel.setLayout(new javax.swing.BoxLayout(mainContentPanel, javax.swing.BoxLayout.PAGE_AXIS));
 
+        ingestRunningPanel.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 5, 1));
         ingestRunningPanel.setAlignmentX(0.0F);
         ingestRunningPanel.setMaximumSize(new java.awt.Dimension(32767, 20));
         ingestRunningPanel.setMinimumSize(new java.awt.Dimension(10, 20));
-        ingestRunningPanel.setPreferredSize(new java.awt.Dimension(32767, 20));
+        ingestRunningPanel.setPreferredSize(new java.awt.Dimension(10, 20));
         mainContentPanel.add(ingestRunningPanel);
 
         org.openide.awt.Mnemonics.setLocalizedText(notableFileLabel, org.openide.util.NbBundle.getMessage(PastCasesPanel.class, "PastCasesPanel.notableFileLabel.text")); // NOI18N
         mainContentPanel.add(notableFileLabel);
         notableFileLabel.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(PastCasesPanel.class, "PastCasesPanel.notableFileLabel.text")); // NOI18N
 
+        filler1.setAlignmentX(0.0F);
         mainContentPanel.add(filler1);
 
         notableFilePanel.setAlignmentX(0.0F);
@@ -185,10 +187,14 @@ public class PastCasesPanel extends BaseDataSourceSummaryPanel {
         notableFilePanel.setMinimumSize(new java.awt.Dimension(100, 106));
         notableFilePanel.setPreferredSize(new java.awt.Dimension(100, 106));
         mainContentPanel.add(notableFilePanel);
+
+        filler2.setAlignmentX(0.0F);
         mainContentPanel.add(filler2);
 
         org.openide.awt.Mnemonics.setLocalizedText(sameIdLabel, org.openide.util.NbBundle.getMessage(PastCasesPanel.class, "PastCasesPanel.sameIdLabel.text")); // NOI18N
         mainContentPanel.add(sameIdLabel);
+
+        filler3.setAlignmentX(0.0F);
         mainContentPanel.add(filler3);
 
         sameIdPanel.setAlignmentX(0.0F);
@@ -196,6 +202,8 @@ public class PastCasesPanel extends BaseDataSourceSummaryPanel {
         sameIdPanel.setMinimumSize(new java.awt.Dimension(100, 106));
         sameIdPanel.setPreferredSize(new java.awt.Dimension(100, 106));
         mainContentPanel.add(sameIdPanel);
+
+        filler5.setAlignmentX(0.0F);
         mainContentPanel.add(filler5);
 
         mainScrollPane.setViewportView(mainContentPanel);

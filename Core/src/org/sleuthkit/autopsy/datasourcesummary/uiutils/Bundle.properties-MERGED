@@ -1,3 +1,4 @@
 AbstractLoadableComponent_errorMessage_defaultText=There was an error loading results.
 AbstractLoadableComponent_loadingMessage_defaultText=Loading results...
 AbstractLoadableComponent_noDataExists_defaultText=No data exists.
+IngestRunningLabel_defaultMessage=Ingest is currently running.

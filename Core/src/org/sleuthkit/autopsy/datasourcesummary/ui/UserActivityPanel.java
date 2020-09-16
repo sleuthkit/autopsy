@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Locale;
 import org.apache.commons.lang.StringUtils;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.IngestModuleCheckUtil;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.TopProgramsSummary;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopAccountResult;
@@ -367,6 +368,7 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
         contentPanel.setMinimumSize(new java.awt.Dimension(10, 450));
         contentPanel.setLayout(new javax.swing.BoxLayout(contentPanel, javax.swing.BoxLayout.PAGE_AXIS));
 
+        ingestRunningPanel.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 5, 1));
         ingestRunningPanel.setAlignmentX(0.0F);
         ingestRunningPanel.setMaximumSize(new java.awt.Dimension(32767, 20));
         ingestRunningPanel.setMinimumSize(new java.awt.Dimension(10, 20));

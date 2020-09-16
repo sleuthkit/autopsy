@@ -324,7 +324,7 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
      *                     Search').
      */
     protected <T> void showResultWithModuleCheck(LoadableComponent<List<T>> component, DataFetchResult<List<T>> result, String factoryClass, String moduleName) {
-        Predicate<List<T>> hasResults = (lst) -> lst == null || lst.isEmpty();
+        Predicate<List<T>> hasResults = (lst) -> lst != null && !lst.isEmpty();
         showResultWithModuleCheck(component, result, hasResults, factoryClass, moduleName);
     }
 
@@ -348,7 +348,7 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
 
         if (result != null && result.getResultType() == ResultType.SUCCESS && !hasResults.test(result.getData())) {
             try {
-                if (ingestModuleCheck.isModuleIngested(getDataSource(), factoryClass)) {
+                if (!ingestModuleCheck.isModuleIngested(getDataSource(), factoryClass)) {
                     component.showMessage(getDefaultNoIngestMessage(moduleName));
                     return;
                 }

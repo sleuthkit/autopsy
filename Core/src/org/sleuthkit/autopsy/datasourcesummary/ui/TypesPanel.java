@@ -194,7 +194,7 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
                             showResultWithModuleCheck(
                                     usageLabel,
                                     result,
-                                    StringUtils::isBlank,
+                                    StringUtils::isNotBlank,
                                     IngestModuleCheckUtil.RECENT_ACTIVITY_FACTORY,
                                     IngestModuleCheckUtil.RECENT_ACTIVITY_MODULE_NAME);
                         }),
@@ -205,7 +205,7 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
                             showResultWithModuleCheck(
                                     osLabel,
                                     result,
-                                    StringUtils::isBlank,
+                                    StringUtils::isNotBlank,
                                     IngestModuleCheckUtil.RECENT_ACTIVITY_FACTORY,
                                     IngestModuleCheckUtil.RECENT_ACTIVITY_MODULE_NAME);
                         }),
@@ -356,6 +356,7 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
         contentParent.setMinimumSize(new java.awt.Dimension(400, 490));
         contentParent.setLayout(new javax.swing.BoxLayout(contentParent, javax.swing.BoxLayout.PAGE_AXIS));
 
+        ingestRunningPanel.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 5, 1));
         ingestRunningPanel.setAlignmentX(0.0F);
         ingestRunningPanel.setMaximumSize(new java.awt.Dimension(32767, 20));
         ingestRunningPanel.setMinimumSize(new java.awt.Dimension(10, 20));

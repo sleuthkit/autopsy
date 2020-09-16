@@ -1,5 +1,8 @@
 AnalysisPanel_countColumn_title=Count
 AnalysisPanel_keyColumn_title=Name
+AnalysisPanel_keywordSearchModuleName=Keyword Search
+# {0} - module name
+BaseDataSourceSummaryPanel_defaultNotIngestMessage=The {0} Ingest Module has not been run on this datasource.
 ContainerPanel.getDataSources.error.text=Failed to get the list of datasources for the current case.
 ContainerPanel.getDataSources.error.title=Load Failure
 CTL_DataSourceSummaryAction=Data Source Summary
@@ -54,6 +57,7 @@ PastCasesPanel_onNoCrIngest_message=No results will be shown because the Central
 RecentFilePanel_col_header_domain=Domain
 RecentFilePanel_col_header_path=Path
 RecentFilePanel_col_header_sender=Sender
+RecentFilePanel_emailParserModuleName=Email Parser
 RecentFilePanel_no_open_documents=No recently open documents found.
 RecentFilesPanel_col_head_date=Date
 SizeRepresentationUtil_units_bytes=\ bytes
