@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Collections;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
-import org.openide.util.ImageUtilities;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.AbstractFile;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE;
