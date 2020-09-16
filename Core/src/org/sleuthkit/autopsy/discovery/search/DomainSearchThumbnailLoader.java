@@ -51,7 +51,7 @@ public class DomainSearchThumbnailLoader extends CacheLoader<DomainSearchThumbna
     private static final String JPG_EXTENSION = "jpg";
     private static final String JPG_MIME_TYPE = "image/jpeg";
     private final DomainSearchArtifactsCache artifactsCache;
-
+    
     public DomainSearchThumbnailLoader() {
         this(new DomainSearchArtifactsCache());
     }
