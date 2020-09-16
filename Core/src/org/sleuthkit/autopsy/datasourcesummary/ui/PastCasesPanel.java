@@ -31,6 +31,7 @@ import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult.ResultType;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.IngestRunningLabel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel.ColumnModel;
 import org.sleuthkit.datamodel.DataSource;
@@ -74,6 +75,8 @@ public class PastCasesPanel extends BaseDataSourceSummaryPanel {
     );
 
     private final List<DataFetchComponents<DataSource, ?>> dataFetchComponents;
+
+    private final IngestRunningLabel ingestRunningLabel = new IngestRunningLabel();
 
     public PastCasesPanel() {
         this(new PastCasesSummary());
@@ -135,6 +138,12 @@ public class PastCasesPanel extends BaseDataSourceSummaryPanel {
         onNewDataSource(dataFetchComponents, tables, dataSource);
     }
 
+    @Override
+    public void close() {
+        ingestRunningLabel.unregister();
+        super.close();
+    }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -146,6 +155,7 @@ public class PastCasesPanel extends BaseDataSourceSummaryPanel {
 
         javax.swing.JScrollPane mainScrollPane = new javax.swing.JScrollPane();
         javax.swing.JPanel mainContentPanel = new javax.swing.JPanel();
+        javax.swing.JPanel ingestRunningPanel = ingestRunningLabel;
         javax.swing.JLabel notableFileLabel = new javax.swing.JLabel();
         javax.swing.Box.Filler filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2), new java.awt.Dimension(32767, 2));
         javax.swing.JPanel notableFilePanel = notableFileTable;
@@ -157,6 +167,12 @@ public class PastCasesPanel extends BaseDataSourceSummaryPanel {
 
         mainContentPanel.setBorder(javax.swing.BorderFactory.createEmptyBorder(10, 10, 10, 10));
         mainContentPanel.setLayout(new javax.swing.BoxLayout(mainContentPanel, javax.swing.BoxLayout.PAGE_AXIS));
+
+        ingestRunningPanel.setAlignmentX(0.0F);
+        ingestRunningPanel.setMaximumSize(new java.awt.Dimension(32767, 20));
+        ingestRunningPanel.setMinimumSize(new java.awt.Dimension(10, 20));
+        ingestRunningPanel.setPreferredSize(new java.awt.Dimension(32767, 20));
+        mainContentPanel.add(ingestRunningPanel);
 
         org.openide.awt.Mnemonics.setLocalizedText(notableFileLabel, org.openide.util.NbBundle.getMessage(PastCasesPanel.class, "PastCasesPanel.notableFileLabel.text")); // NOI18N
         mainContentPanel.add(notableFileLabel);

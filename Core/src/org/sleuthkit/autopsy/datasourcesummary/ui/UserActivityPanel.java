@@ -36,6 +36,7 @@ import org.sleuthkit.autopsy.datasourcesummary.datamodel.TopProgramsSummary.TopP
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopDomainsResult;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer.DefaultCellModel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.IngestRunningLabel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel.ColumnModel;
 import org.sleuthkit.datamodel.DataSource;
@@ -222,6 +223,8 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
             topAccountsTable
     );
 
+    private final IngestRunningLabel ingestRunningLabel = new IngestRunningLabel();
+
     private final List<DataFetchComponents<DataSource, ?>> dataFetchComponents;
     private final TopProgramsSummary topProgramsData;
 
@@ -316,6 +319,12 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
         onNewDataSource(dataFetchComponents, tables, dataSource);
     }
 
+    @Override
+    public void close() {
+        ingestRunningLabel.unregister();
+        super.close();
+    }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -327,6 +336,7 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
 
         javax.swing.JScrollPane contentScrollPane = new javax.swing.JScrollPane();
         javax.swing.JPanel contentPanel = new javax.swing.JPanel();
+        javax.swing.JPanel ingestRunningPanel = ingestRunningLabel;
         javax.swing.JLabel programsRunLabel = new javax.swing.JLabel();
         javax.swing.Box.Filler filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2));
         javax.swing.JPanel topProgramsTablePanel = topProgramsTable;
@@ -356,6 +366,12 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
         contentPanel.setMaximumSize(new java.awt.Dimension(32767, 450));
         contentPanel.setMinimumSize(new java.awt.Dimension(10, 450));
         contentPanel.setLayout(new javax.swing.BoxLayout(contentPanel, javax.swing.BoxLayout.PAGE_AXIS));
+
+        ingestRunningPanel.setAlignmentX(0.0F);
+        ingestRunningPanel.setMaximumSize(new java.awt.Dimension(32767, 20));
+        ingestRunningPanel.setMinimumSize(new java.awt.Dimension(10, 20));
+        ingestRunningPanel.setPreferredSize(new java.awt.Dimension(32767, 20));
+        contentPanel.add(ingestRunningPanel);
 
         programsRunLabel.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         org.openide.awt.Mnemonics.setLocalizedText(programsRunLabel, org.openide.util.NbBundle.getMessage(UserActivityPanel.class, "UserActivityPanel.programsRunLabel.text")); // NOI18N

@@ -41,6 +41,7 @@ import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.S
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.AbstractLoadableComponent;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.IngestRunningLabel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.LoadableComponent;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.PieChartPanel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.PieChartPanel.PieChartItem;
@@ -119,7 +120,7 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
     private static final DecimalFormat COMMA_FORMATTER = new DecimalFormat("#,###");
     private static final String FILE_TYPE_FACTORY = FileTypeIdModuleFactory.class.getCanonicalName();
     private static final String FILE_TYPE_MODULE_NAME = FileTypeIdModuleFactory.getModuleName();
-  
+
     // All file type categories.
     private static final List<Pair<String, Set<String>>> FILE_MIME_TYPE_CATEGORIES = Arrays.asList(
             Pair.of(Bundle.TypesPanel_fileMimeTypesChart_images_title(), FileTypeCategory.IMAGE.getMediaTypes()),
@@ -153,6 +154,8 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
             directoriesLabel
     );
 
+    private final IngestRunningLabel ingestRunningLabel = new IngestRunningLabel();
+
     // all of the means for obtaining data for the gui components.
     private final List<DataFetchComponents<DataSource, ?>> dataFetchComponents;
 
@@ -161,6 +164,12 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
      */
     public TypesPanel() {
         this(new MimeTypeSummary(), new TypesSummary(), new ContainerSummary());
+    }
+
+    @Override
+    public void close() {
+        ingestRunningLabel.unregister();
+        super.close();
     }
 
     /**
@@ -282,7 +291,7 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
         if (!fileCategoryItems.stream().anyMatch((pair) -> pair.getValue() != null && pair.getValue() > 0)) {
             return Collections.emptyList();
         }
-        
+
         // create entry for not analyzed mime types category
         fileCategoryItems.add(Pair.of(Bundle.TypesPanel_fileMimeTypesChart_notAnalyzed_title(),
                 noMimeTypeCount));
@@ -328,6 +337,7 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
 
         javax.swing.JScrollPane scrollParent = new javax.swing.JScrollPane();
         javax.swing.JPanel contentParent = new javax.swing.JPanel();
+        javax.swing.JPanel ingestRunningPanel = ingestRunningLabel;
         javax.swing.JPanel usagePanel = usageLabel;
         javax.swing.JPanel osPanel = osLabel;
         javax.swing.JPanel sizePanel = sizeLabel;
@@ -345,6 +355,12 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
         contentParent.setMaximumSize(new java.awt.Dimension(32787, 32787));
         contentParent.setMinimumSize(new java.awt.Dimension(400, 490));
         contentParent.setLayout(new javax.swing.BoxLayout(contentParent, javax.swing.BoxLayout.PAGE_AXIS));
+
+        ingestRunningPanel.setAlignmentX(0.0F);
+        ingestRunningPanel.setMaximumSize(new java.awt.Dimension(32767, 20));
+        ingestRunningPanel.setMinimumSize(new java.awt.Dimension(10, 20));
+        ingestRunningPanel.setPreferredSize(new java.awt.Dimension(32767, 20));
+        contentParent.add(ingestRunningPanel);
 
         usagePanel.setAlignmentX(0.0F);
         usagePanel.setMaximumSize(new java.awt.Dimension(32767, 20));

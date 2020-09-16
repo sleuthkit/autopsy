@@ -26,6 +26,7 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.AnalysisSummary;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer.DefaultCellModel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.IngestRunningLabel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel.ColumnModel;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashLookupModuleFactory;
@@ -89,6 +90,9 @@ public class AnalysisPanel extends BaseDataSourceSummaryPanel {
             keywordHitsTable,
             interestingItemsTable
     );
+    
+    private final IngestRunningLabel ingestRunningLabel = new IngestRunningLabel();
+    
 
     /**
      * All of the components necessary for data fetch swing workers to load data
@@ -125,6 +129,14 @@ public class AnalysisPanel extends BaseDataSourceSummaryPanel {
         initComponents();
     }
 
+    
+    @Override
+    public void close() {
+        ingestRunningLabel.unregister();
+        super.close();
+    }
+    
+    
     @Override
     protected void fetchInformation(DataSource dataSource) {
         fetchInformation(dataFetchComponents, dataSource);
@@ -146,6 +158,7 @@ public class AnalysisPanel extends BaseDataSourceSummaryPanel {
 
         javax.swing.JScrollPane mainScrollPane = new javax.swing.JScrollPane();
         javax.swing.JPanel mainContentPanel = new javax.swing.JPanel();
+        javax.swing.JPanel ingestRunningPanel = ingestRunningLabel;
         javax.swing.JLabel hashsetHitsLabel = new javax.swing.JLabel();
         javax.swing.Box.Filler filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2), new java.awt.Dimension(32767, 2));
         javax.swing.JPanel hashSetHitsPanel = hashsetHitsTable;
@@ -163,6 +176,12 @@ public class AnalysisPanel extends BaseDataSourceSummaryPanel {
         mainContentPanel.setMaximumSize(new java.awt.Dimension(32767, 452));
         mainContentPanel.setMinimumSize(new java.awt.Dimension(200, 452));
         mainContentPanel.setLayout(new javax.swing.BoxLayout(mainContentPanel, javax.swing.BoxLayout.PAGE_AXIS));
+
+        ingestRunningPanel.setAlignmentX(0.0F);
+        ingestRunningPanel.setMaximumSize(new java.awt.Dimension(32767, 20));
+        ingestRunningPanel.setMinimumSize(new java.awt.Dimension(10, 20));
+        ingestRunningPanel.setPreferredSize(new java.awt.Dimension(32767, 20));
+        mainContentPanel.add(ingestRunningPanel);
 
         org.openide.awt.Mnemonics.setLocalizedText(hashsetHitsLabel, org.openide.util.NbBundle.getMessage(AnalysisPanel.class, "AnalysisPanel.hashsetHitsLabel.text")); // NOI18N
         mainContentPanel.add(hashsetHitsLabel);
