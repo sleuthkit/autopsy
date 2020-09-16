@@ -296,7 +296,7 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
      */
     @Messages({
         "# {0} - module name",
-        "BaseDataSourceSummaryPanel_defaultNotIngestMessage=The {0} Ingest Module has not been run on this datasource."
+        "BaseDataSourceSummaryPanel_defaultNotIngestMessage=The {0} ingest module has not been run on this datasource."
     })
     protected String getDefaultNoIngestMessage(String moduleName) {
         return Bundle.BaseDataSourceSummaryPanel_defaultNotIngestMessage(moduleName);

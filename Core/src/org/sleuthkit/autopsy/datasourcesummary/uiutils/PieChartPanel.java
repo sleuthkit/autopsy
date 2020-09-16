@@ -198,4 +198,8 @@ public class PieChartPanel extends AbstractLoadableComponent<List<PieChartPanel.
             }
         }
     }
+    
+    public void showMessageWithData(String message, List<PieChartPanel.PieChartItem> data) {
+        
+    }
 }
