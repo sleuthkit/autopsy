@@ -49,7 +49,7 @@ class DataSourceModulesWrapper {
         "# {0} - dataSourceName",
         "DataSourceModuleWrapper.fileTypeModule.text=File Type Identification module was not run on data source: {0}\n",
         "# {0} - dataSourceName",
-        "DataSourceModuleWrapper.exifModule.text=Exif Parser module was not run on data source: {0}\n"
+        "DataSourceModuleWrapper.exifModule.text=Picture Analyzer module was not run on data source: {0}\n"
     })
     /**
      * Get the message which indicates which modules were not run on this data
