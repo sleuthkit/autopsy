@@ -115,6 +115,13 @@ public class PieChartPanel extends AbstractLoadableComponent<List<PieChartPanel.
     private static final long serialVersionUID = 1L;
 
     private static final Font DEFAULT_FONT = new JLabel().getFont();
+
+    /**
+     * It appears that JFreeChart will show nothing if all values are zero. So
+     * this is a value close to zero but not to be displayed.
+     */
+    private static final double NEAR_ZERO = Math.ulp(1d);
+
     private static final Font DEFAULT_HEADER_FONT = new Font(DEFAULT_FONT.getName(), DEFAULT_FONT.getStyle(), (int) (DEFAULT_FONT.getSize() * 1.5));
     private static final PieSectionLabelGenerator DEFAULT_LABEL_GENERATOR
             = new StandardPieSectionLabelGenerator(
@@ -202,7 +209,9 @@ public class PieChartPanel extends AbstractLoadableComponent<List<PieChartPanel.
             }
         } else {
             // show a no data label if no data.
-            this.dataset.setValue(Bundle.PieChartPanel_noDataLabel(), 0);
+            // this in fact shows a very small number for the value 
+            // that should be way below rounding error for formatters
+            this.dataset.setValue(Bundle.PieChartPanel_noDataLabel(), NEAR_ZERO);
         }
     }
 
