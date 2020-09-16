@@ -1215,6 +1215,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
      * @param imageTransforms
      */
     private void updateView(double panelWidth, double panelHeight, ImageTransforms imageTransforms) {
+        ensureInJfxThread();
         Image image = fxImageView.getImage();
         if (image == null) {
             return;
