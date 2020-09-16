@@ -24,6 +24,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestManager.IngestJobEvent;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  * Interface for determiining when data should update based on autopsy (i.e.
@@ -77,4 +78,13 @@ public interface UpdateGovernor {
      * @return Whether or not this event should trigger an update.
      */
     boolean isRefreshRequiredForCaseEvent(PropertyChangeEvent evt);
+    
+    /**
+     * Whether or not a newly added AbstractFile should trigger an update.
+     *
+     * @param evt The AbstractFile.
+     *
+     * @return True if an update should occur.
+     */
+    boolean isRefreshRequired(AbstractFile evt);
 }

@@ -26,6 +26,7 @@ import java.util.Set;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -58,6 +59,11 @@ public class TypesSummary implements DefaultUpdateGovernor {
 
     @Override
     public boolean isRefreshRequired(ModuleContentEvent evt) {
+        return true;
+    }
+
+    @Override
+    public boolean isRefreshRequired(AbstractFile file) {
         return true;
     }
 

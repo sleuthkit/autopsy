@@ -27,6 +27,7 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.swing.JPanel;
 import javax.swing.SwingWorker;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult;
@@ -39,6 +40,7 @@ import org.sleuthkit.autopsy.datasourcesummary.uiutils.UpdateGovernor;
 import org.sleuthkit.autopsy.ingest.IngestManager.IngestJobEvent;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
@@ -134,6 +136,33 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
             for (UpdateGovernor governor : governors) {
                 if (governor.isRefreshRequired(evt)) {
                     return true;
+                }
+            }
+
+            return false;
+        }
+
+        @Override
+        public boolean isRefreshRequired(AbstractFile file) {
+            DataSource currentDataSource = getDataSource();
+            if (currentDataSource == null || file == null) {
+                return false;
+            }
+
+            // make sure the file is for the current data source
+            Long fileDsId = null;
+            try {
+                Content fileDataSource = file.getDataSource();
+                fileDsId = fileDataSource.getId();
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, "Unable to get the datasource for newly added file", ex);
+            }
+
+            if (fileDsId != null && currentDataSource.getId() == fileDsId) {
+                for (UpdateGovernor governor : governors) {
+                    if (governor.isRefreshRequired(file)) {
+                        return true;
+                    }
                 }
             }
 

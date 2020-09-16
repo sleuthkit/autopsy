@@ -25,6 +25,7 @@ import java.util.HashSet;
 import java.util.Set;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.DataSource;
@@ -61,6 +62,11 @@ public class ContainerSummary implements DefaultArtifactUpdateGovernor {
 
     @Override
     public boolean isRefreshRequired(ModuleContentEvent evt) {
+        return true;
+    }
+
+    @Override
+    public boolean isRefreshRequired(AbstractFile file) {
         return true;
     }
 
