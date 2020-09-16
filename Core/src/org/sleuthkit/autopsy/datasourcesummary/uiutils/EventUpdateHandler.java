@@ -27,6 +27,7 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestManager.IngestJobEvent;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  * Handles ingest and case events, and determines whether they should trigger an
@@ -54,6 +55,9 @@ public class EventUpdateHandler {
                 } else if (IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString().equals(eventType) && evt.getOldValue() instanceof ModuleContentEvent) {
                     ModuleContentEvent contentEvent = (ModuleContentEvent) evt.getOldValue();
                     return EventUpdateHandler.this.isRefreshRequired(contentEvent);
+                } else if (IngestManager.IngestModuleEvent.FILE_DONE.toString().equals(eventType) && evt.getNewValue() instanceof AbstractFile) {
+                    AbstractFile analyzedFile = (AbstractFile) evt.getNewValue();
+                    return EventUpdateHandler.this.isRefreshRequired(analyzedFile);
                 }
             }
             return false;
@@ -125,6 +129,18 @@ public class EventUpdateHandler {
      * @return True if an update should occur.
      */
     protected boolean isRefreshRequired(ModuleContentEvent evt) {
+        return governor.isRefreshRequired(evt);
+    }
+
+    /**
+     * Handles whether or not a newly added AbstractFile should trigger an
+     * update.
+     *
+     * @param evt The AbstractFile.
+     *
+     * @return True if an update should occur.
+     */
+    protected boolean isRefreshRequired(AbstractFile evt) {
         return governor.isRefreshRequired(evt);
     }
 

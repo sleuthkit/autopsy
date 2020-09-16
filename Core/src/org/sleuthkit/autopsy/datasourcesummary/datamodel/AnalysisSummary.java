@@ -52,12 +52,12 @@ public class AnalysisSummary implements DefaultArtifactUpdateGovernor {
             "URLS",
             "CREDIT CARD NUMBERS"
     ));
-    
+
     private static final Set<Integer> ARTIFACT_UPDATE_TYPE_IDS = new HashSet<>(Arrays.asList(
-        ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID(), 
-        ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID(),
-        ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID(),
-        ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()
+            ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID(),
+            ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID(),
+            ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID(),
+            ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()
     ));
 
     private final SleuthkitCaseProvider provider;
@@ -77,7 +77,7 @@ public class AnalysisSummary implements DefaultArtifactUpdateGovernor {
     public AnalysisSummary(SleuthkitCaseProvider provider) {
         this.provider = provider;
     }
-    
+
     @Override
     public Set<Integer> getArtifactTypeIdsForRefresh() {
         return ARTIFACT_UPDATE_TYPE_IDS;

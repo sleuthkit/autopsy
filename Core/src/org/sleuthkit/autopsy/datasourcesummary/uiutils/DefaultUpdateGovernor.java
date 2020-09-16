@@ -25,6 +25,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  * The default UpdateGovernor where no updates will be triggered unless
@@ -60,5 +61,10 @@ public interface DefaultUpdateGovernor extends UpdateGovernor {
     @Override
     default Set<IngestManager.IngestJobEvent> getIngestJobEventUpdates() {
         return Collections.emptySet();
+    }
+
+    @Override
+    default boolean isRefreshRequired(AbstractFile evt) {
+        return false;
     }
 }
