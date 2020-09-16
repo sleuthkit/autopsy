@@ -19,8 +19,8 @@
 package org.sleuthkit.autopsy.discovery.ui;
 
 import java.awt.event.ActionListener;
-import java.time.Duration;
 import java.time.LocalDate;
+import java.time.Period;
 import java.time.ZoneId;
 import org.sleuthkit.autopsy.discovery.search.AbstractFilter;
 import javax.swing.JCheckBox;
