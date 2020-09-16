@@ -20,7 +20,11 @@ package org.sleuthkit.autopsy.datasourcesummary.datamodel;
 
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultUpdateGovernor;
 import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -30,6 +34,9 @@ import org.sleuthkit.datamodel.TskData;
  * Provides information for the DataSourceSummaryCountsPanel.
  */
 public class TypesSummary implements DefaultUpdateGovernor {
+
+    private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS = new HashSet<>(
+            Arrays.asList(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED));
 
     private final SleuthkitCaseProvider provider;
 
@@ -52,6 +59,16 @@ public class TypesSummary implements DefaultUpdateGovernor {
     @Override
     public boolean isRefreshRequired(ModuleContentEvent evt) {
         return true;
+    }
+
+    @Override
+    public boolean isRefreshRequired(IngestManager.IngestJobEvent evt) {
+        return (evt != null && INGEST_JOB_EVENTS.contains(evt));
+    }
+
+    @Override
+    public Set<IngestManager.IngestJobEvent> getIngestJobEventUpdates() {
+        return INGEST_JOB_EVENTS;
     }
 
     /**

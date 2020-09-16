@@ -24,6 +24,7 @@ import java.util.Set;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.guiutils.RefreshThrottler;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.ingest.IngestManager.IngestJobEvent;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 
@@ -68,17 +69,31 @@ public class EventUpdateHandler {
         }
     };
 
+    private final PropertyChangeListener ingestJobEventsListener = (evt) -> {
+        if (evt == null) {
+            return;
+        }
+
+        String eventName = evt.getPropertyName();
+        for (IngestJobEvent ingestEvt : IngestJobEvent.values()) {
+            if (ingestEvt.name().equals(eventName) && isRefreshRequired(ingestEvt)) {
+                onRefresh();
+            }
+        }
+    };
+
     private final UpdateGovernor governor;
     private final Set<Case.Events> caseEvents;
+    private final Set<IngestJobEvent> ingestEvents;
     private final Runnable onUpdate;
 
     /**
      * Constructor.
      *
-     * @param onUpdate  The function to call if an update should be required.
+     * @param onUpdate The function to call if an update should be required.
      * @param governor The item used to determine if an update is required. If
-     *                  the governor requires an update, then onUpdate is
-     *                  triggered.
+     *                 the governor requires an update, then onUpdate is
+     *                 triggered.
      */
     public EventUpdateHandler(Runnable onUpdate, UpdateGovernor governor) {
         if (onUpdate == null) {
@@ -88,7 +103,7 @@ public class EventUpdateHandler {
         this.onUpdate = onUpdate;
         this.governor = governor;
         this.caseEvents = governor.getCaseEventUpdates();
-
+        this.ingestEvents = governor.getIngestJobEventUpdates();
     }
 
     /**
@@ -110,6 +125,17 @@ public class EventUpdateHandler {
      * @return True if an update should occur.
      */
     protected boolean isRefreshRequired(ModuleContentEvent evt) {
+        return governor.isRefreshRequired(evt);
+    }
+
+    /**
+     * Handles whether or not a IngestJobEvent should trigger an update.
+     *
+     * @param evt The IngestJobEvent.
+     *
+     * @return True if an update should occur.
+     */
+    protected boolean isRefreshRequired(IngestJobEvent evt) {
         return governor.isRefreshRequired(evt);
     }
 
@@ -139,6 +165,7 @@ public class EventUpdateHandler {
             Case.addEventTypeSubscriber(caseEvents, caseEventsListener);
         }
 
+        IngestManager.getInstance().addIngestJobEventListener(ingestEvents, ingestJobEventsListener);
         refreshThrottler.registerForIngestModuleEvents();
     }
 
@@ -149,7 +176,8 @@ public class EventUpdateHandler {
         if (!caseEvents.isEmpty()) {
             Case.removeEventTypeSubscriber(caseEvents, caseEventsListener);
         }
-        
+
+        IngestManager.getInstance().removeIngestJobEventListener(ingestEvents, ingestJobEventsListener);
         refreshThrottler.unregisterEventListener();
     }
 }
