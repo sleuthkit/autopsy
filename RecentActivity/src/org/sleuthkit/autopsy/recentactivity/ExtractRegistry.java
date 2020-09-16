@@ -2044,7 +2044,7 @@ class ExtractRegistry extends Extract {
             if (line.contains("Group Name")) {
                 String value = line.replaceAll("Group Name\\s*?:", "").trim();
                 groupName = (value.replaceAll("\\[\\d*?\\]", "")).trim();
-                int startIndex = value.indexOf('[');
+                int startIndex = value.indexOf(" [") + 1; 
                 int endIndex = value.indexOf(']');
 
                 if (startIndex != -1 && endIndex != -1) {
