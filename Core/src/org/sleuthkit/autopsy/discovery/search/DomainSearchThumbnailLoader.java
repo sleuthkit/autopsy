@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Collections;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
+import org.openide.util.ImageUtilities;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.AbstractFile;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE;
@@ -47,6 +48,8 @@ public class DomainSearchThumbnailLoader extends CacheLoader<DomainSearchThumbna
     private static final String JPG_EXTENSION = "jpg";
     private static final String JPG_MIME_TYPE = "image/jpeg";
     private final DomainSearchArtifactsCache artifactsCache;
+    
+    private static final String UNSUPPORTED_IMAGE = "org/sleuthkit/autopsy/images/image-extraction-not-supported.png";
 
     public DomainSearchThumbnailLoader() {
         this(new DomainSearchArtifactsCache());
@@ -95,7 +98,7 @@ public class DomainSearchThumbnailLoader extends CacheLoader<DomainSearchThumbna
             }
         }
 
-        return null;
+        return ImageUtilities.loadImage(UNSUPPORTED_IMAGE, false);
     }
 
     /**

@@ -33,6 +33,8 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -41,6 +43,8 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryAttributes;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryKeyUtils.GroupKey;
+import org.sleuthkit.autopsy.discovery.search.DomainSearch;
+import org.sleuthkit.autopsy.discovery.search.DomainSearchThumbnailRequest;
 import org.sleuthkit.autopsy.discovery.search.Group;
 import org.sleuthkit.autopsy.discovery.search.FileSearch;
 import org.sleuthkit.autopsy.discovery.search.SearchData;
@@ -50,6 +54,7 @@ import org.sleuthkit.autopsy.discovery.search.ResultDomain;
 import org.sleuthkit.autopsy.discovery.search.ResultFile;
 import static org.sleuthkit.autopsy.discovery.search.SearchData.Type.DOMAIN;
 import org.sleuthkit.autopsy.textsummarizer.TextSummary;
+import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
  * Panel for displaying of Discovery results and handling the paging of those
@@ -121,6 +126,10 @@ final class ResultsPanel extends javax.swing.JPanel {
             }
         });
         //JIRA-TODO 
+    }
+    
+    SearchData.Type getActiveType() {
+        return resultType;
     }
 
     /**
@@ -278,8 +287,17 @@ final class ResultsPanel extends javax.swing.JPanel {
      *                viewer with.
      */
     synchronized void populateDomainViewer(List<Result> results) {
+        SleuthkitCase currentCase;
+        try {
+            currentCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+        } catch (NoCurrentCaseException ex) {
+            // Do nothing, case has been closed.
+            return;
+        }
+        
         for (Result result : results) {
-            DomainThumbnailWorker domainWorker = new DomainThumbnailWorker((ResultDomain) result);
+            DomainThumbnailWorker domainWorker = new DomainThumbnailWorker(
+                    currentCase, (ResultDomain) result);
             domainWorker.execute();
             //keep track of thumb worker for possible cancelation 
             resultContentWorkers.add(domainWorker);
@@ -301,6 +319,7 @@ final class ResultsPanel extends javax.swing.JPanel {
             selectedGroupKey = groupSelectedEvent.getGroupKey();
             resultType = groupSelectedEvent.getResultType();
             groupSize = groupSelectedEvent.getGroupSize();
+            resetResultViewer();
             setPage(0);
         });
     }
@@ -798,6 +817,7 @@ final class ResultsPanel extends javax.swing.JPanel {
     private class DomainThumbnailWorker extends SwingWorker<Void, Void> {
 
         private final DomainWrapper domainWrapper;
+        private final SleuthkitCase caseDb;
 
         /**
          * Construct a new DomainThumbnailWorker.
@@ -805,14 +825,23 @@ final class ResultsPanel extends javax.swing.JPanel {
          * @param file The ResultFile which represents the domain attribute the
          *             preview is being retrieved for.
          */
-        DomainThumbnailWorker(ResultDomain domain) {
+        DomainThumbnailWorker(SleuthkitCase caseDb, ResultDomain domain) {
+            this.caseDb = caseDb;
             domainWrapper = new DomainWrapper(domain);
             domainSummaryViewer.addDomain(domainWrapper);
         }
 
         @Override
         protected Void doInBackground() throws Exception {
-            domainWrapper.setThumnail(null);
+            DomainSearch domainSearch = new DomainSearch();
+            DomainSearchThumbnailRequest request = new DomainSearchThumbnailRequest(
+                    caseDb,
+                    domainWrapper.getResultDomain().getDomain(),
+                    ImageUtils.ICON_SIZE_LARGE
+            );
+            
+            Image thumbnail = domainSearch.getThumbnail(request);
+            domainWrapper.setThumnail(thumbnail);
             return null;
         }
 
@@ -820,14 +849,14 @@ final class ResultsPanel extends javax.swing.JPanel {
         protected void done() {
             try {
                 get();
-            } catch (InterruptedException | ExecutionException ex) {
+            } catch (ExecutionException ex) {
                 domainWrapper.setThumnail(null);
-                logger.log(Level.WARNING, "Document Worker Exception", ex);
-            } catch (CancellationException ignored) {
+                logger.log(Level.WARNING, "Fatal error getting thumbnail for domain.", ex);
+            } catch (InterruptedException | CancellationException ignored) {
                 domainWrapper.setThumnail(null);
                 //we want to do nothing in response to this since we allow it to be cancelled
             }
-            documentPreviewViewer.repaint();
+            domainSummaryViewer.repaint();
         }
 
     }

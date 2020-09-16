@@ -29,7 +29,6 @@ import javax.swing.JComponent;
 import javax.swing.JList;
 import javax.swing.ListCellRenderer;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.ImageUtils;
 
 /**
  * Class which displays a preview and details about a domain.
@@ -38,7 +37,6 @@ class DomainSummaryPanel extends javax.swing.JPanel implements ListCellRenderer<
 
     private static final long serialVersionUID = 1L;
     private static final Color SELECTION_COLOR = new Color(0, 120, 215);
-    private static final int MAX_NAME_STRING = 90;
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd yyyy");
 
     /**
@@ -142,7 +140,8 @@ class DomainSummaryPanel extends javax.swing.JPanel implements ListCellRenderer<
         "DomainSummaryPanel.activity.text=Activity: {0} to {1}",
         "DomainSummaryPanel.pages.text=Pages in past 60 days: ",
         "DomainSummaryPanel.totalPages.text=Total visits: ",
-        "DomainSummaryPanel.downloads.text=Files downloaded: "})
+        "DomainSummaryPanel.downloads.text=Files downloaded: ",
+        "DomainSummaryPanel.loadingImages.text=Loading thumbnail..."})
     @Override
     public Component getListCellRendererComponent(JList<? extends DomainWrapper> list, DomainWrapper value, int index, boolean isSelected, boolean cellHasFocus) {
         domainNameLabel.setText(value.getResultDomain().getDomain());
@@ -153,8 +152,11 @@ class DomainSummaryPanel extends javax.swing.JPanel implements ListCellRenderer<
         pagesLabel.setText(Bundle.DomainSummaryPanel_pages_text() + value.getResultDomain().getVisitsInLast60());
         filesDownloadedLabel.setText(Bundle.DomainSummaryPanel_downloads_text() + value.getResultDomain().getFilesDownloaded());
         if (value.getThumbnail() == null) {
-            numberOfImagesLabel.setText(Bundle.DocumentPanel_numberOfImages_noImages());
-            sampleImageLabel.setIcon(new ImageIcon(ImageUtils.getDefaultThumbnail()));
+            numberOfImagesLabel.setText(Bundle.DomainSummaryPanel_loadingImages_text());
+            sampleImageLabel.setIcon(null);
+        } else {
+            numberOfImagesLabel.setText(null);
+            sampleImageLabel.setIcon(new ImageIcon(value.getThumbnail()));
         }
         setBackground(isSelected ? SELECTION_COLOR : list.getBackground());
         return this;

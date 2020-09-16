@@ -81,7 +81,7 @@ public final class DiscoveryTopComponent extends TopComponent {
         });
         rightSplitPane.addPropertyChangeListener(JSplitPane.DIVIDER_LOCATION_PROPERTY, new PropertyChangeListener() {
             @Override
-            public void propertyChange(PropertyChangeEvent evt) {
+            public void propertyChange(PropertyChangeEvent evt) {                
                 if (evt.getPropertyName().equalsIgnoreCase(JSplitPane.DIVIDER_LOCATION_PROPERTY)) {
                     //Only change the saved location when it was a manual change by the user and not the animation or the window opening initially
                     if ((animator == null || !animator.isRunning()) && evt.getNewValue() instanceof Integer
@@ -91,7 +91,7 @@ public final class DiscoveryTopComponent extends TopComponent {
                     }
                 }
             }
-        });
+        });        
     }
 
     /**
@@ -108,7 +108,7 @@ public final class DiscoveryTopComponent extends TopComponent {
         BasicSplitPaneDividerImpl(BasicSplitPaneUI ui) {
             super(ui);
             this.setLayout(new BorderLayout());
-            this.add(new ResultsSplitPaneDivider());
+            this.add(new ResultsSplitPaneDivider(resultsPanel));
         }
 
         private static final long serialVersionUID = 1L;
