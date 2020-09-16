@@ -120,7 +120,7 @@ final class ResultsPanel extends javax.swing.JPanel {
                 }
             }
         });
-        //JIRA-TODO 
+        //JIRA-TODO 6307 Add listener for domainSummaryViewer when 6782, 6773, and the other details area related stories are done
     }
 
     /**
@@ -812,7 +812,7 @@ final class ResultsPanel extends javax.swing.JPanel {
 
         @Override
         protected Void doInBackground() throws Exception {
-            domainWrapper.setThumnail(null);
+            domainWrapper.setThumbnail(null);
             return null;
         }
 
@@ -821,13 +821,13 @@ final class ResultsPanel extends javax.swing.JPanel {
             try {
                 get();
             } catch (InterruptedException | ExecutionException ex) {
-                domainWrapper.setThumnail(null);
+                domainWrapper.setThumbnail(null);
                 logger.log(Level.WARNING, "Document Worker Exception", ex);
             } catch (CancellationException ignored) {
-                domainWrapper.setThumnail(null);
+                domainWrapper.setThumbnail(null);
                 //we want to do nothing in response to this since we allow it to be cancelled
             }
-            documentPreviewViewer.repaint();
+            domainSummaryViewer.repaint();
         }
 
     }

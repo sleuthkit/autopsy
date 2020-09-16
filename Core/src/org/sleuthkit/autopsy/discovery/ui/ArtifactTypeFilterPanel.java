@@ -25,6 +25,7 @@ import javax.swing.DefaultListModel;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.discovery.search.SearchData;
 import org.sleuthkit.autopsy.discovery.search.SearchFiltering.ArtifactTypeFilter;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -133,10 +134,11 @@ class ArtifactTypeFilterPanel extends AbstractDiscoveryFilterPanel {
         return null;
     }
 
+    @NbBundle.Messages({"ArtifactTypeFilterPanel.selectionNeeded.text=At least one Result type must be selected."})
     @Override
     String checkForError() {
         if (artifactTypeCheckbox.isSelected() && artifactList.getSelectedValuesList().isEmpty()) {
-            return "At least one Result type must be selected.";
+            return Bundle.ArtifactTypeFilterPanel_selectionNeeded_text();
         }
         return "";
     }
