@@ -409,14 +409,14 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
      * Indicates whether or not the panel can be used, i.e., JavaFX has been
      * intitialized.
      */
-    boolean isInited() {
+    final boolean isInited() {
         return jfxIsInited;
     }
 
     /**
      * Clear the displayed image.
      */
-    void reset() {
+    final void reset() {
         Platform.runLater(() -> {
             fxImageView.setViewport(new Rectangle2D(0, 0, 0, 0));
             fxImageView.setImage(null);
@@ -453,7 +453,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
      * @param file The image file.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    void loadFile(final AbstractFile file) {
+    final void loadFile(final AbstractFile file) {
         ensureInSwingThread();
         if (!isInited()) {
             return;
@@ -635,7 +635,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
      * @return supported mime types
      */
     @Override
-    public List<String> getSupportedMimeTypes() {
+    final public List<String> getSupportedMimeTypes() {
         return Collections.unmodifiableList(Lists.newArrayList(supportedMimes));
     }
 
@@ -645,7 +645,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
      * @return
      */
     @Override
-    public List<String> getSupportedExtensions() {
+    final public List<String> getSupportedExtensions() {
         return getExtensions();
     }
 
@@ -654,12 +654,12 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
      *
      * @return
      */
-    public List<String> getExtensions() {
+    final public List<String> getExtensions() {
         return Collections.unmodifiableList(supportedExtensions);
     }
 
     @Override
-    public boolean isSupported(AbstractFile file) {
+    final public boolean isSupported(AbstractFile file) {
         return ImageUtils.isImageThumbnailSupported(file);
     }
 
@@ -1098,7 +1098,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     /**
      * Display states for the show/hide tags button.
      */
-    enum DisplayOptions {
+    private enum DisplayOptions {
         HIDE_TAGS("Hide"),
         SHOW_TAGS("Show");
 
@@ -1117,7 +1117,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
      * Different states that the content viewer can be in. These states drive
      * which buttons are enabled for tagging.
      */
-    enum State {
+    private enum State {
         HIDDEN,
         VISIBLE,
         SELECTED,
@@ -1356,6 +1356,9 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         }
     }
 
+    /**
+     * Used to idicate zoom direction.
+     */
     private enum ZoomDirection {
         IN, OUT
     };
@@ -1402,7 +1405,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
          *
          * @return True or false.
          */
-        boolean shouldAutoResize() {
+        private boolean shouldAutoResize() {
             return autoResize;
         }
 
