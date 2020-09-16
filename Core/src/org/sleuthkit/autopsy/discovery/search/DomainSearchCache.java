@@ -36,10 +36,10 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 class DomainSearchCache {
 
     private static final int MAXIMUM_CACHE_SIZE = 10;
-    private static final LoadingCache<SearchKey, Map<GroupKey, List<Result>>> cache = 
-            CacheBuilder.newBuilder()
-                .maximumSize(MAXIMUM_CACHE_SIZE)
-                .build(new DomainSearchCacheLoader());
+    private static final LoadingCache<SearchKey, Map<GroupKey, List<Result>>> cache
+            = CacheBuilder.newBuilder()
+                    .maximumSize(MAXIMUM_CACHE_SIZE)
+                    .build(new DomainSearchCacheLoader());
 
     /**
      * Get domain search results matching the given parameters. If no results
@@ -57,7 +57,7 @@ class DomainSearchCache {
                     groupSortingType, domainSortingMethod, caseDb, centralRepoDb);
 
             return cache.get(searchKey);
-        } catch (Throwable ex) {
+        } catch (ExecutionException ex) {
             throw new DiscoveryException("Error fetching results from cache", ex.getCause());
         }
     }
