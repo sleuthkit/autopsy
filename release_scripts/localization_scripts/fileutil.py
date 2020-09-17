@@ -43,6 +43,8 @@ def get_new_path(orig_path: str, new_filename: str) -> str:
 # For use with creating csv filenames for entries that have been omitted.
 OMITTED_ADDITION = '-omitted'
 
+# For use with creating csv filenames for entries that have been deleted.
+OMITTED_ADDITION = '-deleted'
 
 def get_filename_addition(orig_path: str, filename_addition: str) -> str:
     """Gets filename with addition.  So if item is '/path/name.ext' and the filename_addition is '-add', the new result

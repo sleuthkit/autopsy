@@ -1,9 +1,9 @@
 """Provides tools for parsing and writing to a csv file.
 """
-from typing import List, Dict
+from typing import List, Dict, OrderedDict
 import pyexcel
 
-Workbook = Dict[str, List[List[str]]]
+Workbook = OrderedDict[str, List[List[str]]]
 
 
 def records_to_excel(output_path: str, workbook: Workbook):

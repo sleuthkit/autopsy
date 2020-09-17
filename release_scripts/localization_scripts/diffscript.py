@@ -2,28 +2,56 @@
 and generates a csv file containing the items changed.  This script requires the python libraries:
 gitpython and jproperties.  As a consequence, it also requires git >= 1.7.0 and python >= 3.4.
 """
+import collections
 import re
 import sys
 from envutil import get_proj_dir
-from fileutil import get_filename_addition, OMITTED_ADDITION
+from excelutil import records_to_excel
+from fileutil import get_filename_addition, OMITTED_ADDITION, DELETED_ADDITION
 from gitutil import get_property_files_diff, get_commit_id, get_git_root
 from itemchange import ItemChange, ChangeType
 from csvutil import records_to_csv
 import argparse
-from typing import Union
+from typing import Union, TypedDict, List
 from langpropsutil import get_commit_for_language, LANG_FILENAME
 
 
-def write_diff_to_csv(repo_path: str, output_path: str, commit_1_id: str, commit_2_id: str, show_commits: bool,
-                      value_regex: Union[str, None] = None):
-    """Determines the changes made in '.properties-MERGED' files from one commit to another commit.
+class DiffResult:
+    results: List[List[str]]
+    deleted: Union[List[List[str]], None]
+    omitted: Union[List[List[str]], None]
+
+
+def write_items_to_csv(results: DiffResult, output_path: str):
+    records_to_csv(output_path, results.results)
+    if results.deleted:
+        records_to_csv(get_filename_addition(output_path, DELETED_ADDITION), results.deleted)
+    if results.omitted:
+        records_to_csv(get_filename_addition(output_path, OMITTED_ADDITION), results.omitted)
+
+
+def write_items_to_xlsx(results: DiffResult, output_path: str):
+    workbook = collections.OrderedDict([('results', results.results)])
+    if results.deleted:
+        workbook['deleted'] = results.deleted
+
+    if results.omitted:
+        workbook['omitted'] = results.omitted
+
+    records_to_excel(output_path, workbook)
+
+
+def get_diff_to_write(repo_path: str, commit_1_id: str, commit_2_id: str, show_commits: bool, separate_deleted: bool,
+                      value_regex: Union[str, None] = None) -> DiffResult:
+    """Determines the changes made in '.properties-MERGED' files from one commit to another commit and returns results.
 
     Args:
         repo_path (str): The local path to the git repo.
-        output_path (str): The output path for the csv file.
         commit_1_id (str): The initial commit for the diff.
         commit_2_id (str): The latest commit for the diff.
         show_commits (bool): Show commits in the header row.
+        separate_deleted (bool): put deletion items in a separate field in return type ('deleted').  Otherwise,
+        include in regular results.
         value_regex (Union[str, None]): If non-none, only key value pairs where the value is a regex match with this
         value will be included.
     """
@@ -34,18 +62,27 @@ def write_diff_to_csv(repo_path: str, output_path: str, commit_1_id: str, commit
 
     rows = []
     omitted = []
+    deleted = []
 
     for entry in get_property_files_diff(repo_path, commit_1_id, commit_2_id):
-        new_entry = entry.get_row()
-        if value_regex is not None and (entry.type == ChangeType.DELETION or not re.match(value_regex, entry.cur_val)):
-            omitted.append(new_entry)
+        entry_row = entry.get_row()
+        if entry.type == ChangeType.DELETION:
+            deleted.append(entry_row)
+        if value_regex is not None and re.match(value_regex, entry.cur_val):
+            omitted.append(entry_row)
         else:
-            rows.append(new_entry)
+            rows.append(entry_row)
 
-    records_to_csv(output_path, [row_header] + rows)
+    omitted_result = [row_header] + omitted if len(omitted) > 0 else None
+    deleted_result = [row_header] + deleted if len(deleted) > 0 else None
 
-    if len(omitted) > 0:
-        records_to_csv(get_filename_addition(output_path, OMITTED_ADDITION), [row_header] + omitted)
+    return {
+        'results': [row_header] + rows,
+        'omitted': omitted_result,
+        'deleted': deleted_result
+    }
+
+
 
 
 def main():
