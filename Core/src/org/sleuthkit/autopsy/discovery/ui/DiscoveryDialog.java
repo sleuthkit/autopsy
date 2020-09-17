@@ -145,7 +145,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         });
         Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, this.new CasePropertyChangeListener());
         IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, this.new ModuleChangeListener());
-
+        setPreferredSize(new java.awt.Dimension(1000, 650));
     }
 
     /**
