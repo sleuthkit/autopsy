@@ -48,6 +48,11 @@
         <copy todir="${basedir}/release/gstreamer" >
             <fileset dir="${thirdparty.dir}/gstreamer"/>
         </copy>
+        
+        <!--Copy iLeapp to release-->
+        <copy todir="${basedir}/release/iLeapp" >
+            <fileset dir="${thirdparty.dir}/iLeapp"/>
+        </copy>
 		
         <!--Copy 7-Zip to release-->
         <copy todir="${basedir}/release/7-Zip" >

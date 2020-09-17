@@ -30,8 +30,8 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
  * Utility class that can be used by UI nodes to reduce the number of
- * potentially expensive UI refresh events when DATA_ADDED and CONTENT_CHANGED
- * ingest manager events are received.
+ * potentially expensive UI refresh events when DATA_ADDED, CONTENT_CHANGED, and
+ * FILE_DONE ingest manager events are received.
  */
 public class RefreshThrottler {
 
@@ -66,7 +66,10 @@ public class RefreshThrottler {
 
     private static final long MIN_SECONDS_BETWEEN_REFRESH = 5;
 
-    private static final Set<IngestManager.IngestModuleEvent> INGEST_MODULE_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestModuleEvent.DATA_ADDED, IngestManager.IngestModuleEvent.CONTENT_CHANGED);
+    private static final Set<IngestManager.IngestModuleEvent> INGEST_MODULE_EVENTS_OF_INTEREST = EnumSet.of(
+            IngestManager.IngestModuleEvent.DATA_ADDED,
+            IngestManager.IngestModuleEvent.CONTENT_CHANGED,
+            IngestManager.IngestModuleEvent.FILE_DONE);
 
     /**
      * A RefreshTask is scheduled to run when an event arrives and there isn't
@@ -96,7 +99,8 @@ public class RefreshThrottler {
         pcl = (PropertyChangeEvent evt) -> {
             String eventType = evt.getPropertyName();
             if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())
-                    || eventType.equals(IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString())) {
+                    || eventType.equals(IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString())
+                    || eventType.equals(IngestManager.IngestModuleEvent.FILE_DONE.toString())) {
                 if (!refresher.isRefreshRequired(evt)) {
                     return;
                 }
