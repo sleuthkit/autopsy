@@ -615,13 +615,6 @@ public class SearchFiltering {
         @Override
         public List<Result> applyAlternateFilter(List<Result> currentResults, SleuthkitCase caseDb,
                 CentralRepository centralRepoDb) throws DiscoveryException {
-
-            // We have to have run some kind of SQL filter before getting to this point,
-            // and should have checked afterward to see if the results were empty.
-            if (currentResults.isEmpty()) {
-                throw new DiscoveryException("Can not run on empty list"); // NON-NLS
-            }
-
             // Set the frequency for each file
             DiscoveryAttributes.FrequencyAttribute freqAttr = new DiscoveryAttributes.FrequencyAttribute();
             freqAttr.addAttributeToResultFiles(currentResults, caseDb, centralRepoDb);
