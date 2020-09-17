@@ -362,14 +362,17 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
             return;
         }
 
-        // if no useful data, do an ingest module check and show data.
         TypesPieChartData data = result.getData();
-        if (data == null || !data.isUsefulContent()) {
+        if (data == null) {
+            // if no data, do an ingest module check with empty results
+            showPieResultWithModuleCheck(null);
+        } else if (!data.isUsefulContent()) {
+            // if no useful data, do an ingest module check and show data
             showPieResultWithModuleCheck(data.getPieSlices());
-            return;
+        } else {
+            // otherwise, show the data
+            this.fileMimeTypesChart.showDataFetchResult(DataFetchResult.getSuccessResult(data.getPieSlices()));
         }
-
-        this.fileMimeTypesChart.showDataFetchResult(DataFetchResult.getSuccessResult(data.getPieSlices()));
     }
 
     /**
