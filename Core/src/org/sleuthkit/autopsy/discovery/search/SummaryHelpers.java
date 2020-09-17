@@ -59,6 +59,13 @@ class SummaryHelpers {
         // Class should not be instantiated
     }
 
+    /**
+     * Get the default text summary for the document.
+     *
+     * @param file The file to summarize.
+     *
+     * @return The TextSummary object which is a default summary for the file.
+     */
     static TextSummary getDefaultSummary(AbstractFile file) {
         Image image = null;
         int countOfImages = 0;

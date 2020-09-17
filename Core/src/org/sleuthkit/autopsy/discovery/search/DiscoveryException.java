@@ -19,7 +19,7 @@
 package org.sleuthkit.autopsy.discovery.search;
 
 /**
- * Exception type used for FileSearch.
+ * Exception type used for Discovery search.
  */
 final public class DiscoveryException extends Exception {
 

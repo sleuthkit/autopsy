@@ -70,7 +70,6 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
         secondColumnPanel.setLayout(new GridBagLayout());
     }
 
-    
     /**
      * Get the type of results this filters panel is for.
      *
@@ -127,7 +126,7 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
             secondColumnY += constraints.gridheight;
         }
     }
-    
+
     /**
      * Add the panels representing the two columns to the specified JSplitPane.
      *
@@ -279,42 +278,56 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
     }
 
     /**
-     * @return the lastSortingMethod
+     * Get the most recently used sorting method.
+     *
+     * @return The most recently used sorting method.
      */
     SortingMethod getLastSortingMethod() {
         return lastSortingMethod;
     }
 
     /**
-     * @param lastSortingMethod the lastSortingMethod to set
+     * Set the most recently used sorting method.
+     *
+     * @param lastSortingMethod The most recently used sorting method.
      */
     final void setLastSortingMethod(SortingMethod lastSortingMethod) {
         this.lastSortingMethod = lastSortingMethod;
     }
 
     /**
-     * @return the lastGroupingAttributeType
+     * Get the most recently used grouping attribute.
+     *
+     * @return The most recently used grouping attribute.
      */
     GroupingAttributeType getLastGroupingAttributeType() {
         return lastGroupingAttributeType;
     }
 
     /**
-     * @param lastGroupingAttributeType the lastGroupingAttributeType to set
+     * Set the most recently used grouping attribute.
+     *
+     * @param lastGroupingAttributeType The most recently used grouping
+     *                                  attribute.
      */
     final void setLastGroupingAttributeType(GroupingAttributeType lastGroupingAttributeType) {
         this.lastGroupingAttributeType = lastGroupingAttributeType;
     }
 
     /**
-     * @return the lastGroupSortingAlg
+     * Get the most recently used group sorting algorithm.
+     *
+     * @return The most recently used group sorting algorithm.
      */
     Group.GroupSortingAlgorithm getLastGroupSortingAlg() {
         return lastGroupSortingAlg;
     }
 
     /**
-     * @param lastGroupSortingAlg the lastGroupSortingAlg to set
+     * Set the group sorting algorithm that was used most recently.
+     *
+     * @param lastGroupSortingAlg The most recently used group sorting
+     *                            algorithm.
      */
     final void setLastGroupSortingAlg(Group.GroupSortingAlgorithm lastGroupSortingAlg) {
         this.lastGroupSortingAlg = lastGroupSortingAlg;

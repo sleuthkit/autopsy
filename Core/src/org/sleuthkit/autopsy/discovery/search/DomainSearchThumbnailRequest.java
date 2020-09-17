@@ -22,34 +22,57 @@ import java.util.Objects;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
- * Requests a thumbnail to be generated for a given Case, domain and 
- * size. IconSize should be a value obtained from ImageUtils.
+ * Requests a thumbnail to be generated for a given Case, domain and size.
+ * IconSize should be a value obtained from ImageUtils.
  */
 public class DomainSearchThumbnailRequest {
-    
+
     private final SleuthkitCase sleuthkitCase;
     private final String domain;
     private final int iconSize;
-    
-    public DomainSearchThumbnailRequest(SleuthkitCase sleuthkitCase, 
+
+    /**
+     * Construct a new DomainSearchThumbnailRequest.
+     *
+     * @param sleuthkitCase The case database for this thumbnail request.
+     * @param domain        The domain name for this thumbnail request.
+     * @param iconSize      The size of icon that this thumbnail request should
+     *                      retrieve.
+     */
+    public DomainSearchThumbnailRequest(SleuthkitCase sleuthkitCase,
             String domain, int iconSize) {
         this.sleuthkitCase = sleuthkitCase;
         this.domain = domain;
         this.iconSize = iconSize;
     }
 
+    /**
+     * Get the case database for this thumbnail request.
+     *
+     * @return The case database for this thumbnail request.
+     */
     public SleuthkitCase getSleuthkitCase() {
         return sleuthkitCase;
     }
 
+    /**
+     * Get the domain name for this thumbnail request.
+     *
+     * @return The domain name for this thumbnail request.
+     */
     public String getDomain() {
         return domain;
     }
 
+    /**
+     * Get the size of icon that this thumbnail request should retrieve.
+     *
+     * @return The size of icon that this thumbnail request should retrieve.
+     */
     public int getIconSize() {
         return iconSize;
     }
-    
+
     @Override
     public boolean equals(Object other) {
         if (other == this) {

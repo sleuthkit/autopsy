@@ -44,6 +44,21 @@ class DomainSearchCache {
     /**
      * Get domain search results matching the given parameters. If no results
      * are found, the cache will automatically load them.
+     *
+     *
+     * @param userName           The name of the user performing the search.
+     * @param filters            The filters to apply.
+     * @param groupAttributeType The attribute to use for grouping.
+     * @param groupSortingType   The method to use to sort the groups.
+     * @param fileSortingMethod  The method to use to sort the domains within
+     *                           the groups.
+     * @param caseDb             The case database.
+     * @param centralRepoDb      The central repository database. Can be null if
+     *                           not needed.
+     *
+     * @return Domain search results matching the given parameters.
+     *
+     * @throws DiscoveryException
      */
     Map<GroupKey, List<Result>> get(String userName,
             List<AbstractFilter> filters,
@@ -51,11 +66,9 @@ class DomainSearchCache {
             Group.GroupSortingAlgorithm groupSortingType,
             ResultsSorter.SortingMethod domainSortingMethod,
             SleuthkitCase caseDb, CentralRepository centralRepoDb) throws DiscoveryException {
-
         try {
             final SearchKey searchKey = new SearchKey(userName, filters, groupAttributeType,
                     groupSortingType, domainSortingMethod, caseDb, centralRepoDb);
-
             return cache.get(searchKey);
         } catch (ExecutionException ex) {
             throw new DiscoveryException("Error fetching results from cache", ex.getCause());

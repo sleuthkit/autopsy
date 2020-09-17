@@ -98,7 +98,6 @@ public class DomainFilterPanel extends AbstractFiltersPanel {
     }
 
 
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JSplitPane domainFiltersSplitPane;
     // End of variables declaration//GEN-END:variables

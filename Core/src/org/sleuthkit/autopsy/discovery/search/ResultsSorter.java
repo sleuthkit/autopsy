@@ -27,7 +27,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Class used to sort ResultFiles using the supplied method.
+ * Class used to sort Results using the supplied method.
  */
 public class ResultsSorter implements Comparator<Result> {
 
@@ -35,14 +35,14 @@ public class ResultsSorter implements Comparator<Result> {
 
     /**
      * Set up the sorter using the supplied sorting method. The sorting is
-     * defined by a list of ResultFile comparators. These comparators will be
-     * run in order until one returns a non-zero result.
+     * defined by a list of Result comparators. These comparators will be run in
+     * order until one returns a non-zero result.
      *
-     * @param method The method that should be used to sort the files
+     * @param method The method that should be used to sort the results.
      */
     public ResultsSorter(SortingMethod method) {
 
-        // Set up the primary comparators that should applied to the files
+        // Set up the primary comparators that should applied to the results
         switch (method) {
             case BY_DATA_SOURCE:
                 comparators.add(getDataSourceComparator());
@@ -75,7 +75,7 @@ public class ResultsSorter implements Comparator<Result> {
         }
 
         // Add the default comparator to the end. This will ensure a consistent sort
-        // order regardless of the order the files were added to the list.
+        // order regardless of the order the results were added to the list.
         comparators.add(getDefaultComparator());
     }
 
@@ -90,36 +90,37 @@ public class ResultsSorter implements Comparator<Result> {
             }
         }
 
-        // The files are the same
+        // The results are the same
         return result;
     }
 
     /**
-     * Compare files using data source ID. Will order smallest to largest.
+     * Compare results using data source ID. Will order smallest to largest.
      *
-     * @return -1 if file1 has the lower data source ID, 0 if equal, 1 otherwise
+     * @return -1 if result1 has the lower data source ID, 0 if equal, 1
+     *         otherwise.
      */
     private static Comparator<Result> getDataSourceComparator() {
         return (Result result1, Result result2) -> Long.compare(result1.getDataSourceObjectId(), result2.getDataSourceObjectId());
     }
 
     /**
-     * Compare files using their FileType enum. Orders based on the ranking in
-     * the FileType enum.
+     * Compare results using their Type enum. Orders based on the ranking in the
+     * Type enum.
      *
-     * @return -1 if file1 has the lower FileType value, 0 if equal, 1 otherwise
+     * @return -1 if result1 has the lower Type value, 0 if equal, 1 otherwise.
      */
     private static Comparator<Result> getTypeComparator() {
         return (Result result1, Result result2) -> Integer.compare(result1.getType().getRanking(), result2.getType().getRanking());
     }
-    
+
     /**
      * Compare files using a concatenated version of keyword list names.
      * Alphabetical by the list names with files with no keyword list hits going
      * last.
      *
-     * @return -1 if file1 has the earliest combined keyword list name, 0 if
-     *         equal, 1 otherwise
+     * @return -1 if result1 has the earliest combined keyword list name, 0 if
+     *         equal, 1 otherwise.
      */
     private static Comparator<Result> getKeywordListNameComparator() {
         return (Result result1, Result result2) -> {
@@ -147,8 +148,8 @@ public class ResultsSorter implements Comparator<Result> {
     /**
      * Compare files based on parent path. Order alphabetically.
      *
-     * @return -1 if file1's path comes first alphabetically, 0 if equal, 1
-     *         otherwise
+     * @return -1 if result1's path comes first alphabetically, 0 if equal, 1
+     *         otherwise.
      */
     private static Comparator<Result> getParentPathComparator() {
 
@@ -178,10 +179,11 @@ public class ResultsSorter implements Comparator<Result> {
     }
 
     /**
-     * Compare files based on number of occurrences in the central repository.
+     * Compare results based on number of occurrences in the central repository.
      * Order from most rare to least rare Frequency enum.
      *
-     * @return -1 if file1's rarity is lower than file2, 0 if equal, 1 otherwise
+     * @return -1 if result1's rarity is lower than result2, 0 if equal, 1
+     *         otherwise.
      */
     private static Comparator<Result> getFrequencyComparator() {
         return (Result result1, Result result2) -> Integer.compare(result1.getFrequency().getRanking(), result2.getFrequency().getRanking());
@@ -190,8 +192,8 @@ public class ResultsSorter implements Comparator<Result> {
     /**
      * Compare files based on MIME type. Order is alphabetical.
      *
-     * @return -1 if file1's MIME type comes before file2's, 0 if equal, 1
-     *         otherwise
+     * @return -1 if result1's MIME type comes before result2's, 0 if equal, 1
+     *         otherwise.
      */
     private static Comparator<Result> getMIMETypeComparator() {
         return (Result result1, Result result2) -> {
@@ -205,7 +207,7 @@ public class ResultsSorter implements Comparator<Result> {
     /**
      * Compare files based on size. Order large to small.
      *
-     * @return -1 if file1 is larger than file2, 0 if equal, 1 otherwise
+     * @return -1 if result1 is larger than result2, 0 if equal, 1 otherwise.
      */
     private static Comparator<Result> getFileSizeComparator() {
         return (Result result1, Result result2) -> {
@@ -219,7 +221,7 @@ public class ResultsSorter implements Comparator<Result> {
     /**
      * Compare files based on file name. Order alphabetically.
      *
-     * @return -1 if file1 comes before file2, 0 if equal, 1 otherwise
+     * @return -1 if result1 comes before result2, 0 if equal, 1 otherwise.
      */
     private static Comparator<Result> getFileNameComparator() {
         return (Result result1, Result result2) -> {
@@ -232,6 +234,8 @@ public class ResultsSorter implements Comparator<Result> {
 
     /**
      * Sorts domain names in lexographical order, ignoring case.
+     *
+     * @return -1 if domain1 comes before domain2, 0 if equal, 1 otherwise.
      */
     private static Comparator<Result> getDomainNameComparator() {
         return (Result domain1, Result domain2) -> {
@@ -244,16 +248,18 @@ public class ResultsSorter implements Comparator<Result> {
             return compareStrings(first.getDomain().toLowerCase(), second.getDomain().toLowerCase());
         };
     }
-    
+
     /**
-     * Sorts results by most recent date time
+     * Sorts results by most recent date time.
+     *
+     * @return -1 if domain1 comes before domain2, 0 if equal, 1 otherwise.
      */
     private static Comparator<Result> getMostRecentDateTimeComparator() {
         return (Result result1, Result result2) -> {
-            if(result1.getType() != SearchData.Type.DOMAIN) {
+            if (result1.getType() != SearchData.Type.DOMAIN) {
                 return 0;
             }
-            
+
             ResultDomain first = (ResultDomain) result1;
             ResultDomain second = (ResultDomain) result2;
             return Long.compare(second.getActivityEnd(), first.getActivityEnd());
@@ -266,7 +272,7 @@ public class ResultsSorter implements Comparator<Result> {
      * include something like the object ID to ensure a consistent sorting when
      * the rest of the compared fields are the same.
      *
-     * @return -1 if file1 comes before file2, 0 if equal, 1 otherwise
+     * @return -1 if file1 comes before file2, 0 if equal, 1 otherwise.
      */
     private static Comparator<Result> getDefaultComparator() {
         return (Result result1, Result result2) -> {
@@ -292,7 +298,7 @@ public class ResultsSorter implements Comparator<Result> {
      * @param s1
      * @param s2
      *
-     * @return -1 if s1 comes before s2, 0 if equal, 1 otherwise
+     * @return -1 if s1 comes before s2, 0 if equal, 1 otherwise.
      */
     private static int compareStrings(String s1, String s2) {
         String string1 = s1 == null ? "" : s1;
@@ -334,6 +340,13 @@ public class ResultsSorter implements Comparator<Result> {
         private final String displayName;
         private final List<DiscoveryAttributes.AttributeType> requiredAttributes;
 
+        /**
+         * Construct a new SortingMethod enum value.
+         *
+         * @param attributes  The list of DiscoveryAttributes required by this
+         *                    enum value.
+         * @param displayName The display name for this enum value.
+         */
         SortingMethod(List<DiscoveryAttributes.AttributeType> attributes, String displayName) {
             this.requiredAttributes = attributes;
             this.displayName = displayName;
@@ -344,23 +357,28 @@ public class ResultsSorter implements Comparator<Result> {
             return displayName;
         }
 
+        /**
+         * Get the list of DiscoveryAttributes required by this enum value.
+         *
+         * @return The list of DiscoveryAttributes required by this enum value.
+         */
         public List<DiscoveryAttributes.AttributeType> getRequiredAttributes() {
             return Collections.unmodifiableList(requiredAttributes);
         }
 
         /**
-         * Get the list of enums that are valid for ordering files.
+         * Get the list of enum values that are valid for ordering files.
          *
-         * @return Enums that can be used to ordering files.
+         * @return Enum values that can be used to ordering files.
          */
         public static List<SortingMethod> getOptionsForOrderingFiles() {
             return Arrays.asList(BY_FILE_SIZE, BY_FULL_PATH, BY_FILE_NAME, BY_DATA_SOURCE);
         }
 
         /**
-         * Get the list of enums that are valid for ordering files.
+         * Get the list of enum values that are valid for ordering files.
          *
-         * @return Enums that can be used to ordering files.
+         * @return Enum values that can be used to ordering files.
          */
         public static List<SortingMethod> getOptionsForOrderingDomains() {
             return Arrays.asList(BY_DOMAIN_NAME, BY_DATA_SOURCE);
