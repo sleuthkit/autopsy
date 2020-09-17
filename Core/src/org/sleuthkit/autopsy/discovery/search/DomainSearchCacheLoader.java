@@ -144,7 +144,7 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
                 "                      date BETWEEN " + sixtyDaysAgo.getEpochSecond() + " AND " + currentTime.getEpochSecond() + " THEN 1 " +
                 "                 ELSE 0 " +
                 "               END) AS last60," + 
-                "           data_source_obj_id AS dataSource " + 
+                "           MAX(data_source_obj_id) AS dataSource " + 
                 
                 "FROM blackboard_artifacts" +
                 "     JOIN (" + domainsTable + ") AS domains_table" + 
