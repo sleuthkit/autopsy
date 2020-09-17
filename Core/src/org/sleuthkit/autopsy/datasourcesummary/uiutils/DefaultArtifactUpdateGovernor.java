@@ -36,6 +36,10 @@ public interface DefaultArtifactUpdateGovernor extends DefaultUpdateGovernor {
 
     @Override
     default boolean isRefreshRequired(ModuleDataEvent evt) {
+        if (evt == null || evt.getBlackboardArtifactType() == null) {
+            return false;
+        }
+        
         return getArtifactTypeIdsForRefresh().contains(evt.getBlackboardArtifactType().getTypeID());
     }
 

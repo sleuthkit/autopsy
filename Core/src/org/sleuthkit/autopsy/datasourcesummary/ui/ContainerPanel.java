@@ -125,9 +125,10 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
                         (result) -> {
                             if (result != null && result.getResultType() == ResultType.SUCCESS) {
                                 ContainerPanelData data = result.getData();
-                                updateDetailsPanelData(
-                                        data.getDataSource(),
-                                        data.getUnallocatedFilesSize());
+                                DataSource dataSource = (data == null) ? null : data.getDataSource();
+                                Long unallocatedFileSize = (data == null) ? null : data.getUnallocatedFilesSize();
+                                
+                                updateDetailsPanelData(dataSource, unallocatedFileSize);
                             } else {
                                 logger.log(Level.WARNING, "An exception occurred while attempting to fetch data for the ContainerPanel.",
                                         (result == null) ? null : result.getException());

@@ -63,7 +63,10 @@ public class IngestRunningLabel extends JPanel {
             // if listener is not initialized, initialize it.
             if (classListener == null) {
                 classListener = (evt) -> {
-
+                    if (evt == null) {
+                        return;
+                    }
+                    
                     if (evt.getPropertyName().equals(IngestManager.IngestJobEvent.STARTED.toString())) {
                         // ingest started
                         notifyListeners(true);
