@@ -39,7 +39,7 @@ public interface DefaultArtifactUpdateGovernor extends DefaultUpdateGovernor {
         if (evt == null || evt.getBlackboardArtifactType() == null) {
             return false;
         }
-        
+
         return getArtifactTypeIdsForRefresh().contains(evt.getBlackboardArtifactType().getTypeID());
     }
 

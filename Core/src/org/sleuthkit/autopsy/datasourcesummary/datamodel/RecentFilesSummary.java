@@ -163,7 +163,7 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
         if (dataSource == null) {
             return Collections.emptyList();
         }
-        
+
         List<BlackboardArtifact> artifactList
                 = DataSourceInfoUtilities.getArtifacts(provider.get(),
                         new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD),
@@ -214,7 +214,7 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
         if (dataSource == null) {
             return Collections.emptyList();
         }
-                
+
         return createListFromMap(buildAttachmentMap(dataSource), maxCount);
     }
 

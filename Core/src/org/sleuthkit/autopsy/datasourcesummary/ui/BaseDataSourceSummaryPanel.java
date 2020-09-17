@@ -303,7 +303,7 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
             // submit swing workers to run
             if (!workers.isEmpty()) {
                 submit(workers);
-            }   
+            }
         }
     }
 
@@ -355,9 +355,10 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
     protected String getDefaultNoIngestMessage(String moduleName) {
         return Bundle.BaseDataSourceSummaryPanel_defaultNotIngestMessage(moduleName);
     }
-    
+
     /**
      * Utility method to return the IngestModuleCheckUtil.
+     *
      * @return The IngestModuleCheckUtil.
      */
     protected IngestModuleCheckUtil getIngestModuleCheckUtil() {

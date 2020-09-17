@@ -127,11 +127,16 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
                                 ContainerPanelData data = result.getData();
                                 DataSource dataSource = (data == null) ? null : data.getDataSource();
                                 Long unallocatedFileSize = (data == null) ? null : data.getUnallocatedFilesSize();
-                                
+
                                 updateDetailsPanelData(dataSource, unallocatedFileSize);
                             } else {
-                                logger.log(Level.WARNING, "An exception occurred while attempting to fetch data for the ContainerPanel.",
-                                        (result == null) ? null : result.getException());
+                                if (result == null) {
+                                    logger.log(Level.WARNING, "No data fetch result was provided to the ContainerPanel.");
+                                } else {
+                                    logger.log(Level.WARNING, "An exception occurred while attempting to fetch data for the ContainerPanel.",
+                                            result.getException());
+                                }
+
                                 updateDetailsPanelData(null, null);
                             }
                         }
@@ -141,7 +146,6 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
         initComponents();
         setDataSource(null);
     }
-
 
     @Override
     protected void onNewDataSource(DataSource dataSource) {

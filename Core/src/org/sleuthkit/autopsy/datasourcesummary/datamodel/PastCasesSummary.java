@@ -303,7 +303,7 @@ public class PastCasesSummary implements DefaultArtifactUpdateGovernor {
         if (dataSource == null) {
             return null;
         }
-        
+
         SleuthkitCase skCase = caseProvider.get();
 
         List<String> deviceArtifactCases = new ArrayList<>();

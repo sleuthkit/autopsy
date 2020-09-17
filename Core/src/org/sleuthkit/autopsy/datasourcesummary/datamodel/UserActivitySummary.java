@@ -148,7 +148,7 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
      */
     public List<TopDomainsResult> getRecentDomains(DataSource dataSource, int count) throws TskCoreException, SleuthkitCaseProviderException {
         assertValidCount(count);
-        
+
         if (dataSource == null) {
             return Collections.emptyList();
         }
@@ -310,7 +310,7 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
      */
     public List<TopWebSearchResult> getMostRecentWebSearches(DataSource dataSource, int count) throws SleuthkitCaseProviderException, TskCoreException {
         assertValidCount(count);
-        
+
         if (dataSource == null) {
             return Collections.emptyList();
         }
@@ -398,7 +398,7 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
      */
     public List<TopDeviceAttachedResult> getRecentDevices(DataSource dataSource, int count) throws SleuthkitCaseProviderException, TskCoreException {
         assertValidCount(count);
-        
+
         if (dataSource == null) {
             return Collections.emptyList();
         }
@@ -487,7 +487,7 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
         "DataSourceUserActivitySummary_getRecentAccounts_calllogMessage=Call Log",})
     public List<TopAccountResult> getRecentAccounts(DataSource dataSource, int count) throws SleuthkitCaseProviderException, TskCoreException {
         assertValidCount(count);
-        
+
         if (dataSource == null) {
             return Collections.emptyList();
         }

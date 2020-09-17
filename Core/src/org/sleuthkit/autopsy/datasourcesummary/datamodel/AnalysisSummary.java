@@ -147,11 +147,11 @@ public class AnalysisSummary implements DefaultArtifactUpdateGovernor {
      */
     private List<Pair<String, Long>> getCountsData(DataSource dataSource, BlackboardAttribute.Type keyType, ARTIFACT_TYPE... artifactTypes)
             throws SleuthkitCaseProviderException, TskCoreException {
-        
+
         if (dataSource == null) {
             return Collections.emptyList();
         }
-        
+
         List<BlackboardArtifact> artifacts = new ArrayList<>();
         SleuthkitCase skCase = provider.get();
 
