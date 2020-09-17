@@ -49,7 +49,7 @@ public class DiscoveryKeyUtils {
         private final String keyString;
         private final Group.GroupSortingAlgorithm groupSortingType;
         private final DiscoveryAttributes.AttributeType groupAttributeType;
-        private final ResultsSorter.SortingMethod fileSortingMethod;
+        private final ResultsSorter.SortingMethod sortingMethod;
         private final List<AbstractFilter> filters;
         private final SleuthkitCase sleuthkitCase;
         private final CentralRepository centralRepository;
@@ -58,21 +58,21 @@ public class DiscoveryKeyUtils {
          * Construct a new SearchKey with all information that defines a search.
          *
          * @param userName           The name of the user performing the search.
-         * @param filters            The FileFilters being used for the search.
+         * @param filters            The Filters being used for the search.
          * @param groupAttributeType The AttributeType to group by.
          * @param groupSortingType   The algorithm to sort the groups by.
-         * @param fileSortingMethod  The method to sort the files by.
+         * @param sortingMethod      The method to sort the results by.
          * @param sleuthkitCase      The SleuthkitCase being searched.
          * @param centralRepository  The Central Repository being searched.
          */
         SearchKey(String userName, List<AbstractFilter> filters,
                 DiscoveryAttributes.AttributeType groupAttributeType,
                 Group.GroupSortingAlgorithm groupSortingType,
-                ResultsSorter.SortingMethod fileSortingMethod,
+                ResultsSorter.SortingMethod sortingMethod,
                 SleuthkitCase sleuthkitCase, CentralRepository centralRepository) {
             this.groupAttributeType = groupAttributeType;
             this.groupSortingType = groupSortingType;
-            this.fileSortingMethod = fileSortingMethod;
+            this.sortingMethod = sortingMethod;
             this.filters = filters;
 
             StringBuilder searchStringBuilder = new StringBuilder();
@@ -80,7 +80,7 @@ public class DiscoveryKeyUtils {
             for (AbstractFilter filter : filters) {
                 searchStringBuilder.append(filter.toString());
             }
-            searchStringBuilder.append(groupAttributeType).append(groupSortingType).append(fileSortingMethod);
+            searchStringBuilder.append(groupAttributeType).append(groupSortingType).append(sortingMethod);
             keyString = searchStringBuilder.toString();
             this.sleuthkitCase = sleuthkitCase;
             this.centralRepository = centralRepository;
@@ -89,13 +89,19 @@ public class DiscoveryKeyUtils {
         /**
          * Construct a SearchKey without a SleuthkitCase or CentralRepositry
          * instance.
+         *
+         * @param userName           The name of the user performing the search.
+         * @param filters            The Filters being used for the search.
+         * @param groupAttributeType The AttributeType to group by.
+         * @param groupSortingType   The algorithm to sort the groups by.
+         * @param sortingMethod      The method to sort the results by.
          */
         SearchKey(String userName, List<AbstractFilter> filters,
                 DiscoveryAttributes.AttributeType groupAttributeType,
                 Group.GroupSortingAlgorithm groupSortingType,
-                ResultsSorter.SortingMethod fileSortingMethod) {
+                ResultsSorter.SortingMethod sortingMethod) {
             this(userName, filters, groupAttributeType, groupSortingType,
-                    fileSortingMethod, null, null);
+                    sortingMethod, null, null);
         }
 
         @Override
@@ -166,18 +172,28 @@ public class DiscoveryKeyUtils {
         }
 
         /**
-         * Get the fileSorting
+         * Get the SortingMethod for this key.
          *
-         * @return
+         * @return The SortingMethod for this key.
          */
         ResultsSorter.SortingMethod getFileSortingMethod() {
-            return fileSortingMethod;
+            return sortingMethod;
         }
 
+        /**
+         * Get the case database for this key.
+         *
+         * @return The case database for this key.
+         */
         SleuthkitCase getSleuthkitCase() {
             return this.sleuthkitCase;
         }
 
+        /**
+         * Get the central repository for this key.
+         *
+         * @return The central repository for this key.
+         */
         CentralRepository getCentralRepository() {
             return this.centralRepository;
         }
@@ -199,7 +215,7 @@ public class DiscoveryKeyUtils {
         /**
          * Subclasses must implement equals().
          *
-         * @param otherKey
+         * @param otherKey The GroupKey to compare to this key.
          *
          * @return true if the keys are equal, false otherwise
          */
@@ -209,7 +225,7 @@ public class DiscoveryKeyUtils {
         /**
          * Subclasses must implement hashCode().
          *
-         * @return the hash code
+         * @return The hash code for the GroupKey.
          */
         @Override
         abstract public int hashCode();
@@ -219,9 +235,9 @@ public class DiscoveryKeyUtils {
          * case where two different GroupKey subclasses are compared against
          * each other. Use a lexicographic comparison on the class names.
          *
-         * @param otherGroupKey The other group key
+         * @param otherGroupKey The other group key.
          *
-         * @return result of alphabetical comparison on the class name
+         * @return Result of alphabetical comparison on the class name.
          */
         int compareClassNames(GroupKey otherGroupKey) {
             return this.getClass().getName().compareTo(otherGroupKey.getClass().getName());
@@ -234,12 +250,17 @@ public class DiscoveryKeyUtils {
     }
 
     /**
-     * Key representing a file size group
+     * Key representing a file size group.
      */
     static class FileSizeGroupKey extends GroupKey {
 
         private final SearchData.FileSize fileSize;
 
+        /**
+         * Construct a new FileSizeGroupKey.
+         *
+         * @param file The file to create the group key for.
+         */
         FileSizeGroupKey(Result file) {
             ResultFile resultFile = (ResultFile) file;
             if (resultFile.getFileType() == SearchData.Type.VIDEO) {
@@ -284,7 +305,9 @@ public class DiscoveryKeyUtils {
         }
 
         /**
-         * @return the fileSize
+         * The size of the file.
+         *
+         * @return The size of the file.
          */
         SearchData.FileSize getFileSize() {
             return fileSize;
@@ -292,12 +315,17 @@ public class DiscoveryKeyUtils {
     }
 
     /**
-     * Key representing a file type group
+     * Key representing a file type group.
      */
     static class FileTypeGroupKey extends GroupKey {
 
         private final SearchData.Type fileType;
 
+        /**
+         * Construct a new FileTypeGroupKey.
+         *
+         * @param file The file to create the group key for.
+         */
         FileTypeGroupKey(Result file) {
             fileType = ((ResultFile) file).getFileType();
         }
@@ -337,7 +365,9 @@ public class DiscoveryKeyUtils {
         }
 
         /**
-         * @return the fileType
+         * Get the type of file the group exists for.
+         *
+         * @return The type of file the group exists for.
          */
         SearchData.Type getFileType() {
             return fileType;
@@ -345,18 +375,22 @@ public class DiscoveryKeyUtils {
     }
 
     /**
-     * Key representing a keyword list group
+     * Key representing a keyword list group.
      */
     static class KeywordListGroupKey extends GroupKey {
 
         private final List<String> keywordListNames;
         private final String keywordListNamesString;
 
+        /**
+         * Construct a new KeywordListGroupKey.
+         *
+         * @param file The file to create the group key for.
+         */
         @NbBundle.Messages({
             "DiscoveryKeyUtils.KeywordListGroupKey.noKeywords=None"})
         KeywordListGroupKey(ResultFile file) {
             keywordListNames = file.getKeywordListNames();
-
             if (keywordListNames.isEmpty()) {
                 keywordListNamesString = Bundle.DiscoveryKeyUtils_KeywordListGroupKey_noKeywords();
             } else {
@@ -411,14 +445,20 @@ public class DiscoveryKeyUtils {
         }
 
         /**
-         * @return the keywordListNames
+         * Get the list of keywords this group is for.
+         *
+         * @return The list of keywords this group is for.
          */
         List<String> getKeywordListNames() {
             return Collections.unmodifiableList(keywordListNames);
         }
 
         /**
-         * @return the keywordListNamesString
+         * Get the string which represents the keyword names represented by this
+         * group key.
+         *
+         * @return The string which represents the keyword names represented by
+         *         this group key.
          */
         String getKeywordListNamesString() {
             return keywordListNamesString;
@@ -426,13 +466,18 @@ public class DiscoveryKeyUtils {
     }
 
     /**
-     * Key representing a file tag group
+     * Key representing a file tag group.
      */
     static class FileTagGroupKey extends GroupKey {
 
         private final List<String> tagNames;
         private final String tagNamesString;
 
+        /**
+         * Construct a new FileTagGroupKey.
+         *
+         * @param file The file to create the group key for.
+         */
         @NbBundle.Messages({
             "DiscoveryKeyUtils.FileTagGroupKey.noSets=None"})
         FileTagGroupKey(ResultFile file) {
@@ -477,11 +522,9 @@ public class DiscoveryKeyUtils {
             if (otherKey == this) {
                 return true;
             }
-
             if (!(otherKey instanceof FileTagGroupKey)) {
                 return false;
             }
-
             FileTagGroupKey otherFileTagGroupKey = (FileTagGroupKey) otherKey;
             return getTagNamesString().equals(otherFileTagGroupKey.getTagNamesString());
         }
@@ -492,14 +535,20 @@ public class DiscoveryKeyUtils {
         }
 
         /**
-         * @return the tagNames
+         * Get the list of tag names which are represented by this group.
+         *
+         * @return The list of tag names which are represented by this group.
          */
         List<String> getTagNames() {
             return Collections.unmodifiableList(tagNames);
         }
 
         /**
-         * @return the tagNamesString
+         * Get the String representation of the tags which are represented by
+         * this group.
+         *
+         * @return The String representation of the tags which are represented
+         *         by this group.
          */
         String getTagNamesString() {
             return tagNamesString;
@@ -507,13 +556,18 @@ public class DiscoveryKeyUtils {
     }
 
     /**
-     * Key representing a parent path group
+     * Key representing a parent path group.
      */
     static class ParentPathGroupKey extends GroupKey {
 
         private String parentPath;
         private Long parentID;
 
+        /**
+         * Construct a new ParentPathGroupKey.
+         *
+         * @param file The file to create the group key for.
+         */
         ParentPathGroupKey(ResultFile file) {
             Content parent;
             try {
@@ -600,14 +654,18 @@ public class DiscoveryKeyUtils {
         }
 
         /**
-         * @return the parentPath
+         * Get the parent path this group is for.
+         *
+         * @return The parent path this group is for as a String.
          */
         String getParentPath() {
             return parentPath;
         }
 
         /**
-         * @return the parentID
+         * Get the object ID of the parent object.
+         *
+         * @return The object ID of the parent object.
          */
         Long getParentID() {
             return parentID;
@@ -615,13 +673,18 @@ public class DiscoveryKeyUtils {
     }
 
     /**
-     * Key representing a data source group
+     * Key representing a data source group.
      */
     static class DataSourceGroupKey extends GroupKey {
 
         private final long dataSourceID;
         private String displayName;
 
+        /**
+         * Construct a new DataSourceGroupKey.
+         *
+         * @param result The Result to create the group key for.
+         */
         @NbBundle.Messages({
             "# {0} - Data source name",
             "# {1} - Data source ID",
@@ -676,7 +739,9 @@ public class DiscoveryKeyUtils {
         }
 
         /**
-         * @return the dataSourceID
+         * Get the object ID of the data source.
+         *
+         * @return The object ID of the data source.
          */
         long getDataSourceID() {
             return dataSourceID;
@@ -689,6 +754,9 @@ public class DiscoveryKeyUtils {
      */
     static class NoGroupingGroupKey extends GroupKey {
 
+        /**
+         * Constructor for dummy group which puts all files together.
+         */
         NoGroupingGroupKey() {
             // Nothing to save - all files will get the same GroupKey
         }
@@ -726,14 +794,19 @@ public class DiscoveryKeyUtils {
     }
 
     /**
-     * Key representing a central repository frequency group
+     * Key representing a central repository frequency group.
      */
     static class FrequencyGroupKey extends GroupKey {
 
         private final SearchData.Frequency frequency;
 
-        FrequencyGroupKey(Result file) {
-            frequency = file.getFrequency();
+        /**
+         * Construct a new FrequencyGroupKey.
+         *
+         * @param result The Result to create the group key for.
+         */
+        FrequencyGroupKey(Result result) {
+            frequency = result.getFrequency();
         }
 
         @Override
@@ -771,7 +844,9 @@ public class DiscoveryKeyUtils {
         }
 
         /**
-         * @return the frequency
+         * Get the frequency which the group is for.
+         *
+         * @return The frequency which the group is for.
          */
         SearchData.Frequency getFrequency() {
             return frequency;
@@ -779,13 +854,18 @@ public class DiscoveryKeyUtils {
     }
 
     /**
-     * Key representing a hash hits group
+     * Key representing a hash hits group.
      */
     static class HashHitsGroupKey extends GroupKey {
 
         private final List<String> hashSetNames;
         private final String hashSetNamesString;
 
+        /**
+         * Construct a new HashHitsGroupKey.
+         *
+         * @param file The file to create the group key for.
+         */
         @NbBundle.Messages({
             "DiscoveryKeyUtils.HashHitsGroupKey.noHashHits=None"})
         HashHitsGroupKey(ResultFile file) {
@@ -845,14 +925,18 @@ public class DiscoveryKeyUtils {
         }
 
         /**
-         * @return the hashSetNames
+         * Get the list of hash set names the group is for.
+         *
+         * @return The list of hash set names the group is for.
          */
         List<String> getHashSetNames() {
             return Collections.unmodifiableList(hashSetNames);
         }
 
         /**
-         * @return the hashSetNamesString
+         * Get the String representation of the list of hash set names.
+         *
+         * @return The String representation of the list of hash set names.
          */
         String getHashSetNamesString() {
             return hashSetNamesString;
@@ -860,13 +944,18 @@ public class DiscoveryKeyUtils {
     }
 
     /**
-     * Key representing a interesting item set group
+     * Key representing a interesting item set group.
      */
     static class InterestingItemGroupKey extends GroupKey {
 
         private final List<String> interestingItemSetNames;
         private final String interestingItemSetNamesString;
 
+        /**
+         * Construct a new InterestingItemGroupKey.
+         *
+         * @param file The file to create the group key for.
+         */
         @NbBundle.Messages({
             "DiscoveryKeyUtils.InterestingItemGroupKey.noSets=None"})
         InterestingItemGroupKey(ResultFile file) {
@@ -926,14 +1015,20 @@ public class DiscoveryKeyUtils {
         }
 
         /**
-         * @return the interestingItemSetNames
+         * Get the list of interesting item set names the group is for.
+         *
+         * @return The list of interesting item set names the group is for.
          */
         List<String> getInterestingItemSetNames() {
             return Collections.unmodifiableList(interestingItemSetNames);
         }
 
         /**
-         * @return the interestingItemSetNamesString
+         * Get the String representation of the interesting item set names the
+         * group is for.
+         *
+         * @return The String representation of the interesting item set names
+         *         the group is for.
          */
         String getInterestingItemSetNamesString() {
             return interestingItemSetNamesString;
@@ -948,6 +1043,11 @@ public class DiscoveryKeyUtils {
         private final Long epochDate;
         private final String dateNameString;
 
+        /**
+         * Construct a new MostRecentActivityDateGroupKey.
+         *
+         * @param result The Result to create the group key for.
+         */
         @NbBundle.Messages({
             "DiscoveryKeyUtils.MostRecentActivityDateGroupKey.noDate=No Date Available"})
         MostRecentActivityDateGroupKey(Result result) {
@@ -1018,7 +1118,7 @@ public class DiscoveryKeyUtils {
         /**
          * Get the name which identifies this group.
          *
-         * @return The dateNameString
+         * @return The dateNameString.
          */
         String getDateNameString() {
             return dateNameString;
@@ -1033,6 +1133,11 @@ public class DiscoveryKeyUtils {
         private final Long epochDate;
         private final String dateNameString;
 
+        /**
+         * Construct a new FirstActivityDateGroupKey.
+         *
+         * @param result The Result to create the group key for.
+         */
         @NbBundle.Messages({
             "DiscoveryKeyUtils.FirstActivityDateGroupKey.noDate=No Date Available"})
         FirstActivityDateGroupKey(Result result) {
@@ -1103,21 +1208,26 @@ public class DiscoveryKeyUtils {
         /**
          * Get the name which identifies this group.
          *
-         * @return The dateNameString
+         * @return The dateNameString.
          */
         String getDateNameString() {
             return dateNameString;
         }
     }
-    
+
     /**
      * Key representing the number of visits.
      */
     static class NumberOfVisitsGroupKey extends GroupKey {
-        
+
         private final String displayName;
         private final Long visits;
-        
+
+        /**
+         * Construct a new NumberOfVisitsGroupKey.
+         *
+         * @param result The Result to create the group key for.
+         */
         @NbBundle.Messages({
             "# {0} - totalVisits",
             "DiscoveryKeyUtils.NumberOfVisitsGroupKey.displayName={0} visits",
@@ -1135,21 +1245,26 @@ public class DiscoveryKeyUtils {
                 visits = -1L;
             }
         }
-        
+
         @Override
         String getDisplayName() {
             return displayName;
         }
-        
+
         @Override
         public int hashCode() {
             return Objects.hash(displayName);
         }
-        
+
+        /**
+         * Get the number of visits this group is for.
+         *
+         * @return The number of visits this group is for.
+         */
         Long getVisits() {
             return visits;
         }
-        
+
         @Override
         public boolean equals(Object otherKey) {
             if (otherKey == this) {
@@ -1163,7 +1278,7 @@ public class DiscoveryKeyUtils {
             NumberOfVisitsGroupKey visitsKey = (NumberOfVisitsGroupKey) otherKey;
             return visits.equals(visitsKey.getVisits());
         }
-        
+
         @Override
         public int compareTo(GroupKey otherGroupKey) {
             if (otherGroupKey instanceof NumberOfVisitsGroupKey) {
@@ -1176,18 +1291,22 @@ public class DiscoveryKeyUtils {
     }
 
     /**
-     * Key representing an object detected group
+     * Key representing an object detected group.
      */
     static class ObjectDetectedGroupKey extends GroupKey {
 
         private final List<String> objectDetectedNames;
         private final String objectDetectedNamesString;
 
+        /**
+         * Construct a new ObjectDetectedGroupKey.
+         *
+         * @param file The file to create the group key for.
+         */
         @NbBundle.Messages({
             "DiscoveryKeyUtils.ObjectDetectedGroupKey.noSets=None"})
         ObjectDetectedGroupKey(ResultFile file) {
             objectDetectedNames = file.getObjectDetectedNames();
-
             if (objectDetectedNames.isEmpty()) {
                 objectDetectedNamesString = Bundle.DiscoveryKeyUtils_ObjectDetectedGroupKey_noSets();
             } else {
@@ -1242,14 +1361,20 @@ public class DiscoveryKeyUtils {
         }
 
         /**
-         * @return the objectDetectedNames
+         * Get the list of object detected names for this group.
+         *
+         * @return The list of object detected names for this group.
          */
         List<String> getObjectDetectedNames() {
             return Collections.unmodifiableList(objectDetectedNames);
         }
 
         /**
-         * @return the objectDetectedNamesString
+         * Get the String representation of the object detected names for this
+         * group.
+         *
+         * @return The String representation of the object detected names for
+         *         this group.
          */
         String getObjectDetectedNamesString() {
             return objectDetectedNamesString;

@@ -38,8 +38,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
  */
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.newpackage.OpenDiscoveryAction")
 @ActionReferences(value = {
-    @ActionReference(path = "Menu/Tools", position = 105)
-    ,
+    @ActionReference(path = "Menu/Tools", position = 105),
     @ActionReference(path = "Toolbars/Case", position = 105)})
 @ActionRegistration(displayName = "#CTL_OpenDiscoveryAction", lazy = false)
 @NbBundle.Messages({"CTL_OpenDiscoveryAction=Discovery"})
@@ -68,7 +67,7 @@ public final class OpenDiscoveryAction extends CallableSystemAction implements P
             final DiscoveryDialog discDialog = DiscoveryDialog.getDiscoveryDialogInstance();
             discDialog.cancelSearch();
             DiscoveryUiUtils.displayErrorMessage(discDialog);
-            discDialog.setVisible(true);           
+            discDialog.setVisible(true);
         });
     }
 

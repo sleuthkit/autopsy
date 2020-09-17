@@ -329,6 +329,7 @@
                     <Property name="selectionMode" type="int" value="0"/>
                   </Properties>
                   <AuxValues>
+                    <AuxValue name="JavaCodeGenerator_AddingCodePost" type="java.lang.String" value="rulesList.setCellRenderer(new SimpleListCellRenderer());"/>
                     <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;FilesSet.Rule&gt;"/>
                   </AuxValues>
                 </Component>
@@ -401,9 +402,12 @@
               <SubComponents>
                 <Component class="javax.swing.JList" name="setsList">
                   <Properties>
-                    <Property name="selectionMode" type="int" value="0"/>
+                    <Property name="selectionMode" type="int" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
+                      <Connection code="javax.swing.ListSelectionModel.SINGLE_SELECTION" type="code"/>
+                    </Property>
                   </Properties>
                   <AuxValues>
+                    <AuxValue name="JavaCodeGenerator_AddingCodePost" type="java.lang.String" value="setsList.setCellRenderer(new SimpleListCellRenderer());"/>
                     <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;FilesSet&gt;"/>
                   </AuxValues>
                 </Component>

@@ -44,6 +44,7 @@ import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.modules.pictureanalyzer.PictureAnalyzerIngestModuleFactory;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF;
@@ -70,11 +71,10 @@ public class EXIFProcessor implements PictureProcessor {
     @Override
     @NbBundle.Messages({
         "ExifProcessor.indexError.message=Failed to post EXIF Metadata artifact(s).",
-        "ExifProcessor.userContent.description=EXIF metadata exists for this file.",
-        "ExifProcessor.module_name=Exif Parser"
+        "ExifProcessor.userContent.description=EXIF metadata data exists for this file."
     })
     public void process(IngestJobContext context, AbstractFile file) {
-        final String MODULE_NAME = Bundle.ExifProcessor_module_name();
+        final String MODULE_NAME = PictureAnalyzerIngestModuleFactory.getModuleName();
 
         try (BufferedInputStream bin = new BufferedInputStream(new ReadContentInputStream(file));) {
 

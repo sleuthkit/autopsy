@@ -24,7 +24,7 @@ import java.util.List;
 import org.openide.util.NbBundle.Messages;
 
 /**
- * Class for storing files that belong to a particular group.
+ * Class for storing results that belong to a particular group.
  */
 public class Group implements Comparable<Group> {
 
@@ -34,7 +34,7 @@ public class Group implements Comparable<Group> {
     private final String displayName;
 
     /**
-     * Create a FileGroup object with its first file.
+     * Create a Group object with its first result.
      *
      * @param groupSortingType The method for sorting the group
      * @param groupKey         The GroupKey for this group
@@ -49,13 +49,13 @@ public class Group implements Comparable<Group> {
     /**
      * Add a Result to the group. Will not be sorted at this time.
      *
-     * @param result The Result to add to the FileGroup
+     * @param result The Result to add to the Group.
      */
     void addResult(Result result) {
         if (result.getType() != SearchData.Type.DOMAIN && results.contains(result)) {
             //dedupe files and show instances
-            ResultFile existingCopy = (ResultFile)results.get(results.indexOf(result)); //get the copy of this which exists in the list
-            existingCopy.addDuplicate(((ResultFile)result).getFirstInstance());
+            ResultFile existingCopy = (ResultFile) results.get(results.indexOf(result)); //get the copy of this which exists in the list
+            existingCopy.addDuplicate(((ResultFile) result).getFirstInstance());
         } else {
             //Domains and non files are not being deduped currently
             results.add(result);
@@ -81,9 +81,9 @@ public class Group implements Comparable<Group> {
     }
 
     /**
-     * Sort all the files in the group
+     * Sort all the results in the group
      */
-    public void sortFiles(ResultsSorter sorter) {
+    public void sortResults(ResultsSorter sorter) {
         Collections.sort(results, sorter);
     }
 
@@ -91,10 +91,10 @@ public class Group implements Comparable<Group> {
      * Compare this group to another group for sorting. Uses the algorithm
      * specified in groupSortingType.
      *
-     * @param otherGroup the group to compare this one to
+     * @param otherGroup The group to compare this one to.
      *
      * @return -1 if this group should be displayed before the other group, 1
-     *         otherwise
+     *         otherwise.
      */
     @Override
     public int compareTo(Group otherGroup) {
@@ -109,12 +109,12 @@ public class Group implements Comparable<Group> {
     }
 
     /**
-     * Compare two groups based on the group key
+     * Compare two groups based on the group key.
      *
-     * @param group1
-     * @param group2
+     * @param group1 The first group to be compared.
+     * @param group2 The second group to be compared.
      *
-     * @return -1 if group1 should be displayed before group2, 1 otherwise
+     * @return -1 if group1 should be displayed before group2, 1 otherwise.
      */
     private static int compareGroupsByGroupKey(Group group1, Group group2) {
         return group1.getGroupKey().compareTo(group2.getGroupKey());
@@ -124,10 +124,10 @@ public class Group implements Comparable<Group> {
      * Compare two groups based on the group size. Falls back on the group key
      * if the groups are the same size.
      *
-     * @param group1
-     * @param group2
+     * @param group1 The first group to be compared.
+     * @param group2 The second group to be compared.
      *
-     * @return -1 if group1 should be displayed before group2, 1 otherwise
+     * @return -1 if group1 should be displayed before group2, 1 otherwise.
      */
     private static int compareGroupsBySize(Group group1, Group group2) {
         if (group1.getResults().size() != group2.getResults().size()) {
@@ -166,9 +166,9 @@ public class Group implements Comparable<Group> {
     }
 
     /**
-     * Get the list of ResultFile objects in the group
+     * Get the list of Result objects in the group.
      *
-     * @return List of ResultFile objects
+     * @return The list of Result objects.
      */
     public List<Result> getResults() {
         return Collections.unmodifiableList(results);

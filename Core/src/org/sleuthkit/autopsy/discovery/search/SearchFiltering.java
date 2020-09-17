@@ -43,19 +43,19 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 
 /**
- * Run various filters to return a subset of files from the current case.
+ * Run various filters to return a subset of Results from the current case.
  */
 public class SearchFiltering {
 
     /**
      * Run the given filters to get a list of matching files.
      *
-     * @param filters The filters to run
-     * @param caseDb  The case database
-     * @param crDb    The central repo. Can be null as long as no filters need
-     *                it.
+     * @param filters       The filters to run.
+     * @param caseDb        The case database.
+     * @param centralRepoDb The central repo. Can be null as long as no filters
+     *                      need it.
      *
-     * @return
+     * @return List of Results from the search performed.
      */
     static List<Result> runQueries(List<AbstractFilter> filters, SleuthkitCase caseDb, CentralRepository centralRepoDb) throws DiscoveryException {
         if (caseDb == null) {
@@ -89,10 +89,10 @@ public class SearchFiltering {
      * @param filters       The filters to run.
      * @param combinedQuery The query to get results files for.
      * @param caseDb        The case database.
-     * @param crDb          The central repo. Can be null as long as no filters
+     * @param centralRepoDb The central repo. Can be null as long as no filters
      *                      need it.
      *
-     * @return An ArrayList of ResultFiles returned by the query.
+     * @return An ArrayList of Results returned by the query.
      *
      * @throws TskCoreException
      * @throws DiscoveryException
@@ -124,36 +124,42 @@ public class SearchFiltering {
         }
         return resultList;
     }
-            
+
     /**
      * A filter to specify date range for artifacts, start and end times should
      * be in epoch seconds.
      */
     public static class ArtifactDateRangeFilter extends AbstractFilter {
-        
+
         private final Long startDate;
         private final Long endDate;
-        
+
         // Attributes to search for date
-        private static List<BlackboardAttribute.ATTRIBUTE_TYPE> dateAttributes = 
-                Arrays.asList(
-                    BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME,
-                    BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
-                    BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED
-            );
-        
+        private static List<BlackboardAttribute.ATTRIBUTE_TYPE> dateAttributes
+                = Arrays.asList(
+                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME,
+                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
+                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED
+                );
+
+        /**
+         * Construct a new ArtifactDateRangeFilter.
+         *
+         * @param startDate The first date to include results for in the search.
+         * @param endDate   The last date to include results for in the search.
+         */
         public ArtifactDateRangeFilter(Long startDate, Long endDate) {
             this.startDate = startDate;
             this.endDate = endDate;
         }
-        
+
         /**
-         * Create a SQL clause containing the date time attribute types
-         * to search.
+         * Create a SQL clause containing the date time attribute types to
+         * search.
          */
         static String createAttributeTypeClause() {
             StringJoiner joiner = new StringJoiner(",");
-            for(BlackboardAttribute.ATTRIBUTE_TYPE type : dateAttributes) {
+            for (BlackboardAttribute.ATTRIBUTE_TYPE type : dateAttributes) {
                 joiner.add("\'" + type.getTypeID() + "\'");
             }
             return "attribute_type_id IN (" + joiner.toString() + ")";
@@ -161,8 +167,8 @@ public class SearchFiltering {
 
         @Override
         public String getWhereClause() {
-            return createAttributeTypeClause() + 
-                    " AND (value_int64 BETWEEN " + startDate + " AND " + endDate + ")";
+            return createAttributeTypeClause()
+                    + " AND (value_int64 BETWEEN " + startDate + " AND " + endDate + ")";
         }
 
         @Override
@@ -170,14 +176,20 @@ public class SearchFiltering {
             return "ArtifactDateRangeFilter Stub";
         }
     }
-    
+
     /**
-     * A filter to specify artifact types
+     * A filter to specify artifact types.
      */
     public static class ArtifactTypeFilter extends AbstractFilter {
-        
+
         private final List<ARTIFACT_TYPE> types;
-        
+
+        /**
+         * Construct a new ArtifactTypeFilter.
+         *
+         * @param types The list of BlackboardArtifact types to include in
+         *              results from.
+         */
         public ArtifactTypeFilter(List<ARTIFACT_TYPE> types) {
             this.types = types;
         }
@@ -185,10 +197,10 @@ public class SearchFiltering {
         @Override
         public String getWhereClause() {
             StringJoiner joiner = new StringJoiner(",");
-            for(ARTIFACT_TYPE type : types) {
+            for (ARTIFACT_TYPE type : types) {
                 joiner.add("\'" + type.getTypeID() + "\'");
             }
-            
+
             return "artifact_type_id IN (" + joiner + ")";
         }
 
@@ -196,20 +208,20 @@ public class SearchFiltering {
         public String getDesc() {
             return "ArtifactTypeFilter Stub";
         }
-        
+
     }
 
     /**
-     * A filter for specifying the file size
+     * A filter for specifying the file size.
      */
     public static class SizeFilter extends AbstractFilter {
 
         private final List<FileSize> fileSizes;
 
         /**
-         * Create the SizeFilter
+         * Create the SizeFilter.
          *
-         * @param fileSizes the file sizes that should match
+         * @param fileSizes The file sizes that should match.
          */
         public SizeFilter(List<FileSize> fileSizes) {
             this.fileSizes = fileSizes;
@@ -251,7 +263,7 @@ public class SearchFiltering {
 
     /**
      * A utility class for the ParentFilter to store the search string and
-     * whether it is a full path or a substring.
+     * whether it is a full path or a sub-string.
      */
     public static class ParentSearchTerm {
 
@@ -260,11 +272,11 @@ public class SearchFiltering {
         private final boolean included;
 
         /**
-         * Create the ParentSearchTerm object
+         * Create the ParentSearchTerm object.
          *
-         * @param searchStr  The string to search for in the file path
+         * @param searchStr  The string to search for in the file path.
          * @param isFullPath True if the path should exactly match the given
-         *                   string, false to do a substring search
+         *                   string, false to do a sub-string search.
          * @param isIncluded True if the results must include the path, false if
          *                   the path should be excluded from the results.
          */
@@ -275,9 +287,9 @@ public class SearchFiltering {
         }
 
         /**
-         * Get the SQL term to search for
+         * Get the SQL term to search for.
          *
-         * @return The SQL for a where clause to search for a matching path
+         * @return The SQL for a where clause to search for a matching path.
          */
         public String getSQLForTerm() {
             // TODO - these should really be prepared statements
@@ -318,21 +330,31 @@ public class SearchFiltering {
         }
 
         /**
-         * @return the fullPath
+         * Is the search string the full path of the of the parent or is it a
+         * sub-string in the parent path?
+         *
+         * @return True if the search string is the full path of the parent,
+         *         false if it is a sub-string.
          */
         public boolean isFullPath() {
             return fullPath;
         }
 
         /**
-         * @return the included
+         * Should the search string be included in the path, or excluded from
+         * the path?
+         *
+         * @return True if the search string should be included, false if it
+         *         should be excluded.
          */
         public boolean isIncluded() {
             return included;
         }
 
         /**
-         * @return the searchStr
+         * Get the string being searched for by this filter.
+         *
+         * @return The string being searched for by this filter.
          */
         public String getSearchStr() {
             return searchStr;
@@ -340,16 +362,16 @@ public class SearchFiltering {
     }
 
     /**
-     * A filter for specifying parent path (either full path or substring)
+     * A filter for specifying parent path (either full path or substring).
      */
     public static class ParentFilter extends AbstractFilter {
 
         private final List<ParentSearchTerm> parentSearchTerms;
 
         /**
-         * Create the ParentFilter
+         * Create the ParentFilter.
          *
-         * @param parentSearchTerms Full paths or substrings to filter on
+         * @param parentSearchTerms Full paths or substrings to filter on.
          */
         public ParentFilter(List<ParentSearchTerm> parentSearchTerms) {
             this.parentSearchTerms = parentSearchTerms;
@@ -417,16 +439,16 @@ public class SearchFiltering {
     }
 
     /**
-     * A filter for specifying data sources
+     * A filter for specifying data sources.
      */
     public static class DataSourceFilter extends AbstractFilter {
 
         private final List<DataSource> dataSources;
 
         /**
-         * Create the DataSourceFilter
+         * Create the DataSourceFilter.
          *
-         * @param dataSources the data sources to filter on
+         * @param dataSources The data sources to filter on.
          */
         public DataSourceFilter(List<DataSource> dataSources) {
             this.dataSources = dataSources;
@@ -475,9 +497,9 @@ public class SearchFiltering {
         private final List<String> listNames;
 
         /**
-         * Create the KeywordListFilter
+         * Create the KeywordListFilter.
          *
-         * @param listNames
+         * @param listNames The list of keywords for this filter.
          */
         public KeywordListFilter(List<String> listNames) {
             this.listNames = listNames;
@@ -511,7 +533,7 @@ public class SearchFiltering {
         private final List<Type> categories;
 
         /**
-         * Create the FileTypeFilter
+         * Create the FileTypeFilter.
          *
          * @param categories List of file types to filter on
          */
@@ -520,9 +542,9 @@ public class SearchFiltering {
         }
 
         /**
-         * Create the FileTypeFilter
+         * Create the FileTypeFilter.
          *
-         * @param category the file type to filter on
+         * @param category The file type to filter on.
          */
         public FileTypeFilter(Type category) {
             this.categories = new ArrayList<>();
@@ -570,9 +592,9 @@ public class SearchFiltering {
         private final List<Frequency> frequencies;
 
         /**
-         * Create the FrequencyFilter
+         * Create the FrequencyFilter.
          *
-         * @param frequencies List of frequencies that will pass the filter
+         * @param frequencies List of frequencies that will pass the filter.
          */
         public FrequencyFilter(List<Frequency> frequencies) {
             this.frequencies = frequencies;
@@ -593,13 +615,6 @@ public class SearchFiltering {
         @Override
         public List<Result> applyAlternateFilter(List<Result> currentResults, SleuthkitCase caseDb,
                 CentralRepository centralRepoDb) throws DiscoveryException {
-
-            // We have to have run some kind of SQL filter before getting to this point,
-            // and should have checked afterward to see if the results were empty.
-            if (currentResults.isEmpty()) {
-                throw new DiscoveryException("Can not run on empty list"); // NON-NLS
-            }
-
             // Set the frequency for each file
             DiscoveryAttributes.FrequencyAttribute freqAttr = new DiscoveryAttributes.FrequencyAttribute();
             freqAttr.addAttributeToResultFiles(currentResults, caseDb, centralRepoDb);
@@ -640,9 +655,9 @@ public class SearchFiltering {
         private final List<String> setNames;
 
         /**
-         * Create the HashSetFilter
+         * Create the HashSetFilter.
          *
-         * @param setNames
+         * @param setNames The hash set names for this filter.
          */
         public HashSetFilter(List<String> setNames) {
             this.setNames = setNames;
@@ -678,9 +693,9 @@ public class SearchFiltering {
         private final List<String> setNames;
 
         /**
-         * Create the InterestingFileSetFilter
+         * Create the InterestingFileSetFilter.
          *
-         * @param setNames
+         * @param setNames The interesting file set names for this filter.
          */
         public InterestingFileSetFilter(List<String> setNames) {
             this.setNames = setNames;
@@ -716,9 +731,9 @@ public class SearchFiltering {
         private final List<String> typeNames;
 
         /**
-         * Create the ObjectDetectionFilter
+         * Create the ObjectDetectionFilter.
          *
-         * @param typeNames
+         * @param typeNames The type names for this filter.
          */
         public ObjectDetectionFilter(List<String> typeNames) {
             this.typeNames = typeNames;
@@ -747,16 +762,16 @@ public class SearchFiltering {
 
     /**
      * A filter for specifying the score. A file must have one of the given
-     * scores to pass
+     * scores to pass.
      */
     public static class ScoreFilter extends AbstractFilter {
 
         private final List<Score> scores;
 
         /**
-         * Create the ObjectDetectionFilter
+         * Create the ScoreFilter.
          *
-         * @param typeNames
+         * @param scores The list of scores for this filter.
          */
         public ScoreFilter(List<Score> scores) {
             this.scores = scores;
@@ -831,9 +846,9 @@ public class SearchFiltering {
         private final List<TagName> tagNames;
 
         /**
-         * Create the TagsFilter
+         * Create the TagsFilter.
          *
-         * @param tagNames
+         * @param tagNames The list of tag names for this filter.
          */
         public TagsFilter(List<TagName> tagNames) {
             this.tagNames = tagNames;
@@ -975,6 +990,13 @@ public class SearchFiltering {
         }
     }
 
+    /**
+     * Concatenate the set names into a "," separated list.
+     *
+     * @param setNames The List of setNames to concatenate.
+     *
+     * @return The concatenated list for display.
+     */
     @NbBundle.Messages({
         "FileSearchFiltering.concatenateSetNamesForDisplay.comma=, ",})
     private static String concatenateSetNamesForDisplay(List<String> setNames) {
@@ -992,9 +1014,9 @@ public class SearchFiltering {
      * Concatenate the set names into an "OR" separated list. This does not do
      * any SQL-escaping.
      *
-     * @param setNames
+     * @param setNames The List of setNames to concatenate.
      *
-     * @return the list to use in the SQL query
+     * @return The concatenated list to use in the SQL query.
      */
     private static String concatenateNamesForSQL(List<String> setNames) {
         String result = ""; // NON-NLS
@@ -1007,6 +1029,9 @@ public class SearchFiltering {
         return result;
     }
 
+    /**
+     * Private constructor for SearchFiltering class.
+     */
     private SearchFiltering() {
         // Class should not be instantiated
     }

@@ -57,19 +57,18 @@ public final class DiscoveryEventUtils {
         private final Type type;
 
         /**
-         * Construct a new SearchStartedEvent
+         * Construct a new SearchStartedEvent.
          *
-         * @param type The type of file the search event is for.
+         * @param type The type of result the search event is for.
          */
         public SearchStartedEvent(Type type) {
             this.type = type;
         }
 
-
         /**
-         * Get the type of file the search is being performed for.
+         * Get the type of result the search is being performed for.
          *
-         * @return The type of files being searched for.
+         * @return The type of results being searched for.
          */
         public Type getType() {
             return type;
@@ -105,7 +104,9 @@ public final class DiscoveryEventUtils {
         }
 
         /**
-         * @return the instances
+         * Get the list of AbstractFiles for the instances list.
+         *
+         * @return The list of AbstractFiles for the instances list.
          */
         public List<AbstractFile> getInstances() {
             return Collections.unmodifiableList(instances);
@@ -121,7 +122,7 @@ public final class DiscoveryEventUtils {
         private final List<AbstractFilter> searchFilters;
         private final DiscoveryAttributes.AttributeType groupingAttribute;
         private final Group.GroupSortingAlgorithm groupSort;
-        private final ResultsSorter.SortingMethod fileSortMethod;
+        private final ResultsSorter.SortingMethod sortMethod;
 
         /**
          * Construct a new SearchCompleteEvent,
@@ -132,16 +133,16 @@ public final class DiscoveryEventUtils {
          *                          search.
          * @param groupingAttribute The grouping attribute used by the search.
          * @param groupSort         The sorting algorithm used for groups.
-         * @param fileSortMethod    The sorting method used for files.
+         * @param sortMethod        The sorting method used for results.
          */
         public SearchCompleteEvent(Map<GroupKey, Integer> groupMap, List<AbstractFilter> searchfilters,
                 DiscoveryAttributes.AttributeType groupingAttribute, Group.GroupSortingAlgorithm groupSort,
-                ResultsSorter.SortingMethod fileSortMethod) {
+                ResultsSorter.SortingMethod sortMethod) {
             this.groupMap = groupMap;
             this.searchFilters = searchfilters;
             this.groupingAttribute = groupingAttribute;
             this.groupSort = groupSort;
-            this.fileSortMethod = fileSortMethod;
+            this.sortMethod = sortMethod;
         }
 
         /**
@@ -154,7 +155,7 @@ public final class DiscoveryEventUtils {
         }
 
         /**
-         * Get the file filters used by the search.
+         * Get the filters used by the search.
          *
          * @return The search filters which were used by the search.
          */
@@ -181,12 +182,12 @@ public final class DiscoveryEventUtils {
         }
 
         /**
-         * Get the sorting method used for files.
+         * Get the sorting method used for results.
          *
-         * @return The sorting method used for files.
+         * @return The sorting method used for results.
          */
-        public ResultsSorter.SortingMethod getFileSort() {
-            return fileSortMethod;
+        public ResultsSorter.SortingMethod getResultSort() {
+            return sortMethod;
         }
 
     }
@@ -204,9 +205,9 @@ public final class DiscoveryEventUtils {
         /**
          * Construct a new PageRetrievedEvent.
          *
-         * @param resultType The type of files which exist in the page.
+         * @param resultType The type of results which exist in the page.
          * @param page       The number of the page which was retrieved.
-         * @param results    The list of files in the page retrieved.
+         * @param results    The list of results in the page retrieved.
          */
         public PageRetrievedEvent(Type resultType, int page, List<Result> results) {
             this.results = results;
@@ -215,9 +216,9 @@ public final class DiscoveryEventUtils {
         }
 
         /**
-         * Get the list of files in the page retrieved.
+         * Get the list of results in the page retrieved.
          *
-         * @return The list of files in the page retrieved.
+         * @return The list of results in the page retrieved.
          */
         public List<Result> getSearchResults() {
             return Collections.unmodifiableList(results);
@@ -233,9 +234,9 @@ public final class DiscoveryEventUtils {
         }
 
         /**
-         * Get the type of files which exist in the page.
+         * Get the type of results which exist in the page.
          *
-         * @return The type of files which exist in the page.
+         * @return The type of results which exist in the page.
          */
         public Type getType() {
             return resultType;
@@ -256,7 +257,7 @@ public final class DiscoveryEventUtils {
     }
 
     /**
-     * Event to signal that a search has been cancelled
+     * Event to signal that a search has been cancelled.
      */
     public static final class SearchCancelledEvent {
 
@@ -280,7 +281,7 @@ public final class DiscoveryEventUtils {
         private final List<AbstractFilter> searchfilters;
         private final DiscoveryAttributes.AttributeType groupingAttribute;
         private final Group.GroupSortingAlgorithm groupSort;
-        private final ResultsSorter.SortingMethod fileSortMethod;
+        private final ResultsSorter.SortingMethod sortMethod;
 
         /**
          * Construct a new GroupSelectedEvent.
@@ -289,29 +290,30 @@ public final class DiscoveryEventUtils {
          *                          search.
          * @param groupingAttribute The grouping attribute used by the search.
          * @param groupSort         The sorting algorithm used for groups.
-         * @param fileSortMethod    The sorting method used for files.
+         * @param sortMethod        The sorting method used for results.
          * @param groupKey          The key associated with the group which was
          *                          selected.
-         * @param groupSize         The number of files in the group which was
+         * @param groupSize         The number of results in the group which was
          *                          selected.
-         * @param resultType        The type of files which exist in the group.
+         * @param resultType        The type of results which exist in the
+         *                          group.
          */
         public GroupSelectedEvent(List<AbstractFilter> searchfilters,
                 DiscoveryAttributes.AttributeType groupingAttribute, Group.GroupSortingAlgorithm groupSort,
-                ResultsSorter.SortingMethod fileSortMethod, GroupKey groupKey, int groupSize, Type resultType) {
+                ResultsSorter.SortingMethod sortMethod, GroupKey groupKey, int groupSize, Type resultType) {
             this.searchfilters = searchfilters;
             this.groupingAttribute = groupingAttribute;
             this.groupSort = groupSort;
-            this.fileSortMethod = fileSortMethod;
+            this.sortMethod = sortMethod;
             this.groupKey = groupKey;
             this.groupSize = groupSize;
             this.resultType = resultType;
         }
 
         /**
-         * Get the type of files which exist in the group.
+         * Get the type of results which exist in the group.
          *
-         * @return The type of files which exist in the group.
+         * @return The type of results which exist in the group.
          */
         public Type getResultType() {
             return resultType;
@@ -329,9 +331,9 @@ public final class DiscoveryEventUtils {
         }
 
         /**
-         * Get the number of files in the group which was selected.
+         * Get the number of results in the group which was selected.
          *
-         * @return The number of files in the group which was selected.
+         * @return The number of results in the group which was selected.
          */
         public int getGroupSize() {
             return groupSize;
@@ -347,16 +349,16 @@ public final class DiscoveryEventUtils {
         }
 
         /**
-         * Get the sorting method used for files in the group.
+         * Get the sorting method used for results in the group.
          *
-         * @return The sorting method used for files.
+         * @return The sorting method used for results.
          */
-        public ResultsSorter.SortingMethod getFileSort() {
-            return fileSortMethod;
+        public ResultsSorter.SortingMethod getResultSort() {
+            return sortMethod;
         }
 
         /**
-         * Get the file filters which were used by the search
+         * Get the result filters which were used by the search.
          *
          * @return The search filters which were used by the search.
          */

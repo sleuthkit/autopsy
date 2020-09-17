@@ -39,7 +39,7 @@ public final class SearchData {
     private static final Set<BlackboardArtifact.ARTIFACT_TYPE> DOMAIN_ARTIFACT_TYPES = EnumSet.of(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK, BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE, BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE, BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY, BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY);
 
     /**
-     * Enum representing how often the file occurs in the Central Repository.
+     * Enum representing how often the result occurs in the Central Repository.
      */
     @NbBundle.Messages({
         "SearchData.Frequency.unique.displayName=Unique (1)",
@@ -60,6 +60,13 @@ public final class SearchData {
         private final String displayName;
         private final int maxOccur;
 
+        /**
+         * Construct a new frequency enum value.
+         *
+         * @param ranking     The rank for sorting.
+         * @param maxOccur    The max occurrences this enum value is for.
+         * @param displayName The display name for this enum value.
+         */
         Frequency(int ranking, int maxOccur, String displayName) {
             this.ranking = ranking;
             this.maxOccur = maxOccur;
@@ -69,7 +76,7 @@ public final class SearchData {
         /**
          * Get the rank for sorting.
          *
-         * @return the rank (lower should be displayed first)
+         * @return The rank (lower should be displayed first).
          */
         public int getRanking() {
             return ranking;
@@ -78,9 +85,9 @@ public final class SearchData {
         /**
          * Get the enum matching the given occurrence count.
          *
-         * @param count Number of times a file is in the Central Repository.
+         * @param count Number of times a result is in the Central Repository.
          *
-         * @return the corresponding enum
+         * @return The corresponding enum.
          */
         public static Frequency fromCount(long count) {
             if (count <= UNIQUE.getMaxOccur()) {
@@ -119,7 +126,9 @@ public final class SearchData {
         }
 
         /**
-         * @return the maxOccur
+         * Get the maximum number of occurrences this enum value is for.
+         *
+         * @return The maximum number of occurrences this enum value is for.
          */
         public int getMaxOccur() {
             return maxOccur;
@@ -127,7 +136,7 @@ public final class SearchData {
     }
 
     /**
-     * Enum representing the file size
+     * Enum representing the file size.
      */
     @NbBundle.Messages({
         "SearchData.FileSize.XXLARGE.displayName=XXLarge",
@@ -169,6 +178,16 @@ public final class SearchData {
         private final String displaySize;
         final static long NO_MAXIMUM = -1;
 
+        /**
+         * Construct a new FileSize enum value.
+         *
+         * @param ranking     The rank for sorting.
+         * @param minB        The minimum size included in this enum value.
+         * @param maxB        The maximum size included in this enum value.
+         * @param displayName The display name for this enum value.
+         * @param displaySize The size to display in association with this enum
+         *                    value.
+         */
         FileSize(int ranking, long minB, long maxB, String displayName, String displaySize) {
             this.ranking = ranking;
             this.minBytes = minB;
@@ -185,9 +204,9 @@ public final class SearchData {
          * Get the enum corresponding to the given file size for image files.
          * The file size must be strictly greater than minBytes.
          *
-         * @param size the file size
+         * @param size The file size.
          *
-         * @return the enum whose range contains the file size
+         * @return The enum whose range contains the file size.
          */
         public static FileSize fromImageSize(long size) {
             if (size > XXLARGE_IMAGE.getMinBytes()) {
@@ -209,9 +228,9 @@ public final class SearchData {
          * Get the enum corresponding to the given file size for video files.
          * The file size must be strictly greater than minBytes.
          *
-         * @param size the file size
+         * @param size The file size.
          *
-         * @return the enum whose range contains the file size
+         * @return The enum whose range contains the file size.
          */
         public static FileSize fromVideoSize(long size) {
             if (size > XXLARGE_VIDEO.getMinBytes()) {
@@ -232,7 +251,7 @@ public final class SearchData {
         /**
          * Get the upper limit of the range.
          *
-         * @return the maximum file size that will fit in this range.
+         * @return The maximum file size that will fit in this range.
          */
         public long getMaxBytes() {
             return maxBytes;
@@ -241,7 +260,7 @@ public final class SearchData {
         /**
          * Get the lower limit of the range.
          *
-         * @return the maximum file size that is not part of this range
+         * @return The maximum file size that is not part of this range.
          */
         public long getMinBytes() {
             return minBytes;
@@ -250,7 +269,7 @@ public final class SearchData {
         /**
          * Get the rank for sorting.
          *
-         * @return the rank (lower should be displayed first)
+         * @return The rank (lower should be displayed first).
          */
         public int getRanking() {
             return ranking;
@@ -261,6 +280,11 @@ public final class SearchData {
             return sizeGroup + displaySize;
         }
 
+        /**
+         * Get the name of the size group. For example Small.
+         *
+         * @return The name of the size group. For example Small.
+         */
         public String getSizeGroup() {
             return sizeGroup;
         }
@@ -313,6 +337,13 @@ public final class SearchData {
                     .add("application/pdf", //NON-NLS
                             "application/xhtml+xml").build(); //NON-NLS
 
+    /**
+     * Get the list of document types for which image extraction is not
+     * supported.
+     *
+     * @return The list of document types for which image extraction is not
+     *         supported.
+     */
     public static Collection<String> getDocTypesWithoutImageExtraction() {
         return Collections.unmodifiableCollection(IMAGE_UNSUPPORTED_DOC_TYPES);
     }
@@ -333,17 +364,26 @@ public final class SearchData {
         IMAGE(0, Bundle.SearchData_FileType_Image_displayName(), FileTypeUtils.FileTypeCategory.IMAGE.getMediaTypes(), new ArrayList<>()),
         AUDIO(1, Bundle.SearchData_FileType_Audio_displayName(), FileTypeUtils.FileTypeCategory.AUDIO.getMediaTypes(), new ArrayList<>()),
         VIDEO(2, Bundle.SearchData_FileType_Video_displayName(), FileTypeUtils.FileTypeCategory.VIDEO.getMediaTypes(), new ArrayList<>()),
-        EXECUTABLE(3, Bundle.SearchData_FileType_Executables_displayName(), FileTypeUtils.FileTypeCategory.EXECUTABLE.getMediaTypes(),new ArrayList<>()),
+        EXECUTABLE(3, Bundle.SearchData_FileType_Executables_displayName(), FileTypeUtils.FileTypeCategory.EXECUTABLE.getMediaTypes(), new ArrayList<>()),
         DOCUMENT(4, Bundle.SearchData_FileType_Documents_displayName(), DOCUMENT_MIME_TYPES, new ArrayList<>()),
         DOMAIN(6, Bundle.SearchData_AttributeType_Domain_displayName(), new ArrayList<>(), DOMAIN_ARTIFACT_TYPES),
         OTHER(5, Bundle.SearchData_FileType_Other_displayName(), new ArrayList<>(), new ArrayList<>());
-        
 
         private final int ranking;  // For ordering in the UI
         private final String displayName;
         private final Collection<String> mediaTypes;
         private final Collection<BlackboardArtifact.ARTIFACT_TYPE> artifactTypes;
 
+        /**
+         * Construct a new Type enum value.
+         *
+         * @param value         Integer value for comparison.
+         * @param displayName   The display name for this type.
+         * @param mediaTypes    The list of mime types this type is defined by
+         *                      if it is file type.
+         * @param artifactTypes The list of artifact types this type is defined
+         *                      by if it is an attribute type.
+         */
         Type(int value, String displayName, Collection<String> mediaTypes, Collection<BlackboardArtifact.ARTIFACT_TYPE> artifactTypes) {
             this.ranking = value;
             this.displayName = displayName;
@@ -359,7 +399,12 @@ public final class SearchData {
         public Collection<String> getMediaTypes() {
             return Collections.unmodifiableCollection(mediaTypes);
         }
-        
+
+        /**
+         * Get the BlackboardArtifact types matching this category.
+         *
+         * @return Collection of BlackboardArtifact.ARTIFACT_TYPE objects.
+         */
         public Collection<BlackboardArtifact.ARTIFACT_TYPE> getArtifactTypes() {
             return Collections.unmodifiableCollection(artifactTypes);
         }
@@ -395,6 +440,12 @@ public final class SearchData {
         private final int ranking;
         private final String displayName;
 
+        /**
+         * Construct a new Score enum value.
+         *
+         * @param ranking     The rank for sorting.
+         * @param displayName The display name for this enum value.
+         */
         Score(int ranking, String displayName) {
             this.ranking = ranking;
             this.displayName = displayName;
@@ -403,7 +454,7 @@ public final class SearchData {
         /**
          * Get the rank for sorting.
          *
-         * @return the rank (lower should be displayed first)
+         * @return The rank (lower should be displayed first).
          */
         public int getRanking() {
             return ranking;
@@ -412,7 +463,7 @@ public final class SearchData {
         /**
          * Get the list of enums that are valid for filtering.
          *
-         * @return enums that can be used to filter
+         * @return Enums that can be used to filter.
          */
         public static List<Score> getOptionsForFiltering() {
             return Arrays.asList(NOTABLE, INTERESTING);
@@ -424,6 +475,9 @@ public final class SearchData {
         }
     }
 
+    /**
+     * Private constructor for SearchData class.
+     */
     private SearchData() {
         // Class should not be instantiated
     }

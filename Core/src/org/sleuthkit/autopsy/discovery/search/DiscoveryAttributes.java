@@ -61,20 +61,20 @@ public class DiscoveryAttributes {
     public abstract static class AttributeType {
 
         /**
-         * For a given file, return the key for the group it belongs to for this
-         * attribute type.
+         * For a given Result, return the key for the group it belongs to for
+         * this attribute type.
          *
-         * @param file the result file to be grouped
+         * @param result The result to be grouped.
          *
-         * @return the key for the group this file goes in
+         * @return The key for the group this result goes in.
          */
-        public abstract DiscoveryKeyUtils.GroupKey getGroupKey(Result file);
+        public abstract DiscoveryKeyUtils.GroupKey getGroupKey(Result result);
 
         /**
          * Add any extra data to the ResultFile object from this attribute.
          *
-         * @param files         The list of results to enhance
-         * @param caseDb        The case database
+         * @param files         The list of results to enhance.
+         * @param caseDb        The case database.
          * @param centralRepoDb The central repository database. Can be null if
          *                      not needed.
          *
@@ -86,7 +86,7 @@ public class DiscoveryAttributes {
     }
 
     /**
-     * Attribute for grouping/sorting by file size
+     * Attribute for grouping/sorting by file size.
      */
     public static class FileSizeAttribute extends AttributeType {
 
@@ -97,7 +97,7 @@ public class DiscoveryAttributes {
     }
 
     /**
-     * Attribute for grouping/sorting by parent path
+     * Attribute for grouping/sorting by parent path.
      */
     public static class ParentPathAttribute extends AttributeType {
 
@@ -108,7 +108,7 @@ public class DiscoveryAttributes {
     }
 
     /**
-     * Default attribute used to make one group
+     * Default attribute used to make one group.
      */
     static class NoGroupingAttribute extends AttributeType {
 
@@ -119,7 +119,7 @@ public class DiscoveryAttributes {
     }
 
     /**
-     * Attribute for grouping/sorting by data source
+     * Attribute for grouping/sorting by data source.
      */
     static class DataSourceAttribute extends AttributeType {
 
@@ -130,7 +130,7 @@ public class DiscoveryAttributes {
     }
 
     /**
-     * Attribute for grouping/sorting by file type
+     * Attribute for grouping/sorting by file type.
      */
     static class FileTypeAttribute extends AttributeType {
 
@@ -141,7 +141,7 @@ public class DiscoveryAttributes {
     }
 
     /**
-     * Attribute for grouping/sorting by keyword lists
+     * Attribute for grouping/sorting by keyword lists.
      */
     static class KeywordListAttribute extends AttributeType {
 
@@ -179,7 +179,7 @@ public class DiscoveryAttributes {
             /**
              * Create the callback.
              *
-             * @param resultFiles List of files to add keyword list names to
+             * @param resultFiles List of files to add keyword list names to.
              */
             SetKeywordListNamesCallback(List<Result> resultFiles) {
                 this.resultFiles = resultFiles;
@@ -217,7 +217,7 @@ public class DiscoveryAttributes {
     }
 
     /**
-     * Attribute for grouping/sorting by frequency in the central repository
+     * Attribute for grouping/sorting by frequency in the central repository.
      */
     static class FrequencyAttribute extends AttributeType {
 
@@ -294,11 +294,18 @@ public class DiscoveryAttributes {
         }
     }
 
+    /**
+     * Query to get the frequency of a domain.
+     *
+     * @param domainsToQuery    List of domains to check the frequency of.
+     * @param centralRepository The central repository to query.
+     *
+     * @throws DiscoveryException
+     */
     private static void queryDomainFrequency(List<ResultDomain> domainsToQuery, CentralRepository centralRepository) throws DiscoveryException {
         if (domainsToQuery.isEmpty()) {
             return;
         }
-
         try {
             final Map<String, List<ResultDomain>> resultDomainTable = new HashMap<>();
             final StringJoiner joiner = new StringJoiner(", ");
@@ -334,11 +341,19 @@ public class DiscoveryAttributes {
         }
     }
 
+    /**
+     * Callback to get the frequency of domain.
+     */
     private static class DomainFrequencyCallback implements InstanceTableCallback {
 
         private final Map<String, List<ResultDomain>> domainLookup;
         private SQLException sqlCause;
 
+        /**
+         * Construct a new DomainFrequencyCallback.
+         *
+         * @param domainLookup The map to get domain from.
+         */
         private DomainFrequencyCallback(Map<String, List<ResultDomain>> domainLookup) {
             this.domainLookup = domainLookup;
         }
@@ -360,6 +375,11 @@ public class DiscoveryAttributes {
             }
         }
 
+        /**
+         * Get the SQL exception if one occurred during this callback.
+         *
+         * @return
+         */
         SQLException getCause() {
             return this.sqlCause;
         }
@@ -373,6 +393,11 @@ public class DiscoveryAttributes {
 
         private final List<ResultFile> files;
 
+        /**
+         * Construct a new FrequencyCallback.
+         *
+         * @param resultFiles List of files to add hash set names to.
+         */
         private FrequencyCallback(List<ResultFile> files) {
             this.files = new ArrayList<>(files);
         }
@@ -404,7 +429,7 @@ public class DiscoveryAttributes {
     }
 
     /**
-     * Attribute for grouping/sorting by hash set lists
+     * Attribute for grouping/sorting by hash set lists.
      */
     static class HashHitsAttribute extends AttributeType {
 
@@ -444,7 +469,7 @@ public class DiscoveryAttributes {
             /**
              * Create the callback.
              *
-             * @param resultFiles List of files to add hash set names to
+             * @param resultFiles List of files to add hash set names to.
              */
             HashSetNamesCallback(List<Result> results) {
                 this.results = results;
@@ -482,7 +507,7 @@ public class DiscoveryAttributes {
     }
 
     /**
-     * Attribute for grouping/sorting by interesting item set lists
+     * Attribute for grouping/sorting by interesting item set lists.
      */
     static class InterestingItemAttribute extends AttributeType {
 
@@ -521,7 +546,7 @@ public class DiscoveryAttributes {
              * Create the callback.
              *
              * @param resultFiles List of files to add interesting file set
-             *                    names to
+             *                    names to.
              */
             InterestingFileSetNamesCallback(List<Result> results) {
                 this.results = results;
@@ -581,12 +606,12 @@ public class DiscoveryAttributes {
         }
 
     }
-    
+
     /**
      * Attribute for grouping/sorting by number of visits.
      */
     static class NumberOfVisitsAttribute extends AttributeType {
-        
+
         @Override
         public DiscoveryKeyUtils.GroupKey getGroupKey(Result result) {
             return new DiscoveryKeyUtils.NumberOfVisitsGroupKey(result);
@@ -594,7 +619,7 @@ public class DiscoveryAttributes {
     }
 
     /**
-     * Attribute for grouping/sorting by objects detected
+     * Attribute for grouping/sorting by objects detected.
      */
     static class ObjectDetectedAttribute extends AttributeType {
 
@@ -632,7 +657,7 @@ public class DiscoveryAttributes {
             /**
              * Create the callback.
              *
-             * @param resultFiles List of files to add object detected names to
+             * @param resultFiles List of files to add object detected names to.
              */
             ObjectDetectedNamesCallback(List<Result> results) {
                 this.results = results;
@@ -670,7 +695,7 @@ public class DiscoveryAttributes {
     }
 
     /**
-     * Attribute for grouping/sorting by tag name
+     * Attribute for grouping/sorting by tag name.
      */
     static class FileTagAttribute extends AttributeType {
 
@@ -737,6 +762,14 @@ public class DiscoveryAttributes {
         private final AttributeType attributeType;
         private final String displayName;
 
+        /**
+         * Construct a new GroupingAttributeType enum value.
+         *
+         * @param attributeType The type of attribute this enum value was
+         *                      constructed for.
+         * @param displayName   The display name for this grouping attribute
+         *                      type.
+         */
         GroupingAttributeType(AttributeType attributeType, String displayName) {
             this.attributeType = attributeType;
             this.displayName = displayName;
@@ -747,6 +780,11 @@ public class DiscoveryAttributes {
             return displayName;
         }
 
+        /**
+         * Get the type of attribute this enum value was constructed for.
+         *
+         * @return The type of attribute this enum value was constructed for.
+         */
         public AttributeType getAttributeType() {
             return attributeType;
         }
@@ -774,8 +812,9 @@ public class DiscoveryAttributes {
      * Computes the CR frequency of all the given hashes and updates the list of
      * files.
      *
-     * @param hashesToLookUp Hashes to find the frequency of
-     * @param currentFiles   List of files to update with frequencies
+     * @param hashesToLookUp Hashes to find the frequency of.
+     * @param currentFiles   List of files to update with frequencies.
+     * @param centralRepoDb  The central repository being used.
      */
     private static void computeFrequency(Set<String> hashesToLookUp, List<ResultFile> currentFiles, CentralRepository centralRepoDb) {
 
@@ -804,6 +843,19 @@ public class DiscoveryAttributes {
 
     }
 
+    /**
+     * Private helper method to create a set name clause to be used in queries.
+     *
+     * @param results        The list of results to create the set name clause
+     *                       for.
+     * @param artifactTypeID The Blackboard Artifact type ID for the artifact
+     *                       type.
+     * @param setNameAttrID  The set name attribute id.
+     *
+     * @return The String to use as a set name clause in queries.
+     *
+     * @throws DiscoveryException
+     */
     private static String createSetNameClause(List<Result> results,
             int artifactTypeID, int setNameAttrID) throws DiscoveryException {
 

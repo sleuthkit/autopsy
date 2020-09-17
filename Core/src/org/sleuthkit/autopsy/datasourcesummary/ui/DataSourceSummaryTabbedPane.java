@@ -18,41 +18,113 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.ui;
 
-import java.util.ArrayList;
+import java.awt.Component;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Consumer;
 import javax.swing.JTabbedPane;
-import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.IngestJobInfoPanel;
 import org.sleuthkit.datamodel.DataSource;
 
 /**
  * A tabbed pane showing the summary of a data source including tabs of:
- * DataSourceSummaryCountsPanel, DataSourceSummaryDetailsPanel, and
- * IngestJobInfoPanel.
+ * DataSourceSummaryCountsPanel, ContainerPanel, and IngestJobInfoPanel.
  */
 @Messages({
-    "DataSourceSummaryTabbedPane_countsTab_title=Counts",
+    "DataSourceSummaryTabbedPane_typesTab_title=Types",
     "DataSourceSummaryTabbedPane_detailsTab_title=Container",
     "DataSourceSummaryTabbedPane_userActivityTab_title=User Activity",
     "DataSourceSummaryTabbedPane_ingestHistoryTab_title=Ingest History",
     "DataSourceSummaryTabbedPane_recentFileTab_title=Recent Files",
+    "DataSourceSummaryTabbedPane_pastCasesTab_title=Past Cases",
     "DataSourceSummaryTabbedPane_analysisTab_title=Analysis"
 })
 public class DataSourceSummaryTabbedPane extends JTabbedPane {
 
+    /**
+     * Records of tab information (i.e. title, component, function to call on
+     * new data source).
+     */
+    private static class DataSourceTab {
+
+        private final String tabTitle;
+        private final Component component;
+        private final Consumer<DataSource> onDataSource;
+        private final Runnable onClose;
+
+        /**
+         * Main constructor.
+         *
+         * @param tabTitle     The title of the tab.
+         * @param component    The component to be displayed.
+         * @param onDataSource The function to be called on a new data source.
+         * @param onClose      Called to cleanup resources when closing tabs.
+         */
+        DataSourceTab(String tabTitle, Component component, Consumer<DataSource> onDataSource, Runnable onClose) {
+            this.tabTitle = tabTitle;
+            this.component = component;
+            this.onDataSource = onDataSource;
+            this.onClose = onClose;
+        }
+
+        /**
+         * Main constructor.
+         *
+         * @param tabTitle The title of the tab.
+         * @param panel    The component to be displayed in the tab.
+         */
+        DataSourceTab(String tabTitle, BaseDataSourceSummaryPanel panel) {
+            this.tabTitle = tabTitle;
+            this.component = panel;
+            this.onDataSource = panel::setDataSource;
+            this.onClose = panel::close;
+        }
+
+        /**
+         * @return The title for the tab.
+         */
+        String getTabTitle() {
+            return tabTitle;
+        }
+
+        /**
+         * @return The component to display in the tab.
+         */
+        Component getComponent() {
+            return component;
+        }
+
+        /**
+         * @return The function to be called on new data source.
+         */
+        Consumer<DataSource> getOnDataSource() {
+            return onDataSource;
+        }
+
+        /**
+         * @return The action for closing resources in the tab.
+         */
+        public Runnable getOnClose() {
+            return onClose;
+        }
+    }
+
     private static final long serialVersionUID = 1L;
 
-    // A pair of the tab name and the corresponding BaseDataSourceSummaryTabs to be displayed.
-    private final List<Pair<String, BaseDataSourceSummaryPanel>> tabs = new ArrayList<>(Arrays.asList(
-            Pair.of(Bundle.DataSourceSummaryTabbedPane_countsTab_title(), new DataSourceSummaryCountsPanel()),
-            Pair.of(Bundle.DataSourceSummaryTabbedPane_userActivityTab_title(), new DataSourceSummaryUserActivityPanel()),
-            Pair.of(Bundle.DataSourceSummaryTabbedPane_recentFileTab_title(), new RecentFilesPanel()),
-            Pair.of(Bundle.DataSourceSummaryTabbedPane_analysisTab_title(), new AnalysisPanel())
-    ));
-
     private final IngestJobInfoPanel ingestHistoryPanel = new IngestJobInfoPanel();
+
+    private final List<DataSourceTab> tabs = Arrays.asList(
+            new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_typesTab_title(), new TypesPanel()),
+            new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_userActivityTab_title(), new UserActivityPanel()),
+            new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_analysisTab_title(), new AnalysisPanel()),
+            new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_recentFileTab_title(), new RecentFilesPanel()),
+            new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_pastCasesTab_title(), new PastCasesPanel()),
+            // do nothing on closing 
+            new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_ingestHistoryTab_title(), ingestHistoryPanel, ingestHistoryPanel::setDataSource, () -> {
+            }),
+            new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_detailsTab_title(), new ContainerPanel())
+    );
 
     private DataSource dataSource = null;
 
@@ -64,18 +136,9 @@ public class DataSourceSummaryTabbedPane extends JTabbedPane {
     }
 
     private void initComponent() {
-        for (Pair<String, BaseDataSourceSummaryPanel> tab : tabs) {
-            addTab(tab.getKey(), tab.getValue());
+        for (DataSourceTab tab : tabs) {
+            addTab(tab.getTabTitle(), tab.getComponent());
         }
-
-        // IngestJobInfoPanel is not specifically a data source summary panel 
-        // and is called separately for that reason.
-        addTab(Bundle.DataSourceSummaryTabbedPane_ingestHistoryTab_title(), ingestHistoryPanel);
-
-        // The Container tab should be last.
-        Pair<String, BaseDataSourceSummaryPanel> tab = Pair.of(Bundle.DataSourceSummaryTabbedPane_detailsTab_title(), new DataSourceSummaryDetailsPanel());
-        addTab(tab.getKey(), tab.getValue());
-        tabs.add(tab);
     }
 
     /**
@@ -95,12 +158,17 @@ public class DataSourceSummaryTabbedPane extends JTabbedPane {
     public void setDataSource(DataSource dataSource) {
         this.dataSource = dataSource;
 
-        for (Pair<String, BaseDataSourceSummaryPanel> tab : tabs) {
-            tab.getValue().setDataSource(dataSource);
+        for (DataSourceTab tab : tabs) {
+            tab.getOnDataSource().accept(dataSource);
         }
+    }
 
-        // IngestJobInfoPanel is not specifically a data source summary panel 
-        // and is called separately for that reason.
-        ingestHistoryPanel.setDataSource(dataSource);
+    /**
+     * Handle close events on each tab.
+     */
+    public void close() {
+        for (DataSourceTab tab : tabs) {
+            tab.getOnClose().run();
+        }
     }
 }

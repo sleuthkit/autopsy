@@ -18,32 +18,33 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.datamodel;
 
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultArtifactUpdateGovernor;
 import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
+import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 
 /**
  * Helper class for getting data for the Recent Files Data Summary tab.
  */
-public class RecentFilesSummary {
+public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
 
     private final static BlackboardAttribute.Type DATETIME_ACCESSED_ATT = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED);
     private final static BlackboardAttribute.Type DOMAIN_ATT = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN);
@@ -52,9 +53,17 @@ public class RecentFilesSummary {
     private final static BlackboardAttribute.Type ASSOCATED_ATT = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT);
     private final static BlackboardAttribute.Type EMAIL_FROM_ATT = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_FROM);
     private final static BlackboardAttribute.Type MSG_DATEIME_SENT_ATT = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_SENT);
-    private final static BlackboardArtifact.Type ASSOCATED_OBJ_ART = new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT);
+    private final static BlackboardArtifact.Type ASSOCATED_OBJ_ART = new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT);
 
     private static final DateFormat DATETIME_FORMAT = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss", Locale.getDefault());
+
+    private static final Set<Integer> ARTIFACT_UPDATE_TYPE_IDS = new HashSet<>(Arrays.asList(
+            ARTIFACT_TYPE.TSK_RECENT_OBJECT.getTypeID(),
+            ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID(),
+            ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT.getTypeID(),
+            ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID(),
+            ARTIFACT_TYPE.TSK_MESSAGE.getTypeID()
+    ));
 
     private final SleuthkitCaseProvider provider;
 
@@ -78,6 +87,11 @@ public class RecentFilesSummary {
         this.provider = provider;
     }
 
+    @Override
+    public Set<Integer> getArtifactTypeIdsForRefresh() {
+        return ARTIFACT_UPDATE_TYPE_IDS;
+    }
+
     /**
      * Return a list of the most recently opened documents based on the
      * TSK_RECENT_OBJECT artifact.
@@ -99,7 +113,7 @@ public class RecentFilesSummary {
 
         List<BlackboardArtifact> artifactList
                 = DataSourceInfoUtilities.getArtifacts(provider.get(),
-                        new BlackboardArtifact.Type(TSK_RECENT_OBJECT),
+                        new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_RECENT_OBJECT),
                         dataSource,
                         DATETIME_ATT,
                         DataSourceInfoUtilities.SortOrder.DESCENDING,
@@ -147,7 +161,7 @@ public class RecentFilesSummary {
     public List<RecentDownloadDetails> getRecentDownloads(DataSource dataSource, int maxCount) throws TskCoreException, SleuthkitCaseProviderException {
         List<BlackboardArtifact> artifactList
                 = DataSourceInfoUtilities.getArtifacts(provider.get(),
-                        new BlackboardArtifact.Type(TSK_WEB_DOWNLOAD),
+                        new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD),
                         dataSource,
                         DATETIME_ACCESSED_ATT,
                         DataSourceInfoUtilities.SortOrder.DESCENDING,
@@ -247,7 +261,7 @@ public class RecentFilesSummary {
                             sortedMap.put(date, list);
                         }
                         RecentAttachmentDetails details = new RecentAttachmentDetails(path, date, sender);
-                        if(!list.contains(details)) {
+                        if (!list.contains(details)) {
                             list.add(details);
                         }
                     }
@@ -302,8 +316,8 @@ public class RecentFilesSummary {
      */
     private boolean isMessageArtifact(BlackboardArtifact nodeArtifact) {
         final int artifactTypeID = nodeArtifact.getArtifactTypeID();
-        return artifactTypeID == TSK_EMAIL_MSG.getTypeID()
-                || artifactTypeID == TSK_MESSAGE.getTypeID();
+        return artifactTypeID == ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()
+                || artifactTypeID == ARTIFACT_TYPE.TSK_MESSAGE.getTypeID();
     }
 
     /**
@@ -334,10 +348,10 @@ public class RecentFilesSummary {
         public String getDateAsString() {
             return DATETIME_FORMAT.format(date * 1000);
         }
-        
+
         /**
          * Returns the date as the seconds from java epoch.
-         * 
+         *
          * @return Seconds from java epoch.
          */
         Long getDateAsLong() {
@@ -415,17 +429,17 @@ public class RecentFilesSummary {
         public String getSender() {
             return sender;
         }
-        
+
         @Override
         public boolean equals(Object obj) {
-            if(!(obj instanceof RecentAttachmentDetails)) {
+            if (!(obj instanceof RecentAttachmentDetails)) {
                 return false;
             }
-            RecentAttachmentDetails compareObj = (RecentAttachmentDetails)obj;
-            
-            return compareObj.getSender().equals(this.sender) && 
-                    compareObj.getPath().equals(this.getPath()) &&
-                    compareObj.getDateAsLong().equals(this.getDateAsLong());           
+            RecentAttachmentDetails compareObj = (RecentAttachmentDetails) obj;
+
+            return compareObj.getSender().equals(this.sender)
+                    && compareObj.getPath().equals(this.getPath())
+                    && compareObj.getDateAsLong().equals(this.getDateAsLong());
         }
 
         @Override

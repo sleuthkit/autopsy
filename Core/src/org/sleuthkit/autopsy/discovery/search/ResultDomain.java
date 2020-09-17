@@ -26,16 +26,17 @@ import org.sleuthkit.datamodel.TskData;
  * Container for domains that holds all necessary data for grouping and sorting.
  */
 public class ResultDomain extends Result {
+
     private final String domain;
     private final Long activityStart;
     private final Long activityEnd;
     private final Long totalVisits;
     private final Long visitsInLast60;
     private final Long filesDownloaded;
-    
+
     private final Content dataSource;
     private final long dataSourceId;
-    
+
     /**
      * Create a ResultDomain from a String.
      *
@@ -51,30 +52,61 @@ public class ResultDomain extends Result {
         this.totalVisits = totalVisits;
         this.visitsInLast60 = visitsInLast60;
         this.filesDownloaded = filesDownloaded;
-        
+
         this.setFrequency(SearchData.Frequency.UNKNOWN);
     }
-    
+
+    /**
+     * Get the domain represented as a String.
+     *
+     * @return The String representation of the domain this result is for.
+     */
     public String getDomain() {
         return this.domain;
     }
 
+    /**
+     * Get the date of first activity for this domain.
+     *
+     * @return The date of first activity for this domain.
+     */
     public Long getActivityStart() {
         return activityStart;
     }
 
+    /**
+     * Get the date of most recent activity for this domain.
+     *
+     * @return The date of most recent activity for this domain.
+     */
     public Long getActivityEnd() {
         return activityEnd;
     }
-    
+
+    /**
+     * Get the total number of visits that this domain has had.
+     *
+     * @return The total number of visits that this domain has had.
+     */
     public Long getTotalVisits() {
         return totalVisits;
     }
 
+    /**
+     * Get the number of visits that this domain has had in the last 60 days.
+     *
+     * @return The number of visits that this domain has had in the last 60
+     *         days.
+     */
     public Long getVisitsInLast60() {
         return visitsInLast60;
     }
 
+    /**
+     * Get the number of files downloaded associated with this domain.
+     *
+     * @return The number of files downloaded associated with this domain.
+     */
     public Long getFilesDownloaded() {
         return filesDownloaded;
     }
@@ -98,12 +130,12 @@ public class ResultDomain extends Result {
     public SearchData.Type getType() {
         return SearchData.Type.DOMAIN;
     }
-    
+
     @Override
     public String toString() {
         return "[domain=" + this.domain + ", data_source=" + this.dataSourceId + ", start="
-                + this.activityStart + ", end=" + this.activityEnd + ", totalVisits=" + this.totalVisits + ", visitsLast60=" 
-                + this.visitsInLast60 + ", downloads=" + this.filesDownloaded + ", frequency=" 
+                + this.activityStart + ", end=" + this.activityEnd + ", totalVisits=" + this.totalVisits + ", visitsLast60="
+                + this.visitsInLast60 + ", downloads=" + this.filesDownloaded + ", frequency="
                 + this.getFrequency() + "]";
     }
 }

@@ -45,33 +45,38 @@ import org.openide.util.ImageUtilities;
  * loaded from the DomainSearchArtifactsCache and then further analyzed.
  */
 public class DomainSearchThumbnailLoader extends CacheLoader<DomainSearchThumbnailRequest, Image> {
-    
-    private static final String UNSUPPORTED_IMAGE = "org/sleuthkit/autopsy/images/image-extraction-not-supported.png";
 
+    private static final String UNSUPPORTED_IMAGE = "org/sleuthkit/autopsy/images/image-extraction-not-supported.png";
     private static final String JPG_EXTENSION = "jpg";
     private static final String JPG_MIME_TYPE = "image/jpeg";
     private final DomainSearchArtifactsCache artifactsCache;
-    
+
+    /**
+     * Construct a new DomainSearchThumbnailLoader.
+     */
     public DomainSearchThumbnailLoader() {
         this(new DomainSearchArtifactsCache());
     }
 
+    /**
+     * Construct a new DomainSearchThumbnailLoader with an existing
+     * DomainSearchArtifactsCache.
+     *
+     * @param artifactsCache The DomainSearchArtifactsCache to use for this
+     *                       DomainSearchThumnailLoader.
+     */
     DomainSearchThumbnailLoader(DomainSearchArtifactsCache artifactsCache) {
         this.artifactsCache = artifactsCache;
     }
 
     @Override
     public Image load(DomainSearchThumbnailRequest thumbnailRequest) throws TskCoreException, DiscoveryException {
-
         final SleuthkitCase caseDb = thumbnailRequest.getSleuthkitCase();
-
         final DomainSearchArtifactsRequest webDownloadsRequest = new DomainSearchArtifactsRequest(
                 caseDb, thumbnailRequest.getDomain(), TSK_WEB_DOWNLOAD);
-
         final List<BlackboardArtifact> webDownloads = artifactsCache.get(webDownloadsRequest);
         final List<AbstractFile> webDownloadPictures = getJpegsFromWebDownload(caseDb, webDownloads);
         Collections.sort(webDownloadPictures, (file1, file2) -> Long.compare(file1.getCrtime(), file2.getCrtime()));
-
         for (int i = webDownloadPictures.size() - 1; i >= 0; i--) {
             // Get the most recent image, according to creation time.
             final AbstractFile mostRecent = webDownloadPictures.get(i);
@@ -81,47 +86,53 @@ public class DomainSearchThumbnailLoader extends CacheLoader<DomainSearchThumbna
                 return candidateThumbnail;
             }
         }
-
         final DomainSearchArtifactsRequest webCacheRequest = new DomainSearchArtifactsRequest(
                 caseDb, thumbnailRequest.getDomain(), TSK_WEB_CACHE);
-
         final List<BlackboardArtifact> webCacheArtifacts = artifactsCache.get(webCacheRequest);
         final List<AbstractFile> webCachePictures = getJpegsFromWebCache(caseDb, webCacheArtifacts);
         Collections.sort(webCachePictures, (file1, file2) -> Long.compare(file1.getSize(), file2.getSize()));
-
         for (int i = webCachePictures.size() - 1; i >= 0; i--) {
             // Get the largest image, according to file size.
             final AbstractFile largest = webCachePictures.get(i);
-
             final Image candidateThumbnail = ImageUtils.getThumbnail(largest, thumbnailRequest.getIconSize());
             if (candidateThumbnail != ImageUtils.getDefaultThumbnail()) {
                 return candidateThumbnail;
             }
         }
-
         return ImageUtilities.loadImage(UNSUPPORTED_IMAGE, false);
     }
 
     /**
      * Finds all JPEG source files from TSK_WEB_DOWNLOAD instances.
+     *
+     * @param caseDb    The case database being searched.
+     * @param artifacts The list of artifacts to get jpegs from.
+     *
+     * @return The list of AbstractFiles representing jpegs which were
+     *         associated with the artifacts.
+     *
+     * @throws TskCoreException
      */
     private List<AbstractFile> getJpegsFromWebDownload(SleuthkitCase caseDb, List<BlackboardArtifact> artifacts) throws TskCoreException {
         final List<AbstractFile> jpegs = new ArrayList<>();
-
         for (BlackboardArtifact artifact : artifacts) {
             final Content sourceContent = caseDb.getContentById(artifact.getObjectID());
             addIfJpeg(jpegs, sourceContent);
         }
-
         return jpegs;
     }
 
     /**
      * Finds all JPEG source files from TSK_WEB_CACHE instances.
+     *
+     * @param caseDb    The case database being searched.
+     * @param artifacts The list of artifacts to get jpegs from.
+     *
+     * @return The list of AbstractFiles representing jpegs which were
+     *         associated with the artifacts.
      */
     private List<AbstractFile> getJpegsFromWebCache(SleuthkitCase caseDb, List<BlackboardArtifact> artifacts) throws TskCoreException {
         final BlackboardAttribute.Type TSK_PATH_ID = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PATH_ID);
-
         final List<AbstractFile> jpegs = new ArrayList<>();
         for (BlackboardArtifact artifact : artifacts) {
             final BlackboardAttribute tskPathId = artifact.getAttribute(TSK_PATH_ID);
@@ -130,12 +141,15 @@ public class DomainSearchThumbnailLoader extends CacheLoader<DomainSearchThumbna
                 addIfJpeg(jpegs, sourceContent);
             }
         }
-
         return jpegs;
     }
 
     /**
      * Checks if the candidate source content is indeed a JPEG file.
+     *
+     * @param files         The list of source content files which are jpegs to
+     *                      add to.
+     * @param sourceContent The source content to check and possibly add.
      */
     private void addIfJpeg(List<AbstractFile> files, Content sourceContent) {
         if ((sourceContent instanceof AbstractFile) && !(sourceContent instanceof DataSource)) {
