@@ -95,8 +95,8 @@ class ExtractWebAccountType extends Extract {
             return;
         }
 
-        String url = urlAttr.getValueString();
-        String domain = domainAttr.getValueString(); 
+        String url = urlAttr.getValueString().toLowerCase();
+        String domain = domainAttr.getValueString().toLowerCase(); 
         
         findMyBbRole(url, domain, artifact, roleProcessor);
         findPhpBbRole(url, domain, artifact, roleProcessor);
@@ -250,7 +250,7 @@ class ExtractWebAccountType extends Extract {
                         continue;
                     }
 
-                    String desc = role.getRole().getDesc() + " role (" + role.getPlatform() + ")"; // NON-NLS
+                    String desc = role.getRole().getDesc() + " (" + role.getPlatform() + ")"; // NON-NLS
 
                     Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                     bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN,
@@ -274,10 +274,15 @@ class ExtractWebAccountType extends Extract {
     /**
      * Possible roles with rank and display name.
      */
+    @NbBundle.Messages({
+        "ExtractWebAccountType.role.user=User role",
+        "ExtractWebAccountType.role.moderator=Moderator role",
+        "ExtractWebAccountType.role.admin=Administrator role"
+    })
     private enum Role {
-        USER("User", 0),
-        MOD("Moderator", 1),
-        ADMIN("Administrator", 2);
+        USER(Bundle.ExtractWebAccountType_role_user(), 0),
+        MOD(Bundle.ExtractWebAccountType_role_moderator(), 1),
+        ADMIN(Bundle.ExtractWebAccountType_role_admin(), 2);
         
         private final String desc;
         private final int rank;
