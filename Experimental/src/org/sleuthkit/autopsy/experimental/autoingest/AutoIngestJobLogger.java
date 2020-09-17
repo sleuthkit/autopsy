@@ -70,7 +70,7 @@ final class AutoIngestJobLogger {
          */
         INFO,
         /**
-         * Qualifies a log message about an unexpected event or condtion during
+         * Qualifies a log message about an unexpected event or condition during
          * automated ingest processing.
          */
         WARNING,
@@ -208,6 +208,18 @@ final class AutoIngestJobLogger {
     void logDataSourceProcessorSelected(String dsp) throws AutoIngestJobLoggerException, InterruptedException {
         log(MessageCategory.INFO, "Using data source processor: " + dsp);
     }
+    
+    /**
+     * Log that a data source is being skipped.
+     * 
+     * @param dataSourceName The name of the data source
+     * 
+     * @throws AutoIngestJobLogger.AutoIngestJobLoggerException
+     * @throws InterruptedException 
+     */
+    void logSkippingDataSource(String dataSourceName) throws AutoIngestJobLoggerException, InterruptedException {
+        log(MessageCategory.INFO, "File type can not currently be processed");
+    }    
 
     /**
      * Logs the failure of the selected data source processor.
