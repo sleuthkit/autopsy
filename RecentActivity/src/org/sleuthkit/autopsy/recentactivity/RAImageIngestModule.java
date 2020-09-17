@@ -80,6 +80,7 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
         Extract recycleBin = new ExtractRecycleBin();
         Extract sru = new ExtractSru();
         Extract prefetch = new ExtractPrefetch();
+        Extract webAccountType = new ExtractWebAccountType();
 
         extractors.add(chrome);
         extractors.add(firefox);
@@ -88,6 +89,7 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
         extractors.add(safari);
         extractors.add(recentDocuments);
         extractors.add(SEUQA); // this needs to run after the web browser modules
+        extractors.add(webAccountType); // this needs to run after the web browser modules
         extractors.add(registry); // this should run after quicker modules like the browser modules and needs to run before the DataSourceUsageAnalyzer
         extractors.add(osExtract); // this needs to run before the DataSourceUsageAnalyzer
         extractors.add(dataSourceAnalyzer); //this needs to run after ExtractRegistry and ExtractOs
