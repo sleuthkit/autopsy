@@ -10,9 +10,15 @@ from envutil import get_proj_dir
 from fileutil import get_filename_addition, OMITTED_ADDITION
 from gitutil import get_property_file_entries, get_commit_id, get_git_root
 from csvutil import records_to_csv
-from typing import Union
+from typing import Union, TypedDict, List
 import re
 import argparse
+
+
+class ProcessingResult(TypedDict):
+    results: List[List[str]]
+    omitted: List[List[str]]
+
 
 
 def write_items_to_csv(repo_path: str, output_path: str, show_commit: bool, value_regex: Union[str, None] = None):
@@ -21,6 +27,23 @@ def write_items_to_csv(repo_path: str, output_path: str, show_commit: bool, valu
     Args:
         repo_path (str): The local path to the git repo.
         output_path (str): The output path for the csv file.
+        show_commit (bool): Whether or not to include the commit id in the header
+        value_regex (Union[str, None]): If non-none, only key value pairs where the value is a regex match with this
+        value will be included.
+    """
+    pass
+    # records_to_csv(output_path, [row_header] + rows)
+    #
+    # if len(omitted) > 0:
+    #     records_to_csv(get_filename_addition(output_path, OMITTED_ADDITION), [row_header] + omitted)
+
+
+
+def get_items_to_be_written(repo_path: str, show_commit: bool, value_regex: Union[str, None] = None) -> ProcessingResult:
+    """Determines the contents of '.properties-MERGED' files and writes to a csv file.
+
+    Args:
+        repo_path (str): The local path to the git repo.
         show_commit (bool): Whether or not to include the commit id in the header
         value_regex (Union[str, None]): If non-none, only key value pairs where the value is a regex match with this
         value will be included.
@@ -40,10 +63,7 @@ def write_items_to_csv(repo_path: str, output_path: str, show_commit: bool, valu
         else:
             omitted.append(new_entry)
 
-    records_to_csv(output_path, [row_header] + rows)
-
-    if len(omitted) > 0:
-        records_to_csv(get_filename_addition(output_path, OMITTED_ADDITION), [row_header] + omitted)
+    return {'results': rows, 'omitted': omitted}
 
 
 def main():

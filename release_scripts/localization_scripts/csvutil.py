@@ -26,10 +26,10 @@ def records_to_csv(output_path: str, rows: Iterable[List[str]]):
 
 
 def csv_to_records(input_path: str, header_row: bool) -> Tuple[List[List[str]], List[str]]:
-    """Writes rows to a csv file at the specified path.
+    """Reads rows from a csv file at the specified path.
 
     Args:
-        input_path (str): The path where the csv file will be written.
+        input_path (str): The path where the csv file will be read.
         header_row (bool): Whether or not there is a header row to be skipped.
     """
 
