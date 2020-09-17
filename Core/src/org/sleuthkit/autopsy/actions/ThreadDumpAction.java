@@ -54,7 +54,7 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
  */
 @ActionID(category = "Help", id = "org.sleuthkit.autopsy.actions.ThreadDumpAction")
 @ActionRegistration(displayName = "#CTL_DumpThreadAction", lazy = false)
-@ActionReference(path = "Menu/Help", position = 2000)
+@ActionReference(path = "Menu/Help", position = 1750)
 @Messages({
     "CTL_DumpThreadAction=Thread Dump"
 })

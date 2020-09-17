@@ -33,7 +33,7 @@ import org.openide.util.NbBundle;
  */
 @ActionID(id = "org.sleuthkit.autopsy.corecomponents.AboutWindowAction", category = "Help")
 @ActionRegistration(displayName = "#CTL_CustomAboutAction", iconInMenu = true, lazy = false)
-@ActionReference(path = "Menu/Help", position = 3000)
+@ActionReference(path = "Menu/Help", position = 3000, separatorBefore = 2999)
 public class AboutWindowAction extends AboutAction {
 
     @Override
