@@ -31,6 +31,13 @@ public class DomainSearchArtifactsRequest {
     private final String domain;
     private final ARTIFACT_TYPE artifactType;
 
+    /**
+     * Construct a new DomainSearchArtifactsRequest object.
+     *
+     * @param sleuthkitCase The case database for the search.
+     * @param domain        The domain that artifacts are being requested for.
+     * @param artifactType  The type of artifact being requested.
+     */
     public DomainSearchArtifactsRequest(SleuthkitCase sleuthkitCase,
             String domain, ARTIFACT_TYPE artifactType) {
         this.sleuthkitCase = sleuthkitCase;
@@ -38,14 +45,29 @@ public class DomainSearchArtifactsRequest {
         this.artifactType = artifactType;
     }
 
+    /**
+     * Get the case database for the search.
+     *
+     * @return The case database for the search.
+     */
     public SleuthkitCase getSleuthkitCase() {
         return sleuthkitCase;
     }
 
+    /**
+     * Get the domain that artifacts are being requested for.
+     *
+     * @return The domain that artifacts are being requested for.
+     */
     public String getDomain() {
         return domain;
     }
 
+    /**
+     * Get the type of artifact being requested.
+     *
+     * @return The type of artifact being requested.
+     */
     public ARTIFACT_TYPE getArtifactType() {
         return artifactType;
     }
@@ -55,11 +77,9 @@ public class DomainSearchArtifactsRequest {
         if (other == this) {
             return true;
         }
-
         if (!(other instanceof DomainSearchArtifactsRequest)) {
             return false;
         }
-
         DomainSearchArtifactsRequest otherRequest = (DomainSearchArtifactsRequest) other;
         return this.sleuthkitCase == otherRequest.getSleuthkitCase()
                 && this.domain.equals(otherRequest.getDomain())

@@ -40,10 +40,11 @@ public class DomainSearchArtifactsCache {
      * is new, the results will be automatically loaded.
      *
      * @param request Artifact request, specifies type, Case, and domain name.
-     * @return A list of matching artifacts
+     *
+     * @return A list of matching artifacts.
      *
      * @throws DiscoveryException Any error that occurs during the loading
-     * process.
+     *                            process.
      */
     public List<BlackboardArtifact> get(DomainSearchArtifactsRequest request) throws DiscoveryException {
         try {

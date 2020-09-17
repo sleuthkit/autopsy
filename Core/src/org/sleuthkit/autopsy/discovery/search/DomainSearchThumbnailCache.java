@@ -27,7 +27,7 @@ import java.util.concurrent.ExecutionException;
  * Caches thumbnail requests.
  */
 public class DomainSearchThumbnailCache {
-    
+
     private static final int MAXIMUM_CACHE_SIZE = 500;
     private static final LoadingCache<DomainSearchThumbnailRequest, Image> cache
             = CacheBuilder.newBuilder()
@@ -37,11 +37,14 @@ public class DomainSearchThumbnailCache {
     /**
      * Get a thumbnail for the requested domain. If the request is new, the
      * thumbnail will be automatically loaded.
-     * 
-     * @param request Requested domain to thumbnail
-     * @return The thumbnail Image instance, or null if no thumbnail is available
-     * 
-     * @throws DiscoveryException If any error occurs during thumbnail generation.
+     *
+     * @param request Requested domain to thumbnail.
+     *
+     * @return The thumbnail Image instance, or null if no thumbnail is
+     *         available.
+     *
+     * @throws DiscoveryException If any error occurs during thumbnail
+     *                            generation.
      */
     public Image get(DomainSearchThumbnailRequest request) throws DiscoveryException {
         try {

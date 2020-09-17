@@ -32,34 +32,45 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  * Main class to perform the domain search.
  */
 public class DomainSearch {
-    
+
     private final DomainSearchCache searchCache;
     private final DomainSearchThumbnailCache thumbnailCache;
-    
+
+    /**
+     * Construct a new DomainSearch object.
+     */
     public DomainSearch() {
         this(new DomainSearchCache(), new DomainSearchThumbnailCache());
     }
-    
+
+    /**
+     * Construct a new DomainSearch object with an existing DomainSearchCache
+     * and DomainSearchThumbnailCache.
+     *
+     * @param cache          The DomainSearchCache to use for this DomainSearch.
+     * @param thumbnailCache The DomainSearchThumnailCache to use for this
+     *                       DomainSearch.
+     */
     DomainSearch(DomainSearchCache cache, DomainSearchThumbnailCache thumbnailCache) {
         this.searchCache = cache;
         this.thumbnailCache = thumbnailCache;
     }
-    
+
     /**
      * Run the domain search to get the group keys and sizes. Clears cache of
      * search results, caching new results for access at later time.
      *
      * @param userName            The name of the user performing the search.
-     * @param filters             The filters to apply
-     * @param groupAttributeType  The attribute to use for grouping
-     * @param groupSortingType    The method to use to sort the groups
+     * @param filters             The filters to apply.
+     * @param groupAttributeType  The attribute to use for grouping.
+     * @param groupSortingType    The method to use to sort the groups.
      * @param domainSortingMethod The method to use to sort the domains within
-     *                            the groups
-     * @param caseDb              The case database
+     *                            the groups.
+     * @param caseDb              The case database.
      * @param centralRepoDb       The central repository database. Can be null
      *                            if not needed.
      *
-     * @return A LinkedHashMap grouped and sorted according to the parameters
+     * @return A LinkedHashMap grouped and sorted according to the parameters.
      *
      * @throws DiscoveryException
      */
@@ -69,9 +80,9 @@ public class DomainSearch {
             Group.GroupSortingAlgorithm groupSortingType,
             ResultsSorter.SortingMethod domainSortingMethod,
             SleuthkitCase caseDb, CentralRepository centralRepoDb) throws DiscoveryException {
-        
+
         final Map<GroupKey, List<Result>> searchResults = searchCache.get(
-                userName, filters, groupAttributeType, groupSortingType, 
+                userName, filters, groupAttributeType, groupSortingType,
                 domainSortingMethod, caseDb, centralRepoDb);
 
         // Transform the cached results into a map of group key to group size.
@@ -88,20 +99,20 @@ public class DomainSearch {
      * was not cached perform a search caching the groups.
      *
      * @param userName            The name of the user performing the search.
-     * @param filters             The filters to apply
-     * @param groupAttributeType  The attribute to use for grouping
-     * @param groupSortingType    The method to use to sort the groups
+     * @param filters             The filters to apply.
+     * @param groupAttributeType  The attribute to use for grouping.
+     * @param groupSortingType    The method to use to sort the groups.
      * @param domainSortingMethod The method to use to sort the Domains within
-     *                            the groups
+     *                            the groups.
      * @param groupKey            The key which uniquely identifies the group to
-     *                            get entries from
-     * @param startingEntry       The first entry to return
-     * @param numberOfEntries     The number of entries to return
-     * @param caseDb              The case database
+     *                            get entries from.
+     * @param startingEntry       The first entry to return.
+     * @param numberOfEntries     The number of entries to return.
+     * @param caseDb              The case database.
      * @param centralRepoDb       The central repository database. Can be null
      *                            if not needed.
      *
-     * @return A LinkedHashMap grouped and sorted according to the parameters
+     * @return A LinkedHashMap grouped and sorted according to the parameters.
      *
      * @throws DiscoveryException
      */
@@ -112,9 +123,9 @@ public class DomainSearch {
             ResultsSorter.SortingMethod domainSortingMethod,
             GroupKey groupKey, int startingEntry, int numberOfEntries,
             SleuthkitCase caseDb, CentralRepository centralRepoDb) throws DiscoveryException {
-        
+
         final Map<GroupKey, List<Result>> searchResults = searchCache.get(
-                userName, filters, groupAttributeType, groupSortingType, 
+                userName, filters, groupAttributeType, groupSortingType,
                 domainSortingMethod, caseDb, centralRepoDb);
         final List<Result> domainsInGroup = searchResults.get(groupKey);
 
@@ -131,11 +142,12 @@ public class DomainSearch {
      * Get a thumbnail representation of a domain name. See
      * DomainSearchThumbnailRequest for more details.
      *
-     * @param thumbnailRequest Thumbnail request for domain
+     * @param thumbnailRequest Thumbnail request for domain.
+     *
      * @return An Image instance or null if no thumbnail is available.
      *
      * @throws DiscoveryException If there is an error with Discovery related
-     * processing
+     *                            processing.
      */
     public Image getThumbnail(DomainSearchThumbnailRequest thumbnailRequest) throws DiscoveryException {
         return thumbnailCache.get(thumbnailRequest);

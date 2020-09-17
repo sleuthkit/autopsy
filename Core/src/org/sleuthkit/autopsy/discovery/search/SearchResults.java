@@ -76,7 +76,7 @@ class SearchResults {
         for (Result result : results) {
             // Add the file to the appropriate group, creating it if necessary
             GroupKey groupKey = attrType.getGroupKey(result);
-            
+
             if (!groupMap.containsKey(groupKey)) {
                 groupMap.put(groupKey, new Group(groupSortingType, groupKey));
             }
@@ -92,7 +92,7 @@ class SearchResults {
 
         // First sortGroupsAndFiles the files
         for (Group group : groupMap.values()) {
-            group.sortFiles(fileSorter);
+            group.sortResults(fileSorter);
         }
 
         // Now put the groups in a list and sortGroupsAndFiles them

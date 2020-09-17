@@ -127,7 +127,7 @@ final class ResultsPanel extends javax.swing.JPanel {
         });
         //JIRA-TODO 6307 Add listener for domainSummaryViewer when 6782, 6773, and the other details area related stories are done
     }
-    
+
     SearchData.Type getActiveType() {
         return resultType;
     }
@@ -294,7 +294,7 @@ final class ResultsPanel extends javax.swing.JPanel {
             // Do nothing, case has been closed.
             return;
         }
-        
+
         for (Result result : results) {
             DomainThumbnailWorker domainWorker = new DomainThumbnailWorker(
                     currentCase, (ResultDomain) result);
@@ -315,7 +315,7 @@ final class ResultsPanel extends javax.swing.JPanel {
             searchFilters = groupSelectedEvent.getFilters();
             groupingAttribute = groupSelectedEvent.getGroupingAttr();
             groupSort = groupSelectedEvent.getGroupSort();
-            fileSortMethod = groupSelectedEvent.getFileSort();
+            fileSortMethod = groupSelectedEvent.getResultSort();
             selectedGroupKey = groupSelectedEvent.getGroupKey();
             resultType = groupSelectedEvent.getResultType();
             groupSize = groupSelectedEvent.getGroupSize();
@@ -839,7 +839,7 @@ final class ResultsPanel extends javax.swing.JPanel {
                     domainWrapper.getResultDomain().getDomain(),
                     ImageUtils.ICON_SIZE_LARGE
             );
-            
+
             Image thumbnail = domainSearch.getThumbnail(request);
             domainWrapper.setThumbnail(thumbnail);
             return null;

@@ -88,7 +88,7 @@ final class GroupListPanel extends javax.swing.JPanel {
         searchfilters = searchCompleteEvent.getFilters();
         groupingAttribute = searchCompleteEvent.getGroupingAttr();
         groupSort = searchCompleteEvent.getGroupSort();
-        resultSortMethod = searchCompleteEvent.getFileSort();
+        resultSortMethod = searchCompleteEvent.getResultSort();
         groupKeyList.setListData(groupMap.keySet().toArray(new GroupKey[groupMap.keySet().size()]));
         SwingUtilities.invokeLater(() -> {
             if (groupKeyList.getModel().getSize() > 0) {

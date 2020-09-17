@@ -29,8 +29,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 public abstract class AbstractFilter {
 
     /**
-     * Returns part of a query on the table that can be AND-ed with
-     * other pieces
+     * Returns part of a query on the table that can be AND-ed with other pieces
      *
      * @return the SQL query or an empty string if there is no SQL query for
      *         this filter.
