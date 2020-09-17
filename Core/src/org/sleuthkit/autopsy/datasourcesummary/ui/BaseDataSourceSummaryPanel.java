@@ -23,13 +23,18 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.swing.JPanel;
 import javax.swing.SwingWorker;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.IngestModuleCheckUtil;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult.ResultType;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.EventUpdateHandler;
@@ -55,6 +60,7 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
     private static final Logger logger = Logger.getLogger(BaseDataSourceSummaryPanel.class.getName());
 
     private final SwingWorkerSequentialExecutor executor = new SwingWorkerSequentialExecutor();
+    private final IngestModuleCheckUtil ingestModuleCheck = new IngestModuleCheckUtil();
     private final EventUpdateHandler updateHandler;
     private final List<UpdateGovernor> governors;
 
@@ -328,5 +334,78 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
 
             fetchInformation(dataSource);
         }
+    }
+
+    /**
+     * Get default message when there is a NotIngestedWithModuleException.
+     *
+     * @param exception The moduleName.
+     *
+     * @return Message specifying that the ingest module was not run.
+     */
+    @Messages({
+        "# {0} - module name",
+        "BaseDataSourceSummaryPanel_defaultNotIngestMessage=The {0} ingest module has not been run on this data source."
+    })
+    protected String getDefaultNoIngestMessage(String moduleName) {
+        return Bundle.BaseDataSourceSummaryPanel_defaultNotIngestMessage(moduleName);
+    }
+    
+    /**
+     * Utility method to return the IngestModuleCheckUtil.
+     * @return The IngestModuleCheckUtil.
+     */
+    protected IngestModuleCheckUtil getIngestModuleCheckUtil() {
+        return this.ingestModuleCheck;
+    }
+
+    /**
+     * Utility method that in the event of a) there are no results and b) a
+     * relevant ingest module has not been run on this datasource, then a
+     * message indicating the unrun ingest module will be shown. Otherwise, the
+     * default LoadableComponent.showDataFetchResult behavior will be used.
+     *
+     * @param component    The component.
+     * @param result       The data result.
+     * @param factoryClass The fully qualified class name of the relevant
+     *                     factory.
+     * @param moduleName   The name of the ingest module (i.e. 'Keyword
+     *                     Search').
+     */
+    protected <T> void showResultWithModuleCheck(LoadableComponent<List<T>> component, DataFetchResult<List<T>> result, String factoryClass, String moduleName) {
+        Predicate<List<T>> hasResults = (lst) -> lst != null && !lst.isEmpty();
+        showResultWithModuleCheck(component, result, hasResults, factoryClass, moduleName);
+    }
+
+    /**
+     * Utility method that in the event of a) there are no results and b) a
+     * relevant ingest module has not been run on this datasource, then a
+     * message indicating the unrun ingest module will be shown. Otherwise, the
+     * default LoadableComponent.showDataFetchResult behavior will be used.
+     *
+     * @param component    The component.
+     * @param result       The data result.
+     * @param hasResults   Given the data type, will provide whether or not the
+     *                     data contains any actual results.
+     * @param factoryClass The fully qualified class name of the relevant
+     *                     factory.
+     * @param moduleName   The name of the ingest module (i.e. 'Keyword
+     *                     Search').
+     */
+    protected <T> void showResultWithModuleCheck(LoadableComponent<T> component, DataFetchResult<T> result,
+            Predicate<T> hasResults, String factoryClass, String moduleName) {
+
+        if (result != null && result.getResultType() == ResultType.SUCCESS && !hasResults.test(result.getData())) {
+            try {
+                if (!ingestModuleCheck.isModuleIngested(getDataSource(), factoryClass)) {
+                    component.showMessage(getDefaultNoIngestMessage(moduleName));
+                    return;
+                }
+            } catch (TskCoreException | SleuthkitCaseProviderException ex) {
+                logger.log(Level.WARNING, "There was an error while checking for ingest modules for datasource.", ex);
+            }
+        }
+
+        component.showDataFetchResult(result);
     }
 }

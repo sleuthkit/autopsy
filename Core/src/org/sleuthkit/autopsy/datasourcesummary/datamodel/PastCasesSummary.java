@@ -28,7 +28,6 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.sleuthkit.autopsy.centralrepository.ingestmodule.CentralRepoIngestModuleFactory;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
@@ -38,7 +37,6 @@ import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.DataSource;
-import org.sleuthkit.datamodel.IngestJobInfo;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -65,47 +63,6 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Case: case1,case2...caseN"
  */
 public class PastCasesSummary implements DefaultArtifactUpdateGovernor {
-
-    /**
-     * Exception that is thrown in the event that a data source has not been
-     * ingested with a particular ingest module.
-     */
-    public static class NotIngestedWithModuleException extends Exception {
-
-        private static final long serialVersionUID = 1L;
-
-        private final String moduleDisplayName;
-
-        /**
-         * Constructor.
-         *
-         * @param moduleName The module name.
-         * @param message    The message for the exception.
-         */
-        public NotIngestedWithModuleException(String moduleName, String message) {
-            super(message);
-            this.moduleDisplayName = moduleName;
-        }
-
-        /**
-         * Constructor.
-         *
-         * @param moduleName The module name.
-         * @param message    The message for the exception.
-         * @param thrwbl     Inner exception if applicable.
-         */
-        public NotIngestedWithModuleException(String moduleName, String message, Throwable thrwbl) {
-            super(message, thrwbl);
-            this.moduleDisplayName = moduleName;
-        }
-
-        /**
-         * @return The module display name.
-         */
-        public String getModuleDisplayName() {
-            return moduleDisplayName;
-        }
-    }
 
     /**
      * Return type for results items in the past cases tab.
@@ -339,12 +296,9 @@ public class PastCasesSummary implements DefaultArtifactUpdateGovernor {
      *
      * @throws SleuthkitCaseProviderException
      * @throws TskCoreException
-     * @throws NotIngestedWithModuleException
      */
     public PastCasesResult getPastCasesData(DataSource dataSource)
-            throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, NotIngestedWithModuleException {
-
-        throwOnNotCentralRepoIngested(dataSource);
+            throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException {
 
         SleuthkitCase skCase = caseProvider.get();
 
@@ -371,76 +325,5 @@ public class PastCasesSummary implements DefaultArtifactUpdateGovernor {
                 getCaseCounts(deviceArtifactCases.stream()),
                 getCaseCounts(Stream.concat(filesCases, nonDeviceArtifactCases.stream()))
         );
-    }
-
-    /**
-     * Returns true if the ingest job info contains an ingest module that
-     * matches the Central Repo Module ingest display name.
-     *
-     * @param info The info.
-     *
-     * @return True if there is a central repo ingest match.
-     */
-    private boolean hasCentralRepoIngest(IngestJobInfo info) {
-        if (info == null || info.getIngestModuleInfo() == null) {
-            return false;
-        }
-
-        return info.getIngestModuleInfo().stream()
-                .anyMatch((moduleInfo) -> {
-                    return StringUtils.isNotBlank(moduleInfo.getDisplayName())
-                            && moduleInfo.getDisplayName().trim().equalsIgnoreCase(CENTRAL_REPO_INGEST_NAME);
-                });
-    }
-
-    /**
-     * Returns true if the central repository ingest module has been run on the
-     * datasource.
-     *
-     * @param dataSource The data source.
-     *
-     * @return True if there is an ingest job pertaining to the data source
-     *         where an ingest module matches the central repo ingest module
-     *         display name.
-     *
-     * @throws SleuthkitCaseProviderException
-     * @throws TskCoreException
-     */
-    public boolean isCentralRepoIngested(DataSource dataSource)
-            throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException {
-        if (dataSource == null) {
-            return false;
-        }
-
-        long dataSourceId = dataSource.getId();
-
-        return this.caseProvider.get().getIngestJobs().stream()
-                .anyMatch((ingestJob) -> {
-                    return ingestJob != null
-                            && ingestJob.getObjectId() == dataSourceId
-                            && hasCentralRepoIngest(ingestJob);
-                });
-
-    }
-
-    /**
-     * Throws an exception if the current data source has not been ingested with
-     * the Central Repository Ingest Module.
-     *
-     * @param dataSource The data source to check if it has been ingested with
-     *                   the Central Repository Ingest Module.
-     *
-     * @throws SleuthkitCaseProviderException
-     * @throws TskCoreException
-     * @throws NotIngestedWithModuleException
-     */
-    private void throwOnNotCentralRepoIngested(DataSource dataSource)
-            throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, NotIngestedWithModuleException {
-
-        if (!isCentralRepoIngested(dataSource)) {
-            String objectId = (dataSource == null) ? "<null>" : String.valueOf(dataSource.getId());
-            String message = String.format("Data source: %s has not been ingested with the Central Repository Ingest Module.", objectId);
-            throw new NotIngestedWithModuleException(CENTRAL_REPO_INGEST_NAME, message);
-        }
     }
 }
