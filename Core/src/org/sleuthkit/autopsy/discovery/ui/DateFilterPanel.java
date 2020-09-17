@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.discovery.ui;
 
+
 import java.awt.event.ActionListener;
 import java.time.LocalDate;
 import java.time.Period;
@@ -26,7 +27,7 @@ import org.sleuthkit.autopsy.discovery.search.AbstractFilter;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
-import javax.swing.SpinnerNumberModel;
+import javax.swing.JSpinner;
 import javax.swing.event.ListSelectionListener;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.communications.Utils;
@@ -38,7 +39,6 @@ import org.sleuthkit.autopsy.discovery.search.SearchFiltering;
 class DateFilterPanel extends AbstractDiscoveryFilterPanel {
 
     private static final long serialVersionUID = 1L;
-    private final SpinnerNumberModel numberModel;
     private static final long SECS_PER_DAY = 86400;
 
     /**
@@ -47,10 +47,14 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
     @NbBundle.Messages({"# {0} - timeZone",
         "DateFilterPanel.dateRange.text=Date Range ({0}):"})
     DateFilterPanel() {
-        // numberModel is used in initComponents
-        numberModel = new SpinnerNumberModel(10, 1, Integer.MAX_VALUE, 1);
         initComponents();
         rangeRadioButton.setText(Bundle.DateFilterPanel_dateRange_text(Utils.getUserPreferredZoneId().toString()));
+        //Disable manual entry in the spinner so it is limited to 60 days 
+        //if a user wants farther back than that one would expect date range filter options would be more appealing
+        ((JSpinner.DefaultEditor) daysSpinner.getEditor()).getTextField().setEditable(false);
+        //Disable manual entry in the date pickers
+        startDatePicker.getComponentDateTextField().setEditable(false);
+        endDatePicker.getComponentDateTextField().setEditable(false);
     }
 
     /**
@@ -65,7 +69,7 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
         buttonGroup1 = new javax.swing.ButtonGroup();
         dateFilterCheckBox = new javax.swing.JCheckBox();
         jPanel1 = new javax.swing.JPanel();
-        daysSpinner = new javax.swing.JSpinner(numberModel);
+        daysSpinner = new javax.swing.JSpinner();
         daysLabel = new javax.swing.JLabel();
         mostRecentRadioButton = new javax.swing.JRadioButton();
         startCheckBox = new javax.swing.JCheckBox();
@@ -81,7 +85,8 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
             }
         });
 
-        daysSpinner.setModel(new javax.swing.SpinnerNumberModel(1, 1, null, 1));
+        daysSpinner.setModel(new javax.swing.SpinnerNumberModel(7, 1, 60, 1));
+        daysSpinner.setEditor(new javax.swing.JSpinner.NumberEditor(daysSpinner, ""));
         daysSpinner.setEnabled(false);
         daysSpinner.setPreferredSize(new java.awt.Dimension(75, 26));
         daysSpinner.setValue(7);
