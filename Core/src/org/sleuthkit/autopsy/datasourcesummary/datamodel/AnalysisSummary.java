@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.datasourcesummary.datamodel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultArtifactUpdateGovernor;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -146,6 +147,11 @@ public class AnalysisSummary implements DefaultArtifactUpdateGovernor {
      */
     private List<Pair<String, Long>> getCountsData(DataSource dataSource, BlackboardAttribute.Type keyType, ARTIFACT_TYPE... artifactTypes)
             throws SleuthkitCaseProviderException, TskCoreException {
+        
+        if (dataSource == null) {
+            return Collections.emptyList();
+        }
+        
         List<BlackboardArtifact> artifacts = new ArrayList<>();
         SleuthkitCase skCase = provider.get();
 

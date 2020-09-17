@@ -123,14 +123,14 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
                             );
                         },
                         (result) -> {
-                            if (result.getResultType() == ResultType.SUCCESS) {
+                            if (result != null && result.getResultType() == ResultType.SUCCESS) {
                                 ContainerPanelData data = result.getData();
                                 updateDetailsPanelData(
                                         data.getDataSource(),
                                         data.getUnallocatedFilesSize());
                             } else {
                                 logger.log(Level.WARNING, "An exception occurred while attempting to fetch data for the ContainerPanel.",
-                                        result.getException());
+                                        (result == null) ? null : result.getException());
                                 updateDetailsPanelData(null, null);
                             }
                         }

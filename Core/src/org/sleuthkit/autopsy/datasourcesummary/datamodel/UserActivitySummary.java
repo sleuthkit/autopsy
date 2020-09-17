@@ -148,6 +148,10 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
      */
     public List<TopDomainsResult> getRecentDomains(DataSource dataSource, int count) throws TskCoreException, SleuthkitCaseProviderException {
         assertValidCount(count);
+        
+        if (dataSource == null) {
+            return Collections.emptyList();
+        }
 
         Pair<Long, Map<String, List<Long>>> mostRecentAndGroups = getDomainGroupsAndMostRecent(dataSource);
         // if no recent domains, return accordingly
@@ -306,6 +310,10 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
      */
     public List<TopWebSearchResult> getMostRecentWebSearches(DataSource dataSource, int count) throws SleuthkitCaseProviderException, TskCoreException {
         assertValidCount(count);
+        
+        if (dataSource == null) {
+            return Collections.emptyList();
+        }
 
         // get the artifacts
         List<BlackboardArtifact> webSearchArtifacts = caseProvider.get().getBlackboard()
@@ -390,6 +398,10 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
      */
     public List<TopDeviceAttachedResult> getRecentDevices(DataSource dataSource, int count) throws SleuthkitCaseProviderException, TskCoreException {
         assertValidCount(count);
+        
+        if (dataSource == null) {
+            return Collections.emptyList();
+        }
 
         return DataSourceInfoUtilities.getArtifacts(caseProvider.get(), TYPE_DEVICE_ATTACHED,
                 dataSource, TYPE_DATETIME, DataSourceInfoUtilities.SortOrder.DESCENDING, 0)
@@ -475,6 +487,10 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
         "DataSourceUserActivitySummary_getRecentAccounts_calllogMessage=Call Log",})
     public List<TopAccountResult> getRecentAccounts(DataSource dataSource, int count) throws SleuthkitCaseProviderException, TskCoreException {
         assertValidCount(count);
+        
+        if (dataSource == null) {
+            return Collections.emptyList();
+        }
 
         Stream<TopAccountResult> messageResults = caseProvider.get().getBlackboard().getArtifacts(ARTIFACT_TYPE.TSK_MESSAGE.getTypeID(), dataSource.getId())
                 .stream()
