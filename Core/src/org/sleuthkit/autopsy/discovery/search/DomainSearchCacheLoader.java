@@ -26,6 +26,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.StringJoiner;
@@ -230,6 +232,11 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
         private final SleuthkitCase skc;
         private SQLException sqlCause;
         private TskCoreException coreCause;
+        
+        private final Set<String> bannedDomains = new HashSet<String>() {{
+           add("localhost");
+           add("127.0.0.1");
+        }};
 
         /**
          * Construct a new DomainCallback object.
@@ -248,6 +255,13 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
 
                 while (resultSet.next()) {
                     String domain = resultSet.getString("domain");
+                    
+                    if (bannedDomains.contains(domain)) {
+                        // Skip banned domains
+                        // Domain names are lowercased in the SQL query
+                        continue;
+                    }
+                    
                     Long activityStart = resultSet.getLong("activity_start");
                     if (resultSet.wasNull()) {
                         activityStart = null;
