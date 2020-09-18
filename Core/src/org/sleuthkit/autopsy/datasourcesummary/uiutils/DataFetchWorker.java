@@ -140,9 +140,6 @@ public class DataFetchWorker<A, R> extends SwingWorker<R, Void> {
                 }
             }
 
-            // otherwise, there is an error to log
-            logger.log(Level.WARNING, "There was an error while fetching results.", ex);
-
             // and pass the result to the client
             resultHandler.accept(DataFetchResult.getErrorResult(inner));
             return;
