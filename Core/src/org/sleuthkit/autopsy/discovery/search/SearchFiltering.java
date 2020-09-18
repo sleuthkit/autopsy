@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.discovery.search;
 
+import java.text.SimpleDateFormat;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
@@ -32,7 +33,9 @@ import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.StringJoiner;
 import java.util.stream.Collectors;
 import org.openide.util.NbBundle;
@@ -133,6 +136,8 @@ public class SearchFiltering {
 
         private final Long startDate;
         private final Long endDate;
+        
+        private static final SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy", Locale.getDefault());
 
         // Attributes to search for date
         private static List<BlackboardAttribute.ATTRIBUTE_TYPE> dateAttributes
@@ -172,8 +177,15 @@ public class SearchFiltering {
         }
 
         @Override
+        @NbBundle.Messages({
+            "# {0} - start",
+            "# {1} - end",
+            "SearchFiltering.ArtifactDateRangeFilter.description=Date between {0} and {1}"
+        })
         public String getDesc() {
-            return "ArtifactDateRangeFilter Stub";
+           Date start = new Date(startDate * 1000);
+           Date end = new Date(endDate * 1000);
+           return Bundle.SearchFiltering_ArtifactDateRangeFilter_description(dateFormat.format(start), dateFormat.format(end));
         }
     }
 
@@ -205,8 +217,16 @@ public class SearchFiltering {
         }
 
         @Override
+        @NbBundle.Messages({
+            "# {0} - artifacts",
+            "SearchFiltering.ArtifactTypeFilter.description=Artifact(s): {0}"
+        })
         public String getDesc() {
-            return "ArtifactTypeFilter Stub";
+            StringJoiner joiner = new StringJoiner(", ");
+            for (ARTIFACT_TYPE type : types) {
+                joiner.add(type.getDisplayName());
+            }
+            return Bundle.SearchFiltering_ArtifactTypeFilter_description(joiner.toString());
         }
 
     }
