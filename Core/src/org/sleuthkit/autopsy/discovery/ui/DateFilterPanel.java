@@ -51,8 +51,7 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
     DateFilterPanel() {
         initComponents();
         rangeRadioButton.setText(Bundle.DateFilterPanel_dateRange_text(Utils.getUserPreferredZoneId().toString()));
-        //Disable manual entry in the spinner so it is limited to 60 days 
-        //if a user wants farther back than that one would expect date range filter options would be more appealing
+        //Disable manual entry in the spinner
         ((JSpinner.DefaultEditor) daysSpinner.getEditor()).getTextField().setEditable(false);
         //Disable manual entry in the date pickers
         startDatePicker.getComponentDateTextField().setEditable(false);
@@ -303,8 +302,8 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
         }
     }
 
-    @NbBundle.Messages({"DateFilterPanel.invalidRange.text=Range or Only Last must be selected",
-        "DateFilterPanel.startOrEndNeeded.text=A start or end date must be specified to use the range filter",
+    @NbBundle.Messages({"DateFilterPanel.invalidRange.text=Range or Only Last must be selected.",
+        "DateFilterPanel.startOrEndNeeded.text=A start or end date must be specified to use the range filter.",
         "DateFilterPanel.startAfterEnd.text=Start date should be before the end date when both are enabled."})
     @Override
     String checkForError() {
