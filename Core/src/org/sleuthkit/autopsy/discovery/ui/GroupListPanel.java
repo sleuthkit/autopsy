@@ -37,6 +37,7 @@ import org.sleuthkit.autopsy.discovery.search.DiscoveryKeyUtils.GroupKey;
 import org.sleuthkit.autopsy.discovery.search.Group;
 import org.sleuthkit.autopsy.discovery.search.ResultsSorter;
 import org.sleuthkit.autopsy.discovery.search.SearchData.Type;
+import static org.sleuthkit.autopsy.discovery.search.SearchData.Type.DOMAIN;
 
 /**
  * Panel to display the list of groups which are provided by a search.
@@ -70,11 +71,16 @@ final class GroupListPanel extends javax.swing.JPanel {
         groupKeyList.setListData(new GroupKey[0]);
     }
 
-    @Messages({"GroupsListPanel.noResults.message.text=No results were found for the selected filters.\n\n"
+    @Messages({"GroupsListPanel.noFileResults.message.text=No files were found for the selected filters.\n\n"
         + "Reminder:\n"
         + "  -The File Type Identification module must be run on each data source you want to find results in.\n"
         + "  -The Hash Lookup module must be run on each data source if you want to filter by past occurrence.\n"
-        + "  -The Exif module must be run on each data source if you are filtering by User Created content.",
+        + "  -The Picture Analyzer module must be run on each data source if you are filtering by User Created content.",
+        "GroupsListPanel.noDomainResults.message.text=No domains were found for the selected filters.\n\n"
+        + "Reminder:\n"
+        + "  -The Recent Activity module must be run on each data source you want to find results in.\n"
+        + "  -The Central Repository module must be run on each data source if you want to filter or sort by past occurrences.\n"
+        + "  -The iOS Analyzer (iLEAPP) module must be run on each data source which contains data from an iOS device.\n",
         "GroupsListPanel.noResults.title.text=No results found"})
     /**
      * Subscribe to and update list of groups in response to
@@ -93,9 +99,14 @@ final class GroupListPanel extends javax.swing.JPanel {
         SwingUtilities.invokeLater(() -> {
             if (groupKeyList.getModel().getSize() > 0) {
                 groupKeyList.setSelectedIndex(0);
+            } else if (type == DOMAIN) {
+                JOptionPane.showMessageDialog(DiscoveryTopComponent.getTopComponent(),
+                        Bundle.GroupsListPanel_noDomainResults_message_text(),
+                        Bundle.GroupsListPanel_noResults_title_text(),
+                        JOptionPane.PLAIN_MESSAGE);
             } else {
                 JOptionPane.showMessageDialog(DiscoveryTopComponent.getTopComponent(),
-                        Bundle.GroupsListPanel_noResults_message_text(),
+                        Bundle.GroupsListPanel_noFileResults_message_text(),
                         Bundle.GroupsListPanel_noResults_title_text(),
                         JOptionPane.PLAIN_MESSAGE);
             }
