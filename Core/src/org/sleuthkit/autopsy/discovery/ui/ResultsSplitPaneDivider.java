@@ -19,10 +19,8 @@
 package org.sleuthkit.autopsy.discovery.ui;
 
 import java.awt.Cursor;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionListener;
+
 import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils;
-import org.sleuthkit.autopsy.discovery.search.SearchData;
 
 /**
  * Panel for separating the results list from the details area.
@@ -30,29 +28,12 @@ import org.sleuthkit.autopsy.discovery.search.SearchData;
 final class ResultsSplitPaneDivider extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
-    private final ResultsPanel resultsPanel;
 
     /**
      * Creates new form LabeledSplitPaneDivider.
      */
-    ResultsSplitPaneDivider(ResultsPanel resultsPanel) {
+    ResultsSplitPaneDivider() {
         initComponents();
-        this.resultsPanel = resultsPanel;
-        this.addMouseMotionListener(new MouseMotionListener() {
-            @Override
-            public void mouseDragged(MouseEvent e) {
-                if (resultsPanel.getActiveType() == SearchData.Type.DOMAIN) {
-                    e.consume();
-                }
-            }
-
-            @Override
-            public void mouseMoved(MouseEvent e) {
-                if (resultsPanel.getActiveType() == SearchData.Type.DOMAIN) {
-                    e.consume();
-                }
-            }
-        });
     }
 
     /**
@@ -129,16 +110,10 @@ final class ResultsSplitPaneDivider extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void showButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showButtonActionPerformed
-        if (resultsPanel.getActiveType() == SearchData.Type.DOMAIN) {
-            return;
-        }
         DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.DetailsVisibleEvent(true));
     }//GEN-LAST:event_showButtonActionPerformed
 
     private void hideButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_hideButtonActionPerformed
-        if (resultsPanel.getActiveType() == SearchData.Type.DOMAIN) {
-            return;
-        }
         DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.DetailsVisibleEvent(false));
     }//GEN-LAST:event_hideButtonActionPerformed
 

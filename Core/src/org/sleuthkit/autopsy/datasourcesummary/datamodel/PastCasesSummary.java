@@ -292,13 +292,17 @@ public class PastCasesSummary implements DefaultArtifactUpdateGovernor {
      *
      * @param dataSource The data source.
      *
-     * @return The retrieved data.
+     * @return The retrieved data or null if null dataSource.
      *
      * @throws SleuthkitCaseProviderException
      * @throws TskCoreException
      */
     public PastCasesResult getPastCasesData(DataSource dataSource)
             throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException {
+
+        if (dataSource == null) {
+            return null;
+        }
 
         SleuthkitCase skCase = caseProvider.get();
 

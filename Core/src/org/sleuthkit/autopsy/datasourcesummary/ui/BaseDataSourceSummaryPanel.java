@@ -290,15 +290,20 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
      * @param dataSource          The data source argument.
      */
     protected void fetchInformation(List<DataFetchComponents<DataSource, ?>> dataFetchComponents, DataSource dataSource) {
-        // create swing workers to run for each loadable item
-        List<DataFetchWorker<?, ?>> workers = dataFetchComponents
-                .stream()
-                .map((components) -> new DataFetchWorker<>(components, dataSource))
-                .collect(Collectors.toList());
+        if (dataSource == null || !Case.isCaseOpen()) {
+            dataFetchComponents.forEach((item) -> item.getResultHandler()
+                    .accept(DataFetchResult.getSuccessResult(null)));
+        } else {
+            // create swing workers to run for each loadable item
+            List<DataFetchWorker<?, ?>> workers = dataFetchComponents
+                    .stream()
+                    .map((components) -> new DataFetchWorker<>(components, dataSource))
+                    .collect(Collectors.toList());
 
-        // submit swing workers to run
-        if (!workers.isEmpty()) {
-            submit(workers);
+            // submit swing workers to run
+            if (!workers.isEmpty()) {
+                submit(workers);
+            }
         }
     }
 
@@ -350,9 +355,10 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
     protected String getDefaultNoIngestMessage(String moduleName) {
         return Bundle.BaseDataSourceSummaryPanel_defaultNotIngestMessage(moduleName);
     }
-    
+
     /**
      * Utility method to return the IngestModuleCheckUtil.
+     *
      * @return The IngestModuleCheckUtil.
      */
     protected IngestModuleCheckUtil getIngestModuleCheckUtil() {

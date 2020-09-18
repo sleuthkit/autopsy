@@ -26,6 +26,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.StringJoiner;
@@ -63,6 +65,18 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
             if (filter.useAlternateFilter()) {
                 domainResults = filter.applyAlternateFilter(domainResults, key.getSleuthkitCase(), key.getCentralRepository());
             }
+        }
+        
+        // Grouping by CR Frequency, for example, will require further processing
+        // in order to make the correct decision. The attribute types that require
+        // more information implement their logic by overriding `addAttributeToResults`.
+        List<AttributeType> searchAttributes = new ArrayList<>();
+        searchAttributes.add(key.getGroupAttributeType());
+        searchAttributes.addAll(key.getFileSortingMethod().getRequiredAttributes());
+        
+        for (AttributeType attr : searchAttributes) {
+            attr.addAttributeToResults(domainResults, 
+                    key.getSleuthkitCase(), key.getCentralRepository());
         }
 
         // Sort the ResultDomains by the requested criteria.
@@ -145,7 +159,7 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
                 + "                      date BETWEEN " + sixtyDaysAgo.getEpochSecond() + " AND " + currentTime.getEpochSecond() + " THEN 1 "
                 + "                 ELSE 0 "
                 + "               END) AS last60,"
-                + "           data_source_obj_id AS dataSource "
+                + "           MAX(data_source_obj_id) AS dataSource "
                 + "FROM blackboard_artifacts"
                 + "     JOIN (" + domainsTable + ") AS domains_table"
                 + "       ON artifact_id = parent_artifact_id "
@@ -230,6 +244,11 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
         private final SleuthkitCase skc;
         private SQLException sqlCause;
         private TskCoreException coreCause;
+        
+        private final Set<String> bannedDomains = new HashSet<String>() {{
+           add("localhost");
+           add("127.0.0.1");
+        }};
 
         /**
          * Construct a new DomainCallback object.
@@ -248,6 +267,13 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
 
                 while (resultSet.next()) {
                     String domain = resultSet.getString("domain");
+                    
+                    if (bannedDomains.contains(domain)) {
+                        // Skip banned domains
+                        // Domain names are lowercased in the SQL query
+                        continue;
+                    }
+                    
                     Long activityStart = resultSet.getLong("activity_start");
                     if (resultSet.wasNull()) {
                         activityStart = null;

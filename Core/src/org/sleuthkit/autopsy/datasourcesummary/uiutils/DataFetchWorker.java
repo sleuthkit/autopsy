@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.datasourcesummary.uiutils;
 
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
-import java.util.logging.Level;
 import javax.swing.SwingWorker;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
@@ -139,9 +138,6 @@ public class DataFetchWorker<A, R> extends SwingWorker<R, Void> {
                     inner = inner.getCause();
                 }
             }
-
-            // otherwise, there is an error to log
-            logger.log(Level.WARNING, "There was an error while fetching results.", ex);
 
             // and pass the result to the client
             resultHandler.accept(DataFetchResult.getErrorResult(inner));
