@@ -18,7 +18,9 @@
  */
 package org.sleuthkit.autopsy.discovery.ui;
 
-
+import com.github.lgooddatepicker.optionalusertools.DateChangeListener;
+import com.github.lgooddatepicker.zinternaltools.DateChangeEvent;
+import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.time.LocalDate;
 import java.time.Period;
@@ -85,7 +87,7 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
             }
         });
 
-        daysSpinner.setModel(new javax.swing.SpinnerNumberModel(7, 1, 60, 1));
+        daysSpinner.setModel(new javax.swing.SpinnerNumberModel(7, 1, 100000, 1));
         daysSpinner.setEditor(new javax.swing.JSpinner.NumberEditor(daysSpinner, ""));
         daysSpinner.setEnabled(false);
         daysSpinner.setPreferredSize(new java.awt.Dimension(75, 26));
@@ -259,6 +261,18 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
         endCheckBox.addActionListener(actionListener);
         rangeRadioButton.addActionListener(actionListener);
         mostRecentRadioButton.addActionListener(actionListener);
+        startDatePicker.addDateChangeListener(new DateChangeListener() {
+            @Override
+            public void dateChanged(DateChangeEvent event) {
+                actionListener.actionPerformed(new ActionEvent(startDatePicker, ActionEvent.ACTION_PERFORMED, "StartDateChanged"));
+            }
+        });
+        endDatePicker.addDateChangeListener(new DateChangeListener() {
+            @Override
+            public void dateChanged(DateChangeEvent event) {
+                actionListener.actionPerformed(new ActionEvent(endDatePicker, ActionEvent.ACTION_PERFORMED, "EndDateChanged"));
+            }
+        });
     }
 
     @Override
@@ -281,10 +295,17 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
         for (ActionListener listener : endCheckBox.getActionListeners()) {
             endCheckBox.removeActionListener(listener);
         }
+        for (DateChangeListener listener : endDatePicker.getDateChangeListeners()) {
+            endDatePicker.removeDateChangeListener(listener);
+        }
+        for (DateChangeListener listener : startDatePicker.getDateChangeListeners()) {
+            startDatePicker.removeDateChangeListener(listener);
+        }
     }
 
     @NbBundle.Messages({"DateFilterPanel.invalidRange.text=Range or Only Last must be selected",
-        "DateFilterPanel.startOrEndNeeded.text=A start or end date must be specified to use the range filter"})
+        "DateFilterPanel.startOrEndNeeded.text=A start or end date must be specified to use the range filter",
+        "DateFilterPanel.startAfterEnd.text=Start date should be before the end date when both are enabled."})
     @Override
     String checkForError() {
         if (dateFilterCheckBox.isSelected()) {
@@ -292,6 +313,9 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
                 return Bundle.DateFilterPanel_invalidRange_text();
             } else if (rangeRadioButton.isSelected() && !(startCheckBox.isSelected() || endCheckBox.isSelected())) {
                 return Bundle.DateFilterPanel_startOrEndNeeded_text();
+            } else if (startCheckBox.isSelected() && endCheckBox.isSelected() && startDatePicker.getDate().isAfter(endDatePicker.getDate())) {
+                //if the dates are equal it will effectively search just that day due to the rounding up of the end date in the getFilter code
+                return Bundle.DateFilterPanel_startAfterEnd_text();
             }
         }
         return "";

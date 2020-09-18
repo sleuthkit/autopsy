@@ -9,6 +9,7 @@ DataSourceModuleWrapper.hashModule.text=Hash Lookup module was not run on data s
 # {0} - timeZone
 DateFilterPanel.dateRange.text=Date Range ({0}):
 DateFilterPanel.invalidRange.text=Range or Only Last must be selected
+DateFilterPanel.startAfterEnd.text=Start date should be before the end date when both are enabled.
 DateFilterPanel.startOrEndNeeded.text=A start or end date must be specified to use the range filter
 DiscoveryDialog.name.text=Discovery
 DiscoveryTopComponent.cancelButton.text=Cancel Search
