@@ -44,6 +44,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
@@ -519,9 +520,11 @@ final class ChromeCacheExtractor {
         BlackboardArtifact webCacheArtifact = cacheEntryFile.newArtifact(ARTIFACT_TYPE.TSK_WEB_CACHE);
         if (webCacheArtifact != null) {
             Collection<BlackboardAttribute> webAttr = new ArrayList<>();
+            String url = cacheEntry.getKey() != null ? cacheEntry.getKey() : "";
             webAttr.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL,
-                    moduleName,
-                    ((cacheEntry.getKey() != null) ? cacheEntry.getKey() : "")));
+                    moduleName, url));
+            webAttr.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN,
+                    moduleName, NetworkUtils.extractDomain(url)));
             webAttr.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
                     moduleName, cacheEntry.getCreationTime()));
             webAttr.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_HEADERS,

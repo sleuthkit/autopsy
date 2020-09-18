@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.discovery.search;
 
+import java.time.LocalDate;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
@@ -171,9 +172,27 @@ public class SearchFiltering {
                     + " AND (value_int64 BETWEEN " + startDate + " AND " + endDate + ")";
         }
 
+        @NbBundle.Messages({"SearchFiltering.dateRangeFilter.lable=Activity date ",
+            "# {0} - startDate",
+            "SearchFiltering.dateRangeFilter.after=after: {0}",
+            "# {0} - endDate",
+            "SearchFiltering.dateRangeFilter.before=before: {0}",
+            "SearchFiltering.dateRangeFilter.and= and "})
         @Override
         public String getDesc() {
-            return "ArtifactDateRangeFilter Stub";
+            String desc = ""; // NON-NLS
+            LocalDate start = LocalDate.ofEpochDay(startDate);
+            if (!start.equals(LocalDate.MIN)) {
+                desc += Bundle.SearchFiltering_dateRangeFilter_after(start.toString());
+            }
+            LocalDate end = LocalDate.ofEpochDay(endDate);
+            if (!end.equals(LocalDate.MAX)) {
+                if (!desc.isEmpty()) {
+                    desc += Bundle.SearchFiltering_dateRangeFilter_and();
+                }
+                desc += Bundle.SearchFiltering_dateRangeFilter_before(end.toString());
+            }
+            return desc;
         }
     }
 
@@ -204,9 +223,20 @@ public class SearchFiltering {
             return "artifact_type_id IN (" + joiner + ")";
         }
 
+        @NbBundle.Messages({"# {0} - artifactTypes",
+            "SearchFiltering.artifactTypeFilter.desc=Result type(s): {0}",
+            "SearchFiltering.artifactTypeFilter.or=, "})
         @Override
         public String getDesc() {
-            return "ArtifactTypeFilter Stub";
+            String desc = ""; // NON-NLS
+            for (ARTIFACT_TYPE type : types) {
+                if (!desc.isEmpty()) {
+                    desc += Bundle.SearchFiltering_artifactTypeFilter_or();
+                }
+                desc += type.getDisplayName();
+            }
+            desc = Bundle.SearchFiltering_artifactTypeFilter_desc(desc);
+            return desc;
         }
 
     }
