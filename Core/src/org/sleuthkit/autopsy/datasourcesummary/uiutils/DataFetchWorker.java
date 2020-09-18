@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.datasourcesummary.uiutils;
 
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
-import java.util.logging.Level;
 import javax.swing.SwingWorker;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
