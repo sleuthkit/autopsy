@@ -24,6 +24,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -108,7 +109,7 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
      */
     public List<RecentFileDetails> getRecentlyOpenedDocuments(DataSource dataSource, int maxCount) throws SleuthkitCaseProviderException, TskCoreException {
         if (dataSource == null) {
-            throw new IllegalArgumentException("Failed to get recently opened documents given data source was null");
+            return Collections.emptyList();
         }
 
         List<BlackboardArtifact> artifactList
@@ -159,6 +160,10 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
      * @throws SleuthkitCaseProviderException
      */
     public List<RecentDownloadDetails> getRecentDownloads(DataSource dataSource, int maxCount) throws TskCoreException, SleuthkitCaseProviderException {
+        if (dataSource == null) {
+            return Collections.emptyList();
+        }
+
         List<BlackboardArtifact> artifactList
                 = DataSourceInfoUtilities.getArtifacts(provider.get(),
                         new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD),
@@ -206,6 +211,10 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
      * @throws TskCoreException
      */
     public List<RecentAttachmentDetails> getRecentAttachments(DataSource dataSource, int maxCount) throws SleuthkitCaseProviderException, TskCoreException {
+        if (dataSource == null) {
+            return Collections.emptyList();
+        }
+
         return createListFromMap(buildAttachmentMap(dataSource), maxCount);
     }
 
