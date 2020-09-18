@@ -301,7 +301,7 @@ public class FileSearch {
     private static void addAttributes(List<AttributeType> attrs, List<Result> results, SleuthkitCase caseDb, CentralRepository centralRepoDb)
             throws DiscoveryException {
         for (AttributeType attr : attrs) {
-            attr.addAttributeToResultFiles(results, caseDb, centralRepoDb);
+            attr.addAttributeToResults(results, caseDb, centralRepoDb);
         }
     }
 

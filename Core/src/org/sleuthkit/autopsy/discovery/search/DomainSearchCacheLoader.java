@@ -66,6 +66,18 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
                 domainResults = filter.applyAlternateFilter(domainResults, key.getSleuthkitCase(), key.getCentralRepository());
             }
         }
+        
+        // Grouping by CR Frequency, for example, will require further processing
+        // in order to make the correct decision. The attribute types that require
+        // more information implement their logic by overriding `addAttributeToResults`.
+        List<AttributeType> searchAttributes = new ArrayList<>();
+        searchAttributes.add(key.getGroupAttributeType());
+        searchAttributes.addAll(key.getFileSortingMethod().getRequiredAttributes());
+        
+        for (AttributeType attr : searchAttributes) {
+            attr.addAttributeToResults(domainResults, 
+                    key.getSleuthkitCase(), key.getCentralRepository());
+        }
 
         // Sort the ResultDomains by the requested criteria.
         final SearchResults searchResults = new SearchResults(

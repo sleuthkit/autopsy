@@ -617,7 +617,7 @@ public class SearchFiltering {
                 CentralRepository centralRepoDb) throws DiscoveryException {
             // Set the frequency for each file
             DiscoveryAttributes.FrequencyAttribute freqAttr = new DiscoveryAttributes.FrequencyAttribute();
-            freqAttr.addAttributeToResultFiles(currentResults, caseDb, centralRepoDb);
+            freqAttr.addAttributeToResults(currentResults, caseDb, centralRepoDb);
 
             // If the frequency matches the filter, add the file to the results
             List<Result> frequencyResults = new ArrayList<>();
