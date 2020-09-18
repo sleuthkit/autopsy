@@ -25,6 +25,7 @@ import javax.swing.DefaultListModel;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.discovery.search.SearchFiltering;
 import org.sleuthkit.autopsy.discovery.search.SearchFiltering.ParentSearchTerm;
 
@@ -279,11 +280,12 @@ final class ParentFolderFilterPanel extends AbstractDiscoveryFilterPanel {
         return parentLabel;
     }
 
+    @NbBundle.Messages({"ParentFolderFilterPanel.error.text=At least one parent path must be entered."})
     @Override
     String checkForError() {
         // Parent uses everything in the box
         if (parentCheckbox.isSelected() && getParentPaths().isEmpty()) {
-            return "At least one parent path must be entered";
+            return Bundle.ParentFolderFilterPanel_error_text();
         }
         return "";
     }

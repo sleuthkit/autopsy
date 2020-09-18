@@ -1,5 +1,6 @@
 ArtifactTypeFilterPanel.selectionNeeded.text=At least one Result type must be selected.
 CTL_OpenDiscoveryAction=Discovery
+DataSourceFilterPanel.error.text=At least one data source must be selected.
 # {0} - dataSourceName
 DataSourceModuleWrapper.exifModule.text=Picture Analyzer module was not run on data source: {0}\n
 # {0} - dataSourceName
@@ -48,9 +49,14 @@ DomainSummaryPanel.pages.text=Pages in past 60 days:
 DomainSummaryPanel.totalPages.text=Total visits: 
 GroupsListPanel.noResults.message.text=No results were found for the selected filters.\n\nReminder:\n  -The File Type Identification module must be run on each data source you want to find results in.\n  -The Hash Lookup module must be run on each data source if you want to filter by past occurrence.\n  -The Exif module must be run on each data source if you are filtering by User Created content.
 GroupsListPanel.noResults.title.text=No results found
+HashSetFilterPanel.error.text=At least one hash set name must be selected.
 ImageThumbnailPanel.isDeleted.text=All instances of file are deleted.
 # {0} - otherInstanceCount
 ImageThumbnailPanel.nameLabel.more.text=\ and {0} more
+InterestingItemsFilterPanel.error.text=At least one interesting file set name must be selected.
+ObjectDetectedFilterPanel.error.text=At least one object type name must be selected.
+ParentFolderFilterPanel.error.text=At least one parent path must be entered.
+PastOccurrencesFilterPanel.error.text=At least one value in the past occurrence filter must be selected.
 # {0} - currentPage
 # {1} - totalPages
 ResultsPanel.currentPage.displayValue=Page: {0} of {1}
@@ -76,6 +82,7 @@ ResultsPanel.invalidPageNumber.title=Invalid Page Number
 ResultsPanel.openInExternalViewer.name=Open in External Viewer
 ResultsPanel.unableToCreate.text=Unable to create summary.
 ResultsPanel.viewFileInDir.name=View File in Directory
+SizeFilterPanel.error.text=At least one size must be selected.
 VideoFilterPanel.videoFiltersSplitPane.border.title=Step 2: Filter which videos to show
 DataSourceFilterPanel.dataSourceCheckbox.text=Data Source:
 ParentFolderFilterPanel.parentLabel.text_1=(All will be used)
