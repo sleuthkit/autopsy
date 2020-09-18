@@ -80,7 +80,7 @@ public class DiscoveryAttributes {
          *
          * @throws DiscoveryException
          */
-        public void addAttributeToResultFiles(List<Result> results, SleuthkitCase caseDb, CentralRepository centralRepoDb) throws DiscoveryException {
+        public void addAttributeToResults(List<Result> results, SleuthkitCase caseDb, CentralRepository centralRepoDb) throws DiscoveryException {
             // Default is to do nothing
         }
     }
@@ -151,7 +151,7 @@ public class DiscoveryAttributes {
         }
 
         @Override
-        public void addAttributeToResultFiles(List<Result> results, SleuthkitCase caseDb,
+        public void addAttributeToResults(List<Result> results, SleuthkitCase caseDb,
                 CentralRepository centralRepoDb) throws DiscoveryException {
 
             // Get pairs of (object ID, keyword list name) for all files in the list of files that have
@@ -231,7 +231,7 @@ public class DiscoveryAttributes {
         }
 
         @Override
-        public void addAttributeToResultFiles(List<Result> results, SleuthkitCase caseDb,
+        public void addAttributeToResults(List<Result> results, SleuthkitCase caseDb,
                 CentralRepository centralRepoDb) throws DiscoveryException {
             if (centralRepoDb == null) {
                 for (Result result : results) {
@@ -279,6 +279,10 @@ public class DiscoveryAttributes {
                     }
                 } else {
                     ResultDomain domainInstance = (ResultDomain) result;
+                    if (domainInstance.getFrequency() != SearchData.Frequency.UNKNOWN) {
+                        // Frequency already calculated, skipping...
+                        continue;
+                    }
                     domainsToQuery.add(domainInstance);
 
                     if (domainsToQuery.size() == DOMAIN_BATCH_SIZE) {
@@ -442,7 +446,7 @@ public class DiscoveryAttributes {
         }
 
         @Override
-        public void addAttributeToResultFiles(List<Result> results, SleuthkitCase caseDb,
+        public void addAttributeToResults(List<Result> results, SleuthkitCase caseDb,
                 CentralRepository centralRepoDb) throws DiscoveryException {
 
             // Get pairs of (object ID, hash set name) for all files in the list of files that have
@@ -517,7 +521,7 @@ public class DiscoveryAttributes {
         }
 
         @Override
-        public void addAttributeToResultFiles(List<Result> results, SleuthkitCase caseDb,
+        public void addAttributeToResults(List<Result> results, SleuthkitCase caseDb,
                 CentralRepository centralRepoDb) throws DiscoveryException {
 
             // Get pairs of (object ID, interesting item set name) for all files in the list of files that have
@@ -629,7 +633,7 @@ public class DiscoveryAttributes {
         }
 
         @Override
-        public void addAttributeToResultFiles(List<Result> results, SleuthkitCase caseDb,
+        public void addAttributeToResults(List<Result> results, SleuthkitCase caseDb,
                 CentralRepository centralRepoDb) throws DiscoveryException {
 
             // Get pairs of (object ID, object type name) for all files in the list of files that have
@@ -705,7 +709,7 @@ public class DiscoveryAttributes {
         }
 
         @Override
-        public void addAttributeToResultFiles(List<Result> results, SleuthkitCase caseDb,
+        public void addAttributeToResults(List<Result> results, SleuthkitCase caseDb,
                 CentralRepository centralRepoDb) throws DiscoveryException {
 
             try {
