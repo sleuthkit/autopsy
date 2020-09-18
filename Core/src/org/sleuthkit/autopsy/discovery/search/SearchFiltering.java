@@ -18,7 +18,9 @@
  */
 package org.sleuthkit.autopsy.discovery.search;
 
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
@@ -33,14 +35,18 @@ import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.StringJoiner;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.autopsy.communications.Utils;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 
 /**
@@ -181,16 +187,14 @@ public class SearchFiltering {
         @Override
         public String getDesc() {
             String desc = ""; // NON-NLS
-            LocalDate start = LocalDate.ofEpochDay(startDate);
-            if (!start.equals(LocalDate.MIN)) {
-                desc += Bundle.SearchFiltering_dateRangeFilter_after(start.toString());
+            if (!(startDate <= 0 )) {
+                desc += Bundle.SearchFiltering_dateRangeFilter_after(new SimpleDateFormat("yyyy/MM/dd", Locale.getDefault()).format(new Date(TimeUnit.SECONDS.toMillis(startDate))));
             }
-            LocalDate end = LocalDate.ofEpochDay(endDate);
-            if (!end.equals(LocalDate.MAX)) {
+            if (!(endDate > 10000000000L)) { //arbitrary time sometime in the 23rd century to check that they specified a date and the max date isn't being used
                 if (!desc.isEmpty()) {
                     desc += Bundle.SearchFiltering_dateRangeFilter_and();
                 }
-                desc += Bundle.SearchFiltering_dateRangeFilter_before(end.toString());
+                desc += Bundle.SearchFiltering_dateRangeFilter_before(new SimpleDateFormat("yyyy/MM/dd", Locale.getDefault()).format(new Date(TimeUnit.SECONDS.toMillis(endDate))));
             }
             return desc;
         }
