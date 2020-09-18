@@ -38,6 +38,7 @@ import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils;
+import static org.sleuthkit.autopsy.discovery.search.SearchData.Type.DOMAIN;
 
 /**
  * Create a dialog for displaying the Discovery results.
@@ -108,7 +109,7 @@ public final class DiscoveryTopComponent extends TopComponent {
         BasicSplitPaneDividerImpl(BasicSplitPaneUI ui) {
             super(ui);
             this.setLayout(new BorderLayout());
-            this.add(new ResultsSplitPaneDivider(resultsPanel));
+            this.add(new ResultsSplitPaneDivider());
         }
 
         private static final long serialVersionUID = 1L;
@@ -258,17 +259,19 @@ public final class DiscoveryTopComponent extends TopComponent {
      */
     @Subscribe
     void handleDetailsVisibleEvent(DiscoveryEventUtils.DetailsVisibleEvent detailsVisibleEvent) {
-        if (animator != null && animator.isRunning()) {
-            animator.stop();
-            animator = null;
+        if (resultsPanel.getActiveType() != DOMAIN) {
+            if (animator != null && animator.isRunning()) {
+                animator.stop();
+                animator = null;
+            }
+            dividerLocation = rightSplitPane.getDividerLocation();
+            if (detailsVisibleEvent.isShowDetailsArea()) {
+                animator = new SwingAnimator(new ShowDetailsAreaCallback());
+            } else {
+                animator = new SwingAnimator(new HideDetailsAreaCallback());
+            }
+            animator.start();
         }
-        dividerLocation = rightSplitPane.getDividerLocation();
-        if (detailsVisibleEvent.isShowDetailsArea()) {
-            animator = new SwingAnimator(new ShowDetailsAreaCallback());
-        } else {
-            animator = new SwingAnimator(new HideDetailsAreaCallback());
-        }
-        animator.start();
     }
 
     /**
@@ -286,6 +289,8 @@ public final class DiscoveryTopComponent extends TopComponent {
         newSearchButton.setText(Bundle.DiscoveryTopComponent_cancelButton_text());
         progressMessageTextArea.setForeground(Color.red);
         progressMessageTextArea.setText(Bundle.DiscoveryTopComponent_searchInProgress_text(searchStartedEvent.getType().name()));
+        rightSplitPane.getComponent(1).setVisible(searchStartedEvent.getType() != DOMAIN);
+        rightSplitPane.getComponent(2).setVisible(searchStartedEvent.getType() != DOMAIN);
     }
 
     /**
