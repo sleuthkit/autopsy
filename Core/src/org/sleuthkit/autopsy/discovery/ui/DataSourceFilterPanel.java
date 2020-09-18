@@ -26,6 +26,7 @@ import javax.swing.DefaultListModel;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.discovery.search.SearchFiltering;
@@ -188,10 +189,11 @@ final class DataSourceFilterPanel extends AbstractDiscoveryFilterPanel {
         }
     }
 
+    @NbBundle.Messages({"DataSourceFilterPanel.error.text=At least one data source must be selected."})
     @Override
     String checkForError() {
         if (dataSourceCheckbox.isSelected() && dataSourceList.getSelectedValuesList().isEmpty()) {
-            return "At least one size must be selected";
+            return Bundle.DataSourceFilterPanel_error_text();
         }
         return "";
     }

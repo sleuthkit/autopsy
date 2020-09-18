@@ -25,6 +25,7 @@ import javax.swing.DefaultListModel;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.discovery.search.SearchFiltering;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -154,11 +155,11 @@ final class ObjectDetectedFilterPanel extends AbstractDiscoveryFilterPanel {
     JLabel getAdditionalLabel() {
         return null;
     }
-
+    @NbBundle.Messages({"ObjectDetectedFilterPanel.error.text=At least one object type name must be selected."})
     @Override
     String checkForError() {
         if (objectsCheckbox.isSelected() && objectsList.getSelectedValuesList().isEmpty()) {
-            return "At least one object type name must be selected";
+            return Bundle.ObjectDetectedFilterPanel_error_text();
         }
         return "";
     }

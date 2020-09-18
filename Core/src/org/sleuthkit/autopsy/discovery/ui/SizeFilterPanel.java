@@ -25,6 +25,7 @@ import javax.swing.DefaultListModel;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.discovery.search.SearchData;
 import org.sleuthkit.autopsy.discovery.search.SearchData.FileSize;
 import org.sleuthkit.autopsy.discovery.search.SearchFiltering;
@@ -166,10 +167,11 @@ final class SizeFilterPanel extends AbstractDiscoveryFilterPanel {
         }
     }
 
+    @NbBundle.Messages({"SizeFilterPanel.error.text=At least one size must be selected."})
     @Override
     String checkForError() {
         if (sizeCheckbox.isSelected() && sizeList.getSelectedValuesList().isEmpty()) {
-            return "At least one size must be selected";
+            return Bundle.SizeFilterPanel_error_text();
         }
         return "";
 

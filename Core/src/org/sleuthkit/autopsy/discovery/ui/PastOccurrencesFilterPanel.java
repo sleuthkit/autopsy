@@ -22,6 +22,7 @@ import javax.swing.DefaultListModel;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.discovery.search.AbstractFilter;
 import org.sleuthkit.autopsy.discovery.search.SearchData;
@@ -153,10 +154,11 @@ final class PastOccurrencesFilterPanel extends AbstractDiscoveryFilterPanel {
         return null;
     }
 
+    @NbBundle.Messages({"PastOccurrencesFilterPanel.error.text=At least one value in the past occurrence filter must be selected."})
     @Override
     String checkForError() {
         if (pastOccurrencesCheckbox.isSelected() && crFrequencyList.getSelectedValuesList().isEmpty()) {
-            return "At least one value in the past occurrence filter must be selected";
+            return Bundle.PastOccurrencesFilterPanel_error_text();
         }
         return "";
     }

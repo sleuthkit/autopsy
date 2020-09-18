@@ -25,6 +25,7 @@ import javax.swing.DefaultListModel;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.discovery.search.SearchFiltering;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -144,10 +145,11 @@ final class InterestingItemsFilterPanel extends AbstractDiscoveryFilterPanel {
         return null;
     }
 
+    @NbBundle.Messages({"InterestingItemsFilterPanel.error.text=At least one interesting file set name must be selected."})
     @Override
     String checkForError() {
         if (interestingItemsCheckbox.isSelected() && interestingItemsList.getSelectedValuesList().isEmpty()) {
-            return "At least one interesting file set name must be selected";
+            return Bundle.InterestingItemsFilterPanel_error_text();
         }
         return "";
     }
