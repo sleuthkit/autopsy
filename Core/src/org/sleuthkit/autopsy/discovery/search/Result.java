@@ -30,7 +30,7 @@ import org.sleuthkit.datamodel.TskData;
  */
 public abstract class Result {
 
-    private SearchData.Frequency frequency;
+    private SearchData.Frequency frequency = SearchData.Frequency.UNKNOWN;
     private final List<String> tagNames = new ArrayList<>();
 
     /**

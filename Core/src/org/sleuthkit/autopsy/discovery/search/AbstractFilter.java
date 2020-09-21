@@ -45,7 +45,7 @@ public abstract class AbstractFilter {
     public boolean useAlternateFilter() {
         return false;
     }
-
+    
     /**
      * Run a secondary filter that does not operate on table.
      *

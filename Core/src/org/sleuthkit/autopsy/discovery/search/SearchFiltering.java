@@ -116,6 +116,9 @@ public class SearchFiltering {
             resultList.add(new ResultFile(abstractFile));
         }
 
+        //manually add the attributes for filters which use alternate non filters and could be used by grouping or sorting
+        DiscoveryAttributes.FrequencyAttribute freqAttr = new DiscoveryAttributes.FrequencyAttribute();
+        freqAttr.addAttributeToResults(resultList, caseDb, centralRepoDb);
         // Now run any non-SQL filters. 
         for (AbstractFilter filter : filters) {
             if (filter.useAlternateFilter()) {
@@ -184,7 +187,7 @@ public class SearchFiltering {
         @Override
         public String getDesc() {
             String desc = ""; // NON-NLS
-            if (startDate > 0 ) {
+            if (startDate > 0) {
                 desc += Bundle.SearchFiltering_dateRangeFilter_after(new SimpleDateFormat("yyyy/MM/dd", Locale.getDefault()).format(new Date(TimeUnit.SECONDS.toMillis(startDate))));
             }
             if (endDate < 10000000000L) { //arbitrary time sometime in the 23rd century to check that they specified a date and the max date isn't being used
@@ -193,8 +196,8 @@ public class SearchFiltering {
                 }
                 desc += Bundle.SearchFiltering_dateRangeFilter_before(new SimpleDateFormat("yyyy/MM/dd", Locale.getDefault()).format(new Date(TimeUnit.SECONDS.toMillis(endDate))));
             }
-            if (!desc.isEmpty()){
-                desc = Bundle.SearchFiltering_dateRangeFilter_lable()+desc;
+            if (!desc.isEmpty()) {
+                desc = Bundle.SearchFiltering_dateRangeFilter_lable() + desc;
             }
             return desc;
         }
@@ -649,10 +652,6 @@ public class SearchFiltering {
         @Override
         public List<Result> applyAlternateFilter(List<Result> currentResults, SleuthkitCase caseDb,
                 CentralRepository centralRepoDb) throws DiscoveryException {
-            // Set the frequency for each file
-            DiscoveryAttributes.FrequencyAttribute freqAttr = new DiscoveryAttributes.FrequencyAttribute();
-            freqAttr.addAttributeToResults(currentResults, caseDb, centralRepoDb);
-
             // If the frequency matches the filter, add the file to the results
             List<Result> frequencyResults = new ArrayList<>();
             for (Result file : currentResults) {
