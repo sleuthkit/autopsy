@@ -46,18 +46,23 @@ def update_prop_entries(entries: Iterator[PropEntry], repo_path: str):
     for rel_path, (entries, to_delete) in items_by_file.items():
         abs_path = os.path.join(repo_path, rel_path)
 
+        changed = False
         prop_items = get_entry_dict_from_path(abs_path)
         if prop_items is None:
             prop_items = {}
 
         for key_to_delete in to_delete:
             if key_to_delete in prop_items:
+                changed = True
                 del prop_items[key_to_delete]
 
         for key, val in entries.items():
+            changed = True
             prop_items[key] = val
 
-        set_entry_dict(prop_items, abs_path)
+        # only write to disk if a change was made
+        if changed:
+            set_entry_dict(prop_items, abs_path)
 
 
 def get_by_file(entries: Iterator[PropEntry]) -> Dict[str, Tuple[Dict[str, str], List[str]]]:
@@ -125,7 +130,7 @@ def get_prop_entry(row: List[str],
     should_delete = False if should_delete_converter is None else should_delete_converter(row)
 
     # delete this key if no value provided
-    if not value.strip():
+    if not value or not value.strip():
         should_delete = True
 
     return PropEntry(path, key, value, should_delete)
@@ -154,8 +159,11 @@ def get_prop_entries(rows: List[List[str]],
     Returns:
         List[PropEntry]: The generated prop entry objects.
     """
-    return map(lambda row: get_prop_entry(row, path_idx, key_idx, value_idx, should_delete_converter,
-                                          path_converter), rows)
+    prop_entries = map(lambda row: get_prop_entry(row, path_idx, key_idx, value_idx, should_delete_converter,
+                                                  path_converter), rows)
+
+    # ensure a value is present
+    return filter(lambda prop_entry: prop_entry and prop_entry.key.strip() and prop_entry.rel_path.strip(), prop_entries)
 
 
 def get_should_deleted(row_items: List[str], requested_idx: int) -> bool:
@@ -230,7 +238,7 @@ def get_xlsx_rows(input_path: str, has_header: bool, results_sheet: str, deleted
         header = results_items[0]
         results_items = results_items[1:len(results_items)]
 
-    deleted_items = workbook[deleted_sheet] if deleted_sheet else None
+    deleted_items = workbook[deleted_sheet] if deleted_sheet and deleted_sheet in workbook else None
     if has_header and deleted_items and len(deleted_items) > 0:
         deleted_items = deleted_items[1:len(deleted_items)]
 
