@@ -193,6 +193,9 @@ public class SearchFiltering {
                 }
                 desc += Bundle.SearchFiltering_dateRangeFilter_before(new SimpleDateFormat("yyyy/MM/dd", Locale.getDefault()).format(new Date(TimeUnit.SECONDS.toMillis(endDate))));
             }
+            if (!desc.isEmpty()){
+                desc = Bundle.SearchFiltering_dateRangeFilter_lable()+desc;
+            }
             return desc;
         }
     }
