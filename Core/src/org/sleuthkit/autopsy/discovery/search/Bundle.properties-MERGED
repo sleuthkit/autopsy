@@ -87,12 +87,21 @@ SearchData.Frequency.verycommon.displayName=Very Common (100+)
 SearchData.Score.interesting.displayName=Interesting
 SearchData.Score.notable.displayName=Notable
 SearchData.Score.unknown.displayName=Unknown
+# {0} - artifactTypes
+SearchFiltering.artifactTypeFilter.desc=Result type(s): {0}
+SearchFiltering.artifactTypeFilter.or=, 
 # {0} - Data source name
 # {1} - Data source ID
 SearchFiltering.DataSourceFilter.datasource={0}({1})
 # {0} - filters
 SearchFiltering.DataSourceFilter.desc=Data source(s): {0}
 SearchFiltering.DataSourceFilter.or=, 
+# {0} - startDate
+SearchFiltering.dateRangeFilter.after=after: {0}
+SearchFiltering.dateRangeFilter.and=\ and 
+# {0} - endDate
+SearchFiltering.dateRangeFilter.before=before: {0}
+SearchFiltering.dateRangeFilter.lable=Activity date 
 # {0} - filters
 SearchFiltering.FileTypeFilter.desc=Type: {0}
 SearchFiltering.FileTypeFilter.or=, 
