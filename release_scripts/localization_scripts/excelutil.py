@@ -1,10 +1,12 @@
 """Provides tools for parsing and writing to a csv file.
 """
 import collections
-from typing import List, OrderedDict
+from typing import List, OrderedDict, Tuple, Union
+import xlsxwriter
 import pyexcel
+from xlsxwriter.format import Format
 
-from outputresult import OutputResult
+from outputresult import OutputResult, ColumnStyle
 
 Workbook = OrderedDict[str, List[List[str]]]
 
@@ -18,22 +20,6 @@ DELETED_SHEET_NAME = 'deleted'
 OMITTED_SHEET_NAME = 'omitted'
 
 
-def records_to_excel(output_path: str, workbook: Workbook):
-    """Writes workbook data model to an excel workbook.
-
-    Args:
-        output_path (str): The path where the csv file will be written.
-        workbook (Workbook): The worksheet to be written.  The dictionary corresponds to sheet name and sheet contents.
-                             Each row of the contents of strings will be written according to their index (i.e. column 3
-                              will be index 2).
-    """
-
-    pyexcel.save_book_as(
-        bookdict=workbook,
-        dest_file_name=output_path
-    )
-
-
 def excel_to_records(input_path: str) -> Workbook:
     """Reads rows to a excel file at the specified path.
 
@@ -44,6 +30,14 @@ def excel_to_records(input_path: str) -> Workbook:
     return pyexcel.get_book_dict(
         file_name=input_path
     )
+
+
+def get_writer_format(workbook: xlsxwriter.Workbook, style: ColumnStyle) -> Union[Tuple[Format, int], None]:
+    if style:
+        wb_format = workbook.add_format({'text_wrap': 1, 'valign': 'top'}) if style['wrap_text'] else None
+        return wb_format, style['width']
+    else:
+        return None
 
 
 def write_results_to_xlsx(results: OutputResult, output_path: str):
@@ -62,4 +56,26 @@ def write_results_to_xlsx(results: OutputResult, output_path: str):
     if results.deleted:
         workbook[DELETED_SHEET_NAME] = results.deleted
 
-    records_to_excel(output_path, workbook)
+    wb_file = xlsxwriter.Workbook(output_path)
+    styles = []
+    if results.column_styles:
+        styles = list(map(lambda style: get_writer_format(wb_file, style), results.column_styles))
+
+    for sheet_name, values in workbook.items():
+        sheet = wb_file.add_worksheet(name=sheet_name)
+        for col_idx in range(0, len(styles)):
+            if styles[col_idx]:
+                col_format, width = styles[col_idx]
+                sheet.set_column(col_idx, col_idx, width)
+
+        for row_idx in range(0, len(values)):
+            row = values[row_idx]
+            for col_idx in range(0, len(row)):
+                cell_format = None
+                if len(styles) > col_idx and styles[col_idx] and styles[col_idx][0]:
+                    cell_format = styles[col_idx][0]
+
+                cell_value = row[col_idx]
+                sheet.write(row_idx, col_idx, cell_value, cell_format)
+
+    wb_file.close()

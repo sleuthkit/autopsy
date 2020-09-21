@@ -1,8 +1,9 @@
 """This script finds all '.properties-MERGED' files and writes relative path, key, and value to a CSV file.
-This script requires the python libraries: jproperties.  It also requires Python 3.x.
+This script requires the python libraries: jproperties, pyexcel-xlsx, xlsxwriter and pyexcel.
+It also requires Python 3.x.
 """
 
-from typing import List, Dict, Tuple, Callable, Iterator, Union, TypedDict
+from typing import List, Dict, Tuple, Callable, Iterator, Union
 import sys
 import os
 
@@ -171,7 +172,7 @@ def get_should_deleted(row_items: List[str], requested_idx: int) -> bool:
         return False
 
 
-class DataRows(TypedDict):
+class DataRows:
     """
     Defines pieces of an intermediate parsed result from a data source including the header row (if present), results
     as a 2d list, and deleted results as a 2d list.
@@ -179,6 +180,19 @@ class DataRows(TypedDict):
     header: Union[List[str], None]
     results: List[List[str]]
     deleted_results: Union[List[List[str]], None]
+
+    def __init__(self, results: List[List[str]], header: Union[List[str], None] = None,
+                 deleted_results: Union[List[List[str]], None] = None):
+        """
+        Creates a DataRows object.
+        Args:
+            results: The 2d list of strings representing cells.
+            header: The header row if present.
+            deleted_results: The 2d list of strings representing cells or None.
+        """
+        self.header = header
+        self.results = results
+        self.deleted_results = deleted_results
 
 
 def get_csv_rows(input_path: str, has_header: bool) -> DataRows:
@@ -192,10 +206,7 @@ def get_csv_rows(input_path: str, has_header: bool) -> DataRows:
 
     """
     all_items, header = csv_to_records(input_path, has_header)
-    return {
-        'header': header,
-        'results': all_items
-    }
+    return DataRows(header=header, results=all_items)
 
 
 def get_xlsx_rows(input_path: str, has_header: bool, results_sheet: str, deleted_sheet: str) -> DataRows:
@@ -210,7 +221,7 @@ def get_xlsx_rows(input_path: str, has_header: bool, results_sheet: str, deleted
     Returns: An intermediate result DataRows object for further parsing.
 
     """
-    workbook = excel_to_records(input_path, has_header)
+    workbook = excel_to_records(input_path)
     results_items = workbook[results_sheet]
     header = None
     if has_header and len(results_items) > 0:
@@ -218,15 +229,11 @@ def get_xlsx_rows(input_path: str, has_header: bool, results_sheet: str, deleted
         results_items = results_items[1:len(results_items)]
 
     deleted_items = workbook[deleted_sheet] if deleted_sheet else None
-    return {
-        'header': header,
-        'results': results_items,
-        'deleted_results': deleted_items
-    }
+    return DataRows(header=header, results=results_items, deleted_results=deleted_items)
 
 
 def get_prop_entries_from_data(datarows: DataRows, path_idx: int, key_idx: int, value_idx: int,
-                               should_delete_converter: Tuple[Callable[[List[str]], bool], None],
+                               should_delete_converter: Union[Callable[[List[str]], bool], None],
                                path_converter: Callable) -> List[PropEntry]:
     """
     Converts a DataRows object into PropEntry objects.
@@ -243,12 +250,12 @@ def get_prop_entries_from_data(datarows: DataRows, path_idx: int, key_idx: int, 
 
     """
 
-    prop_entries = get_prop_entries(datarows['results'], path_idx, key_idx, value_idx, should_delete_converter,
-                                    path_converter)
+    prop_entries = list(get_prop_entries(datarows.results, path_idx, key_idx, value_idx, should_delete_converter,
+                                         path_converter))
 
-    if datarows['deleted_results'] and len(datarows['deleted_results']) > 0:
-        prop_entries += get_prop_entries(datarows['results'], path_idx, key_idx, value_idx, lambda row: True,
-                                         path_converter)
+    if datarows.deleted_results and len(datarows.deleted_results) > 0:
+        prop_entries += list(get_prop_entries(datarows.deleted_results, path_idx, key_idx, value_idx, lambda row: True,
+                                              path_converter))
 
     return prop_entries
 
@@ -320,7 +327,7 @@ def main():
     results_sheet = args.result_sheet
 
     # means of determining if a key should be deleted from a file
-    if args.should_delete_idx is None and args.should_delete_idx >= 0:
+    if args.should_delete_idx < 0:
         should_delete_converter = None
     else:
         def should_delete_converter(row_items: List[str]):
@@ -348,7 +355,7 @@ def main():
     # convert to PropEntry objects
     prop_entries = get_prop_entries_from_data(data_rows, path_idx, key_idx, value_idx,
                                               should_delete_converter, path_converter)
-    header = data_rows['header']
+    header = data_rows.header
 
     # write to files
     if overwrite:

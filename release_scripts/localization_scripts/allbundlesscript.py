@@ -1,7 +1,7 @@
 """This script finds all '.properties-MERGED' files and writes relative path, key, and value to a CSV file.
-This script requires the python libraries: gitpython and jproperties.  As a consequence, it also requires
-git >= 1.7.0 and python >= 3.4.  This script relies on fetching 'HEAD' from current branch.  So make sure
-repo is on correct branch (i.e. develop).
+This script requires the python libraries: gitpython, jproperties, pyexcel-xlsx, xlsxwriter and pyexcel.  As a
+consequence, it also requires git >= 1.7.0 and python >= 3.4.  This script relies on fetching 'HEAD' from current
+branch.  So make sure repo is on correct branch (i.e. develop).
 """
 import sys
 
@@ -37,7 +37,7 @@ def main():
     output_path = args.output_path
     show_commit = not args.no_commit
     output_type = args.output_type
-    translated_col = not args.translated_col
+    translated_col = not args.no_translated_col
     commit_id = get_commit_id(repo_path, 'HEAD') if show_commit else None
 
     processing_result = convert_to_output(get_property_file_entries(repo_path), commit_id, translated_col)

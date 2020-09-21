@@ -4,7 +4,8 @@ from outputresult import OutputResult
 from propsutil import get_entry_dict
 from enum import Enum
 
-from tabularutil import WITH_TRANSLATED_COLS, RELATIVE_PATH_COL, KEY_COL, create_output_result
+from tabularutil import WITH_TRANSLATED_COLS, RELATIVE_PATH_COL, KEY_COL, create_output_result, WITH_TRANSLATED_STYLE, \
+    VALUE_STYLE
 import re
 
 
@@ -73,7 +74,7 @@ class ItemChange:
             return [
                 self.rel_path,
                 self.key,
-                self.type,
+                str(self.type) if self.type else None,
                 self.prev_val,
                 self.cur_val]
 
@@ -98,6 +99,7 @@ def convert_to_output(items: Iterator[ItemChange], commit1_id: Union[str, None] 
 
     """
     header = WITH_TRANSLATED_COLS if show_translated_col else ITEMCHANGE_DEFAULT_COLS
+    style = WITH_TRANSLATED_STYLE if show_translated_col else [None, None, None, VALUE_STYLE, VALUE_STYLE]
 
     if commit1_id:
         header = header + [commit1_id]
@@ -113,12 +115,12 @@ def convert_to_output(items: Iterator[ItemChange], commit1_id: Union[str, None] 
         item_row = item.get_row(show_translated_col)
         if separate_deleted and item.type == ChangeType.DELETION:
             deleted.append(item_row)
-        if value_regex is not None and re.match(value_regex, item.cur_val):
+        elif value_regex is not None and re.match(value_regex, item.cur_val):
             omitted.append(item_row)
         else:
             results.append(item_row)
 
-    return create_output_result(header, results, omitted=omitted)
+    return create_output_result(header, results, omitted=omitted, deleted=deleted, style=style)
 
 
 def get_item_change(rel_path: str, key: str, prev_val: str, cur_val: str) -> Union[ItemChange, None]:

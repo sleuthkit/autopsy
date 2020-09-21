@@ -1,6 +1,6 @@
 from typing import List, Union, Iterator
 from outputresult import OutputResult
-from tabularutil import WITH_TRANSLATED_COLS, DEFAULT_COLS, create_output_result
+from tabularutil import WITH_TRANSLATED_COLS, DEFAULT_COLS, create_output_result, DEFAULT_STYLES, WITH_TRANSLATED_STYLE
 import re
 
 
@@ -50,6 +50,7 @@ def convert_to_output(items: Iterator[PropEntry], commit_id: Union[str, None] = 
 
     """
     header = WITH_TRANSLATED_COLS if show_translated_col else DEFAULT_COLS
+    style = WITH_TRANSLATED_STYLE if show_translated_col else DEFAULT_STYLES
 
     if commit_id:
         header = header + [commit_id]
@@ -64,4 +65,4 @@ def convert_to_output(items: Iterator[PropEntry], commit_id: Union[str, None] = 
         else:
             omitted.append(new_entry)
 
-    return create_output_result(header, results, omitted=omitted)
+    return create_output_result(header, results, omitted=omitted, style=style)

@@ -1,11 +1,11 @@
 """This script determines the updated, added, and deleted properties from the '.properties-MERGED' files
-and generates a csv file containing the items changed.  This script requires the python libraries:
-gitpython and jproperties.  As a consequence, it also requires git >= 1.7.0 and python >= 3.4.
+and generates a csv file containing the items changed.  : gitpython, jproperties, pyexcel-xlsx, xlsxwriter and pyexcel.
+As a consequence, it also requires git >= 1.7.0 and python >= 3.4.
 """
 import sys
 from envutil import get_proj_dir
 from excelutil import write_results_to_xlsx
-from gitutil import get_property_files_diff, get_git_root
+from gitutil import get_property_files_diff, get_git_root, get_commit_id
 from itemchange import convert_to_output
 from csvutil import write_results_to_csv
 import argparse
@@ -46,7 +46,7 @@ def main():
     output_path = args.output_path
     commit_1_id = args.commit_1_id
     output_type = args.output_type
-    show_translated_col = not args.translated_col
+    show_translated_col = not args.no_translated_col
 
     lang = args.language
     if lang is not None:
@@ -63,8 +63,8 @@ def main():
 
     changes = get_property_files_diff(repo_path, commit_1_id, commit_2_id)
     processing_result = convert_to_output(changes,
-                                          commit_1_id=commit_1_id if show_commits else None,
-                                          commit_2_id=commit_2_id if show_commits else None,
+                                          commit1_id=get_commit_id(repo_path, commit_1_id) if show_commits else None,
+                                          commit2_id=get_commit_id(repo_path, commit_2_id) if show_commits else None,
                                           show_translated_col=show_translated_col,
                                           separate_deleted=True)
 
