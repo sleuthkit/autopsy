@@ -38,6 +38,7 @@ import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils;
+import org.sleuthkit.autopsy.discovery.search.SearchData.Type;
 import static org.sleuthkit.autopsy.discovery.search.SearchData.Type.DOMAIN;
 
 /**
@@ -56,6 +57,7 @@ public final class DiscoveryTopComponent extends TopComponent {
     private final GroupListPanel groupListPanel;
     private final DetailsPanel detailsPanel;
     private final ResultsPanel resultsPanel;
+    private Type searchType;
     private int dividerLocation = -1;
     private SwingAnimator animator = null;
 
@@ -288,7 +290,8 @@ public final class DiscoveryTopComponent extends TopComponent {
     void handleSearchStartedEvent(DiscoveryEventUtils.SearchStartedEvent searchStartedEvent) {
         newSearchButton.setText(Bundle.DiscoveryTopComponent_cancelButton_text());
         progressMessageTextArea.setForeground(Color.red);
-        progressMessageTextArea.setText(Bundle.DiscoveryTopComponent_searchInProgress_text(searchStartedEvent.getType().name()));
+        searchType = searchStartedEvent.getType();
+        progressMessageTextArea.setText(Bundle.DiscoveryTopComponent_searchInProgress_text(searchType.name()));
         rightSplitPane.getComponent(1).setVisible(searchStartedEvent.getType() != DOMAIN);
         rightSplitPane.getComponent(2).setVisible(searchStartedEvent.getType() != DOMAIN);
     }
@@ -302,11 +305,22 @@ public final class DiscoveryTopComponent extends TopComponent {
     @Subscribe
     @Messages({"DiscoveryTopComponent.newSearch.text=New Search",
         "# {0} - search",
-        "DiscoveryTopComponent.searchComplete.text=Results with {0}"})
+        "DiscoveryTopComponent.searchComplete.text=Results with {0}",
+        "DiscoveryTopComponent.domainSearch.text=Type: Domain",
+        "DiscoveryTopComponent.additionalFilters.text=; "})
     void handleSearchCompleteEvent(DiscoveryEventUtils.SearchCompleteEvent searchCompleteEvent) {
         newSearchButton.setText(Bundle.DiscoveryTopComponent_newSearch_text());
         progressMessageTextArea.setForeground(Color.black);
-        progressMessageTextArea.setText(Bundle.DiscoveryTopComponent_searchComplete_text(searchCompleteEvent.getFilters().stream().map(AbstractFilter::getDesc).collect(Collectors.joining("; "))));
+        String descriptionText = "";
+        if (searchType == DOMAIN) {
+            //domain does not have a file type filter to add the type information so it is manually added
+            descriptionText = Bundle.DiscoveryTopComponent_domainSearch_text();
+            if (!searchCompleteEvent.getFilters().isEmpty()) {
+                descriptionText += Bundle.DiscoveryTopComponent_additionalFilters_text();
+            }
+        }
+        descriptionText += searchCompleteEvent.getFilters().stream().map(AbstractFilter::getDesc).collect(Collectors.joining("; "));
+        progressMessageTextArea.setText(Bundle.DiscoveryTopComponent_searchComplete_text(descriptionText));
         progressMessageTextArea.setCaretPosition(0);
     }
 
