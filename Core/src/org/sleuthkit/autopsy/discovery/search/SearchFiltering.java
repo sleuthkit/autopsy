@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.discovery.search;
 
+import java.text.SimpleDateFormat;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
@@ -32,8 +33,11 @@ import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.StringJoiner;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -171,9 +175,25 @@ public class SearchFiltering {
                     + " AND (value_int64 BETWEEN " + startDate + " AND " + endDate + ")";
         }
 
+        @NbBundle.Messages({"SearchFiltering.dateRangeFilter.lable=Activity date ",
+            "# {0} - startDate",
+            "SearchFiltering.dateRangeFilter.after=after: {0}",
+            "# {0} - endDate",
+            "SearchFiltering.dateRangeFilter.before=before: {0}",
+            "SearchFiltering.dateRangeFilter.and= and "})
         @Override
         public String getDesc() {
-            return "ArtifactDateRangeFilter Stub";
+            String desc = ""; // NON-NLS
+            if (!(startDate <= 0 )) {
+                desc += Bundle.SearchFiltering_dateRangeFilter_after(new SimpleDateFormat("yyyy/MM/dd", Locale.getDefault()).format(new Date(TimeUnit.SECONDS.toMillis(startDate))));
+            }
+            if (!(endDate > 10000000000L)) { //arbitrary time sometime in the 23rd century to check that they specified a date and the max date isn't being used
+                if (!desc.isEmpty()) {
+                    desc += Bundle.SearchFiltering_dateRangeFilter_and();
+                }
+                desc += Bundle.SearchFiltering_dateRangeFilter_before(new SimpleDateFormat("yyyy/MM/dd", Locale.getDefault()).format(new Date(TimeUnit.SECONDS.toMillis(endDate))));
+            }
+            return desc;
         }
     }
 
@@ -204,9 +224,20 @@ public class SearchFiltering {
             return "artifact_type_id IN (" + joiner + ")";
         }
 
+        @NbBundle.Messages({"# {0} - artifactTypes",
+            "SearchFiltering.artifactTypeFilter.desc=Result type(s): {0}",
+            "SearchFiltering.artifactTypeFilter.or=, "})
         @Override
         public String getDesc() {
-            return "ArtifactTypeFilter Stub";
+            String desc = ""; // NON-NLS
+            for (ARTIFACT_TYPE type : types) {
+                if (!desc.isEmpty()) {
+                    desc += Bundle.SearchFiltering_artifactTypeFilter_or();
+                }
+                desc += type.getDisplayName();
+            }
+            desc = Bundle.SearchFiltering_artifactTypeFilter_desc(desc);
+            return desc;
         }
 
     }
