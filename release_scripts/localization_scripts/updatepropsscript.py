@@ -97,7 +97,7 @@ def idx_bounded(num: int, max_exclusive: int) -> bool:
 def get_prop_entry(row: List[str], 
                    path_idx: int = 0,
                    key_idx: int = 1,
-                   value_idx: int = 2,
+                   value_idx: int = 3,
                    should_delete_converter: Callable[[List[str]], bool] = None,
                    path_converter: Callable[[str], str] = None) -> PropEntry:
     """Parses a PropEntry object from a row of values in a csv.
@@ -123,6 +123,11 @@ def get_prop_entry(row: List[str],
     key = row[key_idx] if idx_bounded(key_idx, len(row)) else None
     value = row[value_idx] if idx_bounded(value_idx, len(row)) else None
     should_delete = False if should_delete_converter is None else should_delete_converter(row)
+
+    # delete this key if no value provided
+    if not value.strip():
+        should_delete = True
+
     return PropEntry(path, key, value, should_delete)
 
 
@@ -149,11 +154,8 @@ def get_prop_entries(rows: List[List[str]],
     Returns:
         List[PropEntry]: The generated prop entry objects.
     """
-    propentry_iter = map(lambda row: get_prop_entry(row, path_idx, key_idx, value_idx, should_delete_converter,
-                                                    path_converter), rows)
-
-    # filter rows that have no value
-    return filter(lambda entry: entry and entry.value.strip(), propentry_iter)
+    return map(lambda row: get_prop_entry(row, path_idx, key_idx, value_idx, should_delete_converter,
+                                          path_converter), rows)
 
 
 def get_should_deleted(row_items: List[str], requested_idx: int) -> bool:
@@ -229,6 +231,9 @@ def get_xlsx_rows(input_path: str, has_header: bool, results_sheet: str, deleted
         results_items = results_items[1:len(results_items)]
 
     deleted_items = workbook[deleted_sheet] if deleted_sheet else None
+    if has_header and deleted_items and len(deleted_items) > 0:
+        deleted_items = deleted_items[1:len(deleted_items)]
+
     return DataRows(header=header, results=results_items, deleted_results=deleted_items)
 
 
@@ -309,7 +314,7 @@ def main():
                         required=False, help="Whether or not to overwrite the previously existing properties files"
                                              " ignoring previously existing values.")
 
-    parser.add_argument('-l', '--language', dest='language', type=str, default='HEAD', required=False,
+    parser.add_argument('-l', '--language', dest='language', type=str, default=None, required=False,
                         help='Specify the language in order to update the last updated properties file and rename '
                              'files within directories.  This flag overrides the file-rename flag.')
 
@@ -324,7 +329,7 @@ def main():
     has_header = not args.has_no_header
     overwrite = args.should_overwrite
     deleted_sheet = args.deleted_sheet
-    results_sheet = args.result_sheet
+    results_sheet = args.results_sheet
 
     # means of determining if a key should be deleted from a file
     if args.should_delete_idx < 0:
@@ -364,7 +369,7 @@ def main():
         update_prop_entries(prop_entries, repo_path)
 
     # update the language last update if applicable
-    if args.language is not None and header is not None and len(header) > args.latest_commit_idx >= 0:
+    if args.language and header is not None and len(header) > args.latest_commit_idx >= 0:
         set_commit_for_language(args.language, header[args.latest_commit_idx])
 
     sys.exit(0)
