@@ -26,22 +26,29 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.swing.JLabel;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.FileTypeUtils.FileTypeCategory;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.TypesSummary;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.ContainerSummary;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.IngestModuleCheckUtil;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.MimeTypeSummary;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.AbstractLoadableComponent;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult.ResultType;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.IngestRunningLabel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.LoadableComponent;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.PieChartPanel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.PieChartPanel.PieChartItem;
+import org.sleuthkit.autopsy.modules.filetypeid.FileTypeIdModuleFactory;
 
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -93,27 +100,64 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
             this.showResults(null);
         }
 
-        private void setValue(String value, boolean italicize) {
+        private void setValue(String value) {
             String formattedKey = StringUtils.isBlank(key) ? "" : key;
             String formattedValue = StringUtils.isBlank(value) ? "" : value;
-            String htmlFormattedValue = (italicize) ? String.format("<i>%s</i>", formattedValue) : formattedValue;
-            label.setText(String.format("<html><div style='text-align: center;'>%s: %s</div></html>", formattedKey, htmlFormattedValue));
+            label.setText(String.format("%s: %s", formattedKey, formattedValue));
         }
 
         @Override
         protected void setMessage(boolean visible, String message) {
-            setValue(message, true);
+            setValue(message);
         }
 
         @Override
         protected void setResults(String data) {
-            setValue(data, false);
+            setValue(data);
+        }
+    }
+
+    /**
+     * Data for types pie chart.
+     */
+    private static class TypesPieChartData {
+
+        private final List<PieChartItem> pieSlices;
+        private final boolean usefulContent;
+
+        /**
+         * Main constructor.
+         *
+         * @param pieSlices     The pie slices.
+         * @param usefulContent True if this is useful content; false if there
+         *                      is 0 mime type information.
+         */
+        public TypesPieChartData(List<PieChartItem> pieSlices, boolean usefulContent) {
+            this.pieSlices = pieSlices;
+            this.usefulContent = usefulContent;
+        }
+
+        /**
+         * @return The pie chart data.
+         */
+        public List<PieChartItem> getPieSlices() {
+            return pieSlices;
+        }
+
+        /**
+         * @return Whether or not the data is usefulContent.
+         */
+        public boolean isUsefulContent() {
+            return usefulContent;
         }
     }
 
     private static final long serialVersionUID = 1L;
     private static final DecimalFormat INTEGER_SIZE_FORMAT = new DecimalFormat("#");
     private static final DecimalFormat COMMA_FORMATTER = new DecimalFormat("#,###");
+    private static final String FILE_TYPE_FACTORY = FileTypeIdModuleFactory.class.getCanonicalName();
+    private static final String FILE_TYPE_MODULE_NAME = FileTypeIdModuleFactory.getModuleName();
+    private static final Logger logger = Logger.getLogger(TypesPanel.class.getName());
 
     // All file type categories.
     private static final List<Pair<String, Set<String>>> FILE_MIME_TYPE_CATEGORIES = Arrays.asList(
@@ -148,6 +192,8 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
             directoriesLabel
     );
 
+    private final IngestRunningLabel ingestRunningLabel = new IngestRunningLabel();
+
     // all of the means for obtaining data for the gui components.
     private final List<DataFetchComponents<DataSource, ?>> dataFetchComponents;
 
@@ -156,6 +202,12 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
      */
     public TypesPanel() {
         this(new MimeTypeSummary(), new TypesSummary(), new ContainerSummary());
+    }
+
+    @Override
+    public void close() {
+        ingestRunningLabel.unregister();
+        super.close();
     }
 
     /**
@@ -176,11 +228,25 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
                 // usage label worker
                 new DataFetchWorker.DataFetchComponents<>(
                         containerData::getDataSourceType,
-                        usageLabel::showDataFetchResult),
+                        (result) -> {
+                            showResultWithModuleCheck(
+                                    usageLabel,
+                                    result,
+                                    StringUtils::isNotBlank,
+                                    IngestModuleCheckUtil.RECENT_ACTIVITY_FACTORY,
+                                    IngestModuleCheckUtil.RECENT_ACTIVITY_MODULE_NAME);
+                        }),
                 // os label worker
                 new DataFetchWorker.DataFetchComponents<>(
                         containerData::getOperatingSystems,
-                        osLabel::showDataFetchResult),
+                        (result) -> {
+                            showResultWithModuleCheck(
+                                    osLabel,
+                                    result,
+                                    StringUtils::isNotBlank,
+                                    IngestModuleCheckUtil.RECENT_ACTIVITY_FACTORY,
+                                    IngestModuleCheckUtil.RECENT_ACTIVITY_MODULE_NAME);
+                        }),
                 // size label worker
                 new DataFetchWorker.DataFetchComponents<>(
                         (dataSource) -> {
@@ -191,7 +257,7 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
                 // file types worker
                 new DataFetchWorker.DataFetchComponents<>(
                         (dataSource) -> getMimeTypeCategoriesModel(mimeTypeData, dataSource),
-                        fileMimeTypesChart::showDataFetchResult),
+                        this::showMimeTypeCategories),
                 // allocated files worker
                 new DataFetchWorker.DataFetchComponents<>(
                         (dataSource) -> getStringOrZero(typeData.getCountOfAllocatedFiles(dataSource)),
@@ -230,7 +296,7 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
      *
      * @return The pie chart items.
      */
-    private List<PieChartItem> getMimeTypeCategoriesModel(MimeTypeSummary mimeTypeData, DataSource dataSource)
+    private TypesPieChartData getMimeTypeCategoriesModel(MimeTypeSummary mimeTypeData, DataSource dataSource)
             throws SQLException, SleuthkitCaseProviderException, TskCoreException {
 
         if (dataSource == null) {
@@ -259,15 +325,76 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
         fileCategoryItems.add(Pair.of(Bundle.TypesPanel_fileMimeTypesChart_other_title(),
                 allRegularFiles - (categoryTotalCount + noMimeTypeCount)));
 
+        // check at this point to see if these are all 0; if so, we don't have useful content.
+        boolean usefulContent = fileCategoryItems.stream().anyMatch((pair) -> pair.getValue() != null && pair.getValue() > 0);
+
         // create entry for not analyzed mime types category
         fileCategoryItems.add(Pair.of(Bundle.TypesPanel_fileMimeTypesChart_notAnalyzed_title(),
                 noMimeTypeCount));
 
         // create pie chart items to provide to pie chart
-        return fileCategoryItems.stream()
+        List<PieChartItem> items = fileCategoryItems.stream()
                 .filter(keyCount -> keyCount.getRight() != null && keyCount.getRight() > 0)
                 .map(keyCount -> new PieChartItem(keyCount.getLeft(), keyCount.getRight()))
                 .collect(Collectors.toList());
+
+        return new TypesPieChartData(items, usefulContent);
+    }
+
+    /**
+     * Handles properly showing data for the mime type categories pie chart
+     * accounting for whether there are any files with mime types specified and
+     * whether or not the current data source has been ingested with the file
+     * type ingest module.
+     *
+     * @param result The result to be shown.
+     */
+    private void showMimeTypeCategories(DataFetchResult<TypesPieChartData> result) {
+        // if result is null check for ingest module and show empty results.
+        if (result == null) {
+            showPieResultWithModuleCheck(null);
+            return;
+        }
+
+        // if error, show error
+        if (result.getResultType() == ResultType.ERROR) {
+            this.fileMimeTypesChart.showDataFetchResult(DataFetchResult.getErrorResult(result.getException()));
+            return;
+        }
+
+        TypesPieChartData data = result.getData();
+        if (data == null) {
+            // if no data, do an ingest module check with empty results
+            showPieResultWithModuleCheck(null);
+        } else if (!data.isUsefulContent()) {
+            // if no useful data, do an ingest module check and show data
+            showPieResultWithModuleCheck(data.getPieSlices());
+        } else {
+            // otherwise, show the data
+            this.fileMimeTypesChart.showDataFetchResult(DataFetchResult.getSuccessResult(data.getPieSlices()));
+        }
+    }
+
+    /**
+     * Shows a message in the fileMimeTypesChart about the data source not being
+     * ingested with the file type ingest module if the data source has not been
+     * ingested with that module. Also shows data if present.
+     *
+     * @param items The list of items to show.
+     */
+    private void showPieResultWithModuleCheck(List<PieChartItem> items) {
+        boolean hasBeenIngested = false;
+        try {
+            hasBeenIngested = this.getIngestModuleCheckUtil().isModuleIngested(getDataSource(), FILE_TYPE_FACTORY);
+        } catch (TskCoreException | SleuthkitCaseProviderException ex) {
+            logger.log(Level.WARNING, "There was an error fetching whether or not the current data source has been ingested with the file type ingest module.", ex);
+        }
+
+        if (hasBeenIngested) {
+            this.fileMimeTypesChart.showDataFetchResult(DataFetchResult.getSuccessResult(items));
+        } else {
+            this.fileMimeTypesChart.showDataWithMessage(items, getDefaultNoIngestMessage(FILE_TYPE_MODULE_NAME));
+        }
     }
 
     /**
@@ -304,6 +431,7 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
 
         javax.swing.JScrollPane scrollParent = new javax.swing.JScrollPane();
         javax.swing.JPanel contentParent = new javax.swing.JPanel();
+        javax.swing.JPanel ingestRunningPanel = ingestRunningLabel;
         javax.swing.JPanel usagePanel = usageLabel;
         javax.swing.JPanel osPanel = osLabel;
         javax.swing.JPanel sizePanel = sizeLabel;
@@ -321,6 +449,12 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
         contentParent.setMaximumSize(new java.awt.Dimension(32787, 32787));
         contentParent.setMinimumSize(new java.awt.Dimension(400, 490));
         contentParent.setLayout(new javax.swing.BoxLayout(contentParent, javax.swing.BoxLayout.PAGE_AXIS));
+
+        ingestRunningPanel.setAlignmentX(0.0F);
+        ingestRunningPanel.setMaximumSize(new java.awt.Dimension(32767, 25));
+        ingestRunningPanel.setMinimumSize(new java.awt.Dimension(10, 25));
+        ingestRunningPanel.setPreferredSize(new java.awt.Dimension(10, 25));
+        contentParent.add(ingestRunningPanel);
 
         usagePanel.setAlignmentX(0.0F);
         usagePanel.setMaximumSize(new java.awt.Dimension(32767, 20));

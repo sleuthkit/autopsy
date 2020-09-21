@@ -33,10 +33,14 @@ import org.jfree.chart.panel.AbstractOverlay;
 import org.jfree.chart.panel.Overlay;
 import org.jfree.chart.plot.PiePlot;
 import org.jfree.data.general.DefaultPieDataset;
+import org.openide.util.NbBundle.Messages;
 
 /**
  * A pie chart panel.
  */
+@Messages({
+    "PieChartPanel_noDataLabel=No Data"
+})
 public class PieChartPanel extends AbstractLoadableComponent<List<PieChartPanel.PieChartItem>> {
 
     /**
@@ -111,6 +115,13 @@ public class PieChartPanel extends AbstractLoadableComponent<List<PieChartPanel.
     private static final long serialVersionUID = 1L;
 
     private static final Font DEFAULT_FONT = new JLabel().getFont();
+
+    /**
+     * It appears that JFreeChart will show nothing if all values are zero. So
+     * this is a value close to zero but not to be displayed.
+     */
+    private static final double NEAR_ZERO = Math.ulp(1d);
+
     private static final Font DEFAULT_HEADER_FONT = new Font(DEFAULT_FONT.getName(), DEFAULT_FONT.getStyle(), (int) (DEFAULT_FONT.getSize() * 1.5));
     private static final PieSectionLabelGenerator DEFAULT_LABEL_GENERATOR
             = new StandardPieSectionLabelGenerator(
@@ -192,10 +203,27 @@ public class PieChartPanel extends AbstractLoadableComponent<List<PieChartPanel.
     @Override
     protected void setResults(List<PieChartPanel.PieChartItem> data) {
         this.dataset.clear();
-        if (data != null) {
+        if (data != null && !data.isEmpty()) {
             for (PieChartPanel.PieChartItem slice : data) {
                 this.dataset.setValue(slice.getLabel(), slice.getValue());
             }
+        } else {
+            // show a no data label if no data.
+            // this in fact shows a very small number for the value 
+            // that should be way below rounding error for formatters
+            this.dataset.setValue(Bundle.PieChartPanel_noDataLabel(), NEAR_ZERO);
         }
+    }
+
+    /**
+     * Shows a message on top of data.
+     *
+     * @param data    The data.
+     * @param message The message.
+     */
+    public synchronized void showDataWithMessage(List<PieChartPanel.PieChartItem> data, String message) {
+        setResults(data);
+        setMessage(true, message);
+        repaint();
     }
 }

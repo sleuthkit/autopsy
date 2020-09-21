@@ -202,6 +202,7 @@ public final class ILeappFileProcessor {
      *
      * @param line                  a tsv line to process that was read
      * @param columnNumberToProcess Which columns to process in the tsv line
+     * @param fileName              name of file begin processed
      *
      * @return
      */
@@ -220,7 +221,7 @@ public final class ILeappFileProcessor {
                     break;
                 }
                 String attrType = attributeType.getValueType().getLabel().toUpperCase();
-                checkAttributeType(bbattributes, attrType, columnValues, columnNumber, attributeType);
+                checkAttributeType(bbattributes, attrType, columnValues, columnNumber, attributeType, fileName);
             } catch (TskCoreException ex) {
                 throw new IngestModuleException(String.format("Error getting Attribute type for Attribute Name %s", attributeName), ex); //NON-NLS
             }
@@ -234,7 +235,8 @@ public final class ILeappFileProcessor {
 
     }
 
-    private void checkAttributeType(Collection<BlackboardAttribute> bbattributes, String attrType, String[] columnValues, Integer columnNumber, BlackboardAttribute.Type attributeType) {
+    private void checkAttributeType(Collection<BlackboardAttribute> bbattributes, String attrType, String[] columnValues, Integer columnNumber, BlackboardAttribute.Type attributeType, 
+                                    String fileName) {
         if (attrType.matches("STRING")) {
             bbattributes.add(new BlackboardAttribute(attributeType, MODULE_NAME, columnValues[columnNumber]));
         } else if (attrType.matches("INTEGER")) {
@@ -256,7 +258,7 @@ public final class ILeappFileProcessor {
             } catch (ParseException ex) {
                 // catching error and displaying date that could not be parsed
                 // we set the timestamp to 0 and continue on processing
-                logger.log(Level.WARNING, String.format("Failed to parse date/time %s for attribute.", columnValues[columnNumber]), ex); //NON-NLS
+                logger.log(Level.WARNING, String.format("Failed to parse date/time %s for attribute type %s in file %s.", columnValues[columnNumber], attributeType.getDisplayName(), fileName)); //NON-NLS
             }
         } else if (attrType.matches("JSON")) {
 

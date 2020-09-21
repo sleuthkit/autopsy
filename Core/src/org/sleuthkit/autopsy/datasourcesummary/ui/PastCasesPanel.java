@@ -21,18 +21,17 @@ package org.sleuthkit.autopsy.datasourcesummary.ui;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.centralrepository.ingestmodule.CentralRepoIngestModuleFactory;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.PastCasesSummary;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.PastCasesSummary.NotIngestedWithModuleException;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.PastCasesSummary.PastCasesResult;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer.DefaultCellModel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult.ResultType;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.IngestRunningLabel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel.ColumnModel;
 import org.sleuthkit.datamodel.DataSource;
@@ -45,11 +44,12 @@ import org.sleuthkit.datamodel.DataSource;
     "PastCasesPanel_caseColumn_title=Case",
     "PastCasesPanel_countColumn_title=Count",
     "PastCasesPanel_onNoCrIngest_message=No results will be shown because the Central Repository module was not run."
-
 })
 public class PastCasesPanel extends BaseDataSourceSummaryPanel {
 
     private static final long serialVersionUID = 1L;
+    private static final String CR_FACTORY = CentralRepoIngestModuleFactory.class.getName();
+    private static final String CR_NAME = CentralRepoIngestModuleFactory.getModuleName();
 
     private static final ColumnModel<Pair<String, Long>> CASE_COL = new ColumnModel<>(
             Bundle.PastCasesPanel_caseColumn_title(),
@@ -76,6 +76,8 @@ public class PastCasesPanel extends BaseDataSourceSummaryPanel {
 
     private final List<DataFetchComponents<DataSource, ?>> dataFetchComponents;
 
+    private final IngestRunningLabel ingestRunningLabel = new IngestRunningLabel();
+
     public PastCasesPanel() {
         this(new PastCasesSummary());
     }
@@ -95,21 +97,14 @@ public class PastCasesPanel extends BaseDataSourceSummaryPanel {
     }
 
     /**
-     * handles displaying the result for the table. If a
-     * NotCentralRepoIngestedException is thrown, then an appropriate message is
-     * shown. Otherwise, this method uses the tables default showDataFetchResult
-     * method.
+     * Handles displaying the result for each table by breaking apart subdata
+     * items into seperate results for each table.
      *
      * @param result The result.
      */
     private void handleResult(DataFetchResult<PastCasesResult> result) {
-        if (result.getResultType() == ResultType.ERROR && result.getException() instanceof NotIngestedWithModuleException) {
-            notableFileTable.showMessage(Bundle.PastCasesPanel_onNoCrIngest_message());
-            sameIdTable.showMessage(Bundle.PastCasesPanel_onNoCrIngest_message());
-        } else {
-            notableFileTable.showDataFetchResult(getSubResult(result, (res) -> (res == null) ? null : res.getTaggedNotable()));
-            sameIdTable.showDataFetchResult(getSubResult(result, (res) -> (res == null) ? null : res.getSameIdsResults()));
-        }
+        showResultWithModuleCheck(notableFileTable, getSubResult(result, (res) -> res.getTaggedNotable()), CR_FACTORY, CR_NAME);
+        showResultWithModuleCheck(sameIdTable, getSubResult(result, (res) -> res.getSameIdsResults()), CR_FACTORY, CR_NAME);
     }
 
     /**
@@ -124,9 +119,12 @@ public class PastCasesPanel extends BaseDataSourceSummaryPanel {
      * @return The new result with the error of the original or the processed
      *         data.
      */
-    private <I, O> DataFetchResult<O> getSubResult(DataFetchResult<I> inputResult, Function<I, O> getSubResult) {
-        if (inputResult.getResultType() == ResultType.SUCCESS) {
-            return DataFetchResult.getSuccessResult(getSubResult.apply(inputResult.getData()));
+    private <O> DataFetchResult<O> getSubResult(DataFetchResult<PastCasesResult> inputResult, Function<PastCasesResult, O> getSubResult) {
+        if (inputResult == null) {
+            return null;
+        } else if (inputResult.getResultType() == ResultType.SUCCESS) {
+            O innerData = (inputResult.getData() == null) ? null : getSubResult.apply(inputResult.getData());
+            return DataFetchResult.getSuccessResult(innerData);
         } else {
             return DataFetchResult.getErrorResult(inputResult.getException());
         }
@@ -142,6 +140,12 @@ public class PastCasesPanel extends BaseDataSourceSummaryPanel {
         onNewDataSource(dataFetchComponents, tables, dataSource);
     }
 
+    @Override
+    public void close() {
+        ingestRunningLabel.unregister();
+        super.close();
+    }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -153,22 +157,30 @@ public class PastCasesPanel extends BaseDataSourceSummaryPanel {
 
         javax.swing.JScrollPane mainScrollPane = new javax.swing.JScrollPane();
         javax.swing.JPanel mainContentPanel = new javax.swing.JPanel();
+        javax.swing.JPanel ingestRunningPanel = ingestRunningLabel;
         javax.swing.JLabel notableFileLabel = new javax.swing.JLabel();
-        javax.swing.Box.Filler filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2), new java.awt.Dimension(32767, 2));
+        javax.swing.Box.Filler filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2));
         javax.swing.JPanel notableFilePanel = notableFileTable;
-        javax.swing.Box.Filler filler2 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 20), new java.awt.Dimension(0, 20), new java.awt.Dimension(32767, 20));
+        javax.swing.Box.Filler filler2 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 20), new java.awt.Dimension(0, 20), new java.awt.Dimension(0, 20));
         javax.swing.JLabel sameIdLabel = new javax.swing.JLabel();
-        javax.swing.Box.Filler filler3 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2), new java.awt.Dimension(32767, 2));
+        javax.swing.Box.Filler filler3 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2));
         javax.swing.JPanel sameIdPanel = sameIdTable;
         javax.swing.Box.Filler filler5 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 32767));
 
         mainContentPanel.setBorder(javax.swing.BorderFactory.createEmptyBorder(10, 10, 10, 10));
         mainContentPanel.setLayout(new javax.swing.BoxLayout(mainContentPanel, javax.swing.BoxLayout.PAGE_AXIS));
 
+        ingestRunningPanel.setAlignmentX(0.0F);
+        ingestRunningPanel.setMaximumSize(new java.awt.Dimension(32767, 25));
+        ingestRunningPanel.setMinimumSize(new java.awt.Dimension(10, 25));
+        ingestRunningPanel.setPreferredSize(new java.awt.Dimension(10, 25));
+        mainContentPanel.add(ingestRunningPanel);
+
         org.openide.awt.Mnemonics.setLocalizedText(notableFileLabel, org.openide.util.NbBundle.getMessage(PastCasesPanel.class, "PastCasesPanel.notableFileLabel.text")); // NOI18N
         mainContentPanel.add(notableFileLabel);
         notableFileLabel.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(PastCasesPanel.class, "PastCasesPanel.notableFileLabel.text")); // NOI18N
 
+        filler1.setAlignmentX(0.0F);
         mainContentPanel.add(filler1);
 
         notableFilePanel.setAlignmentX(0.0F);
@@ -176,10 +188,14 @@ public class PastCasesPanel extends BaseDataSourceSummaryPanel {
         notableFilePanel.setMinimumSize(new java.awt.Dimension(100, 106));
         notableFilePanel.setPreferredSize(new java.awt.Dimension(100, 106));
         mainContentPanel.add(notableFilePanel);
+
+        filler2.setAlignmentX(0.0F);
         mainContentPanel.add(filler2);
 
         org.openide.awt.Mnemonics.setLocalizedText(sameIdLabel, org.openide.util.NbBundle.getMessage(PastCasesPanel.class, "PastCasesPanel.sameIdLabel.text")); // NOI18N
         mainContentPanel.add(sameIdLabel);
+
+        filler3.setAlignmentX(0.0F);
         mainContentPanel.add(filler3);
 
         sameIdPanel.setAlignmentX(0.0F);
@@ -187,6 +203,8 @@ public class PastCasesPanel extends BaseDataSourceSummaryPanel {
         sameIdPanel.setMinimumSize(new java.awt.Dimension(100, 106));
         sameIdPanel.setPreferredSize(new java.awt.Dimension(100, 106));
         mainContentPanel.add(sameIdPanel);
+
+        filler5.setAlignmentX(0.0F);
         mainContentPanel.add(filler5);
 
         mainScrollPane.setViewportView(mainContentPanel);

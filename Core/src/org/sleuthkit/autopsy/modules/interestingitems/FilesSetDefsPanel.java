@@ -46,6 +46,7 @@ import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.guiutils.SimpleListCellRenderer;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
 import org.sleuthkit.autopsy.ingest.IngestProfiles;
@@ -648,6 +649,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
 
         rulesList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         rulesListScrollPane.setViewportView(rulesList);
+        rulesList.setCellRenderer(new SimpleListCellRenderer());
 
         setDescScrollPanel.setMinimumSize(new java.awt.Dimension(10, 22));
         setDescScrollPanel.setPreferredSize(new java.awt.Dimension(14, 40));
@@ -676,6 +678,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
 
         setsList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         setsListScrollPane.setViewportView(setsList);
+        setsList.setCellRenderer(new SimpleListCellRenderer());
 
         fileNameButtonGroup.add(fileNameExtensionRadioButton);
         org.openide.awt.Mnemonics.setLocalizedText(fileNameExtensionRadioButton, org.openide.util.NbBundle.getMessage(FilesSetDefsPanel.class, "FilesSetDefsPanel.fileNameExtensionRadioButton.text")); // NOI18N
