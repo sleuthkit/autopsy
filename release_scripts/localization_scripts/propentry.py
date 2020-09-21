@@ -53,7 +53,7 @@ def convert_to_output(items: Iterator[PropEntry], commit_id: Union[str, None] = 
     style = WITH_TRANSLATED_STYLE if show_translated_col else DEFAULT_STYLES
 
     if commit_id:
-        header = header + [commit_id]
+        header = header + ['', commit_id]
 
     results = []
     omitted = []

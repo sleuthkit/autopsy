@@ -267,8 +267,8 @@ def main():
 
     parser.add_argument(dest='file', type=str, help='The path to the file (ending in either .xlsx or .csv). '
                                                     'The default format for the file has columns of relative path, '
-                                                    'properties file key, properties file value, whether or not the '
-                                                    'key should be deleted, and commit id for how recent these updates '
+                                                    'properties file key, properties file value, translated value, '
+                                                    'first commit, and commit id for how recent these updates '
                                                     'are. If the key should be deleted, the deletion row should be '
                                                     '\'DELETION.\' A header row is expected by default and the '
                                                     'commit id, if specified, should only be in the first row. The'
@@ -283,9 +283,9 @@ def main():
                         help='The column index in the csv file providing the relative path to the properties file.')
     parser.add_argument('-k', '--key-idx', dest='key_idx', action='store', type=int, default=1, required=False,
                         help='The column index in the csv file providing the key within the properties file.')
-    parser.add_argument('-v', '--value-idx', dest='value_idx', action='store', type=int, default=2, required=False,
+    parser.add_argument('-v', '--value-idx', dest='value_idx', action='store', type=int, default=3, required=False,
                         help='The column index in the csv file providing the value within the properties file.')
-    parser.add_argument('-c', '--commit-idx', dest='latest_commit_idx', action='store', type=int, default=4,
+    parser.add_argument('-c', '--commit-idx', dest='latest_commit_idx', action='store', type=int, default=5,
                         required=False, help='The column index in the csv file providing the commit for which this '
                                              'update applies. The commit should be located in the header row.  ')
     parser.add_argument('-rs', '--results-sheet', dest='results_sheet', action='store', type=str,
