@@ -59,23 +59,25 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
     public Map<GroupKey, List<Result>> load(SearchKey key) throws DiscoveryException, SQLException, TskCoreException {
 
         List<Result> domainResults = getResultDomainsFromDatabase(key);
-
+        //manually add the attributes for filters which use alternate non filters and could be used by grouping or sorting
+        DiscoveryAttributes.FrequencyAttribute freqAttr = new DiscoveryAttributes.FrequencyAttribute();
+        freqAttr.addAttributeToResults(domainResults, key.getSleuthkitCase(), key.getCentralRepository());
         // Apply secondary in memory filters
         for (AbstractFilter filter : key.getFilters()) {
             if (filter.useAlternateFilter()) {
                 domainResults = filter.applyAlternateFilter(domainResults, key.getSleuthkitCase(), key.getCentralRepository());
             }
         }
-        
+
         // Grouping by CR Frequency, for example, will require further processing
         // in order to make the correct decision. The attribute types that require
         // more information implement their logic by overriding `addAttributeToResults`.
         List<AttributeType> searchAttributes = new ArrayList<>();
         searchAttributes.add(key.getGroupAttributeType());
         searchAttributes.addAll(key.getFileSortingMethod().getRequiredAttributes());
-        
+
         for (AttributeType attr : searchAttributes) {
-            attr.addAttributeToResults(domainResults, 
+            attr.addAttributeToResults(domainResults,
                     key.getSleuthkitCase(), key.getCentralRepository());
         }
 
@@ -244,11 +246,13 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
         private final SleuthkitCase skc;
         private SQLException sqlCause;
         private TskCoreException coreCause;
-        
-        private final Set<String> bannedDomains = new HashSet<String>() {{
-           add("localhost");
-           add("127.0.0.1");
-        }};
+
+        private final Set<String> bannedDomains = new HashSet<String>() {
+            {
+                add("localhost");
+                add("127.0.0.1");
+            }
+        };
 
         /**
          * Construct a new DomainCallback object.
@@ -267,13 +271,13 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
 
                 while (resultSet.next()) {
                     String domain = resultSet.getString("domain");
-                    
+
                     if (bannedDomains.contains(domain)) {
                         // Skip banned domains
                         // Domain names are lowercased in the SQL query
                         continue;
                     }
-                    
+
                     Long activityStart = resultSet.getLong("activity_start");
                     if (resultSet.wasNull()) {
                         activityStart = null;
