@@ -2,12 +2,13 @@
 This script requires the python libraries: jproperties.  It also requires Python 3.x.
 """
 
-from typing import List, Dict, Tuple, Callable, Iterator
+from typing import List, Dict, Tuple, Callable, Iterator, Union, TypedDict
 import sys
 import os
 
 from envutil import get_proj_dir
-from fileutil import get_new_path
+from excelutil import excel_to_records
+from fileutil import get_new_path, get_path_pieces
 from gitutil import get_git_root
 from langpropsutil import set_commit_for_language
 from propsutil import set_entry_dict, get_entry_dict_from_path, get_lang_bundle_name
@@ -170,42 +171,133 @@ def get_should_deleted(row_items: List[str], requested_idx: int) -> bool:
         return False
 
 
+class DataRows(TypedDict):
+    """
+    Defines pieces of an intermediate parsed result from a data source including the header row (if present), results
+    as a 2d list, and deleted results as a 2d list.
+    """
+    header: Union[List[str], None]
+    results: List[List[str]]
+    deleted_results: Union[List[List[str]], None]
+
+
+def get_csv_rows(input_path: str, has_header: bool) -> DataRows:
+    """
+    Gets rows of a csv file in a DataRows format.
+    Args:
+        input_path: The input path of the file.
+        has_header: Whether or not it has a header.
+
+    Returns: An intermediate result DataRows object for further parsing.
+
+    """
+    all_items, header = csv_to_records(input_path, has_header)
+    return {
+        'header': header,
+        'results': all_items
+    }
+
+
+def get_xlsx_rows(input_path: str, has_header: bool, results_sheet: str, deleted_sheet: str) -> DataRows:
+    """
+    Gets worksheets of an excel workbook in a DataRows format.
+    Args:
+        input_path: The input path of the file.
+        has_header: Whether or not is has a header.
+        results_sheet: The name of the results sheet.
+        deleted_sheet: The name of the sheet containing deleted items.
+
+    Returns: An intermediate result DataRows object for further parsing.
+
+    """
+    workbook = excel_to_records(input_path, has_header)
+    results_items = workbook[results_sheet]
+    header = None
+    if has_header and len(results_items) > 0:
+        header = results_items[0]
+        results_items = results_items[1:len(results_items)]
+
+    deleted_items = workbook[deleted_sheet] if deleted_sheet else None
+    return {
+        'header': header,
+        'results': results_items,
+        'deleted_results': deleted_items
+    }
+
+
+def get_prop_entries_from_data(datarows: DataRows, path_idx: int, key_idx: int, value_idx: int,
+                               should_delete_converter: Tuple[Callable[[List[str]], bool], None],
+                               path_converter: Callable) -> List[PropEntry]:
+    """
+    Converts a DataRows object into PropEntry objects.
+    Args:
+        datarows: The DataRows object.
+        path_idx: The index of the column containing the path.
+        key_idx: The index of the column containing the key.
+        value_idx: The index of the column containing the value.
+        should_delete_converter: Given a list of strings representing a row, returns true if the entry should be
+        deleted.
+        path_converter: Converts the path to the proper format.
+
+    Returns: A list of PropEntry items.
+
+    """
+
+    prop_entries = get_prop_entries(datarows['results'], path_idx, key_idx, value_idx, should_delete_converter,
+                                    path_converter)
+
+    if datarows['deleted_results'] and len(datarows['deleted_results']) > 0:
+        prop_entries += get_prop_entries(datarows['results'], path_idx, key_idx, value_idx, lambda row: True,
+                                         path_converter)
+
+    return prop_entries
+
+
 def main():
     # noinspection PyTypeChecker
     parser = argparse.ArgumentParser(description='Updates properties files in the autopsy git repo.',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-    parser.add_argument(dest='csv_file', type=str, help='The path to the csv file.  The default format for the csv '
-                                                        'file has columns of relative path, properties file key, '
-                                                        'properties file value, whether or not the key should be '
-                                                        'deleted, and commit id for how recent these updates are.  '
-                                                        'If the key should be deleted, the deletion row should be '
-                                                        '\'DELETION.\'  A header row is expected by default and the '
-                                                        'commit id, if specified, should only be in the first row.  The'
-                                                        ' input path should be specified as a relative path with the '
-                                                        'dot slash notation (i.e. `./inputpath.csv`) or an absolute '
-                                                        'path.')
+    parser.add_argument(dest='file', type=str, help='The path to the file (ending in either .xlsx or .csv). '
+                                                    'The default format for the file has columns of relative path, '
+                                                    'properties file key, properties file value, whether or not the '
+                                                    'key should be deleted, and commit id for how recent these updates '
+                                                    'are. If the key should be deleted, the deletion row should be '
+                                                    '\'DELETION.\' A header row is expected by default and the '
+                                                    'commit id, if specified, should only be in the first row. The'
+                                                    ' input path should be specified as a relative path with the '
+                                                    'dot slash notation (i.e. `./inputpath.csv`) or an absolute '
+                                                    'path.')
 
     parser.add_argument('-r', '--repo', dest='repo_path', type=str, required=False,
                         help='The path to the repo.  If not specified, parent repo of path of script is used.')
+
     parser.add_argument('-p', '--path-idx', dest='path_idx', action='store', type=int, default=0, required=False,
                         help='The column index in the csv file providing the relative path to the properties file.')
     parser.add_argument('-k', '--key-idx', dest='key_idx', action='store', type=int, default=1, required=False,
                         help='The column index in the csv file providing the key within the properties file.')
     parser.add_argument('-v', '--value-idx', dest='value_idx', action='store', type=int, default=2, required=False,
                         help='The column index in the csv file providing the value within the properties file.')
-    parser.add_argument('-d', '--should-delete-idx', dest='should_delete_idx', action='store', type=int, default=3,
-                        required=False, help='The column index in the csv file providing whether or not the file '
-                                             'should be deleted.  Any non-blank content will be treated as True.')
     parser.add_argument('-c', '--commit-idx', dest='latest_commit_idx', action='store', type=int, default=4,
                         required=False, help='The column index in the csv file providing the commit for which this '
                                              'update applies. The commit should be located in the header row.  ')
+    parser.add_argument('-rs', '--results-sheet', dest='results_sheet', action='store', type=str,
+                        default='results', required=False, help='In an excel workbook, the sheet that indicates '
+                                                                'results items.  This is only used for xlsx files.')
+    parser.add_argument('-ds', '--deleted-sheet', dest='deleted_sheet', action='store', type=str,
+                        default='deleted', required=False, help='In an excel workbook, the sheet that indicates '
+                                                                'deleted items.  This is only used for xlsx files.')
+    parser.add_argument('-di', '--should-delete-idx', dest='should_delete_idx', action='store', type=int, default=-1,
+                        required=False, help='The column index in the csv file providing whether or not the file '
+                                             'should be deleted.  Any non-blank content will be treated as True.')
+
+    parser.add_argument('-z', '--has-no-header', dest='has_no_header', action='store_true', default=False,
+                        required=False, help='Specify whether or not there is a header within the csv file.')
 
     parser.add_argument('-f', '--file-rename', dest='file_rename', action='store', type=str, default=None,
                         required=False, help='If specified, the properties file will be renamed to the argument'
                                              ' preserving the specified relative path.')
-    parser.add_argument('-z', '--has-no-header', dest='has_no_header', action='store_true', default=False,
-                        required=False, help='Specify whether or not there is a header within the csv file.')
+
     parser.add_argument('-o', '--should-overwrite', dest='should_overwrite', action='store_true', default=False,
                         required=False, help="Whether or not to overwrite the previously existing properties files"
                                              " ignoring previously existing values.")
@@ -217,15 +309,18 @@ def main():
     args = parser.parse_args()
 
     repo_path = args.repo_path if args.repo_path is not None else get_git_root(get_proj_dir())
-    input_path = args.csv_file
+
+    input_path = args.file
     path_idx = args.path_idx
     key_idx = args.key_idx
     value_idx = args.value_idx
     has_header = not args.has_no_header
     overwrite = args.should_overwrite
+    deleted_sheet = args.deleted_sheet
+    results_sheet = args.result_sheet
 
     # means of determining if a key should be deleted from a file
-    if args.should_delete_idx is None:
+    if args.should_delete_idx is None and args.should_delete_idx >= 0:
         should_delete_converter = None
     else:
         def should_delete_converter(row_items: List[str]):
@@ -241,9 +336,19 @@ def main():
     else:
         path_converter = None
 
-    # retrieve records from csv
-    all_items, header = list(csv_to_records(input_path, has_header))
-    prop_entries = get_prop_entries(all_items, path_idx, key_idx, value_idx, should_delete_converter, path_converter)
+    # retrieve records from file
+    ext = get_path_pieces(input_path)[2]
+    if ext == 'xlsx':
+        data_rows = get_xlsx_rows(input_path, has_header, results_sheet, deleted_sheet)
+    elif ext == 'csv':
+        data_rows = get_csv_rows(input_path, has_header)
+    else:
+        raise ValueError('Expected either a csv file or xlsx file for input.')
+
+    # convert to PropEntry objects
+    prop_entries = get_prop_entries_from_data(data_rows, path_idx, key_idx, value_idx,
+                                              should_delete_converter, path_converter)
+    header = data_rows['header']
 
     # write to files
     if overwrite:

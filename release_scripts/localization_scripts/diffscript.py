@@ -2,56 +2,15 @@
 and generates a csv file containing the items changed.  This script requires the python libraries:
 gitpython and jproperties.  As a consequence, it also requires git >= 1.7.0 and python >= 3.4.
 """
-import re
 import sys
 from envutil import get_proj_dir
 from excelutil import write_results_to_xlsx
-from gitutil import get_property_files_diff, get_commit_id, get_git_root
-from itemchange import ItemChange, ChangeType
+from gitutil import get_property_files_diff, get_git_root
+from itemchange import convert_to_output
 from csvutil import write_results_to_csv
 import argparse
-from typing import Union
 from langpropsutil import get_commit_for_language, LANG_FILENAME
-from outputresult import OutputResult
 from outputtype import OutputType
-
-
-def get_diff_to_write(repo_path: str, commit_1_id: str, commit_2_id: str, show_commits: bool, separate_deleted: bool,
-                      value_regex: Union[str, None] = None) -> OutputResult:
-    """Determines the changes made in '.properties-MERGED' files from one commit to another commit and returns results.
-
-    Args:
-        repo_path (str): The local path to the git repo.
-        commit_1_id (str): The initial commit for the diff.
-        commit_2_id (str): The latest commit for the diff.
-        show_commits (bool): Show commits in the header row.
-        separate_deleted (bool): put deletion items in a separate field in return type ('deleted').  Otherwise,
-        include in regular results.
-        value_regex (Union[str, None]): If non-none, only key value pairs where the value is a regex match with this
-        value will be included.
-    """
-
-    row_header = ItemChange.get_headers()
-    if show_commits:
-        row_header += [get_commit_id(repo_path, commit_1_id), get_commit_id(repo_path, commit_2_id)]
-
-    rows = []
-    omitted = []
-    deleted = []
-
-    for entry in get_property_files_diff(repo_path, commit_1_id, commit_2_id):
-        entry_row = entry.get_row()
-        if separate_deleted and entry.type == ChangeType.DELETION:
-            deleted.append(entry_row)
-        if value_regex is not None and re.match(value_regex, entry.cur_val):
-            omitted.append(entry_row)
-        else:
-            rows.append(entry_row)
-
-    omitted_result = [row_header] + omitted if len(omitted) > 0 else None
-    deleted_result = [row_header] + deleted if len(deleted) > 0 else None
-
-    return OutputResult([row_header] + rows, omitted_result, deleted_result)
 
 
 def main():
@@ -79,11 +38,15 @@ def main():
                         help='Specify the language in order to determine the first commit to use (i.e. \'ja\' for '
                              'Japanese.  This flag overrides the first-commit flag.')
 
+    parser.add_argument('-nt', '--no-translated-col', dest='no_translated_col', action='store_true', default=False,
+                        required=False, help="Don't include a column for translation.")
+
     args = parser.parse_args()
     repo_path = args.repo_path if args.repo_path is not None else get_git_root(get_proj_dir())
     output_path = args.output_path
     commit_1_id = args.commit_1_id
     output_type = args.output_type
+    show_translated_col = not args.translated_col
 
     lang = args.language
     if lang is not None:
@@ -98,7 +61,12 @@ def main():
     commit_2_id = args.commit_2_id
     show_commits = not args.no_commits
 
-    processing_result = get_diff_to_write(repo_path, commit_1_id, commit_2_id, show_commits)
+    changes = get_property_files_diff(repo_path, commit_1_id, commit_2_id)
+    processing_result = convert_to_output(changes,
+                                          commit_1_id=commit_1_id if show_commits else None,
+                                          commit_2_id=commit_2_id if show_commits else None,
+                                          show_translated_col=show_translated_col,
+                                          separate_deleted=True)
 
     # based on https://stackoverflow.com/questions/60208/replacements-for-switch-statement-in-python
     {
