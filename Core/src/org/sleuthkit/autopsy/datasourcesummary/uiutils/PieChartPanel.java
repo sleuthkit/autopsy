@@ -97,7 +97,7 @@ public class PieChartPanel extends AbstractLoadableComponent<List<PieChartPanel.
 
         private static final long serialVersionUID = 1L;
         private final BaseMessageOverlay overlay = new BaseMessageOverlay();
-        
+
         // multiply this value by the smaller dimension (height or width) of the component
         // to determine width of text to be displayed.
         private static final double MESSAGE_WIDTH_FACTOR = .6;
@@ -174,7 +174,7 @@ public class PieChartPanel extends AbstractLoadableComponent<List<PieChartPanel.
 
         chart.setBackgroundPaint(null);
         chart.getTitle().setFont(DEFAULT_HEADER_FONT);
-        
+
         this.plot = ((PiePlot) chart.getPlot());
         plot.setInteriorGap(DEFAULT_CHART_PADDING);
         plot.setLabelGenerator(DEFAULT_LABEL_GENERATOR);

@@ -100,7 +100,7 @@ public class BaseMessageOverlay {
         g.translate(leftPad, 0);
         label.setBounds(0, 0, labelWidth, parentHeight);
         g.translate(0, 0);
-        
+
         label.paint(g);
     }
 }
