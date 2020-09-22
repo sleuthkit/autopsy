@@ -5,8 +5,7 @@ Expanded Discovery UI to support searching for and basic display of web domains.
 
 Ingest Modules:
 Added iOS Analyzer module based on iLEAPP and a subset of its artifacts. 
-Support for HEIC/HEIF images by converting them to JPEGs using ImageMagick (which retains EXIF).
-New Picture Analyzer module that does HEIC conversion and EXIF extraction (replaces the previous EXIF module). 
+New Picture Analyzer module that does EXIF extraction and HEIC conversion. HEIC/HEIF images are converted to JPEGs that retain EXIF using ImageMagick. (Replaces the previous EXIF ingest module)
 Added support for the latest version of Edge browser that is based on Chromium into Recent Activity. Other Chromium-based browsers are also supported. 
 Updated the rules that search Web History artifacts for search queries.  Expanded module to support multiple search engines for ambiguous URLs.
 Bluetooth pairing artifacts are created based on RegRipper output.
