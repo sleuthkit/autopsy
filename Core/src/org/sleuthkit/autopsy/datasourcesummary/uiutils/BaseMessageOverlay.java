@@ -38,7 +38,6 @@ public class BaseMessageOverlay {
         label.setHorizontalAlignment(JLabel.CENTER);
         label.setVerticalAlignment(JLabel.CENTER);
         label.setOpaque(false);
-
     }
 
     /**
@@ -76,12 +75,32 @@ public class BaseMessageOverlay {
      * @param height The height.
      */
     public void paintOverlay(Graphics g, int width, int height) {
+        paintOverlay(g, width, height, null);
+    }
+
+    /**
+     * Paints the jlabel at full width and height with the graphics object.
+     *
+     * @param g             The graphics object.
+     * @param parentWidth   The width of the component.
+     * @param parentHeight  The height of the component.
+     * @param labelMaxWidth The maximum width of the label drawn for the
+     *                      overlay. The label will be vertically and
+     *                      horizontally centered.
+     */
+    public void paintOverlay(Graphics g, int parentWidth, int parentHeight, Integer labelMaxWidth) {
         if (!visible) {
             return;
         }
 
+        int labelWidth = (labelMaxWidth == null) ? parentWidth : Math.min(labelMaxWidth, parentWidth);
+        int leftPad = (parentWidth - labelWidth) / 2;
+
         // paint the jlabel if visible.
-        label.setBounds(0, 0, width, height);
+        g.translate(leftPad, 0);
+        label.setBounds(0, 0, labelWidth, parentHeight);
+        g.translate(0, 0);
+        
         label.paint(g);
     }
 }

@@ -97,6 +97,10 @@ public class PieChartPanel extends AbstractLoadableComponent<List<PieChartPanel.
 
         private static final long serialVersionUID = 1L;
         private final BaseMessageOverlay overlay = new BaseMessageOverlay();
+        
+        // multiply this value by the smaller dimension (height or width) of the component
+        // to determine width of text to be displayed.
+        private static final double MESSAGE_WIDTH_FACTOR = .6;
 
         /**
          * Sets this layer visible when painted. In order to be shown in UI,
@@ -119,7 +123,8 @@ public class PieChartPanel extends AbstractLoadableComponent<List<PieChartPanel.
 
         @Override
         public void paintOverlay(Graphics2D gd, ChartPanel cp) {
-            overlay.paintOverlay(gd, cp.getWidth(), cp.getHeight());
+            int labelWidth = (int) (Math.min(cp.getWidth(), cp.getHeight()) * MESSAGE_WIDTH_FACTOR);
+            overlay.paintOverlay(gd, cp.getWidth(), cp.getHeight(), labelWidth);
         }
 
     }
