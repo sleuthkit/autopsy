@@ -196,7 +196,7 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
     private static final Color EXECUTABLES_COLOR = new Color(0,188,212);
     private static final Color UNKNOWN_COLOR = Color.ORANGE;
     private static final Color OTHER_COLOR = new Color(78,52,46);
-    private static final Color NOT_ANALYZED_COLOR = Color.RED;
+    private static final Color NOT_ANALYZED_COLOR = Color.WHITE;
 
     // All file type categories.
     private static final List<TypesPieCategory> FILE_MIME_TYPE_CATEGORIES = Arrays.asList(
@@ -377,6 +377,7 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
         List<PieChartItem> items = Stream.concat(
                 fileCategoryItems.stream(), 
                 Stream.of(otherPieItem, notAnalyzedItem))
+                .filter(slice -> slice.getValue() > 0)
                 .collect(Collectors.toList());
 
         return new TypesPieChartData(items, usefulContent);
