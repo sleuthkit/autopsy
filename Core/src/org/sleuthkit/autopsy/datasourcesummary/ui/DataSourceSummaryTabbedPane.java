@@ -140,6 +140,9 @@ public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
         postInit();
     }
 
+    /**
+     * Method called right after initComponents during initialization.
+     */
     private void postInit() {
         // get the card layout
         cardLayout = (CardLayout) this.getLayout();
