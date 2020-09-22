@@ -24,4 +24,11 @@ public final class Bogus {
         return 1;        
     }
     
+    /**
+     * Blah
+     */
+    static int baz() {
+        return 1;        
+    }
+    
 }
