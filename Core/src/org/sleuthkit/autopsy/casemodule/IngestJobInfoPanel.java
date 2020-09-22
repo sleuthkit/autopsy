@@ -276,7 +276,7 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.weightx = 1.0;
         gridBagConstraints.weighty = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(6, 6, 10, 0);
+        gridBagConstraints.insets = new java.awt.Insets(2, 10, 10, 0);
         contentPanel.add(ingestJobsScrollPane, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(IngestJobInfoPanel.class, "IngestJobInfoPanel.jLabel1.text")); // NOI18N
@@ -284,7 +284,7 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
         gridBagConstraints.gridx = 1;
         gridBagConstraints.gridy = 0;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(8, 8, 0, 0);
+        gridBagConstraints.insets = new java.awt.Insets(10, 10, 0, 0);
         contentPanel.add(jLabel1, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(IngestJobInfoPanel.class, "IngestJobInfoPanel.jLabel2.text")); // NOI18N
@@ -292,7 +292,7 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 0;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(8, 6, 0, 0);
+        gridBagConstraints.insets = new java.awt.Insets(10, 10, 0, 0);
         contentPanel.add(jLabel2, gridBagConstraints);
 
         ingestModulesScrollPane.setMaximumSize(new java.awt.Dimension(254, 32767));
@@ -308,7 +308,7 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
         gridBagConstraints.fill = java.awt.GridBagConstraints.VERTICAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.weighty = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(6, 8, 10, 6);
+        gridBagConstraints.insets = new java.awt.Insets(2, 8, 10, 10);
         contentPanel.add(ingestModulesScrollPane, gridBagConstraints);
 
         mainScrollPane.setViewportView(contentPanel);
