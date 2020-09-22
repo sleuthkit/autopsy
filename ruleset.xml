@@ -219,8 +219,17 @@
   <rule ref="rulesets/java/naming.xml/AvoidFieldNameMatchingMethodName"/>
   <rule ref="rulesets/java/naming.xml/MisleadingVariableName"/>
   <rule ref="rulesets/java/naming.xml/ShortClassName"/>
-  <rule ref="rulesets/java/naming.xml/ClassNamingConventions"/>
-  <rule ref="rulesets/java/naming.xml/MethodNamingConventions"/>
+  <rule ref="category/java/codestyle.xml/ClassNamingConventions">
+    <properties>
+        <property name="classPattern" value="[A-Z][a-zA-Z0-9]*" />
+        <property name="abstractClassPattern" value="[A-Z][a-zA-Z0-9]*" />
+        <property name="interfacePattern" value="[A-Z][a-zA-Z0-9]*" />
+        <property name="enumPattern" value="[A-Z][a-zA-Z0-9]*" />
+        <property name="annotationPattern" value="[A-Z][a-zA-Z0-9]*" />
+        <!-- Disabled because it is too restrictive -->
+        <property name="utilityClassPattern" value="Ignored" />
+    </properties>
+  </rule>  <rule ref="rulesets/java/naming.xml/MethodNamingConventions"/>
   <!--<rule ref="rulesets/java/naming.xml/GenericsNaming"/>-->
   <rule ref="rulesets/java/naming.xml/NoPackage"/>
   <rule ref="rulesets/java/naming.xml/MethodWithSameNameAsEnclosingClass"/>
