@@ -1,21 +1,27 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.sleuthkit.autopsy.coreutils;
 
+/**
+ * Blah
+ */
+public final class Bogus {
 
-public class Bogus {
-
+    /**
+     * Blah
+     */
     private Bogus() {}
     
-    static void foo() {
-        
+    /**
+     * Blah
+     */
+    static int foo() {
+        return 1;
     }
     
-    static void bar() {
-        
+    /**
+     * Blah
+     */
+    static int bar() {
+        return 1;        
     }
     
 }
