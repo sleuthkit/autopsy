@@ -163,17 +163,13 @@ public class PieChartPanel extends AbstractLoadableComponent<List<PieChartPanel.
         this.chart = ChartFactory.createPieChart(
                 title,
                 dataset,
-                true,
-                true,
+                false,
+                false,
                 false);
 
         chart.setBackgroundPaint(null);
-        chart.getLegend().setItemFont(DEFAULT_FONT);
         chart.getTitle().setFont(DEFAULT_HEADER_FONT);
-
-        // don't show a legend by default
-        chart.removeLegend();
-
+        
         this.plot = ((PiePlot) chart.getPlot());
         plot.setInteriorGap(DEFAULT_CHART_PADDING);
         plot.setLabelGenerator(DEFAULT_LABEL_GENERATOR);
@@ -184,6 +180,8 @@ public class PieChartPanel extends AbstractLoadableComponent<List<PieChartPanel.
         // Create Panel
         ChartPanel panel = new ChartPanel(chart);
         panel.addOverlay(overlay);
+        panel.setPopupMenu(null);
+
         this.setLayout(new BorderLayout());
         this.add(panel, BorderLayout.CENTER);
     }
