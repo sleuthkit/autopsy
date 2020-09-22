@@ -321,9 +321,9 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             ProcessBuilder processAndSettings = new ProcessBuilder(
                     executableFile.toString(),
                     "/d", // NON-NLS
-                    outputDirPath.toAbsolutePath().toString() + File.separator + PHOTOREC_RESULTS_BASE,
+                    String.format("\"%s\"", Paths.get(outputDirPath.toAbsolutePath().toString(), PHOTOREC_RESULTS_BASE).toString()),
                     "/cmd", // NON-NLS
-                    tempFilePath.toFile().toString());
+                    String.format("\"%s\"",tempFilePath.toFile().toString()));
 
             processAndSettings.command().add(this.optionsString);
 
