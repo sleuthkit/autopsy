@@ -226,8 +226,8 @@
             <property name="interfacePattern" value="[A-Z][a-zA-Z0-9]*" />
             <property name="enumPattern" value="[A-Z][a-zA-Z0-9]*" />
             <property name="annotationPattern" value="[A-Z][a-zA-Z0-9]*" />
-            <!-- Disabled because it is too restrictive -->
-            <property name="utilityClassPattern" value="Ignored" />
+            <!-- Disabled because it is too restrictive
+            <property name="utilityClassPattern" value="[A-Z][a-zA-Z0-9]+(Utils?|Helper|Constants)" />  -->
         </properties>
     </rule>  
     <rule ref="rulesets/java/naming.xml/MethodNamingConventions"/>
