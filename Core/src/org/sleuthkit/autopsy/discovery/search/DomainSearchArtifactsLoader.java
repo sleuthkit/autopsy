@@ -39,13 +39,16 @@ public class DomainSearchArtifactsLoader extends CacheLoader<DomainSearchArtifac
     private static final Type TSK_URL = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_URL);
 
     @Override
-    public List<BlackboardArtifact> load(DomainSearchArtifactsRequest artifactsRequest) throws TskCoreException {
+    public List<BlackboardArtifact> load(DomainSearchArtifactsRequest artifactsRequest) throws TskCoreException, InterruptedException {
         final SleuthkitCase caseDb = artifactsRequest.getSleuthkitCase();
         final String normalizedDomain = artifactsRequest.getDomain().toLowerCase();
         final List<BlackboardArtifact> artifacts = caseDb.getBlackboardArtifacts(artifactsRequest.getArtifactType());
         final List<BlackboardArtifact> matchingDomainArtifacts = new ArrayList<>();
 
         for (BlackboardArtifact artifact : artifacts) {
+            if(Thread.currentThread().isInterrupted()) {
+                throw new InterruptedException();
+            }
             final BlackboardAttribute tskDomain = artifact.getAttribute(TSK_DOMAIN);
             final BlackboardAttribute tskUrl = artifact.getAttribute(TSK_URL);
 

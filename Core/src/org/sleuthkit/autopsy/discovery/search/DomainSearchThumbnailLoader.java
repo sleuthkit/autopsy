@@ -70,7 +70,7 @@ public class DomainSearchThumbnailLoader extends CacheLoader<DomainSearchThumbna
     }
 
     @Override
-    public Image load(DomainSearchThumbnailRequest thumbnailRequest) throws TskCoreException, DiscoveryException {
+    public Image load(DomainSearchThumbnailRequest thumbnailRequest) throws TskCoreException, DiscoveryException, InterruptedException {
         final SleuthkitCase caseDb = thumbnailRequest.getSleuthkitCase();
         final DomainSearchArtifactsRequest webDownloadsRequest = new DomainSearchArtifactsRequest(
                 caseDb, thumbnailRequest.getDomain(), TSK_WEB_DOWNLOAD);
@@ -78,6 +78,9 @@ public class DomainSearchThumbnailLoader extends CacheLoader<DomainSearchThumbna
         final List<AbstractFile> webDownloadPictures = getJpegsFromWebDownload(caseDb, webDownloads);
         Collections.sort(webDownloadPictures, (file1, file2) -> Long.compare(file1.getCrtime(), file2.getCrtime()));
         for (int i = webDownloadPictures.size() - 1; i >= 0; i--) {
+            if(Thread.currentThread().isInterrupted()) {
+                throw new InterruptedException();
+            }
             // Get the most recent image, according to creation time.
             final AbstractFile mostRecent = webDownloadPictures.get(i);
 
@@ -92,6 +95,9 @@ public class DomainSearchThumbnailLoader extends CacheLoader<DomainSearchThumbna
         final List<AbstractFile> webCachePictures = getJpegsFromWebCache(caseDb, webCacheArtifacts);
         Collections.sort(webCachePictures, (file1, file2) -> Long.compare(file1.getSize(), file2.getSize()));
         for (int i = webCachePictures.size() - 1; i >= 0; i--) {
+            if(Thread.currentThread().isInterrupted()) {
+                throw new InterruptedException();
+            }
             // Get the largest image, according to file size.
             final AbstractFile largest = webCachePictures.get(i);
             final Image candidateThumbnail = ImageUtils.getThumbnail(largest, thumbnailRequest.getIconSize());
@@ -113,9 +119,12 @@ public class DomainSearchThumbnailLoader extends CacheLoader<DomainSearchThumbna
      *
      * @throws TskCoreException
      */
-    private List<AbstractFile> getJpegsFromWebDownload(SleuthkitCase caseDb, List<BlackboardArtifact> artifacts) throws TskCoreException {
+    private List<AbstractFile> getJpegsFromWebDownload(SleuthkitCase caseDb, List<BlackboardArtifact> artifacts) throws TskCoreException, InterruptedException {
         final List<AbstractFile> jpegs = new ArrayList<>();
         for (BlackboardArtifact artifact : artifacts) {
+            if(Thread.currentThread().isInterrupted()) {
+                throw new InterruptedException();
+            }
             final Content sourceContent = caseDb.getContentById(artifact.getObjectID());
             addIfJpeg(jpegs, sourceContent);
         }
@@ -131,10 +140,13 @@ public class DomainSearchThumbnailLoader extends CacheLoader<DomainSearchThumbna
      * @return The list of AbstractFiles representing jpegs which were
      *         associated with the artifacts.
      */
-    private List<AbstractFile> getJpegsFromWebCache(SleuthkitCase caseDb, List<BlackboardArtifact> artifacts) throws TskCoreException {
+    private List<AbstractFile> getJpegsFromWebCache(SleuthkitCase caseDb, List<BlackboardArtifact> artifacts) throws TskCoreException, InterruptedException {
         final BlackboardAttribute.Type TSK_PATH_ID = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PATH_ID);
         final List<AbstractFile> jpegs = new ArrayList<>();
         for (BlackboardArtifact artifact : artifacts) {
+            if(Thread.currentThread().isInterrupted()) {
+                throw new InterruptedException();
+            }
             final BlackboardAttribute tskPathId = artifact.getAttribute(TSK_PATH_ID);
             if (tskPathId != null) {
                 final Content sourceContent = caseDb.getContentById(tskPathId.getValueLong());
