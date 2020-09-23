@@ -338,7 +338,7 @@ final class DataSourceInfoUtilities {
         private int compare(BlackboardAttribute.Type type, BlackboardAttribute attribute1, BlackboardAttribute attribute2) {
             switch (type.getValueType()) {
                 case STRING:
-                    return attribute1.getValueString().compareTo(attribute2.getValueString());
+                    return attribute1.getValueString().compareToIgnoreCase(attribute2.getValueString());
                 case INTEGER:
                     return Integer.compare(attribute1.getValueInt(), attribute2.getValueInt());
                 case LONG:
