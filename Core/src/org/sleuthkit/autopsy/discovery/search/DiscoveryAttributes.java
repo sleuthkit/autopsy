@@ -73,7 +73,7 @@ public class DiscoveryAttributes {
         /**
          * Add any extra data to the ResultFile object from this attribute.
          *
-         * @param files         The list of results to enhance.
+         * @param results       The list of results to enhance.
          * @param caseDb        The case database.
          * @param centralRepoDb The central repository database. Can be null if
          *                      not needed.
@@ -400,7 +400,7 @@ public class DiscoveryAttributes {
         /**
          * Construct a new FrequencyCallback.
          *
-         * @param resultFiles List of files to add hash set names to.
+         * @param files List of files to add hash set names to.
          */
         private FrequencyCallback(List<ResultFile> files) {
             this.files = new ArrayList<>(files);

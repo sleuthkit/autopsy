@@ -344,7 +344,7 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
     /**
      * Get default message when there is a NotIngestedWithModuleException.
      *
-     * @param exception The moduleName.
+     * @param moduleName The moduleName.
      *
      * @return Message specifying that the ingest module was not run.
      */
