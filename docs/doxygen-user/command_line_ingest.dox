@@ -45,11 +45,12 @@ The table below shows a summary of the command line operations. You can run one 
 <tr><td><b>Open Existing Case</b></td><td>&nbsp;</td><td><pre>--caseDir</pre></td><td><pre>--caseDir="C:\work\Cases\test5_2019_09_20_11_01_29"</pre></td></tr>
 
 <tr><td><b>Add a Data Source</b></td><td><pre>--addDataSource
---runIngest (optional)</pre></td><td><pre>--dataSourcePath
---ingestProfile (optional)</pre></td><td><pre>--addDataSource --dataSourcePath="R:\work\images\small2.img" --runIngest</pre></td></tr>
+--runIngest (optional)
+--runIngest=(ingest profile name) (optional)</pre></td><td><pre>--dataSourcePath</pre></td><td><pre>--addDataSource --dataSourcePath="R:\work\images\small2.img" --runIngest</pre></td></tr>
 
-<tr><td><b>Run Ingest on Existing Data Source</b><td><pre>--runIngest</pre></td><td><pre>--dataSourceObjectId
---ingestProfile (optional)</pre></td><td><pre>--runIngest --dataSourceObjectId=1</pre></td></tr>
+<tr><td><b>Run Ingest on Existing Data Source</b><td><pre>--runIngest
+--runIngest=(ingest profile name)</pre></td><td><pre>--dataSourceObjectId</pre></td><td><pre>--runIngest --dataSourceObjectId=1
+--runIngest="imageAnalysis" --dataSourceObjectId=1</pre></td></tr>
 
 <tr><td><b>Generate Reports</b></td><td><pre>--generateReports
 --generateReports=(report profile name)</pre></td><td>&nbsp;</td><td><pre>--generateReports
@@ -109,8 +110,8 @@ autopsy64.exe --caseDir="C:\work\cases\test6_2019_09_20_13_00_51" --addDataSourc
 Next we'll add a third data source ("red_images.img") to the case and run ingest using a custom ingest profile "imageAnalysis" created as described in the \ref command_line_ingest_profile "Configuring Ingest Profiles" section above. 
 
 \verbatim
-autopsy64.exe --caseDir="C:\work\cases\test6_2019_09_20_13_00_51" --addDataSource --runIngest 
-   --dataSourcePath="R:\work\images\red_images.img" --ingestProfile="imageAnalysis"
+autopsy64.exe --caseDir="C:\work\cases\test6_2019_09_20_13_00_51" --addDataSource --runIngest="imageAnalysis"
+   --dataSourcePath="R:\work\images\red_images.img"
 \endverbatim
 
 Finally we'll add a folder ("Test files") as a logical file set to a new case ("test9"). 
