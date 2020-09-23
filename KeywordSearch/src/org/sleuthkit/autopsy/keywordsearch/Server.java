@@ -76,6 +76,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.coreutils.ThreadUtils;
 import org.sleuthkit.autopsy.healthmonitor.HealthMonitor;
 import org.sleuthkit.autopsy.healthmonitor.TimingMetric;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
@@ -1734,6 +1735,11 @@ public class Server {
         }
 
         synchronized void close() throws KeywordSearchModuleException {
+
+            // stop the periodic batch update task. If the task is already running, 
+            // allow it to finish.
+            ThreadUtils.shutDownTaskExecutor(periodicTasksExecutor);
+
             // We only unload cores for "single-user" cases.
             if (this.caseType == CaseType.MULTI_USER_CASE) {
                 return;
