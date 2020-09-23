@@ -48,6 +48,7 @@ import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.ingest.FileIngestModuleProcessTerminator;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
@@ -71,7 +72,7 @@ public class HEICProcessor implements PictureProcessor {
 
     private static final int EXIT_SUCCESS = 0;
     private static final String HEIC_MODULE_FOLDER = "HEIC";
-    private static final long TIMEOUT_IN_MS = TimeUnit.MILLISECONDS.convert(2, TimeUnit.MINUTES);
+    private static final long TIMEOUT_IN_SEC = TimeUnit.SECONDS.convert(2, TimeUnit.MINUTES);
 
     // Windows location
     private static final String IMAGE_MAGICK_FOLDER = "ImageMagick-7.0.10-27-portable-Q16-x64";
@@ -194,10 +195,7 @@ public class HEICProcessor implements PictureProcessor {
         
         processBuilder.redirectError(imageMagickErrorOutput.toFile());
 
-        final long startTime = System.currentTimeMillis();
-        final int exitStatus = ExecUtil.execute(processBuilder, () -> {
-            return context.fileIngestIsCancelled() || System.currentTimeMillis() - startTime >= TIMEOUT_IN_MS;
-        });
+        final int exitStatus = ExecUtil.execute(processBuilder, new FileIngestModuleProcessTerminator(context, TIMEOUT_IN_SEC));
 
         if (context.fileIngestIsCancelled()) {
             return;
