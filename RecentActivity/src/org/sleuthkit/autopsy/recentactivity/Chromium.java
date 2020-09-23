@@ -96,13 +96,18 @@ class Chromium extends Extract {
             .build();
 
     
-    @Messages({
+    @Messages({"# {0} - browserName",
         "Progress_Message_Chrome_History=Chrome History Browser {0}",
+        "# {0} - browserName",
         "Progress_Message_Chrome_Bookmarks=Chrome Bookmarks Browser {0}",
+        "# {0} - browserName",
         "Progress_Message_Chrome_Cookies=Chrome Cookies Browser {0}",
+        "# {0} - browserName",
         "Progress_Message_Chrome_Downloads=Chrome Downloads Browser {0}",
         "Progress_Message_Chrome_FormHistory=Chrome Form History",
+        "# {0} - browserName",
         "Progress_Message_Chrome_AutoFill=Chrome Auto Fill Browser {0}",
+        "# {0} - browserName",
         "Progress_Message_Chrome_Logins=Chrome Logins Browser {0}",
         "Progress_Message_Chrome_Cache=Chrome Cache",
     })
