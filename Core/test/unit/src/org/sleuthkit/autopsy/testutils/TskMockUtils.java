@@ -37,8 +37,11 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class TskMockUtils {
 
     /**
-     * Creates a mock data source.  The data source currently mocks getName returning "" and getId returning the provided id.
+     * Creates a mock data source. The data source currently mocks getName
+     * returning "" and getId returning the provided id.
+     *
      * @param dataSourceId The id for the data source.
+     *
      * @return The mocked datasource.
      */
     public static DataSource mockDataSource(long dataSourceId) {
@@ -47,33 +50,33 @@ public class TskMockUtils {
         when(dataSource.getId()).thenReturn(dataSourceId);
         return dataSource;
     }
-    
+
     /**
-     * Mocks a blackboard artifact returning the values provided for appropriate getters.  Currently mocks methods:
-     * getArtifactID()
-     * getArtifactTypeID()
-     * getAttribute(BlackboardAttribute.Type)
-     * getAttributes()
-     * 
+     * Mocks a blackboard artifact returning the values provided for appropriate
+     * getters. Currently mocks methods: getArtifactID() getArtifactTypeID()
+     * getAttribute(BlackboardAttribute.Type) getAttributes()
+     *
      * @param artifactType The artifact's type.
-     * @param artifactId The id for the artifact.
-     * @param dataSource The data source.
-     * @param attributes The attributes for the artifact.
+     * @param artifactId   The id for the artifact.
+     * @param dataSource   The data source.
+     * @param attributes   The attributes for the artifact.
+     *
      * @return The generated BlackboardArtifact.
-     * @throws TskCoreException 
+     *
+     * @throws TskCoreException
      */
     public static BlackboardArtifact mockArtifact(BlackboardArtifact.Type artifactType, long artifactId,
-            DataSource dataSource, BlackboardAttribute...attributes) throws TskCoreException {
-        
+            DataSource dataSource, BlackboardAttribute... attributes) throws TskCoreException {
+
         BlackboardArtifact artifact = mock(BlackboardArtifact.class);
 
         final Map<BlackboardAttribute.Type, BlackboardAttribute> attributeTypes = Stream.of(attributes)
                 .collect(Collectors.toMap((attr) -> attr.getAttributeType(), Function.identity()));
-        
+
         when(artifact.getArtifactID()).thenReturn(artifactId);
 
         when(artifact.getArtifactTypeID()).thenReturn(artifactType.getTypeID());
-        
+
         when(artifact.getAttribute(any(BlackboardAttribute.Type.class))).thenAnswer((invocation) -> {
             Object[] args = invocation.getArguments();
             BlackboardAttribute.Type type = (BlackboardAttribute.Type) args[0];

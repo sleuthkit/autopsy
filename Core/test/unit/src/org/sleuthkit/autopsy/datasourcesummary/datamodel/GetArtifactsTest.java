@@ -199,16 +199,15 @@ public class GetArtifactsTest {
                 dataSource, values, attrMaker);
 
         List<BlackboardArtifact> mixedUpArtifacts = getMixedUp(sortedArtifacts);
-        
-        List<BlackboardArtifact> expectedArtifacts = count == 0 ? 
-                sortedArtifacts : 
-                sortedArtifacts.subList(0, Math.min(sortedArtifacts.size(), count));
+
+        List<BlackboardArtifact> expectedArtifacts = count == 0
+                ? sortedArtifacts
+                : sortedArtifacts.subList(0, Math.min(sortedArtifacts.size(), count));
 
         test(new BlackboardArtifact.Type(artifactType), dataSource, new BlackboardAttribute.Type(attrType),
                 sortOrder, count, mixedUpArtifacts, null, expectedArtifacts, null);
 
     }
-        
 
     /**
      * Performs a basic test of sort order on each sortable attribute type.
@@ -259,7 +258,7 @@ public class GetArtifactsTest {
     public void testSortDescending() throws TskCoreException {
         testAscDesc(SortOrder.DESCENDING);
     }
-    
+
     @Test
     public void testLimits() throws TskCoreException {
         List<Integer> integers = Arrays.asList(22, 31, 42, 50, 60);
@@ -368,7 +367,7 @@ public class GetArtifactsTest {
                 dataSource,
                 new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_COUNT),
                 SortOrder.ASCENDING,
-                0, 
+                0,
                 Arrays.asList(mock2, mock3, mock1),
                 null,
                 Arrays.asList(mock3, mock2, mock1),
@@ -387,7 +386,7 @@ public class GetArtifactsTest {
                 new ArrayList<>(),
                 TskCoreException.class);
     }
-    
+
     @Test
     public void testThrowOnLessThan0() throws TskCoreException {
         test(new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_ACCOUNT),
