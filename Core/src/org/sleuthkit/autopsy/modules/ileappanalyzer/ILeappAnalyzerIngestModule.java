@@ -138,6 +138,11 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
 
             statusHelper.progress(NbBundle.getMessage(this.getClass(), "ILeappAnalyzerIngestModule.processing.file", iLeappFile.getName()), filesProcessedCount);
             ProcessBuilder iLeappCommand = buildiLeappCommand(moduleOutputPath, iLeappFile.getLocalAbsPath(), iLeappFile.getNameExtension());
+            if (iLeappCommand == null) {
+                    logger.log(Level.SEVERE, String.format("Error building iLeapp command moduleOutputPath is %s, LocalAbsPath is %s, nameExtension is %s", moduleOutputPath.toString(), iLeappFile.getLocalAbsPath(), iLeappFile.getNameExtension())); //NON-NLS
+                    return ProcessResult.ERROR;
+                
+            }
             try {
                 int result = ExecUtil.execute(iLeappCommand, new DataSourceIngestModuleProcessTerminator(context));
                 if (result != 0) {
