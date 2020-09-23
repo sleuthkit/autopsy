@@ -88,6 +88,14 @@ public final class DiscoveryEventUtils {
             //no arg constructor
         }
     }
+    
+    /**
+     * Event to signal that any background tasks currently running should
+     * be cancelled.
+     */
+    public static final class CancelBackgroundTasksEvent {
+        
+    }
 
     /**
      * Event to signal that the Instances list should be populated.
