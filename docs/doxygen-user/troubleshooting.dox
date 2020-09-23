@@ -13,6 +13,20 @@ If you are experiencing an error, we encourage you to post on the forum (https:/
 <li>If there were any errors in the \ref troubleshooting_logs "logs"
 </ul>
 
+\section troubleshooting_user_folder Deleting the Autopsy User Folder
+
+If Autopsy starts behaving strangely, stops loading entirely, or menu items go missing, you probably need to delete your user folder. Doing so essenitally gives you a fresh installation. On Windows the user folder is located in "C:\Users\(user name)\AppData\Roaming\autopsy". 
+
+Note that if you delete this folder you will lose all your Autopsy settings including keyword lists, interesting file sets, and general configuration. If you have settings you want to keep you can try the following:
+<ul>
+<li>Make a copy of the autopsy folder.
+<li>Delete the autopsy folder.
+<li>Open Autopsy to regenerate the folder with default settings.
+<li>Close Autopsy and copy over the old configuration files that look relevant. For example, if you're trying to restore your hash sets, you will want to copy back the "HashDatabases" folder and the "hashLookup.settings" file.
+</ul>
+
+Alternately, you could copy the fresh user folder somewhere, move your old version back, and replace folders until it works again. 
+
 \section troubleshooting_logs Viewing the Logs
 
 The logs are generally the most helpful in figuring out why an error is occurring. There are two sets of logs - the system logs and the case logs. There is an option in the UI to open the log folder:
