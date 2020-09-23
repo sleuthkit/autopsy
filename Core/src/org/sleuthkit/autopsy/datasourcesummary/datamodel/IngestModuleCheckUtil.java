@@ -59,7 +59,6 @@ public class IngestModuleCheckUtil {
      * utilized.
      *
      * @param provider The object providing the current SleuthkitCase.
-     * @param logger   The logger to use.
      */
     public IngestModuleCheckUtil(SleuthkitCaseProvider provider) {
 

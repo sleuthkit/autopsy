@@ -129,7 +129,7 @@ public final class DiscoveryEventUtils {
          *
          * @param groupMap          The map of groups which were found by the
          *                          search.
-         * @param searchFilters     The search filters which were used by the
+         * @param searchfilters     The search filters which were used by the
          *                          search.
          * @param groupingAttribute The grouping attribute used by the search.
          * @param groupSort         The sorting algorithm used for groups.

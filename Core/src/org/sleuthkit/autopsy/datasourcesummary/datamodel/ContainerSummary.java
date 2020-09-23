@@ -173,10 +173,6 @@ public class ContainerSummary implements DefaultArtifactUpdateGovernor {
      * @param query              The query.
      * @param valueParam         The parameter for the value in the result set.
      * @param separator          The string separator used in concatenation.
-     * @param errorMessage       The error message if the result set could not
-     *                           be received.
-     * @param singleErrorMessage The error message if a single result could not
-     *                           be obtained.
      *
      * @return The concatenated string or null if the query could not be
      *         executed.
