@@ -246,8 +246,7 @@ public final class ImageGalleryController {
         tagsManager.registerListener(groupManager);
         tagsManager.registerListener(categoryManager);
         hashSetManager = new HashSetManager(drawableDB);
-        boolean isStale = isDataSourcesTableStale();
-        setModelIsStale(isStale);
+        setModelIsStale(isDataSourcesTableStale());
         dbExecutor = getNewDBExecutor();
 
         listeningEnabled.addListener((observable, wasPreviouslyEnabled, isEnabled) -> {
@@ -259,7 +258,7 @@ public final class ImageGalleryController {
                  */
                 if (isEnabled && !wasPreviouslyEnabled
                         && (Case.getCurrentCaseThrows().getCaseType() == CaseType.SINGLE_USER_CASE)
-                        && isStale) {
+                        && isDataSourcesTableStale()) {
                     rebuildDrawablesDb();
                 }
             } catch (NoCurrentCaseException ex) {
