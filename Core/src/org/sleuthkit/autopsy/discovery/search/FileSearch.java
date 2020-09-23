@@ -291,7 +291,7 @@ public class FileSearch {
      * populate the list of keyword set names in the ResultFile objects.
      *
      * @param attrs         The attributes to add to the list of result files
-     * @param resultFiles   The result files
+     * @param results       The result files
      * @param caseDb        The case database
      * @param centralRepoDb The central repository database. Can be null if not
      *                      needed.

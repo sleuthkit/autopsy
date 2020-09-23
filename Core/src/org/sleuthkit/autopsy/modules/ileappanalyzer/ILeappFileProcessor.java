@@ -142,7 +142,6 @@ public final class ILeappFileProcessor {
      *
      * @param iLeappFilesToProcess List of files to process
      * @param iLeappImageFile      Abstract file to create artifact for
-     * @param statusHelper         progress bar update
      *
      * @throws FileNotFoundException
      * @throws IOException
@@ -399,7 +398,7 @@ public final class ILeappFileProcessor {
          *
          * @param type         is a blackboard.artifact_type enum to determine
          *                     which type the artifact should be
-         * @param content      is the Content object that needs to have the
+         * @param abstractFile is the AbstractFile object that needs to have the
          *                     artifact added for it
          * @param bbattributes is the collection of blackboard attributes that
          *                     need to be added to the artifact after the

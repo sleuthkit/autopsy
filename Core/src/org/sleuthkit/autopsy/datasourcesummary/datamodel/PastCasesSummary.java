@@ -245,7 +245,6 @@ public class PastCasesSummary implements DefaultArtifactUpdateGovernor {
      * Given an artifact with a TYPE_ASSOCIATED_ARTIFACT attribute, retrieves
      * the related artifact.
      *
-     * @param skCase   The sleuthkit case.
      * @param artifact The artifact with the TYPE_ASSOCIATED_ARTIFACT attribute.
      *
      * @return The artifact if found or null if not.
