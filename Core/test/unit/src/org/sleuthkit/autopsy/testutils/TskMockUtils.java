@@ -43,9 +43,9 @@ public class TskMockUtils {
 
         when(artifact.getArtifactTypeID()).thenReturn(artifactType.getTypeID());
         
-        when(artifact.getAttribute(any())).thenAnswer((invocation) -> {
+        when(artifact.getAttribute(any(BlackboardAttribute.Type.class))).thenAnswer((invocation) -> {
             Object[] args = invocation.getArguments();
-            BlackboardArtifact.Type type = (BlackboardArtifact.Type) args[0];
+            BlackboardAttribute.Type type = (BlackboardAttribute.Type) args[0];
             return attributeTypes.get(type.getTypeID());
         });
 

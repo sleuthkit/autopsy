@@ -55,15 +55,16 @@ public class GetArtifactsTest {
         when(mockCase.getBlackboard()).thenReturn(mockBlackboard);
 
         if (blackboardEx == null) {
-            when(mockBlackboard.getArtifacts(anyInt(), anyInt())).thenReturn(returnArr);
-            verify(mockBlackboard, times(1)).getArtifacts(artifactType.getTypeID(), dataSource.getId());
+            when(mockBlackboard.getArtifacts(anyInt(), anyLong())).thenReturn(returnArr);
         } else {
-            when(mockBlackboard.getArtifacts(anyInt(), anyInt())).thenThrow(blackboardEx);
+            when(mockBlackboard.getArtifacts(anyInt(), anyLong())).thenThrow(blackboardEx);
         }
 
         if (expectedException == null) {
             List<BlackboardArtifact> determinedArr = DataSourceInfoUtilities.getArtifacts(mockCase, artifactType, dataSource, attributeType, sortOrder);
-            if (expectedArr == null && returnArr == null) {
+            verify(mockBlackboard, times(1)).getArtifacts(artifactType.getTypeID(), dataSource.getId());
+            
+            if (expectedArr == null && determinedArr == null) {
                 return;
             }
 
@@ -196,16 +197,6 @@ public class GetArtifactsTest {
         testSorted(ARTIFACT_TYPE.TSK_GPS_BOOKMARK, ATTRIBUTE_TYPE.TSK_GEO_LATITUDE, doubles, BlackboardAttribute::new, sortOrder);
     }
     
-    private <T> void testFailOnBadAttrType(BlackboardArtifact.Type artifactType, BlackboardAttribute.Type attributeType, T val) {
-        DataSource dataSource = TskMockUtils.mockDataSource(1);
-        
-        List<BlackboardArtifact> artifacts = Arrays.asList(
-                TskMockUtils.mockArtifact(artifactType, 2, dataSource, attributes)
-        );
-        test(artifactType, dataSource, attributeType, SortOrder.ASCENDING, List<BlackboardArtifact> returnArr, TskCoreException blackboardEx,
-        List<BlackboardArtifact> expectedArr, Class<? extends Exception> expectedException)
-    }
-        
     @Test
     public void testSortAscending() throws TskCoreException {
         testAscDesc(SortOrder.ASCENDING);
@@ -216,6 +207,17 @@ public class GetArtifactsTest {
         testAscDesc(SortOrder.DESCENDING);
     }
 
+    //    private <T> void testFailOnBadAttrType(BlackboardArtifact.Type artifactType, BlackboardAttribute.Type attributeType, T val) {
+//        DataSource dataSource = TskMockUtils.mockDataSource(1);
+//        
+//        List<BlackboardArtifact> artifacts = Arrays.asList(
+//                TskMockUtils.mockArtifact(artifactType, 2, dataSource, attributes)
+//        );
+//        test(artifactType, dataSource, attributeType, SortOrder.ASCENDING, List<BlackboardArtifact> returnArr, TskCoreException blackboardEx,
+//        List<BlackboardArtifact> expectedArr, Class<? extends Exception> expectedException)
+//    }
+        
+    
     @Test
     public void testFailOnJson() throws TskCoreException {
 
