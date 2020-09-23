@@ -178,7 +178,7 @@
             <!-- Note: can be higher on 64 bit systems, should be in sync with project.properties -->
             <entry key="default_options" value="@JVM_OPTIONS" />
             <entry key="jdkhome" value="&quot;jre&quot;" />
-            <entry key="default_userdir" value="${HOME}/${APPNAME}" />
+            <entry key="default_userdir" value="${DEFAULT_USERDIR_ROOT}" />
         </propertyfile>
         <!-- workaround for ant escaping : and = when setting properties -->
         <replace file="${inst.property.file}" token="@JVM_OPTIONS" value="${jvm.args}" />

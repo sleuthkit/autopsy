@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.discovery.ui;
 
+import java.util.Collections;
 import org.sleuthkit.autopsy.discovery.search.AbstractFilter;
 import java.util.List;
 import java.util.logging.Level;
@@ -141,10 +142,13 @@ final class DataSourceFilterPanel extends AbstractDiscoveryFilterPanel {
         try {
             DefaultListModel<DataSourceItem> dsListModel = (DefaultListModel<DataSourceItem>) dataSourceList.getModel();
             dsListModel.removeAllElements();
-            for (DataSource ds : Case.getCurrentCase().getSleuthkitCase().getDataSources()) {
+            List<DataSource> dataSources = Case.getCurrentCase().getSleuthkitCase().getDataSources();
+            Collections.sort(dataSources, (DataSource ds1, DataSource ds2) -> ds1.getName().compareToIgnoreCase(ds2.getName()));
+            for (DataSource ds : dataSources) {
                 dsListModel.add(count, new DataSourceItem(ds));
                 count++;
             }
+
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error loading data sources", ex);
             dataSourceCheckbox.setEnabled(false);

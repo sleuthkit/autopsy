@@ -86,7 +86,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
 
     static final boolean DEFAULT_CONFIG_INCLUDE_ELSE_EXCLUDE = false;
 
-    private static final String PHOTOREC_TEMP_SUBDIR = "Photorec";
+    private static final String PHOTOREC_TEMP_SUBDIR = "PhotoRec Carver"; // NON-NLS Note that we need the space in this dir name (JIRA-6878)
     private static final String PHOTOREC_DIRECTORY = "photorec_exec"; //NON-NLS
     private static final String PHOTOREC_SUBDIRECTORY = "bin"; //NON-NLS
     private static final String PHOTOREC_EXECUTABLE = "photorec_win.exe"; //NON-NLS
