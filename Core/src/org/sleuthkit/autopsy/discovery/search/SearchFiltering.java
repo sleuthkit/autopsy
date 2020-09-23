@@ -116,9 +116,6 @@ public class SearchFiltering {
             resultList.add(new ResultFile(abstractFile));
         }
 
-        //manually add the attributes for filters which use alternate non filters and could be used by grouping or sorting
-        DiscoveryAttributes.FrequencyAttribute freqAttr = new DiscoveryAttributes.FrequencyAttribute();
-        freqAttr.addAttributeToResults(resultList, caseDb, centralRepoDb);
         // Now run any non-SQL filters. 
         for (AbstractFilter filter : filters) {
             if (filter.useAlternateFilter()) {
@@ -652,6 +649,10 @@ public class SearchFiltering {
         @Override
         public List<Result> applyAlternateFilter(List<Result> currentResults, SleuthkitCase caseDb,
                 CentralRepository centralRepoDb) throws DiscoveryException {
+            // Set the frequency for each file
+            DiscoveryAttributes.FrequencyAttribute freqAttr = new DiscoveryAttributes.FrequencyAttribute();
+            freqAttr.addAttributeToResults(currentResults, caseDb, centralRepoDb);
+
             // If the frequency matches the filter, add the file to the results
             List<Result> frequencyResults = new ArrayList<>();
             for (Result file : currentResults) {
