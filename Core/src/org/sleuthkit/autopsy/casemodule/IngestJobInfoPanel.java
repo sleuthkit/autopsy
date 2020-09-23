@@ -256,8 +256,8 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
         setLayout(new java.awt.BorderLayout());
 
         contentPanel.setMaximumSize(new java.awt.Dimension(32767, 32767));
-        contentPanel.setMinimumSize(new java.awt.Dimension(600, 150));
-        contentPanel.setPreferredSize(new java.awt.Dimension(600, 150));
+        contentPanel.setMinimumSize(new java.awt.Dimension(625, 150));
+        contentPanel.setPreferredSize(new java.awt.Dimension(625, 150));
         contentPanel.setLayout(new java.awt.GridBagLayout());
 
         ingestJobsScrollPane.setBorder(null);

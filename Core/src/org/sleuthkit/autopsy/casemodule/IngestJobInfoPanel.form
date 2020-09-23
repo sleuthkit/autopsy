@@ -39,10 +39,10 @@
               <Dimension value="[32767, 32767]"/>
             </Property>
             <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-              <Dimension value="[600, 150]"/>
+              <Dimension value="[625, 150]"/>
             </Property>
             <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-              <Dimension value="[600, 150]"/>
+              <Dimension value="[625, 150]"/>
             </Property>
           </Properties>
           <AuxValues>
