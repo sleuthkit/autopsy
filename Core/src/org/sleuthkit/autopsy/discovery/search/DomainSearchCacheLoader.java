@@ -58,15 +58,6 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
     @Override
     public Map<GroupKey, List<Result>> load(SearchKey key) throws DiscoveryException, SQLException, TskCoreException, InterruptedException {
         List<Result> domainResults = getResultDomainsFromDatabase(key);
-        // Apply secondary in memory filters
-        for (AbstractFilter filter : key.getFilters()) {
-            if (Thread.currentThread().isInterrupted()) {
-                throw new InterruptedException();
-            }
-            if (filter.useAlternateFilter()) {
-                domainResults = filter.applyAlternateFilter(domainResults, key.getSleuthkitCase(), key.getCentralRepository());
-            }
-        }
         // Grouping by CR Frequency, for example, will require further processing
         // in order to make the correct decision. The attribute types that require
         // more information implement their logic by overriding `addAttributeToResults`.
