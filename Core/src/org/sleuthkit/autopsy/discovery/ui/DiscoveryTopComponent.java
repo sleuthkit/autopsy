@@ -148,6 +148,7 @@ public final class DiscoveryTopComponent extends TopComponent {
     protected void componentClosed() {
         DiscoveryDialog.getDiscoveryDialogInstance().cancelSearch();
         DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.ClearInstanceSelectionEvent());
+        DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.CancelBackgroundTasksEvent());
         DiscoveryEventUtils.getDiscoveryEventBus().unregister(this);
         DiscoveryEventUtils.getDiscoveryEventBus().unregister(groupListPanel);
         DiscoveryEventUtils.getDiscoveryEventBus().unregister(resultsPanel);
