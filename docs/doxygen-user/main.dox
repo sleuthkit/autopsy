@@ -12,13 +12,14 @@ Help Topics
 -------
 The following topics are available here:
 
-- Installation
- - \subpage installation_page
- - \subpage performance_page
+- \subpage installation_page
+- Configuration
+ - \subpage config_page
+ - \subpage performance_page 
  - Multi-user Cluster 
   - \subpage install_multiuser_page
   - \subpage multiuser_sec_page
-  - \subpage multiuser_page
+  - \subpage multiuser_page 
 
 - \subpage quick_start_guide "Quick Start Guide"
 
