@@ -95,6 +95,9 @@ public final class DiscoveryEventUtils {
      */
     public static final class CancelBackgroundTasksEvent {
         
+        public CancelBackgroundTasksEvent() {
+            //no-arg constructor
+        }
     }
 
     /**
