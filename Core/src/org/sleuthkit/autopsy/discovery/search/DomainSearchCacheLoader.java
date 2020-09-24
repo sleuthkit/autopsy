@@ -57,36 +57,29 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
 
     @Override
     public Map<GroupKey, List<Result>> load(SearchKey key) throws DiscoveryException, SQLException, TskCoreException, InterruptedException {
-
         List<Result> domainResults = getResultDomainsFromDatabase(key);
-
-        // Apply secondary in memory filters
-        for (AbstractFilter filter : key.getFilters()) {
-            if(Thread.currentThread().isInterrupted()) {
-                throw new InterruptedException();
-            }
-            
-            if (filter.useAlternateFilter()) {
-                domainResults = filter.applyAlternateFilter(domainResults, key.getSleuthkitCase(), key.getCentralRepository());
-            }
-        }
-        
         // Grouping by CR Frequency, for example, will require further processing
         // in order to make the correct decision. The attribute types that require
         // more information implement their logic by overriding `addAttributeToResults`.
         List<AttributeType> searchAttributes = new ArrayList<>();
         searchAttributes.add(key.getGroupAttributeType());
         searchAttributes.addAll(key.getFileSortingMethod().getRequiredAttributes());
-        
         for (AttributeType attr : searchAttributes) {
-            if(Thread.currentThread().isInterrupted()) {
+            if (Thread.currentThread().isInterrupted()) {
                 throw new InterruptedException();
             }
-            
-            attr.addAttributeToResults(domainResults, 
+            attr.addAttributeToResults(domainResults,
                     key.getSleuthkitCase(), key.getCentralRepository());
         }
-
+        // Apply secondary in memory filters
+        for (AbstractFilter filter : key.getFilters()) {
+            if (Thread.currentThread().isInterrupted()) {
+                throw new InterruptedException();
+            }
+            if (filter.useAlternateFilter()) {
+                domainResults = filter.applyAlternateFilter(domainResults, key.getSleuthkitCase(), key.getCentralRepository());
+            }
+        }
         // Sort the ResultDomains by the requested criteria.
         final SearchResults searchResults = new SearchResults(
                 key.getGroupSortingType(),
@@ -188,7 +181,7 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
         if (domainCallback.getTskCoreException() != null) {
             throw domainCallback.getTskCoreException();
         }
-        
+
         if (domainCallback.getInterruptedException() != null) {
             throw domainCallback.getInterruptedException();
         }
@@ -257,11 +250,13 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
         private SQLException sqlCause;
         private TskCoreException coreCause;
         private InterruptedException interruptedException;
-        
-        private final Set<String> bannedDomains = new HashSet<String>() {{
-           add("localhost");
-           add("127.0.0.1");
-        }};
+
+        private final Set<String> bannedDomains = new HashSet<String>() {
+            {
+                add("localhost");
+                add("127.0.0.1");
+            }
+        };
 
         /**
          * Construct a new DomainCallback object.
@@ -279,18 +274,18 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
                 resultSet.setFetchSize(500);
 
                 while (resultSet.next()) {
-                    if(Thread.currentThread().isInterrupted()) {
+                    if (Thread.currentThread().isInterrupted()) {
                         throw new InterruptedException();
                     }
-                    
+
                     String domain = resultSet.getString("domain");
-                    
+
                     if (bannedDomains.contains(domain)) {
                         // Skip banned domains
                         // Domain names are lowercased in the SQL query
                         continue;
                     }
-                    
+
                     Long activityStart = resultSet.getLong("activity_start");
                     if (resultSet.wasNull()) {
                         activityStart = null;
@@ -356,9 +351,10 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
         private TskCoreException getTskCoreException() {
             return this.coreCause;
         }
-        
+
         /**
-         * Get the interrupted exception if the processing thread was interrupted.
+         * Get the interrupted exception if the processing thread was
+         * interrupted.
          *
          * @return The interrupted exception or null if none was thrown.
          */
