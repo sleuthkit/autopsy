@@ -196,12 +196,12 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
 
         List<AbstractFile> iLeappFilesToProcess = new ArrayList<>();
         for (AbstractFile iLeappFile : iLeappFiles) {
-            if ((iLeappFile.getLocalAbsPath() != null)
-                    && (!iLeappFile.getNameExtension().isEmpty() && (!iLeappFile.isVirtual()))) {
-                if ((iLeappFile.getName().toLowerCase().contains(".zip") || (iLeappFile.getName().toLowerCase().contains(".tar"))
+            if (((iLeappFile.getLocalAbsPath() != null)
+                    && (!iLeappFile.getNameExtension().isEmpty() && (!iLeappFile.isVirtual()))) 
+                && ((iLeappFile.getName().toLowerCase().contains(".zip") || (iLeappFile.getName().toLowerCase().contains(".tar")))
                         || iLeappFile.getName().toLowerCase().contains(".tgz"))) {
                     iLeappFilesToProcess.add(iLeappFile);
-                }
+                
             }
         }
 
