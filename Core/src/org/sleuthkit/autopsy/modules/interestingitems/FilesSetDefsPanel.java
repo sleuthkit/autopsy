@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -46,6 +46,7 @@ import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.guiutils.SimpleListCellRenderer;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
@@ -88,6 +89,9 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
     private final String filterDialogTitle;
     private final String ruleDialogTitle;
     private boolean canBeEnabled = true;
+    
+    private final JFileChooser importFileChooser;
+    private final String LAST_IMPORT_PATH_KEY = "InterestingFilesLastImport";
 
     // The following is a map of interesting files set names to interesting
     // files set definitions. It is a snapshot of the files set definitions
@@ -146,6 +150,20 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
             enableButtons();
         });
         canBeEnabled = !IngestManager.getInstance().isIngestRunning();
+        
+        this.importFileChooser = new JFileChooser();
+        configureImportFileChooser();
+    }
+    
+    /**
+     * Configure the file chooser for rule set imports.
+     */
+    private void configureImportFileChooser() {
+        FileNameExtensionFilter autopsyFilter = new FileNameExtensionFilter(
+                NbBundle.getMessage(this.getClass(), "FilesSetDefsPanel.interesting.fileExtensionFilterLbl"), "xml");
+        importFileChooser.addChoosableFileFilter(autopsyFilter);
+        importFileChooser.setAcceptAllFileFilterUsed(false);
+        importFileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
     }
 
     @NbBundle.Messages({"FilesSetDefsPanel.Interesting.Title=Global Interesting Items Settings",
@@ -1131,16 +1149,25 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
     private void importSetButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_importSetButtonActionPerformed
         //save currently selected value as default value to select
         FilesSet selectedSet = this.setsList.getSelectedValue();
-        JFileChooser chooser = new JFileChooser();
-        final String EXTENSION = "xml"; //NON-NLS
-        FileNameExtensionFilter autopsyFilter = new FileNameExtensionFilter(
-                NbBundle.getMessage(this.getClass(), "FilesSetDefsPanel.interesting.fileExtensionFilterLbl"), EXTENSION);
-        chooser.addChoosableFileFilter(autopsyFilter);
-        chooser.setAcceptAllFileFilterUsed(false);
-        chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        int returnVal = chooser.showOpenDialog(this);
+        
+        File lastFolder = null;
+        if (ModuleSettings.settingExists(ModuleSettings.MAIN_SETTINGS, LAST_IMPORT_PATH_KEY)) {
+            final String lastDirectory = ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, LAST_IMPORT_PATH_KEY);
+            File lastDirectoryFile = new File(lastDirectory);
+            // Only select it if it exists.
+            if (lastDirectoryFile.exists()) {
+                lastFolder = lastDirectoryFile;
+            }
+        }
+        
+        // Passing null to fileChooser will set it to the
+        // user's default directory, which is a good starting
+        // point if no selection setting exists yet.
+        importFileChooser.setCurrentDirectory(lastFolder);
+        
+        int returnVal = importFileChooser.showOpenDialog(this);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
-            File selFile = chooser.getSelectedFile();
+            File selFile = importFileChooser.getSelectedFile();
             if (selFile == null) {
                 JOptionPane.showMessageDialog(this,
                         Bundle.FilesSetDefsPanel_importSetButtonActionPerformed_noFilesSelected(),
@@ -1149,6 +1176,9 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
                 logger.warning("Selected file was null, when trying to import interesting files set definitions");
                 return;
             }
+            
+            ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, LAST_IMPORT_PATH_KEY, selFile.getParent());
+            
             Collection<FilesSet> importedSets;
             try {
                 importedSets = InterestingItemsFilesSetSettings.readDefinitionsXML(selFile).values(); //read the xml from that path
