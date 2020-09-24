@@ -93,10 +93,10 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
     private static final String XML_EXTENSION = "xml";
     
     private final JFileChooser importFileChooser;
-    private final String LAST_IMPORT_PATH_KEY = "InterestingFilesRuleSetLastImport";
+    private static final String LAST_IMPORT_PATH_KEY = "InterestingFilesRuleSetLastImport";
     
     private final JFileChooser exportFileChooser;
-    private final String LAST_EXPORT_PATH_KEY = "InterestingFilesRuleSetLastExport";
+    private static final String LAST_EXPORT_PATH_KEY = "InterestingFilesRuleSetLastExport";
 
     // The following is a map of interesting files set names to interesting
     // files set definitions. It is a snapshot of the files set definitions
