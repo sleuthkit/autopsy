@@ -127,12 +127,6 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
         Case currentCase = Case.getCurrentCase();
         for (AbstractFile iLeappFile : iLeappFilesToProcess) {
 
-            if ((iLeappFile.getLocalAbsPath() == null) || (iLeappFile.getNameExtension().isEmpty()) || iLeappFile.getSize() < 1) {
-                    logger.log(Level.WARNING, String.format("Cannot process abstractFile with LocalAbsPath is %s or nameExtension is %s or file size is %d", iLeappFile.getLocalAbsPath(), iLeappFile.getNameExtension(), iLeappFile.getSize())); //NON-NLS
-                    return ProcessResult.ERROR;
-                
-            }
-            
             String currentTime = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss z", Locale.US).format(System.currentTimeMillis());//NON-NLS
             Path moduleOutputPath = Paths.get(currentCase.getModuleDirectory(), ILEAPP, currentTime);
             try {
@@ -145,7 +139,7 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
             statusHelper.progress(NbBundle.getMessage(this.getClass(), "ILeappAnalyzerIngestModule.processing.file", iLeappFile.getName()), filesProcessedCount);
             ProcessBuilder iLeappCommand = buildiLeappCommand(moduleOutputPath, iLeappFile.getLocalAbsPath(), iLeappFile.getNameExtension());
             try {
-                int result = ExecUtil.execute(iLeappCommand, new DataSourceIngestModuleProcessTerminator(context));
+                int result = ExecUtil.execute(iLeappCommand, new DataSourceIngestModuleProcessTerminator(context, true));
                 if (result != 0) {
                     logger.log(Level.SEVERE, String.format("Error running iLeapp, error code returned %d", result)); //NON-NLS
                     return ProcessResult.ERROR;
@@ -202,9 +196,12 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
 
         List<AbstractFile> iLeappFilesToProcess = new ArrayList<>();
         for (AbstractFile iLeappFile : iLeappFiles) {
-            if ((iLeappFile.getName().toLowerCase().contains(".zip") || (iLeappFile.getName().toLowerCase().contains(".tar"))
-                    || iLeappFile.getName().toLowerCase().contains(".tgz"))) {
-                iLeappFilesToProcess.add(iLeappFile);
+            if ((iLeappFile.getLocalAbsPath() != null)
+                    && (!iLeappFile.getNameExtension().isEmpty() && (!iLeappFile.isVirtual()))) {
+                if ((iLeappFile.getName().toLowerCase().contains(".zip") || (iLeappFile.getName().toLowerCase().contains(".tar"))
+                        || iLeappFile.getName().toLowerCase().contains(".tgz"))) {
+                    iLeappFilesToProcess.add(iLeappFile);
+                }
             }
         }
 
