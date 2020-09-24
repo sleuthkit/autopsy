@@ -127,6 +127,12 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
         Case currentCase = Case.getCurrentCase();
         for (AbstractFile iLeappFile : iLeappFilesToProcess) {
 
+            if ((iLeappFile.getLocalAbsPath() == null) || (iLeappFile.getNameExtension().isEmpty())) {
+                    logger.log(Level.WARNING, String.format("Cannot process abstractFile with LocalAbsPath is %s or nameExtension is %s", iLeappFile.getLocalAbsPath(), iLeappFile.getNameExtension())); //NON-NLS
+                    return ProcessResult.ERROR;
+                
+            }
+            
             String currentTime = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss z", Locale.US).format(System.currentTimeMillis());//NON-NLS
             Path moduleOutputPath = Paths.get(currentCase.getModuleDirectory(), ILEAPP, currentTime);
             try {
@@ -138,11 +144,6 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
 
             statusHelper.progress(NbBundle.getMessage(this.getClass(), "ILeappAnalyzerIngestModule.processing.file", iLeappFile.getName()), filesProcessedCount);
             ProcessBuilder iLeappCommand = buildiLeappCommand(moduleOutputPath, iLeappFile.getLocalAbsPath(), iLeappFile.getNameExtension());
-            if (iLeappCommand == null) {
-                    logger.log(Level.SEVERE, String.format("Error building iLeapp command moduleOutputPath is %s, LocalAbsPath is %s, nameExtension is %s", moduleOutputPath.toString(), iLeappFile.getLocalAbsPath(), iLeappFile.getNameExtension())); //NON-NLS
-                    return ProcessResult.ERROR;
-                
-            }
             try {
                 int result = ExecUtil.execute(iLeappCommand, new DataSourceIngestModuleProcessTerminator(context));
                 if (result != 0) {
