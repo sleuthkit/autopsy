@@ -90,8 +90,13 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
     private final String ruleDialogTitle;
     private boolean canBeEnabled = true;
     
+    private static final String XML_EXTENSION = "xml";
+    
     private final JFileChooser importFileChooser;
-    private final String LAST_IMPORT_PATH_KEY = "InterestingFilesLastImport";
+    private final String LAST_IMPORT_PATH_KEY = "InterestingFilesRuleSetLastImport";
+    
+    private final JFileChooser exportFileChooser;
+    private final String LAST_EXPORT_PATH_KEY = "InterestingFilesRuleSetLastExport";
 
     // The following is a map of interesting files set names to interesting
     // files set definitions. It is a snapshot of the files set definitions
@@ -152,18 +157,20 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         canBeEnabled = !IngestManager.getInstance().isIngestRunning();
         
         this.importFileChooser = new JFileChooser();
-        configureImportFileChooser();
+        this.exportFileChooser = new JFileChooser();
+        configureFileChooser(importFileChooser);
+        configureFileChooser(exportFileChooser);
     }
     
     /**
-     * Configure the file chooser for rule set imports.
+     * Configure the file chooser for rule set imports and exports.
      */
-    private void configureImportFileChooser() {
+    private void configureFileChooser(JFileChooser fileChooser) {
         FileNameExtensionFilter autopsyFilter = new FileNameExtensionFilter(
-                NbBundle.getMessage(this.getClass(), "FilesSetDefsPanel.interesting.fileExtensionFilterLbl"), "xml");
-        importFileChooser.addChoosableFileFilter(autopsyFilter);
-        importFileChooser.setAcceptAllFileFilterUsed(false);
-        importFileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+                NbBundle.getMessage(this.getClass(), "FilesSetDefsPanel.interesting.fileExtensionFilterLbl"), XML_EXTENSION);
+        fileChooser.addChoosableFileFilter(autopsyFilter);
+        fileChooser.setAcceptAllFileFilterUsed(false);
+        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
     }
 
     @NbBundle.Messages({"FilesSetDefsPanel.Interesting.Title=Global Interesting Items Settings",
@@ -1150,19 +1157,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         //save currently selected value as default value to select
         FilesSet selectedSet = this.setsList.getSelectedValue();
         
-        File lastFolder = null;
-        if (ModuleSettings.settingExists(ModuleSettings.MAIN_SETTINGS, LAST_IMPORT_PATH_KEY)) {
-            final String lastDirectory = ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, LAST_IMPORT_PATH_KEY);
-            File lastDirectoryFile = new File(lastDirectory);
-            // Only select it if it exists.
-            if (lastDirectoryFile.exists()) {
-                lastFolder = lastDirectoryFile;
-            }
-        }
-        
-        // Passing null to fileChooser will set it to the
-        // user's default directory, which is a good starting
-        // point if no selection setting exists yet.
+        File lastFolder = getLastUsedDirectory(LAST_IMPORT_PATH_KEY);
         importFileChooser.setCurrentDirectory(lastFolder);
         
         int returnVal = importFileChooser.showOpenDialog(this);
@@ -1221,6 +1216,27 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
 
     }//GEN-LAST:event_importSetButtonActionPerformed
 
+    /**
+     * Get the last used directory from ModuleSettings, using the value 
+     * associated with the input key as the directory path.
+     *
+     * @param key The input key to search in module settings.
+     * @return A directory instance if a value was found and the path is still
+     * valid, or null otherwise.
+     */
+    private File getLastUsedDirectory(String key) {
+        File lastFolder = null;
+        if (ModuleSettings.settingExists(ModuleSettings.MAIN_SETTINGS, key)) {
+            final String lastDirectory = ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, key);
+            File lastDirectoryFile = new File(lastDirectory);
+            // Only select it if it exists.
+            if (lastDirectoryFile.exists()) {
+                lastFolder = lastDirectoryFile;
+            }
+        }
+        return lastFolder;
+    }
+    
     /**
      * From the files sets that can be imported, this method rectifies any
      * conflicts that may occur.
@@ -1450,18 +1466,16 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
     private void exportSetButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exportSetButtonActionPerformed
         //display warning that existing filessets with duplicate names will be overwritten
         //create file chooser to get xml filefinal String FEATURE_NAME = NbBundle.getMessage(this.getClass(),
-        JFileChooser chooser = new JFileChooser();
-        final String EXTENSION = "xml"; //NON-NLS
-        FileNameExtensionFilter autopsyFilter = new FileNameExtensionFilter(
-                NbBundle.getMessage(this.getClass(), "FilesSetDefsPanel.interesting.fileExtensionFilterLbl"), EXTENSION);
-        chooser.addChoosableFileFilter(autopsyFilter);
-        chooser.setSelectedFile(new File(this.setsList.getSelectedValue().getName()));
-        chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        int returnVal = chooser.showSaveDialog(this);
+        exportFileChooser.setSelectedFile(new File(this.setsList.getSelectedValue().getName()));
+        
+        final File lastDirectory = getLastUsedDirectory(LAST_EXPORT_PATH_KEY);
+        exportFileChooser.setCurrentDirectory(lastDirectory);
+        
+        int returnVal = exportFileChooser.showSaveDialog(this);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             final String FEATURE_NAME = NbBundle.getMessage(this.getClass(),
                     "FilesSetDefsPanel.interesting.exportButtonAction.featureName");
-            File selFile = chooser.getSelectedFile();
+            File selFile = exportFileChooser.getSelectedFile();
             if (selFile == null) {
                 JOptionPane.showMessageDialog(this,
                         NbBundle.getMessage(this.getClass(), "FilesSetDefsPanel.interesting.failExportMsg"),
@@ -1470,10 +1484,13 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
                 logger.warning("Selected file was null, when trying to export interesting files set definitions");
                 return;
             }
+            
+            ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, LAST_EXPORT_PATH_KEY, selFile.getParent());
+            
             //force append extension if not given
             String fileAbs = selFile.getAbsolutePath();
-            if (!fileAbs.endsWith("." + EXTENSION)) {
-                fileAbs = fileAbs + "." + EXTENSION;
+            if (!fileAbs.endsWith("." + XML_EXTENSION)) {
+                fileAbs = fileAbs + "." + XML_EXTENSION;
                 selFile = new File(fileAbs);
             }
             if (selFile.exists()) {
