@@ -127,8 +127,8 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
         Case currentCase = Case.getCurrentCase();
         for (AbstractFile iLeappFile : iLeappFilesToProcess) {
 
-            if ((iLeappFile.getLocalAbsPath() == null) || (iLeappFile.getNameExtension().isEmpty())) {
-                    logger.log(Level.WARNING, String.format("Cannot process abstractFile with LocalAbsPath is %s or nameExtension is %s", iLeappFile.getLocalAbsPath(), iLeappFile.getNameExtension())); //NON-NLS
+            if ((iLeappFile.getLocalAbsPath() == null) || (iLeappFile.getNameExtension().isEmpty()) || iLeappFile.getSize() < 1) {
+                    logger.log(Level.WARNING, String.format("Cannot process abstractFile with LocalAbsPath is %s or nameExtension is %s or file size is %d", iLeappFile.getLocalAbsPath(), iLeappFile.getNameExtension(), iLeappFile.getSize())); //NON-NLS
                     return ProcessResult.ERROR;
                 
             }
