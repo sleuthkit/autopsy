@@ -1,0 +1,31 @@
+/*! \page data_source_summary_page Data Source Summary
+
+[TOC]
+
+\section ds_summary_overview Overview
+
+\section ds_summary_opening Opening the Data Source Summary
+
+\section ds_summary_main Sections
+
+Each tab of the data source summary displays different types of information about the selected data source. 
+
+If the ingest module(s) required for a data type have not been run, you will see a note about why there is no data. For example, "Recent Programs" results are created by the \ref recent_activity_page, so you will see a message about running that module if you have not.
+
+\image html DataSourceSummary/ds_summary_noRA.png
+
+\subsection ds_summary_types Types
+
+\subsection ds_summary_user_activity User Activity
+
+\subsection ds_summary_analysis Analysis
+
+\subsection ds_summary_recent_files Recent Files
+
+\subsection ds_summary_past_cases Past Cases
+
+\subsection ds_summary_ingest_history Ingest History
+
+\subsection ds_summary_container Container
+
+*/
