@@ -33,7 +33,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class DomainSearchCacheLoaderTest {
         
     @Test
-    public void load_GroupByDataSourceSortByGroupNameAndDomain() throws DiscoveryException, TskCoreException, SQLException {
+    public void load_GroupByDataSourceSortByGroupNameAndDomain() throws DiscoveryException, TskCoreException, SQLException, InterruptedException {
         DomainSearchCacheLoader loader = mock(DomainSearchCacheLoader.class);
         List<Result> domains = Arrays.asList(
                 DomainSearchTestUtils.mockDomainResult("google.com", 10, 100, 3, 5, 4, 110),
@@ -66,7 +66,7 @@ public class DomainSearchCacheLoaderTest {
     }
     
         @Test
-    public void load_GroupByNothingByGroupNameAndDomain() throws DiscoveryException, TskCoreException, SQLException {
+    public void load_GroupByNothingByGroupNameAndDomain() throws DiscoveryException, TskCoreException, SQLException, InterruptedException {
         DomainSearchCacheLoader loader = mock(DomainSearchCacheLoader.class);
         List<Result> domains = Arrays.asList(
                 DomainSearchTestUtils.mockDomainResult("google.com", 10, 100, 1, 5, 4, 110),
@@ -98,7 +98,7 @@ public class DomainSearchCacheLoaderTest {
     }
     
     @Test
-    public void load_GroupByNothingSortByNameAndDataSource() throws DiscoveryException, TskCoreException, SQLException {
+    public void load_GroupByNothingSortByNameAndDataSource() throws DiscoveryException, TskCoreException, SQLException, InterruptedException {
         DomainSearchCacheLoader loader = mock(DomainSearchCacheLoader.class);
         List<Result> domains = Arrays.asList(
                 DomainSearchTestUtils.mockDomainResult("google.com", 10, 100, 7, 5, 4, 110),
@@ -127,7 +127,7 @@ public class DomainSearchCacheLoaderTest {
     }
     
     @Test
-    public void load_GroupByDataSourceBySizeAndName() throws DiscoveryException, TskCoreException, SQLException {
+    public void load_GroupByDataSourceBySizeAndName() throws DiscoveryException, TskCoreException, SQLException, InterruptedException {
         DomainSearchCacheLoader loader = mock(DomainSearchCacheLoader.class);
         List<Result> domains = Arrays.asList(
                 DomainSearchTestUtils.mockDomainResult("google.com", 10, 100, 7, 5, 4, 110),
