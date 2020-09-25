@@ -63,6 +63,9 @@ def write_results_to_xlsx(results: OutputResult, output_path: str):
 
     for sheet_name, values in workbook.items():
         sheet = wb_file.add_worksheet(name=sheet_name)
+        if results.freeze_first_row:
+            sheet.freeze_panes(1, 0)
+
         for col_idx in range(0, len(styles)):
             if styles[col_idx]:
                 col_format, width = styles[col_idx]

@@ -325,6 +325,9 @@ def main():
     parser.add_argument('-l', '--language', dest='language', type=str, default=None, required=False,
                         help='Specify the language in order to update the last updated properties file and rename '
                              'files within directories.  This flag overrides the file-rename flag.')
+    parser.add_argument('-lf', '--language-updates-file', dest='language_file', type=str, default=None, required=False,
+                        help='Specify the path to the properties file containing key value pairs of language mapped to '
+                             'the commit of when bundles for that language were most recently updated.')
 
     args = parser.parse_args()
 
@@ -378,7 +381,7 @@ def main():
 
     # update the language last update if applicable
     if args.language and header is not None and len(header) > args.latest_commit_idx >= 0:
-        set_commit_for_language(args.language, header[args.latest_commit_idx])
+        set_commit_for_language(args.language, header[args.latest_commit_idx], args.language_file)
 
     sys.exit(0)
 
