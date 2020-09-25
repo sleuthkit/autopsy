@@ -61,7 +61,7 @@ public class DomainSearchArtifactsCacheTest {
             cache.get(request);
             // Clear the interrupt flag on failure.
             Thread.interrupted();
-            Assert.fail("Should have thrown an exception.");
+            Assert.fail("Should have thrown a discovery exception.");
         } catch (DiscoveryException ex) {
             // Clear the interrupt flag on success (or failure).
             Thread.interrupted();
