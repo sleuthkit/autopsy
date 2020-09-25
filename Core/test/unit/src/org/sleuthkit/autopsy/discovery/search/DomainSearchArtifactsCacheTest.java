@@ -87,10 +87,10 @@ public class DomainSearchArtifactsCacheTest {
     public void get_MatchingUrl_ShouldHaveSizeOne() throws TskCoreException, DiscoveryException {
         SleuthkitCase mockCase = mock(SleuthkitCase.class);
         BlackboardArtifact mockArtifact = mock(BlackboardArtifact.class);
-        when(mockArtifact.getAttribute(TSK_URL)).thenReturn(mockURLAttribute("https://www.google.com/search"));
+        when(mockArtifact.getAttribute(TSK_URL)).thenReturn(mockURLAttribute("https://www.abc.com/search"));
         when(mockCase.getBlackboardArtifacts(WEB_ARTIFACT_TYPE)).thenReturn(Lists.newArrayList(mockArtifact));
         
-        DomainSearchArtifactsRequest request = new DomainSearchArtifactsRequest(mockCase, "google.com", WEB_ARTIFACT_TYPE);
+        DomainSearchArtifactsRequest request = new DomainSearchArtifactsRequest(mockCase, "abc.com", WEB_ARTIFACT_TYPE);
         DomainSearchArtifactsCache cache = new DomainSearchArtifactsCache();
         List<BlackboardArtifact> artifacts = cache.get(request);
         Assert.assertEquals(1, artifacts.size());
@@ -114,10 +114,10 @@ public class DomainSearchArtifactsCacheTest {
     public void get_MismatchedUrl_ShouldBeEmpty() throws DiscoveryException, TskCoreException {
         SleuthkitCase mockCase = mock(SleuthkitCase.class);
         BlackboardArtifact mockArtifact = mock(BlackboardArtifact.class);
-        when(mockArtifact.getAttribute(TSK_URL)).thenReturn(mockURLAttribute("https://www.go1ogle.com/search"));
+        when(mockArtifact.getAttribute(TSK_URL)).thenReturn(mockURLAttribute("https://www.dce1.com/search"));
         when(mockCase.getBlackboardArtifacts(WEB_ARTIFACT_TYPE)).thenReturn(Lists.newArrayList(mockArtifact));
         
-        DomainSearchArtifactsRequest request = new DomainSearchArtifactsRequest(mockCase, "google.com", WEB_ARTIFACT_TYPE);
+        DomainSearchArtifactsRequest request = new DomainSearchArtifactsRequest(mockCase, "dce.com", WEB_ARTIFACT_TYPE);
         DomainSearchArtifactsCache cache = new DomainSearchArtifactsCache();
         List<BlackboardArtifact> artifacts = cache.get(request);
         Assert.assertEquals(0, artifacts.size());
@@ -127,10 +127,10 @@ public class DomainSearchArtifactsCacheTest {
     public void get_CaseInsensitiveDomainAttribute_ShouldHaveSizeOne() throws TskCoreException, DiscoveryException {
         SleuthkitCase mockCase = mock(SleuthkitCase.class);
         BlackboardArtifact mockArtifact = mock(BlackboardArtifact.class);
-        when(mockArtifact.getAttribute(TSK_DOMAIN)).thenReturn(mockDomainAttribute("GooGle.coM"));
+        when(mockArtifact.getAttribute(TSK_DOMAIN)).thenReturn(mockDomainAttribute("xYZ.coM"));
         when(mockCase.getBlackboardArtifacts(WEB_ARTIFACT_TYPE)).thenReturn(Lists.newArrayList(mockArtifact));
         
-        DomainSearchArtifactsRequest request = new DomainSearchArtifactsRequest(mockCase, "google.com", WEB_ARTIFACT_TYPE);
+        DomainSearchArtifactsRequest request = new DomainSearchArtifactsRequest(mockCase, "xyz.com", WEB_ARTIFACT_TYPE);
         DomainSearchArtifactsCache cache = new DomainSearchArtifactsCache();
         List<BlackboardArtifact> artifacts = cache.get(request);
         Assert.assertEquals(1, artifacts.size());
@@ -155,10 +155,10 @@ public class DomainSearchArtifactsCacheTest {
     public void get_CaseInsensitiveUrlAttribute_ShouldHaveSizeOne() throws TskCoreException, DiscoveryException {
         SleuthkitCase mockCase = mock(SleuthkitCase.class);
         BlackboardArtifact mockArtifact = mock(BlackboardArtifact.class);
-        when(mockArtifact.getAttribute(TSK_URL)).thenReturn(mockURLAttribute("https://www.GooGle.coM/search"));
+        when(mockArtifact.getAttribute(TSK_URL)).thenReturn(mockURLAttribute("https://www.JfK.coM/search"));
         when(mockCase.getBlackboardArtifacts(WEB_ARTIFACT_TYPE)).thenReturn(Lists.newArrayList(mockArtifact));
         
-        DomainSearchArtifactsRequest request = new DomainSearchArtifactsRequest(mockCase, "google.com", WEB_ARTIFACT_TYPE);
+        DomainSearchArtifactsRequest request = new DomainSearchArtifactsRequest(mockCase, "jfk.com", WEB_ARTIFACT_TYPE);
         DomainSearchArtifactsCache cache = new DomainSearchArtifactsCache();
         List<BlackboardArtifact> artifacts = cache.get(request);
         Assert.assertEquals(1, artifacts.size());
@@ -169,16 +169,16 @@ public class DomainSearchArtifactsCacheTest {
     public void get_CaseInsensitiveRequestUrl_ShouldHaveSizeOne() throws TskCoreException, DiscoveryException {
         SleuthkitCase mockCase = mock(SleuthkitCase.class);
         BlackboardArtifact mockArtifact = mock(BlackboardArtifact.class);
-        when(mockArtifact.getAttribute(TSK_URL)).thenReturn(mockURLAttribute("https://www.google.com/search"));
+        when(mockArtifact.getAttribute(TSK_URL)).thenReturn(mockURLAttribute("https://www.hop.com/search"));
         when(mockCase.getBlackboardArtifacts(WEB_ARTIFACT_TYPE)).thenReturn(Lists.newArrayList(mockArtifact));
         
-        DomainSearchArtifactsRequest request = new DomainSearchArtifactsRequest(mockCase, "GooGle.cOm", WEB_ARTIFACT_TYPE);
+        DomainSearchArtifactsRequest request = new DomainSearchArtifactsRequest(mockCase, "HoP.cOm", WEB_ARTIFACT_TYPE);
         DomainSearchArtifactsCache cache = new DomainSearchArtifactsCache();
         List<BlackboardArtifact> artifacts = cache.get(request);
         Assert.assertEquals(1, artifacts.size());
         Assert.assertEquals(mockArtifact, artifacts.get(0));
     }
-    
+        
     private BlackboardAttribute mockDomainAttribute(String value) {
         return new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN, "", value);
     }
