@@ -129,7 +129,7 @@ class Chromium extends Extract {
             if (browserName == NbBundle.getMessage(Chromium.class, "Browser.name.UC.Browser")) {
                 wildcardToken = "%";
             }
-            this.getHistory(browser.getKey(), browser.getValue(), wildcardToken);
+            this.getHistory(browser.getKey(), browser.getValue());
             if (context.dataSourceIngestIsCancelled()) {
                 return;
             }
@@ -174,11 +174,15 @@ class Chromium extends Extract {
     /**
      * Query for history databases and add artifacts
      */
-    private void getHistory(String browser, String browserLocation, String wildcardToken) {
+    private void getHistory(String browser, String browserLocation) {
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> historyFiles;
+        String historyFileName = "History";
+        if (browser == NbBundle.getMessage(Chromium.class, "Browser.name.UC.Browser")) {
+            historyFileName = "History%";
+        }
         try {
-            historyFiles = fileManager.findFiles(dataSource, "History" + wildcardToken, browserLocation); //NON-NLS
+            historyFiles = fileManager.findFiles(dataSource, historyFileName, browserLocation); //NON-NLS
         } catch (TskCoreException ex) {
             String msg = NbBundle.getMessage(this.getClass(), "Chrome.getHistory.errMsg.errGettingFiles");
             logger.log(Level.SEVERE, msg, ex);
@@ -414,6 +418,8 @@ class Chromium extends Extract {
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> cookiesFiles;
         try {
+            // Wildcard on front and back of Cookies as there are Cookie files that start with something else
+            // ie: UC browser has "Extension Cookies.9" as well as Cookies
             cookiesFiles = fileManager.findFiles(dataSource, wildcardToken + "Cookies" + wildcardToken, browserLocation); //NON-NLS
         } catch (TskCoreException ex) {
             String msg = NbBundle.getMessage(this.getClass(), "Chrome.getCookie.errMsg.errGettingFiles");
