@@ -49,6 +49,7 @@ The standard ingest modules included with Autopsy are:
 - <strong>\subpage plaso_page</strong> uses Plaso to create \ref timeline_page "timeline" events.
 - <strong>\subpage android_analyzer_page</strong> allows you to parse common items from Android devices.  Places artifacts into the BlackBoard.
 - <strong>\subpage gpx_page</strong> extracts geolocation data from .gpx files.
+- <strong>\subpage ileapp_page</strong> extracts data from iOS data sources.
 
 When you select a module, you will have the option to change its settings.  For example, you can configure which keyword search lists to use during ingest and which hash sets to use. Refer to the individual module help for details on configuring each module.
 
