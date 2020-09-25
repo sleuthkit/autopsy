@@ -47,6 +47,11 @@ public class DomainSearchArtifactsCache {
      *                            process.
      */
     public List<BlackboardArtifact> get(DomainSearchArtifactsRequest request) throws DiscoveryException {
+        String typeName = request.getArtifactType().getLabel();
+        if (!typeName.startsWith("TSK_WEB")) {
+            throw new IllegalArgumentException("Only web artifacts are valid arguments");
+        }
+        
         try {
             return cache.get(request);
         } catch (ExecutionException ex) {
