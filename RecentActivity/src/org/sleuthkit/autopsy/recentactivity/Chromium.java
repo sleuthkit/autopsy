@@ -81,6 +81,13 @@ class Chromium extends Extract {
     private static final String WEBFORM_ADDRESS_QUERY_V8X = "SELECT first_name, middle_name, last_name, full_name, street_address, city, state, zipcode, country_code, number, email, date_modified, use_date, use_count" +
                                                             " FROM autofill_profiles, autofill_profile_names, autofill_profile_emails, autofill_profile_phones" +
                                                             " WHERE autofill_profiles.guid = autofill_profile_names.guid AND autofill_profiles.guid = autofill_profile_emails.guid AND autofill_profiles.guid = autofill_profile_phones.guid";
+    private static final String HISTORY_FILE_NAME = "History";
+    private static final String BOOKMARK_FILE_NAME = "Bookmarks";
+    private static final String COOKIE_FILE_NAME = "Cookies";
+    private static final String LOGIN_DATA_FILE_NAME = "Login Data";
+    private static final String WEB_DATA_FILE_NAME = "Web Data";
+
+    
     private final Logger logger = Logger.getLogger(this.getClass().getName());
     private Content dataSource;
     private IngestJobContext context;
@@ -125,41 +132,37 @@ class Chromium extends Extract {
             String browserName = browser.getKey();
             String browserLocation = browser.getValue();
             progressBar.progress(NbBundle.getMessage(this.getClass(), "Progress_Message_Chrome_History", browserName));
-            String wildcardToken = "";
-            if (browserName == NbBundle.getMessage(Chromium.class, "Browser.name.UC.Browser")) {
-                wildcardToken = "%";
-            }
             this.getHistory(browser.getKey(), browser.getValue());
             if (context.dataSourceIngestIsCancelled()) {
                 return;
             }
 
             progressBar.progress(NbBundle.getMessage(this.getClass(), "Progress_Message_Chrome_Bookmarks", browserName));
-            this.getBookmark(browser.getKey(), browser.getValue(), wildcardToken);
+            this.getBookmark(browser.getKey(), browser.getValue());
             if (context.dataSourceIngestIsCancelled()) {
                 return;
             }
 
             progressBar.progress(NbBundle.getMessage(this.getClass(), "Progress_Message_Chrome_Cookies", browserName));
-            this.getCookie(browser.getKey(), browser.getValue(), wildcardToken);
+            this.getCookie(browser.getKey(), browser.getValue());
             if (context.dataSourceIngestIsCancelled()) {
                 return;
             }
 
             progressBar.progress(NbBundle.getMessage(this.getClass(), "Progress_Message_Chrome_Logins", browserName));
-            this.getLogins(browser.getKey(), browser.getValue(), wildcardToken);
+            this.getLogins(browser.getKey(), browser.getValue());
             if (context.dataSourceIngestIsCancelled()) {
                 return;
             }
 
             progressBar.progress(NbBundle.getMessage(this.getClass(), "Progress_Message_Chrome_AutoFill", browserName));
-            this.getAutofill(browser.getKey(), browser.getValue(), wildcardToken);
+            this.getAutofill(browser.getKey(), browser.getValue());
             if (context.dataSourceIngestIsCancelled()) {
                 return;
             }
 
             progressBar.progress(NbBundle.getMessage(this.getClass(), "Progress_Message_Chrome_Downloads", browserName));
-            this.getDownload(browser.getKey(), browser.getValue(), wildcardToken);
+            this.getDownload(browser.getKey(), browser.getValue());
             if (context.dataSourceIngestIsCancelled()) {
                 return;
             }
@@ -177,9 +180,9 @@ class Chromium extends Extract {
     private void getHistory(String browser, String browserLocation) {
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> historyFiles;
-        String historyFileName = "History";
+        String historyFileName = HISTORY_FILE_NAME;
         if (browser == NbBundle.getMessage(Chromium.class, "Browser.name.UC.Browser")) {
-            historyFileName = "History%";
+            historyFileName = HISTORY_FILE_NAME + "%";
         }
         try {
             historyFiles = fileManager.findFiles(dataSource, historyFileName, browserLocation); //NON-NLS
@@ -275,11 +278,15 @@ class Chromium extends Extract {
     /**
      * Search for bookmark files and make artifacts.
      */
-    private void getBookmark(String browser, String browserLocation, String wildcardToken) {
+    private void getBookmark(String browser, String browserLocation) {
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> bookmarkFiles;
+        String bookmarkFileName = BOOKMARK_FILE_NAME;
+        if (browser == NbBundle.getMessage(Chromium.class, "Browser.name.UC.Browser")) {
+            bookmarkFileName = BOOKMARK_FILE_NAME + "%";
+        }
         try {
-            bookmarkFiles = fileManager.findFiles(dataSource, "Bookmarks" + wildcardToken, browserLocation); //NON-NLS
+            bookmarkFiles = fileManager.findFiles(dataSource, bookmarkFileName, browserLocation); //NON-NLS
         } catch (TskCoreException ex) {
             String msg = NbBundle.getMessage(this.getClass(), "Chrome.getBookmark.errMsg.errGettingFiles");
             logger.log(Level.SEVERE, msg, ex);
@@ -413,14 +420,18 @@ class Chromium extends Extract {
     /**
      * Queries for cookie files and adds artifacts
      */
-    private void getCookie(String browser, String browserLocation, String wildcardToken) {
+    private void getCookie(String browser, String browserLocation) {
 
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> cookiesFiles;
+        String cookieFileName = COOKIE_FILE_NAME;
+        if (browser == NbBundle.getMessage(Chromium.class, "Browser.name.UC.Browser")) {
+            cookieFileName = "%" + COOKIE_FILE_NAME + "%";
+        }
         try {
             // Wildcard on front and back of Cookies as there are Cookie files that start with something else
             // ie: UC browser has "Extension Cookies.9" as well as Cookies
-            cookiesFiles = fileManager.findFiles(dataSource, wildcardToken + "Cookies" + wildcardToken, browserLocation); //NON-NLS
+            cookiesFiles = fileManager.findFiles(dataSource, cookieFileName, browserLocation); //NON-NLS
         } catch (TskCoreException ex) {
             String msg = NbBundle.getMessage(this.getClass(), "Chrome.getCookie.errMsg.errGettingFiles");
             logger.log(Level.SEVERE, msg, ex);
@@ -504,11 +515,15 @@ class Chromium extends Extract {
     /**
      * Queries for download files and adds artifacts
      */
-    private void getDownload(String browser, String browserLocation, String wildcardToken) {
+    private void getDownload(String browser, String browserLocation) {
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> downloadFiles;
+        String historyFileName = HISTORY_FILE_NAME;
+        if (browser == NbBundle.getMessage(Chromium.class, "Browser.name.UC.Browser")) {
+            historyFileName = HISTORY_FILE_NAME + "%";
+        }
         try {
-            downloadFiles = fileManager.findFiles(dataSource, "History" + wildcardToken, browserLocation); //NON-NLS
+            downloadFiles = fileManager.findFiles(dataSource, historyFileName, browserLocation); //NON-NLS
         } catch (TskCoreException ex) {
             String msg = NbBundle.getMessage(this.getClass(), "Chrome.getDownload.errMsg.errGettingFiles");
             logger.log(Level.SEVERE, msg, ex);
@@ -622,12 +637,17 @@ class Chromium extends Extract {
     /**
      * Gets user logins from Login Data sqlite database
      */
-    private void getLogins(String browser, String browserLocation, String wildcardToken) {
+    private void getLogins(String browser, String browserLocation) {
         
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> loginDataFiles;
+        String loginDataFileName = LOGIN_DATA_FILE_NAME;
+        if (browser == NbBundle.getMessage(Chromium.class, "Browser.name.UC.Browser")) {
+            loginDataFileName = LOGIN_DATA_FILE_NAME + "%";
+        }
+
         try {
-            loginDataFiles = fileManager.findFiles(dataSource, "Login Data" + wildcardToken, browserLocation); //NON-NLS
+            loginDataFiles = fileManager.findFiles(dataSource, loginDataFileName, browserLocation); //NON-NLS
         } catch (TskCoreException ex) {
             String msg = NbBundle.getMessage(this.getClass(), "Chrome.getLogin.errMsg.errGettingFiles");
             logger.log(Level.SEVERE, msg, ex);
@@ -716,12 +736,17 @@ class Chromium extends Extract {
      * Gets and parses Autofill data from 'Web Data' database, 
      * and creates TSK_WEB_FORM_AUTOFILL, TSK_WEB_FORM_ADDRESS artifacts
      */
-    private void getAutofill(String browser, String browserLocation, String wildcardToken) {
+    private void getAutofill(String browser, String browserLocation) {
         
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> webDataFiles;
+        String webDataFileName = WEB_DATA_FILE_NAME;
+        if (browser == NbBundle.getMessage(Chromium.class, "Browser.name.UC.Browser")) {
+            webDataFileName = WEB_DATA_FILE_NAME + "%";
+        }
+
         try {
-            webDataFiles = fileManager.findFiles(dataSource, "Web Data" + wildcardToken, browserLocation); //NON-NLS
+            webDataFiles = fileManager.findFiles(dataSource, webDataFileName, browserLocation); //NON-NLS
         } catch (TskCoreException ex) {
             String msg = NbBundle.getMessage(this.getClass(), "Chrome.getAutofills.errMsg.errGettingFiles");
             logger.log(Level.SEVERE, msg, ex);
