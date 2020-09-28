@@ -173,7 +173,7 @@ class UnpackagePortableCaseProgressDialog extends javax.swing.JDialog implements
                 throw new TskCoreException("Error finding 7-Zip executable"); // NON-NLS
             }
 
-            String outputFolderSwitch = "-o" + String.format("\"%s\"",outputFolder); // NON-NLS
+            String outputFolderSwitch = String.format("\"-o%s\"",outputFolder); // NON-NLS
             ProcessBuilder procBuilder = new ProcessBuilder();
             procBuilder.command(
                     String.format("\"%s\"",sevenZipExe.getAbsolutePath()),
