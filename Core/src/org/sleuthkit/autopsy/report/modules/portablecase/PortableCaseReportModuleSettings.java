@@ -83,6 +83,7 @@ public class PortableCaseReportModuleSettings implements ReportModuleSettings {
         this.chunkSize = ChunkSize.NONE;
         this.allTagsSelected = true;
         this.allSetsSelected = true;
+        this.shouldIncludeApplication = false;
     }
 
     PortableCaseReportModuleSettings(List<String> setNames, List<TagName> tagNames,
