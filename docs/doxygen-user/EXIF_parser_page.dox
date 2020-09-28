@@ -9,7 +9,7 @@ The module also converts HEIC/HEIF images to JPG while maintaining their EXIF in
 
 \section exif_usage Using the Module
 
-Select the checkbox in the Ingest Modules settings screen to enable the EXIF Parser.
+Select the checkbox in the Ingest Modules settings screen to enable the Picture Analyzer module.
 
 
 \section exif_results Seeing Results
