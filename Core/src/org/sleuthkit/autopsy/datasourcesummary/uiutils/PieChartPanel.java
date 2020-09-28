@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.datasourcesummary.uiutils;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
 import java.text.DecimalFormat;
@@ -50,16 +51,20 @@ public class PieChartPanel extends AbstractLoadableComponent<List<PieChartPanel.
 
         private final String label;
         private final double value;
+        private final Color color;
 
         /**
          * Main constructor.
          *
          * @param label The label for this pie slice.
          * @param value The value for this item.
+         * @param color The color for the pie slice. Can be null for
+         *              auto-determined.
          */
-        public PieChartItem(String label, double value) {
+        public PieChartItem(String label, double value, Color color) {
             this.label = label;
             this.value = value;
+            this.color = color;
         }
 
         /**
@@ -75,6 +80,13 @@ public class PieChartPanel extends AbstractLoadableComponent<List<PieChartPanel.
         public double getValue() {
             return value;
         }
+
+        /**
+         * @return The color for the pie slice or null for auto-determined.
+         */
+        public Color getColor() {
+            return color;
+        }
     }
 
     /**
@@ -85,6 +97,10 @@ public class PieChartPanel extends AbstractLoadableComponent<List<PieChartPanel.
 
         private static final long serialVersionUID = 1L;
         private final BaseMessageOverlay overlay = new BaseMessageOverlay();
+
+        // multiply this value by the smaller dimension (height or width) of the component
+        // to determine width of text to be displayed.
+        private static final double MESSAGE_WIDTH_FACTOR = .6;
 
         /**
          * Sets this layer visible when painted. In order to be shown in UI,
@@ -107,7 +123,8 @@ public class PieChartPanel extends AbstractLoadableComponent<List<PieChartPanel.
 
         @Override
         public void paintOverlay(Graphics2D gd, ChartPanel cp) {
-            overlay.paintOverlay(gd, cp.getWidth(), cp.getHeight());
+            int labelWidth = (int) (Math.min(cp.getWidth(), cp.getHeight()) * MESSAGE_WIDTH_FACTOR);
+            overlay.paintOverlay(gd, cp.getWidth(), cp.getHeight(), labelWidth);
         }
 
     }
@@ -121,6 +138,8 @@ public class PieChartPanel extends AbstractLoadableComponent<List<PieChartPanel.
      * this is a value close to zero but not to be displayed.
      */
     private static final double NEAR_ZERO = Math.ulp(1d);
+    private static final Color NO_DATA_COLOR = Color.WHITE;
+    private static final double DEFAULT_CHART_PADDING = .1;
 
     private static final Font DEFAULT_HEADER_FONT = new Font(DEFAULT_FONT.getName(), DEFAULT_FONT.getStyle(), (int) (DEFAULT_FONT.getSize() * 1.5));
     private static final PieSectionLabelGenerator DEFAULT_LABEL_GENERATOR
@@ -130,6 +149,7 @@ public class PieChartPanel extends AbstractLoadableComponent<List<PieChartPanel.
     private final MessageOverlay overlay = new MessageOverlay();
     private final DefaultPieDataset dataset = new DefaultPieDataset();
     private final JFreeChart chart;
+    private final PiePlot plot;
 
     /**
      * Main constructor.
@@ -154,8 +174,9 @@ public class PieChartPanel extends AbstractLoadableComponent<List<PieChartPanel.
 
         chart.setBackgroundPaint(null);
         chart.getTitle().setFont(DEFAULT_HEADER_FONT);
-        PiePlot plot = ((PiePlot) chart.getPlot());
 
+        this.plot = ((PiePlot) chart.getPlot());
+        plot.setInteriorGap(DEFAULT_CHART_PADDING);
         plot.setLabelGenerator(DEFAULT_LABEL_GENERATOR);
         plot.setLabelFont(DEFAULT_FONT);
         plot.setBackgroundPaint(null);
@@ -200,15 +221,21 @@ public class PieChartPanel extends AbstractLoadableComponent<List<PieChartPanel.
     @Override
     protected void setResults(List<PieChartPanel.PieChartItem> data) {
         this.dataset.clear();
+        this.plot.clearSectionPaints(false);
+
         if (data != null && !data.isEmpty()) {
             for (PieChartPanel.PieChartItem slice : data) {
                 this.dataset.setValue(slice.getLabel(), slice.getValue());
+                if (slice.getColor() != null) {
+                    this.plot.setSectionPaint(slice.getLabel(), slice.getColor());
+                }
             }
         } else {
             // show a no data label if no data.
             // this in fact shows a very small number for the value 
             // that should be way below rounding error for formatters
             this.dataset.setValue(Bundle.PieChartPanel_noDataLabel(), NEAR_ZERO);
+            this.plot.setSectionPaint(Bundle.PieChartPanel_noDataLabel(), NO_DATA_COLOR);
         }
     }
 

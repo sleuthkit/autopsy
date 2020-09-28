@@ -73,7 +73,7 @@ public class DiscoveryAttributes {
         /**
          * Add any extra data to the ResultFile object from this attribute.
          *
-         * @param files         The list of results to enhance.
+         * @param results       The list of results to enhance.
          * @param caseDb        The case database.
          * @param centralRepoDb The central repository database. Can be null if
          *                      not needed.
@@ -258,37 +258,33 @@ public class DiscoveryAttributes {
             Set<String> hashesToLookUp = new HashSet<>();
             List<ResultDomain> domainsToQuery = new ArrayList<>();
             for (Result result : results) {
-                if (result.getKnown() == TskData.FileKnown.KNOWN) {
-                    result.setFrequency(SearchData.Frequency.KNOWN);
-                }
-
-                if (result.getType() != SearchData.Type.DOMAIN) {
-                    ResultFile file = (ResultFile) result;
-                    if (file.getFrequency() == SearchData.Frequency.UNKNOWN
-                            && file.getFirstInstance().getMd5Hash() != null
-                            && !file.getFirstInstance().getMd5Hash().isEmpty()) {
-                        hashesToLookUp.add(file.getFirstInstance().getMd5Hash());
-                        currentFiles.add(file);
+                // If frequency was already calculated, skip...
+                if (result.getFrequency() == SearchData.Frequency.UNKNOWN) {
+                    if (result.getKnown() == TskData.FileKnown.KNOWN) {
+                        result.setFrequency(SearchData.Frequency.KNOWN);
                     }
 
-                    if (hashesToLookUp.size() >= BATCH_SIZE) {
-                        computeFrequency(hashesToLookUp, currentFiles, centralRepoDb);
+                    if (result.getType() != SearchData.Type.DOMAIN) {
+                        ResultFile file = (ResultFile) result;
+                        if (file.getFirstInstance().getMd5Hash() != null
+                                && !file.getFirstInstance().getMd5Hash().isEmpty()) {
+                            hashesToLookUp.add(file.getFirstInstance().getMd5Hash());
+                            currentFiles.add(file);
+                        }
 
-                        hashesToLookUp.clear();
-                        currentFiles.clear();
-                    }
-                } else {
-                    ResultDomain domainInstance = (ResultDomain) result;
-                    if (domainInstance.getFrequency() != SearchData.Frequency.UNKNOWN) {
-                        // Frequency already calculated, skipping...
-                        continue;
-                    }
-                    domainsToQuery.add(domainInstance);
+                        if (hashesToLookUp.size() >= BATCH_SIZE) {
+                            computeFrequency(hashesToLookUp, currentFiles, centralRepoDb);
 
-                    if (domainsToQuery.size() == DOMAIN_BATCH_SIZE) {
-                        queryDomainFrequency(domainsToQuery, centralRepoDb);
+                            hashesToLookUp.clear();
+                            currentFiles.clear();
+                        }
+                    } else {
+                        domainsToQuery.add((ResultDomain) result);
+                        if (domainsToQuery.size() == DOMAIN_BATCH_SIZE) {
+                            queryDomainFrequency(domainsToQuery, centralRepoDb);
 
-                        domainsToQuery.clear();
+                            domainsToQuery.clear();
+                        }
                     }
                 }
             }
@@ -400,7 +396,7 @@ public class DiscoveryAttributes {
         /**
          * Construct a new FrequencyCallback.
          *
-         * @param resultFiles List of files to add hash set names to.
+         * @param files List of files to add hash set names to.
          */
         private FrequencyCallback(List<ResultFile> files) {
             this.files = new ArrayList<>(files);

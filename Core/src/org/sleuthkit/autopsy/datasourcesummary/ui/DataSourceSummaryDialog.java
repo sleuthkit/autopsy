@@ -121,7 +121,7 @@ final class DataSourceSummaryDialog extends javax.swing.JDialog implements Obser
 
         closeButton = new javax.swing.JButton();
         dataSourceSummarySplitPane = new javax.swing.JSplitPane();
-        javax.swing.JTabbedPane dataSourceTabbedPane = dataSourceSummaryTabbedPane;
+        javax.swing.JPanel dataSourceTabbedPane = dataSourceSummaryTabbedPane;
 
         org.openide.awt.Mnemonics.setLocalizedText(closeButton, org.openide.util.NbBundle.getMessage(DataSourceSummaryDialog.class, "DataSourceSummaryDialog.closeButton.text")); // NOI18N
         closeButton.addActionListener(new java.awt.event.ActionListener() {

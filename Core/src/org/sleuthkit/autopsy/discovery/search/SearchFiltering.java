@@ -184,7 +184,7 @@ public class SearchFiltering {
         @Override
         public String getDesc() {
             String desc = ""; // NON-NLS
-            if (startDate > 0 ) {
+            if (startDate > 0) {
                 desc += Bundle.SearchFiltering_dateRangeFilter_after(new SimpleDateFormat("yyyy/MM/dd", Locale.getDefault()).format(new Date(TimeUnit.SECONDS.toMillis(startDate))));
             }
             if (endDate < 10000000000L) { //arbitrary time sometime in the 23rd century to check that they specified a date and the max date isn't being used
@@ -193,8 +193,8 @@ public class SearchFiltering {
                 }
                 desc += Bundle.SearchFiltering_dateRangeFilter_before(new SimpleDateFormat("yyyy/MM/dd", Locale.getDefault()).format(new Date(TimeUnit.SECONDS.toMillis(endDate))));
             }
-            if (!desc.isEmpty()){
-                desc = Bundle.SearchFiltering_dateRangeFilter_lable()+desc;
+            if (!desc.isEmpty()) {
+                desc = Bundle.SearchFiltering_dateRangeFilter_lable() + desc;
             }
             return desc;
         }
