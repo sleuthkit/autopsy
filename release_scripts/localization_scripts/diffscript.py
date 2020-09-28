@@ -37,6 +37,9 @@ def main():
     parser.add_argument('-l', '--language', dest='language', type=str, default=None, required=False,
                         help='Specify the language in order to determine the first commit to use (i.e. \'ja\' for '
                              'Japanese.  This flag overrides the first-commit flag.')
+    parser.add_argument('-lf', '--language-updates-file', dest='language_file', type=str, default=None, required=False,
+                        help='Specify the path to the properties file containing key value pairs of language mapped to '
+                             'the commit of when bundles for that language were most recently updated.')
 
     parser.add_argument('-nt', '--no-translated-col', dest='no_translated_col', action='store_true', default=False,
                         required=False, help="Don't include a column for translation.")
@@ -47,10 +50,11 @@ def main():
     commit_1_id = args.commit_1_id
     output_type = args.output_type
     show_translated_col = not args.no_translated_col
+    language_updates_file = args.language_file
 
     lang = args.language
     if lang is not None:
-        commit_1_id = get_commit_for_language(lang)
+        commit_1_id = get_commit_for_language(lang, language_updates_file)
 
     if commit_1_id is None:
         print('Either the first commit or language flag need to be specified.  If specified, the language file, ' +
