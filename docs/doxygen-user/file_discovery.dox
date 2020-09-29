@@ -75,7 +75,7 @@ The possibly user created filter restricts the results to files that suspected t
 
 \image html FileDiscovery/fd_userCreatedFilter.png
 
-This means the file must have a "User Content Suspected" result associated with it. These primarily come from the \ref EXIF_parser_page "Exif parser module".
+This means the file must have a "User Content Suspected" result associated with it. These primarily come from the \ref EXIF_parser_page.
 
 \image html FileDiscovery/fd_userContentArtifact.png
 

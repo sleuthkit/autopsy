@@ -52,8 +52,6 @@ public class ResultDomain extends Result {
         this.totalVisits = totalVisits;
         this.visitsInLast60 = visitsInLast60;
         this.filesDownloaded = filesDownloaded;
-
-        this.setFrequency(SearchData.Frequency.UNKNOWN);
     }
 
     /**

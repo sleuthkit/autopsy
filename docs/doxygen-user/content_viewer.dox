@@ -14,9 +14,7 @@ The Hex tab is nearly always available and shows you the raw and exact contents 
 
 \image html content_viewer_hex.png
 
-If desired, you can open the file in an external hex editor. This is configured through the "External Viewer" tab on the options panel. HxD has been verified to work with Autopsy, but alternate hex editors may also be compatible. 
-
-\image html content_viewer_hex_editor_setup.png
+If desired, you can open the file in an external hex editor. This is configured through the \ref config_ext_viewer tab on the options panel. HxD has been verified to work with Autopsy, but alternate hex editors may also be compatible. 
 
 Note that this process saves the file to disk before launching the hex editor. A progress indicator will be displayed in the lower right corner of the application. If you wish to cancel the file export, click the 'X' to the right of the progress bar.
 

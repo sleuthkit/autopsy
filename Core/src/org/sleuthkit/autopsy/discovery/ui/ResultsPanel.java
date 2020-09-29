@@ -209,6 +209,17 @@ final class ResultsPanel extends javax.swing.JPanel {
         }
         );
     }
+    
+    @Subscribe
+    void handleCancelBackgroundTasksEvent(DiscoveryEventUtils.CancelBackgroundTasksEvent cancelEvent) {
+        for (SwingWorker<Void, Void> thumbWorker : resultContentWorkers) {
+            if (!thumbWorker.isDone()) {
+                thumbWorker.cancel(true);
+            }
+        }
+        
+        resultContentWorkers.clear();
+    }
 
     /**
      * Reset the result viewer and any associate workers to a default empty

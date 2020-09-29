@@ -548,16 +548,16 @@
                 <binary-origin>release\modules\ext\checker-compat-qual-2.5.3.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/sleuthkit-4.10.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/sleuthkit-4.10.0.jar</binary-origin>
+                <runtime-relative-path>ext/sleuthkit-4.10.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/sleuthkit-4.10.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/animal-sniffer-annotations-1.17.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\animal-sniffer-annotations-1.17.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/sleuthkit-caseuco-4.10.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/sleuthkit-caseuco-4.10.0.jar</binary-origin>
+                <runtime-relative-path>ext/sleuthkit-caseuco-4.10.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/sleuthkit-caseuco-4.10.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/gax-1.44.0.jar</runtime-relative-path>

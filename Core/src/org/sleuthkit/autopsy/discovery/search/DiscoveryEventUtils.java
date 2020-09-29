@@ -88,6 +88,17 @@ public final class DiscoveryEventUtils {
             //no arg constructor
         }
     }
+    
+    /**
+     * Event to signal that any background tasks currently running should
+     * be cancelled.
+     */
+    public static final class CancelBackgroundTasksEvent {
+        
+        public CancelBackgroundTasksEvent() {
+            //no-arg constructor
+        }
+    }
 
     /**
      * Event to signal that the Instances list should be populated.
@@ -129,7 +140,7 @@ public final class DiscoveryEventUtils {
          *
          * @param groupMap          The map of groups which were found by the
          *                          search.
-         * @param searchFilters     The search filters which were used by the
+         * @param searchfilters     The search filters which were used by the
          *                          search.
          * @param groupingAttribute The grouping attribute used by the search.
          * @param groupSort         The sorting algorithm used for groups.

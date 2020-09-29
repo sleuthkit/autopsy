@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.datasourcesummary.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.sql.SQLException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -28,9 +29,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.swing.JLabel;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.FileTypeUtils.FileTypeCategory;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -152,6 +153,61 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
         }
     }
 
+    /**
+     * Information concerning a particular category in the file types pie chart.
+     */
+    private static class TypesPieCategory {
+
+        private final String label;
+        private final Set<String> mimeTypes;
+        private final Color color;
+
+        /**
+         * Main constructor.
+         *
+         * @param label     The label for this slice.
+         * @param mimeTypes The mime types associated with this slice.
+         * @param color     The color associated with this slice.
+         */
+        TypesPieCategory(String label, Set<String> mimeTypes, Color color) {
+            this.label = label;
+            this.mimeTypes = mimeTypes;
+            this.color = color;
+        }
+
+        /**
+         * Constructor that accepts FileTypeCategory.
+         *
+         * @param label     The label for this slice.
+         * @param mimeTypes The mime types associated with this slice.
+         * @param color     The color associated with this slice.
+         */
+        TypesPieCategory(String label, FileTypeCategory fileCategory, Color color) {
+            this(label, fileCategory.getMediaTypes(), color);
+        }
+
+        /**
+         * @return The label for this category.
+         */
+        String getLabel() {
+            return label;
+        }
+
+        /**
+         * @return The mime types associated with this category.
+         */
+        Set<String> getMimeTypes() {
+            return mimeTypes;
+        }
+
+        /**
+         * @return The color associated with this category.
+         */
+        Color getColor() {
+            return color;
+        }
+    }
+
     private static final long serialVersionUID = 1L;
     private static final DecimalFormat INTEGER_SIZE_FORMAT = new DecimalFormat("#");
     private static final DecimalFormat COMMA_FORMATTER = new DecimalFormat("#,###");
@@ -159,14 +215,23 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
     private static final String FILE_TYPE_MODULE_NAME = FileTypeIdModuleFactory.getModuleName();
     private static final Logger logger = Logger.getLogger(TypesPanel.class.getName());
 
+    private static final Color IMAGES_COLOR = new Color(156, 39, 176);
+    private static final Color VIDEOS_COLOR = Color.YELLOW;
+    private static final Color AUDIO_COLOR = Color.BLUE;
+    private static final Color DOCUMENTS_COLOR = Color.GREEN;
+    private static final Color EXECUTABLES_COLOR = new Color(0, 188, 212);
+    private static final Color UNKNOWN_COLOR = Color.ORANGE;
+    private static final Color OTHER_COLOR = new Color(78, 52, 46);
+    private static final Color NOT_ANALYZED_COLOR = Color.WHITE;
+
     // All file type categories.
-    private static final List<Pair<String, Set<String>>> FILE_MIME_TYPE_CATEGORIES = Arrays.asList(
-            Pair.of(Bundle.TypesPanel_fileMimeTypesChart_images_title(), FileTypeCategory.IMAGE.getMediaTypes()),
-            Pair.of(Bundle.TypesPanel_fileMimeTypesChart_videos_title(), FileTypeCategory.VIDEO.getMediaTypes()),
-            Pair.of(Bundle.TypesPanel_fileMimeTypesChart_audio_title(), FileTypeCategory.AUDIO.getMediaTypes()),
-            Pair.of(Bundle.TypesPanel_fileMimeTypesChart_documents_title(), FileTypeCategory.DOCUMENTS.getMediaTypes()),
-            Pair.of(Bundle.TypesPanel_fileMimeTypesChart_executables_title(), FileTypeCategory.EXECUTABLE.getMediaTypes()),
-            Pair.of(Bundle.TypesPanel_fileMimeTypesChart_unknown_title(), new HashSet<>(Arrays.asList("application/octet-stream")))
+    private static final List<TypesPieCategory> FILE_MIME_TYPE_CATEGORIES = Arrays.asList(
+            new TypesPieCategory(Bundle.TypesPanel_fileMimeTypesChart_images_title(), FileTypeCategory.IMAGE.getMediaTypes(), IMAGES_COLOR),
+            new TypesPieCategory(Bundle.TypesPanel_fileMimeTypesChart_videos_title(), FileTypeCategory.VIDEO.getMediaTypes(), VIDEOS_COLOR),
+            new TypesPieCategory(Bundle.TypesPanel_fileMimeTypesChart_audio_title(), FileTypeCategory.AUDIO.getMediaTypes(), AUDIO_COLOR),
+            new TypesPieCategory(Bundle.TypesPanel_fileMimeTypesChart_documents_title(), FileTypeCategory.DOCUMENTS.getMediaTypes(), DOCUMENTS_COLOR),
+            new TypesPieCategory(Bundle.TypesPanel_fileMimeTypesChart_executables_title(), FileTypeCategory.EXECUTABLE.getMediaTypes(), EXECUTABLES_COLOR),
+            new TypesPieCategory(Bundle.TypesPanel_fileMimeTypesChart_unknown_title(), new HashSet<>(Arrays.asList("application/octet-stream")), UNKNOWN_COLOR)
     );
 
     private final LoadableLabel usageLabel = new LoadableLabel(Bundle.TypesPanel_usageLabel_title());
@@ -292,7 +357,8 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
     /**
      * Gets all the data for the file type pie chart.
      *
-     * @param dataSource The datasource.
+     * @param mimeTypeData The means of acquiring data.
+     * @param dataSource   The datasource.
      *
      * @return The pie chart items.
      */
@@ -304,38 +370,43 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
         }
 
         // for each category of file types, get the counts of files
-        List<Pair<String, Long>> fileCategoryItems = new ArrayList<>();
-        for (Pair<String, Set<String>> strCat : FILE_MIME_TYPE_CATEGORIES) {
-            fileCategoryItems.add(Pair.of(strCat.getLeft(),
-                    getLongOrZero(mimeTypeData.getCountOfFilesForMimeTypes(
-                            dataSource, strCat.getRight()))));
+        List<PieChartItem> fileCategoryItems = new ArrayList<>();
+        long categoryTotalCount = 0;
+
+        for (TypesPieCategory cat : FILE_MIME_TYPE_CATEGORIES) {
+            long thisValue = getLongOrZero(mimeTypeData.getCountOfFilesForMimeTypes(dataSource, cat.getMimeTypes()));
+            categoryTotalCount += thisValue;
+
+            fileCategoryItems.add(new PieChartItem(
+                    cat.getLabel(),
+                    thisValue,
+                    cat.getColor()));
         }
 
         // get a count of all files with no mime type
-        Long noMimeTypeCount = getLongOrZero(mimeTypeData.getCountOfFilesWithNoMimeType(dataSource));
-
-        // get the sum of all counts for the known categories
-        Long categoryTotalCount = getLongOrZero(fileCategoryItems.stream()
-                .collect(Collectors.summingLong((pair) -> pair.getValue())));
+        long noMimeTypeCount = getLongOrZero(mimeTypeData.getCountOfFilesWithNoMimeType(dataSource));
 
         // get a count of all regular files
-        Long allRegularFiles = getLongOrZero(mimeTypeData.getCountOfAllRegularFiles(dataSource));
+        long allRegularFiles = getLongOrZero(mimeTypeData.getCountOfAllRegularFiles(dataSource));
 
         // create entry for mime types in other category
-        fileCategoryItems.add(Pair.of(Bundle.TypesPanel_fileMimeTypesChart_other_title(),
-                allRegularFiles - (categoryTotalCount + noMimeTypeCount)));
+        long otherCount = allRegularFiles - (categoryTotalCount + noMimeTypeCount);
+        PieChartItem otherPieItem = new PieChartItem(Bundle.TypesPanel_fileMimeTypesChart_other_title(),
+                otherCount, OTHER_COLOR);
 
         // check at this point to see if these are all 0; if so, we don't have useful content.
-        boolean usefulContent = fileCategoryItems.stream().anyMatch((pair) -> pair.getValue() != null && pair.getValue() > 0);
+        boolean usefulContent = categoryTotalCount > 0 || otherCount > 0;
 
         // create entry for not analyzed mime types category
-        fileCategoryItems.add(Pair.of(Bundle.TypesPanel_fileMimeTypesChart_notAnalyzed_title(),
-                noMimeTypeCount));
+        PieChartItem notAnalyzedItem = new PieChartItem(Bundle.TypesPanel_fileMimeTypesChart_notAnalyzed_title(),
+                noMimeTypeCount, NOT_ANALYZED_COLOR);
 
-        // create pie chart items to provide to pie chart
-        List<PieChartItem> items = fileCategoryItems.stream()
-                .filter(keyCount -> keyCount.getRight() != null && keyCount.getRight() > 0)
-                .map(keyCount -> new PieChartItem(keyCount.getLeft(), keyCount.getRight()))
+        // combine categories with 'other' and 'not analyzed'
+        List<PieChartItem> items = Stream.concat(
+                fileCategoryItems.stream(),
+                Stream.of(otherPieItem, notAnalyzedItem))
+                // remove items that have no value
+                .filter(slice -> slice.getValue() > 0)
                 .collect(Collectors.toList());
 
         return new TypesPieChartData(items, usefulContent);

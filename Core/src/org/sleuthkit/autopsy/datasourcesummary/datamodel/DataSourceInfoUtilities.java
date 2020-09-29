@@ -311,7 +311,7 @@ final class DataSourceInfoUtilities {
 
         @Override
         public int compare(BlackboardAttribute attribute1, BlackboardAttribute attribute2) {
-            if (attribute1.getAttributeType() != attribute2.getAttributeType()) {
+            if (!attribute1.getAttributeType().equals(attribute2.getAttributeType())) {
                 throw new IllegalArgumentException("Unable to compare attributes of different types");
             }
 
