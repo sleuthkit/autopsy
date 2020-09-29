@@ -1,3 +1,2 @@
 ExifProcessor.indexError.message=Failed to post EXIF Metadata artifact(s).
-ExifProcessor.module_name=Exif Parser
-ExifProcessor.userContent.description=EXIF metadata exists for this file.
+ExifProcessor.userContent.description=EXIF metadata data exists for this file.

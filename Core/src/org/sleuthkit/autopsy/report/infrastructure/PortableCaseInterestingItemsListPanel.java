@@ -207,7 +207,9 @@ class PortableCaseInterestingItemsListPanel extends javax.swing.JPanel {
                 setFont(list.getFont());
                 setBackground(list.getBackground());
                 setForeground(list.getForeground());
-                setText(value + " (" + setCounts.get(value) + ")"); // NON-NLS
+                String text = value + " (" + setCounts.get(value) + ")";
+                setText(text); // NON-NLS
+                setToolTipText(text);
                 return this;
             }
             return new JLabel();

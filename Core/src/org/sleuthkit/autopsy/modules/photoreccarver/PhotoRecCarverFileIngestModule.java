@@ -86,7 +86,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
 
     static final boolean DEFAULT_CONFIG_INCLUDE_ELSE_EXCLUDE = false;
 
-    private static final String PHOTOREC_TEMP_SUBDIR = "Photorec";
+    private static final String PHOTOREC_TEMP_SUBDIR = "PhotoRec Carver"; // NON-NLS Note that we need the space in this dir name (JIRA-6878)
     private static final String PHOTOREC_DIRECTORY = "photorec_exec"; //NON-NLS
     private static final String PHOTOREC_SUBDIRECTORY = "bin"; //NON-NLS
     private static final String PHOTOREC_EXECUTABLE = "photorec_win.exe"; //NON-NLS
@@ -321,9 +321,9 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             ProcessBuilder processAndSettings = new ProcessBuilder(
                     executableFile.toString(),
                     "/d", // NON-NLS
-                    outputDirPath.toAbsolutePath().toString() + File.separator + PHOTOREC_RESULTS_BASE,
+                    String.format("\"%s\"", Paths.get(outputDirPath.toAbsolutePath().toString(), PHOTOREC_RESULTS_BASE).toString()),
                     "/cmd", // NON-NLS
-                    tempFilePath.toFile().toString());
+                    String.format("\"%s\"",tempFilePath.toFile().toString()));
 
             processAndSettings.command().add(this.optionsString);
 
@@ -468,7 +468,8 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             try {
                 // The last instance of this module for an ingest job cleans out 
                 // the working paths map entry for the job and deletes the temp dir.
-                FileUtil.deleteDir(this.rootTempDirPath.toFile());
+                WorkingPaths paths = PhotoRecCarverFileIngestModule.pathsByJob.remove(this.jobId);
+                FileUtil.deleteDir(new File(paths.getTempDirPath().toString()));
                 postSummary(jobId);
             } catch (SecurityException ex) {
                 logger.log(Level.SEVERE, "Error shutting down PhotoRec carver module", ex); // NON-NLS

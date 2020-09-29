@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 OpenIDE-Module: org.sleuthkit.autopsy.core/10
 OpenIDE-Module-Localizing-Bundle: org/sleuthkit/autopsy/core/Bundle.properties
 OpenIDE-Module-Layer: org/sleuthkit/autopsy/core/layer.xml
-OpenIDE-Module-Implementation-Version: 33
+OpenIDE-Module-Implementation-Version: 34
 OpenIDE-Module-Requires: org.openide.windows.WindowManager
 AutoUpdate-Show-In-Client: true
 AutoUpdate-Essential-Module: true

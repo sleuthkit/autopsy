@@ -34,6 +34,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.JTextPane;
 import javax.swing.SwingUtilities;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
@@ -60,10 +61,10 @@ final class CommunicationArtifactViewerHelper {
     /**
      * Adds a new heading to the panel.
      *
-     * @param panel Panel to update.
+     * @param panel         Panel to update.
      * @param gridbagLayout Layout to use.
-     * @param constraints Constrains to use.
-     * @param headerString Heading string to display.
+     * @param constraints   Constrains to use.
+     * @param headerString  Heading string to display.
      *
      * @return JLabel Heading label added.
      */
@@ -113,10 +114,10 @@ final class CommunicationArtifactViewerHelper {
      *
      * Caller must know what it's doing and set up all the constraints properly.
      *
-     * @param panel Panel to update.
+     * @param panel         Panel to update.
      * @param gridbagLayout Layout to use.
-     * @param constraints Constrains to use.
-     * @param component Component to add.
+     * @param constraints   Constrains to use.
+     * @param component     Component to add.
      */
     static void addComponent(JPanel panel, GridBagLayout gridbagLayout, GridBagConstraints constraints, JComponent component) {
 
@@ -129,9 +130,9 @@ final class CommunicationArtifactViewerHelper {
      * Adds a filler/glue at the end of the line to keep the other columns
      * aligned, in case the panel is resized.
      *
-     * @param panel Panel to update.
+     * @param panel         Panel to update.
      * @param gridbagLayout Layout to use.
-     * @param constraints Constrains to use.
+     * @param constraints   Constrains to use.
      */
     static void addLineEndGlue(JPanel panel, GridBagLayout gridbagLayout, GridBagConstraints constraints) {
         // Place the filler just past the last column.
@@ -156,9 +157,9 @@ final class CommunicationArtifactViewerHelper {
      * Adds a filler/glue at the bottom of the panel to keep the data rows
      * aligned, in case the panel is resized.
      *
-     * @param panel Panel to update.
+     * @param panel         Panel to update.
      * @param gridbagLayout Layout to use.
-     * @param constraints Constrains to use.
+     * @param constraints   Constrains to use.
      */
     static void addPageEndGlue(JPanel panel, GridBagLayout gridbagLayout, GridBagConstraints constraints) {
 
@@ -182,9 +183,9 @@ final class CommunicationArtifactViewerHelper {
     /**
      * Adds a blank line to the panel.
      *
-     * @param panel Panel to update.
+     * @param panel         Panel to update.
      * @param gridbagLayout Layout to use.
-     * @param constraints Constrains to use.
+     * @param constraints   Constrains to use.
      */
     static void addBlankLine(JPanel panel, GridBagLayout gridbagLayout, GridBagConstraints constraints) {
         constraints.gridy++;
@@ -200,10 +201,10 @@ final class CommunicationArtifactViewerHelper {
     /**
      * Adds a label/key to the panel at col 0.
      *
-     * @param panel Panel to update.
+     * @param panel         Panel to update.
      * @param gridbagLayout Layout to use.
-     * @param constraints Constrains to use.
-     * @param keyString Key name to display.
+     * @param constraints   Constrains to use.
+     * @param keyString     Key name to display.
      *
      * @return Label added.
      */
@@ -214,11 +215,11 @@ final class CommunicationArtifactViewerHelper {
     /**
      * Adds a label/key to the panel at specified column.
      *
-     * @param panel Panel to update.
+     * @param panel         Panel to update.
      * @param gridbagLayout Layout to use.
-     * @param constraints Constrains to use.
-     * @param keyString Key name to display.
-     * @param gridx column index, must be less than MAX_COLS - 1.
+     * @param constraints   Constrains to use.
+     * @param keyString     Key name to display.
+     * @param gridx         column index, must be less than MAX_COLS - 1.
      *
      * @return Label added.
      */
@@ -243,38 +244,41 @@ final class CommunicationArtifactViewerHelper {
     /**
      * Adds a value string to the panel at col 1.
      *
-     * @param panel Panel to update.
+     * @param panel         Panel to update.
      * @param gridbagLayout Layout to use.
-     * @param constraints Constrains to use.
-     * @param keyString Value string to display.
+     * @param constraints   Constrains to use.
+     * @param keyString     Value string to display.
      *
      * @return Label added.
      */
-    static JLabel addValue(JPanel panel, GridBagLayout gridbagLayout, GridBagConstraints constraints, String valueString) {
+    static JTextPane addValue(JPanel panel, GridBagLayout gridbagLayout, GridBagConstraints constraints, String valueString) {
         return addValueAtCol(panel, gridbagLayout, constraints, valueString, 1);
     }
 
     /**
      * Adds a value string to the panel at specified column.
      *
-     * @param panel Panel to update.
+     * @param panel         Panel to update.
      * @param gridbagLayout Layout to use.
-     * @param constraints Constrains to use.
-     * @param keyString Value string to display.
-     * @param gridx Column index, must be less than MAX_COLS;
+     * @param constraints   Constrains to use.
+     * @param keyString     Value string to display.
+     * @param gridx         Column index, must be less than MAX_COLS;
      *
      * @return Label added.
      */
-    static JLabel addValueAtCol(JPanel panel, GridBagLayout gridbagLayout, GridBagConstraints constraints, String valueString, int gridx) {
+    static JTextPane addValueAtCol(JPanel panel, GridBagLayout gridbagLayout, GridBagConstraints constraints, String valueString, int gridx) {
         // create label,
-        javax.swing.JLabel valueField = new javax.swing.JLabel();
+        JTextPane valueField = new JTextPane();
+        valueField.setEditable(false);
+        valueField.setOpaque(false);
 
         constraints.gridx = gridx < MAX_COLS ? gridx : MAX_COLS - 1;
 
-        int savedGridwidth = constraints.gridwidth;
+        GridBagConstraints cloneConstraints = (GridBagConstraints) constraints.clone();
 
         // let the value span 2 cols
-        constraints.gridwidth = 2;
+        cloneConstraints.gridwidth = 2;
+        cloneConstraints.fill = GridBagConstraints.BOTH;
 
         // set text
         valueField.setText(valueString);
@@ -288,11 +292,8 @@ final class CommunicationArtifactViewerHelper {
         });
 
         // add label to panel
-        gridbagLayout.setConstraints(valueField, constraints);
+        gridbagLayout.setConstraints(valueField, cloneConstraints);
         panel.add(valueField);
-
-        // restore constraints
-        constraints.gridwidth = savedGridwidth;
 
         // end the line
         addLineEndGlue(panel, gridbagLayout, constraints);
@@ -304,9 +305,9 @@ final class CommunicationArtifactViewerHelper {
      * Displays a message string, starting at column 0, and spanning the entire
      * row.
      *
-     * @param panel Panel to show.
+     * @param panel         Panel to show.
      * @param gridbagLayout Layout to use.
-     * @param constraints Constraints to use.
+     * @param constraints   Constraints to use.
      *
      * @param messageString Message to display.
      *
@@ -320,9 +321,9 @@ final class CommunicationArtifactViewerHelper {
      * Displays a message string, starting at specified column, and spanning the
      * entire row.
      *
-     * @param panel Panel to show.
+     * @param panel         Panel to show.
      * @param gridbagLayout Layout to use.
-     * @param constraints Constraints to use.
+     * @param constraints   Constraints to use.
      *
      * @param messageString Message to display.
      *
@@ -364,12 +365,12 @@ final class CommunicationArtifactViewerHelper {
      *
      * If CentralRepostory is disabled, just displays 'Unknown' persona name.
      *
-     * @param panel Panel to update.
-     * @param gridbagLayout Layout to use.
-     * @param constraints Constrains to use.
+     * @param panel             Panel to update.
+     * @param gridbagLayout     Layout to use.
+     * @param constraints       Constrains to use.
      * @param accountIdentifier Account identifier to search the persona.
      *
-     * @return  List of AccountPersonaSearcherData objects.
+     * @return List of AccountPersonaSearcherData objects.
      */
     @NbBundle.Messages({
         "CommunicationArtifactViewerHelper_persona_label=Persona: ",
@@ -378,7 +379,7 @@ final class CommunicationArtifactViewerHelper {
         "CommunicationArtifactViewerHelper_persona_button_view=View",
         "CommunicationArtifactViewerHelper_persona_button_create=Create"
     })
-        
+
     static List<AccountPersonaSearcherData> addPersonaRow(JPanel panel, GridBagLayout gridbagLayout, GridBagConstraints constraints, String accountIdentifier) {
         List<AccountPersonaSearcherData> dataList = new ArrayList<>();
 
@@ -428,7 +429,7 @@ final class CommunicationArtifactViewerHelper {
 
         return dataList;
     }
-    
+
     /**
      * Adds a contact row to the panel.
      *
@@ -444,7 +445,7 @@ final class CommunicationArtifactViewerHelper {
         "CommunicationArtifactViewerHelper_contact_label=Contact: {0}",
         "CommunicationArtifactViewerHelper_contact_label_unknown=Unknown"
     })
-    static JLabel addContactRow(JPanel panel, GridBagLayout gridbagLayout, GridBagConstraints constraints, String contactId) {
+    static JComponent addContactRow(JPanel panel, GridBagLayout gridbagLayout, GridBagConstraints constraints, String contactId) {
         // Increase the y value because we are not calling the addKey
         constraints.gridy++;
         //Don't change the origian constraints, just make a copy to modify
@@ -462,13 +463,13 @@ final class CommunicationArtifactViewerHelper {
      * Event handler for mouse click event. Attaches a 'Copy' menu item to right
      * click.
      *
-     * @param evt Event to check.
+     * @param evt        Event to check.
      * @param valueLabel Label to attach the menu item to.
      */
     @NbBundle.Messages({
         "CommunicationArtifactViewerHelper_menuitem_copy=Copy"
     })
-    private static void valueLabelMouseClicked(java.awt.event.MouseEvent evt, JLabel valueLabel) {
+    private static void valueLabelMouseClicked(java.awt.event.MouseEvent evt, JTextPane valueLabel) {
         if (SwingUtilities.isRightMouseButton(evt)) {
             JPopupMenu popup = new JPopupMenu();
 
@@ -477,7 +478,6 @@ final class CommunicationArtifactViewerHelper {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(valueLabel.getText()), null);
-
                 }
             });
 

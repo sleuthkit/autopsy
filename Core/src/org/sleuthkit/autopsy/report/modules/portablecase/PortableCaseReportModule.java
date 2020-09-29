@@ -1195,11 +1195,10 @@ public class PortableCaseReportModule implements ReportModule {
     }
 
     /**
-     * Copy the sorceFolder to destBaseFolder\appName.
+     * Copy the sorceFolder to destBaseFolder/appName.
      *
      * @param sourceFolder   Autopsy installation directory.
      * @param destBaseFolder Report base direction.
-     * @param appName        Name of the application being copied.
      *
      * @throws IOException
      */
@@ -1330,10 +1329,10 @@ public class PortableCaseReportModule implements ReportModule {
         File zipFile = Paths.get(tempZipFolder.getAbsolutePath(), caseName + ".zip").toFile(); // NON-NLS
         ProcessBuilder procBuilder = new ProcessBuilder();
         procBuilder.command(
-                sevenZipExe.getAbsolutePath(),
+                String.format("\"%s\"",sevenZipExe.getAbsolutePath()),
                 "a", // Add to archive
-                zipFile.getAbsolutePath(),
-                dirToCompress.toAbsolutePath().toString(),
+                String.format("\"%s\"",zipFile.getAbsolutePath()),
+                String.format("\"%s\"",dirToCompress.toAbsolutePath().toString()),
                 chunkOption
         );
 
