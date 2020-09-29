@@ -1,5 +1,8 @@
 /*! \page timeline_page Timeline
 
+[TOC]
+
+
 \section timeline_overview Overview
 
 This document outlines the use of the Timeline feature of Autopsy.  This feature was funded by DHS S&T to help provide free and open source digital forensics tools to law enforcement. The timeline feature can help answer questions such as these:

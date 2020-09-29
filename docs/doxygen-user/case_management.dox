@@ -1,5 +1,8 @@
 /*! \page cases_page Cases
 
+[TOC]
+
+
 You need to create a case before you can analyze data in Autopsy.  A case can contain one or more data sources (disk images, disk devices, logical files). The data sources can be from multiple drives in a single computer or from multiple computers.  It's up to you. 
 
 Each case has its own directory that is named based on the case name. The directory will contain configuration files, a database, reports, and other files that modules generates. The main Autopsy case configuration file has an ".aut" extension. 
