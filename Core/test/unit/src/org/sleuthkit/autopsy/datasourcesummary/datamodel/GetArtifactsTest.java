@@ -33,7 +33,6 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
-import static org.mockito.Mockito.*;
 import org.sleuthkit.autopsy.testutils.TskMockUtils;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
@@ -70,7 +69,7 @@ public class GetArtifactsTest {
      *
      * @throws TskCoreException
      */
-    private final void test(BlackboardArtifact.Type artifactType, DataSource dataSource, BlackboardAttribute.Type attributeType,
+    private void test(BlackboardArtifact.Type artifactType, DataSource dataSource, BlackboardAttribute.Type attributeType,
             SortOrder sortOrder, int count, List<BlackboardArtifact> returnArr, TskCoreException blackboardEx,
             List<BlackboardArtifact> expectedArr, Class<? extends Exception> expectedException) throws TskCoreException {
 

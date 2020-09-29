@@ -88,4 +88,7 @@ public class TskMockUtils {
         when(artifact.getDataSource()).thenReturn(dataSource);
         return artifact;
     }
+
+    private TskMockUtils() {
+    }
 }
