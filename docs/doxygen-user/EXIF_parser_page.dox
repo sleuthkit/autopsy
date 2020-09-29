@@ -1,5 +1,8 @@
 /*! \page EXIF_parser_page Picture Analyzer Module
 
+[TOC]
+
+
 \section exif_overview Overview
 
 The Picture Analyzer module extracts EXIF (Exchangeable Image File Format) information from ingested pictures. This information can contain geolocation data for the picture, time, date, camera model and settings (exposure values, resolution, etc) and other information. The discovered attributes are added to the Blackboard. This can tell you where and when a picture was taken, and give clues to the camera that took it.

@@ -1,5 +1,8 @@
 /*! \page photorec_carver_page PhotoRec Carver Module
 
+[TOC]
+
+
 \section photorec_overview Overview
 
 The PhotoRec Carver module carves files from unallocated space in the data source and sends the files found through the ingest processing chain.

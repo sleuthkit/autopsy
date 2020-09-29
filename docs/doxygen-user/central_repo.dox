@@ -1,5 +1,8 @@
 /*! \page central_repo_page Central Repository
 
+[TOC]
+
+
 \section cr_overview Overview
 
 The central repository allows a user to find matching artifacts both across cases and across data sources in the same case. 

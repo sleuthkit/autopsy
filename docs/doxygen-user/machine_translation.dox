@@ -1,5 +1,8 @@
 /*! \page machine_translation_page Machine Translation
 
+[TOC]
+
+
 You can configure a machine translation service to use with Autopsy. If one is configured, you will be able to translate text in the \ref content_viewer_page and file names in the \ref result_viewer_page and \ref tree_viewer_page.
 
 \section mt_config Configuration

@@ -1,5 +1,8 @@
 /*! \page plaso_page Plaso
 
+[TOC]
+
+
 Plaso is a framework for running modules to extract timestamps for various types of files. The Plaso ingest module runs Plaso to generate events that are displayed in the Autopsy \ref timeline_page. For more information on Plaso, see <a href="https://plaso.readthedocs.io/en/latest/"> the documentation</a>.
 
 \section plaso_config Running the Module
