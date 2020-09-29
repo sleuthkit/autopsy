@@ -21,11 +21,18 @@ package org.sleuthkit.autopsy.testutils;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.texttranslation.NoServiceProviderException;
+import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
+import org.sleuthkit.autopsy.texttranslation.TranslationException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.DataSource;
@@ -87,5 +94,43 @@ public class TskMockUtils {
 
         when(artifact.getDataSource()).thenReturn(dataSource);
         return artifact;
+    }
+
+    /**
+     * Returns a mock TextTranslationService.
+     *
+     * @param onTranslate A function that performs the translation. If null, a
+     *                    null result is always returned for .translate method.
+     * @param hasProvider What to return for the hasProvider method.
+     *
+     * @return The mocked text translation service.
+     *
+     * @throws NoServiceProviderException
+     * @throws TranslationException
+     */
+    public static TextTranslationService getTextTranslationService(Function<String, String> onTranslate, boolean hasProvider)
+            throws NoServiceProviderException, TranslationException {
+        TextTranslationService translationService = mock(TextTranslationService.class);
+        when(translationService.hasProvider()).thenReturn(hasProvider);
+
+        when(translationService.translate(anyString())).thenAnswer((invocation) -> {
+            Object[] args = invocation.getArguments();
+            String input = (String) args[0];
+            if (onTranslate == null) {
+                throw new NoServiceProviderException("No onTranslate function provided");
+            }
+            
+            return (input == null) ? null : onTranslate.apply(input);
+        });
+        
+        return translationService;
+    }
+    
+    public static Logger getTSKLogger() {
+        Logger logger = mock(Logger.class);
+        doNothing().when(logger.log(any(Level.class), anyString(), any(Throwable.class)));
+        doNothing().when(logger.log(any(Level.class), anyString()));
+        doNothing().when(logger.log(any(Level.class), any(Throwable.class)));
+        return logger;
     }
 }
