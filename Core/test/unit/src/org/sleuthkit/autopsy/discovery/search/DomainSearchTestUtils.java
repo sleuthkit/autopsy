@@ -18,8 +18,7 @@
  */
 package org.sleuthkit.autopsy.discovery.search;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import org.sleuthkit.autopsy.testutils.TskMockUtils;
 import org.sleuthkit.datamodel.Content;
 
 /**
@@ -33,19 +32,12 @@ public class DomainSearchTestUtils {
         
     public static ResultDomain mockDomainResult(String domain, long start, long end, 
             long totalVisits, long visits, long filesDownloaded, long dataSourceId) {
-        Content dataSource = mockDataSource(dataSourceId);
+        Content dataSource = TskMockUtils.mockDataSource(dataSourceId);
         return new ResultDomain(domain, start, end, totalVisits,
                 visits, filesDownloaded, dataSource);
     }
     
     public static ResultDomain mockDomainResult(String domain) {
         return DomainSearchTestUtils.mockDomainResult(domain, 0, 0, 0, 0, 0, 0);
-    }
-    
-    public static Content mockDataSource(long dataSourceId) {
-        Content dataSource = mock(Content.class);
-        when(dataSource.getName()).thenReturn("");
-        when(dataSource.getId()).thenReturn(dataSourceId);
-        return dataSource;
-    }    
+    }   
 }
