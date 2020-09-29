@@ -182,6 +182,7 @@ public class HEICProcessor implements PictureProcessor {
         final Path outputFile = moduleOutputFolder.resolve(baseFileName + ".jpg");
         
         final Path imageMagickErrorOutput = moduleOutputFolder.resolve(IMAGE_MAGICK_ERROR_FILE);
+        Files.deleteIfExists(imageMagickErrorOutput);
         Files.createFile(imageMagickErrorOutput);
 
         // ImageMagick will write the primary image to the output file.
