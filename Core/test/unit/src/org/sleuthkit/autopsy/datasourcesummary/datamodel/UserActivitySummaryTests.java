@@ -18,26 +18,33 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.datamodel;
 
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.function.Function;
-import java.util.logging.Logger;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.poi.ss.formula.functions.T;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.description;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopAccountResult;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopDeviceAttachedResult;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopDomainsResult;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopProgramsResult;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopWebSearchResult;
 import org.sleuthkit.autopsy.testutils.TskMockUtils;
 import org.sleuthkit.autopsy.texttranslation.NoServiceProviderException;
-import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
 import org.sleuthkit.autopsy.texttranslation.TranslationException;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -54,8 +61,32 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class UserActivitySummaryTests {
     
     private interface DataFunction<T> {
-        List<T> retrieve(UserActivitySummary userActivitySummary, DataSource datasource, int count);
+        List<T> retrieve(UserActivitySummary userActivitySummary, DataSource datasource, int count) throws 
+                SleuthkitCaseProviderException, TskCoreException;
     }
+    
+    private static final DataFunction<TopWebSearchResult> WEB_SEARCH_QUERY = 
+            (userActivity, dataSource, count) -> userActivity.getMostRecentWebSearches(dataSource, count);
+    
+    private static final DataFunction<TopAccountResult> ACCOUNT_QUERY = 
+            (userActivity, dataSource, count) -> userActivity.getRecentAccounts(dataSource, count);
+    
+    private static final DataFunction<TopDomainsResult> DOMAINS_QUERY = 
+            (userActivity, dataSource, count) -> userActivity.getRecentDomains(dataSource, count);
+    
+    private static final DataFunction<TopDeviceAttachedResult> DEVICE_QUERY = 
+            (userActivity, dataSource, count) -> userActivity.getRecentDevices(dataSource, count);
+    
+    private static final DataFunction<TopProgramsResult> PROGRAMS_QUERY = 
+            (userActivity, dataSource, count) -> userActivity.getTopPrograms(dataSource, count);
+    
+    private static final Map<String, DataFunction<?>> USER_ACTIVITY_METHODS = new HashMap<String, DataFunction<?>>() {{
+        put("getMostRecentWebSearches", WEB_SEARCH_QUERY);
+        put("getRecentAccounts", ACCOUNT_QUERY);
+        put("getRecentDomains", DOMAINS_QUERY);
+        put("getRecentDevices", DEVICE_QUERY);
+        put("getTopPrograms", PROGRAMS_QUERY);
+    }};
     
     @Rule
     public ExpectedException thrown = ExpectedException.none();
@@ -90,32 +121,69 @@ public class UserActivitySummaryTests {
         );
     }
     
-    private <T> void testMinCount(DataFunction<T> funct) throws TskCoreException, NoServiceProviderException, TranslationException {
+    private <T> void testMinCount(DataFunction<T> funct, String id) 
+        throws TskCoreException, NoServiceProviderException, TranslationException, SleuthkitCaseProviderException {
         Pair<SleuthkitCase, Blackboard> tskPair = getArtifactsTSKMock(null);
         UserActivitySummary summary = getTestClass(tskPair.getLeft(), false, null);
         thrown.expect(IllegalArgumentException.class);
         funct.retrieve(summary, TskMockUtils.mockDataSource(1), -1);
+        verify(tskPair.getRight(), never()).getArtifacts(anyInt(), anyInt());
         
         Pair<SleuthkitCase, Blackboard> tskPair2 = getArtifactsTSKMock(null);
         UserActivitySummary summary2 = getTestClass(tskPair.getLeft(), false, null);
         thrown.expect(IllegalArgumentException.class);
         funct.retrieve(summary2, TskMockUtils.mockDataSource(1), -1);
+        verify(tskPair.getRight(), never()).getArtifacts(anyInt(), anyInt());
     }
     
+    @Test
+    public void testMinCountInvariant() 
+            throws TskCoreException, NoServiceProviderException, TranslationException, SleuthkitCaseProviderException{
+        
+        for (Entry<String, DataFunction<?>> query : USER_ACTIVITY_METHODS.entrySet()) {
+            testMinCount(query.getValue(), query.getKey());
+        }
+    }
     
-    private <T> void testNullDataSource(DataFunction<T> funct) throws TskCoreException, NoServiceProviderException, TranslationException {
-        Pair<SleuthkitCase, Blackboard> tskPair = getArtifactsTSKMock(RET_ARR);
+    private <T> void testNullDataSource(DataFunction<T> funct) 
+            throws TskCoreException, NoServiceProviderException, TranslationException, SleuthkitCaseProviderException {
+        Pair<SleuthkitCase, Blackboard> tskPair = getArtifactsTSKMock(null);
         UserActivitySummary summary = getTestClass(tskPair.getLeft(), false, null);
-        List<T> retArr = funct.retrieve(summary, TskMockUtils.mockDataSource(1), -1);        
+        List<T> retArr = funct.retrieve(summary, TskMockUtils.mockDataSource(1), -1);     
+        verify(tskPair.getRight(), never()).getArtifacts(anyInt(), anyInt());
         Assert.assertTrue(retArr != null);
+        Assert.assertTrue(retArr.isEmpty());
     }
-
     
+    @Test
+    public void testNullDataSource() 
+            throws TskCoreException, NoServiceProviderException, TranslationException, SleuthkitCaseProviderException{
+        
+        for (DataFunction<?> query : USER_ACTIVITY_METHODS.values()) {
+            testNullDataSource(query);
+        }
+    }
     
+    private <T> void testNoResultsReturned(DataFunction<T> funct, String id) 
+            throws TskCoreException, NoServiceProviderException, TranslationException, SleuthkitCaseProviderException {
+        long dataSourceId = 1;
+        Pair<SleuthkitCase, Blackboard> tskPair = getArtifactsTSKMock(new ArrayList<>());
+        UserActivitySummary summary = getTestClass(tskPair.getLeft(), false, null);
+        List<T> retArr = funct.retrieve(summary, TskMockUtils.mockDataSource(dataSourceId), 10);  
+        verifyCalled(tskPair.getRight(), anyInt(), dataSourceId);
+        Assert.assertTrue(String.format("Expected non null empty list returned from %s", id), retArr != null);
+        Assert.assertTrue(String.format("Expected non null empty list returned from %s", id), retArr.isEmpty());
+    }
     
-    // what happens on count <= 0
-    // datasource = null
-    // no results returned
+    @Test
+    public void testNoResultsReturned() 
+            throws TskCoreException, NoServiceProviderException, TranslationException, SleuthkitCaseProviderException{
+        
+        for (Entry<String, DataFunction<?>> query : USER_ACTIVITY_METHODS.entrySet()) {
+            testNoResultsReturned(query.getValue(), query.getKey());
+        }
+    }
+    
     // does not contain excluded
         // ROOT HUB
     // queries correct data sources (i.e. the 3 messages)

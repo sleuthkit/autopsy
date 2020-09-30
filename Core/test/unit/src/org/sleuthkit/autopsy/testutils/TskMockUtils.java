@@ -128,9 +128,8 @@ public class TskMockUtils {
     
     public static Logger getTSKLogger() {
         Logger logger = mock(Logger.class);
-        doNothing().when(logger.log(any(Level.class), anyString(), any(Throwable.class)));
-        doNothing().when(logger.log(any(Level.class), anyString()));
-        doNothing().when(logger.log(any(Level.class), any(Throwable.class)));
+        doNothing().when(logger).log(any(Level.class), anyString(), any(Throwable.class));
+        doNothing().when(logger).log(any(Level.class), anyString());
         return logger;
     }
     
