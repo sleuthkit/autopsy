@@ -133,4 +133,7 @@ public class TskMockUtils {
         doNothing().when(logger.log(any(Level.class), any(Throwable.class)));
         return logger;
     }
+    
+    private TskMockUtils() {
+    }
 }

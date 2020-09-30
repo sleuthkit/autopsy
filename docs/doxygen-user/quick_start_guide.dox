@@ -1,5 +1,8 @@
 /*! \page quick_start_guide Quick Start Guide
 
+[TOC]
+
+
 \section s1 Cases and Data Sources
 
 Autopsy organizes data by <strong>case</strong>.  Each case can have one or more <strong>data sources</strong>, which can be a disk image, a set of logical files, a USB-connected device, etc.  
