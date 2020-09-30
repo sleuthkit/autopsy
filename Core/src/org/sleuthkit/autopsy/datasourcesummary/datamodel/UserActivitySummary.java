@@ -134,7 +134,8 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
         }
 
         // otherwise sort alphabetically
-        return StringUtils.compareIgnoreCase(a.getProgramName(), b.getProgramName());
+        return (a.getProgramName() == null ? "" : a.getProgramName())
+                .compareToIgnoreCase((b.getProgramName() == null ? "" : b.getProgramName()));
     };
     
     private static final Set<Integer> ARTIFACT_UPDATE_TYPE_IDS = new HashSet<>(Arrays.asList(
@@ -649,7 +650,7 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
         String path = DataSourceInfoUtilities.getStringOrNull(artifact, TYPE_PATH);
 
         // ignore items with no name or a ntos boot identifier
-        if (StringUtils.isBlank(programName) || NTOS_BOOT_IDENTIFIER.equalsIgnoreCase(path)) {
+        if (StringUtils.isBlank(programName) || NTOS_BOOT_IDENTIFIER.equalsIgnoreCase(programName)) {
             return null;
         }
 
@@ -657,11 +658,14 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
         if (StringUtils.startsWithIgnoreCase(path, WINDOWS_PREFIX)) {
             return null;
         }
+        
+        Integer count = DataSourceInfoUtilities.getIntOrNull(artifact, TYPE_COUNT);
+        Long longCount = (count == null) ? null : (long) count;
 
         return new TopProgramsResult(
                 programName,
                 path,
-                DataSourceInfoUtilities.getLongOrNull(artifact, TYPE_COUNT),
+                longCount,
                 DataSourceInfoUtilities.getDateOrNull(artifact, TYPE_DATETIME)
         );
     }
@@ -694,7 +698,9 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
      *         value.
      */
     private static int nullableCompare(Long long1, Long long2) {
-        if (long1 != null && long2 == null) {
+        if (long1 == null && long2 == null) {
+            return 0;
+        } else if (long1 != null && long2 == null) {
             return 1;
         } else if (long1 == null && long2 != null) {
             return -1;
