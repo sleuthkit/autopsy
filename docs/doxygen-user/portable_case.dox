@@ -1,5 +1,8 @@
 /*! \page portable_case_page Portable Cases
 
+[TOC]
+
+
 \section portable_case_overview Overview
 
 A portable case is a partial copy of a normal Autopsy case that can be opened from anywhere. It contains a subset of the data from its original case and has been designed to make it easy to share relevant data with other examiners. Portable cases will contain a \ref report_case_uco report detailing the contents of the portable case.

@@ -57,6 +57,7 @@ The following topics are available here:
  - \subpage tree_viewer_page
  - \subpage result_viewer_page
  - \subpage content_viewer_page
+ - \subpage data_source_summary_page
  - \subpage machine_translation_page
 
 - Searching
