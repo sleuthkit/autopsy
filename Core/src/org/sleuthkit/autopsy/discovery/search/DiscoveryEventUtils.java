@@ -19,12 +19,14 @@
 package org.sleuthkit.autopsy.discovery.search;
 
 import com.google.common.eventbus.EventBus;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryKeyUtils.GroupKey;
 import org.sleuthkit.autopsy.discovery.search.SearchData.Type;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
  * Class to handle event bus and events for discovery tool.
@@ -88,13 +90,13 @@ public final class DiscoveryEventUtils {
             //no arg constructor
         }
     }
-    
+
     /**
-     * Event to signal that any background tasks currently running should
-     * be cancelled.
+     * Event to signal that any background tasks currently running should be
+     * cancelled.
      */
     public static final class CancelBackgroundTasksEvent {
-        
+
         public CancelBackgroundTasksEvent() {
             //no-arg constructor
         }
@@ -201,6 +203,39 @@ public final class DiscoveryEventUtils {
             return sortMethod;
         }
 
+    }
+
+    /**
+     * Event to signal the completion of a search being performed.
+     */
+    public static final class ArtifactListRetrievedEvent {
+
+        private final List<BlackboardArtifact> listOfArtifacts = new ArrayList<>();
+        private final BlackboardArtifact.ARTIFACT_TYPE artifactType;
+
+        /**
+         *
+         * @param listOfArtifacts
+         */
+        public ArtifactListRetrievedEvent(BlackboardArtifact.ARTIFACT_TYPE artifactType, List<BlackboardArtifact> listOfArtifacts) {
+            if (listOfArtifacts != null) {
+                this.listOfArtifacts.addAll(listOfArtifacts);
+            }
+            this.artifactType = artifactType;
+        }
+
+        public List<BlackboardArtifact> getListOfArtifacts() {
+            return Collections.unmodifiableList(listOfArtifacts);
+        }
+
+        /**
+         * Get the type of BlackboardArtifact type of which exist in the list.
+         *
+         * @return The BlackboardArtifact type of which exist in the list.
+         */
+        public BlackboardArtifact.ARTIFACT_TYPE getArtifactType() {
+            return artifactType;
+        }
     }
 
     /**

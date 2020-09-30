@@ -55,7 +55,6 @@ public final class DiscoveryTopComponent extends TopComponent {
     private static final int ANIMATION_INCREMENT = 30;
     private volatile static int resultsAreaSize = 250;
     private final GroupListPanel groupListPanel;
-    private final DetailsPanel detailsPanel;
     private final ResultsPanel resultsPanel;
     private Type searchType;
     private int dividerLocation = -1;
@@ -70,10 +69,7 @@ public final class DiscoveryTopComponent extends TopComponent {
         setName(Bundle.DiscoveryTopComponent_name());
         groupListPanel = new GroupListPanel();
         resultsPanel = new ResultsPanel();
-        detailsPanel = new DetailsPanel();
         mainSplitPane.setLeftComponent(groupListPanel);
-        rightSplitPane.setTopComponent(resultsPanel);
-        rightSplitPane.setBottomComponent(detailsPanel);
         //set color of divider
         rightSplitPane.setUI(new BasicSplitPaneUI() {
             @Override
@@ -141,7 +137,6 @@ public final class DiscoveryTopComponent extends TopComponent {
         DiscoveryEventUtils.getDiscoveryEventBus().register(this);
         DiscoveryEventUtils.getDiscoveryEventBus().register(resultsPanel);
         DiscoveryEventUtils.getDiscoveryEventBus().register(groupListPanel);
-        DiscoveryEventUtils.getDiscoveryEventBus().register(detailsPanel);
     }
 
     @Override
@@ -152,7 +147,10 @@ public final class DiscoveryTopComponent extends TopComponent {
         DiscoveryEventUtils.getDiscoveryEventBus().unregister(this);
         DiscoveryEventUtils.getDiscoveryEventBus().unregister(groupListPanel);
         DiscoveryEventUtils.getDiscoveryEventBus().unregister(resultsPanel);
-        DiscoveryEventUtils.getDiscoveryEventBus().unregister(detailsPanel);
+        DiscoveryEventUtils.getDiscoveryEventBus().unregister(rightSplitPane.getBottomComponent());
+        setDetailsVisible(false);
+        rightSplitPane.setBottomComponent(null);
+
         super.componentClosed();
     }
 
@@ -183,6 +181,9 @@ public final class DiscoveryTopComponent extends TopComponent {
         rightSplitPane.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
         rightSplitPane.setResizeWeight(1.0);
         rightSplitPane.setPreferredSize(new java.awt.Dimension(800, 700));
+
+        setDetailsVisible(false);
+
         mainSplitPane.setRightComponent(rightSplitPane);
 
         add(mainSplitPane, java.awt.BorderLayout.CENTER);
@@ -293,8 +294,11 @@ public final class DiscoveryTopComponent extends TopComponent {
         progressMessageTextArea.setForeground(Color.red);
         searchType = searchStartedEvent.getType();
         progressMessageTextArea.setText(Bundle.DiscoveryTopComponent_searchInProgress_text(searchType.name()));
-        rightSplitPane.getComponent(1).setVisible(searchStartedEvent.getType() != DOMAIN);
-        rightSplitPane.getComponent(2).setVisible(searchStartedEvent.getType() != DOMAIN);
+    }
+
+    private void setDetailsVisible(boolean isVisible) {
+        rightSplitPane.getComponent(1).setVisible(isVisible);
+        rightSplitPane.getComponent(2).setVisible(isVisible);
     }
 
     /**
@@ -319,7 +323,12 @@ public final class DiscoveryTopComponent extends TopComponent {
             if (!searchCompleteEvent.getFilters().isEmpty()) {
                 descriptionText += Bundle.DiscoveryTopComponent_additionalFilters_text();
             }
+            rightSplitPane.setBottomComponent(new DomainDetailsPanel());
+        } else {
+            rightSplitPane.setBottomComponent(new FileDetailsPanel());
         }
+        setDetailsVisible(true);
+        DiscoveryEventUtils.getDiscoveryEventBus().register(rightSplitPane.getBottomComponent());
         descriptionText += searchCompleteEvent.getFilters().stream().map(AbstractFilter::getDesc).collect(Collectors.joining("; "));
         progressMessageTextArea.setText(Bundle.DiscoveryTopComponent_searchComplete_text(descriptionText));
         progressMessageTextArea.setCaretPosition(0);

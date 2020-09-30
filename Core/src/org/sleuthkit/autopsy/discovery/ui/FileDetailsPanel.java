@@ -48,7 +48,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Panel to display the details of the selected result.
  */
-final class DetailsPanel extends javax.swing.JPanel {
+final class FileDetailsPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
 
@@ -59,7 +59,7 @@ final class DetailsPanel extends javax.swing.JPanel {
     /**
      * Creates new form DetailsPanel.
      */
-    DetailsPanel() {
+    FileDetailsPanel() {
         initComponents();
         dataContentPanel = DataContentPanel.createInstance();
         detailsSplitPane.setBottomComponent(dataContentPanel);
@@ -186,7 +186,7 @@ final class DetailsPanel extends javax.swing.JPanel {
 
         instancesScrollPane.setPreferredSize(new java.awt.Dimension(775, 60));
 
-        instancesList.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(DetailsPanel.class, "DetailsPanel.instancesList.border.title"))); // NOI18N
+        instancesList.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(FileDetailsPanel.class, "FileDetailsPanel.instancesList.border.title"))); // NOI18N
         instancesList.setModel(instancesListModel);
         instancesList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         instancesList.setCellRenderer(new InstancesCellRenderer());
