@@ -19,17 +19,18 @@
 package org.sleuthkit.autopsy.datasourcesummary.datamodel;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Assert;
 import static org.junit.Assert.fail;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
@@ -58,7 +59,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Tests for UserActivitySummary.
  */
-public class UserActivitySummaryTests {
+public class UserActivitySummaryTest {
     
     private interface DataFunction<T> {
         List<T> retrieve(UserActivitySummary userActivitySummary, DataSource datasource, int count) throws 
@@ -128,7 +129,7 @@ public class UserActivitySummaryTests {
             UserActivitySummary summary = getTestClass(tskPair.getLeft(), false, null);
 
             try {
-                funct.retrieve(summary, TskMockUtils.mockDataSource(1), -1);    
+                funct.retrieve(summary, TskMockUtils.getDataSource(1), -1);    
             } catch (IllegalArgumentException ignored) {
                 // this exception is expected so continue if getArtifacts never called
                 verify(tskPair.getRight(), never().description(
@@ -180,7 +181,7 @@ public class UserActivitySummaryTests {
         int count = 10;
         Pair<SleuthkitCase, Blackboard> tskPair = getArtifactsTSKMock(new ArrayList<>());
         UserActivitySummary summary = getTestClass(tskPair.getLeft(), false, null);
-        List<T> retArr = funct.retrieve(summary, TskMockUtils.mockDataSource(dataSourceId), count);  
+        List<T> retArr = funct.retrieve(summary, TskMockUtils.getDataSource(dataSourceId), count);  
         
         Assert.assertTrue(String.format("Expected non null empty list returned from %s", id), retArr != null);
         Assert.assertTrue(String.format("Expected non null empty list returned from %s", id), retArr.isEmpty());
@@ -195,13 +196,59 @@ public class UserActivitySummaryTests {
         }
     }
     
-    // does not contain excluded
-        // ROOT HUB
-    // queries correct data sources (i.e. the 3 messages)
-    // sorted and limited appropriately
+    private static List<String> EXCLUDED_DEVICES = Arrays.asList("ROOT_HUB", "ROOT_HUB20");
     
+    private static BlackboardArtifact getRecentDeviceArtifact(long artifactId, DataSource dataSource, 
+            String deviceId, String deviceMake, String deviceModel, Long date) throws TskCoreException {
+        
+        return TskMockUtils.getArtifact(new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_DEVICE_ATTACHED), artifactId, dataSource, 
+                    TskMockUtils.getAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_ID, deviceId),
+                    TskMockUtils.getAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, date),
+                    TskMockUtils.getAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MAKE, deviceMake),
+                    TskMockUtils.getAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL, deviceModel)
+                );
+    }
     
-    // public List<UserActivitySummary.TopDomainsResult> getRecentDomains(DataSource dataSource, int count) throws TskCoreException, SleuthkitCaseProvider.SleuthkitCaseProviderException
-    // public List<UserActivitySummary.TopWebSearchResult> getMostRecentWebSearches(DataSource dataSource, int count) throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException
-    // public List<TopDeviceAttachedResult> getRecentDevices(DataSource dataSource, int count) throws SleuthkitCaseProviderException, TskCoreException
+    @Test
+    public void testRecentDevicesFiltering() throws TskCoreException, NoServiceProviderException, 
+            SleuthkitCaseProviderException, TranslationException {
+        
+        long dataSourceId = 1;
+        int count = 10;
+        long time = 24 * 60 * 60 * 42;
+        String acceptedDevice = "ACCEPTED DEVICE";
+        
+        DataSource ds = TskMockUtils.getDataSource(dataSourceId);
+                
+        List<String> allKeys = new ArrayList<>(EXCLUDED_DEVICES);
+        allKeys.add(acceptedDevice);
+        
+        List<BlackboardArtifact> artifacts = IntStream.range(0, allKeys.size())
+                .mapToObj((idx) -> {
+                    String key = allKeys.get(idx);
+                    try {
+                        return getRecentDeviceArtifact(1000L + idx, ds, "ID " + key, "MAKE " + key, key, time);    
+                    } catch (TskCoreException ex) {
+                        fail("Unable to create artifacts correctly");    
+                        return null;
+                    }
+                })
+                .collect(Collectors.toList());
+        
+        Pair<SleuthkitCase, Blackboard> tskPair = getArtifactsTSKMock(artifacts);
+        UserActivitySummary summary = getTestClass(tskPair.getLeft(), false, null);
+        List<TopDeviceAttachedResult> results = summary.getRecentDevices(ds, count);
+        
+        Assert.assertEquals(1, results.size());
+        Assert.assertEquals(acceptedDevice, results.get(0).getDeviceModel());
+        Assert.assertEquals("MAKE " + acceptedDevice, results.get(0).getDeviceMake());
+        Assert.assertEquals("ID " + acceptedDevice, results.get(0).getDeviceId());
+        Assert.assertEquals(time, results.get(0).getDateAccessed().getTime() / 1000);
+    }
+    
+    @Test
+    public void testRecentDevicesLimiting() {
+        
+    }
+
 }

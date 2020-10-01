@@ -18,9 +18,8 @@
  */
 package org.sleuthkit.autopsy.testutils;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.logging.ConsoleHandler;
@@ -37,6 +36,7 @@ import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
 import org.sleuthkit.autopsy.texttranslation.TranslationException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -53,7 +53,7 @@ public class TskMockUtils {
      *
      * @return The mocked datasource.
      */
-    public static DataSource mockDataSource(long dataSourceId) {
+    public static DataSource getDataSource(long dataSourceId) {
         DataSource dataSource = mock(DataSource.class);
         when(dataSource.getName()).thenReturn("");
         when(dataSource.getId()).thenReturn(dataSourceId);
@@ -74,7 +74,7 @@ public class TskMockUtils {
      *
      * @throws TskCoreException
      */
-    public static BlackboardArtifact mockArtifact(BlackboardArtifact.Type artifactType, long artifactId,
+    public static BlackboardArtifact getArtifact(BlackboardArtifact.Type artifactType, long artifactId,
             DataSource dataSource, BlackboardAttribute... attributes) throws TskCoreException {
 
         BlackboardArtifact artifact = mock(BlackboardArtifact.class);
@@ -97,6 +97,55 @@ public class TskMockUtils {
         when(artifact.getDataSource()).thenReturn(dataSource);
         return artifact;
     }
+    
+    public static BlackboardArtifact getArtifact(BlackboardArtifact.Type artifactType, long artifactId,
+        DataSource dataSource, List<BlackboardAttribute> attributes) throws TskCoreException {
+
+        return getArtifact(artifactType, artifactId, dataSource, attributes.toArray(new BlackboardAttribute[attributes.size()]));
+    }
+    
+    private static final String DEFAULT_ATTR_SOURCE = "TEST SOURCE";
+    
+    public static BlackboardAttribute getAttribute(ATTRIBUTE_TYPE attrType, Object value) {
+        
+        return getAttribute(new BlackboardAttribute.Type(attrType), DEFAULT_ATTR_SOURCE, value);
+    }
+    
+    public static BlackboardAttribute getAttribute(BlackboardAttribute.Type attrType, String source, Object value) {
+        switch (attrType.getValueType()) {
+            case STRING:
+            case JSON:
+                if (value instanceof String) {
+                    return new BlackboardAttribute(attrType, source, (String) value);
+                }
+                break;
+            case DATETIME:
+            case LONG:
+                if (value instanceof Long) {
+                    return new BlackboardAttribute(attrType, source, (Long) value);
+                }
+                break;
+            case INTEGER:
+                if (value instanceof Integer) {
+                    return new BlackboardAttribute(attrType, source, (Integer) value);
+                }
+                break;
+            case DOUBLE:
+                if (value instanceof Double) {
+                    return new BlackboardAttribute(attrType, source, (Double) value);
+                }
+                break;
+            case BYTE:
+                if (value instanceof byte[]) {
+                    return new BlackboardAttribute(attrType, source, (byte[]) value);
+                }
+                break;
+            default: throw new IllegalArgumentException(String.format("Unknown attribute value type: %s", attrType.getValueType()));
+        }
+        
+        throw new IllegalArgumentException(String.format("Attribute type expected type of %s but received argument of %s", attrType.getValueType(), value));
+    }
+    
 
     /**
      * Returns a mock TextTranslationService.

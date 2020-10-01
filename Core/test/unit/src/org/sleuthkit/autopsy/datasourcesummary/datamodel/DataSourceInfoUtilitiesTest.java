@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.datasourcesummary.datamodel;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import org.junit.Assert;
 import org.junit.Rule;
@@ -35,6 +36,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.testutils.TskMockUtils;
 import static org.mockito.Mockito.*;
+import org.sleuthkit.autopsy.testutils.RandomizationUtils;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE;
@@ -42,7 +44,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALU
 /**
  * Unit tests for DataSourceInfoUtilities.getArtifacts
  */
-public class GetArtifactsTest {
+public class DataSourceInfoUtilitiesTest {
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
@@ -145,37 +147,14 @@ public class GetArtifactsTest {
 
         List<BlackboardArtifact> toRet = new ArrayList<>();
         for (int i = 0; i < values.size(); i++) {
-            toRet.add(TskMockUtils.mockArtifact(new BlackboardArtifact.Type(artifactType), 1000 + i, dataSource,
+            toRet.add(TskMockUtils.getArtifact(new BlackboardArtifact.Type(artifactType), 1000 + i, dataSource,
                     attrMaker.make(attrType, "TEST SOURCE", values.get(i))));
         }
 
         return toRet;
     }
 
-    /**
-     * Returns list in 0, n-1, 1, n-2 ... order. Deterministic so same results
-     * each time, but not in original order.
-     *
-     * @return Mixed up list.
-     */
-    private <T> List<T> getMixedUp(List<T> list) {
-        int forward = 0;
-        int backward = list.size() - 1;
 
-        List<T> newList = new ArrayList<>();
-        while (forward <= backward) {
-            newList.add(list.get(forward));
-
-            if (forward < backward) {
-                newList.add(list.get(backward));
-            }
-
-            forward++;
-            backward--;
-        }
-
-        return newList;
-    }
 
     /**
      * Does a basic test passing a list of generated artifacts in mixed up order
@@ -194,11 +173,11 @@ public class GetArtifactsTest {
     private <T> void testSorted(ARTIFACT_TYPE artifactType, ATTRIBUTE_TYPE attrType, List<T> values,
             AttrMaker<T> attrMaker, SortOrder sortOrder, int count) throws TskCoreException {
 
-        DataSource dataSource = TskMockUtils.mockDataSource(1);
+        DataSource dataSource = TskMockUtils.getDataSource(1);
         List<BlackboardArtifact> sortedArtifacts = getArtifacts(artifactType, new BlackboardAttribute.Type(attrType),
                 dataSource, values, attrMaker);
 
-        List<BlackboardArtifact> mixedUpArtifacts = getMixedUp(sortedArtifacts);
+        List<BlackboardArtifact> mixedUpArtifacts = RandomizationUtils.getMixedUp(sortedArtifacts);
 
         List<BlackboardArtifact> expectedArtifacts = count == 0
                 ? sortedArtifacts
@@ -281,11 +260,11 @@ public class GetArtifactsTest {
     private <T> void testFailOnBadAttrType(BlackboardArtifact.Type artifactType, BlackboardAttribute.Type attributeType, T val,
             AttrMaker<T> attrMaker) throws TskCoreException {
 
-        DataSource dataSource = TskMockUtils.mockDataSource(1);
+        DataSource dataSource = TskMockUtils.getDataSource(1);
 
         List<BlackboardArtifact> artifacts = Arrays.asList(
-                TskMockUtils.mockArtifact(artifactType, 2, dataSource, attrMaker.make(attributeType, "TEST SOURCE", val)),
-                TskMockUtils.mockArtifact(artifactType, 3, dataSource, attrMaker.make(attributeType, "TEST SOURCE", val))
+                TskMockUtils.getArtifact(artifactType, 2, dataSource, attrMaker.make(attributeType, "TEST SOURCE", val)),
+                TskMockUtils.getArtifact(artifactType, 3, dataSource, attrMaker.make(attributeType, "TEST SOURCE", val))
         );
         test(artifactType,
                 dataSource,
@@ -319,18 +298,18 @@ public class GetArtifactsTest {
     @Test
     public void testPurgeAttrNotPresent() throws TskCoreException {
         long day = 24 * 60 * 60;
-        DataSource dataSource = TskMockUtils.mockDataSource(1);
+        DataSource dataSource = TskMockUtils.getDataSource(1);
 
         BlackboardArtifact.Type ART_TYPE = new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_PROG_RUN);
 
-        BlackboardArtifact mock1 = TskMockUtils.mockArtifact(ART_TYPE, 10, dataSource,
+        BlackboardArtifact mock1 = TskMockUtils.getArtifact(ART_TYPE, 10, dataSource,
                 new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COUNT, "TEST SOURCE", 5),
                 new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, "TEST SOURCE", day));
 
-        BlackboardArtifact mock2 = TskMockUtils.mockArtifact(ART_TYPE, 20, dataSource,
+        BlackboardArtifact mock2 = TskMockUtils.getArtifact(ART_TYPE, 20, dataSource,
                 new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COUNT, "TEST SOURCE", 6));
 
-        BlackboardArtifact mock3 = TskMockUtils.mockArtifact(ART_TYPE, 30, dataSource,
+        BlackboardArtifact mock3 = TskMockUtils.getArtifact(ART_TYPE, 30, dataSource,
                 new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COUNT, "TEST SOURCE", 7),
                 new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, "TEST SOURCE", 3 * day));
 
@@ -348,18 +327,18 @@ public class GetArtifactsTest {
     @Test
     public void testMultAttrsPresent() throws TskCoreException {
         long day = 24 * 60 * 60;
-        DataSource dataSource = TskMockUtils.mockDataSource(1);
+        DataSource dataSource = TskMockUtils.getDataSource(1);
 
         BlackboardArtifact.Type ART_TYPE = new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_PROG_RUN);
 
-        BlackboardArtifact mock1 = TskMockUtils.mockArtifact(ART_TYPE, 10, dataSource,
+        BlackboardArtifact mock1 = TskMockUtils.getArtifact(ART_TYPE, 10, dataSource,
                 new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COUNT, "TEST SOURCE", 7),
                 new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, "TEST SOURCE", day));
 
-        BlackboardArtifact mock2 = TskMockUtils.mockArtifact(ART_TYPE, 20, dataSource,
+        BlackboardArtifact mock2 = TskMockUtils.getArtifact(ART_TYPE, 20, dataSource,
                 new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COUNT, "TEST SOURCE", 6));
 
-        BlackboardArtifact mock3 = TskMockUtils.mockArtifact(ART_TYPE, 30, dataSource,
+        BlackboardArtifact mock3 = TskMockUtils.getArtifact(ART_TYPE, 30, dataSource,
                 new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COUNT, "TEST SOURCE", 5),
                 new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, "TEST SOURCE", 3 * day));
 
@@ -377,7 +356,7 @@ public class GetArtifactsTest {
     @Test
     public void testTskCoreExceptionThrown() throws TskCoreException {
         test(new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_ACCOUNT),
-                TskMockUtils.mockDataSource(1),
+                TskMockUtils.getDataSource(1),
                 new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE),
                 SortOrder.ASCENDING,
                 0,
@@ -390,7 +369,7 @@ public class GetArtifactsTest {
     @Test
     public void testThrowOnLessThan0() throws TskCoreException {
         test(new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_ACCOUNT),
-                TskMockUtils.mockDataSource(1),
+                TskMockUtils.getDataSource(1),
                 new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE),
                 SortOrder.ASCENDING,
                 -1,
@@ -403,7 +382,7 @@ public class GetArtifactsTest {
     @Test
     public void testEmptyListReturned() throws TskCoreException {
         test(new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_ACCOUNT),
-                TskMockUtils.mockDataSource(1),
+                TskMockUtils.getDataSource(1),
                 new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE),
                 SortOrder.ASCENDING,
                 0,
@@ -411,5 +390,68 @@ public class GetArtifactsTest {
                 null,
                 Collections.emptyList(),
                 null);
+    }
+    
+    private interface GetAttrVal<T> {
+        public T getOrNull(BlackboardArtifact artifact, BlackboardAttribute.Type type);
+    }
+    
+    private <T> void testNullAttrValue(String id, GetAttrVal<T> getter, ARTIFACT_TYPE artifactType, 
+            ATTRIBUTE_TYPE attributeType, T nonNullVal) 
+            throws TskCoreException {
+        
+        BlackboardAttribute.Type attrType = new BlackboardAttribute.Type(attributeType);
+        BlackboardArtifact.Type artType = new BlackboardArtifact.Type(artifactType);
+        
+        BlackboardArtifact noAttribute = TskMockUtils.getArtifact(artType, 1000, 
+                TskMockUtils.getDataSource(1), new ArrayList<>());
+        
+        T nullValue = getter.getOrNull(noAttribute, attrType);
+        Assert.assertNull(String.format("Expected function %s to return null when no attribute present", id), nullValue);
+        
+        BlackboardArtifact hasAttribute = TskMockUtils.getArtifact(artType, 1000, 
+                TskMockUtils.getDataSource(1), TskMockUtils.getAttribute(attributeType, nonNullVal));
+        
+        T valueReceived = getter.getOrNull(hasAttribute, attrType);
+        
+        Assert.assertEquals(String.format("%s did not return the same value present in the attribute", id), nonNullVal, valueReceived);
+    }
+    
+    @Test
+    public void testGetStringOrNull() throws TskCoreException {
+        testNullAttrValue("getStringOrNull", DataSourceInfoUtilities::getStringOrNull, 
+                ARTIFACT_TYPE.TSK_ACCOUNT, ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE, "Skype");
+    }
+    
+    @Test
+    public void testGetIntOrNull() throws TskCoreException {
+        testNullAttrValue("getIntOrNull", DataSourceInfoUtilities::getIntOrNull, 
+                ARTIFACT_TYPE.TSK_PROG_RUN, ATTRIBUTE_TYPE.TSK_COUNT, 16);
+    }
+    
+    @Test
+    public void testGetLongOrNull() throws TskCoreException {
+        testNullAttrValue("getLongOrNull", DataSourceInfoUtilities::getLongOrNull, 
+                ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT, ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, 1001L);
+    }
+    
+    @Test
+    public void testGetDateOrNull() throws TskCoreException {
+        BlackboardAttribute.Type attrType = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DATETIME);
+        BlackboardArtifact.Type artType = new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_BLUETOOTH_PAIRING);
+        
+        long dateTime = 24 * 60 * 60 *42;
+        
+        BlackboardArtifact noAttribute = TskMockUtils.getArtifact(artType, 1000, 
+                TskMockUtils.getDataSource(1), new ArrayList<>());
+        
+        Date nullValue = DataSourceInfoUtilities.getDateOrNull(noAttribute, attrType);
+        Assert.assertNull(nullValue);
+        
+        BlackboardArtifact hasAttribute = TskMockUtils.getArtifact(artType, 1000, 
+                TskMockUtils.getDataSource(1), TskMockUtils.getAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, dateTime));
+        
+        Date curVal = DataSourceInfoUtilities.getDateOrNull(hasAttribute, attrType);
+        Assert.assertEquals(dateTime, curVal.getTime() / 1000);
     }
 }
