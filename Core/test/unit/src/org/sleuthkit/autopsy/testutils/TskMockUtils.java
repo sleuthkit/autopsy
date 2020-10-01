@@ -18,15 +18,14 @@
  */
 package org.sleuthkit.autopsy.testutils;
 
+import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.function.Function;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -126,11 +125,25 @@ public class TskMockUtils {
         return translationService;
     }
     
-    public static Logger getTSKLogger() {
-        Logger logger = mock(Logger.class);
-        doNothing().when(logger).log(any(Level.class), anyString(), any(Throwable.class));
-        doNothing().when(logger).log(any(Level.class), anyString());
-        return logger;
+    
+    /**
+     * 
+     * @param loggerName
+     * @return
+     * @throws InstantiationException
+     * @throws NoSuchMethodException
+     * @throws SecurityException 
+     */
+    public static Logger getTSKLogger(String loggerName) 
+            throws InstantiationException, NoSuchMethodException, SecurityException {
+        
+        // The logger doesn't appear to respond well to mocking with mockito.
+        // It appears that the issue may have to do with mocking methods in the java.* packages
+        // since the autopsy logger extends the java.util.logging.Logger class:
+        // https://javadoc.io/static/org.mockito/mockito-core/3.5.13/org/mockito/Mockito.html#39
+        Constructor<Logger> constructor = Logger.class.getConstructor(String.class, String.class);
+        constructor.setAccessible(true);
+        return constructor.newInstance(loggerName, null);
     }
     
     private TskMockUtils() {

@@ -92,7 +92,6 @@ public class UserActivitySummaryTests {
     public ExpectedException thrown = ExpectedException.none();
     
     private static BlackboardArtifact.Type ACCOUNT_TYPE = new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_ACCOUNT);
-    
     private static BlackboardAttribute.Type TYPE_ACCOUNT_TYPE = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE);
     
     
@@ -123,17 +122,13 @@ public class UserActivitySummaryTests {
     
     private <T> void testMinCount(DataFunction<T> funct, String id) 
         throws TskCoreException, NoServiceProviderException, TranslationException, SleuthkitCaseProviderException {
-        Pair<SleuthkitCase, Blackboard> tskPair = getArtifactsTSKMock(null);
-        UserActivitySummary summary = getTestClass(tskPair.getLeft(), false, null);
-        thrown.expect(IllegalArgumentException.class);
-        funct.retrieve(summary, TskMockUtils.mockDataSource(1), -1);
-        verify(tskPair.getRight(), never()).getArtifacts(anyInt(), anyInt());
-        
-        Pair<SleuthkitCase, Blackboard> tskPair2 = getArtifactsTSKMock(null);
-        UserActivitySummary summary2 = getTestClass(tskPair.getLeft(), false, null);
-        thrown.expect(IllegalArgumentException.class);
-        funct.retrieve(summary2, TskMockUtils.mockDataSource(1), -1);
-        verify(tskPair.getRight(), never()).getArtifacts(anyInt(), anyInt());
+        for (int nonPositiveValue : new int[]{ -1, 0}) {
+            Pair<SleuthkitCase, Blackboard> tskPair = getArtifactsTSKMock(null);
+            UserActivitySummary summary = getTestClass(tskPair.getLeft(), false, null);
+            thrown.expect(IllegalArgumentException.class);
+            funct.retrieve(summary, TskMockUtils.mockDataSource(1), nonPositiveValue);
+            verify(tskPair.getRight(), never()).getArtifacts(anyInt(), anyInt());
+        }
     }
     
     @Test
