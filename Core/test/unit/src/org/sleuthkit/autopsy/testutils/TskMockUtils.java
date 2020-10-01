@@ -19,16 +19,19 @@
 package org.sleuthkit.autopsy.testutils;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Handler;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.texttranslation.NoServiceProviderException;
 import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
 import org.sleuthkit.autopsy.texttranslation.TranslationException;
@@ -118,34 +121,57 @@ public class TskMockUtils {
             if (onTranslate == null) {
                 throw new NoServiceProviderException("No onTranslate function provided");
             }
-            
+
             return (input == null) ? null : onTranslate.apply(input);
         });
-        
+
         return translationService;
     }
-    
-    
+
+    private static void setConsoleHandler(Logger logger) {
+        // taken from https://stackoverflow.com/a/981230
+        // Handler for console (reuse it if it already exists)
+        Handler consoleHandler = null;
+
+        //see if there is already a console handler
+        for (Handler handler : logger.getHandlers()) {
+            if (handler instanceof ConsoleHandler) {
+                //found the console handler
+                consoleHandler = handler;
+                break;
+            }
+        }
+
+        if (consoleHandler == null) {
+            //there was no console handler found, create a new one
+            consoleHandler = new ConsoleHandler();
+            logger.addHandler(consoleHandler);
+        }
+
+        //set the console handler to fine:
+        consoleHandler.setLevel(java.util.logging.Level.FINEST);
+    }
+
     /**
-     * 
-     * @param loggerName
-     * @return
+     * Retrieves an autopsy logger that does not write to disk.
+     *
+     * @param loggerName The name of the logger.
+     *
+     * @return The autopsy logger for the console
+     *
      * @throws InstantiationException
-     * @throws NoSuchMethodException
-     * @throws SecurityException 
+     * @throws IllegalStateException
      */
-    public static Logger getTSKLogger(String loggerName) 
-            throws InstantiationException, NoSuchMethodException, SecurityException {
-        
+    public static Logger getJavaLogger(String loggerName) {
         // The logger doesn't appear to respond well to mocking with mockito.
         // It appears that the issue may have to do with mocking methods in the java.* packages
         // since the autopsy logger extends the java.util.logging.Logger class:
         // https://javadoc.io/static/org.mockito/mockito-core/3.5.13/org/mockito/Mockito.html#39
-        Constructor<Logger> constructor = Logger.class.getConstructor(String.class, String.class);
-        constructor.setAccessible(true);
-        return constructor.newInstance(loggerName, null);
+        Logger logger = Logger.getLogger(loggerName);
+        setConsoleHandler(logger);
+        return logger;
     }
-    
+
     private TskMockUtils() {
     }
 }
