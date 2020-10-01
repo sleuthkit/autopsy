@@ -1329,10 +1329,10 @@ public class PortableCaseReportModule implements ReportModule {
         File zipFile = Paths.get(tempZipFolder.getAbsolutePath(), caseName + ".zip").toFile(); // NON-NLS
         ProcessBuilder procBuilder = new ProcessBuilder();
         procBuilder.command(
-                String.format("\"%s\"",sevenZipExe.getAbsolutePath()),
+                sevenZipExe.getAbsolutePath(),
                 "a", // Add to archive
-                String.format("\"%s\"",zipFile.getAbsolutePath()),
-                String.format("\"%s\"",dirToCompress.toAbsolutePath().toString()),
+                zipFile.getAbsolutePath(),
+                dirToCompress.toAbsolutePath().toString(),
                 chunkOption
         );
 
