@@ -47,6 +47,15 @@
             </ArtifactName>
         </FileName>
 
+        <FileName filename="App Snapshots.tsv" description="App Snapshots (screenshots)">
+            <ArtifactName artifactname="TSK_SCREEN_SHOTS" comment="null">
+                <AttributeName attributename="TSK_PROG_NAME" columnName="App Name" required="yes" />
+                <AttributeName attributename="TSK_PATH" columnName="SOurce Path" required="yes" />
+                <AttributeName attributename="TSK_DATETIME" columnName="Date Modified" required="yes" />
+                <AttributeName attributename="null" columnName="Source File Located" required="no" />
+            </ArtifactName>
+        </FileName>
+
         <FileName filename="Bluetooth Other.tsv" description="Bluetooth Other">
             <ArtifactName artifactname="TSK_BLUETOOTH_ADAPTER" comment="Bluetooth Other">
                 <AttributeName attributename="TSK_NAME" columnName="Name" required="yes" />
@@ -120,6 +129,13 @@
             </ArtifactName>
         </FileName>
 
+        <FileName filename="DHCP Received List.tsv" description="DHCP Received List" >
+            <ArtifactName artifactname="TSK_DHCP_INFO" comment="null">
+                <AttributeName attributename="TSK_KEY" columnName="Key" required="yes" />
+                <AttributeName attributename="TSK_VALUE" columnName="Value" required="yes" />
+            </ArtifactName>
+        </FileName>
+
         <FileName filename="KnowledgeC App Activity.tsv" description="KnowledgeC App Activity">
             <ArtifactName artifactname="TSK_PROG_RUN" comment="KnowledgeC App Activity">
                 <AttributeName attributename="TSK_DATETIME" columnName="Entry Creation" required="yes" />
@@ -189,6 +205,36 @@
             </ArtifactName>
         </FileName>
 
+        <FileName filename="KnowledgeC Device is Backlit.tsv" description="KnowledgeC Device is Backlit">
+            <ArtifactName artifactname="TSK_ACTIVITY" comment="Device Backlit">
+                <AttributeName attributename="TSK_DATETIME_START" columnName="Start" required="yes" />
+                <AttributeName attributename="TSK_DATETIME_END" columnName="End" required="yes" />
+                <AttributeName attributename="TSK_ACTIVITY_TYPE" columnName="Screen is Backlit" required="yes" />
+                <AttributeName attributename="null" columnName="Usage in Seconds" required="no" />
+                <AttributeName attributename="null" columnName="Usage in Minutes" required="no" />
+                <AttributeName attributename="null" columnName="Day of Week" required="no" />
+                <AttributeName attributename="null" columnName="GMT Offset" required="no" />
+                <AttributeName attributename="null" columnName="Start" required="no" />
+                <AttributeName attributename="null" columnName="End" required="no" />
+                <AttributeName attributename="null" columnName="Entry Creation" required="no" />
+                <AttributeName attributename="null" columnName="UUID" required="no" />
+                <AttributeName attributename="null" columnName="ZOBJECT Table ID" required="no" />
+            </ArtifactName>
+        </FileName>
+
+        <FileName filename="KnowledgeC Battery Level.tsv" description="KnowledgeC Battery Level">
+            <ArtifactName artifactname="TSK_ACTIVITY" comment="Battery Level">
+                <AttributeName attributename="TSK_DATETIME_START" columnName="Start" required="yes" />
+                <AttributeName attributename="TSK_DATETIME_END" columnName="End" required="yes" />
+                <AttributeName attributename="TSK_ACTIVITY_LEVEL" columnName="Battery Level" required="yes" />
+                <AttributeName attributename="null" columnName="Usage in Seconds" required="no" />
+                <AttributeName attributename="null" columnName="Day of the Week" required="no" />
+                <AttributeName attributename="null" columnName="GMT Offset" required="no" />
+                <AttributeName attributename="null" columnName="Entry Creation" required="no" />
+                <AttributeName attributename="null" columnName=" ZOBJECT Table ID" required="no" />
+            </ArtifactName>
+        </FileName>
+
         <FileName filename="KnowledgeC Bluetooth Connections.tsv" description="KnowledgeC Bluetooth Connections">
             <ArtifactName artifactname="TSK_BLUETOOTH_PAIRING" comment="KnowledgeC Bluetooth Connections">
                 <AttributeName attributename="TSK_DATETIME_START" columnName="Start" required="yes" />
@@ -207,15 +253,61 @@
 
         <FileName filename="KnowledgeC Car Play Connections.tsv" description="KnowledgeC Car Play Connections">
             <ArtifactName artifactname="TSK_DEVICE_INFO" comment="KnowledgeC Car Play Connections">
-                <AttributeName attributename="TSK_DATETIME" columnName="Start" required="no" />
+                <AttributeName attributename="TSK_DATETIME" columnName="Start" required="yes" />
                 <AttributeName attributename="null" columnName="End" required="no" />
-                <AttributeName attributename="null" columnName="Car Play Connected" required="no" />
+                <AttributeName attributename="TSK_ACTIVITY_TYPE" columnName="Car Play Connected" required="yes" />
                 <AttributeName attributename="null" columnName="Usage in Seconds" required="no" />
                 <AttributeName attributename="null" columnName="Usage in Minutes" required="no" />
                 <AttributeName attributename="null" columnName="Day of Week" required="no" />
                 <AttributeName attributename="null" columnName="GMT Offset" required="no" />
                 <AttributeName attributename="null" columnName="Entry Creation" required="no" />
-                <AttributeName attributename="TSK_DEVICE_ID" columnName="UUID" required="no" />
+                <AttributeName attributename="TSK_DEVICE_ID" columnName="UUID" required="yes" />
+                <AttributeName attributename="null" columnName="Zobject Table ID" required="no" />
+            </ArtifactName>
+        </FileName>
+
+        <FileName filename="KnowledgeC Disk Subsystem Access.tsv" description="KnowledgeC Disk Subsystem Access">
+            <ArtifactName artifactname="TSK_ACTIVITY" comment="disk Subsystem">
+                <AttributeName attributename="TSK_DATETIME_START" columnName="Start" required="yes" />
+                <AttributeName attributename="TSK_DATETIME_END" columnName="End" required="yes" />
+                <AttributeName attributename="TSK_PROG_NAME" columnName="Bundle ID" required="yes" />
+                <AttributeName attributename="TSK_ACTIVITY_TYPE" columnName="Value String" required="yes" />
+                <AttributeName attributename="null" columnName="Usage in Seconds" required="no" />
+                <AttributeName attributename="null" columnName="Usage in Minutes" required="no" />
+                <AttributeName attributename="null" columnName="Day of Week" required="no" />
+                <AttributeName attributename="null" columnName="GMT Offset" required="no" />
+                <AttributeName attributename="null" columnName="Entry Creation" required="no" />
+                <AttributeName attributename="null" columnName="UUID" required="no" />
+                <AttributeName attributename="null" columnName="Zobject Table ID" required="no" />
+            </ArtifactName>
+        </FileName>
+
+        <FileName filename="KnowledgeC Do not Disturb.tsv" description="KnowledgeC Do Not Disturb">
+            <ArtifactName artifactname="TSK_ACTIVITY" comment="Do Not Disturb">
+                <AttributeName attributename="TSK_DATETIME_START" columnName="Start" required="yes" />
+                <AttributeName attributename="TSK_DATETIME_END" columnName="End" required="yes" />
+                <AttributeName attributename="TSK_ACTIVITY_TYPE" columnName="Value" required="yes" />
+                <AttributeName attributename="null" columnName="Usage in Seconds" required="no" />
+                <AttributeName attributename="null" columnName="Usage in Minutes" required="no" />
+                <AttributeName attributename="null" columnName="Day of Week" required="no" />
+                <AttributeName attributename="null" columnName="GMT Offset" required="no" />
+                <AttributeName attributename="null" columnName="Entry Creation" required="no" />
+                <AttributeName attributename="null" columnName="UUID" required="no" />
+                <AttributeName attributename="null" columnName="Zobject Table ID" required="no" />
+            </ArtifactName>
+        </FileName>
+
+        <FileName filename="KnowledgeC Inferred Motion.tsv" description="KnowledgeC Inferred Motion">
+            <ArtifactName artifactname="TSK_ACTIVITY" comment="Inferred Motion">
+                <AttributeName attributename="TSK_DATETIME_START" columnName="Start" required="yes" />
+                <AttributeName attributename="TSK_DATETIME_END" columnName="End" required="yes" />
+                <AttributeName attributename="TSK_ACTIVITY_TYPE" columnName="Value" required="yes" />
+                <AttributeName attributename="null" columnName="Usage in Seconds" required="no" />
+                <AttributeName attributename="null" columnName="Usage in Minutes" required="no" />
+                <AttributeName attributename="null" columnName="Day of Week" required="no" />
+                <AttributeName attributename="null" columnName="GMT Offset" required="no" />
+                <AttributeName attributename="null" columnName="Entry Creation" required="no" />
+                <AttributeName attributename="null" columnName="UUID" required="no" />
                 <AttributeName attributename="null" columnName="Zobject Table ID" required="no" />
             </ArtifactName>
         </FileName>
@@ -245,6 +337,19 @@
                 <AttributeName attributename="null" columnName="GMT Offset" required="no" />
                 <AttributeName attributename="TSK_DATETIME_CREATED" columnName="Entry Creation" required="yes" />
                 <AttributeName attributename="null" columnName="ZOBJECT Table ID" required="no" />
+            </ArtifactName>
+        </FileName>
+
+        <FileName filename="KnowledgeC Device Locked.tsv" description="KnowledgeC Device Locked">
+            <ArtifactName artifactname="TSK_ACTIVITY" comment="Device Locked">
+                <AttributeName attributename="TSK_DATETIME_START" columnName="Start" required="yes" />
+                <AttributeName attributename="TSK_DATETIME_END" columnName="End" required="yes" />
+                <AttributeName attributename="TSK_ACTIVITY_TYPE" columnName="Is Locked?" required="yes" />
+                <AttributeName attributename="null" columnName="Usage in Seconds" required="no" />
+                <AttributeName attributename="null" columnName="Day of the Week" required="no" />
+                <AttributeName attributename="null" columnName="GMT Offset" required="no" />
+                <AttributeName attributename="null" columnName="Entry Creation" required="no" />
+                <AttributeName attributename="null" columnName=" ZOBJECT Table ID" required="no" />
             </ArtifactName>
         </FileName>
 
@@ -288,6 +393,36 @@
             </ArtifactName>
         </FileName>
 
+        <FileName filename="KnowledgeC Screen Orientation.tsv" description="KnowledgeC Screen Orientation">
+            <ArtifactName artifactname="TSK_ACTIVITY" comment="Screen Orientation">
+                <AttributeName attributename="TSK_DATETIME_START" columnName="Start" required="yes" />
+                <AttributeName attributename="TSK_DATETIME_END" columnName="End" required="yes" />
+                <AttributeName attributename="TSK_ACTIVITY_TYPE" columnName="Orientation" required="yes" />
+                <AttributeName attributename="null" columnName="Usage in Seconds" required="no" />
+                <AttributeName attributename="null" columnName="Usage in Minutes" required="no" />
+                <AttributeName attributename="null" columnName="Day of Week" required="no" />
+                <AttributeName attributename="null" columnName="GMT Offset" required="no" />
+                <AttributeName attributename="null" columnName="Entry Creation" required="no" />
+                <AttributeName attributename="null" columnName="UUID" required="no" />
+                <AttributeName attributename="null" columnName="Zobject Table ID" required="no" />
+            </ArtifactName>
+        </FileName>
+
+        <FileName filename="KnowledgeC Plugged In.tsv" description="KnowledgeC Plugged In">
+            <ArtifactName artifactname="TSK_ACTIVITY" comment="Plugged In">
+                <AttributeName attributename="TSK_DATETIME_START" columnName="Start" required="yes" />
+                <AttributeName attributename="TSK_DATETIME_END" columnName="End" required="yes" />
+                <AttributeName attributename="TSK_ACTIVITY_TYPE" columnName="Is Plugged In?" required="yes" />
+                <AttributeName attributename="null" columnName="Usage in Seconds" required="no" />
+                <AttributeName attributename="null" columnName="Day of the Week" required="no" />
+                <AttributeName attributename="null" columnName="GMT Offset" required="no" />
+                <AttributeName attributename="null" columnName="Start" required="no" />
+                <AttributeName attributename="null" columnName="End" required="no" />
+                <AttributeName attributename="null" columnName="Entry Creation" required="no" />
+                <AttributeName attributename="null" columnName=" ZOBJECT Table ID" required="no" />
+            </ArtifactName>
+        </FileName>
+
         <FileName filename="KnowledgeC Safari Browsing.tsv" description="KnowledgeC Safari Browsing">
             <ArtifactName artifactname="TSK_WEB_HISTORY" comment="KnowledgeC Safari Browsing">
                 <AttributeName attributename="TSK_DATETIME_ACCESSED" columnName="Start" required="yes" />
@@ -298,6 +433,18 @@
                 <AttributeName attributename="null" columnName="Day of Week" required="no" />
                 <AttributeName attributename="null" columnName="GMT Offset" required="no" />
                 <AttributeName attributename="null" columnName="Entry Creation" required="no" />
+                <AttributeName attributename="null" columnName="ZOBJECT Table ID" required="no" />
+            </ArtifactName>
+        </FileName>
+
+        <FileName filename="KnowledgeC Siri.tsv" description="KnowledgeC Siri Usage">
+            <ArtifactName artifactname="TSK_ACTIVITY_TYPE" comment="Siri Usage">
+                <AttributeName attributename="TSK_DATETIME_START" columnName="Start" required="yes" />
+                <AttributeName attributename="TSK_PROG_NAME" columnName="App Name" required="yes" />
+                <AttributeName attributename="null" columnName="Weekday" required="no" />
+                <AttributeName attributename="null" columnName="GMT Offset" required="no" />
+                <AttributeName attributename="null" columnName="Entry Creation" required="no" />
+                <AttributeName attributename="null" columnName="UUID" required="no" />
                 <AttributeName attributename="null" columnName="ZOBJECT Table ID" required="no" />
             </ArtifactName>
         </FileName>
@@ -315,6 +462,18 @@
                 <AttributeName attributename="null" columnName="Entry Creation" required="no" />			
                 <AttributeName attributename="null" columnName="UUID"	 required="no" />
                 <AttributeName attributename="null" columnName="Zobject Table ID"	 required="no" />
+            </ArtifactName>
+        </FileName>
+
+        <FileName filename="KnowledgeC User Waking Event.tsv" description="KnowledgeC User Waking Event">
+            <ArtifactName artifactname="TSK_ACTIVITY_TYPE" comment="User Waking">
+                <AttributeName attributename="TSK_DATETIME_START" columnName="Start" required="yes" />
+                <AttributeName attributename="TSK_DATETIME_END" columnName="End" required="yes" />
+                <AttributeName attributename="null" columnName="Day of Week" required="no" />
+                <AttributeName attributename="null" columnName="GMT Offset" required="no" />
+                <AttributeName attributename="null" columnName="Entry Creation" required="no" />
+                <AttributeName attributename="null" columnName="UUID" required="no" />
+                <AttributeName attributename="null" columnName="Zobject Table ID" required="no" />
             </ArtifactName>
         </FileName>
 
