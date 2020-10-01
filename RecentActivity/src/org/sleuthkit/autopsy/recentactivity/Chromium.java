@@ -86,6 +86,7 @@ class Chromium extends Extract {
     private static final String COOKIE_FILE_NAME = "Cookies";
     private static final String LOGIN_DATA_FILE_NAME = "Login Data";
     private static final String WEB_DATA_FILE_NAME = "Web Data";
+    private static final String UC_BROWSER_NAME = "UC Browser";
 
     
     private final Logger logger = Logger.getLogger(this.getClass().getName());
@@ -93,13 +94,13 @@ class Chromium extends Extract {
     private IngestJobContext context;
 
     private static final Map<String, String> BROWSERS_MAP = ImmutableMap.<String, String>builder()  
-            .put(NbBundle.getMessage(Chromium.class, "Browser.name.Microsoft.Edge"), "Microsoft/Edge/User Data/Default") 
-            .put(NbBundle.getMessage(Chromium.class, "Browser.name.Yandex"), "YandexBrowser/User Data/Default") 
-            .put(NbBundle.getMessage(Chromium.class, "Browser.name.Opera"), "Opera Software/Opera Stable") 
-            .put(NbBundle.getMessage(Chromium.class, "Browser.name.SalamWeb"), "SalamWeb/User Data/Default") 
-            .put(NbBundle.getMessage(Chromium.class, "Browser.name.UC.Browser"), "UCBrowser/User Data%/Default")
-            .put(NbBundle.getMessage(Chromium.class, "Browser.name.Brave"), "BraveSoftware/Brave-Browser/User Data/Default")
-            .put(NbBundle.getMessage(Chromium.class, "Browser.name.Google.Chrome"), "Chrome/User Data/Default")
+            .put("Microsoft Edge", "Microsoft/Edge/User Data/Default") 
+            .put("Yandex", "YandexBrowser/User Data/Default") 
+            .put("Opera", "Opera Software/Opera Stable") 
+            .put("SalamWeb", "SalamWeb/User Data/Default") 
+            .put("UC Browser", "UCBrowser/User Data%/Default")
+            .put("Brave", "BraveSoftware/Brave-Browser/User Data/Default")
+            .put("Google Chrome", "Chrome/User Data/Default")
             .build();
 
     @Messages({"# {0} - browserName",
@@ -181,7 +182,7 @@ class Chromium extends Extract {
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> historyFiles;
         String historyFileName = HISTORY_FILE_NAME;
-        if (browser == NbBundle.getMessage(Chromium.class, "Browser.name.UC.Browser")) {
+        if (browser.equals(UC_BROWSER_NAME)) {
             historyFileName = HISTORY_FILE_NAME + "%";
         }
         try {
@@ -282,7 +283,7 @@ class Chromium extends Extract {
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> bookmarkFiles;
         String bookmarkFileName = BOOKMARK_FILE_NAME;
-        if (browser == NbBundle.getMessage(Chromium.class, "Browser.name.UC.Browser")) {
+        if (browser.equals(UC_BROWSER_NAME)) {
             bookmarkFileName = BOOKMARK_FILE_NAME + "%";
         }
         try {
@@ -425,12 +426,12 @@ class Chromium extends Extract {
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> cookiesFiles;
         String cookieFileName = COOKIE_FILE_NAME;
-        if (browser == NbBundle.getMessage(Chromium.class, "Browser.name.UC.Browser")) {
+        if (browser.equals(UC_BROWSER_NAME)) {
+            // Wildcard on front and back of Cookies are there for Cookie files that start with something else
+            // ie: UC browser has "Extension Cookies.9" as well as Cookies.9
             cookieFileName = "%" + COOKIE_FILE_NAME + "%";
         }
         try {
-            // Wildcard on front and back of Cookies as there are Cookie files that start with something else
-            // ie: UC browser has "Extension Cookies.9" as well as Cookies
             cookiesFiles = fileManager.findFiles(dataSource, cookieFileName, browserLocation); //NON-NLS
         } catch (TskCoreException ex) {
             String msg = NbBundle.getMessage(this.getClass(), "Chrome.getCookie.errMsg.errGettingFiles");
@@ -519,7 +520,7 @@ class Chromium extends Extract {
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> downloadFiles;
         String historyFileName = HISTORY_FILE_NAME;
-        if (browser == NbBundle.getMessage(Chromium.class, "Browser.name.UC.Browser")) {
+        if (browser.equals(UC_BROWSER_NAME)) {
             historyFileName = HISTORY_FILE_NAME + "%";
         }
         try {
@@ -642,7 +643,7 @@ class Chromium extends Extract {
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> loginDataFiles;
         String loginDataFileName = LOGIN_DATA_FILE_NAME;
-        if (browser == NbBundle.getMessage(Chromium.class, "Browser.name.UC.Browser")) {
+        if (browser.equals(UC_BROWSER_NAME)) {
             loginDataFileName = LOGIN_DATA_FILE_NAME + "%";
         }
 
@@ -741,7 +742,7 @@ class Chromium extends Extract {
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> webDataFiles;
         String webDataFileName = WEB_DATA_FILE_NAME;
-        if (browser == NbBundle.getMessage(Chromium.class, "Browser.name.UC.Browser")) {
+        if (browser.equals(UC_BROWSER_NAME)) {
             webDataFileName = WEB_DATA_FILE_NAME + "%";
         }
 
