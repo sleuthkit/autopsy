@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.datasourcesummary.uiutils;
 
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
-import java.util.logging.Level;
 import javax.swing.SwingWorker;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
@@ -71,6 +70,7 @@ public class DataFetchWorker<A, R> extends SwingWorker<R, Void> {
     }
 
     private static final Logger logger = Logger.getLogger(DataFetchWorker.class.getName());
+    private static final int MAX_INNER_EXCEPTION_DEPTH = 100;
 
     private final A args;
     private final DataFetcher<A, R> processor;
@@ -128,13 +128,16 @@ public class DataFetchWorker<A, R> extends SwingWorker<R, Void> {
             return;
         } catch (ExecutionException ex) {
             Throwable inner = ex.getCause();
-            // if cancelled during operation, simply return
-            if (inner instanceof InterruptedException) {
-                return;
+            for (int i = 0; i < MAX_INNER_EXCEPTION_DEPTH; i++) {
+                if (inner == null) {
+                    break;
+                } else if (inner instanceof InterruptedException) {
+                    // if cancelled during operation, simply return
+                    return;
+                } else {
+                    inner = inner.getCause();
+                }
             }
-
-            // otherwise, there is an error to log
-            logger.log(Level.WARNING, "There was an error while fetching results.", ex);
 
             // and pass the result to the client
             resultHandler.accept(DataFetchResult.getErrorResult(inner));

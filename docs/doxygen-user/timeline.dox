@@ -1,5 +1,8 @@
 /*! \page timeline_page Timeline
 
+[TOC]
+
+
 \section timeline_overview Overview
 
 This document outlines the use of the Timeline feature of Autopsy.  This feature was funded by DHS S&T to help provide free and open source digital forensics tools to law enforcement. The timeline feature can help answer questions such as these:
@@ -18,7 +21,7 @@ Use this section to learn the basics of timeline. More details on the display op
 First you'll need to have a case open in Autopsy. To get the most out of timeline, you'll want to do the following during ingest:
 - Enable the \ref hash_db_page "hash lookup module" and use the NSRL to ignore known files
 - Enable the \ref recent_activity_page "recent activity module" to generate web-related events and other miscellaneous event types
-- Enable the \ref EXIF_parser_page "EXIF parser module" to generate events on when images were 
+- Enable the \ref EXIF_parser_page to generate events on when images were 
 - Enable other ingest modules that apply to your data. If you have email data, ensure the \ref email_parser_page "email parser module" is enabled. If you are analyzing mobile devices, ensure the \ref android_analyzer_page "Android analyzer module" and any other relevant modules are enabled.
 
 To open timeline, either use the "Timeline" button or navigate to "Tools" then "Timeline" in the menu. You can open timeline while an image is processing but the data will not be complete until it finishes. Timeline will start in \ref timeline_counts_view "counts view" with a chart showing the number of events in each time period. 

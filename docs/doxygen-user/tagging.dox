@@ -1,5 +1,8 @@
 /*! \page tagging_page Tagging and Commenting
 
+[TOC]
+
+
 Tagging (or Bookmarking) allows you to create a reference to a file or object and easily find it later or include it in a \ref reporting_page "report". Tagging is also used by the \ref central_repo_page "central repository" to mark items as notable. You can add comments to files and results using tags or through the central repository.
 
 \section tagging_items Tagging items

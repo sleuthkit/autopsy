@@ -19,30 +19,40 @@
 package org.sleuthkit.autopsy.datasourcesummary.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
+import java.sql.SQLException;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.swing.JLabel;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.FileTypeUtils.FileTypeCategory;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourceCountsSummary;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourceDetailsSummary;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourceMimeTypeSummary;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.TypesSummary;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.ContainerSummary;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.IngestModuleCheckUtil;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.MimeTypeSummary;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.AbstractLoadableComponent;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult.ResultType;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.IngestRunningLabel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.LoadableComponent;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.PieChartPanel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.PieChartPanel.PieChartItem;
+import org.sleuthkit.autopsy.modules.filetypeid.FileTypeIdModuleFactory;
 
 import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Panel for displaying summary information on the known files present in the
@@ -91,36 +101,137 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
             this.showResults(null);
         }
 
-        private void setValue(String value, boolean italicize) {
+        private void setValue(String value) {
             String formattedKey = StringUtils.isBlank(key) ? "" : key;
             String formattedValue = StringUtils.isBlank(value) ? "" : value;
-            String htmlFormattedValue = (italicize) ? String.format("<i>%s</i>", formattedValue) : formattedValue;
-            label.setText(String.format("<html><div style='text-align: center;'>%s: %s</div></html>", formattedKey, htmlFormattedValue));
+            label.setText(String.format("%s: %s", formattedKey, formattedValue));
         }
 
         @Override
         protected void setMessage(boolean visible, String message) {
-            setValue(message, true);
+            setValue(message);
         }
 
         @Override
         protected void setResults(String data) {
-            setValue(data, false);
+            setValue(data);
+        }
+    }
+
+    /**
+     * Data for types pie chart.
+     */
+    private static class TypesPieChartData {
+
+        private final List<PieChartItem> pieSlices;
+        private final boolean usefulContent;
+
+        /**
+         * Main constructor.
+         *
+         * @param pieSlices     The pie slices.
+         * @param usefulContent True if this is useful content; false if there
+         *                      is 0 mime type information.
+         */
+        public TypesPieChartData(List<PieChartItem> pieSlices, boolean usefulContent) {
+            this.pieSlices = pieSlices;
+            this.usefulContent = usefulContent;
+        }
+
+        /**
+         * @return The pie chart data.
+         */
+        public List<PieChartItem> getPieSlices() {
+            return pieSlices;
+        }
+
+        /**
+         * @return Whether or not the data is usefulContent.
+         */
+        public boolean isUsefulContent() {
+            return usefulContent;
+        }
+    }
+
+    /**
+     * Information concerning a particular category in the file types pie chart.
+     */
+    private static class TypesPieCategory {
+
+        private final String label;
+        private final Set<String> mimeTypes;
+        private final Color color;
+
+        /**
+         * Main constructor.
+         *
+         * @param label     The label for this slice.
+         * @param mimeTypes The mime types associated with this slice.
+         * @param color     The color associated with this slice.
+         */
+        TypesPieCategory(String label, Set<String> mimeTypes, Color color) {
+            this.label = label;
+            this.mimeTypes = mimeTypes;
+            this.color = color;
+        }
+
+        /**
+         * Constructor that accepts FileTypeCategory.
+         *
+         * @param label     The label for this slice.
+         * @param mimeTypes The mime types associated with this slice.
+         * @param color     The color associated with this slice.
+         */
+        TypesPieCategory(String label, FileTypeCategory fileCategory, Color color) {
+            this(label, fileCategory.getMediaTypes(), color);
+        }
+
+        /**
+         * @return The label for this category.
+         */
+        String getLabel() {
+            return label;
+        }
+
+        /**
+         * @return The mime types associated with this category.
+         */
+        Set<String> getMimeTypes() {
+            return mimeTypes;
+        }
+
+        /**
+         * @return The color associated with this category.
+         */
+        Color getColor() {
+            return color;
         }
     }
 
     private static final long serialVersionUID = 1L;
     private static final DecimalFormat INTEGER_SIZE_FORMAT = new DecimalFormat("#");
     private static final DecimalFormat COMMA_FORMATTER = new DecimalFormat("#,###");
+    private static final String FILE_TYPE_FACTORY = FileTypeIdModuleFactory.class.getCanonicalName();
+    private static final String FILE_TYPE_MODULE_NAME = FileTypeIdModuleFactory.getModuleName();
+    private static final Logger logger = Logger.getLogger(TypesPanel.class.getName());
+
+    private static final Color IMAGES_COLOR = new Color(156, 39, 176);
+    private static final Color VIDEOS_COLOR = Color.YELLOW;
+    private static final Color AUDIO_COLOR = Color.BLUE;
+    private static final Color DOCUMENTS_COLOR = Color.GREEN;
+    private static final Color EXECUTABLES_COLOR = new Color(0, 188, 212);
+    private static final Color UNKNOWN_COLOR = Color.ORANGE;
+    private static final Color OTHER_COLOR = new Color(78, 52, 46);
+    private static final Color NOT_ANALYZED_COLOR = Color.WHITE;
 
     // All file type categories.
-    private static final List<Pair<String, Set<String>>> FILE_MIME_TYPE_CATEGORIES = Arrays.asList(
-            Pair.of(Bundle.TypesPanel_fileMimeTypesChart_images_title(), FileTypeCategory.IMAGE.getMediaTypes()),
-            Pair.of(Bundle.TypesPanel_fileMimeTypesChart_videos_title(), FileTypeCategory.VIDEO.getMediaTypes()),
-            Pair.of(Bundle.TypesPanel_fileMimeTypesChart_audio_title(), FileTypeCategory.AUDIO.getMediaTypes()),
-            Pair.of(Bundle.TypesPanel_fileMimeTypesChart_documents_title(), FileTypeCategory.DOCUMENTS.getMediaTypes()),
-            Pair.of(Bundle.TypesPanel_fileMimeTypesChart_executables_title(), FileTypeCategory.EXECUTABLE.getMediaTypes()),
-            Pair.of(Bundle.TypesPanel_fileMimeTypesChart_unknown_title(), new HashSet<>(Arrays.asList("application/octet-stream")))
+    private static final List<TypesPieCategory> FILE_MIME_TYPE_CATEGORIES = Arrays.asList(
+            new TypesPieCategory(Bundle.TypesPanel_fileMimeTypesChart_images_title(), FileTypeCategory.IMAGE.getMediaTypes(), IMAGES_COLOR),
+            new TypesPieCategory(Bundle.TypesPanel_fileMimeTypesChart_videos_title(), FileTypeCategory.VIDEO.getMediaTypes(), VIDEOS_COLOR),
+            new TypesPieCategory(Bundle.TypesPanel_fileMimeTypesChart_audio_title(), FileTypeCategory.AUDIO.getMediaTypes(), AUDIO_COLOR),
+            new TypesPieCategory(Bundle.TypesPanel_fileMimeTypesChart_documents_title(), FileTypeCategory.DOCUMENTS.getMediaTypes(), DOCUMENTS_COLOR),
+            new TypesPieCategory(Bundle.TypesPanel_fileMimeTypesChart_executables_title(), FileTypeCategory.EXECUTABLE.getMediaTypes(), EXECUTABLES_COLOR),
+            new TypesPieCategory(Bundle.TypesPanel_fileMimeTypesChart_unknown_title(), new HashSet<>(Arrays.asList("application/octet-stream")), UNKNOWN_COLOR)
     );
 
     private final LoadableLabel usageLabel = new LoadableLabel(Bundle.TypesPanel_usageLabel_title());
@@ -146,120 +257,215 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
             directoriesLabel
     );
 
+    private final IngestRunningLabel ingestRunningLabel = new IngestRunningLabel();
+
     // all of the means for obtaining data for the gui components.
-    private final List<DataFetchComponents<DataSource, ?>> dataFetchComponents = Arrays.asList(
-            // usage label worker
-            new DataFetchWorker.DataFetchComponents<>(
-                    DataSourceDetailsSummary::getDataSourceType,
-                    usageLabel::showDataFetchResult),
-            // os label worker
-            new DataFetchWorker.DataFetchComponents<>(
-                    DataSourceDetailsSummary::getOperatingSystems,
-                    osLabel::showDataFetchResult),
-            // size label worker
-            new DataFetchWorker.DataFetchComponents<>(
-                    (dataSource) -> {
-                        Long size = dataSource == null ? null : dataSource.getSize();
-                        return SizeRepresentationUtil.getSizeString(size, INTEGER_SIZE_FORMAT, false);
-                    },
-                    sizeLabel::showDataFetchResult),
-            // file types worker
-            new DataFetchWorker.DataFetchComponents<>(
-                    this::getMimeTypeCategoriesModel,
-                    fileMimeTypesChart::showDataFetchResult),
-            // allocated files worker
-            new DataFetchWorker.DataFetchComponents<>(
-                    (dataSource) -> getStringOrZero(DataSourceCountsSummary.getCountOfAllocatedFiles(dataSource)),
-                    allocatedLabel::showDataFetchResult),
-            // unallocated files worker
-            new DataFetchWorker.DataFetchComponents<>(
-                    (dataSource) -> getStringOrZero(DataSourceCountsSummary.getCountOfUnallocatedFiles(dataSource)),
-                    unallocatedLabel::showDataFetchResult),
-            // slack files worker
-            new DataFetchWorker.DataFetchComponents<>(
-                    (dataSource) -> getStringOrZero(DataSourceCountsSummary.getCountOfSlackFiles(dataSource)),
-                    slackLabel::showDataFetchResult),
-            // directories worker
-            new DataFetchWorker.DataFetchComponents<>(
-                    (dataSource) -> getStringOrZero(DataSourceCountsSummary.getCountOfDirectories(dataSource)),
-                    directoriesLabel::showDataFetchResult)
-    );
+    private final List<DataFetchComponents<DataSource, ?>> dataFetchComponents;
 
     /**
-     * Main constructor.
+     * Creates a new TypesPanel.
      */
     public TypesPanel() {
+        this(new MimeTypeSummary(), new TypesSummary(), new ContainerSummary());
+    }
+
+    @Override
+    public void close() {
+        ingestRunningLabel.unregister();
+        super.close();
+    }
+
+    /**
+     * Creates a new TypesPanel.
+     *
+     * @param mimeTypeData  The service for mime types.
+     * @param typeData      The service for file types data.
+     * @param containerData The service for container information.
+     */
+    public TypesPanel(
+            MimeTypeSummary mimeTypeData,
+            TypesSummary typeData,
+            ContainerSummary containerData) {
+
+        super(mimeTypeData, typeData, containerData);
+
+        this.dataFetchComponents = Arrays.asList(
+                // usage label worker
+                new DataFetchWorker.DataFetchComponents<>(
+                        containerData::getDataSourceType,
+                        (result) -> {
+                            showResultWithModuleCheck(
+                                    usageLabel,
+                                    result,
+                                    StringUtils::isNotBlank,
+                                    IngestModuleCheckUtil.RECENT_ACTIVITY_FACTORY,
+                                    IngestModuleCheckUtil.RECENT_ACTIVITY_MODULE_NAME);
+                        }),
+                // os label worker
+                new DataFetchWorker.DataFetchComponents<>(
+                        containerData::getOperatingSystems,
+                        (result) -> {
+                            showResultWithModuleCheck(
+                                    osLabel,
+                                    result,
+                                    StringUtils::isNotBlank,
+                                    IngestModuleCheckUtil.RECENT_ACTIVITY_FACTORY,
+                                    IngestModuleCheckUtil.RECENT_ACTIVITY_MODULE_NAME);
+                        }),
+                // size label worker
+                new DataFetchWorker.DataFetchComponents<>(
+                        (dataSource) -> {
+                            Long size = dataSource == null ? null : dataSource.getSize();
+                            return SizeRepresentationUtil.getSizeString(size, INTEGER_SIZE_FORMAT, false);
+                        },
+                        sizeLabel::showDataFetchResult),
+                // file types worker
+                new DataFetchWorker.DataFetchComponents<>(
+                        (dataSource) -> getMimeTypeCategoriesModel(mimeTypeData, dataSource),
+                        this::showMimeTypeCategories),
+                // allocated files worker
+                new DataFetchWorker.DataFetchComponents<>(
+                        (dataSource) -> getStringOrZero(typeData.getCountOfAllocatedFiles(dataSource)),
+                        allocatedLabel::showDataFetchResult),
+                // unallocated files worker
+                new DataFetchWorker.DataFetchComponents<>(
+                        (dataSource) -> getStringOrZero(typeData.getCountOfUnallocatedFiles(dataSource)),
+                        unallocatedLabel::showDataFetchResult),
+                // slack files worker
+                new DataFetchWorker.DataFetchComponents<>(
+                        (dataSource) -> getStringOrZero(typeData.getCountOfSlackFiles(dataSource)),
+                        slackLabel::showDataFetchResult),
+                // directories worker
+                new DataFetchWorker.DataFetchComponents<>(
+                        (dataSource) -> getStringOrZero(typeData.getCountOfDirectories(dataSource)),
+                        directoriesLabel::showDataFetchResult)
+        );
+
         initComponents();
     }
 
     @Override
+    protected void fetchInformation(DataSource dataSource) {
+        fetchInformation(dataFetchComponents, dataSource);
+    }
+
+    @Override
     protected void onNewDataSource(DataSource dataSource) {
-        // if no data source is present or the case is not open,
-        // set results for tables to null.
-        if (dataSource == null || !Case.isCaseOpen()) {
-            this.dataFetchComponents.forEach((item) -> item.getResultHandler()
-                    .accept(DataFetchResult.getSuccessResult(null)));
-
-        } else {
-            // set tables to display loading screen
-            this.loadables.forEach((table) -> table.showDefaultLoadingMessage());
-
-            // create swing workers to run for each table
-            List<DataFetchWorker<?, ?>> workers = dataFetchComponents
-                    .stream()
-                    .map((components) -> new DataFetchWorker<>(components, dataSource))
-                    .collect(Collectors.toList());
-
-            // submit swing workers to run
-            submit(workers);
-        }
+        onNewDataSource(dataFetchComponents, loadables, dataSource);
     }
 
     /**
      * Gets all the data for the file type pie chart.
      *
-     * @param dataSource The datasource.
+     * @param mimeTypeData The means of acquiring data.
+     * @param dataSource   The datasource.
      *
      * @return The pie chart items.
      */
-    private List<PieChartItem> getMimeTypeCategoriesModel(DataSource dataSource) {
+    private TypesPieChartData getMimeTypeCategoriesModel(MimeTypeSummary mimeTypeData, DataSource dataSource)
+            throws SQLException, SleuthkitCaseProviderException, TskCoreException {
+
         if (dataSource == null) {
             return null;
         }
 
         // for each category of file types, get the counts of files
-        List<Pair<String, Long>> fileCategoryItems = FILE_MIME_TYPE_CATEGORIES
-                .stream()
-                .map((strCat) -> {
-                    return Pair.of(strCat.getLeft(),
-                            getLongOrZero(DataSourceMimeTypeSummary.getCountOfFilesForMimeTypes(
-                                    dataSource, strCat.getRight())));
-                })
-                .collect(Collectors.toList());
+        List<PieChartItem> fileCategoryItems = new ArrayList<>();
+        long categoryTotalCount = 0;
+
+        for (TypesPieCategory cat : FILE_MIME_TYPE_CATEGORIES) {
+            long thisValue = getLongOrZero(mimeTypeData.getCountOfFilesForMimeTypes(dataSource, cat.getMimeTypes()));
+            categoryTotalCount += thisValue;
+
+            fileCategoryItems.add(new PieChartItem(
+                    cat.getLabel(),
+                    thisValue,
+                    cat.getColor()));
+        }
 
         // get a count of all files with no mime type
-        Long noMimeTypeCount = getLongOrZero(DataSourceMimeTypeSummary.getCountOfFilesWithNoMimeType(dataSource));
-
-        // get the sum of all counts for the known categories
-        Long categoryTotalCount = getLongOrZero(fileCategoryItems.stream()
-                .collect(Collectors.summingLong((pair) -> pair.getValue())));
+        long noMimeTypeCount = getLongOrZero(mimeTypeData.getCountOfFilesWithNoMimeType(dataSource));
 
         // get a count of all regular files
-        Long allRegularFiles = getLongOrZero(DataSourceMimeTypeSummary.getCountOfAllRegularFiles(dataSource));
+        long allRegularFiles = getLongOrZero(mimeTypeData.getCountOfAllRegularFiles(dataSource));
 
         // create entry for mime types in other category
-        fileCategoryItems.add(Pair.of(Bundle.TypesPanel_fileMimeTypesChart_other_title(),
-                allRegularFiles - (categoryTotalCount + noMimeTypeCount)));
+        long otherCount = allRegularFiles - (categoryTotalCount + noMimeTypeCount);
+        PieChartItem otherPieItem = new PieChartItem(Bundle.TypesPanel_fileMimeTypesChart_other_title(),
+                otherCount, OTHER_COLOR);
+
+        // check at this point to see if these are all 0; if so, we don't have useful content.
+        boolean usefulContent = categoryTotalCount > 0 || otherCount > 0;
 
         // create entry for not analyzed mime types category
-        fileCategoryItems.add(Pair.of(Bundle.TypesPanel_fileMimeTypesChart_notAnalyzed_title(),
-                noMimeTypeCount));
+        PieChartItem notAnalyzedItem = new PieChartItem(Bundle.TypesPanel_fileMimeTypesChart_notAnalyzed_title(),
+                noMimeTypeCount, NOT_ANALYZED_COLOR);
 
-        // create pie chart items to provide to pie chart
-        return fileCategoryItems.stream()
-                .filter(keyCount -> keyCount.getRight() != null && keyCount.getRight() > 0)
-                .map(keyCount -> new PieChartItem(keyCount.getLeft(), keyCount.getRight()))
+        // combine categories with 'other' and 'not analyzed'
+        List<PieChartItem> items = Stream.concat(
+                fileCategoryItems.stream(),
+                Stream.of(otherPieItem, notAnalyzedItem))
+                // remove items that have no value
+                .filter(slice -> slice.getValue() > 0)
                 .collect(Collectors.toList());
+
+        return new TypesPieChartData(items, usefulContent);
+    }
+
+    /**
+     * Handles properly showing data for the mime type categories pie chart
+     * accounting for whether there are any files with mime types specified and
+     * whether or not the current data source has been ingested with the file
+     * type ingest module.
+     *
+     * @param result The result to be shown.
+     */
+    private void showMimeTypeCategories(DataFetchResult<TypesPieChartData> result) {
+        // if result is null check for ingest module and show empty results.
+        if (result == null) {
+            showPieResultWithModuleCheck(null);
+            return;
+        }
+
+        // if error, show error
+        if (result.getResultType() == ResultType.ERROR) {
+            this.fileMimeTypesChart.showDataFetchResult(DataFetchResult.getErrorResult(result.getException()));
+            return;
+        }
+
+        TypesPieChartData data = result.getData();
+        if (data == null) {
+            // if no data, do an ingest module check with empty results
+            showPieResultWithModuleCheck(null);
+        } else if (!data.isUsefulContent()) {
+            // if no useful data, do an ingest module check and show data
+            showPieResultWithModuleCheck(data.getPieSlices());
+        } else {
+            // otherwise, show the data
+            this.fileMimeTypesChart.showDataFetchResult(DataFetchResult.getSuccessResult(data.getPieSlices()));
+        }
+    }
+
+    /**
+     * Shows a message in the fileMimeTypesChart about the data source not being
+     * ingested with the file type ingest module if the data source has not been
+     * ingested with that module. Also shows data if present.
+     *
+     * @param items The list of items to show.
+     */
+    private void showPieResultWithModuleCheck(List<PieChartItem> items) {
+        boolean hasBeenIngested = false;
+        try {
+            hasBeenIngested = this.getIngestModuleCheckUtil().isModuleIngested(getDataSource(), FILE_TYPE_FACTORY);
+        } catch (TskCoreException | SleuthkitCaseProviderException ex) {
+            logger.log(Level.WARNING, "There was an error fetching whether or not the current data source has been ingested with the file type ingest module.", ex);
+        }
+
+        if (hasBeenIngested) {
+            this.fileMimeTypesChart.showDataFetchResult(DataFetchResult.getSuccessResult(items));
+        } else {
+            this.fileMimeTypesChart.showDataWithMessage(items, getDefaultNoIngestMessage(FILE_TYPE_MODULE_NAME));
+        }
     }
 
     /**
@@ -296,6 +502,7 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
 
         javax.swing.JScrollPane scrollParent = new javax.swing.JScrollPane();
         javax.swing.JPanel contentParent = new javax.swing.JPanel();
+        javax.swing.JPanel ingestRunningPanel = ingestRunningLabel;
         javax.swing.JPanel usagePanel = usageLabel;
         javax.swing.JPanel osPanel = osLabel;
         javax.swing.JPanel sizePanel = sizeLabel;
@@ -313,6 +520,12 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
         contentParent.setMaximumSize(new java.awt.Dimension(32787, 32787));
         contentParent.setMinimumSize(new java.awt.Dimension(400, 490));
         contentParent.setLayout(new javax.swing.BoxLayout(contentParent, javax.swing.BoxLayout.PAGE_AXIS));
+
+        ingestRunningPanel.setAlignmentX(0.0F);
+        ingestRunningPanel.setMaximumSize(new java.awt.Dimension(32767, 25));
+        ingestRunningPanel.setMinimumSize(new java.awt.Dimension(10, 25));
+        ingestRunningPanel.setPreferredSize(new java.awt.Dimension(10, 25));
+        contentParent.add(ingestRunningPanel);
 
         usagePanel.setAlignmentX(0.0F);
         usagePanel.setMaximumSize(new java.awt.Dimension(32767, 20));

@@ -1,5 +1,8 @@
 /*! \page quick_start_guide Quick Start Guide
 
+[TOC]
+
+
 \section s1 Cases and Data Sources
 
 Autopsy organizes data by <strong>case</strong>.  Each case can have one or more <strong>data sources</strong>, which can be a disk image, a set of logical files, a USB-connected device, etc.  
@@ -36,7 +39,7 @@ The standard ingest modules included with Autopsy are:
 - <strong>\subpage file_type_identification_page</strong> determines file types based on signatures and reports them based on MIME type. It stores the results in the Blackboard and many modules depend on this. It uses the Tika open source library. You can define your own custom file types in Tools, Options, File Types.
 - <strong>\subpage extension_mismatch_detector_page</strong> uses the results from the File Type Identification and flags files that have an extension not traditionally associated with the file's detected type. Ignores 'known' (NSRL) files. You can customize the MIME types and file extensions per MIME type in Tools, Options, File Extension Mismatch.
 - <strong>\subpage embedded_file_extractor_page</strong> opens ZIP, RAR, other archive formats, Doc, Docx, PPT, PPTX, XLS, and XLSX and sends the derived files from those files back through the ingest pipeline for analysis.
-- <strong>\subpage EXIF_parser_page</strong> extracts EXIF information from JPEG files and posts the results into the tree in the main UI.
+- <strong>\subpage EXIF_parser_page</strong> extracts EXIF information from JPEG files and posts the results into the tree in the main UI. Also converts HEIC/HEIF files to JPEG format and extracts EXIF data from those JPEGs.
 - <strong>\subpage keyword_search_page</strong> uses keyword lists to identify files with specific words in them. You can select the keyword lists to search for automatically and you can create new lists using the "Advanced" button. Note that with keyword search, you can always conduct searches after ingest has finished. The keyword lists that you select during ingest will be searched for at periodic intervals and you will get the results in real-time. You do not need to wait for all files to be indexed before performing a keyword search, however you will only get results from files that have already been indexed when you perform your search.
 - <strong>\subpage email_parser_page</strong> identifies Thunderbird MBOX files and PST format files based on file signatures, extracting the e-mails from them, adding the results to the Blackboard.
 - <strong>\subpage encryption_page</strong> looks for encrypted files.
@@ -49,6 +52,7 @@ The standard ingest modules included with Autopsy are:
 - <strong>\subpage plaso_page</strong> uses Plaso to create \ref timeline_page "timeline" events.
 - <strong>\subpage android_analyzer_page</strong> allows you to parse common items from Android devices.  Places artifacts into the BlackBoard.
 - <strong>\subpage gpx_page</strong> extracts geolocation data from .gpx files.
+- <strong>\subpage ileapp_page</strong> extracts data from iOS data sources.
 
 When you select a module, you will have the option to change its settings.  For example, you can configure which keyword search lists to use during ingest and which hash sets to use. Refer to the individual module help for details on configuring each module.
 
@@ -85,17 +89,28 @@ In addition to the 3-panel UI with the tree on the left, there are other interfa
 
 \subsection s3a Timeline
 
-The timeline feature can be opened from the "Tools" menu or the toolbar.  This will show you file system and other events organized by time using various display techniques.  See the \subpage timeline_page section for more details. 
+The Timeline feature can be opened from the "Tools" menu or the toolbar or though the "Timeline" button.  This will show you file system and other events organized by time using various display techniques.  See the \subpage timeline_page section for more details. 
 
 
 \subsection s3b Image Gallery
 
-The Image Gallery focuses on showing the pictures and videos from the data source organized by folder. It will show you files as soon as they have been hashed and EXIF data extracted.  You can open it from the "Tools" menu.  See the \subpage image_gallery_page section for more details. 
+The Image Gallery focuses on showing the pictures and videos from the data source organized by folder. It will show you files as soon as they have been hashed and EXIF data extracted.  You can open it from the "Tools" menu or through the "Image Gallery" button.  See the \subpage image_gallery_page section for more details. 
 
 \subsection s3c Communications
 
-The Communications interface focuses on showing which accounts were communicated with the most and what messages were sent. It allows you to focus on certain relationships or communications within a certain date rage.  You can open it from the "Tools" menu.  See the \subpage communications_page section for more details. 
+The Communications interface focuses on showing which accounts were communicated with the most and what messages were sent. It allows you to focus on certain relationships or communications within a certain date rage.  You can open it from the "Tools" menu or through the "Communications" button.  See the \subpage communications_page section for more details. 
 
+\subsection s3d Geolocation
+
+The Geolocation panel shows a map with markers for all geolocation results found in the case. You can open it from the "Tools" menu or through the "Geolocation" button.  See the \subpage geolocation_page section for more details. 
+
+\subsection s3e Discovery
+
+The Discovery panel allows you to search for different types of data within a case and display it in an easily reviewable form. You can open it from the "Tools" menu or through the "Discovery" button.  See the \subpage discovery_page section for more details. 
+
+\subsection s3f Personas
+
+The Personas panel is for creating and managing personas. Creating a persona allows you to associate one or more accounts with a name and other data. You can open it from the "Tools" menu or through the "Personas" button.  See the \subpage personas_page section for more details. 
 
 \section s5 Example Use Cases
 In this section, we will provide examples of how to do common analysis tasks.

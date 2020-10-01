@@ -18,19 +18,18 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.ui;
 
+import java.awt.CardLayout;
 import java.awt.Component;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
-import javax.swing.JTabbedPane;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.IngestJobInfoPanel;
 import org.sleuthkit.datamodel.DataSource;
 
 /**
  * A tabbed pane showing the summary of a data source including tabs of:
- * DataSourceSummaryCountsPanel, DataSourceSummaryDetailsPanel, and
- * IngestJobInfoPanel.
+ * DataSourceSummaryCountsPanel, ContainerPanel, and IngestJobInfoPanel.
  */
 @Messages({
     "DataSourceSummaryTabbedPane_typesTab_title=Types",
@@ -38,9 +37,10 @@ import org.sleuthkit.datamodel.DataSource;
     "DataSourceSummaryTabbedPane_userActivityTab_title=User Activity",
     "DataSourceSummaryTabbedPane_ingestHistoryTab_title=Ingest History",
     "DataSourceSummaryTabbedPane_recentFileTab_title=Recent Files",
+    "DataSourceSummaryTabbedPane_pastCasesTab_title=Past Cases",
     "DataSourceSummaryTabbedPane_analysisTab_title=Analysis"
 })
-public class DataSourceSummaryTabbedPane extends JTabbedPane {
+public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
 
     /**
      * Records of tab information (i.e. title, component, function to call on
@@ -51,6 +51,7 @@ public class DataSourceSummaryTabbedPane extends JTabbedPane {
         private final String tabTitle;
         private final Component component;
         private final Consumer<DataSource> onDataSource;
+        private final Runnable onClose;
 
         /**
          * Main constructor.
@@ -58,11 +59,13 @@ public class DataSourceSummaryTabbedPane extends JTabbedPane {
          * @param tabTitle     The title of the tab.
          * @param component    The component to be displayed.
          * @param onDataSource The function to be called on a new data source.
+         * @param onClose      Called to cleanup resources when closing tabs.
          */
-        DataSourceTab(String tabTitle, Component component, Consumer<DataSource> onDataSource) {
+        DataSourceTab(String tabTitle, Component component, Consumer<DataSource> onDataSource, Runnable onClose) {
             this.tabTitle = tabTitle;
             this.component = component;
             this.onDataSource = onDataSource;
+            this.onClose = onClose;
         }
 
         /**
@@ -75,6 +78,7 @@ public class DataSourceSummaryTabbedPane extends JTabbedPane {
             this.tabTitle = tabTitle;
             this.component = panel;
             this.onDataSource = panel::setDataSource;
+            this.onClose = panel::close;
         }
 
         /**
@@ -97,34 +101,59 @@ public class DataSourceSummaryTabbedPane extends JTabbedPane {
         Consumer<DataSource> getOnDataSource() {
             return onDataSource;
         }
+
+        /**
+         * @return The action for closing resources in the tab.
+         */
+        public Runnable getOnClose() {
+            return onClose;
+        }
     }
 
     private static final long serialVersionUID = 1L;
+    // needs to match value provided for card layout in designed
+    private static final String TABBED_PANE = "tabbedPane";
+    private static final String NO_DATASOURCE_PANE = "noDataSourcePane";
 
     private final IngestJobInfoPanel ingestHistoryPanel = new IngestJobInfoPanel();
 
     private final List<DataSourceTab> tabs = Arrays.asList(
             new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_typesTab_title(), new TypesPanel()),
-            new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_userActivityTab_title(), new DataSourceSummaryUserActivityPanel()),
-            new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_recentFileTab_title(), new RecentFilesPanel()),
+            new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_userActivityTab_title(), new UserActivityPanel()),
             new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_analysisTab_title(), new AnalysisPanel()),
-            new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_ingestHistoryTab_title(), ingestHistoryPanel, ingestHistoryPanel::setDataSource),
-            new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_detailsTab_title(), new DataSourceSummaryDetailsPanel())
+            new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_recentFileTab_title(), new RecentFilesPanel()),
+            new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_pastCasesTab_title(), new PastCasesPanel()),
+            // do nothing on closing 
+            new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_ingestHistoryTab_title(), ingestHistoryPanel, ingestHistoryPanel::setDataSource, () -> {
+            }),
+            new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_detailsTab_title(), new ContainerPanel())
     );
 
     private DataSource dataSource = null;
+    private CardLayout cardLayout;
 
     /**
-     * Constructs a tabbed pane showing the summary of a data source.
+     * Creates new form TabPane
      */
     public DataSourceSummaryTabbedPane() {
-        initComponent();
+        initComponents();
+        postInit();
     }
 
-    private void initComponent() {
+    /**
+     * Method called right after initComponents during initialization.
+     */
+    private void postInit() {
+        // get the card layout
+        cardLayout = (CardLayout) this.getLayout();
+
+        // set up the tabs
         for (DataSourceTab tab : tabs) {
-            addTab(tab.getTabTitle(), tab.getComponent());
+            tabbedPane.addTab(tab.getTabTitle(), tab.getComponent());
         }
+
+        // set this to no datasource initially
+        cardLayout.show(this, NO_DATASOURCE_PANE);
     }
 
     /**
@@ -143,9 +172,52 @@ public class DataSourceSummaryTabbedPane extends JTabbedPane {
      */
     public void setDataSource(DataSource dataSource) {
         this.dataSource = dataSource;
-
-        for (DataSourceTab tab : tabs) {
-            tab.getOnDataSource().accept(dataSource);
+        if (this.dataSource == null) {
+            cardLayout.show(this, NO_DATASOURCE_PANE);
+        } else {
+            for (DataSourceTab tab : tabs) {
+                tab.getOnDataSource().accept(dataSource);
+            }
+            cardLayout.show(this, TABBED_PANE);
         }
     }
+
+    /**
+     * Handle close events on each tab.
+     */
+    public void close() {
+        for (DataSourceTab tab : tabs) {
+            tab.getOnClose().run();
+        }
+    }
+
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
+     */
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
+
+        tabbedPane = new javax.swing.JTabbedPane();
+        javax.swing.JPanel noDataSourcePane = new javax.swing.JPanel();
+        javax.swing.JLabel noDataSourceLabel = new javax.swing.JLabel();
+
+        setLayout(new java.awt.CardLayout());
+        add(tabbedPane, "tabbedPane");
+
+        noDataSourcePane.setLayout(new java.awt.BorderLayout());
+
+        noDataSourceLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        org.openide.awt.Mnemonics.setLocalizedText(noDataSourceLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryTabbedPane.class, "DataSourceSummaryTabbedPane.noDataSourceLabel.text")); // NOI18N
+        noDataSourcePane.add(noDataSourceLabel, java.awt.BorderLayout.CENTER);
+
+        add(noDataSourcePane, "noDataSourcePane");
+    }// </editor-fold>//GEN-END:initComponents
+
+
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JTabbedPane tabbedPane;
+    // End of variables declaration//GEN-END:variables
 }

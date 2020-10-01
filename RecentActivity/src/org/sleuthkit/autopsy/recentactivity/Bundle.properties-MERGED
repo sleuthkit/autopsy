@@ -72,6 +72,9 @@ ExtractSru_process_errormsg_find_software_hive=Unable to find SOFTWARE HIVE file
 ExtractSru_process_errormsg_find_srudb_dat=Unable to find srudb.dat file
 ExtractSru_process_errormsg_write_software_hive=Unable to write SOFTWARE HIVE file
 ExtractSru_process_errormsg_write_srudb_dat=Unable to write srudb.dat file
+ExtractWebAccountType.role.admin=Administrator role
+ExtractWebAccountType.role.moderator=Moderator role
+ExtractWebAccountType.role.user=User role
 ExtractZone_Internet=Internet Zone
 ExtractZone_Local_Intranet=Local Intranet Zone
 ExtractZone_Local_Machine=Local Machine Zone
@@ -156,13 +159,19 @@ Firefox.getDlV24.errMsg.errAnalyzeFile={0}: Error while trying to analyze file:{
 Firefox.getDlV24.errMsg.errParsingArtifacts={0}: Error parsing {1} Firefox web download artifacts.
 Progress_Message_Analyze_Registry=Analyzing Registry Files
 Progress_Message_Analyze_Usage=Data Sources Usage Analysis
+# {0} - browserName
 Progress_Message_Chrome_AutoFill=Chrome Auto Fill Browser {0}
+# {0} - browserName
 Progress_Message_Chrome_Bookmarks=Chrome Bookmarks Browser {0}
 Progress_Message_Chrome_Cache=Chrome Cache
+# {0} - browserName
 Progress_Message_Chrome_Cookies=Chrome Cookies Browser {0}
+# {0} - browserName
 Progress_Message_Chrome_Downloads=Chrome Downloads Browser {0}
 Progress_Message_Chrome_FormHistory=Chrome Form History
+# {0} - browserName
 Progress_Message_Chrome_History=Chrome History Browser {0}
+# {0} - browserName
 Progress_Message_Chrome_Logins=Chrome Logins Browser {0}
 Progress_Message_Edge_Bookmarks=Microsoft Edge Bookmarks
 Progress_Message_Edge_Cookies=Microsoft Edge Cookies
@@ -225,6 +234,8 @@ SearchEngineURLQueryAnalyzer.domainSubStr.none=NONE
 SearchEngineURLQueryAnalyzer.toString=Name: {0}\nDomain Substring: {1}\nCount: {2}\nSplit Tokens: \n{3}
 SearchEngineURLQueryAnalyzer.parentModuleName.noSpace=RecentActivity
 SearchEngineURLQueryAnalyzer.parentModuleName=Recent Activity
+ExtractWebAccountType.moduleName.text=Web Account Type
+ExtractWebAccountType.parentModuleName=Recent Activity
 Shellbag_Artifact_Display_Name=Shell Bags
 Shellbag_Key_Attribute_Display_Name=Key
 Shellbag_Last_Write_Attribute_Display_Name=Last Write

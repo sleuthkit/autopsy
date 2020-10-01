@@ -51,8 +51,10 @@ To install Autopsy, perform the following steps:
 
 If you are behind a proxy and need access to a network with Autopsy or one of the modules, you may set your proxy information in the _Tools_, _Options_, _General_ tab as shown in the screenshot below.
 
-<br><br>
 \image html proxySettings.PNG
-<br><br>
+
+\section install_file_association Windows File Association
+
+If desired, you can set up a Windows file association for .aut files and the Autopsy executable (normally C:\\Program Files\\Autopsy-(current version)\\bin\\autopsy64.exe). This will allow you to double click on the .aut file for a case to launch Autopsy with the selected case open. Instructions for setting up file associations can be found by doing a web search for "how to set Windows file associations".
 
 */
