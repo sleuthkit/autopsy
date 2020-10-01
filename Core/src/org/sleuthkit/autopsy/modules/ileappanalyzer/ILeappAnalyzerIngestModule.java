@@ -213,8 +213,8 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
         ProcessBuilder processBuilder = buildProcessWithRunAsInvoker(
                 "\"" + iLeappExecutable + "\"", //NON-NLS
                 "-t", iLeappFileSystemType, //NON-NLS
-                "-i", String.format("\"%s\"",sourceFilePath), //NON-NLS
-                "-o", String.format("\"%s\"",moduleOutputPath.toString())
+                "-i", sourceFilePath, //NON-NLS
+                "-o", moduleOutputPath.toString()
         );
         processBuilder.redirectError(moduleOutputPath.resolve("iLeapp_err.txt").toFile());  //NON-NLS
         processBuilder.redirectOutput(moduleOutputPath.resolve("iLeapp_out.txt").toFile());  //NON-NLS
