@@ -95,9 +95,6 @@ public class UserActivitySummaryTest {
         }
     };
 
-    private static final BlackboardArtifact.Type ACCOUNT_TYPE = new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_ACCOUNT);
-    private static final BlackboardAttribute.Type TYPE_ACCOUNT_TYPE = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE);
-
     private static final long DAY_SECONDS = 24 * 60 * 60;
 
     private static Pair<SleuthkitCase, Blackboard> getArtifactsTSKMock(List<BlackboardArtifact> returnArr) throws TskCoreException {
@@ -569,5 +566,43 @@ public class UserActivitySummaryTest {
 
             Assert.assertEquals(Math.min(countRequested, returnedCount), results.size());
         }
+    }
+    
+    @Test
+    public void getRecentAccounts_pullingFromRightArtifacts() {
+        
+    }
+    
+    @Test
+    public void getRecentAccounts_filtersNoDate() {
+        
+    }
+    
+    @Test
+    public void getRecentAccounts_rightLimit() {
+        
+    }
+    
+    @Test
+    public void getShortFolderName_rightConversions() {
+        // program files / program files (x86) => next path
+        // application data / appdata => AppData
+    }
+    
+    @Test
+    public void getTopPrograms_correctGrouping() {
+        
+    }
+    
+    @Test
+    public void getTopPrograms_filtered() {
+        //ntos boot
+        // windows prefix
+        // has a program name
+    }
+    
+    @Test
+    public void getTopPrograms_limited() {
+        
     }
 }
