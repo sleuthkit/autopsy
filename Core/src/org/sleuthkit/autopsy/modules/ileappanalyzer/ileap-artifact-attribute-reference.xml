@@ -592,6 +592,102 @@
             </ArtifactName>
         </FileName>
 -->
+
+        <FileName filename="Notifications.tsv" description="iOS Notificatons">
+            <ArtifactName artifactname="TSK_NOTIFICATIONS" comment="iOS Notificatons">
+                <AttributeName attributename="TSK_DATETIME" columnName="Creation Time" required="yes" />
+                <AttributeName attributename="TSK_PROG_NAME" columnName=" Bundle" required="yes" />
+                <AttributeName attributename="TSK_TITLE" columnName=" Title[Subtitle]" required="yes" />
+                <AttributeName attributename="TSK_VALUE" columnName=" Message" required="yes" />
+                <AttributeName attributename="null" columnName=" Other Details" required="no" />
+            </ArtifactName>
+        </FileName>
+
+        <FileName filename="Powerlog Agg Bulletins.tsv" description="Powerlog Aggregate Bulletins">
+            <ArtifactName artifactname="TSK_NOTIFICATIONS" comment="Powerlog Aggregate Bulletins">
+                <AttributeName attributename="TSK_DATETIME" columnName="Timestamp" required="yes" />
+                <AttributeName attributename="TSK_PROG_NAME" columnName="Bulletin Bundle ID" required="yes" />
+                <AttributeName attributename="null" columnName="Time Interval in Seconds" required="no" />
+                <AttributeName attributename="null" columnName="Count" required="no" />
+                <AttributeName attributename="null" columnName="Post Type" required="no" />
+                <AttributeName attributename="null" columnName="Aggregate Table ID" required="no" />
+                </ArtifactName>
+            </FileName>
+
+        <FileName filename="Powerlog Agg Notifications.tsv" description="Powerlog Aggregate Notifications">
+            <ArtifactName artifactname="TSK_NOTIFICATIONS" comment="Powerlog Aggregate Notifications">
+                <AttributeName attributename="TSK_DATETIME" columnName="Timestamp" required="yes" />
+                <AttributeName attributename="TSK_PROG_NAME" columnName="Notification Bundle ID" required="yes" />
+                <AttributeName attributename="null" columnName="Time Interval in Seconds" required="no" />
+                <AttributeName attributename="null" columnName="Count" required="no" />
+                <AttributeName attributename="null" columnName="Notification Type" required="no" />
+                <AttributeName attributename="null" columnName="Aggregate Table ID" required="no" />
+                </ArtifactName>
+            </FileName>
+
+        <FileName filename="Powerlog Backup Info.tsv" description="Powerlog Backup Info">
+            <ArtifactName artifactname="TSK_BACKUP" comment="null">
+                <AttributeName attributename="TSK_DATETIME" columnName="Timestamp" required="yes" />
+                <AttributeName attributename="TSK_DATETIME_START" columnName="Start" required="yes" />
+                <AttributeName attributename="TSK_DATETIME_END" columnName="End" required="yes" />
+                <AttributeName attributename="null" columnName="State" required="no" />
+                <AttributeName attributename="null" columnName="Finished" required="no" />
+                <AttributeName attributename="null" columnName="Has error" required="no" />
+                <AttributeName attributename="null" columnName="Table ID" required="no" />
+                </ArtifactName>
+            </FileName>
+
+        <FileName filename="Powerlog Deleted Apps.tsv" description="Powerlog Deleted Apps">
+            <ArtifactName artifactname="TSK_DELETED_PROG" comment="Powerlog Deleted Apps">
+                <AttributeName attributename="TSK_DATETIME_DELETED" columnName="App Deleted Date" required="yes" />
+                <AttributeName attributename="TSK_DATETIME" columnName="Timestamp" required="yes" />
+                <AttributeName attributename="TSK_PROG_NAME" columnName="App Name" required="yes" />
+                <AttributeName attributename="null" columnName="App Executable Name" required="no" />
+                <AttributeName attributename="TSK_PATH" columnName="Bundle ID" required="yes" />
+                <AttributeName attributename="null" columnName="Table ID" required="no" />
+                </ArtifactName>
+            </FileName>
+
+        <FileName filename="Powerlog Lightning Connector.tsv" description="Powerlog Lightning Connector Status">
+            <ArtifactName artifactname="TSK_ACTIVITY" comment="Powerlog Lightning Connector Status">
+                <AttributeName attributename="TSK_DATETIME" columnName="Adjusted Timestamp" required="yes" />
+                <AttributeName attributename="TSK_ACTIVITY_TYPE" columnName="Accesory Power Mode" required="yes" />
+                <AttributeName attributename="null" columnName="Original Lightnint Connector Timestamp" required="no" />
+                <AttributeName attributename="null" columnName="Offset Timestamp" required="no" />
+                <AttributeName attributename="null" columnName="Table ID" required="no" />
+                </ArtifactName>
+            </FileName>
+
+        <FileName filename="Powerlog Push Message Received.tsv" description="Powerlog Push Message Received">
+            <ArtifactName artifactname="TSK_ACTIVITY" comment="Powerlog Push Message Received">
+                <AttributeName attributename="TSK_DATETIME" columnName="Adjusted Timestamp" required="yes" />
+                <AttributeName attributename="TSK_PROG_NAME" columnName="Bundle ID" required="yes" />
+                <AttributeName attributename="TSK_VALUE" columnName="Connection Type" required="yes" />
+                <AttributeName attributename="null" columnName="Is Dropped" required="no" />
+                <AttributeName attributename="null" columnName="Link Quality" required="no" />
+                <AttributeName attributename="null" columnName="Priority" required="no" />
+                <AttributeName attributename="null" columnName="Topic" required="no" />
+                <AttributeName attributename="null" columnName="Server Hostname" required="no" />
+                <AttributeName attributename="null" columnName="Server IP" required="no" />
+                <AttributeName attributename="null" columnName="Original Timestamp" required="no" />
+                <AttributeName attributename="null" columnName="Offset Timestamp" required="no" />
+                <AttributeName attributename="null" columnName="Time Offset" required="no" />
+                <AttributeName attributename="null" columnName="Aggregate Table ID" required="no" />
+                </ArtifactName>
+            </FileName>
+
+        <FileName filename="Powerlog Torch.tsv" description="Powerlog Torch">
+            <ArtifactName artifactname="TSK_ACTIVITY" comment="Powerlog Torch">
+                <AttributeName attributename="TSK_DATETIME" columnName="Adjusted Timestamp" required="yes" />
+                <AttributeName attributename="null" columnName="Bundle ID" required="no" />
+                <AttributeName attributename="TSK_ACTIVITY_TYPE" columnName="Status" required="yes" />
+                <AttributeName attributename="null" columnName="Original Torch Timestamp" required="no" />
+                <AttributeName attributename="null" columnName="Offset Timestamp" required="no" />
+                <AttributeName attributename="null" columnName="Time Offset" required="no" />
+                <AttributeName attributename="null" columnName="Torch ID" required="no" />
+                </ArtifactName>
+            </FileName>
+
         <FileName filename="Powerlog Wifi Network Connections.tsv" description="Powerlog WiFi Network Connections">
             <ArtifactName artifactname="TSK_WIFI_NETWORK" comment="Powerlog WiFi Network Connections">
                 <AttributeName attributename="TSK_DATETIME" columnName="Adjusted Timestamp" required="yes" />
