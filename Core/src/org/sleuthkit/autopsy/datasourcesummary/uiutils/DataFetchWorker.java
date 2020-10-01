@@ -140,7 +140,7 @@ public class DataFetchWorker<A, R> extends SwingWorker<R, Void> {
             }
 
             // and pass the result to the client
-            resultHandler.accept(DataFetchResult.getErrorResult(inner));
+            resultHandler.accept(DataFetchResult.getErrorResult(ex.getCause()));
             return;
         }
 

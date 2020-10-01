@@ -247,10 +247,10 @@ final class ExtractSru extends Extract {
         final Path errFilePath = Paths.get(tempOutPath, SRU_ERROR_FILE_NAME);
 
         List<String> commandLine = new ArrayList<>();
-        commandLine.add(String.format("\"%s\"",sruExePath));
+        commandLine.add(sruExePath);
         commandLine.add(sruFile);  //NON-NLS
         commandLine.add(softwareHiveFile);
-        commandLine.add(String.format("\"%s\"",tempOutFile));
+        commandLine.add(tempOutFile);
 
         ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
         processBuilder.redirectOutput(outputFilePath.toFile());
