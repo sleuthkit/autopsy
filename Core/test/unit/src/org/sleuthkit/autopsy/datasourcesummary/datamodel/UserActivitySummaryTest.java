@@ -250,7 +250,6 @@ public class UserActivitySummaryTest {
         Assert.assertEquals(time, results.get(0).getDateAccessed().getTime() / 1000);
     }
 
-
     @Test
     public void getRecentDevices_limitedToCount()
             throws TskCoreException, NoServiceProviderException, SleuthkitCaseProviderException, TskCoreException, TranslationException {
@@ -259,11 +258,11 @@ public class UserActivitySummaryTest {
         for (int returnedCount : new int[]{1, 9, 10, 11}) {
             long dataSourceId = 1L;
             DataSource dataSource = TskMockUtils.getDataSource(dataSourceId);
-            
+
             List<BlackboardArtifact> returnedArtifacts = IntStream.range(0, returnedCount)
-                .mapToObj((idx) -> getRecentDeviceArtifact(1000 + idx, dataSource, "ID" + idx, "MAKE" + idx, "MODEL" + idx, DAY_SECONDS * idx))
-                .collect(Collectors.toList());
-            
+                    .mapToObj((idx) -> getRecentDeviceArtifact(1000 + idx, dataSource, "ID" + idx, "MAKE" + idx, "MODEL" + idx, DAY_SECONDS * idx))
+                    .collect(Collectors.toList());
+
             Pair<SleuthkitCase, Blackboard> tskPair = getArtifactsTSKMock(returnedArtifacts);
             UserActivitySummary summary = getTestClass(tskPair.getLeft(), false, null);
 
@@ -315,9 +314,9 @@ public class UserActivitySummaryTest {
         Assert.assertEquals(DAY_SECONDS * 3, results.get(1).getDateAccessed().getTime() / 1000);
     }
 
-    private void webSearchTranslationTest(List<String> queries, boolean hasProvider, String translationSuffix) 
+    private void webSearchTranslationTest(List<String> queries, boolean hasProvider, String translationSuffix)
             throws SleuthkitCaseProviderException, TskCoreException, NoServiceProviderException, TranslationException {
-        
+
         long dataSourceId = 1;
         DataSource ds = TskMockUtils.getDataSource(dataSourceId);
 
@@ -332,7 +331,7 @@ public class UserActivitySummaryTest {
                 return null;
             } else {
                 return orig + translationSuffix;
-            } 
+            }
         };
 
         TextTranslationService translationService = TskMockUtils.getTextTranslationService(translator, hasProvider);
@@ -356,11 +355,11 @@ public class UserActivitySummaryTest {
         }
 
         Assert.assertEquals(queries.size(), results.size());
-        
+
         for (int i = 0; i < queries.size(); i++) {
             String query = queries.get(i);
             TopWebSearchResult result = results.get(i);
-            
+
             Assert.assertTrue(query.equalsIgnoreCase(result.getSearchString()));
             if (hasProvider) {
                 if (StringUtils.isBlank(translationSuffix)) {
@@ -375,9 +374,9 @@ public class UserActivitySummaryTest {
     }
 
     @Test
-    public void getMostRecentWebSearches_handlesTranslation() 
+    public void getMostRecentWebSearches_handlesTranslation()
             throws SleuthkitCaseProviderException, TskCoreException, NoServiceProviderException, TranslationException {
-        
+
         List<String> queryList = Arrays.asList("query1", "query2", "query3");
         String translationSuffix = " [TRANSLATED]";
         webSearchTranslationTest(queryList, false, translationSuffix);
@@ -387,8 +386,6 @@ public class UserActivitySummaryTest {
         webSearchTranslationTest(queryList, true, translationSuffix);
     }
 
-
-    
     @Test
     public void getMostRecentWebSearches_limitedToCount()
             throws TskCoreException, NoServiceProviderException, SleuthkitCaseProviderException, TskCoreException, TranslationException {
@@ -397,16 +394,177 @@ public class UserActivitySummaryTest {
         for (int returnedCount : new int[]{1, 9, 10, 11}) {
             long dataSourceId = 1L;
             DataSource dataSource = TskMockUtils.getDataSource(dataSourceId);
-            
+
             List<BlackboardArtifact> returnedArtifacts = IntStream.range(0, returnedCount)
-                .mapToObj((idx) -> getWebSearchArtifact(1000 + idx, dataSource, "Query" + idx, DAY_SECONDS * idx))
-                .collect(Collectors.toList());
+                    .mapToObj((idx) -> getWebSearchArtifact(1000 + idx, dataSource, "Query" + idx, DAY_SECONDS * idx + 1))
+                    .collect(Collectors.toList());
+
+            Pair<SleuthkitCase, Blackboard> tskPair = getArtifactsTSKMock(returnedArtifacts);
+            UserActivitySummary summary = getTestClass(tskPair.getLeft(), false, null);
+
+            List<TopWebSearchResult> results = summary.getMostRecentWebSearches(dataSource, countRequested);
+            verifyCalled(tskPair.getRight(), ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getTypeID(), dataSourceId,
+                    "Expected getRecentDevices to call getArtifacts with correct arguments.");
+
+            Assert.assertEquals(Math.min(countRequested, returnedCount), results.size());
+        }
+    }
+
+    private BlackboardArtifact getDomainsArtifact(DataSource dataSource, long id, String domain, Long time) {
+        List<BlackboardAttribute> attributes = new ArrayList<>();
+        if (domain != null) {
+            attributes.add(TskMockUtils.getAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN, domain));
+        }
+
+        if (time != null) {
+            attributes.add(TskMockUtils.getAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED, time));
+        }
+
+        try {
+            return TskMockUtils.getArtifact(
+                    new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_WEB_HISTORY), id, dataSource,
+                    attributes);
+        } catch (TskCoreException e) {
+            fail("TskCoreException occurred while trying to mock a blackboard artifact");
+            return null;
+        }
+    }
+
+    private static final long DOMAIN_WINDOW_DAYS = 30;
+
+    @Test
+    public void getRecentDomains_withinTimeWIndow() throws TskCoreException, SleuthkitCaseProviderException, NoServiceProviderException, TranslationException {
+        long dataSourceId = 1;
+        DataSource dataSource = TskMockUtils.getDataSource(dataSourceId);
+        String domain1 = "www.google.com";
+        String domain2 = "www.basistech.com";
+        String domain3 = "www.github.com";
+        String domain4 = "www.stackoverflow.com";
+
+        BlackboardArtifact artifact1 = getDomainsArtifact(dataSource, 1000, domain1, DAY_SECONDS * DOMAIN_WINDOW_DAYS * 2);
+        BlackboardArtifact artifact1a = getDomainsArtifact(dataSource, 10001, domain1, DAY_SECONDS * DOMAIN_WINDOW_DAYS);
+
+        BlackboardArtifact artifact2 = getDomainsArtifact(dataSource, 1001, domain2, DAY_SECONDS * DOMAIN_WINDOW_DAYS - 1);
+
+        BlackboardArtifact artifact3 = getDomainsArtifact(dataSource, 1002, domain3, DAY_SECONDS * DOMAIN_WINDOW_DAYS);
+        BlackboardArtifact artifact3a = getDomainsArtifact(dataSource, 10021, domain3, 1L);
+
+        BlackboardArtifact artifact4 = getDomainsArtifact(dataSource, 1003, domain4, 1L);
+
+        List<BlackboardArtifact> retArr = Arrays.asList(artifact1, artifact1a, artifact2, artifact3, artifact3a, artifact4);
+
+        Pair<SleuthkitCase, Blackboard> tskPair = getArtifactsTSKMock(retArr);
+
+        UserActivitySummary summary = getTestClass(tskPair.getLeft(), false, null);
+
+        List<TopDomainsResult> domains = summary.getRecentDomains(dataSource, 10);
+
+        verifyCalled(tskPair.getRight(), ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID(), dataSourceId,
+                "Expected getRecentDomains to call getArtifacts with correct arguments.");
+
+        Assert.assertEquals(2, domains.size());
+
+        Assert.assertTrue("Expected " + domain1 + " to be first domain", domain1.equalsIgnoreCase(domains.get(0).getDomain()));
+        Assert.assertEquals(DAY_SECONDS * DOMAIN_WINDOW_DAYS * 2, domains.get(0).getLastVisit().getTime() / 1000);
+        Assert.assertEquals((Long) 2L, domains.get(0).getVisitTimes());
+
+        Assert.assertTrue("Expected " + domain3 + " to be second domain", domain3.equalsIgnoreCase(domains.get(1).getDomain()));
+        Assert.assertEquals(DAY_SECONDS * DOMAIN_WINDOW_DAYS, domains.get(1).getLastVisit().getTime() / 1000);
+        Assert.assertEquals((Long) 1L, domains.get(1).getVisitTimes());
+    }
+
+    @Test
+    public void getRecentDomains_appropriatelyFiltered() throws TskCoreException, NoServiceProviderException, TranslationException, SleuthkitCaseProviderException {
+        long dataSourceId = 1;
+        DataSource dataSource = TskMockUtils.getDataSource(dataSourceId);
+        String domain1 = "www.google.com";
+
+        // excluded
+        String domain2 = "localhost";
+        String domain3 = "127.0.0.1";
+
+        BlackboardArtifact artifact1 = getDomainsArtifact(dataSource, 1000, domain1, DAY_SECONDS);
+        BlackboardArtifact artifact2 = getDomainsArtifact(dataSource, 1001, domain2, DAY_SECONDS * 2);
+        BlackboardArtifact artifact3 = getDomainsArtifact(dataSource, 1002, domain3, DAY_SECONDS * 3);
+
+        List<BlackboardArtifact> retArr = Arrays.asList(artifact1, artifact2, artifact3);
+
+        Pair<SleuthkitCase, Blackboard> tskPair = getArtifactsTSKMock(retArr);
+
+        UserActivitySummary summary = getTestClass(tskPair.getLeft(), false, null);
+
+        List<TopDomainsResult> domains = summary.getRecentDomains(dataSource, 10);
+
+        verifyCalled(tskPair.getRight(), ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID(), dataSourceId,
+                "Expected getRecentDomains to call getArtifacts with correct arguments.");
+
+        Assert.assertEquals(1, domains.size());
+
+        Assert.assertTrue("Expected " + domain1 + " to be most recent domain", domain1.equalsIgnoreCase(domains.get(0).getDomain()));
+        Assert.assertEquals(DAY_SECONDS, domains.get(0).getLastVisit().getTime() / 1000);
+    }
+
+    @Test
+    public void getRecentDomains_groupedAppropriately() throws TskCoreException, NoServiceProviderException, TranslationException, SleuthkitCaseProviderException {
+        long dataSourceId = 1;
+        DataSource dataSource = TskMockUtils.getDataSource(dataSourceId);
+        String domain1 = "www.google.com";
+        String domain2 = "www.basistech.com";
+
+        BlackboardArtifact artifact1 = getDomainsArtifact(dataSource, 1000, domain1, 1L);
+        BlackboardArtifact artifact1a = getDomainsArtifact(dataSource, 1001, domain1, 6L);
+        BlackboardArtifact artifact2 = getDomainsArtifact(dataSource, 1002, domain2, 2L);
+        BlackboardArtifact artifact2a = getDomainsArtifact(dataSource, 1003, domain2, 3L);
+        BlackboardArtifact artifact2b = getDomainsArtifact(dataSource, 1004, domain2, 4L);
+        
+        List<BlackboardArtifact> retArr = Arrays.asList(artifact1, artifact1a, artifact2, artifact2a, artifact2b);
+
+        Pair<SleuthkitCase, Blackboard> tskPair = getArtifactsTSKMock(retArr);
+        UserActivitySummary summary = getTestClass(tskPair.getLeft(), false, null);
+
+        List<TopDomainsResult> domains = summary.getRecentDomains(dataSource, 10);
+
+        verifyCalled(tskPair.getRight(), ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID(), dataSourceId,
+                "Expected getRecentDomains to call getArtifacts with correct arguments.");
+
+        Assert.assertEquals(2, domains.size());
+
+        Assert.assertTrue(domain1.equalsIgnoreCase(domains.get(1).getDomain()));
+        Assert.assertEquals(6L, domains.get(1).getLastVisit().getTime() / 1000);
+        Assert.assertEquals((Long) 2L, domains.get(1).getVisitTimes());
+
+        Assert.assertTrue(domain2.equalsIgnoreCase(domains.get(0).getDomain()));
+        Assert.assertEquals(4L, domains.get(0).getLastVisit().getTime() / 1000);
+        Assert.assertEquals((Long) 3L, domains.get(0).getVisitTimes());
+    }
+
+    @Test
+    public void getRecentDomains_limitedAppropriately() 
+            throws TskCoreException, NoServiceProviderException, TranslationException, SleuthkitCaseProviderException {
+        
+        int countRequested = 10;
+        for (int returnedCount : new int[]{1, 9, 10, 11}) {
+            long dataSourceId = 1L;
+            DataSource dataSource = TskMockUtils.getDataSource(dataSourceId);
+
+            // create a list where there are 1 accesses for first, 2 for second, etc.
+            List<BlackboardArtifact> returnedArtifacts = IntStream.range(0, returnedCount)
+                    .mapToObj((idx) -> {
+                        return IntStream.range(0, idx + 1)
+                                .mapToObj((numIdx) -> {
+                                    int hash = 100 * idx + numIdx;
+                                    return getDomainsArtifact(dataSource, 1000 + hash, "Domain " + idx, 10L);
+                                });
+                    })
+                    .flatMap((s) -> s)
+                    .collect(Collectors.toList());
+            
             
             Pair<SleuthkitCase, Blackboard> tskPair = getArtifactsTSKMock(returnedArtifacts);
             UserActivitySummary summary = getTestClass(tskPair.getLeft(), false, null);
 
-            List<TopWebSearchResult> results = summary.getMostRecentWebSearches(dataSource, returnedCount);
-            verifyCalled(tskPair.getRight(), ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getTypeID(), dataSourceId,
+            List<TopDomainsResult> results = summary.getRecentDomains(dataSource, countRequested);
+            verifyCalled(tskPair.getRight(), ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID(), dataSourceId,
                     "Expected getRecentDevices to call getArtifacts with correct arguments.");
 
             Assert.assertEquals(Math.min(countRequested, returnedCount), results.size());

@@ -154,8 +154,6 @@ public class DataSourceInfoUtilitiesTest {
         return toRet;
     }
 
-
-
     /**
      * Does a basic test passing a list of generated artifacts in mixed up order
      * to DataSourceInfoUtilities.getArtifacts and expecting a sorted list to be
@@ -229,17 +227,17 @@ public class DataSourceInfoUtilitiesTest {
     }
 
     @Test
-    public void testSortAscending() throws TskCoreException {
+    public void getArtifacts_sortAscending() throws TskCoreException {
         testAscDesc(SortOrder.ASCENDING);
     }
 
     @Test
-    public void testSortDescending() throws TskCoreException {
+    public void getArtifacts_sortDescending() throws TskCoreException {
         testAscDesc(SortOrder.DESCENDING);
     }
 
     @Test
-    public void testLimits() throws TskCoreException {
+    public void getArtifacts_limits() throws TskCoreException {
         List<Integer> integers = Arrays.asList(22, 31, 42, 50, 60);
         testSorted(ARTIFACT_TYPE.TSK_PROG_RUN, ATTRIBUTE_TYPE.TSK_COUNT, integers, BlackboardAttribute::new, SortOrder.ASCENDING, 3);
         testSorted(ARTIFACT_TYPE.TSK_PROG_RUN, ATTRIBUTE_TYPE.TSK_COUNT, integers, BlackboardAttribute::new, SortOrder.ASCENDING, 5);
@@ -278,7 +276,7 @@ public class DataSourceInfoUtilitiesTest {
     }
 
     @Test
-    public void testFailOnJson() throws TskCoreException {
+    public void getArtifacts_failOnJson() throws TskCoreException {
         testFailOnBadAttrType(
                 new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_GPS_ROUTE),
                 new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_GEO_WAYPOINTS),
@@ -287,7 +285,7 @@ public class DataSourceInfoUtilitiesTest {
     }
 
     @Test
-    public void testFailOnBytes() throws TskCoreException {
+    public void getArtifacts_failOnBytes() throws TskCoreException {
         testFailOnBadAttrType(
                 new BlackboardArtifact.Type(999, "BYTE_ARRAY_TYPE", "Byte Array Type"),
                 new BlackboardAttribute.Type(999, "BYTE_ARR_ATTR_TYPE", "Byte Array Attribute Type", TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.BYTE),
@@ -296,7 +294,7 @@ public class DataSourceInfoUtilitiesTest {
     }
 
     @Test
-    public void testPurgeAttrNotPresent() throws TskCoreException {
+    public void getArtifacts_purgeAttrNotPresent() throws TskCoreException {
         long day = 24 * 60 * 60;
         DataSource dataSource = TskMockUtils.getDataSource(1);
 
@@ -325,7 +323,7 @@ public class DataSourceInfoUtilitiesTest {
     }
 
     @Test
-    public void testMultAttrsPresent() throws TskCoreException {
+    public void getArtifacts_multipleAttrsPresent() throws TskCoreException {
         long day = 24 * 60 * 60;
         DataSource dataSource = TskMockUtils.getDataSource(1);
 
@@ -354,7 +352,7 @@ public class DataSourceInfoUtilitiesTest {
     }
 
     @Test
-    public void testTskCoreExceptionThrown() throws TskCoreException {
+    public void getArtifacts_tskCoreExceptionThrown() throws TskCoreException {
         test(new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_ACCOUNT),
                 TskMockUtils.getDataSource(1),
                 new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE),
@@ -367,7 +365,7 @@ public class DataSourceInfoUtilitiesTest {
     }
 
     @Test
-    public void testThrowOnLessThan0() throws TskCoreException {
+    public void getArtifacts_throwOnLessThan0() throws TskCoreException {
         test(new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_ACCOUNT),
                 TskMockUtils.getDataSource(1),
                 new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE),
@@ -380,7 +378,7 @@ public class DataSourceInfoUtilitiesTest {
     }
 
     @Test
-    public void testEmptyListReturned() throws TskCoreException {
+    public void getArtifacts_emptyListReturned() throws TskCoreException {
         test(new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_ACCOUNT),
                 TskMockUtils.getDataSource(1),
                 new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE),
@@ -391,66 +389,67 @@ public class DataSourceInfoUtilitiesTest {
                 Collections.emptyList(),
                 null);
     }
-    
+
     private interface GetAttrVal<T> {
+
         public T getOrNull(BlackboardArtifact artifact, BlackboardAttribute.Type type);
     }
-    
-    private <T> void testNullAttrValue(String id, GetAttrVal<T> getter, ARTIFACT_TYPE artifactType, 
-            ATTRIBUTE_TYPE attributeType, T nonNullVal) 
+
+    private <T> void testNullAttrValue(String id, GetAttrVal<T> getter, ARTIFACT_TYPE artifactType,
+            ATTRIBUTE_TYPE attributeType, T nonNullVal)
             throws TskCoreException {
-        
+
         BlackboardAttribute.Type attrType = new BlackboardAttribute.Type(attributeType);
         BlackboardArtifact.Type artType = new BlackboardArtifact.Type(artifactType);
-        
-        BlackboardArtifact noAttribute = TskMockUtils.getArtifact(artType, 1000, 
+
+        BlackboardArtifact noAttribute = TskMockUtils.getArtifact(artType, 1000,
                 TskMockUtils.getDataSource(1), new ArrayList<>());
-        
+
         T nullValue = getter.getOrNull(noAttribute, attrType);
         Assert.assertNull(String.format("Expected function %s to return null when no attribute present", id), nullValue);
-        
-        BlackboardArtifact hasAttribute = TskMockUtils.getArtifact(artType, 1000, 
+
+        BlackboardArtifact hasAttribute = TskMockUtils.getArtifact(artType, 1000,
                 TskMockUtils.getDataSource(1), TskMockUtils.getAttribute(attributeType, nonNullVal));
-        
+
         T valueReceived = getter.getOrNull(hasAttribute, attrType);
-        
+
         Assert.assertEquals(String.format("%s did not return the same value present in the attribute", id), nonNullVal, valueReceived);
     }
-    
+
     @Test
-    public void testGetStringOrNull() throws TskCoreException {
-        testNullAttrValue("getStringOrNull", DataSourceInfoUtilities::getStringOrNull, 
+    public void getStringOrNull_handlesNull() throws TskCoreException {
+        testNullAttrValue("getStringOrNull", DataSourceInfoUtilities::getStringOrNull,
                 ARTIFACT_TYPE.TSK_ACCOUNT, ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE, "Skype");
     }
-    
+
     @Test
-    public void testGetIntOrNull() throws TskCoreException {
-        testNullAttrValue("getIntOrNull", DataSourceInfoUtilities::getIntOrNull, 
+    public void getIntOrNull_handlesNull() throws TskCoreException {
+        testNullAttrValue("getIntOrNull", DataSourceInfoUtilities::getIntOrNull,
                 ARTIFACT_TYPE.TSK_PROG_RUN, ATTRIBUTE_TYPE.TSK_COUNT, 16);
     }
-    
+
     @Test
-    public void testGetLongOrNull() throws TskCoreException {
-        testNullAttrValue("getLongOrNull", DataSourceInfoUtilities::getLongOrNull, 
+    public void getLongOrNull_handlesNull() throws TskCoreException {
+        testNullAttrValue("getLongOrNull", DataSourceInfoUtilities::getLongOrNull,
                 ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT, ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, 1001L);
     }
-    
+
     @Test
-    public void testGetDateOrNull() throws TskCoreException {
+    public void getDateOrNull_handlesNull() throws TskCoreException {
         BlackboardAttribute.Type attrType = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DATETIME);
         BlackboardArtifact.Type artType = new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_BLUETOOTH_PAIRING);
-        
-        long dateTime = 24 * 60 * 60 *42;
-        
-        BlackboardArtifact noAttribute = TskMockUtils.getArtifact(artType, 1000, 
+
+        long dateTime = 24 * 60 * 60 * 42;
+
+        BlackboardArtifact noAttribute = TskMockUtils.getArtifact(artType, 1000,
                 TskMockUtils.getDataSource(1), new ArrayList<>());
-        
+
         Date nullValue = DataSourceInfoUtilities.getDateOrNull(noAttribute, attrType);
         Assert.assertNull(nullValue);
-        
-        BlackboardArtifact hasAttribute = TskMockUtils.getArtifact(artType, 1000, 
+
+        BlackboardArtifact hasAttribute = TskMockUtils.getArtifact(artType, 1000,
                 TskMockUtils.getDataSource(1), TskMockUtils.getAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, dateTime));
-        
+
         Date curVal = DataSourceInfoUtilities.getDateOrNull(hasAttribute, attrType);
         Assert.assertEquals(dateTime, curVal.getTime() / 1000);
     }
