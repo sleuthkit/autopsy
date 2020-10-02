@@ -193,7 +193,7 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
         List<String> command = new ArrayList<>();
         for (final String l01Path : logicalEvidenceFilePaths) {
             command.clear();
-            command.add(String.format("\"%s\"", ewfexportPath.toAbsolutePath().toString()));
+            command.add(ewfexportPath.toAbsolutePath().toString());
             command.add("-f");
             command.add("files");
             command.add("-t");
@@ -203,8 +203,8 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
             }
             Path dirPath = Paths.get(FilenameUtils.getBaseName(l01Path) + UNIQUENESS_CONSTRAINT_SEPERATOR + System.currentTimeMillis());
 
-            command.add(String.format("\"%s\"", dirPath.toString()));
-            command.add(String.format("\"%s\"", l01Path));
+            command.add(dirPath.toString());
+            command.add(l01Path);
             ProcessBuilder processBuilder = new ProcessBuilder(command);
             processBuilder.directory(l01Dir);
             try {

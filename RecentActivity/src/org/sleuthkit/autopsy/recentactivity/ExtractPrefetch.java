@@ -177,9 +177,9 @@ final class ExtractPrefetch extends Extract {
         final Path errFilePath = Paths.get(tempOutPath, PREFETCH_ERROR_FILE_NAME);
 
         List<String> commandLine = new ArrayList<>();
-        commandLine.add(String.format("\"%s\"",prefetchExePath));
-        commandLine.add(String.format("\"%s\"",prefetchDir));  //NON-NLS
-        commandLine.add(String.format("\"%s\"",tempOutFile));
+        commandLine.add(prefetchExePath);
+        commandLine.add(prefetchDir);  //NON-NLS
+        commandLine.add(tempOutFile);
 
         ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
         processBuilder.redirectOutput(outputFilePath.toFile());
