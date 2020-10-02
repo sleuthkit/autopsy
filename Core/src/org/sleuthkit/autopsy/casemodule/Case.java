@@ -1436,15 +1436,16 @@ public class Case {
      */
     public Set<TimeZone> getTimeZones() {
         Set<TimeZone> timezones = new HashSet<>();
-        try {
-            for (Content c : getDataSources()) {
-                final Content dataSource = c.getDataSource();
-                if ((dataSource != null) && (dataSource instanceof Image)) {
-                    Image image = (Image) dataSource;
-                    timezones.add(TimeZone.getTimeZone(image.getTimeZone()));
+        String query = "SELECT time_zone FROM data_source_info";
+        try (SleuthkitCase.CaseDbQuery dbQuery = caseDb.executeQuery(query)) {
+            ResultSet timeZoneSet = dbQuery.getResultSet();
+            while (timeZoneSet.next()) {
+                String timeZone = timeZoneSet.getString("time_zone");
+                if (timeZone != null && !timeZone.isEmpty()) {
+                    timezones.add(TimeZone.getTimeZone(timeZone));
                 }
             }
-        } catch (TskCoreException ex) {
+        } catch (TskCoreException | SQLException ex) {
             logger.log(Level.SEVERE, "Error getting data source time zones", ex); //NON-NLS
         }
         return timezones;
@@ -1468,7 +1469,7 @@ public class Case {
      */
     public boolean hasData() {
         boolean hasDataSources = false;
-        String query = "SELECT count(*) AS count FROM tsk_objects WHERE par_obj_id IS NULL";
+        String query = "SELECT count(*) AS count FROM data_source_info";
         try (SleuthkitCase.CaseDbQuery dbQuery = caseDb.executeQuery(query)) {
             ResultSet resultSet = dbQuery.getResultSet();
             if (resultSet.next()) {
