@@ -529,9 +529,11 @@ final public class Accounts implements AutopsyVisitableItem {
                     + getRejectedArtifactFilterClause(); //NON-NLS
             try (SleuthkitCase.CaseDbQuery results = skCase.executeQuery(query);
                     ResultSet rs = results.getResultSet();) {
+                List<Long> tempList = new ArrayList<>();
                 while (rs.next()) {
-                    list.add(rs.getLong("artifact_id")); //NON-NLS
+                    tempList.add(rs.getLong("artifact_id"));
                 }
+                list.addAll(tempList);
             } catch (TskCoreException | SQLException ex) {
                 LOGGER.log(Level.SEVERE, "Error querying for account artifacts.", ex); //NON-NLS
             }
