@@ -1284,8 +1284,8 @@ final class ChromeCacheExtractor {
             refetchCount = fileROBuf.getInt();
             
             int stateVal = fileROBuf.getInt();
-            if (stateVal < EntryStateEnum.values().length) {
-                state = EntryStateEnum.values()[fileROBuf.getInt()];
+            if ((stateVal >= 0) && (stateVal < EntryStateEnum.values().length)) {
+                state = EntryStateEnum.values()[stateVal];
             } else {
                 throw new TskCoreException("Invalid EntryStateEnum value"); // NON-NLS
             }
