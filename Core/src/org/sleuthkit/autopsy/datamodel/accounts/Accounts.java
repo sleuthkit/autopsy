@@ -531,7 +531,7 @@ final public class Accounts implements AutopsyVisitableItem {
                     ResultSet rs = results.getResultSet();) {
                 List<Long> tempList = new ArrayList<>();
                 while (rs.next()) {
-                    tempList.add(rs.getLong("artifact_id"));
+                    tempList.add(rs.getLong("artifact_id")); // NON-NLS
                 }
                 list.addAll(tempList);
             } catch (TskCoreException | SQLException ex) {
