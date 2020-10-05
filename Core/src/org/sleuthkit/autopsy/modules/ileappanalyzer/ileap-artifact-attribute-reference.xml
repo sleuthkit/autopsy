@@ -131,7 +131,7 @@
 
         <FileName filename="DHCP Received List.tsv" description="DHCP Received List" >
             <ArtifactName artifactname="TSK_DHCP_INFO" comment="null">
-                <AttributeName attributename="TSK_KEY" columnName="Key" required="yes" />
+                <AttributeName attributename="TSK_NAME" columnName="Key" required="yes" />
                 <AttributeName attributename="TSK_VALUE" columnName="Value" required="yes" />
             </ArtifactName>
         </FileName>
@@ -226,7 +226,7 @@
             <ArtifactName artifactname="TSK_ACTIVITY" comment="Battery Level">
                 <AttributeName attributename="TSK_DATETIME_START" columnName="Start" required="yes" />
                 <AttributeName attributename="TSK_DATETIME_END" columnName="End" required="yes" />
-                <AttributeName attributename="TSK_ACTIVITY_LEVEL" columnName="Battery Level" required="yes" />
+                <AttributeName attributename="TSK_ACTIVITY_TYPE" columnName="Battery Level" required="yes" />
                 <AttributeName attributename="null" columnName="Usage in Seconds" required="no" />
                 <AttributeName attributename="null" columnName="Day of the Week" required="no" />
                 <AttributeName attributename="null" columnName="GMT Offset" required="no" />
