@@ -214,14 +214,16 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         PstParser parser = new PstParser(services);
         PstParser.ParseResult result = parser.open(file, abstractFile.getId());
         
-        // Create cache for accounts
-        AccountFileInstanceCache accountFileInstanceCache = new AccountFileInstanceCache(abstractFile, currentCase);
         
         switch( result) {
             case OK:
                 Iterator<EmailMessage> pstMsgIterator = parser.getEmailMessageIterator();
                 if (pstMsgIterator != null) {
+                    // Create cache for accounts
+                    AccountFileInstanceCache accountFileInstanceCache = new AccountFileInstanceCache(abstractFile, currentCase);
+                    
                     processEmails(parser.getPartialEmailMessages(), pstMsgIterator, abstractFile, accountFileInstanceCache);
+                    accountFileInstanceCache.clear();
                     if (context.fileIngestIsCancelled()) {
                         return ProcessResult.OK;
                     }
@@ -278,7 +280,6 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
             logger.log(Level.INFO, "Failed to delete temp file: {0}", file.getName()); //NON-NLS
         }
         
-        accountFileInstanceCache.clear();
         return ProcessResult.OK;
     }
 
