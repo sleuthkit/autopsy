@@ -719,7 +719,6 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
             senderAddress = senderAddressList.get(0);
             try {
                 senderAccountInstance = accountFileInstanceCache.getAccountInstance(senderAddress);
-                //senderAccountInstance = currentCase.getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.EMAIL, senderAddress, EmailParserModuleFactory.getModuleName(), abstractFile);
             }
             catch(TskCoreException ex) {
                  logger.log(Level.WARNING, "Failed to create account for email address  " + senderAddress, ex); //NON-NLS
@@ -745,8 +744,6 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
             }
             try {
                 AccountFileInstance recipientAccountInstance = accountFileInstanceCache.getAccountInstance(addr);
-                //currentCase.getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.EMAIL, addr,
-                //        EmailParserModuleFactory.getModuleName(), abstractFile);
                 recipientAccountInstances.add(recipientAccountInstance);
             }
             catch(TskCoreException ex) {
