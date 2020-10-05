@@ -98,6 +98,7 @@ public class TskMockUtils {
         BlackboardArtifact artifact = mock(BlackboardArtifact.class);
 
         final Map<BlackboardAttribute.Type, BlackboardAttribute> attributeTypes = Stream.of(attributes)
+                .filter(attr -> attr != null)
                 .collect(Collectors.toMap((attr) -> attr.getAttributeType(), Function.identity()));
 
         when(artifact.getParent()).thenReturn(parent);

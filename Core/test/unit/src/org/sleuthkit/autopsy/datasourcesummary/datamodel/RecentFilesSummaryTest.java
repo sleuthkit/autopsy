@@ -140,10 +140,9 @@ public class RecentFilesSummaryTest {
 
     @Test
     public void allMethods_NoReturnedResults_ReturnsEmptyList() throws SleuthkitCaseProviderException, TskCoreException {
-        Pair<SleuthkitCase, Blackboard> casePair = getArtifactsTSKMock(Collections.emptyList());
-        RecentFilesSummary summary = new RecentFilesSummary(() -> casePair.getLeft());
-
         for (Entry<String, RecentFilesMethod<?>> entry : RECENT_FILES_METHODS.entrySet()) {
+            Pair<SleuthkitCase, Blackboard> casePair = getArtifactsTSKMock(Collections.emptyList());
+            RecentFilesSummary summary = new RecentFilesSummary(() -> casePair.getLeft());
             testNoReturnedResults_ReturnsEmptyList(casePair.getRight(), summary, entry.getValue(), entry.getKey());
         }
     }
@@ -191,7 +190,8 @@ public class RecentFilesSummaryTest {
             Assert.assertNotNull("Expected method: " + methodName + " to return a non-null list", results);
             Assert.assertEquals("Expected method: " + methodName + " to return a list size of " + expectedCount, expectedCount, results.size());
             for (int i = 0; i < expectedCount; i++) {
-                Assert.assertTrue("Method: " + methodName + " did not provide correct item at index: " + i, equalityProvider.equals(i));
+                Assert.assertTrue("Method: " + methodName + " did not provide correct item at index: " + i, 
+                        equalityProvider.equals(results.get(i), i));
             }
         }
     }
@@ -225,7 +225,10 @@ public class RecentFilesSummaryTest {
 
         testSortedByDateAndLimited(RECENT_DOCS_FUNCT, "getRecentlyOpenedDocuments",
                 (dataSource, idx) -> getRecentDocumentArtifact(dataSource, 1000 + idx, dateTimeRetriever.apply(idx), pathRetriever.apply(idx)),
-                (details, idx) -> details.getDateAsLong() == dateTimeRetriever.apply(idx) && pathRetriever.apply(idx).equalsIgnoreCase(details.getPath()));
+                (details, idx) -> {
+                    return details.getDateAsLong() == dateTimeRetriever.apply(idx) && 
+                    pathRetriever.apply(idx).equalsIgnoreCase(details.getPath()); 
+                });
     }
 
     @Test
@@ -333,6 +336,9 @@ public class RecentFilesSummaryTest {
                 BlackboardAttribute associatedAttr = null;
                 if (item.isAssociatedAttrFormed()) {
                     Long associatedId = ++objIdCounter;
+                    
+                    associatedAttr = TskMockUtils.getAttribute(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, associatedId);
+                    
                     ARTIFACT_TYPE messageType = Stream.of(ARTIFACT_TYPE.values())
                             .filter((artType) -> artType.getTypeID() == item.getMessageArtifactTypeId())
                             .findFirst()

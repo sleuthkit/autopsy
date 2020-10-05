@@ -32,7 +32,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
-import org.apache.commons.lang.StringUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -119,7 +118,7 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
                         dataSource,
                         DATETIME_ATT,
                         DataSourceInfoUtilities.SortOrder.DESCENDING,
-                        10);
+                        maxCount);
 
         List<RecentFileDetails> fileDetails = new ArrayList<>();
         for (BlackboardArtifact artifact : artifactList) {
@@ -213,6 +212,10 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
     public List<RecentAttachmentDetails> getRecentAttachments(DataSource dataSource, int maxCount) throws SleuthkitCaseProviderException, TskCoreException {
         if (dataSource == null) {
             return Collections.emptyList();
+        }
+        
+        if (maxCount < 0) {
+            throw new IllegalArgumentException("Invalid maxCount passed to getRecentAttachments, value must be equal to or greater than 0");
         }
 
         return createListFromMap(buildAttachmentMap(dataSource), maxCount);
