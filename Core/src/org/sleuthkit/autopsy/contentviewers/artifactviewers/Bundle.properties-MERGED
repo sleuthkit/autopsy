@@ -26,7 +26,7 @@ CallLogArtifactViewer_label_from=From
 CallLogArtifactViewer_label_to=To
 CallLogArtifactViewer_suffix_local=(Local)
 CallLogArtifactViewer_value_unknown=Unknown
-#{0} - contact name
+# {0} - contact name
 CommunicationArtifactViewerHelper_contact_label=Contact: {0}
 CommunicationArtifactViewerHelper_contact_label_unknown=Unknown
 CommunicationArtifactViewerHelper_menuitem_copy=Copy
@@ -65,6 +65,7 @@ MessageAccountPanel.account.justification=Account found in Message artifact
 MessageAccountPanel_button_create_label=Create
 MessageAccountPanel_button_view_label=View
 MessageAccountPanel_contact_label=Contact:
+MessageAccountPanel_copy_label=Copy
 MessageAccountPanel_no_matches=No matches found.
 MessageAccountPanel_persona_label=Persona:
 MessageAccountPanel_unknown_label=Unknown

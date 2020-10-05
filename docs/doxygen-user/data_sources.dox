@@ -1,6 +1,9 @@
 /*! \page ds_page Data Sources
 
 
+[TOC]
+
+
 A data source is the thing you want to analyze. It can be a disk image, some logical files, a local disk, etc. You must open a case prior to adding a data source to Autopsy. 
 
 Autopsy supports multiple types of data sources:
@@ -21,26 +24,25 @@ You can add a data source in several ways:
 The data source must remain accessible for the duration of the analysis because the case contains a reference to the data source.  It does <b>not</b> copy the data source into the case folder. 
 
 Regardless of the type of data source, there are some common steps in the process:
-
-1) You will select the type of data source.
+<ol>
+<li> You will select the type of data source.
 
 \image html select-data-source-type.PNG
 
-2) You will be prompted to specify the data source to add. This screen varies based on the data source type. Details on adding each type of data source are provided below.
+<li> You will be prompted to specify the data source to add. This screen varies based on the data source type. Details on adding each type of data source are provided below.
 
 NOTE: If you are adding a data source to a multi-user case, ensure that all Autopsy clients will have access to the data source at the same path. We recommend using UNC paths to ensure this consistent mapping. 
 
-3) Autopsy will perform a basic examination of the data source and populate an embedded database with an entry for each file in the data source. No content is analyzed in the process, only the files are enumerated. 
-
-4) While it is examining the data source, you will be prompted with a list of ingest modules to enable. If one or more ingest profiles have been saved, there will be a screen before this asking whether to use one of the saved profiles or do a custom setup. See \ref ingest_page for more information on setting up ingest profiles.
+<li> Next you will be prompted with a list of ingest modules to enable. If one or more ingest profiles have been saved, there will be a screen before this asking whether to use one of the saved profiles or do a custom setup. See \ref ingest_page for more information on setting up ingest profiles.
 
 \image html select-ingest-modules.PNG
 
-5) After you configure the ingest modules, you may need to wait for Autopsy to finish its basic examination of the data source. 
+<li> You will need to wait while Autopsy performs a basic examination of the data source and populates an embedded database with an entry for each file in the data source.
 
 \image html data-source-progress-bar.PNG
 
-6) After the ingest modules have been configured and the basic examination of the data source is complete, the ingest modules will begin to analyze the file contents. 
+<li> After the basic examination of the data source is complete, the ingest modules will likely still be running but you can start browsing through the files in your data source.
+</ol>
 
 Data sources can be removed from cases created with Autopsy 4.14.0 and later. See the section \ref data_source_deletion "below".
 

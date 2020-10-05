@@ -35,6 +35,7 @@ final class UserPreferences {
     private static final String INDEXING_NUM_THREADS = "IndexingNumThreads"; //NON-NLS
     private static final String SOLR_CONNECTION_TIMEOUT_MS = "SolrConnectionTimeoutMs"; //NON-NLS
     private static final int DEFAULT_CONNECTION_TIMEOUT_MS = 0; // unlimited
+    private static final int DEFAULT_INDEXING_DOC_QUEUE_SIZE = 30; //NON-NLS
 
     // Prevent instantiation.
     private UserPreferences() {
@@ -85,19 +86,19 @@ final class UserPreferences {
         preferences.putInt(INDEXING_NUM_THREADS, maxShards);
     }
     
-    public static void setDocumentsQueueSize(int maxShards) {
-        preferences.putInt(INDEXING_DOC_QUEUE_SIZE, maxShards);
-    }
-
-    public static int getDocumentsQueueSize() {
-        return preferences.getInt(INDEXING_DOC_QUEUE_SIZE, 30);
-    }
-    
     public static void setConnectionTimeout(int connectionTimeoutMs) {
         preferences.putInt(SOLR_CONNECTION_TIMEOUT_MS, connectionTimeoutMs);
     }
 
     public static int getConnectionTimeout() {
         return preferences.getInt(SOLR_CONNECTION_TIMEOUT_MS, DEFAULT_CONNECTION_TIMEOUT_MS);
+    }
+
+    public static void setDocumentsQueueSize(int size) {
+        preferences.putInt(INDEXING_DOC_QUEUE_SIZE, size);
+    }
+
+    public static int getDocumentsQueueSize() {
+        return preferences.getInt(INDEXING_DOC_QUEUE_SIZE, DEFAULT_INDEXING_DOC_QUEUE_SIZE);
     }
 }

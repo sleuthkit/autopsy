@@ -1,5 +1,8 @@
 /*! \page triage_page Triage
 
+[TOC]
+
+
 \section triage_overview Overview
 
 Sometimes you need to make a quick decision about a system or systems and don't have the time or resources to make full images. For example, during a knock and talk you want to know if there is notable data on their system. Or you are at a location with many systems and want to know which should be analyzed first. Autopsy has features that will allow you to quickly find the data of interest without making full images of the devices. Those features will be described below, followed by some example scenarios that show how to put everything together.
@@ -92,7 +95,7 @@ In this scenario, you are trying to answer whether child exploitation images exi
 <ul>
  <li>Choose View->File Types->Images in the \ref tree_viewer_page "tree viewer" and review the thumbnails
  <li>Wait for hash set hits
- <li>Review EXIF fles
+ <li>Review EXIF files
  <li>\ref tagging_page "Tag" any notable files found
 </ul>
 <li>You can stop the analysis at any time. All data read so far will be in the VHD file.

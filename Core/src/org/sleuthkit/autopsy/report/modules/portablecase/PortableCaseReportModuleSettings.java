@@ -83,6 +83,7 @@ public class PortableCaseReportModuleSettings implements ReportModuleSettings {
         this.chunkSize = ChunkSize.NONE;
         this.allTagsSelected = true;
         this.allSetsSelected = true;
+        this.shouldIncludeApplication = false;
     }
 
     PortableCaseReportModuleSettings(List<String> setNames, List<TagName> tagNames,
@@ -93,6 +94,7 @@ public class PortableCaseReportModuleSettings implements ReportModuleSettings {
         this.chunkSize = chunkSize;
         this.allTagsSelected = allTagsSelected;
         this.allSetsSelected = allSetsSelected;
+        this.shouldIncludeApplication = false;
     }
 
     @Override

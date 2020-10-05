@@ -129,15 +129,7 @@ public final class PersonasTopComponent extends TopComponent {
                 handleSelectionChange(e);
             }
         });
-
-        searchNameRadio.addActionListener((ActionEvent e) -> {
-            searchField.setText("");
-        });
-
-        searchAccountRadio.addActionListener((ActionEvent e) -> {
-            searchField.setText("");
-        });
-
+        
         createAccountBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {

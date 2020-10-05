@@ -1,8 +1,10 @@
 /*! \page discovery_page Discovery
 
+[TOC]
+
 \section file_disc_overview Overview
 
-The discovery tool shows images, videos, or documents that match a set of filters configured by the user. You can choose how to group and order your results in order to see the most relevant data first.
+The discovery tool shows images, videos, documents, or domains that match a set of filters configured by the user. You can choose how to group and order your results in order to see the most relevant data first.
 
 \section file_disc_prereq Prerequisites
 
@@ -10,7 +12,8 @@ We suggest running all \ref ingest_page "ingest modules" before launching discov
 
 Required ingest modules:
 <ul>
-<li>\ref file_type_identification_page
+<li>\ref file_type_identification_page for image, video, and document searches
+<li>\ref recent_activity_page or \ref ileapp_page for domain searches
 </ul>
 
 Optional ingest modules:
@@ -28,26 +31,26 @@ Optional ingest modules:
 
 To launch discovery, either click the "Discovery" icon near the top of the Autopsy UI or go to "Tools", "Discovery". There are three steps when setting up discovery, which flow from the top of the panel to the bottom:
 <ol>
-<li>\ref file_disc_type "Choose the file type"
+<li>\ref file_disc_type "Choose the result type"
 <li>\ref file_disc_filtering "Set up filters"
 <li>\ref file_disc_grouping "Choose how to group and sort the results
 </ol>
 
 \image html FileDiscovery/fd_setup.png
 
-Once everything is set up, use the "Show" button at the bottom right to display your results.
+Once everything is set up, use the "Search" button at the bottom right to display your results.
 
 \image html FileDiscovery/fd_main.png
 
-\subsection file_disc_type File Type
+\subsection file_disc_type Result Type
 
-The first step is choosing whether you want to display images, videos, or documents. The file type is determined by the MIME type of the file, which is why the \ref file_type_identification_page must be run to see any results. Switching between the file types will reset the filters.
+The first step is choosing whether you want to display images, videos, documents, or domains. The first three (images, videos, and documents) will return file results of the given type. The file type is determined by the MIME type of the file, which is why the \ref file_type_identification_page must be run to see any results. Switching between the result types will reset the filters.
 
 \image html FileDiscovery/fd_fileType.png
 
 \subsection file_disc_filtering Filtering
 
-The second step is to select and configure your filters. The available filters will vary depending on the file type. For most filters, you enable them using the checkbox on the left and then select your options. Multiple options can be selected by using CTRL + left click. Files must pass all enabled filters to be displayed.
+The second step is to select and configure your filters. The available filters will vary depending on the result type. For most filters, you enable them using the checkbox on the left and then select your options. Multiple options can be selected by using CTRL + left click. Results must pass all enabled filters to be displayed.
 
 \subsubsection file_disc_size_filter File Size Filter
 
@@ -63,11 +66,11 @@ The data source filter lets you restrict which data sources in your case to incl
 
 \subsubsection file_disc_occur_filter Past Occurrences Filter
 
-The past occurrences filter uses the \ref central_repo_page "central repository" and \ref hash_db_page "known hash sets" to restrict how commom/rare a file must be to be included in the results. By default, the "Known Files" option is disabled, meaning that any file matching the NSRL or other white-listed hash set will not be displayed. 
+The past occurrences filter uses the \ref central_repo_page "central repository" and \ref hash_db_page "known hash sets" (for file type searches) to restrict how commom/rare an entry must be to be included in the results. For file type searches the "Known Files" option is disabled by default, meaning that any file matching the NSRL or other white-listed hash set will not be displayed. 
 
 \image html FileDiscovery/fd_pastOccur.png
 
-The counts for the rest of the options are based on how many data sources in your central repository contain a copy of this file (based on hash). If a file only appears in one data source in the current case, then it will match "Unique(1)". If it has only been seen in a few other data source, it will match "Rare(2-10)". Note that it doesn't matter how many times a file appears in each data source - a file could have twenty copies in one data source and still be "unique". 
+The counts for the rest of the options are based on how many data sources in your central repository contain a copy of this file (based on hash) or domain. If a result only appears in one data source in the current case, then it will match "Unique(1)". If it has only been seen in a few other data source, it will match "Rare(2-10)". Note that it doesn't matter how many times a result appears in each data source - a result could have twenty copies in one data source and still be "unique". 
 
 \subsubsection file_disc_user_filter Possibly User Created
 
@@ -75,7 +78,7 @@ The possibly user created filter restricts the results to files that suspected t
 
 \image html FileDiscovery/fd_userCreatedFilter.png
 
-This means the file must have a "User Content Suspected" result associated with it. These primarily come from the \ref EXIF_parser_page "Exif parser module".
+This means the file must have a "User Content Suspected" result associated with it. These primarily come from the \ref EXIF_parser_page.
 
 \image html FileDiscovery/fd_userContentArtifact.png
 
@@ -121,13 +124,25 @@ When there are multiple path options in the filter, they will be applied as foll
 
 This allows you to, for example, make rules to include both the "My Documents" and the "My Pictures" folders.
 
+\subsubsection file_disc_result_filter Result Type Filter
+
+The result type filter is for domain searches only and can be used to restrict which types of web results the domains can come from.
+
+\image html FileDiscovery/fd_domainResultFilter.png
+
+\subsubsection file_disc_date_filter Date Filter
+
+The date filter is for domain searches only and restricts the search to domains that were accessed within a given time frame. This time frame can either be the last N days (relative to the current date) or have a specific start and/or end date.
+
+\image html FileDiscovery/fd_dateFilter.png
+
 \subsection file_disc_grouping Grouping and Sorting
 
 The final options are for how you want to group and sort your results.
 
 \image html FileDiscovery/fd_grouping.png
 
-The first option lets you choose the top level grouping for your results and the second option lets you choose how to sort them. The groups appear in the left column of the results window. Note that some of the grouping options may not always appear - for example, grouping by past occurrences will only be present if the \ref central_repo_page is enabled, and grouping by hash set will only be present if there are hash set hits in your current case. The example below shows the groups created using the default options (group by file size, order groups by group name):
+The first option lets you choose the top level grouping for your results and the second option lets you choose how to sort them. The groups appear in the left column of the results window. Note that some of the grouping options may not always appear - for example, grouping by past occurrences will only be present if the \ref central_repo_page is enabled, and grouping by hash set will only be present if there are hash set hits in your current case. The example below shows the groups created using the default options (Image search, group by file size, order groups by group name):
 
 \image html FileDiscovery/fd_groupingSize.png
 
@@ -143,7 +158,7 @@ The last grouping and sorting option is choosing how to sort the results within 
 
 \subsection file_disc_results_overview Overview
 
-Once you select your options and click "Search", you'll see a new window with the list of groups on the left side. Selecting one of these groups will display the results from that group on the right side. Selecting a result will cause a panel to rise showing more details about each instance of that result. You can manually raise and lower this panel using the large arrows on the right side of the divider.
+Once you select your options and click "Search", you'll see a new window with the list of groups on the left side. Selecting one of these groups will display the results from that group on the right side. For image, video, and document searches, selecting a result will cause a panel to rise showing more details about each instance of that result. You can manually raise and lower this panel using the large arrows on the right side of the divider. This panel is disabled for domain searches.
 
 If your results are images, you'll see thumbnails for each image in the top area of the right panel.
 
@@ -157,13 +172,19 @@ If your results are documents, you'll see part of the document text. If the \ref
 
 \image html FileDiscovery/fd_documents.png
 
-When you select a result from the top of the right panel, you'll see the path to the corresponding file(s) in the "Instances" panel below the thumbnails. There may be more than one file instance associated with a result - see the \ref file_disc_dedupe section below. You can right-click on files in the instances panel to use most of options available in the normal \ref result_viewer_page.
+If your results are domains, you'll see information about each domain. If there is an image associated with that domain it will be displayed on the right.
+
+\image html FileDiscovery/fd_domains.png
+
+For image, video, and document searches, when you select a result from the top of the right panel, you'll see the path to the corresponding file(s) in the "Instances" panel below the thumbnails. There may be more than one file instance associated with a result - see the \ref file_disc_dedupe section below. You can right-click on files in the instances panel to use most of options available in the normal \ref result_viewer_page.
 
 \image html FileDiscovery/fd_instanceContext.png
 
 The bottom section of the panel is identical to the standard \ref content_viewer_page and displays data corresponding to the file instance selected in the middle of the panel.
 
 \subsection file_disc_dedupe De-duplication
+
+This section only applies to image, video and document searches. 
 
 Assuming the \ref hash_db_page module has been run, all files in a result group with the same hash will be merged together under a single instance. The file path to one of the instances will be displayed along with a note such as "and 1 more" indicating how many duplicates were found. Selecting the file will display each instance in the middle section of the panel.
 
@@ -174,6 +195,8 @@ Clicking on a particular instance will load data for that file in the content vi
 Note that files in different groups will not be merged together or appear under the instances list of each other. For example, if you choose to group by parent folder and have two instances of a file with the same hash but in different folders, each will appear once under its parent folder. Grouping by file size (the default) will always merge every instance of the same file.
 
 \subsection file_disc_icons Status Icons
+
+This section only applies to image, video and document searches. 
 
 A number of icons may be displayed in the bottom right of the thumbnails to help point out notable results. Hovering over the icon will display a message explaining why the icon is present. In the image below, the yellow icon is present because the file is associated with an interesting item set.
 

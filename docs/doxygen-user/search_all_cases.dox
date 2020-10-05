@@ -1,5 +1,8 @@
 /*! \page search_all_cases_page Search All Cases
 
+[TOC]
+
+
 \section search_all_cases_overview Overview
 
 The Search All Cases feature allows you to search the \ref central_repo_page for arbitrary properties. You must have the Central Repository enabled to run 

@@ -47,6 +47,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
+import static java.util.stream.Collectors.toList;
 import javax.swing.AbstractAction;
 import org.apache.commons.io.FileUtils;
 import java.util.concurrent.TimeoutException;
@@ -2001,7 +2002,7 @@ public class Server {
                     logger.log(Level.SEVERE, "Periodic  batched document update failed", ex); //NON-NLS
                 }
             }
-        }
+        }    
 
         /**
          * Get the name of the collection
@@ -2042,7 +2043,6 @@ public class Server {
         }
 
         private void commit() throws SolrServerException {
-
             List<SolrInputDocument> clone;
             synchronized (bufferLock) {
                 // Make a clone and release the lock, so that we don't
@@ -2110,7 +2110,7 @@ public class Server {
          * @throws KeywordSearchModuleException
          */
         // ELTODO DECIDE ON SYNCHRONIZATION
-        private synchronized void sendBufferedDocs(List<SolrInputDocument> docBuffer) throws KeywordSearchModuleException {
+        private void sendBufferedDocs(List<SolrInputDocument> docBuffer) throws KeywordSearchModuleException {
             
             if (docBuffer.isEmpty()) {
                 return;
@@ -2128,9 +2128,9 @@ public class Server {
                             logger.log(Level.WARNING, "Unable to send document batch to Solr. Re-trying...", ex); //NON-NLS
                             try {
                                 Thread.sleep(SLEEP_BETWEEN_RETRIES_MS);
-                            } catch (InterruptedException ex1) {
+                            } catch (InterruptedException ignore) {
                                 throw new KeywordSearchModuleException(
-                                        NbBundle.getMessage(this.getClass(), "Server.addDocBatch.exception.msg"), ex1); //NON-NLS
+                                        NbBundle.getMessage(this.getClass(), "Server.addDocBatch.exception.msg"), ex); //NON-NLS
                             }
                         }                        
                     }

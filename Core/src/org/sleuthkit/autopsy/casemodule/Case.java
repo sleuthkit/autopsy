@@ -107,7 +107,7 @@ import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.events.AutopsyEventException;
 import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
-import org.sleuthkit.autopsy.discovery.OpenDiscoveryAction;
+import org.sleuthkit.autopsy.discovery.ui.OpenDiscoveryAction;
 import org.sleuthkit.autopsy.ingest.IngestJob;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestServices;
@@ -1436,15 +1436,16 @@ public class Case {
      */
     public Set<TimeZone> getTimeZones() {
         Set<TimeZone> timezones = new HashSet<>();
-        try {
-            for (Content c : getDataSources()) {
-                final Content dataSource = c.getDataSource();
-                if ((dataSource != null) && (dataSource instanceof Image)) {
-                    Image image = (Image) dataSource;
-                    timezones.add(TimeZone.getTimeZone(image.getTimeZone()));
+        String query = "SELECT time_zone FROM data_source_info";
+        try (SleuthkitCase.CaseDbQuery dbQuery = caseDb.executeQuery(query)) {
+            ResultSet timeZoneSet = dbQuery.getResultSet();
+            while (timeZoneSet.next()) {
+                String timeZone = timeZoneSet.getString("time_zone");
+                if (timeZone != null && !timeZone.isEmpty()) {
+                    timezones.add(TimeZone.getTimeZone(timeZone));
                 }
             }
-        } catch (TskCoreException ex) {
+        } catch (TskCoreException | SQLException ex) {
             logger.log(Level.SEVERE, "Error getting data source time zones", ex); //NON-NLS
         }
         return timezones;
@@ -1468,9 +1469,16 @@ public class Case {
      */
     public boolean hasData() {
         boolean hasDataSources = false;
-        try {
-            hasDataSources = (getDataSources().size() > 0);
-        } catch (TskCoreException ex) {
+        String query = "SELECT count(*) AS count FROM data_source_info";
+        try (SleuthkitCase.CaseDbQuery dbQuery = caseDb.executeQuery(query)) {
+            ResultSet resultSet = dbQuery.getResultSet();
+            if (resultSet.next()) {
+                long numDataSources = resultSet.getLong("count");
+                if (numDataSources > 0) {
+                    hasDataSources = true;
+                }
+            }
+        } catch (TskCoreException | SQLException ex) {
             logger.log(Level.SEVERE, "Error accessing case database", ex); //NON-NLS
         }
         return hasDataSources;

@@ -78,7 +78,9 @@ final class ExtractPrefetch extends Extract {
     private static final String PREFETCH_DIR_NAME = "prefetch"; //NON-NLS
 
     @Messages({
-        "ExtractPrefetch_module_name=Windows Prefetch Extractor"
+        "ExtractPrefetch_module_name=Windows Prefetch Extractor",
+        "# {0} - sub module name", 
+        "ExtractPrefetch_errMsg_prefetchParsingFailed={0}: Error analyzing prefetch files"
     })
     ExtractPrefetch() {
         this.moduleName = Bundle.ExtractPrefetch_module_name();
@@ -96,7 +98,6 @@ final class ExtractPrefetch extends Extract {
             if (!dirMade) {
                 logger.log(Level.SEVERE, "Error creating directory to store prefetch output database"); //NON-NLS
                 return; //If we cannot create the directory then we need to exit
-
             }
         }
 
@@ -118,7 +119,8 @@ final class ExtractPrefetch extends Extract {
             parsePrefetchFiles(prefetchDumper, tempDirPath, modOutFile, modOutPath);
             createAppExecArtifacts(modOutFile, dataSource);
         } catch (IOException ex) {
-            logger.log(Level.WARNING, "Error runing parse_prefetch or creating artifacts.", ex); //NON-NLS             
+            logger.log(Level.SEVERE, "Error parsing prefetch files", ex); //NON-NLS 
+            addErrorMessage(Bundle.ExtractPrefetch_errMsg_prefetchParsingFailed(Bundle.ExtractPrefetch_module_name()));
         }
     }
 
@@ -127,7 +129,6 @@ final class ExtractPrefetch extends Extract {
      * that the prefetch files only come from the /Windows/Prefetch directory
      *
      * @param dataSource - datasource to search for prefetch files
-     *
      */
     void extractPrefetchFiles(Content dataSource) {
         List<AbstractFile> pFiles;
@@ -184,7 +185,7 @@ final class ExtractPrefetch extends Extract {
         processBuilder.redirectOutput(outputFilePath.toFile());
         processBuilder.redirectError(errFilePath.toFile());
 
-        ExecUtil.execute(processBuilder, new DataSourceIngestModuleProcessTerminator(context));
+        ExecUtil.execute(processBuilder, new DataSourceIngestModuleProcessTerminator(context, true));
     }
 
     /**

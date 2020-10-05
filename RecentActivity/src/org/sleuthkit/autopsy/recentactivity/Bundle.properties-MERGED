@@ -5,10 +5,15 @@ ChromeCacheExtract_adding_artifacts_msg=Chrome Cache: Adding %d artifacts for an
 ChromeCacheExtract_adding_extracted_files_msg=Chrome Cache: Adding %d extracted files for analysis.
 ChromeCacheExtract_loading_files_msg=Chrome Cache: Loading files from %s.
 ChromeCacheExtractor.moduleName=ChromeCacheExtractor
+# {0} - module name
+# {1} - row number
+# {2} - table length
+# {3} - cache path
 ChromeCacheExtractor.progressMsg={0}: Extracting cache entry {1} of {2} entries from {3}
 DataSourceUsage_AndroidMedia=Android Media Card
 DataSourceUsage_DJU_Drone_DAT=DJI Internal SD Card
 DataSourceUsage_FlashDrive=Flash Drive
+# {0} - OS name
 DataSourceUsageAnalyzer.customVolume.label=OS Drive ({0})
 DataSourceUsageAnalyzer.parentModuleName=Recent Activity
 Extract.indexError.message=Failed to index artifact for keyword search.
@@ -19,6 +24,8 @@ ExtractEdge_process_errMsg_errGettingWebCacheFiles=Error trying to retrieving Ed
 ExtractEdge_process_errMsg_spartanFail=Failure processing Microsoft Edge spartan.edb file
 ExtractEdge_process_errMsg_unableFindESEViewer=Unable to find ESEDatabaseViewer
 ExtractEdge_process_errMsg_webcacheFail=Failure processing Microsoft Edge WebCacheV01.dat file
+# {0} - sub module name
+ExtractIE_executePasco_errMsg_errorRunningPasco={0}: Error analyzing Internet Explorer web history
 ExtractOs.androidOs.label=Android
 ExtractOs.androidVolume.label=OS Drive (Android)
 ExtractOs.debianLinuxOs.label=Linux (Debian)
@@ -50,6 +57,8 @@ ExtractOs.windowsVolume.label=OS Drive (Windows)
 ExtractOs.yellowDogLinuxOs.label=Linux (Yellow Dog)
 ExtractOs.yellowDogLinuxVolume.label=OS Drive (Linux Yellow Dog)
 ExtractOS_progressMessage=Checking for OS
+# {0} - sub module name
+ExtractPrefetch_errMsg_prefetchParsingFailed={0}: Error analyzing prefetch files
 ExtractPrefetch_module_name=Windows Prefetch Extractor
 ExtractRecycleBin_module_name=Recycle Bin
 ExtractSafari_Error_Getting_History=An error occurred while processing Safari history files.
@@ -63,6 +72,9 @@ ExtractSru_process_errormsg_find_software_hive=Unable to find SOFTWARE HIVE file
 ExtractSru_process_errormsg_find_srudb_dat=Unable to find srudb.dat file
 ExtractSru_process_errormsg_write_software_hive=Unable to write SOFTWARE HIVE file
 ExtractSru_process_errormsg_write_srudb_dat=Unable to write srudb.dat file
+ExtractWebAccountType.role.admin=Administrator role
+ExtractWebAccountType.role.moderator=Moderator role
+ExtractWebAccountType.role.user=User role
 ExtractZone_Internet=Internet Zone
 ExtractZone_Local_Intranet=Local Intranet Zone
 ExtractZone_Local_Machine=Local Machine Zone
@@ -122,10 +134,7 @@ ExtractRegistry.analyzeRegFiles.failedParsingResults={0}: Failed parsing registr
 ExtractRegistry.parentModuleName.noSpace=RecentActivity
 ExtractRegistry.programName=RegRipper
 ExtractRegistry.analyzeRegFiles.errMsg.errReadingRegFile={0}: Error reading registry file - {1}
-ExtractRegistry.execRegRip.errMsg.failedAnalyzeRegFile={0}: Failed to analyze registry file
-ExtractRegistry.execRegRip.errMsg.failedAnalyzeRegFile2={0}: Failed to analyze registry file
-ExtractRegistry.execRegRip.errMsg.failedAnalyzeRegFile3={0}: Failed to analyze registry file
-ExtractRegistry.execRegRip.errMsg.failedAnalyzeRegFile4={0}: Failed to analyze registry file
+ExtractRegistry.execRegRip.errMsg.failedAnalyzeRegFile={0}: Failed to analyze registry file {1}
 Firefox.moduleName=FireFox
 Firefox.getHistory.errMsg.errFetchingFiles=Error fetching internet history files for Firefox.
 Firefox.getHistory.errMsg.noFilesFound=No FireFox history files found.
@@ -150,13 +159,19 @@ Firefox.getDlV24.errMsg.errAnalyzeFile={0}: Error while trying to analyze file:{
 Firefox.getDlV24.errMsg.errParsingArtifacts={0}: Error parsing {1} Firefox web download artifacts.
 Progress_Message_Analyze_Registry=Analyzing Registry Files
 Progress_Message_Analyze_Usage=Data Sources Usage Analysis
+# {0} - browserName
 Progress_Message_Chrome_AutoFill=Chrome Auto Fill Browser {0}
+# {0} - browserName
 Progress_Message_Chrome_Bookmarks=Chrome Bookmarks Browser {0}
 Progress_Message_Chrome_Cache=Chrome Cache
+# {0} - browserName
 Progress_Message_Chrome_Cookies=Chrome Cookies Browser {0}
+# {0} - browserName
 Progress_Message_Chrome_Downloads=Chrome Downloads Browser {0}
 Progress_Message_Chrome_FormHistory=Chrome Form History
+# {0} - browserName
 Progress_Message_Chrome_History=Chrome History Browser {0}
+# {0} - browserName
 Progress_Message_Chrome_Logins=Chrome Logins Browser {0}
 Progress_Message_Edge_Bookmarks=Microsoft Edge Bookmarks
 Progress_Message_Edge_Cookies=Microsoft Edge Cookies
@@ -211,6 +226,7 @@ Recently_Used_Artifacts_Winrar=Recently opened according to WinRAR MRU
 Registry_System_Bam=Recently Executed according to Background Activity Moderator (BAM)
 RegRipperFullNotFound=Full version RegRipper executable not found.
 RegRipperNotFound=Autopsy RegRipper executable not found.
+# {0} - file name
 SearchEngineURLQueryAnalyzer.init.exception.msg=Unable to find {0}.
 SearchEngineURLQueryAnalyzer.moduleName.text=Search Engine
 SearchEngineURLQueryAnalyzer.engineName.none=NONE
@@ -218,6 +234,8 @@ SearchEngineURLQueryAnalyzer.domainSubStr.none=NONE
 SearchEngineURLQueryAnalyzer.toString=Name: {0}\nDomain Substring: {1}\nCount: {2}\nSplit Tokens: \n{3}
 SearchEngineURLQueryAnalyzer.parentModuleName.noSpace=RecentActivity
 SearchEngineURLQueryAnalyzer.parentModuleName=Recent Activity
+ExtractWebAccountType.moduleName.text=Web Account Type
+ExtractWebAccountType.parentModuleName=Recent Activity
 Shellbag_Artifact_Display_Name=Shell Bags
 Shellbag_Key_Attribute_Display_Name=Key
 Shellbag_Last_Write_Attribute_Display_Name=Last Write
