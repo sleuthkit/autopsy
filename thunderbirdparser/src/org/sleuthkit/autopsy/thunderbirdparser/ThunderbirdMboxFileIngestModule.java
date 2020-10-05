@@ -192,9 +192,6 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
             return ProcessResult.ERROR;
         }
         File file = new File(fileName);
-        
-        // Create cache for accounts
-        AccountFileInstanceCache accountFileInstanceCache = new AccountFileInstanceCache(abstractFile, currentCase);
 
         long freeSpace = services.getFreeDiskSpace();
         if ((freeSpace != IngestMonitor.DISK_FREE_SPACE_UNKNOWN) && (abstractFile.getSize() >= freeSpace)) {
@@ -216,7 +213,10 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
 
         PstParser parser = new PstParser(services);
         PstParser.ParseResult result = parser.open(file, abstractFile.getId());
-
+        
+        // Create cache for accounts
+        AccountFileInstanceCache accountFileInstanceCache = new AccountFileInstanceCache(abstractFile, currentCase);
+        
         switch( result) {
             case OK:
                 Iterator<EmailMessage> pstMsgIterator = parser.getEmailMessageIterator();
@@ -845,17 +845,36 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         }
     }
     
+    /**
+     * Cache for storing AccountFileInstance.
+     * The idea is that emails will be used multiple times in an mbox file and
+     * we shouldn't do a database lookup each time.
+     */
     static private class AccountFileInstanceCache {
         private final Map<String, AccountFileInstance> cacheMap;
         private final AbstractFile mboxFile;
         private final Case currentCase;
         
+        /**
+         * Create a new cache. Caches are linked to a specific mbox file.
+         * @param mboxFile
+         * @param currentCase 
+         */
         AccountFileInstanceCache(AbstractFile mboxFile, Case currentCase) {
             cacheMap= new HashMap<>();
             this.mboxFile = mboxFile;
             this.currentCase = currentCase;
         }
         
+        /**
+         * Get the account file instance from the cache or the database.
+         * 
+         * @param email The email for this account.
+         * 
+         * @return The corresponding AccountFileInstance
+         * 
+         * @throws TskCoreException 
+         */
         AccountFileInstance getAccountInstance(String email) throws TskCoreException {
             if (cacheMap.containsKey(email)) {
                 return cacheMap.get(email);
@@ -868,6 +887,9 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
             return accountInstance;
         }
         
+        /**
+         * Clears the cache.
+         */
         void clear() {
             cacheMap.clear();
         }
