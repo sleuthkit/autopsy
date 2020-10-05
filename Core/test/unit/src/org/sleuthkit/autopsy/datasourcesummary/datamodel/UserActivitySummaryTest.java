@@ -42,6 +42,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourceSummaryMockUtils.getArtifactsTSKMock;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopAccountResult;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopDeviceAttachedResult;
@@ -98,24 +99,6 @@ public class UserActivitySummaryTest {
     };
 
     private static final long DAY_SECONDS = 24 * 60 * 60;
-
-    /**
-     * Creates a pair of a mock SleuthkitCase and mock Blackboard.
-     *
-     * @param returnArr The return result when calling getArtifacts on the
-     *                  blackboard.
-     *
-     * @return The pair of a mock SleuthkitCase and mock Blackboard.
-     *
-     * @throws TskCoreException
-     */
-    private static Pair<SleuthkitCase, Blackboard> getArtifactsTSKMock(List<BlackboardArtifact> returnArr) throws TskCoreException {
-        SleuthkitCase mockCase = mock(SleuthkitCase.class);
-        Blackboard mockBlackboard = mock(Blackboard.class);
-        when(mockCase.getBlackboard()).thenReturn(mockBlackboard);
-        when(mockBlackboard.getArtifacts(anyInt(), anyLong())).thenReturn(returnArr);
-        return Pair.of(mockCase, mockBlackboard);
-    }
 
     private static void verifyCalled(Blackboard mockBlackboard, int artifactType, long datasourceId, String failureMessage) throws TskCoreException {
         verify(mockBlackboard, times(1).description(failureMessage)).getArtifacts(artifactType, datasourceId);

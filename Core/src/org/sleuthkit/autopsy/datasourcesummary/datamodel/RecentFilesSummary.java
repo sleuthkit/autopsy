@@ -32,6 +32,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import org.apache.commons.lang.StringUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -134,12 +135,11 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
                 } else if (attribute.getAttributeType().equals(PATH_ATT)) {
                     path = attribute.getValueString();
                 }
-
-                if (accessedTime != null) {
-                    fileDetails.add(new RecentFileDetails(path, accessedTime));
-                }
             }
 
+            if (accessedTime != null) {
+                fileDetails.add(new RecentFileDetails(path, accessedTime));
+            }
         }
 
         return fileDetails;

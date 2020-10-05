@@ -34,9 +34,11 @@ import static org.mockito.Mockito.when;
 import org.sleuthkit.autopsy.texttranslation.NoServiceProviderException;
 import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
 import org.sleuthkit.autopsy.texttranslation.TranslationException;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -76,12 +78,30 @@ public class TskMockUtils {
      */
     public static BlackboardArtifact getArtifact(BlackboardArtifact.Type artifactType, long artifactId,
             DataSource dataSource, BlackboardAttribute... attributes) throws TskCoreException {
-
+        return getArtifact(artifactType, null, artifactId, dataSource, attributes);
+    }
+        
+    
+    /**
+     * Gets a mock Blackboard artifact.
+     * @param artifactType The artifact type for the artifact.
+     * @param parent The parent file of the artifact.
+     * @param artifactId The artifact id.
+     * @param dataSource The datasource.
+     * @param attributes The attributes for the artifact.
+     * @return The mocked artifact.
+     * @throws TskCoreException 
+     */
+    public static BlackboardArtifact getArtifact(BlackboardArtifact.Type artifactType, Content parent, long artifactId,
+            DataSource dataSource, BlackboardAttribute... attributes) throws TskCoreException {
+        
         BlackboardArtifact artifact = mock(BlackboardArtifact.class);
 
         final Map<BlackboardAttribute.Type, BlackboardAttribute> attributeTypes = Stream.of(attributes)
                 .collect(Collectors.toMap((attr) -> attr.getAttributeType(), Function.identity()));
 
+        when(artifact.getParent()).thenReturn(parent);
+        
         when(artifact.getArtifactID()).thenReturn(artifactId);
 
         when(artifact.getArtifactTypeID()).thenReturn(artifactType.getTypeID());
@@ -103,6 +123,7 @@ public class TskMockUtils {
 
         return getArtifact(artifactType, artifactId, dataSource, attributes.toArray(new BlackboardAttribute[attributes.size()]));
     }
+    
     
     private static final String DEFAULT_ATTR_SOURCE = "TEST SOURCE";
     
@@ -176,6 +197,22 @@ public class TskMockUtils {
 
         return translationService;
     }
+    
+    
+    /**
+     * Returns an AbstractFile mocking getPath and getName.
+     * @param objId The object id.
+     * @param path The path for the file.
+     * @param name The name
+     * @return 
+     */
+    public static AbstractFile getAbstractFile(long objId, String path, String name) {
+        AbstractFile mocked = mock(AbstractFile.class);
+        when(mocked.getId()).thenReturn(objId);
+        when(mocked.getName()).thenReturn(name);
+        when(mocked.getParentPath()).thenReturn(path);
+        return mocked;
+    }
 
     private static void setConsoleHandler(Logger logger) {
         // taken from https://stackoverflow.com/a/981230
@@ -200,6 +237,7 @@ public class TskMockUtils {
         //set the console handler to fine:
         consoleHandler.setLevel(java.util.logging.Level.FINEST);
     }
+    
 
     /**
      * Retrieves an autopsy logger that does not write to disk.
