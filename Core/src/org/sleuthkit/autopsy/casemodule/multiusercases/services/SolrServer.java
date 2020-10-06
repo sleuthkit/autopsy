@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.casemodule.multiusercases.services;
 
 import java.util.logging.Level;
 import org.openide.util.Lookup;
+import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.core.ServicesMonitor;
 import org.sleuthkit.autopsy.core.UserPreferences;
@@ -37,6 +38,9 @@ public final class SolrServer implements ServicesMonitor.MonitoredService {
     private static final Logger logger = Logger.getLogger(SolrServer.class.getName());
 
     @Override
+    @NbBundle.Messages({
+        "SolrServer.missingServiceErrorMsg=Cannot find Keyword Search service"
+    })
     public ServicesMonitor.ServiceStatusReport getStatus() {
         try {
             KeywordSearchService kwsService = Lookup.getDefault().lookup(KeywordSearchService.class);
@@ -45,12 +49,12 @@ public final class SolrServer implements ServicesMonitor.MonitoredService {
                 kwsService.tryConnect(UserPreferences.getIndexingServerHost(), port);
                 return new ServicesMonitor.ServiceStatusReport(ServicesMonitor.Service.KEYWORD_SEARCH_SERVICE, ServicesMonitor.ServiceStatus.UP, "");
             } else {
-                return new ServicesMonitor.ServiceStatusReport(ServicesMonitor.Service.KEYWORD_SEARCH_SERVICE, ServicesMonitor.ServiceStatus.UP, "");
+                return new ServicesMonitor.ServiceStatusReport(ServicesMonitor.Service.KEYWORD_SEARCH_SERVICE, ServicesMonitor.ServiceStatus.DOWN, "");
             }
         } catch (NumberFormatException | KeywordSearchServiceException ex) {
             logger.log(Level.SEVERE, "Error connecting to Solr server", ex); //NON-NLS
             return new ServicesMonitor.ServiceStatusReport(ServicesMonitor.Service.KEYWORD_SEARCH_SERVICE, ServicesMonitor.ServiceStatus.DOWN, ex.getMessage());
-        } 
+        }
     }
 
 }
