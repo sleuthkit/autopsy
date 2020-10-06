@@ -1,1 +1,1 @@
-SolrServer.missingServiceErrorMsg=Cannot find Keyword Search service
+SolrServer_missingServiceProviderErrorMsg=Cannot find Keyword Search service provider
