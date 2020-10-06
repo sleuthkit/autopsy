@@ -250,6 +250,19 @@ public class ServicesMonitor {
          */
         ServiceStatusReport getStatus();
 
+        /**
+         * Indicates whether the status string reported in a given service
+         * status report is functionally equivalent to the standard service
+         * status "UP."
+         *
+         * @param statusReport The status report.
+         *
+         * @return True or false.
+         */
+        default boolean statusIsUp(ServiceStatusReport statusReport) {
+            return (statusReport != null && statusReport.getStatus().equals(ServicesMonitor.ServiceStatus.UP.getDisplayName()));
+        }
+
     }
 
     private static final Logger logger = Logger.getLogger(ServicesMonitor.class.getName());
