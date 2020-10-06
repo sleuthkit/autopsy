@@ -124,7 +124,7 @@ public class TskMockUtils {
     public static BlackboardArtifact getArtifact(BlackboardArtifact.Type artifactType, long artifactId,
             DataSource dataSource, List<BlackboardAttribute> attributes) throws TskCoreException {
 
-        return getArtifact(artifactType, artifactId, dataSource, attributes.toArray(new BlackboardAttribute[attributes.size()]));
+        return getArtifact(artifactType, artifactId, dataSource, attributes.toArray(new BlackboardAttribute[0]));
     }
 
     private static final String DEFAULT_ATTR_SOURCE = "TEST SOURCE";
@@ -188,12 +188,12 @@ public class TskMockUtils {
         when(translationService.hasProvider()).thenReturn(hasProvider);
 
         when(translationService.translate(anyString())).thenAnswer((invocation) -> {
-            Object[] args = invocation.getArguments();
-            String input = (String) args[0];
             if (onTranslate == null) {
                 throw new NoServiceProviderException("No onTranslate function provided");
             }
 
+            Object[] args = invocation.getArguments();
+            String input = (String) args[0];
             return (input == null) ? null : onTranslate.apply(input);
         });
 

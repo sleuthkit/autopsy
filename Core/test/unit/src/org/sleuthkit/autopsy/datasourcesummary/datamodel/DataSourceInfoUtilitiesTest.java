@@ -390,9 +390,17 @@ public class DataSourceInfoUtilitiesTest {
                 null);
     }
 
+    /**
+     * Retrieves the value of an artifact.
+     */
     private interface GetAttrVal<T> {
-
-        public T getOrNull(BlackboardArtifact artifact, BlackboardAttribute.Type type);
+        /**
+         * A method for retrieving the value of an artifact.
+         * @param artifact The artifact.
+         * @param type The type of attribute.
+         * @return The value.
+         */
+        T getOrNull(BlackboardArtifact artifact, BlackboardAttribute.Type type);
     }
 
     private <T> void testNullAttrValue(String id, GetAttrVal<T> getter, ARTIFACT_TYPE artifactType,

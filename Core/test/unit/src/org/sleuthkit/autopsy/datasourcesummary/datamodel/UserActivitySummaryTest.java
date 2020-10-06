@@ -66,9 +66,19 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Tests for UserActivitySummary.
  */
 public class UserActivitySummaryTest {
-
+    /**
+     *  Function to retrieve data from UserActivitySummary with the provided arguments.
+     */
     private interface DataFunction<T> {
-
+        /**
+         * A UserActivitySummary method encapsulated in a uniform manner.
+         * @param userActivitySummary The UserActivitySummary class to use.
+         * @param datasource The data source.
+         * @param count The count.
+         * @return The list of objects to return.
+         * @throws SleuthkitCaseProviderException
+         * @throws TskCoreException 
+         */
         List<T> retrieve(UserActivitySummary userActivitySummary, DataSource datasource, int count) throws
                 SleuthkitCaseProviderException, TskCoreException;
     }

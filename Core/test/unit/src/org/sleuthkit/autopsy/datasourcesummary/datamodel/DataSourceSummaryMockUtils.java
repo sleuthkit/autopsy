@@ -51,4 +51,7 @@ public class DataSourceSummaryMockUtils {
         when(mockBlackboard.getArtifacts(anyInt(), anyLong())).thenReturn(returnArr);
         return Pair.of(mockCase, mockBlackboard);
     }
+
+    private DataSourceSummaryMockUtils() {
+    }
 }

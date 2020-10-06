@@ -25,7 +25,7 @@ import java.util.List;
  * Tools for pseudo-randomization.
  */
 public class RandomizationUtils {
-    
+
     /**
      * Returns list in 0, n-1, 1, n-2 ... order. Deterministic so same results
      * each time, but not in original order.
@@ -49,5 +49,8 @@ public class RandomizationUtils {
         }
 
         return newList;
+    }
+
+    private RandomizationUtils() {
     }
 }

@@ -40,7 +40,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourceSummaryMockUtils.getArtifactsTSKMock;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourceSummaryMockUtils;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.RecentFilesSummary.RecentAttachmentDetails;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.RecentFilesSummary.RecentDownloadDetails;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.RecentFilesSummary.RecentFileDetails;
@@ -104,7 +104,7 @@ public class RecentFilesSummaryTest {
      */
     private <T> void testNonPositiveCount_ThrowsError(RecentFilesMethod<T> method, String methodName)
             throws TskCoreException, SleuthkitCaseProviderException {
-        Pair<SleuthkitCase, Blackboard> casePair = getArtifactsTSKMock(null);
+        Pair<SleuthkitCase, Blackboard> casePair = DataSourceSummaryMockUtils.getArtifactsTSKMock(null);
         DataSource dataSource = TskMockUtils.getDataSource(1);
         RecentFilesSummary summary = new RecentFilesSummary(() -> casePair.getLeft());
 
@@ -146,7 +146,7 @@ public class RecentFilesSummaryTest {
     private <T> void testNoDataSource_ReturnsEmptyList(RecentFilesMethod<T> recentFilesMethod, String methodName)
             throws SleuthkitCaseProviderException, TskCoreException {
 
-        Pair<SleuthkitCase, Blackboard> casePair = getArtifactsTSKMock(null);
+        Pair<SleuthkitCase, Blackboard> casePair = DataSourceSummaryMockUtils.getArtifactsTSKMock(null);
         RecentFilesSummary summary = new RecentFilesSummary(() -> casePair.getLeft());
 
         List<? extends T> items = recentFilesMethod.fetch(summary, null, 10);
@@ -184,7 +184,7 @@ public class RecentFilesSummaryTest {
     private <T> void testNoReturnedResults_ReturnsEmptyList(RecentFilesMethod<T> recentFilesMethod, String methodName)
             throws SleuthkitCaseProviderException, TskCoreException {
 
-        Pair<SleuthkitCase, Blackboard> casePair = getArtifactsTSKMock(Collections.emptyList());
+        Pair<SleuthkitCase, Blackboard> casePair = DataSourceSummaryMockUtils.getArtifactsTSKMock(Collections.emptyList());
         RecentFilesSummary summary = new RecentFilesSummary(() -> casePair.getLeft());
         DataSource dataSource = TskMockUtils.getDataSource(1);
         List<? extends T> items = recentFilesMethod.fetch(summary, dataSource, 10);
@@ -278,7 +278,7 @@ public class RecentFilesSummaryTest {
             }
 
             // run through method
-            Pair<SleuthkitCase, Blackboard> casePair = getArtifactsTSKMock(RandomizationUtils.getMixedUp(artifacts));
+            Pair<SleuthkitCase, Blackboard> casePair = DataSourceSummaryMockUtils.getArtifactsTSKMock(RandomizationUtils.getMixedUp(artifacts));
             RecentFilesSummary summary = new RecentFilesSummary(() -> casePair.getLeft());
             List<RecentFileDetails> results = summary.getRecentlyOpenedDocuments(dataSource, countRequest);
 
@@ -306,7 +306,7 @@ public class RecentFilesSummaryTest {
 //        List<BlackboardArtifact> artifacts = Arrays.asList(nullTime, zeroTime, nullPath, emptyPath, blankPath, successItem);
 
         List<BlackboardArtifact> artifacts = Arrays.asList(nullTime, zeroTime, successItem);
-        Pair<SleuthkitCase, Blackboard> casePair = getArtifactsTSKMock(RandomizationUtils.getMixedUp(artifacts));
+        Pair<SleuthkitCase, Blackboard> casePair = DataSourceSummaryMockUtils.getArtifactsTSKMock(RandomizationUtils.getMixedUp(artifacts));
         RecentFilesSummary summary = new RecentFilesSummary(() -> casePair.getLeft());
         List<RecentFileDetails> results = summary.getRecentlyOpenedDocuments(dataSource, 10);
 
@@ -357,7 +357,7 @@ public class RecentFilesSummaryTest {
             }
 
             // call method
-            Pair<SleuthkitCase, Blackboard> casePair = getArtifactsTSKMock(RandomizationUtils.getMixedUp(artifacts));
+            Pair<SleuthkitCase, Blackboard> casePair = DataSourceSummaryMockUtils.getArtifactsTSKMock(RandomizationUtils.getMixedUp(artifacts));
             RecentFilesSummary summary = new RecentFilesSummary(() -> casePair.getLeft());
             List<RecentDownloadDetails> results = summary.getRecentDownloads(dataSource, countRequest);
 
@@ -387,7 +387,7 @@ public class RecentFilesSummaryTest {
 //        blankPathAndDomain, successItem);
 
         List<BlackboardArtifact> artifacts = Arrays.asList(nullTime, zeroTime, successItem);
-        Pair<SleuthkitCase, Blackboard> casePair = getArtifactsTSKMock(RandomizationUtils.getMixedUp(artifacts));
+        Pair<SleuthkitCase, Blackboard> casePair = DataSourceSummaryMockUtils.getArtifactsTSKMock(RandomizationUtils.getMixedUp(artifacts));
         RecentFilesSummary summary = new RecentFilesSummary(() -> casePair.getLeft());
 
         // call method
@@ -411,7 +411,7 @@ public class RecentFilesSummaryTest {
         private final boolean associatedAttrFormed;
         private final String emailFrom;
         private final Long messageTime;
-        private final boolean hasParent;
+        private final boolean isParent;
         private final String fileParentPath;
         private final String fileName;
 
@@ -441,7 +441,7 @@ public class RecentFilesSummaryTest {
             this.associatedAttrFormed = associatedAttrFormed;
             this.emailFrom = emailFrom;
             this.messageTime = messageTime;
-            this.hasParent = hasParent;
+            this.isParent = hasParent;
             this.fileParentPath = fileParentPath;
             this.fileName = fileName;
         }
@@ -477,7 +477,7 @@ public class RecentFilesSummaryTest {
         }
 
         boolean hasParent() {
-            return hasParent;
+            return isParent;
         }
 
         String getFileParentPath() {
@@ -631,7 +631,7 @@ public class RecentFilesSummaryTest {
                 Assert.assertEquals(dateTimeRetriever.apply(i), result.getDateAsLong());
                 Assert.assertTrue(emailFromRetriever.apply(i).equalsIgnoreCase(result.getSender()));
                 Assert.assertTrue(Paths.get(pathRetriever.apply(i), fileNameRetriever.apply(i)).toString()
-                        .equalsIgnoreCase(result.getPath()));;
+                        .equalsIgnoreCase(result.getPath()));
             }
         }
     }
