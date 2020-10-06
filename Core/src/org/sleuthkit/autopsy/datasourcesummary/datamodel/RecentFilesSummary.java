@@ -244,7 +244,7 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
             }
 
             BlackboardArtifact messageArtifact = skCase.getBlackboardArtifact(attribute.getValueLong());
-            if (isMessageArtifact(messageArtifact)) {
+            if (messageArtifact != null && isMessageArtifact(messageArtifact)) {
                 Content content = artifact.getParent();
                 if (content instanceof AbstractFile) {
                     String sender;

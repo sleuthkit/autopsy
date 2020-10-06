@@ -298,13 +298,9 @@ public class RecentFilesSummaryTest {
 
         BlackboardArtifact successItem = getRecentDocumentArtifact(dataSource, 1001, DAY_SECONDS, "/a/path");
         BlackboardArtifact nullTime = getRecentDocumentArtifact(dataSource, 1002, null, "/a/path2");
-        BlackboardArtifact zeroTime = getRecentDocumentArtifact(dataSource, 10021, 0L, "/a/path2a");
-//        BlackboardArtifact nullPath = getRecentDocumentArtifact(dataSource, 1003, DAY_SECONDS * 2, null);
-//        BlackboardArtifact emptyPath = getRecentDocumentArtifact(dataSource, 1004, DAY_SECONDS * 3, "");
-//        BlackboardArtifact blankPath = getRecentDocumentArtifact(dataSource, 1005, DAY_SECONDS * 4, "    ");        
-//        List<BlackboardArtifact> artifacts = Arrays.asList(nullTime, zeroTime, nullPath, emptyPath, blankPath, successItem);
-
+        BlackboardArtifact zeroTime = getRecentDocumentArtifact(dataSource, 10021, 0L, "/a/path2a");      
         List<BlackboardArtifact> artifacts = Arrays.asList(nullTime, zeroTime, successItem);
+
         Pair<SleuthkitCase, Blackboard> casePair = DataSourceSummaryMockUtils.getArtifactsTSKMock(RandomizationUtils.getMixedUp(artifacts));
         RecentFilesSummary summary = new RecentFilesSummary(() -> casePair.getLeft());
         List<RecentFileDetails> results = summary.getRecentlyOpenedDocuments(dataSource, 10);
@@ -379,13 +375,8 @@ public class RecentFilesSummaryTest {
         BlackboardArtifact successItem = getRecentDownloadArtifact(dataSource, 1001, DAY_SECONDS, "domain1.com", "/a/path1");
         BlackboardArtifact nullTime = getRecentDownloadArtifact(dataSource, 1002, null, "domain2.com", "/a/path2");
         BlackboardArtifact zeroTime = getRecentDownloadArtifact(dataSource, 10021, 0L, "domain2a.com", "/a/path2a");
-//        BlackboardArtifact nullPathAndDomain = getRecentDownloadArtifact(dataSource, 1003, DAY_SECONDS * 2, null, null);
-//        BlackboardArtifact emptyPathAndDomain = getRecentDownloadArtifact(dataSource, 1004, DAY_SECONDS * 3, "", "");
-//        BlackboardArtifact blankPathAndDomain = getRecentDownloadArtifact(dataSource, 1005, DAY_SECONDS * 4, "    ", "    ");       
-//        List<BlackboardArtifact> artifacts = Arrays.asList(nullTime, zeroTime, nullPathAndDomain, emptyPathAndDomain, 
-//        blankPathAndDomain, successItem);
-
         List<BlackboardArtifact> artifacts = Arrays.asList(nullTime, zeroTime, successItem);
+
         Pair<SleuthkitCase, Blackboard> casePair = DataSourceSummaryMockUtils.getArtifactsTSKMock(RandomizationUtils.getMixedUp(artifacts));
         RecentFilesSummary summary = new RecentFilesSummary(() -> casePair.getLeft());
 
@@ -510,6 +501,10 @@ public class RecentFilesSummaryTest {
 
         BlackboardAttribute associatedAttr = TskMockUtils.getAttribute(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, associatedId);
 
+        if (item.getMessageArtifactTypeId() == null) {
+            return associatedAttr;
+        }
+        
         // find the artifact type or null if not found
         ARTIFACT_TYPE messageType = Stream.of(ARTIFACT_TYPE.values())
                 .filter((artType) -> artType.getTypeID() == item.getMessageArtifactTypeId())
@@ -650,26 +645,17 @@ public class RecentFilesSummaryTest {
                 "person2@sleuthkit.com", null, "/parent/path", "msg2.pdf");
         AttachmentArtifactItem zeroTimeStamp = new AttachmentArtifactItem(ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID(),
                 "person2a@sleuthkit.com", 0L, "/parent/path", "msg2a.png");
+        AttachmentArtifactItem noParentFile = new AttachmentArtifactItem(ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID(),
+                "person4@sleuthkit.com", DAY_SECONDS + 4, "/parent/path", "msg4.jpg", true, false);
+        AttachmentArtifactItem noAssocAttr = new AttachmentArtifactItem(ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID(),
+                "person3@sleuthkit.com", DAY_SECONDS + 5, "/parent/path", "msg5.gif", false, true);
+        AttachmentArtifactItem missingAssocArt = new AttachmentArtifactItem(null,
+                "person3@sleuthkit.com", DAY_SECONDS + 6, "/parent/path", "msg6.pdf");
 
-//        AttachmentArtifactItem noParentFile = new AttachmentArtifactItem(ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID(),
-//                "person4@sleuthkit.com", DAY_SECONDS + 4, "/parent/path", "msg4.jpg", true, false);
-//        AttachmentArtifactItem noAssocAttr = new AttachmentArtifactItem(ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID(),
-//                "person3@sleuthkit.com", DAY_SECONDS + 5, "/parent/path", "msg5.gif", false, true);
-//        AttachmentArtifactItem missingAssocArt = new AttachmentArtifactItem(null,
-//                "person3@sleuthkit.com", DAY_SECONDS + 6, "/parent/path", "msg6.pdf");
-//        AttachmentArtifactItem noFrom1 = new AttachmentArtifactItem(ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID(),
-//                null, DAY_SECONDS + 3, "/parent/path", "msg7.pdf");
-//        AttachmentArtifactItem noFrom2 = new AttachmentArtifactItem(ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID(),
-//                "person3@sleuthkit.com", DAY_SECONDS + 7, "/parent/path", "msg8.png");
-//        AttachmentArtifactItem noPath = new AttachmentArtifactItem(ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID(),
-//                "person3@sleuthkit.com", DAY_SECONDS + 8, null, "msg9.bmp");
-//        AttachmentArtifactItem noFile = new AttachmentArtifactItem(ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID(),
-//                "person3@sleuthkit.com", DAY_SECONDS + 9, "/parent/path", null);
-//        List<AttachmentArtifactItem> items = Arrays.asList(successItem, successItem2,
-//                wrongArtType, missingTimeStamp, zeroTimeStamp,
-//                noParentFile, noAssocAttr, missingAssocArt, noFrom1, noFrom2, noPath, noFile);
         List<AttachmentArtifactItem> items = Arrays.asList(successItem, successItem2,
-                wrongArtType, missingTimeStamp, zeroTimeStamp);
+                wrongArtType, missingTimeStamp, zeroTimeStamp,
+                noParentFile, noAssocAttr, missingAssocArt);
+
         Pair<SleuthkitCase, Blackboard> casePair = getRecentAttachmentArtifactCase(items);
         RecentFilesSummary summary = new RecentFilesSummary(() -> casePair.getLeft());
 
