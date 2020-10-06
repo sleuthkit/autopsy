@@ -136,7 +136,7 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
                 }
             }
 
-            if (accessedTime != null) {
+            if (accessedTime != null && accessedTime != 0) {
                 fileDetails.add(new RecentFileDetails(path, accessedTime));
             }
         }
@@ -213,7 +213,7 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
         if (dataSource == null) {
             return Collections.emptyList();
         }
-        
+
         if (maxCount < 0) {
             throw new IllegalArgumentException("Invalid maxCount passed to getRecentAttachments, value must be equal to or greater than 0");
         }
