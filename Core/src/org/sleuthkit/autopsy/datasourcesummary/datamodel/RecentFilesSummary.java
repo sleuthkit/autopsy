@@ -189,7 +189,7 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
                     path = attribute.getValueString();
                 }
             }
-            if (accessedTime != null) {
+            if (accessedTime != null && accessedTime != 0L) {
                 fileDetails.add(new RecentDownloadDetails(path, accessedTime, domain));
             }
         }

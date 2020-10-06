@@ -200,8 +200,7 @@ public class RecentFilesSummaryTest {
 
     @Test
     public void getRecentlyOpenedDocuments_sortedByDateTimeAndLimited() throws SleuthkitCaseProviderException, TskCoreException {
-        Function<Integer, String> pathRetriever = (idx) -> "C:\\path\\to\\downloads\\" + idx;
-        // run through method
+        Function<Integer, String> pathRetriever = (idx) -> "/path/to/downloads/" + idx;
         DataSource dataSource = TskMockUtils.getDataSource(1);
 
         int countRequest = 10;
@@ -214,6 +213,7 @@ public class RecentFilesSummaryTest {
                 artifacts.add(artifact);
             }
 
+            // run through method
             Pair<SleuthkitCase, Blackboard> casePair = getArtifactsTSKMock(RandomizationUtils.getMixedUp(artifacts));
             RecentFilesSummary summary = new RecentFilesSummary(() -> casePair.getLeft());
             List<RecentFileDetails> results = summary.getRecentlyOpenedDocuments(dataSource, countRequest);
@@ -230,8 +230,27 @@ public class RecentFilesSummaryTest {
     }
 
     @Test
-    public void getRecentlyOpenedDocuments_filtersMissingData() {
+    public void getRecentlyOpenedDocuments_filtersMissingData() throws SleuthkitCaseProviderException, TskCoreException {
+        DataSource dataSource = TskMockUtils.getDataSource(1);
 
+        BlackboardArtifact successItem = getRecentDocumentArtifact(dataSource, 1001, DAY_SECONDS, "/a/path");
+        BlackboardArtifact failItem1 = getRecentDocumentArtifact(dataSource, 1002, null, "/a/path2");
+        BlackboardArtifact failItem1a = getRecentDocumentArtifact(dataSource, 10021, 0L, "/a/path2a");
+//        BlackboardArtifact failItem2 = getRecentDocumentArtifact(dataSource, 1003, DAY_SECONDS * 2, null);
+//        BlackboardArtifact failItem3 = getRecentDocumentArtifact(dataSource, 1004, DAY_SECONDS * 3, "");
+//        BlackboardArtifact failItem4 = getRecentDocumentArtifact(dataSource, 1005, DAY_SECONDS * 4, "    ");        
+//        List<BlackboardArtifact> artifacts = Arrays.asList(failItem1, failItem2, failItem3, failItem4, successItem);
+
+        List<BlackboardArtifact> artifacts = Arrays.asList(failItem1, successItem);
+        Pair<SleuthkitCase, Blackboard> casePair = getArtifactsTSKMock(RandomizationUtils.getMixedUp(artifacts));
+        RecentFilesSummary summary = new RecentFilesSummary(() -> casePair.getLeft());
+        List<RecentFileDetails> results = summary.getRecentlyOpenedDocuments(dataSource, 10);
+
+        // verify results
+        Assert.assertNotNull(results);
+        Assert.assertEquals(1, results.size());
+        Assert.assertEquals((Long) DAY_SECONDS, (Long) results.get(0).getDateAsLong());
+        Assert.assertTrue("/a/path".equalsIgnoreCase(results.get(0).getPath()));
     }
 
     private BlackboardArtifact getRecentDownloadArtifact(DataSource ds, long artifactId, Long dateTime, String domain, String path) {
@@ -245,7 +264,7 @@ public class RecentFilesSummaryTest {
     @Test
     public void getRecentDownloads_sortedByDateTimeAndLimited() throws SleuthkitCaseProviderException, TskCoreException {
         Function<Integer, String> domainRetriever = (idx) -> String.format("www.domain%d.com", idx);
-        Function<Integer, String> pathRetriever = (idx) -> "C:\\path\\to\\downloads\\doc" + idx + ".pdf";
+        Function<Integer, String> pathRetriever = (idx) -> "/path/to/downloads/doc" + idx + ".pdf";
 
         // run through method
         DataSource dataSource = TskMockUtils.getDataSource(1);
@@ -279,8 +298,27 @@ public class RecentFilesSummaryTest {
     }
 
     @Test
-    public void getRecentDownloads_filtersMissingData() {
+    public void getRecentDownloads_filtersMissingData() throws SleuthkitCaseProviderException, TskCoreException {
+        DataSource dataSource = TskMockUtils.getDataSource(1);
 
+        BlackboardArtifact successItem = getRecentDownloadArtifact(dataSource, 1001, DAY_SECONDS, "domain1.com", "/a/path1");
+        BlackboardArtifact failItem1 = getRecentDownloadArtifact(dataSource, 1002, null, "domain2.com", "/a/path2");
+        BlackboardArtifact failItem1a = getRecentDownloadArtifact(dataSource, 10021, 0L, "domain2a.com", "/a/path2a");
+//        BlackboardArtifact failItem2 = getRecentDownloadArtifact(dataSource, 1003, DAY_SECONDS * 2, null, null);
+//        BlackboardArtifact failItem3 = getRecentDownloadArtifact(dataSource, 1004, DAY_SECONDS * 3, "", "");
+//        BlackboardArtifact failItem4 = getRecentDownloadArtifact(dataSource, 1005, DAY_SECONDS * 4, "    ", "    ");       
+//        List<BlackboardArtifact> artifacts = Arrays.asList(failItem1, failItem1a, failItem2, failItem3, failItem4, successItem);
+
+        List<BlackboardArtifact> artifacts = Arrays.asList(failItem1, failItem1a, successItem);
+        Pair<SleuthkitCase, Blackboard> casePair = getArtifactsTSKMock(RandomizationUtils.getMixedUp(artifacts));
+        RecentFilesSummary summary = new RecentFilesSummary(() -> casePair.getLeft());
+        List<RecentDownloadDetails> results = summary.getRecentDownloads(dataSource, 10);
+
+        // verify results
+        Assert.assertNotNull(results);
+        Assert.assertEquals(1, results.size());
+        Assert.assertEquals((Long) DAY_SECONDS, (Long) results.get(0).getDateAsLong());
+        Assert.assertTrue("/a/path1".equalsIgnoreCase(results.get(0).getPath()));
     }
 
     private class AttachmentArtifactItem {
@@ -412,7 +450,7 @@ public class RecentFilesSummaryTest {
         // run through method
         DataSource dataSource = TskMockUtils.getDataSource(1);
         Function<Integer, String> emailFromRetriever = (idx) -> String.format("person%d@basistech.com", idx);
-        Function<Integer, String> pathRetriever = (idx) -> "C:\\path\\to\\attachment\\" + idx;
+        Function<Integer, String> pathRetriever = (idx) -> "/path/to/attachment/" + idx;
         Function<Integer, String> fileNameRetriever = (idx) -> String.format("%d-filename.png", idx);
 
         int countRequest = 10;
@@ -444,17 +482,61 @@ public class RecentFilesSummaryTest {
     }
 
     @Test
-    public void getRecentAttachments_filtersMissingData() {
+    public void getRecentAttachments_filterData() throws SleuthkitCaseProviderException, TskCoreException {
+        DataSource dataSource = TskMockUtils.getDataSource(1);
 
-    }
+        AttachmentArtifactItem successItem = new AttachmentArtifactItem(ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID(),
+                "person@sleuthkit.com", DAY_SECONDS, "/parent/path", "msg.pdf");
+        AttachmentArtifactItem successItem2 = new AttachmentArtifactItem(ARTIFACT_TYPE.TSK_MESSAGE.getTypeID(),
+                "person_on_skype", DAY_SECONDS + 1, "/parent/path/to/skype", "skype.png");
+        AttachmentArtifactItem wrongArtType = new AttachmentArtifactItem(ARTIFACT_TYPE.TSK_CALLLOG.getTypeID(),
+                "5555675309", DAY_SECONDS + 2, "/path/to/callog/info", "callog.dat");
+        AttachmentArtifactItem missingTimeStamp = new AttachmentArtifactItem(ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID(),
+                "person2@sleuthkit.com", null, "/parent/path", "msg2.pdf");
+        AttachmentArtifactItem zeroTimeStamp = new AttachmentArtifactItem(ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID(),
+                "person2a@sleuthkit.com", 0L, "/parent/path", "msg2a.png");
 
-    @Test
-    public void getRecentAttachments_handlesMalformed() {
+//        AttachmentArtifactItem noParentFile = new AttachmentArtifactItem(ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID(),
+//                "person4@sleuthkit.com", DAY_SECONDS + 4, "/parent/path", "msg4.jpg", true, false);
+//        AttachmentArtifactItem noAssocAttr = new AttachmentArtifactItem(ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID(),
+//                "person3@sleuthkit.com", DAY_SECONDS + 5, "/parent/path", "msg5.gif", false, true);
+//        AttachmentArtifactItem missingAssocArt = new AttachmentArtifactItem(null,
+//                "person3@sleuthkit.com", DAY_SECONDS + 6, "/parent/path", "msg6.pdf");
+//        AttachmentArtifactItem noFrom1 = new AttachmentArtifactItem(ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID(),
+//                null, DAY_SECONDS + 3, "/parent/path", "msg7.pdf");
+//        AttachmentArtifactItem noFrom2 = new AttachmentArtifactItem(ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID(),
+//                "person3@sleuthkit.com", DAY_SECONDS + 7, "/parent/path", "msg8.png");
+//        AttachmentArtifactItem noPath = new AttachmentArtifactItem(ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID(),
+//                "person3@sleuthkit.com", DAY_SECONDS + 8, null, "msg9.bmp");
+//        AttachmentArtifactItem noFile = new AttachmentArtifactItem(ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID(),
+//                "person3@sleuthkit.com", DAY_SECONDS + 8, "/parent/path", null);
+//        
+//        List<AttachmentArtifactItem> items = Arrays.asList(successItem, successItem2, 
+//                wrongArtType, missingTimeStamp, zeroTimeStamp, 
+//                noParentFile, noAssocAttr, missingAssocArt, noFrom1, noFrom2, noPath, noFile);
 
-    }
+        List<AttachmentArtifactItem> items = Arrays.asList(successItem, successItem2, 
+                wrongArtType, missingTimeStamp, zeroTimeStamp);
+        
+        Pair<SleuthkitCase, Blackboard> casePair = getRecentAttachmentArtifactCase(items);
+        RecentFilesSummary summary = new RecentFilesSummary(() -> casePair.getLeft());
+        List<RecentAttachmentDetails> results = summary.getRecentAttachments(dataSource, 10);
 
-    @Test
-    public void getRecentAttachments_onlyUsesMessageArtifacts() {
+        
+        // verify results
+        Assert.assertNotNull(results);
+        Assert.assertEquals(2, results.size());
+        RecentAttachmentDetails successItem2Details = results.get(0);
+        RecentAttachmentDetails successItemDetails = results.get(1);
+        
+        Assert.assertEquals((Long) successItemDetails.getDateAsLong(), (Long) DAY_SECONDS);
+        Assert.assertTrue(Paths.get(successItem.getFileParentPath(), successItem.getFileName())
+                .toString().equalsIgnoreCase(successItemDetails.getPath()));
+        Assert.assertTrue(successItem.getEmailFrom().equalsIgnoreCase(successItemDetails.getSender()));
 
+        Assert.assertEquals((Long) successItem2Details.getDateAsLong(), (Long) (DAY_SECONDS + 1));
+        Assert.assertTrue(Paths.get(successItem2.getFileParentPath(), successItem2.getFileName())
+                .toString().equalsIgnoreCase(successItem2Details.getPath()));
+        Assert.assertTrue(successItem2.getEmailFrom().equalsIgnoreCase(successItem2Details.getSender()));
     }
 }
