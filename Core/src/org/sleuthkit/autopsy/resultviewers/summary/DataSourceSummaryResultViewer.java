@@ -26,7 +26,7 @@ import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
-import org.sleuthkit.autopsy.casemodule.datasourcesummary.DataSourceSummaryTabbedPane;
+import org.sleuthkit.autopsy.datasourcesummary.ui.DataSourceSummaryTabbedPane;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.corecomponents.AbstractDataResultViewer;
 import org.sleuthkit.datamodel.DataSource;
@@ -116,7 +116,9 @@ public class DataSourceSummaryResultViewer extends AbstractDataResultViewer {
 
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         try {
-            summaryPanel.setDataSource(dataSource);
+            if (summaryPanel != null) {
+                summaryPanel.setDataSource(dataSource);
+            }
         } finally {
             this.setCursor(null);
         }
@@ -133,5 +135,12 @@ public class DataSourceSummaryResultViewer extends AbstractDataResultViewer {
         add(summaryPanel, BorderLayout.CENTER);
     }
 
+    @Override
+    public void clearComponent() {
+        summaryPanel.close();
+        summaryPanel = null;
+    }
+
     private DataSourceSummaryTabbedPane summaryPanel;
+
 }

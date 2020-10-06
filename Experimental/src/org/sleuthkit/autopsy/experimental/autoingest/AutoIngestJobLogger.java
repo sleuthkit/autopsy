@@ -73,7 +73,7 @@ final class AutoIngestJobLogger {
          */
         INFO,
         /**
-         * Qualifies a log message about an unexpected event or condtion during
+         * Qualifies a log message about an unexpected event or condition during
          * automated ingest processing.
          */
         WARNING,
@@ -193,6 +193,18 @@ final class AutoIngestJobLogger {
     void logDataSourceProcessorSelected(String dsp) throws InterruptedException {
         log(MessageCategory.INFO, "Using data source processor: " + dsp);
     }
+    
+    /**
+     * Log that a data source is being skipped.
+     * 
+     * @param dataSourceName The name of the data source
+     * 
+     * @throws AutoIngestJobLogger.AutoIngestJobLoggerException
+     * @throws InterruptedException 
+     */
+    void logSkippingDataSource(String dataSourceName) throws InterruptedException {
+        log(MessageCategory.INFO, "File type can not currently be processed");
+    }    
 
     /**
      * Logs the failure of the selected data source processor.
@@ -245,6 +257,19 @@ final class AutoIngestJobLogger {
     void logIngestJobSettingsErrors() throws InterruptedException {
         log(MessageCategory.ERROR, "Failed to analyze data source due to settings errors");
     }
+    
+    /**
+     * Logs failure to analyze a data source, possibly due to ingest job settings errors.
+     * Used with streaming ingest since incorrect settings are the most likely cause
+     * of the error.
+     *
+     * @throws InterruptedException         if interrupted while blocked waiting
+     *                                      to acquire an exclusive lock on the
+     *                                      log file.
+     */
+    void logProbableIngestJobSettingsErrors() throws InterruptedException {
+        log(MessageCategory.ERROR, "Failed to analyze data source, probably due to ingest settings errors");
+    }    
 
     /**
      * Logs failure to analyze a data source due to ingest module startup

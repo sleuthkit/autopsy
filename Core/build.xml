@@ -48,6 +48,11 @@
         <copy todir="${basedir}/release/gstreamer" >
             <fileset dir="${thirdparty.dir}/gstreamer"/>
         </copy>
+        
+        <!--Copy iLeapp to release-->
+        <copy todir="${basedir}/release/iLeapp" >
+            <fileset dir="${thirdparty.dir}/iLeapp"/>
+        </copy>
 		
         <!--Copy 7-Zip to release-->
         <copy todir="${basedir}/release/7-Zip" >
@@ -62,6 +67,11 @@
         <!--Copy OfficialHashSets to release-->
         <copy todir="${basedir}/release/OfficialHashSets" >
             <fileset dir="${thirdparty.dir}/OfficialHashSets"/>
+        </copy>
+        
+        <!--Copy ImageMagick to release-->
+        <copy todir="${basedir}/release/ImageMagick-7.0.10-27-portable-Q16-x64" >
+            <fileset dir="${thirdparty.dir}/ImageMagick-7.0.10-27-portable-Q16-x64"/>
         </copy>
 
         <!-- The 'libgstlibav.dll' file is too big to store on GitHub, so we

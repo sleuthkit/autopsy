@@ -30,17 +30,23 @@ import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.JButton;
 import javax.swing.SwingWorker;
+import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoAccount;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.centralrepository.datamodel.Persona;
 import org.sleuthkit.autopsy.centralrepository.datamodel.PersonaAccount;
 import org.sleuthkit.autopsy.centralrepository.persona.PersonaDetailsDialog;
 import org.sleuthkit.autopsy.centralrepository.persona.PersonaDetailsDialogCallback;
 import org.sleuthkit.autopsy.centralrepository.persona.PersonaDetailsMode;
+import org.sleuthkit.autopsy.centralrepository.persona.PersonaDetailsPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.CommunicationsManager;
+import org.sleuthkit.datamodel.InvalidAccountIDException;
 
 /**
  * SwingWorker for fetching and updating Persona controls.
@@ -173,11 +179,43 @@ class PersonaAccountFetcher extends SwingWorker<Map<String, Collection<Persona>>
             this.personaSearcherData = personaSearcherData;
         }
 
+        @NbBundle.Messages({
+            "PersonaAccountFetcher.account.justification=Account found in Call Log artifact"
+        })
         @Override
         public void actionPerformed(java.awt.event.ActionEvent evt) {
             // Launch the Persona Create dialog
-            new PersonaDetailsDialog(parentComponent,
-                    PersonaDetailsMode.CREATE, null, new PersonaCreateCallbackImpl(parentComponent, personaSearcherData));
+            
+            PersonaDetailsDialog dialog = new PersonaDetailsDialog(parentComponent,
+                    PersonaDetailsMode.CREATE, null, new PersonaCreateCallbackImpl(parentComponent, personaSearcherData), false);
+            
+            // Pre populate the persona name and accounts if we have them.
+            PersonaDetailsPanel personaPanel = dialog.getDetailsPanel();
+            
+            // Set a default name
+            personaPanel.setPersonaName(personaSearcherData.getAccountIdentifer());
+            
+            // Set up each matching account. We don't know what type of account we have, so check all the types to 
+            // find any matches.
+            try {
+                for (CentralRepoAccount.CentralRepoAccountType type : CentralRepository.getInstance().getAllAccountTypes()) {
+                    try {
+                        // Try to load any matching accounts of this type. Throws an InvalidAccountIDException if the account is the
+                        // wrong format (i.e., when we try to load email accounts for a phone number-type string).
+                        CentralRepoAccount account = CentralRepository.getInstance().getAccount(type, personaSearcherData.getAccountIdentifer());
+                        if (account != null) {
+                            personaPanel.addAccount(account, Bundle.PersonaAccountFetcher_account_justification(), Persona.Confidence.HIGH);
+                        }
+                    } catch (InvalidAccountIDException ex2) {
+                        // These are expected when the account identifier doesn't match the format of the account type.
+                    }
+                }
+            } catch (CentralRepoException ex) {
+                logger.log(Level.SEVERE, "Error looking up account types in the central repository", ex);
+            }
+            
+            // display the dialog now
+            dialog.display();
         }
     }
 
