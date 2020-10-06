@@ -32,7 +32,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Common tools for mocking in data source summary.
  */
-public class DataSourceSummaryMockUtils {
+public final class DataSourceSummaryMockUtils {
 
     /**
      * Creates a pair of a mock SleuthkitCase and mock Blackboard.

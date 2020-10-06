@@ -647,12 +647,13 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
      */
     private TopProgramsResult getTopProgramsResult(BlackboardArtifact artifact) {
         String programName = DataSourceInfoUtilities.getStringOrNull(artifact, TYPE_PROG_NAME);
-        String path = DataSourceInfoUtilities.getStringOrNull(artifact, TYPE_PATH);
 
         // ignore items with no name or a ntos boot identifier
         if (StringUtils.isBlank(programName) || NTOS_BOOT_IDENTIFIER.equalsIgnoreCase(programName)) {
             return null;
         }
+
+        String path = DataSourceInfoUtilities.getStringOrNull(artifact, TYPE_PATH);
 
         // ignore windows directory
         if (StringUtils.startsWithIgnoreCase(path, WINDOWS_PREFIX)) {
@@ -773,7 +774,7 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
                 .collect(Collectors.toList());
 
         // only limit the list to count if there is no last run date and no run times.
-        if (orderedResults.size() > 0) {
+        if (!orderedResults.isEmpty()) {
             TopProgramsResult topResult = orderedResults.get(0);
             // if run times / last run information is available, the first item should have some value,
             // and then the items should be limited accordingly.

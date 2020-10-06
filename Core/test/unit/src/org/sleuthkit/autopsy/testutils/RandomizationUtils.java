@@ -24,7 +24,7 @@ import java.util.List;
 /**
  * Tools for pseudo-randomization.
  */
-public class RandomizationUtils {
+public final class RandomizationUtils {
 
     /**
      * Returns list in 0, n-1, 1, n-2 ... order. Deterministic so same results
