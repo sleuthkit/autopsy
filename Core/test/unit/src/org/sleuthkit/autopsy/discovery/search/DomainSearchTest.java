@@ -48,7 +48,7 @@ public class DomainSearchTest {
         };
         when(cache.get(null, new ArrayList<>(), null, null, null, null, null)).thenReturn(dummyData);
 
-        DomainSearch domainSearch = new DomainSearch(cache, null);
+        DomainSearch domainSearch = new DomainSearch(cache, null, null);
         Map<GroupKey, Integer> sizes = domainSearch.getGroupSizes(null, 
                 new ArrayList<>(), null, null, null, null, null);
         assertEquals(4, sizes.get(groupOne).longValue());
@@ -83,7 +83,7 @@ public class DomainSearchTest {
 
         when(cache.get(null, new ArrayList<>(), null, null, null, null, null)).thenReturn(dummyData);
 
-        DomainSearch domainSearch = new DomainSearch(cache, null);
+        DomainSearch domainSearch = new DomainSearch(cache, null, null);
         Map<GroupKey, Integer> sizes = domainSearch.getGroupSizes(null, 
                 new ArrayList<>(), null, null, null, null, null);
         assertEquals(4, sizes.get(groupOne).longValue());
@@ -97,7 +97,7 @@ public class DomainSearchTest {
 
         when(cache.get(null, new ArrayList<>(), null, null, null, null, null)).thenReturn(new HashMap<>());
 
-        DomainSearch domainSearch = new DomainSearch(cache, null);
+        DomainSearch domainSearch = new DomainSearch(cache, null, null);
         Map<GroupKey, Integer> sizes = domainSearch.getGroupSizes(null, 
                 new ArrayList<>(), null, null, null, null, null);
         assertEquals(0, sizes.size());
@@ -122,7 +122,7 @@ public class DomainSearchTest {
 
         when(cache.get(null, new ArrayList<>(), null, null, null, null, null)).thenReturn(dummyData);
 
-        DomainSearch domainSearch = new DomainSearch(cache, null);
+        DomainSearch domainSearch = new DomainSearch(cache, null, null);
         List<Result> firstPage = domainSearch.getDomainsInGroup(null, 
                 new ArrayList<>(), null, null, null, groupOne, 0, 3, null, null);
         assertEquals(3, firstPage.size());
@@ -150,7 +150,7 @@ public class DomainSearchTest {
 
         when(cache.get(null, new ArrayList<>(), null, null, null, null, null)).thenReturn(dummyData);
 
-        DomainSearch domainSearch = new DomainSearch(cache, null);
+        DomainSearch domainSearch = new DomainSearch(cache, null, null);
         List<Result> firstPage = domainSearch.getDomainsInGroup(null, 
                 new ArrayList<>(), null, null, null, groupOne, 0, 100, null, null);
         assertEquals(4, firstPage.size());
@@ -178,7 +178,7 @@ public class DomainSearchTest {
 
         when(cache.get(null, new ArrayList<>(), null, null, null, null, null)).thenReturn(dummyData);
 
-        DomainSearch domainSearch = new DomainSearch(cache, null);
+        DomainSearch domainSearch = new DomainSearch(cache, null, null);
         List<Result> firstPage = domainSearch.getDomainsInGroup(null, 
                 new ArrayList<>(), null, null, null, groupOne, 0, 2, null, null);
         assertEquals(2, firstPage.size());
@@ -206,7 +206,7 @@ public class DomainSearchTest {
 
         when(cache.get(null, new ArrayList<>(), null, null, null, null, null)).thenReturn(dummyData);
 
-        DomainSearch domainSearch = new DomainSearch(cache, null);
+        DomainSearch domainSearch = new DomainSearch(cache, null, null);
         List<Result> firstPage = domainSearch.getDomainsInGroup(null, 
                 new ArrayList<>(), null, null, null, groupOne, 3, 1, null, null);
         assertEquals(1, firstPage.size());
@@ -232,7 +232,7 @@ public class DomainSearchTest {
 
         when(cache.get(null, new ArrayList<>(), null, null, null, null, null)).thenReturn(dummyData);
 
-        DomainSearch domainSearch = new DomainSearch(cache, null);
+        DomainSearch domainSearch = new DomainSearch(cache, null, null);
         List<Result> firstPage = domainSearch.getDomainsInGroup(null, 
                 new ArrayList<>(), null, null, null, groupOne, 20, 5, null, null);
         assertEquals(0, firstPage.size());
@@ -257,7 +257,7 @@ public class DomainSearchTest {
 
         when(cache.get(null, new ArrayList<>(), null, null, null, null, null)).thenReturn(dummyData);
 
-        DomainSearch domainSearch = new DomainSearch(cache, null);
+        DomainSearch domainSearch = new DomainSearch(cache, null, null);
         List<Result> firstPage = domainSearch.getDomainsInGroup(null, 
                 new ArrayList<>(), null, null, null, groupOne, 0, 0, null, null);
         assertEquals(0, firstPage.size());
@@ -292,7 +292,7 @@ public class DomainSearchTest {
 
         when(cache.get(null, new ArrayList<>(), null, null, null, null, null)).thenReturn(dummyData);
 
-        DomainSearch domainSearch = new DomainSearch(cache, null);
+        DomainSearch domainSearch = new DomainSearch(cache, null, null);
         List<Result> firstPage = domainSearch.getDomainsInGroup(null, 
                 new ArrayList<>(), null, null, null, groupOne, 0, 3, null, null);
         assertEquals(3, firstPage.size());
@@ -327,7 +327,7 @@ public class DomainSearchTest {
 
         when(cache.get(null, new ArrayList<>(), null, null, null, null, null)).thenReturn(dummyData);
 
-        DomainSearch domainSearch = new DomainSearch(cache, null);
+        DomainSearch domainSearch = new DomainSearch(cache, null, null);
         List<Result> firstPage = domainSearch.getDomainsInGroup(null, 
                 new ArrayList<>(), null, null, null, groupTwo, 1, 2, null, null);
         assertEquals(2, firstPage.size());
@@ -359,7 +359,7 @@ public class DomainSearchTest {
 
         when(cache.get(null, new ArrayList<>(), null, null, null, null, null)).thenReturn(dummyData);
 
-        DomainSearch domainSearch = new DomainSearch(cache, null);
+        DomainSearch domainSearch = new DomainSearch(cache, null, null);
         
         int start = 0;
         int size = 2;

@@ -26,6 +26,7 @@ import java.util.Map;
 
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryKeyUtils.GroupKey;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
@@ -35,12 +36,14 @@ public class DomainSearch {
 
     private final DomainSearchCache searchCache;
     private final DomainSearchThumbnailCache thumbnailCache;
+    private final DomainSearchArtifactsCache artifactsCache;
 
     /**
      * Construct a new DomainSearch object.
      */
     public DomainSearch() {
-        this(new DomainSearchCache(), new DomainSearchThumbnailCache());
+        this(new DomainSearchCache(), new DomainSearchThumbnailCache(), 
+                new DomainSearchArtifactsCache());
     }
 
     /**
@@ -51,9 +54,11 @@ public class DomainSearch {
      * @param thumbnailCache The DomainSearchThumnailCache to use for this
      *                       DomainSearch.
      */
-    DomainSearch(DomainSearchCache cache, DomainSearchThumbnailCache thumbnailCache) {
+    DomainSearch(DomainSearchCache cache, DomainSearchThumbnailCache thumbnailCache, 
+            DomainSearchArtifactsCache artifactsCache) {
         this.searchCache = cache;
         this.thumbnailCache = thumbnailCache;
+        this.artifactsCache = artifactsCache;
     }
 
     /**
@@ -139,17 +144,40 @@ public class DomainSearch {
     }
 
     /**
-     * Get a thumbnail representation of a domain name. See
-     * DomainSearchThumbnailRequest for more details.
+     * Get a thumbnail representation of a domain name.
+     *
+     * Thumbnail candidates are JPEG files that have either TSK_WEB_DOWNLOAD or
+     * TSK_WEB_CACHE artifacts that match the domain name (see the DomainSearch
+     * getArtifacts() API). JPEG files are sorted by most recent if sourced from
+     * TSK_WEB_DOWNLOADs and by size if sourced from TSK_WEB_CACHE artifacts.
+     * The first suitable thumbnail is selected.
      *
      * @param thumbnailRequest Thumbnail request for domain.
      *
-     * @return An Image instance or null if no thumbnail is available.
+     * @return A thumbnail of the first matching JPEG, or a default thumbnail if
+     * no suitable JPEG exists.
      *
      * @throws DiscoveryException If there is an error with Discovery related
-     *                            processing.
+     * processing.
      */
     public Image getThumbnail(DomainSearchThumbnailRequest thumbnailRequest) throws DiscoveryException {
         return thumbnailCache.get(thumbnailRequest);
+    }
+
+    /**
+     * Get all blackboard artifacts that match the requested domain name.
+     *
+     * Artifacts will be selected if the requested domain name is either an
+     * exact match on a TSK_DOMAIN value or a substring match on a TSK_URL
+     * value. String matching is case insensitive.
+     *
+     * @param artifactsRequest The request containing the case, artifact type,
+     * and domain name.
+     * @return A list of blackboard artifacts that match the request criteria.
+     * @throws DiscoveryException If an exception is encountered during
+     * processing.
+     */
+    public List<BlackboardArtifact> getArtifacts(DomainSearchArtifactsRequest artifactsRequest) throws DiscoveryException {
+        return artifactsCache.get(artifactsRequest);
     }
 }

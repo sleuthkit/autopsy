@@ -39,10 +39,10 @@ import org.openide.util.ImageUtilities;
 
 /**
  * Loads a thumbnail for the given request. Thumbnail candidates are JPEG files
- * that are either TSK_WEB_DOWNLOAD or TSK_WEB_CACHE artifacts. JPEG files are
- * sorted by most recent if sourced from TSK_WEB_DOWNLOADs. JPEG files are
- * sorted by size if sourced from TSK_WEB_CACHE artifacts. Artifacts are first
- * loaded from the DomainSearchArtifactsCache and then further analyzed.
+ * that have either TSK_WEB_DOWNLOAD or TSK_WEB_CACHE artifacts that match the
+ * domain name (see the DomainSearch getArtifacts() API). JPEG files are sorted
+ * by most recent if sourced from TSK_WEB_DOWNLOADs and by size if sourced from
+ * TSK_WEB_CACHE artifacts. The first suitable thumbnail is selected.
  */
 public class DomainSearchThumbnailLoader extends CacheLoader<DomainSearchThumbnailRequest, Image> {
 

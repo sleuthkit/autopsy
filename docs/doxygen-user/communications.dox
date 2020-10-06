@@ -1,5 +1,8 @@
 /*! \page communications_page Communications Visualization Tool
 
+[TOC]
+
+
 \section cvt_overview Overview
 
 The Communications Visualization Tool gives a consolidated view of all communication events for the case. This allows an analyst to quickly view communications data such as:

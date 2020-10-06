@@ -575,10 +575,10 @@ final class ExtractEdge extends Extract {
         List<String> commandLine = new ArrayList<>();
         commandLine.add(dumperPath);
         commandLine.add("/table");  //NON-NLS
-        commandLine.add(String.format("\"%s\"",inputFilePath));
+        commandLine.add(inputFilePath);
         commandLine.add("*");  //NON-NLS
         commandLine.add("/scomma");  //NON-NLS
-        commandLine.add(String.format("\"%s\"",outputDir + "\\" + "*.csv"));  //NON-NLS
+        commandLine.add(outputDir + "\\" + "*.csv");  //NON-NLS
 
         ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
         processBuilder.redirectOutput(outputFilePath.toFile());

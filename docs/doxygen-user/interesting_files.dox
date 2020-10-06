@@ -1,5 +1,8 @@
 /*! \page interesting_files_identifier_page Interesting Files Identifier Module
 
+[TOC]
+
+
 \section interesting_files_overview Overview
 
 The Interesting Files module allows you to automatically flag files and directories that match a set of rules. This can be useful if you always need to check whether files with a given name or path are in the data source, or if you are always interested in files with a certain type.

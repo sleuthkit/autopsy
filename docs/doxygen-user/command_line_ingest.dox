@@ -1,5 +1,8 @@
 /*! \page command_line_ingest_page Command Line Ingest
 
+[TOC]
+
+
 \section command_line_ingest_overview Overview
 
 The Command Line Ingest feature allows you to run many of Autopsy's functions from the command line. You can add data sources to cases, choose which ingest modules to run, and automatically generate a report. When complete, these cases can be opened as normal or you can simply use the reports and other output without opening Autopsy.

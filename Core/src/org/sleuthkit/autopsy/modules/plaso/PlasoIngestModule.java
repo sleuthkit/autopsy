@@ -235,8 +235,8 @@ public class PlasoIngestModule implements DataSourceIngestModule {
                 "--parsers", "\"" + parsersString + "\"",//NON-NLS
                 "--no_dependencies_check", //NON-NLS
                 "--workers", String.valueOf(LOG2TIMELINE_WORKERS),//NON-NLS
-                String.format("\"%s\"",moduleOutputPath.resolve(PLASO).toString()),
-                String.format("\"%s\"",image.getPaths()[0])
+                moduleOutputPath.resolve(PLASO).toString(),
+                image.getPaths()[0]
         );
         processBuilder.redirectError(moduleOutputPath.resolve("log2timeline_err.txt").toFile());  //NON-NLS
         return processBuilder;
@@ -256,8 +256,8 @@ public class PlasoIngestModule implements DataSourceIngestModule {
         ProcessBuilder processBuilder = buildProcessWithRunAsInvoker(
                 "\"" + psortExecutable + "\"", //NON-NLS
                 "-o", "4n6time_sqlite", //NON-NLS
-                "-w", String.format("\"%s\"",moduleOutputPath.resolve("plasodb.db3").toString()), //NON-NLS
-                String.format("\"%s\"",moduleOutputPath.resolve(PLASO).toString())
+                "-w", moduleOutputPath.resolve("plasodb.db3").toString(), //NON-NLS
+                moduleOutputPath.resolve(PLASO).toString()
         );
 
         processBuilder.redirectOutput(moduleOutputPath.resolve("psort_output.txt").toFile()); //NON-NLS
