@@ -281,8 +281,8 @@
                 <AttributeName attributename="null" columnName="Zobject Table ID" required="no" />
             </ArtifactName>
         </FileName>
-
-        <FileName filename="KnowledgeC Do not Disturb.tsv" description="KnowledgeC Do Not Disturb">
+                           
+        <FileName filename="KnowledgeC Do Not Disturb.tsv" description="KnowledgeC Do Not Disturb">
             <ArtifactName artifactname="TSK_ACTIVITY" comment="Do Not Disturb">
                 <AttributeName attributename="TSK_DATETIME_START" columnName="Start" required="yes" />
                 <AttributeName attributename="TSK_DATETIME_END" columnName="End" required="yes" />
@@ -437,8 +437,8 @@
             </ArtifactName>
         </FileName>
 
-        <FileName filename="KnowledgeC Siri.tsv" description="KnowledgeC Siri Usage">
-            <ArtifactName artifactname="TSK_ACTIVITY_TYPE" comment="Siri Usage">
+        <FileName filename="KnowledgeC Siri Usage.tsv" description="KnowledgeC Siri Usage">
+            <ArtifactName artifactname="TSK_ACTIVITY" comment="Siri Usage">
                 <AttributeName attributename="TSK_DATETIME_START" columnName="Start" required="yes" />
                 <AttributeName attributename="TSK_PROG_NAME" columnName="App Name" required="yes" />
                 <AttributeName attributename="null" columnName="Weekday" required="no" />
@@ -464,9 +464,9 @@
                 <AttributeName attributename="null" columnName="Zobject Table ID"	 required="no" />
             </ArtifactName>
         </FileName>
-
-        <FileName filename="KnowledgeC User Waking Event.tsv" description="KnowledgeC User Waking Event">
-            <ArtifactName artifactname="TSK_ACTIVITY_TYPE" comment="User Waking">
+                           
+        <FileName filename="KnowledgeC User Waking Events.tsv" description="KnowledgeC User Waking Event">
+            <ArtifactName artifactname="TSK_ACTIVITY" comment="User Waking">
                 <AttributeName attributename="TSK_DATETIME_START" columnName="Start" required="yes" />
                 <AttributeName attributename="TSK_DATETIME_END" columnName="End" required="yes" />
                 <AttributeName attributename="null" columnName="Day of Week" required="no" />
