@@ -124,7 +124,7 @@ public final class ILeappFileProcessor {
                     .filter(f -> f.toLowerCase().endsWith(".tsv")).collect(Collectors.toList());
 
             for (String tsvFile : allTsvFiles) {
-                if (tsvFiles.containsKey(FilenameUtils.getName(tsvFile))) {
+                if (tsvFiles.containsKey(FilenameUtils.getName(tsvFile.toLowerCase()))) {
                     foundTsvFiles.add(tsvFile);
                 }
             }
@@ -340,7 +340,7 @@ public final class ILeappFileProcessor {
 
         for (int i = 0; i < nlist.getLength(); i++) {
             NamedNodeMap nnm = nlist.item(i).getAttributes();
-            tsvFiles.put(nnm.getNamedItem("filename").getNodeValue(), nnm.getNamedItem("description").getNodeValue());
+            tsvFiles.put(nnm.getNamedItem("filename").getNodeValue().toLowerCase(), nnm.getNamedItem("description").getNodeValue());
 
         }
 
