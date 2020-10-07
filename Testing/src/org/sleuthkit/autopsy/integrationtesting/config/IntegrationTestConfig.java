@@ -26,4 +26,23 @@ public class IntegrationTestConfig {
     private final String rootCaseOutputPath;
     private final String rootTestOutputPath;
     private final CaseConfig cases;
+
+    public IntegrationTestConfig(String rootCaseOutputPath, 
+            String rootTestOutputPath, CaseConfig cases) {
+        this.rootCaseOutputPath = rootCaseOutputPath;
+        this.rootTestOutputPath = rootTestOutputPath;
+        this.cases = cases;
+    }
+
+    public String getRootCaseOutputPath() {
+        return rootCaseOutputPath;
+    }
+
+    public String getRootTestOutputPath() {
+        return rootTestOutputPath;
+    }
+
+    public CaseConfig getCases() {
+        return cases;
+    }
 }

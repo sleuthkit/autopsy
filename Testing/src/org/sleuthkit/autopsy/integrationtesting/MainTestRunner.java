@@ -44,7 +44,8 @@ import org.sleuthkit.autopsy.modules.encryptiondetection.EncryptionDetectionModu
 public class MainTestRunner extends TestCase {
 
     private static final Logger logger = Logger.getLogger(MainTestRunner.class.getName()); // DO NOT USE AUTOPSY LOGGER
-
+    private static final String CONFIG_FILE_KEY = "CONFIG_FILE_KEY";
+    
     /**
      * Constructor required by JUnit
      */
@@ -64,7 +65,7 @@ public class MainTestRunner extends TestCase {
     }
 
     public void runIntegrationTests() {
-        String configFile = TBD;
+        String configFile = System.getProperty(CONFIG_FILE_KEY);
         IntegrationTestConfig config = getFromConfigFile(configFile);
         // Set up NetBeans environment
         Case autopsyCase = runIngest(config);

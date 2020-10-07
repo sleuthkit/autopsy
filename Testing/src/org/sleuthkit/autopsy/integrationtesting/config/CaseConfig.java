@@ -31,7 +31,9 @@ public class CaseConfig {
     private final IntegrationCaseType caseTypes;
     private final TestingConfig testConfig;
 
-    public CaseConfig(String caseName, List<String> dataSourceResources, String ingestProfilePath, String ingestModuleSettingsPath, IntegrationCaseType caseTypes, TestingConfig testConfig) {
+    public CaseConfig(String caseName, List<String> dataSourceResources, 
+            String ingestProfilePath, String ingestModuleSettingsPath, 
+            IntegrationCaseType caseTypes, TestingConfig testConfig) {
         this.caseName = caseName;
         this.dataSourceResources = dataSourceResources;
         this.ingestProfilePath = ingestProfilePath;

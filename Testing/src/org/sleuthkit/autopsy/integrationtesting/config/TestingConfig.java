@@ -18,11 +18,25 @@
  */
 package org.sleuthkit.autopsy.integrationtesting.config;
 
+import java.util.List;
+
 /**
  * Configuration for which integration test suites to run.
  */
 public class TestingConfig {
-
     private final List<String> excludeAllExcept;
     private final List<String> includeAllExcept;
+
+    public TestingConfig(List<String> excludeAllExcept, List<String> includeAllExcept) {
+        this.excludeAllExcept = excludeAllExcept;
+        this.includeAllExcept = includeAllExcept;
+    }
+
+    public List<String> getExcludeAllExcept() {
+        return excludeAllExcept;
+    }
+
+    public List<String> getIncludeAllExcept() {
+        return includeAllExcept;
+    }    
 }
