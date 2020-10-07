@@ -72,6 +72,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 import com.google.common.collect.ImmutableMap; 
+import org.apache.tika.extractor.DocumentSelector;
 
 /**
  * Extracts text from Tika supported content. Protects against Tika parser hangs
@@ -200,10 +201,13 @@ final class TikaTextExtractor implements TextExtractor {
         //Disable appending embedded file text to output for EFE supported types
         //JIRA-4975
         if(content instanceof AbstractFile && EMBEDDED_FILE_MIME_TYPES.contains(((AbstractFile)content).getMIMEType())) {
-            parseContext.set(Parser.class, new EmptyParser());
-        } else {
-            parseContext.set(Parser.class, parser);
+            // Only allow for inline images to be selected during recusive parsing.
+            // Non-visible attachments are handled by the embedded file extractor still.
+            // See JIRA-6938
+            parseContext.set(DocumentSelector.class, new InlineImageDocumentSelector());
         }
+        
+        parseContext.set(Parser.class, parser);
 
         if (ocrEnabled() && content instanceof AbstractFile) {
             AbstractFile file = ((AbstractFile) content);
@@ -345,6 +349,15 @@ final class TikaTextExtractor implements TextExtractor {
             if (inputFile != null) {
                 inputFile.delete();
             }
+        }
+    }
+    
+    private class InlineImageDocumentSelector implements DocumentSelector {
+
+        @Override
+        public boolean select(Metadata metadata) {
+            String contentType = metadata.get(Metadata.CONTENT_TYPE);
+            return contentType != null && contentType.toLowerCase().startsWith("image/");
         }
     }
 
