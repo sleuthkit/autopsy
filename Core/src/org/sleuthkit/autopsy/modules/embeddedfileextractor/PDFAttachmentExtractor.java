@@ -47,6 +47,8 @@ import org.sleuthkit.datamodel.TskData;
  * Implementation specifics, however, are generic enough to be used on any
  * document with embedded resources. The current name reflects the only known
  * use case for this class.
+ * 
+ * This extractor will also attempt to extract inline images from PDFs.
  */
 final class PDFAttachmentExtractor {
 
@@ -76,8 +78,6 @@ final class PDFAttachmentExtractor {
     public Map<String, Path> extract(InputStream input, long parentID, Path outputDir) throws IOException, SAXException, TikaException {
         ExtractionPreconditions.checkArgument(Files.exists(outputDir), 
                 String.format("Output directory: %s, does not exist.", outputDir.toString())); //NON-NLS
-
-        
         
         ParseContext parseContext = new ParseContext();
         parseContext.set(Parser.class, parser);

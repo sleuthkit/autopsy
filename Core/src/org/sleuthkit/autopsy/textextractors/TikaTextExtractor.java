@@ -207,23 +207,13 @@ final class TikaTextExtractor implements TextExtractor {
 
         if (ocrEnabled() && content instanceof AbstractFile) {
             AbstractFile file = ((AbstractFile) content);
-            //Run OCR on images with Tesseract directly. 
-            if (file.getMIMEType().toLowerCase().startsWith("image/")) {
+            String mimeType = file.getMIMEType();
+            
+            //Run OCR on images with Tesseract directly.
+            if (mimeType != null && mimeType.toLowerCase().startsWith("image/")) {
                 stream = performOCR(file);
             } else {
-                //Otherwise, go through Tika for PDFs so that it can
-                //extract images and run Tesseract on them.     
-                PDFParserConfig pdfConfig = new PDFParserConfig();
-
-                // Extracting the inline images and letting Tesseract run on each inline image.
-                // https://wiki.apache.org/tika/PDFParser%20%28Apache%20PDFBox%29
-                // https://tika.apache.org/1.7/api/org/apache/tika/parser/pdf/PDFParserConfig.html
-                pdfConfig.setExtractInlineImages(true);
-                // Multiple pages within a PDF file might refer to the same underlying image.
-                pdfConfig.setExtractUniqueInlineImagesOnly(true);
-                parseContext.set(PDFParserConfig.class, pdfConfig);
-
-                // Configure Tesseract parser to perform OCR
+                // Otherwise, let Tika run Tesseract
                 TesseractOCRConfig ocrConfig = new TesseractOCRConfig();
                 String tesseractFolder = TESSERACT_PATH.getParent();
                 ocrConfig.setTesseractPath(tesseractFolder);
