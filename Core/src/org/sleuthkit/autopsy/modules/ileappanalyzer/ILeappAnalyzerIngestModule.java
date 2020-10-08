@@ -141,8 +141,8 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
             try {
                 int result = ExecUtil.execute(iLeappCommand, new DataSourceIngestModuleProcessTerminator(context, true));
                 if (result != 0) {
-                    logger.log(Level.SEVERE, String.format("Error running iLeapp, error code returned %d", result)); //NON-NLS
-                    return ProcessResult.ERROR;
+                    // ignore if there is an error and continue to try and process the next file if there is one
+                    continue;
                 }
 
                 addILeappReportToReports(moduleOutputPath, currentCase);
@@ -213,8 +213,8 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
         ProcessBuilder processBuilder = buildProcessWithRunAsInvoker(
                 "\"" + iLeappExecutable + "\"", //NON-NLS
                 "-t", iLeappFileSystemType, //NON-NLS
-                "-i", String.format("\"%s\"",sourceFilePath), //NON-NLS
-                "-o", String.format("\"%s\"",moduleOutputPath.toString())
+                "-i", sourceFilePath, //NON-NLS
+                "-o", moduleOutputPath.toString()
         );
         processBuilder.redirectError(moduleOutputPath.resolve("iLeapp_err.txt").toFile());  //NON-NLS
         processBuilder.redirectOutput(moduleOutputPath.resolve("iLeapp_out.txt").toFile());  //NON-NLS
