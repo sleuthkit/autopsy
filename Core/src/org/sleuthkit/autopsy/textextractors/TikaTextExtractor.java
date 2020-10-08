@@ -356,6 +356,12 @@ final class TikaTextExtractor implements TextExtractor {
         }
     }
     
+    /**
+     * A document selector to control which embedded resources Tika will extract
+     * and parse (or OCR). The embedded file extractor handles general embedded 
+     * document extraction, but the OCR text from inline images should be part 
+     * of the indexed text of the PDF document. See JIRA-6938 for more details.
+     */
     private class InlineImageDocumentSelector implements DocumentSelector {
 
         @Override
