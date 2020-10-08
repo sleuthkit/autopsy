@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2011-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -46,7 +46,6 @@ import org.apache.tika.Tika;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.AutoDetectParser;
-import org.apache.tika.parser.EmptyParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParsingReader;
@@ -72,7 +71,6 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 import com.google.common.collect.ImmutableMap; 
-import org.apache.tika.extractor.DocumentSelector;
 import org.apache.tika.parser.pdf.PDFParserConfig.OCR_STRATEGY;
 
 /**
@@ -127,16 +125,6 @@ final class TikaTextExtractor implements TextExtractor {
                     "application/x-lzop", //NON-NLS
                     "application/x-z", //NON-NLS
                     "application/x-compress"); //NON-NLS
-
-    //Tika should ignore types with embedded files that can be handled by the unpacking modules
-    private static final List<String> EMBEDDED_FILE_MIME_TYPES
-            = ImmutableList.of("application/msword", //NON-NLS
-                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document", //NON-NLS
-                    "application/vnd.ms-powerpoint", //NON-NLS
-                    "application/vnd.openxmlformats-officedocument.presentationml.presentation", //NON-NLS
-                    "application/vnd.ms-excel", //NON-NLS
-                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", //NON-NLS
-                    "application/pdf"); //NON-NLS
 
     // Used to log to the tika file that is why it uses the java.util.logging.logger class instead of the Autopsy one
     private static final java.util.logging.Logger TIKA_LOGGER = java.util.logging.Logger.getLogger("Tika"); //NON-NLS
@@ -197,52 +185,50 @@ final class TikaTextExtractor implements TextExtractor {
     public Reader getReader() throws InitReaderException {
         InputStream stream = null;
 
-        ParseContext parseContext = new ParseContext();
+        final ParseContext parseContext = new ParseContext();
 
-        //Disable appending embedded file text to output for EFE supported types
-        //JIRA-4975
-        if(content instanceof AbstractFile && EMBEDDED_FILE_MIME_TYPES.contains(((AbstractFile)content).getMIMEType())) {
-            // Only allow for inline images to be selected during recursive parsing.
-            // Non-visible attachments are handled by the embedded file extractor still.
-            // See JIRA-6938
-            parseContext.set(DocumentSelector.class, new InlineImageDocumentSelector());
-        }
-        
-        // Needed to recursively parse embedded files
+        // Documents can contain other documents. By adding
+        // the parser back into the context, Tika will recursively
+        // parse embedded documents.
         parseContext.set(Parser.class, parser);
 
-        if (ocrEnabled() && content instanceof AbstractFile) {
-            AbstractFile file = ((AbstractFile) content);
-            //Run OCR on images with Tesseract directly. 
-            if (file.getMIMEType().toLowerCase().startsWith("image/")) {
-                stream = performOCR(file);
-            } else {
-                //Otherwise, configure Tika to do OCR
-                TesseractOCRConfig ocrConfig = new TesseractOCRConfig();
-                String tesseractFolder = TESSERACT_PATH.getParent();
-                ocrConfig.setTesseractPath(tesseractFolder);
-                ocrConfig.setLanguage(languagePacks);
-                ocrConfig.setTessdataPath(PlatformUtil.getOcrLanguagePacksPath());
-                parseContext.set(TesseractOCRConfig.class, ocrConfig);
-                
-                // Configure how Tika handles PDFs and OCR
-                PDFParserConfig pdfConfig = new PDFParserConfig();
-                // Tesseract will run on the extracted inline images
-                pdfConfig.setExtractInlineImages(true);
-                // Multiple pages within a PDF file might refer to the same underlying image.
-                pdfConfig.setExtractUniqueInlineImagesOnly(true);
-                
-                // This stategy tries to pick between OCRing a page in the 
-                // PDF and doing text extraction. It makes this choice by
-                // first running text extraction and then counting characters.
-                // If there are too few characters, it'll run the entire page
-                // through OCR and take that output instead. See JIRA-6938
-                pdfConfig.setOcrStrategy(OCR_STRATEGY.AUTO);
-                parseContext.set(PDFParserConfig.class, pdfConfig);
+        if (ocrEnabled()) {
 
-                stream = new ReadContentInputStream(content);
+            if (content instanceof AbstractFile) {
+                final AbstractFile file = ((AbstractFile) content);
+                final String mimeType = file.getMIMEType();
+
+                if (mimeType != null && mimeType.toLowerCase().startsWith("image/")) {
+                    // Run OCR on images with Tesseract directly
+                    // so that the task can be cancelled if ingest is 
+                    // cancelled or if OCR in the UI is cancelled. See JIRA-4519.
+                    stream = performOCR(file);
+                }
             }
-        } else {
+
+            // Otherwise, let Tika do OCR on any other file type we might
+            // be missing.
+            TesseractOCRConfig ocrConfig = new TesseractOCRConfig();
+            String tesseractFolder = TESSERACT_PATH.getParent();
+            ocrConfig.setTesseractPath(tesseractFolder);
+            ocrConfig.setLanguage(languagePacks);
+            ocrConfig.setTessdataPath(PlatformUtil.getOcrLanguagePacksPath());
+            parseContext.set(TesseractOCRConfig.class, ocrConfig);
+
+            // Configure how Tika handles PDFs and OCR
+            PDFParserConfig pdfConfig = new PDFParserConfig();
+
+            // This stategy tries to pick between OCRing a page in the 
+            // PDF and doing text extraction. It makes this choice by
+            // first running text extraction and then counting characters.
+            // If there are too few characters or too many unmapped 
+            // unicode characters, it'll run the entire page through OCR
+            // and take that output instead. See JIRA-6938
+            pdfConfig.setOcrStrategy(OCR_STRATEGY.AUTO);
+            parseContext.set(PDFParserConfig.class, pdfConfig);
+        }
+
+        if (stream == null) {
             stream = new ReadContentInputStream(content);
         }
 
@@ -353,21 +339,6 @@ final class TikaTextExtractor implements TextExtractor {
             if (inputFile != null) {
                 inputFile.delete();
             }
-        }
-    }
-    
-    /**
-     * A document selector to control which embedded resources Tika will extract
-     * and parse (or OCR). The embedded file extractor handles general embedded 
-     * document extraction, but the OCR text from inline images should be part 
-     * of the indexed text of the PDF document. See JIRA-6938 for more details.
-     */
-    private class InlineImageDocumentSelector implements DocumentSelector {
-
-        @Override
-        public boolean select(Metadata metadata) {
-            String contentType = metadata.get(Metadata.CONTENT_TYPE);
-            return contentType != null && contentType.toLowerCase().startsWith("image/");
         }
     }
 
