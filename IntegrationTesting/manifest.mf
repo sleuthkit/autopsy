@@ -1,0 +1,6 @@
+Manifest-Version: 1.0
+AutoUpdate-Show-In-Client: false
+OpenIDE-Module: org.sleuthkit.autopsy.integrationtesting/3
+OpenIDE-Module-Implementation-Version: 11
+OpenIDE-Module-Localizing-Bundle: org/sleuthkit/autopsy/integrationtesting/Bundle.properties
+
