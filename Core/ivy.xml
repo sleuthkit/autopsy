@@ -27,6 +27,8 @@
 
         <dependency conf="core->default" org="org.jsoup" name="jsoup" rev="1.10.3"/>
 		
+        <!-- for yaml reading/writing (these two should likely have the same rev) -->
+        <dependency conf="core->default" org="com.fasterxml.jackson.dataformat" name="jackson-dataformat-yaml" rev="2.9.7"/>
         <dependency conf="core->default" org="com.fasterxml.jackson.core" name="jackson-databind" rev="2.9.7"/>
         <dependency conf="core->default" org="com.drewnoakes" name="metadata-extractor" rev="2.11.0"/>
 
