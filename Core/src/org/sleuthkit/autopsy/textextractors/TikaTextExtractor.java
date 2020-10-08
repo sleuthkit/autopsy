@@ -73,6 +73,7 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 import com.google.common.collect.ImmutableMap; 
 import org.apache.tika.extractor.DocumentSelector;
+import org.apache.tika.parser.pdf.PDFParserConfig.OCR_STRATEGY;
 
 /**
  * Extracts text from Tika supported content. Protects against Tika parser hangs
@@ -201,12 +202,13 @@ final class TikaTextExtractor implements TextExtractor {
         //Disable appending embedded file text to output for EFE supported types
         //JIRA-4975
         if(content instanceof AbstractFile && EMBEDDED_FILE_MIME_TYPES.contains(((AbstractFile)content).getMIMEType())) {
-            // Only allow for inline images to be selected during recusive parsing.
+            // Only allow for inline images to be selected during recursive parsing.
             // Non-visible attachments are handled by the embedded file extractor still.
             // See JIRA-6938
             parseContext.set(DocumentSelector.class, new InlineImageDocumentSelector());
         }
         
+        // Needed to recursively parse embedded files
         parseContext.set(Parser.class, parser);
 
         if (ocrEnabled() && content instanceof AbstractFile) {
@@ -215,26 +217,28 @@ final class TikaTextExtractor implements TextExtractor {
             if (file.getMIMEType().toLowerCase().startsWith("image/")) {
                 stream = performOCR(file);
             } else {
-                //Otherwise, go through Tika for PDFs so that it can
-                //extract images and run Tesseract on them.     
-                PDFParserConfig pdfConfig = new PDFParserConfig();
-
-                // Extracting the inline images and letting Tesseract run on each inline image.
-                // https://wiki.apache.org/tika/PDFParser%20%28Apache%20PDFBox%29
-                // https://tika.apache.org/1.7/api/org/apache/tika/parser/pdf/PDFParserConfig.html
-                pdfConfig.setExtractInlineImages(true);
-                // Multiple pages within a PDF file might refer to the same underlying image.
-                pdfConfig.setExtractUniqueInlineImagesOnly(true);
-                parseContext.set(PDFParserConfig.class, pdfConfig);
-
-                // Configure Tesseract parser to perform OCR
+                //Otherwise, configure Tika to do OCR
                 TesseractOCRConfig ocrConfig = new TesseractOCRConfig();
                 String tesseractFolder = TESSERACT_PATH.getParent();
                 ocrConfig.setTesseractPath(tesseractFolder);
-
                 ocrConfig.setLanguage(languagePacks);
                 ocrConfig.setTessdataPath(PlatformUtil.getOcrLanguagePacksPath());
                 parseContext.set(TesseractOCRConfig.class, ocrConfig);
+                
+                // Configure how Tika handles PDFs and OCR
+                PDFParserConfig pdfConfig = new PDFParserConfig();
+                // Tesseract will run on the extracted inline images
+                pdfConfig.setExtractInlineImages(true);
+                // Multiple pages within a PDF file might refer to the same underlying image.
+                pdfConfig.setExtractUniqueInlineImagesOnly(true);
+                
+                // This stategy tries to pick between OCRing a page in the 
+                // PDF and doing text extraction. It makes this choice by
+                // first running text extraction and then counting characters.
+                // If there are too few characters, it'll run the entire page
+                // through OCR and take that output instead. See JIRA-6938
+                pdfConfig.setOcrStrategy(OCR_STRATEGY.AUTO);
+                parseContext.set(PDFParserConfig.class, pdfConfig);
 
                 stream = new ReadContentInputStream(content);
             }
