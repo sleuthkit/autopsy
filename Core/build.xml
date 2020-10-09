@@ -263,7 +263,9 @@
             <mkdir dir="${build.test.@{test.type}.results.dir}"/>
             <junit fork="true" failureproperty="tests.failed" errorproperty="tests.failed" filtertrace="${test.filter.trace}" tempdir="${build.test.@{test.type}.results.dir}">
                 <batchtest todir="${build.test.@{test.type}.results.dir}">
-                    <fileset dir="${build.test.@{test.type}.classes.dir}" includes="${test.includes}" excludes="${test.excludes}"/>
+                    <fileset dir="${build.test.@{test.type}.classes.dir}">
+                        <filename name="**/org/sleuthkit/autopsy/integrationtesting.MainTestRunner.class" />
+                    </fileset>
                 </batchtest>
                 <classpath refid="test.classpath"/>
                 <syspropertyset refid="test.@{test.type}.properties"/>

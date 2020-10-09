@@ -396,6 +396,14 @@
                 <binary-origin>release\modules\ext\jackson-dataformat-yaml-2.9.7.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/jackson-annotations-2.9.7.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\jackson-annotations-2.9.7.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jackson-core-2.9.7.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\jackson-core-2.9.7.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/okhttp-2.7.5.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\okhttp-2.7.5.jar</binary-origin>
             </class-path-extension>
@@ -616,16 +624,8 @@
                 <binary-origin>release\modules\ext\curator-recipes-2.8.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/jackson-annotations-2.9.0.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\jackson-annotations-2.9.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/objenesis-3.1.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\objenesis-3.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/jackson-core-2.9.7.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\jackson-core-2.9.7.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/commons-lang3-3.5.jar</runtime-relative-path>
