@@ -71,6 +71,8 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 import com.google.common.collect.ImmutableMap; 
+import java.io.InputStreamReader;
+import java.nio.charset.Charset;
 import org.apache.tika.parser.pdf.PDFParserConfig.OCR_STRATEGY;
 
 /**
@@ -183,8 +185,24 @@ final class TikaTextExtractor implements TextExtractor {
      */
     @Override
     public Reader getReader() throws InitReaderException {
-        InputStream stream = null;
+        if (!this.isSupported()) {
+            throw new InitReaderException("Content is not supported");
+        }
 
+        // Only abstract files are supported, see isSupported()
+        final AbstractFile file = ((AbstractFile) content);
+        // This mime type must be non-null, see isSupported()
+        final String mimeType = file.getMIMEType();
+
+        // Handle images seperately so the OCR task can be cancelled.
+        // See JIRA-4519 for the need to have cancellation in the UI and ingest.
+        if (ocrEnabled() && mimeType.toLowerCase().startsWith("image/")) {
+            InputStream imageOcrStream = performOCR(file);
+            return new InputStreamReader(imageOcrStream, Charset.forName("UTF-8"));
+        }
+
+        // Set up Tika
+        final InputStream stream = new ReadContentInputStream(content);
         final ParseContext parseContext = new ParseContext();
 
         // Documents can contain other documents. By adding
@@ -192,22 +210,16 @@ final class TikaTextExtractor implements TextExtractor {
         // parse embedded documents.
         parseContext.set(Parser.class, parser);
 
+        // Use the more memory efficient Tika SAX parsers for DOCX and
+        // PPTX files (it already uses SAX for XLSX).
+        OfficeParserConfig officeParserConfig = new OfficeParserConfig();
+        officeParserConfig.setUseSAXPptxExtractor(true);
+        officeParserConfig.setUseSAXDocxExtractor(true);
+        parseContext.set(OfficeParserConfig.class, officeParserConfig);
+
         if (ocrEnabled()) {
-
-            if (content instanceof AbstractFile) {
-                final AbstractFile file = ((AbstractFile) content);
-                final String mimeType = file.getMIMEType();
-
-                if (mimeType != null && mimeType.toLowerCase().startsWith("image/")) {
-                    // Run OCR on images with Tesseract directly
-                    // so that the task can be cancelled if ingest is 
-                    // cancelled or if OCR in the UI is cancelled. See JIRA-4519.
-                    stream = performOCR(file);
-                }
-            }
-
-            // Otherwise, let Tika do OCR on any other file type we might
-            // be missing.
+            // Configure OCR for Tika if it chooses to run OCR
+            // during extraction
             TesseractOCRConfig ocrConfig = new TesseractOCRConfig();
             String tesseractFolder = TESSERACT_PATH.getParent();
             ocrConfig.setTesseractPath(tesseractFolder);
@@ -215,7 +227,7 @@ final class TikaTextExtractor implements TextExtractor {
             ocrConfig.setTessdataPath(PlatformUtil.getOcrLanguagePacksPath());
             parseContext.set(TesseractOCRConfig.class, ocrConfig);
 
-            // Configure how Tika handles PDFs and OCR
+            // Configure how Tika handles OCRing PDFs
             PDFParserConfig pdfConfig = new PDFParserConfig();
 
             // This stategy tries to pick between OCRing a page in the 
@@ -228,18 +240,7 @@ final class TikaTextExtractor implements TextExtractor {
             parseContext.set(PDFParserConfig.class, pdfConfig);
         }
 
-        if (stream == null) {
-            stream = new ReadContentInputStream(content);
-        }
-
         Metadata metadata = new Metadata();
-        // Use the more memory efficient Tika SAX parsers for DOCX and
-        // PPTX files (it already uses SAX for XLSX).
-        OfficeParserConfig officeParserConfig = new OfficeParserConfig();
-        officeParserConfig.setUseSAXPptxExtractor(true);
-        officeParserConfig.setUseSAXDocxExtractor(true);
-        parseContext.set(OfficeParserConfig.class, officeParserConfig);
-
         //Make the creation of a TikaReader a cancellable future in case it takes too long
         Future<Reader> future = executorService.submit(
                 new GetTikaReader(parser, stream, metadata, parseContext));
