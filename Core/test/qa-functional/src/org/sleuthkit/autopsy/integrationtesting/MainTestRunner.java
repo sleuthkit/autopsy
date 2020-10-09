@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.integrationtesting;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -27,8 +28,8 @@ import org.sleuthkit.autopsy.integrationtesting.config.IntegrationTestConfig;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -37,27 +38,25 @@ import junit.framework.Test;
 import junit.framework.TestCase;
 import org.apache.cxf.common.util.CollectionUtils;
 import org.netbeans.junit.NbModuleSuite;
-import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
+import org.openide.util.io.NbObjectInputStream;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.casemodule.CaseActionException;
-import org.sleuthkit.autopsy.casemodule.ImageDSProcessor;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException;
 import org.sleuthkit.autopsy.datasourceprocessors.DataSourceProcessorUtility;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings.IngestType;
+import org.sleuthkit.autopsy.ingest.IngestModuleFactoryService;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleTemplate;
 import org.sleuthkit.autopsy.integrationtesting.config.CaseConfig;
 import org.sleuthkit.autopsy.integrationtesting.config.IntegrationCaseType;
-import org.sleuthkit.autopsy.modules.encryptiondetection.EncryptionDetectionModuleFactory;
-import org.sleuthkit.autopsy.modules.encryptiondetection.EncryptionDetectionTest;
+import org.sleuthkit.autopsy.python.FactoryClassNameNormalizer;
 import org.sleuthkit.autopsy.testutils.CaseUtils;
 import org.sleuthkit.autopsy.testutils.IngestUtils;
-import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -69,6 +68,8 @@ public class MainTestRunner extends TestCase {
 
     private static final Logger logger = Logger.getLogger(MainTestRunner.class.getName()); // DO NOT USE AUTOPSY LOGGER
     private static final String CONFIG_FILE_KEY = "CONFIG_FILE_KEY";
+    private static final IngestModuleFactoryService ingestFactoryService = new IngestModuleFactoryService();
+    private static final IngestType DEFAULT_INGEST_TYPE = IngestType.ALL_MODULES;
 
     /**
      * Constructor required by JUnit
@@ -139,7 +140,7 @@ public class MainTestRunner extends TestCase {
             default:
                 throw new IllegalArgumentException("Unknown case type: " + caseType);
         }
-        
+
         if (openCase == null) {
             logger.log(Level.WARNING, String.format("No case could be created for %s of type %s.", caseConfig.getCaseName(), caseType));
             return null;
@@ -147,15 +148,52 @@ public class MainTestRunner extends TestCase {
 
         addDataSourcesToCase(caseConfig.getDataSourceResources(), caseConfig.getCaseName());
         try {
-            IngestUtils.runIngestJob(openCase.getDataSources(), getIngestSettings(caseConfig));
+            IngestJobSettings ingestJobSettings = getIngestSettings(caseConfig.getCaseName(),
+                    DEFAULT_INGEST_TYPE,
+                    caseConfig.getIngestModules(), caseConfig.getIngestModuleSettingsPath());
+
+            IngestUtils.runIngestJob(openCase.getDataSources(), ingestJobSettings);
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, String.format("There was an error while ingesting datasources for case %s", caseConfig.getCaseName()), ex);
         }
-        
+
         return openCase;
     }
 
-    
+    private IngestJobSettings getIngestSettings(String profileName, IngestType ingestType, List<String> enabledFactoryClasses, String pathToIngestModuleSettings) {
+        Map<String, IngestModuleFactory> classToFactoryMap = ingestFactoryService.getFactories().stream()
+                .collect(Collectors.toMap(factory -> factory.getClass().getCanonicalName(), factory -> factory, (f1, f2) -> f1));
+
+        List<IngestModuleTemplate> ingestModuleTemplates = enabledFactoryClasses.stream()
+                .map(className -> {
+                    IngestModuleFactory factory = classToFactoryMap.get(className);
+                    if (factory == null) {
+                        logger.log(Level.WARNING, "Could not find ingest module factory: " + className);
+                    }
+                    return factory;
+                })
+                .filter(factory -> factory != null)
+                .map(factory -> getTemplate(pathToIngestModuleSettings, factory))
+                .collect(Collectors.toList());
+
+        return new IngestJobSettings(profileName, ingestType, ingestModuleTemplates);
+    }
+
+    private IngestModuleTemplate getTemplate(String pathToIngestModuleSettings, IngestModuleFactory factory) {
+        String fileName = FactoryClassNameNormalizer.normalize(factory.getClass().getCanonicalName()) + ".settings";
+        File settingsFile = Paths.get(pathToIngestModuleSettings, fileName).toFile();
+        if (settingsFile.exists()) {
+            try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(settingsFile.getAbsolutePath()))) {
+                IngestModuleIngestJobSettings settings = (IngestModuleIngestJobSettings) in.readObject();
+                return new IngestModuleTemplate(factory, settings);
+            } catch (IOException | ClassNotFoundException ex) {
+                logger.log(Level.WARNING, String.format("Unable to open %s as IngestModuleIngestJobSettings", settingsFile), ex);
+            }
+        }
+
+        return new IngestModuleTemplate(factory, factory.getDefaultIngestJobSettings());
+    }
+
     private void addDataSourcesToCase(List<String> pathStrings, String caseName) {
         for (String strPath : pathStrings) {
             Path path = Paths.get(strPath);
@@ -179,19 +217,6 @@ public class MainTestRunner extends TestCase {
         try (FileInputStream jsonSrc = new FileInputStream(filePath)) {
             return om.readValue(jsonSrc, IntegrationTestConfig.class);
         }
-    }
-
-    private IngestJobSettings getIngestSettings(CaseConfig caseConfig) {
-        // TODO
-        ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
-        IngestUtils.addDataSource(dataSourceProcessor, BITLOCKER_DETECTION_IMAGE_PATH);
-        IngestModuleFactory ingestModuleFactory = new EncryptionDetectionModuleFactory();
-        IngestModuleIngestJobSettings settings = ingestModuleFactory.getDefaultIngestJobSettings();
-        IngestModuleTemplate template = new IngestModuleTemplate(ingestModuleFactory, settings);
-        template.setEnabled(true);
-        List<IngestModuleTemplate> templates = new ArrayList<>();
-        templates.add(template);
-        IngestJobSettings ingestJobSettings = new IngestJobSettings(EncryptionDetectionTest.class.getCanonicalName(), IngestType.FILES_ONLY, templates);
     }
 
     private void runIntegrationTests(IntegrationTestConfig config, CaseConfig caseConfig, CaseType caseType) {

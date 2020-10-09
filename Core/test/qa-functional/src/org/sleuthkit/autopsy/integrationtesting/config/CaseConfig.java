@@ -26,17 +26,19 @@ import java.util.List;
 public class CaseConfig {
     private final String caseName;
     private final List<String> dataSourceResources;
-    private final String ingestProfilePath;
+    
+    private final List<String> ingestModules;
     private final String ingestModuleSettingsPath;
+    
     private final IntegrationCaseType caseTypes;
     private final TestingConfig testConfig;
 
     public CaseConfig(String caseName, List<String> dataSourceResources, 
-            String ingestProfilePath, String ingestModuleSettingsPath, 
+            List<String> ingestModules, String ingestModuleSettingsPath, 
             IntegrationCaseType caseTypes, TestingConfig testConfig) {
         this.caseName = caseName;
         this.dataSourceResources = dataSourceResources;
-        this.ingestProfilePath = ingestProfilePath;
+        this.ingestModules = ingestModules;
         this.ingestModuleSettingsPath = ingestModuleSettingsPath;
         this.caseTypes = caseTypes;
         this.testConfig = testConfig;
@@ -50,10 +52,6 @@ public class CaseConfig {
         return dataSourceResources;
     }
 
-    public String getIngestProfilePath() {
-        return ingestProfilePath;
-    }
-
     public String getIngestModuleSettingsPath() {
         return ingestModuleSettingsPath;
     }
@@ -64,5 +62,9 @@ public class CaseConfig {
 
     public TestingConfig getTestConfig() {
         return testConfig;
+    }
+
+    public List<String> getIngestModules() {
+        return ingestModules;
     }
 }

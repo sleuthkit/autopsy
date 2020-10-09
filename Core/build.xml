@@ -196,4 +196,107 @@
         </copy>
     </target>
     
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <!-- INTEGRATION TEST ITEMS START HERE (based heavily on Testing NBM build.xml) -->
+
+    <!-- use manifestclasspath (http://ant.apache.org/manual/Tasks/manifestclasspath.html) to put all the jar files that we need for junit/regression test
+                  to a single jar file: allJarsInUse.jar. Then we put this new jar to classpath for testing program to avoid command line Java classpath too long problem.
+      Note: Started from ant 1.10, maxParentLevels are enforced. If you get error from manifestclasspath complaines 'No suitable relative path from ...' then it's time to
+            increase your maxParentLevels -->
+    <target name="manifest-classpath">
+        <manifestclasspath property="tem.classpath" jarfile="allJarsInUse.jar" maxParentLevels="5">
+            <classpath refid="test.${regression}.run.cp"/>
+        </manifestclasspath>
+        <jar destfile="allJarsInUse.jar" basedir="build/classes">
+            <manifest>
+                <attribute name="Class-Path" value="${tem.classpath}"/>
+            </manifest>
+        </jar>
+        <path id="test.classpath">
+            <pathelement path="allJarsInUse.jar"/>
+        </path>
+    </target>
+
+    <target name="integration-test-check-args"> 
+        <fail message="Missing required argument: configPath" unless="configPath"/>
+    </target>
+
+
+    <target name="regression-test" depends="integration-test-check-args,init,test-init,test-build, manifest-classpath" if="exists.test.qa-functional.src.dir">
+        <test test.type="${regression}"/>
+        <delete file="allJarsInUse.jar"/>
+    </target>
+    
+    <macrodef name="test">
+        <attribute name="test.type"/>
+        <attribute name="disable.apple.ui" default="false"/>
+
+        <sequential>
+            <property name="test.config" value="default"/>
+            <property name="test.config.default.includes" value="**/*Test.class"/>
+            <property name="test.config.${test.config}.includes" value="NOTHING"/>
+            <metaproperty name="test.includes" value="test.config.${test.config}.includes"/>
+            <property name="test.config.${test.config}.excludes" value=""/>
+            <metaproperty name="test.excludes" value="test.config.${test.config}.excludes"/>
+            <mkdir dir="${build.test.@{test.type}.results.dir}"/>
+            <junit fork="true" failureproperty="tests.failed" errorproperty="tests.failed" filtertrace="${test.filter.trace}" tempdir="${build.test.@{test.type}.results.dir}">
+                <batchtest todir="${build.test.@{test.type}.results.dir}">
+                    <fileset dir="${build.test.@{test.type}.classes.dir}" includes="${test.includes}" excludes="${test.excludes}"/>
+                </batchtest>
+                <classpath refid="test.classpath"/>
+                <syspropertyset refid="test.@{test.type}.properties"/>
+                <jvmarg line="${test.bootclasspath.prepend.args}"/>
+                <jvmarg line="${test.run.args}"/>
+                <!--  should be in sync with project.properties and build.xml of autopsy main project -->
+                <!-- disable for now, causes issues with Java 7 -->
+                <!-- <jvmarg line="-J-Xms24m -J-Xmx512m -J-XX:MaxPermSize=128M -J-Xverify:none"/>  -->
+                <sysproperty key="configPath" value="configPath"/>
+                <!--needed to have tests NOT to steal focus when running, works in latest apple jdk update only.-->
+                <sysproperty key="apple.awt.UIElement" value="@{disable.apple.ui}"/>
+                <formatter type="brief" usefile="false"/>
+                <formatter type="xml"/>
+            </junit>
+            <fail message="Some tests failed; see details above.">
+                <condition>
+                    <and>
+                        <isset property="tests.failed"/>
+                        <isfalse value="${continue.after.failing.tests}"/>
+                    </and>
+                </condition>
+            </fail>
+        </sequential>
+    </macrodef>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 </project>
