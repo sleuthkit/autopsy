@@ -203,12 +203,12 @@ public final class TranslatedTextViewer implements TextViewer {
          * org.sleuthkit.autopsy.textextractors.TextExtractor.InitReaderException
          */
         @NbBundle.Messages({
-            "TranslatedContentViewer.getFileText=OCR is not enabled. To change, go to Tools->Options->Machine Translation",
+            "TranslatedContentViewer.ocrNotEnabled=OCR is not enabled. To change, go to Tools->Options->Machine Translation",
         })
         private String getFileText(AbstractFile file) throws IOException, InterruptedException, TextExtractor.InitReaderException {
             final boolean isImage = file.getMIMEType().toLowerCase().startsWith("image/"); // NON-NLS
             if (isImage && ! UserPreferences.getUseOcrInTranslation()) {
-                return Bundle.TranslatedContentViewer_getFileText();
+                return Bundle.TranslatedContentViewer_ocrNotEnabled();
             }
             
             String result;
