@@ -183,15 +183,16 @@ public class HEICProcessor implements PictureProcessor {
         final Path outputFile = moduleOutputFolder.resolve(baseFileName + ".jpg");
         
         final Path imageMagickErrorOutput = moduleOutputFolder.resolve(IMAGE_MAGICK_ERROR_FILE);
+        Files.deleteIfExists(imageMagickErrorOutput);
         Files.createFile(imageMagickErrorOutput);
 
         // ImageMagick will write the primary image to the output file.
         // Any additional images found within the HEIC container will be
         // formatted as fileName-1.jpg, fileName-2.jpg, etc.
         final ProcessBuilder processBuilder = new ProcessBuilder()
-                .command(String.format("\"%s\"",IMAGE_MAGICK_PATH.toString()),
-                        String.format("\"%s\"",localDiskCopy.toString()),
-                        String.format("\"%s\"",outputFile.toString()));
+                .command(IMAGE_MAGICK_PATH.toString(),
+                        localDiskCopy.toString(),
+                        outputFile.toString());
         
         processBuilder.redirectError(imageMagickErrorOutput.toFile());
 
