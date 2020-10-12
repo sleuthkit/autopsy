@@ -662,6 +662,7 @@ final public class ViewFrame extends BorderPane {
                 : defaultTimeNavigationNodes);
 
         //do further setup of  new view.
+        ActionUtils.unconfigureButton(refreshButton);
         ActionUtils.configureButton(new Refresh(), refreshButton);//configure new refresh action for new view
         hostedView.refresh();
         notificationPane.setContent(hostedView);
