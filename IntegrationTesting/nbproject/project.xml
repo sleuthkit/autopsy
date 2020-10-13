@@ -101,6 +101,46 @@
             <public-packages>
                 <package>org.sleuthkit.autopsy.integrationtesting</package>
             </public-packages>
+            <class-path-extension>
+                <runtime-relative-path>ext/hamcrest-core-1.3.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\hamcrest-core-1.3.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/velocity-1.6.2.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\velocity-1.6.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/commons-lang3-3.4.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\commons-lang3-3.4.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/commons-lang-2.4.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\commons-lang-2.4.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/commons-collections-3.2.1.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\commons-collections-3.2.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/oro-2.0.8.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\oro-2.0.8.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/joda-time-2.10.1.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\joda-time-2.10.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/junit-4.12.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\junit-4.12.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/commons-io-2.5.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\commons-io-2.5.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/snakeyaml-1.27.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\snakeyaml-1.27.jar</binary-origin>
+            </class-path-extension>
         </data>
     </configuration>
 </project>

@@ -18,6 +18,13 @@
  */
 package org.sleuthkit.autopsy.integrationtesting.config;
 
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
+import com.google.gson.reflect.TypeToken;
+import java.lang.reflect.Type;
 import java.util.List;
 
 /**
@@ -25,6 +32,21 @@ import java.util.List;
  * parameters, datasource locations, cases to create, tests to run, etc.
  */
 public class IntegrationTestConfig {
+    private static final Type listOfCasesType = new TypeToken<List<CaseConfig>>(){}.getType();
+        
+    public static final JsonDeserializer<IntegrationTestConfig> DESERIALIZER = new JsonDeserializer<IntegrationTestConfig>() {
+        @Override
+        public IntegrationTestConfig deserialize(JsonElement je, Type type, JsonDeserializationContext jdc) throws JsonParseException {
+            JsonObject jObj = je.getAsJsonObject();
+            String rootCaseOutputPath = jObj.get("rootTestOutputPath").getAsString();
+            String rootTestOutputPath = jObj.get("rootTestOutputPath").getAsString();
+            List<CaseConfig> cases = jdc.deserialize(jObj.get("cases"), listOfCasesType);
+            
+            return new IntegrationTestConfig(rootCaseOutputPath, rootTestOutputPath, cases);
+        }
+    };
+    
+    
     private final String rootCaseOutputPath;
     private final String rootTestOutputPath;
     private final List<CaseConfig> cases;

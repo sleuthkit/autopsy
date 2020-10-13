@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.integrationtesting.config;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -43,8 +41,7 @@ public class TestingConfig {
                 .collect(Collectors.toSet());
     }
     
-    @JsonCreator
-    public TestingConfig(@JsonProperty() List<String> excludeAllExcept, @JsonProperty() List<String> includeAllExcept) {
+    public TestingConfig(List<String> excludeAllExcept, List<String> includeAllExcept) {
         this.excludeAllExcept = convert(excludeAllExcept);
         this.includeAllExcept = convert(includeAllExcept);
     }

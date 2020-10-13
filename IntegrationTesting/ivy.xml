@@ -1,0 +1,15 @@
+<ivy-module version="2.0">
+    <info organisation="org.sleuthkit.autopsy" module="integrationtesting"/>
+    <configurations >
+        <!-- module dependencies -->
+        <conf name="integrationtesting"/>
+
+    </configurations>
+    <dependencies >
+        <!-- for yaml reading/writing -->
+        <dependency org="org.yaml" name="snakeyaml" rev="1.27"/>
+
+        <!-- https://mvnrepository.com/artifact/com.google.code.gson/gson -->
+        <dependency org="com.google.code.gson" name="gson" rev="2.8.6"/>
+    </dependencies>
+</ivy-module>

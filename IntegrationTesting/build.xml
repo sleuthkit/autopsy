@@ -2,11 +2,14 @@
 <!-- You may freely edit this file. See harness/README in the NetBeans platform -->
 <!-- for some information on what you could do (e.g. targets to override). -->
 <!-- If you delete this file and reopen the project it will be recreated. -->
-<project name="org.sleuthkit.autopsy.integrationtesting" default="netbeans" basedir=".">
+<project name="org.sleuthkit.autopsy.integrationtesting" default="netbeans" basedir="." xmlns:ivy="antlib:org.apache.ivy.ant" >
     <description>Builds, tests, and runs the project org.sleuthkit.autopsy.integrationtesting.</description>
     <import file="nbproject/build-impl.xml"/>
+    <import file="../BootstrapIvy.xml"/>
     <property name="regression" value="qa-functional"/>
- 
+    <property name="modules.dir" value="${basedir}/release/modules/" />
+    <property name="ext.dir" value="${modules.dir}/ext" />
+
     <target name="check-args"> 
 <!--        <fail message="Missing required argument: img_path" unless="img_path"/>
         <fail message="Missing required argument: gold_path" unless="gold_path"/>
@@ -34,9 +37,24 @@
         </path>
     </target>
 
-    <target name="regression-test" depends="check-args,init,test-init,test-build, manifest-classpath" if="exists.test.qa-functional.src.dir">
+    <target name="get-deps" depends="init-ivy">
+        <mkdir dir="${ext.dir}"/>
+        <ivy:resolve log="quiet"/>
+        <ivy:retrieve conf="integrationtesting" pattern="${ext.dir}/[artifact]-[revision](-[classifier]).[ext]" />
+    </target>
+
+    <target name="init" depends="get-deps,harness.init"/>
+
+    <target name="integration-test" depends="check-args,init,test-init,test-build,manifest-classpath" if="exists.test.qa-functional.src.dir">
         <test test.type="${regression}"/>
-        <delete file="allJarsInUse.jar"/>
+        <!--<delete file="allJarsInUse.jar"/>-->
+    </target>
+
+    <target name="clean" depends="projectized-common.clean">
+        <!--Override clean to delete jars, etc downloaded with Ivy, 
+        or copied in from thirdparty folder.  This way we don't end up with 
+        out-of-date/unneeded stuff in the installer-->
+        <delete dir="${basedir}/release/"/>
     </target>
     
     <macrodef name="test">
@@ -45,7 +63,7 @@
 
         <sequential>
             <property name="test.config" value="default"/>
-            <property name="test.config.default.includes" value="**/*Test.class"/>
+            <property name="test.config.default.includes" value="**/org/sleuthkit/autopsy/integrationtesting/MainTestRunner.class"/>
             <property name="test.config.${test.config}.includes" value="NOTHING"/>
             <metaproperty name="test.includes" value="test.config.${test.config}.includes"/>
             <property name="test.config.${test.config}.excludes" value=""/>
@@ -56,13 +74,14 @@
                     <fileset dir="${build.test.@{test.type}.classes.dir}" includes="${test.includes}" excludes="${test.excludes}"/>
                 </batchtest>
                 <classpath refid="test.classpath"/>
+                <!--<classpath refid="test.@{test.type}.run.cp"/>-->
                 <syspropertyset refid="test.@{test.type}.properties"/>
                 <jvmarg line="${test.bootclasspath.prepend.args}"/>
                 <jvmarg line="${test.run.args}"/>
                 <!--  should be in sync with project.properties and build.xml of autopsy main project -->
                 <!-- disable for now, causes issues with Java 7 -->
                 <!-- <jvmarg line="-J-Xms24m -J-Xmx512m -J-XX:MaxPermSize=128M -J-Xverify:none"/>  -->
-                <sysproperty key="img_path" value="${img_path}"/>
+<!--                <sysproperty key="img_path" value="${img_path}"/>
                 <sysproperty key="gold_path" value="${gold_path}"/>
                 <sysproperty key="out_path" value="${out_path}"/>
                 <sysproperty key="known_bad_path" value="${known_bad_path}"/>
@@ -76,7 +95,7 @@
                 <sysproperty key="solrPort" value="${solrPort}"/>
                 <sysproperty key="messageServiceHost" value="${messageServiceHost}"/>
                 <sysproperty key="messageServicePort" value="${messageServicePort}"/>
-                <sysproperty key="isMultiUser" value="${isMultiUser}"/>
+                <sysproperty key="isMultiUser" value="${isMultiUser}"/>-->
                 <!--needed to have tests NOT to steal focus when running, works in latest apple jdk update only.-->
                 <sysproperty key="apple.awt.UIElement" value="@{disable.apple.ui}"/>
                 <formatter type="brief" usefile="false"/>

@@ -18,10 +18,12 @@
  */
 package org.sleuthkit.autopsy.integrationtesting;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import org.sleuthkit.autopsy.integrationtesting.config.IntegrationTestConfig;
@@ -58,6 +60,7 @@ import org.sleuthkit.autopsy.python.FactoryClassNameNormalizer;
 import org.sleuthkit.autopsy.testutils.CaseUtils;
 import org.sleuthkit.autopsy.testutils.IngestUtils;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.yaml.snakeyaml.Yaml;
 
 /**
  * Main entry point for running integration tests. Handles processing
@@ -67,7 +70,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class MainTestRunner extends TestCase {
 
     private static final Logger logger = Logger.getLogger(MainTestRunner.class.getName()); // DO NOT USE AUTOPSY LOGGER
-    private static final String CONFIG_FILE_KEY = "CONFIG_FILE_KEY";
+    private static final String CONFIG_FILE_KEY = "configFileKey";
     private static final IngestModuleFactoryService ingestFactoryService = new IngestModuleFactoryService();
     private static final IngestType DEFAULT_INGEST_TYPE = IngestType.ALL_MODULES;
 
@@ -213,10 +216,11 @@ public class MainTestRunner extends TestCase {
     }
 
     private IntegrationTestConfig getConfigFromFile(String filePath) throws IOException {
-        ObjectMapper om = new ObjectMapper();
-        try (FileInputStream jsonSrc = new FileInputStream(filePath)) {
-            return om.readValue(jsonSrc, IntegrationTestConfig.class);
-        }
+        //return new IntegrationTestConfig("C:\\Users\\gregd\\Desktop\\testoutput", "C:\\Users\\gregd\\Desktop\\testoutput", Collections.emptyList());
+        GsonBuilder builder = new GsonBuilder();
+        builder.registerTypeAdapter(IntegrationTestConfig.class, IntegrationTestConfig.DESERIALIZER);
+        Gson gson = builder.create();
+        return gson.fromJson(new FileReader(new File(filePath)), IntegrationTestConfig.class);
     }
 
     private void runIntegrationTests(IntegrationTestConfig config, CaseConfig caseConfig, CaseType caseType) {
@@ -301,10 +305,12 @@ public class MainTestRunner extends TestCase {
     private void serializeFile(OutputResults results, String outputFolder, String caseName, String caseType) {
         String outputExtension = ".yml";
         Path outputPath = Paths.get(outputFolder, String.format("%s-%s%s", caseName, caseType, outputExtension));
-        ObjectMapper om = new ObjectMapper(new YAMLFactory());
+        Yaml yaml = new Yaml();
 
         try {
-            om.writeValue(outputPath.toFile(), results.getSerializableData());
+
+            FileWriter writer = new FileWriter(outputPath.toFile());
+            yaml.dump(results.getSerializableData(), writer);
         } catch (IOException ex) {
             logger.log(Level.WARNING, "There was an error writing results to outputPath: " + outputPath, ex);
         }
