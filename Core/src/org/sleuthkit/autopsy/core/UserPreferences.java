@@ -62,6 +62,7 @@ public final class UserPreferences {
     private static final String MESSAGE_SERVICE_HOST = "MessageServiceHost"; //NON-NLS
     private static final String MESSAGE_SERVICE_PORT = "MessageServicePort"; //NON-NLS
     public static final String TEXT_TRANSLATOR_NAME = "TextTranslatorName";
+    public static final String OCR_TRANSLATION_ENABLED = "OcrTranslationEnabled";
     public static final String PROCESS_TIME_OUT_ENABLED = "ProcessTimeOutEnabled"; //NON-NLS
     public static final String PROCESS_TIME_OUT_HOURS = "ProcessTimeOutHours"; //NON-NLS
     private static final int DEFAULT_PROCESS_TIMEOUT_HR = 60;
@@ -347,6 +348,14 @@ public final class UserPreferences {
     public static String getTextTranslatorName() {
         return preferences.get(TEXT_TRANSLATOR_NAME, null);
     }
+    
+    public static void setUseOcrInTranslation(boolean enableOcr) {
+        preferences.putBoolean(OCR_TRANSLATION_ENABLED, enableOcr);
+    }
+
+    public static boolean getUseOcrInTranslation() {
+        return preferences.getBoolean(OCR_TRANSLATION_ENABLED, true);
+    }    
 
     /**
      * Persists message service connection info.
