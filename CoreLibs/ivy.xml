@@ -45,9 +45,9 @@
 
         <!-- timeline  -->
         <dependency conf="autopsy_core->*" org="joda-time" name="joda-time" rev="2.4" />
-        <dependency conf="autopsy_core->*" org="org.jfxtras" name="jfxtras-fxml" rev="10.0-r1" />
-        <dependency conf="autopsy_core->*" org="org.jfxtras" name="jfxtras-controls" rev="10.0-r1" />
-        <dependency conf="autopsy_core->*" org="org.jfxtras" name="jfxtras-common" rev="10.0-r1" />
+        <dependency conf="autopsy_core->default" org="org.jfxtras" name="jfxtras-fxml" rev="10.0-r1" />
+        <dependency conf="autopsy_core->default" org="org.jfxtras" name="jfxtras-controls" rev="10.0-r1" />
+        <dependency conf="autopsy_core->default" org="org.jfxtras" name="jfxtras-common" rev="10.0-r1" />
         <!-- templateing engine used by timeline to generate its snapshot report -->
         <dependency conf="autopsy_core->*" org="com.github.spullara.mustache.java" name="compiler" rev="0.9.1" />
         
