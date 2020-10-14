@@ -116,7 +116,9 @@ public class DataSourceSummaryResultViewer extends AbstractDataResultViewer {
 
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         try {
-            summaryPanel.setDataSource(dataSource);
+            if (summaryPanel != null) {
+                summaryPanel.setDataSource(dataSource);
+            }
         } finally {
             this.setCursor(null);
         }
@@ -133,5 +135,12 @@ public class DataSourceSummaryResultViewer extends AbstractDataResultViewer {
         add(summaryPanel, BorderLayout.CENTER);
     }
 
+    @Override
+    public void clearComponent() {
+        summaryPanel.close();
+        summaryPanel = null;
+    }
+
     private DataSourceSummaryTabbedPane summaryPanel;
+
 }

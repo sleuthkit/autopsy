@@ -1,5 +1,8 @@
 /*! \page ui_quick_search UI Quick Search
 
+[TOC]
+
+
 The user interface quick search feature allows you to search within the data on a panel for a given string, it will not search data in hidden columns or collapsed nodes.
 
 How to use it

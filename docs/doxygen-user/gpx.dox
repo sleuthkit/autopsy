@@ -1,5 +1,8 @@
 /*! \page gpx_page GPX Analyzer
 
+[TOC]
+
+
 \section gpx_overview Overview
 
 The GPX Analyzer modules allows you to import GPS data from a GPX file. Information on the GPX format can be found <a href="https://www.topografix.com/gpx.asp">here</a>. The following is a short sample of a GPX file:

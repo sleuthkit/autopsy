@@ -175,7 +175,7 @@
             <entry key="default_options" value="@JVM_OPTIONS" />
             <!-- Update configuration file to include runtime -->
             <entry key="jdkhome" value="&quot;java-runtime&quot;" />
-            <entry key="default_userdir" value="${HOME}/${APPNAME}" />
+            <entry key="default_userdir" value="${DEFAULT_USERDIR_ROOT}" />
         </propertyfile>
         <!-- workaround for ant escaping : and = when setting properties -->
         <replace file="${inst.property.file}" token="@JVM_OPTIONS" value="${jvm.args}" />

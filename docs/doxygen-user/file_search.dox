@@ -1,5 +1,8 @@
 /*! \page file_search_page File Search
 
+[TOC]
+
+
 \section about_file_search About File Search
 The File Search tool can be accessed either from the Tools menu or by right-clicking on a data source node in the Data Explorer / Directory Tree. By using File Search, you can specify, filter, and show the directories and files that you want to see from the images in the currently opened case. The File Search results will be populated in a brand new Table Result viewer on the right-hand side.
 

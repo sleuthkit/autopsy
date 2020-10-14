@@ -1040,7 +1040,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         }
 
     }
-
+    
     /**
      * A task that submits an input directory scan task to the input directory
      * scan task executor.
@@ -2437,6 +2437,15 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
 
             AutoIngestDataSource dataSource = identifyDataSource();
             if (null == dataSource) {
+                currentJob.setProcessingStage(AutoIngestJob.Stage.COMPLETED, Date.from(Instant.now()));
+                return;
+            }
+            
+            if (SupportedDataSources.shouldSkipFile(dataSource.getPath().toString())) {
+                Manifest manifest = currentJob.getManifest();
+                AutoIngestJobLogger jobLogger = new AutoIngestJobLogger(manifest.getFilePath(), manifest.getDataSourceFileName(), currentJob.getCaseDirectoryPath());
+                jobLogger.logSkippingDataSource(dataSource.getPath().toString());
+                sysLogger.log(Level.INFO, "Skipping data source that can not be processed ({0})", dataSource.getPath().toString());
                 currentJob.setProcessingStage(AutoIngestJob.Stage.COMPLETED, Date.from(Instant.now()));
                 return;
             }

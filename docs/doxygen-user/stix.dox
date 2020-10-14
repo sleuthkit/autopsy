@@ -1,4 +1,8 @@
 /*! \page stix_page STIX
+
+[TOC]
+
+
 Overview
 ========
 This document outlines the use of the STIX feature of Autopsy. This feature allows one or more Structured Threat Information Exchange (STIX) files to be run against a data source, reporting which indicators were found in the data source. More information about STIX can be found at https://stix.mitre.org/.

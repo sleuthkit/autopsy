@@ -1,5 +1,8 @@
 /*! \page content_viewer_page Content Viewer
 
+[TOC]
+
+
 The Content Viewer lives in the lower right-hand side of the Autopsy main screen and shows pictures, video, hex, text, extracted strings, metadata, etc. The Content Viewer is populated when you select an entry in the \ref ui_results.
 
 The Content Viewer is context-aware, meaning different tabs will be enabled depending on the type of content selected and which ingest modules have been run. It will default to what it considers the "most specific" tab. For example, selecting a JPG will cause the Content Viewer to automatically select the "Application" tab and will display the image there. If you instead would like the Content Viewer to stay on the previously selected tab when you change to a different content object, go to the \ref view_options_page panel through Tools->Options->Application Tab and select the "Stay on the same file viewer" option.
@@ -14,9 +17,7 @@ The Hex tab is nearly always available and shows you the raw and exact contents 
 
 \image html content_viewer_hex.png
 
-If desired, you can open the file in an external hex editor. This is configured through the "External Viewer" tab on the options panel. HxD has been verified to work with Autopsy, but alternate hex editors may also be compatible. 
-
-\image html content_viewer_hex_editor_setup.png
+If desired, you can open the file in an external hex editor. This is configured through the \ref config_ext_viewer tab on the options panel. HxD has been verified to work with Autopsy, but alternate hex editors may also be compatible. 
 
 Note that this process saves the file to disk before launching the hex editor. A progress indicator will be displayed in the lower right corner of the application. If you wish to cancel the file export, click the 'X' to the right of the progress bar.
 

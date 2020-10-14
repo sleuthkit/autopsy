@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.contentviewers;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
@@ -87,7 +88,12 @@ final class JavaFxAppSink extends AppSink {
             fxImageView = new ImageView();  // Will hold the current video frame.
             BorderPane borderpane = new BorderPane(fxImageView); // Center and size ImageView.
             Scene scene = new Scene(borderpane); // Root of the JavaFX tree.
-            target.setScene(scene);
+            // Although the documentation for JFXPanel.setScene() claims that it
+            // can be called on either the EDT or the JavaFX thread, with JavaFX 11
+            // it doesn't work unless you call it on the JavaFX application thread.
+            Platform.runLater(() -> {
+                target.setScene(scene);        
+            });
 
             // Bind size of image to that of scene, while keeping proportions
             fxImageView.fitWidthProperty().bind(scene.widthProperty());

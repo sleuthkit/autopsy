@@ -1,5 +1,8 @@
 /*! \page geolocation_page  Geolocation
 
+[TOC]
+
+
 \section geo_overview Overview
 
 The Geolocation window shows artifacts that have longitude and latitude attributes as waypoints on a map.  In the field, when access to online map tile servers may not be available, the Geolocation window provides support for offline map tile data sources.

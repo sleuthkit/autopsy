@@ -1,5 +1,8 @@
 /*! \page auto_ingest_admin_page Auto Ingest Administration
 
+[TOC]
+
+
 \section auto_ingest_admin_overview Overview
 
 Examiner nodes in an \ref auto_ingest_page environment can be given a type of administrator access. This allows an admin to:

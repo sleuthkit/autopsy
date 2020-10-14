@@ -49,8 +49,7 @@ public class CommandLineOptionProcessor extends OptionProcessor {
     private final Option dataSourceObjectIdOption = Option.requiredArgument('i', "dataSourceObjectId");
     private final Option addDataSourceCommandOption = Option.withoutArgument('a', "addDataSource");
     private final Option caseDirOption = Option.requiredArgument('d', "caseDir");
-    private final Option runIngestCommandOption = Option.withoutArgument('r', "runIngest");
-    private final Option ingestProfileOption = Option.requiredArgument('p', "ingestProfile");
+    private final Option runIngestCommandOption = Option.optionalArgument('r', "runIngest");
     private final Option listAllDataSourcesCommandOption = Option.withoutArgument('l', "listAllDataSources");
     private final Option generateReportsOption = Option.optionalArgument('g', "generateReports");
     private final Option defaultArgument = Option.defaultArguments();
@@ -76,7 +75,6 @@ public class CommandLineOptionProcessor extends OptionProcessor {
         set.add(dataSourceObjectIdOption);
         set.add(caseDirOption);
         set.add(runIngestCommandOption);
-        set.add(ingestProfileOption);
         set.add(listAllDataSourcesCommandOption);
         set.add(generateReportsOption);
         set.add(defaultArgument);
@@ -205,21 +203,6 @@ public class CommandLineOptionProcessor extends OptionProcessor {
             }
         }
 
-        String ingestProfile = "";
-        if (values.containsKey(ingestProfileOption)) {
-
-            argDirs = values.get(ingestProfileOption);
-            if (argDirs.length < 1) {
-                handleError("Argument missing from 'ingestProfile' option");
-            }
-            ingestProfile = argDirs[0];
-
-            // verify inputs
-            if (ingestProfile == null || ingestProfile.isEmpty()) {
-                handleError("Missing argument 'ingestProfile'");
-            }
-        }
-
         // Create commands in order in which they should be executed:
         // First create the "CREATE_CASE" command, if present
         if (values.containsKey(createCaseCommandOption)) {
@@ -263,8 +246,14 @@ public class CommandLineOptionProcessor extends OptionProcessor {
             runFromCommandLine = true;
         }
 
+        String ingestProfile = "";
         // Add RUN_INGEST command, if present
         if (values.containsKey(runIngestCommandOption)) {
+
+            argDirs = values.get(runIngestCommandOption);
+            if(argDirs != null && argDirs.length > 0) {
+                ingestProfile = argDirs[0];
+            }
 
             // 'caseDir' must only be specified if the case is not being created during the current run
             if (!values.containsKey(createCaseCommandOption) && caseDir.isEmpty()) {
