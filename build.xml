@@ -119,7 +119,9 @@
         <copy flatten="false" todir="${zip-tmp}/${app.name}/autopsy/ZookeeperNodeMigration">
             <fileset dir="${basedir}/ZookeeperNodeMigration/dist"/>
         </copy>
-        <copy file="${basedir}/ZookeeperNodeMigration/docs/README.TXT" todir="${zip-tmp}/${app.name}/autopsy/ZookeeperNodeMigration"/>
+        <copy flatten="false" todir="${zip-tmp}/${app.name}/autopsy/ZookeeperNodeMigration" overwrite="true">
+            <fileset dir="${basedir}/ZookeeperNodeMigration/docs"/>
+        </copy>
 
         <property name="app.property.file" value="${zip-tmp}/${app.name}/etc/${app.name}.conf" />
         <var name="jvm-value" value="--branding ${app.name} -J-Xms24m -J-Xmx4G -J-Xverify:none -J-XX:+UseG1GC -J-XX:+UseStringDeduplication"/>
