@@ -33,7 +33,6 @@ final class TimeStampUtils {
      */
     private static final Pattern TIME_STAMP_PATTERN = Pattern.compile("\\d{4}_\\d{2}_\\d{2}_\\d{2}_\\d{2}_\\d{2}$");
     private static final int LENGTH_OF_DATE_TIME_STAMP = 20; // length of the above time stamp
-    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss");
 
     /**
      * Checks whether a string ends with a time stamp.

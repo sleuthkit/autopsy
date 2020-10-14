@@ -55,6 +55,9 @@ public class ZookeeperNodeMigration {
     private static CuratorFramework outputCurator;
     private static Map<String, String> categoryNodeToPath;
 
+    private ZookeeperNodeMigration(){
+    }
+    
     /**
      * Main method.
      *
@@ -226,7 +229,7 @@ public class ZookeeperNodeMigration {
         ZooKeeper zooKeeper = new ZooKeeper(connectString, ZOOKEEPER_SESSION_TIMEOUT_MILLIS,
                 (WatchedEvent event) -> {
                     synchronized (workerThreadWaitNotifyLock) {
-                        workerThreadWaitNotifyLock.notify();
+                        workerThreadWaitNotifyLock.notifyAll();
                     }
                 });
         synchronized (workerThreadWaitNotifyLock) {
@@ -238,44 +241,6 @@ public class ZookeeperNodeMigration {
         }
         zooKeeper.close();
         return result;
-    }
-
-    /**
-     * Tries to get an exclusive lock on a node path appended to a category path
-     * in the namespace managed by this coordination service. Blocks until the
-     * lock is obtained or the time out expires.
-     *
-     * IMPORTANT: The lock needs to be released in the same thread in which it
-     * is acquired.
-     *
-     * @param category The desired category in the namespace.
-     * @param nodePath The node path to use as the basis for the lock.
-     * @param timeOut  Length of the time out.
-     * @param timeUnit Time unit for the time out.
-     *
-     * @return The lock, or null if lock acquisition timed out.
-     *
-     * @throws CoordinationServiceException If there is an error during lock
-     *                                      acquisition.
-     * @throws InterruptedException         If interrupted while blocked during
-     *                                      lock acquisition.
-     */
-    private static Lock tryGetExclusiveLock(CategoryNode category, String nodePath, int timeOut, TimeUnit timeUnit) throws CoordinationServiceException, InterruptedException {
-        String fullNodePath = getFullyQualifiedNodePath(category, nodePath);
-        try {
-            InterProcessReadWriteLock lock = new InterProcessReadWriteLock(inputCurator, fullNodePath);
-            if (lock.writeLock().acquire(timeOut, timeUnit)) {
-                return new Lock(nodePath, lock.writeLock());
-            } else {
-                return null;
-            }
-        } catch (Exception ex) {
-            if (ex instanceof InterruptedException) {
-                throw (InterruptedException) ex;
-            } else {
-                throw new CoordinationServiceException(String.format("Failed to get exclusive lock for %s", fullNodePath), ex);
-            }
-        }
     }
 
     /**
@@ -304,73 +269,6 @@ public class ZookeeperNodeMigration {
             return new Lock(nodePath, lock.writeLock());
         } catch (Exception ex) {
             throw new CoordinationServiceException(String.format("Failed to get exclusive lock for %s", fullNodePath), ex);
-        }
-    }
-
-    /**
-     * Tries to get a shared lock on a node path appended to a category path in
-     * the namespace managed by this coordination service. Blocks until the lock
-     * is obtained or the time out expires.
-     *
-     * IMPORTANT: The lock needs to be released in the same thread in which it
-     * is acquired.
-     *
-     * @param category The desired category in the namespace.
-     * @param nodePath The node path to use as the basis for the lock.
-     * @param timeOut  Length of the time out.
-     * @param timeUnit Time unit for the time out.
-     *
-     * @return The lock, or null if lock acquisition timed out.
-     *
-     * @throws CoordinationServiceException If there is an error during lock
-     *                                      acquisition.
-     * @throws InterruptedException         If interrupted while blocked during
-     *                                      lock acquisition.
-     */
-    private static Lock tryGetSharedLock(CategoryNode category, String nodePath, int timeOut, TimeUnit timeUnit) throws CoordinationServiceException, InterruptedException {
-        String fullNodePath = getFullyQualifiedNodePath(category, nodePath);
-        try {
-            InterProcessReadWriteLock lock = new InterProcessReadWriteLock(inputCurator, fullNodePath);
-            if (lock.readLock().acquire(timeOut, timeUnit)) {
-                return new Lock(nodePath, lock.readLock());
-            } else {
-                return null;
-            }
-        } catch (Exception ex) {
-            if (ex instanceof InterruptedException) {
-                throw (InterruptedException) ex;
-            } else {
-                throw new CoordinationServiceException(String.format("Failed to get shared lock for %s", fullNodePath), ex);
-            }
-        }
-    }
-
-    /**
-     * Tries to get a shared lock on a node path appended to a category path in
-     * the namespace managed by this coordination service. Returns immediately
-     * if the lock can not be acquired.
-     *
-     * IMPORTANT: The lock needs to be released in the same thread in which it
-     * is acquired.
-     *
-     * @param category The desired category in the namespace.
-     * @param nodePath The node path to use as the basis for the lock.
-     *
-     * @return The lock, or null if the lock could not be obtained.
-     *
-     * @throws CoordinationServiceException If there is an error during lock
-     *                                      acquisition.
-     */
-    private static Lock tryGetSharedLock(CategoryNode category, String nodePath) throws CoordinationServiceException {
-        String fullNodePath = getFullyQualifiedNodePath(category, nodePath);
-        try {
-            InterProcessReadWriteLock lock = new InterProcessReadWriteLock(inputCurator, fullNodePath);
-            if (!lock.readLock().acquire(0, TimeUnit.SECONDS)) {
-                return null;
-            }
-            return new Lock(nodePath, lock.readLock());
-        } catch (Exception ex) {
-            throw new CoordinationServiceException(String.format("Failed to get shared lock for %s", fullNodePath), ex);
         }
     }
 
