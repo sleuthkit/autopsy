@@ -38,7 +38,7 @@ public class IntegrationTestConfig {
         @Override
         public IntegrationTestConfig deserialize(JsonElement je, Type type, JsonDeserializationContext jdc) throws JsonParseException {
             JsonObject jObj = je.getAsJsonObject();
-            String rootCaseOutputPath = jObj.get("rootTestOutputPath").getAsString();
+            String rootCaseOutputPath = jObj.get("rootCaseOutputPath").getAsString();
             String rootTestOutputPath = jObj.get("rootTestOutputPath").getAsString();
             List<CaseConfig> cases = jdc.deserialize(jObj.get("cases"), listOfCasesType);
             

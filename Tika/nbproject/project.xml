@@ -123,10 +123,6 @@
                 <binary-origin>release\modules\ext\xmlbeans-3.1.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/gson-2.8.6.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\gson-2.8.6.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/cdm-4.5.5.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\cdm-4.5.5.jar</binary-origin>
             </class-path-extension>

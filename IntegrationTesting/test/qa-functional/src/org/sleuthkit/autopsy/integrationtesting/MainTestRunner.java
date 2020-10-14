@@ -50,12 +50,13 @@ import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor.
 import org.sleuthkit.autopsy.datasourceprocessors.DataSourceProcessorUtility;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings.IngestType;
-import org.sleuthkit.autopsy.ingest.IngestModuleFactoryService;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleTemplate;
 import org.sleuthkit.autopsy.integrationtesting.config.CaseConfig;
 import org.sleuthkit.autopsy.integrationtesting.config.IntegrationCaseType;
+import org.sleuthkit.autopsy.integrationtesting.interfaces.IntegrationTest;
+import org.sleuthkit.autopsy.integrationtesting.interfaces.IntegrationTests;
 import org.sleuthkit.autopsy.python.FactoryClassNameNormalizer;
 import org.sleuthkit.autopsy.testutils.CaseUtils;
 import org.sleuthkit.autopsy.testutils.IngestUtils;
@@ -70,8 +71,7 @@ import org.yaml.snakeyaml.Yaml;
 public class MainTestRunner extends TestCase {
 
     private static final Logger logger = Logger.getLogger(MainTestRunner.class.getName()); // DO NOT USE AUTOPSY LOGGER
-    private static final String CONFIG_FILE_KEY = "configFileKey";
-    private static final IngestModuleFactoryService ingestFactoryService = new IngestModuleFactoryService();
+    private static final String CONFIG_FILE_KEY = "integrationConfigFile";
     private static final IngestType DEFAULT_INGEST_TYPE = IngestType.ALL_MODULES;
 
     /**
@@ -163,8 +163,40 @@ public class MainTestRunner extends TestCase {
         return openCase;
     }
 
+    private IngestModuleFactory getIngestModuleFactory(String className) {
+        if (className == null) {
+            logger.log(Level.WARNING, "No class name provided.");
+            return null;
+        }
+
+        Class<?> ingestModuleFactoryClass = null;
+        try {
+            ingestModuleFactoryClass = Class.forName(className);
+        } catch (ClassNotFoundException ex) {
+            logger.log(Level.WARNING, String.format("No class found matching canonical name in config of %s.", className), ex);
+            return null;
+        }
+
+        Object factoryObject = null;
+        try {
+            factoryObject = ingestModuleFactoryClass.newInstance();
+        } catch (InstantiationException | IllegalAccessException ex) {
+            logger.log(Level.WARNING, String.format("Error during instantiation of %s.", className), ex);
+            return null;
+        }
+
+        if (factoryObject instanceof IngestModuleFactory) {
+            return (IngestModuleFactory) factoryObject;
+        } else {
+            logger.log(Level.WARNING, String.format("Could not properly instantiate class of: %s", className));
+            return null;
+        }
+    }
+
     private IngestJobSettings getIngestSettings(String profileName, IngestType ingestType, List<String> enabledFactoryClasses, String pathToIngestModuleSettings) {
-        Map<String, IngestModuleFactory> classToFactoryMap = ingestFactoryService.getFactories().stream()
+        Map<String, IngestModuleFactory> classToFactoryMap = enabledFactoryClasses.stream()
+                .map(factoryName -> getIngestModuleFactory(factoryName))
+                .filter(factory -> factory != null)
                 .collect(Collectors.toMap(factory -> factory.getClass().getCanonicalName(), factory -> factory, (f1, f2) -> f1));
 
         List<IngestModuleTemplate> ingestModuleTemplates = enabledFactoryClasses.stream()
@@ -216,11 +248,12 @@ public class MainTestRunner extends TestCase {
     }
 
     private IntegrationTestConfig getConfigFromFile(String filePath) throws IOException {
-        //return new IntegrationTestConfig("C:\\Users\\gregd\\Desktop\\testoutput", "C:\\Users\\gregd\\Desktop\\testoutput", Collections.emptyList());
         GsonBuilder builder = new GsonBuilder();
-        builder.registerTypeAdapter(IntegrationTestConfig.class, IntegrationTestConfig.DESERIALIZER);
+        builder.registerTypeAdapter(IntegrationTestConfig.class,
+                 IntegrationTestConfig.DESERIALIZER);
         Gson gson = builder.create();
-        return gson.fromJson(new FileReader(new File(filePath)), IntegrationTestConfig.class);
+        return gson.fromJson(new FileReader(new File(filePath)), IntegrationTestConfig.class
+        );
     }
 
     private void runIntegrationTests(IntegrationTestConfig config, CaseConfig caseConfig, CaseType caseType) {
@@ -228,14 +261,17 @@ public class MainTestRunner extends TestCase {
         OutputResults results = new OutputResults();
 
         // run through each ConsumerIntegrationTest
-        for (IntegrationTests testGroup : Lookup.getDefault().lookupAll(IntegrationTests.class)) {
+        for (IntegrationTests testGroup : Lookup.getDefault().lookupAll(IntegrationTests.class
+        )) {
 
             // if test should not be included in results, skip it.
-            if (!caseConfig.getTestConfig().hasIncludedTest(testGroup.getClass().getCanonicalName())) {
+            if (!caseConfig.getTestConfig()
+                    .hasIncludedTest(testGroup.getClass().getCanonicalName())) {
                 continue;
             }
 
             List<Method> testMethods = getIntegrationTestMethods(testGroup);
+
             if (CollectionUtils.isEmpty(testMethods)) {
                 continue;
             }
@@ -244,10 +280,11 @@ public class MainTestRunner extends TestCase {
             for (Method testMethod : testMethods) {
                 runIntegrationTestMethod(results, testGroup, testMethod);
             }
+
             testGroup.tearDownClass();
         }
 
-        // write the results for the case to a file
+// write the results for the case to a file
         serializeFile(results, config.getRootTestOutputPath(), caseConfig.getCaseName(), getCaseTypeId(caseType));
     }
 
@@ -298,7 +335,8 @@ public class MainTestRunner extends TestCase {
 
     private List<Method> getIntegrationTestMethods(IntegrationTests testGroup) {
         return Stream.of(testGroup.getClass().getMethods())
-                .filter((method) -> method.getAnnotation(IntegrationTest.class) != null)
+                .filter((method) -> method.getAnnotation(IntegrationTest.class
+        ) != null)
                 .collect(Collectors.toList());
     }
 
