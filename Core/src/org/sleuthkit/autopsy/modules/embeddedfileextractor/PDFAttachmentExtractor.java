@@ -123,7 +123,7 @@ final class PDFAttachmentExtractor {
         @Override
         public void parseEmbedded(InputStream in, ContentHandler ch, Metadata mtdt, boolean bln) throws SAXException, IOException {
             //Resource naming scheme is used internally in autopsy, therefore we can guarentee uniqueness.
-            String uniqueExtractedName = parentID + "_attch_" + attachmentCount++; //NON-NLS
+            String uniqueExtractedName = "extract_" + attachmentCount++; //NON-NLS
             
             String name = mtdt.get(Metadata.RESOURCE_NAME_KEY);
             String ext = FilenameUtils.getExtension(name);
