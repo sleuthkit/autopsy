@@ -66,6 +66,7 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
     private static final String MODULE_NAME = ILeappAnalyzerModuleFactory.getModuleName();
 
     private static final String ILEAPP = "iLeapp"; //NON-NLS
+    private static final String ILEAPP_FS = "fs_"; //NON-NLS
     private static final String ILEAPP_EXECUTABLE = "ileapp.exe";//NON-NLS
     private static final String ILEAPP_PATHS_FILE = "iLeapp_paths.txt"; //NON-NLS
 
@@ -119,7 +120,7 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress statusHelper) {
 
         Case currentCase = Case.getCurrentCase();
-        Path moduleOutputPath = Paths.get(currentCase.getModuleDirectory(), ILEAPP);
+        Path moduleOutputPath = Paths.get(currentCase.getModuleDirectory(), ILEAPP, ILEAPP_FS + dataSource.getId());
         try {
             Files.createDirectories(moduleOutputPath);
         } catch (IOException ex) {
@@ -132,7 +133,7 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
         try {
             int result = ExecUtil.execute(iLeappCommand, new DataSourceIngestModuleProcessTerminator(context, true));
             if (result != 0) {
-                // ignore if there is an error and continue to try and process the next file if there is one
+                // ignore if there is an error and continue to try and process the next fileif there is one
 
             }
             iLeappPathsToProcess = loadIleappPathFile(moduleOutputPath);
@@ -157,6 +158,8 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
             for (AbstractFile iLeappFile : iLeappFilesToProcess) {
                 processILeappFile(dataSource, currentCase, statusHelper, filesProcessedCount, iLeappFile);
             }
+            // Process the logical image as a fs in iLeapp to make sure this is not a logical fs that was added
+            processILeappFs(dataSource, currentCase, statusHelper, moduleOutputPath.toString());
         }
 
         IngestMessage message = IngestMessage.createMessage(IngestMessage.MessageType.DATA,
