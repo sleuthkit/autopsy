@@ -26,7 +26,6 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import org.sleuthkit.autopsy.integrationtesting.config.IntegrationTestConfig;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.nio.file.Paths;

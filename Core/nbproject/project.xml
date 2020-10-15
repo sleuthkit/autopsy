@@ -819,6 +819,10 @@
                 <runtime-relative-path>ext/grpc-netty-shaded-1.19.0.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\grpc-netty-shaded-1.19.0.jar</binary-origin>
             </class-path-extension>
+			<class-path-extension>
+                <runtime-relative-path>ext/snakeyaml-1.27.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\snakeyaml-1.27.jar</binary-origin>
+            </class-path-extension>
         </data>
     </configuration>
 </project>
