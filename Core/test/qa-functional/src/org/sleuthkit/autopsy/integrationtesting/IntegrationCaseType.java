@@ -29,6 +29,11 @@ import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 public enum IntegrationCaseType {
     multiUser, singleUser, both;
     
+    /**
+     * Creates a list of Case.CaseType objects that represent the IntegrationCaseType.
+     * @param integrationCaseType The type(s) of cases to create for this case (single user, multi user, both).
+     * @return The Case.CaseType objects associated with choice.
+     */
     public static List<CaseType> getCaseTypes(IntegrationCaseType integrationCaseType) {
         if (integrationCaseType == null) {
             return Collections.emptyList();

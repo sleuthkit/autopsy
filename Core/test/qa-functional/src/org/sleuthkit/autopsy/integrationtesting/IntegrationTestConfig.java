@@ -34,6 +34,9 @@ import java.util.List;
 public class IntegrationTestConfig {
     private static final Type listOfCasesType = new TypeToken<List<CaseConfig>>(){}.getType();
         
+    /**
+     * Gson Json deserializer to handle proper construction of this 
+     */
     public static final JsonDeserializer<IntegrationTestConfig> DESERIALIZER = new JsonDeserializer<IntegrationTestConfig>() {
         @Override
         public IntegrationTestConfig deserialize(JsonElement je, Type type, JsonDeserializationContext jdc) throws JsonParseException {
@@ -58,14 +61,23 @@ public class IntegrationTestConfig {
         this.cases = cases;
     }
 
+    /**
+     * @return The path for where cases should be saved.
+     */
     public String getRootCaseOutputPath() {
         return rootCaseOutputPath;
     }
 
+    /**
+     * @return The path for where output yaml data should be saved.
+     */
     public String getRootTestOutputPath() {
         return rootTestOutputPath;
     }
 
+    /**
+     * @return The per-case configuration.
+     */
     public List<CaseConfig> getCases() {
         return cases;
     }

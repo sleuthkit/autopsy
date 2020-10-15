@@ -60,7 +60,6 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.introspector.Property;
-import org.yaml.snakeyaml.introspector.PropertyUtils;
 import org.yaml.snakeyaml.nodes.MappingNode;
 import org.yaml.snakeyaml.nodes.Tag;
 import org.yaml.snakeyaml.representer.Representer;
@@ -94,7 +93,11 @@ public class MainTestRunner extends TestCase {
         return NbModuleSuite.create(conf.addTest("runIntegrationTests"));
     }
 
+    /**
+     * Main entry point for running all integration tests.
+     */
     public void runIntegrationTests() {
+        // The config file location is specified as a system property.  A config is necessary to run this properly.
         String configFile = System.getProperty(CONFIG_FILE_KEY);
         IntegrationTestConfig config;
         try {
@@ -111,6 +114,8 @@ public class MainTestRunner extends TestCase {
         if (!CollectionUtils.isEmpty(config.getCases())) {
             for (CaseConfig caseConfig : config.getCases()) {
                 for (CaseType caseType : IntegrationCaseType.getCaseTypes(caseConfig.getCaseTypes())) {
+                    // create an autopsy case for each case in the config and for each case type for the specified case.
+                    // then run ingest for the case.
                     Case autopsyCase = runIngest(caseConfig, caseType);
                     if (autopsyCase == null || autopsyCase != Case.getCurrentCase()) {
                         logger.log(Level.WARNING,
@@ -119,6 +124,7 @@ public class MainTestRunner extends TestCase {
                         return;
                     }
 
+                    // once ingested, run integration tests to produce output.
                     String caseName = autopsyCase.getName();
 
                     runIntegrationTests(config, caseConfig, caseType);
@@ -134,6 +140,12 @@ public class MainTestRunner extends TestCase {
         }
     }
 
+    /**
+     * Create a case and run ingest with the current case.
+     * @param caseConfig The configuration for the case.
+     * @param caseType The type of case.
+     * @return The currently open case after ingest.
+     */
     private Case runIngest(CaseConfig caseConfig, CaseType caseType) {
         Case openCase = null;
         switch (caseType) {
@@ -164,7 +176,35 @@ public class MainTestRunner extends TestCase {
 
         return openCase;
     }
+    
+    /**
+     * Adds the datasources to the current case.
+     * @param pathStrings The list of paths for the data sources.
+     * @param caseName The name of the case.
+     */
+    private void addDataSourcesToCase(List<String> pathStrings, String caseName) {
+        for (String strPath : pathStrings) {
+            Path path = Paths.get(strPath);
+            List<AutoIngestDataSourceProcessor> processors = null;
+            try {
+                processors = DataSourceProcessorUtility.getOrderedListOfDataSourceProcessors(path);
+            } catch (AutoIngestDataSourceProcessorException ex) {
+                logger.log(Level.WARNING, String.format("There was an error while adding data source: %s to case %s", strPath, caseName));
+            }
 
+            if (CollectionUtils.isEmpty(processors)) {
+                continue;
+            }
+
+            IngestUtils.addDataSource(processors.get(0), path);
+        }
+    }
+
+    /**
+     * Gets an IngestModuleFactory instance from the canonical class name provided.
+     * @param className The canonical class name of the factory.
+     * @return The IngestModuleFactory for the class or null if can't be determined.
+     */
     private IngestModuleFactory getIngestModuleFactory(String className) {
         if (className == null) {
             logger.log(Level.WARNING, "No class name provided.");
@@ -195,6 +235,14 @@ public class MainTestRunner extends TestCase {
         }
     }
 
+    /**
+     * Creates an IngestJobSettings instance.
+     * @param profileName The name of the profile.
+     * @param ingestType The ingest type.
+     * @param enabledFactoryClasses The list of canonical class names of factories to be used in ingest.
+     * @param pathToIngestModuleSettings
+     * @return 
+     */
     private IngestJobSettings getIngestSettings(String profileName, IngestType ingestType, List<String> enabledFactoryClasses, String pathToIngestModuleSettings) {
         Map<String, IngestModuleFactory> classToFactoryMap = enabledFactoryClasses.stream()
                 .map(factoryName -> getIngestModuleFactory(factoryName))
@@ -231,23 +279,7 @@ public class MainTestRunner extends TestCase {
         return new IngestModuleTemplate(factory, factory.getDefaultIngestJobSettings());
     }
 
-    private void addDataSourcesToCase(List<String> pathStrings, String caseName) {
-        for (String strPath : pathStrings) {
-            Path path = Paths.get(strPath);
-            List<AutoIngestDataSourceProcessor> processors = null;
-            try {
-                processors = DataSourceProcessorUtility.getOrderedListOfDataSourceProcessors(path);
-            } catch (AutoIngestDataSourceProcessorException ex) {
-                logger.log(Level.WARNING, String.format("There was an error while adding data source: %s to case %s", strPath, caseName));
-            }
 
-            if (CollectionUtils.isEmpty(processors)) {
-                continue;
-            }
-
-            IngestUtils.addDataSource(processors.get(0), path);
-        }
-    }
 
     private IntegrationTestConfig getConfigFromFile(String filePath) throws IOException {
         GsonBuilder builder = new GsonBuilder();
@@ -351,12 +383,14 @@ public class MainTestRunner extends TestCase {
             return super.representJavaBean(properties, javaBean);
         }
     };
-    
-    private static final DumperOptions DUMPER_OPTS = new DumperOptions() {{
-       setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK); 
-       setAllowReadOnlyProperties(true);
-    }};
-    
+
+    private static final DumperOptions DUMPER_OPTS = new DumperOptions() {
+        {
+            setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
+            setAllowReadOnlyProperties(true);
+        }
+    };
+
     private static final Yaml YAML_SERIALIZER = new Yaml(MAP_REPRESENTER, DUMPER_OPTS);
 
     private void serializeFile(OutputResults results, String outputFolder, String caseName, String caseType) {

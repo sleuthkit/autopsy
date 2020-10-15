@@ -28,6 +28,7 @@ import org.apache.commons.collections4.CollectionUtils;
  * Configuration for which integration test suites to run.
  */
 public class TestingConfig {
+
     private final Set<String> excludeAllExcept;
     private final Set<String> includeAllExcept;
 
@@ -35,40 +36,54 @@ public class TestingConfig {
         if (orig == null) {
             return Collections.emptySet();
         }
-        
+
         return orig.stream()
                 .map((item) -> item.toUpperCase())
                 .collect(Collectors.toSet());
     }
-    
+
     public TestingConfig(List<String> excludeAllExcept, List<String> includeAllExcept) {
         this.excludeAllExcept = convert(excludeAllExcept);
         this.includeAllExcept = convert(includeAllExcept);
     }
 
+    /**
+     * @return The test suites to be run. If not specified, getIncludeAllExcept
+     *         will be used. If that is not specified, all tests will be run.
+     */
     public Set<String> getExcludeAllExcept() {
         return excludeAllExcept;
     }
 
+    /**
+     * @return The test suites explicitly to exclude. If not specified,
+     *         getExcludeAllExcept will be used. If that is not specified, all
+     *         tests will be run.
+     */
     public Set<String> getIncludeAllExcept() {
         return includeAllExcept;
-    }   
-    
+    }
+
+    /**
+     * Whether or not the current settings contain the current test.
+     * @param itemType The fully qualified name of the test suite.
+     * @return True if this test should be run.
+     */
     public boolean hasIncludedTest(String itemType) {
         if (itemType == null) {
             return false;
         }
-        
+
         if (!CollectionUtils.isEmpty(includeAllExcept)) {
             if (includeAllExcept.contains(itemType.toUpperCase())) {
                 return false;
             }
         }
-        
+
         if (!CollectionUtils.isEmpty(excludeAllExcept)) {
             return excludeAllExcept.contains(itemType.toUpperCase());
         }
-        
+
         return true;
     }
 }

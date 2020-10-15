@@ -24,17 +24,18 @@ import java.util.List;
  * Configuration in IntegrationTests per case.
  */
 public class CaseConfig {
+
     private final String caseName;
     private final List<String> dataSourceResources;
-    
+
     private final List<String> ingestModules;
     private final String ingestModuleSettingsPath;
-    
+
     private final IntegrationCaseType caseTypes;
     private final TestingConfig testConfig;
 
-    public CaseConfig(String caseName, List<String> dataSourceResources, 
-            List<String> ingestModules, String ingestModuleSettingsPath, 
+    public CaseConfig(String caseName, List<String> dataSourceResources,
+            List<String> ingestModules, String ingestModuleSettingsPath,
             IntegrationCaseType caseTypes, TestingConfig testConfig) {
         this.caseName = caseName;
         this.dataSourceResources = dataSourceResources;
@@ -44,26 +45,46 @@ public class CaseConfig {
         this.testConfig = testConfig;
     }
 
+    /**
+     * @return The name for the case (also used in formulating output name).
+     */
     public String getCaseName() {
         return caseName;
     }
 
+    /**
+     * @return The paths (relative to working directory) of data sources.
+     */
     public List<String> getDataSourceResources() {
         return dataSourceResources;
     }
 
+    /**
+     * @return The path to ingest module settings.
+     */
     public String getIngestModuleSettingsPath() {
         return ingestModuleSettingsPath;
     }
 
+    /**
+     * @return The type(s) of cases to create for this (single user, multi user,
+     *         or both).
+     */
     public IntegrationCaseType getCaseTypes() {
         return caseTypes;
     }
 
+    /**
+     * @return The configuration for how testing should be done on this case and
+     *         datasources.
+     */
     public TestingConfig getTestConfig() {
         return testConfig;
     }
 
+    /**
+     * @return The ingestModules to use for this case.
+     */
     public List<String> getIngestModules() {
         return ingestModules;
     }
