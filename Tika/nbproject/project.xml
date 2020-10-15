@@ -507,10 +507,6 @@
                 <binary-origin>release\modules\ext\jcip-annotations-1.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/commons-collections4-4.4.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\commons-collections4-4.4.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/cxf-core-3.3.4.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\cxf-core-3.3.4.jar</binary-origin>
             </class-path-extension>

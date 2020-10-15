@@ -183,7 +183,7 @@
     <target name="compile" depends="projectized-common.compile">
         <antcall target="copy-bundle" />
     </target>
-
+    
     <target name="copy-bundle">
         <!-- the externalized strings in 'src' are in both the java files as annotations and in the Bundle.property files.
         The strings get merged during compilation.  This target copies that merged file into src so that it can be checked
@@ -195,5 +195,91 @@
             <globmapper from="*" to="*-MERGED"/>
         </copy>
     </target>
+
+    <target name="test-qa-functional">
+        <!--We don't want integration testing to run from standard qa functional-->
+        <property name="test.config.qa-functional.excludes" value="**/org/sleuthkit/autopsy/integrationtesting/MainTestRunner.class"/>
+        <antcall target="projectized-common.test-qa-functional" />
+    </target>    
+
+    <target name="check-integration-test-args"> 
+        <fail message="Missing required argument: integrationConfigFile" unless="integrationConfigFile"/>
+    </target>
+
+    <!-- use manifestclasspath (http://ant.apache.org/manual/Tasks/manifestclasspath.html) to put all the jar files that we need for junit/regression test
+                  to a single jar file: allJarsInUse.jar. Then we put this new jar to classpath for testing program to avoid command line Java classpath too long problem.
+      Note: Started from ant 1.10, maxParentLevels are enforced. If you get error from manifestclasspath complaines 'No suitable relative path from ...' then it's time to
+            increase your maxParentLevels -->
+    <target name="regression-test-manifest-classpath">
+        <manifestclasspath property="tem.classpath" jarfile="allJarsInUse.jar" maxParentLevels="5">
+            <classpath refid="test.qa-functional.run.cp"/>
+        </manifestclasspath>
+        <jar destfile="allJarsInUse.jar" basedir="build/classes">
+            <manifest>
+                <attribute name="Class-Path" value="${tem.classpath}"/>
+            </manifest>
+        </jar>
+        <path id="test.classpath">
+            <pathelement path="allJarsInUse.jar"/>
+        </path>
+    </target>
     
+    <target 
+        name="integration-test" 
+        depends="check-integration-test-args,init,test-init,test-build,regression-test-manifest-classpath" 
+        if="exists.test.qa-functional.src.dir"
+    >
+
+        <sequential>
+            <property name="test.type" value="qa-functional"/>
+            <property name="test.config" value="default"/>
+            <property name="test.config.${test.config}.excludes" value=""/>
+            <property name="test.config.default.includes" value="**/org/sleuthkit/autopsy/integrationtesting/MainTestRunner.class"/>
+            <!--<property name="test.config.${test.config}.includes" value="NOTHING"/>-->
+            
+            <metaproperty name="test.includes" value="test.config.${test.config}.includes"/>
+            <metaproperty name="test.excludes" value="test.config.${test.config}.excludes"/>
+            
+            <metaproperty name="resultsDir" value="build.test.${test.type}.results.dir"/>
+            <metaproperty name="classesDir" value="build.test.${test.type}.classes.dir"/>
+            
+            <mkdir dir="${resultsDir}"/>
+            <junit 
+                fork="true" 
+                failureproperty="tests.failed" 
+                errorproperty="tests.failed" 
+                filtertrace="${test.filter.trace}" 
+                tempdir="${resultsDir}"
+            >
+                <batchtest todir="${resultsDir}">
+                    <fileset dir="${classesDir}" includes="${test.includes}" excludes="${test.excludes}"/>
+                </batchtest>
+                <classpath refid="test.classpath"/>
+                <!--<classpath refid="test.@{test.type}.run.cp"/>-->
+                <syspropertyset refid="test.${test.type}.properties"/>
+                <jvmarg line="${test.bootclasspath.prepend.args}"/>
+                <jvmarg line="${test.run.args}"/>
+                <!--  should be in sync with project.properties and build.xml of autopsy main project -->
+                <!-- disable for now, causes issues with Java 7 -->
+                <!-- <jvmarg line="-J-Xms24m -J-Xmx512m -J-XX:MaxPermSize=128M -J-Xverify:none"/>  -->
+                <sysproperty key="integrationConfigFile" value="${integrationConfigFile}"/>
+                
+                <!--needed to have tests NOT to steal focus when running, works in latest apple jdk update only.-->
+                <sysproperty key="apple.awt.UIElement" value="false"/>
+                <formatter type="brief" usefile="false"/>
+                <formatter type="xml"/>
+            </junit>
+            <fail message="Some tests failed; see details above.">
+                <condition>
+                    <and>
+                        <isset property="tests.failed"/>
+                        <isfalse value="${continue.after.failing.tests}"/>
+                    </and>
+                </condition>
+            </fail>
+            
+            <!--delete the jar created in manifest-classpath-->
+            <delete file="allJarsInUse.jar"/>
+        </sequential>
+    </target> 
 </project>
