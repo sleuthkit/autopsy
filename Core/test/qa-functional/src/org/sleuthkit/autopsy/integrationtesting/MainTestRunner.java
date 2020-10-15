@@ -31,6 +31,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -56,7 +57,13 @@ import org.sleuthkit.autopsy.python.FactoryClassNameNormalizer;
 import org.sleuthkit.autopsy.testutils.CaseUtils;
 import org.sleuthkit.autopsy.testutils.IngestUtils;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.introspector.Property;
+import org.yaml.snakeyaml.introspector.PropertyUtils;
+import org.yaml.snakeyaml.nodes.MappingNode;
+import org.yaml.snakeyaml.nodes.Tag;
+import org.yaml.snakeyaml.representer.Representer;
 
 /**
  * Main entry point for running integration tests. Handles processing
@@ -245,7 +252,7 @@ public class MainTestRunner extends TestCase {
     private IntegrationTestConfig getConfigFromFile(String filePath) throws IOException {
         GsonBuilder builder = new GsonBuilder();
         builder.registerTypeAdapter(IntegrationTestConfig.class,
-                 IntegrationTestConfig.DESERIALIZER);
+                IntegrationTestConfig.DESERIALIZER);
         Gson gson = builder.create();
         return gson.fromJson(new FileReader(new File(filePath)), IntegrationTestConfig.class
         );
@@ -334,15 +341,31 @@ public class MainTestRunner extends TestCase {
                 .collect(Collectors.toList());
     }
 
+    private static final Representer MAP_REPRESENTER = new Representer() {
+        @Override
+        protected MappingNode representJavaBean(Set<Property> properties, Object javaBean) {
+            if (!classTags.containsKey(javaBean.getClass())) {
+                addClassTag(javaBean.getClass(), Tag.MAP);
+            }
+
+            return super.representJavaBean(properties, javaBean);
+        }
+    };
+    
+    private static final DumperOptions DUMPER_OPTS = new DumperOptions() {{
+       setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK); 
+       setAllowReadOnlyProperties(true);
+    }};
+    
+    private static final Yaml YAML_SERIALIZER = new Yaml(MAP_REPRESENTER, DUMPER_OPTS);
+
     private void serializeFile(OutputResults results, String outputFolder, String caseName, String caseType) {
         String outputExtension = ".yml";
         Path outputPath = Paths.get(outputFolder, String.format("%s-%s%s", caseName, caseType, outputExtension));
-        Yaml yaml = new Yaml();
 
         try {
-
             FileWriter writer = new FileWriter(outputPath.toFile());
-            yaml.dump(results.getSerializableData(), writer);
+            YAML_SERIALIZER.dump(results.getSerializableData(), writer);
         } catch (IOException ex) {
             logger.log(Level.WARNING, "There was an error writing results to outputPath: " + outputPath, ex);
         }
