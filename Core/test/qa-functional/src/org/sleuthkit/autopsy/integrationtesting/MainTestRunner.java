@@ -53,10 +53,6 @@ import org.sleuthkit.autopsy.ingest.IngestJobSettings.IngestType;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleTemplate;
-import org.sleuthkit.autopsy.integrationtesting.config.CaseConfig;
-import org.sleuthkit.autopsy.integrationtesting.config.IntegrationCaseType;
-import org.sleuthkit.autopsy.integrationtesting.interfaces.IntegrationTest;
-import org.sleuthkit.autopsy.integrationtesting.interfaces.IntegrationTests;
 import org.sleuthkit.autopsy.python.FactoryClassNameNormalizer;
 import org.sleuthkit.autopsy.testutils.CaseUtils;
 import org.sleuthkit.autopsy.testutils.IngestUtils;
@@ -261,8 +257,7 @@ public class MainTestRunner extends TestCase {
         OutputResults results = new OutputResults();
 
         // run through each ConsumerIntegrationTest
-        for (IntegrationTests testGroup : Lookup.getDefault().lookupAll(IntegrationTests.class
-        )) {
+        for (IntegrationTests testGroup : Lookup.getDefault().lookupAll(IntegrationTests.class)) {
 
             // if test should not be included in results, skip it.
             if (!caseConfig.getTestConfig()

@@ -27,12 +27,12 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopDomainsResult;
-import org.sleuthkit.autopsy.integrationtesting.IntegrationTest;
-import org.sleuthkit.autopsy.integrationtesting.IntegrationTests;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.openide.util.lookup.ServiceProvider;
+import org.sleuthkit.autopsy.integrationtesting.IntegrationTest;
+import org.sleuthkit.autopsy.integrationtesting.IntegrationTests;
 
 /**
  * Tests for the UserActivitySummary class.
