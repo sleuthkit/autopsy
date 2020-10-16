@@ -18,40 +18,29 @@
  */
 package org.sleuthkit.autopsy.integrationtesting;
 
-import java.util.Collections;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * Configuration for which integration test suites to run.
  */
 public class TestingConfig {
 
-    private final Set<String> excludeAllExcept;
-    private final Set<String> includeAllExcept;
+    private final List<String> excludeAllExcept;
+    private final List<String> includeAllExcept;
 
-    private static Set<String> convert(List<String> orig) {
-        if (orig == null) {
-            return Collections.emptySet();
-        }
-
-        return orig.stream()
-                .map((item) -> item.toUpperCase())
-                .collect(Collectors.toSet());
-    }
 
     public TestingConfig(List<String> excludeAllExcept, List<String> includeAllExcept) {
-        this.excludeAllExcept = convert(excludeAllExcept);
-        this.includeAllExcept = convert(includeAllExcept);
+        this.excludeAllExcept = excludeAllExcept;
+        this.includeAllExcept = includeAllExcept;
     }
 
     /**
      * @return The test suites to be run. If not specified, getIncludeAllExcept
      *         will be used. If that is not specified, all tests will be run.
      */
-    public Set<String> getExcludeAllExcept() {
+    public List<String> getExcludeAllExcept() {
         return excludeAllExcept;
     }
 
@@ -60,7 +49,7 @@ public class TestingConfig {
      *         getExcludeAllExcept will be used. If that is not specified, all
      *         tests will be run.
      */
-    public Set<String> getIncludeAllExcept() {
+    public List<String> getIncludeAllExcept() {
         return includeAllExcept;
     }
 
@@ -75,13 +64,13 @@ public class TestingConfig {
         }
 
         if (!CollectionUtils.isEmpty(includeAllExcept)) {
-            if (includeAllExcept.contains(itemType.toUpperCase())) {
+            if (includeAllExcept.stream().anyMatch((test) -> StringUtils.equalsIgnoreCase(test, itemType))) {
                 return false;
             }
         }
 
         if (!CollectionUtils.isEmpty(excludeAllExcept)) {
-            return excludeAllExcept.contains(itemType.toUpperCase());
+            return excludeAllExcept.stream().anyMatch((test) -> StringUtils.equalsIgnoreCase(test, itemType));
         }
 
         return true;

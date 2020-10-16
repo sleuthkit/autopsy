@@ -140,11 +140,12 @@ public class EnvironmentSetupUtil {
      * Sets up the Autopsy environment based on the case config and returns the
      * ingest job settings to be used for ingest.
      *
+     * @param config The overall configuration.
      * @param caseConfig The case configuration.
      * @return The IngestJobSettings to be used with ingest.
      */
-    public IngestJobSettings setupEnvironment(CaseConfig caseConfig) {
-        return getIngestSettings(caseConfig.getCaseName(),
+    public IngestJobSettings setupEnvironment(IntegrationTestConfig config, CaseConfig caseConfig) {
+        return getIngestSettings(PathUtil.getAbsolutePath(config.getWorkingDirectory(), caseConfig.getCaseName()),
                 DEFAULT_INGEST_TYPE,
                 caseConfig.getIngestModules(), caseConfig.getIngestModuleSettingsPath());
     }

@@ -94,6 +94,9 @@ public class MainTestRunner extends TestCase {
         IntegrationTestConfig config;
         try {
             config = getConfigFromFile(configFile);
+            if (config.getWorkingDirectory() == null) {
+                config.setWorkingDirectory(new File(configFile).getParentFile().getAbsolutePath());
+            }
         } catch (IOException ex) {
             logger.log(Level.WARNING, "There was an error processing integration test config at " + configFile, ex);
             return;
@@ -108,7 +111,7 @@ public class MainTestRunner extends TestCase {
                 for (CaseType caseType : IntegrationCaseType.getCaseTypes(caseConfig.getCaseTypes())) {
                     // create an autopsy case for each case in the config and for each case type for the specified case.
                     // then run ingest for the case.
-                    Case autopsyCase = runIngest(caseConfig, caseType);
+                    Case autopsyCase = runIngest(config, caseConfig, caseType);
                     if (autopsyCase == null || autopsyCase != Case.getCurrentCase()) {
                         logger.log(Level.WARNING,
                                 String.format("Case was not properly ingested or setup correctly for environment.  Case is %s and current case is %s.",
@@ -135,11 +138,12 @@ public class MainTestRunner extends TestCase {
     /**
      * Create a case and run ingest with the current case.
      *
+     * @param config The overall configuration.
      * @param caseConfig The configuration for the case.
      * @param caseType The type of case.
      * @return The currently open case after ingest.
      */
-    private Case runIngest(CaseConfig caseConfig, CaseType caseType) {
+    private Case runIngest(IntegrationTestConfig config, CaseConfig caseConfig, CaseType caseType) {
         Case openCase = null;
         switch (caseType) {
             case SINGLE_USER_CASE:
@@ -156,11 +160,11 @@ public class MainTestRunner extends TestCase {
             return null;
         }
 
-        addDataSourcesToCase(caseConfig.getDataSourceResources(), caseConfig.getCaseName());
+        addDataSourcesToCase(PathUtil.getAbsolutePaths(config.getWorkingDirectory(), caseConfig.getDataSourceResources()), caseConfig.getCaseName());
         
         
         try {
-            IngestJobSettings ingestJobSettings = SETUP_UTIL.setupEnvironment(caseConfig);
+            IngestJobSettings ingestJobSettings = SETUP_UTIL.setupEnvironment(config, caseConfig);
             IngestUtils.runIngestJob(openCase.getDataSources(), ingestJobSettings);
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, String.format("There was an error while ingesting datasources for case %s", caseConfig.getCaseName()), ex);
@@ -203,8 +207,6 @@ public class MainTestRunner extends TestCase {
      */
     private IntegrationTestConfig getConfigFromFile(String filePath) throws IOException {
         GsonBuilder builder = new GsonBuilder();
-        builder.registerTypeAdapter(IntegrationTestConfig.class,
-                IntegrationTestConfig.DESERIALIZER);
         Gson gson = builder.create();
         return gson.fromJson(new FileReader(new File(filePath)), IntegrationTestConfig.class);
     }
@@ -253,7 +255,12 @@ public class MainTestRunner extends TestCase {
         }
 
         // write the results for the case to a file
-        serializeFile(results, config.getRootTestOutputPath(), caseConfig.getCaseName(), getCaseTypeId(caseType));
+        serializeFile(
+                results, 
+                PathUtil.getAbsolutePath(config.getWorkingDirectory(), config.getRootTestOutputPath()), 
+                caseConfig.getCaseName(), 
+                getCaseTypeId(caseType)
+        );
     }
 
     /**

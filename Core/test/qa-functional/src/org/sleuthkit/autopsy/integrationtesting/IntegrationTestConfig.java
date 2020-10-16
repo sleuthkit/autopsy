@@ -32,29 +32,13 @@ import java.util.List;
  * parameters, datasource locations, cases to create, tests to run, etc.
  */
 public class IntegrationTestConfig {
-    private static final Type listOfCasesType = new TypeToken<List<CaseConfig>>(){}.getType();
-        
-    /**
-     * Gson Json deserializer to handle proper construction of this 
-     */
-    public static final JsonDeserializer<IntegrationTestConfig> DESERIALIZER = new JsonDeserializer<IntegrationTestConfig>() {
-        @Override
-        public IntegrationTestConfig deserialize(JsonElement je, Type type, JsonDeserializationContext jdc) throws JsonParseException {
-            JsonObject jObj = je.getAsJsonObject();
-            String rootCaseOutputPath = jObj.get("rootCaseOutputPath").getAsString();
-            String rootTestOutputPath = jObj.get("rootTestOutputPath").getAsString();
-            List<CaseConfig> cases = jdc.deserialize(jObj.get("cases"), listOfCasesType);
-            
-            return new IntegrationTestConfig(rootCaseOutputPath, rootTestOutputPath, cases);
-        }
-    };
-    
-    
+
     private final String rootCaseOutputPath;
     private final String rootTestOutputPath;
     private final List<CaseConfig> cases;
+    private String workingDirectory;
 
-    public IntegrationTestConfig(String rootCaseOutputPath, 
+    public IntegrationTestConfig(String rootCaseOutputPath,
             String rootTestOutputPath, List<CaseConfig> cases) {
         this.rootCaseOutputPath = rootCaseOutputPath;
         this.rootTestOutputPath = rootTestOutputPath;
@@ -81,4 +65,25 @@ public class IntegrationTestConfig {
     public List<CaseConfig> getCases() {
         return cases;
     }
+
+    /**
+     * @return The working directory. In practice, this is the folder that the
+     * configuration is located within. Any relative paths will be relative to
+     * this.
+     */
+    public String getWorkingDirectory() {
+        return workingDirectory;
+    }
+
+    /**
+     * Sets the working directory.
+     *
+     * @param workingDirectory The working directory. In practice, this is the
+     * folder that the configuration is located within. Any relative paths will
+     * be relative to this.
+     */
+    public void setWorkingDirectory(String workingDirectory) {
+        this.workingDirectory = workingDirectory;
+    }
+
 }

@@ -523,10 +523,6 @@
                 <binary-origin>release\modules\ext\ehcache-core-2.6.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/commons-lang3-3.9.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\commons-lang3-3.9.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/dec-0.1.2.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\dec-0.1.2.jar</binary-origin>
             </class-path-extension>
