@@ -398,13 +398,6 @@ public class IngestManager implements IngestProgressSnapshotProvider {
         "IngestManager.startupErr.dlgErrorList=Errors:"
     })
     IngestJobStartResult startIngestJob(IngestJob job) {
-        /**
-         * Initialize Java's Image I/O API so that modules processing
-         * image files will consistently get the same image readers and writers. 
-         * See JIRA-6951 for more details.
-         */
-        initializeImageIO();        
-        
         List<IngestModuleError> errors = null;
         Case openCase;
         try {
@@ -894,44 +887,6 @@ public class IngestManager implements IngestProgressSnapshotProvider {
             return ingestMonitor.getFreeSpace();
         } else {
             return -1;
-        }
-    }
-
-    /**
-     * Initializes the ImageIO API and sorts the providers for
-     * deterministic image reading and writing.
-     */
-    private void initializeImageIO() {
-        ImageIO.scanForPlugins();
-        
-        // Sift through each registry category and sort category providers by
-        // their canonical class name.
-        IIORegistry pluginRegistry = IIORegistry.getDefaultInstance();
-        Iterator<Class<?>> categories = pluginRegistry.getCategories();
-        while(categories.hasNext()) {
-            sortPluginsInCategory(pluginRegistry, categories.next());
-        }
-    }
-    
-    /**
-     * Sorts all ImageIO SPI providers by their class name.
-     */
-    private <T> void sortPluginsInCategory(IIORegistry pluginRegistry, Class<T> category) {
-        Iterator<T> serviceProviderIter = pluginRegistry.getServiceProviders(category, false);
-        ArrayList<T> providers = new ArrayList<>();
-        while (serviceProviderIter.hasNext()) {
-            providers.add(serviceProviderIter.next());
-        }
-        Collections.sort(providers, (first, second) -> {
-            return first.getClass().getCanonicalName().compareToIgnoreCase(second.getClass().getCanonicalName());
-        });
-        for(int i = 0; i < providers.size(); i++) {
-            for(int j = i + 1; j < providers.size(); j++) {
-                // The registry only accepts pairwise orderings. To guarentee a 
-                // total order, all pairs need to be exhausted.
-                pluginRegistry.setOrdering(category, providers.get(i), 
-                        providers.get(j));
-            }
         }
     }
 
