@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.integrationtesting;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -30,7 +29,6 @@ import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -41,7 +39,6 @@ import junit.framework.TestCase;
 import org.apache.cxf.common.util.CollectionUtils;
 import org.netbeans.junit.NbModuleSuite;
 import org.openide.util.Lookup;
-import org.openide.util.io.NbObjectInputStream;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.casemodule.CaseActionException;
@@ -49,11 +46,6 @@ import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException;
 import org.sleuthkit.autopsy.datasourceprocessors.DataSourceProcessorUtility;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
-import org.sleuthkit.autopsy.ingest.IngestJobSettings.IngestType;
-import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
-import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
-import org.sleuthkit.autopsy.ingest.IngestModuleTemplate;
-import org.sleuthkit.autopsy.python.FactoryClassNameNormalizer;
 import org.sleuthkit.autopsy.testutils.CaseUtils;
 import org.sleuthkit.autopsy.testutils.IngestUtils;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -71,10 +63,10 @@ import org.yaml.snakeyaml.representer.Representer;
  */
 public class MainTestRunner extends TestCase {
 
-    private static final Logger logger = Logger.getLogger(MainTestRunner.class.getName()); // DO NOT USE AUTOPSY LOGGER
+    private static final Logger logger = Logger.getLogger(MainTestRunner.class.getName()); 
     private static final String CONFIG_FILE_KEY = "integrationConfigFile";
-    private static final IngestType DEFAULT_INGEST_TYPE = IngestType.ALL_MODULES;
-
+    private static final EnvironmentSetupUtil SETUP_UTIL = new EnvironmentSetupUtil();
+    
     /**
      * Constructor required by JUnit
      */
@@ -165,11 +157,10 @@ public class MainTestRunner extends TestCase {
         }
 
         addDataSourcesToCase(caseConfig.getDataSourceResources(), caseConfig.getCaseName());
+        
+        
         try {
-            IngestJobSettings ingestJobSettings = getIngestSettings(caseConfig.getCaseName(),
-                    DEFAULT_INGEST_TYPE,
-                    caseConfig.getIngestModules(), caseConfig.getIngestModuleSettingsPath());
-
+            IngestJobSettings ingestJobSettings = SETUP_UTIL.setupEnvironment(caseConfig);
             IngestUtils.runIngestJob(openCase.getDataSources(), ingestJobSettings);
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, String.format("There was an error while ingesting datasources for case %s", caseConfig.getCaseName()), ex);
@@ -179,7 +170,7 @@ public class MainTestRunner extends TestCase {
     }
 
     /**
-     * Adds the datasources to the current case.
+     * Adds the data sources to the current case.
      *
      * @param pathStrings The list of paths for the data sources.
      * @param caseName The name of the case.
@@ -200,99 +191,6 @@ public class MainTestRunner extends TestCase {
 
             IngestUtils.addDataSource(processors.get(0), path);
         }
-    }
-
-    /**
-     * Gets an IngestModuleFactory instance from the canonical class name
-     * provided.
-     *
-     * @param className The canonical class name of the factory.
-     * @return The IngestModuleFactory for the class or null if can't be
-     * determined.
-     */
-    private IngestModuleFactory getIngestModuleFactory(String className) {
-        if (className == null) {
-            logger.log(Level.WARNING, "No class name provided.");
-            return null;
-        }
-
-        Class<?> ingestModuleFactoryClass = null;
-        try {
-            ingestModuleFactoryClass = Class.forName(className);
-        } catch (ClassNotFoundException ex) {
-            logger.log(Level.WARNING, String.format("No class found matching canonical name in config of %s.", className), ex);
-            return null;
-        }
-
-        Object factoryObject = null;
-        try {
-            factoryObject = ingestModuleFactoryClass.newInstance();
-        } catch (InstantiationException | IllegalAccessException ex) {
-            logger.log(Level.WARNING, String.format("Error during instantiation of %s.", className), ex);
-            return null;
-        }
-
-        if (factoryObject instanceof IngestModuleFactory) {
-            return (IngestModuleFactory) factoryObject;
-        } else {
-            logger.log(Level.WARNING, String.format("Could not properly instantiate class of: %s", className));
-            return null;
-        }
-    }
-
-    /**
-     * Creates an IngestJobSettings instance.
-     *
-     * @param profileName The name of the profile.
-     * @param ingestType The ingest type.
-     * @param enabledFactoryClasses The list of canonical class names of
-     * factories to be used in ingest.
-     * @param pathToIngestModuleSettings The path to ingest module settings.
-     * @return The IngestJobSettings instance.
-     */
-    private IngestJobSettings getIngestSettings(String profileName, IngestType ingestType, List<String> enabledFactoryClasses, String pathToIngestModuleSettings) {
-        Map<String, IngestModuleFactory> classToFactoryMap = enabledFactoryClasses.stream()
-                .map(factoryName -> getIngestModuleFactory(factoryName))
-                .filter(factory -> factory != null)
-                .collect(Collectors.toMap(factory -> factory.getClass().getCanonicalName(), factory -> factory, (f1, f2) -> f1));
-
-        List<IngestModuleTemplate> ingestModuleTemplates = enabledFactoryClasses.stream()
-                .map(className -> {
-                    IngestModuleFactory factory = classToFactoryMap.get(className);
-                    if (factory == null) {
-                        logger.log(Level.WARNING, "Could not find ingest module factory: " + className);
-                    }
-                    return factory;
-                })
-                .filter(factory -> factory != null)
-                .map(factory -> getTemplate(pathToIngestModuleSettings, factory))
-                .collect(Collectors.toList());
-
-        return new IngestJobSettings(profileName, ingestType, ingestModuleTemplates);
-    }
-
-    /**
-     * Creates an IngestModuleTemplate given a path to the module settings and
-     * the factory. If that file does not exist, default settings are used.
-     *
-     * @param pathToIngestModuleSettings the path to the folder containing
-     * settings.
-     * @param factory The factory.
-     * @return The template to be used.
-     */
-    private IngestModuleTemplate getTemplate(String pathToIngestModuleSettings, IngestModuleFactory factory) {
-        String fileName = FactoryClassNameNormalizer.normalize(factory.getClass().getCanonicalName()) + ".settings";
-        File settingsFile = Paths.get(pathToIngestModuleSettings, fileName).toFile();
-        if (settingsFile.exists()) {
-            try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(settingsFile.getAbsolutePath()))) {
-                IngestModuleIngestJobSettings settings = (IngestModuleIngestJobSettings) in.readObject();
-                return new IngestModuleTemplate(factory, settings);
-            } catch (IOException | ClassNotFoundException ex) {
-                logger.log(Level.WARNING, String.format("Unable to open %s as IngestModuleIngestJobSettings", settingsFile), ex);
-            }
-        }
-
-        return new IngestModuleTemplate(factory, factory.getDefaultIngestJobSettings());
     }
 
     /**
