@@ -142,6 +142,7 @@ public class MainTestRunner extends TestCase {
 
     /**
      * Create a case and run ingest with the current case.
+     *
      * @param caseConfig The configuration for the case.
      * @param caseType The type of case.
      * @return The currently open case after ingest.
@@ -176,9 +177,10 @@ public class MainTestRunner extends TestCase {
 
         return openCase;
     }
-    
+
     /**
      * Adds the datasources to the current case.
+     *
      * @param pathStrings The list of paths for the data sources.
      * @param caseName The name of the case.
      */
@@ -201,9 +203,12 @@ public class MainTestRunner extends TestCase {
     }
 
     /**
-     * Gets an IngestModuleFactory instance from the canonical class name provided.
+     * Gets an IngestModuleFactory instance from the canonical class name
+     * provided.
+     *
      * @param className The canonical class name of the factory.
-     * @return The IngestModuleFactory for the class or null if can't be determined.
+     * @return The IngestModuleFactory for the class or null if can't be
+     * determined.
      */
     private IngestModuleFactory getIngestModuleFactory(String className) {
         if (className == null) {
@@ -237,11 +242,13 @@ public class MainTestRunner extends TestCase {
 
     /**
      * Creates an IngestJobSettings instance.
+     *
      * @param profileName The name of the profile.
      * @param ingestType The ingest type.
-     * @param enabledFactoryClasses The list of canonical class names of factories to be used in ingest.
-     * @param pathToIngestModuleSettings
-     * @return 
+     * @param enabledFactoryClasses The list of canonical class names of
+     * factories to be used in ingest.
+     * @param pathToIngestModuleSettings The path to ingest module settings.
+     * @return The IngestJobSettings instance.
      */
     private IngestJobSettings getIngestSettings(String profileName, IngestType ingestType, List<String> enabledFactoryClasses, String pathToIngestModuleSettings) {
         Map<String, IngestModuleFactory> classToFactoryMap = enabledFactoryClasses.stream()
@@ -264,6 +271,15 @@ public class MainTestRunner extends TestCase {
         return new IngestJobSettings(profileName, ingestType, ingestModuleTemplates);
     }
 
+    /**
+     * Creates an IngestModuleTemplate given a path to the module settings and
+     * the factory. If that file does not exist, default settings are used.
+     *
+     * @param pathToIngestModuleSettings the path to the folder containing
+     * settings.
+     * @param factory The factory.
+     * @return The template to be used.
+     */
     private IngestModuleTemplate getTemplate(String pathToIngestModuleSettings, IngestModuleFactory factory) {
         String fileName = FactoryClassNameNormalizer.normalize(factory.getClass().getCanonicalName()) + ".settings";
         File settingsFile = Paths.get(pathToIngestModuleSettings, fileName).toFile();
@@ -279,17 +295,29 @@ public class MainTestRunner extends TestCase {
         return new IngestModuleTemplate(factory, factory.getDefaultIngestJobSettings());
     }
 
-
-
+    /**
+     * Deserializes the json config specified at the given path into the java
+     * equivalent IntegrationTestConfig object.
+     *
+     * @param filePath The path to the config.
+     * @return The java object.
+     * @throws IOException If there is an error opening the file.
+     */
     private IntegrationTestConfig getConfigFromFile(String filePath) throws IOException {
         GsonBuilder builder = new GsonBuilder();
         builder.registerTypeAdapter(IntegrationTestConfig.class,
                 IntegrationTestConfig.DESERIALIZER);
         Gson gson = builder.create();
-        return gson.fromJson(new FileReader(new File(filePath)), IntegrationTestConfig.class
-        );
+        return gson.fromJson(new FileReader(new File(filePath)), IntegrationTestConfig.class);
     }
 
+    /**
+     * Runs the integration tests and serializes results to disk.
+     *
+     * @param config The overall config.
+     * @param caseConfig The configuration for a particular case.
+     * @param caseType The case type (single user / multi user) to create.
+     */
     private void runIntegrationTests(IntegrationTestConfig config, CaseConfig caseConfig, CaseType caseType) {
         // this will capture output results
         OutputResults results = new OutputResults();
@@ -303,7 +331,9 @@ public class MainTestRunner extends TestCase {
                 continue;
             }
 
-            List<Method> testMethods = getIntegrationTestMethods(testGroup);
+            List<Method> testMethods = Stream.of(testGroup.getClass().getMethods())
+                    .filter((method) -> method.getAnnotation(IntegrationTest.class) != null)
+                    .collect(Collectors.toList());
 
             if (CollectionUtils.isEmpty(testMethods)) {
                 continue;
@@ -311,16 +341,29 @@ public class MainTestRunner extends TestCase {
 
             testGroup.setupClass();
             for (Method testMethod : testMethods) {
-                runIntegrationTestMethod(results, testGroup, testMethod);
+                Object serializableResult = runIntegrationTestMethod(testGroup, testMethod);
+                // add the results and capture the package, class, 
+                // and method of the test for easy location of failed tests
+                results.addResult(
+                        testGroup.getClass().getPackage().getName(),
+                        testGroup.getClass().getSimpleName(),
+                        testMethod.getName(),
+                        serializableResult);
             }
 
             testGroup.tearDownClass();
         }
 
-// write the results for the case to a file
+        // write the results for the case to a file
         serializeFile(results, config.getRootTestOutputPath(), caseConfig.getCaseName(), getCaseTypeId(caseType));
     }
 
+    /**
+     * The name of the CaseType to be used in the filename during serialization.
+     *
+     * @param caseType The case type.
+     * @return The identifier to be used in a file name.
+     */
     private String getCaseTypeId(CaseType caseType) {
         if (caseType == null) {
             return "";
@@ -336,7 +379,13 @@ public class MainTestRunner extends TestCase {
         }
     }
 
-    private void runIntegrationTestMethod(OutputResults results, IntegrationTests testGroup, Method testMethod) {
+    /**
+     * Runs a test method in a test suite on the current case.
+     *
+     * @param testGroup The test suite to which the method belongs.
+     * @param testMethod The java reflection method to run.
+     */
+    private Object runIntegrationTestMethod(IntegrationTests testGroup, Method testMethod) {
         testGroup.setup();
 
         // run the test method and get the results
@@ -357,25 +406,16 @@ public class MainTestRunner extends TestCase {
 
         testGroup.tearDown();
 
-        // add the results and capture the package, class, 
-        // and method of the test for easy location of failed tests
-        results.addResult(
-                testGroup.getClass().getPackage().getName(),
-                testGroup.getClass().getSimpleName(),
-                testMethod.getName(),
-                serializableResult);
+        return serializableResult;
     }
 
-    private List<Method> getIntegrationTestMethods(IntegrationTests testGroup) {
-        return Stream.of(testGroup.getClass().getMethods())
-                .filter((method) -> method.getAnnotation(IntegrationTest.class
-        ) != null)
-                .collect(Collectors.toList());
-    }
-
+    /**
+     * Used by yaml serialization to properly represent objects.
+     */
     private static final Representer MAP_REPRESENTER = new Representer() {
         @Override
         protected MappingNode representJavaBean(Set<Property> properties, Object javaBean) {
+            // don't show class name in yaml
             if (!classTags.containsKey(javaBean.getClass())) {
                 addClassTag(javaBean.getClass(), Tag.MAP);
             }
@@ -384,15 +424,31 @@ public class MainTestRunner extends TestCase {
         }
     };
 
+    /**
+     * Used by yaml serialization to properly represent objects.
+     */
     private static final DumperOptions DUMPER_OPTS = new DumperOptions() {
         {
+            // Show each property on a new line.
             setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
+            // allow for serializing properties that only have getters.
             setAllowReadOnlyProperties(true);
         }
     };
 
+    /**
+     * The actual yaml serializer that is used.
+     */
     private static final Yaml YAML_SERIALIZER = new Yaml(MAP_REPRESENTER, DUMPER_OPTS);
 
+    /**
+     * Serializes results of a test to a yaml file.
+     *
+     * @param results The results to serialize.
+     * @param outputFolder The folder where the yaml should be written.
+     * @param caseName The name of the case (used to determine filename).
+     * @param caseType The type of case (used to determine filename).
+     */
     private void serializeFile(OutputResults results, String outputFolder, String caseName, String caseType) {
         String outputExtension = ".yml";
         Path outputPath = Paths.get(outputFolder, String.format("%s-%s%s", caseName, caseType, outputExtension));
