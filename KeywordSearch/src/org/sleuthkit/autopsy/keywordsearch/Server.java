@@ -80,6 +80,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.autopsy.core.UserPreferences;
+import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
@@ -281,10 +282,11 @@ public class Server {
 
         Path solr8Home = Paths.get(PlatformUtil.getUserDirectory().getAbsolutePath(), "solr"); //NON-NLS
         try {
-            if (!solr8Home.toFile().exists()) {
-                Files.createDirectory(solr8Home);
-            }
             // Always copy the config files, as they may have changed. Othweise potentially stale Solr configuration is being used.
+            if (solr8Home.toFile().exists()) {
+                FileUtil.deleteDir(solr8Home.toFile());                
+            }
+            Files.createDirectory(solr8Home);
             Files.copy(Paths.get(solr8Folder.getAbsolutePath(), "server", "solr", "solr.xml"), solr8Home.resolve("solr.xml"), REPLACE_EXISTING); //NON-NLS
             Files.copy(Paths.get(solr8Folder.getAbsolutePath(), "server", "solr", "zoo.cfg"), solr8Home.resolve("zoo.cfg"), REPLACE_EXISTING); //NON-NLS
             FileUtils.copyDirectory(Paths.get(solr8Folder.getAbsolutePath(), "server", "solr", "configsets").toFile(), solr8Home.resolve("configsets").toFile()); //NON-NLS
@@ -294,10 +296,11 @@ public class Server {
         
         Path solr4Home = Paths.get(PlatformUtil.getUserDirectory().getAbsolutePath(), "solr4"); //NON-NLS
         try {
-            if (!solr4Home.toFile().exists()) {
-                Files.createDirectory(solr4Home);
-            }
             // Always copy the config files, as they may have changed. Othweise potentially stale Solr configuration is being used.
+            if (solr4Home.toFile().exists()) {
+                FileUtil.deleteDir(solr4Home.toFile());
+            }
+            Files.createDirectory(solr4Home);
             Files.copy(Paths.get(solr4Folder.getAbsolutePath(), "solr", "solr.xml"), solr4Home.resolve("solr.xml"), REPLACE_EXISTING); //NON-NLS
             Files.copy(Paths.get(solr4Folder.getAbsolutePath(), "solr", "zoo.cfg"), solr4Home.resolve("zoo.cfg"), REPLACE_EXISTING); //NON-NLS
         } catch (IOException ex) {
