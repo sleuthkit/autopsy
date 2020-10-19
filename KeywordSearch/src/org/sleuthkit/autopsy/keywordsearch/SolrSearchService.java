@@ -209,7 +209,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
     @NbBundle.Messages({
         "# {0} - case directory", "SolrSearchService.exceptionMessage.noIndexMetadata=Unable to create IndexMetaData from case directory: {0}",
         "SolrSearchService.exceptionMessage.noCurrentSolrCore=IndexMetadata did not contain a current Solr core so could not delete the case",
-        "# {0} - collection name", "SolrSearchService.exceptionMessage.unableToDeleteCollection=Unablt to delete collction {0}",
+        "# {0} - collection name", "SolrSearchService.exceptionMessage.unableToDeleteCollection=Unable to delete colletion {0}",
         "# {0} - index folder path", "SolrSearchService.exceptionMessage.failedToDeleteIndexFiles=Failed to delete text index files at {0}"
     })
     @Override

@@ -1833,12 +1833,6 @@ public class Server {
         HealthMonitor.submitTimingMetric(metric);
     }
     
-     /*       } catch (Exception ex) {
-            // intentional "catch all" as Solr is known to throw all kinds of Runtime exceptions
-            throw new KeywordSearchModuleException(
-                    NbBundle.getMessage(this.getClass(), "Server.connect.exception.msg", solrServer.getBaseURL()));
-        }*/
-    
     private List<String> getSolrServerList(String host, String port) throws KeywordSearchModuleException {
         HttpSolrClient solrServer = getSolrClient("http://" + host + ":" + port + "/solr");
         return getSolrServerList(solrServer);
@@ -1865,10 +1859,9 @@ public class Server {
                 return Collections.emptyList();
             }
 
-            // For some reason this returns info about all collections even though it's supposed to only return about the one we are requesting
             NamedList cluster = (NamedList) statusResponse.getResponse().get("cluster");
-            ArrayList<String> live_nodes = (ArrayList) cluster.get("live_nodes");
-            return live_nodes;
+            ArrayList<String> liveNodes = (ArrayList) cluster.get("live_nodes");
+            return liveNodes;
         } catch (Exception ex) {
             // intentional "catch all" as Solr is known to throw all kinds of Runtime exceptions
             throw new KeywordSearchModuleException(
@@ -1928,7 +1921,7 @@ public class Server {
         // We use different Solr clients for different operations. HttpSolrClient is geared towards query performance.
         // ConcurrentUpdateSolrClient is geared towards batching solr documents for better indexing throughput. We
         // have implemented our own batching algorithm so we will probably not use ConcurrentUpdateSolrClient.
-        // CloudSolrClient is gaered towards SolrCloud deployments. These are only good for collection-specific operations.
+        // CloudSolrClient is geared towards SolrCloud deployments. These are only good for collection-specific operations.
         private HttpSolrClient queryClient;        
         private SolrClient indexingClient;
         

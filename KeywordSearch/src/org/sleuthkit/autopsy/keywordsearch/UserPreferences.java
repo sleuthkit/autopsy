@@ -94,10 +94,9 @@ final class UserPreferences {
         return preferences.getInt(SOLR_CONNECTION_TIMEOUT_MS, DEFAULT_CONNECTION_TIMEOUT_MS);
     }
 
-    public static void setDocumentsQueueSize(int size) {
-        preferences.putInt(INDEXING_DOC_QUEUE_SIZE, size);
-    }
-
+    // reading of this parameter exists so that sys admins can change the batch size without
+    // having to ask for a new installer. We do not want users to be changing this, hence
+    // this is not in UI.
     public static int getDocumentsQueueSize() {
         return preferences.getInt(INDEXING_DOC_QUEUE_SIZE, DEFAULT_INDEXING_DOC_QUEUE_SIZE);
     }
