@@ -225,8 +225,8 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
         try {
             int result = ExecUtil.execute(iLeappCommand, new DataSourceIngestModuleProcessTerminator(context, true));
             if (result != 0) {
-                // ignore if there is an error and continue to try and process the next file if there is one
-
+                logger.log(Level.WARNING, String.format("Error when trying to execute iLeapp program getting file paths to search for result is %d", result));
+                return;
             }
 
             addILeappReportToReports(moduleOutputPath, currentCase);
