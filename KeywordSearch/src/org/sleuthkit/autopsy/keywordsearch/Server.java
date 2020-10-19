@@ -623,7 +623,6 @@ public class Server {
             // read Solr connection info from user preferences, unless "solrserver.txt" is present
             IndexingServerProperties properties = getMultiUserServerProperties(theCase.getCaseDirectory());
             if (properties.host.isEmpty() || properties.port.isEmpty()) {
-                logger.log(Level.SEVERE, "Solr version {0} multi-user connection info is not configured", index.getSolrVersion()); //NON-NLS
                 throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.connectionInfoMissing.exception.msg", index.getSolrVersion())); 
             }
             solrUrl = "http://" + properties.host + ":" + properties.port + "/solr";
@@ -632,7 +631,6 @@ public class Server {
             String solr4ServerHost = UserPreferences.getSolr4ServerHost().trim();
             String solr4ServerPort = UserPreferences.getSolr4ServerPort().trim();
             if (solr4ServerHost.isEmpty() || solr4ServerPort.isEmpty()) {
-                logger.log(Level.SEVERE, "Solr version {0} multi-user connection info is not configured", index.getSolrVersion()); //NON-NLS
                 throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.connectionInfoMissing.exception.msg", index.getSolrVersion()));
             }
             solrUrl = "http://" + solr4ServerHost + ":" + solr4ServerPort + "/solr";
@@ -649,7 +647,6 @@ public class Server {
             // test the connection
             connectToSolrServer(client);
         } catch (SolrServerException | IOException ex) {
-            logger.log(Level.SEVERE, "Unable to connect to Solr server {0}", client.getBaseURL()); //NON-NLS
             throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.connect.exception.msg", client.getBaseURL()), ex);
         }
         
@@ -751,11 +748,9 @@ public class Server {
                     }
                 });
             } catch (SecurityException ex) {
-                logger.log(Level.SEVERE, "Could not start Solr process!", ex); //NON-NLS
                 throw new KeywordSearchModuleException(
                         NbBundle.getMessage(this.getClass(), "Server.start.exception.cantStartSolr.msg"), ex);
             } catch (IOException ex) {
-                logger.log(Level.SEVERE, "Could not start Solr server process!", ex); //NON-NLS
                 throw new KeywordSearchModuleException(
                         NbBundle.getMessage(this.getClass(), "Server.start.exception.cantStartSolr.msg2"), ex);
             }
