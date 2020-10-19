@@ -65,6 +65,10 @@ public abstract class AbstractFXCellFactory<X, Y> {
         @Override
         protected void updateItem(Y item, boolean empty) {
             super.updateItem(item, empty);
+            // Due to a JavaFX issue in Java 10+,
+            // https://bugs.java.com/bugdatabase/view_bug.do?bug_id=8231644
+            // the arrows to expand the tree were removed (FilterTable.css)
+            // and the following code was added to indent the subnodes.
             TreeTableView<X> treeTableView = this.treeTableViewProperty().get();
             this.setTranslateX(treeTableView.getTreeItemLevel(treeTableView.getTreeItem(getIndex())) << 4);
             configureCell(this, item, empty, (() -> this.getTreeTableRow().getItem()));
