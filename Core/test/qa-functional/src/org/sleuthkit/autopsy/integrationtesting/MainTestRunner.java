@@ -134,9 +134,11 @@ public class MainTestRunner extends TestCase {
 
                     configurationModuleManager.revertConfigurationModules(configModules);
 
+                    String outputFolder = PathUtil.getAbsolutePath(envConfig.getWorkingDirectory(), envConfig.getRootTestOutputPath());
+                            
                     // write the results for the case to a file
                     results.serializeToFile(
-                            PathUtil.getAbsolutePath(envConfig.getWorkingDirectory(), envConfig.getRootTestOutputPath()),
+                            Paths.get(outputFolder, testSuiteConfig.getRelativeOutputPath()).toString(),
                             testSuiteConfig.getName(),
                             caseType
                     );

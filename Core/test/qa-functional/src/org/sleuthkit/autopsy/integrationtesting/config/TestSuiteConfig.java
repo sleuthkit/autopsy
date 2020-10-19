@@ -30,6 +30,7 @@ public class TestSuiteConfig {
     private final List<ParameterizedResourceConfig> configurationModules;
     private final TestingConfig integrationTests;
     private final IntegrationCaseType caseTypes;
+    private String relativeOutputPath;
 
     public TestSuiteConfig(String name, String description, List<String> dataSources, List<ParameterizedResourceConfig> configurationModules, TestingConfig integrationTests, IntegrationCaseType caseTypes) {
         this.name = name;
@@ -63,4 +64,14 @@ public class TestSuiteConfig {
     public IntegrationCaseType getCaseTypes() {
         return caseTypes;
     }
+
+    public String getRelativeOutputPath() {
+        return relativeOutputPath;
+    }
+
+    public void setRelativeOutputPath(String relativeOutputPath) {
+        this.relativeOutputPath = relativeOutputPath;
+    }
+    
+    
 }

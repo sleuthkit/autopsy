@@ -34,6 +34,7 @@ import org.sleuthkit.autopsy.integrationtesting.PathUtil;
  */
 public class ConfigDeserializer {
 
+    private static final String JSON_EXT = ".json";
     private static final Logger logger = Logger.getLogger(ConfigDeserializer.class.getName());
     private static final ObjectMapper mapper = getMapper();
 
@@ -91,14 +92,14 @@ public class ConfigDeserializer {
         return config;
     }
 
-    public List<TestSuiteConfig> getTestSuiteConfig(File configFile) {
+    public List<TestSuiteConfig> getTestSuiteConfig(File rootDirectory, File configFile) {
         try {
             JsonNode root = mapper.readTree(configFile);
             if (root.isArray()) {
                 CollectionType listClass = mapper.getTypeFactory().constructCollectionType(List.class, TestSuiteConfig.class);
-                return validate(configFile, (List<TestSuiteConfig>) mapper.readValue(mapper.treeAsTokens(root), listClass));
+                return validate(rootDirectory, configFile, (List<TestSuiteConfig>) mapper.readValue(mapper.treeAsTokens(root), listClass));
             } else {
-                return validate(configFile, Arrays.asList(mapper.treeToValue(root, TestSuiteConfig.class)));
+                return validate(rootDirectory, configFile, Arrays.asList(mapper.treeToValue(root, TestSuiteConfig.class)));
             }
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Unable to read test suite config at " + configFile.getPath(), ex);
@@ -107,20 +108,20 @@ public class ConfigDeserializer {
     }
 
     public List<TestSuiteConfig> getTestSuiteConfigs(File rootDirectory) {
-        File[] jsonFiles = rootDirectory.listFiles((File dir, String name) -> name.endsWith(".json"));
+        File[] jsonFiles = rootDirectory.listFiles((File dir, String name) -> name.endsWith(JSON_EXT));
         return Stream.of(jsonFiles)
-                .flatMap((file) -> getTestSuiteConfig(file).stream())
+                .flatMap((file) -> getTestSuiteConfig(rootDirectory, file).stream())
                 .collect(Collectors.toList());
     }
 
-    private List<TestSuiteConfig> validate(File file, List<TestSuiteConfig> testSuites) {
+    private List<TestSuiteConfig> validate(File rootDirectory, File file, List<TestSuiteConfig> testSuites) {
         return IntStream.range(0, testSuites.size())
-                .mapToObj(idx -> validate(file, idx, testSuites.get(idx)))
+                .mapToObj(idx -> validate(rootDirectory, file, idx, testSuites.get(idx)))
                 .filter(c -> c != null)
                 .collect(Collectors.toList());
     }
 
-    private TestSuiteConfig validate(File file, int index, TestSuiteConfig config) {
+    private TestSuiteConfig validate(File rootDirectory, File file, int index, TestSuiteConfig config) {
         if (config == null
                 || StringUtils.isBlank(config.getName())
                 || config.getCaseTypes() == null
@@ -129,6 +130,15 @@ public class ConfigDeserializer {
 
             logger.log(Level.WARNING, String.format("Item in %s at index %d must contain a valid 'name', 'caseTypes', 'dataSources', and 'integrationTests'", file.toString(), index));
             return null;
+        }
+        
+        if (config.getRelativeOutputPath() == null) {
+            // taken from https://stackoverflow.com/questions/204784/how-to-construct-a-relative-path-in-java-from-two-absolute-paths-or-urls
+            String relative = rootDirectory.toURI().relativize(file.toURI()).getPath();
+            if (relative.endsWith(JSON_EXT)) {
+                relative = relative.substring(0, relative.length() - JSON_EXT.length());
+            }
+            config.setRelativeOutputPath(relative);
         }
 
         return config;
