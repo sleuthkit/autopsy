@@ -171,17 +171,17 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
                 fromAccountAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM));
                 localAccountAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM));
             }
-        }
-
-        // if direction isn't known, check all the usual attributes that may have the number/address
-        // in the absence of sufficent data, any number available will be displayed as a From address.
-        if (fromAccountAttr == null) {
-            fromAccountAttr = ObjectUtils.firstNonNull(
-                    artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM)),
-                    artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO)),
-                    artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER)),
-                    artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ID))
-            );
+        } else {
+            // if direction isn't known, check all the usual attributes that may have the number/address
+            // in the absence of sufficent data, any number available will be displayed as a From address.
+            if (fromAccountAttr == null) {
+                fromAccountAttr = ObjectUtils.firstNonNull(
+                        artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM)),
+                        artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO)),
+                        artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER)),
+                        artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ID))
+                );
+            }
         }
 
         // get the from account address
@@ -312,10 +312,10 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
         CommunicationArtifactViewerHelper.addHeader(this, m_gridBagLayout, this.m_constraints, Bundle.CallLogArtifactViewer_heading_parties());
 
         List<AccountPersonaSearcherData> dataList = new ArrayList<>();
-        // Display From address
-        CommunicationArtifactViewerHelper.addKey(this, m_gridBagLayout, this.m_constraints, Bundle.CallLogArtifactViewer_label_from());
-
+        // Display "From" if we have non-local device accounts
         if (callLogViewData.getFromAccount() != null) {
+            CommunicationArtifactViewerHelper.addKey(this, m_gridBagLayout, this.m_constraints, Bundle.CallLogArtifactViewer_label_from());
+            
             // check if this is local account
             String accountDisplayString = getAccountDisplayString(callLogViewData.getFromAccount(), callLogViewData);
             CommunicationArtifactViewerHelper.addValue(this, m_gridBagLayout, this.m_constraints, accountDisplayString);
@@ -327,13 +327,11 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
 
             // show persona
             dataList.addAll(CommunicationArtifactViewerHelper.addPersonaRow(this, m_gridBagLayout, this.m_constraints, callLogViewData.getFromAccount()));
-        } else {
-            CommunicationArtifactViewerHelper.addValue(this, m_gridBagLayout, this.m_constraints, Bundle.CallLogArtifactViewer_value_unknown());
         }
 
-        // Display To:
-        CommunicationArtifactViewerHelper.addKey(this, m_gridBagLayout, this.m_constraints, Bundle.CallLogArtifactViewer_label_to());
+        // Display "To" if we have non-local device accounts
         if (callLogViewData.getToAccount() != null) {
+            CommunicationArtifactViewerHelper.addKey(this, m_gridBagLayout, this.m_constraints, Bundle.CallLogArtifactViewer_label_to());
             String accountDisplayString = getAccountDisplayString(callLogViewData.getToAccount(), callLogViewData);
             CommunicationArtifactViewerHelper.addValue(this, m_gridBagLayout, this.m_constraints, accountDisplayString);
 
@@ -344,8 +342,6 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
 
             dataList.addAll(CommunicationArtifactViewerHelper.addPersonaRow(this, m_gridBagLayout, this.m_constraints, callLogViewData.getToAccount()));
 
-        } else {
-            CommunicationArtifactViewerHelper.addValue(this, m_gridBagLayout, this.m_constraints, Bundle.CallLogArtifactViewer_value_unknown());
         }
 
         // Display other parties

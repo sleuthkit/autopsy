@@ -209,6 +209,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
     @NbBundle.Messages({
         "# {0} - case directory", "SolrSearchService.exceptionMessage.noIndexMetadata=Unable to create IndexMetaData from case directory: {0}",
         "SolrSearchService.exceptionMessage.noCurrentSolrCore=IndexMetadata did not contain a current Solr core so could not delete the case",
+        "# {0} - collection name", "SolrSearchService.exceptionMessage.unableToDeleteCollection=Unable to delete colletion {0}",
         "# {0} - index folder path", "SolrSearchService.exceptionMessage.failedToDeleteIndexFiles=Failed to delete text index files at {0}"
     })
     @Override
@@ -231,8 +232,12 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
 
         // delete index(es) for this case        
         for (Index index : indexMetadata.getIndexes()) {
-            // Unload/delete the collection on the server and then delete the text index files.
-            KeywordSearch.getServer().deleteCollection(index.getIndexName(), metadata);
+            try {
+                // Unload/delete the collection on the server and then delete the text index files.
+                KeywordSearch.getServer().deleteCollection(index.getIndexName(), metadata);
+            } catch (KeywordSearchModuleException ex) {
+                throw new KeywordSearchServiceException(Bundle.SolrSearchService_exceptionMessage_unableToDeleteCollection(index.getIndexName()), ex);
+            }
             if (!FileUtil.deleteDir(new File(index.getIndexPath()).getParentFile())) {
                 throw new KeywordSearchServiceException(Bundle.SolrSearchService_exceptionMessage_failedToDeleteIndexFiles(index.getIndexPath()));
             }

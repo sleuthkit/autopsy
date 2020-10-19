@@ -336,6 +336,27 @@ public class HTMLReport implements TableReportModule {
                 case TSK_REMOTE_DRIVE:
                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/drive_network.png"); //NON-NLS
                     break;
+                case TSK_OS_ACCOUNT:
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/os-account.png"); //NON-NLS
+                    break;    
+                case TSK_OBJECT_DETECTED:
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/objects.png"); //NON-NLS
+                    break; 
+                case TSK_WEB_FORM_AUTOFILL:
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/web-form.png"); //NON-NLS
+                    break; 
+                case TSK_WEB_CACHE:
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/cache.png"); //NON-NLS
+                    break; 
+                case TSK_USER_CONTENT_SUSPECTED:
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/user-content.png"); //NON-NLS
+                    break; 
+                case TSK_METADATA:
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/metadata.png"); //NON-NLS
+                    break; 
+                case TSK_CLIPBOARD_CONTENT:
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/clipboard.png"); //NON-NLS
+                    break; 
                 case TSK_ACCOUNT:
                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/accounts.png"); //NON-NLS
                     break;
@@ -356,6 +377,12 @@ public class HTMLReport implements TableReportModule {
                     break;
                 case TSK_VERIFICATION_FAILED:
                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/validationFailed.png"); //NON-NLS
+                    break;
+                case TSK_WEB_ACCOUNT_TYPE:
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/web-account-type.png"); //NON-NLS
+                    break;
+                case TSK_WEB_FORM_ADDRESS:
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/web-form-address.png"); //NON-NLS
                     break;
                 default:
                     logger.log(Level.WARNING, "useDataTypeIcon: unhandled artifact type = {0}", dataType); //NON-NLS

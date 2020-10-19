@@ -1,5 +1,8 @@
 /*! \page auto_ingest_setup_page Auto Ingest Configuration
 
+[TOC]
+
+
 \section auto_ingest_setup_overview Overview
 
 A multi-user installation requires several network-based services, such as a central database and a messaging system, and automated ingest requires one or more auto ingest nodes. While you may run all of the external services on a single node, this is not likely to be ideal - spreading the services out across several machines can improve throughput. Keeping in mind that all the following machines need to be able to communicate with each other with network visibility to the shared drive, here is a description of a possible configuration:

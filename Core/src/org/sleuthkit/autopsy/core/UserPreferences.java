@@ -26,6 +26,7 @@ import java.util.prefs.PreferenceChangeListener;
 import java.util.prefs.Preferences;
 import org.openide.util.NbPreferences;
 import org.python.icu.util.TimeZone;
+import org.sleuthkit.autopsy.machinesettings.UserMachinePreferences;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.TextConverterException;
 import org.sleuthkit.autopsy.coreutils.Version;
@@ -65,6 +66,7 @@ public final class UserPreferences {
     private static final String MESSAGE_SERVICE_HOST = "MessageServiceHost"; //NON-NLS
     private static final String MESSAGE_SERVICE_PORT = "MessageServicePort"; //NON-NLS
     public static final String TEXT_TRANSLATOR_NAME = "TextTranslatorName";
+    public static final String OCR_TRANSLATION_ENABLED = "OcrTranslationEnabled";
     public static final String PROCESS_TIME_OUT_ENABLED = "ProcessTimeOutEnabled"; //NON-NLS
     public static final String PROCESS_TIME_OUT_HOURS = "ProcessTimeOutHours"; //NON-NLS
     private static final int DEFAULT_PROCESS_TIMEOUT_HR = 60;
@@ -87,7 +89,7 @@ public final class UserPreferences {
     private static final String GEO_OSM_TILE_ZIP_PATH = "GeolocationOsmZipPath";
     private static final String GEO_OSM_SERVER_ADDRESS = "GeolocationOsmServerAddress";
     private static final String GEO_MBTILES_FILE_PATH = "GeolcoationMBTilesFilePath";
-
+    
     // Prevent instantiation.
     private UserPreferences() {
     }
@@ -382,6 +384,14 @@ public final class UserPreferences {
     public static String getTextTranslatorName() {
         return preferences.get(TEXT_TRANSLATOR_NAME, null);
     }
+    
+    public static void setUseOcrInTranslation(boolean enableOcr) {
+        preferences.putBoolean(OCR_TRANSLATION_ENABLED, enableOcr);
+    }
+
+    public static boolean getUseOcrInTranslation() {
+        return preferences.getBoolean(OCR_TRANSLATION_ENABLED, true);
+    }    
 
     /**
      * Persists message service connection info.
@@ -647,5 +657,15 @@ public final class UserPreferences {
      */
     public static String getGeolocationMBTilesFilePath() {
         return preferences.get(GEO_MBTILES_FILE_PATH, "");
+    }
+    
+    /**
+     * Retrieves the root application temp directory.
+     * 
+     * @return The absolute path to the application temp directory.
+     */
+    public static String getAppTempDirectory() {
+        return Paths.get(UserMachinePreferences.getBaseTempDirectory(), getAppName())
+                .toAbsolutePath().toString();
     }
 }

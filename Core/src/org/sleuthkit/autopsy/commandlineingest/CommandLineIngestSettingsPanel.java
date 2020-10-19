@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019-2019 Basis Technology Corp.
+ * Copyright 2019-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,12 +21,16 @@ package org.sleuthkit.autopsy.commandlineingest;
 import java.awt.BorderLayout;
 import java.awt.Cursor;
 import java.util.List;
+import java.util.Set;
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.JOptionPane;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestJobSettingsPanel;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import static org.sleuthkit.autopsy.report.infrastructure.ReportWizardAction.doReportWizard;
+import org.sleuthkit.autopsy.report.infrastructure.ReportWizardAction;
 
 /**
  * Configuration panel for auto ingest settings.
@@ -36,7 +40,7 @@ public class CommandLineIngestSettingsPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(CommandLineIngestSettingsPanel.class.getName());
-    
+
     private static final String REPORTING_CONFIGURATION_NAME = "CommandLineIngest";
     private static final boolean DISPLAY_CASE_SPECIFIC_DATA = false; // do not try to display case specific data
     private static final boolean RUN_REPORTS = false; // do not generate reports as part of running the report wizard
@@ -48,12 +52,13 @@ public class CommandLineIngestSettingsPanel extends javax.swing.JPanel {
      */
     public CommandLineIngestSettingsPanel(CommandLineIngestSettingsPanelController theController) {
         initComponents();
+        setupReportList();
     }
-    
+
     /**
      * @return the REPORTING_CONFIGURATION_NAME
      */
-    public static String getReportingConfigName() {
+    public static String getDefaultReportingConfigName() {
         return REPORTING_CONFIGURATION_NAME;
     }
 
@@ -87,6 +92,58 @@ public class CommandLineIngestSettingsPanel extends javax.swing.JPanel {
         }
     }
 
+    @Messages({
+        "CommandListIngestSettingsPanel_Default_Report_DisplayName=Default",
+        "CommandListIngestSettingsPanel_Make_Config=Make new profile..."
+    })
+    /**
+     * Initializes the report profile list combo box.
+     */
+    private void setupReportList() {
+        Set<String> configNames = ReportWizardAction.getReportConfigNames();
+        configNames.remove(REPORTING_CONFIGURATION_NAME);
+
+        DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();
+        model.addElement(Bundle.CommandListIngestSettingsPanel_Default_Report_DisplayName());
+        for (String name : configNames) {
+            model.addElement(name);
+        }
+
+        model.addElement(Bundle.CommandListIngestSettingsPanel_Make_Config());
+
+        reportProfileCB.setModel(model);
+        reportProfileCB.setSelectedIndex(0);
+    }
+
+    /**
+     * Checks to see if there is currently a profile define with the given name.
+     * 
+     * @param name Profile name to check.
+     * 
+     * @return True if there is a report with the given name.
+     */
+    private boolean doesReportProfileNameExist(String name) {
+        Set<String> configNames = ReportWizardAction.getReportConfigNames();
+        return configNames.contains(name);
+    }
+
+    /**
+     * Returns the currently selected report profile name from the cb. For backwards
+     * compatibility if Default is selected, the existing default 
+     * profile name of CommandLineIngest will be returned.
+     * 
+     * @return The selected profile name.
+     */
+    private String getReportName() {
+        String reportName = (String) reportProfileCB.getSelectedItem();
+
+        if (reportName.equals(Bundle.CommandListIngestSettingsPanel_Default_Report_DisplayName())) {
+            reportName = REPORTING_CONFIGURATION_NAME;
+        }
+
+        return reportName;
+    }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -95,20 +152,26 @@ public class CommandLineIngestSettingsPanel extends javax.swing.JPanel {
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
+        java.awt.GridBagConstraints gridBagConstraints;
 
-        nodeScrollPane = new javax.swing.JScrollPane();
         nodePanel = new javax.swing.JPanel();
         bnEditIngestSettings = new javax.swing.JButton();
-        jLabelDescription = new javax.swing.JLabel();
         bnEditReportSettings = new javax.swing.JButton();
+        javax.swing.JTextPane ingestDescriptionTextPane = new javax.swing.JTextPane();
+        javax.swing.JLabel ingestProfileLabel = new javax.swing.JLabel();
+        ingestProfileCB = new javax.swing.JComboBox<>();
+        javax.swing.JTextPane reportDescriptionTextPane = new javax.swing.JTextPane();
+        javax.swing.JLabel reportProfileLabel = new javax.swing.JLabel();
+        reportProfileCB = new javax.swing.JComboBox<>();
+        javax.swing.Box.Filler bottomFiller = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0));
+        jTextPane1 = new javax.swing.JTextPane();
 
         setPreferredSize(new java.awt.Dimension(810, 422));
-
-        nodeScrollPane.setMinimumSize(new java.awt.Dimension(0, 0));
-        nodeScrollPane.setPreferredSize(new java.awt.Dimension(803, 553));
+        setLayout(new java.awt.BorderLayout());
 
         nodePanel.setMinimumSize(new java.awt.Dimension(100, 100));
         nodePanel.setPreferredSize(new java.awt.Dimension(801, 551));
+        nodePanel.setLayout(new java.awt.GridBagLayout());
 
         org.openide.awt.Mnemonics.setLocalizedText(bnEditIngestSettings, org.openide.util.NbBundle.getMessage(CommandLineIngestSettingsPanel.class, "CommandLineIngestSettingsPanel.bnEditIngestSettings.text")); // NOI18N
         bnEditIngestSettings.setToolTipText(org.openide.util.NbBundle.getMessage(CommandLineIngestSettingsPanel.class, "CommandLineIngestSettingsPanel.bnEditIngestSettings.toolTipText")); // NOI18N
@@ -118,8 +181,12 @@ public class CommandLineIngestSettingsPanel extends javax.swing.JPanel {
                 bnEditIngestSettingsActionPerformed(evt);
             }
         });
-
-        org.openide.awt.Mnemonics.setLocalizedText(jLabelDescription, org.openide.util.NbBundle.getMessage(CommandLineIngestSettingsPanel.class, "CommandLineIngestSettingsPanel.jLabelDescription.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 2;
+        gridBagConstraints.gridy = 2;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(0, 9, 0, 0);
+        nodePanel.add(bnEditIngestSettings, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(bnEditReportSettings, org.openide.util.NbBundle.getMessage(CommandLineIngestSettingsPanel.class, "CommandLineIngestSettingsPanel.bnEditReportSettings.text")); // NOI18N
         bnEditReportSettings.setToolTipText(org.openide.util.NbBundle.getMessage(CommandLineIngestSettingsPanel.class, "CommandLineIngestSettingsPanel.bnEditReportSettings.toolTipText")); // NOI18N
@@ -129,48 +196,120 @@ public class CommandLineIngestSettingsPanel extends javax.swing.JPanel {
                 bnEditReportSettingsActionPerformed(evt);
             }
         });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 2;
+        gridBagConstraints.gridy = 4;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(0, 9, 0, 0);
+        nodePanel.add(bnEditReportSettings, gridBagConstraints);
+        bnEditReportSettings.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(CommandLineIngestSettingsPanel.class, "CommandLineIngestSettingsPanel.bnEditReportSettings.AccessibleContext.accessibleName")); // NOI18N
 
-        javax.swing.GroupLayout nodePanelLayout = new javax.swing.GroupLayout(nodePanel);
-        nodePanel.setLayout(nodePanelLayout);
-        nodePanelLayout.setHorizontalGroup(
-            nodePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(nodePanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(nodePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(bnEditIngestSettings, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabelDescription, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(bnEditReportSettings, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-        nodePanelLayout.setVerticalGroup(
-            nodePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(nodePanelLayout.createSequentialGroup()
-                .addGap(27, 27, 27)
-                .addComponent(jLabelDescription, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(bnEditIngestSettings)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(bnEditReportSettings)
-                .addContainerGap(381, Short.MAX_VALUE))
-        );
+        ingestDescriptionTextPane.setEditable(false);
+        ingestDescriptionTextPane.setBackground(javax.swing.UIManager.getDefaults().getColor("Label.background"));
+        ingestDescriptionTextPane.setText(org.openide.util.NbBundle.getMessage(CommandLineIngestSettingsPanel.class, "CommandLineIngestSettingsPanel.ingestDescriptionTextPane.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.gridwidth = 3;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(5, 5, 10, 5);
+        nodePanel.add(ingestDescriptionTextPane, gridBagConstraints);
 
-        nodeScrollPane.setViewportView(nodePanel);
+        org.openide.awt.Mnemonics.setLocalizedText(ingestProfileLabel, org.openide.util.NbBundle.getMessage(CommandLineIngestSettingsPanel.class, "CommandLineIngestSettingsPanel.ingestProfileLabel.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 2;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        gridBagConstraints.insets = new java.awt.Insets(0, 25, 0, 0);
+        nodePanel.add(ingestProfileLabel, gridBagConstraints);
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(nodeScrollPane, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(nodeScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 421, Short.MAX_VALUE)
-        );
+        ingestProfileCB.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Default" }));
+        ingestProfileCB.setEnabled(false);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.insets = new java.awt.Insets(0, 5, 0, 0);
+        nodePanel.add(ingestProfileCB, gridBagConstraints);
+
+        reportDescriptionTextPane.setEditable(false);
+        reportDescriptionTextPane.setBackground(javax.swing.UIManager.getDefaults().getColor("Label.background"));
+        reportDescriptionTextPane.setText(org.openide.util.NbBundle.getMessage(CommandLineIngestSettingsPanel.class, "CommandLineIngestSettingsPanel.reportDescriptionTextPane.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 3;
+        gridBagConstraints.gridwidth = 3;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.insets = new java.awt.Insets(15, 5, 5, 5);
+        nodePanel.add(reportDescriptionTextPane, gridBagConstraints);
+
+        org.openide.awt.Mnemonics.setLocalizedText(reportProfileLabel, org.openide.util.NbBundle.getMessage(CommandLineIngestSettingsPanel.class, "CommandLineIngestSettingsPanel.reportProfileLabel.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 4;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        gridBagConstraints.insets = new java.awt.Insets(0, 25, 0, 0);
+        nodePanel.add(reportProfileLabel, gridBagConstraints);
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 4;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.insets = new java.awt.Insets(0, 5, 0, 0);
+        nodePanel.add(reportProfileCB, gridBagConstraints);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 5;
+        gridBagConstraints.weighty = 1.0;
+        nodePanel.add(bottomFiller, gridBagConstraints);
+
+        jTextPane1.setEditable(false);
+        jTextPane1.setBackground(javax.swing.UIManager.getDefaults().getColor("Label.background"));
+        jTextPane1.setText(org.openide.util.NbBundle.getMessage(CommandLineIngestSettingsPanel.class, "CommandLineIngestSettingsPanel.jTextPane1.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.gridwidth = 3;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        gridBagConstraints.insets = new java.awt.Insets(10, 5, 5, 5);
+        nodePanel.add(jTextPane1, gridBagConstraints);
+
+        add(nodePanel, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
-
+    @Messages({
+        "CommandListIngestSettingsPanel_Report_Name_Msg=Please supply a report profile name:",
+        "CommandLineIngestSettingPanel_empty_report_name_mgs=Report profile name was empty, no profile created.",
+        "CommandLineIngestSettingPanel_existing_report_name_mgs=Report profile name was already exists, no profile created."
+    })
     private void bnEditReportSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnEditReportSettingsActionPerformed
+        String reportName = getReportName();
+        if (reportName.equals(Bundle.CommandListIngestSettingsPanel_Make_Config())) {
+            reportName = JOptionPane.showInputDialog(this, Bundle.CommandListIngestSettingsPanel_Report_Name_Msg());
+
+            // User hit cancel
+            if (reportName == null) {
+                return;
+            } else if (reportName.isEmpty()) {
+                JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), Bundle.CommandLineIngestSettingPanel_empty_report_name_mgs());
+                return;
+            } else if (doesReportProfileNameExist(reportName)) {
+                JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), Bundle.CommandLineIngestSettingPanel_existing_report_name_mgs());
+                return;
+            }
+        }
+
         this.getParent().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        doReportWizard(getReportingConfigName(), DISPLAY_CASE_SPECIFIC_DATA, RUN_REPORTS);
+        doReportWizard(reportName, DISPLAY_CASE_SPECIFIC_DATA, RUN_REPORTS);
+
+        setupReportList();
+
+        if (((DefaultComboBoxModel) reportProfileCB.getModel()).getIndexOf(reportName) >= 0) {
+            reportProfileCB.setSelectedItem(reportName);
+        }
+
         this.getParent().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
     }//GEN-LAST:event_bnEditReportSettingsActionPerformed
 
@@ -181,8 +320,9 @@ public class CommandLineIngestSettingsPanel extends javax.swing.JPanel {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton bnEditIngestSettings;
     private javax.swing.JButton bnEditReportSettings;
-    private javax.swing.JLabel jLabelDescription;
+    private javax.swing.JComboBox<String> ingestProfileCB;
+    private javax.swing.JTextPane jTextPane1;
     private javax.swing.JPanel nodePanel;
-    private javax.swing.JScrollPane nodeScrollPane;
+    private javax.swing.JComboBox<String> reportProfileCB;
     // End of variables declaration//GEN-END:variables
 }
