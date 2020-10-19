@@ -35,6 +35,7 @@ import java.net.ServerSocket;
 import java.net.SocketException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -47,7 +48,6 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
-import static java.util.stream.Collectors.toList;
 import javax.swing.AbstractAction;
 import org.apache.commons.io.FileUtils;
 import java.util.concurrent.TimeoutException;
@@ -280,27 +280,30 @@ public class Server {
         javaPath = PlatformUtil.getJavaPath();
 
         Path solr8Home = Paths.get(PlatformUtil.getUserDirectory().getAbsolutePath(), "solr"); //NON-NLS
-        if (!solr8Home.toFile().exists()) {
-            try {
+        try {
+            if (!solr8Home.toFile().exists()) {
                 Files.createDirectory(solr8Home);
-                Files.copy(Paths.get(solr8Folder.getAbsolutePath(), "server", "solr", "solr.xml"), solr8Home.resolve("solr.xml")); //NON-NLS
-                Files.copy(Paths.get(solr8Folder.getAbsolutePath(), "server", "solr", "zoo.cfg"), solr8Home.resolve("zoo.cfg")); //NON-NLS
-                FileUtils.copyDirectory(Paths.get(solr8Folder.getAbsolutePath(), "server", "solr", "configsets").toFile(), solr8Home.resolve("configsets").toFile()); //NON-NLS
-            } catch (IOException ex) {
-                logger.log(Level.SEVERE, "Failed to create Solr home folder:", ex); //NON-NLS
             }
+            // Always copy the config files, as they may have changed. Othweise potentially stale Solr configuration is being used.
+            Files.copy(Paths.get(solr8Folder.getAbsolutePath(), "server", "solr", "solr.xml"), solr8Home.resolve("solr.xml"), REPLACE_EXISTING); //NON-NLS
+            Files.copy(Paths.get(solr8Folder.getAbsolutePath(), "server", "solr", "zoo.cfg"), solr8Home.resolve("zoo.cfg"), REPLACE_EXISTING); //NON-NLS
+            FileUtils.copyDirectory(Paths.get(solr8Folder.getAbsolutePath(), "server", "solr", "configsets").toFile(), solr8Home.resolve("configsets").toFile()); //NON-NLS
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Failed to create Solr home folder:", ex); //NON-NLS
         }
         
         Path solr4Home = Paths.get(PlatformUtil.getUserDirectory().getAbsolutePath(), "solr4"); //NON-NLS
-        if (!solr4Home.toFile().exists()) { 
-            try {
+        try {
+            if (!solr4Home.toFile().exists()) {
                 Files.createDirectory(solr4Home);
-                Files.copy(Paths.get(solr4Folder.getAbsolutePath(), "solr", "solr.xml"), solr4Home.resolve("solr.xml")); //NON-NLS
-                Files.copy(Paths.get(solr4Folder.getAbsolutePath(), "solr", "zoo.cfg"), solr4Home.resolve("zoo.cfg")); //NON-NLS
-            } catch (IOException ex) {
-                logger.log(Level.SEVERE, "Failed to create Solr home folder:", ex); //NON-NLS
             }
+            // Always copy the config files, as they may have changed. Othweise potentially stale Solr configuration is being used.
+            Files.copy(Paths.get(solr4Folder.getAbsolutePath(), "solr", "solr.xml"), solr4Home.resolve("solr.xml"), REPLACE_EXISTING); //NON-NLS
+            Files.copy(Paths.get(solr4Folder.getAbsolutePath(), "solr", "zoo.cfg"), solr4Home.resolve("zoo.cfg"), REPLACE_EXISTING); //NON-NLS
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Failed to create Solr home folder:", ex); //NON-NLS
         }
+
         currentCoreLock = new ReentrantReadWriteLock(true);
 
         logger.log(Level.INFO, "Created Server instance using Java at {0}", javaPath); //NON-NLS
