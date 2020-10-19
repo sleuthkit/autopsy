@@ -24,6 +24,7 @@ import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableMap;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Cell;
@@ -35,6 +36,7 @@ import javafx.scene.control.TreeTableColumn;
 import javafx.scene.control.TreeTableView;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import org.controlsfx.control.action.Action;
 import org.controlsfx.control.action.ActionUtils;
@@ -154,6 +156,14 @@ final public class FilterSetPanel extends BorderPane {
                     break;
                 default:
                     throw new UnsupportedOperationException("Unknown ViewMode: " + controller.getViewMode());
+            }
+        });
+        
+        //Block the default treetable keyboard events.
+        filterTreeTable.addEventFilter(KeyEvent.ANY, new EventHandler<KeyEvent>() {
+            @Override 
+            public void handle(KeyEvent event) {
+                event.consume();
             }
         });
     }
