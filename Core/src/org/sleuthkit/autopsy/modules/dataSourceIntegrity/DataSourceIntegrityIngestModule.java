@@ -23,7 +23,6 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
-import javax.xml.bind.DatatypeConverter;
 import java.util.Arrays;
 import org.apache.commons.codec.binary.Hex;
 import org.sleuthkit.autopsy.coreutils.Logger;
