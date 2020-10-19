@@ -133,8 +133,8 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
         try {
             int result = ExecUtil.execute(iLeappCommand, new DataSourceIngestModuleProcessTerminator(context, true));
             if (result != 0) {
-                // ignore if there is an error and continue to try and process the next fileif there is one
-
+                logger.log(Level.SEVERE, String.format("Error when trying to execute iLeapp program getting file paths to search for result is %d", result));
+                return ProcessResult.ERROR;
             }
             iLeappPathsToProcess = loadIleappPathFile(moduleOutputPath);
         } catch (IOException ex) {
@@ -157,6 +157,7 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
             Integer filesProcessedCount = 0;
             for (AbstractFile iLeappFile : iLeappFilesToProcess) {
                 processILeappFile(dataSource, currentCase, statusHelper, filesProcessedCount, iLeappFile);
+                filesProcessedCount++;
             }
             // Process the logical image as a fs in iLeapp to make sure this is not a logical fs that was added
             extractFilesFromImage(dataSource, iLeappPathsToProcess, moduleOutputPath);
@@ -207,8 +208,6 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
         if (fileProcessorResult == ProcessResult.ERROR) {
             return;
         }
-
-        filesProcessedCount++;
     }
 
     private void processILeappFs(Content dataSource, Case currentCase, DataSourceIngestModuleProgress statusHelper, String directoryToProcess) {
@@ -336,7 +335,7 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
     private void addILeappReportToReports(Path iLeappOutputDir, Case currentCase) {
         List<String> allIndexFiles = new ArrayList<>();
 
-        try (Stream<Path> walk = Files.walk(iLeappOutputDir)) {
+        try (Stream<Path> walk = Files.walk(iLeappOutputDir)) { 
 
             allIndexFiles = walk.map(x -> x.toString())
                     .filter(f -> f.toLowerCase().endsWith("index.html")).collect(Collectors.toList());
@@ -412,7 +411,13 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
                 Path parentPath = Paths.get(moduleOutputPath.toString(), iLeappFile.getParentPath());
                 File fileParentPath = new File(parentPath.toString());
 
-                if (fileParentPath.exists()) {
+                extractFileToOutput(dataSource, iLeappFile, fileParentPath, parentPath);
+            }
+        }
+    }
+
+    private void extractFileToOutput(Content dataSource, AbstractFile iLeappFile, File fileParentPath, Path parentPath) {
+        if (fileParentPath.exists()) {
                     if (!iLeappFile.isDir()) {
                         writeiLeappFile(dataSource, iLeappFile, fileParentPath.toString());
                     } else {
@@ -420,7 +425,6 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
                             Files.createDirectories(Paths.get(parentPath.toString(), iLeappFile.getName()));
                         } catch (IOException ex) {
                             logger.log(Level.INFO, String.format("Error creating iLeapp output directory %s", parentPath.toString()), ex);
-                            continue;
                         }
                     }
                 } else {
@@ -428,7 +432,6 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
                         Files.createDirectories(parentPath);
                     } catch (IOException ex) {
                         logger.log(Level.INFO, String.format("Error creating iLeapp output directory %s", parentPath.toString()), ex);
-                        continue;
                     }
                     if (!iLeappFile.isDir()) {
                         writeiLeappFile(dataSource, iLeappFile, fileParentPath.toString());
@@ -437,14 +440,11 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
                             Files.createDirectories(Paths.get(parentPath.toString(), iLeappFile.getName()));
                         } catch (IOException ex) {
                             logger.log(Level.INFO, String.format("Error creating iLeapp output directory %s", parentPath.toString()), ex);
-                            continue;
                         }
                     }
                 }
-            }
-        }
     }
-
+    
     private void writeiLeappFile(Content dataSource, AbstractFile iLeappFile, String parentPath) {
         String fileName = iLeappFile.getName().replace(":", "-");
         if (!fileName.matches(".") && !fileName.matches("..") && !fileName.toLowerCase().endsWith("-slack")) {
