@@ -18,9 +18,9 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
-import com.fasterxml.jackson.core.JsonEncoding;
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
+//import com.fasterxml.jackson.core.JsonEncoding;
+//import com.fasterxml.jackson.core.JsonFactory;
+//import com.fasterxml.jackson.core.JsonGenerator;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -62,9 +62,9 @@ final class FileExporter {
     private FileExportSettings settings;
     private Path filesDirPath;
     private Path reportsDirPath;
-    private JsonFactory jsonGeneratorFactory;
-    private JsonGenerator masterCatalog;
-    private Map<String, JsonGenerator> ruleNamesToCatalogs;
+//    private JsonFactory jsonGeneratorFactory;
+//    private JsonGenerator masterCatalog;
+//    private Map<String, JsonGenerator> ruleNamesToCatalogs;
     private List<Path> flagFilePaths;
     
     FileExporter() throws FileExportException {
@@ -110,7 +110,7 @@ final class FileExporter {
                 }
                 exportFiles(fileIdsToRuleNames, cancelCheck);
             }
-            closeCatalogs();
+//            closeCatalogs();
             writeFlagFiles();
         } catch (FileExportSettings.PersistenceException | FileExportRuleSet.ExportRulesException | TskCoreException | IOException | NoCurrentCaseException ex) {
             throw new FileExportException("Error occurred during file export", ex);
@@ -212,49 +212,49 @@ final class FileExporter {
      *                                                 generator.
      */
     private void setUp() throws FileExportSettings.PersistenceException, IOException {
-        /*
-         * Create the file export and report root directory paths.
-         */
-        filesDirPath = settings.getFilesRootDirectory();
-        filesDirPath = filesDirPath.resolve(deviceId);
-        reportsDirPath = settings.getReportsRootDirectory();
-        reportsDirPath = reportsDirPath.resolve(deviceId);
-
-        /*
-         * Delete the results of a previous run, if any. Results deletion cleans
-         * up for a crashed auto ingest job.
-         */
-        FileUtil.deleteDir(reportsDirPath.toFile());
-        FileUtil.deleteDir(filesDirPath.toFile());
-
-        /*
-         * Create the file export and report root directories.
-         */
-        Files.createDirectories(filesDirPath);
-        Files.createDirectories(reportsDirPath);
-
-        /*
-         * Create the JSON generator for the master catalog of exported files
-         * and a map to hold the JSON generators for the rule catalogs.
-         */
-        jsonGeneratorFactory = new JsonFactory();
-        jsonGeneratorFactory.setRootValueSeparator("\r\n");
-        String catalogName = settings.getMasterCatalogName();
-        String catalogDir = catalogName.substring(0, 1).toUpperCase() + catalogName.substring(1);
-        Path catalogPath = Paths.get(reportsDirPath.toString(), catalogDir, catalogName + ".json");
-        Files.createDirectories(catalogPath.getParent());
-        File catalogFile = catalogPath.toFile();
-        masterCatalog = jsonGeneratorFactory.createGenerator(catalogFile, JsonEncoding.UTF8);
-        ruleNamesToCatalogs = new HashMap<>();
-
-        /*
-         * Set up the paths for the flag files that are written to signal export
-         * is complete for thsi device.
-         */
-        flagFilePaths = new ArrayList<>();
-        flagFilePaths.add(Paths.get(filesDirPath.toString(), settings.getExportCompletedFlagFileName()));
-        flagFilePaths.add(Paths.get(reportsDirPath.toString(), catalogDir, settings.getExportCompletedFlagFileName()));
-        flagFilePaths.add(Paths.get(reportsDirPath.toString(), settings.getRulesEvaluatedFlagFileName()));
+//        /*
+//         * Create the file export and report root directory paths.
+//         */
+//        filesDirPath = settings.getFilesRootDirectory();
+//        filesDirPath = filesDirPath.resolve(deviceId);
+//        reportsDirPath = settings.getReportsRootDirectory();
+//        reportsDirPath = reportsDirPath.resolve(deviceId);
+//
+//        /*
+//         * Delete the results of a previous run, if any. Results deletion cleans
+//         * up for a crashed auto ingest job.
+//         */
+//        FileUtil.deleteDir(reportsDirPath.toFile());
+//        FileUtil.deleteDir(filesDirPath.toFile());
+//
+//        /*
+//         * Create the file export and report root directories.
+//         */
+//        Files.createDirectories(filesDirPath);
+//        Files.createDirectories(reportsDirPath);
+//
+//        /*
+//         * Create the JSON generator for the master catalog of exported files
+//         * and a map to hold the JSON generators for the rule catalogs.
+//         */
+//        jsonGeneratorFactory = new JsonFactory();
+//        jsonGeneratorFactory.setRootValueSeparator("\r\n");
+//        String catalogName = settings.getMasterCatalogName();
+//        String catalogDir = catalogName.substring(0, 1).toUpperCase() + catalogName.substring(1);
+//        Path catalogPath = Paths.get(reportsDirPath.toString(), catalogDir, catalogName + ".json");
+//        Files.createDirectories(catalogPath.getParent());
+//        File catalogFile = catalogPath.toFile();
+//        masterCatalog = jsonGeneratorFactory.createGenerator(catalogFile, JsonEncoding.UTF8);
+//        ruleNamesToCatalogs = new HashMap<>();
+//
+//        /*
+//         * Set up the paths for the flag files that are written to signal export
+//         * is complete for thsi device.
+//         */
+//        flagFilePaths = new ArrayList<>();
+//        flagFilePaths.add(Paths.get(filesDirPath.toString(), settings.getExportCompletedFlagFileName()));
+//        flagFilePaths.add(Paths.get(reportsDirPath.toString(), catalogDir, settings.getExportCompletedFlagFileName()));
+//        flagFilePaths.add(Paths.get(reportsDirPath.toString(), settings.getRulesEvaluatedFlagFileName()));
     }
 
     /**
@@ -341,31 +341,31 @@ final class FileExporter {
      *                          storage.
      */
     private void exportFile(Long fileId, List<String> ruleNames, Supplier<Boolean> cancelCheck) throws TskCoreException, IOException, NoCurrentCaseException {
-        AbstractFile file = Case.getCurrentCaseThrows().getSleuthkitCase().getAbstractFileById(fileId);
-        if (!shouldExportFile(file)) {
-            return;
-        }
-        Map<BlackboardArtifact, List<BlackboardAttribute>> artifactsToAttributes = new HashMap<>();
-        List<BlackboardArtifact> artifacts = file.getAllArtifacts();
-        for (BlackboardArtifact artifact : artifacts) {
-            artifactsToAttributes.put(artifact, artifact.getAttributes());
-        }
-        Path filePath = exportFileToSecondaryStorage(file, cancelCheck);
-        if (filePath == null) {
-            return;
-        }
-        addFileToCatalog(file, artifactsToAttributes, filePath, masterCatalog);
-        for (String ruleName : ruleNames) {
-            JsonGenerator ruleCatalog = this.ruleNamesToCatalogs.get(ruleName);
-            if (null == ruleCatalog) {
-                Path catalogPath = Paths.get(reportsDirPath.toString(), ruleName, "catalog.json");
-                Files.createDirectories(catalogPath.getParent());
-                File catalogFile = catalogPath.toFile();
-                ruleCatalog = jsonGeneratorFactory.createGenerator(catalogFile, JsonEncoding.UTF8);
-                ruleNamesToCatalogs.put(ruleName, ruleCatalog);
-            }
-            addFileToCatalog(file, artifactsToAttributes, filePath, ruleCatalog);
-        }
+//        AbstractFile file = Case.getCurrentCaseThrows().getSleuthkitCase().getAbstractFileById(fileId);
+//        if (!shouldExportFile(file)) {
+//            return;
+//        }
+//        Map<BlackboardArtifact, List<BlackboardAttribute>> artifactsToAttributes = new HashMap<>();
+//        List<BlackboardArtifact> artifacts = file.getAllArtifacts();
+//        for (BlackboardArtifact artifact : artifacts) {
+//            artifactsToAttributes.put(artifact, artifact.getAttributes());
+//        }
+//        Path filePath = exportFileToSecondaryStorage(file, cancelCheck);
+//        if (filePath == null) {
+//            return;
+//        }
+//        addFileToCatalog(file, artifactsToAttributes, filePath, masterCatalog);
+//        for (String ruleName : ruleNames) {
+//            JsonGenerator ruleCatalog = this.ruleNamesToCatalogs.get(ruleName);
+//            if (null == ruleCatalog) {
+//                Path catalogPath = Paths.get(reportsDirPath.toString(), ruleName, "catalog.json");
+//                Files.createDirectories(catalogPath.getParent());
+//                File catalogFile = catalogPath.toFile();
+//                ruleCatalog = jsonGeneratorFactory.createGenerator(catalogFile, JsonEncoding.UTF8);
+//                ruleNamesToCatalogs.put(ruleName, ruleCatalog);
+//            }
+//            addFileToCatalog(file, artifactsToAttributes, filePath, ruleCatalog);
+//        }
     }
 
     /**
@@ -470,150 +470,150 @@ final class FileExporter {
         return exportFilePath;
     }
 
-    /**
-     * Adds an exported file to a catalog.
-     *
-     * @param file                  The file.
-     * @param artifactsToAttributes The artifacts associated with the file.
-     * @param filePath              The path to the exported file.
-     * @param catalog               The catalog.
-     *
-     * @throws IOException       If there is an error while writing to the
-     *                           catalog.
-     * @throws TskCoreExceptiion If there is a problem querying the case
-     *                           database.
-     */
-    private void addFileToCatalog(AbstractFile file, Map<BlackboardArtifact, List<BlackboardAttribute>> artifactsToAttributes, Path filePath, JsonGenerator catalog) throws IOException, TskCoreException {
-        catalog.writeStartObject();
-        String md5 = file.getMd5Hash().toUpperCase();
-        catalog.writeFieldName(md5);
-        catalog.writeStartObject();
-        catalog.writeStringField("Filename", filePath.toString());
-        catalog.writeStringField("Type", file.getMIMEType());
-        catalog.writeStringField("MD5", md5);
-        catalog.writeFieldName("File data");
-        catalog.writeStartObject();
-
-        catalog.writeFieldName("Modified");
-        catalog.writeStartArray();
-        catalog.writeString(file.getMtimeAsDate());
-        catalog.writeEndArray();
-
-        catalog.writeFieldName("Changed");
-        catalog.writeStartArray();
-        catalog.writeString(file.getCtimeAsDate());
-        catalog.writeEndArray();
-
-        catalog.writeFieldName("Accessed");
-        catalog.writeStartArray();
-        catalog.writeString(file.getAtimeAsDate());
-        catalog.writeEndArray();
-
-        catalog.writeFieldName("Created");
-        catalog.writeStartArray();
-        catalog.writeString(file.getCrtimeAsDate());
-        catalog.writeEndArray();
-
-        catalog.writeFieldName("Extension");
-        catalog.writeStartArray();
-        catalog.writeString(file.getNameExtension());
-        catalog.writeEndArray();
-
-        catalog.writeFieldName("Filename");
-        catalog.writeStartArray();
-        catalog.writeString(file.getName());
-        catalog.writeEndArray();
-
-        catalog.writeFieldName("Size");
-        catalog.writeStartArray();
-        catalog.writeString(Long.toString(file.getSize()));
-        catalog.writeEndArray();
-
-        catalog.writeFieldName("Source Path");
-        catalog.writeStartArray();
-        catalog.writeString(file.getParentPath() + "/" + file.getName());
-        catalog.writeEndArray();
-
-        catalog.writeFieldName("Flags (Dir)");
-        catalog.writeStartArray();
-        catalog.writeString(file.getDirFlagAsString());
-        catalog.writeEndArray();
-
-        catalog.writeFieldName("Flags (Meta)");
-        catalog.writeStartArray();
-        catalog.writeString(file.getMetaFlagsAsString());
-        catalog.writeEndArray();
-
-        catalog.writeFieldName("Mode");
-        catalog.writeStartArray();
-        catalog.writeString(file.getModesAsString());
-        catalog.writeEndArray();
-
-        catalog.writeFieldName("User ID");
-        catalog.writeStartArray();
-        catalog.writeString(Integer.toString(file.getUid()));
-        catalog.writeEndArray();
-
-        catalog.writeFieldName("Group ID");
-        catalog.writeStartArray();
-        catalog.writeString(Integer.toString(file.getGid()));
-        catalog.writeEndArray();
-
-        catalog.writeFieldName("Meta Addr");
-        catalog.writeStartArray();
-        catalog.writeString(Long.toString(file.getMetaAddr()));
-        catalog.writeEndArray();
-
-        catalog.writeFieldName("Attr Addr");
-        catalog.writeStartArray();
-        catalog.writeString(Long.toString(file.getAttrType().getValue()) + "-" + file.getAttributeId());
-        catalog.writeEndArray();
-
-        catalog.writeFieldName("Dir Type");
-        catalog.writeStartArray();
-        catalog.writeString(file.getDirType().getLabel());
-        catalog.writeEndArray();
-
-        catalog.writeFieldName("Meta Type");
-        catalog.writeStartArray();
-        catalog.writeString(file.getMetaType().toString());
-        catalog.writeEndArray();
-
-        catalog.writeFieldName("Known");
-        catalog.writeStartArray();
-        catalog.writeString(file.getKnown().getName());
-        catalog.writeEndArray();
-
-        catalog.writeEndObject();
-
-        for (Map.Entry<BlackboardArtifact, List<BlackboardAttribute>> entry : artifactsToAttributes.entrySet()) {
-            for (BlackboardAttribute attr : entry.getValue()) {
-                catalog.writeFieldName(entry.getKey().getArtifactTypeName());
-                catalog.writeStartObject();
-                catalog.writeFieldName(attr.getAttributeType().getTypeName());
-                catalog.writeStartArray();
-                catalog.writeString(attr.getDisplayString());
-                catalog.writeEndArray();
-                catalog.writeEndObject();
-            }
-        }
-
-        catalog.writeEndObject();
-        catalog.writeEndObject();
-    }
-
-    /**
-     * Closes all catalogs opened during export.
-     *
-     * @throws IOException If there is a problem closing a catalog.
-     */
-    private void closeCatalogs() throws IOException {
-        masterCatalog.close();
-        for (JsonGenerator catalog : this.ruleNamesToCatalogs.values()) {
-            catalog.close();
-        }
-
-    }
+//    /**
+//     * Adds an exported file to a catalog.
+//     *
+//     * @param file                  The file.
+//     * @param artifactsToAttributes The artifacts associated with the file.
+//     * @param filePath              The path to the exported file.
+//     * @param catalog               The catalog.
+//     *
+//     * @throws IOException       If there is an error while writing to the
+//     *                           catalog.
+//     * @throws TskCoreExceptiion If there is a problem querying the case
+//     *                           database.
+//     */
+//    private void addFileToCatalog(AbstractFile file, Map<BlackboardArtifact, List<BlackboardAttribute>> artifactsToAttributes, Path filePath, JsonGenerator catalog) throws IOException, TskCoreException {
+//        catalog.writeStartObject();
+//        String md5 = file.getMd5Hash().toUpperCase();
+//        catalog.writeFieldName(md5);
+//        catalog.writeStartObject();
+//        catalog.writeStringField("Filename", filePath.toString());
+//        catalog.writeStringField("Type", file.getMIMEType());
+//        catalog.writeStringField("MD5", md5);
+//        catalog.writeFieldName("File data");
+//        catalog.writeStartObject();
+//
+//        catalog.writeFieldName("Modified");
+//        catalog.writeStartArray();
+//        catalog.writeString(file.getMtimeAsDate());
+//        catalog.writeEndArray();
+//
+//        catalog.writeFieldName("Changed");
+//        catalog.writeStartArray();
+//        catalog.writeString(file.getCtimeAsDate());
+//        catalog.writeEndArray();
+//
+//        catalog.writeFieldName("Accessed");
+//        catalog.writeStartArray();
+//        catalog.writeString(file.getAtimeAsDate());
+//        catalog.writeEndArray();
+//
+//        catalog.writeFieldName("Created");
+//        catalog.writeStartArray();
+//        catalog.writeString(file.getCrtimeAsDate());
+//        catalog.writeEndArray();
+//
+//        catalog.writeFieldName("Extension");
+//        catalog.writeStartArray();
+//        catalog.writeString(file.getNameExtension());
+//        catalog.writeEndArray();
+//
+//        catalog.writeFieldName("Filename");
+//        catalog.writeStartArray();
+//        catalog.writeString(file.getName());
+//        catalog.writeEndArray();
+//
+//        catalog.writeFieldName("Size");
+//        catalog.writeStartArray();
+//        catalog.writeString(Long.toString(file.getSize()));
+//        catalog.writeEndArray();
+//
+//        catalog.writeFieldName("Source Path");
+//        catalog.writeStartArray();
+//        catalog.writeString(file.getParentPath() + "/" + file.getName());
+//        catalog.writeEndArray();
+//
+//        catalog.writeFieldName("Flags (Dir)");
+//        catalog.writeStartArray();
+//        catalog.writeString(file.getDirFlagAsString());
+//        catalog.writeEndArray();
+//
+//        catalog.writeFieldName("Flags (Meta)");
+//        catalog.writeStartArray();
+//        catalog.writeString(file.getMetaFlagsAsString());
+//        catalog.writeEndArray();
+//
+//        catalog.writeFieldName("Mode");
+//        catalog.writeStartArray();
+//        catalog.writeString(file.getModesAsString());
+//        catalog.writeEndArray();
+//
+//        catalog.writeFieldName("User ID");
+//        catalog.writeStartArray();
+//        catalog.writeString(Integer.toString(file.getUid()));
+//        catalog.writeEndArray();
+//
+//        catalog.writeFieldName("Group ID");
+//        catalog.writeStartArray();
+//        catalog.writeString(Integer.toString(file.getGid()));
+//        catalog.writeEndArray();
+//
+//        catalog.writeFieldName("Meta Addr");
+//        catalog.writeStartArray();
+//        catalog.writeString(Long.toString(file.getMetaAddr()));
+//        catalog.writeEndArray();
+//
+//        catalog.writeFieldName("Attr Addr");
+//        catalog.writeStartArray();
+//        catalog.writeString(Long.toString(file.getAttrType().getValue()) + "-" + file.getAttributeId());
+//        catalog.writeEndArray();
+//
+//        catalog.writeFieldName("Dir Type");
+//        catalog.writeStartArray();
+//        catalog.writeString(file.getDirType().getLabel());
+//        catalog.writeEndArray();
+//
+//        catalog.writeFieldName("Meta Type");
+//        catalog.writeStartArray();
+//        catalog.writeString(file.getMetaType().toString());
+//        catalog.writeEndArray();
+//
+//        catalog.writeFieldName("Known");
+//        catalog.writeStartArray();
+//        catalog.writeString(file.getKnown().getName());
+//        catalog.writeEndArray();
+//
+//        catalog.writeEndObject();
+//
+//        for (Map.Entry<BlackboardArtifact, List<BlackboardAttribute>> entry : artifactsToAttributes.entrySet()) {
+//            for (BlackboardAttribute attr : entry.getValue()) {
+//                catalog.writeFieldName(entry.getKey().getArtifactTypeName());
+//                catalog.writeStartObject();
+//                catalog.writeFieldName(attr.getAttributeType().getTypeName());
+//                catalog.writeStartArray();
+//                catalog.writeString(attr.getDisplayString());
+//                catalog.writeEndArray();
+//                catalog.writeEndObject();
+//            }
+//        }
+//
+//        catalog.writeEndObject();
+//        catalog.writeEndObject();
+//    }
+//
+//    /**
+//     * Closes all catalogs opened during export.
+//     *
+//     * @throws IOException If there is a problem closing a catalog.
+//     */
+//    private void closeCatalogs() throws IOException {
+//        masterCatalog.close();
+//        for (JsonGenerator catalog : this.ruleNamesToCatalogs.values()) {
+//            catalog.close();
+//        }
+//
+//    }
 
     /**
      * Writes the flag files that signal export is completed.
