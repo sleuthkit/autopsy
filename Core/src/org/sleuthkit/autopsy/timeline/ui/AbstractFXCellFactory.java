@@ -25,10 +25,11 @@ import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TreeTableCell;
 import javafx.scene.control.TreeTableColumn;
+import javafx.scene.control.TreeTableView;
 
 /**
  * An abstract base class for Cell factories. This class provides the basic
- * infrustructure for implementations to be able to create similar cells for
+ * infrastructure for implementations to be able to create similar cells for
  * ListView, TableViews or TreeTableViews via the appropriate method call.
  * Implementations need only implement the abstract configureCell method in the
  * same spirit as IndexedCell.updateItem
@@ -64,6 +65,8 @@ public abstract class AbstractFXCellFactory<X, Y> {
         @Override
         protected void updateItem(Y item, boolean empty) {
             super.updateItem(item, empty);
+            TreeTableView<X> treeTableView = this.treeTableViewProperty().get();
+            this.setTranslateX(treeTableView.getTreeItemLevel(treeTableView.getTreeItem(getIndex())) << 4);
             configureCell(this, item, empty, (() -> this.getTreeTableRow().getItem()));
         }
     }
