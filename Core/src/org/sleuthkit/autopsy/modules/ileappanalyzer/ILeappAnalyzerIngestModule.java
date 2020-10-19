@@ -159,6 +159,7 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
                 processILeappFile(dataSource, currentCase, statusHelper, filesProcessedCount, iLeappFile);
             }
             // Process the logical image as a fs in iLeapp to make sure this is not a logical fs that was added
+            extractFilesFromImage(dataSource, iLeappPathsToProcess, moduleOutputPath);
             processILeappFs(dataSource, currentCase, statusHelper, moduleOutputPath.toString());
         }
 
@@ -311,7 +312,7 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
     static private ProcessBuilder buildProcessWithRunAsInvoker(String... commandLine) {
         ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
         /*
-         * Add an environment variable to force log2timeline/psort to run with
+         * Add an environment variable to force iLeapp to run with
          * the same permissions Autopsy uses.
          */
         processBuilder.environment().put("__COMPAT_LAYER", "RunAsInvoker"); //NON-NLS
@@ -341,7 +342,12 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
                     .filter(f -> f.toLowerCase().endsWith("index.html")).collect(Collectors.toList());
 
             if (!allIndexFiles.isEmpty()) {
-                currentCase.addReport(allIndexFiles.get(0), MODULE_NAME, Bundle.ILeappAnalyzerIngestModule_report_name());
+                // Check for existance of directory that holds report data if does not exist then report contains no data
+                String filePath = FilenameUtils.getFullPathNoEndSeparator(allIndexFiles.get(0));
+                File dataFilesDir = new File(Paths.get(filePath, "_TSV Exports").toString());
+                if (dataFilesDir.exists()) {
+                    currentCase.addReport(allIndexFiles.get(0), MODULE_NAME, Bundle.ILeappAnalyzerIngestModule_report_name());
+                }
             }
 
         } catch (IOException | UncheckedIOException | TskCoreException ex) {
@@ -389,11 +395,6 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
             ffp = FilenameUtils.normalize(ffp, true);
             String fileName = FilenameUtils.getName(ffp);
             String filePath = FilenameUtils.getPath(ffp);
-
-            if (fileName.matches("47CC96DE-495D-4430-B240-B6D160F18328@2x.ktx")) {
-                logger.log(Level.INFO, "ILeapp Analyser ingest module run was canceled"); //NON-NLS
-
-            }
 
             List<AbstractFile> iLeappFiles = new ArrayList<>();
             try {
