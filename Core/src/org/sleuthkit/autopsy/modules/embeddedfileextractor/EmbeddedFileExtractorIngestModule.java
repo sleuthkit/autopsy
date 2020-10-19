@@ -20,7 +20,12 @@ package org.sleuthkit.autopsy.modules.embeddedfileextractor;
 
 import java.io.File;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
+import javax.imageio.ImageIO;
+import javax.imageio.spi.IIORegistry;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -122,7 +127,52 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
         } catch (NoCurrentCaseException ex) {
             throw new IngestModuleException(Bundle.EmbeddedFileExtractorIngestModule_UnableToGetMSOfficeExtractor_errMsg(), ex);
         }
+        
+        /**
+         * Initialize Java's Image I/O API so that image reading and writing 
+         * (needed for image extraction) happens consistently through the 
+         * same providers. See JIRA-6951 for more details.
+         */
+        initializeImageIO();        
 
+    }
+    
+    /**
+     * Initializes the ImageIO API and sorts the providers for
+     * deterministic image reading and writing.
+     */
+    private void initializeImageIO() {
+        ImageIO.scanForPlugins();
+        
+        // Sift through each registry category and sort category providers by
+        // their canonical class name.
+        IIORegistry pluginRegistry = IIORegistry.getDefaultInstance();
+        Iterator<Class<?>> categories = pluginRegistry.getCategories();
+        while(categories.hasNext()) {
+            sortPluginsInCategory(pluginRegistry, categories.next());
+        }
+    }
+    
+    /**
+     * Sorts all ImageIO SPI providers by their class name.
+     */
+    private <T> void sortPluginsInCategory(IIORegistry pluginRegistry, Class<T> category) {
+        Iterator<T> serviceProviderIter = pluginRegistry.getServiceProviders(category, false);
+        ArrayList<T> providers = new ArrayList<>();
+        while (serviceProviderIter.hasNext()) {
+            providers.add(serviceProviderIter.next());
+        }
+        Collections.sort(providers, (first, second) -> {
+            return first.getClass().getCanonicalName().compareToIgnoreCase(second.getClass().getCanonicalName());
+        });
+        for(int i = 0; i < providers.size() - 1; i++) {
+            for(int j = i + 1; j < providers.size(); j++) {
+                // The registry only accepts pairwise orderings. To guarantee a 
+                // total order, all pairs need to be exhausted.
+                pluginRegistry.setOrdering(category, providers.get(i), 
+                        providers.get(j));
+            }
+        }
     }
 
     @Override
