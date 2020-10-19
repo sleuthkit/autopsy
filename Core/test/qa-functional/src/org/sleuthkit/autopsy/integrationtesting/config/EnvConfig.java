@@ -16,33 +16,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.integrationtesting;
-
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
-import com.google.gson.reflect.TypeToken;
-import java.lang.reflect.Type;
-import java.util.List;
+package org.sleuthkit.autopsy.integrationtesting.config;
 
 /**
- * Configuration for running Integration Tests including things like ingest
- * parameters, datasource locations, cases to create, tests to run, etc.
+ *
+ * @author gregd
  */
-public class IntegrationTestConfig {
+public class EnvConfig {
 
     private final String rootCaseOutputPath;
     private final String rootTestOutputPath;
-    private final List<CaseConfig> cases;
+    private final ConnectionConfig connectionInfo;
+
     private String workingDirectory;
 
-    public IntegrationTestConfig(String rootCaseOutputPath,
-            String rootTestOutputPath, List<CaseConfig> cases) {
+    public EnvConfig(String rootCaseOutputPath,
+            String rootTestOutputPath, ConnectionConfig connectionInfo) {
         this.rootCaseOutputPath = rootCaseOutputPath;
         this.rootTestOutputPath = rootTestOutputPath;
-        this.cases = cases;
+        this.connectionInfo = connectionInfo;
     }
 
     /**
@@ -57,13 +49,6 @@ public class IntegrationTestConfig {
      */
     public String getRootTestOutputPath() {
         return rootTestOutputPath;
-    }
-
-    /**
-     * @return The per-case configuration.
-     */
-    public List<CaseConfig> getCases() {
-        return cases;
     }
 
     /**
@@ -86,4 +71,7 @@ public class IntegrationTestConfig {
         this.workingDirectory = workingDirectory;
     }
 
+    public ConnectionConfig getConnectionInfo() {
+        return connectionInfo;
+    }
 }

@@ -18,17 +18,20 @@
  */
 package org.sleuthkit.autopsy.integrationtesting;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
+import org.sleuthkit.autopsy.integrationtesting.config.TestSuiteConfig;
+import org.sleuthkit.autopsy.integrationtesting.config.IntegrationTestConfig;
+import org.sleuthkit.autopsy.integrationtesting.config.IntegrationCaseType;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -39,6 +42,7 @@ import junit.framework.TestCase;
 import org.apache.cxf.common.util.CollectionUtils;
 import org.netbeans.junit.NbModuleSuite;
 import org.openide.util.Lookup;
+import org.openide.util.Pair;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.casemodule.CaseActionException;
@@ -46,15 +50,16 @@ import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException;
 import org.sleuthkit.autopsy.datasourceprocessors.DataSourceProcessorUtility;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
+import org.sleuthkit.autopsy.ingest.IngestJobSettings.IngestType;
+import org.sleuthkit.autopsy.ingest.IngestModuleFactoryService;
+import org.sleuthkit.autopsy.ingest.IngestModuleTemplate;
+import org.sleuthkit.autopsy.integrationtesting.config.ConfigDeserializer;
+import org.sleuthkit.autopsy.integrationtesting.config.EnvConfig;
+import org.sleuthkit.autopsy.integrationtesting.config.ParameterizedResourceConfig;
+import org.sleuthkit.autopsy.integrationtesting.config.TestingConfig;
 import org.sleuthkit.autopsy.testutils.CaseUtils;
 import org.sleuthkit.autopsy.testutils.IngestUtils;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.yaml.snakeyaml.DumperOptions;
-import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.introspector.Property;
-import org.yaml.snakeyaml.nodes.MappingNode;
-import org.yaml.snakeyaml.nodes.Tag;
-import org.yaml.snakeyaml.representer.Representer;
 
 /**
  * Main entry point for running integration tests. Handles processing
@@ -63,10 +68,14 @@ import org.yaml.snakeyaml.representer.Representer;
  */
 public class MainTestRunner extends TestCase {
 
-    private static final Logger logger = Logger.getLogger(MainTestRunner.class.getName()); 
+    private static final Logger logger = Logger.getLogger(MainTestRunner.class.getName());
     private static final String CONFIG_FILE_KEY = "integrationConfigFile";
-    private static final EnvironmentSetupUtil SETUP_UTIL = new EnvironmentSetupUtil();
-    
+    private static final ConfigDeserializer configDeserializer = new ConfigDeserializer();
+    private static final IngestModuleFactoryService ingestModuleFactories = new IngestModuleFactoryService();
+
+    private static final IngestType DEFAULT_INGEST_FILTER_TYPE = IngestType.ALL_MODULES;
+    private static final Set<String> DEFAULT_EXCLUDED_MODULES = Stream.of("Plaso").collect(Collectors.toSet());
+
     /**
      * Constructor required by JUnit
      */
@@ -93,10 +102,7 @@ public class MainTestRunner extends TestCase {
         String configFile = System.getProperty(CONFIG_FILE_KEY);
         IntegrationTestConfig config;
         try {
-            config = getConfigFromFile(configFile);
-            if (config.getWorkingDirectory() == null) {
-                config.setWorkingDirectory(new File(configFile).getParentFile().getAbsolutePath());
-            }
+            config = configDeserializer.getConfigFromFile(configFile);
         } catch (IOException ex) {
             logger.log(Level.WARNING, "There was an error processing integration test config at " + configFile, ex);
             return;
@@ -106,12 +112,17 @@ public class MainTestRunner extends TestCase {
             logger.log(Level.WARNING, "No properly formatted config found at " + configFile);
         }
 
-        if (!CollectionUtils.isEmpty(config.getCases())) {
-            for (CaseConfig caseConfig : config.getCases()) {
-                for (CaseType caseType : IntegrationCaseType.getCaseTypes(caseConfig.getCaseTypes())) {
+        EnvConfig envConfig = config.getEnvConfig();
+
+        if (!CollectionUtils.isEmpty(config.getTestSuites())) {
+            for (TestSuiteConfig testSuiteConfig : config.getTestSuites()) {
+                String caseName = testSuiteConfig.getName();
+
+                for (CaseType caseType : IntegrationCaseType.getCaseTypes(testSuiteConfig.getCaseTypes())) {
                     // create an autopsy case for each case in the config and for each case type for the specified case.
                     // then run ingest for the case.
-                    Case autopsyCase = runIngest(config, caseConfig, caseType);
+                    Case autopsyCase = createCaseWithDataSources(envConfig, caseName, caseType, testSuiteConfig.getDataSources());
+
                     if (autopsyCase == null || autopsyCase != Case.getCurrentCase()) {
                         logger.log(Level.WARNING,
                                 String.format("Case was not properly ingested or setup correctly for environment.  Case is %s and current case is %s.",
@@ -119,10 +130,23 @@ public class MainTestRunner extends TestCase {
                         return;
                     }
 
-                    // once ingested, run integration tests to produce output.
-                    String caseName = autopsyCase.getName();
+                    Pair<IngestJobSettings, List<ConfigurationModule<?>>> configurationResult = runConfigurationModules(caseName, testSuiteConfig);
+                    IngestJobSettings ingestSettings = configurationResult.first();
+                    List<ConfigurationModule<?>> configModules = configurationResult.second();
 
-                    runIntegrationTests(config, caseConfig, caseType);
+                    runIngest(autopsyCase, ingestSettings, caseName);
+
+                    // once ingested, run integration tests to produce output.
+                    OutputResults results = runIntegrationTests(testSuiteConfig.getIntegrationTests());
+
+                    revertConfigurationModules(configModules);
+
+                    // write the results for the case to a file
+                    results.serializeToFile(
+                            PathUtil.getAbsolutePath(envConfig.getWorkingDirectory(), envConfig.getRootTestOutputPath()),
+                            testSuiteConfig.getName(),
+                            caseType
+                    );
 
                     try {
                         Case.closeCurrentCase();
@@ -135,19 +159,102 @@ public class MainTestRunner extends TestCase {
         }
     }
 
-    /**
-     * Create a case and run ingest with the current case.
-     *
-     * @param config The overall configuration.
-     * @param caseConfig The configuration for the case.
-     * @param caseType The type of case.
-     * @return The currently open case after ingest.
-     */
-    private Case runIngest(IntegrationTestConfig config, CaseConfig caseConfig, CaseType caseType) {
+    private void revertConfigurationModules(List<ConfigurationModule<?>> configModules) {
+        List<ConfigurationModule<?>> reversed = new ArrayList<>(configModules);
+        Collections.reverse(reversed);
+        for (ConfigurationModule<?> configModule : reversed) {
+            configModule.revert();
+        }
+    }
+
+    private String getProfileName(String caseName) {
+        return String.format("integrationTestProfile-%s", caseName);
+    }
+
+    private IngestJobSettings getDefaultIngestConfig(String caseName) {
+        return new IngestJobSettings(
+                getProfileName(caseName),
+                DEFAULT_INGEST_FILTER_TYPE,
+                ingestModuleFactories.getFactories().stream()
+                        .filter((f) -> !DEFAULT_EXCLUDED_MODULES.contains(f.getModuleDisplayName()))
+                        .map(f -> new IngestModuleTemplate(f, f.getDefaultIngestJobSettings()))
+                        .collect(Collectors.toList())
+        );
+    }
+
+    private Pair<IngestJobSettings, List<ConfigurationModule<?>>> runConfigurationModules(String caseName, TestSuiteConfig config) {
+        if (CollectionUtils.isEmpty(config.getConfigurationModules())) {
+            return Pair.of(getDefaultIngestConfig(caseName), Collections.emptyList());
+        }
+
+        IngestJobSettings curConfig = new IngestJobSettings(
+                getProfileName(caseName),
+                DEFAULT_INGEST_FILTER_TYPE,
+                Collections.emptyList());
+
+        List<ConfigurationModule<?>> configurationModuleCache = new ArrayList<>();
+
+        for (ParameterizedResourceConfig configModule : config.getConfigurationModules()) {
+            Pair<IngestJobSettings, ConfigurationModule<?>> ingestResult = runConfigurationModule(curConfig, configModule, caseName);
+            if (ingestResult != null) {
+                curConfig = ingestResult.first() == null ? curConfig : ingestResult.first();
+                if (ingestResult.second() != null) {
+                    configurationModuleCache.add(ingestResult.second());
+                }
+            }
+        }
+        return Pair.of(curConfig, configurationModuleCache);
+    }
+
+    private Pair<IngestJobSettings, ConfigurationModule<?>> runConfigurationModule(IngestJobSettings curConfig, ParameterizedResourceConfig configModule, String caseName) {
+        Class<?> clazz = null;
+        try {
+            clazz = Class.forName(configModule.getResource());
+        } catch (ClassNotFoundException ex) {
+            logger.log(Level.WARNING, "Unable to find module: " + configModule.getResource(), ex);
+            return null;
+        }
+
+        if (clazz == null || !ConfigurationModule.class.isAssignableFrom(clazz)) {
+            logger.log(Level.WARNING, String.format("%s does not seem to be an instance of a configuration module.", configModule.getResource()));
+            return null;
+        }
+
+        Type configurationModuleType = Stream.of(clazz.getGenericInterfaces())
+                .filter(type -> type.getClass().equals(ConfigurationModule.class) && type instanceof ParameterizedType && type instanceof Class)
+                .map(type -> ((ParameterizedType) type).getActualTypeArguments()[0])
+                .findFirst()
+                .orElse(null);
+
+        if (configurationModuleType == null) {
+            logger.log(Level.SEVERE, String.format("Could not determine generic type of config module: %s", configModule.getResource()));
+            return null;
+        }
+
+        
+        ConfigurationModule<?> configModuleObj = null;
+        Object result = null;
+        try {
+            configModuleObj = (ConfigurationModule<?>) clazz.newInstance();
+            Method m = clazz.getMethod("configure", IngestJobSettings.class, (Class<?>) configurationModuleType);
+            result = m.invoke(configModuleObj, curConfig, configDeserializer.convertToObj(configModule.getParameters(), configurationModuleType));
+        } catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException |  InstantiationException ex) {
+            logger.log(Level.SEVERE, String.format("There was an error calling configure method on Configuration Module %s", configModule.getResource()), ex);
+        }
+        
+        if (result instanceof IngestJobSettings) {
+            return Pair.of(curConfig, configModuleObj);
+        } else {
+            logger.log(Level.SEVERE, String.format("Could not retrieve IngestJobSettings from %s", configModule.getResource()));
+            return null;
+        }
+    }
+
+    private Case createCaseWithDataSources(EnvConfig envConfig, String caseName, CaseType caseType, List<String> dataSourcePaths) {
         Case openCase = null;
         switch (caseType) {
             case SINGLE_USER_CASE:
-                openCase = CaseUtils.createAsCurrentCase(caseConfig.getCaseName());
+                openCase = CaseUtils.createAsCurrentCase(caseName);
                 break;
             case MULTI_USER_CASE:
             // TODO
@@ -156,20 +263,11 @@ public class MainTestRunner extends TestCase {
         }
 
         if (openCase == null) {
-            logger.log(Level.WARNING, String.format("No case could be created for %s of type %s.", caseConfig.getCaseName(), caseType));
+            logger.log(Level.WARNING, String.format("No case could be created for %s of type %s.", caseName, caseType));
             return null;
         }
 
-        addDataSourcesToCase(PathUtil.getAbsolutePaths(config.getWorkingDirectory(), caseConfig.getDataSourceResources()), caseConfig.getCaseName());
-        
-        
-        try {
-            IngestJobSettings ingestJobSettings = SETUP_UTIL.setupEnvironment(config, caseConfig);
-            IngestUtils.runIngestJob(openCase.getDataSources(), ingestJobSettings);
-        } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, String.format("There was an error while ingesting datasources for case %s", caseConfig.getCaseName()), ex);
-        }
-
+        addDataSourcesToCase(PathUtil.getAbsolutePaths(envConfig.getWorkingDirectory(), dataSourcePaths), caseName);
         return openCase;
     }
 
@@ -197,28 +295,25 @@ public class MainTestRunner extends TestCase {
         }
     }
 
-    /**
-     * Deserializes the json config specified at the given path into the java
-     * equivalent IntegrationTestConfig object.
-     *
-     * @param filePath The path to the config.
-     * @return The java object.
-     * @throws IOException If there is an error opening the file.
-     */
-    private IntegrationTestConfig getConfigFromFile(String filePath) throws IOException {
-        GsonBuilder builder = new GsonBuilder();
-        Gson gson = builder.create();
-        return gson.fromJson(new FileReader(new File(filePath)), IntegrationTestConfig.class);
+    private Case runIngest(Case openCase, IngestJobSettings ingestJobSettings, String caseName) {
+        try {
+            // IngestJobSettings ingestJobSettings = SETUP_UTIL.setupEnvironment(envConfig, testSuiteConfig);
+            IngestUtils.runIngestJob(openCase.getDataSources(), ingestJobSettings);
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, String.format("There was an error while ingesting datasources for case %s", caseName), ex);
+        }
+
+        return openCase;
     }
 
     /**
      * Runs the integration tests and serializes results to disk.
      *
-     * @param config The overall config.
-     * @param caseConfig The configuration for a particular case.
+     * @param envConfig The overall config.
+     * @param testSuiteConfig The configuration for a particular case.
      * @param caseType The case type (single user / multi user) to create.
      */
-    private void runIntegrationTests(IntegrationTestConfig config, CaseConfig caseConfig, CaseType caseType) {
+    private OutputResults runIntegrationTests(TestingConfig testSuiteConfig) {
         // this will capture output results
         OutputResults results = new OutputResults();
 
@@ -226,8 +321,7 @@ public class MainTestRunner extends TestCase {
         for (IntegrationTests testGroup : Lookup.getDefault().lookupAll(IntegrationTests.class)) {
 
             // if test should not be included in results, skip it.
-            if (!caseConfig.getTestConfig()
-                    .hasIncludedTest(testGroup.getClass().getCanonicalName())) {
+            if (!testSuiteConfig.hasIncludedTest(testGroup.getClass().getCanonicalName())) {
                 continue;
             }
 
@@ -240,8 +334,18 @@ public class MainTestRunner extends TestCase {
             }
 
             testGroup.setupClass();
+            Map<String, Object> parametersMap = testSuiteConfig.getParameters(testGroup.getClass().getCanonicalName());
+
             for (Method testMethod : testMethods) {
-                Object serializableResult = runIntegrationTestMethod(testGroup, testMethod);
+                Object[] parameters = new Object[0];
+                if (testMethod.getParameters().length > 1) {
+                    throw new IllegalArgumentException(String.format("Could not call method %s in class %s.  Multiple parameters cannot be handled.",
+                            testMethod.getName(), testGroup.getClass().getCanonicalName()));
+                } else if (testMethod.getParameters().length > 0) {
+                    parameters = new Object[]{configDeserializer.convertToObj(parametersMap, testMethod.getParameters().getClass())};
+                }
+
+                Object serializableResult = runIntegrationTestMethod(testGroup, testMethod, parameters);
                 // add the results and capture the package, class, 
                 // and method of the test for easy location of failed tests
                 results.addResult(
@@ -254,34 +358,7 @@ public class MainTestRunner extends TestCase {
             testGroup.tearDownClass();
         }
 
-        // write the results for the case to a file
-        serializeFile(
-                results, 
-                PathUtil.getAbsolutePath(config.getWorkingDirectory(), config.getRootTestOutputPath()), 
-                caseConfig.getCaseName(), 
-                getCaseTypeId(caseType)
-        );
-    }
-
-    /**
-     * The name of the CaseType to be used in the filename during serialization.
-     *
-     * @param caseType The case type.
-     * @return The identifier to be used in a file name.
-     */
-    private String getCaseTypeId(CaseType caseType) {
-        if (caseType == null) {
-            return "";
-        }
-
-        switch (caseType) {
-            case SINGLE_USER_CASE:
-                return "singleUser";
-            case MULTI_USER_CASE:
-                return "multiUser";
-            default:
-                throw new IllegalArgumentException("Unknown case type: " + caseType);
-        }
+        return results;
     }
 
     /**
@@ -290,14 +367,14 @@ public class MainTestRunner extends TestCase {
      * @param testGroup The test suite to which the method belongs.
      * @param testMethod The java reflection method to run.
      */
-    private Object runIntegrationTestMethod(IntegrationTests testGroup, Method testMethod) {
+    private Object runIntegrationTestMethod(IntegrationTests testGroup, Method testMethod, Object[] parameters) {
         testGroup.setup();
 
         // run the test method and get the results
         Object serializableResult = null;
 
         try {
-            serializableResult = testMethod.invoke(testGroup);
+            serializableResult = testMethod.invoke(testGroup, parameters);
         } catch (IllegalAccessException | IllegalArgumentException ex) {
             logger.log(Level.WARNING,
                     String.format("test method %s in %s could not be properly invoked",
@@ -312,57 +389,5 @@ public class MainTestRunner extends TestCase {
         testGroup.tearDown();
 
         return serializableResult;
-    }
-
-    /**
-     * Used by yaml serialization to properly represent objects.
-     */
-    private static final Representer MAP_REPRESENTER = new Representer() {
-        @Override
-        protected MappingNode representJavaBean(Set<Property> properties, Object javaBean) {
-            // don't show class name in yaml
-            if (!classTags.containsKey(javaBean.getClass())) {
-                addClassTag(javaBean.getClass(), Tag.MAP);
-            }
-
-            return super.representJavaBean(properties, javaBean);
-        }
-    };
-
-    /**
-     * Used by yaml serialization to properly represent objects.
-     */
-    private static final DumperOptions DUMPER_OPTS = new DumperOptions() {
-        {
-            // Show each property on a new line.
-            setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
-            // allow for serializing properties that only have getters.
-            setAllowReadOnlyProperties(true);
-        }
-    };
-
-    /**
-     * The actual yaml serializer that is used.
-     */
-    private static final Yaml YAML_SERIALIZER = new Yaml(MAP_REPRESENTER, DUMPER_OPTS);
-
-    /**
-     * Serializes results of a test to a yaml file.
-     *
-     * @param results The results to serialize.
-     * @param outputFolder The folder where the yaml should be written.
-     * @param caseName The name of the case (used to determine filename).
-     * @param caseType The type of case (used to determine filename).
-     */
-    private void serializeFile(OutputResults results, String outputFolder, String caseName, String caseType) {
-        String outputExtension = ".yml";
-        Path outputPath = Paths.get(outputFolder, String.format("%s-%s%s", caseName, caseType, outputExtension));
-
-        try {
-            FileWriter writer = new FileWriter(outputPath.toFile());
-            YAML_SERIALIZER.dump(results.getSerializableData(), writer);
-        } catch (IOException ex) {
-            logger.log(Level.WARNING, "There was an error writing results to outputPath: " + outputPath, ex);
-        }
     }
 }
