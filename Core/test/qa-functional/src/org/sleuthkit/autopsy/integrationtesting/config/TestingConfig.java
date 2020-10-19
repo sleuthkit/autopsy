@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.integrationtesting.config;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -36,7 +37,11 @@ public class TestingConfig {
     private final Map<String, ParameterizedResourceConfig> excludeAllExcept;
     private final Set<String> includeAllExcept;
 
-    public TestingConfig(List<ParameterizedResourceConfig> excludeAllExcept, List<String> includeAllExcept) {
+    public TestingConfig(
+            @JsonProperty("excludeAllExcept")
+            List<ParameterizedResourceConfig> excludeAllExcept, 
+            @JsonProperty("includeAllExcept")
+            List<String> includeAllExcept) {
 
         List<ParameterizedResourceConfig> safeExcludeAllExcept = ((excludeAllExcept == null) ? Collections.emptyList() : excludeAllExcept);
         this.excludeAllExcept = safeExcludeAllExcept

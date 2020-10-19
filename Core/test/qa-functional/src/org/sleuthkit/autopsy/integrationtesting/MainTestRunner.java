@@ -24,15 +24,10 @@ import org.sleuthkit.autopsy.integrationtesting.config.IntegrationCaseType;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -41,23 +36,22 @@ import junit.framework.Test;
 import junit.framework.TestCase;
 import org.apache.cxf.common.util.CollectionUtils;
 import org.netbeans.junit.NbModuleSuite;
+import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.Pair;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.casemodule.CaseActionException;
+import org.sleuthkit.autopsy.casemodule.CaseDetails;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.coreutils.TimeStampUtils;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException;
 import org.sleuthkit.autopsy.datasourceprocessors.DataSourceProcessorUtility;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
-import org.sleuthkit.autopsy.ingest.IngestJobSettings.IngestType;
-import org.sleuthkit.autopsy.ingest.IngestModuleFactoryService;
-import org.sleuthkit.autopsy.ingest.IngestModuleTemplate;
 import org.sleuthkit.autopsy.integrationtesting.config.ConfigDeserializer;
 import org.sleuthkit.autopsy.integrationtesting.config.EnvConfig;
-import org.sleuthkit.autopsy.integrationtesting.config.ParameterizedResourceConfig;
 import org.sleuthkit.autopsy.integrationtesting.config.TestingConfig;
-import org.sleuthkit.autopsy.testutils.CaseUtils;
 import org.sleuthkit.autopsy.testutils.IngestUtils;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -71,10 +65,7 @@ public class MainTestRunner extends TestCase {
     private static final Logger logger = Logger.getLogger(MainTestRunner.class.getName());
     private static final String CONFIG_FILE_KEY = "integrationConfigFile";
     private static final ConfigDeserializer configDeserializer = new ConfigDeserializer();
-    private static final IngestModuleFactoryService ingestModuleFactories = new IngestModuleFactoryService();
-
-    private static final IngestType DEFAULT_INGEST_FILTER_TYPE = IngestType.ALL_MODULES;
-    private static final Set<String> DEFAULT_EXCLUDED_MODULES = Stream.of("Plaso").collect(Collectors.toSet());
+    private static final ConfigurationModuleManager configurationModuleManager = new ConfigurationModuleManager();
 
     /**
      * Constructor required by JUnit
@@ -130,7 +121,9 @@ public class MainTestRunner extends TestCase {
                         return;
                     }
 
-                    Pair<IngestJobSettings, List<ConfigurationModule<?>>> configurationResult = runConfigurationModules(caseName, testSuiteConfig);
+                    Pair<IngestJobSettings, List<ConfigurationModule<?>>> configurationResult
+                            = configurationModuleManager.runConfigurationModules(caseName, testSuiteConfig);
+
                     IngestJobSettings ingestSettings = configurationResult.first();
                     List<ConfigurationModule<?>> configModules = configurationResult.second();
 
@@ -139,7 +132,7 @@ public class MainTestRunner extends TestCase {
                     // once ingested, run integration tests to produce output.
                     OutputResults results = runIntegrationTests(testSuiteConfig.getIntegrationTests());
 
-                    revertConfigurationModules(configModules);
+                    configurationModuleManager.revertConfigurationModules(configModules);
 
                     // write the results for the case to a file
                     results.serializeToFile(
@@ -159,103 +152,26 @@ public class MainTestRunner extends TestCase {
         }
     }
 
-    private void revertConfigurationModules(List<ConfigurationModule<?>> configModules) {
-        List<ConfigurationModule<?>> reversed = new ArrayList<>(configModules);
-        Collections.reverse(reversed);
-        for (ConfigurationModule<?> configModule : reversed) {
-            configModule.revert();
-        }
-    }
-
-    private String getProfileName(String caseName) {
-        return String.format("integrationTestProfile-%s", caseName);
-    }
-
-    private IngestJobSettings getDefaultIngestConfig(String caseName) {
-        return new IngestJobSettings(
-                getProfileName(caseName),
-                DEFAULT_INGEST_FILTER_TYPE,
-                ingestModuleFactories.getFactories().stream()
-                        .filter((f) -> !DEFAULT_EXCLUDED_MODULES.contains(f.getModuleDisplayName()))
-                        .map(f -> new IngestModuleTemplate(f, f.getDefaultIngestJobSettings()))
-                        .collect(Collectors.toList())
-        );
-    }
-
-    private Pair<IngestJobSettings, List<ConfigurationModule<?>>> runConfigurationModules(String caseName, TestSuiteConfig config) {
-        if (CollectionUtils.isEmpty(config.getConfigurationModules())) {
-            return Pair.of(getDefaultIngestConfig(caseName), Collections.emptyList());
-        }
-
-        IngestJobSettings curConfig = new IngestJobSettings(
-                getProfileName(caseName),
-                DEFAULT_INGEST_FILTER_TYPE,
-                Collections.emptyList());
-
-        List<ConfigurationModule<?>> configurationModuleCache = new ArrayList<>();
-
-        for (ParameterizedResourceConfig configModule : config.getConfigurationModules()) {
-            Pair<IngestJobSettings, ConfigurationModule<?>> ingestResult = runConfigurationModule(curConfig, configModule, caseName);
-            if (ingestResult != null) {
-                curConfig = ingestResult.first() == null ? curConfig : ingestResult.first();
-                if (ingestResult.second() != null) {
-                    configurationModuleCache.add(ingestResult.second());
-                }
-            }
-        }
-        return Pair.of(curConfig, configurationModuleCache);
-    }
-
-    private Pair<IngestJobSettings, ConfigurationModule<?>> runConfigurationModule(IngestJobSettings curConfig, ParameterizedResourceConfig configModule, String caseName) {
-        Class<?> clazz = null;
-        try {
-            clazz = Class.forName(configModule.getResource());
-        } catch (ClassNotFoundException ex) {
-            logger.log(Level.WARNING, "Unable to find module: " + configModule.getResource(), ex);
-            return null;
-        }
-
-        if (clazz == null || !ConfigurationModule.class.isAssignableFrom(clazz)) {
-            logger.log(Level.WARNING, String.format("%s does not seem to be an instance of a configuration module.", configModule.getResource()));
-            return null;
-        }
-
-        Type configurationModuleType = Stream.of(clazz.getGenericInterfaces())
-                .filter(type -> type.getClass().equals(ConfigurationModule.class) && type instanceof ParameterizedType && type instanceof Class)
-                .map(type -> ((ParameterizedType) type).getActualTypeArguments()[0])
-                .findFirst()
-                .orElse(null);
-
-        if (configurationModuleType == null) {
-            logger.log(Level.SEVERE, String.format("Could not determine generic type of config module: %s", configModule.getResource()));
-            return null;
-        }
-
-        
-        ConfigurationModule<?> configModuleObj = null;
-        Object result = null;
-        try {
-            configModuleObj = (ConfigurationModule<?>) clazz.newInstance();
-            Method m = clazz.getMethod("configure", IngestJobSettings.class, (Class<?>) configurationModuleType);
-            result = m.invoke(configModuleObj, curConfig, configDeserializer.convertToObj(configModule.getParameters(), configurationModuleType));
-        } catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException |  InstantiationException ex) {
-            logger.log(Level.SEVERE, String.format("There was an error calling configure method on Configuration Module %s", configModule.getResource()), ex);
-        }
-        
-        if (result instanceof IngestJobSettings) {
-            return Pair.of(curConfig, configModuleObj);
-        } else {
-            logger.log(Level.SEVERE, String.format("Could not retrieve IngestJobSettings from %s", configModule.getResource()));
-            return null;
-        }
-    }
-
     private Case createCaseWithDataSources(EnvConfig envConfig, String caseName, CaseType caseType, List<String> dataSourcePaths) {
         Case openCase = null;
+        String uniqueCaseName = String.format("%s_%s", caseName, TimeStampUtils.createTimeStamp());
+        String outputFolder = PathUtil.getAbsolutePath(envConfig.getWorkingDirectory(), envConfig.getRootCaseOutputPath());
+        String caseOutputFolder = Paths.get(outputFolder, uniqueCaseName).toString();
+
         switch (caseType) {
-            case SINGLE_USER_CASE:
-                openCase = CaseUtils.createAsCurrentCase(caseName);
-                break;
+            case SINGLE_USER_CASE: {
+                try {
+                    Case.createAsCurrentCase(
+                            Case.CaseType.SINGLE_USER_CASE,
+                            caseOutputFolder,
+                            new CaseDetails(uniqueCaseName));
+                    openCase = Case.getCurrentCaseThrows();
+                } catch (CaseActionException | NoCurrentCaseException ex) {
+                    logger.log(Level.SEVERE, "Unable to create integration test case for " + caseName, ex);
+                }
+            }
+            break;
+            
             case MULTI_USER_CASE:
             // TODO
             default:

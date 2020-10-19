@@ -18,10 +18,16 @@
  */
 package org.sleuthkit.autopsy.integrationtesting;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
+import java.util.Map;
+import java.util.stream.Collectors;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
+import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactoryService;
+import org.sleuthkit.autopsy.ingest.IngestModuleTemplate;
 
 /**
  * Handles setting up the autopsy environment to be used with integration tests.
@@ -40,14 +46,40 @@ public class IngestModuleSetupManager implements ConfigurationModule<IngestModul
         }
     }
     
-    private static final Logger logger = Logger.getLogger(MainTestRunner.class.getName());
     private static final IngestModuleFactoryService ingestModuleFactories = new IngestModuleFactoryService();
     
     
     @Override
-    public IngestJobSettings configure(IngestJobSettings curSettings, ConfigArgs parameters) {
+    public IngestJobSettings configure(IngestJobSettings curSettings, IngestModuleSetupManager.ConfigArgs parameters) {
         
+        String context = curSettings.getExecutionContext();
+        if (StringUtils.isNotBlank(context) && context.indexOf('.') > 0) {
+            context = context.substring(0, context.indexOf('.'));
+        }
         
+        Map<String, IngestModuleTemplate> curTemplates = curSettings.getEnabledIngestModuleTemplates().stream()
+                .collect(Collectors.toMap(t -> t.getModuleFactory().getClass().getCanonicalName(), t -> t, (t1, t2) -> t1));
         
+        Map<String, IngestModuleFactory> allFactories = ingestModuleFactories.getFactories().stream()
+                .collect(Collectors.toMap(f -> f.getClass().getCanonicalName(), f -> f, (f1, f2) -> f1));
+        
+        List<IngestModuleTemplate> newTemplates = new ArrayList<>(curTemplates.values());
+        
+        if (parameters != null && CollectionUtils.isEmpty(parameters.getModules())) {
+            List<IngestModuleTemplate> templatesToAdd = parameters.getModules().stream()
+                    .filter((className) -> !curTemplates.containsKey(className))
+                    .map((className) -> allFactories.get(className))
+                    .filter((factory) -> factory != null)
+                    .map((factory) -> new IngestModuleTemplate(factory, factory.getDefaultIngestJobSettings()))
+                    .collect(Collectors.toList());
+            
+            newTemplates.addAll(templatesToAdd);
+        }
+        
+        return new IngestJobSettings(
+                context,
+                IngestJobSettings.IngestType.ALL_MODULES,
+                newTemplates
+        );
     }
 }

@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.integrationtesting.config;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -27,7 +28,14 @@ import org.sleuthkit.autopsy.casemodule.Case.CaseType;
  * The case types to create for this case.
  */
 public enum IntegrationCaseType {
-    multiUser, singleUser, both;
+    @JsonProperty("multiUser")
+    MULTI_USER, 
+    
+    @JsonProperty("singleUser")
+    SINGLE_USER, 
+    
+    @JsonProperty("both")
+    BOTH;
     
     /**
      * Creates a list of Case.CaseType objects that represent the IntegrationCaseType.
@@ -40,9 +48,9 @@ public enum IntegrationCaseType {
         }
         
         switch (integrationCaseType) {
-            case multiUser: return Arrays.asList(CaseType.MULTI_USER_CASE);
-            case singleUser: return Arrays.asList(CaseType.SINGLE_USER_CASE);
-            case both: return Arrays.asList(CaseType.MULTI_USER_CASE, CaseType.SINGLE_USER_CASE);
+            case MULTI_USER: return Arrays.asList(CaseType.MULTI_USER_CASE);
+            case SINGLE_USER: return Arrays.asList(CaseType.SINGLE_USER_CASE);
+            case BOTH: return Arrays.asList(CaseType.MULTI_USER_CASE, CaseType.SINGLE_USER_CASE);
             default: throw new IllegalArgumentException("Unknown integration case type: " + integrationCaseType);
         }
     }

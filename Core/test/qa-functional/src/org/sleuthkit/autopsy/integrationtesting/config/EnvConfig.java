@@ -26,14 +26,20 @@ public class EnvConfig {
 
     private final String rootCaseOutputPath;
     private final String rootTestOutputPath;
+    private final String rootTestSuitesPath;
+    
     private final ConnectionConfig connectionInfo;
 
     private String workingDirectory;
+    
 
     public EnvConfig(String rootCaseOutputPath,
-            String rootTestOutputPath, ConnectionConfig connectionInfo) {
+            String rootTestSuitesPath,
+            String rootTestOutputPath, 
+            ConnectionConfig connectionInfo) {
         this.rootCaseOutputPath = rootCaseOutputPath;
         this.rootTestOutputPath = rootTestOutputPath;
+        this.rootTestSuitesPath = rootTestSuitesPath;
         this.connectionInfo = connectionInfo;
     }
 
@@ -73,5 +79,9 @@ public class EnvConfig {
 
     public ConnectionConfig getConnectionInfo() {
         return connectionInfo;
+    }
+
+    public String getRootTestSuitesPath() {
+        return rootTestSuitesPath;
     }
 }

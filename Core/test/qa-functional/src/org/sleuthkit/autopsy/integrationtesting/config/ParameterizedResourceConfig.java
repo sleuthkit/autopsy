@@ -18,6 +18,12 @@
  */
 package org.sleuthkit.autopsy.integrationtesting.config;
 
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
 
@@ -25,7 +31,29 @@ import java.util.Map;
  *
  * @author gregd
  */
-public class ParameterizedResourceConfig {    
+public class ParameterizedResourceConfig {
+
+    public static class ParameterizedResourceConfigDeserializer extends StdDeserializer<ParameterizedResourceConfig> {
+
+        public ParameterizedResourceConfigDeserializer() {
+            this(null);
+        }
+
+        public ParameterizedResourceConfigDeserializer(Class<?> vc) {
+            super(vc);
+        }
+
+        @Override
+        public ParameterizedResourceConfig deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException, JsonProcessingException {
+            JsonNode node = jp.getCodec().readTree(jp);
+            if (node.isTextual()) {
+                return new ParameterizedResourceConfig(node.asText());
+            } else {
+                return ctxt.readValue(jp, ParameterizedResourceConfig.class);
+            }
+        }
+    }
+
     private final String resource;
     private final Map<String, Object> parameters;
 
@@ -37,7 +65,7 @@ public class ParameterizedResourceConfig {
     public ParameterizedResourceConfig(String resource) {
         this(resource, null);
     }
-    
+
     public String getResource() {
         return resource;
     }

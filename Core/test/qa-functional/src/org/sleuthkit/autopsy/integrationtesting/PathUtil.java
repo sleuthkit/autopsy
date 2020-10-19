@@ -26,9 +26,9 @@ import org.apache.commons.lang3.StringUtils;
 /**
  * Retrieves absolute paths relative to a working directory.
  */
-final class PathUtil {
+public final class PathUtil {
 
-    static String getAbsolutePath(String workingDirectory, String relPath) {
+    public static String getAbsolutePath(String workingDirectory, String relPath) {
         if (StringUtils.isBlank(workingDirectory)) {
             return relPath;
         } else {
@@ -40,7 +40,7 @@ final class PathUtil {
         }
     }
 
-    static List<String> getAbsolutePaths(String workingDirectory, List<String> relPaths) {
+    public static List<String> getAbsolutePaths(String workingDirectory, List<String> relPaths) {
         if (relPaths == null) {
             return null;
         }
