@@ -282,7 +282,7 @@ public class Server {
 
         Path solr8Home = Paths.get(PlatformUtil.getUserDirectory().getAbsolutePath(), "solr"); //NON-NLS
         try {
-            // Always copy the config files, as they may have changed. Othweise potentially stale Solr configuration is being used.
+            // Always copy the config files, as they may have changed. Otherwise potentially stale Solr configuration is being used.
             if (!solr8Home.toFile().exists()) {
                 Files.createDirectory(solr8Home);
             } else {
@@ -293,19 +293,19 @@ public class Server {
             Files.copy(Paths.get(solr8Folder.getAbsolutePath(), "server", "solr", "zoo.cfg"), solr8Home.resolve("zoo.cfg"), REPLACE_EXISTING); //NON-NLS
             FileUtils.copyDirectory(Paths.get(solr8Folder.getAbsolutePath(), "server", "solr", "configsets").toFile(), solr8Home.resolve("configsets").toFile()); //NON-NLS
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Failed to create Solr home folder:", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Failed to create Solr 8 home folder:", ex); //NON-NLS
         }
         
         Path solr4Home = Paths.get(PlatformUtil.getUserDirectory().getAbsolutePath(), "solr4"); //NON-NLS
         try {
-            // Always copy the config files, as they may have changed. Othweise potentially stale Solr configuration is being used.
+            // Always copy the config files, as they may have changed. Otherwise potentially stale Solr configuration is being used.
             if (!solr4Home.toFile().exists()) {
                 Files.createDirectory(solr4Home);
             }          
             Files.copy(Paths.get(solr4Folder.getAbsolutePath(), "solr", "solr.xml"), solr4Home.resolve("solr.xml"), REPLACE_EXISTING); //NON-NLS
             Files.copy(Paths.get(solr4Folder.getAbsolutePath(), "solr", "zoo.cfg"), solr4Home.resolve("zoo.cfg"), REPLACE_EXISTING); //NON-NLS
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Failed to create Solr home folder:", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Failed to create Solr 4 home folder:", ex); //NON-NLS
         }
 
         currentCoreLock = new ReentrantReadWriteLock(true);
