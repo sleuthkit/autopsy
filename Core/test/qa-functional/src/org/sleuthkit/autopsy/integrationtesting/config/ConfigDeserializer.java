@@ -1,13 +1,25 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2020 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.integrationtesting.config;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.type.CollectionType;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -30,8 +42,7 @@ import org.apache.cxf.common.util.CollectionUtils;
 import org.sleuthkit.autopsy.integrationtesting.PathUtil;
 
 /**
- *
- * @author gregd
+ * Handles deserializing configuration items.
  */
 public class ConfigDeserializer {
 
@@ -39,6 +50,14 @@ public class ConfigDeserializer {
     private static final Logger logger = Logger.getLogger(ConfigDeserializer.class.getName());
     private static final ObjectMapper mapper = new ObjectMapper();
 
+    /**
+     * Creates an object of type T by re-deserializing the map to the specified
+     * type.
+     *
+     * @param toConvert The map to convert.
+     * @param clazz The type of object to deserialize to.
+     * @return The object converted to the specified type.
+     */
     public <T> T convertToObj(Map<String, Object> toConvert, Type clazz) {
         GsonBuilder builder = new GsonBuilder();
         Gson gson = builder.create();
@@ -48,14 +67,16 @@ public class ConfigDeserializer {
 
     /**
      * Deserializes the json config specified at the given path into the java
-     * equivalent IntegrationTestConfig object.
+     * equivalent IntegrationTestConfig object. This uses information in env
+     * config file to determine test suite locations.
      *
      * @param filePath The path to the config.
      * @return The java object.
      * @throws IOException If there is an error opening the file.
+     * @throws IllegalStateException If the file cannot be validated.
      */
-    public IntegrationTestConfig getConfigFromFile(String envConfigFile) throws IOException, IllegalStateException {
-        EnvConfig envConfig = getEnvConfig(new File(envConfigFile));
+    public IntegrationTestConfig getConfigFromFile(File envConfigFile) throws IOException, IllegalStateException {
+        EnvConfig envConfig = getEnvConfig(envConfigFile);
         String testSuiteConfigPath = PathUtil.getAbsolutePath(envConfig.getWorkingDirectory(), envConfig.getRootTestSuitesPath());
 
         return new IntegrationTestConfig(
@@ -64,11 +85,28 @@ public class ConfigDeserializer {
         );
     }
 
+    /**
+     * Deserializes the specified json file into an EnvConfig object.
+     *
+     * @param envConfigFile The file location for the environmental config.
+     * @return The deserialized file.
+     * @throws IOException
+     * @throws IllegalStateException If the file cannot be validated.
+     */
     public EnvConfig getEnvConfig(File envConfigFile) throws IOException, IllegalStateException {
         EnvConfig config = mapper.readValue(envConfigFile, EnvConfig.class);
         return validate(envConfigFile, config);
     }
 
+    /**
+     * Validates the environment configuration file.
+     *
+     * @param envConfigFile The file location of the config (used for setting
+     * working directory if not specified).
+     * @param config The environmental config that was deserialized.
+     * @return The updated config.
+     * @throws IllegalStateException If could not be validated.
+     */
     private EnvConfig validate(File envConfigFile, EnvConfig config) throws IllegalStateException {
         if (config == null || StringUtils.isBlank(config.getRootCaseOutputPath()) || StringUtils.isBlank(config.getRootTestOutputPath())) {
             throw new IllegalStateException("EnvConfig must have both the root case output path and the root test output path set.");
@@ -82,6 +120,16 @@ public class ConfigDeserializer {
         return config;
     }
 
+    /**
+     * Derives a list of test suite config's specified in the configFile. The
+     * root directory is the same or an ancestor directory of this configFile
+     * used for the relative output path.
+     *
+     * @param rootDirectory The ancestor directory of configFile.
+     * @param configFile The configFile to read.
+     * @return The list of test suite configs found after invalid configs are
+     * filtered.
+     */
     public List<TestSuiteConfig> getTestSuiteConfig(File rootDirectory, File configFile) {
         try {
             JsonNode root = mapper.readTree(configFile);
@@ -97,13 +145,39 @@ public class ConfigDeserializer {
         }
     }
 
-    public List<TestSuiteConfig> getTestSuiteConfigs(File rootDirectory) {
-        Collection<File> jsonFiles = FileUtils.listFiles(rootDirectory, new String[]{JSON_EXT}, true);
-        return jsonFiles.stream()
-                .flatMap((file) -> getTestSuiteConfig(rootDirectory, file).stream())
-                .collect(Collectors.toList());
+    /**
+     * Finds all test suite config json files within this directory and sub
+     * directories or if a file is specified, just that file is loaded.
+     *
+     * @param fileOrDirectory The parent directory of test suite configurations
+     * or the configuration file itself.
+     * @return The list of determined test suite configurations found.
+     */
+    public List<TestSuiteConfig> getTestSuiteConfigs(File fileOrDirectory) {
+        if (fileOrDirectory.isDirectory()) {
+            Collection<File> jsonFiles = FileUtils.listFiles(fileOrDirectory, new String[]{JSON_EXT}, true);
+            return jsonFiles.stream()
+                    .flatMap((file) -> getTestSuiteConfig(fileOrDirectory, file).stream())
+                    .collect(Collectors.toList());
+        } else if (fileOrDirectory.isFile()) {
+            return getTestSuiteConfig(fileOrDirectory, fileOrDirectory);
+        }
+
+        logger.log(Level.WARNING, "Unable to read file at: " + fileOrDirectory);
+        return Collections.emptyList();
     }
 
+    /**
+     * Validates the list of test suite configurations.
+     *
+     * @param rootDirectory The root directory for configurations
+     * (relativeOutputPath is set by determining relative path from root
+     * directory to file).
+     * @param file The file containing the configuration.
+     * @param testSuites The list of test suite objects discovered.
+     * @return The test suites with invalid items filtered and relative output
+     * path set.
+     */
     private List<TestSuiteConfig> validate(File rootDirectory, File file, List<TestSuiteConfig> testSuites) {
         return IntStream.range(0, testSuites.size())
                 .mapToObj(idx -> validate(rootDirectory, file, idx, testSuites.get(idx)))
@@ -111,6 +185,20 @@ public class ConfigDeserializer {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Validates a single test suite by returning it or null if invalid. The
+     * relative output path is also determined based on the relative path from
+     * rootDirectory to file.
+     *
+     * @param rootDirectory The root directory for configurations
+     * (relativeOutputPath is set by determining relative path from root
+     * directory to file).
+     * @param file The file containing the configuration.
+     * @param index The index within a list of test suites which this item
+     * exists.
+     * @param config The test suite confi.
+     * @return The test suite with relative output path set or null if invalid.
+     */
     private TestSuiteConfig validate(File rootDirectory, File file, int index, TestSuiteConfig config) {
         if (config == null
                 || StringUtils.isBlank(config.getName())

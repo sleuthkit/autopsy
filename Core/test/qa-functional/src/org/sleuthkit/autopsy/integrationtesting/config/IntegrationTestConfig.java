@@ -31,6 +31,11 @@ public class IntegrationTestConfig {
     private final List<TestSuiteConfig> testSuites;
     private final EnvConfig envConfig;
 
+    /**
+     * Main constructor.
+     * @param testSuites The test suites to be run.
+     * @param envConfig The environment configuration.
+     */
     @JsonCreator
     public IntegrationTestConfig(
             @JsonProperty("testSuites") List<TestSuiteConfig> testSuites,
@@ -41,12 +46,15 @@ public class IntegrationTestConfig {
     }
 
     /**
-     * @return The per-case configuration.
+     * @return A list of test suite configurations.
      */
     public List<TestSuiteConfig> getTestSuites() {
         return testSuites;
     }
 
+    /**
+     * @return The integration test environment configuration.
+     */
     public EnvConfig getEnvConfig() {
         return envConfig;
     }

@@ -22,8 +22,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- *
- * @author gregd
+ * Configuration information for a postgres connection.
  */
 public class ConnectionConfig {
     private final String hostName;
@@ -31,6 +30,13 @@ public class ConnectionConfig {
     private final String userName;
     private final String password;
 
+    /**
+     * Main constructor.
+     * @param hostName The host name.
+     * @param port The port to use.
+     * @param userName The user name to use.
+     * @param password The password to use.
+     */
     @JsonCreator
     public ConnectionConfig(
             @JsonProperty("hostName") String hostName, 
@@ -44,18 +50,30 @@ public class ConnectionConfig {
         this.password = password;
     }
 
+    /**
+     * @return The host name.
+     */
     public String getHostName() {
         return hostName;
     }
 
+    /**
+     * @return The port.
+     */
     public Integer getPort() {
         return port;
     }
 
+    /**
+     * @return The user name.
+     */
     public String getUserName() {
         return userName;
     }
 
+    /**
+     * @return The password to use.
+     */
     public String getPassword() {
         return password;
     }

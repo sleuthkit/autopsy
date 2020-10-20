@@ -32,13 +32,13 @@ import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.integrationtesting.IntegrationTest;
-import org.sleuthkit.autopsy.integrationtesting.IntegrationTests;
+import org.sleuthkit.autopsy.integrationtesting.IntegrationTestGroup;
 
 /**
  * Tests for the UserActivitySummary class.
  */
-@ServiceProvider(service = IntegrationTests.class)
-public class UserActivitySummaryTests implements IntegrationTests {
+@ServiceProvider(service = IntegrationTestGroup.class)
+public class UserActivitySummaryTests implements IntegrationTestGroup {
 
     /**
      * Runs UserActivitySummary.getRecentDomains for all data sources found in

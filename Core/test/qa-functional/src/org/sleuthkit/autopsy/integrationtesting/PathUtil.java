@@ -28,6 +28,15 @@ import org.apache.commons.lang3.StringUtils;
  */
 public final class PathUtil {
 
+    /**
+     * If the relPath is an absolute path, that is returned. Otherwise, it is
+     * treated as a relative path using the working directory.
+     *
+     * @param workingDirectory The working directory.
+     * @param relPath The path.
+     * @return The relPath with the workingDirectory prepended if relPath is a
+     * relative path.
+     */
     public static String getAbsolutePath(String workingDirectory, String relPath) {
         if (StringUtils.isBlank(workingDirectory)) {
             return relPath;
@@ -35,16 +44,25 @@ public final class PathUtil {
             if (Paths.get(relPath).isAbsolute()) {
                 return relPath;
             } else {
-                return Paths.get(workingDirectory, relPath).toString();   
+                return Paths.get(workingDirectory, relPath).toString();
             }
         }
     }
 
+    /**
+     * If one of the relPaths is an absolute path, that is returned. Otherwise,
+     * each is treated as a relative path using the working directory.
+     *
+     * @param workingDirectory The working directory.
+     * @param relPath The paths.
+     * @return The list of paths with the workingDirectory prepended if a path
+     * is a relative path.
+     */
     public static List<String> getAbsolutePaths(String workingDirectory, List<String> relPaths) {
         if (relPaths == null) {
             return null;
         }
-        
+
         return relPaths.stream()
                 .map((relPath) -> getAbsolutePath(workingDirectory, relPath))
                 .collect(Collectors.toList());

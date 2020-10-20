@@ -38,16 +38,23 @@ public class TestingConfig {
     private final Map<String, ParameterizedResourceConfig> excludeAllExcept;
     private final Set<String> includeAllExcept;
 
+    /**
+     * Main constructor for Integration tests to be run.
+     *
+     * @param excludeAllExcept Items that should be run to the exclusion of all
+     * others.
+     * @param includeAllExcept Items that should only be run.
+     */
     @JsonCreator
     public TestingConfig(
-            @JsonProperty("excludeAllExcept") List<ParameterizedResourceConfig> excludeAllExcept, 
+            @JsonProperty("excludeAllExcept") List<ParameterizedResourceConfig> excludeAllExcept,
             @JsonProperty("includeAllExcept") List<String> includeAllExcept) {
 
         List<ParameterizedResourceConfig> safeExcludeAllExcept = ((excludeAllExcept == null) ? Collections.emptyList() : excludeAllExcept);
         this.excludeAllExcept = safeExcludeAllExcept
                 .stream()
                 .collect(Collectors.toMap(
-                        (res) ->  res.getResource() == null ? "" : res.getResource().toUpperCase(),
+                        (res) -> res.getResource() == null ? "" : res.getResource().toUpperCase(),
                         (res) -> res,
                         (res1, res2) -> {
                             Map<String, Object> mergedArgs = new HashMap<>();
@@ -55,7 +62,7 @@ public class TestingConfig {
                             mergedArgs.putAll(res2.getParameters());
                             return new ParameterizedResourceConfig(res1.getResource(), mergedArgs);
                         })
-        );
+                );
 
         List<String> safeIncludeAllExcept = ((includeAllExcept == null) ? Collections.emptyList() : includeAllExcept);
         this.includeAllExcept = safeIncludeAllExcept
@@ -80,7 +87,7 @@ public class TestingConfig {
     public Set<String> getIncludeAllExcept() {
         return includeAllExcept;
     }
-    
+
     public Map<String, Object> getParameters(String itemType) {
         ParameterizedResourceConfig resource = (itemType == null) ? null : excludeAllExcept.get(itemType.toUpperCase());
         return resource == null ? Collections.emptyMap() : new HashMap<String, Object>(resource.getParameters());

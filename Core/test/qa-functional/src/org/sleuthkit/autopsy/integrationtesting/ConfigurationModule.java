@@ -18,17 +18,33 @@
  */
 package org.sleuthkit.autopsy.integrationtesting;
 
-import java.util.Map;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 
 /**
- *
- * @author gregd
+ * Interface for a module that performs configuration. Implementers of this
+ * class must have a no-parameter constructor in order to be instantiated
+ * properly.
  */
 public interface ConfigurationModule<T> {
 
+    /**
+     * Configures the autopsy environment and updates the current ingest job
+     * settings to augment with any additional templates that may need to be
+     * added or any other ingest job setting changes.
+     *
+     * @param curSettings The current IngestJobSettings.
+     * @param parameters The parameters object for this configuration module.
+     * @return The new IngestJobSettings or 'curSettings' if no
+     * IngestJobSettings need to be made.
+     */
     IngestJobSettings configure(IngestJobSettings curSettings, T parameters);
 
+    /**
+     * In the event that settings outside the IngestJobSettings were altered,
+     * this provides a means of reverting those changes when the test completes.
+     * Configuration changes in the 'configure' method can be captured in this
+     * object for revert to utilize.
+     */
     default void revert() {
     }
 }

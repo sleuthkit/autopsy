@@ -54,7 +54,6 @@ import org.sleuthkit.autopsy.integrationtesting.config.EnvConfig;
 import org.sleuthkit.autopsy.integrationtesting.config.TestingConfig;
 import org.sleuthkit.autopsy.testutils.IngestUtils;
 import org.sleuthkit.datamodel.TskCoreException;
-import static ucar.unidata.util.Format.i;
 
 /**
  * Main entry point for running integration tests. Handles processing
@@ -94,7 +93,7 @@ public class MainTestRunner extends TestCase {
         String configFile = System.getProperty(CONFIG_FILE_KEY);
         IntegrationTestConfig config;
         try {
-            config = configDeserializer.getConfigFromFile(configFile);
+            config = configDeserializer.getConfigFromFile(new File(configFile));
         } catch (IOException ex) {
             logger.log(Level.WARNING, "There was an error processing integration test config at " + configFile, ex);
             return;
@@ -113,7 +112,12 @@ public class MainTestRunner extends TestCase {
                 for (CaseType caseType : IntegrationCaseType.getCaseTypes(testSuiteConfig.getCaseTypes())) {
                     // create an autopsy case for each case in the config and for each case type for the specified case.
                     // then run ingest for the case.
-                    Case autopsyCase = createCaseWithDataSources(envConfig, caseName, caseType, testSuiteConfig.getDataSources());
+                    Case autopsyCase = createCaseWithDataSources(
+                            envConfig.getWorkingDirectory(),
+                            envConfig.getRootCaseOutputPath(),
+                            caseName,
+                            caseType,
+                            testSuiteConfig.getDataSources());
 
                     if (autopsyCase == null || autopsyCase != Case.getCurrentCase()) {
                         logger.log(Level.WARNING,
@@ -122,24 +126,29 @@ public class MainTestRunner extends TestCase {
                         return;
                     }
 
+                    // run configuration modules and get result
                     Pair<IngestJobSettings, List<ConfigurationModule<?>>> configurationResult
-                            = configurationModuleManager.runConfigurationModules(caseName, testSuiteConfig);
+                            = configurationModuleManager.runConfigurationModules(caseName, testSuiteConfig.getConfigurationModules());
 
                     IngestJobSettings ingestSettings = configurationResult.first();
                     List<ConfigurationModule<?>> configModules = configurationResult.second();
 
+                    // run ingest with ingest settings derived from configuration modules.
                     runIngest(autopsyCase, ingestSettings, caseName);
 
                     // once ingested, run integration tests to produce output.
                     OutputResults results = runIntegrationTests(testSuiteConfig.getIntegrationTests());
 
+                    // revert any autopsy environment changes made by configuration modules.
                     configurationModuleManager.revertConfigurationModules(configModules);
 
                     String outputFolder = PathUtil.getAbsolutePath(envConfig.getWorkingDirectory(), envConfig.getRootTestOutputPath());
-                            
+
                     // write the results for the case to a file
                     results.serializeToFile(
-                            Paths.get(outputFolder, testSuiteConfig.getRelativeOutputPath()).toString(),
+                            envConfig.getUseRelativeOutput() == true ? 
+                                    Paths.get(outputFolder, testSuiteConfig.getRelativeOutputPath()).toString() : 
+                                    outputFolder,
                             testSuiteConfig.getName(),
                             caseType
                     );
@@ -155,10 +164,22 @@ public class MainTestRunner extends TestCase {
         }
     }
 
-    private Case createCaseWithDataSources(EnvConfig envConfig, String caseName, CaseType caseType, List<String> dataSourcePaths) {
+    /**
+     * Creates a case with the given data sources.
+     *
+     * @param workingDirectory The base working directory (if caseOutputPath or
+     * dataSourcePaths are relative, this is the working directory).
+     * @param caseOutputPath The case output path.
+     * @param caseName The name of the case (unique case name appends time
+     * stamp).
+     * @param caseType The type of case (single user / multi user).
+     * @param dataSourcePaths The path to the data sources.
+     * @return The generated case that is now the current case.
+     */
+    private Case createCaseWithDataSources(String workingDirectory, String caseOutputPath, String caseName, CaseType caseType, List<String> dataSourcePaths) {
         Case openCase = null;
         String uniqueCaseName = String.format("%s_%s", caseName, TimeStampUtils.createTimeStamp());
-        String outputFolder = PathUtil.getAbsolutePath(envConfig.getWorkingDirectory(), envConfig.getRootCaseOutputPath());
+        String outputFolder = PathUtil.getAbsolutePath(workingDirectory, caseOutputPath);
         String caseOutputFolder = Paths.get(outputFolder, uniqueCaseName).toString();
         File caseOutputFolderFile = new File(caseOutputFolder);
         if (!caseOutputFolderFile.exists()) {
@@ -178,7 +199,7 @@ public class MainTestRunner extends TestCase {
                 }
             }
             break;
-            
+
             case MULTI_USER_CASE:
             // TODO
             default:
@@ -190,7 +211,7 @@ public class MainTestRunner extends TestCase {
             return null;
         }
 
-        addDataSourcesToCase(PathUtil.getAbsolutePaths(envConfig.getWorkingDirectory(), dataSourcePaths), caseName);
+        addDataSourcesToCase(PathUtil.getAbsolutePaths(workingDirectory, dataSourcePaths), caseName);
         return openCase;
     }
 
@@ -198,7 +219,7 @@ public class MainTestRunner extends TestCase {
      * Adds the data sources to the current case.
      *
      * @param pathStrings The list of paths for the data sources.
-     * @param caseName The name of the case.
+     * @param caseName The name of the case (used for error messages).
      */
     private void addDataSourcesToCase(List<String> pathStrings, String caseName) {
         for (String strPath : pathStrings) {
@@ -218,6 +239,13 @@ public class MainTestRunner extends TestCase {
         }
     }
 
+    /**
+     * Runs ingest on the current case.
+     * @param openCase The currently open case.
+     * @param ingestJobSettings The ingest job settings to be used.
+     * @param caseName The name of the case to be used for error messages.
+     * @return The case that was ingested.
+     */
     private Case runIngest(Case openCase, IngestJobSettings ingestJobSettings, String caseName) {
         try {
             // IngestJobSettings ingestJobSettings = SETUP_UTIL.setupEnvironment(envConfig, testSuiteConfig);
@@ -232,16 +260,14 @@ public class MainTestRunner extends TestCase {
     /**
      * Runs the integration tests and serializes results to disk.
      *
-     * @param envConfig The overall config.
      * @param testSuiteConfig The configuration for a particular case.
-     * @param caseType The case type (single user / multi user) to create.
      */
     private OutputResults runIntegrationTests(TestingConfig testSuiteConfig) {
         // this will capture output results
         OutputResults results = new OutputResults();
 
-        // run through each ConsumerIntegrationTest
-        for (IntegrationTests testGroup : Lookup.getDefault().lookupAll(IntegrationTests.class)) {
+        // run through each IntegrationTestGroup
+        for (IntegrationTestGroup testGroup : Lookup.getDefault().lookupAll(IntegrationTestGroup.class)) {
 
             // if test should not be included in results, skip it.
             if (!testSuiteConfig.hasIncludedTest(testGroup.getClass().getCanonicalName())) {
@@ -261,11 +287,13 @@ public class MainTestRunner extends TestCase {
 
             for (Method testMethod : testMethods) {
                 Object[] parameters = new Object[0];
+                // no more than 1 parameter in a test method.
                 if (testMethod.getParameters().length > 1) {
                     throw new IllegalArgumentException(String.format("Could not call method %s in class %s.  Multiple parameters cannot be handled.",
                             testMethod.getName(), testGroup.getClass().getCanonicalName()));
+                // if there is a parameter, deserialize parameters to the specified type.
                 } else if (testMethod.getParameters().length > 0) {
-                    parameters = new Object[]{configDeserializer.convertToObj(parametersMap, testMethod.getParameters().getClass())};
+                    parameters = new Object[]{configDeserializer.convertToObj(parametersMap, testMethod.getParameterTypes()[0])};
                 }
 
                 Object serializableResult = runIntegrationTestMethod(testGroup, testMethod, parameters);
@@ -284,20 +312,22 @@ public class MainTestRunner extends TestCase {
         return results;
     }
 
+
     /**
      * Runs a test method in a test suite on the current case.
-     *
      * @param testGroup The test suite to which the method belongs.
      * @param testMethod The java reflection method to run.
+     * @param parameters The parameters to use with this method or none/empty array.
+     * @return The results of running the method.
      */
-    private Object runIntegrationTestMethod(IntegrationTests testGroup, Method testMethod, Object[] parameters) {
+    private Object runIntegrationTestMethod(IntegrationTestGroup testGroup, Method testMethod, Object[] parameters) {
         testGroup.setup();
 
         // run the test method and get the results
         Object serializableResult = null;
 
         try {
-            serializableResult = testMethod.invoke(testGroup, parameters);
+            serializableResult = testMethod.invoke(testGroup, parameters == null ? new Object[0] : parameters);
         } catch (IllegalAccessException | IllegalArgumentException ex) {
             logger.log(Level.WARNING,
                     String.format("test method %s in %s could not be properly invoked",

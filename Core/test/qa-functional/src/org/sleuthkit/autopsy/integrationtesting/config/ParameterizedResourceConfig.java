@@ -37,24 +37,37 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import org.sleuthkit.autopsy.integrationtesting.config.ParameterizedResourceConfig.ParameterizedResourceConfigDeserializer;
 
 /**
- *
- * @author gregd
+ * A resource that potentially has parameters as well.
  */
-@JsonDeserialize(using = ParameterizedResourceConfigDeserializer.class)
+@JsonDeserialize(using = ParameterizedResourceConfig.ParameterizedResourceConfigDeserializer.class)
 public class ParameterizedResourceConfig {
 
+    /**
+     * Deserializes from json. If a string is specified, that will be the
+     * resource, otherwise, an object of { resource: string, parameters, {...} }
+     * should be specified. The parameters can be expected to be a
+     * Map<String, Object>, containing nested Maps, List<Object>, or json
+     * primitives of type String, Integer, Long, Boolean, or Double.
+     */
     public static class ParameterizedResourceConfigDeserializer extends StdDeserializer<ParameterizedResourceConfig> {
 
         private static TypeReference<HashMap<String, Object>> typeRef = new TypeReference<HashMap<String, Object>>() {
         };
 
+        /**
+         * Main constructor.
+         */
         public ParameterizedResourceConfigDeserializer() {
             this(null);
         }
 
+        /**
+         * Main constructor specifying type.
+         *
+         * @param vc The type.
+         */
         public ParameterizedResourceConfigDeserializer(Class<?> vc) {
             super(vc);
         }
@@ -63,11 +76,14 @@ public class ParameterizedResourceConfig {
         public ParameterizedResourceConfig deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException, JsonProcessingException {
             JsonNode node = jp.getCodec().readTree(jp);
 
+            // if no node, return null.
             if (node == null) {
                 return null;
             } else if (node instanceof TextNode) {
+                // if just a string, return a ParameterizedResourceConfig where the resource is the string.
                 return new ParameterizedResourceConfig(((TextNode) node).textValue());
             } else {
+                // otherwise, determine the resource and create an object
                 JsonNode resourceNode = node.get("resource");
                 String resource = (resourceNode != null) ? resourceNode.asText() : null;
 
@@ -81,6 +97,12 @@ public class ParameterizedResourceConfig {
             }
         }
 
+        /**
+         * Reads an Object node into a Map<String, Object>.
+         *
+         * @param node The json node.
+         * @return The Map<String, Object>.
+         */
         Map<String, Object> readMap(ObjectNode node) {
             Map<String, Object> jsonObject = new LinkedHashMap<>();
             Iterator<Map.Entry<String, JsonNode>> keyValIter = node.fields();
@@ -91,6 +113,12 @@ public class ParameterizedResourceConfig {
             return jsonObject;
         }
 
+        /**
+         * Reads an Array node into a List<Object>.
+         *
+         * @param node The json array node.
+         * @return The list of objects.
+         */
         List<Object> readList(ArrayNode node) {
             List<Object> objArr = new ArrayList<>();
             for (JsonNode childNode : node) {
@@ -99,6 +127,13 @@ public class ParameterizedResourceConfig {
             return objArr;
         }
 
+        /**
+         * Reads a Json value node into an Object (text, boolean, long, int,
+         * double).
+         *
+         * @param vNode The value node.
+         * @return The created object.
+         */
         Object readJsonPrimitive(ValueNode vNode) {
             if (vNode.isTextual()) {
                 return vNode.asText();
@@ -115,6 +150,12 @@ public class ParameterizedResourceConfig {
             return null;
         }
 
+        /**
+         * Reads a json node of unknown type into a java object.
+         *
+         * @param node The json node.
+         * @return The object.
+         */
         Object readItem(JsonNode node) {
             if (node == null) {
                 return null;
@@ -135,19 +176,38 @@ public class ParameterizedResourceConfig {
     private final String resource;
     private final Map<String, Object> parameters;
 
+    /**
+     * Main constructor.
+     *
+     * @param resource The resource name.
+     * @param parameters The parameters to be specified.
+     */
     public ParameterizedResourceConfig(String resource, Map<String, Object> parameters) {
         this.resource = resource;
         this.parameters = (parameters == null) ? Collections.emptyMap() : parameters;
     }
 
+    /**
+     * Main constructor where parameters are null.
+     *
+     * @param resource The resource.
+     */
     public ParameterizedResourceConfig(String resource) {
         this(resource, null);
     }
 
+    /**
+     * @return The resource identifier.
+     */
     public String getResource() {
         return resource;
     }
 
+    /**
+     * @return Parameters provided for the resource. Nested objects will be
+     * Map<String, Object>, List<Object> or a json primitive like boolean, int,
+     * long, double, string.
+     */
     public Map<String, Object> getParameters() {
         return parameters;
     }

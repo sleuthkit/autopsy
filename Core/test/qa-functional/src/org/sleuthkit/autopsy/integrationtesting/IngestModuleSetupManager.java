@@ -33,48 +33,68 @@ import org.sleuthkit.autopsy.ingest.IngestModuleTemplate;
  */
 public class IngestModuleSetupManager implements ConfigurationModule<IngestModuleSetupManager.ConfigArgs> {
 
+    /**
+     * The parameters used when calling 'configure' in this class.
+     */
     public static class ConfigArgs {
+
         private final List<String> modules;
 
+        /**
+         * Main constructor.
+         *
+         * @param modules The ingest module factories to be loaded.
+         */
         public ConfigArgs(List<String> modules) {
             this.modules = modules;
         }
 
+        /**
+         * @return The ingest module factories to be loaded.
+         */
         public List<String> getModules() {
             return modules;
         }
     }
-    
+
     private static final IngestModuleFactoryService ingestModuleFactories = new IngestModuleFactoryService();
-    
-    
+
     @Override
     public IngestJobSettings configure(IngestJobSettings curSettings, IngestModuleSetupManager.ConfigArgs parameters) {
-        
+
+        // get the profile from the IngestJobSettings
         String context = curSettings.getExecutionContext();
         if (StringUtils.isNotBlank(context) && context.indexOf('.') > 0) {
             context = context.substring(0, context.indexOf('.'));
         }
-        
+
+        // get current templates
         Map<String, IngestModuleTemplate> curTemplates = curSettings.getEnabledIngestModuleTemplates().stream()
                 .collect(Collectors.toMap(t -> t.getModuleFactory().getClass().getCanonicalName(), t -> t, (t1, t2) -> t1));
-        
+
+        // get all the factories determined by canonical name
         Map<String, IngestModuleFactory> allFactories = ingestModuleFactories.getFactories().stream()
                 .collect(Collectors.toMap(f -> f.getClass().getCanonicalName(), f -> f, (f1, f2) -> f1));
-        
+
+        // add current templates to the list of templates to return.
         List<IngestModuleTemplate> newTemplates = new ArrayList<>(curTemplates.values());
-        
+
+        // if there are parameters, add any relevant ingest module factories
         if (parameters != null && !CollectionUtils.isEmpty(parameters.getModules())) {
             List<IngestModuleTemplate> templatesToAdd = parameters.getModules().stream()
-                    .filter((className) -> !curTemplates.containsKey(className))
-                    .map((className) -> allFactories.get(className))
+                    // ensure only one of each type of factory is added
+                    .distinct()
+                    // if the factory to be added is already contained in curTemplates or allFactories does not contain item, null is returned
+                    .map((className) -> curTemplates.containsKey(className) ? null : allFactories.get(className))
+                    // filter out any null items
                     .filter((factory) -> factory != null)
+                    // create a template for any remaining items
                     .map((factory) -> new IngestModuleTemplate(factory, factory.getDefaultIngestJobSettings()))
                     .collect(Collectors.toList());
-            
+
             newTemplates.addAll(templatesToAdd);
         }
-        
+
         return new IngestJobSettings(
                 context,
                 IngestJobSettings.IngestType.ALL_MODULES,

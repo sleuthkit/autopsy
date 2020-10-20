@@ -19,27 +19,31 @@
 package org.sleuthkit.autopsy.integrationtesting;
 
 /**
- * Basic interface for integration test suite.
+ * Basic interface for integration test group.
  */
-public interface IntegrationTests {
+public interface IntegrationTestGroup {
+
     /**
      * Allows for a test to perform any necessary setup.
      */
-    default void setup() {}
- 
+    default void setup() {
+    }
+
     /**
      * Allows for a test to perform any necessary disposing of resources.
      */
-    default void tearDown() {}
-    
+    default void tearDown() {
+    }
+
     /**
      * Allows for this suite of tests to perform any necessary setup.
      */
-    default void setupClass() {}
-    
+    default void setupClass() {
+    }
+
     /**
      * Allows for this suite of tests to dispose of resources.
      */
-    default void tearDownClass() {}
+    default void tearDownClass() {
+    }
 }
- 

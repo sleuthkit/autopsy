@@ -185,7 +185,6 @@ class OutputResults {
     /**
      * Serializes results of a test to a yaml file.
      *
-     * @param results The results to serialize.
      * @param outputFolder The folder where the yaml should be written.
      * @param caseName The name of the case (used to determine filename).
      * @param caseType The type of case (used to determine filename).
