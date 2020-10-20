@@ -301,9 +301,7 @@ public class Server {
             // Always copy the config files, as they may have changed. Othweise potentially stale Solr configuration is being used.
             if (!solr4Home.toFile().exists()) {
                 Files.createDirectory(solr4Home);
-            } else {
-                FileUtil.deleteDir(solr4Home.toFile());
-            }            
+            }          
             Files.copy(Paths.get(solr4Folder.getAbsolutePath(), "solr", "solr.xml"), solr4Home.resolve("solr.xml"), REPLACE_EXISTING); //NON-NLS
             Files.copy(Paths.get(solr4Folder.getAbsolutePath(), "solr", "zoo.cfg"), solr4Home.resolve("zoo.cfg"), REPLACE_EXISTING); //NON-NLS
         } catch (IOException ex) {
