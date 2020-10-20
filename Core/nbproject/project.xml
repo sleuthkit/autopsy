@@ -644,6 +644,10 @@
                 <binary-origin>release\modules\ext\commons-collections-3.2.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/java-diff-utils-4.8.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\java-diff-utils-4.8.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/SparseBitSet-1.1.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\SparseBitSet-1.1.jar</binary-origin>
             </class-path-extension>
@@ -811,7 +815,7 @@
                 <runtime-relative-path>ext/grpc-netty-shaded-1.19.0.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\grpc-netty-shaded-1.19.0.jar</binary-origin>
             </class-path-extension>
-			<class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/snakeyaml-1.27.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\snakeyaml-1.27.jar</binary-origin>
             </class-path-extension>

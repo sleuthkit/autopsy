@@ -29,11 +29,14 @@ public class EnvConfig {
     private final String rootCaseOutputPath;
     private final String rootTestOutputPath;
     private final String rootTestSuitesPath;
-
+    private final String rootGoldPath;
+    private final String diffOutputPath;
+    
     private final ConnectionConfig connectionInfo;
 
     private String workingDirectory;
     private Boolean useRelativeOutput;
+
 
     /**
      * Main constructor.
@@ -50,6 +53,8 @@ public class EnvConfig {
      * the same relative path structure as the file (i.e. if file was found at
      * /rootTestSuitesPath/folderX/fileY.json then it will now be outputted in
      * /rootTestOutputPath/folderX/fileY/)
+     * @param rootGoldPath The path to the gold data for diff comparison.
+     * @param diffOutputPath The file location for diff output.
      */
     @JsonCreator
     public EnvConfig(
@@ -58,11 +63,15 @@ public class EnvConfig {
             @JsonProperty("rootTestOutputPath") String rootTestOutputPath,
             @JsonProperty("connectionInfo") ConnectionConfig connectionInfo,
             @JsonProperty("workingDirectory") String workingDirectory,
-            @JsonProperty("useRelativeOutput") Boolean useRelativeOutput) {
+            @JsonProperty("useRelativeOutput") Boolean useRelativeOutput,
+            @JsonProperty("rootGoldPath") String rootGoldPath,
+            @JsonProperty("diffOutputPath") String diffOutputPath) {
 
         this.rootCaseOutputPath = rootCaseOutputPath;
         this.rootTestOutputPath = rootTestOutputPath;
         this.rootTestSuitesPath = rootTestSuitesPath;
+        this.rootGoldPath = rootGoldPath;
+        this.diffOutputPath = diffOutputPath;
         this.connectionInfo = connectionInfo;
 
         this.workingDirectory = workingDirectory;
@@ -139,4 +148,20 @@ public class EnvConfig {
     public void setUseRelativeOutput(boolean useRelativeOutput) {
         this.useRelativeOutput = useRelativeOutput;
     }
+
+    /**
+     * @return The path to the gold data for diff comparison.
+     */
+    public String getRootGoldPath() {
+        return rootGoldPath;
+    }
+
+    /**
+     * @return The file location for diff output.
+     */
+    public String getDiffOutputPath() {
+        return diffOutputPath;
+    }
+    
+    
 }
