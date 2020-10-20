@@ -342,13 +342,11 @@ public class Server {
     
     private HttpSolrClient getSolrClient(String solrUrl) {
         int connectionTimeoutMs = org.sleuthkit.autopsy.keywordsearch.UserPreferences.getConnectionTimeout();
-        HttpSolrClient client = new HttpSolrClient.Builder(solrUrl)
+        return new HttpSolrClient.Builder(solrUrl)
                 .withSocketTimeout(connectionTimeoutMs)
                 .withConnectionTimeout(connectionTimeoutMs)
                 .withResponseParser(new XMLResponseParser())
                 .build();
-
-        return client;
     }
 
     private ConcurrentUpdateSolrClient getConcurrentClient(String solrUrl) {
@@ -670,7 +668,7 @@ public class Server {
     void startLocalSolr(SOLR_VERSION version) throws KeywordSearchModuleException, SolrServerNoPortException, SolrServerException {
         
         if (isLocalSolrRunning()) {
-            if (localServerVersion == version) {
+            if (localServerVersion.equals(version)) {
                 // this version of local server is already running
                 return;
             } else {
