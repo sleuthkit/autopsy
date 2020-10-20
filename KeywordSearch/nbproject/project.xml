@@ -263,10 +263,6 @@
                 <binary-origin>release\modules\ext\commons-validator-1.5.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/commons-lang-2.4.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\commons-lang-2.4.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/commons-logging-1.2.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\commons-logging-1.2.jar</binary-origin>
             </class-path-extension>
@@ -285,10 +281,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/commons-beanutils-1.9.2.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\commons-beanutils-1.9.2.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/commons-io-2.3.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\commons-io-2.3.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/wstx-asl-3.2.7.jar</runtime-relative-path>

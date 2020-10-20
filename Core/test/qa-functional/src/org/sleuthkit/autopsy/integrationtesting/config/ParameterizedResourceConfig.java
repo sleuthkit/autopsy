@@ -20,20 +20,29 @@ package org.sleuthkit.autopsy.integrationtesting.config;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+import com.fasterxml.jackson.databind.node.TextNode;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
+import org.sleuthkit.autopsy.integrationtesting.config.ParameterizedResourceConfig.ParameterizedResourceConfigDeserializer;
 
 /**
  *
  * @author gregd
  */
+@JsonDeserialize(using = ParameterizedResourceConfigDeserializer.class)
 public class ParameterizedResourceConfig {
 
     public static class ParameterizedResourceConfigDeserializer extends StdDeserializer<ParameterizedResourceConfig> {
+
+        private static TypeReference<HashMap<String, Object>> typeRef = new TypeReference<HashMap<String, Object>>() {
+        };
 
         public ParameterizedResourceConfigDeserializer() {
             this(null);
@@ -46,10 +55,18 @@ public class ParameterizedResourceConfig {
         @Override
         public ParameterizedResourceConfig deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException, JsonProcessingException {
             JsonNode node = jp.getCodec().readTree(jp);
-            if (node.isTextual()) {
-                return new ParameterizedResourceConfig(node.asText());
+
+            if (node == null) {
+                return null;
+            } else if (node instanceof TextNode) {
+                return new ParameterizedResourceConfig(((TextNode) node).textValue());
             } else {
-                return ctxt.readValue(jp, ParameterizedResourceConfig.class);
+                String resource = (node.get("resource") != null) ? node.get("resource").asText() : null;
+                Map<String, Object> parameters = (node.get("parameters") != null) ?
+                        node.get("parameters").traverse().readValueAs(Map.class) : 
+                        null;
+
+                return new ParameterizedResourceConfig(resource, parameters);
             }
         }
     }

@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.integrationtesting.config;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 /**
@@ -26,15 +28,18 @@ import java.util.List;
  */
 public class IntegrationTestConfig {
 
-
     private final List<TestSuiteConfig> testSuites;
     private final EnvConfig envConfig;
 
-    public IntegrationTestConfig(List<TestSuiteConfig> testSuites, EnvConfig envConfig) {
+    @JsonCreator
+    public IntegrationTestConfig(
+            @JsonProperty("testSuites") List<TestSuiteConfig> testSuites,
+            @JsonProperty("envConfig") EnvConfig envConfig) {
+
         this.testSuites = testSuites;
         this.envConfig = envConfig;
     }
-    
+
     /**
      * @return The per-case configuration.
      */

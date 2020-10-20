@@ -16,6 +16,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -23,7 +24,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.cxf.common.util.CollectionUtils;
 import org.sleuthkit.autopsy.integrationtesting.PathUtil;
@@ -34,20 +35,9 @@ import org.sleuthkit.autopsy.integrationtesting.PathUtil;
  */
 public class ConfigDeserializer {
 
-    private static final String JSON_EXT = ".json";
+    private static final String JSON_EXT = "json";
     private static final Logger logger = Logger.getLogger(ConfigDeserializer.class.getName());
-    private static final ObjectMapper mapper = getMapper();
-
-    private static ObjectMapper getMapper() {
-        ObjectMapper mapper = new ObjectMapper();
-        SimpleModule module = new SimpleModule();
-        module.addDeserializer(
-                ParameterizedResourceConfig.class,
-                new ParameterizedResourceConfig.ParameterizedResourceConfigDeserializer());
-
-        mapper.registerModule(module);
-        return mapper;
-    }
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     public <T> T convertToObj(Map<String, Object> toConvert, Type clazz) {
         GsonBuilder builder = new GsonBuilder();
@@ -108,8 +98,8 @@ public class ConfigDeserializer {
     }
 
     public List<TestSuiteConfig> getTestSuiteConfigs(File rootDirectory) {
-        File[] jsonFiles = rootDirectory.listFiles((File dir, String name) -> name.endsWith(JSON_EXT));
-        return Stream.of(jsonFiles)
+        Collection<File> jsonFiles = FileUtils.listFiles(rootDirectory, new String[]{JSON_EXT}, true);
+        return jsonFiles.stream()
                 .flatMap((file) -> getTestSuiteConfig(rootDirectory, file).stream())
                 .collect(Collectors.toList());
     }
@@ -131,12 +121,12 @@ public class ConfigDeserializer {
             logger.log(Level.WARNING, String.format("Item in %s at index %d must contain a valid 'name', 'caseTypes', 'dataSources', and 'integrationTests'", file.toString(), index));
             return null;
         }
-        
+
         if (config.getRelativeOutputPath() == null) {
             // taken from https://stackoverflow.com/questions/204784/how-to-construct-a-relative-path-in-java-from-two-absolute-paths-or-urls
             String relative = rootDirectory.toURI().relativize(file.toURI()).getPath();
-            if (relative.endsWith(JSON_EXT)) {
-                relative = relative.substring(0, relative.length() - JSON_EXT.length());
+            if (relative.endsWith("." + JSON_EXT)) {
+                relative = relative.substring(0, relative.length() - ("." + JSON_EXT).length());
             }
             config.setRelativeOutputPath(relative);
         }

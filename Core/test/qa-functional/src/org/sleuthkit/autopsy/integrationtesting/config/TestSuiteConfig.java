@@ -18,12 +18,15 @@
  */
 package org.sleuthkit.autopsy.integrationtesting.config;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 /**
  * Configuration in IntegrationTests per case.
  */
 public class TestSuiteConfig {
+
     private final String name;
     private final String description;
     private final List<String> dataSources;
@@ -32,7 +35,15 @@ public class TestSuiteConfig {
     private final IntegrationCaseType caseTypes;
     private String relativeOutputPath;
 
-    public TestSuiteConfig(String name, String description, List<String> dataSources, List<ParameterizedResourceConfig> configurationModules, TestingConfig integrationTests, IntegrationCaseType caseTypes) {
+    @JsonCreator
+    public TestSuiteConfig(
+            @JsonProperty("name") String name,
+            @JsonProperty("description") String description,
+            @JsonProperty("dataSources") List<String> dataSources,
+            @JsonProperty("configurationModules") List<ParameterizedResourceConfig> configurationModules,
+            @JsonProperty("integrationTests") TestingConfig integrationTests,
+            @JsonProperty("caseTypes") IntegrationCaseType caseTypes) {
+
         this.name = name;
         this.description = description;
         this.dataSources = dataSources;
@@ -72,6 +83,5 @@ public class TestSuiteConfig {
     public void setRelativeOutputPath(String relativeOutputPath) {
         this.relativeOutputPath = relativeOutputPath;
     }
-    
-    
+
 }

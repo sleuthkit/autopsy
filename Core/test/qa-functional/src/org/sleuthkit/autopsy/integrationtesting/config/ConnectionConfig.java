@@ -18,6 +18,9 @@
  */
 package org.sleuthkit.autopsy.integrationtesting.config;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  *
  * @author gregd
@@ -28,7 +31,13 @@ public class ConnectionConfig {
     private final String userName;
     private final String password;
 
-    public ConnectionConfig(String hostName, Integer port, String userName, String password) {
+    @JsonCreator
+    public ConnectionConfig(
+            @JsonProperty("hostName") String hostName, 
+            @JsonProperty("port") Integer port, 
+            @JsonProperty("userName") String userName, 
+            @JsonProperty("password") String password) {
+        
         this.hostName = hostName;
         this.port = port;
         this.userName = userName;

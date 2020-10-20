@@ -18,6 +18,9 @@
  */
 package org.sleuthkit.autopsy.integrationtesting.config;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  *
  * @author gregd
@@ -27,16 +30,18 @@ public class EnvConfig {
     private final String rootCaseOutputPath;
     private final String rootTestOutputPath;
     private final String rootTestSuitesPath;
-    
+
     private final ConnectionConfig connectionInfo;
 
     private String workingDirectory;
-    
 
-    public EnvConfig(String rootCaseOutputPath,
-            String rootTestSuitesPath,
-            String rootTestOutputPath, 
-            ConnectionConfig connectionInfo) {
+    @JsonCreator
+    public EnvConfig(
+            @JsonProperty("rootCaseOutputPath") String rootCaseOutputPath,
+            @JsonProperty("rootTestSuitesPath") String rootTestSuitesPath,
+            @JsonProperty("rootTestOutputPath") String rootTestOutputPath,
+            @JsonProperty("connectionInfo") ConnectionConfig connectionInfo) {
+        
         this.rootCaseOutputPath = rootCaseOutputPath;
         this.rootTestOutputPath = rootTestOutputPath;
         this.rootTestSuitesPath = rootTestSuitesPath;

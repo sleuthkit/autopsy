@@ -688,10 +688,6 @@
                 <binary-origin>release\modules\ext\jython-standalone-2.7.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/commons-lang-2.6.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\commons-lang-2.6.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/jsr305-3.0.2.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\jsr305-3.0.2.jar</binary-origin>
             </class-path-extension>

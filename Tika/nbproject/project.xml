@@ -427,10 +427,6 @@
                 <binary-origin>release\modules\ext\bcmail-jdk15on-1.64.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/commons-io-2.6.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\commons-io-2.6.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/cxf-rt-rs-client-3.3.4.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\cxf-rt-rs-client-3.3.4.jar</binary-origin>
             </class-path-extension>
