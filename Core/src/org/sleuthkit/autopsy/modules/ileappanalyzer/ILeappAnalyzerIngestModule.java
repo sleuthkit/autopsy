@@ -39,6 +39,7 @@ import org.openide.modules.InstalledFileLocator;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import static org.sleuthkit.autopsy.casemodule.Case.getCurrentCase;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -94,7 +95,7 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
 
         try {
             iLeappFileProcessor = new ILeappFileProcessor();
-        } catch (IOException | IngestModuleException ex) {
+        } catch (IOException | IngestModuleException | NoCurrentCaseException ex) {
             throw new IngestModuleException(Bundle.ILeappAnalyzerIngestModule_error_ileapp_file_processor_init(), ex);
         }
 
@@ -120,23 +121,23 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress statusHelper) {
 
         Case currentCase = Case.getCurrentCase();
-        Path moduleOutputPath = Paths.get(currentCase.getModuleDirectory(), ILEAPP, ILEAPP_FS + dataSource.getId());
+        Path tempOutputPath = Paths.get(currentCase.getTempDirectory(), ILEAPP, ILEAPP_FS + dataSource.getId());
         try {
-            Files.createDirectories(moduleOutputPath);
+            Files.createDirectories(tempOutputPath);
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, String.format("Error creating iLeapp output directory %s", moduleOutputPath.toString()), ex);
+            logger.log(Level.SEVERE, String.format("Error creating iLeapp output directory %s", tempOutputPath.toString()), ex);
             return ProcessResult.ERROR;
         }
 
         List<String> iLeappPathsToProcess = new ArrayList<>();
-        ProcessBuilder iLeappCommand = buildiLeappListCommand(moduleOutputPath);
+        ProcessBuilder iLeappCommand = buildiLeappListCommand(tempOutputPath);
         try {
             int result = ExecUtil.execute(iLeappCommand, new DataSourceIngestModuleProcessTerminator(context, true));
             if (result != 0) {
                 logger.log(Level.SEVERE, String.format("Error when trying to execute iLeapp program getting file paths to search for result is %d", result));
                 return ProcessResult.ERROR;
             }
-            iLeappPathsToProcess = loadIleappPathFile(moduleOutputPath);
+            iLeappPathsToProcess = loadIleappPathFile(tempOutputPath);
         } catch (IOException ex) {
             logger.log(Level.SEVERE, String.format("Error when trying to execute iLeapp program getting file paths to search"), ex);
             return ProcessResult.ERROR;
@@ -147,9 +148,9 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
         List<AbstractFile> iLeappFilesToProcess = new ArrayList<>();
 
         if (!(context.getDataSource() instanceof LocalFilesDataSource)) {
-            extractFilesFromImage(dataSource, iLeappPathsToProcess, moduleOutputPath);
+            extractFilesFromImage(dataSource, iLeappPathsToProcess, tempOutputPath);
             statusHelper.switchToDeterminate(iLeappFilesToProcess.size());
-            processILeappFs(dataSource, currentCase, statusHelper, moduleOutputPath.toString());
+            processILeappFs(dataSource, currentCase, statusHelper, tempOutputPath.toString());
         } else {
             iLeappFilesToProcess = findiLeappFilesToProcess(dataSource);
             statusHelper.switchToDeterminate(iLeappFilesToProcess.size());
@@ -160,8 +161,8 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
                 filesProcessedCount++;
             }
             // Process the logical image as a fs in iLeapp to make sure this is not a logical fs that was added
-            extractFilesFromImage(dataSource, iLeappPathsToProcess, moduleOutputPath);
-            processILeappFs(dataSource, currentCase, statusHelper, moduleOutputPath.toString());
+            extractFilesFromImage(dataSource, iLeappPathsToProcess, tempOutputPath);
+            processILeappFs(dataSource, currentCase, statusHelper, tempOutputPath.toString());
         }
 
         IngestMessage message = IngestMessage.createMessage(IngestMessage.MessageType.DATA,
