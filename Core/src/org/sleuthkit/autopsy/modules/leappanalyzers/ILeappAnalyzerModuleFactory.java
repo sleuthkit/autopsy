@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.modules.ileappanalyzer;
+package org.sleuthkit.autopsy.modules.leappanalyzers;
 
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
