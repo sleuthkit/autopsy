@@ -101,12 +101,12 @@ class OutputResults {
         }
         return curValue;
     }
-    
+
     /**
      * A mapping of package -> test suite -> test -> output data
      */
     private final Map<String, Map<String, Map<String, Object>>> data = new HashMap<>();
-    
+
     /**
      * Adds a result for a particular test in a test suite.
      *
@@ -193,20 +193,27 @@ class OutputResults {
     public void serializeToFile(String outputFolder, String caseName, Case.CaseType caseType) {
         serializeToFile(getSerializationPath(outputFolder, caseName, caseType));
     }
-    
+
     private String getSerializationPath(String outputFolder, String caseName, Case.CaseType caseType) {
         String outputExtension = ".yml";
         Path outputPath = Paths.get(outputFolder, String.format("%s-%s%s", caseName, getCaseTypeId(caseType), outputExtension));
         return outputPath.toString();
     }
-        
+
     /**
      * Serializes results of a test to a yaml file.
+     *
      * @param outputPath The output path.
      */
     public void serializeToFile(String outputPath) {
+        File outputFile = new File(outputPath);
+        
+        if (!outputFile.getParentFile().exists()) {
+            outputFile.getParentFile().mkdirs();
+        }
+        
         try {
-            FileWriter writer = new FileWriter(new File(outputPath));
+            FileWriter writer = new FileWriter(outputFile);
             YAML_SERIALIZER.dump(getSerializableData(), writer);
         } catch (IOException ex) {
             logger.log(Level.WARNING, "There was an error writing results to outputPath: " + outputPath, ex);

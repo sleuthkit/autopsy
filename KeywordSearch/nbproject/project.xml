@@ -291,10 +291,6 @@
                 <binary-origin>release\modules\ext\annotations-12.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/commons-collections-3.2.2.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\commons-collections-3.2.2.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/noggit-0.5.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\noggit-0.5.jar</binary-origin>
             </class-path-extension>

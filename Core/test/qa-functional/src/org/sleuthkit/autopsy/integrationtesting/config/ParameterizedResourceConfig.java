@@ -25,10 +25,17 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
+import com.fasterxml.jackson.databind.node.ValueNode;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import org.sleuthkit.autopsy.integrationtesting.config.ParameterizedResourceConfig.ParameterizedResourceConfigDeserializer;
 
@@ -61,13 +68,67 @@ public class ParameterizedResourceConfig {
             } else if (node instanceof TextNode) {
                 return new ParameterizedResourceConfig(((TextNode) node).textValue());
             } else {
-                String resource = (node.get("resource") != null) ? node.get("resource").asText() : null;
-                Map<String, Object> parameters = (node.get("parameters") != null) ?
-                        node.get("parameters").traverse().readValueAs(Map.class) : 
-                        null;
+                JsonNode resourceNode = node.get("resource");
+                String resource = (resourceNode != null) ? resourceNode.asText() : null;
+
+                Map<String, Object> parameters = null;
+                JsonNode parametersNode = node.get("parameters");
+                if (parametersNode != null && parametersNode.isObject()) {
+                    parameters = readMap((ObjectNode) parametersNode);
+                }
 
                 return new ParameterizedResourceConfig(resource, parameters);
             }
+        }
+
+        Map<String, Object> readMap(ObjectNode node) {
+            Map<String, Object> jsonObject = new LinkedHashMap<>();
+            Iterator<Map.Entry<String, JsonNode>> keyValIter = node.fields();
+            while (keyValIter.hasNext()) {
+                Map.Entry<String, JsonNode> keyVal = keyValIter.next();
+                jsonObject.put(keyVal.getKey(), readItem(keyVal.getValue()));
+            }
+            return jsonObject;
+        }
+
+        List<Object> readList(ArrayNode node) {
+            List<Object> objArr = new ArrayList<>();
+            for (JsonNode childNode : node) {
+                objArr.add(readItem(childNode));
+            }
+            return objArr;
+        }
+
+        Object readJsonPrimitive(ValueNode vNode) {
+            if (vNode.isTextual()) {
+                return vNode.asText();
+            } else if (vNode.isBoolean()) {
+                return vNode.asBoolean();
+            } else if (vNode.isLong()) {
+                return vNode.asLong();
+            } else if (vNode.isInt()) {
+                return vNode.asInt();
+            } else if (vNode.isDouble()) {
+                return vNode.asDouble();
+            }
+
+            return null;
+        }
+
+        Object readItem(JsonNode node) {
+            if (node == null) {
+                return null;
+            }
+
+            if (node.isObject()) {
+                return readMap((ObjectNode) node);
+            } else if (node.isArray()) {
+                return readList((ArrayNode) node);
+            } else if (node.isValueNode()) {
+                return readJsonPrimitive((ValueNode) node);
+            }
+
+            return null;
         }
     }
 

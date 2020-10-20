@@ -26,7 +26,6 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
-import org.sleuthkit.autopsy.ingest.IngestModuleFactoryService;
 import org.sleuthkit.autopsy.ingest.IngestModuleTemplate;
 
 /**
@@ -65,7 +64,7 @@ public class IngestModuleSetupManager implements ConfigurationModule<IngestModul
         
         List<IngestModuleTemplate> newTemplates = new ArrayList<>(curTemplates.values());
         
-        if (parameters != null && CollectionUtils.isEmpty(parameters.getModules())) {
+        if (parameters != null && !CollectionUtils.isEmpty(parameters.getModules())) {
             List<IngestModuleTemplate> templatesToAdd = parameters.getModules().stream()
                     .filter((className) -> !curTemplates.containsKey(className))
                     .map((className) -> allFactories.get(className))

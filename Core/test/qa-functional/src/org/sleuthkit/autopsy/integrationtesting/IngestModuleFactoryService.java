@@ -3,9 +3,12 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.sleuthkit.autopsy.ingest;
+package org.sleuthkit.autopsy.integrationtesting;
 
+import java.util.ArrayList;
 import java.util.List;
+import org.openide.util.Lookup;
+import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 
 /**
  *
@@ -13,6 +16,6 @@ import java.util.List;
  */
 public class IngestModuleFactoryService {
     public List<IngestModuleFactory> getFactories() {
-        return IngestModuleFactoryLoader.getIngestModuleFactories();
+        return new ArrayList<>(Lookup.getDefault().lookupAll(IngestModuleFactory.class));
     }
 }

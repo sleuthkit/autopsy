@@ -20,7 +20,6 @@ import java.util.stream.Stream;
 import org.apache.cxf.common.util.CollectionUtils;
 import org.openide.util.Pair;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
-import org.sleuthkit.autopsy.ingest.IngestModuleFactoryService;
 import org.sleuthkit.autopsy.ingest.IngestModuleTemplate;
 import org.sleuthkit.autopsy.integrationtesting.config.ConfigDeserializer;
 import org.sleuthkit.autopsy.integrationtesting.config.ParameterizedResourceConfig;
@@ -100,7 +99,7 @@ public class ConfigurationModuleManager {
         }
 
         Type configurationModuleType = Stream.of(clazz.getGenericInterfaces())
-                .filter(type -> type.getClass().equals(ConfigurationModule.class) && type instanceof ParameterizedType && type instanceof Class)
+                .filter(type -> type instanceof ParameterizedType && ((ParameterizedType) type).getRawType().equals(ConfigurationModule.class))
                 .map(type -> ((ParameterizedType) type).getActualTypeArguments()[0])
                 .findFirst()
                 .orElse(null);
@@ -121,7 +120,7 @@ public class ConfigurationModuleManager {
         }
 
         if (result instanceof IngestJobSettings) {
-            return Pair.of(curConfig, configModuleObj);
+            return Pair.of((IngestJobSettings) result, configModuleObj);
         } else {
             logger.log(Level.SEVERE, String.format("Could not retrieve IngestJobSettings from %s", configModule.getResource()));
             return null;

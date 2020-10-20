@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.integrationtesting;
 
+import java.io.File;
 import org.sleuthkit.autopsy.integrationtesting.config.TestSuiteConfig;
 import org.sleuthkit.autopsy.integrationtesting.config.IntegrationTestConfig;
 import org.sleuthkit.autopsy.integrationtesting.config.IntegrationCaseType;
@@ -36,7 +37,6 @@ import junit.framework.Test;
 import junit.framework.TestCase;
 import org.apache.cxf.common.util.CollectionUtils;
 import org.netbeans.junit.NbModuleSuite;
-import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.Pair;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -54,6 +54,7 @@ import org.sleuthkit.autopsy.integrationtesting.config.EnvConfig;
 import org.sleuthkit.autopsy.integrationtesting.config.TestingConfig;
 import org.sleuthkit.autopsy.testutils.IngestUtils;
 import org.sleuthkit.datamodel.TskCoreException;
+import static ucar.unidata.util.Format.i;
 
 /**
  * Main entry point for running integration tests. Handles processing
@@ -159,6 +160,10 @@ public class MainTestRunner extends TestCase {
         String uniqueCaseName = String.format("%s_%s", caseName, TimeStampUtils.createTimeStamp());
         String outputFolder = PathUtil.getAbsolutePath(envConfig.getWorkingDirectory(), envConfig.getRootCaseOutputPath());
         String caseOutputFolder = Paths.get(outputFolder, uniqueCaseName).toString();
+        File caseOutputFolderFile = new File(caseOutputFolder);
+        if (!caseOutputFolderFile.exists()) {
+            caseOutputFolderFile.mkdirs();
+        }
 
         switch (caseType) {
             case SINGLE_USER_CASE: {
