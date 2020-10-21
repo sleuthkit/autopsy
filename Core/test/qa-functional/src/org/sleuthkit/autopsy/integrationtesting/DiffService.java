@@ -101,9 +101,9 @@ public class DiffService {
         if (!hasOrig && !hasCur) {
             return null;
         } else if (!hasOrig && hasCur) {
-            return getHeaderWithDivider("MISSING FILE IN CURRENT: " + identifier);
-        } else if (hasOrig && !hasCur) {
             return getHeaderWithDivider("ADDITIONAL FILE IN CURRENT: " + identifier);
+        } else if (hasOrig && !hasCur) {
+            return getHeaderWithDivider("MISSING FILE IN CURRENT: " + identifier);
         } else {
             try {
                 return diffLines(Files.readAllLines(orig.toPath()), Files.readAllLines(cur.toPath()), getHeaderWithDivider(identifier + ":"));

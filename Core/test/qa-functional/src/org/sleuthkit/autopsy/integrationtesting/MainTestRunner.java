@@ -370,7 +370,7 @@ public class MainTestRunner extends TestCase {
             logger.log(Level.WARNING, String.format("Gold does not exist at location: %s.  Not creating diff.", goldDir.toString()));
         }
 
-        String outputPath = PathUtil.getAbsolutePath(envConfig.getWorkingDirectory(), envConfig.getRootCaseOutputPath());
+        String outputPath = PathUtil.getAbsolutePath(envConfig.getWorkingDirectory(), envConfig.getRootTestOutputPath());
         File outputDir = new File(outputPath);
         if (!outputDir.exists()) {
             logger.log(Level.WARNING, String.format("Output path does not exist at location: %s.  Not creating diff.", outputDir.toString()));
