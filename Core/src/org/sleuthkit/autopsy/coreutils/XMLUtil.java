@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2014 Basis Technology Corp.
+ * Copyright 2012-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -63,9 +63,15 @@ public class XMLUtil {
      * @throws ParserConfigurationException
      */
     public static Document createDocument() throws ParserConfigurationException {
-        DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder builder = builderFactory.newDocumentBuilder();
-        return builder.newDocument();
+        ClassLoader original = Thread.currentThread().getContextClassLoader();
+        try {
+            Thread.currentThread().setContextClassLoader(XMLUtil.class.getClassLoader());
+            DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder builder = builderFactory.newDocumentBuilder();
+            return builder.newDocument();
+        } finally {
+            Thread.currentThread().setContextClassLoader(original);
+        }
     }
 
     /**
@@ -100,10 +106,16 @@ public class XMLUtil {
      * @throws IOException
      */
     public static Document loadDocument(String docPath) throws ParserConfigurationException, SAXException, IOException {
-        DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder builder = builderFactory.newDocumentBuilder();
-        Document doc = builder.parse(new FileInputStream(docPath));
-        return doc;
+        ClassLoader original = Thread.currentThread().getContextClassLoader();
+        try {
+            Thread.currentThread().setContextClassLoader(XMLUtil.class.getClassLoader());
+            DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder builder = builderFactory.newDocumentBuilder();
+            Document doc = builder.parse(new FileInputStream(docPath));
+            return doc;
+        } finally {
+            Thread.currentThread().setContextClassLoader(original);
+        }
     }
 
     /**
@@ -117,12 +129,18 @@ public class XMLUtil {
      * @throws IOException
      */
     public static <T> void validateDocument(final Document doc, Class<T> clazz, String schemaResourceName) throws SAXException, IOException {
-        PlatformUtil.extractResourceToUserConfigDir(clazz, schemaResourceName, false);
-        File schemaFile = new File(Paths.get(PlatformUtil.getUserConfigDirectory(), schemaResourceName).toAbsolutePath().toString());
-        SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-        Schema schema = schemaFactory.newSchema(schemaFile);
-        Validator validator = schema.newValidator();
-        validator.validate(new DOMSource(doc), new DOMResult());
+        ClassLoader original = Thread.currentThread().getContextClassLoader();
+        try {
+            Thread.currentThread().setContextClassLoader(XMLUtil.class.getClassLoader());
+            PlatformUtil.extractResourceToUserConfigDir(clazz, schemaResourceName, false);
+            File schemaFile = new File(Paths.get(PlatformUtil.getUserConfigDirectory(), schemaResourceName).toAbsolutePath().toString());
+            SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+            Schema schema = schemaFactory.newSchema(schemaFile);
+            Validator validator = schema.newValidator();
+            validator.validate(new DOMSource(doc), new DOMResult());
+        } finally {
+            Thread.currentThread().setContextClassLoader(original);
+        }
     }
 
     /**
@@ -140,19 +158,25 @@ public class XMLUtil {
      * @throws IOException
      */
     public static void saveDocument(final Document doc, String encoding, String docPath) throws TransformerConfigurationException, FileNotFoundException, UnsupportedEncodingException, TransformerException, IOException {
-        TransformerFactory xf = TransformerFactory.newInstance();
-        xf.setAttribute("indent-number", 1); //NON-NLS
-        Transformer xformer = xf.newTransformer();
-        xformer.setOutputProperty(OutputKeys.METHOD, "xml"); //NON-NLS
-        xformer.setOutputProperty(OutputKeys.INDENT, "yes"); //NON-NLS
-        xformer.setOutputProperty(OutputKeys.ENCODING, encoding);
-        xformer.setOutputProperty(OutputKeys.STANDALONE, "yes"); //NON-NLS
-        xformer.setOutputProperty(OutputKeys.VERSION, "1.0");
-        File file = new File(docPath);
-        try (FileOutputStream stream = new FileOutputStream(file)) {
-            Result out = new StreamResult(new OutputStreamWriter(stream, encoding));
-            xformer.transform(new DOMSource(doc), out);
-            stream.flush();
+        ClassLoader original = Thread.currentThread().getContextClassLoader();
+        try {
+            Thread.currentThread().setContextClassLoader(XMLUtil.class.getClassLoader());
+            TransformerFactory xf = TransformerFactory.newInstance();
+            xf.setAttribute("indent-number", 1); //NON-NLS
+            Transformer xformer = xf.newTransformer();
+            xformer.setOutputProperty(OutputKeys.METHOD, "xml"); //NON-NLS
+            xformer.setOutputProperty(OutputKeys.INDENT, "yes"); //NON-NLS
+            xformer.setOutputProperty(OutputKeys.ENCODING, encoding);
+            xformer.setOutputProperty(OutputKeys.STANDALONE, "yes"); //NON-NLS
+            xformer.setOutputProperty(OutputKeys.VERSION, "1.0");
+            File file = new File(docPath);
+            try (FileOutputStream stream = new FileOutputStream(file)) {
+                Result out = new StreamResult(new OutputStreamWriter(stream, encoding));
+                xformer.transform(new DOMSource(doc), out);
+                stream.flush();
+            }
+        } finally {
+            Thread.currentThread().setContextClassLoader(original);
         }
     }
 
@@ -175,7 +199,9 @@ public class XMLUtil {
      */
     // TODO: Deprecate.
     public static <T> boolean xmlIsValid(DOMSource xmlfile, Class<T> clazz, String schemaFile) {
+        ClassLoader original = Thread.currentThread().getContextClassLoader();
         try {
+            Thread.currentThread().setContextClassLoader(XMLUtil.class.getClassLoader());
             PlatformUtil.extractResourceToUserConfigDir(clazz, schemaFile, false);
             File schemaLoc = new File(PlatformUtil.getUserConfigDirectory() + File.separator + schemaFile);
             SchemaFactory schm = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
@@ -192,6 +218,8 @@ public class XMLUtil {
         } catch (IOException e) {
             Logger.getLogger(clazz.getName()).log(Level.WARNING, "Unable to load XML file [" + xmlfile.toString() + "] of type [" + schemaFile + "]", e); //NON-NLS
             return false;
+        } finally {
+            Thread.currentThread().setContextClassLoader(original);
         }
     }
 
@@ -226,9 +254,11 @@ public class XMLUtil {
      */
     // TODO: Deprecate.
     public static <T> Document loadDoc(Class<T> clazz, String xmlPath) {
-        DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
         Document ret = null;
+        ClassLoader original = Thread.currentThread().getContextClassLoader();
         try {
+            Thread.currentThread().setContextClassLoader(XMLUtil.class.getClassLoader());
+            DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
             DocumentBuilder builder = builderFactory.newDocumentBuilder();
             ret = builder.parse(new FileInputStream(xmlPath));
         } catch (ParserConfigurationException e) {
@@ -238,6 +268,8 @@ public class XMLUtil {
         } catch (IOException e) {
             //error reading file
             Logger.getLogger(clazz.getName()).log(Level.SEVERE, "Error loading XML file " + xmlPath + " : can't read file.", e); //NON-NLS
+        } finally {
+            Thread.currentThread().setContextClassLoader(original);
         }
         return ret;
     }
@@ -268,10 +300,12 @@ public class XMLUtil {
      */
     // TODO: Deprecate.
     public static <T> boolean saveDoc(Class<T> clazz, String xmlPath, String encoding, final Document doc) {
-        TransformerFactory xf = TransformerFactory.newInstance();
-        xf.setAttribute("indent-number", 1); //NON-NLS
         boolean success = false;
+        ClassLoader original = Thread.currentThread().getContextClassLoader();
         try {
+            Thread.currentThread().setContextClassLoader(XMLUtil.class.getClassLoader());
+            TransformerFactory xf = TransformerFactory.newInstance();
+            xf.setAttribute("indent-number", 1); //NON-NLS
             Transformer xformer = xf.newTransformer();
             xformer.setOutputProperty(OutputKeys.METHOD, "xml"); //NON-NLS
             xformer.setOutputProperty(OutputKeys.INDENT, "yes"); //NON-NLS
@@ -296,6 +330,8 @@ public class XMLUtil {
             Logger.getLogger(clazz.getName()).log(Level.SEVERE, "Error writing XML file: cannot write to file: " + xmlPath, e); //NON-NLS
         } catch (IOException e) {
             Logger.getLogger(clazz.getName()).log(Level.SEVERE, "Error writing XML file: cannot write to file: " + xmlPath, e); //NON-NLS
+        } finally {
+            Thread.currentThread().setContextClassLoader(original);
         }
         return success;
     }
