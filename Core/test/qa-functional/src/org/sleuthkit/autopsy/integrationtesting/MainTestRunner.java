@@ -33,6 +33,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import junit.framework.Assert;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import org.apache.commons.io.FileUtils;
@@ -355,7 +356,8 @@ public class MainTestRunner extends TestCase {
 
     /**
      * Writes any differences found between gold and output to a diff file. Only
-     * works if a gold and diff location are specified in the EnvConfig.
+     * works if a gold and diff location are specified in the EnvConfig. If
+     * there is a diff, fail.
      *
      * @param envConfig The env config.
      */
@@ -384,7 +386,10 @@ public class MainTestRunner extends TestCase {
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, "Unable to write diff file to " + diffPath);
             }
-        }
 
+            Assert.fail(String.format("There was a diff between the integration test gold data: %s "
+                    + "and the current iteration output data: %s.  Diff file created at %s.",
+                    goldPath, outputPath, diffPath));
+        }
     }
 }
