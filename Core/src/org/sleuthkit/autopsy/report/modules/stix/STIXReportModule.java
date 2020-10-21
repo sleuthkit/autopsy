@@ -228,6 +228,7 @@ public class STIXReportModule implements GeneralReportModule {
      */
     private STIXPackage loadSTIXFile(String stixFileName) throws JAXBException {
         // Create STIXPackage object from xml.
+        // See JIRA-6958 for details about class loading and jaxb.
         ClassLoader original = Thread.currentThread().getContextClassLoader();
         try {
             Thread.currentThread().setContextClassLoader(STIXReportModule.class.getClassLoader());

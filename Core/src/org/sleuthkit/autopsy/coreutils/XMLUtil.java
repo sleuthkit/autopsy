@@ -63,6 +63,7 @@ public class XMLUtil {
      * @throws ParserConfigurationException
      */
     public static Document createDocument() throws ParserConfigurationException {
+        // See JIRA-6958 for details about class loading and jaxb.
         ClassLoader original = Thread.currentThread().getContextClassLoader();
         try {
             Thread.currentThread().setContextClassLoader(XMLUtil.class.getClassLoader());
@@ -106,6 +107,7 @@ public class XMLUtil {
      * @throws IOException
      */
     public static Document loadDocument(String docPath) throws ParserConfigurationException, SAXException, IOException {
+        // See JIRA-6958 for details about class loading and jaxb.
         ClassLoader original = Thread.currentThread().getContextClassLoader();
         try {
             Thread.currentThread().setContextClassLoader(XMLUtil.class.getClassLoader());
@@ -129,6 +131,7 @@ public class XMLUtil {
      * @throws IOException
      */
     public static <T> void validateDocument(final Document doc, Class<T> clazz, String schemaResourceName) throws SAXException, IOException {
+        // See JIRA-6958 for details about class loading and jaxb.
         ClassLoader original = Thread.currentThread().getContextClassLoader();
         try {
             Thread.currentThread().setContextClassLoader(XMLUtil.class.getClassLoader());
@@ -158,6 +161,7 @@ public class XMLUtil {
      * @throws IOException
      */
     public static void saveDocument(final Document doc, String encoding, String docPath) throws TransformerConfigurationException, FileNotFoundException, UnsupportedEncodingException, TransformerException, IOException {
+        // See JIRA-6958 for details about class loading and jaxb.
         ClassLoader original = Thread.currentThread().getContextClassLoader();
         try {
             Thread.currentThread().setContextClassLoader(XMLUtil.class.getClassLoader());
@@ -199,6 +203,7 @@ public class XMLUtil {
      */
     // TODO: Deprecate.
     public static <T> boolean xmlIsValid(DOMSource xmlfile, Class<T> clazz, String schemaFile) {
+        // See JIRA-6958 for details about class loading and jaxb.
         ClassLoader original = Thread.currentThread().getContextClassLoader();
         try {
             Thread.currentThread().setContextClassLoader(XMLUtil.class.getClassLoader());
@@ -255,6 +260,7 @@ public class XMLUtil {
     // TODO: Deprecate.
     public static <T> Document loadDoc(Class<T> clazz, String xmlPath) {
         Document ret = null;
+        // See JIRA-6958 for details about class loading and jaxb.
         ClassLoader original = Thread.currentThread().getContextClassLoader();
         try {
             Thread.currentThread().setContextClassLoader(XMLUtil.class.getClassLoader());
@@ -301,6 +307,7 @@ public class XMLUtil {
     // TODO: Deprecate.
     public static <T> boolean saveDoc(Class<T> clazz, String xmlPath, String encoding, final Document doc) {
         boolean success = false;
+        // See JIRA-6958 for details about class loading and jaxb.
         ClassLoader original = Thread.currentThread().getContextClassLoader();
         try {
             Thread.currentThread().setContextClassLoader(XMLUtil.class.getClassLoader());
