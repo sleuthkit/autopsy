@@ -44,8 +44,8 @@ class FilterTreeItem extends TreeItem<FilterState<?>> {
         super(filterState);
 
         //keep expanion map upto date if user expands/collapses filter
-        expandedProperty().addListener(expandedProperty -> expansionMap.put(filterState.getFilter(), isExpanded()));
-        setExpanded(expansionMap.getOrDefault(filterState.getFilter(), false));
+        expandedProperty().addListener(expandedProperty -> expansionMap.put(filterState.getFilter(), true));
+        setExpanded(true);
 
         //if the filter is a compound filter, add its subfilters to the tree
         if (filterState instanceof CompoundFilterState<?, ?>) {

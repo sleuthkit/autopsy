@@ -24,6 +24,7 @@ import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableMap;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Cell;
@@ -35,6 +36,7 @@ import javafx.scene.control.TreeTableColumn;
 import javafx.scene.control.TreeTableView;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import org.controlsfx.control.action.Action;
 import org.controlsfx.control.action.ActionUtils;
@@ -117,6 +119,8 @@ final public class FilterSetPanel extends BorderPane {
         //type is the only filter expanded initialy
         expansionMap.put(filteredEvents.getEventFilterState().getFilter(), true);
         expansionMap.put(filteredEvents.getEventFilterState().getEventTypeFilterState().getFilter(), true);
+        expansionMap.put(filteredEvents.getEventFilterState().getDataSourcesFilterState().getFilter(), true);
+        expansionMap.put(filteredEvents.getEventFilterState().getFileTypesFilterState().getFilter(), true);
 
         InvalidationListener applyFiltersListener = observable -> applyFilters();
 
@@ -128,7 +132,7 @@ final public class FilterSetPanel extends BorderPane {
         refreshFilterUI();
 
         hiddenDescriptionsListView.setItems(controller.getQuickHideFilters());
-        hiddenDescriptionsListView.setCellFactory(listView -> getNewDiscriptionFilterListCell());
+        hiddenDescriptionsListView.setCellFactory(listView -> getNewDescriptionFilterListCell());
 
         //show and hide the "hidden descriptions" panel depending on the current view mode
         controller.viewModeProperty().addListener(observable -> {
@@ -154,6 +158,14 @@ final public class FilterSetPanel extends BorderPane {
                     throw new UnsupportedOperationException("Unknown ViewMode: " + controller.getViewMode());
             }
         });
+        
+        //Block the default treetable keyboard events.
+        filterTreeTable.addEventFilter(KeyEvent.ANY, new EventHandler<KeyEvent>() {
+            @Override 
+            public void handle(KeyEvent event) {
+                event.consume();
+            }
+        });
     }
 
     public FilterSetPanel(TimeLineController controller) {
@@ -173,7 +185,7 @@ final public class FilterSetPanel extends BorderPane {
         });
     }
 
-    private ListCell<DescriptionFilterState> getNewDiscriptionFilterListCell() {
+    private ListCell<DescriptionFilterState> getNewDescriptionFilterListCell() {
         final ListCell<DescriptionFilterState> cell = new FilterCheckBoxCellFactory< DescriptionFilterState>().forList();
         cell.itemProperty().addListener(itemProperty -> {
             if (cell.getItem() == null) {
