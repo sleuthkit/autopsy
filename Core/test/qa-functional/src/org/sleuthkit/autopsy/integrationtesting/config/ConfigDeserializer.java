@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.integrationtesting.config;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.CollectionType;
@@ -50,6 +51,82 @@ public class ConfigDeserializer {
     private static final Logger logger = Logger.getLogger(ConfigDeserializer.class.getName());
     private static final ObjectMapper mapper = new ObjectMapper();
 
+    
+    // The following are the keys that must be provided as arguments (prefixed with 'integration-test.')
+    // A config file key must be specifed or at least the test suites path, and output path.
+    
+    // If a config specifying the EnvConfig json exists, specify this path to load it
+    private static final String CONFIG_FILE_KEY = "configFile";
+    // where cases will be written
+    private static final String ROOT_CASE_OUTPUT_PATH_KEY = "rootCaseOutputPath";
+    // where the test suites files will be held
+    private static final String ROOT_TEST_SUITES_PATH_KEY = "rootTestSuitesPath";
+    // where the integration tests will output yml data
+    private static final String ROOT_TEST_OUTPUT_PATH_KEY = "rootTestOutputPath";
+    // the postgres connection host name
+    private static final String CONNECTION_HOST_NAME_KEY = "connectionHostName";
+    // the postgres connection port
+    private static final String CONNECTION_PORT_KEY = "connectionPort";
+    // the postgres connection user name
+    private static final String CONNECTION_USER_NAME_KEY = "connectionUserName";
+    // the postgres connection password
+    private static final String CONNECTION_PASSWORD_KEY = "connectionPassword";
+    // the working directory.  Paths that are relative are relative to this path.
+    private static final String WORKING_DIRECTORY_KEY = "workingDirectory";
+    // whether or not the output path should have the same directory structure as 
+    // where the config was found in the test suites directory.  For instance, if 
+    // the file is located at /testSuitesDir/folderX/fileY.json, the yaml will be 
+    // located at /outputDir/folderX/fileY/.  This value should be "true" to be true.
+    private static final String USE_RELATIVE_OUTPUT_KEY = "useRelativeOutput";
+    // Where gold files are located.  Can be null.
+    private static final String ROOT_GOLD_PATH_KEY = "rootGoldPath";
+    // The diff output path.  Can be null.
+    private static final String DIFF_OUTPUT_PATH_KEY = "diffOutputPath";
+    
+    /**
+     * Deserializes the specified json file into an EnvConfig object using
+     * System.Property specified values. This is affected by build.xml test-init
+     * target and values specified in this file.  
+     *
+     * @return The deserialized file.
+     * @throws IOException
+     * @throws IllegalStateException If the env config file cannot be found but
+     * the property has been specified or the env config object cannot be
+     * validated.
+     */
+    public EnvConfig getEnvConfigFromSysProps() throws IOException, IllegalStateException {
+        if (System.getProperty(CONFIG_FILE_KEY) != null) {
+            // try to load from file if value is present
+            String fileLoc = System.getProperty(CONFIG_FILE_KEY);
+            File envConfigFile = new File(fileLoc);
+            if (envConfigFile.exists()) {
+                return getEnvConfig(envConfigFile);
+            } else {
+                throw new IllegalStateException(String.format("No file exists at %s", fileLoc));
+            }
+        } else {
+            // otherwise, try to load from properties
+            try {
+                return validate(null, new EnvConfig(
+                        System.getProperty(ROOT_CASE_OUTPUT_PATH_KEY),
+                        System.getProperty(ROOT_TEST_SUITES_PATH_KEY),
+                        System.getProperty(ROOT_TEST_OUTPUT_PATH_KEY),
+                        new ConnectionConfig(
+                                System.getProperty(CONNECTION_HOST_NAME_KEY),
+                                Integer.getInteger(System.getProperty(CONNECTION_PORT_KEY)),
+                                System.getProperty(CONNECTION_USER_NAME_KEY),
+                                System.getProperty(CONNECTION_PASSWORD_KEY)
+                        ),
+                        System.getProperty(WORKING_DIRECTORY_KEY),
+                        Boolean.parseBoolean(System.getProperty(USE_RELATIVE_OUTPUT_KEY)),
+                        System.getProperty(ROOT_GOLD_PATH_KEY),
+                        System.getProperty(DIFF_OUTPUT_PATH_KEY)));
+            } catch (IllegalStateException ex) {
+                throw new IllegalStateException("EnvConfig could not be determined from system property values", ex);
+            }
+        }
+    }
+
     /**
      * Creates an object of type T by re-deserializing the map to the specified
      * type.
@@ -68,15 +145,14 @@ public class ConfigDeserializer {
     /**
      * Deserializes the json config specified at the given path into the java
      * equivalent IntegrationTestConfig object. This uses information in env
-     * config file to determine test suite locations.
+     * config to determine test suite locations.
      *
-     * @param filePath The path to the config.
      * @return The java object.
-     * @throws IOException If there is an error opening the file.
-     * @throws IllegalStateException If the file cannot be validated.
+     * @throws IOException If there is an error loading the config.
+     * @throws IllegalStateException If the config cannot be validated.
      */
-    public IntegrationTestConfig getConfigFromFile(File envConfigFile) throws IOException, IllegalStateException {
-        EnvConfig envConfig = getEnvConfig(envConfigFile);
+    public IntegrationTestConfig getIntegrationTestConfig() throws IOException, IllegalStateException {
+        EnvConfig envConfig = getEnvConfigFromSysProps();
         String testSuiteConfigPath = PathUtil.getAbsolutePath(envConfig.getWorkingDirectory(), envConfig.getRootTestSuitesPath());
 
         return new IntegrationTestConfig(
@@ -108,13 +184,16 @@ public class ConfigDeserializer {
      * @throws IllegalStateException If could not be validated.
      */
     private EnvConfig validate(File envConfigFile, EnvConfig config) throws IllegalStateException {
-        if (config == null || StringUtils.isBlank(config.getRootCaseOutputPath()) || StringUtils.isBlank(config.getRootTestOutputPath())) {
-            throw new IllegalStateException("EnvConfig must have both the root case output path and the root test output path set.");
-        }
-
-        // env config should be non-null after validation
-        if (config.getWorkingDirectory() == null) {
+        // set working directory based off of parent of envConfigFile if that parent exists
+        if (config.getWorkingDirectory() == null && envConfigFile != null && envConfigFile.getParentFile() != null) {
             config.setWorkingDirectory(envConfigFile.getParentFile().getAbsolutePath());
+        }
+        
+        // env config should be non-null after validation
+        if (config == null || 
+                StringUtils.isBlank(config.getRootCaseOutputPath()) || 
+                StringUtils.isBlank(config.getRootTestOutputPath())) {
+            throw new IllegalStateException("EnvConfig must have the root case output path and the root test output path set.");
         }
 
         return config;

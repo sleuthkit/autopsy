@@ -198,16 +198,17 @@
         </copy>
     </target>
     
-    <target name="test-init" depends="projectized-common.test-init">
-        <!--create test property for integration config file location-->
-        <property name="test.qa-functional.properties.integrationConfigFile" value="${integrationConfigFile}"/>
+    <target name="setup-integration-test-props">
         <!--map that to the qa functional test properties-->
+        <!-- See ConfigDeserializer keys for relevant keys; Keys should be prefixed with 'integration-test.' -->
         <propertyset id="test.qa-functional.properties">
-            <propertyref prefix="test.qa-functional.properties."/>
-            <mapper type="glob" from="test.qa-functional.properties.*" to="*"/>
+            <propertyref prefix="integration-test."/>
+            <mapper type="glob" from="integration-test.*" to="*"/>
         </propertyset>
     </target>
- 
+
+    <!--Call setup integration test properties-->    
+    <target name="test-init" depends="projectized-common.test-init,setup-integration-test-props"/>
 
     <target name="test-qa-functional">
         <!--We don't want integration testing to run from standard qa functional-->

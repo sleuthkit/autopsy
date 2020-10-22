@@ -66,7 +66,8 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class MainTestRunner extends TestCase {
 
     private static final Logger logger = Logger.getLogger(MainTestRunner.class.getName());
-    private static final String CONFIG_FILE_KEY = "integrationConfigFile";
+
+    
     private static final ConfigDeserializer configDeserializer = new ConfigDeserializer();
     private static final DiffService diffService = new DiffService();
     private static final ConfigurationModuleManager configurationModuleManager = new ConfigurationModuleManager();
@@ -93,18 +94,15 @@ public class MainTestRunner extends TestCase {
      * Main entry point for running all integration tests.
      */
     public void runIntegrationTests() {
-        // The config file location is specified as a system property.  A config is necessary to run this properly.
-        String configFile = System.getProperty(CONFIG_FILE_KEY);
         IntegrationTestConfig config;
         try {
-            config = configDeserializer.getConfigFromFile(new File(configFile));
+            config = configDeserializer.getIntegrationTestConfig();
         } catch (IOException ex) {
-            logger.log(Level.WARNING, "There was an error processing integration test config at " + configFile, ex);
-            return;
+            throw new IllegalStateException("There was an error processing integration test config", ex);
         }
 
         if (config == null) {
-            logger.log(Level.WARNING, "No properly formatted config found at " + configFile);
+            logger.log(Level.WARNING, "No properly formatted config found.");
         }
 
         EnvConfig envConfig = config.getEnvConfig();
@@ -124,6 +122,7 @@ public class MainTestRunner extends TestCase {
             writeDiff(envConfig);
         }
     }
+    
 
     /**
      * Runs a single test suite.
