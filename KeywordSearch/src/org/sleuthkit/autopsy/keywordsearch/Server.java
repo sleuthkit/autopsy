@@ -646,16 +646,7 @@ public class Server {
         }
 
         // create SolrJ client to connect to remore Solr server
-        HttpSolrClient client = getSolrClient(solrUrl);
-        
-        try {
-            // test the connection
-            connectToSolrServer(client);
-        } catch (SolrServerException | IOException ex) {
-            throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.connect.exception.msg", client.getBaseURL()), ex);
-        }
-        
-        return client;
+        return getSolrClient(solrUrl);
     }
 
     /**
