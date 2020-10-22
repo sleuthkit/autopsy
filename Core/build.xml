@@ -217,8 +217,7 @@
     </target>    
 
     <target name="integration-test">
-        <fail message="Missing required argument: integrationConfigFile" unless="integrationConfigFile"/>
-        <!--We don't want integration testing to run from standard qa functional-->
+        <!--We want only integration testing to run from this-->
         <property name="test.includes" value="**/org/sleuthkit/autopsy/integrationtesting/MainTestRunner.class"/>
         <antcall target="projectized-common.test-qa-functional" />
     </target>  
