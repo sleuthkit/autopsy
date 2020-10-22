@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.discovery.ui;
 
 import org.sleuthkit.autopsy.discovery.search.AbstractFilter;
 import com.google.common.eventbus.Subscribe;
+import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Image;
 import java.awt.event.ItemEvent;
@@ -32,6 +33,8 @@ import javax.swing.DefaultComboBoxModel;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -125,7 +128,17 @@ final class ResultsPanel extends javax.swing.JPanel {
                 }
             }
         });
-        //JIRA-TODO 6307 Add listener for domainSummaryViewer when 6782, 6773, and the other details area related stories are done
+        domainSummaryViewer.addListSelectionListener((e) -> {
+            if (resultType == SearchData.Type.DOMAIN) {
+                if (!e.getValueIsAdjusting()) {
+                    //send populateMesage
+                    DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.PopulateDomainTabsEvent(domainSummaryViewer.getDomainForSelected()));
+                } else {
+                    //send clearSelection message
+                    DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.PopulateDomainTabsEvent(""));
+                }
+            }
+        });
     }
 
     SearchData.Type getActiveType() {
@@ -209,7 +222,7 @@ final class ResultsPanel extends javax.swing.JPanel {
         }
         );
     }
-    
+
     @Subscribe
     void handleCancelBackgroundTasksEvent(DiscoveryEventUtils.CancelBackgroundTasksEvent cancelEvent) {
         for (SwingWorker<Void, Void> thumbWorker : resultContentWorkers) {
@@ -217,7 +230,7 @@ final class ResultsPanel extends javax.swing.JPanel {
                 thumbWorker.cancel(true);
             }
         }
-        
+
         resultContentWorkers.clear();
     }
 

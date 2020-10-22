@@ -91,6 +91,7 @@ public final class DiscoveryTopComponent extends TopComponent {
                 }
             }
         });
+        rightSplitPane.setTopComponent(resultsPanel);
     }
 
     /**
@@ -149,8 +150,6 @@ public final class DiscoveryTopComponent extends TopComponent {
         DiscoveryEventUtils.getDiscoveryEventBus().unregister(resultsPanel);
         DiscoveryEventUtils.getDiscoveryEventBus().unregister(rightSplitPane.getBottomComponent());
         setDetailsVisible(false);
-        rightSplitPane.setBottomComponent(null);
-
         super.componentClosed();
     }
 
@@ -263,19 +262,17 @@ public final class DiscoveryTopComponent extends TopComponent {
      */
     @Subscribe
     void handleDetailsVisibleEvent(DiscoveryEventUtils.DetailsVisibleEvent detailsVisibleEvent) {
-        if (resultsPanel.getActiveType() != DOMAIN) {
-            if (animator != null && animator.isRunning()) {
-                animator.stop();
-                animator = null;
-            }
-            dividerLocation = rightSplitPane.getDividerLocation();
-            if (detailsVisibleEvent.isShowDetailsArea()) {
-                animator = new SwingAnimator(new ShowDetailsAreaCallback());
-            } else {
-                animator = new SwingAnimator(new HideDetailsAreaCallback());
-            }
-            animator.start();
+        if (animator != null && animator.isRunning()) {
+            animator.stop();
+            animator = null;
         }
+        dividerLocation = rightSplitPane.getDividerLocation();
+        if (detailsVisibleEvent.isShowDetailsArea()) {
+            animator = new SwingAnimator(new ShowDetailsAreaCallback());
+        } else {
+            animator = new SwingAnimator(new HideDetailsAreaCallback());
+        }
+        animator.start();
     }
 
     /**

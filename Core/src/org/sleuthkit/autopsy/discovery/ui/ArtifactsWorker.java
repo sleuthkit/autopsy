@@ -19,33 +19,29 @@
 package org.sleuthkit.autopsy.discovery.ui;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
-import static javax.swing.JComponent.TOOL_TIP_TEXT_KEY;
 import javax.swing.SwingWorker;
 import org.apache.commons.lang3.StringUtils;
-import org.openide.util.Exceptions;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils;
 import org.sleuthkit.autopsy.discovery.search.DomainSearch;
 import org.sleuthkit.autopsy.discovery.search.DomainSearchArtifactsRequest;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
-/**
- *
- * @author wschaefer
- */
 public class ArtifactsWorker extends SwingWorker<List<BlackboardArtifact>, Void> {
 
-    private final BlackboardArtifact.ARTIFACT_TYPE artifactType = null;
+    private BlackboardArtifact.ARTIFACT_TYPE artifactType = null;
     private final static Logger logger = Logger.getLogger(ArtifactsWorker.class.getName());
-    private final String domain = null;
+    private final String domain;
 
+    ArtifactsWorker(BlackboardArtifact.ARTIFACT_TYPE artifactType, String domain){
+        this.artifactType = artifactType;
+        this.domain = domain;
+    }
+    
     @Override
     protected List<BlackboardArtifact> doInBackground() throws Exception {
         if (artifactType != null && !StringUtils.isBlank(domain)) {
@@ -55,6 +51,8 @@ public class ArtifactsWorker extends SwingWorker<List<BlackboardArtifact>, Void>
         return new ArrayList<>();
     }
 
+    
+    
     @Override
     protected void done() {
         List<BlackboardArtifact> listOfArtifacts = new ArrayList<>();

@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.discovery.ui;
 
 import javax.swing.DefaultListModel;
+import javax.swing.event.ListSelectionListener;
 
 /**
  * A JPanel to display domain summaries.
@@ -56,7 +57,7 @@ public class DomainSummaryViewer extends javax.swing.JPanel {
     private void initComponents() {
 
         domainScrollPane = new javax.swing.JScrollPane();
-        javax.swing.JList<DomainWrapper> domainList = new javax.swing.JList<>();
+        domainList = new javax.swing.JList<>();
 
         setLayout(new java.awt.BorderLayout());
 
@@ -69,6 +70,7 @@ public class DomainSummaryViewer extends javax.swing.JPanel {
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JList<DomainWrapper> domainList;
     private javax.swing.JScrollPane domainScrollPane;
     // End of variables declaration//GEN-END:variables
 
@@ -82,5 +84,32 @@ public class DomainSummaryViewer extends javax.swing.JPanel {
         synchronized (this) {
             domainListModel.addElement(domainWrapper);
         }
+    }
+
+    /**
+     * Get the list of AbstractFiles which are represented by the selected
+     * document preview.
+     *
+     * @return The list of AbstractFiles which are represented by the selected
+     *         document preview.
+     */
+    String getDomainForSelected() {
+        synchronized (this) {
+            if (domainList.getSelectedIndex() == -1) {
+                return "";
+            } else {
+                return domainListModel.getElementAt(domainList.getSelectedIndex()).getResultDomain().getDomain();
+            }
+        }
+    }
+
+    /**
+     * Add a selection listener to the list of document previews being
+     * displayed.
+     *
+     * @param listener The ListSelectionListener to add to the selection model.
+     */
+    void addListSelectionListener(ListSelectionListener listener) {
+        domainList.getSelectionModel().addListSelectionListener(listener);
     }
 }

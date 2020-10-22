@@ -20,22 +20,29 @@ package org.sleuthkit.autopsy.discovery.ui;
 
 import com.google.common.eventbus.Subscribe;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import org.sleuthkit.autopsy.contentviewers.artifactviewers.ArtifactContentViewer;
+import org.sleuthkit.autopsy.contentviewers.artifactviewers.DefaultArtifactContentViewer;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
-/**
- *
- * @author wschaefer
- */
-public final class DomainArtifactsTabPanel extends javax.swing.JSplitPane {
+public final class DomainArtifactsTabPanel extends JPanel {
 
     private static final long serialVersionUID = 1L;
     private final ArtifactsListPanel listPanel = new ArtifactsListPanel();
     private final BlackboardArtifact.ARTIFACT_TYPE artifactType;
     private AbstractArtifactDetailsPanel rightPanel = null;
+
+    private volatile ARTIFACT_RETRIEVAL_STATUS status = ARTIFACT_RETRIEVAL_STATUS.UNPOPULATED;
+    private final ListSelectionListener listener = new ListSelectionListener() {
+        @Override
+        public void valueChanged(ListSelectionEvent event) {
+            if (!event.getValueIsAdjusting()) {
+                rightPanel.setArtifact(listPanel.getSelectedArtifact());
+            }
+        }
+    };
 
     /**
      * Creates new form CookiesPanel
@@ -43,46 +50,65 @@ public final class DomainArtifactsTabPanel extends javax.swing.JSplitPane {
     public DomainArtifactsTabPanel(BlackboardArtifact.ARTIFACT_TYPE artifactType) {
         initComponents();
         this.artifactType = artifactType;
-        this.setLeftComponent(listPanel);
+        jSplitPane1.setLeftComponent(listPanel);
         setRightComponent();
-        update();
     }
 
     private void setRightComponent() {
-       
+
         switch (artifactType) {
-            case TSK_WEB_COOKIE:
-                rightPanel = new CookieDetailsPanel();
+            case TSK_WEB_HISTORY:
+                rightPanel = new WebHistoryDetailsPanel();
                 break;
+            case TSK_WEB_COOKIE:
+            case TSK_WEB_SEARCH_QUERY:
+            case TSK_WEB_BOOKMARK:
+            case TSK_WEB_DOWNLOAD:
+            case TSK_WEB_CACHE:
             default:
+                rightPanel = new DefaultArtifactContentViewer();
                 break;
         }
-        if (rightPanel == null) {
-            getComponent(1).setVisible(false);
-            getComponent(2).setVisible(false);
-        } else {
-            this.setRightComponent(rightPanel);
-            getComponent(1).setVisible(true);
-            getComponent(2).setVisible(true);
+        if (rightPanel != null) {
+            jSplitPane1.setRightComponent(rightPanel);
         }
     }
 
-    private void update() {
-        this.setEnabled(!this.listPanel.isEmpty());
+    ARTIFACT_RETRIEVAL_STATUS getStatus() {
+        return status;
+    }
+
+    void setStatus(ARTIFACT_RETRIEVAL_STATUS status) {
+        this.status = status;
     }
 
     @Subscribe
     void handleArtifactListRetrievedEvent(DiscoveryEventUtils.ArtifactListRetrievedEvent artifactListEvent) {
-        if (artifactType == artifactListEvent.getArtifactType()) {
-            listPanel.addArtifacts(artifactListEvent.getListOfArtifacts());
-            listPanel.addSelectionListener(new ListSelectionListener() {
-                public void valueChanged(ListSelectionEvent event) {
-                    if (!event.getValueIsAdjusting()){
-                        rightPanel.setArtifact(listPanel.getSelectedArtifact());
-                    }
+        SwingUtilities.invokeLater(() -> {
+            if (artifactType == artifactListEvent.getArtifactType()) {
+                if (artifactListEvent.getListOfArtifacts().isEmpty()) {
+                    listPanel.clearArtifacts();
+                    setEnabled(false);
+                } else {
+                    setEnabled(true);
+                    listPanel.removeListSelectionListener(listener);
+                    listPanel.addArtifacts(artifactListEvent.getListOfArtifacts());
+                    listPanel.addSelectionListener(listener);
                 }
-            });
-        }
+                try {
+                    DiscoveryEventUtils.getDiscoveryEventBus().unregister(this);
+                } catch (IllegalArgumentException notRegistered) {
+                    // attempting to remove a tab that was never registered
+                }
+                status = ARTIFACT_RETRIEVAL_STATUS.POPULATED;
+                validate();
+                repaint();
+            }
+        });
+    }
+
+    BlackboardArtifact.ARTIFACT_TYPE getArtifactType() {
+        return artifactType;
     }
 
     /**
@@ -94,19 +120,21 @@ public final class DomainArtifactsTabPanel extends javax.swing.JSplitPane {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 400, Short.MAX_VALUE)
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 300, Short.MAX_VALUE)
-        );
+        jSplitPane1 = new javax.swing.JSplitPane();
+
+        setLayout(new java.awt.BorderLayout());
+        add(jSplitPane1, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JSplitPane jSplitPane1;
     // End of variables declaration//GEN-END:variables
+
+    public enum ARTIFACT_RETRIEVAL_STATUS {
+        UNPOPULATED(),
+        POPULATING(),
+        POPULATED();
+    }
+
 }

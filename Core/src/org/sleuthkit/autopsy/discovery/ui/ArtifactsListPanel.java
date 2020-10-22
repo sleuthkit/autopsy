@@ -20,44 +20,55 @@ package org.sleuthkit.autopsy.discovery.ui;
 
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.JPanel;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
+import org.apache.commons.lang.StringUtils;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.TskCoreException;
 
-/**
- *
- * @author wschaefer
- */
-public class ArtifactsListPanel extends javax.swing.JScrollPane {
+public class ArtifactsListPanel extends JPanel {
 
     private static final long serialVersionUID = 1L;
+    private final DomainArtifactTableModel tableModel = new DomainArtifactTableModel();
 
     /**
      * Creates new form ArtifactsListPanel
      */
     public ArtifactsListPanel() {
         initComponents();
+
     }
 
     public void addSelectionListener(ListSelectionListener listener) {
         jTable1.getSelectionModel().addListSelectionListener(listener);
     }
 
+    public void removeListSelectionListener(ListSelectionListener listener) {
+        jTable1.getSelectionModel().removeListSelectionListener(listener);
+    }
+
     public BlackboardArtifact getSelectedArtifact() {
-        return ((DomainArtifactTableModel) jTable1.getSelectionModel()).getArtifactByRow(jTable1.getSelectionModel().getLeadSelectionIndex());
+        return ((DomainArtifactTableModel) jTable1.getModel()).getArtifactByRow(jTable1.getSelectionModel().getLeadSelectionIndex());
     }
 
     public boolean isEmpty() {
-        return false;
+        return tableModel.getRowCount() <= 0;
     }
 
     public void addArtifacts(List<BlackboardArtifact> artifactList) {
-        jTable1.setModel(new DomainArtifactTableModel(artifactList));
+        tableModel.setContents(artifactList);
+        jTable1.validate();
+        jTable1.repaint();
+        tableModel.fireTableDataChanged();
     }
 
     public void clearArtifacts() {
-        jTable1.setModel(new DomainArtifactTableModel());
+        tableModel.setContents(new ArrayList<>());
+        tableModel.fireTableDataChanged();
     }
 
     /**
@@ -68,24 +79,33 @@ public class ArtifactsListPanel extends javax.swing.JScrollPane {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        jScrollPane1 = new javax.swing.JScrollPane();
         jTable1 = new javax.swing.JTable();
 
         setLayout(new java.awt.BorderLayout());
 
-        jTable1.setModel(new DomainArtifactTableModel());
-        add(jTable1, java.awt.BorderLayout.PAGE_START);
+        jTable1.setModel(tableModel);
+        jScrollPane1.setViewportView(jTable1);
+
+        add(jScrollPane1, java.awt.BorderLayout.PAGE_START);
     }// </editor-fold>//GEN-END:initComponents
-  private class DomainArtifactTableModel extends AbstractTableModel {
+
+    void addListener(ListSelectionListener listSelectionListener) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    private class DomainArtifactTableModel extends AbstractTableModel {
 
         private static final long serialVersionUID = 1L;
         private final List<BlackboardArtifact> artifactList = new ArrayList<>();
 
-        DomainArtifactTableModel(){
+        DomainArtifactTableModel() {
             //No arg constructor to create empty model
         }
-        
-        DomainArtifactTableModel(List<BlackboardArtifact> artifactList) {
-            this.artifactList.addAll(artifactList);
+
+        void setContents(List<BlackboardArtifact> artifacts) {
+            artifactList.clear();
+            artifactList.addAll(artifacts);
         }
 
         @Override
@@ -104,25 +124,51 @@ public class ArtifactsListPanel extends javax.swing.JScrollPane {
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            switch (columnIndex) {
-                case 0:
-                    return getArtifactByRow(rowIndex);
-                case 1:
-                    return getArtifactByRow(rowIndex);
-                default:
-                    return getArtifactByRow(rowIndex);
+            Object returnValue = null;
+            String url = "";
+            try {
+                for (BlackboardAttribute bba : getArtifactByRow(rowIndex).getAttributes()) {
+                    if (bba.getAttributeType().getTypeName().startsWith("TSK_URL")) {
+                        url = bba.getDisplayString();
+                        continue;
+                    }
+                    switch (columnIndex) {
+                        case 0:
+                            if (bba.getAttributeType().getTypeName().startsWith("TSK_DATETIME_ACCESSED") && !StringUtils.isBlank(bba.getDisplayString())) {
+                                returnValue = bba.getDisplayString();
+                            }
+                            break;
+                        case 1:
+                            if (bba.getAttributeType().getTypeName().startsWith("TSK_TITLE") && !StringUtils.isBlank(bba.getDisplayString())) {
+                                returnValue = bba.getDisplayString();
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            } catch (TskCoreException ex) {
+                Exceptions.printStackTrace(ex);
             }
+            if (returnValue == null) {
+                if (columnIndex == 0) {
+                    returnValue = "No Date";
+                } else {
+                    returnValue = url;
+                }
+            }
+            return returnValue;
         }
 
-        @NbBundle.Messages({"ArtifactsListPanel.urlColumn.name=URL",
+        @NbBundle.Messages({"ArtifactsListPanel.titleColumn.name=Title",
             "ArtifactsListPanel.dateColumn.name=Date/Time"})
         @Override
         public String getColumnName(int column) {
             switch (column) {
                 case 0:
-                    return Bundle.ArtifactsListPanel_urlColumn_name();
-                case 1:
                     return Bundle.ArtifactsListPanel_dateColumn_name();
+                case 1:
+                    return Bundle.ArtifactsListPanel_titleColumn_name();
                 default:
                     return "";
             }
@@ -130,6 +176,7 @@ public class ArtifactsListPanel extends javax.swing.JScrollPane {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTable jTable1;
     // End of variables declaration//GEN-END:variables
 }

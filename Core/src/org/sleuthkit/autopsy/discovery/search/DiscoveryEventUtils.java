@@ -126,6 +126,27 @@ public final class DiscoveryEventUtils {
         }
     }
 
+    public static final class PopulateDomainTabsEvent {
+
+        private final String domain;
+
+        /**
+         * Construct a new PopulateDomainTabsEvent.
+         */
+        public PopulateDomainTabsEvent(String domain) {
+            this.domain = domain;
+        }
+
+        /**
+         * Get the domain for the details area.
+         *
+         * @return The the domain for the details area.
+         */
+        public String getDomain() {
+            return domain;
+        }
+    }
+
     /**
      * Event to signal the completion of a search being performed.
      */
