@@ -122,10 +122,12 @@ public class ArtifactsListPanel extends JPanel {
             return artifactList.get(rowIndex);
         }
 
+        @NbBundle.Messages({"ArtifactsListPanel.value.noValue=No value available."})
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
             Object returnValue = null;
             String url = "";
+            String otherDate = "";
             try {
                 for (BlackboardAttribute bba : getArtifactByRow(rowIndex).getAttributes()) {
                     if (bba.getAttributeType().getTypeName().startsWith("TSK_URL")) {
@@ -136,6 +138,8 @@ public class ArtifactsListPanel extends JPanel {
                         case 0:
                             if (bba.getAttributeType().getTypeName().startsWith("TSK_DATETIME_ACCESSED") && !StringUtils.isBlank(bba.getDisplayString())) {
                                 returnValue = bba.getDisplayString();
+                            } else if (bba.getAttributeType().getTypeName().startsWith("TSK_DATETIME") && !StringUtils.isBlank(bba.getDisplayString())) {
+                                otherDate = bba.getDisplayString();
                             }
                             break;
                         case 1:
@@ -151,10 +155,12 @@ public class ArtifactsListPanel extends JPanel {
                 Exceptions.printStackTrace(ex);
             }
             if (returnValue == null) {
-                if (columnIndex == 0) {
-                    returnValue = "No Date";
-                } else {
+                if (columnIndex == 0 && !StringUtils.isBlank(otherDate)) {
+                    returnValue = otherDate;
+                } else if (columnIndex == 1 && !StringUtils.isBlank(url)) {
                     returnValue = url;
+                } else {
+                    returnValue = Bundle.ArtifactsListPanel_value_noValue();
                 }
             }
             return returnValue;
