@@ -58,8 +58,6 @@ public final class CoordinationService {
     private final CuratorFramework curator;
     @GuardedBy("categoryNodeToPath")
     private final Map<String, String> categoryNodeToPath;
-    private final String zkHost;
-    private final String zkPort;
 
     /**
      * Gets the coordination service for maintaining configuration information
@@ -124,14 +122,11 @@ public final class CoordinationService {
         
         // We are using ZK for all coordination/locking, so ZK connection info cannot be changed.
         // A reboot is required in order to use a different ZK server for coordination services.
-        zkHost = hostName;
-        zkPort = port;
-
         /*
          * Connect to ZooKeeper via Curator.
          */
         RetryPolicy retryPolicy = new ExponentialBackoffRetry(1000, 3);
-        String connectString = zkHost + ":" + zkPort;
+        String connectString = hostName + ":" + port;
         curator = CuratorFrameworkFactory.newClient(connectString, SESSION_TIMEOUT_MILLISECONDS, CONNECTION_TIMEOUT_MILLISECONDS, retryPolicy);
         curator.start();
 

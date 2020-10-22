@@ -35,6 +35,7 @@ import java.net.ServerSocket;
 import java.net.SocketException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -47,7 +48,6 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
-import static java.util.stream.Collectors.toList;
 import javax.swing.AbstractAction;
 import org.apache.commons.io.FileUtils;
 import java.util.concurrent.TimeoutException;
@@ -80,6 +80,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.autopsy.core.UserPreferences;
+import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
@@ -280,27 +281,33 @@ public class Server {
         javaPath = PlatformUtil.getJavaPath();
 
         Path solr8Home = Paths.get(PlatformUtil.getUserDirectory().getAbsolutePath(), "solr"); //NON-NLS
-        if (!solr8Home.toFile().exists()) {
-            try {
+        try {
+            // Always copy the config files, as they may have changed. Otherwise potentially stale Solr configuration is being used.
+            if (!solr8Home.toFile().exists()) {
                 Files.createDirectory(solr8Home);
-                Files.copy(Paths.get(solr8Folder.getAbsolutePath(), "server", "solr", "solr.xml"), solr8Home.resolve("solr.xml")); //NON-NLS
-                Files.copy(Paths.get(solr8Folder.getAbsolutePath(), "server", "solr", "zoo.cfg"), solr8Home.resolve("zoo.cfg")); //NON-NLS
-                FileUtils.copyDirectory(Paths.get(solr8Folder.getAbsolutePath(), "server", "solr", "configsets").toFile(), solr8Home.resolve("configsets").toFile()); //NON-NLS
-            } catch (IOException ex) {
-                logger.log(Level.SEVERE, "Failed to create Solr home folder:", ex); //NON-NLS
+            } else {
+                // delete the configsets directory as the Autopsy configset could have changed
+                FileUtil.deleteDir(solr8Home.resolve("configsets").toFile());
             }
+            Files.copy(Paths.get(solr8Folder.getAbsolutePath(), "server", "solr", "solr.xml"), solr8Home.resolve("solr.xml"), REPLACE_EXISTING); //NON-NLS
+            Files.copy(Paths.get(solr8Folder.getAbsolutePath(), "server", "solr", "zoo.cfg"), solr8Home.resolve("zoo.cfg"), REPLACE_EXISTING); //NON-NLS
+            FileUtils.copyDirectory(Paths.get(solr8Folder.getAbsolutePath(), "server", "solr", "configsets").toFile(), solr8Home.resolve("configsets").toFile()); //NON-NLS
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Failed to create Solr 8 home folder:", ex); //NON-NLS
         }
         
         Path solr4Home = Paths.get(PlatformUtil.getUserDirectory().getAbsolutePath(), "solr4"); //NON-NLS
-        if (!solr4Home.toFile().exists()) { 
-            try {
+        try {
+            // Always copy the config files, as they may have changed. Otherwise potentially stale Solr configuration is being used.
+            if (!solr4Home.toFile().exists()) {
                 Files.createDirectory(solr4Home);
-                Files.copy(Paths.get(solr4Folder.getAbsolutePath(), "solr", "solr.xml"), solr4Home.resolve("solr.xml")); //NON-NLS
-                Files.copy(Paths.get(solr4Folder.getAbsolutePath(), "solr", "zoo.cfg"), solr4Home.resolve("zoo.cfg")); //NON-NLS
-            } catch (IOException ex) {
-                logger.log(Level.SEVERE, "Failed to create Solr home folder:", ex); //NON-NLS
-            }
+            }          
+            Files.copy(Paths.get(solr4Folder.getAbsolutePath(), "solr", "solr.xml"), solr4Home.resolve("solr.xml"), REPLACE_EXISTING); //NON-NLS
+            Files.copy(Paths.get(solr4Folder.getAbsolutePath(), "solr", "zoo.cfg"), solr4Home.resolve("zoo.cfg"), REPLACE_EXISTING); //NON-NLS
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Failed to create Solr 4 home folder:", ex); //NON-NLS
         }
+
         currentCoreLock = new ReentrantReadWriteLock(true);
 
         logger.log(Level.INFO, "Created Server instance using Java at {0}", javaPath); //NON-NLS
@@ -335,13 +342,11 @@ public class Server {
     
     private HttpSolrClient getSolrClient(String solrUrl) {
         int connectionTimeoutMs = org.sleuthkit.autopsy.keywordsearch.UserPreferences.getConnectionTimeout();
-        HttpSolrClient client = new HttpSolrClient.Builder(solrUrl)
+        return new HttpSolrClient.Builder(solrUrl)
                 .withSocketTimeout(connectionTimeoutMs)
                 .withConnectionTimeout(connectionTimeoutMs)
                 .withResponseParser(new XMLResponseParser())
                 .build();
-
-        return client;
     }
 
     private ConcurrentUpdateSolrClient getConcurrentClient(String solrUrl) {
@@ -663,7 +668,7 @@ public class Server {
     void startLocalSolr(SOLR_VERSION version) throws KeywordSearchModuleException, SolrServerNoPortException, SolrServerException {
         
         if (isLocalSolrRunning()) {
-            if (localServerVersion == version) {
+            if (localServerVersion.equals(version)) {
                 // this version of local server is already running
                 return;
             } else {
