@@ -46,6 +46,7 @@ class ArtifactsListPanel extends JPanel {
      */
     ArtifactsListPanel() {
         initComponents();
+        jTable1.getRowSorter().toggleSortOrder(0);
 
     }
 
@@ -187,13 +188,16 @@ class ArtifactsListPanel extends JPanel {
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
             try {
+                int artifactTypeId = getArtifactByRow(rowIndex).getArtifactTypeID();
+                if (columnIndex == 1 && (artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID() || artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID())) {
+                    return getArtifactByRow(rowIndex).getParent().getName();
+                }
                 for (BlackboardAttribute bba : getArtifactByRow(rowIndex).getAttributes()) {
                     if (columnIndex == 0 && bba.getAttributeType().getTypeName().startsWith("TSK_DATETIME_ACCESSED") && !StringUtils.isBlank(bba.getDisplayString())) {
                         return bba.getDisplayString();
                     } else if (columnIndex == 1 && bba.getAttributeType().getTypeName().startsWith("TSK_TITLE") && !StringUtils.isBlank(bba.getDisplayString())) {
                         return bba.getDisplayString();
                     }
-
                 }
                 return getFallbackValue(rowIndex, columnIndex);
             } catch (TskCoreException ex) {
