@@ -36,7 +36,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
  */
 class ArtifactsWorker extends SwingWorker<List<BlackboardArtifact>, Void> {
 
-    private BlackboardArtifact.ARTIFACT_TYPE artifactType = null;
+    private final BlackboardArtifact.ARTIFACT_TYPE artifactType;
     private final static Logger logger = Logger.getLogger(ArtifactsWorker.class.getName());
     private final String domain;
 

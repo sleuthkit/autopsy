@@ -120,12 +120,10 @@ class ArtifactsListPanel extends JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jScrollPane1 = new javax.swing.JScrollPane();
+        javax.swing.JScrollPane jScrollPane1 = new javax.swing.JScrollPane();
         jTable1 = new javax.swing.JTable();
 
         setLayout(new java.awt.BorderLayout());
-
-        jScrollPane1.setPreferredSize(null);
 
         jTable1.setAutoCreateRowSorter(true);
         jTable1.setModel(tableModel);
@@ -191,10 +189,6 @@ class ArtifactsListPanel extends JPanel {
             String otherDate = "";
             try {
                 for (BlackboardAttribute bba : getArtifactByRow(rowIndex).getAttributes()) {
-                    if (bba.getAttributeType().getTypeName().startsWith("TSK_URL")) {
-                        url = bba.getDisplayString();
-                        continue;
-                    }
                     switch (columnIndex) {
                         case 0:
                             if (bba.getAttributeType().getTypeName().startsWith("TSK_DATETIME_ACCESSED") && !StringUtils.isBlank(bba.getDisplayString())) {
@@ -206,6 +200,8 @@ class ArtifactsListPanel extends JPanel {
                         case 1:
                             if (bba.getAttributeType().getTypeName().startsWith("TSK_TITLE") && !StringUtils.isBlank(bba.getDisplayString())) {
                                 returnValue = bba.getDisplayString();
+                            } else if (bba.getAttributeType().getTypeName().startsWith("TSK_URL") && !StringUtils.isBlank(bba.getDisplayString())) {
+                                url = bba.getDisplayString();
                             }
                             break;
                         default:
@@ -243,7 +239,6 @@ class ArtifactsListPanel extends JPanel {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTable jTable1;
     // End of variables declaration//GEN-END:variables
 }

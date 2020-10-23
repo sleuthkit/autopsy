@@ -106,14 +106,21 @@
         <copy file="${basedir}/NEWS.txt" tofile="${zip-tmp}/${app.name}/NEWS.txt"/>
         <copy file="${basedir}/Running_Linux_OSX.txt" tofile="${zip-tmp}/${app.name}/Running_Linux_OSX.txt"/>
         <copy file="${basedir}/unix_setup.sh" tofile="${zip-tmp}/${app.name}/unix_setup.sh"/>
-        <copy file="${basedir}/ManifestTool/ManifestTool.exe" todir="${zip-tmp}/${app.name}/bin"/>
-            
+        <copy file="${basedir}/ManifestTool/ManifestTool.exe" todir="${zip-tmp}/${app.name}/bin"/>        
         
         <copy file="${basedir}/icons/icon.ico" tofile="${zip-tmp}/${app.name}/icon.ico" overwrite="true"/>
         
         <!-- Copy the Autopsy documentation to the docs folder -->
         <copy flatten="true" todir="${zip-tmp}/${app.name}/docs">
             <fileset dir="${basedir}/docs/doxygen-user/user-docs"/>
+        </copy>
+        
+        <!-- Copy the ZooKeeper migration tool, it's JAR files, and documentation -->
+        <copy flatten="false" todir="${zip-tmp}/${app.name}/autopsy/ZookeeperNodeMigration">
+            <fileset dir="${basedir}/ZookeeperNodeMigration/dist"/>
+        </copy>
+        <copy flatten="false" todir="${zip-tmp}/${app.name}/autopsy/ZookeeperNodeMigration" overwrite="true">
+            <fileset dir="${basedir}/ZookeeperNodeMigration/docs"/>
         </copy>
 
         <property name="app.property.file" value="${zip-tmp}/${app.name}/etc/${app.name}.conf" />
