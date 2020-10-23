@@ -54,6 +54,7 @@ import com.google.gson.JsonArray;
 import java.util.Locale;
 import java.util.Map;
 import javax.swing.SwingUtilities;
+import org.sleuthkit.autopsy.discovery.ui.AbstractArtifactDetailsPanel;
 //import org.sleuthkit.autopsy.contentviewers.Bundle;
 
 /**
@@ -62,7 +63,7 @@ import javax.swing.SwingUtilities;
  */
 
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
-public class DefaultArtifactContentViewer extends javax.swing.JPanel implements ArtifactContentViewer {
+public class DefaultArtifactContentViewer extends AbstractArtifactDetailsPanel implements ArtifactContentViewer {
 
     @NbBundle.Messages({
         "DefaultArtifactContentViewer.attrsTableHeader.type=Type",
