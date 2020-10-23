@@ -29,6 +29,10 @@ import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.autopsy.discovery.search.SearchData;
 
+/**
+ * Panel to display details area for domain discovery results.
+ *
+ */
 final class DomainDetailsPanel extends JPanel {
 
     private static final long serialVersionUID = 1L;
@@ -76,13 +80,13 @@ final class DomainDetailsPanel extends JPanel {
     private void runDomainWorker() {
         SwingUtilities.invokeLater(() -> {
             Component selectedComponent = jTabbedPane1.getSelectedComponent();
-            if (selectedComponent != null && selectedComponent instanceof DomainArtifactsTabPanel) {
+            if (selectedComponent instanceof DomainArtifactsTabPanel) {
                 if (detailsWorker != null && !detailsWorker.isDone()) {
                     detailsWorker.cancel(true);
                 }
                 DomainArtifactsTabPanel selectedTab = (DomainArtifactsTabPanel) selectedComponent;
-                if (selectedTab.getStatus() == DomainArtifactsTabPanel.ARTIFACT_RETRIEVAL_STATUS.UNPOPULATED) {
-                    selectedTab.setStatus(DomainArtifactsTabPanel.ARTIFACT_RETRIEVAL_STATUS.POPULATING);
+                if (selectedTab.getStatus() == DomainArtifactsTabPanel.ArtifactRetrievalStatus.UNPOPULATED) {
+                    selectedTab.setStatus(DomainArtifactsTabPanel.ArtifactRetrievalStatus.POPULATING);
                     DiscoveryEventUtils.getDiscoveryEventBus().register(selectedTab);
                     detailsWorker = new ArtifactsWorker(selectedTab.getArtifactType(), domain);
                     detailsWorker.execute();

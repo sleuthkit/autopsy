@@ -71,8 +71,6 @@ public class WebHistoryDetailsPanel extends AbstractArtifactDetailsPanel impleme
                 Exceptions.printStackTrace(ex);
             }
             updateView();
-        } else {
-
         }
         this.setLayout(this.gridBagLayout);
         this.revalidate();

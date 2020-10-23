@@ -19,12 +19,14 @@
 package org.sleuthkit.autopsy.discovery.ui;
 
 import com.google.common.eventbus.Subscribe;
+import java.util.logging.Level;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.sleuthkit.autopsy.contentviewers.artifactviewers.DefaultArtifactContentViewer;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
@@ -34,11 +36,12 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 final class DomainArtifactsTabPanel extends JPanel {
 
     private static final long serialVersionUID = 1L;
+    private final static Logger logger = Logger.getLogger(DomainArtifactsTabPanel.class.getName());
     private final ArtifactsListPanel listPanel = new ArtifactsListPanel();
     private final BlackboardArtifact.ARTIFACT_TYPE artifactType;
     private AbstractArtifactDetailsPanel rightPanel = null;
 
-    private volatile ARTIFACT_RETRIEVAL_STATUS status = ARTIFACT_RETRIEVAL_STATUS.UNPOPULATED;
+    private volatile ArtifactRetrievalStatus status = ArtifactRetrievalStatus.UNPOPULATED;
     private final ListSelectionListener listener = new ListSelectionListener() {
         @Override
         public void valueChanged(ListSelectionEvent event) {
@@ -85,18 +88,18 @@ final class DomainArtifactsTabPanel extends JPanel {
     /**
      * Get the status of the panel which indicates if it is populated.
      *
-     * @return The ARTIFACT_RETRIEVAL_STATUS of the panel.
+     * @return The ArtifactRetrievalStatuss of the panel.
      */
-    ARTIFACT_RETRIEVAL_STATUS getStatus() {
+    ArtifactRetrievalStatus getStatus() {
         return status;
     }
 
     /**
      * Manually set the status of the panel.
      *
-     * @param status The ARTIFACT_RETRIEVAL_STATUS of the panel.
+     * @param status The ArtifactRetrievalStatus of the panel.
      */
-    void setStatus(ARTIFACT_RETRIEVAL_STATUS status) {
+    void setStatus(ArtifactRetrievalStatus status) {
         this.status = status;
     }
 
@@ -110,9 +113,10 @@ final class DomainArtifactsTabPanel extends JPanel {
                 try {
                     DiscoveryEventUtils.getDiscoveryEventBus().unregister(this);
                 } catch (IllegalArgumentException notRegistered) {
+                    logger.log(Level.INFO, "Attempting to unregister tab which was not registered");
                     // attempting to remove a tab that was never registered
                 }
-                status = ARTIFACT_RETRIEVAL_STATUS.POPULATED;
+                status = ArtifactRetrievalStatus.POPULATED;
                 setEnabled(!listPanel.isEmpty());
                 validate();
                 repaint();
@@ -152,7 +156,7 @@ final class DomainArtifactsTabPanel extends JPanel {
     /**
      * Enum to keep track of the populated state of this panel.
      */
-    enum ARTIFACT_RETRIEVAL_STATUS {
+    enum ArtifactRetrievalStatus {
         UNPOPULATED(),
         POPULATING(),
         POPULATED();
