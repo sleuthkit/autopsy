@@ -71,8 +71,12 @@ final class DomainArtifactsTabPanel extends JPanel {
             case TSK_WEB_COOKIE:
             case TSK_WEB_SEARCH_QUERY:
             case TSK_WEB_BOOKMARK:
+                rightPanel = new DefaultArtifactContentViewer();
+                break;
             case TSK_WEB_DOWNLOAD:
             case TSK_WEB_CACHE:
+                rightPanel = new ContentViewerDetailsPanel();
+                break;
             default:
                 rightPanel = new DefaultArtifactContentViewer();
                 break;
