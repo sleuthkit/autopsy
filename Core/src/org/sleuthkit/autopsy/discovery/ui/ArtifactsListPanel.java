@@ -187,22 +187,21 @@ class ArtifactsListPanel extends JPanel {
         @NbBundle.Messages({"ArtifactsListPanel.value.noValue=No value available."})
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            int convertedRowIndex = rowIndex;//jTable1.convertRowIndexToModel(rowIndex);
             try {
-                int artifactTypeId = getArtifactByRow(convertedRowIndex).getArtifactTypeID();
+                int artifactTypeId = getArtifactByRow(rowIndex).getArtifactTypeID();
                 if (columnIndex == 1 && (artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID() || artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID())) {
-                    return getArtifactByRow(convertedRowIndex).getParent().getName();
+                    return getArtifactByRow(rowIndex).getParent().getName();
                 }
-                for (BlackboardAttribute bba : getArtifactByRow(convertedRowIndex).getAttributes()) {
+                for (BlackboardAttribute bba : getArtifactByRow(rowIndex).getAttributes()) {
                     if (columnIndex == 0 && bba.getAttributeType().getTypeName().startsWith("TSK_DATETIME_ACCESSED") && !StringUtils.isBlank(bba.getDisplayString())) {
                         return bba.getDisplayString();
                     } else if (columnIndex == 1 && bba.getAttributeType().getTypeName().startsWith("TSK_TITLE") && !StringUtils.isBlank(bba.getDisplayString())) {
                         return bba.getDisplayString();
                     }
                 }
-                return getFallbackValue(convertedRowIndex, columnIndex);
+                return getFallbackValue(rowIndex, columnIndex);
             } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, "Error getting attributes for artifact " + getArtifactByRow(convertedRowIndex).getArtifactID(), ex);
+                logger.log(Level.WARNING, "Error getting attributes for artifact " + getArtifactByRow(rowIndex).getArtifactID(), ex);
                 return Bundle.ArtifactsListPanel_value_noValue();
             }
         }
