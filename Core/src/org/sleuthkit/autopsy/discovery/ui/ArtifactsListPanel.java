@@ -126,8 +126,7 @@ class ArtifactsListPanel extends JPanel {
 
         setOpaque(false);
 
-        jScrollPane1.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(ArtifactsListPanel.class, "ArtifactsListPanel.jScrollPane1.border.title"))); // NOI18N
-        jScrollPane1.setPreferredSize(null);
+        jScrollPane1.setBorder(null);
 
         jTable1.setAutoCreateRowSorter(true);
         jTable1.setModel(tableModel);
