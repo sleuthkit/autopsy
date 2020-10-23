@@ -30,43 +30,84 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
 
-public class ArtifactsListPanel extends JPanel {
+/**
+ * Panel to display list of artifacts for selected domain.
+ *
+ */
+class ArtifactsListPanel extends JPanel {
 
     private static final long serialVersionUID = 1L;
     private final DomainArtifactTableModel tableModel = new DomainArtifactTableModel();
 
     /**
-     * Creates new form ArtifactsListPanel
+     * Creates new form ArtifactsListPanel.
      */
-    public ArtifactsListPanel() {
+    ArtifactsListPanel() {
         initComponents();
 
     }
 
-    public void addSelectionListener(ListSelectionListener listener) {
+    /**
+     * Add a listener to the table of artifacts to perform actions when an
+     * artifact is selected.
+     *
+     * @param listener The listener to add to the table of artifacts.
+     */
+    void addSelectionListener(ListSelectionListener listener) {
         jTable1.getSelectionModel().addListSelectionListener(listener);
     }
 
-    public void removeListSelectionListener(ListSelectionListener listener) {
+    /**
+     * Remove a listener from the table of artifacts.
+     *
+     * @param listener The listener to remove from the table of artifacts.
+     */
+    void removeListSelectionListener(ListSelectionListener listener) {
         jTable1.getSelectionModel().removeListSelectionListener(listener);
     }
 
-    public BlackboardArtifact getSelectedArtifact() {
-        return ((DomainArtifactTableModel) jTable1.getModel()).getArtifactByRow(jTable1.getSelectionModel().getLeadSelectionIndex());
+    /**
+     * The artifact which is currently selected, null if no artifact is
+     * selected.
+     *
+     * @return The currently selected BlackboardArtifact or null if none is
+     *         selected.
+     */
+    BlackboardArtifact getSelectedArtifact() {
+        int selectedIndex = jTable1.getSelectionModel().getLeadSelectionIndex();
+        if (selectedIndex < 0 || jTable1.getSelectionModel().getMaxSelectionIndex() < 0 || selectedIndex >= jTable1.getSelectionModel().getMaxSelectionIndex()) {
+            return null;
+        }
+        return tableModel.getArtifactByRow(selectedIndex);
     }
 
-    public boolean isEmpty() {
+    /**
+     * Whether the list of artifacts is empty.
+     *
+     * @return true if the list of artifacts is empty, false if there are
+     *         artifacts.
+     */
+    boolean isEmpty() {
         return tableModel.getRowCount() <= 0;
     }
 
-    public void addArtifacts(List<BlackboardArtifact> artifactList) {
+    /**
+     * Add the specified list of artifacts to the list of artifacts which should
+     * be displayed.
+     *
+     * @param artifactList
+     */
+    void addArtifacts(List<BlackboardArtifact> artifactList) {
         tableModel.setContents(artifactList);
         jTable1.validate();
         jTable1.repaint();
         tableModel.fireTableDataChanged();
     }
 
-    public void clearArtifacts() {
+    /**
+     * Remove all artifacts from the list of artifacts displayed.
+     */
+    void clearArtifacts() {
         tableModel.setContents(new ArrayList<>());
         tableModel.fireTableDataChanged();
     }
@@ -84,25 +125,38 @@ public class ArtifactsListPanel extends JPanel {
 
         setLayout(new java.awt.BorderLayout());
 
+        jScrollPane1.setPreferredSize(null);
+
+        jTable1.setAutoCreateRowSorter(true);
         jTable1.setModel(tableModel);
+        jTable1.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         jScrollPane1.setViewportView(jTable1);
 
         add(jScrollPane1, java.awt.BorderLayout.PAGE_START);
     }// </editor-fold>//GEN-END:initComponents
 
-    void addListener(ListSelectionListener listSelectionListener) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
+    /**
+     * Table model which allows the artifact table in this panel to mimic a list
+     * of artifacts.
+     */
     private class DomainArtifactTableModel extends AbstractTableModel {
 
         private static final long serialVersionUID = 1L;
         private final List<BlackboardArtifact> artifactList = new ArrayList<>();
 
+        /**
+         * Construct a new DomainArtifactTableModel.
+         */
         DomainArtifactTableModel() {
             //No arg constructor to create empty model
         }
 
+        /**
+         * Set the list of artifacts which should be represented by this table
+         * model.
+         *
+         * @param artifacts The list of BlackboardArtifacts to represent.
+         */
         void setContents(List<BlackboardArtifact> artifacts) {
             artifactList.clear();
             artifactList.addAll(artifacts);
@@ -118,7 +172,14 @@ public class ArtifactsListPanel extends JPanel {
             return 2;
         }
 
-        public BlackboardArtifact getArtifactByRow(int rowIndex) {
+        /**
+         * Get the BlackboardArtifact at the specified row.
+         *
+         * @param rowIndex The row the artifact to return is at.
+         *
+         * @return The BlackboardArtifact at the specified row.
+         */
+        BlackboardArtifact getArtifactByRow(int rowIndex) {
             return artifactList.get(rowIndex);
         }
 

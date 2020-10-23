@@ -1,20 +1,7 @@
 /*
- * Autopsy
- *
- * Copyright 2020 Basis Technology Corp.
- * Contact: carrier <at> sleuthkit <dot> org
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
  */
 package org.sleuthkit.autopsy.discovery.ui;
 
@@ -25,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JScrollPane;
 import org.openide.util.Exceptions;
+import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.contentviewers.artifactviewers.ArtifactContentViewer;
 import org.sleuthkit.autopsy.contentviewers.artifactviewers.CommunicationArtifactViewerHelper;
@@ -48,6 +36,7 @@ public class WebHistoryDetailsPanel extends AbstractArtifactDetailsPanel impleme
     private final List<BlackboardAttribute> artifactAttributesList = new ArrayList<>();
     private final GridBagConstraints gridBagConstraints = new GridBagConstraints();
     private String dataSourceName;
+    private String sourceFileName;
 
     /**
      * Creates new form WebHistoryDetailsPanel.
@@ -58,18 +47,17 @@ public class WebHistoryDetailsPanel extends AbstractArtifactDetailsPanel impleme
 
     @Override
     public void setArtifact(BlackboardArtifact artifact) {
-
         resetComponent();
         if (artifact != null) {
-
             try {
                 extractArtifactData(artifact);
             } catch (TskCoreException ex) {
                 Exceptions.printStackTrace(ex);
             }
             updateView();
-        }
+        } else {
 
+        }
         this.setLayout(this.gridBagLayout);
         this.revalidate();
         this.repaint();
@@ -85,15 +73,6 @@ public class WebHistoryDetailsPanel extends AbstractArtifactDetailsPanel impleme
     private void extractArtifactData(BlackboardArtifact artifact) throws TskCoreException {
 
         webHistoryArtifact = artifact;
-
-        urlList.clear();
-        dateAccessedList.clear();
-        referrerUrlList.clear();
-        titleList.clear();
-        programNameList.clear();
-        domainList.clear();
-        otherList.clear();
-        artifactAttributesList.clear();
         artifactAttributesList.addAll(webHistoryArtifact.getAttributes());
         // Get all the attributes and group them by the section panels they go in
         for (BlackboardAttribute bba : artifactAttributesList) {
@@ -112,13 +91,16 @@ public class WebHistoryDetailsPanel extends AbstractArtifactDetailsPanel impleme
             } else {
                 otherList.add(bba);
             }
-            
+
         }
 
         dataSourceName = webHistoryArtifact.getDataSource().getName();
+        sourceFileName = webHistoryArtifact.getParent().getName();
     }
 
     private void resetComponent() {
+        // clear the panel 
+        this.removeAll();
         gridBagConstraints.anchor = GridBagConstraints.FIRST_LINE_START;
         gridBagConstraints.gridy = 0;
         gridBagConstraints.gridx = 0;
@@ -128,16 +110,16 @@ public class WebHistoryDetailsPanel extends AbstractArtifactDetailsPanel impleme
         gridBagConstraints.fill = GridBagConstraints.NONE;
         webHistoryArtifact = null;
         dataSourceName = null;
+        sourceFileName = null;
         urlList.clear();
         dateAccessedList.clear();
         referrerUrlList.clear();
         titleList.clear();
         programNameList.clear();
         domainList.clear();
+        otherList.clear();
         artifactAttributesList.clear();
-        // clear the panel 
-        this.removeAll();
-        this.setLayout(null);
+
     }
 
     @Override
@@ -152,6 +134,10 @@ public class WebHistoryDetailsPanel extends AbstractArtifactDetailsPanel impleme
                 && (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID());
     }
 
+    @NbBundle.Messages({"WebHistoryDetailsPanel.details.attrHeader=Attributes",
+        "WebHistoryDetailsPanel.details.sourceHeader=Source",
+        "WebHistoryDetailsPanel.details.dataSource=Data Source",
+        "WebHistoryDetailsPanel.details.file=File"})
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -174,12 +160,11 @@ public class WebHistoryDetailsPanel extends AbstractArtifactDetailsPanel impleme
     }// </editor-fold>//GEN-END:initComponents
 
     private void updateView() {
-        CommunicationArtifactViewerHelper.addHeader(this, gridBagLayout, gridBagConstraints, "Attributes");
+        CommunicationArtifactViewerHelper.addHeader(this, gridBagLayout, gridBagConstraints, Bundle.WebHistoryDetailsPanel_details_attrHeader());
 
         for (BlackboardAttribute bba : this.titleList) {
             CommunicationArtifactViewerHelper.addRow(this, gridBagLayout, gridBagConstraints, bba.getAttributeType().getDisplayName(), bba.getDisplayString());
         }
-//        CommunicationArtifactViewerHelper.addHeader(this, gridBagLayout, gridBagConstraints, sectionHeader);
         for (BlackboardAttribute bba : dateAccessedList) {
             CommunicationArtifactViewerHelper.addRow(this, gridBagLayout, gridBagConstraints, bba.getAttributeType().getDisplayName(), bba.getDisplayString());
         }
@@ -198,8 +183,9 @@ public class WebHistoryDetailsPanel extends AbstractArtifactDetailsPanel impleme
         for (BlackboardAttribute bba : otherList) {
             CommunicationArtifactViewerHelper.addRow(this, gridBagLayout, gridBagConstraints, bba.getAttributeType().getDisplayName(), bba.getDisplayString());
         }
-        CommunicationArtifactViewerHelper.addHeader(this, gridBagLayout, gridBagConstraints, "Source");
-        CommunicationArtifactViewerHelper.addRow(this, gridBagLayout, gridBagConstraints, "Data Source", dataSourceName);
+        CommunicationArtifactViewerHelper.addHeader(this, gridBagLayout, gridBagConstraints, Bundle.WebHistoryDetailsPanel_details_sourceHeader());
+        CommunicationArtifactViewerHelper.addRow(this, gridBagLayout, gridBagConstraints, Bundle.WebHistoryDetailsPanel_details_dataSource(), dataSourceName);
+        CommunicationArtifactViewerHelper.addRow(this, gridBagLayout, gridBagConstraints, Bundle.WebHistoryDetailsPanel_details_file(), sourceFileName);
         // add veritcal glue at the end
         CommunicationArtifactViewerHelper.addPageEndGlue(this, gridBagLayout, this.gridBagConstraints);
     }

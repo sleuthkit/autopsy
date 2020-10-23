@@ -126,6 +126,9 @@ public final class DiscoveryEventUtils {
         }
     }
 
+        /**
+     * Event to signal that the list should be populated.
+     */
     public static final class PopulateDomainTabsEvent {
 
         private final String domain;

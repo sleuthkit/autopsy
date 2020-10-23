@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.discovery.ui;
 
 import org.sleuthkit.autopsy.discovery.search.AbstractFilter;
 import com.google.common.eventbus.Subscribe;
-import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Image;
 import java.awt.event.ItemEvent;
@@ -33,8 +32,6 @@ import javax.swing.DefaultComboBoxModel;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;

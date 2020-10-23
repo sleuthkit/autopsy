@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.discovery.ui;
 
 import com.google.common.eventbus.Subscribe;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -27,7 +28,10 @@ import org.sleuthkit.autopsy.contentviewers.artifactviewers.DefaultArtifactConte
 import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
-public final class DomainArtifactsTabPanel extends JPanel {
+/**
+ * JPanel which should be used as a tab in the domain artifacts details area.
+ */
+final class DomainArtifactsTabPanel extends JPanel {
 
     private static final long serialVersionUID = 1L;
     private final ArtifactsListPanel listPanel = new ArtifactsListPanel();
@@ -47,11 +51,12 @@ public final class DomainArtifactsTabPanel extends JPanel {
     /**
      * Creates new form CookiesPanel
      */
-    public DomainArtifactsTabPanel(BlackboardArtifact.ARTIFACT_TYPE artifactType) {
+    DomainArtifactsTabPanel(BlackboardArtifact.ARTIFACT_TYPE artifactType) {
         initComponents();
         this.artifactType = artifactType;
         jSplitPane1.setLeftComponent(listPanel);
         setRightComponent();
+        listPanel.addSelectionListener(listener);
     }
 
     private void setRightComponent() {
@@ -70,7 +75,7 @@ public final class DomainArtifactsTabPanel extends JPanel {
                 break;
         }
         if (rightPanel != null) {
-            jSplitPane1.setRightComponent(rightPanel);
+            jSplitPane1.setRightComponent(new JScrollPane(rightPanel));
         }
     }
 
@@ -86,21 +91,16 @@ public final class DomainArtifactsTabPanel extends JPanel {
     void handleArtifactListRetrievedEvent(DiscoveryEventUtils.ArtifactListRetrievedEvent artifactListEvent) {
         SwingUtilities.invokeLater(() -> {
             if (artifactType == artifactListEvent.getArtifactType()) {
-                if (artifactListEvent.getListOfArtifacts().isEmpty()) {
-                    listPanel.clearArtifacts();
-                    setEnabled(false);
-                } else {
-                    setEnabled(true);
-                    listPanel.removeListSelectionListener(listener);
-                    listPanel.addArtifacts(artifactListEvent.getListOfArtifacts());
-                    listPanel.addSelectionListener(listener);
-                }
+                listPanel.removeListSelectionListener(listener);
+                listPanel.addArtifacts(artifactListEvent.getListOfArtifacts());
+                listPanel.addSelectionListener(listener);
                 try {
                     DiscoveryEventUtils.getDiscoveryEventBus().unregister(this);
                 } catch (IllegalArgumentException notRegistered) {
                     // attempting to remove a tab that was never registered
                 }
                 status = ARTIFACT_RETRIEVAL_STATUS.POPULATED;
+                setEnabled(!listPanel.isEmpty());
                 validate();
                 repaint();
             }
@@ -131,7 +131,10 @@ public final class DomainArtifactsTabPanel extends JPanel {
     private javax.swing.JSplitPane jSplitPane1;
     // End of variables declaration//GEN-END:variables
 
-    public enum ARTIFACT_RETRIEVAL_STATUS {
+    /**
+     * Enum to keep track of the populated state of this panel.
+     */
+    enum ARTIFACT_RETRIEVAL_STATUS {
         UNPOPULATED(),
         POPULATING(),
         POPULATED();
