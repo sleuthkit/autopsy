@@ -21,6 +21,10 @@ package org.sleuthkit.autopsy.discovery.ui;
 import javax.swing.JPanel;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
+/**
+ * Class for ensuring all ArtifactDetailsPanels have a setArtifact method.
+ *
+ */
 public abstract class AbstractArtifactDetailsPanel extends JPanel {
 
     private static final long serialVersionUID = 1L;

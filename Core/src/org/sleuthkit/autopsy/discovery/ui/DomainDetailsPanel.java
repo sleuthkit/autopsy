@@ -29,7 +29,6 @@ import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.autopsy.discovery.search.SearchData;
 
-
 final class DomainDetailsPanel extends JPanel {
 
     private static final long serialVersionUID = 1L;
@@ -45,11 +44,14 @@ final class DomainDetailsPanel extends JPanel {
         addArtifactTabs();
     }
 
+    /**
+     * Add the tabs for each of the artifact types which we will be displaying.
+     */
     private void addArtifactTabs() {
         for (BlackboardArtifact.ARTIFACT_TYPE type : SearchData.Type.DOMAIN.getArtifactTypes()) {
             DomainArtifactsTabPanel newTab = new DomainArtifactsTabPanel(type);
             jTabbedPane1.add(type.getDisplayName(), newTab);
-            if (!StringUtils.isBlank(selectedTabName) && type.getDisplayName().equals(selectedTabName) && newTab.isEnabled()) {
+            if (!StringUtils.isBlank(selectedTabName)) {
                 jTabbedPane1.setSelectedComponent(newTab);
             }
         }
@@ -67,6 +69,10 @@ final class DomainDetailsPanel extends JPanel {
         });
     }
 
+    /**
+     * Run the worker which retrieves the list of artifacts for the domain to
+     * populate the details area.
+     */
     private void runDomainWorker() {
         SwingUtilities.invokeLater(() -> {
             Component selectedComponent = jTabbedPane1.getSelectedComponent();
@@ -85,6 +91,9 @@ final class DomainDetailsPanel extends JPanel {
         });
     }
 
+    /**
+     * Clear the tabs of any previous content.
+     */
     private void clearTabs() {
         int tabCount = jTabbedPane1.getTabCount();
         // We invoke removeTabAt for each tab, otherwise we may end up

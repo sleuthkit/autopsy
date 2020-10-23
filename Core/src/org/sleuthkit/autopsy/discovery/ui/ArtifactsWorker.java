@@ -31,17 +31,26 @@ import org.sleuthkit.autopsy.discovery.search.DomainSearch;
 import org.sleuthkit.autopsy.discovery.search.DomainSearchArtifactsRequest;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
-public class ArtifactsWorker extends SwingWorker<List<BlackboardArtifact>, Void> {
+/**
+ * SwingWorker to retrieve a list of artifacts for a specified type and domain.
+ */
+class ArtifactsWorker extends SwingWorker<List<BlackboardArtifact>, Void> {
 
     private BlackboardArtifact.ARTIFACT_TYPE artifactType = null;
     private final static Logger logger = Logger.getLogger(ArtifactsWorker.class.getName());
     private final String domain;
 
-    ArtifactsWorker(BlackboardArtifact.ARTIFACT_TYPE artifactType, String domain){
+    /**
+     * Construct a new ArtifactsWorker.
+     *
+     * @param artifactType The type of artifact being retrieved.
+     * @param domain       The domain the artifacts should have as an attribute.
+     */
+    ArtifactsWorker(BlackboardArtifact.ARTIFACT_TYPE artifactType, String domain) {
         this.artifactType = artifactType;
         this.domain = domain;
     }
-    
+
     @Override
     protected List<BlackboardArtifact> doInBackground() throws Exception {
         if (artifactType != null && !StringUtils.isBlank(domain)) {
@@ -51,8 +60,6 @@ public class ArtifactsWorker extends SwingWorker<List<BlackboardArtifact>, Void>
         return new ArrayList<>();
     }
 
-    
-    
     @Override
     protected void done() {
         List<BlackboardArtifact> listOfArtifacts = new ArrayList<>();

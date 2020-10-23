@@ -59,8 +59,11 @@ final class DomainArtifactsTabPanel extends JPanel {
         listPanel.addSelectionListener(listener);
     }
 
+    /**
+     * Set the right component of the tab panel, which will display the details
+     * for the artifact.
+     */
     private void setRightComponent() {
-
         switch (artifactType) {
             case TSK_WEB_HISTORY:
                 rightPanel = new WebHistoryDetailsPanel();
@@ -79,10 +82,20 @@ final class DomainArtifactsTabPanel extends JPanel {
         }
     }
 
+    /**
+     * Get the status of the panel which indicates if it is populated.
+     *
+     * @return The ARTIFACT_RETRIEVAL_STATUS of the panel.
+     */
     ARTIFACT_RETRIEVAL_STATUS getStatus() {
         return status;
     }
 
+    /**
+     * Manually set the status of the panel.
+     *
+     * @param status The ARTIFACT_RETRIEVAL_STATUS of the panel.
+     */
     void setStatus(ARTIFACT_RETRIEVAL_STATUS status) {
         this.status = status;
     }
@@ -107,6 +120,11 @@ final class DomainArtifactsTabPanel extends JPanel {
         });
     }
 
+    /**
+     * Get the type of Artifact the panel exists for.
+     *
+     * @return The ARTIFACT_TYPE of the BlackboardArtifact being displayed.
+     */
     BlackboardArtifact.ARTIFACT_TYPE getArtifactType() {
         return artifactType;
     }

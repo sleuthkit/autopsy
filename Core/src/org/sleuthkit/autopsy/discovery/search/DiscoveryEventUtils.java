@@ -126,7 +126,7 @@ public final class DiscoveryEventUtils {
         }
     }
 
-        /**
+    /**
      * Event to signal that the list should be populated.
      */
     public static final class PopulateDomainTabsEvent {
@@ -238,8 +238,11 @@ public final class DiscoveryEventUtils {
         private final BlackboardArtifact.ARTIFACT_TYPE artifactType;
 
         /**
+         * Construct a new ArtifactListRetrievedEvent with a list of specified
+         * artifacts and an artifact type.
          *
-         * @param listOfArtifacts
+         * @param artifactType    The type of artifacts in the list.
+         * @param listOfArtifacts The list of artifacts retrieved.
          */
         public ArtifactListRetrievedEvent(BlackboardArtifact.ARTIFACT_TYPE artifactType, List<BlackboardArtifact> listOfArtifacts) {
             if (listOfArtifacts != null) {
@@ -248,6 +251,11 @@ public final class DiscoveryEventUtils {
             this.artifactType = artifactType;
         }
 
+        /**
+         * Get the list of artifacts included in the event.
+         *
+         * @return The list of artifacts retrieved.
+         */
         public List<BlackboardArtifact> getListOfArtifacts() {
             return Collections.unmodifiableList(listOfArtifacts);
         }
