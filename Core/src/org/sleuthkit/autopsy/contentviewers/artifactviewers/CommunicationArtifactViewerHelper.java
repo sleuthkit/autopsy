@@ -109,7 +109,19 @@ public final class CommunicationArtifactViewerHelper {
         return headingLabel;
     }
 
-    public static void addRow(JPanel panel, GridBagLayout gridbagLayout, GridBagConstraints constraints, String keyString, String valueString) {
+    /**
+     * Add a key value row to the specified panel with the specified layout and
+     * constraints.
+     *
+     *
+     * @param panel         Panel to update.
+     * @param gridbagLayout Layout to use.
+     * @param constraints   Constrains to use.
+     * @param keyString     Key name to display.
+     * @param valueString   Value string to display.
+     *
+     */
+    public static void addNameValueRow(JPanel panel, GridBagLayout gridbagLayout, GridBagConstraints constraints, String keyString, String valueString) {
         addKey(panel, gridbagLayout, constraints, keyString);
         addValue(panel, gridbagLayout, constraints, valueString);
     }
@@ -252,7 +264,7 @@ public final class CommunicationArtifactViewerHelper {
      * @param panel         Panel to update.
      * @param gridbagLayout Layout to use.
      * @param constraints   Constrains to use.
-     * @param keyString     Value string to display.
+     * @param valueString   Value string to display.
      *
      * @return Label added.
      */

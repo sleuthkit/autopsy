@@ -163,29 +163,29 @@ public class WebHistoryDetailsPanel extends AbstractArtifactDetailsPanel impleme
         CommunicationArtifactViewerHelper.addHeader(this, gridBagLayout, gridBagConstraints, Bundle.WebHistoryDetailsPanel_details_attrHeader());
 
         for (BlackboardAttribute bba : this.titleList) {
-            CommunicationArtifactViewerHelper.addRow(this, gridBagLayout, gridBagConstraints, bba.getAttributeType().getDisplayName(), bba.getDisplayString());
+            CommunicationArtifactViewerHelper.addNameValueRow(this, gridBagLayout, gridBagConstraints, bba.getAttributeType().getDisplayName(), bba.getDisplayString());
         }
         for (BlackboardAttribute bba : dateAccessedList) {
-            CommunicationArtifactViewerHelper.addRow(this, gridBagLayout, gridBagConstraints, bba.getAttributeType().getDisplayName(), bba.getDisplayString());
+            CommunicationArtifactViewerHelper.addNameValueRow(this, gridBagLayout, gridBagConstraints, bba.getAttributeType().getDisplayName(), bba.getDisplayString());
         }
         for (BlackboardAttribute bba : domainList) {
-            CommunicationArtifactViewerHelper.addRow(this, gridBagLayout, gridBagConstraints, bba.getAttributeType().getDisplayName(), bba.getDisplayString());
+            CommunicationArtifactViewerHelper.addNameValueRow(this, gridBagLayout, gridBagConstraints, bba.getAttributeType().getDisplayName(), bba.getDisplayString());
         }
         for (BlackboardAttribute bba : urlList) {
-            CommunicationArtifactViewerHelper.addRow(this, gridBagLayout, gridBagConstraints, bba.getAttributeType().getDisplayName(), bba.getDisplayString());
+            CommunicationArtifactViewerHelper.addNameValueRow(this, gridBagLayout, gridBagConstraints, bba.getAttributeType().getDisplayName(), bba.getDisplayString());
         }
         for (BlackboardAttribute bba : referrerUrlList) {
-            CommunicationArtifactViewerHelper.addRow(this, gridBagLayout, gridBagConstraints, bba.getAttributeType().getDisplayName(), bba.getDisplayString());
+            CommunicationArtifactViewerHelper.addNameValueRow(this, gridBagLayout, gridBagConstraints, bba.getAttributeType().getDisplayName(), bba.getDisplayString());
         }
         for (BlackboardAttribute bba : programNameList) {
-            CommunicationArtifactViewerHelper.addRow(this, gridBagLayout, gridBagConstraints, bba.getAttributeType().getDisplayName(), bba.getDisplayString());
+            CommunicationArtifactViewerHelper.addNameValueRow(this, gridBagLayout, gridBagConstraints, bba.getAttributeType().getDisplayName(), bba.getDisplayString());
         }
         for (BlackboardAttribute bba : otherList) {
-            CommunicationArtifactViewerHelper.addRow(this, gridBagLayout, gridBagConstraints, bba.getAttributeType().getDisplayName(), bba.getDisplayString());
+            CommunicationArtifactViewerHelper.addNameValueRow(this, gridBagLayout, gridBagConstraints, bba.getAttributeType().getDisplayName(), bba.getDisplayString());
         }
         CommunicationArtifactViewerHelper.addHeader(this, gridBagLayout, gridBagConstraints, Bundle.WebHistoryDetailsPanel_details_sourceHeader());
-        CommunicationArtifactViewerHelper.addRow(this, gridBagLayout, gridBagConstraints, Bundle.WebHistoryDetailsPanel_details_dataSource(), dataSourceName);
-        CommunicationArtifactViewerHelper.addRow(this, gridBagLayout, gridBagConstraints, Bundle.WebHistoryDetailsPanel_details_file(), sourceFileName);
+        CommunicationArtifactViewerHelper.addNameValueRow(this, gridBagLayout, gridBagConstraints, Bundle.WebHistoryDetailsPanel_details_dataSource(), dataSourceName);
+        CommunicationArtifactViewerHelper.addNameValueRow(this, gridBagLayout, gridBagConstraints, Bundle.WebHistoryDetailsPanel_details_file(), sourceFileName);
         // add veritcal glue at the end
         CommunicationArtifactViewerHelper.addPageEndGlue(this, gridBagLayout, this.gridBagConstraints);
     }

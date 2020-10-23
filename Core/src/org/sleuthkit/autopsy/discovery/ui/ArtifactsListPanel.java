@@ -75,7 +75,7 @@ class ArtifactsListPanel extends JPanel {
      */
     BlackboardArtifact getSelectedArtifact() {
         int selectedIndex = jTable1.getSelectionModel().getLeadSelectionIndex();
-        if (selectedIndex < 0 || jTable1.getSelectionModel().getMaxSelectionIndex() < 0 || selectedIndex >= jTable1.getSelectionModel().getMaxSelectionIndex()) {
+        if (selectedIndex < jTable1.getSelectionModel().getMinSelectionIndex() || jTable1.getSelectionModel().getMaxSelectionIndex() < 0 || selectedIndex > jTable1.getSelectionModel().getMaxSelectionIndex()) {
             return null;
         }
         return tableModel.getArtifactByRow(selectedIndex);
