@@ -20,12 +20,13 @@ package org.sleuthkit.autopsy.discovery.ui;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 import javax.swing.JPanel;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import org.apache.commons.lang.StringUtils;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -38,6 +39,7 @@ class ArtifactsListPanel extends JPanel {
 
     private static final long serialVersionUID = 1L;
     private final DomainArtifactTableModel tableModel = new DomainArtifactTableModel();
+    private static final Logger logger = Logger.getLogger(ArtifactsListPanel.class.getName());
 
     /**
      * Creates new form ArtifactsListPanel.
@@ -184,49 +186,52 @@ class ArtifactsListPanel extends JPanel {
         @NbBundle.Messages({"ArtifactsListPanel.value.noValue=No value available."})
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            Object returnValue = null;
-            String url = "";
-            String otherDate = "";
             try {
                 for (BlackboardAttribute bba : getArtifactByRow(rowIndex).getAttributes()) {
-                    switch (columnIndex) {
-                        case 0:
-                            if (bba.getAttributeType().getTypeName().startsWith("TSK_DATETIME_ACCESSED") && !StringUtils.isBlank(bba.getDisplayString())) {
-                                returnValue = bba.getDisplayString();
-                            } else if (bba.getAttributeType().getTypeName().startsWith("TSK_DATETIME") && !StringUtils.isBlank(bba.getDisplayString())) {
-                                otherDate = bba.getDisplayString();
-                            }
-                            break;
-                        case 1:
-                            if (bba.getAttributeType().getTypeName().startsWith("TSK_TITLE") && !StringUtils.isBlank(bba.getDisplayString())) {
-                                returnValue = bba.getDisplayString();
-                            } else if (bba.getAttributeType().getTypeName().startsWith("TSK_URL") && !StringUtils.isBlank(bba.getDisplayString())) {
-                                url = bba.getDisplayString();
-                            }
-                            break;
-                        default:
-                            break;
+                    if (columnIndex == 0 && bba.getAttributeType().getTypeName().startsWith("TSK_DATETIME_ACCESSED") && !StringUtils.isBlank(bba.getDisplayString())) {
+                        return bba.getDisplayString();
+                    } else if (columnIndex == 1 && bba.getAttributeType().getTypeName().startsWith("TSK_TITLE") && !StringUtils.isBlank(bba.getDisplayString())) {
+                        return bba.getDisplayString();
                     }
+
                 }
+                return getFallbackValue(rowIndex, columnIndex);
             } catch (TskCoreException ex) {
-                Exceptions.printStackTrace(ex);
+                logger.log(Level.WARNING, "Error getting attributes for artifact " + getArtifactByRow(rowIndex).getArtifactID(), ex);
+                return Bundle.ArtifactsListPanel_value_noValue();
             }
-            if (returnValue == null) {
-                if (columnIndex == 0 && !StringUtils.isBlank(otherDate)) {
-                    returnValue = otherDate;
-                } else if (columnIndex == 1 && !StringUtils.isBlank(url)) {
-                    returnValue = url;
-                } else {
-                    returnValue = Bundle.ArtifactsListPanel_value_noValue();
+        }
+
+        /**
+         * Private helper method to use when the value we want for either date
+         * or title is not available.
+         *
+         *
+         * @param rowIndex    The row the artifact to return is at.
+         * @param columnIndex The column index the attribute will be displayed
+         *                    at.
+         *
+         * @return A string that can be used in place of the accessed date time
+         *         attribute title when they are not avaiable.
+         *
+         * @throws TskCoreException
+         */
+        private String getFallbackValue(int rowIndex, int columnIndex) throws TskCoreException {
+            for (BlackboardAttribute bba : getArtifactByRow(rowIndex).getAttributes()) {
+                if (columnIndex == 0 && bba.getAttributeType().getTypeName().startsWith("TSK_DATETIME") && !StringUtils.isBlank(bba.getDisplayString())) {
+                    return bba.getDisplayString();
+                } else if (columnIndex == 1 && bba.getAttributeType().getTypeName().startsWith("TSK_URL") && !StringUtils.isBlank(bba.getDisplayString())) {
+                    return bba.getDisplayString();
                 }
             }
-            return returnValue;
+            return Bundle.ArtifactsListPanel_value_noValue();
         }
 
         @NbBundle.Messages({"ArtifactsListPanel.titleColumn.name=Title",
             "ArtifactsListPanel.dateColumn.name=Date/Time"})
         @Override
-        public String getColumnName(int column) {
+        public String getColumnName(int column
+        ) {
             switch (column) {
                 case 0:
                     return Bundle.ArtifactsListPanel_dateColumn_name();
