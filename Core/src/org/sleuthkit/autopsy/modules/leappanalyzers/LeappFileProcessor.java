@@ -63,14 +63,14 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 /**
- * Find and process output from iLeapp program and bring into Autopsy
+ * Find and process output from Leapp program and bring into Autopsy
  */
-public final class ILeappFileProcessor {
+public final class LeappFileProcessor {
 
-    private static final Logger logger = Logger.getLogger(ILeappFileProcessor.class.getName());
+    private static final Logger logger = Logger.getLogger(LeappFileProcessor.class.getName());
     private static final String MODULE_NAME = ILeappAnalyzerModuleFactory.getModuleName();
 
-    private static final String XMLFILE = "ileap-artifact-attribute-reference.xml"; //NON-NLS
+    private final String xmlFile; //NON-NLS
 
     private final Map<String, String> tsvFiles;
     private final Map<String, String> tsvFileArtifacts;
@@ -79,11 +79,12 @@ public final class ILeappFileProcessor {
 
     Blackboard blkBoard;
 
-    public ILeappFileProcessor() throws IOException, IngestModuleException, NoCurrentCaseException {
+    public LeappFileProcessor(String xmlFile) throws IOException, IngestModuleException, NoCurrentCaseException {
         this.tsvFiles = new HashMap<>();
         this.tsvFileArtifacts = new HashMap<>();
         this.tsvFileArtifactComments = new HashMap<>();
         this.tsvFileAttributes = new HashMap<>();
+        this.xmlFile = xmlFile;
 
         blkBoard = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard();
 
@@ -93,22 +94,22 @@ public final class ILeappFileProcessor {
     }
 
     @NbBundle.Messages({
-        "ILeappFileProcessor.error.running.iLeapp=Error running iLeapp, see log file.",
-        "ILeappFileProcessor.error.creating.output.dir=Error creating iLeapp module output directory.",
-        "ILeappFileProcessor.starting.iLeapp=Starting iLeapp",
-        "ILeappFileProcessor.running.iLeapp=Running iLeapp",
-        "ILeappFileProcessor.has.run=iLeapp",
-        "ILeappFileProcessor.iLeapp.cancelled=iLeapp run was canceled",
-        "ILeappFileProcessor.completed=iLeapp Processing Completed",
-        "ILeappFileProcessor.error.reading.iLeapp.directory=Error reading iLeapp Output Directory"})
+        "LeappFileProcessor.error.running.Leapp=Error running Leapp, see log file.",
+        "LeappFileProcessor.error.creating.output.dir=Error creating Leapp module output directory.",
+        "LeappFileProcessor.starting.Leapp=Starting Leapp",
+        "LeappFileProcessor.running.Leapp=Running Leapp",
+        "LeappFileProcessor.has.run=Leapp",
+        "LeappFileProcessor.Leapp.cancelled=Leapp run was canceled",
+        "LeappFileProcessor.completed=Leapp Processing Completed",
+        "LeappFileProcessor.error.reading.Leapp.directory=Error reading Leapp Output Directory"})
 
-    public ProcessResult processFiles(Content dataSource, Path moduleOutputPath, AbstractFile iLeappFile) {
+    public ProcessResult processFiles(Content dataSource, Path moduleOutputPath, AbstractFile LeappFile) {
 
         try {
-            List<String> iLeappTsvOutputFiles = findTsvFiles(moduleOutputPath);
-            processiLeappFiles(iLeappTsvOutputFiles, iLeappFile);
+            List<String> LeappTsvOutputFiles = findTsvFiles(moduleOutputPath);
+            processLeappFiles(LeappTsvOutputFiles, LeappFile);
         } catch (IOException | IngestModuleException ex) {
-            logger.log(Level.SEVERE, String.format("Error trying to process iLeapp output files in directory %s. ", moduleOutputPath.toString()), ex); //NON-NLS
+            logger.log(Level.SEVERE, String.format("Error trying to process Leapp output files in directory %s. ", moduleOutputPath.toString()), ex); //NON-NLS
             return ProcessResult.ERROR;
         }
 
@@ -118,10 +119,10 @@ public final class ILeappFileProcessor {
     public ProcessResult processFileSystem(Content dataSource, Path moduleOutputPath) {
 
         try {
-            List<String> iLeappTsvOutputFiles = findTsvFiles(moduleOutputPath);
-            processiLeappFiles(iLeappTsvOutputFiles, dataSource);
+            List<String> LeappTsvOutputFiles = findTsvFiles(moduleOutputPath);
+            processLeappFiles(LeappTsvOutputFiles, dataSource);
         } catch (IOException | IngestModuleException ex) {
-            logger.log(Level.SEVERE, String.format("Error trying to process iLeapp output files in directory %s. ", moduleOutputPath.toString()), ex); //NON-NLS
+            logger.log(Level.SEVERE, String.format("Error trying to process Leapp output files in directory %s. ", moduleOutputPath.toString()), ex); //NON-NLS
             return ProcessResult.ERROR;
         }
 
@@ -129,14 +130,14 @@ public final class ILeappFileProcessor {
     }
 
     /**
-     * Find the tsv files in the iLeapp output directory and match them to files
+     * Find the tsv files in the Leapp output directory and match them to files
      * we know we want to process and return the list to process those files.
      */
-    private List<String> findTsvFiles(Path iLeappOutputDir) throws IngestModuleException {
+    private List<String> findTsvFiles(Path LeappOutputDir) throws IngestModuleException {
         List<String> allTsvFiles = new ArrayList<>();
         List<String> foundTsvFiles = new ArrayList<>();
 
-        try (Stream<Path> walk = Files.walk(iLeappOutputDir)) {
+        try (Stream<Path> walk = Files.walk(LeappOutputDir)) {
 
             allTsvFiles = walk.map(x -> x.toString())
                     .filter(f -> f.toLowerCase().endsWith(".tsv")).collect(Collectors.toList());
@@ -148,7 +149,7 @@ public final class ILeappFileProcessor {
             }
 
         } catch (IOException | UncheckedIOException e) {
-            throw new IngestModuleException(Bundle.ILeappFileProcessor_error_reading_iLeapp_directory() + iLeappOutputDir.toString(), e);
+            throw new IngestModuleException(Bundle.LeappFileProcessor_error_reading_Leapp_directory() + LeappOutputDir.toString(), e);
         }
 
         return foundTsvFiles;
@@ -156,26 +157,26 @@ public final class ILeappFileProcessor {
     }
 
     /**
-     * Process the iLeapp files that were found that match the xml mapping file
+     * Process the Leapp files that were found that match the xml mapping file
      *
-     * @param iLeappFilesToProcess List of files to process
-     * @param iLeappImageFile      Abstract file to create artifact for
+     * @param LeappFilesToProcess List of files to process
+     * @param LeappImageFile      Abstract file to create artifact for
      *
      * @throws FileNotFoundException
      * @throws IOException
      */
-    private void processiLeappFiles(List<String> iLeappFilesToProcess, AbstractFile iLeappImageFile) throws FileNotFoundException, IOException, IngestModuleException {
+    private void processLeappFiles(List<String> LeappFilesToProcess, AbstractFile LeappImageFile) throws FileNotFoundException, IOException, IngestModuleException {
         List<BlackboardArtifact> bbartifacts = new ArrayList<>();
 
-        for (String iLeappFileName : iLeappFilesToProcess) {
-            String fileName = FilenameUtils.getName(iLeappFileName);
-            File iLeappFile = new File(iLeappFileName);
+        for (String LeappFileName : LeappFilesToProcess) {
+            String fileName = FilenameUtils.getName(LeappFileName);
+            File LeappFile = new File(LeappFileName);
             if (tsvFileAttributes.containsKey(fileName)) {
                 List<List<String>> attrList = tsvFileAttributes.get(fileName);
                 try {
                     BlackboardArtifact.Type artifactType = Case.getCurrentCase().getSleuthkitCase().getArtifactType(tsvFileArtifacts.get(fileName));
 
-                    processFile(iLeappFile, attrList, fileName, artifactType, bbartifacts, iLeappImageFile);
+                    processFile(LeappFile, attrList, fileName, artifactType, bbartifacts, LeappImageFile);
 
                 } catch (TskCoreException ex) {
                     throw new IngestModuleException(String.format("Error getting Blackboard Artifact Type for %s", tsvFileArtifacts.get(fileName)), ex);
@@ -191,26 +192,26 @@ public final class ILeappFileProcessor {
     }
 
     /**
-     * Process the iLeapp files that were found that match the xml mapping file
+     * Process the Leapp files that were found that match the xml mapping file
      *
-     * @param iLeappFilesToProcess List of files to process
-     * @param iLeappImageFile      Abstract file to create artifact for
+     * @param LeappFilesToProcess List of files to process
+     * @param LeappImageFile      Abstract file to create artifact for
      *
      * @throws FileNotFoundException
      * @throws IOException
      */
-    private void processiLeappFiles(List<String> iLeappFilesToProcess, Content dataSource) throws FileNotFoundException, IOException, IngestModuleException {
+    private void processLeappFiles(List<String> LeappFilesToProcess, Content dataSource) throws FileNotFoundException, IOException, IngestModuleException {
         List<BlackboardArtifact> bbartifacts = new ArrayList<>();
 
-        for (String iLeappFileName : iLeappFilesToProcess) {
-            String fileName = FilenameUtils.getName(iLeappFileName);
-            File iLeappFile = new File(iLeappFileName);
+        for (String LeappFileName : LeappFilesToProcess) {
+            String fileName = FilenameUtils.getName(LeappFileName);
+            File LeappFile = new File(LeappFileName);
             if (tsvFileAttributes.containsKey(fileName)) {
                 List<List<String>> attrList = tsvFileAttributes.get(fileName);
                 try {
                     BlackboardArtifact.Type artifactType = Case.getCurrentCase().getSleuthkitCase().getArtifactType(tsvFileArtifacts.get(fileName));
 
-                    processFile(iLeappFile, attrList, fileName, artifactType, bbartifacts, dataSource);
+                    processFile(LeappFile, attrList, fileName, artifactType, bbartifacts, dataSource);
 
                 } catch (TskCoreException ex) {
                     throw new IngestModuleException(String.format("Error getting Blackboard Artifact Type for %s", tsvFileArtifacts.get(fileName)), ex);
@@ -225,10 +226,10 @@ public final class ILeappFileProcessor {
 
     }
 
-    private void processFile(File iLeappFile, List<List<String>> attrList, String fileName, BlackboardArtifact.Type artifactType,
+    private void processFile(File LeappFile, List<List<String>> attrList, String fileName, BlackboardArtifact.Type artifactType,
             List<BlackboardArtifact> bbartifacts, Content dataSource) throws FileNotFoundException, IOException, IngestModuleException,
             TskCoreException {
-        try (BufferedReader reader = new BufferedReader(new FileReader(iLeappFile))) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(LeappFile))) {
             String line = reader.readLine();
             // Check first line, if it is null then no heading so nothing to match to, close and go to next file.
             if (line != null) {
@@ -236,6 +237,10 @@ public final class ILeappFileProcessor {
                 line = reader.readLine();
                 while (line != null) {
                     Collection<BlackboardAttribute> bbattributes = processReadLine(line, columnNumberToProcess, fileName);
+                    if (artifactType == null) {
+                        logger.log(Level.SEVERE, "Error trying to process Leapp output files in directory . "); //NON-NLS
+                        
+                    }
                     if (!bbattributes.isEmpty() && !blkBoard.artifactExists(dataSource, BlackboardArtifact.ARTIFACT_TYPE.fromID(artifactType.getTypeID()), bbattributes)) {
                         BlackboardArtifact bbartifact = createArtifactWithAttributes(artifactType.getTypeID(), dataSource, bbattributes);
                         if (bbartifact != null) {
@@ -354,11 +359,11 @@ public final class ILeappFileProcessor {
     }
 
     @NbBundle.Messages({
-        "ILeappFileProcessor.cannot.load.artifact.xml=Cannor load xml artifact file.",
-        "ILeappFileProcessor.cannotBuildXmlParser=Cannot buld an XML parser.",
-        "ILeappFileProcessor_cannotParseXml=Cannot Parse XML file.",
-        "ILeappFileProcessor.postartifacts_error=Error posting Blackboard Artifact",
-        "ILeappFileProcessor.error.creating.new.artifacts=Error creating new artifacts."
+        "LeappFileProcessor.cannot.load.artifact.xml=Cannor load xml artifact file.",
+        "LeappFileProcessor.cannotBuildXmlParser=Cannot buld an XML parser.",
+        "LeappFileProcessor_cannotParseXml=Cannot Parse XML file.",
+        "LeappFileProcessor.postartifacts_error=Error posting Blackboard Artifact",
+        "LeappFileProcessor.error.creating.new.artifacts=Error creating new artifacts."
     })
 
     /**
@@ -367,18 +372,18 @@ public final class ILeappFileProcessor {
     private void loadConfigFile() throws IngestModuleException {
         Document xmlinput;
         try {
-            String path = PlatformUtil.getUserConfigDirectory() + File.separator + XMLFILE;
+            String path = PlatformUtil.getUserConfigDirectory() + File.separator + xmlFile;
             File f = new File(path);
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
             DocumentBuilder db = dbf.newDocumentBuilder();
             xmlinput = db.parse(f);
 
         } catch (IOException e) {
-            throw new IngestModuleException(Bundle.ILeappFileProcessor_cannot_load_artifact_xml() + e.getLocalizedMessage(), e); //NON-NLS
+            throw new IngestModuleException(Bundle.LeappFileProcessor_cannot_load_artifact_xml() + e.getLocalizedMessage(), e); //NON-NLS
         } catch (ParserConfigurationException pce) {
-            throw new IngestModuleException(Bundle.ILeappFileProcessor_cannotBuildXmlParser() + pce.getLocalizedMessage(), pce); //NON-NLS
+            throw new IngestModuleException(Bundle.LeappFileProcessor_cannotBuildXmlParser() + pce.getLocalizedMessage(), pce); //NON-NLS
         } catch (SAXException sxe) {
-            throw new IngestModuleException(Bundle.ILeappFileProcessor_cannotParseXml() + sxe.getLocalizedMessage(), sxe); //NON-NLS
+            throw new IngestModuleException(Bundle.LeappFileProcessor_cannotParseXml() + sxe.getLocalizedMessage(), sxe); //NON-NLS
         }
 
         getFileNode(xmlinput);
@@ -466,7 +471,7 @@ public final class ILeappFileProcessor {
             bbart.addAttributes(bbattributes);
             return bbart;
         } catch (TskException ex) {
-            logger.log(Level.WARNING, Bundle.ILeappFileProcessor_error_creating_new_artifacts(), ex); //NON-NLS
+            logger.log(Level.WARNING, Bundle.LeappFileProcessor_error_creating_new_artifacts(), ex); //NON-NLS
         }
         return null;
     }
@@ -490,7 +495,7 @@ public final class ILeappFileProcessor {
             bbart.addAttributes(bbattributes);
             return bbart;
         } catch (TskException ex) {
-            logger.log(Level.WARNING, Bundle.ILeappFileProcessor_error_creating_new_artifacts(), ex); //NON-NLS
+            logger.log(Level.WARNING, Bundle.LeappFileProcessor_error_creating_new_artifacts(), ex); //NON-NLS
         }
         return null;
     }
@@ -509,17 +514,17 @@ public final class ILeappFileProcessor {
         try {
             Case.getCurrentCase().getSleuthkitCase().getBlackboard().postArtifacts(artifacts, MODULE_NAME);
         } catch (Blackboard.BlackboardException ex) {
-            logger.log(Level.SEVERE, Bundle.ILeappFileProcessor_postartifacts_error(), ex); //NON-NLS
+            logger.log(Level.SEVERE, Bundle.LeappFileProcessor_postartifacts_error(), ex); //NON-NLS
         }
     }
 
     /**
-     * Extract the iLeapp config xml file to the user directory to process
+     * Extract the Leapp config xml file to the user directory to process
      *
      * @throws org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException
      */
     private void configExtractor() throws IOException {
-        PlatformUtil.extractResourceToUserConfigDir(ILeappFileProcessor.class, XMLFILE, true);
+        PlatformUtil.extractResourceToUserConfigDir(LeappFileProcessor.class, xmlFile, true);
     }
 
 }

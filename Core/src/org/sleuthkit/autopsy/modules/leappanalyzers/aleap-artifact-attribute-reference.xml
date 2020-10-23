@@ -29,56 +29,61 @@
     <aLeap_Files_To_Process>
 
     <FileName filename="Call Logs.tsv" description="Call logs">
-        <ArtifactName artifactname="TSK_CALLOG" comment="null">
-            <AttributeName attributename="TSK_DATETIME_START " columnName="Call Date" required="yes" />
-            <AttributeName attributename="TSK_PHONE_NUMBER_FROM " columnName=" Phone Account Address" required="yes" />
-            <AttributeName attributename="TSK_PHONE_NUMBER_TO " columnName=" Partner" required="yes" />
-            <AttributeName attributename="TSK_DIRECTION" columnName=" Type" required="yes" />
-            <AttributeName attributename="null" columnName="Duration in Secs" required="no" />
-            <AttributeName attributename="null" columnName="Partner Location" required="no" />
-            <AttributeName attributename="null" columnName="Country ISO" required="no" />
-            <AttributeName attributename="null" columnName="Data" required="no" />
-            <AttributeName attributename="null" columnName="Mime Type" required="no" />
-            <AttributeName attributename="null" columnName="Transcription" required="no" />
-            <AttributeName attributename="null" columnName="Deleted" required="no" />
+        <ArtifactName artifactname="TSK_CALLLOG" comment="null">
+            <AttributeName attributename="TSK_DATETIME_START" columnName="Call Date" required="yes"/>
+            <AttributeName attributename="TSK_PHONE_NUMBER_FROM" columnName="Phone Account Address" required="yes"/>
+            <AttributeName attributename="TSK_PHONE_NUMBER_TO" columnName="Partner" required="yes"/>
+            <AttributeName attributename="TSK_DIRECTION" columnName="Type" required="yes"/>
+            <AttributeName attributename="null" columnName="Duration in Secs" required="no"/>
+            <AttributeName attributename="null" columnName="Partner Location" required="no"/>
+            <AttributeName attributename="null" columnName="Country ISO" required="no"/>
+            <AttributeName attributename="null" columnName="Data" required="no"/>
+            <AttributeName attributename="null" columnName="Mime Type" required="no"/>
+            <AttributeName attributename="null" columnName="Transcription" required="no"/>
+            <AttributeName attributename="null" columnName="Deleted" required="no"/>
         </ArtifactName>
     </FileName>
 
     <FileName filename="Chrome History.tsv" description="Chrome History">
         <ArtifactName artifactname="TSK_WEB_HISTORY" comment="Chrome History">
-            <AttributeName attributename="TSK_DATETIME_ACCESSED" columnName="Last Visit Time" required="yes" />
-            <AttributeName attributename="TSK_URL" columnName="URL" required="yes" />
-            <AttributeName attributename="TSK_TITLE" columnName="Title" required="yes" />
-            <AttributeName attributename="null" columnName="Visit Count" required="no" />
-            <AttributeName attributename="null" columnName="Hidden" required="no" />
+            <AttributeName attributename="TSK_DATETIME_ACCESSED" columnName="Last Visit Time" required="yes"/>
+            <AttributeName attributename="TSK_URL" columnName="URL" required="yes"/>
+            <AttributeName attributename="TSK_TITLE" columnName="Title" required="yes"/>
+            <AttributeName attributename="null" columnName="Visit Count" required="no"/>
+            <AttributeName attributename="null" columnName="Hidden" required="no"/>
         </ArtifactName>
     </FileName>
 
     <FileName filename="Chrome search terms.tsv" description="Chrome Search Terms">
         <ArtifactName artifactname="TSK_WEB_SEARCH_QUERY" comment="Chrome Search Terms">
-            <AttributeName attributename="TSK_DATETIME_ACCESSED" columnName="Last Visit Time" required="yes" />
-            <AttributeName attributename="TSK_TEXT" columnName="Search Term" required="yes" />
-            <AttributeName attributename="TSK_URL" columnName="URL" required="yes" />
-            <AttributeName attributename="null" columnName=" Title" required="no" />
-            <AttributeName attributename="null" columnName=" Visit Count" required="no" />
+            <AttributeName attributename="TSK_DATETIME_ACCESSED" columnName="Last Visit Time" required="yes"/>
+            <AttributeName attributename="TSK_TEXT" columnName="Search Term" required="yes"/>
+            <AttributeName attributename="TSK_URL" columnName="URL" required="yes"/>
+            <AttributeName attributename="null" columnName="Title" required="no"/>
+            <AttributeName attributename="null" columnName="Visit Count" required="no"/>
         </ArtifactName>
     </FileName>
 
     <FileName filename="installed apps library.tsv" description="Installed Apps (Library)">
         <ArtifactName artifactname="TSK_INSTALLED_PROG" comment="Installed Apps (Library)">
-            <AttributeName attributename="TSK_DATETIME" columnName="Purchase Time" required="yes" />
-            <AttributeName attributename="TSK_USER_NAME" columnName=" Account" required="yes" />
-            <AttributeName attributename="TSK_PROG_NAME" columnName=" Doc ID" required="yes" />
+            <AttributeName attributename="TSK_DATETIME" columnName="Purchase Time" required="yes"/>
+            <AttributeName attributename="TSK_USER_NAME" columnName="Account" required="yes"/>
+            <AttributeName attributename="TSK_PROG_NAME" columnName="Doc ID" required="yes"/>
         </ArtifactName>
     </FileName>
 
     <FileName filename="mms messages.tsv" description="MMS messages">
         <ArtifactName artifactname="TSK_MESSAGE" comment="MMS messages">
-            <AttributeName attributename="TSK_DATETIME" columnName="Date" required="yes" />
-            <AttributeName attributename="TSK_TEXT" columnName=" MSG ID" required="yes" />
-            <AttributeName attributename="TSK_THREAD_ID" columnName=" Thread ID" required="yes" />
-            <AttributeName attributename="TSK_DATETIME_SENT" columnName=" Date sent" required="yes" />
-            <AttributeName attributename="TSK_READ_STATUS" columnName=" Read" required="yes" />
+            <AttributeName attributename="TSK_DATETIME" columnName="Date" required="yes"/>
+            <AttributeName attributename="null" columnName="MSG ID" required="no"/>
+            <AttributeName attributename="TSK_THREAD_ID" columnName="Thread ID" required="yes"/>
+            <AttributeName attributename="TSK_DATETIME_SENT" columnName="Date sent" required="yes"/>
+            <AttributeName attributename="TSK_READ_STATUS" columnName="Read" required="yes"/>
+            <AttributeName attributename="TSK_PHONE_NUMBER_FROM" columnName="From" required="yes"/>
+            <AttributeName attributename="TSK_PHONE_NUMBER_TO" columnName="To" required="yes"/>
+            <AttributeName attributename="null" columnName="Cc" required="no"/>
+            <AttributeName attributename="null" columnName="Bcc" required="no"/>
+            <AttributeName attributename="TSK_TEXT" columnName="Body" required="yes"/>            
         </ArtifactName>
     </FileName>
 

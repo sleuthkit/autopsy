@@ -71,11 +71,14 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
     private static final String ILEAPP_EXECUTABLE = "ileapp.exe";//NON-NLS
     private static final String ILEAPP_PATHS_FILE = "iLeapp_paths.txt"; //NON-NLS
 
+    private static final String XMLFILE = "ileap-artifact-attribute-reference.xml"; //NON-NLS
+
+    
     private File iLeappExecutable;
 
     private IngestJobContext context;
 
-    private ILeappFileProcessor iLeappFileProcessor;
+    private LeappFileProcessor iLeappFileProcessor;
 
     ILeappAnalyzerIngestModule() {
         // This constructor is intentionally empty. Nothing special is needed here.     
@@ -94,7 +97,7 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
         }
 
         try {
-            iLeappFileProcessor = new ILeappFileProcessor();
+            iLeappFileProcessor = new LeappFileProcessor(XMLFILE);
         } catch (IOException | IngestModuleException | NoCurrentCaseException ex) {
             throw new IngestModuleException(Bundle.ILeappAnalyzerIngestModule_error_ileapp_file_processor_init(), ex);
         }

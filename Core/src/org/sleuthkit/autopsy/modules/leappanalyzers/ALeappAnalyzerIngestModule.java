@@ -70,12 +70,15 @@ public class ALeappAnalyzerIngestModule implements DataSourceIngestModule {
     private static final String ALEAPP_FS = "fs_"; //NON-NLS
     private static final String ALEAPP_EXECUTABLE = "aleapp.exe";//NON-NLS
     private static final String ALEAPP_PATHS_FILE = "aLeapp_paths.txt"; //NON-NLS
+    
+    private static final String XMLFILE = "aleap-artifact-attribute-reference.xml"; //NON-NLS
+
 
     private File aLeappExecutable;
 
     private IngestJobContext context;
 
-    private ILeappFileProcessor aLeappFileProcessor;
+    private LeappFileProcessor aLeappFileProcessor;
 
     ALeappAnalyzerIngestModule() {
         // This constructor is intentionally empty. Nothing special is needed here.     
@@ -94,7 +97,7 @@ public class ALeappAnalyzerIngestModule implements DataSourceIngestModule {
         }
 
         try {
-            aLeappFileProcessor = new ILeappFileProcessor();
+            aLeappFileProcessor = new LeappFileProcessor(XMLFILE);
         } catch (IOException | IngestModuleException | NoCurrentCaseException ex) {
             throw new IngestModuleException(Bundle.ALeappAnalyzerIngestModule_error_ileapp_file_processor_init(), ex);
         }
@@ -387,7 +390,7 @@ public class ALeappAnalyzerIngestModule implements DataSourceIngestModule {
         for (String fullFilePath : aLeappPathsToProcess) {
 
             if (context.dataSourceIngestIsCancelled()) {
-                logger.log(Level.INFO, "ILeapp Analyser ingest module run was canceled"); //NON-NLS
+                logger.log(Level.INFO, "aLeapp Analyser ingest module run was canceled"); //NON-NLS
                 break;
             }
 
