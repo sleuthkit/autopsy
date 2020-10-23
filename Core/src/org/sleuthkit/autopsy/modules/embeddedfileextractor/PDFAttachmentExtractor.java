@@ -34,6 +34,7 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
+import org.apache.tika.parser.pdf.PDFParserConfig;
 import org.apache.tika.sax.BodyContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
@@ -79,6 +80,12 @@ final class PDFAttachmentExtractor {
         ParseContext parseContext = new ParseContext();
         parseContext.set(Parser.class, parser);
 
+        PDFParserConfig pdfConfig = new PDFParserConfig();
+        pdfConfig.setExtractInlineImages(true);
+        pdfConfig.setExtractUniqueInlineImagesOnly(true);
+
+        parseContext.set(PDFParserConfig.class, pdfConfig);
+        
         //Keep track of the attachment files as they are being extracted and written to disk.
         NewResourceWatcher watcher = new NewResourceWatcher();
         parseContext.set(EmbeddedDocumentExtractor.class, new EmbeddedAttachmentHandler(outputDir, parentID, watcher));
@@ -116,7 +123,7 @@ final class PDFAttachmentExtractor {
         @Override
         public void parseEmbedded(InputStream in, ContentHandler ch, Metadata mtdt, boolean bln) throws SAXException, IOException {
             //Resource naming scheme is used internally in autopsy, therefore we can guarentee uniqueness.
-            String uniqueExtractedName = parentID + "_attch_" + attachmentCount++; //NON-NLS
+            String uniqueExtractedName = "extract_" + attachmentCount++; //NON-NLS
             
             String name = mtdt.get(Metadata.RESOURCE_NAME_KEY);
             String ext = FilenameUtils.getExtension(name);
