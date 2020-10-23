@@ -77,11 +77,11 @@ class ArtifactsListPanel extends JPanel {
      *         selected.
      */
     BlackboardArtifact getSelectedArtifact() {
-        int selectedIndex = jTable1.convertRowIndexToModel(jTable1.getSelectionModel().getLeadSelectionIndex());
+        int selectedIndex = jTable1.getSelectionModel().getLeadSelectionIndex();
         if (selectedIndex < jTable1.getSelectionModel().getMinSelectionIndex() || jTable1.getSelectionModel().getMaxSelectionIndex() < 0 || selectedIndex > jTable1.getSelectionModel().getMaxSelectionIndex()) {
             return null;
         }
-        return tableModel.getArtifactByRow(selectedIndex);
+        return tableModel.getArtifactByRow(jTable1.convertRowIndexToView(selectedIndex));
     }
 
     /**
@@ -187,21 +187,22 @@ class ArtifactsListPanel extends JPanel {
         @NbBundle.Messages({"ArtifactsListPanel.value.noValue=No value available."})
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
+            int convertedRowIndex = rowIndex;//jTable1.convertRowIndexToModel(rowIndex);
             try {
-                int artifactTypeId = getArtifactByRow(rowIndex).getArtifactTypeID();
+                int artifactTypeId = getArtifactByRow(convertedRowIndex).getArtifactTypeID();
                 if (columnIndex == 1 && (artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID() || artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID())) {
-                    return getArtifactByRow(rowIndex).getParent().getName();
+                    return getArtifactByRow(convertedRowIndex).getParent().getName();
                 }
-                for (BlackboardAttribute bba : getArtifactByRow(rowIndex).getAttributes()) {
+                for (BlackboardAttribute bba : getArtifactByRow(convertedRowIndex).getAttributes()) {
                     if (columnIndex == 0 && bba.getAttributeType().getTypeName().startsWith("TSK_DATETIME_ACCESSED") && !StringUtils.isBlank(bba.getDisplayString())) {
                         return bba.getDisplayString();
                     } else if (columnIndex == 1 && bba.getAttributeType().getTypeName().startsWith("TSK_TITLE") && !StringUtils.isBlank(bba.getDisplayString())) {
                         return bba.getDisplayString();
                     }
                 }
-                return getFallbackValue(rowIndex, columnIndex);
+                return getFallbackValue(convertedRowIndex, columnIndex);
             } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, "Error getting attributes for artifact " + getArtifactByRow(rowIndex).getArtifactID(), ex);
+                logger.log(Level.WARNING, "Error getting attributes for artifact " + getArtifactByRow(convertedRowIndex).getArtifactID(), ex);
                 return Bundle.ArtifactsListPanel_value_noValue();
             }
         }
