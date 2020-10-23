@@ -23,12 +23,13 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 import javax.swing.JScrollPane;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.contentviewers.artifactviewers.ArtifactContentViewer;
 import org.sleuthkit.autopsy.contentviewers.artifactviewers.CommunicationArtifactViewerHelper;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -40,6 +41,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class WebHistoryDetailsPanel extends AbstractArtifactDetailsPanel implements ArtifactContentViewer {
 
     private static final long serialVersionUID = 1L;
+    private static final Logger logger = Logger.getLogger(WebHistoryDetailsPanel.class.getName());
     private BlackboardArtifact webHistoryArtifact;
     private final GridBagLayout gridBagLayout = new GridBagLayout();
     private final List<BlackboardAttribute> urlList = new ArrayList<>();
@@ -68,7 +70,7 @@ public class WebHistoryDetailsPanel extends AbstractArtifactDetailsPanel impleme
             try {
                 extractArtifactData(artifact);
             } catch (TskCoreException ex) {
-                Exceptions.printStackTrace(ex);
+                logger.log(Level.WARNING, "Unable to get attributes for artifact " + artifact.getArtifactID(), ex);
             }
             updateView();
         }
