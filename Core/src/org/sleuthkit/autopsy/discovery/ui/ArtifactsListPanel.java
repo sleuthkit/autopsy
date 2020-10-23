@@ -47,7 +47,7 @@ class ArtifactsListPanel extends JPanel {
     ArtifactsListPanel() {
         initComponents();
         jTable1.getRowSorter().toggleSortOrder(0);
-
+        jTable1.getRowSorter().toggleSortOrder(0);
     }
 
     /**
