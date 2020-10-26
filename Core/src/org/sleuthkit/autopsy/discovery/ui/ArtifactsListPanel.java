@@ -126,14 +126,25 @@ class ArtifactsListPanel extends JPanel {
         javax.swing.JScrollPane jScrollPane1 = new javax.swing.JScrollPane();
         jTable1 = new javax.swing.JTable();
 
-        setLayout(new java.awt.BorderLayout());
+        setOpaque(false);
+
+        jScrollPane1.setBorder(null);
 
         jTable1.setAutoCreateRowSorter(true);
         jTable1.setModel(tableModel);
         jTable1.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         jScrollPane1.setViewportView(jTable1);
 
-        add(jScrollPane1, java.awt.BorderLayout.PAGE_START);
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
+        this.setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 400, Short.MAX_VALUE)
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 607, Short.MAX_VALUE)
+        );
     }// </editor-fold>//GEN-END:initComponents
 
     /**
@@ -216,7 +227,7 @@ class ArtifactsListPanel extends JPanel {
          *                    at.
          *
          * @return A string that can be used in place of the accessed date time
-         *         attribute title when they are not avaiable.
+         *         attribute title when they are not available.
          *
          * @throws TskCoreException
          */

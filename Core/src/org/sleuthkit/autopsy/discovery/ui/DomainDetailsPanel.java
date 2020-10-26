@@ -53,12 +53,9 @@ final class DomainDetailsPanel extends JPanel {
      */
     private void addArtifactTabs() {
         for (BlackboardArtifact.ARTIFACT_TYPE type : SearchData.Type.DOMAIN.getArtifactTypes()) {
-            DomainArtifactsTabPanel newTab = new DomainArtifactsTabPanel(type);
-            jTabbedPane1.add(type.getDisplayName(), newTab);
-            if (!StringUtils.isBlank(selectedTabName)) {
-                jTabbedPane1.setSelectedComponent(newTab);
-            }
+            jTabbedPane1.add(type.getDisplayName(), new DomainArtifactsTabPanel(type));
         }
+        selectTab();
         jTabbedPane1.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(ChangeEvent e) {
@@ -71,6 +68,15 @@ final class DomainDetailsPanel extends JPanel {
                 }
             }
         });
+    }
+
+    private void selectTab() {
+        for (int i = 0; i < jTabbedPane1.getTabCount(); i++) {
+            if (!StringUtils.isBlank(selectedTabName) && selectedTabName.equals(jTabbedPane1.getTitleAt(i))) {
+                jTabbedPane1.setSelectedIndex(i);
+                return;
+            }
+        }
     }
 
     /**
@@ -96,21 +102,6 @@ final class DomainDetailsPanel extends JPanel {
     }
 
     /**
-     * Clear the tabs of any previous content.
-     */
-    private void clearTabs() {
-        int tabCount = jTabbedPane1.getTabCount();
-        // We invoke removeTabAt for each tab, otherwise we may end up
-        // removing Components added by the UI.
-        while (tabCount > 0) {
-            tabCount--;
-            jTabbedPane1.removeTabAt(tabCount);
-        }
-        addArtifactTabs();
-
-    }
-
-    /**
      * Populate the the details tabs.
      *
      * @param populateEvent The PopulateDomainTabsEvent which indicates which
@@ -120,8 +111,8 @@ final class DomainDetailsPanel extends JPanel {
     synchronized void handlePopulateDomainTabsEvent(DiscoveryEventUtils.PopulateDomainTabsEvent populateEvent) {
         SwingUtilities.invokeLater(() -> {
             domain = populateEvent.getDomain();
+            selectTab();
             runDomainWorker();
-            clearTabs();
             if (StringUtils.isBlank(domain)) {
                 //send fade out event
                 DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.DetailsVisibleEvent(false));
