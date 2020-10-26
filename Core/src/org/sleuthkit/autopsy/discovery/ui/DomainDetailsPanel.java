@@ -44,10 +44,13 @@ final class DomainDetailsPanel extends JPanel {
     /**
      * Creates new form ArtifactDetailsPanel
      *
-     * @param initialSelectedTab Specifies which specific details tab should be selected initially.
+     * @param initialSelectedTab Specifies which specific details tab should be
+     *                           selected initially.
      */
     DomainDetailsPanel(ARTIFACT_TYPE initialSelectedTab) {
-        selectedTabName = initialSelectedTab.getDisplayName();
+        if (initialSelectedTab != null) {
+            selectedTabName = initialSelectedTab.getDisplayName();
+        }
         initComponents();
         addArtifactTabs();
     }

@@ -27,8 +27,8 @@ import javax.swing.table.AbstractTableModel;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -160,15 +160,15 @@ class ArtifactsListPanel extends JPanel {
 
         private static final long serialVersionUID = 1L;
         private final List<BlackboardArtifact> artifactList = new ArrayList<>();
-        private final BlackboardArtifact.ARTIFACT_TYPE resultType;
+        private final BlackboardArtifact.ARTIFACT_TYPE artifactType;
 
         /**
          * Construct a new DomainArtifactTableModel.
          *
-         * @param resultType The type of artifact displayed in this table.
+         * @param artifactType The type of artifact displayed in this table.
          */
-        DomainArtifactTableModel(BlackboardArtifact.ARTIFACT_TYPE resultType) {
-            this.resultType = resultType;
+        DomainArtifactTableModel(BlackboardArtifact.ARTIFACT_TYPE artifactType) {
+            this.artifactType = artifactType;
         }
 
         /**
@@ -189,7 +189,7 @@ class ArtifactsListPanel extends JPanel {
 
         @Override
         public int getColumnCount() {
-            if (resultType == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE) {
+            if (artifactType == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE) {
                 return 3;
             } else {
                 return 2;
@@ -211,21 +211,27 @@ class ArtifactsListPanel extends JPanel {
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
             try {
-                int artifactTypeId = getArtifactByRow(rowIndex).getArtifactTypeID();
-                if (columnIndex == 1 && artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID()) {
-                    return getArtifactByRow(rowIndex).getParent().getName();
-                } else if (columnIndex == 2 && artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID() && getArtifactByRow(rowIndex).getParent() instanceof AbstractFile) {
-                    return ((AbstractFile) getArtifactByRow(rowIndex).getParent()).getMIMEType();
-                } else if (columnIndex == 2) {
+                if (columnIndex == 2 && artifactType != BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE) {
                     return "";
                 }
                 for (BlackboardAttribute bba : getArtifactByRow(rowIndex).getAttributes()) {
-                    if (columnIndex == 0 && bba.getAttributeType().getTypeName().startsWith("TSK_DATETIME_ACCESSED") && !StringUtils.isBlank(bba.getDisplayString()) && artifactTypeId != BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID()) {
+                    System.out.println("ATTR NAME: " + bba.getAttributeType().getTypeName());
+                    if (columnIndex == 0 && bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID() && !StringUtils.isBlank(bba.getDisplayString())) {
                         return bba.getDisplayString();
-                    } else if (columnIndex == 1 && bba.getAttributeType().getTypeName().startsWith("TSK_TITLE") && !StringUtils.isBlank(bba.getDisplayString())) {
-                        return bba.getDisplayString();
-                    } else if (columnIndex == 1 && bba.getAttributeType().getTypeName().startsWith("TSK_PATH") && artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID()) {
-                        return FilenameUtils.getName(bba.getDisplayString());
+                    } else if (columnIndex == 1) {
+                        if (bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TITLE.getTypeID() && artifactType != BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD && !StringUtils.isBlank(bba.getDisplayString())) {
+                            System.out.println("TITLE");
+                            return bba.getDisplayString();
+                        } else if (artifactType == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE && bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID()) {
+                            System.out.println("GET FILE NAME FROM URL");
+                            return FilenameUtils.getName(bba.getDisplayString());
+                        } else if (bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH.getTypeID() && artifactType == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD) {
+                            System.out.println("GET FILE NAME DOWNLOAD: ");
+                            return FilenameUtils.getName(bba.getDisplayString());
+                        }
+                    } else if (columnIndex == 2 && artifactType == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE && bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID() && !StringUtils.isBlank(bba.getDisplayString())) {
+                        System.out.println("MIMETYPE");
+                        return Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(bba.getValueLong()).getMIMEType();
                     }
                 }
                 return getFallbackValue(rowIndex, columnIndex);
@@ -252,15 +258,19 @@ class ArtifactsListPanel extends JPanel {
         private String getFallbackValue(int rowIndex, int columnIndex) throws TskCoreException {
             for (BlackboardAttribute bba : getArtifactByRow(rowIndex).getAttributes()) {
                 if (columnIndex == 0 && bba.getAttributeType().getTypeName().startsWith("TSK_DATETIME") && !StringUtils.isBlank(bba.getDisplayString())) {
+                    System.out.println("FALLBACK TIME");
                     return bba.getDisplayString();
-                } else if (columnIndex == 1 && bba.getAttributeType().getTypeName().startsWith("TSK_URL") && !StringUtils.isBlank(bba.getDisplayString())) {
+                } else if (columnIndex == 1 && bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID() && !StringUtils.isBlank(bba.getDisplayString())) {
+                    System.out.println("FALLBACK TITLE");
                     return bba.getDisplayString();
                 }
             }
+            System.out.println("NO VALUE");
             return Bundle.ArtifactsListPanel_value_noValue();
         }
 
         @NbBundle.Messages({"ArtifactsListPanel.titleColumn.name=Title",
+            "ArtifactsListPanel.fileNameColumn.name=Name",
             "ArtifactsListPanel.dateColumn.name=Date/Time",
             "ArtifactsListPanel.mimeTypeColumn.name=MIME Type"})
         @Override
@@ -269,8 +279,12 @@ class ArtifactsListPanel extends JPanel {
                 case 0:
                     return Bundle.ArtifactsListPanel_dateColumn_name();
                 case 1:
-                    return Bundle.ArtifactsListPanel_titleColumn_name();
-                case 3:
+                    if (artifactType == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE || artifactType == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD) {
+                        return Bundle.ArtifactsListPanel_fileNameColumn_name();
+                    } else {
+                        return Bundle.ArtifactsListPanel_titleColumn_name();
+                    }
+                case 2:
                     return Bundle.ArtifactsListPanel_mimeTypeColumn_name();
                 default:
                     return "";
