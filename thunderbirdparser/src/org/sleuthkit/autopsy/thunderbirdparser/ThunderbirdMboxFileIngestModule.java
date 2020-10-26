@@ -79,7 +79,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
     
     private static final int MBOX_SIZE_TO_SPLIT = 1048576000;
     private Case currentCase;
-
+  
     /**
      * Empty constructor.
      */
@@ -138,6 +138,10 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         
         boolean isPstFile = PstParser.isPstFile(abstractFile);
         boolean isVcardFile = VcardParser.isVcardFile(abstractFile);
+        
+        if (context.fileIngestIsCancelled()) {
+            return ProcessResult.OK;
+        }
         
         if (isMbox || isEMLFile || isPstFile || isVcardFile  ) {
             try {
@@ -213,6 +217,9 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
                 Iterator<EmailMessage> pstMsgIterator = parser.getEmailMessageIterator();
                 if (pstMsgIterator != null) {
                     processEmails(parser.getPartialEmailMessages(), pstMsgIterator , abstractFile);
+                    if (context.fileIngestIsCancelled()) {
+                        return ProcessResult.OK;
+                    }
                 } else {
                     // sometimes parser returns ParseResult=OK but there are no messages
                     postErrorMessage(
@@ -321,6 +328,9 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
             }
 
             processMboxFile(file, abstractFile, emailFolder);
+            if (context.fileIngestIsCancelled()) {
+                return ProcessResult.OK;
+            }
             
             if (file.delete() == false) {
                 logger.log(Level.INFO, "Failed to delete temp file: {0}", file.getName()); //NON-NLS
@@ -349,7 +359,9 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
                 if (splitFile.delete() == false) {
                     logger.log(Level.INFO, "Failed to delete temp file: {0}", splitFile); //NON-NLS
                 }
-
+                if (context.fileIngestIsCancelled()) {
+                    return ProcessResult.OK;
+                }
             }
         }                 
             
@@ -385,6 +397,9 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         List<EmailMessage> emails = new ArrayList<>();
         if(emailIterator != null) {
             while(emailIterator.hasNext()) {
+                if (context.fileIngestIsCancelled()) {
+                    return;
+                }
                 EmailMessage emailMessage = emailIterator.next();
                 if(emailMessage != null) {
                     emails.add(emailMessage);
@@ -526,6 +541,10 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
 
         int msgCnt = 0;
         while(fullMessageIterator.hasNext()) {
+            if (context.fileIngestIsCancelled()) {
+                return;
+            }
+            
             EmailMessage current = fullMessageIterator.next();
             
             if(current == null) {
@@ -550,6 +569,9 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
 
         if (derivedFiles.isEmpty() == false) {
             for (AbstractFile derived : derivedFiles) {
+                if (context.fileIngestIsCancelled()) {
+                    return;
+                }
                 services.fireModuleContentEvent(new ModuleContentEvent(derived));
             }
         }
@@ -675,6 +697,10 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         String senderAddress;
         senderAddressList.addAll(findEmailAddresess(from));
         
+        if (context.fileIngestIsCancelled()) {
+            return null;
+        }
+        
         AccountFileInstance senderAccountInstance = null;
 
         if (senderAddressList.size() == 1) {
@@ -690,13 +716,20 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
              logger.log(Level.WARNING, "Failed to find sender address, from  = {0}", from); //NON-NLS
         }
         
+        if (context.fileIngestIsCancelled()) {
+            return null;
+        }
+        
         List<String> recipientAddresses = new ArrayList<>();
         recipientAddresses.addAll(findEmailAddresess(to));
         recipientAddresses.addAll(findEmailAddresess(cc));
         recipientAddresses.addAll(findEmailAddresess(bcc));
         
         List<AccountFileInstance> recipientAccountInstances = new ArrayList<>();
-        recipientAddresses.forEach((addr) -> {
+        for (String addr : recipientAddresses) {
+            if (context.fileIngestIsCancelled()) {
+                return null;
+            }
             try {
                 AccountFileInstance recipientAccountInstance = 
                 currentCase.getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.EMAIL, addr,
@@ -706,7 +739,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
             catch(TskCoreException ex) {
                 logger.log(Level.WARNING, "Failed to create account for email address  " + addr, ex); //NON-NLS
             }
-        });
+        }
                 
         addArtifactAttribute(headers, ATTRIBUTE_TYPE.TSK_HEADERS, bbattributes);
         addArtifactAttribute(from, ATTRIBUTE_TYPE.TSK_EMAIL_FROM, bbattributes);
@@ -731,12 +764,23 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         
    
         try {
+            if (context.fileIngestIsCancelled()) {
+                return null;
+            }
             
             bbart = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG);
             bbart.addAttributes(bbattributes);
 
+            if (context.fileIngestIsCancelled()) {
+                return null;
+            }
+            
             // Add account relationships
             currentCase.getSleuthkitCase().getCommunicationsManager().addRelationships(senderAccountInstance, recipientAccountInstances, bbart,Relationship.Type.MESSAGE, dateL);
+
+            if (context.fileIngestIsCancelled()) {
+                return null;
+            }
             
             try {
                 // index the artifact for keyword search
