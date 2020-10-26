@@ -101,8 +101,8 @@ final class DomainArtifactsTabPanel extends JPanel {
      */
     void setStatus(ArtifactRetrievalStatus status) {
         this.status = status;
-        if (status == ArtifactRetrievalStatus.UNPOPULATED) {
-            rightPanel.setArtifact(null);
+        if (status == ArtifactRetrievalStatus.UNPOPULATED && rightPanel != null) {
+           rightPanel.setArtifact(null);
         }
     }
 
