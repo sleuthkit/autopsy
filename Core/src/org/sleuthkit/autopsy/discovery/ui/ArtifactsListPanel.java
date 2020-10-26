@@ -92,11 +92,19 @@ class ArtifactsListPanel extends JPanel {
         return tableModel.getRowCount() <= 0;
     }
 
+    void selectFirst() {
+        if (!isEmpty()) {
+            jTable1.setRowSelectionInterval(0, 0);
+        } else {
+            jTable1.clearSelection();
+        }
+    }
+
     /**
      * Add the specified list of artifacts to the list of artifacts which should
      * be displayed.
      *
-     * @param artifactList
+     * @param artifactList The list of artifacts to display.
      */
     void addArtifacts(List<BlackboardArtifact> artifactList) {
         tableModel.setContents(artifactList);
@@ -168,6 +176,7 @@ class ArtifactsListPanel extends JPanel {
          * @param artifacts The list of BlackboardArtifacts to represent.
          */
         void setContents(List<BlackboardArtifact> artifacts) {
+            jTable1.clearSelection();
             artifactList.clear();
             artifactList.addAll(artifacts);
         }

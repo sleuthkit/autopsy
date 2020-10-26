@@ -101,6 +101,9 @@ final class DomainArtifactsTabPanel extends JPanel {
      */
     void setStatus(ArtifactRetrievalStatus status) {
         this.status = status;
+        if (status == ArtifactRetrievalStatus.UNPOPULATED) {
+            rightPanel.setArtifact(null);
+        }
     }
 
     @Subscribe
@@ -110,6 +113,7 @@ final class DomainArtifactsTabPanel extends JPanel {
                 listPanel.removeListSelectionListener(listener);
                 listPanel.addArtifacts(artifactListEvent.getListOfArtifacts());
                 listPanel.addSelectionListener(listener);
+                listPanel.selectFirst();
                 try {
                     DiscoveryEventUtils.getDiscoveryEventBus().unregister(this);
                 } catch (IllegalArgumentException notRegistered) {
