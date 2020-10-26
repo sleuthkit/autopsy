@@ -79,7 +79,7 @@ class ArtifactsListPanel extends JPanel {
         if (selectedIndex < jTable1.getSelectionModel().getMinSelectionIndex() || jTable1.getSelectionModel().getMaxSelectionIndex() < 0 || selectedIndex > jTable1.getSelectionModel().getMaxSelectionIndex()) {
             return null;
         }
-        return tableModel.getArtifactByRow(jTable1.convertRowIndexToView(selectedIndex));
+        return tableModel.getArtifactByRow(jTable1.convertRowIndexToModel(selectedIndex));
     }
 
     /**
