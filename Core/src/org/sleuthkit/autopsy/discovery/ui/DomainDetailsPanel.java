@@ -28,6 +28,7 @@ import org.apache.commons.lang.StringUtils;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.autopsy.discovery.search.SearchData;
+import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 
 /**
  * Panel to display details area for domain discovery results.
@@ -42,8 +43,11 @@ final class DomainDetailsPanel extends JPanel {
 
     /**
      * Creates new form ArtifactDetailsPanel
+     *
+     * @param initialSelectedTab Specifies which specific details tab should be selected initially.
      */
-    DomainDetailsPanel() {
+    DomainDetailsPanel(ARTIFACT_TYPE initialSelectedTab) {
+        selectedTabName = initialSelectedTab.getDisplayName();
         initComponents();
         addArtifactTabs();
     }

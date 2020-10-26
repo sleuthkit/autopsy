@@ -217,6 +217,18 @@ public class SearchFiltering {
             this.types = types;
         }
 
+        /**
+         * Get the first artifact type specified by the filter.
+         *
+         * @return The first artifact type specified by the filter.
+         */
+        public ARTIFACT_TYPE getFirstType() {
+            if (!types.isEmpty()) {
+                return types.get(0);
+            }
+            return null;
+        }
+
         @Override
         public String getWhereClause() {
             StringJoiner joiner = new StringJoiner(",");

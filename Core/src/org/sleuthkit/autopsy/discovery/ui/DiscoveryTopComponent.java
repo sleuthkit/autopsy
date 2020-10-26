@@ -40,6 +40,8 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils;
 import org.sleuthkit.autopsy.discovery.search.SearchData.Type;
 import static org.sleuthkit.autopsy.discovery.search.SearchData.Type.DOMAIN;
+import org.sleuthkit.autopsy.discovery.search.SearchFiltering.ArtifactTypeFilter;
+import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 
 /**
  * Create a dialog for displaying the Discovery results.
@@ -320,7 +322,15 @@ public final class DiscoveryTopComponent extends TopComponent {
             if (!searchCompleteEvent.getFilters().isEmpty()) {
                 descriptionText += Bundle.DiscoveryTopComponent_additionalFilters_text();
             }
-            rightSplitPane.setBottomComponent(new DomainDetailsPanel());
+            ARTIFACT_TYPE selectedType = null;
+            for (AbstractFilter filter : searchCompleteEvent.getFilters()) {
+                if (filter instanceof ArtifactTypeFilter) {
+                    selectedType = ((ArtifactTypeFilter) filter).getFirstType();
+                    break;
+                }
+            }
+
+            rightSplitPane.setBottomComponent(new DomainDetailsPanel(selectedType));
         } else {
             rightSplitPane.setBottomComponent(new FileDetailsPanel());
         }

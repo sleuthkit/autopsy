@@ -37,7 +37,7 @@ final class DomainArtifactsTabPanel extends JPanel {
 
     private static final long serialVersionUID = 1L;
     private final static Logger logger = Logger.getLogger(DomainArtifactsTabPanel.class.getName());
-    private final ArtifactsListPanel listPanel = new ArtifactsListPanel();
+    private final ArtifactsListPanel listPanel;
     private final BlackboardArtifact.ARTIFACT_TYPE artifactType;
     private AbstractArtifactDetailsPanel rightPanel = null;
 
@@ -54,9 +54,10 @@ final class DomainArtifactsTabPanel extends JPanel {
     /**
      * Creates new form CookiesPanel
      */
-    DomainArtifactsTabPanel(BlackboardArtifact.ARTIFACT_TYPE artifactType) {
+    DomainArtifactsTabPanel(BlackboardArtifact.ARTIFACT_TYPE type) {
         initComponents();
-        this.artifactType = artifactType;
+        this.artifactType = type;
+        listPanel = new ArtifactsListPanel(artifactType);
         jSplitPane1.setLeftComponent(listPanel);
         setRightComponent();
         listPanel.addSelectionListener(listener);
