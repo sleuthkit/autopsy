@@ -118,6 +118,7 @@ final class DomainDetailsPanel extends JPanel {
     synchronized void handlePopulateDomainTabsEvent(DiscoveryEventUtils.PopulateDomainTabsEvent populateEvent) {
         SwingUtilities.invokeLater(() -> {
             domain = populateEvent.getDomain();
+            resetTabsStatus();
             selectTab();
             runDomainWorker();
             if (StringUtils.isBlank(domain)) {
@@ -128,6 +129,18 @@ final class DomainDetailsPanel extends JPanel {
                 DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.DetailsVisibleEvent(true));
             }
         });
+    }
+
+    /**
+     * Private helper method to ensure tabs will re-populate after a new domain
+     * is selected.
+     */
+    private void resetTabsStatus() {
+        for (Component comp : jTabbedPane1.getComponents()) {
+            if (comp instanceof DomainArtifactsTabPanel) {
+                ((DomainArtifactsTabPanel) comp).setStatus(DomainArtifactsTabPanel.ArtifactRetrievalStatus.UNPOPULATED);
+            }
+        }
     }
 
     /**
