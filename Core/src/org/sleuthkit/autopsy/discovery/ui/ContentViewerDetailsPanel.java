@@ -5,10 +5,17 @@
  */
 package org.sleuthkit.autopsy.discovery.ui;
 
+import java.util.logging.Level;
 import org.openide.nodes.Node;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponents.DataContentPanel;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
+import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Details panel for displaying the collection of content viewers.
@@ -16,7 +23,8 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 class ContentViewerDetailsPanel extends AbstractArtifactDetailsPanel {
 
     private static final long serialVersionUID = 1L;
-    private final DataContentPanel contentViewer  = DataContentPanel.createInstance();
+    private final static Logger logger = Logger.getLogger(ContentViewerDetailsPanel.class.getName());
+    private final DataContentPanel contentViewer = DataContentPanel.createInstance();
 
     /**
      * Creates new form ContentViewerDetailsPanel
@@ -42,7 +50,22 @@ class ContentViewerDetailsPanel extends AbstractArtifactDetailsPanel {
     public void setArtifact(BlackboardArtifact artifact) {
         Node node = Node.EMPTY;
         if (artifact != null) {
-            node = new BlackboardArtifactNode(artifact);
+            if (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID()) {
+                try {
+                    for (BlackboardAttribute attr : artifact.getAttributes()) {
+                        if (attr.getAttributeType().getTypeID() == TSK_PATH_ID.getTypeID()) {
+                            node = new FileNode(Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(attr.getValueLong()));
+                            break;
+                        }
+                    }
+                } catch (TskCoreException ex) {
+                    logger.log(Level.WARNING, "Unable to retrieve attributes for artifact with ID: " + artifact.getArtifactID(), ex);
+                }
+            }
+            if (node.equals(Node.EMPTY)) {
+                node = new BlackboardArtifactNode(artifact);
+            }
+
         }
         contentViewer.setNode(node);
     }
