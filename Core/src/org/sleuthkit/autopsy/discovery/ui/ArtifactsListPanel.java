@@ -215,22 +215,17 @@ class ArtifactsListPanel extends JPanel {
                     return "";
                 }
                 for (BlackboardAttribute bba : getArtifactByRow(rowIndex).getAttributes()) {
-                    System.out.println("ATTR NAME: " + bba.getAttributeType().getTypeName());
                     if (columnIndex == 0 && bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID() && !StringUtils.isBlank(bba.getDisplayString())) {
                         return bba.getDisplayString();
                     } else if (columnIndex == 1) {
                         if (bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TITLE.getTypeID() && artifactType != BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD && !StringUtils.isBlank(bba.getDisplayString())) {
-                            System.out.println("TITLE");
                             return bba.getDisplayString();
                         } else if (artifactType == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE && bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID()) {
-                            System.out.println("GET FILE NAME FROM URL");
                             return FilenameUtils.getName(bba.getDisplayString());
                         } else if (bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH.getTypeID() && artifactType == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD) {
-                            System.out.println("GET FILE NAME DOWNLOAD: ");
                             return FilenameUtils.getName(bba.getDisplayString());
                         }
                     } else if (columnIndex == 2 && artifactType == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE && bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID() && !StringUtils.isBlank(bba.getDisplayString())) {
-                        System.out.println("MIMETYPE");
                         return Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(bba.getValueLong()).getMIMEType();
                     }
                 }
@@ -258,14 +253,11 @@ class ArtifactsListPanel extends JPanel {
         private String getFallbackValue(int rowIndex, int columnIndex) throws TskCoreException {
             for (BlackboardAttribute bba : getArtifactByRow(rowIndex).getAttributes()) {
                 if (columnIndex == 0 && bba.getAttributeType().getTypeName().startsWith("TSK_DATETIME") && !StringUtils.isBlank(bba.getDisplayString())) {
-                    System.out.println("FALLBACK TIME");
                     return bba.getDisplayString();
                 } else if (columnIndex == 1 && bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID() && !StringUtils.isBlank(bba.getDisplayString())) {
-                    System.out.println("FALLBACK TITLE");
                     return bba.getDisplayString();
                 }
             }
-            System.out.println("NO VALUE");
             return Bundle.ArtifactsListPanel_value_noValue();
         }
 
