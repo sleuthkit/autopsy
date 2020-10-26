@@ -220,7 +220,7 @@ class ArtifactsListPanel extends JPanel {
                     } else if (columnIndex == 1) {
                         if (bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TITLE.getTypeID() && artifactType != BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD && !StringUtils.isBlank(bba.getDisplayString())) {
                             return bba.getDisplayString();
-                        } else if (artifactType == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE && bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID()) {
+                        } else if (artifactType == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE && bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID() && !StringUtils.isBlank(bba.getDisplayString())) {
                             return FilenameUtils.getName(bba.getDisplayString());
                         } else if (bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH.getTypeID() && artifactType == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD) {
                             return FilenameUtils.getName(bba.getDisplayString());

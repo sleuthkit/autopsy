@@ -1,4 +1,5 @@
 ArtifactsListPanel.dateColumn.name=Date/Time
+ArtifactsListPanel.fileNameColumn.name=Name
 ArtifactsListPanel.mimeTypeColumn.name=MIME Type
 ArtifactsListPanel.titleColumn.name=Title
 ArtifactsListPanel.value.noValue=No value available.
