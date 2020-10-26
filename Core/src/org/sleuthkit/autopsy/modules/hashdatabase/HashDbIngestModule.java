@@ -18,13 +18,11 @@
  */
 package org.sleuthkit.autopsy.modules.hashdatabase;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.logging.Level;
@@ -478,7 +476,7 @@ public class HashDbIngestModule implements FileIngestModule {
 
         TimingMetric metric = HealthMonitor.getTimingMetric("Disk Reads: Hash calculation");
         long calcstart = System.currentTimeMillis();
-        List<HashUtility.HashValue> newHashResults = 
+        List<HashUtility.HashResult> newHashResults = 
                 HashUtility.calculateHashes(file, Arrays.asList(HashUtility.HashType.MD5,HashUtility.HashType.SHA256 ));
         if (file.getSize() > 0) {
             // Surprisingly, the hash calculation does not seem to be correlated that
@@ -491,7 +489,7 @@ public class HashDbIngestModule implements FileIngestModule {
                 HealthMonitor.submitNormalizedTimingMetric(metric, file.getSize() / 500000);
             }
         }
-        for (HashUtility.HashValue hash : newHashResults) {
+        for (HashUtility.HashResult hash : newHashResults) {
             if (hash.getType().equals(HashUtility.HashType.MD5)) {
                 file.setMd5Hash(hash.getValue());
             } else if (hash.getType().equals(HashUtility.HashType.SHA256)) {
