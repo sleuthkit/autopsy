@@ -151,7 +151,6 @@ public final class DiscoveryTopComponent extends TopComponent {
         DiscoveryEventUtils.getDiscoveryEventBus().unregister(groupListPanel);
         DiscoveryEventUtils.getDiscoveryEventBus().unregister(resultsPanel);
         DiscoveryEventUtils.getDiscoveryEventBus().unregister(rightSplitPane.getBottomComponent());
-        setDetailsVisible(false);
         super.componentClosed();
     }
 
@@ -182,9 +181,6 @@ public final class DiscoveryTopComponent extends TopComponent {
         rightSplitPane.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
         rightSplitPane.setResizeWeight(1.0);
         rightSplitPane.setPreferredSize(new java.awt.Dimension(800, 700));
-
-        setDetailsVisible(false);
-
         mainSplitPane.setRightComponent(rightSplitPane);
 
         add(mainSplitPane, java.awt.BorderLayout.CENTER);
@@ -295,11 +291,6 @@ public final class DiscoveryTopComponent extends TopComponent {
         progressMessageTextArea.setText(Bundle.DiscoveryTopComponent_searchInProgress_text(searchType.name()));
     }
 
-    private void setDetailsVisible(boolean isVisible) {
-        rightSplitPane.getComponent(1).setVisible(isVisible);
-        rightSplitPane.getComponent(2).setVisible(isVisible);
-    }
-
     /**
      * Subscribe to the SearchCompleteEvent for updating the UI accordingly.
      *
@@ -334,7 +325,6 @@ public final class DiscoveryTopComponent extends TopComponent {
         } else {
             rightSplitPane.setBottomComponent(new FileDetailsPanel());
         }
-        setDetailsVisible(true);
         DiscoveryEventUtils.getDiscoveryEventBus().register(rightSplitPane.getBottomComponent());
         descriptionText += searchCompleteEvent.getFilters().stream().map(AbstractFilter::getDesc).collect(Collectors.joining("; "));
         progressMessageTextArea.setText(Bundle.DiscoveryTopComponent_searchComplete_text(descriptionText));

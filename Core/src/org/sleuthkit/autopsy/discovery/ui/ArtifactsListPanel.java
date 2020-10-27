@@ -99,6 +99,10 @@ class ArtifactsListPanel extends JPanel {
         return tableModel.getRowCount() <= 0;
     }
 
+    /**
+     * Select the first available artifact in the list if it is not empty to
+     * populate the panel to the right.
+     */
     void selectFirst() {
         if (!isEmpty()) {
             jTable1.setRowSelectionInterval(0, 0);
