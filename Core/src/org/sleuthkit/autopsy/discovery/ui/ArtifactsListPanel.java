@@ -223,59 +223,53 @@ class ArtifactsListPanel extends JPanel {
         @NbBundle.Messages({"ArtifactsListPanel.value.noValue=No value available."})
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            try {
-                if (columnIndex == 2 && artifactType != BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE) {
-                    return "";
-                }
-                for (BlackboardAttribute bba : getArtifactByRow(rowIndex).getAttributes()) {
-                    if (!StringUtils.isBlank(bba.getDisplayString())) {
-                        String stringFromAttribute = getStringForColumn(bba, columnIndex);
-                        if (!StringUtils.isBlank(stringFromAttribute)) {
-                            return stringFromAttribute;
+            if (columnIndex < 2 || artifactType == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE) {
+                try {
+                    for (BlackboardAttribute bba : getArtifactByRow(rowIndex).getAttributes()) {
+                        if (!StringUtils.isBlank(bba.getDisplayString())) {
+                            String stringFromAttribute = getStringForColumn(bba, columnIndex);
+                            if (!StringUtils.isBlank(stringFromAttribute)) {
+                                return stringFromAttribute;
+                            }
                         }
                     }
+                    return getFallbackValue(rowIndex, columnIndex);
+                } catch (TskCoreException ex) {
+                    logger.log(Level.WARNING, "Error getting attributes for artifact " + getArtifactByRow(rowIndex).getArtifactID(), ex);
                 }
-                return getFallbackValue(rowIndex, columnIndex);
-            } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, "Error getting attributes for artifact " + getArtifactByRow(rowIndex).getArtifactID(), ex);
-                return Bundle.ArtifactsListPanel_value_noValue();
             }
+            return Bundle.ArtifactsListPanel_value_noValue();
         }
 
         /**
+         * Get the appropriate String for the specified column from the
+         * BlackboardAttribute.
          *
-         * @param rowIndex
-         * @param columnIndex
+         * @param bba         The BlackboardAttribute which may contain a value.
+         * @param columnIndex The column the value will be displayed in.
          *
-         * @return
+         * @return The value from the specified attribute which should be
+         *         displayed in the specified column, null if the specified
+         *         attribute does not contain a value for that column.
          *
-         * @throws TskCoreException
+         * @throws TskCoreException When unable to get abstract files based on
+         *                          the TSK_PATH_ID.
          */
         private String getStringForColumn(BlackboardAttribute bba, int columnIndex) throws TskCoreException {
-            switch (columnIndex) {
-                case 0:
-                    if (bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()) {
-                        return bba.getDisplayString();
-                    }
-                    break;
-                case 1:
-                    if (bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TITLE.getTypeID() && artifactType != BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD) {
-                        return bba.getDisplayString();
-                    } else if (artifactType == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE && bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID()) {
-                        return Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(bba.getValueLong()).getName();
-                    } else if (bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH.getTypeID() && artifactType == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD) {
-                        return FilenameUtils.getName(bba.getDisplayString());
-                    }
-                    break;
-                case 2:
-                    if (artifactType == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE && bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID()) {
-                        return Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(bba.getValueLong()).getMIMEType();
-                    }
-                    break;
-                default:
-                //default is to do nothing
+            if (columnIndex == 0 && bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()) {
+                return bba.getDisplayString();
+            } else if (columnIndex == 1) {
+                if (bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TITLE.getTypeID() && artifactType != BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD) {
+                    return bba.getDisplayString();
+                } else if (artifactType == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE && bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID()) {
+                    return Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(bba.getValueLong()).getName();
+                } else if (bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH.getTypeID() && artifactType == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD) {
+                    return FilenameUtils.getName(bba.getDisplayString());
+                }
+            } else if (columnIndex == 2 && artifactType == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE && bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID()) {
+                return Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(bba.getValueLong()).getMIMEType();
             }
-            return "";
+            return null;
         }
 
         /**
