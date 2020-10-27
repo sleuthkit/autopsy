@@ -39,7 +39,7 @@ final class DomainDetailsPanel extends JPanel {
     private static final long serialVersionUID = 1L;
     private static ArtifactsWorker detailsWorker;
     private static String domain;
-    private static String selectedTabName;
+    private String selectedTabName;
 
     /**
      * Creates new form ArtifactDetailsPanel
@@ -50,9 +50,7 @@ final class DomainDetailsPanel extends JPanel {
     DomainDetailsPanel(ARTIFACT_TYPE initialSelectedTab) {
         if (initialSelectedTab != null) {
             selectedTabName = initialSelectedTab.getDisplayName();
-        } else {
-            selectedTabName = null;
-        }
+        } 
         initComponents();
         addArtifactTabs();
     }
