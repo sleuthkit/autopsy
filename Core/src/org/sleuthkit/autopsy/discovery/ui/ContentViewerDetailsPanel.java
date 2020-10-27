@@ -1,29 +1,34 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy
+ *
+ * Copyright 2020 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.discovery.ui;
 
-import java.util.logging.Level;
 import org.openide.nodes.Node;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponents.DataContentPanel;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
-import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardAttribute;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Details panel for displaying the collection of content viewers.
  */
-class ContentViewerDetailsPanel extends AbstractArtifactDetailsPanel {
+final class ContentViewerDetailsPanel extends AbstractArtifactDetailsPanel {
 
     private static final long serialVersionUID = 1L;
-    private final static Logger logger = Logger.getLogger(ContentViewerDetailsPanel.class.getName());
     private final DataContentPanel contentViewer = DataContentPanel.createInstance();
 
     /**
@@ -50,22 +55,7 @@ class ContentViewerDetailsPanel extends AbstractArtifactDetailsPanel {
     public void setArtifact(BlackboardArtifact artifact) {
         Node node = Node.EMPTY;
         if (artifact != null) {
-            if (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID()) {
-                try {
-                    for (BlackboardAttribute attr : artifact.getAttributes()) {
-                        if (attr.getAttributeType().getTypeID() == TSK_PATH_ID.getTypeID()) {
-                            node = new FileNode(Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(attr.getValueLong()));
-                            break;
-                        }
-                    }
-                } catch (TskCoreException ex) {
-                    logger.log(Level.WARNING, "Unable to retrieve attributes for artifact with ID: " + artifact.getArtifactID(), ex);
-                }
-            }
-            if (node.equals(Node.EMPTY)) {
-                node = new BlackboardArtifactNode(artifact);
-            }
-
+            node = new BlackboardArtifactNode(artifact);
         }
         contentViewer.setNode(node);
     }
