@@ -35,7 +35,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import junit.framework.Test;
 import junit.framework.TestCase;
-import org.apache.commons.io.FileUtils;
 import org.netbeans.junit.NbModuleSuite;
 import org.openide.util.Exceptions;
 import junit.framework.Assert;
@@ -47,6 +46,7 @@ import org.sleuthkit.datamodel.TskData;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.coreutils.FileUtil;
 
 /**
  * Functional tests for the Central Repository data model.
@@ -100,8 +100,8 @@ public class CentralRepoDatamodelTest extends TestCase {
                 if (CentralRepository.isEnabled()) {
                     CentralRepository.getInstance().shutdownConnections();
                 }
-                FileUtils.deleteDirectory(testDirectory.toFile());
-            } catch (IOException | CentralRepoException ex) {
+                FileUtil.deleteDir(testDirectory.toFile());
+            } catch (CentralRepoException ex) {
                 Assert.fail(ex.getMessage());
             }
         }
@@ -194,8 +194,8 @@ public class CentralRepoDatamodelTest extends TestCase {
             if (CentralRepository.isEnabled()) {
                 CentralRepository.getInstance().shutdownConnections();
             }
-            FileUtils.deleteDirectory(testDirectory.toFile());
-        } catch (CentralRepoException | IOException ex) {
+            FileUtil.deleteDir(testDirectory.toFile());
+        } catch (CentralRepoException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
         }

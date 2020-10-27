@@ -18,7 +18,8 @@
  */
 package org.sleuthkit.autopsy.discovery.search;
 
-import com.google.common.collect.Lists;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
@@ -52,7 +53,7 @@ public class DomainSearchArtifactsCacheTest {
     public void get_ThreadInterrupted_ShouldThrow() throws TskCoreException {        
         SleuthkitCase mockCase = mock(SleuthkitCase.class);
         BlackboardArtifact mockArtifact = mock(BlackboardArtifact.class);
-        when(mockCase.getBlackboardArtifacts(WEB_ARTIFACT_TYPE)).thenReturn(Lists.newArrayList(mockArtifact));
+        when(mockCase.getBlackboardArtifacts(WEB_ARTIFACT_TYPE)).thenReturn(new ArrayList<>(Arrays.asList(mockArtifact)));
         
         DomainSearchArtifactsRequest request = new DomainSearchArtifactsRequest(mockCase, "facebook.com", WEB_ARTIFACT_TYPE);
         DomainSearchArtifactsCache cache = new DomainSearchArtifactsCache();
@@ -74,7 +75,7 @@ public class DomainSearchArtifactsCacheTest {
         SleuthkitCase mockCase = mock(SleuthkitCase.class);
         BlackboardArtifact mockArtifact = mock(BlackboardArtifact.class);
         when(mockArtifact.getAttribute(TSK_DOMAIN)).thenReturn(mockDomainAttribute("google.com"));
-        when(mockCase.getBlackboardArtifacts(WEB_ARTIFACT_TYPE)).thenReturn(Lists.newArrayList(mockArtifact));
+        when(mockCase.getBlackboardArtifacts(WEB_ARTIFACT_TYPE)).thenReturn(new ArrayList<>(Arrays.asList(mockArtifact)));
         
         DomainSearchArtifactsRequest request = new DomainSearchArtifactsRequest(mockCase, "google.com", WEB_ARTIFACT_TYPE);
         DomainSearchArtifactsCache cache = new DomainSearchArtifactsCache();
@@ -88,7 +89,7 @@ public class DomainSearchArtifactsCacheTest {
         SleuthkitCase mockCase = mock(SleuthkitCase.class);
         BlackboardArtifact mockArtifact = mock(BlackboardArtifact.class);
         when(mockArtifact.getAttribute(TSK_URL)).thenReturn(mockURLAttribute("https://www.abc.com/search"));
-        when(mockCase.getBlackboardArtifacts(WEB_ARTIFACT_TYPE)).thenReturn(Lists.newArrayList(mockArtifact));
+        when(mockCase.getBlackboardArtifacts(WEB_ARTIFACT_TYPE)).thenReturn(new ArrayList<>(Arrays.asList(mockArtifact)));
         
         DomainSearchArtifactsRequest request = new DomainSearchArtifactsRequest(mockCase, "abc.com", WEB_ARTIFACT_TYPE);
         DomainSearchArtifactsCache cache = new DomainSearchArtifactsCache();
@@ -102,7 +103,7 @@ public class DomainSearchArtifactsCacheTest {
         SleuthkitCase mockCase = mock(SleuthkitCase.class);
         BlackboardArtifact mockArtifact = mock(BlackboardArtifact.class);
         when(mockArtifact.getAttribute(TSK_DOMAIN)).thenReturn(mockDomainAttribute("google.com"));
-        when(mockCase.getBlackboardArtifacts(WEB_ARTIFACT_TYPE)).thenReturn(Lists.newArrayList(mockArtifact));
+        when(mockCase.getBlackboardArtifacts(WEB_ARTIFACT_TYPE)).thenReturn(new ArrayList<>(Arrays.asList(mockArtifact)));
         
         DomainSearchArtifactsRequest request = new DomainSearchArtifactsRequest(mockCase, "facebook.com", WEB_ARTIFACT_TYPE);
         DomainSearchArtifactsCache cache = new DomainSearchArtifactsCache();
@@ -115,7 +116,7 @@ public class DomainSearchArtifactsCacheTest {
         SleuthkitCase mockCase = mock(SleuthkitCase.class);
         BlackboardArtifact mockArtifact = mock(BlackboardArtifact.class);
         when(mockArtifact.getAttribute(TSK_URL)).thenReturn(mockURLAttribute("https://www.dce1.com/search"));
-        when(mockCase.getBlackboardArtifacts(WEB_ARTIFACT_TYPE)).thenReturn(Lists.newArrayList(mockArtifact));
+        when(mockCase.getBlackboardArtifacts(WEB_ARTIFACT_TYPE)).thenReturn(new ArrayList<>(Arrays.asList(mockArtifact)));
         
         DomainSearchArtifactsRequest request = new DomainSearchArtifactsRequest(mockCase, "dce.com", WEB_ARTIFACT_TYPE);
         DomainSearchArtifactsCache cache = new DomainSearchArtifactsCache();
@@ -128,7 +129,7 @@ public class DomainSearchArtifactsCacheTest {
         SleuthkitCase mockCase = mock(SleuthkitCase.class);
         BlackboardArtifact mockArtifact = mock(BlackboardArtifact.class);
         when(mockArtifact.getAttribute(TSK_DOMAIN)).thenReturn(mockDomainAttribute("xYZ.coM"));
-        when(mockCase.getBlackboardArtifacts(WEB_ARTIFACT_TYPE)).thenReturn(Lists.newArrayList(mockArtifact));
+        when(mockCase.getBlackboardArtifacts(WEB_ARTIFACT_TYPE)).thenReturn(new ArrayList<>(Arrays.asList(mockArtifact)));
         
         DomainSearchArtifactsRequest request = new DomainSearchArtifactsRequest(mockCase, "xyz.com", WEB_ARTIFACT_TYPE);
         DomainSearchArtifactsCache cache = new DomainSearchArtifactsCache();
@@ -142,7 +143,7 @@ public class DomainSearchArtifactsCacheTest {
         SleuthkitCase mockCase = mock(SleuthkitCase.class);
         BlackboardArtifact mockArtifact = mock(BlackboardArtifact.class);
         when(mockArtifact.getAttribute(TSK_DOMAIN)).thenReturn(mockDomainAttribute("google.com"));
-        when(mockCase.getBlackboardArtifacts(WEB_ARTIFACT_TYPE)).thenReturn(Lists.newArrayList(mockArtifact));
+        when(mockCase.getBlackboardArtifacts(WEB_ARTIFACT_TYPE)).thenReturn(new ArrayList<>(Arrays.asList(mockArtifact)));
         
         DomainSearchArtifactsRequest request = new DomainSearchArtifactsRequest(mockCase, "GooGle.coM", WEB_ARTIFACT_TYPE);
         DomainSearchArtifactsCache cache = new DomainSearchArtifactsCache();
@@ -156,7 +157,7 @@ public class DomainSearchArtifactsCacheTest {
         SleuthkitCase mockCase = mock(SleuthkitCase.class);
         BlackboardArtifact mockArtifact = mock(BlackboardArtifact.class);
         when(mockArtifact.getAttribute(TSK_URL)).thenReturn(mockURLAttribute("https://www.JfK.coM/search"));
-        when(mockCase.getBlackboardArtifacts(WEB_ARTIFACT_TYPE)).thenReturn(Lists.newArrayList(mockArtifact));
+        when(mockCase.getBlackboardArtifacts(WEB_ARTIFACT_TYPE)).thenReturn(new ArrayList<>(Arrays.asList(mockArtifact)));
         
         DomainSearchArtifactsRequest request = new DomainSearchArtifactsRequest(mockCase, "jfk.com", WEB_ARTIFACT_TYPE);
         DomainSearchArtifactsCache cache = new DomainSearchArtifactsCache();
@@ -170,7 +171,7 @@ public class DomainSearchArtifactsCacheTest {
         SleuthkitCase mockCase = mock(SleuthkitCase.class);
         BlackboardArtifact mockArtifact = mock(BlackboardArtifact.class);
         when(mockArtifact.getAttribute(TSK_URL)).thenReturn(mockURLAttribute("https://www.hop.com/search"));
-        when(mockCase.getBlackboardArtifacts(WEB_ARTIFACT_TYPE)).thenReturn(Lists.newArrayList(mockArtifact));
+        when(mockCase.getBlackboardArtifacts(WEB_ARTIFACT_TYPE)).thenReturn(new ArrayList<>(Arrays.asList(mockArtifact)));
         
         DomainSearchArtifactsRequest request = new DomainSearchArtifactsRequest(mockCase, "HoP.cOm", WEB_ARTIFACT_TYPE);
         DomainSearchArtifactsCache cache = new DomainSearchArtifactsCache();
