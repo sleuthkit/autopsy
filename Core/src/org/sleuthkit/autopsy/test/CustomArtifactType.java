@@ -20,7 +20,8 @@ package org.sleuthkit.autopsy.test;
 
 import java.util.ArrayList;
 import java.util.List;
-import javax.xml.bind.DatatypeConverter;
+import org.apache.commons.codec.DecoderException;
+import org.apache.commons.codec.binary.Hex;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.datamodel.Blackboard;
@@ -88,14 +89,14 @@ final class CustomArtifactType {
      *
      * @throws TskCoreException If there is an error creating the artifact.
      */
-    static BlackboardArtifact createInstance(Content source) throws TskCoreException {
+    static BlackboardArtifact createInstance(Content source) throws TskCoreException, DecoderException {
         BlackboardArtifact artifact = source.newArtifact(artifactType.getTypeID());
         List<BlackboardAttribute> attributes = new ArrayList<>();
         attributes.add(new BlackboardAttribute(intAttrType, MODULE_NAME, 0));
         attributes.add(new BlackboardAttribute(doubleAttrType, MODULE_NAME, 0.0));
         attributes.add(new BlackboardAttribute(longAttributeType, MODULE_NAME, 0L));
         attributes.add(new BlackboardAttribute(dateTimeAttrType, MODULE_NAME, 60L));
-        attributes.add(new BlackboardAttribute(bytesAttrType, MODULE_NAME, DatatypeConverter.parseHexBinary("ABCD")));
+        attributes.add(new BlackboardAttribute(bytesAttrType, MODULE_NAME, Hex.decodeHex("ABCD")));
         attributes.add(new BlackboardAttribute(stringAttrType, MODULE_NAME, "Zero"));
         attributes.add(new BlackboardAttribute(jsonAttrType, MODULE_NAME, "{\"fruit\": \"Apple\",\"size\": \"Large\",\"color\": \"Red\"}"));
         artifact.addAttributes(attributes);

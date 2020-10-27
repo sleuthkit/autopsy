@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.test;
 
 import java.util.logging.Level;
+import org.apache.commons.codec.DecoderException;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -72,7 +73,7 @@ public class CustomArtifactsCreatorDataSourceIngestModule extends DataSourceInge
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
         try {
             CustomArtifactType.createInstance(dataSource);
-        } catch (TskCoreException ex) {
+        } catch (TskCoreException | DecoderException ex) {
             logger.log(Level.SEVERE, String.format("Failed to process data source (obj_id = %d)", dataSource.getId()), ex);
             return ProcessResult.ERROR;
         }

@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.test;
 
 import java.util.logging.Level;
+import org.apache.commons.codec.DecoderException;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -73,7 +74,7 @@ final class CustomArtifactsCreatorFileIngestModule extends FileIngestModuleAdapt
         }
         try {
             CustomArtifactType.createInstance(file);
-        } catch (TskCoreException ex) {
+        } catch (TskCoreException | DecoderException ex) {
             logger.log(Level.SEVERE, String.format("Failed to process file (obj_id = %d)", file.getId()), ex);
             return ProcessResult.ERROR;
         }

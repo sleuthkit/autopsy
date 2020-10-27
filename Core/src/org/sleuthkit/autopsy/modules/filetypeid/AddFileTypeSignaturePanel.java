@@ -22,7 +22,8 @@ import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JOptionPane;
-import javax.xml.bind.DatatypeConverter;
+import org.apache.commons.codec.DecoderException;
+import org.apache.commons.codec.binary.Hex;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.modules.filetypeid.FileType.Signature;
@@ -101,7 +102,7 @@ class AddFileTypeSignaturePanel extends javax.swing.JPanel {
         this.offsetTextField.setText(toEdit.getOffset() + "");
         if (Signature.Type.RAW == toEdit.getType()) {
             this.signatureTypeComboBox.setSelectedIndex(0);
-            this.signatureTextField.setText(DatatypeConverter.printHexBinary(toEdit.getSignatureBytes()));
+            this.signatureTextField.setText(Hex.encodeHexString(toEdit.getSignatureBytes()));
         } else {
             this.signatureTypeComboBox.setSelectedIndex(1);
             try {
@@ -146,8 +147,8 @@ class AddFileTypeSignaturePanel extends javax.swing.JPanel {
         if (FileType.Signature.Type.RAW == sigType) {
             try {
                 sigString = sigString.replaceAll("\\s", ""); //NON-NLS
-                signatureBytes = DatatypeConverter.parseHexBinary(sigString);
-            } catch (IllegalArgumentException ex) {
+                signatureBytes = Hex.decodeHex(sigString);
+            } catch (DecoderException ex) {
                 JOptionPane.showMessageDialog(this,
                         NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidRawSignatureBytes.message"),
                         NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidSignatureBytes.title"),

@@ -330,7 +330,8 @@ final class CustomFileTypesManager {
 
         } catch (DecoderException ex) {
             /*
-             * parseHexBinary() throws this if the argument passed in is not hex
+             * decodeHex() throws this if an odd number of characters or illegal
+             * characters are supplied
              */
             throw new CustomFileTypesException("Error creating Autopsy defined custom file types", ex); //NON-NLS
         }
