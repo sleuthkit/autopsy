@@ -22,10 +22,10 @@ REM of this file is completely commented.
 REM By default the script will use JAVA_HOME to determine which java
 REM to use, but you can set a specific path for Solr to use without
 REM affecting other Java applications on your server/workstation.
-set JAVA_HOME=C:\Program Files\ojdkbuild\java-1.8.0-openjdk-1.8.0.222-1
+REM set SOLR_JAVA_HOME=
 
 REM Increase Java Min/Max Heap as needed to support your indexing / query needs
-set SOLR_JAVA_MEM=-Xms512m -Xmx4G
+REM set SOLR_JAVA_MEM=-Xms512m -Xmx512m
 
 REM Configure verbose GC logging:
 REM For Java 8: if this is set, additional params will be added to specify the log file & rotation
@@ -55,11 +55,11 @@ REM Leave empty if not using SolrCloud
 REM set ZK_HOST=
 
 REM Set the ZooKeeper client timeout (for SolrCloud mode)
-set ZK_CLIENT_TIMEOUT=60000
+REM set ZK_CLIENT_TIMEOUT=15000
 
 REM By default the start script uses "localhost"; override the hostname here
 REM for production SolrCloud environments to control the hostname exposed to cluster state
-set SOLR_HOST=localhost
+REM set SOLR_HOST=192.168.1.1
 
 REM By default Solr will try to connect to Zookeeper with 30 seconds in timeout; override the timeout if needed
 REM set SOLR_WAIT_FOR_ZK=30
@@ -81,9 +81,6 @@ REM -a option on start script, those options will be appended as well. Examples:
 REM set SOLR_OPTS=%SOLR_OPTS% -Dsolr.autoSoftCommit.maxTime=3000
 REM set SOLR_OPTS=%SOLR_OPTS% -Dsolr.autoCommit.maxTime=60000
 REM set SOLR_OPTS=%SOLR_OPTS% -Dsolr.clustering.enabled=true
-set SOLR_OPTS=%SOLR_OPTS% -Dbootstrap_confdir="C:\Bitnami\solr-8.6.3\server\solr\configsets\AutopsyConfig\conf"
-set SOLR_OPTS=%SOLR_OPTS% -Dcollection.configName=AutopsyConfig
-set DEFAULT_CONFDIR="C:\Bitnami\solr-8.6.3\server\solr\configsets\AutopsyConfig\conf"
 
 REM Path to a directory for Solr to store cores and their data. By default, Solr will use server\solr
 REM If solr.xml is not stored in ZooKeeper, this directory needs to contain solr.xml
@@ -91,7 +88,7 @@ REM set SOLR_HOME=
 
 REM Path to a directory that Solr will use as root for data folders for each core.
 REM If not set, defaults to <instance_dir>/data. Overridable per core through 'dataDir' core property
-set SOLR_DATA_HOME=C:\TEST\DELETE\SOLR_SHARDS
+REM set SOLR_DATA_HOME=
 
 REM Changes the logging level. Valid values: ALL, TRACE, DEBUG, INFO, WARN, ERROR, FATAL, OFF. Default is INFO
 REM This is an alternative to changing the rootLogger in log4j2.xml
@@ -113,8 +110,7 @@ REM This must be an IPv4 ("a.b.c.d") or bracketed IPv6 ("[x::y]") address, not a
 REM set SOLR_JETTY_HOST=0.0.0.0
 
 REM Sets the port Solr binds to, default is 8983
-set SOLR_PORT=18983
-set STOP_PORT=8079
+REM set SOLR_PORT=8983
 
 REM Restrict access to solr by IP address.
 REM Specify a comma-separated list of addresses or networks, for example:
