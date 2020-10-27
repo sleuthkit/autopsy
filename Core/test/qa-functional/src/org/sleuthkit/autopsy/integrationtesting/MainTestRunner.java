@@ -256,8 +256,11 @@ public class MainTestRunner extends TestCase {
      */
     private Case runIngest(Case openCase, IngestJobSettings ingestJobSettings, String caseName) {
         try {
-            // IngestJobSettings ingestJobSettings = SETUP_UTIL.setupEnvironment(envConfig, testSuiteConfig);
-            IngestUtils.runIngestJob(openCase.getDataSources(), ingestJobSettings);
+            if (CollectionUtils.isEmpty(openCase.getDataSources())) {
+                logger.log(Level.WARNING, String.format("No datasources provided in %s", caseName));
+            } else {
+                IngestUtils.runIngestJob(openCase.getDataSources(), ingestJobSettings);
+            }
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, String.format("There was an error while ingesting datasources for case %s", caseName), ex);
         }
