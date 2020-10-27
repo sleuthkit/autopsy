@@ -227,11 +227,30 @@ class ArtifactsListPanel extends JPanel {
                 if (columnIndex == 2 && artifactType != BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE) {
                     return "";
                 }
-                for (BlackboardAttribute bba : getArtifactByRow(rowIndex).getAttributes()) {
-                    if (!StringUtils.isBlank(bba.getDisplayString())) {
-                        if (columnIndex == 0 && bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()) {
-                            return bba.getDisplayString();
-                        } else if (columnIndex == 1) {
+                return getStringForArtifact(rowIndex, columnIndex);
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, "Error getting attributes for artifact " + getArtifactByRow(rowIndex).getArtifactID(), ex);
+                return Bundle.ArtifactsListPanel_value_noValue();
+            }
+        }
+
+        /**
+         * 
+         * @param rowIndex
+         * @param columnIndex
+         * @return
+         * @throws TskCoreException 
+         */
+        private String getStringForArtifact(int rowIndex, int columnIndex) throws TskCoreException {
+            for (BlackboardAttribute bba : getArtifactByRow(rowIndex).getAttributes()) {
+                if (!StringUtils.isBlank(bba.getDisplayString())) {
+                    switch (columnIndex) {
+                        case 0:
+                            if (bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()) {
+                                return bba.getDisplayString();
+                            }
+                            break;
+                        case 1:
                             if (bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TITLE.getTypeID() && artifactType != BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD) {
                                 return bba.getDisplayString();
                             } else if (artifactType == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE && bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID()) {
@@ -239,16 +258,19 @@ class ArtifactsListPanel extends JPanel {
                             } else if (bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH.getTypeID() && artifactType == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD) {
                                 return FilenameUtils.getName(bba.getDisplayString());
                             }
-                        } else if (columnIndex == 2 && artifactType == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE && bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID()) {
-                            return Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(bba.getValueLong()).getMIMEType();
-                        }
+                            break;
+                        case 2:
+                            if (artifactType == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE && bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID()) {
+                                return Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(bba.getValueLong()).getMIMEType();
+                            }
+                            break;
+                        default:
+                        //default is to do nothing
                     }
                 }
-                return getFallbackValue(rowIndex, columnIndex);
-            } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, "Error getting attributes for artifact " + getArtifactByRow(rowIndex).getArtifactID(), ex);
-                return Bundle.ArtifactsListPanel_value_noValue();
             }
+            return getFallbackValue(rowIndex, columnIndex);
+
         }
 
         /**
