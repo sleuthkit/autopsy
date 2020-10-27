@@ -30,7 +30,6 @@ import java.util.Set;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.apache.commons.lang.exception.ExceptionUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
@@ -43,44 +42,6 @@ import org.yaml.snakeyaml.representer.Representer;
  * Integration Test results for a case to be written to disk in a text format.
  */
 class OutputResults {
-
-    /**
-     * An object representing an exception to be serialized.
-     */
-    private static class ExceptionObject {
-
-        private final String message;
-        private final String stackTrace;
-        private final ExceptionObject innerException;
-
-        ExceptionObject(Throwable t) {
-            this.message = t.getMessage();
-            this.stackTrace = ExceptionUtils.getStackTrace(t);
-            this.innerException = (t.getCause() == null) ? null : new ExceptionObject(t.getCause());
-        }
-
-        /**
-         * @return The message of the exception.
-         */
-        String getMessage() {
-            return message;
-        }
-
-        /**
-         * @return The stacktrace as a string.
-         */
-        String getStackTrace() {
-            return stackTrace;
-        }
-
-        /**
-         * @return The inner exception (if any).
-         */
-        ExceptionObject getInnerException() {
-            return innerException;
-        }
-    }
-
     private static final Logger logger = Logger.getLogger(MainTestRunner.class.getName());
 
     /**
@@ -204,7 +165,7 @@ class OutputResults {
      *
      * @param outputPath The output path.
      */
-    public void serializeToFile(String outputPath) {
+    void serializeToFile(String outputPath) {
         File outputFile = new File(outputPath);
         
         if (!outputFile.getParentFile().exists()) {
