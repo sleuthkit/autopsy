@@ -128,8 +128,8 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     };
 
     private final BlackboardArtifact artifact;
-    private Content srcContent;  
-    private volatile String translatedSourceName; 
+    private Content srcContent;
+    private volatile String translatedSourceName;
 
     /*
      * A method has been provided to allow the injection of properties into this
@@ -284,17 +284,46 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      */
     private static Lookup createLookup(BlackboardArtifact artifact) {
         final long objectID = artifact.getObjectID();
-        try {
-            Content content = contentCache.get(objectID, () -> artifact.getSleuthkitCase().getContentById(objectID));
-            if (content == null) {
-                return Lookups.fixed(artifact);
-            } else {
-                return Lookups.fixed(artifact, content);
+        Content content = null;
+        if (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID() || artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID()) {
+            content = getPathIdFile(artifact);
+        } else {
+            try {
+                content = contentCache.get(objectID, () -> artifact.getSleuthkitCase().getContentById(objectID));
+            } catch (ExecutionException ex) {
+                logger.log(Level.SEVERE, MessageFormat.format("Error getting source content (artifact objID={0}", artifact.getId()), ex); //NON-NLS
+                content = null;
             }
-        } catch (ExecutionException ex) {
-            logger.log(Level.SEVERE, MessageFormat.format("Error getting source content (artifact objID={0}", artifact.getId()), ex); //NON-NLS
-            return Lookups.fixed(artifact);
         }
+        if (content == null) {
+            return Lookups.fixed(artifact);
+        } else {
+            return Lookups.fixed(artifact, content);
+        }
+
+    }
+
+    /**
+     * Private helper method to allow content specified in a path id attribute
+     * to be retrieved.
+     *
+     * @param artifact The artifact which content may be specified as a tsk path
+     *                 attribute.
+     *
+     * @return The Content specified by the artifact's path id attribute or null
+     *         if there was no content available.
+     */
+    private static Content getPathIdFile(BlackboardArtifact artifact) {
+        try {
+            for (BlackboardAttribute attribute : artifact.getAttributes()) {
+                if (attribute.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID()) {
+                    return artifact.getSleuthkitCase().getContentById(attribute.getValueLong());
+                }
+            }
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, MessageFormat.format("Error getting content for path id attrbiute for artifact: ", artifact.getId()), ex); //NON-NLS
+        }
+        return null;
     }
 
     /**
