@@ -102,10 +102,16 @@ final class DomainArtifactsTabPanel extends JPanel {
     void setStatus(ArtifactRetrievalStatus status) {
         this.status = status;
         if (status == ArtifactRetrievalStatus.UNPOPULATED && rightPanel != null) {
-           rightPanel.setArtifact(null);
+            rightPanel.setArtifact(null);
         }
     }
 
+    /**
+     * Handle the event which indicates the artifacts have been retrieved.
+     *
+     * @param artifactListEvent The event which indicates the artifacts have
+     *                          been retrieved.
+     */
     @Subscribe
     void handleArtifactListRetrievedEvent(DiscoveryEventUtils.ArtifactListRetrievedEvent artifactListEvent) {
         SwingUtilities.invokeLater(() -> {
