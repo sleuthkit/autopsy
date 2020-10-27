@@ -228,18 +228,20 @@ class ArtifactsListPanel extends JPanel {
                     return "";
                 }
                 for (BlackboardAttribute bba : getArtifactByRow(rowIndex).getAttributes()) {
-                    if (columnIndex == 0 && bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID() && !StringUtils.isBlank(bba.getDisplayString())) {
-                        return bba.getDisplayString();
-                    } else if (columnIndex == 1) {
-                        if (bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TITLE.getTypeID() && artifactType != BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD && !StringUtils.isBlank(bba.getDisplayString())) {
+                    if (!StringUtils.isBlank(bba.getDisplayString())) {
+                        if (columnIndex == 0 && bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()) {
                             return bba.getDisplayString();
-                        } else if (artifactType == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE && bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID() && !StringUtils.isBlank(bba.getDisplayString())) {
-                            return Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(bba.getValueLong()).getName();
-                        } else if (bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH.getTypeID() && artifactType == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD) {
-                            return FilenameUtils.getName(bba.getDisplayString());
+                        } else if (columnIndex == 1) {
+                            if (bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TITLE.getTypeID() && artifactType != BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD) {
+                                return bba.getDisplayString();
+                            } else if (artifactType == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE && bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID()) {
+                                return Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(bba.getValueLong()).getName();
+                            } else if (bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH.getTypeID() && artifactType == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD) {
+                                return FilenameUtils.getName(bba.getDisplayString());
+                            }
+                        } else if (columnIndex == 2 && artifactType == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE && bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID()) {
+                            return Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(bba.getValueLong()).getMIMEType();
                         }
-                    } else if (columnIndex == 2 && artifactType == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE && bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID() && !StringUtils.isBlank(bba.getDisplayString())) {
-                        return Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(bba.getValueLong()).getMIMEType();
                     }
                 }
                 return getFallbackValue(rowIndex, columnIndex);

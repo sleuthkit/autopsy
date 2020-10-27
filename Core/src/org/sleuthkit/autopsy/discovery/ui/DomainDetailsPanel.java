@@ -50,6 +50,8 @@ final class DomainDetailsPanel extends JPanel {
     DomainDetailsPanel(ARTIFACT_TYPE initialSelectedTab) {
         if (initialSelectedTab != null) {
             selectedTabName = initialSelectedTab.getDisplayName();
+        } else {
+            selectedTabName = null;
         }
         initComponents();
         addArtifactTabs();
