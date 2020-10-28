@@ -28,7 +28,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import org.apache.commons.io.FileUtils;
 import org.netbeans.junit.NbTestCase;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -63,6 +62,7 @@ import org.sleuthkit.autopsy.modules.vmextractor.VMExtractorIngestModuleFactory;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.centralrepository.datamodel.RdbmsCentralRepoFactory;
+import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.modules.pictureanalyzer.PictureAnalyzerIngestModuleFactory;
 
 /**
@@ -247,8 +247,8 @@ class InterCaseTestUtils {
                 if (CentralRepository.isEnabled()) {
                     CentralRepository.getInstance().shutdownConnections();
                 }
-                FileUtils.deleteDirectory(CENTRAL_REPO_DIRECTORY_PATH.toFile());
-            } catch (IOException | CentralRepoException ex) {
+                FileUtil.deleteDir(CENTRAL_REPO_DIRECTORY_PATH.toFile());
+            } catch (CentralRepoException ex) {
                 Exceptions.printStackTrace(ex);
                 Assert.fail(ex.getMessage());
             }
