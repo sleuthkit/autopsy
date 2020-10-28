@@ -19,7 +19,7 @@
 # By default the script will use JAVA_HOME to determine which java
 # to use, but you can set a specific path for Solr to use without
 # affecting other Java applications on your server/workstation.
-SOLR_JAVA_HOME="C:\Program Files\ojdkbuild\java-1.8.0-openjdk-1.8.0.222-1"
+#SOLR_JAVA_HOME=""
 
 # This controls the number of seconds that the solr script will wait for
 # Solr to stop gracefully or Solr to start.  If the graceful stop fails,
@@ -47,6 +47,7 @@ SOLR_JAVA_HOME="C:\Program Files\ojdkbuild\java-1.8.0-openjdk-1.8.0.222-1"
 
 # These GC settings have shown to work well for a number of common Solr workloads
 #GC_TUNE=" \
+#-XX:+ExplicitGCInvokesConcurrent \
 #-XX:SurvivorRatio=4 \
 #-XX:TargetSurvivorRatio=90 \
 #-XX:MaxTenuringThreshold=8 \
@@ -58,8 +59,7 @@ SOLR_JAVA_HOME="C:\Program Files\ojdkbuild\java-1.8.0-openjdk-1.8.0.222-1"
 #-XX:CMSInitiatingOccupancyFraction=50 \
 #-XX:CMSMaxAbortablePrecleanTime=6000 \
 #-XX:+CMSParallelRemarkEnabled \
-#-XX:+ParallelRefProcEnabled \
-#-XX:-OmitStackTraceInFastThrow  etc.
+#-XX:+ParallelRefProcEnabled        etc.
 
 # Set the ZooKeeper connection string if using an external ZooKeeper ensemble
 # e.g. host1:2181,host2:2181/chroot
@@ -82,7 +82,7 @@ SOLR_JAVA_HOME="C:\Program Files\ojdkbuild\java-1.8.0-openjdk-1.8.0.222-1"
 # Set to true to activate the JMX RMI connector to allow remote JMX client applications
 # to monitor the JVM hosting Solr; set to "false" to disable that behavior
 # (false is recommended in production environments)
-ENABLE_REMOTE_JMX_OPTS="true"
+#ENABLE_REMOTE_JMX_OPTS="false"
 
 # The script will use SOLR_PORT+10000 for the RMI_PORT or you can set it here
 # RMI_PORT=18983
@@ -90,9 +90,9 @@ ENABLE_REMOTE_JMX_OPTS="true"
 # Anything you add to the SOLR_OPTS variable will be included in the java
 # start command line as-is, in ADDITION to other options. If you specify the
 # -a option on start script, those options will be appended as well. Examples:
-SOLR_OPTS="$SOLR_OPTS -Dcollection.configName=AutopsyConfig"
-SOLR_OPTS="$SOLR_OPTS -Dbootstrap_confdir=C:\Bitnami\solr-8.2.0-2\apache-solr\server\solr\configsets\AutopsyConfig\conf"
-SOLR_OPTS="$SOLR_OPTS -Dsolr.default.confdir=C:\Bitnami\solr-8.2.0-2\apache-solr\server\solr\configsets\AutopsyConfig\conf"
+#SOLR_OPTS="$SOLR_OPTS -Dsolr.autoSoftCommit.maxTime=3000"
+#SOLR_OPTS="$SOLR_OPTS -Dsolr.autoCommit.maxTime=60000"
+#SOLR_OPTS="$SOLR_OPTS -Dsolr.clustering.enabled=true"
 
 # Location where the bin/solr script will save PID files for running instances
 # If not set, the script will create PID files in $SOLR_TIP/bin
@@ -123,28 +123,43 @@ SOLR_OPTS="$SOLR_OPTS -Dsolr.default.confdir=C:\Bitnami\solr-8.2.0-2\apache-solr
 # framework that cannot do startup rotation, you may want to enable this to let Solr rotate logs on startup.
 #SOLR_LOG_PRESTART_ROTATION=false
 
+# Enables jetty request log for all requests
+#SOLR_REQUESTLOG_ENABLED=false
+
 # Sets the port Solr binds to, default is 8983
 #SOLR_PORT=8983
+
+# Restrict access to solr by IP address.
+# Specify a comma-separated list of addresses or networks, for example:
+#   127.0.0.1, 192.168.0.0/24, [::1], [2000:123:4:5::]/64
+#SOLR_IP_WHITELIST=
+
+# Block access to solr from specific IP addresses.
+# Specify a comma-separated list of addresses or networks, for example:
+#   127.0.0.1, 192.168.0.0/24, [::1], [2000:123:4:5::]/64
+#SOLR_IP_BLACKLIST=
 
 # Enables HTTPS. It is implictly true if you set SOLR_SSL_KEY_STORE. Use this config
 # to enable https module with custom jetty configuration.
 #SOLR_SSL_ENABLED=true
 # Uncomment to set SSL-related system properties
 # Be sure to update the paths to the correct keystore for your environment
-#SOLR_SSL_KEY_STORE=etc/solr-ssl.keystore.jks
+#SOLR_SSL_KEY_STORE=etc/solr-ssl.keystore.p12
 #SOLR_SSL_KEY_STORE_PASSWORD=secret
-#SOLR_SSL_TRUST_STORE=etc/solr-ssl.keystore.jks
+#SOLR_SSL_TRUST_STORE=etc/solr-ssl.keystore.p12
 #SOLR_SSL_TRUST_STORE_PASSWORD=secret
 # Require clients to authenticate
 #SOLR_SSL_NEED_CLIENT_AUTH=false
 # Enable clients to authenticate (but not require)
 #SOLR_SSL_WANT_CLIENT_AUTH=false
+# Verify client's hostname during SSL handshake
+#SOLR_SSL_CLIENT_HOSTNAME_VERIFICATION=false
 # SSL Certificates contain host/ip "peer name" information that is validated by default. Setting
 # this to false can be useful to disable these checks when re-using a certificate on many hosts
 #SOLR_SSL_CHECK_PEER_NAME=true
 # Override Key/Trust Store types if necessary
-#SOLR_SSL_KEY_STORE_TYPE=JKS
-#SOLR_SSL_TRUST_STORE_TYPE=JKS
+#SOLR_SSL_KEY_STORE_TYPE=PKCS12
+#SOLR_SSL_TRUST_STORE_TYPE=PKCS12
 
 # Uncomment if you want to override previously defined SSL values for HTTP client
 # otherwise keep them commented and the above values will automatically be set for HTTP clients
@@ -201,3 +216,19 @@ SOLR_OPTS="$SOLR_OPTS -Dsolr.default.confdir=C:\Bitnami\solr-8.2.0-2\apache-solr
 # a -Dsolr.environment property below. Valid values are prod, stage, test, dev, with an optional
 # label or color, e.g. -Dsolr.environment=test,label=Functional+test,color=brown
 #SOLR_OPTS="$SOLR_OPTS -Dsolr.environment=prod"
+
+# Specifies the path to a common library directory that will be shared across all cores.
+# Any JAR files in this directory will be added to the search path for Solr plugins.
+# If the specified path is not absolute, it will be relative to `$SOLR_HOME`.
+#SOLR_OPTS="$SOLR_OPTS -Dsolr.sharedLib=/path/to/lib"
+
+# Runs solr in java security manager sandbox. This can protect against some attacks.
+# Runtime properties are passed to the security policy file (server/etc/security.policy)
+# You can also tweak via standard JDK files such as ~/.java.policy, see https://s.apache.org/java8policy
+# This is experimental! It may not work at all with Hadoop/HDFS features.
+#SOLR_SECURITY_MANAGER_ENABLED=false
+
+# Solr is by default allowed to read and write data from/to SOLR_HOME and a few other well defined locations
+# Sometimes it may be necessary to place a core or a backup on a different location or a different disk
+# This parameter lets you specify file system path(s) to explicitly allow. The special value of '*' will allow any path
+#SOLR_OPTS="$SOLR_OPTS -Dsolr.allowPaths=/mnt/bigdisk,/other/path"
