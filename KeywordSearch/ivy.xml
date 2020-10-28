@@ -19,6 +19,7 @@
         
         <!-- Autopsy -->
         <dependency conf="autopsy->default" org="org.apache.solr" name="solr-solrj" rev="4.9.1"/>
+        <dependency conf="autopsy->default" org="commons-lang" name="commons-lang" rev="2.4"/>
         <dependency conf="autopsy->default" org="commons-validator" name="commons-validator" rev="1.5.1"/>
         <dependency conf="autopsy->default" org="com.optimaize.languagedetector" name="language-detector" rev="0.6"/>
         

@@ -8,6 +8,7 @@
         <dependency conf="experimental->default" org="com.github.lgooddatepicker" name="LGoodDatePicker" rev="10.3.1"/>
         <dependency conf="experimental->default" org="org.postgresql" name="postgresql" rev="9.4-1201-jdbc41"/>
         <dependency conf="experimental->default" org="com.mchange" name="c3p0" rev="0.9.5"/>
+        <dependency conf="experimental->default" org="com.fasterxml.jackson.core" name="jackson-core" rev="2.7.0"/>
         <dependency conf="experimental->default" org="org.swinglabs.swingx" name="swingx-all" rev="1.6.4"/>
     </dependencies>
 </ivy-module>

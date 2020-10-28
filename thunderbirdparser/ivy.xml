@@ -7,6 +7,7 @@
      
     </configurations>
     <dependencies>
+        <dependency conf="autopsy->default" org="org.apache.commons" name="commons-lang3" rev="3.8.1"/>
         <dependency conf="autopsy->default" org="org.apache.james" name="apache-mime4j-core" rev="0.8.0"/>
         <dependency conf="autopsy->default" org="org.apache.james" name="apache-mime4j-dom" rev="0.8.0"/>
         <dependency conf="autopsy->default" org="org.apache.james" name="apache-mime4j-mbox-iterator" rev="0.8.0"/>

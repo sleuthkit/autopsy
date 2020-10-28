@@ -179,6 +179,10 @@
                 <binary-origin>release/modules/ext/mchange-commons-java-0.2.9.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/jackson-core-2.7.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jackson-core-2.7.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/c3p0-0.9.5.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/c3p0-0.9.5.jar</binary-origin>
             </class-path-extension>
