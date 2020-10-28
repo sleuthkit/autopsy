@@ -68,7 +68,7 @@ public class IngestModuleSetupManager implements ConfigurationModule<IngestModul
             context = context.substring(0, context.indexOf('.'));
         }
 
-        // get current templates
+        // get current templates in job settings
         Map<String, IngestModuleTemplate> curTemplates = curSettings.getEnabledIngestModuleTemplates().stream()
                 .collect(Collectors.toMap(t -> t.getModuleFactory().getClass().getCanonicalName(), t -> t, (t1, t2) -> t1));
 

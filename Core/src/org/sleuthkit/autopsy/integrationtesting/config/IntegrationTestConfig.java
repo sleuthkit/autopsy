@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.integrationtesting.config;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -49,7 +50,7 @@ public class IntegrationTestConfig {
      * @return A list of test suite configurations.
      */
     public List<TestSuiteConfig> getTestSuites() {
-        return testSuites;
+        return Collections.unmodifiableList(testSuites);
     }
 
     /**

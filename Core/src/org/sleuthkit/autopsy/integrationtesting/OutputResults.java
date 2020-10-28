@@ -29,7 +29,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
@@ -42,7 +42,7 @@ import org.yaml.snakeyaml.representer.Representer;
  * Integration Test results for a case to be written to disk in a text format.
  */
 class OutputResults {
-    private static final Logger logger = Logger.getLogger(MainTestRunner.class.getName());
+    private static final Logger logger = Logger.getLogger(IntegrationTestService.class.getName());
 
     /**
      * Returns the value for a particular key in a map. Creates a default value

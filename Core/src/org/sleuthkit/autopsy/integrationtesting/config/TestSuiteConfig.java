@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.integrationtesting.config;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -81,7 +82,7 @@ public class TestSuiteConfig {
      * @return The data sources to be ingested.
      */
     public List<String> getDataSources() {
-        return dataSources;
+        return Collections.unmodifiableList(dataSources);
     }
 
     /**
@@ -89,7 +90,7 @@ public class TestSuiteConfig {
      * environment.
      */
     public List<ParameterizedResourceConfig> getConfigurationModules() {
-        return configurationModules;
+        return Collections.unmodifiableList(configurationModules);
     }
 
     /**

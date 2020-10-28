@@ -21,9 +21,7 @@ package org.sleuthkit.autopsy.testutils;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.UUID;
-import static junit.framework.Assert.assertEquals;
-import org.openide.util.Exceptions;
-import junit.framework.Assert;
+import org.apache.commons.collections.CollectionUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
@@ -57,26 +55,24 @@ public final class IngestUtils {
      * @param dataSourcePath      the path to the datasource which is being
      *                            added
      */
-    public static void addDataSource(AutoIngestDataSourceProcessor dataSourceProcessor, Path dataSourcePath) {
-        DataSourceProcessorCallback.DataSourceProcessorResult result = null;
+    public static void addDataSource(AutoIngestDataSourceProcessor dataSourceProcessor, Path dataSourcePath) throws TestUtilsException {
         try {
             if (!dataSourcePath.toFile().exists()) {
-                Assert.fail("IngestUtils.addDataSource: Data source not found: " + dataSourcePath.toString());
+                throw new TestUtilsException("IngestUtils.addDataSource: Data source not found: " + dataSourcePath.toString());
             }
             UUID taskId = UUID.randomUUID();
             Case.getCurrentCaseThrows().notifyAddingDataSource(taskId);
             DataSourceProcessorRunner.ProcessorCallback callBack = DataSourceProcessorRunner.runDataSourceProcessor(dataSourceProcessor, dataSourcePath);
-            result = callBack.getResult();
+            DataSourceProcessorCallback.DataSourceProcessorResult result = callBack.getResult();
             if (result.equals(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS)) {
                 String joinedErrors = String.join(System.lineSeparator(), callBack.getErrorMessages());
-                Assert.fail(String.format("IngestUtils.addDataSource: Error(s) occurred while running the data source processor: %s", joinedErrors));
+                throw new TestUtilsException(String.format("IngestUtils.addDataSource: Error(s) occurred while running the data source processor: %s", joinedErrors));
             }
             for (Content c:callBack.getDataSourceContent()) {
                 Case.getCurrentCaseThrows().notifyDataSourceAdded(c, taskId);
             }
         } catch (AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException | NoCurrentCaseException | InterruptedException ex) {
-            Exceptions.printStackTrace(ex);
-            Assert.fail("IngestUtils.addDataSource: " + ex.getMessage());
+            throw new TestUtilsException("IngestUtils.addDataSource encountered an error on adding a datasource: " + ex.getMessage(), ex);
         }
     }
 
@@ -88,17 +84,20 @@ public final class IngestUtils {
      * @param datasources       - the datasources to run ingest on
      * @param ingestJobSettings - the ingest job settings to use for ingest
      */
-    public static void runIngestJob(List<Content> datasources, IngestJobSettings ingestJobSettings) {
+    public static void runIngestJob(List<Content> datasources, IngestJobSettings ingestJobSettings) throws TestUtilsException {
         try {
             List<IngestModuleError> errs = IngestJobRunner.runIngestJob(datasources, ingestJobSettings);
             StringBuilder joinedErrors = new StringBuilder("");
             errs.forEach((err) -> {
                 joinedErrors.append(String.format("Error: %s: %s.", err.getModuleDisplayName(), err.toString())).append(System.lineSeparator());
             });
-            assertEquals(joinedErrors.toString(), 0, errs.size());
+            
+            if (CollectionUtils.isNotEmpty(errs)) {
+                throw new TestUtilsException("An error occurred while running an ingest job: " + joinedErrors);
+            }
+            
         } catch (InterruptedException ex) {
-            Exceptions.printStackTrace(ex);
-            Assert.fail(ex.getMessage());
+            throw new TestUtilsException("An interrupted exception occurred.", ex);
         }
     }
 

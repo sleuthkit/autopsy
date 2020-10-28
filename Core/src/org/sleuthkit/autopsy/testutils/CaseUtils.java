@@ -20,8 +20,6 @@ package org.sleuthkit.autopsy.testutils;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import org.openide.util.Exceptions;
-import junit.framework.Assert;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.casemodule.CaseDetails;
@@ -43,7 +41,7 @@ public final class CaseUtils {
      *
      * @return The new case.
      */
-    public static Case createAsCurrentCase(String caseName) {
+    public static Case createAsCurrentCase(String caseName) throws TestUtilsException {
         String uniqueCaseName = caseName + "_" + TimeStampUtils.createTimeStamp();
         Path caseDirectoryPath = Paths.get(System.getProperty("java.io.tmpdir"), uniqueCaseName);
         Case currentCase = null;
@@ -51,25 +49,22 @@ public final class CaseUtils {
             Case.createAsCurrentCase(Case.CaseType.SINGLE_USER_CASE, caseDirectoryPath.toString(), new CaseDetails(uniqueCaseName));
             currentCase = Case.getCurrentCaseThrows();
         } catch (CaseActionException | NoCurrentCaseException ex) {
-            Exceptions.printStackTrace(ex);
-            Assert.fail(String.format("Failed to create case %s at %s: %s", uniqueCaseName, caseDirectoryPath, ex.getMessage()));
+            throw new TestUtilsException(String.format("Failed to create case %s at %s", uniqueCaseName, caseDirectoryPath), ex);
         }
         return currentCase;
     }
 
     /**
      * Closes the current case, and optionally deletes it. Asserts if there is
-     * no current case or if there is an error closing the current
-     * case.
+     * no current case or if there is an error closing the current case.
      */
-    public static void closeCurrentCase() {
+    public static void closeCurrentCase() throws TestUtilsException {
         Case currentCase;
+
         try {
             currentCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) {
-            Exceptions.printStackTrace(ex);
-            Assert.fail("Failed to get current case");
-            return;
+            throw new TestUtilsException("Failed to get current case.", ex);
         }
 
         String caseName = currentCase.getName();
@@ -77,8 +72,7 @@ public final class CaseUtils {
         try {
             Case.closeCurrentCase();
         } catch (CaseActionException ex) {
-            Exceptions.printStackTrace(ex);
-            Assert.fail(String.format("Failed to close case %s at %s: %s", caseName, caseDirectory, ex.getMessage()));
+            throw new TestUtilsException(String.format("Failed to close case %s at %s", caseName, caseDirectory), ex);
         }
     }
 

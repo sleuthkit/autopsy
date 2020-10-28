@@ -27,8 +27,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.io.FileUtils;
@@ -41,7 +39,33 @@ import org.apache.commons.lang3.tuple.Pair;
  */
 public class DiffService {
 
-    private static final Logger logger = Logger.getLogger(DiffUtils.class.getName());
+    /**
+     * An exception thrown during the normal operation of the diff service.
+     */
+    public static class DiffServiceException extends Exception {
+
+        private static final long serialVersionUID = 1L;
+
+        /**
+         * Constructor accepting a message.
+         *
+         * @param message The message.
+         */
+        DiffServiceException(String message) {
+            super(message);
+        }
+
+        /**
+         * Constructor accepting a message and inner exception.
+         *
+         * @param message The message.
+         * @param exception The inner exception.
+         */
+        DiffServiceException(String message, Throwable exception) {
+            super(message, exception);
+        }
+    }
+
     private static final String ORIG_LINE_PREFIX = "< ";
     private static final String CUR_LINE_PREFIX = "> ";
     private static final String[] DIFF_BREAK = new String[]{"", "", ""};
@@ -57,8 +81,9 @@ public class DiffService {
      * @param curResult The current file or directory. Must be of same type as
      * prevResult (file/directory).
      * @return The string contents of the diff.
+     * @throws DiffServiceException
      */
-    String diffFilesOrDirs(File prevResult, File curResult) {
+    String diffFilesOrDirs(File prevResult, File curResult) throws DiffServiceException {
         if (prevResult.isDirectory() && curResult.isDirectory()) {
             final Map<String, File> prevFiles = FileUtils.listFiles(prevResult, null, true).stream()
                     .collect(Collectors.toMap(f -> getRelative(prevResult, f), f -> f, (f1, f2) -> f1));
@@ -81,8 +106,7 @@ public class DiffService {
             return getFileDiffs(prevResult, curResult, prevResult.toString() + " / " + curResult.toString());
 
         } else {
-            logger.log(Level.WARNING, String.format("%s and %s must be of same type (directory/file).", prevResult.toString(), curResult.toString()));
-            return null;
+            throw new DiffServiceException(String.format("%s and %s must be of same type (directory/file).", prevResult.toString(), curResult.toString()));
         }
     }
 

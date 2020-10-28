@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.integrationtesting;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -27,7 +26,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.cxf.common.util.CollectionUtils;
@@ -59,7 +58,12 @@ public class ConfigurationModuleManager {
         List<ConfigurationModule<?>> reversed = new ArrayList<>(configModules);
         Collections.reverse(reversed);
         for (ConfigurationModule<?> configModule : reversed) {
-            configModule.revert();
+            try {
+                configModule.revert();
+            } catch (Exception ex) {
+                // firewall exception handler to ensure reverting a configuration module doesn't cause an error.
+                logger.log(Level.SEVERE, "An error occurred while reverting configuration module: " + configModule.getClass().getCanonicalName(), ex);
+            }
         }
     }
 
@@ -177,8 +181,10 @@ public class ConfigurationModuleManager {
             configModuleObj = (ConfigurationModule<?>) clazz.newInstance();
             Method m = clazz.getMethod("configure", IngestJobSettings.class, (Class<?>) configurationModuleType);
             result = m.invoke(configModuleObj, curConfig, configDeserializer.convertToObj(configModule.getParameters(), configurationModuleType));
-        } catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | InstantiationException ex) {
+        } catch (Exception ex) {
+            // firewall exception handler.
             logger.log(Level.SEVERE, String.format("There was an error calling configure method on Configuration Module %s", configModule.getResource()), ex);
+            return null;
         }
 
         // return results or an error if no results returned.

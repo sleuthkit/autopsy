@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.integrationtesting.config;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -32,7 +31,6 @@ import com.fasterxml.jackson.databind.node.ValueNode;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -53,8 +51,7 @@ public class ParameterizedResourceConfig {
      */
     public static class ParameterizedResourceConfigDeserializer extends StdDeserializer<ParameterizedResourceConfig> {
 
-        private static TypeReference<HashMap<String, Object>> typeRef = new TypeReference<HashMap<String, Object>>() {
-        };
+        private static final long serialVersionUID = 1L;
 
         /**
          * Main constructor.
@@ -81,7 +78,7 @@ public class ParameterizedResourceConfig {
                 return null;
             } else if (node instanceof TextNode) {
                 // if just a string, return a ParameterizedResourceConfig where the resource is the string.
-                return new ParameterizedResourceConfig(((TextNode) node).textValue());
+                return new ParameterizedResourceConfig(node.textValue());
             } else {
                 // otherwise, determine the resource and create an object
                 JsonNode resourceNode = node.get("resource");
@@ -209,6 +206,6 @@ public class ParameterizedResourceConfig {
      * long, double, string.
      */
     public Map<String, Object> getParameters() {
-        return parameters;
+        return Collections.unmodifiableMap(parameters);
     }
 }

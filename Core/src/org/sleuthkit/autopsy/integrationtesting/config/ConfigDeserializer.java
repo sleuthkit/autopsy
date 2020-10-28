@@ -33,7 +33,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.apache.commons.io.FileUtils;
@@ -241,7 +241,7 @@ public class ConfigDeserializer {
             return getTestSuiteConfig(fileOrDirectory, fileOrDirectory);
         }
 
-        logger.log(Level.WARNING, "Unable to read file at: " + fileOrDirectory);
+        logger.log(Level.WARNING, "Unable to read file at: {0}", fileOrDirectory);
         return Collections.emptyList();
     }
 

@@ -50,7 +50,10 @@ public class TestingConfig {
             @JsonProperty("excludeAllExcept") List<ParameterizedResourceConfig> excludeAllExcept,
             @JsonProperty("includeAllExcept") List<String> includeAllExcept) {
 
+        // if exclude all except is null, treat as empty list.
         List<ParameterizedResourceConfig> safeExcludeAllExcept = ((excludeAllExcept == null) ? Collections.emptyList() : excludeAllExcept);
+
+        // create a map of canonical paths to their parameterized resource config merging configurations if doubled.
         this.excludeAllExcept = safeExcludeAllExcept
                 .stream()
                 .collect(Collectors.toMap(
@@ -85,12 +88,19 @@ public class TestingConfig {
      * will be run.
      */
     public Set<String> getIncludeAllExcept() {
-        return includeAllExcept;
+        return Collections.unmodifiableSet(includeAllExcept);
     }
 
+    /**
+     * Retrieve parameters if any exist for a particular integration test group.
+     *
+     * @param itemType The identifier for the integration test group.
+     * @return The map of fields to values for that test group or an empty map
+     * if no arguments are present.
+     */
     public Map<String, Object> getParameters(String itemType) {
         ParameterizedResourceConfig resource = (itemType == null) ? null : excludeAllExcept.get(itemType.toUpperCase());
-        return resource == null ? Collections.emptyMap() : new HashMap<String, Object>(resource.getParameters());
+        return resource == null ? Collections.emptyMap() : new HashMap<>(resource.getParameters());
     }
 
     /**
@@ -104,12 +114,12 @@ public class TestingConfig {
             return false;
         }
 
-        if (!CollectionUtils.isEmpty(includeAllExcept)) {
-            if (includeAllExcept.contains(itemType.toUpperCase())) {
-                return false;
-            }
+        // if there are items to exclude and this item is excluded
+        if (!CollectionUtils.isEmpty(includeAllExcept) && includeAllExcept.contains(itemType.toUpperCase())) {
+            return false;
         }
 
+        // otherwise, if there are items that should specifically be included, ensure that this item is in that list.
         if (!MapUtils.isEmpty(excludeAllExcept)) {
             return excludeAllExcept.containsKey(itemType.toUpperCase());
         }
