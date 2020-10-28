@@ -199,109 +199,97 @@
     </target>
     
 
-    <!-- This code should be nearly identical to common.xml barring two fundamental differences. 
-        1) The integration-test parameters are injected into 'test.qa-functional.properties' to be 
-        used as system properties in common.xml's target "-do-junit" and 2) the paths specified in 
-        'module.run.classpath' are incorporated into the manifest of a jar and then the path to the 
-        jar is used as part of the classpath for '-do-junit' instead of 'module.run.classpath'.  
-        This was done to prevent classpath length issues on windows.  More information on this 
-        technique can be found here: https://stackoverflow.com/a/201969.
-    -->
-    <target name="test-init" depends="init,test-preinit,test-lib-init">
-        <property name="test.timeout" value="600000"/> <!-- 10min per test -->
-        <property name="test.run.args" value="-ea"/>
-        <property name="test.filter.trace" value="true"/>
-        <condition property="test.bootclasspath.prepend.args" value="-Xbootclasspath/p:${run.bootclasspath.prepend}">
-            <isset property="run.bootclasspath.prepend"/>
-        </condition>
-        <property name="test.bootclasspath.prepend.args" value="-Dno.netbeans.bootclasspath.prepend.needed=true"/>
-        <macrodef name="test-init">
-            <attribute name="test.type"/>
-            <sequential>
-                <path id="test.@{test.type}.pathing-jar.module-cp.classpath" path="${module.run.classpath}"/>
-                <pathconvert pathsep=" " refid="test.@{test.type}.pathing-jar.module-cp.classpath" property="test.@{test.type}.pathing-jar.module-cp.classpathstr"/>
-                <property name="test.@{test.type}.pathing-jar.module-cp.loc" value="${cluster}/test.@{test.type}.pathing.module-cp.jar"/>
-                <jar destfile="${test.@{test.type}.pathing-jar.module-cp.loc}">
-                    <manifest>
-                        <attribute name="Class-Path" value="${test.@{test.type}.pathing-jar.module-cp.classpathstr}"/>
-                    </manifest>
-                </jar>
-                
-                <property name="test.@{test.type}.dir" location="test/@{test.type}"/>
-                <property name="test.@{test.type}.src.dir" location="${test.@{test.type}.dir}/src"/>
-                <property name="test.@{test.type}.data.dir" location="${test.@{test.type}.dir}/data"/>
-                <property name="build.test.@{test.type}.dir" location="${build.dir}/test/@{test.type}"/>
-                <property name="build.test.@{test.type}.classes.dir" location="${build.test.@{test.type}.dir}/classes"/>
-                <property name="build.test.@{test.type}.results.dir" location="${build.test.@{test.type}.dir}/results"/>
-                <property name="build.test.@{test.type}.work.dir" location="${build.test.@{test.type}.dir}/work"/>
-                <property name="test-@{test.type}-sys-prop.cluster.path.final" value="${cluster.path.final}:${cluster}"/> <!-- #153178, 176019 -->
-                <property name="test.@{test.type}.cp.extra" value=""/>
-                <path id="test.@{test.type}.cp">
-                    <!-- Cannot use <path refid="cp"/> since that uses ${module.classpath} and we want ${module.run.classpath}: -->
-                    <pathelement path="${test.@{test.type}.compile.cp}"/>
-                    <pathelement path="${cp.extra}"/>
-                    <pathelement location="${cluster}/${module.jar}"/>
-                    <path refid="test.unit.lib.cp"/>
-                    <!-- for compatibility with property based classpath-->
-                    <pathelement path="${module.run.classpath}"/>
-                    <pathelement path="${test.@{test.type}.cp.extra}"/>
-                </path>
-                <path id="test.@{test.type}.run.cp">
-                    <pathelement path="${build.test.@{test.type}.classes.dir}"/>
-                    <!-- Cannot use <path refid="cp"/> since that uses ${module.classpath} and we want ${module.run.classpath}: -->
-                    <pathelement path="${test.@{test.type}.runtime.cp}"/>
-                    <pathelement path="${cp.extra}"/>
-                    <pathelement location="${cluster}/${module.jar}"/>
-                    <path refid="test.unit.lib.cp"/>
-                    <!-- for compatibility with property based classpath-->
-                    <pathelement path="${test.@{test.type}.pathing-jar.module-cp.loc}"/>
-                    <pathelement path="${test.@{test.type}.run.cp.extra}"/>
-                    <pathelement path="${test.@{test.type}.cp.extra}"/>
-                    <pathelement path="${test.extra.nb.javac.deps}"/>
-                </path>
-                <!-- path reference used in both compiler and executor -->
-                <propertyset id="test.@{test.type}.properties">
-                    <propertyset> 
-                        <propertyref prefix="integration-test."/>
-                        <mapper type="glob" from="integration-test.*" to="*"/>
-                    </propertyset>
-                    <propertyset>
-                        <propertyref prefix="test-@{test.type}-sys-prop."/>
-                        <mapper type="glob" from="test-@{test.type}-sys-prop.*" to="*"/>
-                    </propertyset>
-                    <propertyset>
-                        <propertyref name="build.test.@{test.type}.work.dir"/>
-                        <mapper type="glob" from="build.test.@{test.type}.work.dir" to="nbjunit.workdir"/>
-                    </propertyset>
-                    <propertyset>
-                        <propertyref name="test.timeout"/>
-                        <mapper type="glob" from="test.timeout" to="nbjunit.hard.timeout"/>
-                    </propertyset>
-                </propertyset>
-                <condition property="exists.test.@{test.type}.src.dir">
-                    <and>
-                        <available file="${test.@{test.type}.src.dir}" type="dir"/>
-                        <not>
-                            <istrue value="${disable.@{test.type}.tests}"/>
-                        </not>
-                    </and>
-                </condition>
-            </sequential>
-        </macrodef>
-        <test-init test.type="unit"/>
-        <test-init test.type="qa-functional"/>
-    </target>
-    
+
+    <!--sets up integration test system properties, calls underlying test-init and then sets up the pathing jar-->
+    <target name="test-init" depends="setup-integration-props,projectized-common.test-init,integration-pathing-jar" />
+        
     
     <target name="test-qa-functional">
         <!--We don't want integration testing to run from standard qa functional-->
-        <property name="test.excludes" value="**/org/sleuthkit/autopsy/integrationtesting/MainTestRunner.class"/>
+        <property name="test.excludes" value="**/org/sleuthkit/autopsy/integrationtesting/TestRunner.class"/>
         <antcall target="projectized-common.test-qa-functional" />
-    </target>    
+    </target>   
+    
+     
+    <!--map from integration-test variables to test-qa-functional-sys-prop so they will be used as system properties-->
+    <target name="setup-integration-props" depends="init">        
+        <sequential>
+            <condition property="test-qa-functional-sys-prop.rootTestOutputPath" value="${integration-test.rootTestOutputPath}">
+                <isset property="integration-test.rootTestOutputPath" />
+            </condition> 
+
+            <condition property="test-qa-functional-sys-prop.diffOutputPath" value="${integration-test.diffOutputPath}">
+                <isset property="integration-test.diffOutputPath" />
+            </condition> 
+            
+            <condition property="test-qa-functional-sys-prop.rootGoldPath" value="${integration-test.rootGoldPath}">
+                <isset property="integration-test.rootGoldPath" />
+            </condition> 
+            
+            <condition property="test-qa-functional-sys-prop.workingDirectory" value="${integration-test.workingDirectory}">
+                <isset property="integration-test.workingDirectory" />
+            </condition> 
+            
+            <condition property="test-qa-functional-sys-prop.rootTestSuitesPath" value="${integration-test.rootTestSuitesPath}">
+                <isset property="integration-test.rootTestSuitesPath" />
+            </condition> 
+            
+            <condition property="test-qa-functional-sys-prop.rootCaseOutputPath" value="${integration-test.rootCaseOutputPath}">
+                <isset property="integration-test.rootCaseOutputPath" />
+            </condition> 
+            
+            <condition property="test-qa-functional-sys-prop.configFile" value="${integration-test.configFile}">
+                <isset property="integration-test.configFile" />
+            </condition> 
+        </sequential>
+    </target>
+    
+    <!--    
+        The paths specified in 'module.run.classpath' are incorporated into the manifest of a jar and then the path to the 
+        jar is used as part of the classpath for '-do-junit' instead of 'module.run.classpath'.  This was done to prevent 
+        classpath length issues on windows.  More information on this technique can be found here: 
+        https://stackoverflow.com/a/201969.
+    -->
+    <target name="integration-pathing-jar" depends="projectized-common.test-init" if="testing-pathing-jar.should-create">
+        <sequential>
+            <!--set up pathing jar based on module.run.classpath as classpath-->
+            <path id="test.qa-functional.pathing-jar.module-cp.classpath" path="${module.run.classpath}"/>
+            <pathconvert pathsep=" " refid="test.qa-functional.pathing-jar.module-cp.classpath" property="test.qa-functional.pathing-jar.module-cp.classpathstr"/>
+            <property name="test.qa-functional.pathing-jar.module-cp.loc" value="${cluster}/test.qa-functional.pathing.module-cp.jar"/>
+            <jar destfile="${test.qa-functional.pathing-jar.module-cp.loc}">
+                <manifest>
+                    <attribute name="Class-Path" value="${test.qa-functional.pathing-jar.module-cp.classpathstr}"/>
+                </manifest>
+            </jar>
+             
+            <!--grab properties from common.xml:test-init so that "test.qa-functional.run.cp" can be properly formed-->
+            <property name="build.test.qa-functional.dir" location="${build.dir}/test/qa-functional"/>
+            <property name="build.test.qa-functional.classes.dir" location="${build.test.qa-functional.dir}/classes"/>
+            <property name="test.qa-functional.cp.extra" value=""/>
+                
+            <!--set up "test.qa-functional.run.cp" to be used by common.xml:-do-junit-->
+            <path id="test.qa-functional.run.cp">
+                <pathelement path="${build.test.qa-functional.classes.dir}"/>
+                <!-- Cannot use <path refid="cp"/> since that uses ${module.classpath} and we want ${module.run.classpath}: -->
+                <pathelement path="${test.qa-functional.runtime.cp}"/>
+                <pathelement path="${cp.extra}"/>
+                <pathelement location="${cluster}/${module.jar}"/>
+                <path refid="test.unit.lib.cp"/>
+                <!-- for compatibility with property based classpath-->
+                <pathelement path="${test.qa-functional.pathing-jar.module-cp.loc}"/>
+                <pathelement path="${test.qa-functional.run.cp.extra}"/>
+                <pathelement path="${test.qa-functional.cp.extra}"/>
+                <pathelement path="${test.extra.nb.javac.deps}"/>
+            </path>
+        </sequential>
+    </target>
 
     <target name="integration-test">
         <!--We want only integration testing to run from this-->
-        <property name="test.includes" value="**/org/sleuthkit/autopsy/integrationtesting/MainTestRunner.class"/>
-        <antcall target="projectized-common.test-qa-functional" />
+        <sequential>
+            <property name="testing-pathing-jar.should-create" value="true"/>
+            <property name="test.includes" value="**/org/sleuthkit/autopsy/integrationtesting/TestRunner.class"/>        
+            <antcall target="projectized-common.test-qa-functional" />
+        </sequential>
     </target>  
 </project>
