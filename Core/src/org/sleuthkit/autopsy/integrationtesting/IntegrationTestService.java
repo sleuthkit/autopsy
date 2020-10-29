@@ -129,7 +129,9 @@ public class IntegrationTestService {
         EnvConfig envConfig = config.getEnvConfig();
 
         // iterate through test suites if any exist
-        if (!CollectionUtils.isEmpty(config.getTestSuites())) {
+        if (CollectionUtils.isEmpty(config.getTestSuites())) {
+            logger.log(Level.WARNING, "No test suites discovered.  No tests will be run.");
+        } else {
             for (TestSuiteConfig testSuiteConfig : config.getTestSuites()) {
                 for (CaseType caseType : IntegrationCaseType.getCaseTypes(testSuiteConfig.getCaseTypes())) {
                     try {

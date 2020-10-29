@@ -82,7 +82,7 @@ public class TestSuiteConfig {
      * @return The data sources to be ingested.
      */
     public List<String> getDataSources() {
-        return Collections.unmodifiableList(dataSources);
+        return dataSources == null ? Collections.emptyList() : Collections.unmodifiableList(dataSources);
     }
 
     /**
@@ -90,7 +90,7 @@ public class TestSuiteConfig {
      * environment.
      */
     public List<ParameterizedResourceConfig> getConfigurationModules() {
-        return Collections.unmodifiableList(configurationModules);
+        return configurationModules == null ? Collections.emptyList() : Collections.unmodifiableList(configurationModules);
     }
 
     /**

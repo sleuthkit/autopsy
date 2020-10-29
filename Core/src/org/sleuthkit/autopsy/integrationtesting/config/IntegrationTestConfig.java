@@ -50,7 +50,7 @@ public class IntegrationTestConfig {
      * @return A list of test suite configurations.
      */
     public List<TestSuiteConfig> getTestSuites() {
-        return Collections.unmodifiableList(testSuites);
+        return testSuites == null ? Collections.emptyList() : Collections.unmodifiableList(testSuites);
     }
 
     /**

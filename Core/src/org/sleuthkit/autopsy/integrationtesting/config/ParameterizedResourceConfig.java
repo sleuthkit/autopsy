@@ -206,6 +206,6 @@ public class ParameterizedResourceConfig {
      * long, double, string.
      */
     public Map<String, Object> getParameters() {
-        return Collections.unmodifiableMap(parameters);
+        return parameters == null ? Collections.emptyMap() : Collections.unmodifiableMap(parameters);
     }
 }

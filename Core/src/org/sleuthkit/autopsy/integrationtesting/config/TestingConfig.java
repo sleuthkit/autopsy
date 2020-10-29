@@ -79,7 +79,7 @@ public class TestingConfig {
      * will be used. If that is not specified, all tests will be run.
      */
     public Set<ParameterizedResourceConfig> getExcludeAllExcept() {
-        return new HashSet<>(excludeAllExcept.values());
+        return excludeAllExcept == null ? Collections.emptySet() : new HashSet<>(excludeAllExcept.values());
     }
 
     /**
@@ -88,7 +88,7 @@ public class TestingConfig {
      * will be run.
      */
     public Set<String> getIncludeAllExcept() {
-        return Collections.unmodifiableSet(includeAllExcept);
+        return includeAllExcept == null ? Collections.emptySet() : Collections.unmodifiableSet(includeAllExcept);
     }
 
     /**
