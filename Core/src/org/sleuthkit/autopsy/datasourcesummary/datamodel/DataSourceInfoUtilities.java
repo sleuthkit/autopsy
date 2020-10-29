@@ -398,6 +398,20 @@ final class DataSourceInfoUtilities {
         BlackboardAttribute attr = getAttributeOrNull(artifact, attributeType);
         return (attr == null) ? null : attr.getValueLong();
     }
+    
+    /**
+     * Retrieves the int value of a certain attribute type from an artifact.
+     *
+     * @param artifact      The artifact.
+     * @param attributeType The attribute type.
+     *
+     * @return The 'getValueInt()' value or null if the attribute could not be
+     *         retrieved.
+     */
+    static Integer getIntOrNull(BlackboardArtifact artifact, Type attributeType) {
+        BlackboardAttribute attr = getAttributeOrNull(artifact, attributeType);
+        return (attr == null) ? null : attr.getValueInt();
+    }
 
     /**
      * Retrieves the long value of a certain attribute type from an artifact and

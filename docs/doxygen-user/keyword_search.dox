@@ -57,6 +57,7 @@ The "Indexed Text" tab shows the results when running the keyword search module 
 
 \image html keyword-search-ocr-indexed-text.png
 
+\anchor keyword_search_ocr_config
 By default, OCR is only configured for English text. Its configuration depends on the presence of language files (called "traineddata" files) 
 that exist in a location that Autopsy can understand. To add support for more languages, you will need to download additional "traineddata" 
 and move them to the right location. The following steps breakdown this process for you:
