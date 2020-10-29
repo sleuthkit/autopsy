@@ -212,8 +212,14 @@ public class ConfigDeserializer {
         try {
             JsonNode root = mapper.readTree(configFile);
             if (root.isArray()) {
+                // Define a collection type of List<TestSuiteConfig> for the purposes of json deserialization.
                 CollectionType listClass = mapper.getTypeFactory().constructCollectionType(List.class, TestSuiteConfig.class);
-                return validate(rootDirectory, configFile, (List<TestSuiteConfig>) mapper.readValue(mapper.treeAsTokens(root), listClass));
+                
+                // This suppresses compiler warning for this cast.
+                @SuppressWarnings("unchecked")
+                List<TestSuiteConfig> testSuites = (List<TestSuiteConfig>) mapper.readValue(mapper.treeAsTokens(root), listClass);
+                
+                return validate(rootDirectory, configFile, testSuites);
             } else {
                 return validate(rootDirectory, configFile, Arrays.asList(mapper.treeToValue(root, TestSuiteConfig.class)));
             }
