@@ -25,11 +25,10 @@ import java.nio.file.Paths;
 import junit.framework.Assert;
 import junit.framework.TestCase;
 import junit.framework.Test;
-import org.apache.commons.io.FileUtils;
 
 import org.netbeans.junit.NbModuleSuite;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoAccount.CentralRepoAccountType;
+import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.InvalidAccountIDException;
 
@@ -95,7 +94,8 @@ public class CentralRepoAccountsTest extends TestCase {
         if (CentralRepository.isEnabled()) {
             CentralRepository.getInstance().shutdownConnections();
         }
-        FileUtils.deleteDirectory(testDirectory.toFile());
+
+        FileUtil.deleteDir(testDirectory.toFile());
     }
 
     public void testPredefinedAccountTypes() {
