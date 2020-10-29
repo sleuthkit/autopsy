@@ -111,6 +111,7 @@ final class TranslationOptionsPanel extends javax.swing.JPanel {
         }
         translatorComboBox.setSelectedItem(currentSelection);
         loadSelectedPanelSettings();
+        enableOcrCheckBox.setSelected(UserPreferences.getUseOcrInTranslation());
     }
 
     /**
@@ -128,6 +129,8 @@ final class TranslationOptionsPanel extends javax.swing.JPanel {
                 logger.log(Level.WARNING, "Unable to save settings for TextTranslator named: " + currentSelection, ex);
             }
         }
+        // Save whether OCR is enabled in the content viewer
+        UserPreferences.setUseOcrInTranslation(enableOcrCheckBox.isSelected());
 
     }
 
@@ -144,6 +147,8 @@ final class TranslationOptionsPanel extends javax.swing.JPanel {
         translationServiceLabel = new javax.swing.JLabel();
         translationServicePanel = new javax.swing.JPanel();
         translationOptionsDescription = new javax.swing.JLabel();
+        jSeparator1 = new javax.swing.JSeparator();
+        enableOcrCheckBox = new javax.swing.JCheckBox();
 
         translatorComboBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -157,20 +162,31 @@ final class TranslationOptionsPanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(translationOptionsDescription, org.openide.util.NbBundle.getMessage(TranslationOptionsPanel.class, "TranslationOptionsPanel.translationOptionsDescription.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(enableOcrCheckBox, org.openide.util.NbBundle.getMessage(TranslationOptionsPanel.class, "TranslationOptionsPanel.enableOcrCheckBox.text")); // NOI18N
+        enableOcrCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                enableOcrCheckBoxActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jSeparator1)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(translationServicePanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(translationOptionsDescription, javax.swing.GroupLayout.DEFAULT_SIZE, 462, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(translationServiceLabel)
-                        .addGap(10, 10, 10)
-                        .addComponent(translatorComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 214, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(translationOptionsDescription, javax.swing.GroupLayout.PREFERRED_SIZE, 462, Short.MAX_VALUE))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(translationServiceLabel)
+                                .addGap(10, 10, 10)
+                                .addComponent(translatorComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 214, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(enableOcrCheckBox))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -183,8 +199,12 @@ final class TranslationOptionsPanel extends javax.swing.JPanel {
                     .addComponent(translatorComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(translationServiceLabel))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(translationServicePanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap())
+                .addComponent(translationServicePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(enableOcrCheckBox)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -192,8 +212,14 @@ final class TranslationOptionsPanel extends javax.swing.JPanel {
         updatePanel();
     }//GEN-LAST:event_translatorComboBoxActionPerformed
 
+    private void enableOcrCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_enableOcrCheckBoxActionPerformed
+        controller.changed();
+    }//GEN-LAST:event_enableOcrCheckBoxActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JCheckBox enableOcrCheckBox;
+    private javax.swing.JSeparator jSeparator1;
     private javax.swing.JLabel translationOptionsDescription;
     private javax.swing.JLabel translationServiceLabel;
     private javax.swing.JPanel translationServicePanel;
