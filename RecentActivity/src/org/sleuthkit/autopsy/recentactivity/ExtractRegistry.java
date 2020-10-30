@@ -472,7 +472,7 @@ class ExtractRegistry extends Extract {
                 commandLine.add(cmd);
             }
             commandLine.add("-r"); //NON-NLS
-            commandLine.add(String.format("\"%s\"",hiveFilePath));
+            commandLine.add(hiveFilePath);
             commandLine.add("-f"); //NON-NLS
             commandLine.add(hiveFileType);
 

@@ -1,6 +1,9 @@
 /*! \page ds_page Data Sources
 
 
+[TOC]
+
+
 A data source is the thing you want to analyze. It can be a disk image, some logical files, a local disk, etc. You must open a case prior to adding a data source to Autopsy. 
 
 Autopsy supports multiple types of data sources:

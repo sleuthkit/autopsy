@@ -400,7 +400,7 @@ class ExtractIE extends Extract {
             List<String> commandLine = new ArrayList<>();
             commandLine.add(JAVA_PATH);
             commandLine.add("-cp"); //NON-NLS
-            commandLine.add(String.format("\"%s\"",PASCO_LIB_PATH));
+            commandLine.add(PASCO_LIB_PATH);
             commandLine.add("isi.pasco2.Main"); //NON-NLS
             commandLine.add("-T"); //NON-NLS
             commandLine.add("history");  //NON-NLS

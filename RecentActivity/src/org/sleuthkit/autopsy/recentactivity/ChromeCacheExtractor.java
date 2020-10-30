@@ -360,28 +360,32 @@ final class ChromeCacheExtractor {
         // seek past the header
         indexFileROBuffer.position(INDEXFILE_HDR_SIZE);
 
-        /* Cycle through index and get the CacheAddress for each CacheEntry.  Process each entry
-         * to extract data, add artifacts, etc. from the f_XXXX and data_x files */
-        for (int i = 0; i <  indexHdr.getTableLen(); i++) {
-            
-            if (context.dataSourceIngestIsCancelled()) {
-                cleanup();
-                return;
-            }
-            
-            CacheAddress addr = new CacheAddress(indexFileROBuffer.getInt() & UINT32_MASK, cacheFolderName);
-            if (addr.isInitialized()) {
-                progressBar.progress(NbBundle.getMessage(this.getClass(),
-                                        "ChromeCacheExtractor.progressMsg",
-                                        moduleName, i, indexHdr.getTableLen(), cacheFolderName)  );
-                try {
-                    List<DerivedFile> addedFiles = processCacheEntry(addr, artifactsAdded);
-                    derivedFiles.addAll(addedFiles);
+        try {
+            /* Cycle through index and get the CacheAddress for each CacheEntry.  Process each entry
+             * to extract data, add artifacts, etc. from the f_XXXX and data_x files */
+            for (int i = 0; i <  indexHdr.getTableLen(); i++) {
+
+                if (context.dataSourceIngestIsCancelled()) {
+                    cleanup();
+                    return;
                 }
-                catch (TskCoreException | IngestModuleException ex) {
-                   logger.log(Level.WARNING, String.format("Failed to get cache entry at address %s", addr), ex); //NON-NLS
-                } 
-            }  
+
+                CacheAddress addr = new CacheAddress(indexFileROBuffer.getInt() & UINT32_MASK, cacheFolderName);
+                if (addr.isInitialized()) {
+                    progressBar.progress(NbBundle.getMessage(this.getClass(),
+                                            "ChromeCacheExtractor.progressMsg",
+                                            moduleName, i, indexHdr.getTableLen(), cacheFolderName)  );
+                    try {
+                        List<DerivedFile> addedFiles = processCacheEntry(addr, artifactsAdded);
+                        derivedFiles.addAll(addedFiles);
+                    }
+                    catch (TskCoreException | IngestModuleException ex) {
+                       logger.log(Level.WARNING, String.format("Failed to get cache entry at address %s for file with object ID %d (%s)", addr, indexFile.getId(), ex.getLocalizedMessage())); //NON-NLS
+                    } 
+                }  
+            }
+        } catch (java.nio.BufferUnderflowException ex) {
+            logger.log(Level.WARNING, String.format("Ran out of data unexpectedly reading file %s (ObjID: %d)", indexFile.getName(), indexFile.getId()));
         }
         
         if (context.dataSourceIngestIsCancelled()) {
@@ -1019,7 +1023,11 @@ final class ChromeCacheExtractor {
             }
             
             // Don't extract data from external files.
-            if (!cacheAddress.isInExternalFile() ) {
+            if (!cacheAddress.isInExternalFile()) {
+                
+                if (cacheAddress.getFilename() == null) {
+                    throw new TskCoreException("Cache address has no file name");
+                }
                 
                 cacheFileCopy = findDataOrIndexFile(cacheAddress.getFilename(), cacheAddress.getCachePath()).get();
 
@@ -1253,7 +1261,7 @@ final class ChromeCacheExtractor {
        
         private String key;     // Key may be found within the entry or may be external
         
-        CacheEntry(CacheAddress cacheAdress, FileWrapper cacheFileCopy ) {
+        CacheEntry(CacheAddress cacheAdress, FileWrapper cacheFileCopy ) throws TskCoreException {
             this.selfAddress = cacheAdress;
             this.cacheFileCopy = cacheFileCopy;
             
@@ -1275,7 +1283,12 @@ final class ChromeCacheExtractor {
             reuseCount = fileROBuf.getInt();
             refetchCount = fileROBuf.getInt();
             
-            state = EntryStateEnum.values()[fileROBuf.getInt()];
+            int stateVal = fileROBuf.getInt();
+            if ((stateVal >= 0) && (stateVal < EntryStateEnum.values().length)) {
+                state = EntryStateEnum.values()[stateVal];
+            } else {
+                throw new TskCoreException("Invalid EntryStateEnum value"); // NON-NLS
+            }
             creationTime = (fileROBuf.getLong() / 1000000) - Long.valueOf("11644473600");
             
             keyLen = fileROBuf.getInt();
@@ -1309,7 +1322,7 @@ final class ChromeCacheExtractor {
                     CacheDataSegment data = new CacheDataSegment(longKeyAddresses, this.keyLen, true);
                     key = data.getDataString();
                 } catch (TskCoreException | IngestModuleException ex) {
-                    logger.log(Level.WARNING, String.format("Failed to get external key from address %s", longKeyAddresses)); //NON-NLS 
+                    throw new TskCoreException(String.format("Failed to get external key from address %s", longKeyAddresses)); //NON-NLS 
                 } 
             }
             else {  // key stored within entry 

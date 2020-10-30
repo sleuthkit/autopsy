@@ -100,13 +100,13 @@ sub pluginmain {
 			}
 		}
 		else {
-			::rptMsg($key_path." has no subkeys.");
+			#::rptMsg($key_path." has no subkeys.");
 			#::logMsg($key_path." has no subkeys.");
 		}
 		::rptMsg("</artifacts></usb>");
 	}
 	else {
-		::rptMsg($key_path." not found.");
+		#::rptMsg($key_path." not found.");
 		#::logMsg($key_path." not found.");
 	}
 }

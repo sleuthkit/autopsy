@@ -29,12 +29,11 @@ import org.apache.commons.lang.StringUtils;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.IngestModuleCheckUtil;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.TopProgramsSummary;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopAccountResult;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopDeviceAttachedResult;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopWebSearchResult;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.TopProgramsSummary.TopProgramsResult;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopDomainsResult;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopProgramsResult;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer.DefaultCellModel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.IngestRunningLabel;
@@ -227,35 +226,30 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
     private final IngestRunningLabel ingestRunningLabel = new IngestRunningLabel();
 
     private final List<DataFetchComponents<DataSource, ?>> dataFetchComponents;
-    private final TopProgramsSummary topProgramsData;
-
+    private final UserActivitySummary userActivityData;
+    
     /**
      * Creates a new UserActivityPanel.
      */
     public UserActivityPanel() {
-        this(new TopProgramsSummary(), new UserActivitySummary());
+        this(new UserActivitySummary());
     }
 
     /**
      * Creates a new UserActivityPanel.
      *
-     * @param topProgramsData  Class from which to obtain top programs data.
      * @param userActivityData Class from which to obtain remaining user
      *                         activity data.
      */
-    public UserActivityPanel(
-            TopProgramsSummary topProgramsData,
-            UserActivitySummary userActivityData) {
-
-        super(topProgramsData, userActivityData);
-
-        this.topProgramsData = topProgramsData;
+    public UserActivityPanel(UserActivitySummary userActivityData) {
+        super(userActivityData);
+        this.userActivityData = userActivityData;
 
         // set up data acquisition methods
         this.dataFetchComponents = Arrays.asList(
                 // top programs query
                 new DataFetchComponents<DataSource, List<TopProgramsResult>>(
-                        (dataSource) -> topProgramsData.getTopPrograms(dataSource, TOP_PROGS_COUNT),
+                        (dataSource) -> userActivityData.getTopPrograms(dataSource, TOP_PROGS_COUNT),
                         (result) -> {
                             showResultWithModuleCheck(topProgramsTable, result,
                                     IngestModuleCheckUtil.RECENT_ACTIVITY_FACTORY,
@@ -307,7 +301,7 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
      * @return The underlying short folder name if one exists.
      */
     private String getShortFolderName(String path, String appName) {
-        return this.topProgramsData.getShortFolderName(path, appName);
+        return this.userActivityData.getShortFolderName(path, appName);
     }
 
     @Override

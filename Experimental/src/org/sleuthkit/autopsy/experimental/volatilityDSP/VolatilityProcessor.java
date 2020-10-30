@@ -196,7 +196,7 @@ class VolatilityProcessor {
         List<String> commandLine = new ArrayList<>();
         commandLine.add("\"" + executableFile + "\""); //NON-NLS
         File memoryImage = new File(memoryImagePath);
-        commandLine.add("--filename=" + String.format("\"%s\"",memoryImage.getName())); //NON-NLS
+        commandLine.add("--filename=" + memoryImage.getName()); //NON-NLS
         if (!profile.isEmpty()) {
             commandLine.add("--profile=" + profile); //NON-NLS
         }
@@ -213,7 +213,7 @@ class VolatilityProcessor {
                 if (!directory.exists()) {
                     directory.mkdirs();
                 }
-                commandLine.add("--dump-dir=" + String.format("\"%s\"",outputDir)); //NON-NLS
+                commandLine.add("--dump-dir=" + outputDir); //NON-NLS
                 break;
             default:
                 break;
