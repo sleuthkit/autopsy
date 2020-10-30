@@ -469,8 +469,8 @@ public class HashDbIngestModule implements FileIngestModule {
         // First check if we've already calculated the hashes.
         String md5Hash = file.getMd5Hash();
         String sha256Hash = file.getSha256Hash();
-        if ((md5Hash != null && md5Hash.isEmpty())
-                && (sha256Hash != null && sha256Hash.isEmpty())) {
+        if ((md5Hash != null && ! md5Hash.isEmpty())
+                && (sha256Hash != null && ! sha256Hash.isEmpty())) {
             return;
         }
 
