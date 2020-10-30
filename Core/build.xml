@@ -196,5 +196,55 @@
         </copy>
     </target>
 
-    <target name="test-init" depends="projectized-common.test-init,getTestDataFiles"/>    
+    <!--sets up integration test system properties, calls underlying test-init and then sets up the pathing jar-->
+    <target name="test-init" depends="projectized-common.test-init,getTestDataFiles,integration-pathing-jar" />
+        
+    
+    <target name="test-qa-functional">
+        <!--We don't want integration testing to run from standard qa functional-->
+        <property name="testing-pathing-jar.should-create" value="true"/>
+        <property name="test.excludes" value="**/org/sleuthkit/autopsy/integrationtesting/TestRunner.class"/>
+        <antcall target="projectized-common.test-qa-functional" />
+    </target>   
+    
+
+    <!--    
+        The paths specified in 'module.run.classpath' are incorporated into the manifest of a jar and then the path to the 
+        jar is used as part of the classpath for '-do-junit' instead of 'module.run.classpath'.  This was done to prevent 
+        classpath length issues on windows.  More information on this technique can be found here: 
+        https://stackoverflow.com/a/201969.
+    -->
+    <target name="integration-pathing-jar" depends="projectized-common.test-init" if="testing-pathing-jar.should-create">
+        <sequential>
+            <!--set up pathing jar based on module.run.classpath as classpath-->
+            <path id="test.qa-functional.pathing-jar.module-cp.classpath" path="${module.run.classpath}"/>
+            <pathconvert pathsep=" " refid="test.qa-functional.pathing-jar.module-cp.classpath" property="test.qa-functional.pathing-jar.module-cp.classpathstr"/>
+            <property name="test.qa-functional.pathing-jar.module-cp.loc" value="${cluster}/test.qa-functional.pathing.module-cp.jar"/>
+            <jar destfile="${test.qa-functional.pathing-jar.module-cp.loc}">
+                <manifest>
+                    <attribute name="Class-Path" value="${test.qa-functional.pathing-jar.module-cp.classpathstr}"/>
+                </manifest>
+            </jar>
+             
+            <!--grab properties from common.xml:test-init so that "test.qa-functional.run.cp" can be properly formed-->
+            <property name="build.test.qa-functional.dir" location="${build.dir}/test/qa-functional"/>
+            <property name="build.test.qa-functional.classes.dir" location="${build.test.qa-functional.dir}/classes"/>
+            <property name="test.qa-functional.cp.extra" value=""/>
+                
+            <!--set up "test.qa-functional.run.cp" to be used by common.xml:-do-junit-->
+            <path id="test.qa-functional.run.cp">
+                <pathelement path="${build.test.qa-functional.classes.dir}"/>
+                <!-- Cannot use <path refid="cp"/> since that uses ${module.classpath} and we want ${module.run.classpath}: -->
+                <pathelement path="${test.qa-functional.runtime.cp}"/>
+                <pathelement path="${cp.extra}"/>
+                <pathelement location="${cluster}/${module.jar}"/>
+                <path refid="test.unit.lib.cp"/>
+                <!-- for compatibility with property based classpath-->
+                <pathelement path="${test.qa-functional.pathing-jar.module-cp.loc}"/>
+                <pathelement path="${test.qa-functional.run.cp.extra}"/>
+                <pathelement path="${test.qa-functional.cp.extra}"/>
+                <pathelement path="${test.extra.nb.javac.deps}"/>
+            </path>
+        </sequential>
+    </target>    
 </project>
