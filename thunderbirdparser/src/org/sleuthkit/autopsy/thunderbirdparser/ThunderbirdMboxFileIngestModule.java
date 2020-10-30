@@ -219,11 +219,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
             case OK:
                 Iterator<EmailMessage> pstMsgIterator = parser.getEmailMessageIterator();
                 if (pstMsgIterator != null) {
-                    // Create cache for accounts
-                    AccountFileInstanceCache accountFileInstanceCache = new AccountFileInstanceCache(abstractFile, currentCase);
-                    
-                    processEmails(parser.getPartialEmailMessages(), pstMsgIterator, abstractFile, accountFileInstanceCache);
-                    accountFileInstanceCache.clear();
+                    processEmails(parser.getPartialEmailMessages(), pstMsgIterator, abstractFile);
                     if (context.fileIngestIsCancelled()) {
                         return ProcessResult.OK;
                     }
@@ -402,7 +398,6 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
 
         MboxParser emailIterator = MboxParser.getEmailIterator( emailFolder, file, abstractFile.getId());
         List<EmailMessage> emails = new ArrayList<>();
-        AccountFileInstanceCache accountFileInstanceCache = new AccountFileInstanceCache(abstractFile, currentCase);
         if(emailIterator != null) {
             while(emailIterator.hasNext()) {
                 if (context.fileIngestIsCancelled()) {
@@ -421,8 +416,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
                                 abstractFile.getName()), errors);
             }
         }
-        processEmails(emails, MboxParser.getEmailIterator( emailFolder, file, abstractFile.getId()), abstractFile, accountFileInstanceCache);
-        accountFileInstanceCache.clear();
+        processEmails(emails, MboxParser.getEmailIterator( emailFolder, file, abstractFile.getId()), abstractFile);
 
     }
     
@@ -537,10 +531,12 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
      * @param partialEmailsForThreading
      * @param fullMessageIterator
      * @param abstractFile
-     * @param accountFileInstanceCache
      */
     private void processEmails(List<EmailMessage> partialEmailsForThreading, Iterator<EmailMessage> fullMessageIterator, 
-            AbstractFile abstractFile, AccountFileInstanceCache accountFileInstanceCache) {
+            AbstractFile abstractFile) {
+        
+        // Create cache for accounts
+        AccountFileInstanceCache accountFileInstanceCache = new AccountFileInstanceCache(abstractFile, currentCase);
         
         // Putting try/catch around this to catch any exception and still allow
         // the creation of the artifacts to continue.
@@ -848,22 +844,22 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
     
     /**
      * Cache for storing AccountFileInstance.
-     * The idea is that emails will be used multiple times in an mbox file and
+     * The idea is that emails will be used multiple times in a file and
      * we shouldn't do a database lookup each time.
      */
     static private class AccountFileInstanceCache {
         private final Map<String, AccountFileInstance> cacheMap;
-        private final AbstractFile mboxFile;
+        private final AbstractFile file;
         private final Case currentCase;
         
         /**
-         * Create a new cache. Caches are linked to a specific mbox file.
-         * @param mboxFile
+         * Create a new cache. Caches are linked to a specific file.
+         * @param file
          * @param currentCase 
          */
-        AccountFileInstanceCache(AbstractFile mboxFile, Case currentCase) {
+        AccountFileInstanceCache(AbstractFile file, Case currentCase) {
             cacheMap= new HashMap<>();
-            this.mboxFile = mboxFile;
+            this.file = file;
             this.currentCase = currentCase;
         }
         
@@ -883,7 +879,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
             
             AccountFileInstance accountInstance = 
                 currentCase.getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.EMAIL, email,
-                        EmailParserModuleFactory.getModuleName(), mboxFile);
+                        EmailParserModuleFactory.getModuleName(), file);
             cacheMap.put(email, accountInstance);
             return accountInstance;
         }
