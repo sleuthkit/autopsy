@@ -12,7 +12,7 @@ extern "C" {
 	* Method:    FindRuleMatch
 	* Signature: (Ljava/lang/String;[B)Ljava/util/List;
 	*/
-	JNIEXPORT jobject JNICALL Java_org_sleuthkit_autopsy_yara_YaraJNIWrapper_FindRuleMatch
+	JNIEXPORT jobject JNICALL Java_org_sleuthkit_autopsy_yara_YaraJNIWrapper_findRuleMatch
 	(JNIEnv *, jclass, jstring, jbyteArray);
 
 #ifdef __cplusplus

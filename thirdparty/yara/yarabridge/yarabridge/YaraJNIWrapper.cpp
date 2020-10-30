@@ -84,7 +84,7 @@ jobject createArrayList(JNIEnv *env, std::vector<std::string> vector) {
 * Method:    FindRuleMatch
 * Signature: (Ljava/lang/String;[B)Ljava/util/List;
 */
-JNIEXPORT jobject JNICALL Java_org_sleuthkit_autopsy_yara_YaraJNIWrapper_FindRuleMatch
+JNIEXPORT jobject JNICALL Java_org_sleuthkit_autopsy_yara_YaraJNIWrapper_findRuleMatch
 (JNIEnv * env, jclass cls, jstring compiledRulePath, jbyteArray fileByteArray) {
 	
 	char errorMessage[256];

@@ -57,7 +57,7 @@ public class YaraJNIWrapper {
      *
      * @throws YaraWrapperException
      */
-    static public native List<String> FindRuleMatch(String compiledRulesPath, byte[] byteBuffer) throws YaraWrapperException;
+    static public native List<String> findRuleMatch(String compiledRulesPath, byte[] byteBuffer) throws YaraWrapperException;
 
     /**
      * private constructor.

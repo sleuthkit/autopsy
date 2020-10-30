@@ -23,6 +23,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.sleuthkit.autopsy.yara.YaraJNIWrapper;
 import org.sleuthkit.autopsy.yara.YaraWrapperException;
@@ -32,13 +34,15 @@ import org.sleuthkit.autopsy.yara.YaraWrapperException;
  */
 public class YaraWrapperTest {
 
+    private static final Logger logger = Logger.getLogger(YaraWrapperTest.class.getName());
+
     public static void main(String[] args) {
         if (args.length < 2) {
             System.out.println("Please supply two arguments, a yara compiled rule path and a path to the file to scan.");
             return;
         }
 
-        TestFileRuleMatch(args[0], args[1]);
+        testFileRuleMatch(args[0], args[1]);
     }
 
     /**
@@ -48,29 +52,29 @@ public class YaraWrapperTest {
      * @param compiledRulePath Path to yara compiled rule file
      * @param filePath         Path to file
      */
-    private static void TestFileRuleMatch(String compiledRulePath, String filePath) {
+    private static void testFileRuleMatch(String compiledRulePath, String filePath) {
         Path path = Paths.get(filePath);
 
         try {
             byte[] data = Files.readAllBytes(path);
 
-            List<String> list = YaraJNIWrapper.FindRuleMatch(compiledRulePath, data);
+            List<String> list = YaraJNIWrapper.findRuleMatch(compiledRulePath, data);
 
             if (list != null) {
                 if (list.isEmpty()) {
                     System.out.println("FindRuleMatch return an empty list");
                 } else {
+                    System.out.println("Matching Rules:");
                     for (String s : list) {
-                        System.out.println("Matching Rules:");
                         System.out.println(s);
                     }
                 }
             } else {
-                System.out.println("FindRuleMatch return a null list");
+                logger.log(Level.SEVERE, "FindRuleMatch return a null list");
             }
 
         } catch (IOException | YaraWrapperException ex) {
-            ex.printStackTrace();
+            logger.log(Level.SEVERE, "Error thrown from yarabridge", ex);
         }
     }
 
