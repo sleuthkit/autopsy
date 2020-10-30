@@ -162,7 +162,7 @@
         <get src="https://drive.google.com/uc?id=1ns2olaWsBu_c4EoE4Seh8t_B3U5RnLKd" dest="${test-input}/CommonFilesAttrs_img1_v1.vhd" skipexisting="true"/>
 
     </target>
-
+    
     <target name="get-deps" depends="init-ivy,getTSKJars,get-thirdparty-dependencies,get-InternalPythonModules, download-binlist">
         <mkdir dir="${ext.dir}"/>
         <copy file="${thirdparty.dir}/LICENSE-2.0.txt" todir="${ext.dir}" />        
@@ -195,5 +195,6 @@
             <globmapper from="*" to="*-MERGED"/>
         </copy>
     </target>
-    
+
+    <target name="test-init" depends="projectized-common.test-init,getTestDataFiles"/>    
 </project>
