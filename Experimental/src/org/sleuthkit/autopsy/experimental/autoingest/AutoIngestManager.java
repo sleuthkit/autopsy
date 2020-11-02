@@ -2930,7 +2930,9 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                     String eventType = event.getPropertyName();
                     if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString()) || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
                         synchronized (ingestLock) {
-                            ingestLock.notify();
+                            if (! IngestManager.getInstance().isIngestRunning()) {
+                                ingestLock.notify();
+                            }
                         }
                     }
                 }
