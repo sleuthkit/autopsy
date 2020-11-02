@@ -42,4 +42,6 @@ build_script:
   - cd %APPVEYOR_BUILD_FOLDER%
   - cmd: ant -q build
 
-test: off
+test_script:
+  - cd %APPVEYOR_BUILD_FOLDER%
+  - cmd: ant -q test
