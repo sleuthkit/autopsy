@@ -44,4 +44,4 @@ build_script:
 
 test_script:
   - cd %APPVEYOR_BUILD_FOLDER%
-  - cmd: ant -q test
+  - cmd: ant -q test-no-regression
