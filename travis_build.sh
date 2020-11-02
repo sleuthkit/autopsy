@@ -19,26 +19,14 @@ if [[ $build_rc != 0 ]]; then
 fi
 
 echo "Testing Autopsy..." && echo -en 'travis_fold:start:script.tests\\r'
-cd Core/
-echo "Testing Autopsy Core..."
 echo "Free Space:"
 echo `df -h .` 
 xvfb-run ant -q test
-core_test_rc=$?
-cd ../KeywordSearch
-echo "Testing Autopsy Keyword Search..."
-echo "Free Space:"
-echo `df -h .` 
-xvfb-run ant -q test
-keywordsearch_test_rc=$?
+test_rc=$?
 echo -en 'travis_fold:end:script.tests\\r'
+exit $test_rc
 
-if [ $core_test_rc != 0 ] || [$keywordsearch_test_rc != 0]; then
+if [[ $test_rc != 0 ]]; then
     echo "There was a test failure."
-
-    if [$core_test_rc != 0]; then
-        exit $core_test_rc
-    elif [$keywordsearch_test_rc != 0]; then
-        exit $keywordsearch_test_rc
-    fi
+    exit $test_rc
 fi
