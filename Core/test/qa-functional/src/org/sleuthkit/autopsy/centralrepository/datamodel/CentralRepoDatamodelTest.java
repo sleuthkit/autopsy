@@ -1256,7 +1256,8 @@ public class CentralRepoDatamodelTest extends TestCase {
             List<CorrelationAttributeInstance.Type> types = CentralRepository.getInstance().getDefinedCorrelationTypes();
 
             // We expect 11 total - 10 default and the custom one made earlier
-            assertTrue("getDefinedCorrelationTypes returned " + types.size() + " entries - expected 11", types.size() == 11);
+            // Note: this test will need to be updated based on the current default items defined in the correlation_types table
+            assertTrue("getDefinedCorrelationTypes returned " + types.size() + " entries - expected 28", types.size() == 28);
         } catch (CentralRepoException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
@@ -1267,7 +1268,8 @@ public class CentralRepoDatamodelTest extends TestCase {
             List<CorrelationAttributeInstance.Type> types = CentralRepository.getInstance().getEnabledCorrelationTypes();
 
             // We expect 10 - the custom type is disabled
-            assertTrue("getDefinedCorrelationTypes returned " + types.size() + " enabled entries - expected 10", types.size() == 10);
+            // Note: this test will need to be updated based on the current default items defined in the correlation_types table
+            assertTrue("getDefinedCorrelationTypes returned " + types.size() + " enabled entries - expected 27", types.size() == 27);
         } catch (CentralRepoException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
@@ -1278,7 +1280,8 @@ public class CentralRepoDatamodelTest extends TestCase {
             List<CorrelationAttributeInstance.Type> types = CentralRepository.getInstance().getSupportedCorrelationTypes();
 
             // We expect 10 - the custom type is not supported
-            assertTrue("getDefinedCorrelationTypes returned " + types.size() + " supported entries - expected 10", types.size() == 10);
+            // Note: this test will need to be updated based on the current default items defined in the correlation_types table
+            assertTrue("getDefinedCorrelationTypes returned " + types.size() + " supported entries - expected 27", types.size() == 27);
         } catch (CentralRepoException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
