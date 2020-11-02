@@ -41,6 +41,12 @@
         <dependency conf="autopsy_core->*" org="org.imgscalr" name="imgscalr-lib" rev="4.2" />
         
         <!-- timeline and image analyzer -->
+        <!-- ControlsFX after version 9.0.0 has a bug that causes the Image Gallery GridView
+             to constantly reload images (JIRA-6724). Do not upgrade ControlsFX unless you can
+             confirm that the following issue is fixed.
+             
+             https://github.com/controlsfx/controlsfx/issues/1241
+        -->
         <dependency conf="autopsy_core->*" org="org.controlsfx" name="controlsfx" rev="9.0.0" />
 
         <!-- timeline  -->
