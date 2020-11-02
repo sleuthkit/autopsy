@@ -10,6 +10,16 @@
      
      
     <property name="thirdparty.dir" value="${basedir}/../thirdparty" />
+    
+    <!-- import ant-contrib tools -->
+    <property name="ant-contrib.dir" value="${thirdparty.dir}/ant-contrib/1.0b3" />
+    <property name="ant.contrib.jar" value="${ant-contrib.dir}/ant-contrib.jar" />
+    <taskdef resource="net/sf/antcontrib/antlib.xml">
+        <classpath>
+            <pathelement location="${ant.contrib.jar}"/>
+        </classpath>
+    </taskdef>
+
     <property name="modules.dir" value="${basedir}/release/modules/" />
     <property name="ext.dir" value="${modules.dir}/ext" />
     <property name="test-input" location="test/qa-functional/data"/>
@@ -212,45 +222,34 @@
     
      
     <!--map from integration-test variables to test-qa-functional-sys-prop so they will be used as system properties-->
-    <target name="setup-integration-props" depends="init">        
-        <sequential>
-            <condition property="test-qa-functional-sys-prop.rootTestOutputPath" value="${integration-test.rootTestOutputPath}">
-                <isset property="integration-test.rootTestOutputPath" />
-            </condition> 
+    <target name="setup-integration-props" depends="init">   
+        <propertyselector 
+            property="integration-test-sys-props" 
+            match="^integration-test\.(.*)" 
+            select="\1" 
+            delimiter="," 
+            casesensitive="true" 
+            distinct="true"
+        />
 
-            <condition property="test-qa-functional-sys-prop.diffOutputPath" value="${integration-test.diffOutputPath}">
-                <isset property="integration-test.diffOutputPath" />
-            </condition> 
-            
-            <condition property="test-qa-functional-sys-prop.rootGoldPath" value="${integration-test.rootGoldPath}">
-                <isset property="integration-test.rootGoldPath" />
-            </condition> 
-            
-            <condition property="test-qa-functional-sys-prop.workingDirectory" value="${integration-test.workingDirectory}">
-                <isset property="integration-test.workingDirectory" />
-            </condition> 
-            
-            <condition property="test-qa-functional-sys-prop.rootTestSuitesPath" value="${integration-test.rootTestSuitesPath}">
-                <isset property="integration-test.rootTestSuitesPath" />
-            </condition> 
-            
-            <condition property="test-qa-functional-sys-prop.rootCaseOutputPath" value="${integration-test.rootCaseOutputPath}">
-                <isset property="integration-test.rootCaseOutputPath" />
-            </condition> 
-            
-            <condition property="test-qa-functional-sys-prop.configFile" value="${integration-test.configFile}">
-                <isset property="integration-test.configFile" />
-            </condition> 
-        </sequential>
+        <for list="${integration-test-sys-props}" param="integration-test-sys-prop">
+            <sequential>
+                <property 
+                    name="test-qa-functional-sys-prop.@{integration-test-sys-prop}" 
+                    value="${integration-test.@{integration-test-sys-prop}}" 
+                />
+            </sequential>
+        </for>
     </target>
-    
+
+        
     <!--    
         The paths specified in 'module.run.classpath' are incorporated into the manifest of a jar and then the path to the 
         jar is used as part of the classpath for '-do-junit' instead of 'module.run.classpath'.  This was done to prevent 
         classpath length issues on windows.  More information on this technique can be found here: 
         https://stackoverflow.com/a/201969.
     -->
-    <target name="integration-pathing-jar" depends="projectized-common.test-init" if="testing-pathing-jar.should-create">
+    <target name="integration-pathing-jar" depends="projectized-common.test-init">
         <sequential>
             <!--set up pathing jar based on module.run.classpath as classpath-->
             <path id="test.qa-functional.pathing-jar.module-cp.classpath" path="${module.run.classpath}"/>
@@ -287,7 +286,6 @@
     <target name="integration-test">
         <!--We want only integration testing to run from this-->
         <sequential>
-            <property name="testing-pathing-jar.should-create" value="true"/>
             <property name="test.includes" value="**/org/sleuthkit/autopsy/integrationtesting/TestRunner.class"/>        
             <antcall target="projectized-common.test-qa-functional" />
         </sequential>

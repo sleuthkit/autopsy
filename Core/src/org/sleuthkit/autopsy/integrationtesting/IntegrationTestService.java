@@ -35,6 +35,7 @@ import java.util.stream.Stream;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.collections.CollectionUtils;
+import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.Pair;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -42,6 +43,9 @@ import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.casemodule.CaseDetails;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.PostgresConnectionSettings;
+import org.sleuthkit.autopsy.core.UserPreferences;
+import org.sleuthkit.autopsy.core.UserPreferencesException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.TimeStampUtils;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
@@ -50,11 +54,15 @@ import org.sleuthkit.autopsy.datasourceprocessors.DataSourceProcessorUtility;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.integrationtesting.DiffService.DiffServiceException;
 import org.sleuthkit.autopsy.integrationtesting.config.ConfigDeserializer;
+import org.sleuthkit.autopsy.integrationtesting.config.ConnectionConfig;
 import org.sleuthkit.autopsy.integrationtesting.config.EnvConfig;
 import org.sleuthkit.autopsy.integrationtesting.config.TestingConfig;
 import org.sleuthkit.autopsy.testutils.IngestUtils;
 import org.sleuthkit.autopsy.testutils.TestUtilsException;
+import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.TskData.DbType;
 
 /**
  * Main entry point for running integration tests. Handles processing
@@ -127,37 +135,82 @@ public class IntegrationTestService {
         }
 
         EnvConfig envConfig = config.getEnvConfig();
+        CaseDbConnectionInfo oldSettings = null;
+        try {
+            oldSettings = pushNewMultiUserSettings(envConfig.getConnectionInfo());
+        } catch (UserPreferencesException ex) {
+            logger.log(Level.SEVERE, "There was an error while trying to set up multi user connection information.", ex);
+        }
 
-        // iterate through test suites if any exist
-        if (CollectionUtils.isEmpty(config.getTestSuites())) {
-            logger.log(Level.WARNING, "No test suites discovered.  No tests will be run.");
-        } else {
-            for (TestSuiteConfig testSuiteConfig : config.getTestSuites()) {
-                for (CaseType caseType : IntegrationCaseType.getCaseTypes(testSuiteConfig.getCaseTypes())) {
-                    try {
-                        runIntegrationTestSuite(envConfig, caseType, testSuiteConfig);
-                    } catch (CaseActionException | IllegalStateException | NoCurrentCaseException | IllegalArgumentException ex) {
-                        logger.log(Level.SEVERE, "There was an error working with current case: " + testSuiteConfig.getName(), ex);
+        try {
+            // iterate through test suites if any exist
+            if (CollectionUtils.isEmpty(config.getTestSuites())) {
+                logger.log(Level.WARNING, "No test suites discovered.  No tests will be run.");
+            } else {
+                for (TestSuiteConfig testSuiteConfig : config.getTestSuites()) {
+                    for (CaseType caseType : IntegrationCaseType.getCaseTypes(testSuiteConfig.getCaseTypes())) {
+                        try {
+                            runIntegrationTestSuite(envConfig, caseType, testSuiteConfig);
+                        } catch (CaseActionException | IllegalStateException | NoCurrentCaseException | IllegalArgumentException ex) {
+                            logger.log(Level.SEVERE, "There was an error working with current case: " + testSuiteConfig.getName(), ex);
+                        }
                     }
                 }
-            }
 
-            String goldPath = PathUtil.getAbsolutePath(envConfig.getWorkingDirectory(), envConfig.getRootGoldPath());
-            String outputPath = PathUtil.getAbsolutePath(envConfig.getWorkingDirectory(), envConfig.getRootTestOutputPath());
-            String diffPath = PathUtil.getAbsolutePath(envConfig.getWorkingDirectory(), envConfig.getDiffOutputPath());
+                String goldPath = PathUtil.getAbsolutePath(envConfig.getWorkingDirectory(), envConfig.getRootGoldPath());
+                String outputPath = PathUtil.getAbsolutePath(envConfig.getWorkingDirectory(), envConfig.getRootTestOutputPath());
+                String diffPath = PathUtil.getAbsolutePath(envConfig.getWorkingDirectory(), envConfig.getDiffOutputPath());
 
-            try {
-                // write diff to file if requested
-                if (writeDiff(outputPath, goldPath, diffPath)) {
-                    // if there is a diff, throw an exception accordingly
-                    throw new IntegrationTestDiffException(String.format("There was a diff between the integration test gold data: %s "
-                            + "and the current iteration output data: %s.  Diff file created at %s.",
-                            goldPath, outputPath, diffPath));
+                try {
+                    // write diff to file if requested
+                    if (writeDiff(outputPath, goldPath, diffPath)) {
+                        // if there is a diff, throw an exception accordingly
+                        throw new IntegrationTestDiffException(String.format("There was a diff between the integration test gold data: %s "
+                                + "and the current iteration output data: %s.  Diff file created at %s.",
+                                goldPath, outputPath, diffPath));
+                    }
+                } catch (DiffServiceException ex) {
+                    throw new IntegrationTestServiceException("There was an error while trying to diff output with gold data.", ex);
                 }
-            } catch (DiffServiceException ex) {
-                throw new IntegrationTestServiceException("There was an error while trying to diff output with gold data.", ex);
+            }
+        } finally {
+            if (oldSettings != null) {
+                try {
+                    UserPreferences.setDatabaseConnectionInfo(oldSettings);
+                } catch (Exception ex) {
+                    logger.log(Level.WARNING, "There was an error reverting database settings", ex);
+                }
             }
         }
+    }
+
+    /**
+     * If multi user settings are present in current configuration, then set
+     * multi user settings to those settings. Provide the old
+     * CaseDbConnectionInfo object with the old values to revert when finished.
+     *
+     * @param connectionInfo The connection info to use for new values.
+     * @return The old connection info if present and the connection info was
+     * changed.
+     */
+    private CaseDbConnectionInfo pushNewMultiUserSettings(ConnectionConfig connectionInfo) throws UserPreferencesException {
+        if (connectionInfo == null) {
+            return null;
+        }
+
+        String username = connectionInfo.getUserName();
+        String host = connectionInfo.getHostName();
+        String password = connectionInfo.getPassword();
+        int port = connectionInfo.getPort() == null ? PostgresConnectionSettings.DEFAULT_PORT : connectionInfo.getPort();
+
+        if (StringUtils.isBlank(username) || StringUtils.isBlank(password) || StringUtils.isBlank(host)) {
+            logger.log(Level.WARNING, "Username, password, or host are not present.  Not setting multi user connection info.");
+            return null;
+        }
+
+        CaseDbConnectionInfo oldInfo = UserPreferences.getDatabaseConnectionInfo();
+        UserPreferences.setDatabaseConnectionInfo(new CaseDbConnectionInfo(host, Integer.toString(port), username, password, DbType.POSTGRESQL));
+        return oldInfo;
     }
 
     /**
@@ -232,22 +285,11 @@ public class IntegrationTestService {
             caseOutputFolderFile.mkdirs();
         }
 
-        // create a spe
-        switch (caseType) {
-            case SINGLE_USER_CASE: {
-                Case.createAsCurrentCase(
-                        Case.CaseType.SINGLE_USER_CASE,
-                        caseOutputFolder,
-                        new CaseDetails(uniqueCaseName));
-                openCase = Case.getCurrentCaseThrows();
-            }
-            break;
-
-            case MULTI_USER_CASE:
-                throw new IllegalArgumentException("Multiuser cases are not currently supported for integration tests");
-            default:
-                throw new IllegalArgumentException("Unknown case type: " + caseType);
-        }
+        Case.createAsCurrentCase(
+                caseType,
+                caseOutputFolder,
+                new CaseDetails(uniqueCaseName));
+        openCase = Case.getCurrentCaseThrows();
 
         addDataSourcesToCase(PathUtil.getAbsolutePaths(workingDirectory, dataSourcePaths), caseName);
         return openCase;

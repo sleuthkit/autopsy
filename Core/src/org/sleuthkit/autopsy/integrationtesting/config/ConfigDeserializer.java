@@ -63,13 +63,13 @@ public class ConfigDeserializer {
     // where the integration tests will output yml data
     private static final String ROOT_TEST_OUTPUT_PATH_KEY = "rootTestOutputPath";
     // the postgres connection host name
-    private static final String CONNECTION_HOST_NAME_KEY = "connectionHostName";
+    private static final String CONNECTION_HOST_NAME_KEY = "connectionInfo.hostName";
     // the postgres connection port
-    private static final String CONNECTION_PORT_KEY = "connectionPort";
+    private static final String CONNECTION_PORT_KEY = "connectionInfo.port";
     // the postgres connection user name
-    private static final String CONNECTION_USER_NAME_KEY = "connectionUserName";
+    private static final String CONNECTION_USER_NAME_KEY = "connectionInfo.userName";
     // the postgres connection password
-    private static final String CONNECTION_PASSWORD_KEY = "connectionPassword";
+    private static final String CONNECTION_PASSWORD_KEY = "connectionInfo.password";
     // the working directory.  Paths that are relative are relative to this path.
     private static final String WORKING_DIRECTORY_KEY = "workingDirectory";
     // whether or not the output path should have the same directory structure as 
