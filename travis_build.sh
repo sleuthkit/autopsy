@@ -8,7 +8,7 @@ pushd bindings/java && ant -q dist && popd
 
 echo "Building Autopsy..." && echo -en 'travis_fold:start:script.build\\r'
 cd $TRAVIS_BUILD_DIR/
-ant build
+ant -q build
 echo -en 'travis_fold:end:script.build\\r'
 
 echo "Testing Autopsy..." && echo -en 'travis_fold:start:script.tests\\r'
