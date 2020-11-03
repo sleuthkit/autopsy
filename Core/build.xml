@@ -200,7 +200,7 @@
 
     <!--sets up integration test system properties, calls underlying test-init, 
     get test data files if they have not been retrieved, and then sets up the pathing jar-->
-    <target name="test-init" depends="setup-integration-props,projectized-common.test-init,getTestDataFiles,integration-pathing-jar" />
+    <target name="test-init" depends="setup-integration-props,projectized-common.test-init,getTestDataFiles,qa-functional-pathing-jar" />
         
     
     <target name="test-qa-functional">
