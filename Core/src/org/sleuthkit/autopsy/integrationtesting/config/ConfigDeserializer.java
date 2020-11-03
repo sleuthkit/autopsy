@@ -30,8 +30,10 @@ import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import java.util.stream.Collectors;
@@ -50,42 +52,15 @@ public class ConfigDeserializer {
     private static final Logger logger = Logger.getLogger(ConfigDeserializer.class.getName());
     private static final ObjectMapper mapper = new ObjectMapper();
 
-    
     // The following are the keys that must be provided as arguments (prefixed with 'integration-test.')
     // A config file key must be specifed or at least the test suites path, and output path.
-    
     // If a config specifying the EnvConfig json exists, specify this path to load it
     private static final String CONFIG_FILE_KEY = "configFile";
-    // where cases will be written
-    private static final String ROOT_CASE_OUTPUT_PATH_KEY = "rootCaseOutputPath";
-    // where the test suites files will be held
-    private static final String ROOT_TEST_SUITES_PATH_KEY = "rootTestSuitesPath";
-    // where the integration tests will output yml data
-    private static final String ROOT_TEST_OUTPUT_PATH_KEY = "rootTestOutputPath";
-    // the postgres connection host name
-    private static final String CONNECTION_HOST_NAME_KEY = "connectionInfo.hostName";
-    // the postgres connection port
-    private static final String CONNECTION_PORT_KEY = "connectionInfo.port";
-    // the postgres connection user name
-    private static final String CONNECTION_USER_NAME_KEY = "connectionInfo.userName";
-    // the postgres connection password
-    private static final String CONNECTION_PASSWORD_KEY = "connectionInfo.password";
-    // the working directory.  Paths that are relative are relative to this path.
-    private static final String WORKING_DIRECTORY_KEY = "workingDirectory";
-    // whether or not the output path should have the same directory structure as 
-    // where the config was found in the test suites directory.  For instance, if 
-    // the file is located at /testSuitesDir/folderX/fileY.json, the yaml will be 
-    // located at /outputDir/folderX/fileY/.  This value should be "true" to be true.
-    private static final String USE_RELATIVE_OUTPUT_KEY = "useRelativeOutput";
-    // Where gold files are located.  Can be null.
-    private static final String ROOT_GOLD_PATH_KEY = "rootGoldPath";
-    // The diff output path.  Can be null.
-    private static final String DIFF_OUTPUT_PATH_KEY = "diffOutputPath";
-    
+
     /**
      * Deserializes the specified json file into an EnvConfig object using
      * System.Property specified values. This is affected by build.xml test-init
-     * target and values specified in this file.  
+     * target and values specified in this file.
      *
      * @return The deserialized file.
      * @throws IOException
@@ -106,23 +81,72 @@ public class ConfigDeserializer {
         } else {
             // otherwise, try to load from properties
             try {
-                return validate(null, new EnvConfig(
-                        System.getProperty(ROOT_CASE_OUTPUT_PATH_KEY),
-                        System.getProperty(ROOT_TEST_SUITES_PATH_KEY),
-                        System.getProperty(ROOT_TEST_OUTPUT_PATH_KEY),
-                        new ConnectionConfig(
-                                System.getProperty(CONNECTION_HOST_NAME_KEY),
-                                Integer.getInteger(System.getProperty(CONNECTION_PORT_KEY)),
-                                System.getProperty(CONNECTION_USER_NAME_KEY),
-                                System.getProperty(CONNECTION_PASSWORD_KEY)
-                        ),
-                        System.getProperty(WORKING_DIRECTORY_KEY),
-                        Boolean.parseBoolean(System.getProperty(USE_RELATIVE_OUTPUT_KEY)),
-                        System.getProperty(ROOT_GOLD_PATH_KEY),
-                        System.getProperty(DIFF_OUTPUT_PATH_KEY)));
+                return validate(null, convertToObj(getSysPropsMap(), EnvConfig.class));
             } catch (IllegalStateException ex) {
                 throw new IllegalStateException("EnvConfig could not be determined from system property values", ex);
             }
+        }
+    }
+
+    /**
+     * Creates a Map<String, Object> representing the values in System
+     * Properties. Properties will be stored in nested maps for property keys
+     * separated by periods. For instance, the property 'keyA.childA.childB'
+     * will be located in returnObj.get("keyA").get("childA").get("childB").
+     *
+     * @return The generated map.
+     */
+    private Map<String, Object> getSysPropsMap() {
+        Map<String, Object> mapToRet = new HashMap<>();
+
+        for (Entry<Object, Object> property : System.getProperties().entrySet()) {
+            String key = property.getKey().toString();
+            Object value = property.getValue().toString();
+
+            String[] keyPieces = key.split("\\.");
+            Map<String, Object> mapToAddTo = mapToRet;
+            for (int i = 0; i < keyPieces.length - 1; i++) {
+                mapToAddTo = getOrCreate(mapToAddTo, keyPieces[i]);
+            }
+
+            mapToAddTo.put(keyPieces[keyPieces.length - 1], value);
+        }
+
+        return mapToRet;
+    }
+
+    /**
+     * Extends HashMap<String, Object> to guarantee a type of
+     * Map<String, Object> with type erasure.
+     */
+    private static class StringObjMap extends HashMap<String, Object> {
+
+        private static final long serialVersionUID = 1L;
+
+        /**
+         * Main constructor.
+         */
+        StringObjMap() {
+        }
+
+    }
+
+    /**
+     * Retrieves the Map<String, Object> that will be found at parent.get(key)
+     * or create a new Map at that key and return that.
+     *
+     * @param parent The parent map.
+     * @param key The key to fetch.
+     * @return The child map.
+     */
+    private Map<String, Object> getOrCreate(Map<String, Object> parent, String key) {
+        Object child = parent.get(key);
+        if (child instanceof StringObjMap) {
+            return (StringObjMap) child;
+        } else {
+            Map<String, Object> toRet = new StringObjMap();
+            parent.put(key, toRet);
+            return toRet;
         }
     }
 
@@ -187,11 +211,11 @@ public class ConfigDeserializer {
         if (config.getWorkingDirectory() == null && envConfigFile != null && envConfigFile.getParentFile() != null) {
             config.setWorkingDirectory(envConfigFile.getParentFile().getAbsolutePath());
         }
-        
+
         // env config should be non-null after validation
-        if (config == null || 
-                StringUtils.isBlank(config.getRootCaseOutputPath()) || 
-                StringUtils.isBlank(config.getRootTestOutputPath())) {
+        if (config == null
+                || StringUtils.isBlank(config.getRootCaseOutputPath())
+                || StringUtils.isBlank(config.getRootTestOutputPath())) {
             throw new IllegalStateException("EnvConfig must have the root case output path and the root test output path set.");
         }
 
@@ -214,11 +238,11 @@ public class ConfigDeserializer {
             if (root.isArray()) {
                 // Define a collection type of List<TestSuiteConfig> for the purposes of json deserialization.
                 CollectionType listClass = mapper.getTypeFactory().constructCollectionType(List.class, TestSuiteConfig.class);
-                
+
                 // This suppresses compiler warning for this cast.
                 @SuppressWarnings("unchecked")
                 List<TestSuiteConfig> testSuites = (List<TestSuiteConfig>) mapper.readValue(mapper.treeAsTokens(root), listClass);
-                
+
                 return validate(rootDirectory, configFile, testSuites);
             } else {
                 return validate(rootDirectory, configFile, Arrays.asList(mapper.treeToValue(root, TestSuiteConfig.class)));

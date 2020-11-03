@@ -35,7 +35,6 @@ import java.util.stream.Stream;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.collections.CollectionUtils;
-import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.Pair;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -51,6 +50,7 @@ import org.sleuthkit.autopsy.coreutils.TimeStampUtils;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException;
 import org.sleuthkit.autopsy.datasourceprocessors.DataSourceProcessorUtility;
+import org.sleuthkit.autopsy.events.MessageServiceConnectionInfo;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.integrationtesting.DiffService.DiffServiceException;
 import org.sleuthkit.autopsy.integrationtesting.config.ConfigDeserializer;
@@ -61,7 +61,6 @@ import org.sleuthkit.autopsy.testutils.IngestUtils;
 import org.sleuthkit.autopsy.testutils.TestUtilsException;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskData.DbType;
 
 /**
@@ -117,6 +116,10 @@ public class IntegrationTestService {
 
     }
 
+    private static final int DEFAULT_POSTGRES_PORT = 5432;
+    private static final int DEFAULT_ACTIVEMQ_PORT = 61616;
+    private static final int DEFAULT_SOLR_PORT = 8983;
+
     private static final Logger logger = Logger.getLogger(IntegrationTestService.class.getName());
 
     private static final ConfigDeserializer configDeserializer = new ConfigDeserializer();
@@ -135,9 +138,9 @@ public class IntegrationTestService {
         }
 
         EnvConfig envConfig = config.getEnvConfig();
-        CaseDbConnectionInfo oldSettings = null;
+        AllConnectionInfo oldSettings = null;
         try {
-            oldSettings = pushNewMultiUserSettings(envConfig.getConnectionInfo());
+            oldSettings = pushNewMultiUserSettings(new AllConnectionInfo(envConfig.getDbConnection(), envConfig.getMqConnection(), envConfig.getSolrConnection()));
         } catch (UserPreferencesException ex) {
             logger.log(Level.SEVERE, "There was an error while trying to set up multi user connection information.", ex);
         }
@@ -176,7 +179,8 @@ public class IntegrationTestService {
         } finally {
             if (oldSettings != null) {
                 try {
-                    UserPreferences.setDatabaseConnectionInfo(oldSettings);
+                    // revert postgres, solr, activemq settings
+                    pushNewMultiUserSettings(oldSettings);
                 } catch (Exception ex) {
                     logger.log(Level.WARNING, "There was an error reverting database settings", ex);
                 }
@@ -184,33 +188,139 @@ public class IntegrationTestService {
         }
     }
 
-    /**
-     * If multi user settings are present in current configuration, then set
-     * multi user settings to those settings. Provide the old
-     * CaseDbConnectionInfo object with the old values to revert when finished.
-     *
-     * @param connectionInfo The connection info to use for new values.
-     * @return The old connection info if present and the connection info was
-     * changed.
-     */
-    private CaseDbConnectionInfo pushNewMultiUserSettings(ConnectionConfig connectionInfo) throws UserPreferencesException {
+    private static class AllConnectionInfo {
+
+        private final ConnectionConfig dbConnection;
+        private final ConnectionConfig mqConnection;
+        private final ConnectionConfig solrConnection;
+
+        public AllConnectionInfo(ConnectionConfig dbConnection, ConnectionConfig mqConnection, ConnectionConfig solrConnection) {
+            this.dbConnection = dbConnection;
+            this.mqConnection = mqConnection;
+            this.solrConnection = solrConnection;
+        }
+
+        public ConnectionConfig getDbConnection() {
+            return dbConnection;
+        }
+
+        public ConnectionConfig getMqConnection() {
+            return mqConnection;
+        }
+
+        public ConnectionConfig getSolrConnection() {
+            return solrConnection;
+        }
+    }
+
+    private AllConnectionInfo pushNewMultiUserSettings(AllConnectionInfo connectionInfo) throws UserPreferencesException {
+        // take no action if no settings
         if (connectionInfo == null) {
             return null;
         }
 
+        // setup connections and capture old settings.
+        ConnectionConfig oldPostgresSettings = pushPostgresSettings(connectionInfo.getDbConnection());
+        ConnectionConfig oldActiveMqSettings = pushActiveMqSettings(connectionInfo.getMqConnection());
+        ConnectionConfig oldSolrSettings = pushSolrSettings(connectionInfo.getSolrConnection());
+
+        // return old settings
+        return new AllConnectionInfo(oldPostgresSettings, oldActiveMqSettings, oldSolrSettings);
+    }
+
+    private ConnectionConfig pushPostgresSettings(ConnectionConfig connectionInfo) throws UserPreferencesException {
+        // take no action if no database settings.
+        if (connectionInfo == null) {
+            return null;
+        }
+
+        // retrieve values
         String username = connectionInfo.getUserName();
         String host = connectionInfo.getHostName();
         String password = connectionInfo.getPassword();
         int port = connectionInfo.getPort() == null ? PostgresConnectionSettings.DEFAULT_PORT : connectionInfo.getPort();
 
+        // ensure all necessary values are present.
         if (StringUtils.isBlank(username) || StringUtils.isBlank(password) || StringUtils.isBlank(host)) {
             logger.log(Level.WARNING, "Username, password, or host are not present.  Not setting multi user connection info.");
             return null;
         }
 
+        // capture old information.
         CaseDbConnectionInfo oldInfo = UserPreferences.getDatabaseConnectionInfo();
+
+        ConnectionConfig oldConnectionInfo = new ConnectionConfig(
+                oldInfo.getHost(),
+                parseIntOrDefault(oldInfo.getPort(), DEFAULT_POSTGRES_PORT),
+                oldInfo.getUserName(),
+                oldInfo.getPassword());
+
         UserPreferences.setDatabaseConnectionInfo(new CaseDbConnectionInfo(host, Integer.toString(port), username, password, DbType.POSTGRESQL));
-        return oldInfo;
+        return oldConnectionInfo;
+    }
+
+    private ConnectionConfig pushActiveMqSettings(ConnectionConfig connectionInfo) throws UserPreferencesException {
+        // take no action if no database settings.
+        if (connectionInfo == null) {
+            return null;
+        }
+
+        // retrieve values
+        String username = connectionInfo.getUserName();
+        String host = connectionInfo.getHostName();
+        String password = connectionInfo.getPassword();
+        int port = connectionInfo.getPort() == null ? DEFAULT_ACTIVEMQ_PORT : connectionInfo.getPort();
+
+        // ensure all necessary values are present.
+        if (StringUtils.isBlank(host)) {
+            logger.log(Level.WARNING, "Host is not present.  Not setting active mq connection info.");
+            return null;
+        }
+
+        // capture old information.
+        MessageServiceConnectionInfo oldInfo = UserPreferences.getMessageServiceConnectionInfo();
+        ConnectionConfig oldConnectionInfo = new ConnectionConfig(oldInfo.getHost(), oldInfo.getPort(), oldInfo.getUserName(), oldInfo.getPassword());
+
+        UserPreferences.setMessageServiceConnectionInfo(new MessageServiceConnectionInfo(host, port, username, password));
+        return oldConnectionInfo;
+    }
+
+    private ConnectionConfig pushSolrSettings(ConnectionConfig connectionInfo) {
+        // take no action if no database settings.
+        if (connectionInfo == null) {
+            return null;
+        }
+
+        // retrieve values
+        String host = connectionInfo.getHostName();
+        int port = connectionInfo.getPort() == null ? DEFAULT_SOLR_PORT : connectionInfo.getPort();
+
+        // ensure all necessary values are present.
+        if (StringUtils.isBlank(host)) {
+            logger.log(Level.WARNING, "Host is not present.  Not setting solr info.");
+            return null;
+        }
+
+        // capture old information.
+        String oldHost = UserPreferences.getIndexingServerHost();
+        String oldPortStr = UserPreferences.getIndexingServerPort();
+
+        UserPreferences.setIndexingServerHost(host);
+        UserPreferences.setIndexingServerPort(port);
+
+        return new ConnectionConfig(oldHost, parseIntOrDefault(oldPortStr, DEFAULT_SOLR_PORT), null, null);
+    }
+
+    private int parseIntOrDefault(String toBeParsed, int defaultVal) {
+        if (toBeParsed == null) {
+            return defaultVal;
+        }
+
+        try {
+            return Integer.parseInt(toBeParsed);
+        } catch (NumberFormatException ex) {
+            return defaultVal;
+        }
     }
 
     /**

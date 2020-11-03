@@ -31,8 +31,9 @@ public class EnvConfig {
     private final String rootTestSuitesPath;
     private final String rootGoldPath;
     private final String diffOutputPath;
-    
-    private final ConnectionConfig connectionInfo;
+    private final ConnectionConfig dbConnection;
+    private final ConnectionConfig mqConnection;
+    private final ConnectionConfig solrConnection;    
 
     private String workingDirectory;
     private Boolean useRelativeOutput;
@@ -56,12 +57,35 @@ public class EnvConfig {
      * @param rootGoldPath The path to the gold data for diff comparison.
      * @param diffOutputPath The file location for diff output.
      */
+    
+    /**
+     * Main constructor.
+     *
+     * @param rootCaseOutputPath The location where cases will be created.
+     * @param rootTestSuitesPath The location of test suite configuration
+     * file(s).
+     * @param rootTestOutputPath The location where output results should be
+     * created.
+     * @param dbConnection The connection information for the database (postgres).
+     * @param mqConnection The active mq connection information.
+     * @param solrConnection The solr connection information.
+     * @param workingDirectory The working directory (if not specified, the
+     * parent directory of the EnvConfig file is used.
+     * @param useRelativeOutput If true, results will be outputted maintaining
+     * the same relative path structure as the file (i.e. if file was found at
+     * /rootTestSuitesPath/folderX/fileY.json then it will now be outputted in
+     * /rootTestOutputPath/folderX/fileY/)
+     * @param rootGoldPath The path to the gold data for diff comparison.
+     * @param diffOutputPath The file location for diff output.
+     */
     @JsonCreator
     public EnvConfig(
             @JsonProperty("rootCaseOutputPath") String rootCaseOutputPath,
             @JsonProperty("rootTestSuitesPath") String rootTestSuitesPath,
             @JsonProperty("rootTestOutputPath") String rootTestOutputPath,
-            @JsonProperty("connectionInfo") ConnectionConfig connectionInfo,
+            @JsonProperty("dbConnection") ConnectionConfig dbConnection,
+            @JsonProperty("mqConnection") ConnectionConfig mqConnection,
+            @JsonProperty("solrConnection") ConnectionConfig solrConnection,
             @JsonProperty("workingDirectory") String workingDirectory,
             @JsonProperty("useRelativeOutput") Boolean useRelativeOutput,
             @JsonProperty("rootGoldPath") String rootGoldPath,
@@ -72,10 +96,12 @@ public class EnvConfig {
         this.rootTestSuitesPath = rootTestSuitesPath;
         this.rootGoldPath = rootGoldPath;
         this.diffOutputPath = diffOutputPath;
-        this.connectionInfo = connectionInfo;
-
         this.workingDirectory = workingDirectory;
         this.useRelativeOutput = useRelativeOutput;
+        
+        this.dbConnection = dbConnection;
+        this.mqConnection = mqConnection;
+        this.solrConnection = solrConnection;
     }
 
     /**
@@ -112,12 +138,6 @@ public class EnvConfig {
         this.workingDirectory = workingDirectory;
     }
 
-    /**
-     * @return The postgres connection information.
-     */
-    public ConnectionConfig getConnectionInfo() {
-        return connectionInfo;
-    }
 
     /**
      * @return The root test suites path that will be searched or the path to a
@@ -148,6 +168,29 @@ public class EnvConfig {
     public void setUseRelativeOutput(boolean useRelativeOutput) {
         this.useRelativeOutput = useRelativeOutput;
     }
+
+    /**
+     * @return The connection information for the database (postgres).
+     */
+    public ConnectionConfig getDbConnection() {
+        return dbConnection;
+    }
+
+    /**
+     * @return The active mq connection information.
+     */
+    public ConnectionConfig getMqConnection() {
+        return mqConnection;
+    }
+
+    /**
+     * @return The solr connection information.
+     */
+    public ConnectionConfig getSolrConnection() {
+        return solrConnection;
+    }
+    
+    
 
     /**
      * @return The path to the gold data for diff comparison.
