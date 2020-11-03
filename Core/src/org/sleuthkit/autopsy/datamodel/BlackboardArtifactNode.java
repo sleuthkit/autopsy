@@ -285,15 +285,16 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     private static Lookup createLookup(BlackboardArtifact artifact) {
         final long objectID = artifact.getObjectID();
         Content content = null;
-        if (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID() || artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID()) {
-            content = getPathIdFile(artifact);
-        } else {
-            try {
-                content = contentCache.get(objectID, () -> artifact.getSleuthkitCase().getContentById(objectID));
-            } catch (ExecutionException ex) {
-                logger.log(Level.SEVERE, MessageFormat.format("Error getting source content (artifact objID={0}", artifact.getId()), ex); //NON-NLS
-                content = null;
+        try {
+            if (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID() || artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID()) {
+                content = getPathIdFile(artifact);
             }
+            if (content == null) {
+                content = contentCache.get(objectID, () -> artifact.getSleuthkitCase().getContentById(objectID));
+            }
+        } catch (ExecutionException ex) {
+            logger.log(Level.SEVERE, MessageFormat.format("Error getting source content (artifact objID={0}", artifact.getId()), ex); //NON-NLS
+            content = null;
         }
         if (content == null) {
             return Lookups.fixed(artifact);
@@ -312,12 +313,15 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      *
      * @return The Content specified by the artifact's path id attribute or null
      *         if there was no content available.
+     *
+     * @throws ExecutionException Error retrieving the file specified by the
+     *                            path id from the cache.
      */
-    private static Content getPathIdFile(BlackboardArtifact artifact) {
+    private static Content getPathIdFile(BlackboardArtifact artifact) throws ExecutionException {
         try {
             for (BlackboardAttribute attribute : artifact.getAttributes()) {
                 if (attribute.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID()) {
-                    return artifact.getSleuthkitCase().getContentById(attribute.getValueLong());
+                    return contentCache.get(attribute.getValueLong(), () -> artifact.getSleuthkitCase().getContentById(attribute.getValueLong()));
                 }
             }
         } catch (TskCoreException ex) {
