@@ -39,7 +39,7 @@ public final class SolrServer implements ServicesMonitor.MonitoredService {
 
     @Override
     @NbBundle.Messages({
-        "SolrServer_missingServiceProviderErrorMsg=Cannot find Keyword Search service provider"
+        "SolrServer_missingServiceProviderErrorMsg=Cannot find keyword search service provider"
     })
     public ServicesMonitor.ServiceStatusReport getStatus() {
         try {
@@ -50,7 +50,7 @@ public final class SolrServer implements ServicesMonitor.MonitoredService {
                 return new ServicesMonitor.ServiceStatusReport(ServicesMonitor.Service.KEYWORD_SEARCH_SERVICE, ServicesMonitor.ServiceStatus.UP, "");
             } else {
                 logger.log(Level.SEVERE, "No implementation of KeywordSearchService found"); //NON-NLS
-                return new ServicesMonitor.ServiceStatusReport(ServicesMonitor.Service.KEYWORD_SEARCH_SERVICE, ServicesMonitor.ServiceStatus.DOWN, Bundle.SolrServer_missingServiceErrorMsg());
+                return new ServicesMonitor.ServiceStatusReport(ServicesMonitor.Service.KEYWORD_SEARCH_SERVICE, ServicesMonitor.ServiceStatus.DOWN, Bundle.SolrServer_missingServiceProviderErrorMsg());
             }
         } catch (NumberFormatException | KeywordSearchServiceException ex) {
             logger.log(Level.SEVERE, "Error connecting to Solr server", ex); //NON-NLS
