@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.discovery.ui;
 
 import javax.swing.DefaultListModel;
 import javax.swing.event.ListSelectionListener;
+import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils;
 
 /**
  * A JPanel to display domain summaries.
@@ -87,20 +88,24 @@ public class DomainSummaryViewer extends javax.swing.JPanel {
     }
 
     /**
-     * Get the list of AbstractFiles which are represented by the selected
-     * document preview.
+     * Send an event to perform the population of the domain details tabs to
+     * reflect the currently selected domain. Will populate the list with
+     * nothing when a domain is not used.
      *
-     * @return The list of AbstractFiles which are represented by the selected
-     *         document preview.
+     * @param useDomain If the currently selected domain should be used to
+     *                  retrieve a list.
      */
-    String getDomainForSelected() {
-        synchronized (this) {
-            if (domainList.getSelectedIndex() == -1) {
-                return "";
-            } else {
-                return domainListModel.getElementAt(domainList.getSelectedIndex()).getResultDomain().getDomain();
+    void sendPopulateEvent(boolean useDomain) {
+        String domain = "";
+        if (useDomain) {
+            synchronized (this) {
+                if (domainList.getSelectedIndex() != -1) {
+                    domain = domainListModel.getElementAt(domainList.getSelectedIndex()).getResultDomain().getDomain();
+                }
             }
         }
+        //send populateMesage
+        DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.PopulateDomainTabsEvent(domain));
     }
 
     /**

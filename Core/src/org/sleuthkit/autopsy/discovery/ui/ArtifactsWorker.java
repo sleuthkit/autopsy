@@ -71,7 +71,7 @@ class ArtifactsWorker extends SwingWorker<List<BlackboardArtifact>, Void> {
                         + artifactType.getDisplayName() + " and domain: " + domain, ex);
             }
         }
-        DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.ArtifactListRetrievedEvent(artifactType, listOfArtifacts));
+        DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.ArtifactSearchResultEvent(artifactType, listOfArtifacts));
     }
 
 }

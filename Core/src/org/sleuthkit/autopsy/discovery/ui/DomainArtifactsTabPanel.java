@@ -109,15 +109,15 @@ final class DomainArtifactsTabPanel extends JPanel {
     /**
      * Handle the event which indicates the artifacts have been retrieved.
      *
-     * @param artifactListEvent The event which indicates the artifacts have
-     *                          been retrieved.
+     * @param artifactresultEvent The event which indicates the artifacts have
+     *                            been retrieved.
      */
     @Subscribe
-    void handleArtifactListRetrievedEvent(DiscoveryEventUtils.ArtifactListRetrievedEvent artifactListEvent) {
+    void handleArtifactSearchResultEvent(DiscoveryEventUtils.ArtifactSearchResultEvent artifactresultEvent) {
         SwingUtilities.invokeLater(() -> {
-            if (artifactType == artifactListEvent.getArtifactType()) {
+            if (artifactType == artifactresultEvent.getArtifactType()) {
                 listPanel.removeListSelectionListener(listener);
-                listPanel.addArtifacts(artifactListEvent.getListOfArtifacts());
+                listPanel.addArtifacts(artifactresultEvent.getListOfArtifacts());
                 listPanel.addSelectionListener(listener);
                 listPanel.selectFirst();
                 try {
