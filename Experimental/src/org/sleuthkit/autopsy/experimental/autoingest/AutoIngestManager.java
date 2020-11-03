@@ -1583,29 +1583,27 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         public void run() {
             sysLogger.log(Level.INFO, "Auto ingest started");
             while (true) {
-                if (jobProcessingTaskFuture.isCancelled()) {
-                    sysLogger.log(Level.SEVERE, "Auto ingest shut down before beginning wait for an input directory scan");
-                    break;
-                }
-
                 try {
+                    if (jobProcessingTaskFuture.isCancelled()) {
+                        sysLogger.log(Level.SEVERE, "Auto ingest shut down before beginning wait for an input directory scan");
+                        break;
+                    }
                     waitForInputDirScan();
                 } catch (InterruptedException ex) {
                     sysLogger.log(Level.SEVERE, "Auto ingest shut down while waiting for an input directory scan");
                     break;
                 }
 
-                if (jobProcessingTaskFuture.isCancelled()) {
-                    sysLogger.log(Level.SEVERE, "Auto ingest shut down before beginning job processing after an input directory scan");
-                    break;
-                }
-
                 try {
+                    if (jobProcessingTaskFuture.isCancelled()) {
+                        sysLogger.log(Level.SEVERE, "Auto ingest shut down before beginning job processing after an input directory scan");
+                        break;
+                    }
                     processJobs();
                 } catch (InterruptedException ex) {
                     sysLogger.log(Level.SEVERE, "Auto ingest shut down while processing jobs", ex);
                     break;
-                } catch (SharedConfigDownloadException | ServiceDownException | AnalysisStartupException ex) { // RJCTODO: catch all
+                } catch (SharedConfigDownloadException | ServiceDownException | AnalysisStartupException ex) { // RJCTODO: convert to catch all
                     /*
                      * This is an exception firewall. A critical error occurred
                      * while processing a job. Pause to allow a system
