@@ -162,7 +162,7 @@
         <get src="https://drive.google.com/uc?id=1ns2olaWsBu_c4EoE4Seh8t_B3U5RnLKd" dest="${test-input}/CommonFilesAttrs_img1_v1.vhd" skipexisting="true"/>
 
     </target>
-
+    
     <target name="get-deps" depends="init-ivy,getTSKJars,get-thirdparty-dependencies,get-InternalPythonModules, download-binlist">
         <mkdir dir="${ext.dir}"/>
         <copy file="${thirdparty.dir}/LICENSE-2.0.txt" todir="${ext.dir}" />        
@@ -197,11 +197,10 @@
             <globmapper from="*" to="*-MERGED"/>
         </copy>
     </target>
-    
 
-
-    <!--sets up integration test system properties, calls underlying test-init and then sets up the pathing jar-->
-    <target name="test-init" depends="setup-integration-props,projectized-common.test-init,integration-pathing-jar" />
+    <!--sets up integration test system properties, calls underlying test-init, 
+    get test data files if they have not been retrieved, and then sets up the pathing jar-->
+    <target name="test-init" depends="setup-integration-props,projectized-common.test-init,getTestDataFiles,integration-pathing-jar" />
         
     
     <target name="test-qa-functional">
@@ -250,7 +249,7 @@
         classpath length issues on windows.  More information on this technique can be found here: 
         https://stackoverflow.com/a/201969.
     -->
-    <target name="integration-pathing-jar" depends="projectized-common.test-init" if="testing-pathing-jar.should-create">
+    <target name="qa-functional-pathing-jar" depends="projectized-common.test-init">
         <sequential>
             <!--set up pathing jar based on module.run.classpath as classpath-->
             <path id="test.qa-functional.pathing-jar.module-cp.classpath" path="${module.run.classpath}"/>
@@ -287,7 +286,6 @@
     <target name="integration-test">
         <!--We want only integration testing to run from this-->
         <sequential>
-            <property name="testing-pathing-jar.should-create" value="true"/>
             <property name="test.includes" value="**/org/sleuthkit/autopsy/integrationtesting/TestRunner.class"/>        
             <antcall target="projectized-common.test-qa-functional" />
         </sequential>
