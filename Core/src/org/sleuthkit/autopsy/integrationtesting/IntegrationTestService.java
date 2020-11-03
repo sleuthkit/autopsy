@@ -138,6 +138,7 @@ public class IntegrationTestService {
         }
 
         EnvConfig envConfig = config.getEnvConfig();
+        // setup external connections preserving old settings for reverting later.
         AllConnectionInfo oldSettings = null;
         try {
             oldSettings = pushNewMultiUserSettings(new AllConnectionInfo(envConfig.getDbConnection(), envConfig.getMqConnection(), envConfig.getSolrConnection()));
@@ -188,31 +189,59 @@ public class IntegrationTestService {
         }
     }
 
+    /**
+     * Represents all connection information.
+     */
     private static class AllConnectionInfo {
 
         private final ConnectionConfig dbConnection;
         private final ConnectionConfig mqConnection;
         private final ConnectionConfig solrConnection;
 
+        /**
+         * Main constructor.
+         *
+         * @param dbConnection A postgres database connection configuration.
+         * @param mqConnection An active mq connection configuration.
+         * @param solrConnection A solr connection configuration.
+         */
         public AllConnectionInfo(ConnectionConfig dbConnection, ConnectionConfig mqConnection, ConnectionConfig solrConnection) {
             this.dbConnection = dbConnection;
             this.mqConnection = mqConnection;
             this.solrConnection = solrConnection;
         }
 
+        /**
+         * @return The postgres database connection configuration.
+         */
         public ConnectionConfig getDbConnection() {
             return dbConnection;
         }
 
+        /**
+         * @return The active mq database connection configuration.
+         */
         public ConnectionConfig getMqConnection() {
             return mqConnection;
         }
 
+        /**
+         * @return The solr connection configuration.
+         */
         public ConnectionConfig getSolrConnection() {
             return solrConnection;
         }
     }
 
+    /**
+     * Updates all multi user settings to those provided in connectionInfo. If
+     * connectionInfo or child items (i.e. postgres/mq/solr) are null, they are
+     * ignored and null is returned.
+     *
+     * @param connectionInfo The connection info or null if no setup to be done.
+     * @return The old settings (used for reverting).
+     * @throws UserPreferencesException
+     */
     private AllConnectionInfo pushNewMultiUserSettings(AllConnectionInfo connectionInfo) throws UserPreferencesException {
         // take no action if no settings
         if (connectionInfo == null) {
@@ -228,6 +257,15 @@ public class IntegrationTestService {
         return new AllConnectionInfo(oldPostgresSettings, oldActiveMqSettings, oldSolrSettings);
     }
 
+    /**
+     * Updates postgres connection settings returning the previous settings. If
+     * connectionInfo is null or missing necessary data, no update occurs and
+     * null is returned.
+     *
+     * @param connectionInfo The connection configuration or null.
+     * @return The previous settings.
+     * @throws UserPreferencesException
+     */
     private ConnectionConfig pushPostgresSettings(ConnectionConfig connectionInfo) throws UserPreferencesException {
         // take no action if no database settings.
         if (connectionInfo == null) {
@@ -259,6 +297,15 @@ public class IntegrationTestService {
         return oldConnectionInfo;
     }
 
+    /**
+     * Updates active mq connection settings returning the previous settings. If
+     * connectionInfo is null or missing necessary data, no update occurs and
+     * null is returned.
+     *
+     * @param connectionInfo The connection configuration or null.
+     * @return The previous settings.
+     * @throws UserPreferencesException
+     */
     private ConnectionConfig pushActiveMqSettings(ConnectionConfig connectionInfo) throws UserPreferencesException {
         // take no action if no database settings.
         if (connectionInfo == null) {
@@ -285,6 +332,14 @@ public class IntegrationTestService {
         return oldConnectionInfo;
     }
 
+    /**
+     * Updates solr connection settings returning the previous settings. If
+     * connectionInfo is null or missing necessary data, no update occurs and
+     * null is returned. Username and password are currently ignored.
+     *
+     * @param connectionInfo The connection configuration or null.
+     * @return The previous settings.
+     */
     private ConnectionConfig pushSolrSettings(ConnectionConfig connectionInfo) {
         // take no action if no database settings.
         if (connectionInfo == null) {
