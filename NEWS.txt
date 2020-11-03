@@ -1,36 +1,36 @@
 ---------------- VERSION 4.17.0  --------------
 GUI:
-Expanded the Data Source Summary panel to show recent activity, past cases, analysis results, etc.  Also made this available from the main UI when a data source is selected.
-Expanded Discovery UI to support searching for and basic display of web domains.  It collapses the various web artifacts into a single view. 
+- Expanded the Data Source Summary panel to show recent activity, past cases, analysis results, etc.  Also made this available from the main UI when a data source is selected.
+- Expanded Discovery UI to support searching for and basic display of web domains.  It collapses the various web artifacts into a single view. 
 
 Ingest Modules:
-Added iOS Analyzer module based on iLEAPP and a subset of its artifacts. 
-New Picture Analyzer module that does EXIF extraction and HEIC conversion. HEIC/HEIF images are converted to JPEGs that retain EXIF using ImageMagick (replaces the previous EXIF ingest module).
-Added support for the latest version of Edge browser that is based on Chromium into Recent Activity. Other Chromium-based browsers are also supported. 
-Updated the rules that search Web History artifacts for search queries.  Expanded module to support multiple search engines for ambiguous URLs.
-Bluetooth pairing artifacts are created based on RegRipper output.
-Prefetch artifacts record the full path of exes.
-PhotoRec module allows you to include or exclude specific file types.
-Upgraded to Tika 1.23.
+- Added iOS Analyzer module based on iLEAPP and a subset of its artifacts. 
+- New Picture Analyzer module that does EXIF extraction and HEIC conversion. HEIC/HEIF images are converted to JPEGs that retain EXIF using ImageMagick (replaces the previous EXIF ingest module).
+- Added support for the latest version of Edge browser that is based on Chromium into Recent Activity. Other Chromium-based browsers are also supported. 
+- Updated the rules that search Web History artifacts for search queries.  Expanded module to support multiple search engines for ambiguous URLs.
+- Bluetooth pairing artifacts are created based on RegRipper output.
+- Prefetch artifacts record the full path of exes.
+- PhotoRec module allows you to include or exclude specific file types.
+- Upgraded to Tika 1.23.
 
 Performance:
-Documents are added to Solr in batches instead of one by one. 
-More efficient queries to find WAL files for SQLite databases. 
-Use a local drive for temp files for multi-user cases instead of the shared folder. 
+- Documents are added to Solr in batches instead of one by one. 
+- More efficient queries to find WAL files for SQLite databases. 
+- Use a local drive for temp files for multi-user cases instead of the shared folder. 
 
 Command Line
-Command line support for report profiles.
-Restored support for Windows file type association for opening a case in Autopsy by double clicking case metadata (.aut) file.
-Better feedback for command line argument errors.
+- Command line support for report profiles.
+- Restored support for Windows file type association for opening a case in Autopsy by double clicking case metadata (.aut) file.
+- Better feedback for command line argument errors.
 
 Misc:
-Updated versions of libvmdk, libvhdi, and libewf.
-Persona UI fixes: Pre-populate account and changed order of New Persona dialog.
-Streaming ingest support added to auto ingest.
-Recent Activity module processes now use the global timeout.
-Option to include Autopsy executable in portable case (Windows only.)
-Upgraded to NetBeans 11 Rich Client Platform.
-Added debug feature to save the stack trace on all threads. 
+- Updated versions of libvmdk, libvhdi, and libewf.
+- Persona UI fixes: Pre-populate account and changed order of New Persona dialog.
+- Streaming ingest support added to auto ingest.
+- Recent Activity module processes now use the global timeout.
+- Option to include Autopsy executable in portable case (Windows only.)
+- Upgraded to NetBeans 11 Rich Client Platform.
+- Added debug feature to save the stack trace on all threads. 
 
 
 ---------------- VERSION 4.16.0  --------------
