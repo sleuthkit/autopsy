@@ -228,12 +228,19 @@ public class STIXReportModule implements GeneralReportModule {
      */
     private STIXPackage loadSTIXFile(String stixFileName) throws JAXBException {
         // Create STIXPackage object from xml.
-        File file = new File(stixFileName);
-        JAXBContext jaxbContext = JAXBContext.newInstance("org.mitre.stix.stix_1:org.mitre.stix.common_1:org.mitre.stix.indicator_2:" //NON-NLS
-                + "org.mitre.cybox.objects:org.mitre.cybox.cybox_2:org.mitre.cybox.common_2"); //NON-NLS
-        Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
-        STIXPackage stix = (STIXPackage) jaxbUnmarshaller.unmarshal(file);
-        return stix;
+        // See JIRA-6958 for details about class loading and jaxb.
+        ClassLoader original = Thread.currentThread().getContextClassLoader();
+        try {
+            Thread.currentThread().setContextClassLoader(STIXReportModule.class.getClassLoader());
+            File file = new File(stixFileName);
+            JAXBContext jaxbContext = JAXBContext.newInstance("org.mitre.stix.stix_1:org.mitre.stix.common_1:org.mitre.stix.indicator_2:" //NON-NLS
+                    + "org.mitre.cybox.objects:org.mitre.cybox.cybox_2:org.mitre.cybox.common_2"); //NON-NLS
+            Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
+            STIXPackage stix = (STIXPackage) jaxbUnmarshaller.unmarshal(file);
+            return stix;
+        } finally {
+            Thread.currentThread().setContextClassLoader(original);
+        }
     }
     
     /**
