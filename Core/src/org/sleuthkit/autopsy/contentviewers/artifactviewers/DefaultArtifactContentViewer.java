@@ -58,8 +58,7 @@ import org.sleuthkit.autopsy.discovery.ui.AbstractArtifactDetailsPanel;
 //import org.sleuthkit.autopsy.contentviewers.Bundle;
 
 /**
- * This class displays a Blackboard artifact as a table listing all it's
- * attributes names and values.
+ * This class displays a Blackboard artifact as a table of its attributes.
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class DefaultArtifactContentViewer extends AbstractArtifactDetailsPanel implements ArtifactContentViewer {
