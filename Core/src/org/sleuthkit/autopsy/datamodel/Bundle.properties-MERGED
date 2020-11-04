@@ -30,6 +30,7 @@ AbstractAbstractFileNode.modifiedTimeColLbl=Modified Time
 AbstractAbstractFileNode.nameColLbl=Name
 AbstractAbstractFileNode.objectId=Object ID
 AbstractAbstractFileNode.originalName=Original Name
+AbstractAbstractFileNode.sha256HashColLbl=SHA-256 Hash
 AbstractAbstractFileNode.sizeColLbl=Size
 AbstractAbstractFileNode.tagsProperty.displayName=Tags
 AbstractAbstractFileNode.typeDirColLbl=Type(Dir)
