@@ -1,0 +1,23 @@
+[
+  {
+    "name": "arrayCase",
+    "description": "An Array case for ingestion",
+    "dataSources": ["..\\Documents\\images\\xp-sp3-v4.E01"],
+    "caseTypes": "singleUser",
+    "configurationModules": [
+      {
+        "resource": "org.sleuthkit.autopsy.integrationtesting.IngestModuleSetupManager",
+        "parameters": {
+          "modules": [
+            "org.sleuthkit.autopsy.recentactivity.RecentActivityExtracterModuleFactory"
+          ]
+        }
+      }
+    ],
+    "integrationTests": {
+      "excludeAllExcept": [
+        "org.sleuthkit.autopsy.datasourcesummary.UserActivitySummaryTests"
+      ]
+    }
+  }
+]

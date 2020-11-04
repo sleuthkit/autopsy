@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "Connection Configuration",
+  "description": "Values for an external domain connection.",
+  "type": "object",
+  "properties": {
+    "hostName": {
+      "title": "Host Name",
+      "description": "Domain of host.",
+      "type": "string",
+      "required": true
+    },
+    "userName": {
+      "title": "User Name",
+      "description": "User name for the host if applicable.",
+      "type": "string",
+      "required": false
+    },
+    "password": {
+      "title": "Password",
+      "description": "Password to use with the host if applicable.",
+      "type": "string",
+      "required": false
+    },
+    "port": {
+      "title": "Host Name",
+      "description": "Domain of host.",
+      "type": "integer",
+      "required": false
+    }
+  }
+}
