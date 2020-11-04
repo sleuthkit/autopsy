@@ -126,6 +126,7 @@ import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.FileRepositoryManager.FileRepositorySettings;
 import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.Report;
@@ -1998,6 +1999,8 @@ public class Case {
             checkForCancellation();
             openCaseDataBase(progressIndicator);
             checkForCancellation();
+            setUpFileRepository(progressIndicator);
+            checkForCancellation();
             openCaseLevelServices(progressIndicator);
             checkForCancellation();
             openAppServiceCaseResources(progressIndicator, false);
@@ -2023,6 +2026,60 @@ public class Case {
         }
     }
 
+    /**
+     * Initializes the file repository (if enabled).
+     * Throws a CaseActionException if the file repository is not enabled
+     * but the case contains remote files or if the check for remote files fails.
+     * 
+     * @param progressIndicator 
+     * 
+     * @throws CaseActionException
+     */
+    @NbBundle.Messages({
+        "Case.setUpFileRepository.setup=Setting up File Repository",
+        "Case.setUpFileRepository.fileCheck=Checking for File Repository data",
+        "Case.setUpFileRepository.title=File Repository",
+        "Case.setUpFileRepository.notInitialized=File repository not initialized - some files may not be accessible",
+        "Case.setUpFileRepository.errorTestingCase=Error checking case for file repository data",
+    })
+    private void setUpFileRepository(ProgressIndicator progressIndicator) throws CaseActionException {
+        
+        if (UserPreferences.getFileRepositoryEnabled()) {
+            progressIndicator.progress(Bundle.Case_setUpFileRepository_setup());
+            
+            // Set up a temp folder
+            File repoTempDir = Paths.get(getTempDirectory(), "File Repo").toFile();
+            if (repoTempDir.exists() == false) {
+                repoTempDir.mkdirs();
+            }
+            
+            // Initialize the file repository settings
+            caseDb.getFileRepositoryManager().initializeSettings(new FileRepositorySettings(UserPreferences.getFileRepositoryAddress(),
+                UserPreferences.getFileRepositoryPort()), repoTempDir.getAbsolutePath());
+        } else {
+            progressIndicator.progress(Bundle.Case_setUpFileRepository_fileCheck());
+            
+            // Check that the case does not contain any files stored in the repository
+            try {
+                if (caseDb.getFileRepositoryManager().caseUsesFileRepository()) {
+                    logger.log(Level.WARNING, "Case contains file repository data but file repository has not been initialized");
+                    if (RuntimeProperties.runningWithGUI()) {
+                    SwingUtilities.invokeLater(() -> {
+                        MessageNotifyUtil.Notify.warn(Bundle.Case_setUpFileRepository_title(), Bundle.Case_setUpFileRepository_notInitialized());
+                    });
+                }
+                }
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, "Could not count file repository files while opening case",ex);
+                if (RuntimeProperties.runningWithGUI()) {
+                    SwingUtilities.invokeLater(() -> {
+                        MessageNotifyUtil.Notify.error(Bundle.Case_setUpFileRepository_title(), Bundle.Case_setUpFileRepository_errorTestingCase());
+                    });
+                }
+            }
+        }
+    }
+    
     /**
      * Starts a background task that reads a sector from each file system of
      * each image of a case to do an eager open of the filesystems in the case.

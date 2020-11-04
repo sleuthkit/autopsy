@@ -1,0 +1,13 @@
+FileRepositoryOptionsPanel.error.emptyFields=Empty hostname/IP address or port
+FileRepositoryOptionsPanel.error.invalidPort=Invalid port number
+FileRepositoryOptionsPanelController.moduleErr=Error processing value changes.
+FileRepositoryOptionsPanelController.moduleErr.msg=Value change processing failed.
+OptionsCategory_Name_File_Repository_Options=File Repository
+OptionsCategory_Keywords_File_Repository_Options=File Repository Settings
+FileRepositoryOptionsPanel.addressLabel.text=Hostname or IP Address
+FileRepositoryOptionsPanel.addressTextField.text=
+FileRepositoryOptionsPanel.portLabel.text=Port
+FileRepositoryOptionsPanel.portTextField.text=
+FileRepositoryOptionsPanel.headingLabel.text=Configure the settings for the file repository. Settings can not be changes while ingest is in progress.
+FileRepositoryOptionsPanel.enableCheckBox.text=Enable file repository
+FileRepositoryOptionsPanel.errorLabel.text=Error label
