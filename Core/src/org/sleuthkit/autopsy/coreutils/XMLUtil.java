@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2014 Basis Technology Corp.
+ * Copyright 2012-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -54,6 +54,40 @@ import org.xml.sax.SAXException;
  * -Loading documents from disk
  */
 public class XMLUtil {
+    
+    private static DocumentBuilder getDocumentBuilder() throws ParserConfigurationException {
+        // See JIRA-6958 for details about class loading and jaxb.
+        ClassLoader original = Thread.currentThread().getContextClassLoader();
+        try {
+            Thread.currentThread().setContextClassLoader(XMLUtil.class.getClassLoader());
+            DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
+            return builderFactory.newDocumentBuilder();
+        } finally {
+            Thread.currentThread().setContextClassLoader(original);
+        }
+    }
+    
+    private static SchemaFactory getSchemaFactory(String schemaLanguage) {
+        // See JIRA-6958 for details about class loading and jaxb.
+        ClassLoader original = Thread.currentThread().getContextClassLoader();
+        try {
+            Thread.currentThread().setContextClassLoader(XMLUtil.class.getClassLoader());
+            return SchemaFactory.newInstance(schemaLanguage);
+        } finally {
+            Thread.currentThread().setContextClassLoader(original);
+        }
+    }
+    
+    private static TransformerFactory getTransformerFactory() {
+        // See JIRA-6958 for details about class loading and jaxb.
+        ClassLoader original = Thread.currentThread().getContextClassLoader();
+        try {
+            Thread.currentThread().setContextClassLoader(XMLUtil.class.getClassLoader());
+            return TransformerFactory.newInstance();
+        } finally {
+            Thread.currentThread().setContextClassLoader(original);
+        }
+    }
 
     /**
      * Creates a W3C DOM.
@@ -63,9 +97,7 @@ public class XMLUtil {
      * @throws ParserConfigurationException
      */
     public static Document createDocument() throws ParserConfigurationException {
-        DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder builder = builderFactory.newDocumentBuilder();
-        return builder.newDocument();
+        return getDocumentBuilder().newDocument();
     }
 
     /**
@@ -100,8 +132,7 @@ public class XMLUtil {
      * @throws IOException
      */
     public static Document loadDocument(String docPath) throws ParserConfigurationException, SAXException, IOException {
-        DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder builder = builderFactory.newDocumentBuilder();
+        DocumentBuilder builder = getDocumentBuilder();
         Document doc = builder.parse(new FileInputStream(docPath));
         return doc;
     }
@@ -119,7 +150,7 @@ public class XMLUtil {
     public static <T> void validateDocument(final Document doc, Class<T> clazz, String schemaResourceName) throws SAXException, IOException {
         PlatformUtil.extractResourceToUserConfigDir(clazz, schemaResourceName, false);
         File schemaFile = new File(Paths.get(PlatformUtil.getUserConfigDirectory(), schemaResourceName).toAbsolutePath().toString());
-        SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+        SchemaFactory schemaFactory = getSchemaFactory(XMLConstants.W3C_XML_SCHEMA_NS_URI);
         Schema schema = schemaFactory.newSchema(schemaFile);
         Validator validator = schema.newValidator();
         validator.validate(new DOMSource(doc), new DOMResult());
@@ -140,7 +171,7 @@ public class XMLUtil {
      * @throws IOException
      */
     public static void saveDocument(final Document doc, String encoding, String docPath) throws TransformerConfigurationException, FileNotFoundException, UnsupportedEncodingException, TransformerException, IOException {
-        TransformerFactory xf = TransformerFactory.newInstance();
+        TransformerFactory xf = getTransformerFactory();
         xf.setAttribute("indent-number", 1); //NON-NLS
         Transformer xformer = xf.newTransformer();
         xformer.setOutputProperty(OutputKeys.METHOD, "xml"); //NON-NLS
@@ -178,7 +209,7 @@ public class XMLUtil {
         try {
             PlatformUtil.extractResourceToUserConfigDir(clazz, schemaFile, false);
             File schemaLoc = new File(PlatformUtil.getUserConfigDirectory() + File.separator + schemaFile);
-            SchemaFactory schm = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+            SchemaFactory schm = getSchemaFactory(XMLConstants.W3C_XML_SCHEMA_NS_URI);
             try {
                 Schema schema = schm.newSchema(schemaLoc);
                 Validator validator = schema.newValidator();
@@ -226,10 +257,9 @@ public class XMLUtil {
      */
     // TODO: Deprecate.
     public static <T> Document loadDoc(Class<T> clazz, String xmlPath) {
-        DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
         Document ret = null;
         try {
-            DocumentBuilder builder = builderFactory.newDocumentBuilder();
+            DocumentBuilder builder = getDocumentBuilder();
             ret = builder.parse(new FileInputStream(xmlPath));
         } catch (ParserConfigurationException e) {
             Logger.getLogger(clazz.getName()).log(Level.SEVERE, "Error loading XML file " + xmlPath + " : can't initialize parser.", e); //NON-NLS
@@ -268,7 +298,7 @@ public class XMLUtil {
      */
     // TODO: Deprecate.
     public static <T> boolean saveDoc(Class<T> clazz, String xmlPath, String encoding, final Document doc) {
-        TransformerFactory xf = TransformerFactory.newInstance();
+        TransformerFactory xf = getTransformerFactory();
         xf.setAttribute("indent-number", 1); //NON-NLS
         boolean success = false;
         try {

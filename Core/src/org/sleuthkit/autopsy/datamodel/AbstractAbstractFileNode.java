@@ -278,6 +278,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         "AbstractAbstractFileNode.typeMetaColLbl=Type(Meta)",
         "AbstractAbstractFileNode.knownColLbl=Known",
         "AbstractAbstractFileNode.md5HashColLbl=MD5 Hash",
+        "AbstractAbstractFileNode.sha256HashColLbl=SHA-256 Hash",
         "AbstractAbstractFileNode.objectId=Object ID",
         "AbstractAbstractFileNode.mimeType=MIME Type",
         "AbstractAbstractFileNode.extensionColLbl=Extension"})
@@ -305,6 +306,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         TYPE_META(AbstractAbstractFileNode_typeMetaColLbl()),
         KNOWN(AbstractAbstractFileNode_knownColLbl()),
         MD5HASH(AbstractAbstractFileNode_md5HashColLbl()),
+        SHA256HASH(AbstractAbstractFileNode_sha256HashColLbl()),
         ObjectID(AbstractAbstractFileNode_objectId()),
         MIMETYPE(AbstractAbstractFileNode_mimeType()),
         EXTENSION(AbstractAbstractFileNode_extensionColLbl());
@@ -358,6 +360,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         properties.add(new NodeProperty<>(KNOWN.toString(), KNOWN.toString(), NO_DESCR, content.getKnown().getName()));
         properties.add(new NodeProperty<>(LOCATION.toString(), LOCATION.toString(), NO_DESCR, getContentPath(content)));
         properties.add(new NodeProperty<>(MD5HASH.toString(), MD5HASH.toString(), NO_DESCR, StringUtils.defaultString(content.getMd5Hash())));
+        properties.add(new NodeProperty<>(SHA256HASH.toString(), SHA256HASH.toString(), NO_DESCR, StringUtils.defaultString(content.getSha256Hash())));
         properties.add(new NodeProperty<>(MIMETYPE.toString(), MIMETYPE.toString(), NO_DESCR, StringUtils.defaultString(content.getMIMEType())));
         properties.add(new NodeProperty<>(EXTENSION.toString(), EXTENSION.toString(), NO_DESCR, content.getNameExtension()));
 
@@ -577,6 +580,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         map.put(FLAGS_META.toString(), content.getMetaFlagsAsString());
         map.put(KNOWN.toString(), content.getKnown().getName());
         map.put(MD5HASH.toString(), StringUtils.defaultString(content.getMd5Hash()));
+        map.put(SHA256HASH.toString(), StringUtils.defaultString(content.getSha256Hash()));
         map.put(MIMETYPE.toString(), StringUtils.defaultString(content.getMIMEType()));
         map.put(EXTENSION.toString(), content.getNameExtension());
     }

@@ -219,7 +219,9 @@ class InterCaseTestUtils {
 //        kitchenSink.add(keywordSearchTemplate);
 
         this.kitchenShink = new IngestJobSettings(InterCaseTestUtils.class.getCanonicalName(), IngestType.ALL_MODULES, kitchenSink);
+    }
 
+    void setupCorrelationTypes() {
         try {
             Collection<CorrelationAttributeInstance.Type> types = CentralRepository.getInstance().getDefinedCorrelationTypes();
 
