@@ -67,7 +67,7 @@ An example of that config file would look like this:
 
 There are json schema files defining this configuration schema in [jsonschema/envconfig.schema.json](../jsonschema/envconfig.schema.json).  These schema files can simplify the creation of this configuration file.  See the [json schema](#-json-schema) section for more information.
 
-These values can also be provided directly as parameters.  See the notes concerning [command line parameters](#-command-line-parameters) or [running from the command line](#-command-line).
+These values can also be provided directly as parameters.  See the notes concerning [command line parameters](#-command-line-parameters) or [running from the command line](#-running-from-the-command-line).
 
 ## IDE Configuration
 
@@ -80,7 +80,7 @@ Code snippit:
 integration-test.configFile=C:\\path\\to\\config.json
 ```
 
-### <a name="command-line-parameters"></a> Command Line Parameters
+### Command Line Parameters
 
 All of the properties in the configuration file can also be specified as parameters directly.  Nested properties in the json (i.e. `userName` for `dbConnection`) are separated by periods like so:
 
@@ -112,7 +112,7 @@ integration-test.solrConnection.hostName=127.0.0.1
 However these properties are defined, the integration tests can be run by running the `integration-test` ant target or by right-clicking on `org.sleuthkit.autopsy.integrationtesting.TestRunner` and selecting `Test File` or `Debug Test File`.
 
 
-## <a name="command-line"></a> Running from the command line
+## Running From the Command Line
 
 The easiest way to run from the command line is something like this:
 
@@ -168,15 +168,15 @@ Test suites are defined in JSON files.  A JSON file may contain test suite objec
     }
   }
   ```
-#### <a name="json-schema"></a> Json Schema
+#### Json Schema
 
-There are json schema files located in `autopsy_testing_private/integration_tests/doc/jsonschema`.  VS Code as well as other editors provide autocomplete functionality for specified json schema.  [See this page for more information.](https://code.visualstudio.com/docs/languages/json#_json-schemas-and-settings).  For example:
+There are json schema files located in `autopsy_testing_private/integration_tests/doc/jsonschema`.  VS Code as well as other editors provide autocomplete functionality for specified json schema.  [See this page for more information](https://code.visualstudio.com/docs/languages/json#_json-schemas-and-settings).  For example:
 
 ![VS Code JSON Schema autocomplete](./readme_vscode_autocomplete.png)
 
 The [envconfig.schema.json](../jsonschema/envconfig.schema.json) schema file is for creating an environment configuration as described in the [Setup section](#-setup) and the [testsuite.schema.json](../jsonschema/testsuite.schema.json) schema file is for creating a test suite described in the [Test Suite Schema section](#-test-suite-schema).
 
-#### <a name="test-suite-schema"></a> Test Suite Schema
+#### Test Suite Schema
 
 This is the schema for test suites to be defined in a json file.  
 
