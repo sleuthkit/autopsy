@@ -89,3 +89,13 @@ hs_err_pid*.log
 *.img
 *.vhd
 *.E01
+
+/thirdparty/yara/yarabridge/yarabridge/x64/
+/thirdparty/yara/yarabridge/yarabridge.VC.db
+/thirdparty/yara/yarabridge/yarabridge.VC.VC.opendb
+/thirdparty/yara/yarabridge/x64/
+/thirdparty/yara/YaraWrapperTest/nbproject/private/
+/thirdparty/yara/YaraWrapperTest/build/
+/thirdparty/yara/YaraJNIWrapper/dist/
+/thirdparty/yara/YaraJNIWrapper/build/
+/thirdparty/yara/YaraJNIWrapper/nbproject/private/

@@ -18,9 +18,11 @@
  */
 package org.sleuthkit.autopsy.yara;
 
-import java.net.URISyntaxException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -31,18 +33,12 @@ import java.util.logging.Logger;
  */
 public class YaraJNIWrapper {
 
-    // Load the yarabridge.dll which should be located in the same directory as
-    // the jar file. If we need to use this code for debugging the dll this
-    // code will need to be modified to add that support.
     static {
-        Path directoryPath = null;
         try {
-            directoryPath = Paths.get(YaraJNIWrapper.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getParent().toAbsolutePath();
-        } catch (URISyntaxException ex) {
+            extractAndLoadDll();
+        } catch (IOException | YaraWrapperException ex) {
             Logger.getLogger(YaraJNIWrapper.class.getName()).log(Level.SEVERE, null, ex);
         }
-        String libraryPath = Paths.get(directoryPath != null ? directoryPath.toString() : "", "yarabridge.dll").toAbsolutePath().toString();
-        System.load(libraryPath);
     }
 
     /**
@@ -60,9 +56,39 @@ public class YaraJNIWrapper {
     static public native List<String> findRuleMatch(String compiledRulesPath, byte[] byteBuffer) throws YaraWrapperException;
 
     /**
+     * Copy yarabridge.dll from inside the jar to a temp file that can be loaded
+     * with System.load.
+     * 
+     * To make this work, the dll needs to be in the same folder as this source
+     * file. The dll needs to be located somewhere in the jar class path.
+     * 
+     * @throws IOException
+     * @throws YaraWrapperException 
+     */
+    static private void extractAndLoadDll() throws IOException, YaraWrapperException {
+        File tempFile = File.createTempFile("lib", null);
+        tempFile.deleteOnExit();
+        try (InputStream in = YaraJNIWrapper.class.getResourceAsStream("yarabridge.dll")) {
+            if (in == null) {
+                throw new YaraWrapperException("native library was not found in jar file.");
+            }
+            try (OutputStream out = new FileOutputStream(tempFile)) {
+                byte[] buffer = new byte[1024];
+                int lengthRead;
+                while ((lengthRead = in.read(buffer)) > 0) {
+                    out.write(buffer, 0, lengthRead);
+                    out.flush();
+                }
+            }
+        }
+
+        System.load(tempFile.getAbsolutePath());
+    }
+
+    /**
      * private constructor.
      */
     private YaraJNIWrapper() {
     }
-    
+
 }
