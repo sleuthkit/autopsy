@@ -65,9 +65,9 @@ An example of that config file would look like this:
 }
 ```
 
-There are json schema files defining this configuration schema in [jsonschema/envconfig.schema.json](../jsonschema/envconfig.schema.json).  These schema files can simplify the creation of this configuration file.  See the [json schema](#-json-schema) section for more information.
+There are json schema files defining this configuration schema in [jsonschema/envconfig.schema.json](../jsonschema/envconfig.schema.json).  These schema files can simplify the creation of this configuration file.  See the [json schema](#json-schema) section for more information.
 
-These values can also be provided directly as parameters.  See the notes concerning [command line parameters](#-command-line-parameters) or [running from the command line](#-running-from-the-command-line).
+These values can also be provided directly as parameters.  See the notes concerning [command line parameters](#command-line-parameters) or [running from the command line](#running-from-the-command-line).
 
 ## IDE Configuration
 
@@ -174,7 +174,7 @@ There are json schema files located in `autopsy_testing_private/integration_test
 
 ![VS Code JSON Schema autocomplete](./readme_vscode_autocomplete.png)
 
-The [envconfig.schema.json](../jsonschema/envconfig.schema.json) schema file is for creating an environment configuration as described in the [Setup section](#-setup) and the [testsuite.schema.json](../jsonschema/testsuite.schema.json) schema file is for creating a test suite described in the [Test Suite Schema section](#-test-suite-schema).
+The [envconfig.schema.json](../jsonschema/envconfig.schema.json) schema file is for creating an environment configuration as described in the [Setup section](#setup) and the [testsuite.schema.json](../jsonschema/testsuite.schema.json) schema file is for creating a test suite described in the [Test Suite Schema section](#test-suite-schema).
 
 #### Test Suite Schema
 
