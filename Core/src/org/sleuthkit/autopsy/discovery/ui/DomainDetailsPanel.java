@@ -44,10 +44,8 @@ final class DomainDetailsPanel extends JPanel {
      * Creates new form ArtifactDetailsPanel.
      */
     DomainDetailsPanel(String selectedTabName) {
-
         initComponents();
         addArtifactTabs(selectedTabName);
-        
     }
 
     /**
@@ -138,13 +136,13 @@ final class DomainDetailsPanel extends JPanel {
             }
         }
     }
-    
+
     /**
      * Get the name of the tab that was most recently selected.
-     * 
+     *
      * @return The name of the tab that was most recently selected.
      */
-    String getSelectedTabName(){
+    String getSelectedTabName() {
         return selectedTabName;
     }
 
