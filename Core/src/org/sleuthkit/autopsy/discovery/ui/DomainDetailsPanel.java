@@ -138,6 +138,11 @@ final class DomainDetailsPanel extends JPanel {
         }
     }
     
+    /**
+     * Get the name of the tab that was most recently selected.
+     * 
+     * @return The name of the tab that was most recently selected.
+     */
     String getSelectedTabName(){
         return selectedTabName;
     }
