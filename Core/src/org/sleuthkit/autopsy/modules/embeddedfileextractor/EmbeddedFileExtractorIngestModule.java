@@ -117,6 +117,12 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
              * while processing archive files.
              */
             mapOfDepthTrees.put(jobId, new ConcurrentHashMap<>());
+            /**
+             * Initialize Java's Image I/O API so that image reading and writing
+             * (needed for image extraction) happens consistently through the
+             * same providers. See JIRA-6951 for more details.
+             */
+            initializeImageIO();
         }
         /*
          * Construct an embedded content extractor for processing Microsoft
@@ -127,14 +133,6 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
         } catch (NoCurrentCaseException ex) {
             throw new IngestModuleException(Bundle.EmbeddedFileExtractorIngestModule_UnableToGetMSOfficeExtractor_errMsg(), ex);
         }
-        
-        /**
-         * Initialize Java's Image I/O API so that image reading and writing 
-         * (needed for image extraction) happens consistently through the 
-         * same providers. See JIRA-6951 for more details.
-         */
-        initializeImageIO();        
-
     }
     
     /**
