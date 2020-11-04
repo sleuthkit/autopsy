@@ -56,6 +56,7 @@ public final class DiscoveryTopComponent extends TopComponent {
     private volatile static int resultsAreaSize = 250;
     private final GroupListPanel groupListPanel;
     private final ResultsPanel resultsPanel;
+    private String selectedDomainTabName;
     private Type searchType;
     private int dividerLocation = -1;
     private SwingAnimator animator = null;
@@ -149,6 +150,9 @@ public final class DiscoveryTopComponent extends TopComponent {
         DiscoveryEventUtils.getDiscoveryEventBus().unregister(groupListPanel);
         DiscoveryEventUtils.getDiscoveryEventBus().unregister(resultsPanel);
         DiscoveryEventUtils.getDiscoveryEventBus().unregister(rightSplitPane.getBottomComponent());
+        if (rightSplitPane.getBottomComponent() instanceof DomainDetailsPanel){
+           selectedDomainTabName = ((DomainDetailsPanel)rightSplitPane.getBottomComponent()).getSelectedTabName();
+        }
         super.componentClosed();
     }
 
@@ -311,7 +315,7 @@ public final class DiscoveryTopComponent extends TopComponent {
             if (!searchCompleteEvent.getFilters().isEmpty()) {
                 descriptionText += Bundle.DiscoveryTopComponent_additionalFilters_text();
             }
-            rightSplitPane.setBottomComponent(new DomainDetailsPanel());
+            rightSplitPane.setBottomComponent(new DomainDetailsPanel(selectedDomainTabName));
         } else {
             rightSplitPane.setBottomComponent(new FileDetailsPanel());
         }

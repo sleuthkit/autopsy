@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.discovery.ui;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.SwingWorker;
@@ -69,6 +70,8 @@ class ArtifactsWorker extends SwingWorker<List<BlackboardArtifact>, Void> {
             } catch (InterruptedException | ExecutionException ex) {
                 logger.log(Level.SEVERE, "Exception while trying to get list of artifacts for Domain details for artifact type: "
                         + artifactType.getDisplayName() + " and domain: " + domain, ex);
+            } catch (CancellationException ignored) {
+                //Worker was cancelled after previously finishing its background work, exception ignored to cut down on non-helpful logging
             }
         }
         DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.ArtifactSearchResultEvent(artifactType, listOfArtifacts));
