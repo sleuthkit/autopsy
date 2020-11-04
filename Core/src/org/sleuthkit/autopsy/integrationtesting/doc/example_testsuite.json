@@ -1,8 +1,8 @@
 [
   {
-    "name": "arrayCase",
-    "description": "An Array case for ingestion",
-    "dataSources": ["..\\Documents\\images\\xp-sp3-v4.E01"],
+    "name": "Test Suite",
+    "description": "A description for the test suite",
+    "dataSources": ["..\\path\\to\\datasource.img"],
     "caseTypes": "singleUser",
     "configurationModules": [
       {
