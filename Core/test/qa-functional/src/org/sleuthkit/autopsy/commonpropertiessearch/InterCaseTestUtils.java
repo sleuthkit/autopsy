@@ -218,7 +218,9 @@ class InterCaseTestUtils {
 //        kitchenSink.add(keywordSearchTemplate);
 
         this.kitchenShink = new IngestJobSettings(InterCaseTestUtils.class.getCanonicalName(), IngestType.ALL_MODULES, kitchenSink);
+    }
 
+    void setupCorrelationTypes() {
         try {
             Collection<CorrelationAttributeInstance.Type> types = CentralRepository.getInstance().getDefinedCorrelationTypes();
 
@@ -254,16 +256,16 @@ class InterCaseTestUtils {
             }
         }
     }
-    
+
     Map<Long, String> getDataSourceMap() throws NoCurrentCaseException, TskCoreException, SQLException {
         return DataSourceLoader.getAllDataSources();
-    }    
+    }
 
     Map<String, Integer> getCaseMap() throws CentralRepoException {
 
         if (CentralRepository.isEnabled()) {
             Map<String, Integer> mapOfCaseIdsToCase = new HashMap<>();
-            
+
             for (CorrelationCase correlationCase : CentralRepository.getInstance().getCases()) {
                 mapOfCaseIdsToCase.put(correlationCase.getDisplayName(), correlationCase.getID());
             }
@@ -300,7 +302,7 @@ class InterCaseTestUtils {
         RdbmsCentralRepoFactory centralRepoSchemaFactory = new RdbmsCentralRepoFactory(CentralRepoPlatforms.SQLITE, crSettings);
         centralRepoSchemaFactory.initializeDatabaseSchema();
         centralRepoSchemaFactory.insertDefaultDatabaseContent();
-        
+
         crSettings.saveSettings();
         CentralRepoDbManager.saveDbChoice(CentralRepoDbChoice.SQLITE);
     }
@@ -313,10 +315,10 @@ class InterCaseTestUtils {
      * The length of caseNames and caseDataSourcePaths should be the same, and
      * cases should appear in the same order.
      *
-     * @param caseNames            list case names
-     * @param caseDataSourcePaths  two dimensional array listing the datasources
-     *                             in each case
-     * @param ingestJobSettings    HashLookup FileType etc...
+     * @param caseNames list case names
+     * @param caseDataSourcePaths two dimensional array listing the datasources
+     * in each case
+     * @param ingestJobSettings HashLookup FileType etc...
      * @param caseReferenceToStore
      */
     Case createCases(String[] caseNames, Path[][] caseDataSourcePaths, IngestJobSettings ingestJobSettings, String caseReferenceToStore) throws TskCoreException {
