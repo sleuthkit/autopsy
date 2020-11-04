@@ -235,7 +235,7 @@
         <for list="${integration-test-sys-props}" param="integration-test-sys-prop">
             <sequential>
                 <property 
-                    name="test-qa-functional-sys-prop.@{integration-test-sys-prop}" 
+                    name="test-qa-functional-sys-prop.integration-test.@{integration-test-sys-prop}" 
                     value="${integration-test.@{integration-test-sys-prop}}" 
                 />
             </sequential>

@@ -33,7 +33,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import java.util.stream.Collectors;
@@ -56,6 +55,8 @@ public class ConfigDeserializer {
     // A config file key must be specifed or at least the test suites path, and output path.
     // If a config specifying the EnvConfig json exists, specify this path to load it
     private static final String CONFIG_FILE_KEY = "configFile";
+    // expecting properties are marked as "integration-test.propVal"
+    private static final String INTEGRATION_TEST_NAMESPACE = "integration-test";
 
     /**
      * Deserializes the specified json file into an EnvConfig object using
@@ -69,9 +70,10 @@ public class ConfigDeserializer {
      * validated.
      */
     public EnvConfig getEnvConfigFromSysProps() throws IOException, IllegalStateException {
-        if (System.getProperty(CONFIG_FILE_KEY) != null) {
+        String configFileKey = String.join(".", INTEGRATION_TEST_NAMESPACE, CONFIG_FILE_KEY);
+        if (System.getProperty(configFileKey) != null) {
             // try to load from file if value is present
-            String fileLoc = System.getProperty(CONFIG_FILE_KEY);
+            String fileLoc = System.getProperty(configFileKey);
             File envConfigFile = new File(fileLoc);
             if (envConfigFile.exists()) {
                 return getEnvConfig(envConfigFile);
@@ -81,7 +83,8 @@ public class ConfigDeserializer {
         } else {
             // otherwise, try to load from properties
             try {
-                return validate(null, convertToObj(getSysPropsMap(), EnvConfig.class));
+                Map<String, Object> integrationProperties = getOrCreate(getSysPropsMap(), INTEGRATION_TEST_NAMESPACE);
+                return validate(null, convertToObj(integrationProperties, EnvConfig.class));
             } catch (IllegalStateException ex) {
                 throw new IllegalStateException("EnvConfig could not be determined from system property values", ex);
             }
@@ -99,9 +102,8 @@ public class ConfigDeserializer {
     private Map<String, Object> getSysPropsMap() {
         Map<String, Object> mapToRet = new HashMap<>();
 
-        for (Entry<Object, Object> property : System.getProperties().entrySet()) {
-            String key = property.getKey().toString();
-            Object value = property.getValue().toString();
+        for (String key : System.getProperties().stringPropertyNames()) {
+            String value = System.getProperty(key);
 
             String[] keyPieces = key.split("\\.");
             Map<String, Object> mapToAddTo = mapToRet;
@@ -117,7 +119,8 @@ public class ConfigDeserializer {
 
     /**
      * Extends HashMap<String, Object> to guarantee a type of
-     * Map<String, Object> with type erasure.
+     * Map<String, Object>
+     * with type erasure.
      */
     private static class StringObjMap extends HashMap<String, Object> {
 
@@ -237,7 +240,9 @@ public class ConfigDeserializer {
             JsonNode root = mapper.readTree(configFile);
             if (root.isArray()) {
                 // Define a collection type of List<TestSuiteConfig> for the purposes of json deserialization.
-                CollectionType listClass = mapper.getTypeFactory().constructCollectionType(List.class, TestSuiteConfig.class);
+                CollectionType listClass = mapper.getTypeFactory().constructCollectionType(List.class,
+                        TestSuiteConfig.class
+                );
 
                 // This suppresses compiler warning for this cast.
                 @SuppressWarnings("unchecked")
@@ -245,7 +250,8 @@ public class ConfigDeserializer {
 
                 return validate(rootDirectory, configFile, testSuites);
             } else {
-                return validate(rootDirectory, configFile, Arrays.asList(mapper.treeToValue(root, TestSuiteConfig.class)));
+                return validate(rootDirectory, configFile, Arrays.asList(mapper.treeToValue(root, TestSuiteConfig.class
+                )));
             }
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Unable to read test suite config at " + configFile.getPath(), ex);
