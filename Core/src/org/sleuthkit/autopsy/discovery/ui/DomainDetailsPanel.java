@@ -28,7 +28,6 @@ import org.apache.commons.lang.StringUtils;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.autopsy.discovery.search.SearchData;
-import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 
 /**
  * Panel to display details area for domain discovery results.
@@ -37,31 +36,28 @@ import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 final class DomainDetailsPanel extends JPanel {
 
     private static final long serialVersionUID = 1L;
-    private static ArtifactsWorker detailsWorker;
-    private static String domain;
+    private ArtifactsWorker detailsWorker;
+    private String domain;
     private String selectedTabName;
 
     /**
-     * Creates new form ArtifactDetailsPanel
-     *
-     * @param initialSelectedTab Specifies which specific details tab should be
-     *                           selected initially.
+     * Creates new form ArtifactDetailsPanel.
      */
-    DomainDetailsPanel(ARTIFACT_TYPE initialSelectedTab) {
-        if (initialSelectedTab != null) {
-            selectedTabName = initialSelectedTab.getDisplayName();
-        } 
+    DomainDetailsPanel(String selectedTabName) {
+
         initComponents();
-        addArtifactTabs();
+        addArtifactTabs(selectedTabName);
+        
     }
 
     /**
      * Add the tabs for each of the artifact types which we will be displaying.
      */
-    private void addArtifactTabs() {
+    private void addArtifactTabs(String tabName) {
         for (BlackboardArtifact.ARTIFACT_TYPE type : SearchData.Type.DOMAIN.getArtifactTypes()) {
             jTabbedPane1.add(type.getDisplayName(), new DomainArtifactsTabPanel(type));
         }
+        selectedTabName = tabName;
         selectTab();
         jTabbedPane1.addChangeListener(new ChangeListener() {
             @Override
@@ -141,6 +137,15 @@ final class DomainDetailsPanel extends JPanel {
                 ((DomainArtifactsTabPanel) comp).setStatus(DomainArtifactsTabPanel.ArtifactRetrievalStatus.UNPOPULATED);
             }
         }
+    }
+    
+    /**
+     * Get the name of the tab that was most recently selected.
+     * 
+     * @return The name of the tab that was most recently selected.
+     */
+    String getSelectedTabName(){
+        return selectedTabName;
     }
 
     /**

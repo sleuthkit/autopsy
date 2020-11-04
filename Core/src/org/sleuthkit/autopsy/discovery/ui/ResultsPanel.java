@@ -127,13 +127,7 @@ final class ResultsPanel extends javax.swing.JPanel {
         });
         domainSummaryViewer.addListSelectionListener((e) -> {
             if (resultType == SearchData.Type.DOMAIN) {
-                if (!e.getValueIsAdjusting()) {
-                    //send populateMesage
-                    DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.PopulateDomainTabsEvent(domainSummaryViewer.getDomainForSelected()));
-                } else {
-                    //send clearSelection message
-                    DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.PopulateDomainTabsEvent(""));
-                }
+                domainSummaryViewer.sendPopulateEvent(!e.getValueIsAdjusting());
             }
         });
     }

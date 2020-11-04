@@ -179,7 +179,7 @@ public class WebHistoryDetailsPanel extends AbstractArtifactDetailsPanel impleme
     }// </editor-fold>//GEN-END:initComponents
 
     /**
-     * Update the view to reflect the current artifacts details.
+     * Update the view to reflect the current artifact's details.
      */
     private void updateView() {
         CommunicationArtifactViewerHelper.addHeader(this, gridBagLayout, gridBagConstraints, Bundle.WebHistoryDetailsPanel_details_attrHeader());
