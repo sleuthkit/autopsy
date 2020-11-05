@@ -327,6 +327,7 @@ public final class DiscoveryTopComponent extends TopComponent {
                 if (!searchCompleteEvent.getFilters().isEmpty()) {
                     descriptionText += Bundle.DiscoveryTopComponent_additionalFilters_text();
                 }
+                selectedDomainTabName = validateLastSelectedType(searchCompleteEvent);
                 rightSplitPane.setBottomComponent(new DomainDetailsPanel(selectedDomainTabName));
             } else {
                 rightSplitPane.setBottomComponent(new FileDetailsPanel());
@@ -336,6 +337,30 @@ public final class DiscoveryTopComponent extends TopComponent {
             progressMessageTextArea.setText(Bundle.DiscoveryTopComponent_searchComplete_text(descriptionText));
             progressMessageTextArea.setCaretPosition(0);
         });
+    }
+
+    /**
+     * Get the name of the tab which was last selected unless the tab last
+     * selected would not be included in the types currently being displayed or
+     * was not previously set.
+     *
+     * @return The name of the tab which should be selected in the new
+     *         DomainDetailsPanel.
+     */
+    private String validateLastSelectedType(DiscoveryEventUtils.SearchCompleteEvent searchCompleteEvent) {
+        String typeFilteredOn = selectedDomainTabName;
+        for (AbstractFilter filter : searchCompleteEvent.getFilters()) {
+            if (filter instanceof ArtifactTypeFilter) {
+                for (ARTIFACT_TYPE type : ((ArtifactTypeFilter) filter).getTypes()) {
+                    typeFilteredOn = type.getDisplayName();
+                    if (selectedDomainTabName == null || typeFilteredOn.equalsIgnoreCase(selectedDomainTabName)) {
+                        break;
+                    }
+                }
+                break;
+            }
+        }
+        return typeFilteredOn;
     }
 
     /**
