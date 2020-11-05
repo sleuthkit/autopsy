@@ -51,8 +51,8 @@ class ArtifactsListPanel extends JPanel {
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     ArtifactsListPanel(BlackboardArtifact.ARTIFACT_TYPE artifactType) {
-        initComponents();
         tableModel = new DomainArtifactTableModel(artifactType);
+        initComponents();        
         jTable1.getRowSorter().toggleSortOrder(0);
         jTable1.getRowSorter().toggleSortOrder(0);
     }
