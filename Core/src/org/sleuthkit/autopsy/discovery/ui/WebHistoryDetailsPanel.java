@@ -30,6 +30,7 @@ import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.contentviewers.artifactviewers.ArtifactContentViewer;
 import org.sleuthkit.autopsy.contentviewers.artifactviewers.CommunicationArtifactViewerHelper;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -51,7 +52,6 @@ public class WebHistoryDetailsPanel extends AbstractArtifactDetailsPanel impleme
     private final List<BlackboardAttribute> programNameList = new ArrayList<>();
     private final List<BlackboardAttribute> domainList = new ArrayList<>();
     private final List<BlackboardAttribute> otherList = new ArrayList<>();
-    private final List<BlackboardAttribute> artifactAttributesList = new ArrayList<>();
     private final GridBagConstraints gridBagConstraints = new GridBagConstraints();
     private String dataSourceName;
     private String sourceFileName;
@@ -59,10 +59,12 @@ public class WebHistoryDetailsPanel extends AbstractArtifactDetailsPanel impleme
     /**
      * Creates new form WebHistoryDetailsPanel.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public WebHistoryDetailsPanel() {
         initComponents();
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     public void setArtifact(BlackboardArtifact artifact) {
         resetComponent();
@@ -86,12 +88,12 @@ public class WebHistoryDetailsPanel extends AbstractArtifactDetailsPanel impleme
      *
      * @throws TskCoreException
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private void extractArtifactData(BlackboardArtifact artifact) throws TskCoreException {
 
         webHistoryArtifact = artifact;
-        artifactAttributesList.addAll(webHistoryArtifact.getAttributes());
         // Get all the attributes and group them by the section panels they go in
-        for (BlackboardAttribute bba : artifactAttributesList) {
+        for (BlackboardAttribute bba : webHistoryArtifact.getAttributes()) {
             if (bba.getAttributeType().getTypeName().startsWith("TSK_URL")) {
                 urlList.add(bba);
             } else if (bba.getAttributeType().getTypeName().startsWith("TSK_PROG_NAME")) {
@@ -117,6 +119,7 @@ public class WebHistoryDetailsPanel extends AbstractArtifactDetailsPanel impleme
     /**
      * Reset the panel so that it is empty.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private void resetComponent() {
         // clear the panel 
         this.removeAll();
@@ -137,16 +140,16 @@ public class WebHistoryDetailsPanel extends AbstractArtifactDetailsPanel impleme
         programNameList.clear();
         domainList.clear();
         otherList.clear();
-        artifactAttributesList.clear();
-
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     public Component getComponent() {
         // Slap a vertical scrollbar on the panel.
         return new JScrollPane(this, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     public boolean isSupported(BlackboardArtifact artifact) {
         return (artifact != null)
@@ -181,6 +184,7 @@ public class WebHistoryDetailsPanel extends AbstractArtifactDetailsPanel impleme
     /**
      * Update the view to reflect the current artifact's details.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private void updateView() {
         CommunicationArtifactViewerHelper.addHeader(this, gridBagLayout, gridBagConstraints, Bundle.WebHistoryDetailsPanel_details_attrHeader());
 

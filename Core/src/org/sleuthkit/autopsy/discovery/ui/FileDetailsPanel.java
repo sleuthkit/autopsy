@@ -36,6 +36,7 @@ import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
 import org.sleuthkit.autopsy.corecomponents.DataContentPanel;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
@@ -59,6 +60,7 @@ final class FileDetailsPanel extends javax.swing.JPanel {
     /**
      * Creates new form DetailsPanel.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     FileDetailsPanel() {
         initComponents();
         dataContentPanel = DataContentPanel.createInstance();
@@ -112,7 +114,9 @@ final class FileDetailsPanel extends javax.swing.JPanel {
      */
     @Subscribe
     void handleClearSelectionListener(DiscoveryEventUtils.ClearInstanceSelectionEvent clearEvent) {
-        instancesList.clearSelection();
+        SwingUtilities.invokeLater(() -> {
+            instancesList.clearSelection();
+        });
     }
 
     /**
@@ -122,7 +126,7 @@ final class FileDetailsPanel extends javax.swing.JPanel {
      *                      instances list should be populated
      */
     @Subscribe
-    synchronized void handlePopulateInstancesListEvent(DiscoveryEventUtils.PopulateInstancesListEvent populateEvent) {
+    void handlePopulateInstancesListEvent(DiscoveryEventUtils.PopulateInstancesListEvent populateEvent) {
         SwingUtilities.invokeLater(() -> {
             List<AbstractFile> files = populateEvent.getInstances();
             if (files.isEmpty()) {
@@ -154,7 +158,8 @@ final class FileDetailsPanel extends javax.swing.JPanel {
      *
      * @return The AbstractFile which is currently selected.
      */
-    synchronized AbstractFile getSelectedFile() {
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    AbstractFile getSelectedFile() {
         if (instancesList.getSelectedIndex() == -1) {
             return null;
         } else {
@@ -241,6 +246,7 @@ final class FileDetailsPanel extends javax.swing.JPanel {
 
         private static final long serialVersionUID = 1L;
 
+        @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
         @Override
         public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
             super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);

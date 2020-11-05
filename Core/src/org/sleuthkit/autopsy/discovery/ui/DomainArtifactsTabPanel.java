@@ -27,6 +27,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.sleuthkit.autopsy.contentviewers.artifactviewers.DefaultArtifactContentViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
@@ -53,10 +54,13 @@ final class DomainArtifactsTabPanel extends JPanel {
 
     /**
      * Creates new form CookiesPanel
+     *
+     * @param type The type of Artifact this tab is displaying information for.
      */
-    DomainArtifactsTabPanel(BlackboardArtifact.ARTIFACT_TYPE artifactType) {
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    DomainArtifactsTabPanel(BlackboardArtifact.ARTIFACT_TYPE type) {
         initComponents();
-        this.artifactType = artifactType;
+        this.artifactType = type;
         jSplitPane1.setLeftComponent(listPanel);
         setRightComponent();
         listPanel.addSelectionListener(listener);
@@ -66,6 +70,7 @@ final class DomainArtifactsTabPanel extends JPanel {
      * Set the right component of the tab panel, which will display the details
      * for the artifact.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private void setRightComponent() {
         switch (artifactType) {
             case TSK_WEB_HISTORY:
@@ -90,6 +95,7 @@ final class DomainArtifactsTabPanel extends JPanel {
      *
      * @return The ArtifactRetrievalStatuss of the panel.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     ArtifactRetrievalStatus getStatus() {
         return status;
     }
@@ -99,6 +105,7 @@ final class DomainArtifactsTabPanel extends JPanel {
      *
      * @param status The ArtifactRetrievalStatus of the panel.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     void setStatus(ArtifactRetrievalStatus status) {
         this.status = status;
         if (status == ArtifactRetrievalStatus.UNPOPULATED && rightPanel != null) {
@@ -139,6 +146,7 @@ final class DomainArtifactsTabPanel extends JPanel {
      *
      * @return The ARTIFACT_TYPE of the BlackboardArtifact being displayed.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     BlackboardArtifact.ARTIFACT_TYPE getArtifactType() {
         return artifactType;
     }

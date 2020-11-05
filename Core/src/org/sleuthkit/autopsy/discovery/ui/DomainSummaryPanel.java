@@ -30,6 +30,7 @@ import javax.swing.JComponent;
 import javax.swing.JList;
 import javax.swing.ListCellRenderer;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 
 /**
  * Class which displays a preview and details about a domain.
@@ -43,6 +44,7 @@ class DomainSummaryPanel extends javax.swing.JPanel implements ListCellRenderer<
     /**
      * Creates new form DomainPanel.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     DomainSummaryPanel() {
         initComponents();
         domainNameLabel.setFont(domainNameLabel.getFont().deriveFont(domainNameLabel.getFont().getStyle(), domainNameLabel.getFont().getSize() + 6));
@@ -136,6 +138,7 @@ class DomainSummaryPanel extends javax.swing.JPanel implements ListCellRenderer<
     private javax.swing.JLabel totalVisitsLabel;
     // End of variables declaration//GEN-END:variables
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @NbBundle.Messages({"# {0} - startDate",
         "# {1} - endDate",
         "DomainSummaryPanel.activity.text=Activity: {0} to {1}",
@@ -163,6 +166,7 @@ class DomainSummaryPanel extends javax.swing.JPanel implements ListCellRenderer<
         return this;
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     public String getToolTipText(MouseEvent event) {
         if (event != null) {
