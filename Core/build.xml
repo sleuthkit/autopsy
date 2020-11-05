@@ -285,7 +285,11 @@
     <target name="integration-test">
         <!--We want only integration testing to run from this-->
         <sequential>
-            <property name="test.includes" value="**/org/sleuthkit/autopsy/integrationtesting/TestRunner.class"/>        
+            <property name="test.includes" value="**/org/sleuthkit/autopsy/integrationtesting/TestRunner.class"/>   
+            <!-- This overrides the value in common.xml:test-init that sets each test lasting 10 minutes maximum.
+            More information on the timeout can be found here: http://bits.netbeans.org/dev/javadoc/org-netbeans-modules-nbjunit/org/netbeans/junit/NbTestCase.html 
+            under timeout() or in the harness README. Current value is 1 hour (60 * 60 * 1000) -->
+            <property name="test.timeout" value="3600000"/>     
             <antcall target="projectized-common.test-qa-functional" />
         </sequential>
     </target>  
