@@ -491,7 +491,7 @@ class DocumentEmbeddedContentExtractor {
         try {
             Path outputDirectory = Paths.get(getOutputFolderPath(parentFileName));
             //Get map of attachment name -> location disk.
-            Map<String, Path> extractedAttachments = pdfExtractor.extract(
+            Map<String, PDFAttachmentExtractor.NewResourceData> extractedAttachments = pdfExtractor.extract(
                     new ReadContentInputStream(abstractFile), abstractFile.getId(),
                     outputDirectory);
 
@@ -499,10 +499,11 @@ class DocumentEmbeddedContentExtractor {
             List<ExtractedFile> extractedFiles = new ArrayList<>();
             extractedAttachments.entrySet().forEach((pathEntry) -> {
                 String fileName = pathEntry.getKey();
-                Path writeLocation = pathEntry.getValue();
+                Path writeLocation = pathEntry.getValue().getPath();
+                int fileSize = pathEntry.getValue().getLength();
                 extractedFiles.add(new ExtractedFile(fileName,
                         getFileRelativePath(writeLocation.getFileName().toString()),
-                        writeLocation.toFile().length()));
+                        fileSize));
             });
 
             return extractedFiles;

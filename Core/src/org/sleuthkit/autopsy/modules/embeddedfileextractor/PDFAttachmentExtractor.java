@@ -73,7 +73,7 @@ final class PDFAttachmentExtractor {
      * @throws SAXException
      * @throws TikaException 
      */
-    public Map<String, Path> extract(InputStream input, long parentID, Path outputDir) throws IOException, SAXException, TikaException {
+    public Map<String, NewResourceData> extract(InputStream input, long parentID, Path outputDir) throws IOException, SAXException, TikaException {
         ExtractionPreconditions.checkArgument(Files.exists(outputDir), 
                 String.format("Output directory: %s, does not exist.", outputDir.toString())); //NON-NLS
 
@@ -139,8 +139,8 @@ final class PDFAttachmentExtractor {
 
             try (EncodedFileOutputStream outputStream = new EncodedFileOutputStream(
                     new FileOutputStream(outputFile.toFile()), TskData.EncodingType.XOR1)){
-                IOUtils.copy(in, outputStream);
-                watcher.notify(name, outputFile);
+                int bytesCopied = IOUtils.copy(in, outputStream);
+                watcher.notify(name, outputFile, bytesCopied);
             } catch (IOException ex) {
                 logger.log(Level.WARNING, String.format("Could not extract attachment %s into directory %s", //NON-NLS
                         uniqueExtractedName, outputFile), ex);
@@ -148,6 +148,29 @@ final class PDFAttachmentExtractor {
         }
     }
 
+    /**
+     * Utility class to hold an extracted file's path and length.
+     * Note that we can not use the length of the file on disk because
+     * the XOR header has been added to it.
+     */
+    static class NewResourceData {
+        private final Path path;
+        private final int length;
+        
+        NewResourceData(Path path, int length) {
+            this.path = path;
+            this.length = length;
+        }
+        
+        Path getPath() {
+            return path;
+        }
+        
+        int getLength() {
+            return length;
+        }
+    }
+    
     /**
      * Convenient wrapper for keeping track of new resource paths and the display
      * name for each of these resources.
@@ -157,17 +180,17 @@ final class PDFAttachmentExtractor {
      */
     static class NewResourceWatcher {
 
-        private final Map<String, Path> newResourcePaths;
+        private final Map<String, NewResourceData> newResourcePaths;
 
         public NewResourceWatcher() {
             newResourcePaths = new HashMap<>();
         }
 
-        public void notify(String name, Path newResource) {
-            newResourcePaths.put(name, newResource);
+        public void notify(String name, Path localPath, int length) {
+            newResourcePaths.put(name, new NewResourceData(localPath, length));
         }
 
-        public Map<String, Path> getSnapshot() {
+        public Map<String, NewResourceData> getSnapshot() {
             return newResourcePaths;
         }
     }
