@@ -61,6 +61,7 @@ final class DomainArtifactsTabPanel extends JPanel {
     DomainArtifactsTabPanel(BlackboardArtifact.ARTIFACT_TYPE type) {
         initComponents();
         this.artifactType = type;
+        listPanel = new ArtifactsListPanel(artifactType);
         jSplitPane1.setLeftComponent(listPanel);
         setRightComponent();
         listPanel.addSelectionListener(listener);
