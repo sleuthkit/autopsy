@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 - 2013 Basis Technology Corp.
+ * Copyright 2011 - 2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A utility class that modules can use to keep track of whether they are the
@@ -30,7 +30,7 @@ public class IngestModuleReferenceCounter {
 
     // Maps a JobId to the count of instances
 
-    private HashMap<Long, Long> moduleRefCount = new HashMap<>();
+    private ConcurrentHashMap<Long, Long> moduleRefCount = new ConcurrentHashMap<>();
 
     public synchronized long get(long jobId) {
         return moduleRefCount.get(jobId);
