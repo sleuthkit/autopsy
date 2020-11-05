@@ -99,3 +99,4 @@ hs_err_pid*.log
 /thirdparty/yara/YaraJNIWrapper/dist/
 /thirdparty/yara/YaraJNIWrapper/build/
 /thirdparty/yara/YaraJNIWrapper/nbproject/private/
+thirdparty/yara/yarabridge/.vs/

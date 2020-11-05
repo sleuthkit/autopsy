@@ -23,6 +23,8 @@ import org.sleuthkit.autopsy.yara.YaraWrapperException;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_YARA_HIT;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_RULE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -136,8 +138,8 @@ final class YaraIngestHelper {
             BlackboardArtifact artifact = abstractFile.newArtifact(TSK_YARA_HIT);
             List<BlackboardAttribute> attributes = new ArrayList<>();
 
-            attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME, ruleSetName));
-            attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY, MODULE_NAME, rule));
+            attributes.add(new BlackboardAttribute(TSK_SET_NAME, MODULE_NAME, ruleSetName));
+            attributes.add(new BlackboardAttribute(TSK_RULE, MODULE_NAME, rule));
 
             artifact.addAttributes(attributes);
             artifacts.add(artifact);
