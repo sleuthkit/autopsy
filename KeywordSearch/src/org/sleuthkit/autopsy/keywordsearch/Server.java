@@ -1141,7 +1141,31 @@ public class Server {
         // shard across all available servers
         return solrServerList.size();
     }
-    
+
+    /*
+     * Poll the remote Solr server for list of existing collections, and check if 
+     * the collection of interest exists.
+     * 
+     * @param collectionName The name of the collection.
+     *
+     * @return True if the collection exists, false otherwise.
+     *
+     * @throws SolrServerException If there is a problem communicating with the
+     * Solr server.
+     * @throws IOException If there is a problem communicating with the Solr
+     * server.
+     */
+    private boolean collectionExists(String collectionName) throws SolrServerException, IOException {
+        CollectionAdminRequest.List req = new CollectionAdminRequest.List();
+        CollectionAdminResponse response = req.process(remoteSolrServer);
+        List<String> existingCollections = (List<String>) response.getResponse().get("collections");
+        if (existingCollections == null) {
+            existingCollections = new ArrayList<>();
+        }
+        return existingCollections.contains(collectionName);
+    }
+
+    /* NOTE: Keeping this code for reference, since it works.
     private boolean collectionExists(String collectionName) throws SolrServerException, IOException {
 
         // TODO we could potentially use this API. Currently set exception "Solr instance is not running in SolrCloud mode"
@@ -1174,7 +1198,7 @@ public class Server {
         } else {
             return false;
         }
-    }    
+    }*/
     
     private void createMultiUserCollection(String collectionName, int numShardsToUse) throws KeywordSearchModuleException, SolrServerException, IOException {
         /*
