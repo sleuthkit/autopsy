@@ -20,6 +20,8 @@ package org.sleuthkit.autopsy.discovery.ui;
 
 import javax.swing.DefaultListModel;
 import javax.swing.event.ListSelectionListener;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
+import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils;
 
 /**
  * A JPanel to display domain summaries.
@@ -31,20 +33,20 @@ public class DomainSummaryViewer extends javax.swing.JPanel {
     private final DefaultListModel<DomainWrapper> domainListModel = new DefaultListModel<>();
 
     /**
-     * Clear the list of documents being displayed.
+     * Creates new form DomainSummaryPanel
      */
-    void clearViewer() {
-        synchronized (this) {
-            domainListModel.removeAllElements();
-            domainScrollPane.getVerticalScrollBar().setValue(0);
-        }
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    public DomainSummaryViewer() {
+        initComponents();
     }
 
     /**
-     * Creates new form DomainSummaryPanel
+     * Clear the list of documents being displayed.
      */
-    public DomainSummaryViewer() {
-        initComponents();
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    void clearViewer() {
+        domainListModel.removeAllElements();
+        domainScrollPane.getVerticalScrollBar().setValue(0);
     }
 
     /**
@@ -80,27 +82,29 @@ public class DomainSummaryViewer extends javax.swing.JPanel {
      * @param domainWrapper The object which contains the domain summary which
      *                      will be displayed.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     void addDomain(DomainWrapper domainWrapper) {
-        synchronized (this) {
-            domainListModel.addElement(domainWrapper);
-        }
+        domainListModel.addElement(domainWrapper);
     }
 
     /**
-     * Get the list of AbstractFiles which are represented by the selected
-     * document preview.
+     * Send an event to perform the population of the domain details tabs to
+     * reflect the currently selected domain. Will populate the list with
+     * nothing when a domain is not used.
      *
-     * @return The list of AbstractFiles which are represented by the selected
-     *         document preview.
+     * @param useDomain If the currently selected domain should be used to
+     *                  retrieve a list.
      */
-    String getDomainForSelected() {
-        synchronized (this) {
-            if (domainList.getSelectedIndex() == -1) {
-                return "";
-            } else {
-                return domainListModel.getElementAt(domainList.getSelectedIndex()).getResultDomain().getDomain();
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    void sendPopulateEvent(boolean useDomain) {
+        String domain = "";
+        if (useDomain) {
+            if (domainList.getSelectedIndex() != -1) {
+                domain = domainListModel.getElementAt(domainList.getSelectedIndex()).getResultDomain().getDomain();
             }
         }
+        //send populateMesage
+        DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.PopulateDomainTabsEvent(domain));
     }
 
     /**
@@ -109,6 +113,7 @@ public class DomainSummaryViewer extends javax.swing.JPanel {
      *
      * @param listener The ListSelectionListener to add to the selection model.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     void addListSelectionListener(ListSelectionListener listener) {
         domainList.getSelectionModel().addListSelectionListener(listener);
     }

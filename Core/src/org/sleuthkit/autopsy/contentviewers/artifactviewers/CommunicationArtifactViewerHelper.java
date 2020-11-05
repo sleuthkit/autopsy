@@ -63,7 +63,7 @@ public final class CommunicationArtifactViewerHelper {
      *
      * @param panel         Panel to update.
      * @param gridbagLayout Layout to use.
-     * @param constraints   Constrains to use.
+     * @param constraints   Constraints to use.
      * @param headerString  Heading string to display.
      *
      * @return JLabel Heading label added.
@@ -116,7 +116,7 @@ public final class CommunicationArtifactViewerHelper {
      *
      * @param panel         Panel to update.
      * @param gridbagLayout Layout to use.
-     * @param constraints   Constrains to use.
+     * @param constraints   Constraints to use.
      * @param keyString     Key name to display.
      * @param valueString   Value string to display.
      *
@@ -133,7 +133,7 @@ public final class CommunicationArtifactViewerHelper {
      *
      * @param panel         Panel to update.
      * @param gridbagLayout Layout to use.
-     * @param constraints   Constrains to use.
+     * @param constraints   Constraints to use.
      * @param component     Component to add.
      */
     static void addComponent(JPanel panel, GridBagLayout gridbagLayout, GridBagConstraints constraints, JComponent component) {
@@ -149,7 +149,7 @@ public final class CommunicationArtifactViewerHelper {
      *
      * @param panel         Panel to update.
      * @param gridbagLayout Layout to use.
-     * @param constraints   Constrains to use.
+     * @param constraints   Constraints to use.
      */
     static void addLineEndGlue(JPanel panel, GridBagLayout gridbagLayout, GridBagConstraints constraints) {
         // Place the filler just past the last column.
@@ -176,7 +176,7 @@ public final class CommunicationArtifactViewerHelper {
      *
      * @param panel         Panel to update.
      * @param gridbagLayout Layout to use.
-     * @param constraints   Constrains to use.
+     * @param constraints   Constraints to use.
      */
     public static void addPageEndGlue(JPanel panel, GridBagLayout gridbagLayout, GridBagConstraints constraints) {
 
@@ -202,7 +202,7 @@ public final class CommunicationArtifactViewerHelper {
      *
      * @param panel         Panel to update.
      * @param gridbagLayout Layout to use.
-     * @param constraints   Constrains to use.
+     * @param constraints   Constraints to use.
      */
     static void addBlankLine(JPanel panel, GridBagLayout gridbagLayout, GridBagConstraints constraints) {
         constraints.gridy++;
@@ -220,7 +220,7 @@ public final class CommunicationArtifactViewerHelper {
      *
      * @param panel         Panel to update.
      * @param gridbagLayout Layout to use.
-     * @param constraints   Constrains to use.
+     * @param constraints   Constraints to use.
      * @param keyString     Key name to display.
      *
      * @return Label added.
@@ -234,7 +234,7 @@ public final class CommunicationArtifactViewerHelper {
      *
      * @param panel         Panel to update.
      * @param gridbagLayout Layout to use.
-     * @param constraints   Constrains to use.
+     * @param constraints   Constraints to use.
      * @param keyString     Key name to display.
      * @param gridx         column index, must be less than MAX_COLS - 1.
      *
@@ -263,7 +263,7 @@ public final class CommunicationArtifactViewerHelper {
      *
      * @param panel         Panel to update.
      * @param gridbagLayout Layout to use.
-     * @param constraints   Constrains to use.
+     * @param constraints   Constraints to use.
      * @param valueString   Value string to display.
      *
      * @return Label added.
@@ -277,7 +277,7 @@ public final class CommunicationArtifactViewerHelper {
      *
      * @param panel         Panel to update.
      * @param gridbagLayout Layout to use.
-     * @param constraints   Constrains to use.
+     * @param constraints   Constraints to use.
      * @param keyString     Value string to display.
      * @param gridx         Column index, must be less than MAX_COLS;
      *
@@ -384,7 +384,7 @@ public final class CommunicationArtifactViewerHelper {
      *
      * @param panel             Panel to update.
      * @param gridbagLayout     Layout to use.
-     * @param constraints       Constrains to use.
+     * @param constraints       Constraints to use.
      * @param accountIdentifier Account identifier to search the persona.
      *
      * @return List of AccountPersonaSearcherData objects.
@@ -452,7 +452,7 @@ public final class CommunicationArtifactViewerHelper {
      *
      * @param panel         Panel to update.
      * @param gridbagLayout Layout to use.
-     * @param constraints   Constrains to use.
+     * @param constraints   Constraints to use.
      * @param contactId     Contact name to display.
      *
      * @return A JLabel with the contact information.

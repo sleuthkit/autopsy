@@ -25,10 +25,10 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.apache.commons.lang.StringUtils;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.autopsy.discovery.search.SearchData;
-import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 
 /**
  * Panel to display details area for domain discovery results.
@@ -37,31 +37,32 @@ import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 final class DomainDetailsPanel extends JPanel {
 
     private static final long serialVersionUID = 1L;
-    private static ArtifactsWorker detailsWorker;
-    private static String domain;
+    private ArtifactsWorker detailsWorker;
+    private String domain;
     private String selectedTabName;
 
     /**
-     * Creates new form ArtifactDetailsPanel
+     * Creates new form ArtifactDetailsPanel.
      *
-     * @param initialSelectedTab Specifies which specific details tab should be
-     *                           selected initially.
+     * @param selectedTabName The name of the tab to select initially.
      */
-    DomainDetailsPanel(ARTIFACT_TYPE initialSelectedTab) {
-        if (initialSelectedTab != null) {
-            selectedTabName = initialSelectedTab.getDisplayName();
-        } 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    DomainDetailsPanel(String selectedTabName) {
         initComponents();
-        addArtifactTabs();
+        addArtifactTabs(selectedTabName);
     }
 
     /**
      * Add the tabs for each of the artifact types which we will be displaying.
+     *
+     * @param tabName The name of the tab to select initially.
      */
-    private void addArtifactTabs() {
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    private void addArtifactTabs(String tabName) {
         for (BlackboardArtifact.ARTIFACT_TYPE type : SearchData.Type.DOMAIN.getArtifactTypes()) {
             jTabbedPane1.add(type.getDisplayName(), new DomainArtifactsTabPanel(type));
         }
+        selectedTabName = tabName;
         selectTab();
         jTabbedPane1.addChangeListener(new ChangeListener() {
             @Override
@@ -77,6 +78,11 @@ final class DomainDetailsPanel extends JPanel {
         });
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    /**
+     * Set the selected tab index to be the previously selected tab if a
+     * previously selected tab exists.
+     */
     private void selectTab() {
         for (int i = 0; i < jTabbedPane1.getTabCount(); i++) {
             if (!StringUtils.isBlank(selectedTabName) && selectedTabName.equals(jTabbedPane1.getTitleAt(i))) {
@@ -115,7 +121,7 @@ final class DomainDetailsPanel extends JPanel {
      *                      domain the details tabs should be populated for.
      */
     @Subscribe
-    synchronized void handlePopulateDomainTabsEvent(DiscoveryEventUtils.PopulateDomainTabsEvent populateEvent) {
+    void handlePopulateDomainTabsEvent(DiscoveryEventUtils.PopulateDomainTabsEvent populateEvent) {
         SwingUtilities.invokeLater(() -> {
             domain = populateEvent.getDomain();
             resetTabsStatus();
@@ -135,12 +141,23 @@ final class DomainDetailsPanel extends JPanel {
      * Private helper method to ensure tabs will re-populate after a new domain
      * is selected.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private void resetTabsStatus() {
         for (Component comp : jTabbedPane1.getComponents()) {
             if (comp instanceof DomainArtifactsTabPanel) {
                 ((DomainArtifactsTabPanel) comp).setStatus(DomainArtifactsTabPanel.ArtifactRetrievalStatus.UNPOPULATED);
             }
         }
+    }
+
+    /**
+     * Get the name of the tab that was most recently selected.
+     *
+     * @return The name of the tab that was most recently selected.
+     */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    String getSelectedTabName() {
+        return selectedTabName;
     }
 
     /**

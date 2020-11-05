@@ -27,6 +27,7 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.discovery.search.SearchFiltering;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -43,6 +44,7 @@ final class ObjectDetectedFilterPanel extends AbstractDiscoveryFilterPanel {
     /**
      * Creates new form ObjectDetectedFilter.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     ObjectDetectedFilterPanel() {
         initComponents();
         setUpObjectFilter();
@@ -51,6 +53,7 @@ final class ObjectDetectedFilterPanel extends AbstractDiscoveryFilterPanel {
     /**
      * Initialize the object filter.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private void setUpObjectFilter() {
         int count = 0;
         try {
@@ -129,6 +132,7 @@ final class ObjectDetectedFilterPanel extends AbstractDiscoveryFilterPanel {
     private javax.swing.JScrollPane objectsScrollPane;
     // End of variables declaration//GEN-END:variables
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     void configurePanel(boolean selected, int[] indicesSelected) {
         boolean hasObjects = objectsList.getModel().getSize() > 0;
@@ -146,6 +150,7 @@ final class ObjectDetectedFilterPanel extends AbstractDiscoveryFilterPanel {
         }
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     JCheckBox getCheckbox() {
         return objectsCheckbox;
@@ -155,6 +160,8 @@ final class ObjectDetectedFilterPanel extends AbstractDiscoveryFilterPanel {
     JLabel getAdditionalLabel() {
         return null;
     }
+
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @NbBundle.Messages({"ObjectDetectedFilterPanel.error.text=At least one object type name must be selected."})
     @Override
     String checkForError() {
@@ -164,11 +171,13 @@ final class ObjectDetectedFilterPanel extends AbstractDiscoveryFilterPanel {
         return "";
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     JList<?> getList() {
         return objectsList;
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     AbstractFilter getFilter() {
         if (objectsCheckbox.isSelected()) {

@@ -232,19 +232,19 @@ public final class DiscoveryEventUtils {
     /**
      * Event to signal the completion of a search being performed.
      */
-    public static final class ArtifactListRetrievedEvent {
+    public static final class ArtifactSearchResultEvent {
 
         private final List<BlackboardArtifact> listOfArtifacts = new ArrayList<>();
         private final BlackboardArtifact.ARTIFACT_TYPE artifactType;
 
         /**
-         * Construct a new ArtifactListRetrievedEvent with a list of specified
+         * Construct a new ArtifactSearchResultEvent with a list of specified
          * artifacts and an artifact type.
          *
          * @param artifactType    The type of artifacts in the list.
          * @param listOfArtifacts The list of artifacts retrieved.
          */
-        public ArtifactListRetrievedEvent(BlackboardArtifact.ARTIFACT_TYPE artifactType, List<BlackboardArtifact> listOfArtifacts) {
+        public ArtifactSearchResultEvent(BlackboardArtifact.ARTIFACT_TYPE artifactType, List<BlackboardArtifact> listOfArtifacts) {
             if (listOfArtifacts != null) {
                 this.listOfArtifacts.addAll(listOfArtifacts);
             }

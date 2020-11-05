@@ -29,6 +29,7 @@ import org.apache.commons.lang.StringUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -48,9 +49,10 @@ class ArtifactsListPanel extends JPanel {
      *
      * @param artifactType The type of artifact displayed in this table.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     ArtifactsListPanel(BlackboardArtifact.ARTIFACT_TYPE artifactType) {
-        tableModel = new DomainArtifactTableModel(artifactType);
         initComponents();
+        tableModel = new DomainArtifactTableModel(artifactType);
         jTable1.getRowSorter().toggleSortOrder(0);
         jTable1.getRowSorter().toggleSortOrder(0);
     }
@@ -61,6 +63,7 @@ class ArtifactsListPanel extends JPanel {
      *
      * @param listener The listener to add to the table of artifacts.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     void addSelectionListener(ListSelectionListener listener) {
         jTable1.getSelectionModel().addListSelectionListener(listener);
     }
@@ -70,6 +73,7 @@ class ArtifactsListPanel extends JPanel {
      *
      * @param listener The listener to remove from the table of artifacts.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     void removeListSelectionListener(ListSelectionListener listener) {
         jTable1.getSelectionModel().removeListSelectionListener(listener);
     }
@@ -81,6 +85,7 @@ class ArtifactsListPanel extends JPanel {
      * @return The currently selected BlackboardArtifact or null if none is
      *         selected.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     BlackboardArtifact getSelectedArtifact() {
         int selectedIndex = jTable1.getSelectionModel().getLeadSelectionIndex();
         if (selectedIndex < jTable1.getSelectionModel().getMinSelectionIndex() || jTable1.getSelectionModel().getMaxSelectionIndex() < 0 || selectedIndex > jTable1.getSelectionModel().getMaxSelectionIndex()) {
@@ -95,6 +100,7 @@ class ArtifactsListPanel extends JPanel {
      * @return true if the list of artifacts is empty, false if there are
      *         artifacts.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     boolean isEmpty() {
         return tableModel.getRowCount() <= 0;
     }
@@ -103,6 +109,7 @@ class ArtifactsListPanel extends JPanel {
      * Select the first available artifact in the list if it is not empty to
      * populate the panel to the right.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     void selectFirst() {
         if (!isEmpty()) {
             jTable1.setRowSelectionInterval(0, 0);
@@ -117,6 +124,7 @@ class ArtifactsListPanel extends JPanel {
      *
      * @param artifactList The list of artifacts to display.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     void addArtifacts(List<BlackboardArtifact> artifactList) {
         tableModel.setContents(artifactList);
         jTable1.validate();
@@ -127,6 +135,7 @@ class ArtifactsListPanel extends JPanel {
     /**
      * Remove all artifacts from the list of artifacts displayed.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     void clearArtifacts() {
         tableModel.setContents(new ArrayList<>());
         tableModel.fireTableDataChanged();
@@ -179,6 +188,7 @@ class ArtifactsListPanel extends JPanel {
          *
          * @param artifactType The type of artifact displayed in this table.
          */
+        @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
         DomainArtifactTableModel(BlackboardArtifact.ARTIFACT_TYPE artifactType) {
             this.artifactType = artifactType;
         }
@@ -189,17 +199,20 @@ class ArtifactsListPanel extends JPanel {
          *
          * @param artifacts The list of BlackboardArtifacts to represent.
          */
+        @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
         void setContents(List<BlackboardArtifact> artifacts) {
             jTable1.clearSelection();
             artifactList.clear();
             artifactList.addAll(artifacts);
         }
 
+        @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
         @Override
         public int getRowCount() {
             return artifactList.size();
         }
 
+        @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
         @Override
         public int getColumnCount() {
             if (artifactType == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE) {
@@ -216,10 +229,12 @@ class ArtifactsListPanel extends JPanel {
          *
          * @return The BlackboardArtifact at the specified row.
          */
+        @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
         BlackboardArtifact getArtifactByRow(int rowIndex) {
             return artifactList.get(rowIndex);
         }
 
+        @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
         @NbBundle.Messages({"ArtifactsListPanel.value.noValue=No value available."})
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
@@ -288,6 +303,7 @@ class ArtifactsListPanel extends JPanel {
          *
          * @throws TskCoreException
          */
+        @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
         private String getFallbackValue(int rowIndex, int columnIndex) throws TskCoreException {
             for (BlackboardAttribute bba : getArtifactByRow(rowIndex).getAttributes()) {
                 if (columnIndex == 0 && bba.getAttributeType().getTypeName().startsWith("TSK_DATETIME") && !StringUtils.isBlank(bba.getDisplayString())) {
@@ -299,6 +315,7 @@ class ArtifactsListPanel extends JPanel {
             return Bundle.ArtifactsListPanel_value_noValue();
         }
 
+        @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
         @NbBundle.Messages({"ArtifactsListPanel.titleColumn.name=Title",
             "ArtifactsListPanel.fileNameColumn.name=Name",
             "ArtifactsListPanel.dateColumn.name=Date/Time",
