@@ -347,6 +347,7 @@ public final class DiscoveryTopComponent extends TopComponent {
      * @return The name of the tab which should be selected in the new
      *         DomainDetailsPanel.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private String validateLastSelectedType(DiscoveryEventUtils.SearchCompleteEvent searchCompleteEvent) {
         String typeFilteredOn = selectedDomainTabName;
         for (AbstractFilter filter : searchCompleteEvent.getFilters()) {

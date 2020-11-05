@@ -270,6 +270,7 @@ class ArtifactsListPanel extends JPanel {
          * @throws TskCoreException When unable to get abstract files based on
          *                          the TSK_PATH_ID.
          */
+        @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
         private String getStringForColumn(BlackboardAttribute bba, int columnIndex) throws TskCoreException {
             if (columnIndex == 0 && bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()) {
                 return bba.getDisplayString();

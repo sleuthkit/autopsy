@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.discovery.ui;
 
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.corecomponents.DataContentPanel;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
@@ -34,6 +35,7 @@ final class ContentViewerDetailsPanel extends AbstractArtifactDetailsPanel {
     /**
      * Creates new form ContentViewerDetailsPanel
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     ContentViewerDetailsPanel() {
         initComponents();
         add(contentViewer);
@@ -51,6 +53,7 @@ final class ContentViewerDetailsPanel extends AbstractArtifactDetailsPanel {
         setLayout(new java.awt.BorderLayout());
     }// </editor-fold>//GEN-END:initComponents
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     public void setArtifact(BlackboardArtifact artifact) {
         Node node = Node.EMPTY;
