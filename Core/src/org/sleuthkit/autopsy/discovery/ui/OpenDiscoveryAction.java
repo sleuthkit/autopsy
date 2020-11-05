@@ -52,7 +52,6 @@ public final class OpenDiscoveryAction extends CallableSystemAction implements P
     /**
      * Construct a new OpenDiscoveryAction.
      */
-    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public OpenDiscoveryAction() {
         toolbarButton.addActionListener(OpenDiscoveryAction.this::actionPerformed);
         this.setEnabled(false);
@@ -92,7 +91,6 @@ public final class OpenDiscoveryAction extends CallableSystemAction implements P
      *
      * @param value whether to enable this action or not
      */
-    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     public void setEnabled(boolean value) {
         super.setEnabled(value);

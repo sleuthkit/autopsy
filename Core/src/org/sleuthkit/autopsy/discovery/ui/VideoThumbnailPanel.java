@@ -235,6 +235,7 @@ final class VideoThumbnailPanel extends javax.swing.JPanel implements ListCellRe
         return Bundle.VideoThumbnailPanel_sizeLabel_text(size, units);
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     public String getToolTipText(MouseEvent event) {
         if (event != null) {

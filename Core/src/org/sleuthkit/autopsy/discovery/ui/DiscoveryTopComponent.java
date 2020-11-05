@@ -135,6 +135,7 @@ public final class DiscoveryTopComponent extends TopComponent {
         groupListPanel.resetGroupList();
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     public void componentOpened() {
         super.componentOpened();
@@ -144,6 +145,7 @@ public final class DiscoveryTopComponent extends TopComponent {
         DiscoveryEventUtils.getDiscoveryEventBus().register(groupListPanel);
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     protected void componentClosed() {
         DiscoveryDialog.getDiscoveryDialogInstance().cancelSearch();
