@@ -102,7 +102,9 @@ Case.servicesException.notificationTitle={0} Error
 # {1} - exception message
 Case.servicesException.serviceResourcesCloseError=Could not close case resources for {0} service: {1}
 Case.setUpFileRepository.errorTestingCase=Error checking case for file repository data
+Case.setUpFileRepository.fileCheck=Checking for File Repository data
 Case.setUpFileRepository.notInitialized=File repository not initialized - some files may not be accessible
+Case.setUpFileRepository.setup=Setting up File Repository
 Case.setUpFileRepository.title=File Repository
 Case_caseType_multiUser=Multi-user case
 Case_caseType_singleUser=Single-user case

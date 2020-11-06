@@ -126,7 +126,8 @@ import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.DataSource;
-import org.sleuthkit.datamodel.FileRepositoryManager.FileRepositorySettings;
+import org.sleuthkit.datamodel.FileRepository;
+import org.sleuthkit.datamodel.FileRepository.FileRepositorySettings;
 import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.Report;
@@ -2054,20 +2055,20 @@ public class Case {
             }
             
             // Initialize the file repository settings
-            caseDb.getFileRepositoryManager().initializeSettings(new FileRepositorySettings(UserPreferences.getFileRepositoryAddress(),
+            FileRepository.initialize(new FileRepositorySettings(UserPreferences.getFileRepositoryAddress(),
                 UserPreferences.getFileRepositoryPort()), repoTempDir.getAbsolutePath());
         } else {
             progressIndicator.progress(Bundle.Case_setUpFileRepository_fileCheck());
             
             // Check that the case does not contain any files stored in the repository
             try {
-                if (caseDb.getFileRepositoryManager().caseUsesFileRepository()) {
+                if (caseDb.caseUsesFileRepository()) {
                     logger.log(Level.WARNING, "Case contains file repository data but file repository has not been initialized");
                     if (RuntimeProperties.runningWithGUI()) {
-                    SwingUtilities.invokeLater(() -> {
-                        MessageNotifyUtil.Notify.warn(Bundle.Case_setUpFileRepository_title(), Bundle.Case_setUpFileRepository_notInitialized());
-                    });
-                }
+                        SwingUtilities.invokeLater(() -> {
+                            MessageNotifyUtil.Notify.warn(Bundle.Case_setUpFileRepository_title(), Bundle.Case_setUpFileRepository_notInitialized());
+                        });
+                    }
                 }
             } catch (TskCoreException ex) {
                 logger.log(Level.WARNING, "Could not count file repository files while opening case",ex);
@@ -2805,6 +2806,11 @@ public class Case {
         progressIndicator.progress(Bundle.Case_progressMessage_closingApplicationServiceResources());
         closeAppServiceCaseResources();
 
+        /*
+         * De-initialize the file repository
+         */
+        FileRepository.deinitialize();
+        
         /*
          * Close the case database.
          */
