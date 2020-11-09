@@ -240,14 +240,14 @@
     </target>    
     
  
-    <!--
-    Putting junit on the classpath with a pathing jar fails (NoClassDefError’s).  
+    <!--  
     This specifies the classpath for unit tests using * notation 
     (i.e. https://stackoverflow.com/questions/219585/including-all-the-jars-in-a-directory-within-the-java-classpath).  
     This solution involves taking the initial ‘module.run.classpath’ property and simplifying it to the directories containing jars 
     (i.e. instead of “/dir/lib1.jar:/dir/lib2.jar:/dir/lib3.jar” it becomes “/dir/*” ).  
     More information on ‘module.run.classpath’ can be found in “netbeans-plat\11.3\harness\README” and it appears that
     “netbeans-plat\11.3\harness\build.xml:build-init target is in charge of setting the ‘module.run.classpath’ variable.
+    More information in Jira: 6970.
     -->
     <target name="unit-test-path-simplification" depends="projectized-common.test-init">
         <sequential>
