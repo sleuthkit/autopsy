@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.discovery.ui;
 
 import javax.swing.JPanel;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
@@ -34,6 +35,7 @@ public abstract class AbstractArtifactDetailsPanel extends JPanel {
      *
      * @param artifact the artifact to display.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     abstract public void setArtifact(BlackboardArtifact artifact);
 
 }

@@ -30,6 +30,7 @@ import javax.swing.JList;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.discovery.search.SearchFiltering;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -45,6 +46,7 @@ final class DataSourceFilterPanel extends AbstractDiscoveryFilterPanel {
     /**
      * Creates new form DataSourceFilterPanel.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     DataSourceFilterPanel() {
         initComponents();
         setUpDataSourceFilter();
@@ -109,6 +111,7 @@ final class DataSourceFilterPanel extends AbstractDiscoveryFilterPanel {
     private javax.swing.JScrollPane dataSourceScrollPane;
     // End of variables declaration//GEN-END:variables
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     void configurePanel(boolean selected, int[] indicesSelected) {
         dataSourceCheckbox.setSelected(selected);
@@ -124,6 +127,7 @@ final class DataSourceFilterPanel extends AbstractDiscoveryFilterPanel {
         }
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     JCheckBox getCheckbox() {
         return dataSourceCheckbox;
@@ -137,6 +141,7 @@ final class DataSourceFilterPanel extends AbstractDiscoveryFilterPanel {
     /**
      * Initialize the data source filter.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private void setUpDataSourceFilter() {
         int count = 0;
         try {
@@ -156,6 +161,7 @@ final class DataSourceFilterPanel extends AbstractDiscoveryFilterPanel {
         }
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     JList<?> getList() {
         return dataSourceList;
@@ -193,6 +199,7 @@ final class DataSourceFilterPanel extends AbstractDiscoveryFilterPanel {
         }
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @NbBundle.Messages({"DataSourceFilterPanel.error.text=At least one data source must be selected."})
     @Override
     String checkForError() {
@@ -202,6 +209,7 @@ final class DataSourceFilterPanel extends AbstractDiscoveryFilterPanel {
         return "";
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     AbstractFilter getFilter() {
         if (dataSourceCheckbox.isSelected()) {
