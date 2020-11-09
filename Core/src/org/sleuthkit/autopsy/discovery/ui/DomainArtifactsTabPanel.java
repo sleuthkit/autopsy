@@ -75,12 +75,10 @@ final class DomainArtifactsTabPanel extends JPanel {
     private void setRightComponent() {
         switch (artifactType) {
             case TSK_WEB_HISTORY:
-                rightPanel = new WebHistoryDetailsPanel();
-                break;
             case TSK_WEB_COOKIE:
             case TSK_WEB_SEARCH_QUERY:
             case TSK_WEB_BOOKMARK:
-                rightPanel = new DefaultArtifactContentViewer();
+                rightPanel = new WebHistoryDetailsPanel();
                 break;
             case TSK_WEB_DOWNLOAD:
             case TSK_WEB_CACHE:
@@ -98,7 +96,7 @@ final class DomainArtifactsTabPanel extends JPanel {
     /**
      * Get the status of the panel which indicates if it is populated.
      *
-     * @return The ArtifactRetrievalStatuss of the panel.
+     * @return The ArtifactRetrievalStatus of the panel.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     ArtifactRetrievalStatus getStatus() {

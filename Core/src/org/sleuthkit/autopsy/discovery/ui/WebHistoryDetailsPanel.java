@@ -51,6 +51,12 @@ public class WebHistoryDetailsPanel extends AbstractArtifactDetailsPanel impleme
     private final List<BlackboardAttribute> titleList = new ArrayList<>();
     private final List<BlackboardAttribute> programNameList = new ArrayList<>();
     private final List<BlackboardAttribute> domainList = new ArrayList<>();
+    private final List<BlackboardAttribute> nameList = new ArrayList<>();
+    private final List<BlackboardAttribute> valueList = new ArrayList<>();
+    private final List<BlackboardAttribute> dateCreatedList = new ArrayList<>();
+    private final List<BlackboardAttribute> datestartList = new ArrayList<>();
+    private final List<BlackboardAttribute> dateEndList = new ArrayList<>();
+    private final List<BlackboardAttribute> textList = new ArrayList<>();
     private final List<BlackboardAttribute> otherList = new ArrayList<>();
     private final GridBagConstraints gridBagConstraints = new GridBagConstraints();
     private String dataSourceName;
@@ -104,6 +110,16 @@ public class WebHistoryDetailsPanel extends AbstractArtifactDetailsPanel impleme
                 referrerUrlList.add(bba);
             } else if (bba.getAttributeType().getTypeName().startsWith("TSK_DATETIME_ACCESSED")) {
                 dateAccessedList.add(bba);
+            } else if (bba.getAttributeType().getTypeName().startsWith("TSK_DATETIME_CREATED")) {
+                dateCreatedList.add(bba);
+            } else if (bba.getAttributeType().getTypeName().startsWith("TSK_DATETIME_START")) {
+                datestartList.add(bba);
+            } else if (bba.getAttributeType().getTypeName().startsWith("TSK_DATETIME_END")) {
+                dateEndList.add(bba);
+            } else if (bba.getAttributeType().getTypeName().startsWith("TSK_TEXT")) {
+                textList.add(bba);
+            } else if (bba.getAttributeType().getTypeName().startsWith("TSK_VALUE")) {
+                valueList.add(bba);
             } else if (bba.getAttributeType().getTypeName().startsWith("TSK_TITLE")) {
                 titleList.add(bba);
             } else {
@@ -139,6 +155,12 @@ public class WebHistoryDetailsPanel extends AbstractArtifactDetailsPanel impleme
         titleList.clear();
         programNameList.clear();
         domainList.clear();
+        dateCreatedList.clear();
+        datestartList.clear();
+        dateEndList.clear();
+        valueList.clear();
+        nameList.clear();
+        textList.clear();
         otherList.clear();
     }
 
@@ -153,7 +175,10 @@ public class WebHistoryDetailsPanel extends AbstractArtifactDetailsPanel impleme
     @Override
     public boolean isSupported(BlackboardArtifact artifact) {
         return (artifact != null)
-                && (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID());
+                && (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID()
+                || artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getTypeID()
+                || artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE.getTypeID()
+                || artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID());
     }
 
     @NbBundle.Messages({"WebHistoryDetailsPanel.details.attrHeader=Attributes",
@@ -191,7 +216,19 @@ public class WebHistoryDetailsPanel extends AbstractArtifactDetailsPanel impleme
         for (BlackboardAttribute bba : this.titleList) {
             CommunicationArtifactViewerHelper.addNameValueRow(this, gridBagLayout, gridBagConstraints, bba.getAttributeType().getDisplayName(), bba.getDisplayString());
         }
+        for (BlackboardAttribute bba : this.nameList) {
+            CommunicationArtifactViewerHelper.addNameValueRow(this, gridBagLayout, gridBagConstraints, bba.getAttributeType().getDisplayName(), bba.getDisplayString());
+        }
         for (BlackboardAttribute bba : dateAccessedList) {
+            CommunicationArtifactViewerHelper.addNameValueRow(this, gridBagLayout, gridBagConstraints, bba.getAttributeType().getDisplayName(), bba.getDisplayString());
+        }
+        for (BlackboardAttribute bba : dateCreatedList) {
+            CommunicationArtifactViewerHelper.addNameValueRow(this, gridBagLayout, gridBagConstraints, bba.getAttributeType().getDisplayName(), bba.getDisplayString());
+        }
+        for (BlackboardAttribute bba : datestartList) {
+            CommunicationArtifactViewerHelper.addNameValueRow(this, gridBagLayout, gridBagConstraints, bba.getAttributeType().getDisplayName(), bba.getDisplayString());
+        }
+        for (BlackboardAttribute bba : dateEndList) {
             CommunicationArtifactViewerHelper.addNameValueRow(this, gridBagLayout, gridBagConstraints, bba.getAttributeType().getDisplayName(), bba.getDisplayString());
         }
         for (BlackboardAttribute bba : domainList) {
@@ -204,6 +241,12 @@ public class WebHistoryDetailsPanel extends AbstractArtifactDetailsPanel impleme
             CommunicationArtifactViewerHelper.addNameValueRow(this, gridBagLayout, gridBagConstraints, bba.getAttributeType().getDisplayName(), bba.getDisplayString());
         }
         for (BlackboardAttribute bba : programNameList) {
+            CommunicationArtifactViewerHelper.addNameValueRow(this, gridBagLayout, gridBagConstraints, bba.getAttributeType().getDisplayName(), bba.getDisplayString());
+        }
+        for (BlackboardAttribute bba : valueList) {
+            CommunicationArtifactViewerHelper.addNameValueRow(this, gridBagLayout, gridBagConstraints, bba.getAttributeType().getDisplayName(), bba.getDisplayString());
+        }
+        for (BlackboardAttribute bba : textList) {
             CommunicationArtifactViewerHelper.addNameValueRow(this, gridBagLayout, gridBagConstraints, bba.getAttributeType().getDisplayName(), bba.getDisplayString());
         }
         for (BlackboardAttribute bba : otherList) {
