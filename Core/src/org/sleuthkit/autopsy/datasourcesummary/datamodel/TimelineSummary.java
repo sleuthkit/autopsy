@@ -18,21 +18,47 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.datamodel;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
-import static java.util.Locale.filter;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import org.apache.commons.lang3.tuple.Pair;
 import org.joda.time.Interval;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultUpdateGovernor;
+import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
+import org.sleuthkit.autopsy.timeline.utils.FilterUtils;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TimelineEvent;
+import org.sleuthkit.datamodel.TimelineEventType;
+import org.sleuthkit.datamodel.TimelineFilter;
+import org.sleuthkit.datamodel.TimelineFilter.DataSourcesFilter;
+import org.sleuthkit.datamodel.TimelineFilter.EventTypeFilter;
+import org.sleuthkit.datamodel.TimelineFilter.HashHitsFilter;
+import org.sleuthkit.datamodel.TimelineFilter.HideKnownFilter;
+import org.sleuthkit.datamodel.TimelineFilter.RootFilter;
+import org.sleuthkit.datamodel.TimelineFilter.TagsFilter;
+import org.sleuthkit.datamodel.TimelineFilter.TextFilter;
 import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Provides data source summary information pertaining to Timeline data.
  */
-public class TimelineSummary {
+public class TimelineSummary implements DefaultUpdateGovernor {
+    private static final long DAY_SECS = 24 * 60 * 60;
+    
+        
+    private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS = new HashSet<>(
+        Arrays.asList(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED));
 
+    
     private final SleuthkitCaseProvider provider;
 
     /**
@@ -50,41 +76,151 @@ public class TimelineSummary {
     public TimelineSummary(SleuthkitCaseProvider provider) {
         this.provider = provider;
     }
+
     
-    private Date getDateOrNull(Long secsFromEpoch) {
-        if (secsFromEpoch == null || secsFromEpoch == 0) {
-            return null;
-        }
-        
-        return new Date(secsFromEpoch * 1000);
+    @Override
+    public boolean isRefreshRequired(ModuleContentEvent evt) {
+        return true;
     }
-    
-    
-    
-    
-    private void getData(DataSource dataSource) throws SleuthkitCaseProviderException, TskCoreException {
-        TimelineManager timelineManager = this.provider.get().getTimelineManager();
-        
-        
-        
-        List<TimelineEvent> events = timelineManager.getEvents(new Interval(0, System.currentTimeMillis()), new RootTimelineFilter);
+
+    @Override
+    public boolean isRefreshRequired(AbstractFile file) {
+        return true;
+    }
+
+    @Override
+    public boolean isRefreshRequired(IngestManager.IngestJobEvent evt) {
+        return (evt != null && INGEST_JOB_EVENTS.contains(evt));
+    }
+
+    @Override
+    public Set<IngestManager.IngestJobEvent> getIngestJobEventUpdates() {
+        return INGEST_JOB_EVENTS;
     }
     
 
-    
+
+    private static Long getMinOrNull(Long first, Long second) {
+        if (first == null) {
+            return second;
+        } else if (second == null) {
+            return first;
+        } else {
+            return Math.min(first, second);
+        }
+    }
+
+    private static Long getMaxOrNull(Long first, Long second) {
+        if (first == null) {
+            return second;
+        } else if (second == null) {
+            return first;
+        } else {
+            return Math.max(first, second);
+        }
+    }
+
+    public TimelineSummaryData getData(DataSource dataSource) throws SleuthkitCaseProviderException, TskCoreException {
+        TimelineManager timelineManager = this.provider.get().getTimelineManager();
+
+        DataSourcesFilter dataSourceFilter = new DataSourcesFilter();
+        dataSourceFilter.addSubFilter(new TimelineFilter.DataSourceFilter(dataSource.getName(), dataSource.getId()));
+
+        // TODO check that this isn't filtering more than it should
+        RootFilter dataSourceRootFilter = new RootFilter(
+                new HideKnownFilter(),
+                new TagsFilter(),
+                new HashHitsFilter(),
+                new TextFilter(),
+                new EventTypeFilter(TimelineEventType.ROOT_EVENT_TYPE),
+                new DataSourcesFilter(),
+                FilterUtils.createDefaultFileTypesFilter(),
+                Collections.emptySet());
+
+        // get events for data source
+        long curRunTime = System.currentTimeMillis();
+        List<TimelineEvent> events = timelineManager.getEvents(new Interval(0, curRunTime), dataSourceRootFilter);
+
+        // get counts of events per day
+        Map<Long, Integer> dateCounts = events.stream().collect(Collectors.toMap(
+                (evt) -> evt.getTime() / DAY_SECS,
+                (evt) -> 1,
+                (count1, count2) -> count1 + count2));
+
+        // get minimum and maximum usage date
+        Pair<Long, Long> minMax = dateCounts.keySet().stream().reduce(
+                Pair.of((Long) null, (Long) null),
+                (curMinMax, thisDay) -> Pair.of(getMinOrNull(curMinMax.getLeft(), thisDay), getMaxOrNull(curMinMax.getRight(), thisDay)),
+                (minMax1, minMax2) -> Pair.of(getMinOrNull(minMax1.getLeft(), minMax2.getLeft()), getMaxOrNull(minMax1.getRight(), minMax2.getRight())));
+
+        Long minDay = minMax.getLeft();
+        Long maxDay = minMax.getRight();
+
+        // if no min date or max date, no usage; return null.
+        if (minDay == null || maxDay == null) {
+            return null;
+        }
+
+        Date minDate = new Date(minDay * 1000);
+        Date maxDate = new Date(maxDay * 1000);
+
+        List<DailyActivityAmount> mostRecentActivityAmt = dateCounts.entrySet().stream()
+                // reverse sort to get latest activity
+                .sorted((e1, e2) -> -Long.compare(e1.getKey(), e2.getKey()))
+                // get last 30 days
+                .limit(30)
+                // convert to object to return
+                .map(entry -> new DailyActivityAmount(new Date(entry.getKey() * 1000), entry.getValue()))
+                // create list
+                .collect(Collectors.toList());
+
+        // get in ascending order
+        Collections.reverse(mostRecentActivityAmt);
+
+        return new TimelineSummaryData(minDate, maxDate, mostRecentActivityAmt);
+    }
+
     public static class TimelineSummaryData {
-        private final DataSource dataSource;
+
         private final Date minDate;
         private final Date maxDate;
         private final List<DailyActivityAmount> histogramActivity;
-        
-        
+
+        TimelineSummaryData(Date minDate, Date maxDate, List<DailyActivityAmount> histogramActivity) {
+            this.minDate = minDate;
+            this.maxDate = maxDate;
+            this.histogramActivity = (histogramActivity == null) ? Collections.emptyList() : Collections.unmodifiableList(histogramActivity);
+        }
+
+        public Date getMinDate() {
+            return minDate;
+        }
+
+        public Date getMaxDate() {
+            return maxDate;
+        }
+
+        public List<DailyActivityAmount> getHistogramActivity() {
+            return histogramActivity;
+        }
     }
-    
-    
-    
+
     public static class DailyActivityAmount {
+
         private final Date day;
-        private final long magnitude;
+        private final int magnitude;
+
+        DailyActivityAmount(Date day, int magnitude) {
+            this.day = day;
+            this.magnitude = magnitude;
+        }
+
+        public Date getDay() {
+            return day;
+        }
+
+        public int getMagnitude() {
+            return magnitude;
+        }
     }
 }
