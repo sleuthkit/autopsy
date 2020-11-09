@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.datamodel;
 
+import com.google.common.collect.Sets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -58,6 +59,14 @@ public class TimelineSummary implements DefaultUpdateGovernor {
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS = new HashSet<>(
         Arrays.asList(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED));
 
+    
+    private static final Set<TimelineEventType> FILE_SYSTEM_EVENTS = 
+            new HashSet<>(Arrays.asList(
+                    TimelineEventType.FILE_MODIFIED, 
+                    TimelineEventType.FILE_ACCESSED, 
+                    TimelineEventType.FILE_CREATED, 
+                    TimelineEventType.FILE_CHANGED));
+    
     
     private final SleuthkitCaseProvider provider;
 
@@ -141,11 +150,11 @@ public class TimelineSummary implements DefaultUpdateGovernor {
         long curRunTime = System.currentTimeMillis();
         List<TimelineEvent> events = timelineManager.getEvents(new Interval(0, curRunTime), dataSourceRootFilter);
 
-        // get counts of events per day
-        Map<Long, Integer> dateCounts = events.stream().collect(Collectors.toMap(
+        // get counts of events per day (left is file system events, right is everything else)
+        Map<Long, Pair<Integer, Integer>> dateCounts = events.stream().collect(Collectors.toMap(
                 (evt) -> evt.getTime() / DAY_SECS,
-                (evt) -> 1,
-                (count1, count2) -> count1 + count2));
+                (evt) -> FILE_SYSTEM_EVENTS.contains(evt.getEventType()) ? Pair.of(1, 0) : Pair.of(0, 1),
+                (count1, count2) -> Pair.of(count1.getLeft() + count2.getLeft(), count1.getRight() + count2.getRight())));
 
         // get minimum and maximum usage date
         Pair<Long, Long> minMax = dateCounts.keySet().stream().reduce(
@@ -170,7 +179,7 @@ public class TimelineSummary implements DefaultUpdateGovernor {
                 // get last 30 days
                 .limit(30)
                 // convert to object to return
-                .map(entry -> new DailyActivityAmount(new Date(entry.getKey() * 1000), entry.getValue()))
+                .map(entry -> new DailyActivityAmount(new Date(entry.getKey() * 1000), entry.getValue().getLeft(), entry.getValue().getRight()))
                 // create list
                 .collect(Collectors.toList());
 
@@ -208,19 +217,27 @@ public class TimelineSummary implements DefaultUpdateGovernor {
     public static class DailyActivityAmount {
 
         private final Date day;
-        private final int magnitude;
+        private final int fileActivityCount;
+        private final int artifactActivityCount;
 
-        DailyActivityAmount(Date day, int magnitude) {
+        public DailyActivityAmount(Date day, int fileActivityCount, int artifactActivityCount) {
             this.day = day;
-            this.magnitude = magnitude;
+            this.fileActivityCount = fileActivityCount;
+            this.artifactActivityCount = artifactActivityCount;
         }
 
         public Date getDay() {
             return day;
         }
 
-        public int getMagnitude() {
-            return magnitude;
+        public int getFileActivityCount() {
+            return fileActivityCount;
         }
+
+        public int getArtifactActivityCount() {
+            return artifactActivityCount;
+        }
+        
+        
     }
 }

@@ -47,6 +47,7 @@ import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.IngestRunningLabel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.LoadableComponent;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.LoadableLabel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.PieChartPanel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.PieChartPanel.PieChartItem;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeIdModuleFactory;
@@ -77,46 +78,6 @@ import org.sleuthkit.datamodel.TskCoreException;
     "TypesPanel_osLabel_title=OS",
     "TypesPanel_sizeLabel_title=Size"})
 class TypesPanel extends BaseDataSourceSummaryPanel {
-
-    /**
-     * A label that allows for displaying loading messages and can be used with
-     * a DataFetchResult. Text displays as "<key>:<value | message>".
-     */
-    private static class LoadableLabel extends AbstractLoadableComponent<String> {
-
-        private static final long serialVersionUID = 1L;
-
-        private final JLabel label = new JLabel();
-        private final String key;
-
-        /**
-         * Main constructor for the label.
-         *
-         * @param key The key to be displayed.
-         */
-        LoadableLabel(String key) {
-            this.key = key;
-            setLayout(new BorderLayout());
-            add(label, BorderLayout.CENTER);
-            this.showResults(null);
-        }
-
-        private void setValue(String value) {
-            String formattedKey = StringUtils.isBlank(key) ? "" : key;
-            String formattedValue = StringUtils.isBlank(value) ? "" : value;
-            label.setText(String.format("%s: %s", formattedKey, formattedValue));
-        }
-
-        @Override
-        protected void setMessage(boolean visible, String message) {
-            setValue(message);
-        }
-
-        @Override
-        protected void setResults(String data) {
-            setValue(data);
-        }
-    }
 
     /**
      * Data for types pie chart.

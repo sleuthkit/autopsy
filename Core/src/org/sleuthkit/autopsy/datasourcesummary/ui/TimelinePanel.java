@@ -20,29 +20,37 @@ package org.sleuthkit.autopsy.datasourcesummary.ui;
 
 import java.util.Arrays;
 import java.util.List;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.TimelineSummary;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.TimelineSummary.TimelineSummaryData;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.BarChartPanel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.IngestRunningLabel;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.LoadableComponent;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.LoadableLabel;
 import org.sleuthkit.datamodel.DataSource;
 
 /**
  * A tab shown in data source summary displaying information about a datasource
  * and how it pertains to other cases.
  */
+@Messages({
+    "TimelinePanel_earliestLabel_title=Earliest",
+    "TimelinePanel_latestLabel_title=Latest",
+    "TimlinePanel_last30DaysChart_title=Last 30 Days"
+})
 public class TimelinePanel extends BaseDataSourceSummaryPanel {
 
     private static final long serialVersionUID = 1L;
     
-
-    private final List<JTablePanel<?>> tables = Arrays.asList(
-    );
-
+    private final LoadableLabel earliestLabel = new LoadableLabel(Bundle.TimelinePanel_earliestLabel_title());
+    private final LoadableLabel latestLabel = new LoadableLabel(Bundle.TimelinePanel_latestLabel_title());
+    private final BarChartPanel last30DaysChart = new BarChartPanel(Bundle.TimlinePanel_last30DaysChart_title(), "", "");
+    
+    private final List<LoadableComponent<?>> loadableComponents = Arrays.asList(earliestLabel, latestLabel, last30DaysChart);
     private final List<DataFetchComponents<DataSource, ?>> dataFetchComponents;
-
     private final IngestRunningLabel ingestRunningLabel = new IngestRunningLabel();
 
     public TimelinePanel() {
@@ -84,7 +92,7 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
 
     @Override
     protected void onNewDataSource(DataSource dataSource) {
-        onNewDataSource(dataFetchComponents, tables, dataSource);
+        onNewDataSource(dataFetchComponents, loadableComponents, dataSource);
     }
 
     @Override
@@ -105,7 +113,7 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
         javax.swing.JScrollPane mainScrollPane = new javax.swing.JScrollPane();
         javax.swing.JPanel mainContentPanel = new javax.swing.JPanel();
         javax.swing.JPanel ingestRunningPanel = ingestRunningLabel;
-        javax.swing.JLabel notableFileLabel = new javax.swing.JLabel();
+        javax.swing.JLabel activityRangeLabel = new javax.swing.JLabel();
         javax.swing.Box.Filler filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2));
         javax.swing.JPanel notableFilePanel = notableFileTable;
         javax.swing.Box.Filler filler2 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 20), new java.awt.Dimension(0, 20), new java.awt.Dimension(0, 20));
@@ -123,9 +131,9 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
         ingestRunningPanel.setPreferredSize(new java.awt.Dimension(10, 25));
         mainContentPanel.add(ingestRunningPanel);
 
-        org.openide.awt.Mnemonics.setLocalizedText(notableFileLabel, org.openide.util.NbBundle.getMessage(TimelinePanel.class, "TimelinePanel.notableFileLabel.text")); // NOI18N
-        mainContentPanel.add(notableFileLabel);
-        notableFileLabel.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(TimelinePanel.class, "PastCasesPanel.notableFileLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(activityRangeLabel, org.openide.util.NbBundle.getMessage(TimelinePanel.class, "TimelinePanel.activityRangeLabel.text")); // NOI18N
+        mainContentPanel.add(activityRangeLabel);
+        activityRangeLabel.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(TimelinePanel.class, "PastCasesPanel.notableFileLabel.text")); // NOI18N
 
         filler1.setAlignmentX(0.0F);
         mainContentPanel.add(filler1);
