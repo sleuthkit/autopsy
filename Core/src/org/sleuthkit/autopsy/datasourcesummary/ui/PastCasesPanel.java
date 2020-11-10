@@ -105,8 +105,6 @@ public class PastCasesPanel extends BaseDataSourceSummaryPanel {
         showResultWithModuleCheck(sameIdTable, DataFetchResult.getSubResult(result, (res) -> res.getSameIdsResults()), CR_FACTORY, CR_NAME);
     }
 
-
-
     @Override
     protected void fetchInformation(DataSource dataSource) {
         fetchInformation(dataFetchComponents, dataSource);

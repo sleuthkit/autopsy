@@ -57,10 +57,10 @@ public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
         /**
          * Main constructor.
          *
-         * @param tabTitle     The title of the tab.
-         * @param component    The component to be displayed.
+         * @param tabTitle The title of the tab.
+         * @param component The component to be displayed.
          * @param onDataSource The function to be called on a new data source.
-         * @param onClose      Called to cleanup resources when closing tabs.
+         * @param onClose Called to cleanup resources when closing tabs.
          */
         DataSourceTab(String tabTitle, Component component, Consumer<DataSource> onDataSource, Runnable onClose) {
             this.tabTitle = tabTitle;
@@ -73,7 +73,7 @@ public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
          * Main constructor.
          *
          * @param tabTitle The title of the tab.
-         * @param panel    The component to be displayed in the tab.
+         * @param panel The component to be displayed in the tab.
          */
         DataSourceTab(String tabTitle, BaseDataSourceSummaryPanel panel) {
             this.tabTitle = tabTitle;

@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.ui;
 
-import java.awt.BorderLayout;
 import java.awt.Color;
 import java.sql.SQLException;
 import java.text.DecimalFormat;
@@ -30,7 +29,6 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.swing.JLabel;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.FileTypeUtils.FileTypeCategory;
@@ -40,7 +38,6 @@ import org.sleuthkit.autopsy.datasourcesummary.datamodel.ContainerSummary;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.IngestModuleCheckUtil;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.MimeTypeSummary;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.AbstractLoadableComponent;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult.ResultType;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
@@ -90,9 +87,9 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
         /**
          * Main constructor.
          *
-         * @param pieSlices     The pie slices.
+         * @param pieSlices The pie slices.
          * @param usefulContent True if this is useful content; false if there
-         *                      is 0 mime type information.
+         * is 0 mime type information.
          */
         public TypesPieChartData(List<PieChartItem> pieSlices, boolean usefulContent) {
             this.pieSlices = pieSlices;
@@ -126,9 +123,9 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
         /**
          * Main constructor.
          *
-         * @param label     The label for this slice.
+         * @param label The label for this slice.
          * @param mimeTypes The mime types associated with this slice.
-         * @param color     The color associated with this slice.
+         * @param color The color associated with this slice.
          */
         TypesPieCategory(String label, Set<String> mimeTypes, Color color) {
             this.label = label;
@@ -139,9 +136,9 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
         /**
          * Constructor that accepts FileTypeCategory.
          *
-         * @param label     The label for this slice.
+         * @param label The label for this slice.
          * @param mimeTypes The mime types associated with this slice.
-         * @param color     The color associated with this slice.
+         * @param color The color associated with this slice.
          */
         TypesPieCategory(String label, FileTypeCategory fileCategory, Color color) {
             this(label, fileCategory.getMediaTypes(), color);
@@ -239,8 +236,8 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
     /**
      * Creates a new TypesPanel.
      *
-     * @param mimeTypeData  The service for mime types.
-     * @param typeData      The service for file types data.
+     * @param mimeTypeData The service for mime types.
+     * @param typeData The service for file types data.
      * @param containerData The service for container information.
      */
     public TypesPanel(
@@ -319,7 +316,7 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
      * Gets all the data for the file type pie chart.
      *
      * @param mimeTypeData The means of acquiring data.
-     * @param dataSource   The datasource.
+     * @param dataSource The datasource.
      *
      * @return The pie chart items.
      */

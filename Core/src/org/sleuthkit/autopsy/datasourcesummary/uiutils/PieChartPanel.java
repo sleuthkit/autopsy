@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.datasourcesummary.uiutils;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Font;
-import java.awt.Graphics2D;
 import java.text.DecimalFormat;
 import java.util.List;
 import javax.swing.JLabel;
@@ -30,8 +29,6 @@ import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.labels.PieSectionLabelGenerator;
 import org.jfree.chart.labels.StandardPieSectionLabelGenerator;
-import org.jfree.chart.panel.AbstractOverlay;
-import org.jfree.chart.panel.Overlay;
 import org.jfree.chart.plot.PiePlot;
 import org.jfree.data.general.DefaultPieDataset;
 import org.openide.util.NbBundle.Messages;
@@ -59,7 +56,7 @@ public class PieChartPanel extends AbstractLoadableComponent<List<PieChartPanel.
          * @param label The label for this pie slice.
          * @param value The value for this item.
          * @param color The color for the pie slice. Can be null for
-         *              auto-determined.
+         * auto-determined.
          */
         public PieChartItem(String label, double value, Color color) {
             this.label = label;
@@ -202,7 +199,7 @@ public class PieChartPanel extends AbstractLoadableComponent<List<PieChartPanel.
     /**
      * Shows a message on top of data.
      *
-     * @param data    The data.
+     * @param data The data.
      * @param message The message.
      */
     public synchronized void showDataWithMessage(List<PieChartPanel.PieChartItem> data, String message) {
