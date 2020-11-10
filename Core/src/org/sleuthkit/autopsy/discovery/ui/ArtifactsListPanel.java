@@ -313,6 +313,8 @@ class ArtifactsListPanel extends JPanel {
                     return bba.getDisplayString();
                 } else if (columnIndex == 1 && bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID() && !StringUtils.isBlank(bba.getDisplayString())) {
                     return bba.getDisplayString();
+                } else if (columnIndex == 1 && bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT.getTypeID() && !StringUtils.isBlank(bba.getDisplayString())) {
+                    return bba.getDisplayString();
                 }
             }
             return Bundle.ArtifactsListPanel_value_noValue();

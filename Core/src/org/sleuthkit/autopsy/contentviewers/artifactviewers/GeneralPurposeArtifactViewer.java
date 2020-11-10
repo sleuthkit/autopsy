@@ -66,17 +66,33 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
     private final static int VALUE_COLUMN = 1;
     private final static int VALUE_WIDTH = 2;
     private final static int LABEL_WIDTH = 1;
+    private static final Integer[] DEFAULT_ORDERING = new Integer[]{BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TITLE.getTypeID(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID(),
+        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID(),
+        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID(),
+        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID(),
+        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_REFERRER.getTypeID(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),
+        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT.getTypeID(),
+        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH.getTypeID(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID(),
+        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_HEADERS.getTypeID()};
     private final GridBagLayout gridBagLayout = new GridBagLayout();
     private final GridBagConstraints gridBagConstraints = new GridBagConstraints();
     private String dataSourceName;
     private String sourceFileName;
+    private Integer artifactTypeId = -1;
     private final Map<Integer, List<BlackboardAttribute>> attributeMap = new HashMap<>();
+    private final Map<Integer, Integer[]> orderingMap = new HashMap<>();
 
     /**
      * Creates new form GeneralPurposeArtifactViewer.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public GeneralPurposeArtifactViewer() {
+        orderingMap.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID(), DEFAULT_ORDERING);
+        orderingMap.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID(), DEFAULT_ORDERING);
+        orderingMap.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID(), DEFAULT_ORDERING);
+        orderingMap.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID(), DEFAULT_ORDERING);
+        orderingMap.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID(), DEFAULT_ORDERING);
+        orderingMap.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID(), DEFAULT_ORDERING);
         initComponents();
     }
 
@@ -85,6 +101,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
     public void setArtifact(BlackboardArtifact artifact) {
         resetComponent();
         if (artifact != null) {
+            artifactTypeId = artifact.getArtifactTypeID();
             try {
                 extractArtifactData(artifact);
             } catch (TskCoreException ex) {
@@ -133,6 +150,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
         gridBagConstraints.weightx = TEXT_WEIGHT_X;    // keep components fixed horizontally.
         gridBagConstraints.fill = GridBagConstraints.NONE;
         gridBagConstraints.insets = ROW_INSETS;
+        artifactTypeId = -1;
         dataSourceName = null;
         sourceFileName = null;
         attributeMap.clear();
@@ -185,29 +203,26 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private void updateView() {
-        addHeader(Bundle.GeneralPurposeArtifactViewer_details_attrHeader());
-        moveAttributesFromMapToPanel(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TITLE);
-        moveAttributesFromMapToPanel(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME);
-        moveAttributesFromMapToPanel(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED);
-        moveAttributesFromMapToPanel(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED);
-        moveAttributesFromMapToPanel(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START);
-        moveAttributesFromMapToPanel(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_END);
-        moveAttributesFromMapToPanel(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN);
-        moveAttributesFromMapToPanel(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL);
-        moveAttributesFromMapToPanel(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_REFERRER);
-        moveAttributesFromMapToPanel(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME);
-        moveAttributesFromMapToPanel(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_VALUE);
-        moveAttributesFromMapToPanel(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT);
-        for (int key : attributeMap.keySet()) {
-            for (BlackboardAttribute bba : attributeMap.get(key)) {
-                addNameValueRow(bba.getAttributeType().getDisplayName(), bba.getDisplayString());
+        if (artifactTypeId != -1) {
+            addHeader(Bundle.GeneralPurposeArtifactViewer_details_attrHeader());
+            Integer[] orderingArray = orderingMap.get(artifactTypeId);
+            if (orderingArray == null) {
+                orderingArray = DEFAULT_ORDERING;
             }
+            for (Integer attrId : orderingArray) {
+                moveAttributesFromMapToPanel(attrId);
+            }
+            for (int key : attributeMap.keySet()) {
+                for (BlackboardAttribute bba : attributeMap.get(key)) {
+                    addNameValueRow(bba.getAttributeType().getDisplayName(), bba.getDisplayString());
+                }
+            }
+            addHeader(Bundle.GeneralPurposeArtifactViewer_details_sourceHeader());
+            addNameValueRow(Bundle.GeneralPurposeArtifactViewer_details_dataSource(), dataSourceName);
+            addNameValueRow(Bundle.GeneralPurposeArtifactViewer_details_file(), sourceFileName);
+            // add veritcal glue at the end
+            addPageEndGlue();
         }
-        addHeader(Bundle.GeneralPurposeArtifactViewer_details_sourceHeader());
-        addNameValueRow(Bundle.GeneralPurposeArtifactViewer_details_dataSource(), dataSourceName);
-        addNameValueRow(Bundle.GeneralPurposeArtifactViewer_details_file(), sourceFileName);
-        // add veritcal glue at the end
-        addPageEndGlue();
     }
 
     /**
@@ -218,8 +233,8 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
      *             add to the panel.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    private void moveAttributesFromMapToPanel(BlackboardAttribute.ATTRIBUTE_TYPE type) {
-        List<BlackboardAttribute> attrList = attributeMap.remove(type.getTypeID());
+    private void moveAttributesFromMapToPanel(Integer attrId) {
+        List<BlackboardAttribute> attrList = attributeMap.remove(attrId);
         if (attrList != null) {
             for (BlackboardAttribute bba : attrList) {
                 addNameValueRow(bba.getAttributeType().getDisplayName(), bba.getDisplayString());
