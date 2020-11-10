@@ -175,7 +175,7 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
             } catch (TskCoreException ex) {
                 logger.log(Level.WARNING, "Unable to get aquisition details for selected data source", ex);
             }
-            
+
             if (selectedDataSource instanceof Image) {
                 setFieldsForImage((Image) selectedDataSource, unallocatedFilesSize);
             } else {
