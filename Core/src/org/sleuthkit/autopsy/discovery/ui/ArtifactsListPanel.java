@@ -314,36 +314,33 @@ class ArtifactsListPanel extends JPanel {
                 } else if (columnIndex == 1 && bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID() && !StringUtils.isBlank(bba.getDisplayString())) {
                     return bba.getDisplayString();
                 }
-                return Bundle.ArtifactsListPanel_value_noValue();
             }
-
-            @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-            @NbBundle.Messages({"ArtifactsListPanel.titleColumn.name=Title",
-                "ArtifactsListPanel.fileNameColumn.name=Name",
-                "ArtifactsListPanel.dateColumn.name=Date/Time",
-                "ArtifactsListPanel.mimeTypeColumn.name=MIME Type"})
-            @Override
-            public String getColumnName
-            (int column
-            
-                ) {
-            switch (column) {
-                    case 0:
-                        return Bundle.ArtifactsListPanel_dateColumn_name();
-                    case 1:
-                        if (artifactType == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE || artifactType == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD) {
-                            return Bundle.ArtifactsListPanel_fileNameColumn_name();
-                        } else {
-                            return Bundle.ArtifactsListPanel_titleColumn_name();
-                        }
-                    case 2:
-                        return Bundle.ArtifactsListPanel_mimeTypeColumn_name();
-                    default:
-                        return "";
-                }
-            }
+            return Bundle.ArtifactsListPanel_value_noValue();
         }
 
+        @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+        @NbBundle.Messages({"ArtifactsListPanel.titleColumn.name=Title",
+            "ArtifactsListPanel.fileNameColumn.name=Name",
+            "ArtifactsListPanel.dateColumn.name=Date/Time",
+            "ArtifactsListPanel.mimeTypeColumn.name=MIME Type"})
+        @Override
+        public String getColumnName(int column) {
+            switch (column) {
+                case 0:
+                    return Bundle.ArtifactsListPanel_dateColumn_name();
+                case 1:
+                    if (artifactType == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE || artifactType == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD) {
+                        return Bundle.ArtifactsListPanel_fileNameColumn_name();
+                    } else {
+                        return Bundle.ArtifactsListPanel_titleColumn_name();
+                    }
+                case 2:
+                    return Bundle.ArtifactsListPanel_mimeTypeColumn_name();
+                default:
+                    return "";
+            }
+        }
+    }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTable jTable1;
     // End of variables declaration//GEN-END:variables
