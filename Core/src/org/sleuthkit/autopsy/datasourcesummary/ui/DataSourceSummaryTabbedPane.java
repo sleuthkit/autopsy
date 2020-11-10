@@ -38,7 +38,8 @@ import org.sleuthkit.datamodel.DataSource;
     "DataSourceSummaryTabbedPane_ingestHistoryTab_title=Ingest History",
     "DataSourceSummaryTabbedPane_recentFileTab_title=Recent Files",
     "DataSourceSummaryTabbedPane_pastCasesTab_title=Past Cases",
-    "DataSourceSummaryTabbedPane_analysisTab_title=Analysis"
+    "DataSourceSummaryTabbedPane_analysisTab_title=Analysis",
+    "DataSourceSummaryTabbedPane_timelineTab_title=Timeline"
 })
 public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
 
@@ -123,6 +124,7 @@ public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
             new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_analysisTab_title(), new AnalysisPanel()),
             new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_recentFileTab_title(), new RecentFilesPanel()),
             new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_pastCasesTab_title(), new PastCasesPanel()),
+            new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_timelineTab_title(), new TimelinePanel()),
             // do nothing on closing 
             new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_ingestHistoryTab_title(), ingestHistoryPanel, ingestHistoryPanel::setDataSource, () -> {
             }),

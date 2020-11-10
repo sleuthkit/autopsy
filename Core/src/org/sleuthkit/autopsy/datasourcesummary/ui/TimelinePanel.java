@@ -18,12 +18,22 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.ui;
 
+import java.awt.Color;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
+import org.apache.commons.collections.CollectionUtils;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.TimelineSummary;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.TimelineSummary.DailyActivityAmount;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.TimelineSummary.TimelineSummaryData;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.BarChartPanel;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.BarChartPanel.BarChartItem;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.BarChartPanel.BarChartSeries;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
@@ -44,6 +54,9 @@ import org.sleuthkit.datamodel.DataSource;
 public class TimelinePanel extends BaseDataSourceSummaryPanel {
 
     private static final long serialVersionUID = 1L;
+    private static final DateFormat EARLIEST_LATEST_FORMAT = new SimpleDateFormat("MMM d, yyyy", Locale.getDefault());
+    private static final DateFormat CHART_FORMAT = new SimpleDateFormat("MMM d", Locale.getDefault());
+    private static final Color CHART_COLOR = Color.BLUE;
     
     private final LoadableLabel earliestLabel = new LoadableLabel(Bundle.TimelinePanel_earliestLabel_title());
     private final LoadableLabel latestLabel = new LoadableLabel(Bundle.TimelinePanel_latestLabel_title());
@@ -70,6 +83,34 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
 
         initComponents();
     }
+    
+    
+    private static String parseEarliestLatest(Date date) {
+        return date == null ? null : EARLIEST_LATEST_FORMAT.format(date);
+    }
+    
+    private BarChartSeries parseChartData(List<DailyActivityAmount> recentDaysActivity) {
+        if (CollectionUtils.isEmpty(recentDaysActivity)) {
+            return null;
+        }
+        
+        List<BarChartItem> items = new ArrayList<>();
+        for (int i = 0; i < recentDaysActivity.size(); i++) {
+            DailyActivityAmount curItem = recentDaysActivity.get(i);
+            long amount = curItem.getArtifactActivityCount() * 1000 + curItem.getFileActivityCount();
+            
+            if (i == 0 || i == recentDaysActivity.size() - 1) {
+                String formattedDate = curItem.getDay() == null ? "" : CHART_FORMAT.format(curItem.getDay());
+                items.add(new BarChartItem(formattedDate, amount));
+            } else {
+                items.add(new BarChartItem("", amount));
+            }
+        }
+        
+        return new BarChartSeries(CHART_COLOR, items);
+    }
+    
+    
 
     /**
      * Handles displaying the result for each table by breaking apart subdata
@@ -78,11 +119,9 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
      * @param result The result.
      */
     private void handleResult(DataFetchResult<TimelineSummaryData> result) {
-        if (result == null) {
-            // TODO
-        } else {
-            // TODO
-        }
+        earliestLabel.showDataFetchResult(DataFetchResult.getSubResult(result, r -> parseEarliestLatest(r.getMinDate())));
+        latestLabel.showDataFetchResult(DataFetchResult.getSubResult(result, r -> parseEarliestLatest(r.getMaxDate())));
+        last30DaysChart.showDataFetchResult(DataFetchResult.getSubResult(result, r -> parseChartData(r.getMostRecentDaysActivity())));
     }
 
     @Override
@@ -115,11 +154,10 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
         javax.swing.JPanel ingestRunningPanel = ingestRunningLabel;
         javax.swing.JLabel activityRangeLabel = new javax.swing.JLabel();
         javax.swing.Box.Filler filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2));
-        javax.swing.JPanel notableFilePanel = notableFileTable;
+        javax.swing.JPanel earliestLabelPanel = earliestLabel;
+        javax.swing.JPanel latestLabelPanel = latestLabel;
         javax.swing.Box.Filler filler2 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 20), new java.awt.Dimension(0, 20), new java.awt.Dimension(0, 20));
-        javax.swing.JLabel sameIdLabel = new javax.swing.JLabel();
-        javax.swing.Box.Filler filler3 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2));
-        javax.swing.JPanel sameIdPanel = sameIdTable;
+        javax.swing.JPanel sameIdPanel = last30DaysChart;
         javax.swing.Box.Filler filler5 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 32767));
 
         mainContentPanel.setBorder(javax.swing.BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -131,6 +169,7 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
         ingestRunningPanel.setPreferredSize(new java.awt.Dimension(10, 25));
         mainContentPanel.add(ingestRunningPanel);
 
+        activityRangeLabel.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(activityRangeLabel, org.openide.util.NbBundle.getMessage(TimelinePanel.class, "TimelinePanel.activityRangeLabel.text")); // NOI18N
         mainContentPanel.add(activityRangeLabel);
         activityRangeLabel.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(TimelinePanel.class, "PastCasesPanel.notableFileLabel.text")); // NOI18N
@@ -138,25 +177,26 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
         filler1.setAlignmentX(0.0F);
         mainContentPanel.add(filler1);
 
-        notableFilePanel.setAlignmentX(0.0F);
-        notableFilePanel.setMaximumSize(new java.awt.Dimension(32767, 106));
-        notableFilePanel.setMinimumSize(new java.awt.Dimension(100, 106));
-        notableFilePanel.setPreferredSize(new java.awt.Dimension(100, 106));
-        mainContentPanel.add(notableFilePanel);
+        earliestLabelPanel.setAlignmentX(0.0F);
+        earliestLabelPanel.setMaximumSize(new java.awt.Dimension(32767, 20));
+        earliestLabelPanel.setMinimumSize(new java.awt.Dimension(100, 20));
+        earliestLabelPanel.setPreferredSize(new java.awt.Dimension(32767, 20));
+        mainContentPanel.add(earliestLabelPanel);
+
+        latestLabelPanel.setAlignmentX(0.0F);
+        latestLabelPanel.setMaximumSize(new java.awt.Dimension(32767, 20));
+        latestLabelPanel.setMinimumSize(new java.awt.Dimension(100, 20));
+        latestLabelPanel.setPreferredSize(new java.awt.Dimension(32767, 20));
+        mainContentPanel.add(latestLabelPanel);
 
         filler2.setAlignmentX(0.0F);
         mainContentPanel.add(filler2);
 
-        org.openide.awt.Mnemonics.setLocalizedText(sameIdLabel, org.openide.util.NbBundle.getMessage(TimelinePanel.class, "TimelinePanel.sameIdLabel.text")); // NOI18N
-        mainContentPanel.add(sameIdLabel);
-
-        filler3.setAlignmentX(0.0F);
-        mainContentPanel.add(filler3);
-
         sameIdPanel.setAlignmentX(0.0F);
-        sameIdPanel.setMaximumSize(new java.awt.Dimension(32767, 106));
-        sameIdPanel.setMinimumSize(new java.awt.Dimension(100, 106));
-        sameIdPanel.setPreferredSize(new java.awt.Dimension(100, 106));
+        sameIdPanel.setMaximumSize(new java.awt.Dimension(600, 300));
+        sameIdPanel.setMinimumSize(new java.awt.Dimension(600, 300));
+        sameIdPanel.setPreferredSize(new java.awt.Dimension(600, 300));
+        sameIdPanel.setVerifyInputWhenFocusTarget(false);
         mainContentPanel.add(sameIdPanel);
 
         filler5.setAlignmentX(0.0F);

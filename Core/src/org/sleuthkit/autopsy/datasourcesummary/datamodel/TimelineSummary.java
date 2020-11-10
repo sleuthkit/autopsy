@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.datamodel;
 
-import com.google.common.collect.Sets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -195,10 +194,10 @@ public class TimelineSummary implements DefaultUpdateGovernor {
         private final Date maxDate;
         private final List<DailyActivityAmount> histogramActivity;
 
-        TimelineSummaryData(Date minDate, Date maxDate, List<DailyActivityAmount> histogramActivity) {
+        TimelineSummaryData(Date minDate, Date maxDate, List<DailyActivityAmount> recentDaysActivity) {
             this.minDate = minDate;
             this.maxDate = maxDate;
-            this.histogramActivity = (histogramActivity == null) ? Collections.emptyList() : Collections.unmodifiableList(histogramActivity);
+            this.histogramActivity = (recentDaysActivity == null) ? Collections.emptyList() : Collections.unmodifiableList(recentDaysActivity);
         }
 
         public Date getMinDate() {
@@ -209,7 +208,7 @@ public class TimelineSummary implements DefaultUpdateGovernor {
             return maxDate;
         }
 
-        public List<DailyActivityAmount> getHistogramActivity() {
+        public List<DailyActivityAmount> getMostRecentDaysActivity() {
             return histogramActivity;
         }
     }
