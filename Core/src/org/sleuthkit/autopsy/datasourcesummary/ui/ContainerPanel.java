@@ -35,7 +35,6 @@ import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultUpdateGovernor;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.UpdateGovernor;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Image;
-import org.sleuthkit.datamodel.LocalFilesDataSource;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
