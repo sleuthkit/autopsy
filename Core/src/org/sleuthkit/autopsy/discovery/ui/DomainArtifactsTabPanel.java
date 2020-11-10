@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.discovery.ui;
 
+import org.sleuthkit.autopsy.contentviewers.artifactviewers.GeneralPurposeArtifactViewer;
 import com.google.common.eventbus.Subscribe;
 import java.util.logging.Level;
 import javax.swing.JPanel;
@@ -78,7 +79,7 @@ final class DomainArtifactsTabPanel extends JPanel {
             case TSK_WEB_COOKIE:
             case TSK_WEB_SEARCH_QUERY:
             case TSK_WEB_BOOKMARK:
-                rightPanel = new WebHistoryDetailsPanel();
+                rightPanel = new GeneralPurposeArtifactViewer();
                 break;
             case TSK_WEB_DOWNLOAD:
             case TSK_WEB_CACHE:
