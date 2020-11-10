@@ -34,6 +34,7 @@ import org.sleuthkit.autopsy.datasourcesummary.datamodel.TimelineSummary.Timelin
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.BarChartPanel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.BarChartPanel.BarChartItem;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.BarChartPanel.BarChartSeries;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.BarChartPanel.OrderedKey;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
@@ -49,8 +50,9 @@ import org.sleuthkit.datamodel.DataSource;
 @Messages({
     "TimelinePanel_earliestLabel_title=Earliest",
     "TimelinePanel_latestLabel_title=Latest",
-    "TimlinePanel_last30DaysChart_title=Last 30 Days"
-})
+    "TimlinePanel_last30DaysChart_title=Last 30 Days",
+    "TimlinePanel_last30DaysChart_fileEvts_title=File Events",
+    "TimlinePanel_last30DaysChart_artifactEvts_title=Artifact Events",})
 public class TimelinePanel extends BaseDataSourceSummaryPanel {
 
     private static final long serialVersionUID = 1L;
@@ -58,7 +60,7 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
     private static final DateFormat CHART_FORMAT = getUtcFormat("MMM d");
     private static final Color CHART_COLOR = Color.BLUE;
     private static final int MOST_RECENT_DAYS_COUNT = 30;
-    
+
     /**
      * Creates a DateFormat formatter that uses UTC for time zone.
      *
@@ -112,6 +114,9 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
         return date == null ? null : formatter.format(date);
     }
 
+    private static final Color FILE_EVT_COLOR = new Color(1, 87, 155);
+    private static final Color ARTIFACT_EVT_COLOR = new Color(76, 175, 80);
+
     /**
      * Converts DailyActivityAmount data retrieved from TimelineSummary into
      * data to be displayed as a bar chart.
@@ -119,27 +124,32 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
      * @param recentDaysActivity The data retrieved from TimelineSummary.
      * @return The data to be displayed in the BarChart.
      */
-    private BarChartSeries parseChartData(List<DailyActivityAmount> recentDaysActivity) {
+    private List<BarChartSeries> parseChartData(List<DailyActivityAmount> recentDaysActivity) {
         // if no data, return null indicating no result.
         if (CollectionUtils.isEmpty(recentDaysActivity)) {
             return null;
         }
 
         // Create a bar chart item for each recent days activity item
-        List<BarChartItem> items = new ArrayList<>();
+        List<BarChartItem> fileEvtCounts = new ArrayList<>();
+        List<BarChartItem> artifactEvtCounts = new ArrayList<>();
+
         for (int i = 0; i < recentDaysActivity.size(); i++) {
             DailyActivityAmount curItem = recentDaysActivity.get(i);
-            long amount = curItem.getArtifactActivityCount() * 1000 + curItem.getFileActivityCount();
 
-            if (i == 0 || i == recentDaysActivity.size() - 1) {
-                String formattedDate = formatDate(curItem.getDay(), CHART_FORMAT);
-                items.add(new BarChartItem(formattedDate, amount));
-            } else {
-                items.add(new BarChartItem("", amount));
-            }
+            long fileAmt = curItem.getFileActivityCount();
+            long artifactAmt = curItem.getArtifactActivityCount() * 100;
+            String formattedDate = (i == 0 || i == recentDaysActivity.size() - 1)
+                    ? formatDate(curItem.getDay(), CHART_FORMAT) : "";
+
+            OrderedKey thisKey = new OrderedKey(formattedDate, i);
+            fileEvtCounts.add(new BarChartItem(thisKey, fileAmt));
+            artifactEvtCounts.add(new BarChartItem(thisKey, artifactAmt));
         }
 
-        return new BarChartSeries(CHART_COLOR, items);
+        return Arrays.asList(
+                new BarChartSeries(Bundle.TimlinePanel_last30DaysChart_fileEvts_title(), FILE_EVT_COLOR, fileEvtCounts),
+                new BarChartSeries(Bundle.TimlinePanel_last30DaysChart_artifactEvts_title(), ARTIFACT_EVT_COLOR, artifactEvtCounts));
     }
 
     /**

@@ -24,6 +24,7 @@ import java.awt.Font;
 import java.util.Collections;
 import java.util.List;
 import javax.swing.JLabel;
+import org.apache.commons.collections4.CollectionUtils;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
@@ -37,7 +38,7 @@ import org.jfree.data.category.DefaultCategoryDataset;
 /**
  * A bar chart panel.
  */
-public class BarChartPanel extends AbstractLoadableComponent<BarChartPanel.BarChartSeries> {
+public class BarChartPanel extends AbstractLoadableComponent<List<BarChartPanel.BarChartSeries>> {
 
     /**
      * Represents a series in a bar chart where all items pertain to one
@@ -45,6 +46,7 @@ public class BarChartPanel extends AbstractLoadableComponent<BarChartPanel.BarCh
      */
     public static class BarChartSeries {
 
+        private final Comparable key;
         private final Color color;
         private final List<BarChartItem> items;
 
@@ -54,7 +56,8 @@ public class BarChartPanel extends AbstractLoadableComponent<BarChartPanel.BarCh
          * @param color The color for this series.
          * @param items The bars to be displayed for this series.
          */
-        public BarChartSeries(Color color, List<BarChartItem> items) {
+        public BarChartSeries(Comparable key, Color color, List<BarChartItem> items) {
+            this.key = key;
             this.color = color;
             this.items = (items == null) ? Collections.emptyList() : Collections.unmodifiableList(items);
         }
@@ -72,6 +75,13 @@ public class BarChartPanel extends AbstractLoadableComponent<BarChartPanel.BarCh
         public List<BarChartItem> getItems() {
             return items;
         }
+
+        /**
+         * @return The key for this item.
+         */
+        public Comparable getKey() {
+            return key;
+        }
     }
 
     /**
@@ -79,25 +89,26 @@ public class BarChartPanel extends AbstractLoadableComponent<BarChartPanel.BarCh
      */
     public static class BarChartItem {
 
-        private final String label;
+        private final Comparable key;
         private final double value;
 
         /**
          * Main constructor.
          *
-         * @param label The label for this bar.
+         * @param label The key for this bar. Also serves as the label using
+         * toString().
          * @param value The value for this item.
          */
-        public BarChartItem(String label, double value) {
-            this.label = label;
+        public BarChartItem(Comparable key, double value) {
+            this.key = key;
             this.value = value;
         }
 
         /**
-         * @return The label for this item.
+         * @return The key for this item.
          */
-        public String getLabel() {
-            return label;
+        public Comparable getKey() {
+            return key;
         }
 
         /**
@@ -113,17 +124,19 @@ public class BarChartPanel extends AbstractLoadableComponent<BarChartPanel.BarCh
      * chart, but instead uses the comparable nature to order items. This
      * provides order using a provided index as well as the value for the axis.
      */
-    private static class OrderedKey implements Comparable<OrderedKey> {
+    public static class OrderedKey implements Comparable<OrderedKey> {
 
         private final Object keyValue;
         private final int keyIndex;
 
         /**
          * Main constructor.
-         * @param keyValue The value for the key to be displayed in the domain axis.
+         *
+         * @param keyValue The value for the key to be displayed in the domain
+         * axis.
          * @param keyIndex The index at which it will be displayed.
          */
-        OrderedKey(Object keyValue, int keyIndex) {
+        public OrderedKey(Object keyValue, int keyIndex) {
             this.keyValue = keyValue;
             this.keyIndex = keyIndex;
         }
@@ -151,6 +164,30 @@ public class BarChartPanel extends AbstractLoadableComponent<BarChartPanel.BarCh
 
             // compare by index
             return Integer.compare(this.getKeyIndex(), o.getKeyIndex());
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 3;
+            return hash;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            final OrderedKey other = (OrderedKey) obj;
+            if (this.keyIndex != other.keyIndex) {
+                return false;
+            }
+            return true;
         }
 
         @Override
@@ -185,13 +222,13 @@ public class BarChartPanel extends AbstractLoadableComponent<BarChartPanel.BarCh
      * @param valueLabel The y-axis label.
      */
     public BarChartPanel(String title, String categoryLabel, String valueLabel) {
-        this.chart = ChartFactory.createBarChart(
+        this.chart = ChartFactory.createStackedBarChart(
                 title,
                 categoryLabel,
                 valueLabel,
                 dataset,
                 PlotOrientation.VERTICAL,
-                false, false, false);
+                true, false, false);
 
         // set style to match autopsy components
         chart.setBackgroundPaint(null);
@@ -247,34 +284,24 @@ public class BarChartPanel extends AbstractLoadableComponent<BarChartPanel.BarCh
         this.overlay.setMessage(message);
     }
 
-    // only one category for now.
-    private static final String DEFAULT_CATEGORY = "";
-
     @Override
-    protected void setResults(BarChartPanel.BarChartSeries data) {
+    protected void setResults(List<BarChartPanel.BarChartSeries> data) {
         this.dataset.clear();
 
-        if (data != null && data.getItems() != null && !data.getItems().isEmpty()) {
-            if (data.getColor() != null) {
-                this.plot.getRenderer().setSeriesPaint(0, data.getColor());
-            }
+        if (CollectionUtils.isNotEmpty(data)) {
+            for (int s = 0; s < data.size(); s++) {
+                BarChartPanel.BarChartSeries series = data.get(s);
+                if (series != null && CollectionUtils.isNotEmpty(series.getItems())) {
+                    if (series.getColor() != null) {
+                        this.plot.getRenderer().setSeriesPaint(s, series.getColor());
+                    }
 
-            for (int i = 0; i < data.getItems().size(); i++) {
-                BarChartItem bar = data.getItems().get(i);
-                this.dataset.setValue(bar.getValue(), DEFAULT_CATEGORY, new OrderedKey(bar.getLabel(), i));
+                    for (int i = 0; i < series.getItems().size(); i++) {
+                        BarChartItem bar = series.getItems().get(i);
+                        this.dataset.setValue(bar.getValue(), series.getKey(), bar.getKey());
+                    }
+                }
             }
         }
-    }
-
-    /**
-     * Shows a message on top of data.
-     *
-     * @param data The data.
-     * @param message The message.
-     */
-    public synchronized void showDataWithMessage(BarChartPanel.BarChartSeries data, String message) {
-        setResults(data);
-        setMessage(true, message);
-        repaint();
     }
 }
