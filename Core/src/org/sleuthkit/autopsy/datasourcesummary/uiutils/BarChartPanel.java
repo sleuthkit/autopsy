@@ -46,7 +46,7 @@ public class BarChartPanel extends AbstractLoadableComponent<List<BarChartPanel.
      */
     public static class BarChartSeries {
 
-        private final Comparable key;
+        private final Comparable<?> key;
         private final Color color;
         private final List<BarChartItem> items;
 
@@ -56,7 +56,7 @@ public class BarChartPanel extends AbstractLoadableComponent<List<BarChartPanel.
          * @param color The color for this series.
          * @param items The bars to be displayed for this series.
          */
-        public BarChartSeries(Comparable key, Color color, List<BarChartItem> items) {
+        public BarChartSeries(Comparable<?> key, Color color, List<BarChartItem> items) {
             this.key = key;
             this.color = color;
             this.items = (items == null) ? Collections.emptyList() : Collections.unmodifiableList(items);
@@ -79,7 +79,7 @@ public class BarChartPanel extends AbstractLoadableComponent<List<BarChartPanel.
         /**
          * @return The key for this item.
          */
-        public Comparable getKey() {
+        public Comparable<?> getKey() {
             return key;
         }
     }
@@ -89,7 +89,7 @@ public class BarChartPanel extends AbstractLoadableComponent<List<BarChartPanel.
      */
     public static class BarChartItem {
 
-        private final Comparable key;
+        private final Comparable<?> key;
         private final double value;
 
         /**
@@ -99,7 +99,7 @@ public class BarChartPanel extends AbstractLoadableComponent<List<BarChartPanel.
          * toString().
          * @param value The value for this item.
          */
-        public BarChartItem(Comparable key, double value) {
+        public BarChartItem(Comparable<?> key, double value) {
             this.key = key;
             this.value = value;
         }
@@ -107,7 +107,7 @@ public class BarChartPanel extends AbstractLoadableComponent<List<BarChartPanel.
         /**
          * @return The key for this item.
          */
-        public Comparable getKey() {
+        public Comparable<?> getKey() {
             return key;
         }
 

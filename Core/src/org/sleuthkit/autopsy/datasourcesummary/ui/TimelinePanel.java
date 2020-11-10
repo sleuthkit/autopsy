@@ -58,7 +58,6 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
     private static final long serialVersionUID = 1L;
     private static final DateFormat EARLIEST_LATEST_FORMAT = getUtcFormat("MMM d, yyyy");
     private static final DateFormat CHART_FORMAT = getUtcFormat("MMM d");
-    private static final Color CHART_COLOR = Color.BLUE;
     private static final int MOST_RECENT_DAYS_COUNT = 30;
 
     /**
@@ -114,8 +113,8 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
         return date == null ? null : formatter.format(date);
     }
 
-    private static final Color FILE_EVT_COLOR = new Color(1, 87, 155);
-    private static final Color ARTIFACT_EVT_COLOR = new Color(76, 175, 80);
+    private static final Color FILE_EVT_COLOR = new Color(228, 22, 28);
+    private static final Color ARTIFACT_EVT_COLOR = new Color(21, 227, 100);
 
     /**
      * Converts DailyActivityAmount data retrieved from TimelineSummary into
