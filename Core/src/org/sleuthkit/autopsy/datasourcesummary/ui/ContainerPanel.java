@@ -181,7 +181,7 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
                 setFieldsForImage((Image) selectedDataSource);
             }
         }
-        updateFieldVisibility();
+        
         this.repaint();
     }
 
@@ -231,41 +231,6 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Unable to get SHA256 for selected data source", ex);
         }
-    }
-
-    /**
-     * Update the visibility of all fields and their labels based on whether
-     * they have contents. Empty fields have them and their contents hidden.
-     */
-    private void updateFieldVisibility() {
-        displayNameValue.setVisible(!displayNameValue.getText().isEmpty());
-        displayNameLabel.setVisible(!displayNameValue.getText().isEmpty());
-        originalNameValue.setVisible(!originalNameValue.getText().isEmpty());
-        originalNameLabel.setVisible(!originalNameValue.getText().isEmpty());
-        deviceIdValue.setVisible(!deviceIdValue.getText().isEmpty());
-        deviceIdLabel.setVisible(!deviceIdValue.getText().isEmpty());
-        timeZoneValue.setVisible(!timeZoneValue.getText().isEmpty());
-        timeZoneLabel.setVisible(!timeZoneValue.getText().isEmpty());
-        acquisitionDetailsTextArea.setVisible(!acquisitionDetailsTextArea.getText().isEmpty());
-        acquisitionDetailsLabel.setVisible(!acquisitionDetailsTextArea.getText().isEmpty());
-        acquisitionDetailsScrollPane.setVisible(!acquisitionDetailsTextArea.getText().isEmpty());
-        imageTypeValue.setVisible(!imageTypeValue.getText().isEmpty());
-        imageTypeLabel.setVisible(!imageTypeValue.getText().isEmpty());
-        sizeValue.setVisible(!sizeValue.getText().isEmpty());
-        sizeLabel.setVisible(!sizeValue.getText().isEmpty());
-        sectorSizeValue.setVisible(!sectorSizeValue.getText().isEmpty());
-        sectorSizeLabel.setVisible(!sectorSizeValue.getText().isEmpty());
-        md5HashValue.setVisible(!md5HashValue.getText().isEmpty());
-        md5HashLabel.setVisible(!md5HashValue.getText().isEmpty());
-        sha1HashValue.setVisible(!sha1HashValue.getText().isEmpty());
-        sha1HashLabel.setVisible(!sha1HashValue.getText().isEmpty());
-        sha256HashValue.setVisible(!sha256HashValue.getText().isEmpty());
-        sha256HashLabel.setVisible(!sha256HashValue.getText().isEmpty());
-        unallocatedSizeValue.setVisible(!unallocatedSizeValue.getText().isEmpty());
-        unallocatedSizeLabel.setVisible(!unallocatedSizeValue.getText().isEmpty());
-        filePathsTable.setVisible(filePathsTable.getRowCount() > 0);
-        filePathsLabel.setVisible(filePathsTable.getRowCount() > 0);
-        filePathsScrollPane.setVisible(filePathsTable.getRowCount() > 0);
     }
 
     /**
