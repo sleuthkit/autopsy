@@ -3,6 +3,7 @@ AnalysisPanel_keyColumn_title=Name
 AnalysisPanel_keywordSearchModuleName=Keyword Search
 # {0} - module name
 BaseDataSourceSummaryPanel_defaultNotIngestMessage=The {0} ingest module has not been run on this data source.
+ContainerPanel_setFieldsForNonImageDataSource_na=N/A
 CTL_DataSourceSummaryAction=Data Source Summary
 DataSourceSummaryDialog.closeButton.text=Close
 ContainerPanel.displayNameLabel.text=Display Name:
