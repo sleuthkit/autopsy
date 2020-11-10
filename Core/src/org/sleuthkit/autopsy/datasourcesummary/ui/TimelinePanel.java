@@ -43,8 +43,8 @@ import org.sleuthkit.autopsy.datasourcesummary.uiutils.LoadableLabel;
 import org.sleuthkit.datamodel.DataSource;
 
 /**
- * A tab shown in data source summary displaying information about a datasource
- * and how it pertains to other cases.
+ * A tab shown in data source summary displaying information about a data
+ * source's timeline events.
  */
 @Messages({
     "TimelinePanel_earliestLabel_title=Earliest",
@@ -57,22 +57,30 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
     private static final DateFormat EARLIEST_LATEST_FORMAT = getUtcFormat("MMM d, yyyy");
     private static final DateFormat CHART_FORMAT = getUtcFormat("MMM d");
     private static final Color CHART_COLOR = Color.BLUE;
+    private static final int MOST_RECENT_DAYS_COUNT = 30;
     
-
-    
-    private final LoadableLabel earliestLabel = new LoadableLabel(Bundle.TimelinePanel_earliestLabel_title());
-    private final LoadableLabel latestLabel = new LoadableLabel(Bundle.TimelinePanel_latestLabel_title());
-    private final BarChartPanel last30DaysChart = new BarChartPanel(Bundle.TimlinePanel_last30DaysChart_title(), "", "");
-    
-    private final List<LoadableComponent<?>> loadableComponents = Arrays.asList(earliestLabel, latestLabel, last30DaysChart);
-    private final List<DataFetchComponents<DataSource, ?>> dataFetchComponents;
-    private final IngestRunningLabel ingestRunningLabel = new IngestRunningLabel();
-
-    
+    /**
+     * Creates a DateFormat formatter that uses UTC for time zone.
+     *
+     * @param formatString The date format string.
+     * @return The data format.
+     */
     private static DateFormat getUtcFormat(String formatString) {
         return new SimpleDateFormat(formatString, Locale.getDefault());
     }
-    
+
+    // components displayed in the tab
+    private final IngestRunningLabel ingestRunningLabel = new IngestRunningLabel();
+    private final LoadableLabel earliestLabel = new LoadableLabel(Bundle.TimelinePanel_earliestLabel_title());
+    private final LoadableLabel latestLabel = new LoadableLabel(Bundle.TimelinePanel_latestLabel_title());
+    private final BarChartPanel last30DaysChart = new BarChartPanel(Bundle.TimlinePanel_last30DaysChart_title(), "", "");
+
+    // all loadable components on this tab
+    private final List<LoadableComponent<?>> loadableComponents = Arrays.asList(earliestLabel, latestLabel, last30DaysChart);
+
+    // actions to load data for this tab
+    private final List<DataFetchComponents<DataSource, ?>> dataFetchComponents;
+
     public TimelinePanel() {
         this(new TimelineSummary());
     }
@@ -84,50 +92,67 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
         // set up data acquisition methods
         dataFetchComponents = Arrays.asList(
                 new DataFetchWorker.DataFetchComponents<>(
-                        (dataSource) -> timelineData.getData(dataSource),
+                        (dataSource) -> timelineData.getData(dataSource, MOST_RECENT_DAYS_COUNT),
                         (result) -> handleResult(result))
         );
 
         initComponents();
     }
-    
-    
-    private static String parseEarliestLatest(Date date) {
-        return date == null ? null : EARLIEST_LATEST_FORMAT.format(date);
+
+    /**
+     * Formats a date using a DateFormat. In the event that the date is null,
+     * returns a null string.
+     *
+     * @param date The date to format.
+     * @param formatter The DateFormat to use to format the date.
+     * @return The formatted string generated from the formatter or null if the
+     * date is null.
+     */
+    private static String formatDate(Date date, DateFormat formatter) {
+        return date == null ? null : formatter.format(date);
     }
-    
+
+    /**
+     * Converts DailyActivityAmount data retrieved from TimelineSummary into
+     * data to be displayed as a bar chart.
+     *
+     * @param recentDaysActivity The data retrieved from TimelineSummary.
+     * @return The data to be displayed in the BarChart.
+     */
     private BarChartSeries parseChartData(List<DailyActivityAmount> recentDaysActivity) {
+        // if no data, return null indicating no result.
         if (CollectionUtils.isEmpty(recentDaysActivity)) {
             return null;
         }
-        
+
+        // Create a bar chart item for each recent days activity item
         List<BarChartItem> items = new ArrayList<>();
         for (int i = 0; i < recentDaysActivity.size(); i++) {
             DailyActivityAmount curItem = recentDaysActivity.get(i);
             long amount = curItem.getArtifactActivityCount() * 1000 + curItem.getFileActivityCount();
-            
+
             if (i == 0 || i == recentDaysActivity.size() - 1) {
-                String formattedDate = curItem.getDay() == null ? "" : CHART_FORMAT.format(curItem.getDay());
+                String formattedDate = formatDate(curItem.getDay(), CHART_FORMAT);
                 items.add(new BarChartItem(formattedDate, amount));
             } else {
                 items.add(new BarChartItem("", amount));
             }
         }
-        
+
         return new BarChartSeries(CHART_COLOR, items);
     }
-    
-    
 
     /**
-     * Handles displaying the result for each table by breaking apart subdata
-     * items into seperate results for each table.
+     * Handles displaying the result for each displayable item in the
+     * TimelinePanel by breaking the TimelineSummaryData result into its
+     * constituent parts and then sending each data item to the pertinent
+     * component.
      *
-     * @param result The result.
+     * @param result The result to be displayed on this tab.
      */
     private void handleResult(DataFetchResult<TimelineSummaryData> result) {
-        earliestLabel.showDataFetchResult(DataFetchResult.getSubResult(result, r -> parseEarliestLatest(r.getMinDate())));
-        latestLabel.showDataFetchResult(DataFetchResult.getSubResult(result, r -> parseEarliestLatest(r.getMaxDate())));
+        earliestLabel.showDataFetchResult(DataFetchResult.getSubResult(result, r -> formatDate(r.getMinDate(), EARLIEST_LATEST_FORMAT)));
+        latestLabel.showDataFetchResult(DataFetchResult.getSubResult(result, r -> formatDate(r.getMaxDate(), EARLIEST_LATEST_FORMAT)));
         last30DaysChart.showDataFetchResult(DataFetchResult.getSubResult(result, r -> parseChartData(r.getMostRecentDaysActivity())));
     }
 

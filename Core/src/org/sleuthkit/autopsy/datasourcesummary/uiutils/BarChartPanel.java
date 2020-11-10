@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,27 +39,43 @@ import org.jfree.data.category.DefaultCategoryDataset;
  */
 public class BarChartPanel extends AbstractLoadableComponent<BarChartPanel.BarChartSeries> {
 
+    /**
+     * Represents a series in a bar chart where all items pertain to one
+     * category.
+     */
     public static class BarChartSeries {
 
         private final Color color;
         private final List<BarChartItem> items;
 
+        /**
+         * Main constructor.
+         *
+         * @param color The color for this series.
+         * @param items The bars to be displayed for this series.
+         */
         public BarChartSeries(Color color, List<BarChartItem> items) {
             this.color = color;
             this.items = (items == null) ? Collections.emptyList() : Collections.unmodifiableList(items);
         }
 
+        /**
+         * @return The color for this series.
+         */
         public Color getColor() {
             return color;
         }
 
+        /**
+         * @return The bars to be displayed for this series.
+         */
         public List<BarChartItem> getItems() {
             return items;
         }
     }
 
     /**
-     * An individual pie chart slice in the pie chart.
+     * An individual bar to be displayed in the bar chart.
      */
     public static class BarChartItem {
 
@@ -71,7 +87,6 @@ public class BarChartPanel extends AbstractLoadableComponent<BarChartPanel.BarCh
          *
          * @param label The label for this bar.
          * @param value The value for this item.
-         * @param color The color for the bar. Can be null for auto-determined.
          */
         public BarChartItem(String label, double value) {
             this.label = label;
@@ -93,6 +108,58 @@ public class BarChartPanel extends AbstractLoadableComponent<BarChartPanel.BarCh
         }
     }
 
+    /**
+     * JFreeChart bar charts don't preserve the order of bars provided to the
+     * chart, but instead uses the comparable nature to order items. This
+     * provides order using a provided index as well as the value for the axis.
+     */
+    private static class OrderedKey implements Comparable<OrderedKey> {
+
+        private final Object keyValue;
+        private final int keyIndex;
+
+        /**
+         * Main constructor.
+         * @param keyValue The value for the key to be displayed in the domain axis.
+         * @param keyIndex The index at which it will be displayed.
+         */
+        OrderedKey(Object keyValue, int keyIndex) {
+            this.keyValue = keyValue;
+            this.keyIndex = keyIndex;
+        }
+
+        /**
+         * @return The value for the key to be displayed in the domain axis.
+         */
+        Object getKeyValue() {
+            return keyValue;
+        }
+
+        /**
+         * @return The index at which it will be displayed.
+         */
+        int getKeyIndex() {
+            return keyIndex;
+        }
+
+        @Override
+        public int compareTo(OrderedKey o) {
+            // this will have a higher value than null.
+            if (o == null) {
+                return 1;
+            }
+
+            // compare by index
+            return Integer.compare(this.getKeyIndex(), o.getKeyIndex());
+        }
+
+        @Override
+        public String toString() {
+            // use toString on the key.
+            return this.getKeyValue() == null ? null : this.getKeyValue().toString();
+        }
+    }
+
     private static final long serialVersionUID = 1L;
 
     private static final Font DEFAULT_FONT = new JLabel().getFont();
@@ -104,7 +171,7 @@ public class BarChartPanel extends AbstractLoadableComponent<BarChartPanel.BarCh
     private final CategoryPlot plot;
 
     /**
-     * Main constructor.
+     * Main constructor assuming null values for all items.
      */
     public BarChartPanel() {
         this(null, null, null);
@@ -114,6 +181,8 @@ public class BarChartPanel extends AbstractLoadableComponent<BarChartPanel.BarCh
      * Main constructor for the pie chart.
      *
      * @param title The title for this pie chart.
+     * @param categoryLabel The x-axis label.
+     * @param valueLabel The y-axis label.
      */
     public BarChartPanel(String title, String categoryLabel, String valueLabel) {
         this.chart = ChartFactory.createBarChart(
@@ -124,6 +193,7 @@ public class BarChartPanel extends AbstractLoadableComponent<BarChartPanel.BarCh
                 PlotOrientation.VERTICAL,
                 false, false, false);
 
+        // set style to match autopsy components
         chart.setBackgroundPaint(null);
         chart.getTitle().setFont(DEFAULT_HEADER_FONT);
 
@@ -132,13 +202,15 @@ public class BarChartPanel extends AbstractLoadableComponent<BarChartPanel.BarCh
         plot.setBackgroundPaint(null);
         plot.setOutlinePaint(null);
 
+        // hide y axis labels
         ValueAxis range = plot.getRangeAxis();
         range.setVisible(false);
-        
+
+        // make sure x axis labels don't get cut off
         plot.getDomainAxis().setMaximumCategoryLabelWidthRatio(10);
 
         ((BarRenderer) plot.getRenderer()).setBarPainter(new StandardBarPainter());
-        
+
         // Create Panel
         ChartPanel panel = new ChartPanel(chart);
         panel.addOverlay(overlay);
@@ -177,39 +249,6 @@ public class BarChartPanel extends AbstractLoadableComponent<BarChartPanel.BarCh
 
     // only one category for now.
     private static final String DEFAULT_CATEGORY = "";
-
-    private static class OrderedKey implements Comparable<OrderedKey> {
-
-        private final Object keyValue;
-        private final int keyIndex;
-
-        OrderedKey(Object keyValue, int keyIndex) {
-            this.keyValue = keyValue;
-            this.keyIndex = keyIndex;
-        }
-
-        Object getKeyValue() {
-            return keyValue;
-        }
-
-        int getKeyIndex() {
-            return keyIndex;
-        }
-
-        @Override
-        public int compareTo(OrderedKey o) {
-            if (o == null) {
-                return 1;
-            }
-
-            return Integer.compare(this.getKeyIndex(), o.getKeyIndex());
-        }
-
-        @Override
-        public String toString() {
-            return this.getKeyValue() == null ? null : this.getKeyValue().toString();
-        }
-    }
 
     @Override
     protected void setResults(BarChartPanel.BarChartSeries data) {
