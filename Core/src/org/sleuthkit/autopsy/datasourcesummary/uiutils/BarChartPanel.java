@@ -27,8 +27,11 @@ import javax.swing.JLabel;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
-import org.jfree.chart.plot.PiePlot;
+import org.jfree.chart.axis.ValueAxis;
+import org.jfree.chart.plot.CategoryPlot;
 import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.renderer.category.BarRenderer;
+import org.jfree.chart.renderer.category.StandardBarPainter;
 import org.jfree.data.category.DefaultCategoryDataset;
 
 /**
@@ -98,7 +101,7 @@ public class BarChartPanel extends AbstractLoadableComponent<BarChartPanel.BarCh
     private final ChartMessageOverlay overlay = new ChartMessageOverlay();
     private final DefaultCategoryDataset dataset = new DefaultCategoryDataset();
     private final JFreeChart chart;
-    private final PiePlot plot;
+    private final CategoryPlot plot;
 
     /**
      * Main constructor.
@@ -124,11 +127,18 @@ public class BarChartPanel extends AbstractLoadableComponent<BarChartPanel.BarCh
         chart.setBackgroundPaint(null);
         chart.getTitle().setFont(DEFAULT_HEADER_FONT);
 
-        this.plot = ((PiePlot) chart.getPlot());
-        plot.setLabelFont(DEFAULT_FONT);
+        this.plot = ((CategoryPlot) chart.getPlot());
+        this.plot.getRenderer().setBaseItemLabelFont(DEFAULT_FONT);
         plot.setBackgroundPaint(null);
         plot.setOutlinePaint(null);
 
+        ValueAxis range = plot.getRangeAxis();
+        range.setVisible(false);
+        
+        plot.getDomainAxis().setMaximumCategoryLabelWidthRatio(10);
+
+        ((BarRenderer) plot.getRenderer()).setBarPainter(new StandardBarPainter());
+        
         // Create Panel
         ChartPanel panel = new ChartPanel(chart);
         panel.addOverlay(overlay);
@@ -168,15 +178,51 @@ public class BarChartPanel extends AbstractLoadableComponent<BarChartPanel.BarCh
     // only one category for now.
     private static final String DEFAULT_CATEGORY = "";
 
+    private static class OrderedKey implements Comparable<OrderedKey> {
+
+        private final Object keyValue;
+        private final int keyIndex;
+
+        OrderedKey(Object keyValue, int keyIndex) {
+            this.keyValue = keyValue;
+            this.keyIndex = keyIndex;
+        }
+
+        Object getKeyValue() {
+            return keyValue;
+        }
+
+        int getKeyIndex() {
+            return keyIndex;
+        }
+
+        @Override
+        public int compareTo(OrderedKey o) {
+            if (o == null) {
+                return 1;
+            }
+
+            return Integer.compare(this.getKeyIndex(), o.getKeyIndex());
+        }
+
+        @Override
+        public String toString() {
+            return this.getKeyValue() == null ? null : this.getKeyValue().toString();
+        }
+    }
+
     @Override
     protected void setResults(BarChartPanel.BarChartSeries data) {
         this.dataset.clear();
-        this.plot.clearSectionPaints(false);
 
         if (data != null && data.getItems() != null && !data.getItems().isEmpty()) {
-            this.plot.setSectionPaint(DEFAULT_CATEGORY, data.getColor());
-            for (BarChartPanel.BarChartItem bar : data.getItems()) {
-                this.dataset.setValue(bar.getValue(), DEFAULT_CATEGORY, bar.getLabel());
+            if (data.getColor() != null) {
+                this.plot.getRenderer().setSeriesPaint(0, data.getColor());
+            }
+
+            for (int i = 0; i < data.getItems().size(); i++) {
+                BarChartItem bar = data.getItems().get(i);
+                this.dataset.setValue(bar.getValue(), DEFAULT_CATEGORY, new OrderedKey(bar.getLabel(), i));
             }
         }
     }

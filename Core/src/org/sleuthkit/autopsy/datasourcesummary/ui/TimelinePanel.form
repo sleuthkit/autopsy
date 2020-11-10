@@ -120,7 +120,7 @@
                   <Dimension value="[100, 20]"/>
                 </Property>
                 <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-                  <Dimension value="[32767, 20]"/>
+                  <Dimension value="[100, 20]"/>
                 </Property>
               </Properties>
               <AuxValues>
@@ -141,7 +141,7 @@
                   <Dimension value="[100, 20]"/>
                 </Property>
                 <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-                  <Dimension value="[32767, 20]"/>
+                  <Dimension value="[100, 20]"/>
                 </Property>
               </Properties>
               <AuxValues>

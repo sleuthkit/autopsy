@@ -54,9 +54,11 @@ import org.sleuthkit.datamodel.DataSource;
 public class TimelinePanel extends BaseDataSourceSummaryPanel {
 
     private static final long serialVersionUID = 1L;
-    private static final DateFormat EARLIEST_LATEST_FORMAT = new SimpleDateFormat("MMM d, yyyy", Locale.getDefault());
-    private static final DateFormat CHART_FORMAT = new SimpleDateFormat("MMM d", Locale.getDefault());
+    private static final DateFormat EARLIEST_LATEST_FORMAT = getUtcFormat("MMM d, yyyy");
+    private static final DateFormat CHART_FORMAT = getUtcFormat("MMM d");
     private static final Color CHART_COLOR = Color.BLUE;
+    
+
     
     private final LoadableLabel earliestLabel = new LoadableLabel(Bundle.TimelinePanel_earliestLabel_title());
     private final LoadableLabel latestLabel = new LoadableLabel(Bundle.TimelinePanel_latestLabel_title());
@@ -66,6 +68,11 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
     private final List<DataFetchComponents<DataSource, ?>> dataFetchComponents;
     private final IngestRunningLabel ingestRunningLabel = new IngestRunningLabel();
 
+    
+    private static DateFormat getUtcFormat(String formatString) {
+        return new SimpleDateFormat(formatString, Locale.getDefault());
+    }
+    
     public TimelinePanel() {
         this(new TimelineSummary());
     }
@@ -180,13 +187,13 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
         earliestLabelPanel.setAlignmentX(0.0F);
         earliestLabelPanel.setMaximumSize(new java.awt.Dimension(32767, 20));
         earliestLabelPanel.setMinimumSize(new java.awt.Dimension(100, 20));
-        earliestLabelPanel.setPreferredSize(new java.awt.Dimension(32767, 20));
+        earliestLabelPanel.setPreferredSize(new java.awt.Dimension(100, 20));
         mainContentPanel.add(earliestLabelPanel);
 
         latestLabelPanel.setAlignmentX(0.0F);
         latestLabelPanel.setMaximumSize(new java.awt.Dimension(32767, 20));
         latestLabelPanel.setMinimumSize(new java.awt.Dimension(100, 20));
-        latestLabelPanel.setPreferredSize(new java.awt.Dimension(32767, 20));
+        latestLabelPanel.setPreferredSize(new java.awt.Dimension(100, 20));
         mainContentPanel.add(latestLabelPanel);
 
         filler2.setAlignmentX(0.0F);

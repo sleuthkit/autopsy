@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.datamodel;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -26,25 +27,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import org.apache.commons.lang3.tuple.Pair;
 import org.joda.time.Interval;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultUpdateGovernor;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
-import org.sleuthkit.autopsy.timeline.utils.FilterUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TimelineEvent;
 import org.sleuthkit.datamodel.TimelineEventType;
 import org.sleuthkit.datamodel.TimelineFilter;
 import org.sleuthkit.datamodel.TimelineFilter.DataSourcesFilter;
-import org.sleuthkit.datamodel.TimelineFilter.EventTypeFilter;
-import org.sleuthkit.datamodel.TimelineFilter.HashHitsFilter;
-import org.sleuthkit.datamodel.TimelineFilter.HideKnownFilter;
 import org.sleuthkit.datamodel.TimelineFilter.RootFilter;
-import org.sleuthkit.datamodel.TimelineFilter.TagsFilter;
-import org.sleuthkit.datamodel.TimelineFilter.TextFilter;
 import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -52,21 +48,20 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Provides data source summary information pertaining to Timeline data.
  */
 public class TimelineSummary implements DefaultUpdateGovernor {
-    private static final long DAY_SECS = 24 * 60 * 60;
-    
-        
-    private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS = new HashSet<>(
-        Arrays.asList(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED));
 
-    
-    private static final Set<TimelineEventType> FILE_SYSTEM_EVENTS = 
-            new HashSet<>(Arrays.asList(
-                    TimelineEventType.FILE_MODIFIED, 
-                    TimelineEventType.FILE_ACCESSED, 
-                    TimelineEventType.FILE_CREATED, 
+    private static final long DAY_SECS = 24 * 60 * 60;
+    private static final int MOST_RECENT_DAYS_COUNT = 30;
+
+    private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS = new HashSet<>(
+            Arrays.asList(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED));
+
+    private static final Set<TimelineEventType> FILE_SYSTEM_EVENTS
+            = new HashSet<>(Arrays.asList(
+                    TimelineEventType.FILE_MODIFIED,
+                    TimelineEventType.FILE_ACCESSED,
+                    TimelineEventType.FILE_CREATED,
                     TimelineEventType.FILE_CHANGED));
-    
-    
+
     private final SleuthkitCaseProvider provider;
 
     /**
@@ -85,7 +80,6 @@ public class TimelineSummary implements DefaultUpdateGovernor {
         this.provider = provider;
     }
 
-    
     @Override
     public boolean isRefreshRequired(ModuleContentEvent evt) {
         return true;
@@ -105,8 +99,6 @@ public class TimelineSummary implements DefaultUpdateGovernor {
     public Set<IngestManager.IngestJobEvent> getIngestJobEventUpdates() {
         return INGEST_JOB_EVENTS;
     }
-    
-
 
     private static Long getMinOrNull(Long first, Long second) {
         if (first == null) {
@@ -136,13 +128,13 @@ public class TimelineSummary implements DefaultUpdateGovernor {
 
         // TODO check that this isn't filtering more than it should
         RootFilter dataSourceRootFilter = new RootFilter(
-                new HideKnownFilter(),
-                new TagsFilter(),
-                new HashHitsFilter(),
-                new TextFilter(),
-                new EventTypeFilter(TimelineEventType.ROOT_EVENT_TYPE),
-                new DataSourcesFilter(),
-                FilterUtils.createDefaultFileTypesFilter(),
+                null,
+                null,
+                null,
+                null,
+                null,
+                dataSourceFilter,
+                null,
                 Collections.emptySet());
 
         // get events for data source
@@ -150,9 +142,9 @@ public class TimelineSummary implements DefaultUpdateGovernor {
         List<TimelineEvent> events = timelineManager.getEvents(new Interval(0, curRunTime), dataSourceRootFilter);
 
         // get counts of events per day (left is file system events, right is everything else)
-        Map<Long, Pair<Integer, Integer>> dateCounts = events.stream().collect(Collectors.toMap(
-                (evt) -> evt.getTime() / DAY_SECS,
-                (evt) -> FILE_SYSTEM_EVENTS.contains(evt.getEventType()) ? Pair.of(1, 0) : Pair.of(0, 1),
+        Map<Long, Pair<Long, Long>> dateCounts = events.stream().collect(Collectors.toMap(
+                (evt) -> (evt.getTime() / DAY_SECS),
+                (evt) -> FILE_SYSTEM_EVENTS.contains(evt.getEventType()) ? Pair.of(1L, 0L) : Pair.of(0L, 1L),
                 (count1, count2) -> Pair.of(count1.getLeft() + count2.getLeft(), count1.getRight() + count2.getRight())));
 
         // get minimum and maximum usage date
@@ -169,21 +161,19 @@ public class TimelineSummary implements DefaultUpdateGovernor {
             return null;
         }
 
-        Date minDate = new Date(minDay * 1000);
-        Date maxDate = new Date(maxDay * 1000);
+        Date minDate = new Date(minDay * 1000 * DAY_SECS);
+        Date maxDate = new Date(maxDay * 1000 * DAY_SECS);
 
-        List<DailyActivityAmount> mostRecentActivityAmt = dateCounts.entrySet().stream()
-                // reverse sort to get latest activity
-                .sorted((e1, e2) -> -Long.compare(e1.getKey(), e2.getKey()))
-                // get last 30 days
-                .limit(30)
-                // convert to object to return
-                .map(entry -> new DailyActivityAmount(new Date(entry.getKey() * 1000), entry.getValue().getLeft(), entry.getValue().getRight()))
-                // create list
-                .collect(Collectors.toList());
+        List<DailyActivityAmount> mostRecentActivityAmt = new ArrayList<>();
 
-        // get in ascending order
-        Collections.reverse(mostRecentActivityAmt);
+        long minRecentDay = Math.max(maxDay - MOST_RECENT_DAYS_COUNT + 1, minDay);
+        for (long curRecentDay = minRecentDay; curRecentDay <= maxDay; curRecentDay++) {
+            Pair<Long, Long> counts = dateCounts.get(curRecentDay);
+            long fileSystemEvts = counts == null ? 0L : counts.getLeft();
+            long otherEvts = counts == null ? 0L : counts.getRight();
+
+            mostRecentActivityAmt.add(new DailyActivityAmount(new Date(curRecentDay * DAY_SECS * 1000), fileSystemEvts, otherEvts));
+        }
 
         return new TimelineSummaryData(minDate, maxDate, mostRecentActivityAmt);
     }
@@ -216,10 +206,10 @@ public class TimelineSummary implements DefaultUpdateGovernor {
     public static class DailyActivityAmount {
 
         private final Date day;
-        private final int fileActivityCount;
-        private final int artifactActivityCount;
+        private final long fileActivityCount;
+        private final long artifactActivityCount;
 
-        public DailyActivityAmount(Date day, int fileActivityCount, int artifactActivityCount) {
+        public DailyActivityAmount(Date day, long fileActivityCount, long artifactActivityCount) {
             this.day = day;
             this.fileActivityCount = fileActivityCount;
             this.artifactActivityCount = artifactActivityCount;
@@ -229,14 +219,13 @@ public class TimelineSummary implements DefaultUpdateGovernor {
             return day;
         }
 
-        public int getFileActivityCount() {
+        public long getFileActivityCount() {
             return fileActivityCount;
         }
 
-        public int getArtifactActivityCount() {
+        public long getArtifactActivityCount() {
             return artifactActivityCount;
         }
-        
-        
+
     }
 }
