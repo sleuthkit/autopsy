@@ -199,7 +199,7 @@ public class TimelineSummary implements DefaultUpdateGovernor {
 
         // get events for data source
         long curRunTime = System.currentTimeMillis();
-        List<TimelineEvent> events = timelineManager.getEvents(new Interval(0, curRunTime), dataSourceRootFilter);
+        List<TimelineEvent> events = timelineManager.getEvents(new Interval(1, curRunTime), dataSourceRootFilter);
 
         // get counts of events per day (left is file system events, right is everything else)
         Map<Long, DailyActivityAmount> dateCounts = new HashMap<>();
