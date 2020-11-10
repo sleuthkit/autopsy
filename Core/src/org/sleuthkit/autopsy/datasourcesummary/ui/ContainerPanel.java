@@ -170,6 +170,12 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
             originalNameValue.setText(selectedDataSource.getName());
             deviceIdValue.setText(selectedDataSource.getDeviceId());
 
+            try {
+                acquisitionDetailsTextArea.setText(selectedDataSource.getAcquisitionDetails());
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, "Unable to get aquisition details for selected data source", ex);
+            }
+            
             if (selectedDataSource instanceof Image) {
                 setFieldsForImage((Image) selectedDataSource, unallocatedFilesSize);
             } else {
@@ -180,22 +186,20 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
         this.repaint();
     }
 
-
     @Messages({
         "ContainerPanel_setFieldsForNonImageDataSource_na=N/A"
     })
     private void setFieldsForNonImageDataSource() {
         String NA = Bundle.ContainerPanel_setFieldsForNonImageDataSource_na();
-        
+
         unallocatedSizeValue.setText(NA);
         imageTypeValue.setText(NA);
         sizeValue.setText(NA);
         sectorSizeValue.setText(NA);
         timeZoneValue.setText(NA);
-        
+
         ((DefaultTableModel) filePathsTable.getModel()).addRow(new Object[]{NA});
-        
-        acquisitionDetailsTextArea.setText(NA);
+
         md5HashValue.setText(NA);
         sha1HashValue.setText(NA);
         sha256HashValue.setText(NA);
@@ -218,12 +222,6 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
 
         for (String path : selectedImage.getPaths()) {
             ((DefaultTableModel) filePathsTable.getModel()).addRow(new Object[]{path});
-        }
-
-        try {
-            acquisitionDetailsTextArea.setText(selectedImage.getAcquisitionDetails());
-        } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Unable to get aquisition details for selected data source", ex);
         }
 
         try {
