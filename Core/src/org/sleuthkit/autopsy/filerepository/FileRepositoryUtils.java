@@ -42,6 +42,10 @@ class FileRepositoryUtils {
         return repoTempDir;
     }
     
+    /**
+     * Error handling class for the file repository. 
+     * Will handle displaying relevant error messages to the user.
+     */
     static class AutopsyFileRepositoryErrorHandler implements FileRepositoryErrorHandler {
         @Override
         public void displayErrorToUser(String title, String error) {
