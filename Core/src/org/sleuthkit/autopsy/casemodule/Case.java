@@ -1948,7 +1948,6 @@ public class Case {
             checkForCancellation();
             createCaseNodeData(progressIndicator);
             checkForCancellation();
-            checkForCancellation();
             createCaseDatabase(progressIndicator);
             checkForCancellation();
             openCaseLevelServices(progressIndicator);
@@ -2000,7 +1999,7 @@ public class Case {
             checkForCancellation();
             openCaseDataBase(progressIndicator);
             checkForCancellation();
-            setUpFileRepository(progressIndicator);
+            checkFileRepository(progressIndicator);
             checkForCancellation();
             openCaseLevelServices(progressIndicator);
             checkForCancellation();
@@ -2028,37 +2027,22 @@ public class Case {
     }
 
     /**
-     * Initializes the file repository (if enabled).
-     * Throws a CaseActionException if the file repository is not enabled
-     * but the case contains remote files or if the check for remote files fails.
+     * Checks whether the case contains file repository data but the file repository
+     * is not enabled. Displays a warning if so.
      * 
      * @param progressIndicator 
-     * 
-     * @throws CaseActionException
      */
     @NbBundle.Messages({
-        "Case.setUpFileRepository.setup=Setting up File Repository",
-        "Case.setUpFileRepository.fileCheck=Checking for File Repository data",
-        "Case.setUpFileRepository.title=File Repository",
-        "Case.setUpFileRepository.notInitialized=File repository not initialized - some files may not be accessible",
-        "Case.setUpFileRepository.errorTestingCase=Error checking case for file repository data",
+        "Case.checkFileRepository.setup=Setting up File Repository",
+        "Case.checkFileRepository.fileCheck=Checking for File Repository data",
+        "Case.checkFileRepository.title=File Repository",
+        "Case.checkFileRepository.notInitialized=File repository not initialized - some files may not be accessible",
+        "Case.checkFileRepository.errorTestingCase=Error checking case for file repository data",
     })
-    private void setUpFileRepository(ProgressIndicator progressIndicator) throws CaseActionException {
+    private void checkFileRepository(ProgressIndicator progressIndicator) {
         
-        if (UserPreferences.getFileRepositoryEnabled()) {
-            progressIndicator.progress(Bundle.Case_setUpFileRepository_setup());
-            
-            // Set up a temp folder
-            File repoTempDir = Paths.get(getTempDirectory(), "File Repo").toFile();
-            if (repoTempDir.exists() == false) {
-                repoTempDir.mkdirs();
-            }
-            
-            // Initialize the file repository settings
-            FileRepository.initialize(new FileRepositorySettings(UserPreferences.getFileRepositoryAddress(),
-                UserPreferences.getFileRepositoryPort()), repoTempDir.getAbsolutePath());
-        } else {
-            progressIndicator.progress(Bundle.Case_setUpFileRepository_fileCheck());
+        if (FileRepository.isEnabled() == false) {
+            progressIndicator.progress(Bundle.Case_checkFileRepository_fileCheck());
             
             // Check that the case does not contain any files stored in the repository
             try {
@@ -2066,7 +2050,7 @@ public class Case {
                     logger.log(Level.WARNING, "Case contains file repository data but file repository has not been initialized");
                     if (RuntimeProperties.runningWithGUI()) {
                         SwingUtilities.invokeLater(() -> {
-                            MessageNotifyUtil.Notify.warn(Bundle.Case_setUpFileRepository_title(), Bundle.Case_setUpFileRepository_notInitialized());
+                            MessageNotifyUtil.Notify.warn(Bundle.Case_checkFileRepository_title(), Bundle.Case_checkFileRepository_notInitialized());
                         });
                     }
                 }
@@ -2074,7 +2058,7 @@ public class Case {
                 logger.log(Level.WARNING, "Could not count file repository files while opening case",ex);
                 if (RuntimeProperties.runningWithGUI()) {
                     SwingUtilities.invokeLater(() -> {
-                        MessageNotifyUtil.Notify.error(Bundle.Case_setUpFileRepository_title(), Bundle.Case_setUpFileRepository_errorTestingCase());
+                        MessageNotifyUtil.Notify.error(Bundle.Case_checkFileRepository_title(), Bundle.Case_checkFileRepository_errorTestingCase());
                     });
                 }
             }
@@ -2805,11 +2789,6 @@ public class Case {
          */
         progressIndicator.progress(Bundle.Case_progressMessage_closingApplicationServiceResources());
         closeAppServiceCaseResources();
-
-        /*
-         * De-initialize the file repository
-         */
-        FileRepository.deinitialize();
         
         /*
          * Close the case database.

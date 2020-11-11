@@ -1,5 +1,10 @@
 AddImageWizardIngestConfigPanel.name.text=Configure Ingest Modules
 AddImageWizardSelectDspVisual.multiUserWarning.text=This type of Data Source Processor is not available in multi-user mode
+Case.checkFileRepository.errorTestingCase=Error checking case for file repository data
+Case.checkFileRepository.fileCheck=Checking for File Repository data
+Case.checkFileRepository.notInitialized=File repository not initialized - some files may not be accessible
+Case.checkFileRepository.setup=Setting up File Repository
+Case.checkFileRepository.title=File Repository
 # {0} - exception message
 Case.closeException.couldNotCloseCase=Error closing case: {0}
 Case.creationException.couldNotAcquireResourcesLock=Failed to get lock on case resources
@@ -101,11 +106,6 @@ Case.servicesException.notificationTitle={0} Error
 # {0} - service name
 # {1} - exception message
 Case.servicesException.serviceResourcesCloseError=Could not close case resources for {0} service: {1}
-Case.setUpFileRepository.errorTestingCase=Error checking case for file repository data
-Case.setUpFileRepository.fileCheck=Checking for File Repository data
-Case.setUpFileRepository.notInitialized=File repository not initialized - some files may not be accessible
-Case.setUpFileRepository.setup=Setting up File Repository
-Case.setUpFileRepository.title=File Repository
 Case_caseType_multiUser=Multi-user case
 Case_caseType_singleUser=Single-user case
 CaseDetailsPanel.casePanel.border.title=Case

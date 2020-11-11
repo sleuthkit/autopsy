@@ -26,15 +26,16 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
+import org.sleuthkit.datamodel.FileRepository;
+import org.sleuthkit.datamodel.FileRepository.FileRepositorySettings;
 
 /**
- *
+ * Options panel for the file repository.
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class FileRepositoryOptionsPanel  extends IngestModuleGlobalSettingsPanel implements OptionsPanel {
 
     private final TextFieldListener textFieldListener;
-    private boolean caseIsOpen;
     
     /**
      * Creates new form FileRepositoryOptionsPanel
@@ -53,11 +54,19 @@ public class FileRepositoryOptionsPanel  extends IngestModuleGlobalSettingsPanel
         portTextField.getDocument().addDocumentListener(textFieldListener);
     }
     
+    /**
+     * Enable or disable the panel.
+     * 
+     * @param enable 
+     */
     private void enablePanel(boolean enable) {
         enableCheckBox.setEnabled(enable);
         updatePanel();
     }
     
+    /**
+     * Update the panel based on the status of the enabled checkbox.
+     */
     private void updatePanel() {
         boolean panelEnabled = enableCheckBox.isEnabled();
         boolean fileRepositoryEnabled = enableCheckBox.isSelected();
@@ -75,11 +84,16 @@ public class FileRepositoryOptionsPanel  extends IngestModuleGlobalSettingsPanel
         if (enableCheckBox.isSelected()) {
             UserPreferences.setFileRepositoryAddress(addressTextField.getText());
             UserPreferences.setFileRepositoryPort(portTextField.getText());
+            FileRepository.initialize(new FileRepositorySettings(addressTextField.getText(), portTextField.getText()), 
+                    FileRepositoryUtils.createDownloadFolder());
+        } else {
+            FileRepository.deinitialize();
         }
     }
     
     @Override
     public void load() {
+        enableCheckBox.setEnabled(! Case.isCaseOpen());
         enableCheckBox.setSelected(UserPreferences.getFileRepositoryEnabled());
         addressTextField.setText(UserPreferences.getFileRepositoryAddress());
         portTextField.setText(UserPreferences.getFileRepositoryPort());
