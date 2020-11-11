@@ -49,6 +49,10 @@
         <!-- For Discovery testing -->
         <dependency conf="core->default" org="org.mockito" name="mockito-core" rev="3.5.7"/>
         
+        <!-- JAXB -->
+        <dependency conf="core->default" org="javax.xml.bind" name="jaxb-api" rev="2.3.1"/>
+        <dependency conf="core->default" org="org.glassfish.jaxb" name="jaxb-runtime" rev="2.3.3"/>
+
         <!-- https://mvnrepository.com/artifact/javax.ws.rs/javax.ws.rs-api -->
         <dependency conf="core->default" org="javax.ws.rs" name="javax.ws.rs-api" rev="2.0"/>
         <override org="jakarta.ws.rs" module="jakarta.ws.rs-api" rev="2.1.5"/>

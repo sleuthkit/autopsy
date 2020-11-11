@@ -465,6 +465,10 @@
                 <binary-origin>release\modules\ext\jgraphx-4.1.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/jython-standalone-2.7.2.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\jython-standalone-2.7.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/jline-0.9.94.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\jline-0.9.94.jar</binary-origin>
             </class-path-extension>
@@ -549,16 +553,8 @@
                 <binary-origin>release\modules\ext\checker-compat-qual-2.5.3.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/sleuthkit-4.10.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/sleuthkit-4.10.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/animal-sniffer-annotations-1.17.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\animal-sniffer-annotations-1.17.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/sleuthkit-caseuco-4.10.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/sleuthkit-caseuco-4.10.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/gax-1.44.0.jar</runtime-relative-path>
@@ -645,6 +641,10 @@
                 <binary-origin>release\modules\ext\protobuf-java-util-3.7.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/jaxb-api-2.3.1.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\jaxb-api-2.3.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/commons-collections-3.2.2.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\commons-collections-3.2.2.jar</binary-origin>
             </class-path-extension>
@@ -673,6 +673,10 @@
                 <binary-origin>release\modules\ext\grpc-alts-1.19.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/sleuthkit-caseuco-4.10.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/sleuthkit-caseuco-4.10.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/jdom-2.0.5.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\jdom-2.0.5.jar</binary-origin>
             </class-path-extension>
@@ -685,16 +689,16 @@
                 <binary-origin>release\modules\ext\google-api-client-1.27.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/jaxb-runtime-2.3.3.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\jaxb-runtime-2.3.3.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/opencensus-contrib-http-util-0.19.2.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\opencensus-contrib-http-util-0.19.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/google-auth-library-oauth2-http-0.15.0.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\google-auth-library-oauth2-http-0.15.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/jython-standalone-2.7.2.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\jython-standalone-2.7.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/commons-lang-2.6.jar</runtime-relative-path>
@@ -721,6 +725,10 @@
                 <binary-origin>release\modules\ext\opencensus-contrib-grpc-metrics-0.19.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/activemq-all-5.16.0.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\activemq-all-5.16.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/jai_imageio-1.1.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\jai_imageio-1.1.jar</binary-origin>
             </class-path-extension>
@@ -731,6 +739,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/junit-3.8.1.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\junit-3.8.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/istack-commons-runtime-3.0.11.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/istack-commons-runtime-3.0.11.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/curator-client-2.8.0.jar</runtime-relative-path>
@@ -751,10 +763,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/icepdf-core-6.2.2.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\icepdf-core-6.2.2.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/activemq-all-5.16.0.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\activemq-all-5.16.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/google-cloud-core-http-1.70.0.jar</runtime-relative-path>
@@ -795,6 +803,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/sevenzipjbinding-AllPlatforms.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\sevenzipjbinding-AllPlatforms.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/sleuthkit-4.10.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/sleuthkit-4.10.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jutf7-1.0.0.jar</runtime-relative-path>
