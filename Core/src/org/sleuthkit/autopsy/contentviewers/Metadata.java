@@ -137,7 +137,7 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
         "Metadata.tableRowTitle.mimeType=MIME Type",
         "Metadata.nodeText.truncated=(results truncated)",
         "Metadata.tableRowTitle.sha1=SHA1",
-        "Metadata.tableRowTitle.sha256=SHA256",
+        "Metadata.tableRowTitle.sha256=SHA-256",
         "Metadata.tableRowTitle.imageType=Type",
         "Metadata.tableRowTitle.sectorSize=Sector Size",
         "Metadata.tableRowTitle.timezone=Time Zone",
@@ -182,6 +182,11 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
                 md5 = NbBundle.getMessage(this.getClass(), "Metadata.tableRowContent.md5notCalc");
             }
             addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.md5"), md5);
+            String sha256 = file.getSha256Hash();
+            if (sha256 == null) {
+                sha256 = NbBundle.getMessage(this.getClass(), "Metadata.tableRowContent.md5notCalc");
+            }
+            addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.sha256"), sha256);
             addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.hashLookupResults"), file.getKnown().toString());
             addAcquisitionDetails(sb, dataSource);
             

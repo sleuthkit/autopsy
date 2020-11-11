@@ -253,7 +253,7 @@ public class IngestFileFiltersTest extends NbTestCase {
             IngestUtils.runIngestJob(currentCase.getDataSources(), ingestJobSettings); 
             FileManager fileManager = currentCase.getServices().getFileManager();
             List<AbstractFile> results = fileManager.findFiles("%%");
-            assertEquals(70, results.size()); 
+            assertEquals(71, results.size()); 
             int carvedJpgGifFiles = 0;
             for (AbstractFile file : results) {
                 if (file.getNameExtension().equalsIgnoreCase("jpg") || file.getNameExtension().equalsIgnoreCase("gif")) { //Unalloc file and .jpg files in dir1, dir2, $CarvedFiles, root directory should have MIME type

@@ -308,7 +308,7 @@ public class RecentFilesSummaryTest {
         // verify results (only successItem)
         Assert.assertNotNull(results);
         Assert.assertEquals(1, results.size());
-        Assert.assertEquals((Long) DAY_SECONDS, (Long) results.get(0).getDateAsLong());
+        Assert.assertEquals((Long) DAY_SECONDS, results.get(0).getDateAsLong());
         Assert.assertTrue("/a/path".equalsIgnoreCase(results.get(0).getPath()));
     }
 
@@ -386,7 +386,7 @@ public class RecentFilesSummaryTest {
         // verify results
         Assert.assertNotNull(results);
         Assert.assertEquals(1, results.size());
-        Assert.assertEquals((Long) DAY_SECONDS, (Long) results.get(0).getDateAsLong());
+        Assert.assertEquals((Long) DAY_SECONDS, results.get(0).getDateAsLong());
         Assert.assertTrue("/a/path1".equalsIgnoreCase(results.get(0).getPath()));
     }
 
@@ -668,12 +668,12 @@ public class RecentFilesSummaryTest {
         RecentAttachmentDetails successItem2Details = results.get(0);
         RecentAttachmentDetails successItemDetails = results.get(1);
 
-        Assert.assertEquals((Long) successItemDetails.getDateAsLong(), (Long) DAY_SECONDS);
+        Assert.assertEquals(successItemDetails.getDateAsLong(), (Long) DAY_SECONDS);
         Assert.assertTrue(Paths.get(successItem.getFileParentPath(), successItem.getFileName())
                 .toString().equalsIgnoreCase(successItemDetails.getPath()));
         Assert.assertTrue(successItem.getEmailFrom().equalsIgnoreCase(successItemDetails.getSender()));
 
-        Assert.assertEquals((Long) successItem2Details.getDateAsLong(), (Long) (DAY_SECONDS + 1));
+        Assert.assertEquals(successItem2Details.getDateAsLong(), (Long) (DAY_SECONDS + 1));
         Assert.assertTrue(Paths.get(successItem2.getFileParentPath(), successItem2.getFileName())
                 .toString().equalsIgnoreCase(successItem2Details.getPath()));
         Assert.assertTrue(successItem2.getEmailFrom().equalsIgnoreCase(successItem2Details.getSender()));
