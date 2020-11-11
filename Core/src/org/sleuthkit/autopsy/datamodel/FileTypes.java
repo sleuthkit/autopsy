@@ -434,6 +434,15 @@ public final class FileTypes implements AutopsyVisitableItem {
         }
 
         @Override
+        public List<AnalysisResult> getAllAnalysisResults() throws TskCoreException {
+             return content.getAllAnalysisResults();
+        }
+        
+        public List<AnalysisResult> getAnalysisResults(BlackboardArtifact.Type artifactType) throws TskCoreException {
+            return content.getAnalysisResults(artifactType);
+        }
+        
+        @Override
         public Set<String> getHashSetNames() throws TskCoreException {
             return content.getHashSetNames();
         }
