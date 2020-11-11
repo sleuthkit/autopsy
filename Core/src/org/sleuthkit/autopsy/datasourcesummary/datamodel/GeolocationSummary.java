@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.datamodel;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -53,7 +54,9 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
 
         /**
          * Main constructor.
-         * @param cityRecord The record for the city including name, country, and location.
+         *
+         * @param cityRecord The record for the city including name, country,
+         * and location.
          * @param count The number of hits in proximity to that city.
          */
         CityCount(CityRecord cityRecord, int count) {
@@ -62,7 +65,8 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
         }
 
         /**
-         * @return The record for the city including name, country, and location.
+         * @return The record for the city including name, country, and
+         * location.
          */
         public CityRecord getCityRecord() {
             return cityRecord;
@@ -86,6 +90,7 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
 
         /**
          * Main constructor.
+         *
          * @param cityName The name of the city.
          * @param country The country of that city.
          * @param latitude Latitude for the city.
@@ -171,7 +176,7 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
             BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACKPOINT,
             BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF
     );
-    
+
     // all GPS types
     private static final Set<Integer> GPS_ARTIFACT_TYPE_IDS = GPS_ARTIFACT_TYPES.stream()
             .map(artifactType -> artifactType.getTypeID())
@@ -214,12 +219,14 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
     }
 
     /**
-     * Get this list of hits per city where the list is sorted descending by number of found hits (i.e. most hits is first index).
+     * Get this list of hits per city where the list is sorted descending by
+     * number of found hits (i.e. most hits is first index).
+     *
      * @param dataSource The data source.
      * @return The sorted list.
      * @throws SleuthkitCaseProviderException
      * @throws GeoLocationDataException
-     * @throws InterruptedException 
+     * @throws InterruptedException
      */
     public List<CityCount> getCityCounts(DataSource dataSource) throws SleuthkitCaseProviderException, GeoLocationDataException, InterruptedException {
         List<Waypoint> dataSourcePoints = getPoints(dataSource);
@@ -233,11 +240,12 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
 
     /**
      * Fetches all GPS data for the data source from the current case.
+     *
      * @param dataSource The data source.
      * @return The GPS data pertaining to the data source.
      * @throws SleuthkitCaseProviderException
      * @throws GeoLocationDataException
-     * @throws InterruptedException 
+     * @throws InterruptedException
      */
     private List<Waypoint> getPoints(DataSource dataSource) throws SleuthkitCaseProviderException, GeoLocationDataException, InterruptedException {
         // make asynchronous callback synchronous (the callback nature will be handled in a different level)
@@ -274,13 +282,15 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
     /**
      * Pre-loads city data.
      */
-    public void load() {
+    public void load() throws IOException {
         // TODO
         throw new UnsupportedOperationException();
     }
 
     /**
-     * Determines closest city to each waypoint and returns a map of the city to the number of hits closest to that city.
+     * Determines closest city to each waypoint and returns a map of the city to
+     * the number of hits closest to that city.
+     *
      * @param waypoints The waypoints.
      * @return A map of city to the number of hits.
      */
