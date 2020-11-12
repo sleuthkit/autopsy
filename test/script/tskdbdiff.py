@@ -464,6 +464,16 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
 
     # remove object ID
     if files_index:
+    
+        # Ignore TIFF size and hash if extracted from PDFs.
+        # See JIRA-6951 for more details.
+        # index: -1 = last element in the list, which is extension
+        # index: -3 = 3rd from the end, which is the parent path.
+        if fields_list[-1] == "'tif'" and fields_list[-3].endswith(".pdf/'"):
+            fields_list[15] = "'SIZE_IGNORED'"
+            fields_list[23] = "'MD5_IGNORED'"
+            fields_list[24] = "'SHA256_IGNORED'"
+            
         newLine = ('INSERT INTO "tsk_files" VALUES(' + ', '.join(fields_list[1:]) + ');') 
         # Remove object ID from Unalloc file name
         newLine = re.sub('Unalloc_[0-9]+_', 'Unalloc_', newLine)
