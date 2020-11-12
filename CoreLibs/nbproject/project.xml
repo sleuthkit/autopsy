@@ -164,73 +164,19 @@
                 <package>javax.annotation</package>
                 <package>javax.annotation.concurrent</package>
                 <package>javax.annotation.meta</package>
-                <package>javax.annotation.security</package>
-                <package>javax.ejb</package>
-                <package>javax.ejb.spi</package>
-                <package>javax.enterprise.deploy.model</package>
-                <package>javax.enterprise.deploy.model.exceptions</package>
-                <package>javax.enterprise.deploy.shared</package>
-                <package>javax.enterprise.deploy.shared.factories</package>
-                <package>javax.enterprise.deploy.spi</package>
-                <package>javax.enterprise.deploy.spi.exceptions</package>
-                <package>javax.enterprise.deploy.spi.factories</package>
-                <package>javax.enterprise.deploy.spi.status</package>
-                <package>javax.interceptor</package>
                 <package>javax.jms</package>
-                <package>javax.jws</package>
-                <package>javax.jws.soap</package>
                 <package>javax.mail</package>
                 <package>javax.mail.event</package>
                 <package>javax.mail.internet</package>
                 <package>javax.mail.search</package>
                 <package>javax.mail.util</package>
-                <package>javax.management.j2ee</package>
-                <package>javax.management.j2ee.statistics</package>
-                <package>javax.persistence</package>
-                <package>javax.persistence.spi</package>
-                <package>javax.resource</package>
-                <package>javax.resource.cci</package>
-                <package>javax.resource.spi</package>
-                <package>javax.resource.spi.endpoint</package>
-                <package>javax.resource.spi.security</package>
-                <package>javax.resource.spi.work</package>
-                <package>javax.security.jacc</package>
                 <package>javax.servlet</package>
                 <package>javax.servlet.http</package>
-                <package>javax.transaction</package>
-                <package>javax.transaction.xa</package>
-                <package>javax.xml</package>
-                <package>javax.xml.bind</package>
-                <package>javax.xml.bind.annotation</package>
-                <package>javax.xml.bind.annotation.adapters</package>
-                <package>javax.xml.bind.attachment</package>
-                <package>javax.xml.bind.helpers</package>
-                <package>javax.xml.bind.util</package>
-                <package>javax.xml.namespace</package>
                 <package>javax.xml.parsers</package>
-                <package>javax.xml.registry</package>
-                <package>javax.xml.registry.infomodel</package>
-                <package>javax.xml.rpc</package>
-                <package>javax.xml.rpc.encoding</package>
-                <package>javax.xml.rpc.handler</package>
-                <package>javax.xml.rpc.handler.soap</package>
-                <package>javax.xml.rpc.holders</package>
-                <package>javax.xml.rpc.server</package>
-                <package>javax.xml.rpc.soap</package>
-                <package>javax.xml.soap</package>
-                <package>javax.xml.stream</package>
-                <package>javax.xml.stream.events</package>
-                <package>javax.xml.stream.util</package>
                 <package>javax.xml.transform</package>
                 <package>javax.xml.transform.dom</package>
                 <package>javax.xml.transform.sax</package>
                 <package>javax.xml.transform.stream</package>
-                <package>javax.xml.ws</package>
-                <package>javax.xml.ws.handler</package>
-                <package>javax.xml.ws.handler.soap</package>
-                <package>javax.xml.ws.http</package>
-                <package>javax.xml.ws.soap</package>
-                <package>javax.xml.ws.spi</package>
                 <package>jfxtras.animation</package>
                 <package>jfxtras.css</package>
                 <package>jfxtras.css.converters</package>
@@ -334,8 +280,6 @@
                 <package>org.apache.commons.lang3.tuple</package>
                 <package>org.apache.commons.logging</package>
                 <package>org.apache.commons.logging.impl</package>
-                <package>org.apache.geronimo.mail.handlers</package>
-                <package>org.apache.geronimo.mail.util</package>
                 <package>org.apache.log</package>
                 <package>org.apache.log.filter</package>
                 <package>org.apache.log.format</package>
@@ -810,10 +754,6 @@
                 <binary-origin>release/modules/ext/gson-2.8.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/jfxtras-common-10.0-r1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jfxtras-common-10.0-r1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/jsr305-1.3.9.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/jsr305-1.3.9.jar</binary-origin>
             </class-path-extension>
@@ -826,6 +766,10 @@
                 <binary-origin>release/modules/ext/imgscalr-lib-4.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/jfxtras-fxml-10.0-r1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jfxtras-fxml-10.0-r1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/commons-lang3-3.4.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\commons-lang3-3.4.jar</binary-origin>
             </class-path-extension>
@@ -836,10 +780,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/xmlbeans-3.0.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/xmlbeans-3.0.2.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/controlsfx-9.0.0.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\controlsfx-9.0.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/mail-1.4.3.jar</runtime-relative-path>
@@ -898,12 +838,12 @@
                 <binary-origin>release/modules/ext/imageio-tiff-3.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/jfxtras-controls-10.0-r1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jfxtras-controls-10.0-r1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/commons-csv-1.4.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/commons-csv-1.4.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/controlsfx-9.0.0.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\controlsfx-9.0.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/imageio-sgi-3.2.jar</runtime-relative-path>
@@ -912,10 +852,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/geronimo-jms_1.1_spec-1.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/geronimo-jms_1.1_spec-1.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/jfxtras-fxml-10.0-r1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jfxtras-fxml-10.0-r1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/joda-time-2.4.jar</runtime-relative-path>
@@ -936,6 +872,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/slf4j-simple-1.6.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/slf4j-simple-1.6.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jfxtras-common-10.0-r1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jfxtras-common-10.0-r1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/guava-19.0.jar</runtime-relative-path>
@@ -990,8 +930,8 @@
                 <binary-origin>release/modules/ext/commons-logging-1.1.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/javaee-api-5.0-2.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/javaee-api-5.0-2.jar</binary-origin>
+                <runtime-relative-path>ext/jfxtras-controls-10.0-r1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jfxtras-controls-10.0-r1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/common-image-3.2.jar</runtime-relative-path>
