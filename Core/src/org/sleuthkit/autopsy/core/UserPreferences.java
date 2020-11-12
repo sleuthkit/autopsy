@@ -85,6 +85,9 @@ public final class UserPreferences {
     private static final String GEO_OSM_TILE_ZIP_PATH = "GeolocationOsmZipPath";
     private static final String GEO_OSM_SERVER_ADDRESS = "GeolocationOsmServerAddress";
     private static final String GEO_MBTILES_FILE_PATH = "GeolcoationMBTilesFilePath";
+    private static final String FILE_REPOSITORY_ENABLED = "FileRepositoryEnabled";
+    private static final String FILE_REPOSITORY_ADDRESS = "FileRepositoryAddress";
+    private static final String FILE_REPOSITORY_PORT = "FileRepositoryPort";
     
     // Prevent instantiation.
     private UserPreferences() {
@@ -632,4 +635,29 @@ public final class UserPreferences {
         return Paths.get(UserMachinePreferences.getBaseTempDirectory(), getAppName())
                 .toAbsolutePath().toString();
     }
+    
+    public static void setFileRepositoryEnabled(boolean enabled) {
+        preferences.putBoolean(FILE_REPOSITORY_ENABLED, enabled);
+    }
+    
+    public static boolean getFileRepositoryEnabled() {
+        return preferences.getBoolean(FILE_REPOSITORY_ENABLED, false);
+    }
+    
+    public static void setFileRepositoryAddress(String address) {
+        preferences.put(FILE_REPOSITORY_ADDRESS, address);
+    }
+    
+    public static String getFileRepositoryAddress() {
+        return preferences.get(FILE_REPOSITORY_ADDRESS, "");
+    }
+    
+    
+    public static void setFileRepositoryPort(String port) {
+        preferences.put(FILE_REPOSITORY_PORT, port);
+    }
+    
+    public static String getFileRepositoryPort() {
+        return preferences.get(FILE_REPOSITORY_PORT, "");
+    }    
 }

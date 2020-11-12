@@ -204,6 +204,7 @@ public class Installer extends ModuleInstall {
         packageInstallers.add(org.sleuthkit.autopsy.centralrepository.eventlisteners.Installer.getDefault());
         packageInstallers.add(org.sleuthkit.autopsy.healthmonitor.Installer.getDefault());
         packageInstallers.add(org.sleuthkit.autopsy.casemodule.Installer.getDefault());
+        packageInstallers.add(org.sleuthkit.autopsy.filerepository.Installer.getDefault()); // Must go after casemodule so the temp dir doesn't get deleted
 
         /**
          * This is a temporary workaround for the following bug in Tika that

@@ -126,6 +126,8 @@ import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.FileRepository;
+import org.sleuthkit.datamodel.FileRepository.FileRepositorySettings;
 import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.Report;
@@ -1946,7 +1948,6 @@ public class Case {
             checkForCancellation();
             createCaseNodeData(progressIndicator);
             checkForCancellation();
-            checkForCancellation();
             createCaseDatabase(progressIndicator);
             checkForCancellation();
             openCaseLevelServices(progressIndicator);
@@ -1998,6 +1999,8 @@ public class Case {
             checkForCancellation();
             openCaseDataBase(progressIndicator);
             checkForCancellation();
+            checkFileRepository(progressIndicator);
+            checkForCancellation();
             openCaseLevelServices(progressIndicator);
             checkForCancellation();
             openAppServiceCaseResources(progressIndicator, false);
@@ -2023,6 +2026,45 @@ public class Case {
         }
     }
 
+    /**
+     * Checks whether the case contains file repository data but the file repository
+     * is not enabled. Displays a warning if so.
+     * 
+     * @param progressIndicator 
+     */
+    @NbBundle.Messages({
+        "Case.checkFileRepository.setup=Setting up File Repository",
+        "Case.checkFileRepository.fileCheck=Checking for File Repository data",
+        "Case.checkFileRepository.title=File Repository",
+        "Case.checkFileRepository.notInitialized=File repository not initialized - some files may not be accessible",
+        "Case.checkFileRepository.errorTestingCase=Error checking case for file repository data",
+    })
+    private void checkFileRepository(ProgressIndicator progressIndicator) {
+        
+        if (FileRepository.isEnabled() == false) {
+            progressIndicator.progress(Bundle.Case_checkFileRepository_fileCheck());
+            
+            // Check that the case does not contain any files stored in the repository
+            try {
+                if (caseDb.caseUsesFileRepository()) {
+                    logger.log(Level.WARNING, "Case contains file repository data but file repository has not been initialized");
+                    if (RuntimeProperties.runningWithGUI()) {
+                        SwingUtilities.invokeLater(() -> {
+                            MessageNotifyUtil.Notify.warn(Bundle.Case_checkFileRepository_title(), Bundle.Case_checkFileRepository_notInitialized());
+                        });
+                    }
+                }
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, "Could not count file repository files while opening case",ex);
+                if (RuntimeProperties.runningWithGUI()) {
+                    SwingUtilities.invokeLater(() -> {
+                        MessageNotifyUtil.Notify.error(Bundle.Case_checkFileRepository_title(), Bundle.Case_checkFileRepository_errorTestingCase());
+                    });
+                }
+            }
+        }
+    }
+    
     /**
      * Starts a background task that reads a sector from each file system of
      * each image of a case to do an eager open of the filesystems in the case.
@@ -2747,7 +2789,7 @@ public class Case {
          */
         progressIndicator.progress(Bundle.Case_progressMessage_closingApplicationServiceResources());
         closeAppServiceCaseResources();
-
+        
         /*
          * Close the case database.
          */
