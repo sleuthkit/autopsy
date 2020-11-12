@@ -137,7 +137,7 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
         return (a.getProgramName() == null ? "" : a.getProgramName())
                 .compareToIgnoreCase((b.getProgramName() == null ? "" : b.getProgramName()));
     };
-    
+
     private static final Set<Integer> ARTIFACT_UPDATE_TYPE_IDS = new HashSet<>(Arrays.asList(
             ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getTypeID(),
             ARTIFACT_TYPE.TSK_MESSAGE.getTypeID(),
@@ -172,9 +172,9 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
      * is designed with unit testing in mind since mocked dependencies can be
      * utilized.
      *
-     * @param provider           The object providing the current SleuthkitCase.
+     * @param provider The object providing the current SleuthkitCase.
      * @param translationService The translation service.
-     * @param logger             The logger to use.
+     * @param logger The logger to use.
      */
     public UserActivitySummary(
             SleuthkitCaseProvider provider,
@@ -206,7 +206,7 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
      * Gets a list of recent domains based on the datasource.
      *
      * @param dataSource The datasource to query for recent domains.
-     * @param count      The max count of items to return.
+     * @param count The max count of items to return.
      *
      * @return The list of items retrieved from the database.
      *
@@ -242,12 +242,12 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
      * Creates a TopDomainsResult from data or null if no visit date exists
      * within DOMAIN_WINDOW_MS of mostRecentMs.
      *
-     * @param domain       The domain.
-     * @param visits       The number of visits.
+     * @param domain The domain.
+     * @param visits The number of visits.
      * @param mostRecentMs The most recent visit of any domain.
      *
      * @return The TopDomainsResult or null if no visits to this domain within
-     *         30 days of mostRecentMs.
+     * 30 days of mostRecentMs.
      */
     private TopDomainsResult getDomainsResult(String domain, List<Long> visits, long mostRecentMs) {
         long visitCount = 0;
@@ -280,9 +280,8 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
      * @param dataSource The datasource.
      *
      * @return A tuple where the first value is the latest web history accessed
-     *         date in milliseconds and the second value maps normalized
-     *         (lowercase; trimmed) domain names to when those domains were
-     *         visited.
+     * date in milliseconds and the second value maps normalized (lowercase;
+     * trimmed) domain names to when those domains were visited.
      *
      * @throws TskCoreException
      * @throws SleuthkitCaseProviderException
@@ -349,7 +348,7 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
      * @param artifact The artifact.
      *
      * @return The TopWebSearchResult or null if the search string or date
-     *         accessed cannot be determined.
+     * accessed cannot be determined.
      */
     private static TopWebSearchResult getWebSearchResult(BlackboardArtifact artifact) {
         String searchString = DataSourceInfoUtilities.getStringOrNull(artifact, TYPE_TEXT);
@@ -364,11 +363,10 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
      * term.
      *
      * @param dataSource The data source.
-     * @param count      The maximum number of records to be shown (must be >
-     *                   0).
+     * @param count The maximum number of records to be shown (must be > 0).
      *
      * @return The list of most recent web searches where most recent search
-     *         appears first.
+     * appears first.
      *
      * @throws
      * org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException
@@ -386,21 +384,22 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
                 .getArtifacts(ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getTypeID(), dataSource.getId());
 
         // group by search string (case insensitive)
-        Collection<List<TopWebSearchResult>> resultGroups = webSearchArtifacts
+        Collection<TopWebSearchResult> resultGroups = webSearchArtifacts
                 .stream()
                 // get items where search string and date is not null
                 .map(UserActivitySummary::getWebSearchResult)
                 // remove null records
                 .filter(result -> result != null)
-                // get these messages grouped by search to string
-                .collect(Collectors.groupingBy((result) -> result.getSearchString().toUpperCase()))
+                // get the latest message for each search string
+                .collect(Collectors.toMap(
+                        (result) -> result.getSearchString().toUpperCase(),
+                        result -> result,
+                        (result1, result2) -> TOP_WEBSEARCH_RESULT_DATE_COMPARE.compare(result1, result2) >= 0 ? result1 : result2))
                 .values();
 
         // get the most recent date for each search term
         List<TopWebSearchResult> results = resultGroups
                 .stream()
-                // get the most recent access per search type
-                .map((list) -> list.stream().max(TOP_WEBSEARCH_RESULT_DATE_COMPARE).get())
                 // get most recent searches first
                 .sorted(TOP_WEBSEARCH_RESULT_DATE_COMPARE.reversed())
                 .limit(count)
@@ -424,7 +423,7 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
      * @param original The original text.
      *
      * @return The translated text or null if no translation can be determined
-     *         or exists.
+     * or exists.
      */
     private String getTranslationOrNull(String original) {
         if (!translationService.hasProvider() || StringUtils.isBlank(original)) {
@@ -449,14 +448,33 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
     }
 
     /**
+     * Gives the most recent TopDeviceAttachedResult. If one is null, the other
+     * is returned.
+     *
+     * @param r1 A result.
+     * @param r2 Another result.
+     * @return The most recent one with a non-null date.
+     */
+    private TopDeviceAttachedResult getMostRecentDevice(TopDeviceAttachedResult r1, TopDeviceAttachedResult r2) {
+        if (r2.getDateAccessed() == null) {
+            return r1;
+        }
+
+        if (r1.getDateAccessed() == null) {
+            return r2;
+        }
+
+        return r1.getDateAccessed().compareTo(r2.getDateAccessed()) >= 0 ? r1 : r2;
+    }
+
+    /**
      * Retrieves most recent devices used by most recent date attached.
      *
      * @param dataSource The data source.
-     * @param count      The maximum number of records to be shown (must be >
-     *                   0).
+     * @param count The maximum number of records to be shown (must be > 0).
      *
      * @return The list of most recent devices attached where most recent device
-     *         attached appears first.
+     * attached appears first.
      *
      * @throws
      * org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException
@@ -469,7 +487,7 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
             return Collections.emptyList();
         }
 
-        return DataSourceInfoUtilities.getArtifacts(caseProvider.get(), TYPE_DEVICE_ATTACHED,
+        Collection<TopDeviceAttachedResult> results = DataSourceInfoUtilities.getArtifacts(caseProvider.get(), TYPE_DEVICE_ATTACHED,
                 dataSource, TYPE_DATETIME, DataSourceInfoUtilities.SortOrder.DESCENDING, 0)
                 .stream()
                 .map(artifact -> {
@@ -482,9 +500,14 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
                 })
                 // remove Root Hub identifier
                 .filter(result -> {
-                    return result.getDeviceModel() == null
+                    return result.getDeviceId() == null
+                            || result.getDeviceModel() == null
                             || !DEVICE_EXCLUDE_LIST.contains(result.getDeviceModel().trim().toUpperCase());
                 })
+                .collect(Collectors.toMap(result -> result.getDeviceId(), result -> result, (r1, r2) -> getMostRecentDevice(r1, r2)))
+                .values();
+
+        return results.stream()
                 .limit(count)
                 .collect(Collectors.toList());
     }
@@ -495,7 +518,7 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
      * @param artifact The artifact.
      *
      * @return The TopAccountResult or null if the account type or message date
-     *         cannot be determined.
+     * cannot be determined.
      */
     private static TopAccountResult getMessageAccountResult(BlackboardArtifact artifact) {
         String type = DataSourceInfoUtilities.getStringOrNull(artifact, TYPE_MESSAGE_TYPE);
@@ -509,12 +532,12 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
      * Obtains a TopAccountResult from a blackboard artifact. The date is
      * maximum of any found dates for attribute types provided.
      *
-     * @param artifact    The artifact.
+     * @param artifact The artifact.
      * @param messageType The type of message this is.
-     * @param dateAttrs   The date attribute types.
+     * @param dateAttrs The date attribute types.
      *
      * @return The TopAccountResult or null if the account type or max date are
-     *         not provided.
+     * not provided.
      */
     private static TopAccountResult getAccountResult(BlackboardArtifact artifact, String messageType, BlackboardAttribute.Type... dateAttrs) {
         String type = messageType;
@@ -538,11 +561,10 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
      * sent.
      *
      * @param dataSource The data source.
-     * @param count      The maximum number of records to be shown (must be >
-     *                   0).
+     * @param count The maximum number of records to be shown (must be > 0).
      *
      * @return The list of most recent accounts used where the most recent
-     *         account by last message sent occurs first.
+     * account by last message sent occurs first.
      *
      * @throws
      * org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException
@@ -585,18 +607,19 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
         Stream<TopAccountResult> allResults = Stream.concat(messageResults, Stream.concat(emailResults, calllogResults));
 
         // get them grouped by account type        
-        Collection<List<TopAccountResult>> groupedResults = allResults
+        Collection<TopAccountResult> groupedResults = allResults
                 // remove null records
                 .filter(result -> result != null)
-                // get these messages grouped by account type
-                .collect(Collectors.groupingBy(TopAccountResult::getAccountType))
+                // get these messages grouped by account type and get the most recent of each type
+                .collect(Collectors.toMap(
+                        result -> result.getAccountType(),
+                        result -> result,
+                        (result1, result2) -> TOP_ACCOUNT_RESULT_DATE_COMPARE.compare(result1, result2) >= 0 ? result1 : result2))
                 .values();
 
         // get account type sorted by most recent date
         return groupedResults
                 .stream()
-                // get the most recent access per account type
-                .map((accountGroup) -> accountGroup.stream().max(TOP_ACCOUNT_RESULT_DATE_COMPARE).get())
                 // get most recent accounts accessed
                 .sorted(TOP_ACCOUNT_RESULT_DATE_COMPARE.reversed())
                 // limit to count
@@ -608,7 +631,7 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
     /**
      * Determines a short folder name if any. Otherwise, returns empty string.
      *
-     * @param strPath         The string path.
+     * @param strPath The string path.
      * @param applicationName The application name.
      *
      * @return The short folder name or empty string if not found.
@@ -659,7 +682,7 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
         if (StringUtils.startsWithIgnoreCase(path, WINDOWS_PREFIX)) {
             return null;
         }
-        
+
         Integer count = DataSourceInfoUtilities.getIntOrNull(artifact, TYPE_COUNT);
         Long longCount = (count == null) ? null : (long) count;
 
@@ -696,7 +719,7 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
      * @param long2 Second possibly null long.
      *
      * @return Returns the compare value: 1,0,-1 favoring the higher non-null
-     *         value.
+     * value.
      */
     private static int nullableCompare(Long long1, Long long2) {
         if (long1 == null && long2 == null) {
@@ -721,7 +744,6 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
         return longNum != null && longNum > 0;
     }
 
-
     /**
      * Retrieves the top programs results for the given data source limited to
      * the count provided as a parameter. The highest run times are at the top
@@ -731,12 +753,12 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
      * be ignored and all items will be returned.
      *
      * @param dataSource The datasource. If the datasource is null, an empty
-     *                   list will be returned.
-     * @param count      The number of results to return. This value must be > 0
-     *                   or an IllegalArgumentException will be thrown.
+     * list will be returned.
+     * @param count The number of results to return. This value must be > 0 or
+     * an IllegalArgumentException will be thrown.
      *
      * @return The sorted list and limited to the count if last run or run count
-     *         information is available on any item.
+     * information is available on any item.
      *
      * @throws SleuthkitCaseProviderException
      * @throws TskCoreException
@@ -759,7 +781,9 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
                 // The value will be a TopProgramsResult with the max run times 
                 // and most recent last run date for each program name / program path pair.
                 .collect(Collectors.toMap(
-                        res -> Pair.of(res.getProgramName(), res.getProgramPath()),
+                        res -> Pair.of(
+                                res.getProgramName() == null ? null : res.getProgramName().toUpperCase(),
+                                res.getProgramPath() == null ? null : res.getProgramPath().toUpperCase()),
                         res -> res,
                         (res1, res2) -> {
                             return new TopProgramsResult(
@@ -852,10 +876,10 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
         /**
          * Main constructor.
          *
-         * @param deviceId     The device id.
+         * @param deviceId The device id.
          * @param dateAccessed The date last attached.
-         * @param deviceMake   The device make.
-         * @param deviceModel  The device model.
+         * @param deviceMake The device make.
+         * @param deviceModel The device model.
          */
         public TopDeviceAttachedResult(String deviceId, Date dateAccessed, String deviceMake, String deviceModel) {
             this.deviceId = deviceId;
@@ -906,7 +930,7 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
          * Main constructor.
          *
          * @param accountType The account type.
-         * @param lastAccess  The date the account was last accessed.
+         * @param lastAccess The date the account was last accessed.
          */
         public TopAccountResult(String accountType, Date lastAccess) {
             this.accountType = accountType;
@@ -940,9 +964,9 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
         /**
          * Describes a top domain result.
          *
-         * @param domain     The domain.
+         * @param domain The domain.
          * @param visitTimes The number of times it was visited.
-         * @param lastVisit  The date of the last visit.
+         * @param lastVisit The date of the last visit.
          */
         public TopDomainsResult(String domain, Long visitTimes, Date lastVisit) {
             this.domain = domain;
@@ -987,7 +1011,7 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
          *
          * @param programName The name of the program.
          * @param programPath The path of the program.
-         * @param runTimes    The number of runs.
+         * @param runTimes The number of runs.
          */
         TopProgramsResult(String programName, String programPath, Long runTimes, Date lastRun) {
             this.programName = programName;
