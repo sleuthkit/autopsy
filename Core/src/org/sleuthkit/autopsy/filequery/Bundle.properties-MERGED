@@ -1,4 +1,3 @@
-CTL_OpenFileDiscoveryAction=File Discovery
 # {0} - dataSourceName
 DataSourceModuleWrapper.exifModule.text=Exif Parser module was not run on data source: {0}\n
 # {0} - dataSourceName
