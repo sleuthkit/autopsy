@@ -8,6 +8,6 @@ FileRepositoryOptionsPanel.addressLabel.text=Hostname or IP Address
 FileRepositoryOptionsPanel.addressTextField.text=
 FileRepositoryOptionsPanel.portLabel.text=Port
 FileRepositoryOptionsPanel.portTextField.text=
-FileRepositoryOptionsPanel.headingLabel.text=Configure the settings for the file repository. Settings can not be changed while ingest is in progress.
+FileRepositoryOptionsPanel.headingLabel.text=Configure the settings for the file repository. Settings can not be changed while a case is open.
 FileRepositoryOptionsPanel.enableCheckBox.text=Enable file repository
 FileRepositoryOptionsPanel.errorLabel.text=Error label
