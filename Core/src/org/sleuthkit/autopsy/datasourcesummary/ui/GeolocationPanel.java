@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.datasourcesummary.ui;
 
 import java.util.Arrays;
 import java.util.List;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.GeolocationSummary;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.GeolocationSummary.CityCount;
@@ -54,6 +55,10 @@ public class GeolocationPanel extends BaseDataSourceSummaryPanel {
     private static String getCityName(CityRecord record) {
         if (record == null) {
             return null;
+        }
+        
+        if (StringUtils.isBlank(record.getCountry())) {
+            return record.getCityName();
         }
         
         return String.format("%s, %s", record.getCityName(), record.getCountry());
