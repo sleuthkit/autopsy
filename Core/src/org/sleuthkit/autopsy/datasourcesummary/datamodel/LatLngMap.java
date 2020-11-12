@@ -65,7 +65,7 @@ public class LatLngMap<E extends KdTree.XYZPoint> {
                 .collect(Collectors.groupingBy((pt) -> bucketCalculator.apply(pt)));
 
         latLngMap = latLngBuckets.entrySet().stream()
-                .map(e -> Pair.of(e.getKey(), new KdTree(e.getValue())))
+                .map(e -> Pair.of(e.getKey(), new KdTree<E>(e.getValue())))
                 .collect(Collectors.toMap(p -> p.getKey(), p -> p.getValue()));
     }
 

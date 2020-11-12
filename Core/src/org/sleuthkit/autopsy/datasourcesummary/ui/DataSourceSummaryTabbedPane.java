@@ -38,7 +38,8 @@ import org.sleuthkit.datamodel.DataSource;
     "DataSourceSummaryTabbedPane_ingestHistoryTab_title=Ingest History",
     "DataSourceSummaryTabbedPane_recentFileTab_title=Recent Files",
     "DataSourceSummaryTabbedPane_pastCasesTab_title=Past Cases",
-    "DataSourceSummaryTabbedPane_analysisTab_title=Analysis"
+    "DataSourceSummaryTabbedPane_analysisTab_title=Analysis",
+    "DataSourceSummaryTabbedPane_geolocationTab_title=Geolocation"
 })
 public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
 
@@ -56,10 +57,10 @@ public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
         /**
          * Main constructor.
          *
-         * @param tabTitle     The title of the tab.
-         * @param component    The component to be displayed.
+         * @param tabTitle The title of the tab.
+         * @param component The component to be displayed.
          * @param onDataSource The function to be called on a new data source.
-         * @param onClose      Called to cleanup resources when closing tabs.
+         * @param onClose Called to cleanup resources when closing tabs.
          */
         DataSourceTab(String tabTitle, Component component, Consumer<DataSource> onDataSource, Runnable onClose) {
             this.tabTitle = tabTitle;
@@ -72,7 +73,7 @@ public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
          * Main constructor.
          *
          * @param tabTitle The title of the tab.
-         * @param panel    The component to be displayed in the tab.
+         * @param panel The component to be displayed in the tab.
          */
         DataSourceTab(String tabTitle, BaseDataSourceSummaryPanel panel) {
             this.tabTitle = tabTitle;
@@ -123,6 +124,7 @@ public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
             new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_analysisTab_title(), new AnalysisPanel()),
             new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_recentFileTab_title(), new RecentFilesPanel()),
             new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_pastCasesTab_title(), new PastCasesPanel()),
+            new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_geolocationTab_title(), new GeolocationPanel()),
             // do nothing on closing 
             new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_ingestHistoryTab_title(), ingestHistoryPanel, ingestHistoryPanel::setDataSource, () -> {
             }),

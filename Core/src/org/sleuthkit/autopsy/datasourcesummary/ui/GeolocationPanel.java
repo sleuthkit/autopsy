@@ -44,8 +44,8 @@ import org.sleuthkit.datamodel.DataSource;
 public class GeolocationPanel extends BaseDataSourceSummaryPanel {
 
     private static final long serialVersionUID = 1L;
-    private static final String GPX_FACTORY = "GPX Parser";
-    private static final String GPX_NAME = GPX_FACTORY;
+    private static final String GPX_FACTORY = "org.sleuthkit.autopsy.modules.vmextractor.VMExtractorIngestModuleFactory";
+    private static final String GPX_NAME =  "GPX Parser";
 
     /**
      * Retrieves the city name to display from the record.

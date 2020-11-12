@@ -29,8 +29,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.SynchronousQueue;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -181,6 +181,7 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
     }
 
     // taken from GeoFilterPanel: all of the GPS artifact types.
+    @SuppressWarnings("deprecation")
     private static final List<ARTIFACT_TYPE> GPS_ARTIFACT_TYPES = Arrays.asList(
             BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_BOOKMARK,
             BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_LAST_KNOWN_LOCATION,
@@ -246,6 +247,10 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
      * @throws InterruptedException
      */
     public List<CityCount> getCityCounts(DataSource dataSource) throws SleuthkitCaseProviderException, GeoLocationDataException, InterruptedException {
+        if (this.latLngMap == null) {
+            throw new IllegalStateException("City data hasn't been loaded");
+        }
+        
         List<Waypoint> dataSourcePoints = getPoints(dataSource);
         Map<CityRecord, Integer> cityCounts = getCounts(dataSourcePoints);
 
@@ -254,6 +259,7 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
                 .sorted((cityCount1, cityCount2) -> -Integer.compare(cityCount1.getCount(), cityCount2.getCount()))
                 .collect(Collectors.toList());
     }
+    
 
     /**
      * Fetches all GPS data for the data source from the current case.
@@ -267,7 +273,7 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
     private List<Waypoint> getPoints(DataSource dataSource) throws SleuthkitCaseProviderException, GeoLocationDataException, InterruptedException {
         // make asynchronous callback synchronous (the callback nature will be handled in a different level)
         // see the following: https://stackoverflow.com/questions/20659961/java-synchronous-callback
-        final BlockingQueue<GeoLocationParseResult<Waypoint>> asyncResult = new SynchronousQueue<>();
+        final BlockingQueue<GeoLocationParseResult<Waypoint>> asyncResult = new ArrayBlockingQueue<>(1);
 
         final WaypointBuilder.WaypointFilterQueryCallBack callback = (result) -> {
             try {
@@ -300,10 +306,9 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
      * Pre-loads city data.
      */
     public void load() throws IOException {
-        // TODO
         latLngMap = new LatLngMap<CityRecord>(parseCsvLines(GeolocationSummary.class.getResourceAsStream("worldcities.csv"), true));
     }
-    
+
     private static CityRecord OTHER_RECORD = new CityRecord(Bundle.GeolocationSummary_cities_noRecordFound(), "", 0, 0);
 
     /**
@@ -320,9 +325,7 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
 
         return toRet;
     }
-    
-    
-    
+
     private static final int CITY_NAME_IDX = 0;
     private static final int COUNTRY_NAME_IDX = 4;
     private static final int LAT_IDX = 2;
@@ -385,7 +388,7 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
 
         return new CityRecord(cityName, countryName, lattitude, longitude);
     }
-    
+
     private static Pattern CSV_NAIVE_REGEX = Pattern.compile("\"\\s*(([^\"]+?)?)\\s*\"");
     private static Pattern COUNTRY_WITH_COMMA = Pattern.compile("^\\s*([^,]*)\\s*,\\s*([^,]*)\\s*$");
 
@@ -426,9 +429,8 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
                 line = reader.readLine();
                 lineNum++;
             }
-            reader.close();
         }
-        
+
         return cityRecords;
     }
 }
