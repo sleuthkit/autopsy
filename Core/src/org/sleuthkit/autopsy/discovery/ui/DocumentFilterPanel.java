@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.discovery.ui;
 
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.discovery.search.SearchData;
 
 /**
@@ -32,6 +33,7 @@ final class DocumentFilterPanel extends AbstractFiltersPanel {
     /**
      * Constructs a new DocumentFilterPanel.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     DocumentFilterPanel() {
         super();
         initComponents();

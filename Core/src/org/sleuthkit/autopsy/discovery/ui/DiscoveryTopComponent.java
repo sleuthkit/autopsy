@@ -28,6 +28,7 @@ import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.swing.JSplitPane;
+import javax.swing.SwingUtilities;
 import javax.swing.plaf.basic.BasicSplitPaneDivider;
 import javax.swing.plaf.basic.BasicSplitPaneUI;
 import org.openide.util.NbBundle;
@@ -55,8 +56,8 @@ public final class DiscoveryTopComponent extends TopComponent {
     private static final int ANIMATION_INCREMENT = 30;
     private volatile static int resultsAreaSize = 250;
     private final GroupListPanel groupListPanel;
-    private final DetailsPanel detailsPanel;
     private final ResultsPanel resultsPanel;
+    private String selectedDomainTabName;
     private Type searchType;
     private int dividerLocation = -1;
     private SwingAnimator animator = null;
@@ -70,10 +71,7 @@ public final class DiscoveryTopComponent extends TopComponent {
         setName(Bundle.DiscoveryTopComponent_name());
         groupListPanel = new GroupListPanel();
         resultsPanel = new ResultsPanel();
-        detailsPanel = new DetailsPanel();
         mainSplitPane.setLeftComponent(groupListPanel);
-        rightSplitPane.setTopComponent(resultsPanel);
-        rightSplitPane.setBottomComponent(detailsPanel);
         //set color of divider
         rightSplitPane.setUI(new BasicSplitPaneUI() {
             @Override
@@ -95,6 +93,7 @@ public final class DiscoveryTopComponent extends TopComponent {
                 }
             }
         });
+        rightSplitPane.setTopComponent(resultsPanel);
     }
 
     /**
@@ -108,6 +107,7 @@ public final class DiscoveryTopComponent extends TopComponent {
          * @param ui The component which contains the split pane this divider is
          *           in.
          */
+        @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
         BasicSplitPaneDividerImpl(BasicSplitPaneUI ui) {
             super(ui);
             this.setLayout(new BorderLayout());
@@ -129,11 +129,13 @@ public final class DiscoveryTopComponent extends TopComponent {
     /**
      * Reset the top component so it isn't displaying any results.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public void resetTopComponent() {
         resultsPanel.resetResultViewer();
         groupListPanel.resetGroupList();
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     public void componentOpened() {
         super.componentOpened();
@@ -141,9 +143,9 @@ public final class DiscoveryTopComponent extends TopComponent {
         DiscoveryEventUtils.getDiscoveryEventBus().register(this);
         DiscoveryEventUtils.getDiscoveryEventBus().register(resultsPanel);
         DiscoveryEventUtils.getDiscoveryEventBus().register(groupListPanel);
-        DiscoveryEventUtils.getDiscoveryEventBus().register(detailsPanel);
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     protected void componentClosed() {
         DiscoveryDialog.getDiscoveryDialogInstance().cancelSearch();
@@ -152,7 +154,10 @@ public final class DiscoveryTopComponent extends TopComponent {
         DiscoveryEventUtils.getDiscoveryEventBus().unregister(this);
         DiscoveryEventUtils.getDiscoveryEventBus().unregister(groupListPanel);
         DiscoveryEventUtils.getDiscoveryEventBus().unregister(resultsPanel);
-        DiscoveryEventUtils.getDiscoveryEventBus().unregister(detailsPanel);
+        DiscoveryEventUtils.getDiscoveryEventBus().unregister(rightSplitPane.getBottomComponent());
+        if (rightSplitPane.getBottomComponent() instanceof DomainDetailsPanel) {
+            selectedDomainTabName = ((DomainDetailsPanel) rightSplitPane.getBottomComponent()).getSelectedTabName();
+        }
         super.componentClosed();
     }
 
@@ -262,7 +267,7 @@ public final class DiscoveryTopComponent extends TopComponent {
      */
     @Subscribe
     void handleDetailsVisibleEvent(DiscoveryEventUtils.DetailsVisibleEvent detailsVisibleEvent) {
-        if (resultsPanel.getActiveType() != DOMAIN) {
+        SwingUtilities.invokeLater(() -> {
             if (animator != null && animator.isRunning()) {
                 animator.stop();
                 animator = null;
@@ -274,7 +279,7 @@ public final class DiscoveryTopComponent extends TopComponent {
                 animator = new SwingAnimator(new HideDetailsAreaCallback());
             }
             animator.start();
-        }
+        });
     }
 
     /**
@@ -289,12 +294,12 @@ public final class DiscoveryTopComponent extends TopComponent {
         "DiscoveryTopComponent.searchError.text=Error no type specified for search."})
     @Subscribe
     void handleSearchStartedEvent(DiscoveryEventUtils.SearchStartedEvent searchStartedEvent) {
-        newSearchButton.setText(Bundle.DiscoveryTopComponent_cancelButton_text());
-        progressMessageTextArea.setForeground(Color.red);
-        searchType = searchStartedEvent.getType();
-        progressMessageTextArea.setText(Bundle.DiscoveryTopComponent_searchInProgress_text(searchType.name()));
-        rightSplitPane.getComponent(1).setVisible(searchStartedEvent.getType() != DOMAIN);
-        rightSplitPane.getComponent(2).setVisible(searchStartedEvent.getType() != DOMAIN);
+        SwingUtilities.invokeLater(() -> {
+            newSearchButton.setText(Bundle.DiscoveryTopComponent_cancelButton_text());
+            progressMessageTextArea.setForeground(Color.red);
+            searchType = searchStartedEvent.getType();
+            progressMessageTextArea.setText(Bundle.DiscoveryTopComponent_searchInProgress_text(searchType.name()));
+        });
     }
 
     /**
@@ -310,19 +315,25 @@ public final class DiscoveryTopComponent extends TopComponent {
         "DiscoveryTopComponent.domainSearch.text=Type: Domain",
         "DiscoveryTopComponent.additionalFilters.text=; "})
     void handleSearchCompleteEvent(DiscoveryEventUtils.SearchCompleteEvent searchCompleteEvent) {
-        newSearchButton.setText(Bundle.DiscoveryTopComponent_newSearch_text());
-        progressMessageTextArea.setForeground(Color.black);
-        String descriptionText = "";
-        if (searchType == DOMAIN) {
-            //domain does not have a file type filter to add the type information so it is manually added
-            descriptionText = Bundle.DiscoveryTopComponent_domainSearch_text();
-            if (!searchCompleteEvent.getFilters().isEmpty()) {
-                descriptionText += Bundle.DiscoveryTopComponent_additionalFilters_text();
+        SwingUtilities.invokeLater(() -> {
+            newSearchButton.setText(Bundle.DiscoveryTopComponent_newSearch_text());
+            progressMessageTextArea.setForeground(Color.black);
+            String descriptionText = "";
+            if (searchType == DOMAIN) {
+                //domain does not have a file type filter to add the type information so it is manually added
+                descriptionText = Bundle.DiscoveryTopComponent_domainSearch_text();
+                if (!searchCompleteEvent.getFilters().isEmpty()) {
+                    descriptionText += Bundle.DiscoveryTopComponent_additionalFilters_text();
+                }
+                rightSplitPane.setBottomComponent(new DomainDetailsPanel(selectedDomainTabName));
+            } else {
+                rightSplitPane.setBottomComponent(new FileDetailsPanel());
             }
-        }
-        descriptionText += searchCompleteEvent.getFilters().stream().map(AbstractFilter::getDesc).collect(Collectors.joining("; "));
-        progressMessageTextArea.setText(Bundle.DiscoveryTopComponent_searchComplete_text(descriptionText));
-        progressMessageTextArea.setCaretPosition(0);
+            DiscoveryEventUtils.getDiscoveryEventBus().register(rightSplitPane.getBottomComponent());
+            descriptionText += searchCompleteEvent.getFilters().stream().map(AbstractFilter::getDesc).collect(Collectors.joining("; "));
+            progressMessageTextArea.setText(Bundle.DiscoveryTopComponent_searchComplete_text(descriptionText));
+            progressMessageTextArea.setCaretPosition(0);
+        });
     }
 
     /**
@@ -334,9 +345,11 @@ public final class DiscoveryTopComponent extends TopComponent {
     @Messages({"DiscoveryTopComponent.searchCancelled.text=Search has been cancelled."})
     @Subscribe
     void handleSearchCancelledEvent(DiscoveryEventUtils.SearchCancelledEvent searchCancelledEvent) {
-        newSearchButton.setText(Bundle.DiscoveryTopComponent_newSearch_text());
-        progressMessageTextArea.setForeground(Color.red);
-        progressMessageTextArea.setText(Bundle.DiscoveryTopComponent_searchCancelled_text());
+        SwingUtilities.invokeLater(() -> {
+            newSearchButton.setText(Bundle.DiscoveryTopComponent_newSearch_text());
+            progressMessageTextArea.setForeground(Color.red);
+            progressMessageTextArea.setText(Bundle.DiscoveryTopComponent_searchCancelled_text());
+        });
 
     }
 
@@ -345,12 +358,14 @@ public final class DiscoveryTopComponent extends TopComponent {
      */
     private final class ShowDetailsAreaCallback implements SwingAnimatorCallback {
 
+        @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
         @Override
         public void callback(Object caller) {
             dividerLocation -= ANIMATION_INCREMENT;
             repaint();
         }
 
+        @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
         @Override
         public boolean hasTerminated() {
             if (dividerLocation != JSplitPane.UNDEFINED_CONDITION && dividerLocation < resultsAreaSize) {
@@ -368,12 +383,14 @@ public final class DiscoveryTopComponent extends TopComponent {
      */
     private final class HideDetailsAreaCallback implements SwingAnimatorCallback {
 
+        @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
         @Override
         public void callback(Object caller) {
             dividerLocation += ANIMATION_INCREMENT;
             repaint();
         }
 
+        @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
         @Override
         public boolean hasTerminated() {
             if (dividerLocation > rightSplitPane.getHeight() || dividerLocation == JSplitPane.UNDEFINED_CONDITION) {
@@ -399,6 +416,7 @@ public final class DiscoveryTopComponent extends TopComponent {
 
         private static final long serialVersionUID = 1L;
 
+        @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
         @Override
         public void paintComponent(Graphics g) {
             if (animator != null && animator.isRunning() && (dividerLocation == JSplitPane.UNDEFINED_CONDITION
