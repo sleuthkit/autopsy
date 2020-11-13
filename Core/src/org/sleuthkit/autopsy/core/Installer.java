@@ -204,21 +204,6 @@ public class Installer extends ModuleInstall {
         packageInstallers.add(org.sleuthkit.autopsy.centralrepository.eventlisteners.Installer.getDefault());
         packageInstallers.add(org.sleuthkit.autopsy.healthmonitor.Installer.getDefault());
         packageInstallers.add(org.sleuthkit.autopsy.casemodule.Installer.getDefault());
-
-        /**
-         * This is a temporary workaround for the following bug in Tika that
-         * results in a null pointer exception when used from the Image Gallery.
-         * The current hypothesis is that the Image Gallery is cancelling the
-         * thumbnail task that Tika initialization is happening on. Once the
-         * Tika issue has been fixed we should no longer need this workaround.
-         *
-         * https://issues.apache.org/jira/browse/TIKA-2896
-         */
-        try {
-            FileTypeDetector fileTypeDetector = new FileTypeDetector();
-        } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
-            logger.log(Level.SEVERE, "Failed to load file type detector.", ex);
-        }
     }
 
     /**
