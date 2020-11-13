@@ -77,7 +77,8 @@ public class GeolocationPanel extends BaseDataSourceSummaryPanel {
     );
 
     // table displaying city and number of hits for that city
-    private final JTablePanel<CityCount> cityCountsTable = JTablePanel.getJTablePanel(Arrays.asList(CITY_COL, COUNT_COL));
+    private final JTablePanel<CityCount> cityCountsTable = JTablePanel.getJTablePanel(Arrays.asList(CITY_COL, COUNT_COL))
+            .setKeyFunction((cityCount) -> cityCount.getCityRecord());
 
     // loadable components on this tab
     private final List<JTablePanel<?>> tables = Arrays.asList(
