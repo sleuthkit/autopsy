@@ -38,7 +38,7 @@ final class DomainArtifactsTabPanel extends JPanel {
 
     private static final long serialVersionUID = 1L;
     private final static Logger logger = Logger.getLogger(DomainArtifactsTabPanel.class.getName());
-    private final ArtifactsListPanel listPanel = new ArtifactsListPanel();
+    private final ArtifactsListPanel listPanel;
     private final BlackboardArtifact.ARTIFACT_TYPE artifactType;
     private AbstractArtifactDetailsPanel rightPanel = null;
 
@@ -61,6 +61,7 @@ final class DomainArtifactsTabPanel extends JPanel {
     DomainArtifactsTabPanel(BlackboardArtifact.ARTIFACT_TYPE type) {
         initComponents();
         this.artifactType = type;
+        listPanel = new ArtifactsListPanel(artifactType);
         jSplitPane1.setLeftComponent(listPanel);
         setRightComponent();
         listPanel.addSelectionListener(listener);
@@ -79,8 +80,12 @@ final class DomainArtifactsTabPanel extends JPanel {
             case TSK_WEB_COOKIE:
             case TSK_WEB_SEARCH_QUERY:
             case TSK_WEB_BOOKMARK:
+                rightPanel = new DefaultArtifactContentViewer();
+                break;
             case TSK_WEB_DOWNLOAD:
             case TSK_WEB_CACHE:
+                rightPanel = new ContentViewerDetailsPanel();
+                break;
             default:
                 rightPanel = new DefaultArtifactContentViewer();
                 break;

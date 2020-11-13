@@ -43,16 +43,19 @@ final class DomainDetailsPanel extends JPanel {
 
     /**
      * Creates new form ArtifactDetailsPanel.
+     *
+     * @param selectedTabName The name of the tab to select initially.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     DomainDetailsPanel(String selectedTabName) {
         initComponents();
         addArtifactTabs(selectedTabName);
-        
     }
 
     /**
      * Add the tabs for each of the artifact types which we will be displaying.
+     *
+     * @param tabName The name of the tab to select initially.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private void addArtifactTabs(String tabName) {
@@ -76,6 +79,10 @@ final class DomainDetailsPanel extends JPanel {
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    /**
+     * Set the selected tab index to be the previously selected tab if a
+     * previously selected tab exists.
+     */
     private void selectTab() {
         for (int i = 0; i < jTabbedPane1.getTabCount(); i++) {
             if (!StringUtils.isBlank(selectedTabName) && selectedTabName.equals(jTabbedPane1.getTitleAt(i))) {
@@ -142,10 +149,10 @@ final class DomainDetailsPanel extends JPanel {
             }
         }
     }
-    
+
     /**
      * Get the name of the tab that was most recently selected.
-     * 
+     *
      * @return The name of the tab that was most recently selected.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
