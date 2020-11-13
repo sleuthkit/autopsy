@@ -49,7 +49,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Panel to display the details for a Web History Artifact.
+ * Panel to display the details for an Artifact.
  */
 @ServiceProvider(service = ArtifactContentViewer.class)
 public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel implements ArtifactContentViewer {
