@@ -308,8 +308,8 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      * Private helper method to allow content specified in a path id attribute
      * to be retrieved.
      *
-     * @param artifact The artifact which content may be specified as a tsk path
-     *                 attribute.
+     * @param artifact The artifact for which content may be specified as a tsk
+     *                 path attribute.
      *
      * @return The Content specified by the artifact's path id attribute or null
      *         if there was no content available.
@@ -319,10 +319,9 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      */
     private static Content getPathIdFile(BlackboardArtifact artifact) throws ExecutionException {
         try {
-            for (BlackboardAttribute attribute : artifact.getAttributes()) {
-                if (attribute.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID()) {
-                    return contentCache.get(attribute.getValueLong(), () -> artifact.getSleuthkitCase().getContentById(attribute.getValueLong()));
-                }
+            BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID));
+            if (attribute != null) {
+                return contentCache.get(attribute.getValueLong(), () -> artifact.getSleuthkitCase().getContentById(attribute.getValueLong()));
             }
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, MessageFormat.format("Error getting content for path id attrbiute for artifact: ", artifact.getId()), ex); //NON-NLS
