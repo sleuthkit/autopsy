@@ -25,14 +25,12 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.openide.modules.ModuleInstall;
 import org.openide.util.NbBundle;
-import org.openide.windows.WindowManager;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
-import org.sleuthkit.autopsy.coreutils.Version;
 
 /**
  * Adds/removes application event listeners responsible for adding data to the
@@ -81,19 +79,10 @@ public class Installer extends ModuleInstall {
      * the org.sleuthkit.autopsy.core package when the already installed
      * Autopsy-Core module is restored (during application startup).
      */
-    @NbBundle.Messages({
-        "Installer.initialCreateSqlite.title=Enable Central Repository?",
-        "Installer.initialCreateSqlite.messageHeader=The Central Repository is not enabled. Would you like to enable it?",
-        "Installer.initialCreateSqlite.messageDesc=It will store information about all hashes and identifiers that you process. "
-        + "You can use this to ignore previously seen files and make connections between cases."
-    })
     @Override
     public void restored() {
         addApplicationEventListeners();
-
-        if (Version.getBuildType() == Version.Type.RELEASE) {
-            setupDefaultCentralRepository();
-        }
+        setupDefaultCentralRepository();
     }
 
     /**
@@ -107,9 +96,9 @@ public class Installer extends ModuleInstall {
 
     /**
      * Checks if the central repository has been set up and configured. If not,
-     * either offers to perform set up (running with a GUI) or does the set up
-     * unconditionally (not running with a GUI, e.g., in an automated ingest
-     * node).
+     * does the set up unconditionally. If the application is running with a
+     * GUI, a notification will be displayed to the user if the mode is RELEASE
+     * (in other words, developers are exempt from seeing the notification).
      */
     private void setupDefaultCentralRepository() {
         Map<String, String> centralRepoSettings = ModuleSettings.getConfigSettings("CentralRepository");
@@ -127,62 +116,29 @@ public class Installer extends ModuleInstall {
                 ModuleSettings.setConfigSetting("CentralRepository", "initialized", "true");
             }
         }
-
-        // if central repository hasn't been previously initialized, initialize it
-        if (!initialized) {
-            // if running with a GUI, prompt the user
-            if (RuntimeProperties.runningWithGUI()) {
-                try {
-                    SwingUtilities.invokeAndWait(() -> {
-                        try {
-                            String dialogText
-                                    = "<html><body>"
-                                    + "<div style='width: 400px;'>"
-                                    + "<p>" + NbBundle.getMessage(this.getClass(), "Installer.initialCreateSqlite.messageHeader") + "</p>"
-                                    + "<p style='margin-top: 10px'>" + NbBundle.getMessage(this.getClass(), "Installer.initialCreateSqlite.messageDesc") + "</p>"
-                                    + "</div>"
-                                    + "</body></html>";
-
-                            if (JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog(WindowManager.getDefault().getMainWindow(),
-                                    dialogText,
-                                    NbBundle.getMessage(this.getClass(), "Installer.initialCreateSqlite.title"),
-                                    JOptionPane.YES_NO_OPTION)) {
-
-                                setupDefaultSqliteCentralRepo();
-                            }
-                        } catch (CentralRepoException ex) {
-                            logger.log(Level.SEVERE, "There was an error while initializing the central repository database", ex);
-
-                            doMessageBoxIfRunningInGUI(ex);
-                        }
-                    });
-                } catch (InterruptedException | InvocationTargetException ex) {
-                    logger.log(Level.SEVERE, "There was an error while running the swing utility invoke later while creating the central repository database", ex);
-                }
-            } // if no GUI, just initialize
-            else {
-                try {
-                    setupDefaultSqliteCentralRepo();
-                } catch (CentralRepoException ex) {
-                    logger.log(Level.SEVERE, "There was an error while initializing the central repository database", ex);
-
-                    doMessageBoxIfRunningInGUI(ex);
-                }
-            }
-
-            ModuleSettings.setConfigSetting("CentralRepository", "initialized", "true");
+        
+        if(initialized) {
+            return; // Nothing to do
         }
-    }
 
-    /**
-     * Sets up a default single-user SQLite central repository.
-     *
-     * @throws CentralRepoException If there is an error setting up teh central
-     *                              repository.
-     */
-    private void setupDefaultSqliteCentralRepo() throws CentralRepoException {
-        CentralRepoDbManager manager = new CentralRepoDbManager();
-        manager.setupDefaultSqliteDb();
+        if (CentralRepositoryNotificationDialog.shouldDisplay()) {
+            CentralRepositoryNotificationDialog.display();
+        }
+
+        try {
+            CentralRepoDbManager manager = new CentralRepoDbManager();
+            if (UserPreferences.getIsMultiUserModeEnabled()) {
+                manager.setupDefaultPostgresDb();
+            } else {
+                manager.setupDefaultSqliteDb();
+            }
+        } catch (CentralRepoException ex) {
+            logger.log(Level.SEVERE, "There was an error while initializing the central repository database", ex);
+
+            doMessageBoxIfRunningInGUI(ex);
+        }
+
+        ModuleSettings.setConfigSetting("CentralRepository", "initialized", "true");
     }
 
     /**
