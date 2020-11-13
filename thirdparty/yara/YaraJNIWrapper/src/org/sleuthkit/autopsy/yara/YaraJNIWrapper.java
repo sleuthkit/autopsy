@@ -46,24 +46,40 @@ public class YaraJNIWrapper {
      *
      * The rule path must be to a yara compile rule file.
      *
-     * @param compiledRulesPath
-     * @param byteBuffer
+     * @param compiledRulesPath Absolute path to a compiled YARA rule file.
+     * @param byteBuffer        File buffer.
+     * @param bufferSize        Size of the byte to read in the given buffer
+     * @param timeoutSec        Scan timeout value in seconds.
      *
      * @return List of rules found rules. Null maybe returned if error occurred.
      *
      * @throws YaraWrapperException
      */
-    static public native List<String> findRuleMatch(String compiledRulesPath, byte[] byteBuffer) throws YaraWrapperException;
+    static public native List<String> findRuleMatch(String compiledRulesPath, byte[] byteBuffer, int bufferSize, int timeoutSec) throws YaraWrapperException;
+
+    /**
+     * Returns a list of matching YARA rules found in the given file.
+     *
+     * @param compiledRulePath Absolute path to a compiled YARA rule file.
+     * @param filePath         Absolute path to the file to search.
+     * @param timeoutSec       Scan timeout value in seconds.
+     *
+     * @return List of rules found rules. Null maybe returned if error occurred.
+     *
+     *
+     * @throws YaraWrapperException
+     */
+    static public native List<String> findRuleMatchFile(String compiledRulePath, String filePath, int timeoutSec) throws YaraWrapperException;
 
     /**
      * Copy yarabridge.dll from inside the jar to a temp file that can be loaded
      * with System.load.
-     * 
+     *
      * To make this work, the dll needs to be in the same folder as this source
      * file. The dll needs to be located somewhere in the jar class path.
-     * 
+     *
      * @throws IOException
-     * @throws YaraWrapperException 
+     * @throws YaraWrapperException
      */
     static private void extractAndLoadDll() throws IOException, YaraWrapperException {
         File tempFile = File.createTempFile("lib", null);

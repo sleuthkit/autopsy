@@ -75,20 +75,44 @@ final class YaraIngestHelper {
      * The baseDirectory should contain a series of directories one for each
      * rule set.
      *
-     * @param file          The file to scan.
-     * @param baseDirectory Base directory for the compiled rule sets.
+     * @param file                 The file to scan.
+     * @param baseRuleSetDirectory Base directory for the compiled rule sets.
      *
      * @throws TskCoreException
      */
-    static List<BlackboardArtifact> scanFileForMatches(AbstractFile file, File baseDirectory) throws TskCoreException, YaraWrapperException {
+    static List<BlackboardArtifact> scanFileForMatches(AbstractFile file, File baseRuleSetDirectory, byte[] fileData, int fileDataSize, int timeout) throws TskCoreException, YaraWrapperException {
         List<BlackboardArtifact> artifacts = new ArrayList<>();
 
-        byte[] fileBytes = new byte[(int) file.getSize()];
-        file.read(fileBytes, 0, fileBytes.length);
-
-        File[] ruleSetDirectories = baseDirectory.listFiles();
+        File[] ruleSetDirectories = baseRuleSetDirectory.listFiles();
         for (File ruleSetDirectory : ruleSetDirectories) {
-            List<String> ruleMatches = YaraIngestHelper.scanFileForMatches(fileBytes, ruleSetDirectory);
+
+            List<String> ruleMatches = YaraIngestHelper.scanFileForMatches(fileData, fileDataSize, ruleSetDirectory, timeout);
+            if (!ruleMatches.isEmpty()) {
+                artifacts.addAll(YaraIngestHelper.createArtifact(file, ruleSetDirectory.getName(), ruleMatches));
+            }
+        }
+
+        return artifacts;
+    }
+
+    /**
+     *
+     * @param file                 The Abstract File being processed.
+     * @param baseRuleSetDirectory Base directory of the compiled rule sets.
+     * @param localFile            Local copy of file.
+     * @param timeout              Yara file scan timeout in seconds.
+     *
+     * @return
+     *
+     * @throws TskCoreException
+     * @throws YaraWrapperException
+     */
+    static List<BlackboardArtifact> scanFileForMatches(AbstractFile file, File baseRuleSetDirectory, File localFile, int timeout) throws TskCoreException, YaraWrapperException {
+        List<BlackboardArtifact> artifacts = new ArrayList<>();
+
+        File[] ruleSetDirectories = baseRuleSetDirectory.listFiles();
+        for (File ruleSetDirectory : ruleSetDirectories) {
+            List<String> ruleMatches = YaraIngestHelper.scanFileForMatch(localFile, ruleSetDirectory, timeout);
             if (!ruleMatches.isEmpty()) {
                 artifacts.addAll(YaraIngestHelper.createArtifact(file, ruleSetDirectory.getName(), ruleMatches));
             }
@@ -109,13 +133,25 @@ final class YaraIngestHelper {
      *
      * @throws TskCoreException
      */
-    private static List<String> scanFileForMatches(byte[] fileBytes, File ruleSetDirectory) throws TskCoreException, YaraWrapperException {
+    private static List<String> scanFileForMatches(byte[] fileBytes, int fileSize, File ruleSetDirectory, int timeout) throws YaraWrapperException {
         List<String> matchingRules = new ArrayList<>();
 
         File[] ruleSetCompiledFileList = ruleSetDirectory.listFiles();
 
         for (File ruleFile : ruleSetCompiledFileList) {
-            matchingRules.addAll(YaraJNIWrapper.findRuleMatch(ruleFile.getAbsolutePath(), fileBytes));
+            matchingRules.addAll(YaraJNIWrapper.findRuleMatch(ruleFile.getAbsolutePath(), fileBytes, fileSize, timeout));
+        }
+
+        return matchingRules;
+    }
+
+    private static List<String> scanFileForMatch(File scanFile, File ruleSetDirectory, int timeout) throws YaraWrapperException {
+        List<String> matchingRules = new ArrayList<>();
+
+        File[] ruleSetCompiledFileList = ruleSetDirectory.listFiles();
+
+        for (File ruleFile : ruleSetCompiledFileList) {
+            matchingRules.addAll(YaraJNIWrapper.findRuleMatchFile(ruleFile.getAbsolutePath(), scanFile.getAbsolutePath(), timeout));
         }
 
         return matchingRules;

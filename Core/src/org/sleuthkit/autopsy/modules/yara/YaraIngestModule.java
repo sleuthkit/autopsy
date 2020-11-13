@@ -18,8 +18,11 @@
  */
 package org.sleuthkit.autopsy.modules.yara;
 
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -30,6 +33,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.FileIngestModuleAdapter;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestModule;
@@ -40,6 +44,7 @@ import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.Blackboard.BlackboardException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * An ingest module that runs the yara against the given files.
@@ -47,10 +52,16 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class YaraIngestModule extends FileIngestModuleAdapter {
 
+    // 15MB
+    private static final int FILE_SIZE_THRESHOLD_MB = 100;
+    private static final int FILE_SIZE_THRESHOLD_BYTE = FILE_SIZE_THRESHOLD_MB * 1024 * 1024;
+    private static final int YARA_SCAN_TIMEOUT_SEC = 30 * 60 * 60; // 30 minutes.
+    
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
     private final static Logger logger = Logger.getLogger(YaraIngestModule.class.getName());
     private static final String YARA_DIR = "yara";
     private static final Map<Long, Path> pathsByJobId = new ConcurrentHashMap<>();
+    private static final String RULESET_DIR = "RuleSets";
 
     private final YaraIngestJobSettings settings;
 
@@ -81,8 +92,12 @@ public class YaraIngestModule extends FileIngestModuleAdapter {
         if (refCounter.incrementAndGet(jobId) == 1) {
             // compile the selected rules & put into temp folder based on jobID
             Path tempDir = getTempDirectory(jobId);
+            Path tempRuleSetDir = Paths.get(tempDir.toString(), RULESET_DIR);
+            if(!tempRuleSetDir.toFile().exists()) {
+                tempRuleSetDir.toFile().mkdir();
+            }
 
-            YaraIngestHelper.compileRules(settings.getSelectedRuleSetNames(), tempDir);
+            YaraIngestHelper.compileRules(settings.getSelectedRuleSetNames(), tempRuleSetDir);
         }
     }
 
@@ -108,13 +123,31 @@ public class YaraIngestModule extends FileIngestModuleAdapter {
             }
         }
 
-        // Skip the file if its 0 in length.
-        if (file.getSize() == 0) {
+        // Skip the file if its 0 in length or a directory.
+        if (file.getSize() == 0 || 
+                file.isDir() || 
+                file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS) {
             return ProcessResult.OK;
         }
 
         try {
-            List<BlackboardArtifact> artifacts = YaraIngestHelper.scanFileForMatches(file, getTempDirectory(jobId).toFile());
+            List<BlackboardArtifact> artifacts = new ArrayList<>();
+            File ruleSetsDir = Paths.get(getTempDirectory(jobId).toString(), RULESET_DIR).toFile();
+            
+            // If the file size is less than FILE_SIZE_THRESHOLD_BYTE read the file
+            // into a buffer, else make a local copy of the file.
+            if(file.getSize() < FILE_SIZE_THRESHOLD_BYTE) {
+                byte[] fileBuffer = new byte[(int)file.getSize()];
+                
+                int dataRead = file.read(fileBuffer, 0, file.getSize());
+                if(dataRead != 0) {
+                    artifacts.addAll( YaraIngestHelper.scanFileForMatches(file, ruleSetsDir, fileBuffer, dataRead, YARA_SCAN_TIMEOUT_SEC));
+                } 
+            } else {
+                File tempCopy = createLocalCopy(file);
+                artifacts.addAll( YaraIngestHelper.scanFileForMatches(file, ruleSetsDir, tempCopy, YARA_SCAN_TIMEOUT_SEC));
+                tempCopy.delete();
+            }
             
             if(!artifacts.isEmpty()) {
                 Blackboard blackboard = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard();
@@ -122,9 +155,13 @@ public class YaraIngestModule extends FileIngestModuleAdapter {
             }
             
         } catch (BlackboardException | NoCurrentCaseException | IngestModuleException | TskCoreException | YaraWrapperException ex) {
-            logger.log(Level.SEVERE, "YARA ingest module failed to process file.", ex);
+            logger.log(Level.SEVERE, String.format("YARA ingest module failed to process file id %d", file.getId()), ex);
             return ProcessResult.ERROR;
-        } 
+        } catch(IOException ex) {
+            logger.log(Level.SEVERE, String.format("YARA ingest module failed to make a local copy of given file id %d", file.getId()), ex);
+            return ProcessResult.ERROR;
+        }
+        
         return ProcessResult.OK;
     }
 
@@ -163,6 +200,25 @@ public class YaraIngestModule extends FileIngestModuleAdapter {
         pathsByJobId.put(jobId, jobPath);
 
         return jobPath;
+    }
+    
+    /**
+     * Create a local copy of the given AbstractFile.
+     * 
+     * @param file AbstractFile to make a copy of.
+     * 
+     * @return A File object representation of the local copy.
+     * 
+     * @throws org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException
+     * @throws IOException 
+     */
+    protected File createLocalCopy(AbstractFile file) throws IngestModuleException, IOException {
+        String tempFileName = RandomStringUtils.randomAlphabetic(15) + file.getId() + ".temp";
+        
+        File tempFile = Paths.get(getTempDirectory(context.getJobId()).toString(), tempFileName).toFile();
+        ContentUtils.writeToFile(file, tempFile, context::dataSourceIngestIsCancelled);
+        
+        return tempFile;
     }
 
 }
