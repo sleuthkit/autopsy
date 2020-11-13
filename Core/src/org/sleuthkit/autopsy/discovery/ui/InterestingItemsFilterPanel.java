@@ -27,6 +27,7 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.discovery.search.SearchFiltering;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -43,6 +44,7 @@ final class InterestingItemsFilterPanel extends AbstractDiscoveryFilterPanel {
     /**
      * Creates new form InterestingItemsFilterPanel.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     InterestingItemsFilterPanel() {
         initComponents();
         setUpInterestingItemsFilter();
@@ -51,6 +53,7 @@ final class InterestingItemsFilterPanel extends AbstractDiscoveryFilterPanel {
     /**
      * Initialize the interesting items filter.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private void setUpInterestingItemsFilter() {
         int count = 0;
         try {
@@ -118,6 +121,7 @@ final class InterestingItemsFilterPanel extends AbstractDiscoveryFilterPanel {
         interestingItemsList.setEnabled(interestingItemsCheckbox.isSelected());
     }//GEN-LAST:event_interestingItemsCheckboxActionPerformed
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     void configurePanel(boolean selected, int[] indicesSelected) {
         boolean hasInterestingItems = interestingItemsList.getModel().getSize() > 0;
@@ -135,6 +139,7 @@ final class InterestingItemsFilterPanel extends AbstractDiscoveryFilterPanel {
         }
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     JCheckBox getCheckbox() {
         return interestingItemsCheckbox;
@@ -145,6 +150,7 @@ final class InterestingItemsFilterPanel extends AbstractDiscoveryFilterPanel {
         return null;
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @NbBundle.Messages({"InterestingItemsFilterPanel.error.text=At least one interesting file set name must be selected."})
     @Override
     String checkForError() {
@@ -161,11 +167,13 @@ final class InterestingItemsFilterPanel extends AbstractDiscoveryFilterPanel {
     private javax.swing.JScrollPane interestingItemsScrollPane;
     // End of variables declaration//GEN-END:variables
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     JList<?> getList() {
         return interestingItemsList;
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     AbstractFilter getFilter() {
         if (interestingItemsCheckbox.isSelected()) {

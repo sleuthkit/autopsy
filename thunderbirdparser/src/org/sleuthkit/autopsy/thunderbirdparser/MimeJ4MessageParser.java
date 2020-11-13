@@ -318,8 +318,10 @@ class MimeJ4MessageParser {
         
         Body body = e.getBody();
         if (body instanceof SingleBody) {
+            long fileLength;
             try (EncodedFileOutputStream fos = new EncodedFileOutputStream(new FileOutputStream(outPath), TskData.EncodingType.XOR1)) {
                 ((SingleBody) body).writeTo(fos);
+                fileLength = fos.getBytesWritten();
             } catch (IOException ex) {
                 logger.log(Level.WARNING, "Failed to create file output stream for: " + outPath, ex); //NON-NLS
                 return;
@@ -328,7 +330,7 @@ class MimeJ4MessageParser {
             EmailMessage.Attachment attach = new EmailMessage.Attachment();
             attach.setName(filename);
             attach.setLocalPath(relModuleOutputPath + uniqueFilename);
-            attach.setSize(new File(outPath).length());
+            attach.setSize(fileLength);
             attach.setEncodingType(TskData.EncodingType.XOR1);
             email.addAttachment(attach);
         } 

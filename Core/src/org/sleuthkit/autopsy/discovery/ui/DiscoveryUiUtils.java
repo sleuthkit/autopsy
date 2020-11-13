@@ -51,6 +51,7 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corelibs.ScalrWrapper;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import static org.sleuthkit.autopsy.coreutils.VideoUtils.getVideoFileInTempDir;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.discovery.search.ResultFile;
@@ -173,6 +174,7 @@ final class DiscoveryUiUtils {
      *
      * @return True if the point is over the icon, false otherwise.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     static boolean isPointOnIcon(Component comp, Point point) {
         return comp instanceof JComponent && point.x >= comp.getX() && point.x <= comp.getX() + ICON_SIZE && point.y >= comp.getY() && point.y <= comp.getY() + ICON_SIZE;
     }
@@ -186,6 +188,7 @@ final class DiscoveryUiUtils {
      * @param isDeletedLabel The label to set the icon and tooltip for.
      */
     @NbBundle.Messages({"DiscoveryUiUtils.isDeleted.text=All instances of file are deleted."})
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     static void setDeletedIcon(boolean isDeleted, javax.swing.JLabel isDeletedLabel) {
         if (isDeleted) {
             isDeletedLabel.setIcon(DELETED_ICON);
@@ -203,6 +206,7 @@ final class DiscoveryUiUtils {
      *                   score of.
      * @param scoreLabel The label to set the icon and tooltip for.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     static void setScoreIcon(ResultFile resultFile, javax.swing.JLabel scoreLabel) {
         switch (resultFile.getScore()) {
             case NOTABLE_SCORE:
@@ -232,6 +236,7 @@ final class DiscoveryUiUtils {
      * Helper method to display an error message when the results of the
      * Discovery Top component may be incomplete.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @NbBundle.Messages({"DiscoveryUiUtils.resultsIncomplete.text=Discovery results may be incomplete"})
     static void displayErrorMessage(DiscoveryDialog dialog) {
         //check if modules run and assemble message

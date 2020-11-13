@@ -22,6 +22,7 @@ import org.sleuthkit.autopsy.discovery.search.AbstractFilter;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.discovery.search.SearchFiltering;
 
 /**
@@ -34,6 +35,7 @@ final class UserCreatedFilterPanel extends AbstractDiscoveryFilterPanel {
     /**
      * Creates new form UserCreatedFilterPanel.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     UserCreatedFilterPanel() {
         initComponents();
     }
@@ -69,11 +71,13 @@ final class UserCreatedFilterPanel extends AbstractDiscoveryFilterPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     void configurePanel(boolean selected, int[] indicesSelected) {
         userCreatedCheckbox.setSelected(selected);
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     JCheckBox getCheckbox() {
         return userCreatedCheckbox;
@@ -99,6 +103,7 @@ final class UserCreatedFilterPanel extends AbstractDiscoveryFilterPanel {
         return null;
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     AbstractFilter getFilter() {
         if (userCreatedCheckbox.isSelected()) {

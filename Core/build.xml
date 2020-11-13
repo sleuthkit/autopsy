@@ -209,8 +209,8 @@
     </target>
 
     <!--sets up integration test system properties, calls underlying test-init, 
-    get test data files if they have not been retrieved, and then sets up the pathing jar-->
-    <target name="test-init" depends="setup-integration-props,projectized-common.test-init,getTestDataFiles,qa-functional-pathing-jar" />
+    get test data files if they have not been retrieved, and then sets up the pathing jar and unit test simplification -->
+    <target name="test-init" depends="setup-integration-props,projectized-common.test-init,getTestDataFiles,qa-functional-pathing-jar,unit-test-path-simplification" />
         
     
     <target name="test-qa-functional">
@@ -292,5 +292,68 @@
             <property name="test.timeout" value="3600000"/>     
             <antcall target="projectized-common.test-qa-functional" />
         </sequential>
-    </target>  
+    </target>    
+    
+ 
+    <!--  
+    This specifies the classpath for unit tests using * notation 
+    (i.e. https://stackoverflow.com/questions/219585/including-all-the-jars-in-a-directory-within-the-java-classpath).  
+    This solution involves taking the initial ‘module.run.classpath’ property and simplifying it to the directories containing jars 
+    (i.e. instead of “/dir/lib1.jar:/dir/lib2.jar:/dir/lib3.jar” it becomes “/dir/*” ).  
+    More information on ‘module.run.classpath’ can be found in “netbeans-plat\11.3\harness\README” and it appears that
+    “netbeans-plat\11.3\harness\build.xml:build-init target is in charge of setting the ‘module.run.classpath’ variable.
+    More information in Jira: 6970.
+    -->
+    <target name="unit-test-path-simplification" depends="projectized-common.test-init">
+        <sequential>
+            <script language="javascript">
+                <![CDATA[ 
+                    var moduleRunClasspath = project.getProperty("module.run.classpath");
+
+                    var directories = [];
+                    // searches for jar file parent directories with path separators of \ or /
+                    var individualPathRegex = /^\s*(.+?[\\\/])[^\\\/]+?\.jar\s*$/i;
+                    // split on ':' but not 'C:\'
+                    var classPathRegex = /((C:\\)?.+?)(:|$)/gi;
+                    var match;
+                    while((match = classPathRegex.exec(moduleRunClasspath)) !== null) {
+                        var thisPath = match[1];
+                        var pathMatch = thisPath.match(individualPathRegex);
+                        // find unique matches
+                        if (pathMatch && directories.indexOf(pathMatch[1]) < 0) {
+                            directories.push(pathMatch[1]);
+                        }
+                    }
+
+                    // suffix with *
+                    for (var i = 0; i < directories.length; i++) {
+                        directories[i] = directories[i] + "*";
+                    }
+
+                    // set project property
+                    project.setNewProperty("test.unit.abbreviatedModuleRunClassPath", directories.join(":"));
+                ]]>
+            </script>
+
+            <!--grab properties from common.xml:test-init so that "test.unit.run.cp" can be properly formed-->
+            <property name="build.test.unit.dir" location="${build.dir}/test/unit"/>
+            <property name="build.test.unit.classes.dir" location="${build.test.unit.dir}/classes"/>
+            <property name="test.unit.cp.extra" value=""/>
+                
+            <!--set up "test.unit.run.cp" to be used by common.xml:-do-junit-->
+            <path id="test.unit.run.cp">
+                <pathelement path="${build.test.unit.classes.dir}"/>
+                <!-- Cannot use <path refid="cp"/> since that uses ${module.classpath} and we want ${module.run.classpath}: -->
+                <pathelement path="${test.unit.runtime.cp}"/>
+                <pathelement path="${cp.extra}"/>
+                <pathelement location="${cluster}/${module.jar}"/>
+                <path refid="test.unit.lib.cp"/>
+                <!-- for compatibility with property based classpath-->
+                <pathelement path="${test.unit.abbreviatedModuleRunClassPath}"/>
+                <pathelement path="${test.unit.run.cp.extra}"/>
+                <pathelement path="${test.unit.cp.extra}"/>
+                <pathelement path="${test.extra.nb.javac.deps}"/>
+            </path>
+        </sequential>
+    </target>     
 </project>
