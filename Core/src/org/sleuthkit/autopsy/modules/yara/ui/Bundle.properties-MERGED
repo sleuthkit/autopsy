@@ -14,6 +14,7 @@ YaraIngestSettingsPanel.border.title=Select YARA rule sets to enable during inge
 YaraIngestSettingsPanel.allFilesButton.text=All Files
 YaraIngestSettingsPanel.allFilesButton.toolTipText=
 YaraIngestSettingsPanel.executableFilesButton.text=Only Executable Files
+RuleSetDetailsPanel.refreshButton.text=Refresh File List
 # {0} - rule set name
 YaraRuleSetOptionPanel_badName_msg=Rule set name {0} already exists.\nRule set names must be unique.
 YaraRuleSetOptionPanel_badName_title=Create Rule Set
