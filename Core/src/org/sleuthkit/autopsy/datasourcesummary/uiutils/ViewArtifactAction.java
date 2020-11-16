@@ -44,7 +44,7 @@ public class ViewArtifactAction implements Runnable {
 
         // Navigate to the source context artifact.
         if (dtc != null && artifact != null) {
-            dtc.viewArtifact(artifact);
+            dtc.viewArtifactContent(artifact);
         }
     }
 

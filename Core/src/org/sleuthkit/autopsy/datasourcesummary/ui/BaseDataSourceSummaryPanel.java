@@ -64,6 +64,8 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
     private final EventUpdateHandler updateHandler;
     private final List<UpdateGovernor> governors;
 
+    private Runnable notifyParentClose = null;
+
     private DataSource dataSource;
 
     /**
@@ -77,7 +79,7 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
          * Checks to see if artifact is from a datasource.
          *
          * @param art The artifact.
-         * @param ds  The datasource.
+         * @param ds The datasource.
          *
          * @return True if in datasource; false if not or exception.
          */
@@ -219,7 +221,7 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
      * Main constructor.
      *
      * @param governors The items governing when this panel should receive
-     *                  updates.
+     * updates.
      */
     protected BaseDataSourceSummaryPanel(UpdateGovernor... governors) {
         this.governors = (governors == null) ? Collections.emptyList() : Arrays.asList(governors);
@@ -244,6 +246,24 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
         this.dataSource = dataSource;
         this.executor.cancelRunning();
         onNewDataSource(this.dataSource);
+    }
+
+    /**
+     * Sends event that parent should close.
+     */
+    protected void notifyParentClose() {
+        if (notifyParentClose != null) {
+            notifyParentClose.run();
+        }
+    }
+
+    /**
+     * Sets the listener for parent close events.
+     *
+     * @param action The action to run when parent is to close.
+     */
+    void setParentCloseListener(Runnable action) {
+        notifyParentClose = action;
     }
 
     /**
@@ -287,7 +307,7 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
      * argument and data fetch components and then submits them to run.
      *
      * @param dataFetchComponents The components to be run.
-     * @param dataSource          The data source argument.
+     * @param dataSource The data source argument.
      */
     protected void fetchInformation(List<DataFetchComponents<DataSource, ?>> dataFetchComponents, DataSource dataSource) {
         if (dataSource == null || !Case.isCaseOpen()) {
@@ -320,8 +340,8 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
      * argument and submits them to be executed.
      *
      * @param dataFetchComponents The components to register.
-     * @param loadableComponents  The components to set to a loading screen.
-     * @param dataSource          The data source argument.
+     * @param loadableComponents The components to set to a loading screen.
+     * @param dataSource The data source argument.
      */
     protected void onNewDataSource(
             List<DataFetchComponents<DataSource, ?>> dataFetchComponents,
@@ -371,12 +391,11 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
      * message indicating the unrun ingest module will be shown. Otherwise, the
      * default LoadableComponent.showDataFetchResult behavior will be used.
      *
-     * @param component    The component.
-     * @param result       The data result.
+     * @param component The component.
+     * @param result The data result.
      * @param factoryClass The fully qualified class name of the relevant
-     *                     factory.
-     * @param moduleName   The name of the ingest module (i.e. 'Keyword
-     *                     Search').
+     * factory.
+     * @param moduleName The name of the ingest module (i.e. 'Keyword Search').
      */
     protected <T> void showResultWithModuleCheck(LoadableComponent<List<T>> component, DataFetchResult<List<T>> result, String factoryClass, String moduleName) {
         Predicate<List<T>> hasResults = (lst) -> lst != null && !lst.isEmpty();
@@ -389,14 +408,13 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
      * message indicating the unrun ingest module will be shown. Otherwise, the
      * default LoadableComponent.showDataFetchResult behavior will be used.
      *
-     * @param component    The component.
-     * @param result       The data result.
-     * @param hasResults   Given the data type, will provide whether or not the
-     *                     data contains any actual results.
+     * @param component The component.
+     * @param result The data result.
+     * @param hasResults Given the data type, will provide whether or not the
+     * data contains any actual results.
      * @param factoryClass The fully qualified class name of the relevant
-     *                     factory.
-     * @param moduleName   The name of the ingest module (i.e. 'Keyword
-     *                     Search').
+     * factory.
+     * @param moduleName The name of the ingest module (i.e. 'Keyword Search').
      */
     protected <T> void showResultWithModuleCheck(LoadableComponent<T> component, DataFetchResult<T> result,
             Predicate<T> hasResults, String factoryClass, String moduleName) {

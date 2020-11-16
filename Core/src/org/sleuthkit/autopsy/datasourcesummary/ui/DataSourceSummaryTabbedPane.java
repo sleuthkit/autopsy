@@ -47,7 +47,7 @@ public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
      * Records of tab information (i.e. title, component, function to call on
      * new data source).
      */
-    private static class DataSourceTab {
+    private class DataSourceTab {
 
         private final String tabTitle;
         private final Component component;
@@ -74,8 +74,12 @@ public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
          *
          * @param tabTitle The title of the tab.
          * @param panel The component to be displayed in the tab.
+         * @param notifyParentClose Notifies parent to trigger a close.
          */
         DataSourceTab(String tabTitle, BaseDataSourceSummaryPanel panel) {
+
+            panel.setParentCloseListener(() -> notifyParentClose());
+
             this.tabTitle = tabTitle;
             this.component = panel;
             this.onDataSource = panel::setDataSource;
@@ -116,20 +120,10 @@ public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
     private static final String TABBED_PANE = "tabbedPane";
     private static final String NO_DATASOURCE_PANE = "noDataSourcePane";
 
+    private Runnable notifyParentClose = null;
     private final IngestJobInfoPanel ingestHistoryPanel = new IngestJobInfoPanel();
 
-    private final List<DataSourceTab> tabs = Arrays.asList(
-            new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_typesTab_title(), new TypesPanel()),
-            new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_userActivityTab_title(), new UserActivityPanel()),
-            new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_analysisTab_title(), new AnalysisPanel()),
-            new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_recentFileTab_title(), new RecentFilesPanel()),
-            new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_pastCasesTab_title(), new PastCasesPanel()),
-            new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_timelineTab_title(), new TimelinePanel()),
-            // do nothing on closing 
-            new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_ingestHistoryTab_title(), ingestHistoryPanel, ingestHistoryPanel::setDataSource, () -> {
-            }),
-            new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_detailsTab_title(), new ContainerPanel())
-    );
+    private final List<DataSourceTab> tabs;
 
     private DataSource dataSource = null;
     private CardLayout cardLayout;
@@ -138,8 +132,44 @@ public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
      * Creates new form TabPane
      */
     public DataSourceSummaryTabbedPane() {
+        this.tabs = getTabs();
         initComponents();
         postInit();
+    }
+
+    /**
+     * Sends event that parent should close.
+     */
+    private void notifyParentClose() {
+        if (notifyParentClose != null) {
+            notifyParentClose.run();
+        }
+    }
+
+    /**
+     * Sets the listener for parent close events.
+     *
+     * @param parentCloseAction The observer.
+     */
+    void setParentCloseListener(Runnable parentCloseAction) {
+        notifyParentClose = parentCloseAction;
+    }
+
+    private List<DataSourceTab> getTabs() {
+        List<DataSourceTab> tabs = Arrays.asList(
+                new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_typesTab_title(), new TypesPanel()),
+                new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_userActivityTab_title(), new UserActivityPanel()),
+                new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_analysisTab_title(), new AnalysisPanel()),
+                new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_recentFileTab_title(), new RecentFilesPanel()),
+                new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_pastCasesTab_title(), new PastCasesPanel()),
+                new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_timelineTab_title(), new TimelinePanel()),
+                // do nothing on closing 
+                new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_ingestHistoryTab_title(), ingestHistoryPanel, ingestHistoryPanel::setDataSource, () -> {
+                }),
+                new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_detailsTab_title(), new ContainerPanel())
+        );
+
+        return tabs;
     }
 
     /**

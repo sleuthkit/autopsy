@@ -80,11 +80,17 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
     private static final String ANDROID_FACTORY = "org.python.proxies.module$AndroidModuleFactory";
     private static final String ANDROID_MODULE_NAME = "Android Analyzer";
 
-    private static List<MenuItem> getArtifactPopup(BlackboardArtifact artifact) {
-        return artifact == null ? null : Arrays.asList(new DefaultMenuItem(Bundle.UserActivityPanel_goToArtifact(), new ViewArtifactAction(artifact)));
+    private List<MenuItem> getArtifactPopup(BlackboardArtifact artifact) {
+        return artifact == null ? null : Arrays.asList(
+                new DefaultMenuItem(
+                        Bundle.UserActivityPanel_goToArtifact(),
+                        () -> {
+                            new ViewArtifactAction(artifact).run();
+                            notifyParentClose();
+                        }));
     }
 
-    private static List<MenuItem> getPopup(LastAccessedArtifact record) {
+    private List<MenuItem> getPopup(LastAccessedArtifact record) {
         return record == null ? null : getArtifactPopup(record.getArtifact());
     }
 

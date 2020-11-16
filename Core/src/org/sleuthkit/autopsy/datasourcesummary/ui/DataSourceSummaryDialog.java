@@ -40,7 +40,7 @@ import org.sleuthkit.datamodel.IngestJobInfo;
  * Dialog for displaying the Data Sources Summary information
  */
 final class DataSourceSummaryDialog extends javax.swing.JDialog implements Observer {
-
+    
     private static final long serialVersionUID = 1L;
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.DATA_SOURCE_ANALYSIS_COMPLETED);
     private final DataSourceBrowser dataSourcesPanel;
@@ -61,6 +61,7 @@ final class DataSourceSummaryDialog extends javax.swing.JDialog implements Obser
         Map<Long, Long> fileCountsMap = CaseDataSourcesSummary.getCountsOfFiles();
         dataSourcesPanel = new DataSourceBrowser(usageMap, fileCountsMap);
         dataSourceSummaryTabbedPane = new DataSourceSummaryTabbedPane();
+        dataSourceSummaryTabbedPane.setParentCloseListener(() -> DataSourceSummaryDialog.this.dispose());
         initComponents();
         dataSourceSummarySplitPane.setLeftComponent(dataSourcesPanel);
         dataSourcesPanel.addListSelectionListener((ListSelectionEvent e) -> {
@@ -70,7 +71,7 @@ final class DataSourceSummaryDialog extends javax.swing.JDialog implements Obser
                 this.repaint();
             }
         });
-
+        
         ingestEventListener = (PropertyChangeEvent evt) -> {
             if (evt instanceof DataSourceAnalysisCompletedEvent) {
                 DataSourceAnalysisCompletedEvent dsEvent = (DataSourceAnalysisCompletedEvent) evt;
@@ -90,7 +91,7 @@ final class DataSourceSummaryDialog extends javax.swing.JDialog implements Obser
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         this.pack();
     }
-
+    
     @Override
     public void dispose() {
         IngestManager.getInstance().removeIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, ingestEventListener);
@@ -104,7 +105,7 @@ final class DataSourceSummaryDialog extends javax.swing.JDialog implements Obser
     void enableObserver() {
         dataSourcesPanel.addObserver(this);
     }
-
+    
     @Override
     public void update(Observable o, Object arg) {
         this.dispose();
@@ -169,7 +170,7 @@ final class DataSourceSummaryDialog extends javax.swing.JDialog implements Obser
      * source matches the dataSourceID it will select the first datasource.
      *
      * @param dataSourceID the ID of the datasource to select, null will cause
-     *                     the first datasource to be selected
+     * the first datasource to be selected
      */
     void selectDataSource(Long dataSourceId) {
         dataSourcesPanel.selectDataSource(dataSourceId);

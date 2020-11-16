@@ -215,8 +215,8 @@ public class JTablePanel<T> extends AbstractLoadableComponent<List<T>> {
 
                     // make sure there is a value at the row,col of click event.
                     if (tableModel != null
-                            && row > 0 && row < tableModel.getRowCount()
-                            && col > 0 && col < tableModel.getColumnCount()) {
+                            && row >= 0 && row < tableModel.getRowCount()
+                            && col >= 0 && col < tableModel.getColumnCount()) {
 
                         // select the row
                         table.setRowSelectionInterval(row, row);
