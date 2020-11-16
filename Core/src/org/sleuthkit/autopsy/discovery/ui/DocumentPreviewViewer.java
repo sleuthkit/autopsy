@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.swing.DefaultListModel;
 import javax.swing.event.ListSelectionListener;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
@@ -35,6 +36,7 @@ final class DocumentPreviewViewer extends javax.swing.JPanel {
     /**
      * Creates new form DocumentViewer.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     DocumentPreviewViewer() {
         initComponents();
     }
@@ -75,11 +77,10 @@ final class DocumentPreviewViewer extends javax.swing.JPanel {
     /**
      * Clear the list of documents being displayed.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     void clearViewer() {
-        synchronized (this) {
-            documentListModel.removeAllElements();
-            documentScrollPane.getVerticalScrollBar().setValue(0);
-        }
+        documentListModel.removeAllElements();
+        documentScrollPane.getVerticalScrollBar().setValue(0);
     }
 
     /**
@@ -88,6 +89,7 @@ final class DocumentPreviewViewer extends javax.swing.JPanel {
      *
      * @param listener The ListSelectionListener to add to the selection model.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     void addListSelectionListener(ListSelectionListener listener) {
         documentList.getSelectionModel().addListSelectionListener(listener);
     }
@@ -99,13 +101,12 @@ final class DocumentPreviewViewer extends javax.swing.JPanel {
      * @return The list of AbstractFiles which are represented by the selected
      *         document preview.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     List<AbstractFile> getInstancesForSelected() {
-        synchronized (this) {
-            if (documentList.getSelectedIndex() == -1) {
-                return new ArrayList<>();
-            } else {
-                return documentListModel.getElementAt(documentList.getSelectedIndex()).getResultFile().getAllInstances();
-            }
+        if (documentList.getSelectedIndex() == -1) {
+            return new ArrayList<>();
+        } else {
+            return documentListModel.getElementAt(documentList.getSelectedIndex()).getResultFile().getAllInstances();
         }
     }
 
@@ -120,9 +121,8 @@ final class DocumentPreviewViewer extends javax.swing.JPanel {
      * @param documentWrapper The object which contains the document preview
      *                        which will be displayed.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     void addDocument(DocumentWrapper documentWrapper) {
-        synchronized (this) {
-            documentListModel.addElement(documentWrapper);
-        }
+        documentListModel.addElement(documentWrapper);
     }
 }

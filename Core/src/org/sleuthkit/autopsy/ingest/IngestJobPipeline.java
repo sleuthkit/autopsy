@@ -1274,6 +1274,9 @@ final class IngestJobPipeline {
                 }
             }
         }
+        
+        // If a data source had no tasks in progress it may now be complete.
+        checkForStageCompleted();
     }
 
     /**

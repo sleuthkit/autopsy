@@ -28,6 +28,7 @@ import javax.swing.JComponent;
 import javax.swing.JList;
 import javax.swing.ListCellRenderer;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 
 /**
  * Class which displays a thumbnail and information for an image file.
@@ -41,6 +42,7 @@ final class ImageThumbnailPanel extends javax.swing.JPanel implements ListCellRe
     /**
      * Creates new form ImageThumbnailPanel
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     ImageThumbnailPanel() {
         initComponents();
     }
@@ -129,6 +131,7 @@ final class ImageThumbnailPanel extends javax.swing.JPanel implements ListCellRe
     private javax.swing.JLabel thumbnailLabel;
     // End of variables declaration//GEN-END:variables
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @NbBundle.Messages({
         "# {0} - otherInstanceCount",
         "ImageThumbnailPanel.nameLabel.more.text= and {0} more",
@@ -152,6 +155,7 @@ final class ImageThumbnailPanel extends javax.swing.JPanel implements ListCellRe
         return this;
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     public String getToolTipText(MouseEvent event) {
         if (event != null) {

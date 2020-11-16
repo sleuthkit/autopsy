@@ -28,10 +28,10 @@ import junit.framework.Assert;
 import static junit.framework.Assert.assertTrue;
 import junit.framework.TestCase;
 import junit.framework.Test;
-import org.apache.commons.io.FileUtils;
 
 import org.netbeans.junit.NbModuleSuite;
 import org.openide.util.Exceptions;
+import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.InvalidAccountIDException;
 import org.sleuthkit.datamodel.TskData;
@@ -257,12 +257,12 @@ public class CentralRepoPersonasTest  extends TestCase {
     // This function is run after every test, NOT after the entire collection of 
     // tests defined in the class are run.
     @Override
-    public void tearDown() throws CentralRepoException, IOException {
+    public void tearDown() throws CentralRepoException {
         // Close and delete the test case and central repo db
         if (CentralRepository.isEnabled()) {
             CentralRepository.getInstance().shutdownConnections();
         }
-        FileUtils.deleteDirectory(testDirectory.toFile());
+        FileUtil.deleteDir(testDirectory.toFile());
     }
     
     

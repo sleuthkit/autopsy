@@ -32,7 +32,7 @@ public class DomainSearchTestUtils {
         
     public static ResultDomain mockDomainResult(String domain, long start, long end, 
             long totalVisits, long visits, long filesDownloaded, long dataSourceId) {
-        Content dataSource = TskMockUtils.mockDataSource(dataSourceId);
+        Content dataSource = TskMockUtils.getDataSource(dataSourceId);
         return new ResultDomain(domain, start, end, totalVisits,
                 visits, filesDownloaded, dataSource);
     }

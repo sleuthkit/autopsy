@@ -29,6 +29,7 @@ import javax.swing.JList;
 import javax.swing.ListCellRenderer;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.corecomponents.AutoWrappingJTextPane;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.discovery.search.SearchData;
 
 /**
@@ -43,6 +44,7 @@ class DocumentPanel extends javax.swing.JPanel implements ListCellRenderer<Docum
     /**
      * Creates new form DocumentPanel.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     DocumentPanel() {
         initComponents();
     }
@@ -150,7 +152,7 @@ class DocumentPanel extends javax.swing.JPanel implements ListCellRenderer<Docum
         "DocumentPanel.numberOfImages.text=1 of {0} images",
         "DocumentPanel.numberOfImages.noImages=No images",
         "DocumentPanel.noImageExtraction.text=0 of ? images"})
-
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     public Component getListCellRendererComponent(JList<? extends DocumentWrapper> list, DocumentWrapper value, int index, boolean isSelected, boolean cellHasFocus) {
         fileSizeLabel.setText(DiscoveryUiUtils.getFileSizeString(value.getResultFile().getFirstInstance().getSize()));
@@ -180,6 +182,7 @@ class DocumentPanel extends javax.swing.JPanel implements ListCellRenderer<Docum
         return this;
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     public String getToolTipText(MouseEvent event) {
         if (event != null) {

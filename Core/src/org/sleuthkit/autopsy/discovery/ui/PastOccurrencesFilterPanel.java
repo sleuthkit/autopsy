@@ -24,6 +24,7 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.discovery.search.AbstractFilter;
 import org.sleuthkit.autopsy.discovery.search.SearchData;
 import org.sleuthkit.autopsy.discovery.search.SearchData.Frequency;
@@ -41,6 +42,7 @@ final class PastOccurrencesFilterPanel extends AbstractDiscoveryFilterPanel {
     /**
      * Creates new form PastOccurrencesFilterPanel.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     PastOccurrencesFilterPanel(Type type) {
         initComponents();
         this.type = type;
@@ -101,6 +103,7 @@ final class PastOccurrencesFilterPanel extends AbstractDiscoveryFilterPanel {
     /**
      * Initialize the frequency filter.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private void setUpFrequencyFilter() {
         int count = 0;
         DefaultListModel<SearchData.Frequency> frequencyListModel = (DefaultListModel<SearchData.Frequency>) crFrequencyList.getModel();
@@ -126,6 +129,7 @@ final class PastOccurrencesFilterPanel extends AbstractDiscoveryFilterPanel {
     private javax.swing.JCheckBox pastOccurrencesCheckbox;
     // End of variables declaration//GEN-END:variables
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     void configurePanel(boolean selected, int[] indicesSelected) {
         boolean canBeFilteredOn = type != Type.DOMAIN || CentralRepository.isEnabled();
@@ -144,6 +148,7 @@ final class PastOccurrencesFilterPanel extends AbstractDiscoveryFilterPanel {
         }
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     JCheckBox getCheckbox() {
         return pastOccurrencesCheckbox;
@@ -154,6 +159,7 @@ final class PastOccurrencesFilterPanel extends AbstractDiscoveryFilterPanel {
         return null;
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @NbBundle.Messages({"PastOccurrencesFilterPanel.error.text=At least one value in the past occurrence filter must be selected."})
     @Override
     String checkForError() {
@@ -163,11 +169,13 @@ final class PastOccurrencesFilterPanel extends AbstractDiscoveryFilterPanel {
         return "";
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     JList<?> getList() {
         return crFrequencyList;
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     AbstractFilter getFilter() {
         if (pastOccurrencesCheckbox.isSelected()) {
