@@ -43,6 +43,7 @@ import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.ExecUtil.ProcessTerminator;
+import org.sleuthkit.autopsy.coreutils.ExecUtil.TimedProcessTerminator;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
@@ -143,6 +144,8 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                     .put("Title", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION) 
                     .put("pdf:PDFVersion", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_VERSION)
                    .build();
+    
+    private static final int OCR_TIMEOUT_SECONDS = 30 * 60;
 
     
     /**
@@ -515,7 +518,11 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         private boolean extractTextAndIndex(AbstractFile aFile, Map<String, String> extractedMetadata) throws IngesterException {
             ImageConfig imageConfig = new ImageConfig();
             imageConfig.setOCREnabled(KeywordSearchSettings.getOcrOption());
-            ProcessTerminator terminator = () -> context.fileIngestIsCancelled();
+            
+            List<ProcessTerminator> terminators = new ArrayList<>();
+            terminators.add(() -> context.fileIngestIsCancelled()); 
+            terminators.add(new TimedProcessTerminator(OCR_TIMEOUT_SECONDS));
+            HybridTerminator terminator = new HybridTerminator(terminators);
             Lookup extractionContext = Lookups.fixed(imageConfig, terminator);
 
             try {
@@ -803,6 +810,29 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 }
             } catch (IngesterException | IOException | TextExtractor.InitReaderException ex) {
                 logger.log(Level.WARNING, "Unable to index " + aFile.getName(), ex);
+            }
+            return false;
+        }
+    }
+    
+    /**
+     * This class takes a list of ProcessTerminators checking all of them
+     * during shouldTerminateProcess.
+     */
+    private class HybridTerminator implements ProcessTerminator {
+        
+        private final List<ProcessTerminator> terminatorList;
+        
+        private HybridTerminator(List<ProcessTerminator> terminators) {
+            this.terminatorList = terminators;
+        }
+        
+        @Override
+        public boolean shouldTerminateProcess() {
+            for(ProcessTerminator terminator: terminatorList) {
+                if(terminator.shouldTerminateProcess()) {
+                    return true;
+                }
             }
             return false;
         }
