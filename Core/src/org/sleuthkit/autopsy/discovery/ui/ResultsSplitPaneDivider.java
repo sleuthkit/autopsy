@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.discovery.ui;
 
 import java.awt.Cursor;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 
 import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils;
 
@@ -32,6 +33,7 @@ final class ResultsSplitPaneDivider extends javax.swing.JPanel {
     /**
      * Creates new form LabeledSplitPaneDivider.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     ResultsSplitPaneDivider() {
         initComponents();
     }

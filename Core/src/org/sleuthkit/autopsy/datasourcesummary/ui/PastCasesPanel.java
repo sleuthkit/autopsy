@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.datasourcesummary.ui;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.function.Function;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.centralrepository.ingestmodule.CentralRepoIngestModuleFactory;
@@ -28,7 +27,6 @@ import org.sleuthkit.autopsy.datasourcesummary.datamodel.PastCasesSummary;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.PastCasesSummary.PastCasesResult;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer.DefaultCellModel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult.ResultType;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.IngestRunningLabel;
@@ -103,31 +101,8 @@ public class PastCasesPanel extends BaseDataSourceSummaryPanel {
      * @param result The result.
      */
     private void handleResult(DataFetchResult<PastCasesResult> result) {
-        showResultWithModuleCheck(notableFileTable, getSubResult(result, (res) -> res.getTaggedNotable()), CR_FACTORY, CR_NAME);
-        showResultWithModuleCheck(sameIdTable, getSubResult(result, (res) -> res.getSameIdsResults()), CR_FACTORY, CR_NAME);
-    }
-
-    /**
-     * Given an input data fetch result, creates an error result if the original
-     * is an error. Otherwise, uses the getSubResult function on the underlying
-     * data to create a new DataFetchResult.
-     *
-     * @param inputResult     The input result.
-     * @param getSubComponent The means of getting the data given the original
-     *                        data.
-     *
-     * @return The new result with the error of the original or the processed
-     *         data.
-     */
-    private <O> DataFetchResult<O> getSubResult(DataFetchResult<PastCasesResult> inputResult, Function<PastCasesResult, O> getSubResult) {
-        if (inputResult == null) {
-            return null;
-        } else if (inputResult.getResultType() == ResultType.SUCCESS) {
-            O innerData = (inputResult.getData() == null) ? null : getSubResult.apply(inputResult.getData());
-            return DataFetchResult.getSuccessResult(innerData);
-        } else {
-            return DataFetchResult.getErrorResult(inputResult.getException());
-        }
+        showResultWithModuleCheck(notableFileTable, DataFetchResult.getSubResult(result, (res) -> res.getTaggedNotable()), CR_FACTORY, CR_NAME);
+        showResultWithModuleCheck(sameIdTable, DataFetchResult.getSubResult(result, (res) -> res.getSameIdsResults()), CR_FACTORY, CR_NAME);
     }
 
     @Override

@@ -118,7 +118,7 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
                         dataSource,
                         DATETIME_ATT,
                         DataSourceInfoUtilities.SortOrder.DESCENDING,
-                        10);
+                        maxCount);
 
         List<RecentFileDetails> fileDetails = new ArrayList<>();
         for (BlackboardArtifact artifact : artifactList) {
@@ -134,12 +134,11 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
                 } else if (attribute.getAttributeType().equals(PATH_ATT)) {
                     path = attribute.getValueString();
                 }
-
-                if (accessedTime != null) {
-                    fileDetails.add(new RecentFileDetails(path, accessedTime));
-                }
             }
 
+            if (accessedTime != null && accessedTime != 0) {
+                fileDetails.add(new RecentFileDetails(path, accessedTime));
+            }
         }
 
         return fileDetails;
@@ -190,7 +189,7 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
                     path = attribute.getValueString();
                 }
             }
-            if (accessedTime != null) {
+            if (accessedTime != null && accessedTime != 0L) {
                 fileDetails.add(new RecentDownloadDetails(path, accessedTime, domain));
             }
         }
@@ -213,6 +212,10 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
     public List<RecentAttachmentDetails> getRecentAttachments(DataSource dataSource, int maxCount) throws SleuthkitCaseProviderException, TskCoreException {
         if (dataSource == null) {
             return Collections.emptyList();
+        }
+
+        if (maxCount < 0) {
+            throw new IllegalArgumentException("Invalid maxCount passed to getRecentAttachments, value must be equal to or greater than 0");
         }
 
         return createListFromMap(buildAttachmentMap(dataSource), maxCount);
@@ -241,7 +244,7 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
             }
 
             BlackboardArtifact messageArtifact = skCase.getBlackboardArtifact(attribute.getValueLong());
-            if (isMessageArtifact(messageArtifact)) {
+            if (messageArtifact != null && isMessageArtifact(messageArtifact)) {
                 Content content = artifact.getParent();
                 if (content instanceof AbstractFile) {
                     String sender;

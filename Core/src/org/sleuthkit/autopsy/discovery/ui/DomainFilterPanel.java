@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.discovery.ui;
 
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryAttributes;
 import org.sleuthkit.autopsy.discovery.search.ResultsSorter;
 import org.sleuthkit.autopsy.discovery.search.SearchData;
@@ -34,6 +35,7 @@ public class DomainFilterPanel extends AbstractFiltersPanel {
     /**
      * Creates new form DomainFilterPanel.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public DomainFilterPanel() {
         super();
         initComponents();
