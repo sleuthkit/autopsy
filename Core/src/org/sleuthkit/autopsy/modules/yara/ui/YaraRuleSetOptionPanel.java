@@ -20,12 +20,14 @@ package org.sleuthkit.autopsy.modules.yara.ui;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.modules.yara.rules.RuleSet;
 import org.sleuthkit.autopsy.modules.yara.rules.RuleSetException;
 import org.sleuthkit.autopsy.modules.yara.rules.RuleSetManager;
 
@@ -117,7 +119,26 @@ public class YaraRuleSetOptionPanel extends javax.swing.JPanel {
      * rule set list.
      */
     private void handleDeleteRuleSet() {
-        ruleSetPanel.removeRuleSet(ruleSetPanel.getSelectedRule());
+        RuleSet ruleSet = ruleSetPanel.getSelectedRule();
+        ruleSetPanel.removeRuleSet(ruleSet);
+        deleteDirectory(ruleSet.getPath().toFile());
+    }
+
+    /**
+     * Recursively delete the given directory and its children.
+     *
+     * @param directoryToBeDeleted
+     *
+     * @return True if the delete was successful.
+     */
+    private boolean deleteDirectory(File directoryToBeDeleted) {
+        File[] allContents = directoryToBeDeleted.listFiles();
+        if (allContents != null) {
+            for (File file : allContents) {
+                deleteDirectory(file);
+            }
+        }
+        return directoryToBeDeleted.delete();
     }
 
     /**
