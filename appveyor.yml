@@ -6,15 +6,14 @@ cache:
   - C:\ProgramData\chocolatey\lib
   - '%APPVEYOR_BUILD_FOLDER%\Core\test\qa-functional\data'
 
-
 image: Visual Studio 2015
 platform: x64
 environment:
-    global:
-      TSK_HOME: "C:\\sleuthkit"
-      JDK_HOME: C:\Program Files\BellSoft\LibericaJDK-11-Full
-      JAVA_HOME: C:\Program Files\BellSoft\LibericaJDK-11-Full
-      PYTHON: "C:\\Python36-x64"
+  global:
+    TSK_HOME: "C:\\sleuthkit"
+    JDK_HOME: C:\Program Files\BellSoft\LibericaJDK-11-Full
+    JAVA_HOME: C:\Program Files\BellSoft\LibericaJDK-11-Full
+    PYTHON: "C:\\Python36-x64"
 
 install:
   - ps: choco install nuget.commandline
@@ -44,4 +43,6 @@ build_script:
   - cd %APPVEYOR_BUILD_FOLDER%
   - cmd: ant -q build
 
-test: off
+test_script:
+  - cd %APPVEYOR_BUILD_FOLDER%
+  - cmd: ant -q test-no-regression
