@@ -19,12 +19,14 @@
 package org.sleuthkit.autopsy.discovery.search;
 
 import com.google.common.eventbus.EventBus;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryKeyUtils.GroupKey;
 import org.sleuthkit.autopsy.discovery.search.SearchData.Type;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
  * Class to handle event bus and events for discovery tool.
@@ -88,13 +90,13 @@ public final class DiscoveryEventUtils {
             //no arg constructor
         }
     }
-    
+
     /**
-     * Event to signal that any background tasks currently running should
-     * be cancelled.
+     * Event to signal that any background tasks currently running should be
+     * cancelled.
      */
     public static final class CancelBackgroundTasksEvent {
-        
+
         public CancelBackgroundTasksEvent() {
             //no-arg constructor
         }
@@ -121,6 +123,30 @@ public final class DiscoveryEventUtils {
          */
         public List<AbstractFile> getInstances() {
             return Collections.unmodifiableList(instances);
+        }
+    }
+
+    /**
+     * Event to signal that the list should be populated.
+     */
+    public static final class PopulateDomainTabsEvent {
+
+        private final String domain;
+
+        /**
+         * Construct a new PopulateDomainTabsEvent.
+         */
+        public PopulateDomainTabsEvent(String domain) {
+            this.domain = domain;
+        }
+
+        /**
+         * Get the domain for the details area.
+         *
+         * @return The the domain for the details area.
+         */
+        public String getDomain() {
+            return domain;
         }
     }
 
@@ -201,6 +227,47 @@ public final class DiscoveryEventUtils {
             return sortMethod;
         }
 
+    }
+
+    /**
+     * Event to signal the completion of a search being performed.
+     */
+    public static final class ArtifactSearchResultEvent {
+
+        private final List<BlackboardArtifact> listOfArtifacts = new ArrayList<>();
+        private final BlackboardArtifact.ARTIFACT_TYPE artifactType;
+
+        /**
+         * Construct a new ArtifactSearchResultEvent with a list of specified
+         * artifacts and an artifact type.
+         *
+         * @param artifactType    The type of artifacts in the list.
+         * @param listOfArtifacts The list of artifacts retrieved.
+         */
+        public ArtifactSearchResultEvent(BlackboardArtifact.ARTIFACT_TYPE artifactType, List<BlackboardArtifact> listOfArtifacts) {
+            if (listOfArtifacts != null) {
+                this.listOfArtifacts.addAll(listOfArtifacts);
+            }
+            this.artifactType = artifactType;
+        }
+
+        /**
+         * Get the list of artifacts included in the event.
+         *
+         * @return The list of artifacts retrieved.
+         */
+        public List<BlackboardArtifact> getListOfArtifacts() {
+            return Collections.unmodifiableList(listOfArtifacts);
+        }
+
+        /**
+         * Get the type of BlackboardArtifact type of which exist in the list.
+         *
+         * @return The BlackboardArtifact type of which exist in the list.
+         */
+        public BlackboardArtifact.ARTIFACT_TYPE getArtifactType() {
+            return artifactType;
+        }
     }
 
     /**

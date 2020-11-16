@@ -31,6 +31,7 @@ import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryAttributes;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryKeyUtils.GroupKey;
@@ -56,6 +57,7 @@ final class GroupListPanel extends javax.swing.JPanel {
     /**
      * Creates new form GroupListPanel.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     GroupListPanel() {
         initComponents();
     }
@@ -67,8 +69,10 @@ final class GroupListPanel extends javax.swing.JPanel {
      */
     @Subscribe
     void handleSearchStartedEvent(DiscoveryEventUtils.SearchStartedEvent searchStartedEvent) {
-        type = searchStartedEvent.getType();
-        groupKeyList.setListData(new GroupKey[0]);
+        SwingUtilities.invokeLater(() -> {
+            type = searchStartedEvent.getType();
+            groupKeyList.setListData(new GroupKey[0]);
+        });
     }
 
     @Messages({"GroupsListPanel.noFileResults.message.text=No files were found for the selected filters.\n\n"
@@ -90,27 +94,29 @@ final class GroupListPanel extends javax.swing.JPanel {
      */
     @Subscribe
     void handleSearchCompleteEvent(DiscoveryEventUtils.SearchCompleteEvent searchCompleteEvent) {
-        groupMap = searchCompleteEvent.getGroupMap();
-        searchfilters = searchCompleteEvent.getFilters();
-        groupingAttribute = searchCompleteEvent.getGroupingAttr();
-        groupSort = searchCompleteEvent.getGroupSort();
-        resultSortMethod = searchCompleteEvent.getResultSort();
-        groupKeyList.setListData(groupMap.keySet().toArray(new GroupKey[groupMap.keySet().size()]));
         SwingUtilities.invokeLater(() -> {
-            if (groupKeyList.getModel().getSize() > 0) {
-                groupKeyList.setSelectedIndex(0);
-            } else if (type == DOMAIN) {
-                JOptionPane.showMessageDialog(DiscoveryTopComponent.getTopComponent(),
-                        Bundle.GroupsListPanel_noDomainResults_message_text(),
-                        Bundle.GroupsListPanel_noResults_title_text(),
-                        JOptionPane.PLAIN_MESSAGE);
-            } else {
-                JOptionPane.showMessageDialog(DiscoveryTopComponent.getTopComponent(),
-                        Bundle.GroupsListPanel_noFileResults_message_text(),
-                        Bundle.GroupsListPanel_noResults_title_text(),
-                        JOptionPane.PLAIN_MESSAGE);
-            }
-            setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+            groupMap = searchCompleteEvent.getGroupMap();
+            searchfilters = searchCompleteEvent.getFilters();
+            groupingAttribute = searchCompleteEvent.getGroupingAttr();
+            groupSort = searchCompleteEvent.getGroupSort();
+            resultSortMethod = searchCompleteEvent.getResultSort();
+            groupKeyList.setListData(groupMap.keySet().toArray(new GroupKey[groupMap.keySet().size()]));
+            SwingUtilities.invokeLater(() -> {
+                if (groupKeyList.getModel().getSize() > 0) {
+                    groupKeyList.setSelectedIndex(0);
+                } else if (type == DOMAIN) {
+                    JOptionPane.showMessageDialog(DiscoveryTopComponent.getTopComponent(),
+                            Bundle.GroupsListPanel_noDomainResults_message_text(),
+                            Bundle.GroupsListPanel_noResults_title_text(),
+                            JOptionPane.PLAIN_MESSAGE);
+                } else {
+                    JOptionPane.showMessageDialog(DiscoveryTopComponent.getTopComponent(),
+                            Bundle.GroupsListPanel_noFileResults_message_text(),
+                            Bundle.GroupsListPanel_noResults_title_text(),
+                            JOptionPane.PLAIN_MESSAGE);
+                }
+                setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+            });
         });
     }
 
@@ -168,10 +174,9 @@ final class GroupListPanel extends javax.swing.JPanel {
     /**
      * Reset the group list to be empty.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     void resetGroupList() {
-        SwingUtilities.invokeLater(() -> {
-            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        });
+        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         groupKeyList.setListData(new GroupKey[0]);
     }
 
@@ -211,6 +216,7 @@ final class GroupListPanel extends javax.swing.JPanel {
 
         private static final long serialVersionUID = 1L;
 
+        @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
         @Override
         public java.awt.Component getListCellRendererComponent(
                 JList<?> list,
