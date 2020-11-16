@@ -24,6 +24,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.event.ListSelectionListener;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 
 /**
  * Abstract class extending JPanel for filter controls.
@@ -41,6 +42,7 @@ abstract class AbstractDiscoveryFilterPanel extends javax.swing.JPanel {
      *                        selected, null to indicate leaving selected items
      *                        unchanged or that there are no items to select.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     abstract void configurePanel(boolean selected, int[] indicesSelected);
 
     /**
@@ -48,6 +50,7 @@ abstract class AbstractDiscoveryFilterPanel extends javax.swing.JPanel {
      *
      * @return The JCheckBox which enables and disables this filter.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     abstract JCheckBox getCheckbox();
 
     /**
@@ -57,6 +60,7 @@ abstract class AbstractDiscoveryFilterPanel extends javax.swing.JPanel {
      * @return The JList which contains the values available for selection for
      *         this filter.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     abstract JList<?> getList();
 
     /**
@@ -65,6 +69,7 @@ abstract class AbstractDiscoveryFilterPanel extends javax.swing.JPanel {
      *
      * @return The JLabel to display under the JCheckBox.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     abstract JLabel getAdditionalLabel();
 
     /**
@@ -73,6 +78,7 @@ abstract class AbstractDiscoveryFilterPanel extends javax.swing.JPanel {
      * @return If the settings are invalid returns the error that has occurred,
      *         otherwise returns empty string.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     abstract String checkForError();
 
     /**
@@ -82,6 +88,7 @@ abstract class AbstractDiscoveryFilterPanel extends javax.swing.JPanel {
      * @param actionlistener The listener for the checkbox selection events.
      * @param listListener   The listener for the list selection events.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     void addListeners(ActionListener actionListener, ListSelectionListener listListener) {
         if (getCheckbox() != null) {
             getCheckbox().addActionListener(actionListener);
@@ -97,11 +104,13 @@ abstract class AbstractDiscoveryFilterPanel extends javax.swing.JPanel {
      * @return The AbstractFilter for the selected settings, null if the
      *         settings are not in use.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     abstract AbstractFilter getFilter();
 
     /**
      * Remove listeners from the checkbox and the list if they exist.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     void removeListeners() {
         if (getCheckbox() != null) {
             for (ActionListener listener : getCheckbox().getActionListeners()) {
