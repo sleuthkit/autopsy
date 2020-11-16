@@ -29,16 +29,21 @@ import org.apache.commons.lang.StringUtils;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.IngestModuleCheckUtil;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.LastAccessedArtifact;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopAccountResult;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopDeviceAttachedResult;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopWebSearchResult;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopDomainsResult;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopProgramsResult;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer.DefaultCellModel;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer.DefaultMenuItem;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer.MenuItem;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.IngestRunningLabel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel.ColumnModel;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.ViewArtifactAction;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.DataSource;
 
 /**
@@ -61,7 +66,8 @@ import org.sleuthkit.datamodel.DataSource;
     "UserActivityPanel_TopDeviceAttachedTableModel_dateAccessed_header=Last Accessed",
     "UserActivityPanel_TopAccountTableModel_accountType_header=Account Type",
     "UserActivityPanel_TopAccountTableModel_lastAccess_header=Last Accessed",
-    "UserActivityPanel_noDataExists=No communication data exists"})
+    "UserActivityPanel_noDataExists=No communication data exists",
+    "UserActivityPanel_goToArtifact=Go to Artifact"})
 public class UserActivityPanel extends BaseDataSourceSummaryPanel {
 
     private static final long serialVersionUID = 1L;
@@ -73,6 +79,14 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
     private static final int TOP_DEVICES_COUNT = 10;
     private static final String ANDROID_FACTORY = "org.python.proxies.module$AndroidModuleFactory";
     private static final String ANDROID_MODULE_NAME = "Android Analyzer";
+
+    private static List<MenuItem> getArtifactPopup(BlackboardArtifact artifact) {
+        return artifact == null ? null : Arrays.asList(new DefaultMenuItem(Bundle.UserActivityPanel_goToArtifact(), new ViewArtifactAction(artifact)));
+    }
+
+    private static List<MenuItem> getPopup(LastAccessedArtifact record) {
+        return record == null ? null : getArtifactPopup(record.getArtifact());
+    }
 
     /**
      * Gets a string formatted date or returns empty string if the date is null.
@@ -92,7 +106,8 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
                     Bundle.UserActivityPanel_TopProgramsTableModel_name_header(),
                     (prog) -> {
                         return new DefaultCellModel(prog.getProgramName())
-                                .setTooltip(prog.getProgramPath());
+                                .setTooltip(prog.getProgramPath())
+                                .setPopupMenu(getPopup(prog));
                     },
                     250),
             // program folder column
@@ -103,7 +118,8 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
                                 getShortFolderName(
                                         prog.getProgramPath(),
                                         prog.getProgramName()))
-                                .setTooltip(prog.getProgramPath());
+                                .setTooltip(prog.getProgramPath())
+                                .setPopupMenu(getPopup(prog));
                     },
                     150),
             // run count column
@@ -111,13 +127,17 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
                     Bundle.UserActivityPanel_TopProgramsTableModel_count_header(),
                     (prog) -> {
                         String runTimes = prog.getRunTimes() == null ? "" : Long.toString(prog.getRunTimes());
-                        return new DefaultCellModel(runTimes);
+                        return new DefaultCellModel(runTimes)
+                                .setPopupMenu(getPopup(prog));
                     },
                     80),
             // last run date column
             new ColumnModel<>(
                     Bundle.UserActivityPanel_TopProgramsTableModel_lastrun_header(),
-                    (prog) -> new DefaultCellModel(getFormatted(prog.getLastRun())),
+                    (prog) -> {
+                        return new DefaultCellModel(getFormatted(prog.getLastAccessed()))
+                                .setPopupMenu(getPopup(prog));
+                    },
                     150)
     ))
             .setKeyFunction((prog) -> prog.getProgramPath() + ":" + prog.getProgramName());
@@ -127,20 +147,24 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
             // domain column
             new ColumnModel<TopDomainsResult>(
                     Bundle.UserActivityPanel_TopDomainsTableModel_domain_header(),
-                    (recentDomain) -> new DefaultCellModel(recentDomain.getDomain()),
+                    (recentDomain) -> {
+                        return new DefaultCellModel(recentDomain.getDomain())
+                                .setPopupMenu(getPopup(recentDomain));
+                    },
                     250),
             // count column
             new ColumnModel<>(
                     Bundle.UserActivityPanel_TopDomainsTableModel_count_header(),
                     (recentDomain) -> {
                         String visitTimes = recentDomain.getVisitTimes() == null ? "" : Long.toString(recentDomain.getVisitTimes());
-                        return new DefaultCellModel(visitTimes);
+                        return new DefaultCellModel(visitTimes)
+                                .setPopupMenu(getPopup(recentDomain));
                     },
                     100),
             // last accessed column
             new ColumnModel<>(
                     Bundle.UserActivityPanel_TopDomainsTableModel_lastAccess_header(),
-                    (recentDomain) -> new DefaultCellModel(getFormatted(recentDomain.getLastVisit())),
+                    (recentDomain) -> new DefaultCellModel(getFormatted(recentDomain.getLastAccessed())),
                     150)
     ))
             .setKeyFunction((domain) -> domain.getDomain());
@@ -150,19 +174,28 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
             // search string column
             new ColumnModel<TopWebSearchResult>(
                     Bundle.UserActivityPanel_TopWebSearchTableModel_searchString_header(),
-                    (webSearch) -> new DefaultCellModel(webSearch.getSearchString()),
+                    (webSearch) -> {
+                        return new DefaultCellModel(webSearch.getSearchString())
+                                .setPopupMenu(getPopup(webSearch));
+                    },
                     250
             ),
             // last accessed
             new ColumnModel<>(
                     Bundle.UserActivityPanel_TopWebSearchTableModel_dateAccessed_header(),
-                    (webSearch) -> new DefaultCellModel(getFormatted(webSearch.getDateAccessed())),
+                    (webSearch) -> {
+                        return new DefaultCellModel(getFormatted(webSearch.getLastAccessed()))
+                                .setPopupMenu(getPopup(webSearch));
+                    },
                     150
             ),
             // translated value
             new ColumnModel<>(
                     Bundle.UserActivityPanel_TopWebSearchTableModel_translatedResult_header(),
-                    (webSearch) -> new DefaultCellModel(webSearch.getTranslatedResult()),
+                    (webSearch) -> {
+                        return new DefaultCellModel(webSearch.getTranslatedResult())
+                                .setPopupMenu(getPopup(webSearch));
+                    },
                     250
             )
     ))
@@ -173,13 +206,19 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
             // device id column
             new ColumnModel<TopDeviceAttachedResult>(
                     Bundle.UserActivityPanel_TopDeviceAttachedTableModel_deviceId_header(),
-                    (device) -> new DefaultCellModel(device.getDeviceId()),
+                    (device) -> {
+                        return new DefaultCellModel(device.getDeviceId())
+                                .setPopupMenu(getPopup(device));
+                    },
                     250
             ),
             // last accessed
             new ColumnModel<>(
                     Bundle.UserActivityPanel_TopDeviceAttachedTableModel_dateAccessed_header(),
-                    (device) -> new DefaultCellModel(getFormatted(device.getDateAccessed())),
+                    (device) -> {
+                        return new DefaultCellModel(getFormatted(device.getLastAccessed()))
+                                .setPopupMenu(getPopup(device));
+                    },
                     150
             ),
             // make and model
@@ -191,7 +230,8 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
                         String makeModelString = (make.isEmpty() || model.isEmpty())
                         ? make + model
                         : String.format("%s - %s", make, model);
-                        return new DefaultCellModel(makeModelString);
+                        return new DefaultCellModel(makeModelString)
+                                .setPopupMenu(getPopup(device));
                     },
                     250
             )
@@ -209,7 +249,7 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
             // last accessed
             new ColumnModel<>(
                     Bundle.UserActivityPanel_TopAccountTableModel_lastAccess_header(),
-                    (account) -> new DefaultCellModel(getFormatted(account.getLastAccess())),
+                    (account) -> new DefaultCellModel(getFormatted(account.getLastAccessed())),
                     150
             )
     ))
@@ -227,7 +267,7 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
 
     private final List<DataFetchComponents<DataSource, ?>> dataFetchComponents;
     private final UserActivitySummary userActivityData;
-    
+
     /**
      * Creates a new UserActivityPanel.
      */
@@ -239,7 +279,7 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
      * Creates a new UserActivityPanel.
      *
      * @param userActivityData Class from which to obtain remaining user
-     *                         activity data.
+     * activity data.
      */
     public UserActivityPanel(UserActivitySummary userActivityData) {
         super(userActivityData);
@@ -295,7 +335,7 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
     /**
      * Queries DataSourceTopProgramsSummary instance for short folder name.
      *
-     * @param path    The path for the application.
+     * @param path The path for the application.
      * @param appName The application name.
      *
      * @return The underlying short folder name if one exists.

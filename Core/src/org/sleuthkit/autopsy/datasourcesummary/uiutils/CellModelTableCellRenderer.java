@@ -20,6 +20,9 @@ package org.sleuthkit.autopsy.datasourcesummary.uiutils;
 
 import java.awt.Component;
 import java.awt.Insets;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JTable;
@@ -49,7 +52,7 @@ public class CellModelTableCellRenderer extends DefaultTableCellRenderer {
          * Constructor for a HorizontalAlign enum.
          *
          * @param jlabelAlignment The corresponding JLabel horizontal alignment
-         *                        number.
+         * number.
          */
         HorizontalAlign(int jlabelAlignment) {
             this.jlabelAlignment = jlabelAlignment;
@@ -57,11 +60,55 @@ public class CellModelTableCellRenderer extends DefaultTableCellRenderer {
 
         /**
          * @return The corresponding JLabel horizontal alignment (i.e.
-         *         JLabel.LEFT).
+         * JLabel.LEFT).
          */
         int getJLabelAlignment() {
             return this.jlabelAlignment;
         }
+    }
+
+    /**
+     * A menu item to be used within a popup menu.
+     */
+    public interface MenuItem {
+
+        /**
+         * @return The title for that popup menu item.
+         */
+        String getTitle();
+
+        /**
+         * @return The action if that popup menu item is clicked.
+         */
+        Runnable getAction();
+    }
+
+    /**
+     * Default implementation of a menu item.
+     */
+    public static class DefaultMenuItem implements MenuItem {
+
+        private final String title;
+        private final Runnable action;
+
+        /**
+         * Main constructor.
+         * @param title The title for the menu item.
+         * @param action The action should the menu item be clicked.
+         */
+        public DefaultMenuItem(String title, Runnable action) {
+            this.title = title;
+            this.action = action;
+        }
+
+        public String getTitle() {
+            return title;
+        }
+
+        public Runnable getAction() {
+            return action;
+        }
+
     }
 
     /**
@@ -88,6 +135,12 @@ public class CellModelTableCellRenderer extends DefaultTableCellRenderer {
          * @return The insets for the cell text.
          */
         Insets getInsets();
+
+        /**
+         * @return The popup menu associated with this cell or null if no popup
+         * menu should be shown for this cell.
+         */
+        List<MenuItem> getPopupMenu();
     }
 
     /**
@@ -99,6 +152,7 @@ public class CellModelTableCellRenderer extends DefaultTableCellRenderer {
         private String tooltip;
         private HorizontalAlign horizontalAlignment;
         private Insets insets;
+        private List<MenuItem> popupMenu;
 
         /**
          * Main constructor.
@@ -167,6 +221,23 @@ public class CellModelTableCellRenderer extends DefaultTableCellRenderer {
         }
 
         @Override
+        public List<MenuItem> getPopupMenu() {
+            return  popupMenu == null ? null : Collections.unmodifiableList(popupMenu);
+        }
+
+        /**
+         * Sets the list of items for a popup menu
+         * @param popupMenu
+         * @return As a utility, returns this.
+         */
+        public DefaultCellModel setPopupMenu(List<MenuItem> popupMenu) {
+            this.popupMenu = popupMenu == null ? null : new ArrayList<>(popupMenu);
+            return this;
+        }
+        
+        
+
+        @Override
         public String toString() {
             return getText();
         }
@@ -192,8 +263,8 @@ public class CellModelTableCellRenderer extends DefaultTableCellRenderer {
      * Customizes the jlabel to match the column model and cell model provided.
      *
      * @param defaultCell The cell to customize that will be displayed in the
-     *                    jtable.
-     * @param cellModel   The cell model for this cell.
+     * jtable.
+     * @param cellModel The cell model for this cell.
      *
      * @return The provided defaultCell.
      */

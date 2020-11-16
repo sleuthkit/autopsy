@@ -296,7 +296,7 @@ public class UserActivitySummaryTest {
         Assert.assertEquals(acceptedDevice, results.get(0).getDeviceModel());
         Assert.assertEquals("MAKE " + acceptedDevice, results.get(0).getDeviceMake());
         Assert.assertEquals("ID " + acceptedDevice, results.get(0).getDeviceId());
-        Assert.assertEquals(time, results.get(0).getDateAccessed().getTime() / 1000);
+        Assert.assertEquals(time, results.get(0).getLastAccessed().getTime() / 1000);
     }
 
     /**
@@ -377,9 +377,9 @@ public class UserActivitySummaryTest {
 
         Assert.assertEquals("Expected two different search queries", 2, results.size());
         Assert.assertTrue(query1.equalsIgnoreCase(results.get(0).getSearchString()));
-        Assert.assertEquals(DAY_SECONDS * 5, results.get(0).getDateAccessed().getTime() / 1000);
+        Assert.assertEquals(DAY_SECONDS * 5, results.get(0).getLastAccessed().getTime() / 1000);
         Assert.assertTrue(query2.equalsIgnoreCase(results.get(1).getSearchString()));
-        Assert.assertEquals(DAY_SECONDS * 3, results.get(1).getDateAccessed().getTime() / 1000);
+        Assert.assertEquals(DAY_SECONDS * 3, results.get(1).getLastAccessed().getTime() / 1000);
     }
 
     private void webSearchTranslationTest(List<String> queries, boolean hasProvider, String translationSuffix)
@@ -573,11 +573,11 @@ public class UserActivitySummaryTest {
         Assert.assertEquals(2, domains.size());
 
         Assert.assertTrue("Expected " + domain1 + " to be first domain", domain1.equalsIgnoreCase(domains.get(0).getDomain()));
-        Assert.assertEquals(DAY_SECONDS * DOMAIN_WINDOW_DAYS * 2, domains.get(0).getLastVisit().getTime() / 1000);
+        Assert.assertEquals(DAY_SECONDS * DOMAIN_WINDOW_DAYS * 2, domains.get(0).getLastAccessed().getTime() / 1000);
         Assert.assertEquals((Long) 2L, domains.get(0).getVisitTimes());
 
         Assert.assertTrue("Expected " + domain3 + " to be second domain", domain3.equalsIgnoreCase(domains.get(1).getDomain()));
-        Assert.assertEquals(DAY_SECONDS * DOMAIN_WINDOW_DAYS, domains.get(1).getLastVisit().getTime() / 1000);
+        Assert.assertEquals(DAY_SECONDS * DOMAIN_WINDOW_DAYS, domains.get(1).getLastAccessed().getTime() / 1000);
         Assert.assertEquals((Long) 1L, domains.get(1).getVisitTimes());
     }
 
@@ -617,7 +617,7 @@ public class UserActivitySummaryTest {
         Assert.assertEquals(1, domains.size());
 
         Assert.assertTrue("Expected " + domain1 + " to be most recent domain", domain1.equalsIgnoreCase(domains.get(0).getDomain()));
-        Assert.assertEquals(DAY_SECONDS, domains.get(0).getLastVisit().getTime() / 1000);
+        Assert.assertEquals(DAY_SECONDS, domains.get(0).getLastAccessed().getTime() / 1000);
     }
 
     /**
@@ -654,11 +654,11 @@ public class UserActivitySummaryTest {
         Assert.assertEquals(2, domains.size());
 
         Assert.assertTrue(domain1.equalsIgnoreCase(domains.get(1).getDomain()));
-        Assert.assertEquals(6L, domains.get(1).getLastVisit().getTime() / 1000);
+        Assert.assertEquals(6L, domains.get(1).getLastAccessed().getTime() / 1000);
         Assert.assertEquals((Long) 2L, domains.get(1).getVisitTimes());
 
         Assert.assertTrue(domain2.equalsIgnoreCase(domains.get(0).getDomain()));
-        Assert.assertEquals(4L, domains.get(0).getLastVisit().getTime() / 1000);
+        Assert.assertEquals(4L, domains.get(0).getLastAccessed().getTime() / 1000);
         Assert.assertEquals((Long) 3L, domains.get(0).getVisitTimes());
     }
 
@@ -843,7 +843,7 @@ public class UserActivitySummaryTest {
 
             // since this may be somewhat variable
             Assert.assertTrue(expectedItem.getAccountType().equalsIgnoreCase(receivedItem.getAccountType()));
-            Assert.assertEquals(expectedItem.getLastAccess().getTime(), receivedItem.getLastAccess().getTime());
+            Assert.assertEquals(expectedItem.getLastAccessed().getTime(), receivedItem.getLastAccessed().getTime());
         }
     }
 
@@ -1130,17 +1130,17 @@ public class UserActivitySummaryTest {
         Assert.assertTrue("program1.exe".equalsIgnoreCase(results.get(0).getProgramName()));
         Assert.assertTrue("/Program Files/another/".equalsIgnoreCase(results.get(0).getProgramPath()));
         Assert.assertEquals((Long) 31L, results.get(0).getRunTimes());
-        Assert.assertEquals((Long) 31L, (Long) (results.get(0).getLastRun().getTime() / 1000));
+        Assert.assertEquals((Long) 31L, (Long) (results.get(0).getLastAccessed().getTime() / 1000));
 
         Assert.assertTrue("program1.exe".equalsIgnoreCase(results.get(1).getProgramName()));
         Assert.assertTrue("/Program Files/etc/".equalsIgnoreCase(results.get(1).getProgramPath()));
         Assert.assertEquals((Long) 21L, results.get(1).getRunTimes());
-        Assert.assertEquals((Long) 31L, (Long) (results.get(1).getLastRun().getTime() / 1000));
+        Assert.assertEquals((Long) 31L, (Long) (results.get(1).getLastAccessed().getTime() / 1000));
 
         Assert.assertTrue("program2.exe".equalsIgnoreCase(results.get(2).getProgramName()));
         Assert.assertTrue("/Program Files/another/".equalsIgnoreCase(results.get(2).getProgramPath()));
         Assert.assertEquals((Long) 10L, results.get(2).getRunTimes());
-        Assert.assertEquals((Long) 22L, (Long) (results.get(2).getLastRun().getTime() / 1000));
+        Assert.assertEquals((Long) 22L, (Long) (results.get(2).getLastAccessed().getTime() / 1000));
     }
 
     private void assertProgramOrder(DataSource ds1, List<BlackboardArtifact> artifacts, List<String> programNamesReturned)
