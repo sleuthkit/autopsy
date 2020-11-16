@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,6 +25,9 @@ import junit.framework.Test;
 import junit.framework.TestCase;
 import org.netbeans.jemmy.Timeouts;
 import org.netbeans.junit.NbModuleSuite;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbChoice;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbManager;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 
 /**
  * This test expects the following system properties to be set: img_path: The
@@ -100,6 +103,16 @@ public class RegressionTest extends TestCase {
     public void setUp() {
         logger.info("########  " + AutopsyTestCases.getEscapedPath(System.getProperty("img_path")) + "  #######");
         Timeouts.setDefault("ComponentOperator.WaitComponentTimeout", 1000000);
+        
+        try {
+            CentralRepoDbManager manager = new CentralRepoDbManager();
+            manager.getDbSettingsPostgres().setHost("localhost");
+            manager.getDbSettingsPostgres().setUserName("postgres");
+            manager.getDbSettingsPostgres().setPassword("password");
+            manager.setupPostgresDb(CentralRepoDbChoice.POSTGRESQL_CUSTOM);
+        } catch (CentralRepoException ex) {
+            throw new RuntimeException(ex);
+        }
     }
 
     /**

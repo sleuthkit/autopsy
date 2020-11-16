@@ -383,10 +383,10 @@ public class CentralRepoDbManager {
         saveNewCentralRepo();
     }
     
-    public void setupDefaultPostgresDb() throws CentralRepoException {
+    public void setupPostgresDb(CentralRepoDbChoice choice) throws CentralRepoException {
         assert UserPreferences.getIsMultiUserModeEnabled();
         
-        selectedDbChoice = CentralRepoDbChoice.POSTGRESQL_MULTIUSER;
+        selectedDbChoice = choice;
         DatabaseTestResult curStatus = testStatus();
         if (curStatus == DatabaseTestResult.DB_DOES_NOT_EXIST) {
             createDb();

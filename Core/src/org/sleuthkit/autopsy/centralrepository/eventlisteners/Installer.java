@@ -25,6 +25,7 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.openide.modules.ModuleInstall;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbChoice;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
@@ -128,7 +129,8 @@ public class Installer extends ModuleInstall {
         try {
             CentralRepoDbManager manager = new CentralRepoDbManager();
             if (UserPreferences.getIsMultiUserModeEnabled()) {
-                manager.setupDefaultPostgresDb();
+                // Set up using existing multi-user settings.
+                manager.setupPostgresDb(CentralRepoDbChoice.POSTGRESQL_MULTIUSER);
             } else {
                 manager.setupDefaultSqliteDb();
             }
