@@ -621,25 +621,28 @@ public class Server {
         }
     }
     
+    /**
+     * Returns a fully configured Solr client to be used for the current case.
+     * Checks the version of Solr index for the current case (Solr 4 or 8), gets
+     * connection info for the appropriate Solr server, and configures the Solr
+     * client.
+     *
+     * @param theCase Current case
+     * @param index   Index object for the current case
+     * @param name    Name of the Solr collection
+     *
+     * @return Fully configured Solr client.
+     *
+     * @throws KeywordSearchModuleException
+     */
     private HttpSolrClient configureMultiUserConnection(Case theCase, Index index, String name) throws KeywordSearchModuleException {
-        String solrUrl;
-        if (IndexFinder.getCurrentSolrVersion().equals(index.getSolrVersion())) {
-            // Solr 8
-            // read Solr connection info from user preferences, unless "solrserver.txt" is present
-            IndexingServerProperties properties = getMultiUserServerProperties(theCase.getCaseDirectory());
-            if (properties.host.isEmpty() || properties.port.isEmpty()) {
-                throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.connectionInfoMissing.exception.msg", index.getSolrVersion())); 
-            }
-            solrUrl = "http://" + properties.host + ":" + properties.port + "/solr";
-        } else {
-            // Solr 4
-            String solr4ServerHost = UserPreferences.getSolr4ServerHost().trim();
-            String solr4ServerPort = UserPreferences.getSolr4ServerPort().trim();
-            if (solr4ServerHost.isEmpty() || solr4ServerPort.isEmpty()) {
-                throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.connectionInfoMissing.exception.msg", index.getSolrVersion()));
-            }
-            solrUrl = "http://" + solr4ServerHost + ":" + solr4ServerPort + "/solr";
+
+        // read Solr connection info from user preferences, unless "solrserver.txt" is present
+        IndexingServerProperties properties = getMultiUserServerProperties(theCase.getCaseDirectory());
+        if (properties.host.isEmpty() || properties.port.isEmpty()) {
+            throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.connectionInfoMissing.exception.msg", index.getSolrVersion()));
         }
+        String solrUrl = "http://" + properties.host + ":" + properties.port + "/solr";
 
         if (!name.isEmpty()) {
             solrUrl = solrUrl + "/" + name;
@@ -1300,9 +1303,11 @@ public class Server {
     }    
 
     /**
-     * Get the host and port for a multiuser case. If the file solrserver.txt
+     * Get the host and port for a multi-user case. If the file solrserver.txt
      * exists, then use the values from that file. Otherwise use the settings
-     * from the properties file.
+     * from the properties file, depending on which version of Solr was used to 
+     * create the current index. Defaults to using latest Solr version info if
+     * an error occurred.
      *
      * @param caseDirectory Current case directory
      * @return IndexingServerProperties containing the solr host/port for this
@@ -1310,6 +1315,7 @@ public class Server {
      */
     public static IndexingServerProperties getMultiUserServerProperties(String caseDirectory) {
 
+        // if "solrserver.txt" is present, use those connection settings
         Path serverFilePath = Paths.get(caseDirectory, "solrserver.txt"); //NON-NLS
         if (serverFilePath.toFile().exists()) {
             try {
@@ -1330,11 +1336,46 @@ public class Server {
                 logger.log(Level.SEVERE, "solrserver.txt file could not be read", ex); //NON-NLS
             }
         }
+        
+        // otherwise (or if an error occurred) determine Solr version of the current case
+        List<Index> indexes = new ArrayList<>();
+        try {
+            IndexMetadata indexMetadata = new IndexMetadata(caseDirectory);
+            indexes = indexMetadata.getIndexes();
+        } catch (IndexMetadata.TextIndexMetadataException ex) {
+            logger.log(Level.SEVERE, "Unable to read text index metadata file: " + caseDirectory, ex);
+            
+            // default to using the latest Solr version settings
+            String host = UserPreferences.getIndexingServerHost();
+            String port = UserPreferences.getIndexingServerPort();
+            return new IndexingServerProperties(host, port);
+        }
 
-        // Default back to the user preferences if the solrserver.txt file was not found or if an error occurred
-        String host = UserPreferences.getIndexingServerHost();
-        String port = UserPreferences.getIndexingServerPort();
-        return new IndexingServerProperties(host, port);
+        // select which index to use. In practice, all cases always have only one
+        // index but there is support for having multiple indexes.
+        Index indexToUse = IndexFinder.identifyIndexToUse(indexes);
+        if (indexToUse == null) {
+            // unable to find index that can be used
+            logger.log(Level.SEVERE, "Unable to find index that can be used for case: {0}", caseDirectory);
+            
+            // default to using the latest Solr version settings
+            String host = UserPreferences.getIndexingServerHost();
+            String port = UserPreferences.getIndexingServerPort();
+            return new IndexingServerProperties(host, port);
+        }
+
+        // return connection info for the Solr version of the current index
+        if (IndexFinder.getCurrentSolrVersion().equals(indexToUse.getSolrVersion())) {
+            // Solr 8
+            String host = UserPreferences.getIndexingServerHost();
+            String port = UserPreferences.getIndexingServerPort();
+            return new IndexingServerProperties(host, port);
+        } else {
+            // Solr 4
+            String host = UserPreferences.getSolr4ServerHost().trim();
+            String port = UserPreferences.getSolr4ServerPort().trim();
+            return new IndexingServerProperties(host, port);
+        }
     }
 
     /**
