@@ -26,6 +26,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.discovery.search.SearchData;
 import org.sleuthkit.autopsy.discovery.search.SearchData.FileSize;
 import org.sleuthkit.autopsy.discovery.search.SearchFiltering;
@@ -42,6 +43,7 @@ final class SizeFilterPanel extends AbstractDiscoveryFilterPanel {
      *
      * @param type The type of result being searched for.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     SizeFilterPanel(SearchData.Type type) {
         initComponents();
         setUpSizeFilter(type);
@@ -109,6 +111,7 @@ final class SizeFilterPanel extends AbstractDiscoveryFilterPanel {
     private javax.swing.JScrollPane sizeScrollPane;
     // End of variables declaration//GEN-END:variables
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     void configurePanel(boolean selected, int[] indicesSelected) {
         sizeCheckbox.setSelected(selected);
@@ -124,6 +127,7 @@ final class SizeFilterPanel extends AbstractDiscoveryFilterPanel {
         }
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     JCheckBox getCheckbox() {
         return sizeCheckbox;
@@ -137,6 +141,7 @@ final class SizeFilterPanel extends AbstractDiscoveryFilterPanel {
     /**
      * Initialize the file size filter.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private void setUpSizeFilter(SearchData.Type fileType) {
         int count = 0;
         DefaultListModel<FileSize> sizeListModel = (DefaultListModel<FileSize>) sizeList.getModel();
@@ -169,6 +174,7 @@ final class SizeFilterPanel extends AbstractDiscoveryFilterPanel {
 
     @NbBundle.Messages({"SizeFilterPanel.error.text=At least one size must be selected."})
     @Override
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     String checkForError() {
         if (sizeCheckbox.isSelected() && sizeList.getSelectedValuesList().isEmpty()) {
             return Bundle.SizeFilterPanel_error_text();
@@ -177,11 +183,13 @@ final class SizeFilterPanel extends AbstractDiscoveryFilterPanel {
 
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     JList<?> getList() {
         return sizeList;
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     AbstractFilter getFilter() {
         if (sizeCheckbox.isSelected()) {

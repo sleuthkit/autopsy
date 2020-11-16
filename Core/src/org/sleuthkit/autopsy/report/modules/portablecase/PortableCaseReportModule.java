@@ -1117,7 +1117,7 @@ public class PortableCaseReportModule implements ReportModule {
 
                                 newContent = portableSkCase.addLocalFile(abstractFile.getName(), relativePath, abstractFile.getSize(),
                                         abstractFile.getCtime(), abstractFile.getCrtime(), abstractFile.getAtime(), abstractFile.getMtime(),
-                                        abstractFile.getMd5Hash(), abstractFile.getKnown(), abstractFile.getMIMEType(),
+                                        abstractFile.getMd5Hash(), abstractFile.getSha256Hash(), abstractFile.getKnown(), abstractFile.getMIMEType(),
                                         true, TskData.EncodingType.NONE,
                                         newParent, trans);
                             } catch (IOException ex) {

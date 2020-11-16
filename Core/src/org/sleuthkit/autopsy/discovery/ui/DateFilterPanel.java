@@ -33,6 +33,7 @@ import javax.swing.JSpinner;
 import javax.swing.event.ListSelectionListener;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.communications.Utils;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.discovery.search.SearchFiltering;
 
 /**
@@ -48,6 +49,7 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
      */
     @NbBundle.Messages({"# {0} - timeZone",
         "DateFilterPanel.dateRange.text=Date Range ({0}):"})
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     DateFilterPanel() {
         initComponents();
         rangeRadioButton.setText(Bundle.DateFilterPanel_dateRange_text(Utils.getUserPreferredZoneId().toString()));
@@ -225,6 +227,7 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
         endCheckBox.firePropertyChange("EndButtonChange", true, false);
     }//GEN-LAST:event_rangeRadioButtonStateChanged
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     void configurePanel(boolean selected, int[] indicesSelected) {
         dateFilterCheckBox.setSelected(selected);
@@ -238,6 +241,7 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
         }
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     JCheckBox getCheckbox() {
         return dateFilterCheckBox;
@@ -253,6 +257,7 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
         return null;
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     void addListeners(ActionListener actionListener, ListSelectionListener listListener) {
         dateFilterCheckBox.addActionListener(actionListener);
@@ -274,6 +279,7 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
         });
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     void removeListeners() {
         for (ActionListener listener : dateFilterCheckBox.getActionListeners()) {
@@ -302,6 +308,7 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
         }
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @NbBundle.Messages({"DateFilterPanel.invalidRange.text=Range or Only Last must be selected.",
         "DateFilterPanel.startOrEndNeeded.text=A start or end date must be specified to use the range filter.",
         "DateFilterPanel.startAfterEnd.text=Start date should be before the end date when both are enabled."})
@@ -320,6 +327,7 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
         return "";
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     AbstractFilter getFilter() {
         if (dateFilterCheckBox.isSelected()) {
