@@ -22,30 +22,74 @@ import java.awt.BorderLayout;
 import java.awt.Graphics;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.swing.JComponent;
 import javax.swing.JLayer;
-import javax.swing.JMenuItem;
-import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.plaf.LayerUI;
 import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
-import org.apache.commons.collections.CollectionUtils;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer.CellModel;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer.MenuItem;
 
 /**
  * A table that displays a list of items and also can display messages for
  * loading, load error, and not loaded.
  */
 public class JTablePanel<T> extends AbstractLoadableComponent<List<T>> {
+
+    public static class CellMouseEvent {
+        private final MouseEvent e;
+        private final JTable table;
+        private final int row;
+        private final int col;
+        private final Object cellValue;
+
+        public CellMouseEvent(MouseEvent e, JTable table, int row, int col, Object cellValue) {
+            this.e = e;
+            this.table = table;
+            this.row = row;
+            this.col = col;
+            this.cellValue = cellValue;
+        }
+
+        public MouseEvent getMouseEvent() {
+            return e;
+        }
+
+        public JTable getTable() {
+            return table;
+        }
+
+        public int getRow() {
+            return row;
+        }
+
+        public int getCol() {
+            return col;
+        }
+
+        public Object getCellValue() {
+            return cellValue;
+        }
+    }
+    
+    /**
+     * Handles mouse events for cells in the table.
+     */
+    public interface CellMouseListener {
+
+        /**
+         * Handles mouse events at a cell level for the table.
+         *
+         * @param e The event containing information about the cell, the mouse event, and the table.
+         */
+        void mouseClicked(CellMouseEvent e);
+    }
 
     /**
      * JTables don't allow displaying messages. So this LayerUI is used to
@@ -195,62 +239,6 @@ public class JTablePanel<T> extends AbstractLoadableComponent<List<T>> {
     }
 
     /**
-     * Sets up a table mouse listener to trigger a popup menu if the cell
-     * clicked has a popup menu.
-     *
-     * @param tablePanel Th JTablePanel instance.
-     */
-    private static <T> void setPopupListener(final JTablePanel<T> tablePanel) {
-        final JTable table = tablePanel.table;
-        final ListTableModel<T> tableModel = tablePanel.tableModel;
-
-        // add mouse listener to table for popup menu item click
-        tablePanel.table.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                // make sure click event isn't primary button and table is present
-                if (e.getButton() != MouseEvent.BUTTON1 && tablePanel.table != null) {
-                    int row = table.rowAtPoint(e.getPoint());
-                    int col = table.columnAtPoint(e.getPoint());
-
-                    // make sure there is a value at the row,col of click event.
-                    if (tableModel != null
-                            && row >= 0 && row < tableModel.getRowCount()
-                            && col >= 0 && col < tableModel.getColumnCount()) {
-
-                        // select the row
-                        table.setRowSelectionInterval(row, row);
-
-                        Object cellModelObj = tableModel.getValueAt(row, col);
-                        // if the object at that cell is a cell model object.
-                        if (cellModelObj instanceof CellModel) {
-                            CellModel cellModel = (CellModel) cellModelObj;
-                            List<MenuItem> menuItems = cellModel.getPopupMenu();
-
-                            // if there are menu items, show a popup menu for 
-                            // this item with all the menu items.
-                            if (CollectionUtils.isNotEmpty(menuItems)) {
-                                final JPopupMenu popupMenu = new JPopupMenu();
-                                for (MenuItem mItem : menuItems) {
-                                    JMenuItem jMenuItem = new JMenuItem(mItem.getTitle());
-                                    if (mItem.getAction() != null) {
-                                        jMenuItem.addActionListener((evt) -> mItem.getAction().run());
-                                    }
-                                    popupMenu.add(jMenuItem);
-                                }
-                                popupMenu.show(table, e.getX(), e.getY());
-                            }
-                        }
-
-                    }
-
-                }
-            }
-
-        });
-    }
-
-    /**
      * Generates a JTablePanel corresponding to the provided column definitions
      * where 'T' is the object representing each row.
      *
@@ -260,17 +248,19 @@ public class JTablePanel<T> extends AbstractLoadableComponent<List<T>> {
      */
     public static <T> JTablePanel<T> getJTablePanel(List<ColumnModel<T>> columns) {
         ListTableModel<T> tableModel = getTableModel(columns);
-        JTablePanel<T> resultTable = new JTablePanel<>(tableModel);
-        setPopupListener(resultTable);
-        return resultTable.setColumnModel(getTableColumnModel(columns));
+        JTablePanel<T> resultTable = new JTablePanel<>(tableModel)
+                .setColumnModel(getTableColumnModel(columns))
+                .setCellListener(CellModelTableCellRenderer.getMouseListener());
+        
+        return resultTable;
     }
 
     private JScrollPane tableScrollPane;
     private Overlay overlayLayer;
     private ListTableModel<T> tableModel;
     private JTable table;
+    private CellMouseListener cellListener = null;
     private Function<T, ? extends Object> keyFunction = (rowItem) -> rowItem;
-    private MouseListener tableMouseListener = null;
 
     /**
      * Panel constructor.
@@ -287,6 +277,26 @@ public class JTablePanel<T> extends AbstractLoadableComponent<List<T>> {
      */
     public JTablePanel() {
         initComponents();
+        this.table.addMouseListener(new MouseAdapter() {
+
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                // make sure click event isn't primary button and table is present
+                if (cellListener != null) {
+                    int row = table.rowAtPoint(e.getPoint());
+                    int col = table.columnAtPoint(e.getPoint());
+
+                    // make sure there is a value at the row,col of click event.
+                    if (tableModel != null
+                            && row >= 0 && row < tableModel.getRowCount()
+                            && col >= 0 && col < tableModel.getColumnCount()) {
+
+                        Object cellValue = tableModel.getValueAt(row, col);
+                        cellListener.mouseClicked(new CellMouseEvent(e, table, row, col, cellValue));
+                    }
+                }
+            }
+        });
     }
 
     /**
@@ -306,6 +316,18 @@ public class JTablePanel<T> extends AbstractLoadableComponent<List<T>> {
         table.setModel(tableModel);
         return this;
     }
+
+    
+    public CellMouseListener getCellListener() {
+        return cellListener;
+    }
+
+    public JTablePanel<T> setCellListener(CellMouseListener cellListener) {
+        this.cellListener = cellListener;
+        return this;
+    }
+    
+    
 
     /**
      * @return The underlying JTable's column model.

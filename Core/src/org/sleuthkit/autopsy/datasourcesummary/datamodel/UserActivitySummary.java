@@ -508,7 +508,7 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
         String type = DataSourceInfoUtilities.getStringOrNull(artifact, TYPE_MESSAGE_TYPE);
         Date date = DataSourceInfoUtilities.getDateOrNull(artifact, TYPE_DATETIME);
         return (StringUtils.isNotBlank(type) && date != null)
-                ? new TopAccountResult(type, date)
+                ? new TopAccountResult(type, date, artifact)
                 : null;
     }
 
@@ -536,7 +536,7 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
         }
 
         return (StringUtils.isNotBlank(type) && latestDate != null)
-                ? new TopAccountResult(type, latestDate)
+                ? new TopAccountResult(type, latestDate, artifact)
                 : null;
     }
 
@@ -928,20 +928,20 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
      * A record of an account and the last time it was used determined by
      * messages.
      */
-    public static class TopAccountResult {
+    public static class TopAccountResult extends LastAccessedArtifact {
 
         private final String accountType;
-        private final Date lastAccess;
 
         /**
          * Main constructor.
          *
          * @param accountType The account type.
          * @param lastAccess The date the account was last accessed.
+         * @param artifact The artifact indicating last access.
          */
-        public TopAccountResult(String accountType, Date lastAccess) {
+        public TopAccountResult(String accountType, Date lastAccess, BlackboardArtifact artifact) {
+            super(lastAccess, artifact);
             this.accountType = accountType;
-            this.lastAccess = lastAccess;
         }
 
         /**
@@ -949,13 +949,6 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
          */
         public String getAccountType() {
             return accountType;
-        }
-
-        /**
-         * @return The date the account was last accessed.
-         */
-        public Date getLastAccessed() {
-            return lastAccess;
         }
     }
 

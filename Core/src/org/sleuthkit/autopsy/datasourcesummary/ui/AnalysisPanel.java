@@ -21,10 +21,11 @@ package org.sleuthkit.autopsy.datasourcesummary.ui;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
-import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.AnalysisSummary;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.AnalysisSummary.AnalysisCountRecord;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer.DefaultCellModel;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer.MenuItem;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.IngestRunningLabel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel;
@@ -58,30 +59,30 @@ public class AnalysisPanel extends BaseDataSourceSummaryPanel {
     /**
      * Default Column definitions for each table
      */
-    private static final List<ColumnModel<Pair<String, Long>>> DEFAULT_COLUMNS = Arrays.asList(
+    private final List<ColumnModel<AnalysisCountRecord>> DEFAULT_COLUMNS = Arrays.asList(
             new ColumnModel<>(
                     Bundle.AnalysisPanel_keyColumn_title(),
-                    (pair) -> new DefaultCellModel(pair.getKey()),
+                    (r) -> new DefaultCellModel(r.getIdentifier()).setPopupMenu(getPopup(r)),
                     300
             ),
             new ColumnModel<>(
                     Bundle.AnalysisPanel_countColumn_title(),
-                    (pair) -> new DefaultCellModel(String.valueOf(pair.getValue())),
+                    (r) -> new DefaultCellModel(String.valueOf(Long.toString(r.getCount()))).setPopupMenu(getPopup(r)),
                     100
             )
     );
 
-    private static final Function<Pair<String, Long>, String> DEFAULT_KEY_PROVIDER = (pair) -> pair.getKey();
+    private final Function<AnalysisCountRecord, String> DEFAULT_KEY_PROVIDER = (pair) -> pair.getIdentifier();
 
-    private final JTablePanel<Pair<String, Long>> hashsetHitsTable
+    private final JTablePanel<AnalysisCountRecord> hashsetHitsTable
             = JTablePanel.getJTablePanel(DEFAULT_COLUMNS)
                     .setKeyFunction(DEFAULT_KEY_PROVIDER);
 
-    private final JTablePanel<Pair<String, Long>> keywordHitsTable
+    private final JTablePanel<AnalysisCountRecord> keywordHitsTable
             = JTablePanel.getJTablePanel(DEFAULT_COLUMNS)
                     .setKeyFunction(DEFAULT_KEY_PROVIDER);
 
-    private final JTablePanel<Pair<String, Long>> interestingItemsTable
+    private final JTablePanel<AnalysisCountRecord> interestingItemsTable
             = JTablePanel.getJTablePanel(DEFAULT_COLUMNS)
                     .setKeyFunction(DEFAULT_KEY_PROVIDER);
 
@@ -90,9 +91,8 @@ public class AnalysisPanel extends BaseDataSourceSummaryPanel {
             keywordHitsTable,
             interestingItemsTable
     );
-    
+
     private final IngestRunningLabel ingestRunningLabel = new IngestRunningLabel();
-    
 
     /**
      * All of the components necessary for data fetch swing workers to load data
@@ -129,14 +129,24 @@ public class AnalysisPanel extends BaseDataSourceSummaryPanel {
         initComponents();
     }
 
-    
+    /**
+     * Takes a base class of AnalysisCountRecord and provides the pertinent menu
+     * items. going to artifact.
+     *
+     * @param record The AnalysisCountRecord instance.
+     * @return The menu items list containing one action or navigating to the
+     * appropriate artifact and closing the data source summary dialog if open.
+     */
+    private List<MenuItem> getPopup(AnalysisCountRecord record) {
+        return record == null ? null : navigateToArtifactPopup(record.getArtifact());
+    }
+
     @Override
     public void close() {
         ingestRunningLabel.unregister();
         super.close();
     }
-    
-    
+
     @Override
     protected void fetchInformation(DataSource dataSource) {
         fetchInformation(dataFetchComponents, dataSource);

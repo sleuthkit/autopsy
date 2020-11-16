@@ -20,15 +20,22 @@ package org.sleuthkit.autopsy.datasourcesummary.uiutils;
 
 import java.awt.Component;
 import java.awt.Insets;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.JLabel;
+import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
 import javax.swing.JTable;
 import javax.swing.border.Border;
 import javax.swing.table.DefaultTableCellRenderer;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel.CellMouseEvent;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel.CellMouseListener;
 
 /**
  * A Table cell renderer that renders a cell of a table based off of the
@@ -93,6 +100,7 @@ public class CellModelTableCellRenderer extends DefaultTableCellRenderer {
 
         /**
          * Main constructor.
+         *
          * @param title The title for the menu item.
          * @param action The action should the menu item be clicked.
          */
@@ -222,11 +230,12 @@ public class CellModelTableCellRenderer extends DefaultTableCellRenderer {
 
         @Override
         public List<MenuItem> getPopupMenu() {
-            return  popupMenu == null ? null : Collections.unmodifiableList(popupMenu);
+            return popupMenu == null ? null : Collections.unmodifiableList(popupMenu);
         }
 
         /**
          * Sets the list of items for a popup menu
+         *
          * @param popupMenu
          * @return As a utility, returns this.
          */
@@ -234,8 +243,6 @@ public class CellModelTableCellRenderer extends DefaultTableCellRenderer {
             this.popupMenu = popupMenu == null ? null : new ArrayList<>(popupMenu);
             return this;
         }
-        
-        
 
         @Override
         public String toString() {
@@ -301,5 +308,34 @@ public class CellModelTableCellRenderer extends DefaultTableCellRenderer {
         defaultCell.setHorizontalAlignment(alignment);
 
         return defaultCell;
+    }
+
+    private static final CellMouseListener DEFAULT_CELL_MOUSE_LISTENER = new CellMouseListener() {
+
+        @Override
+        public void mouseClicked(CellMouseEvent cellEvent) {
+            if (cellEvent.getCellValue() instanceof CellModel) {
+                CellModel cellModel = (CellModel) cellEvent.getCellValue();
+                List<MenuItem> menuItems = cellModel.getPopupMenu();
+
+                // if there are menu items, show a popup menu for 
+                // this item with all the menu items.
+                if (CollectionUtils.isNotEmpty(menuItems)) {
+                    final JPopupMenu popupMenu = new JPopupMenu();
+                    for (MenuItem mItem : menuItems) {
+                        JMenuItem jMenuItem = new JMenuItem(mItem.getTitle());
+                        if (mItem.getAction() != null) {
+                            jMenuItem.addActionListener((evt) -> mItem.getAction().run());
+                        }
+                        popupMenu.add(jMenuItem);
+                    }
+                    popupMenu.show(cellEvent.getTable(), cellEvent.getMouseEvent().getX(), cellEvent.getMouseEvent().getY());
+                }
+            }
+        }
+    };
+
+    public static CellMouseListener getMouseListener() {
+        return DEFAULT_CELL_MOUSE_LISTENER;
     }
 }

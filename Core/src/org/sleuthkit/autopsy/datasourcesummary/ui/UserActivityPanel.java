@@ -36,14 +36,11 @@ import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.Top
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopDomainsResult;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopProgramsResult;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer.DefaultCellModel;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer.DefaultMenuItem;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer.MenuItem;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.IngestRunningLabel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel.ColumnModel;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.ViewArtifactAction;
-import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.DataSource;
 
 /**
@@ -66,8 +63,7 @@ import org.sleuthkit.datamodel.DataSource;
     "UserActivityPanel_TopDeviceAttachedTableModel_dateAccessed_header=Last Accessed",
     "UserActivityPanel_TopAccountTableModel_accountType_header=Account Type",
     "UserActivityPanel_TopAccountTableModel_lastAccess_header=Last Accessed",
-    "UserActivityPanel_noDataExists=No communication data exists",
-    "UserActivityPanel_goToArtifact=Go to Artifact"})
+    "UserActivityPanel_noDataExists=No communication data exists"})
 public class UserActivityPanel extends BaseDataSourceSummaryPanel {
 
     private static final long serialVersionUID = 1L;
@@ -79,20 +75,6 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
     private static final int TOP_DEVICES_COUNT = 10;
     private static final String ANDROID_FACTORY = "org.python.proxies.module$AndroidModuleFactory";
     private static final String ANDROID_MODULE_NAME = "Android Analyzer";
-
-    private List<MenuItem> getArtifactPopup(BlackboardArtifact artifact) {
-        return artifact == null ? null : Arrays.asList(
-                new DefaultMenuItem(
-                        Bundle.UserActivityPanel_goToArtifact(),
-                        () -> {
-                            new ViewArtifactAction(artifact).run();
-                            notifyParentClose();
-                        }));
-    }
-
-    private List<MenuItem> getPopup(LastAccessedArtifact record) {
-        return record == null ? null : getArtifactPopup(record.getArtifact());
-    }
 
     /**
      * Gets a string formatted date or returns empty string if the date is null.
@@ -249,13 +231,19 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
             // account type column
             new ColumnModel<TopAccountResult>(
                     Bundle.UserActivityPanel_TopAccountTableModel_accountType_header(),
-                    (account) -> new DefaultCellModel(account.getAccountType()),
+                    (account) -> {
+                        return new DefaultCellModel(account.getAccountType())
+                                .setPopupMenu(getPopup(account));
+                    },
                     250
             ),
             // last accessed
             new ColumnModel<>(
                     Bundle.UserActivityPanel_TopAccountTableModel_lastAccess_header(),
-                    (account) -> new DefaultCellModel(getFormatted(account.getLastAccessed())),
+                    (account) -> {
+                        return new DefaultCellModel(getFormatted(account.getLastAccessed()))
+                                .setPopupMenu(getPopup(account));
+                    },
                     150
             )
     ))
@@ -336,6 +324,19 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
         );
 
         initComponents();
+    }
+
+    /**
+     * Takes a base class of LastAccessedArtifact and provides the pertinent
+     * menu items. going to artifact.
+     *
+     * @param record The LastAccessedArtifact instance.
+     * @param navigateToArtifact Navigate right tot the artifact.
+     * @return The menu items list containing one action or navigating to the
+     * appropriate artifact and closing the data source summary dialog if open.
+     */
+    private List<MenuItem> getPopup(LastAccessedArtifact record) {
+        return record == null ? null : navigateToArtifactPopup(record.getArtifact());
     }
 
     /**

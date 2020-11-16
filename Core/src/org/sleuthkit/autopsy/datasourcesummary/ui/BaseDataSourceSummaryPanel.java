@@ -33,6 +33,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.IngestModuleCheckUtil;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult.ResultType;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
@@ -41,6 +42,7 @@ import org.sleuthkit.autopsy.datasourcesummary.uiutils.EventUpdateHandler;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.LoadableComponent;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.SwingWorkerSequentialExecutor;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.UpdateGovernor;
+import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 import org.sleuthkit.autopsy.ingest.IngestManager.IngestJobEvent;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
@@ -53,6 +55,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Base class from which other tabs in data source summary derive.
  */
+@Messages({"UserActivityPanel_goToArtifact=Go to Artifact"})
 abstract class BaseDataSourceSummaryPanel extends JPanel {
 
     private static final long serialVersionUID = 1L;
@@ -227,6 +230,52 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
         this.governors = (governors == null) ? Collections.emptyList() : Arrays.asList(governors);
         this.updateHandler = new EventUpdateHandler(this::onRefresh, updateGovernor);
         this.updateHandler.register();
+    }
+
+    /**
+     * Given the relevant artifact, navigates to the artifact in the tree and
+     * closes data source summary dialog if open.
+     *
+     * @param artifact The artifact.
+     * @return The menu item list for a go to artifact menu item.
+     */
+    protected List<CellModelTableCellRenderer.MenuItem> navigateToArtifactPopup(BlackboardArtifact artifact) {
+        return artifact == null ? null : Arrays.asList(
+                new CellModelTableCellRenderer.DefaultMenuItem(
+                        Bundle.UserActivityPanel_goToArtifact(),
+                        () -> {
+                            final DirectoryTreeTopComponent dtc = DirectoryTreeTopComponent.findInstance();
+
+                            // Navigate to the source context artifact.
+                            if (dtc != null && artifact != null) {
+                                dtc.viewArtifact(artifact);
+                            }
+
+                            notifyParentClose();
+                        }));
+    }
+
+    /**
+     * Given the relevant artifact, navigates to the artifact's content in the
+     * tree and closes data source summary dialog if open.
+     *
+     * @param artifact The artifact.
+     * @return The menu item list for a go to artifact menu item.
+     */
+    protected List<CellModelTableCellRenderer.MenuItem> navigateToArtifactContentPopup(BlackboardArtifact artifact) {
+        return artifact == null ? null : Arrays.asList(
+                new CellModelTableCellRenderer.DefaultMenuItem(
+                        Bundle.UserActivityPanel_goToArtifact(),
+                        () -> {
+                            final DirectoryTreeTopComponent dtc = DirectoryTreeTopComponent.findInstance();
+
+                            // Navigate to the source context artifact.
+                            if (dtc != null && artifact != null) {
+                                dtc.viewArtifactContent(artifact);
+                            }
+
+                            notifyParentClose();
+                        }));
     }
 
     /**

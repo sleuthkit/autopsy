@@ -98,11 +98,11 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
      * TSK_RECENT_OBJECT artifact.
      *
      * @param dataSource The data source to query.
-     * @param maxCount   The maximum number of results to return, pass 0 to get
-     *                   a list of all results.
+     * @param maxCount The maximum number of results to return, pass 0 to get a
+     * list of all results.
      *
      * @return A list RecentFileDetails representing the most recently opened
-     *         documents or an empty list if none were found.
+     * documents or an empty list if none were found.
      *
      * @throws SleuthkitCaseProviderException
      * @throws TskCoreException
@@ -137,7 +137,7 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
             }
 
             if (accessedTime != null && accessedTime != 0) {
-                fileDetails.add(new RecentFileDetails(path, accessedTime));
+                fileDetails.add(new RecentFileDetails(artifact, path, accessedTime));
             }
         }
 
@@ -149,11 +149,11 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
      * artifact TSK_DATETIME_ACCESSED attribute.
      *
      * @param dataSource Data source to query.
-     * @param maxCount   Maximum number of results to return, passing 0 will
-     *                   return all results.
+     * @param maxCount Maximum number of results to return, passing 0 will
+     * return all results.
      *
      * @return A list of RecentFileDetails objects or empty list if none were
-     *         found.
+     * found.
      *
      * @throws TskCoreException
      * @throws SleuthkitCaseProviderException
@@ -190,7 +190,7 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
                 }
             }
             if (accessedTime != null && accessedTime != 0L) {
-                fileDetails.add(new RecentDownloadDetails(path, accessedTime, domain));
+                fileDetails.add(new RecentDownloadDetails(artifact, path, accessedTime, domain));
             }
         }
 
@@ -201,8 +201,8 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
      * Returns a list of the most recent message attachments.
      *
      * @param dataSource Data source to query.
-     * @param maxCount   Maximum number of results to return, passing 0 will
-     *                   return all results.
+     * @param maxCount Maximum number of results to return, passing 0 will
+     * return all results.
      *
      * @return A list of RecentFileDetails of the most recent attachments.
      *
@@ -227,7 +227,7 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
      * @param dataSource Data source to query.
      *
      * @return Returns a SortedMap of details objects returned in descending
-     *         order.
+     * order.
      *
      * @throws SleuthkitCaseProviderException
      * @throws TskCoreException
@@ -272,7 +272,7 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
                             list = new ArrayList<>();
                             sortedMap.put(date, list);
                         }
-                        RecentAttachmentDetails details = new RecentAttachmentDetails(path, date, sender);
+                        RecentAttachmentDetails details = new RecentAttachmentDetails(messageArtifact, path, date, sender);
                         if (!list.contains(details)) {
                             list.add(details);
                         }
@@ -288,10 +288,10 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
      * size.
      *
      * @param sortedMap A Map of attachment details sorted by date.
-     * @param maxCount  Maximum number of values to return.
+     * @param maxCount Maximum number of values to return.
      *
      * @return A list of the details of the most recent attachments or empty
-     *         list if none where found.
+     * list if none where found.
      */
     private List<RecentAttachmentDetails> createListFromMap(SortedMap<Long, List<RecentAttachmentDetails>> sortedMap, int maxCount) {
         List<RecentAttachmentDetails> fileList = new ArrayList<>();
@@ -322,7 +322,7 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
      * Is the given artifact a message.
      *
      * @param nodeArtifact An artifact that might be a message. Must not be
-     *                     null.
+     * null.
      *
      * @return True if the given artifact is a message artifact
      */
@@ -339,14 +339,17 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
 
         private final String path;
         private final long date;
+        private final BlackboardArtifact artifact;
 
         /**
          * Constructor for files with just a path and date.
          *
+         * @param artifact The relevant artifact.
          * @param path File path.
          * @param date File access date\time in seconds with java epoch
          */
-        RecentFileDetails(String path, long date) {
+        RecentFileDetails(BlackboardArtifact artifact, String path, long date) {
+            this.artifact = artifact;
             this.path = path;
             this.date = date;
         }
@@ -379,6 +382,12 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
             return path;
         }
 
+        /**
+         * @return The pertinent artifact for this recent file hit.
+         */
+        public BlackboardArtifact getArtifact() {
+            return artifact;
+        }
     }
 
     /**
@@ -391,12 +400,13 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
         /**
          * Constructor for files with just a path and date.
          *
-         * @param path      File path.
-         * @param date      File access date\time in seconds with java epoch.
+         * @param artifact The relevant artifact.
+         * @param path File path.
+         * @param date File access date\time in seconds with java epoch.
          * @param webDomain The webdomain from which the file was downloaded.
          */
-        RecentDownloadDetails(String path, long date, String webDomain) {
-            super(path, date);
+        RecentDownloadDetails(BlackboardArtifact artifact, String path, long date, String webDomain) {
+            super(artifact, path, date);
             this.webDomain = webDomain;
         }
 
@@ -404,7 +414,7 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
          * Returns the web domain.
          *
          * @return The web domain or empty string if not available or
-         *         applicable.
+         * applicable.
          */
         public String getWebDomain() {
             return webDomain;
@@ -422,13 +432,14 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
          * Constructor for recent download files which have a path, date and
          * domain value.
          *
-         * @param path   File path.
-         * @param date   File crtime.
+         * @param artifact The relevant artifact.
+         * @param path File path.
+         * @param date File crtime.
          * @param sender The sender of the message from which the file was
-         *               attached.
+         * attached.
          */
-        RecentAttachmentDetails(String path, long date, String sender) {
-            super(path, date);
+        RecentAttachmentDetails(BlackboardArtifact artifact, String path, long date, String sender) {
+            super(artifact, path, date);
             this.sender = sender;
         }
 
@@ -436,7 +447,7 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
          * Return the sender of the attached file.
          *
          * @return The sender of the attached file or empty string if not
-         *         available.
+         * available.
          */
         public String getSender() {
             return sender;

@@ -28,6 +28,7 @@ import org.sleuthkit.autopsy.datasourcesummary.datamodel.RecentFilesSummary.Rece
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.RecentFilesSummary.RecentDownloadDetails;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.RecentFilesSummary.RecentFileDetails;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer.DefaultCellModel;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer.MenuItem;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.IngestRunningLabel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel;
@@ -77,6 +78,18 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
         initalizeTables();
     }
 
+    /**
+     * Takes a base class of RecentFileDetails and provides the pertinent menu
+     * items. going to artifact.
+     *
+     * @param record The RecentFileDetails instance.
+     * @return The menu items list containing one action or navigating to the
+     * appropriate artifact and closing the data source summary dialog if open.
+     */
+    private List<MenuItem> getPopup(RecentFileDetails record) {
+        return record == null ? null : navigateToArtifactPopup(record.getArtifact());
+    }
+
     @Override
     protected void fetchInformation(DataSource dataSource) {
         fetchInformation(dataFetchComponents, dataSource);
@@ -113,11 +126,13 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
         List<ColumnModel<RecentFileDetails>> list = Arrays.asList(
                 new ColumnModel<>(Bundle.RecentFilePanel_col_header_path(),
                         (prog) -> {
-                            return new DefaultCellModel(prog.getPath());
+                            return new DefaultCellModel(prog.getPath())
+                                    .setPopupMenu(getPopup(prog));
                         }, 250),
                 new ColumnModel<>(Bundle.RecentFilesPanel_col_head_date(),
                         (prog) -> {
-                            return new DefaultCellModel(prog.getDateAsString());
+                            return new DefaultCellModel(prog.getDateAsString())
+                                    .setPopupMenu(getPopup(prog));
                         }, 80));
 
         ListTableModel<RecentFileDetails> tableModel = JTablePanel.getTableModel(list);
@@ -148,15 +163,18 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
         List<ColumnModel<RecentDownloadDetails>> list = Arrays.asList(
                 new ColumnModel<>(Bundle.RecentFilePanel_col_header_domain(),
                         (prog) -> {
-                            return new DefaultCellModel(prog.getWebDomain());
+                            return new DefaultCellModel(prog.getWebDomain())
+                                    .setPopupMenu(getPopup(prog));
                         }, 100),
                 new ColumnModel<>(Bundle.RecentFilePanel_col_header_path(),
                         (prog) -> {
-                            return new DefaultCellModel(prog.getPath());
+                            return new DefaultCellModel(prog.getPath())
+                                    .setPopupMenu(getPopup(prog));
                         }, 250),
                 new ColumnModel<>(Bundle.RecentFilesPanel_col_head_date(),
                         (prog) -> {
-                            return new DefaultCellModel(prog.getDateAsString());
+                            return new DefaultCellModel(prog.getDateAsString())
+                                    .setPopupMenu(getPopup(prog));
                         }, 80));
 
         ListTableModel<RecentDownloadDetails> tableModel = JTablePanel.getTableModel(list);
@@ -187,15 +205,18 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
         List<ColumnModel<RecentAttachmentDetails>> list = Arrays.asList(
                 new ColumnModel<>(Bundle.RecentFilePanel_col_header_path(),
                         (prog) -> {
-                            return new DefaultCellModel(prog.getPath());
+                            return new DefaultCellModel(prog.getPath())
+                                    .setPopupMenu(getPopup(prog));
                         }, 250),
                 new ColumnModel<>(Bundle.RecentFilesPanel_col_head_date(),
                         (prog) -> {
-                            return new DefaultCellModel(prog.getDateAsString());
+                            return new DefaultCellModel(prog.getDateAsString())
+                                    .setPopupMenu(getPopup(prog));
                         }, 80),
                 new ColumnModel<>(Bundle.RecentFilePanel_col_header_sender(),
                         (prog) -> {
-                            return new DefaultCellModel(prog.getSender());
+                            return new DefaultCellModel(prog.getSender())
+                                    .setPopupMenu(getPopup(prog));
                         }, 150));
 
         ListTableModel<RecentAttachmentDetails> tableModel = JTablePanel.getTableModel(list);
