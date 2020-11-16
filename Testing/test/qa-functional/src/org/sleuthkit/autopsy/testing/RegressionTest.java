@@ -106,12 +106,13 @@ public class RegressionTest extends TestCase {
         
         try {
             CentralRepoDbManager manager = new CentralRepoDbManager();
-            manager.getDbSettingsPostgres().setHost("localhost");
-            manager.getDbSettingsPostgres().setUserName("postgres");
-            manager.getDbSettingsPostgres().setPassword("password");
+            manager.getDbSettingsPostgres().setHost(System.getProperty("crHost"));
+            manager.getDbSettingsPostgres().setPort(Integer.parseInt(System.getProperty("crPort")));
+            manager.getDbSettingsPostgres().setUserName(System.getProperty("crUserName"));
+            manager.getDbSettingsPostgres().setPassword(System.getProperty("crPassword"));
             manager.setupPostgresDb(CentralRepoDbChoice.POSTGRESQL_CUSTOM);
         } catch (CentralRepoException ex) {
-            throw new RuntimeException(ex);
+            throw new RuntimeException("Error setting up multi user CR", ex);
         }
     }
 
