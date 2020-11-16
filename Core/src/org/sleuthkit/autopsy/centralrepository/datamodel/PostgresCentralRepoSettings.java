@@ -153,7 +153,7 @@ public final class PostgresCentralRepoSettings implements CentralRepoDbConnectiv
         } catch (ClassNotFoundException | SQLException ex) {
             // TODO: Determine why a connection failure (ConnectionException) re-throws
             // the SQLException and does not print this log message?
-            LOGGER.log(Level.SEVERE, "Failed to acquire ephemeral connection to postgresql."); // NON-NLS
+            LOGGER.log(Level.SEVERE, "Failed to acquire ephemeral connection to postgresql.", ex); // NON-NLS
             conn = null;
         }
         return conn;

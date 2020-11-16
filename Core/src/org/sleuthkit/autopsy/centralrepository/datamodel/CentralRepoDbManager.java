@@ -395,7 +395,7 @@ public class CentralRepoDbManager {
 
         // the only successful setup status is tested ok
         if (curStatus != DatabaseTestResult.TESTED_OK) {
-            throw new CentralRepoException("Unable to successfully create sqlite database");
+            throw new CentralRepoException("Unable to successfully create postgres database. Test failed with: " + curStatus);
         }
 
         // if successfully got here, then save the settings
