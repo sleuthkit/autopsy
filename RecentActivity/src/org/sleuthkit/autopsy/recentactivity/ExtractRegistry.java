@@ -77,6 +77,7 @@ import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.recentactivity.ShellBagParser.ShellBag;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Account;
+import org.sleuthkit.datamodel.Blackboard.BlackboardException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_OS_ACCOUNT;
@@ -1989,10 +1990,10 @@ class ExtractRegistry extends Extract {
     private BlackboardAttribute.Type getLastWriteAttribute() throws TskCoreException {
         if (shellBagLastWriteAttributeType == null) {
             try {
-                shellBagLastWriteAttributeType = tskCase.addArtifactAttributeType(SHELLBAG_ATTRIBUTE_LAST_WRITE,
+                shellBagLastWriteAttributeType = tskCase.getBlackboard().getOrAddAttributeType(SHELLBAG_ATTRIBUTE_LAST_WRITE,
                         BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DATETIME,
                         Bundle.Shellbag_Last_Write_Attribute_Display_Name());
-            } catch (TskDataException ex) {
+            } catch (BlackboardException ex) {
                 // Attribute already exists get it from the case
                 shellBagLastWriteAttributeType = tskCase.getAttributeType(SHELLBAG_ATTRIBUTE_LAST_WRITE);
             }
@@ -2011,10 +2012,10 @@ class ExtractRegistry extends Extract {
     private BlackboardAttribute.Type getKeyAttribute() throws TskCoreException {
         if (shellBagKeyAttributeType == null) {
             try {
-                shellBagKeyAttributeType = tskCase.addArtifactAttributeType(SHELLBAG_ATTRIBUTE_KEY,
+                shellBagKeyAttributeType = tskCase.getBlackboard().getOrAddAttributeType(SHELLBAG_ATTRIBUTE_KEY,
                         BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING,
                         Bundle.Shellbag_Key_Attribute_Display_Name());
-            } catch (TskDataException ex) {
+            } catch (BlackboardException ex) {
                 // The attribute already exists get it from the case
                 shellBagKeyAttributeType = tskCase.getAttributeType(SHELLBAG_ATTRIBUTE_KEY);
             }

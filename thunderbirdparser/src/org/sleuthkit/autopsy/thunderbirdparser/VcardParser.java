@@ -53,6 +53,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.AccountFileInstance;
 import org.sleuthkit.datamodel.Blackboard;
+import org.sleuthkit.datamodel.Blackboard.BlackboardException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
@@ -421,10 +422,10 @@ final class VcardParser {
                     if (attributeType == null) {
                         try{
                             // Add this attribute type to the case database.
-                            attributeType = tskCase.addArtifactAttributeType(attributeTypeName,
+                            attributeType = tskCase.getBlackboard().getOrAddAttributeType(attributeTypeName,
                                     BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING,
                                     String.format("Phone Number (%s)", StringUtils.capitalize(splitType.toLowerCase())));
-                        }catch (TskDataException ex) {
+                        }catch (BlackboardException ex) {
                             attributeType = tskCase.getAttributeType(attributeTypeName);
                         }
                     }
@@ -474,14 +475,14 @@ final class VcardParser {
                    BlackboardAttribute.Type attributeType = tskCase.getAttributeType(attributeTypeName);
                    if (attributeType == null) {
                        // Add this attribute type to the case database.
-                       attributeType = tskCase.addArtifactAttributeType(attributeTypeName, 
+                       attributeType = tskCase.getBlackboard().getOrAddAttributeType(attributeTypeName, 
                                BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, 
                                String.format("Email (%s)", StringUtils.capitalize(splitType.toLowerCase())));
                    }
                    ThunderbirdMboxFileIngestModule.addArtifactAttribute(email.getValue(), attributeType, attributes);
                } catch (TskCoreException ex) {
                    logger.log(Level.SEVERE, String.format("Unable to retrieve attribute type '%s' for file '%s' (id=%d).", attributeTypeName, abstractFile.getName(), abstractFile.getId()), ex);
-               } catch (TskDataException ex) {
+               } catch (BlackboardException ex) {
                    logger.log(Level.SEVERE, String.format("Unable to add custom attribute type '%s' for file '%s' (id=%d).", attributeTypeName, abstractFile.getName(), abstractFile.getId()), ex);
                }
            }  
