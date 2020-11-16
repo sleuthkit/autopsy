@@ -314,7 +314,8 @@ public class CellModelTableCellRenderer extends DefaultTableCellRenderer {
 
         @Override
         public void mouseClicked(CellMouseEvent cellEvent) {
-            if (cellEvent.getCellValue() instanceof CellModel) {
+            if (cellEvent.getCellValue() instanceof CellModel && cellEvent.getMouseEvent().getButton() != MouseEvent.BUTTON1) {
+                cellEvent.getTable().setRowSelectionInterval(cellEvent.getRow(), cellEvent.getRow());
                 CellModel cellModel = (CellModel) cellEvent.getCellValue();
                 List<MenuItem> menuItems = cellModel.getPopupMenu();
 
