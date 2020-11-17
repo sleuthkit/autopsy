@@ -70,7 +70,6 @@ import org.sleuthkit.autopsy.coordinationservice.CoordinationService.Coordinatio
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.Lock;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.core.ServicesMonitor;
-import org.sleuthkit.autopsy.core.ServicesMonitor.ServicesMonitorException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback.DataSourceProcessorResult;
 import static org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS;
@@ -160,7 +159,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
     private final ScheduledThreadPoolExecutor jobStatusPublishingExecutor;
     private final ConcurrentHashMap<String, Instant> hostNamesToLastMsgTime;
     private final ConcurrentHashMap<String, AutoIngestJob> hostNamesToRunningJobs;
-    private final Object jobsLock;
+    private final Object jobsQueueLock;
     @GuardedBy("jobsLock")
     private List<AutoIngestJob> pendingJobs;
     @GuardedBy("jobsLock")
@@ -218,7 +217,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         jobStatusPublishingExecutor = new ScheduledThreadPoolExecutor(1, new ThreadFactoryBuilder().setNameFormat(JOB_STATUS_PUBLISHING_THREAD_NAME).build());
         hostNamesToRunningJobs = new ConcurrentHashMap<>();
         hostNamesToLastMsgTime = new ConcurrentHashMap<>();
-        jobsLock = new Object();
+        jobsQueueLock = new Object();
         pendingJobs = new ArrayList<>();
         completedJobs = new ArrayList<>();
         try {
@@ -315,7 +314,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
     private void handleRemoteJobStartedEvent(AutoIngestJobStartedEvent event) {
         String hostName = event.getJob().getProcessingHostName();
         hostNamesToLastMsgTime.put(hostName, Instant.now());
-        synchronized (jobsLock) {
+        synchronized (jobsQueueLock) {
             Path manifestFilePath = event.getJob().getManifest().getFilePath();
             for (Iterator<AutoIngestJob> iterator = pendingJobs.iterator(); iterator.hasNext();) {
                 AutoIngestJob pendingJob = iterator.next();
@@ -341,7 +340,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
      */
     private void handleRemoteJobStatusEvent(AutoIngestJobStatusEvent event) {
         AutoIngestJob job = event.getJob();
-        synchronized (jobsLock) {
+        synchronized (jobsQueueLock) {
             for (Iterator<AutoIngestJob> iterator = pendingJobs.iterator(); iterator.hasNext();) {
                 AutoIngestJob pendingJob = iterator.next();
                 if (job.equals(pendingJob)) {
@@ -372,7 +371,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         hostNamesToLastMsgTime.put(hostName, Instant.now());
         hostNamesToRunningJobs.remove(hostName);
         if (event.shouldRetry() == false) {
-            synchronized (jobsLock) {
+            synchronized (jobsQueueLock) {
                 AutoIngestJob job = event.getJob();
                 if (completedJobs.contains(job)) {
                     completedJobs.remove(job);
@@ -406,7 +405,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
      * @param event
      */
     private void handleRemoteJobReprocessEvent(AutoIngestJobReprocessEvent event) {
-        synchronized (jobsLock) {
+        synchronized (jobsQueueLock) {
             AutoIngestJob job = event.getJob();
             sysLogger.log(Level.INFO, "Received reprocess job event for data source {0} in case {1} from user {2} on machine {3}",
                     new Object[]{job.getManifest().getDataSourceFileName(), job.getManifest().getCaseName(), event.getUserName(), event.getNodeName()});
@@ -559,7 +558,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
      * Cancels the job processing task and shuts down its executor.
      */
     private void stopJobProcessing() throws InterruptedException {
-        synchronized (jobsLock) {
+        synchronized (jobsQueueLock) {
             if (null != currentJob) {
                 cancelCurrentJob();
             }
@@ -575,7 +574,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
      * Clears the job lists and resets the current job to null.
      */
     private void cleanupJobs() {
-        synchronized (jobsLock) {
+        synchronized (jobsQueueLock) {
             pendingJobs.clear();
             currentJob = null;
             jobLogger = null;
@@ -596,7 +595,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
      *                      null.
      */
     void getJobs(List<AutoIngestJob> pendingJobs, List<AutoIngestJob> runningJobs, List<AutoIngestJob> completedJobs) {
-        synchronized (jobsLock) {
+        synchronized (jobsQueueLock) {
             if (null != pendingJobs) {
                 pendingJobs.clear();
                 pendingJobs.addAll(this.pendingJobs);
@@ -687,7 +686,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         }
 
         List<AutoIngestJob> jobsToDeprioritize = new ArrayList<>();
-        synchronized (jobsLock) {
+        synchronized (jobsQueueLock) {
             for (AutoIngestJob job : pendingJobs) {
                 if (job.getManifest().getCaseName().equals(caseName)) {
                     jobsToDeprioritize.add(job);
@@ -733,7 +732,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
 
         List<AutoIngestJob> jobsToPrioritize = new ArrayList<>();
         int maxPriority = 0;
-        synchronized (jobsLock) {
+        synchronized (jobsQueueLock) {
             for (AutoIngestJob job : pendingJobs) {
                 if (job.getPriority() > maxPriority) {
                     maxPriority = job.getPriority();
@@ -782,7 +781,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         }
 
         AutoIngestJob jobToDeprioritize = null;
-        synchronized (jobsLock) {
+        synchronized (jobsQueueLock) {
             /*
              * Find the job in the pending jobs list.
              */
@@ -835,7 +834,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
 
         int maxPriority = 0;
         AutoIngestJob jobToPrioritize = null;
-        synchronized (jobsLock) {
+        synchronized (jobsQueueLock) {
             /*
              * Find the job in the pending jobs list and record the highest
              * existing priority.
@@ -886,7 +885,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
      */
     void reprocessJob(Path manifestPath) {
         AutoIngestJob completedJob = null;
-        synchronized (jobsLock) {
+        synchronized (jobsQueueLock) {
             /*
              * Find the job in the completed jobs list.
              */
@@ -934,7 +933,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
      * @return Snapshot of jobs lists
      */
     JobsSnapshot getCurrentJobsSnapshot() {
-        synchronized (jobsLock) {
+        synchronized (jobsQueueLock) {
             List<AutoIngestJob> runningJobs = new ArrayList<>();
             getJobs(null, runningJobs, null);
             return new JobsSnapshot(pendingJobs, runningJobs, completedJobs);
@@ -968,7 +967,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         if (State.RUNNING != state) {
             return;
         }
-        synchronized (jobsLock) {
+        synchronized (jobsQueueLock) {
             if (null != currentJob) {
                 currentJob.cancel();
                 sysLogger.log(Level.INFO, "Cancelling automated ingest for manifest {0}", currentJob.getManifest().getFilePath());
@@ -984,7 +983,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         if (State.RUNNING != state) {
             return;
         }
-        synchronized (jobsLock) {
+        synchronized (jobsQueueLock) {
             if (null != currentJob) {
                 IngestJob ingestJob = currentJob.getIngestJob();
                 if (null != ingestJob) {
@@ -1102,7 +1101,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          * list.
          */
         private void scan() {
-            synchronized (jobsLock) {
+            synchronized (jobsQueueLock) {
                 if (Thread.currentThread().isInterrupted()) {
                     return;
                 }
@@ -1555,9 +1554,8 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
 
         private final static String SUB_TASK_THREAD_NAME = "AIM-job-processing-subtask-%d";
         private final static int NUM_SUB_TASK_THREADS = 1;
-        private final static int MAX_SUB_TASK_RETRIES = 2;
-        private final static int SUB_TASK_RETRY_INCR_MINS = 5;
         private final ScheduledThreadPoolExecutor subTaskExecutor;
+        private final List<Attempt> retries;
         private final Object ingestLock;
         private final Object pauseLock;
         @GuardedBy("pauseLock")
@@ -1571,6 +1569,10 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          */
         private JobProcessingTask() {
             subTaskExecutor = new ScheduledThreadPoolExecutor(NUM_SUB_TASK_THREADS, new ThreadFactoryBuilder().setNameFormat(SUB_TASK_THREAD_NAME).build());
+            retries = new ArrayList<>();
+            retries.add(new Attempt(5, TimeUnit.MINUTES));
+            retries.add(new Attempt(10, TimeUnit.MINUTES));
+            retries.add(new Attempt(20, TimeUnit.MINUTES));
             ingestLock = new Object();
             pauseLock = new Object();
         }
@@ -1581,28 +1583,40 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          */
         @Override
         public void run() {
-            sysLogger.log(Level.INFO, "Auto ingest started");
+            sysLogger.log(Level.INFO, "Auto ingest job processing started");
             while (true) {
+                /*
+                 * Wait for a scan of the input directory to populate the
+                 * pending auto ingest jobs queue.
+                 */
                 try {
                     if (jobProcessingTaskFuture.isCancelled()) {
-                        sysLogger.log(Level.SEVERE, "Auto ingest shut down");
+                        sysLogger.log(Level.SEVERE, "Auto ingest job processing stopping before waiting for an input directory scan");
                         break;
                     }
                     waitForInputDirScan();
                 } catch (InterruptedException ex) {
-                    sysLogger.log(Level.SEVERE, "Auto ingest shut down while waiting for an input directory scan");
+                    sysLogger.log(Level.SEVERE, "Auto ingest job processing stopping while waiting for an input directory scan", ex);
                     break;
                 }
 
+                /*
+                 * Process the eligible pending jobs, if any, in the auto ingest
+                 * jobs queue. Processing will automatically pause until it is
+                 * either resumed or cancelled if there is an error downloading
+                 * shared configuration or the configuration is incorrect
+                 * (analysis start up error), a required multi-user case service
+                 * is down, or an unchecked runtime exception occurs.
+                 */
                 try {
                     if (jobProcessingTaskFuture.isCancelled()) {
-                        sysLogger.log(Level.SEVERE, "Auto ingest shut down");
+                        sysLogger.log(Level.SEVERE, "Auto ingest job processing stopping after wait for an input directory scan");
                         break;
                     }
                     verifyRequiredSevicesAreRunning();
                     processJobs();
                 } catch (InterruptedException ex) {
-                    sysLogger.log(Level.SEVERE, "Auto ingest shut down while processing jobs", ex);
+                    sysLogger.log(Level.SEVERE, "Auto ingest job processing stopping while processing jobs", ex);
                     break;
                 } catch (SharedConfigDownloadException | ServiceDownException | AnalysisStartupException ex) { // RJCTODO: convert to catch all
                     /*
@@ -1612,17 +1626,18 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                      */
                     sysLogger.log(Level.SEVERE, "A critical auto ingest system error occurred", ex);
                     if (jobProcessingTaskFuture.isCancelled()) {
-                        sysLogger.log(Level.SEVERE, "Auto ingest shut down");
+                        sysLogger.log(Level.SEVERE, "Auto ingest job processing stopping before pausing for system error");
                         break;
                     }
                     try {
                         pauseForSystemError();
                     } catch (InterruptedException ex2) {
-                        sysLogger.log(Level.SEVERE, "Auto ingest shut down while paused due to a system error", ex2);
+                        sysLogger.log(Level.SEVERE, "Auto ingest job processing stopping while paused due to a system error", ex2);
                         break;
                     }
                 }
             }
+            sysLogger.log(Level.INFO, "Auto ingest job processing stopped");
         }
 
         /**
@@ -1815,18 +1830,38 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          *                                       ingest is shutting down.
          */
         private void processJobs() throws SharedConfigDownloadException, ServiceDownException, AnalysisStartupException, InterruptedException {
-//            try {
             sysLogger.log(Level.INFO, "Started processing pending jobs queue");
-            Lock manifestLock = JobProcessingTask.this.dequeueAndLockNextJob();
-            while (null != manifestLock) {
+            Lock jobLock = getAndLockNextJob();
+            while (jobLock != null) {
+                /*
+                 * Process the current job.
+                 */
+                final Path manifestPath = currentJob.getManifest().getFilePath();
                 try {
                     if (currentJob.isCanceled() || jobProcessingTaskFuture.isCancelled()) {
                         return;
                     }
                     processJob();
                 } finally {
-                    manifestLock.release();
+                    final Lock lockToRelease = jobLock;
+                    Callable<Lock> releaseJobLockTask = () -> {
+                        try {
+                            lockToRelease.release();
+                            return lockToRelease;
+                        } catch (CoordinationServiceException ex) {
+                            sysLogger.log(Level.SEVERE, String.format("Error releasing exclusive auto ingest job lock for %s", manifestPath), ex);
+                            return null;
+                        }
+                    };
+                    Lock releasedLock = tryTask(String.format("Releasing exclusive auto ingest job lock for %s", manifestPath), releaseJobLockTask, subTaskExecutor, retries);
+                    if (releasedLock == null) {
+                        verifyRequiredSevicesAreRunning();
+                    }
                 }
+
+                /*
+                 * Check for auto ingest shutdown and pause requests.
+                 */
                 if (jobProcessingTaskFuture.isCancelled()) {
                     return;
                 }
@@ -1834,167 +1869,180 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 if (jobProcessingTaskFuture.isCancelled()) {
                     return;
                 }
-                manifestLock = JobProcessingTask.this.dequeueAndLockNextJob();
+
+                /*
+                 * Get the next job, if any.
+                 */
+                jobLock = getAndLockNextJob();
             }
-//            } catch (CoordinationServiceException ex) {
-//                sysLogger.log(Level.SEVERE, "Coordination service error processing pending jobs queue", ex);
-//            }
+            sysLogger.log(Level.INFO, "Finished processing pending jobs queue");
         }
 
         /**
-         * Inspects the pending jobs queue, looking for the next job that is
-         * ready for processing. If such a job is found, it is removed from the
-         * queue, made the current job, and a coordination service lock on the
-         * manifest for the job is returned.
-         * <p>
-         * Note that two passes through the queue may be made, the first
-         * enforcing the maximum concurrent jobs per case setting, the second
-         * ignoring this constraint. This policy override prevents idling nodes
-         * when jobs are queued.
-         * <p>
-         * Holding the manifest lock does the following: a) signals to all auto
-         * ingest nodes, including this one, that the job is in progress so it
-         * does not get put in pending jobs queues or completed jobs lists by
-         * input directory scans and b) prevents deletion of the input directory
-         * and the case directory because exclusive manifest locks for all of
-         * the manifests for a case must be acquired for delete operations.
+         * Makes up to two passes through the pending jobs queue, looking for
+         * the next job to process. The first pass enforces the the maximum
+         * concurrent jobs per case setting. If this pass does not find a job to
+         * process, a seond pass through the queue is made, ignoring this
+         * constraint. If these operations find a job to process, the job is
+         * made the current job and the auto ingest job coordination service
+         * lock for the job is returned.
          *
-         * @return A manifest file lock if a ready job was found, null
+         * @return An auto ingest job lock if a ready job was found, null
          *         otherwise.
          *
-         * @throws CoordinationServiceException if there is an error while
-         *                                      acquiring or releasing a
-         *                                      manifest file lock.
-         * @throws InterruptedException         if the thread is interrupted
-         *                                      while reading the lock data
+         * @throws InterruptedException If the thread running the job processing
+         *                              task is interrupted while blocked, i.e.,
+         *                              if auto ingest is shutting down.
          */
-        private Lock dequeueAndLockNextJob() throws InterruptedException {
+        private Lock getAndLockNextJob() throws InterruptedException {
             sysLogger.log(Level.INFO, "Checking pending jobs queue for ready job, enforcing max jobs per case");
-            Lock manifestLock;
-            synchronized (jobsLock) {
-                manifestLock = dequeueAndLockNextJob(true);
-                if (null != manifestLock) {
+            Lock jobLock;
+            synchronized (jobsQueueLock) {
+                jobLock = findAndLockNextJob(true);
+                if (jobLock != null) {
                     sysLogger.log(Level.INFO, "Dequeued job for {0}", currentJob.getManifest().getFilePath());
                 } else {
                     sysLogger.log(Level.INFO, "No ready job");
                     sysLogger.log(Level.INFO, "Checking pending jobs queue for ready job, not enforcing max jobs per case");
-                    manifestLock = dequeueAndLockNextJob(false);
-                    if (null != manifestLock) {
+                    jobLock = findAndLockNextJob(false);
+                    if (jobLock != null) {
                         sysLogger.log(Level.INFO, "Dequeued job for {0}", currentJob.getManifest().getFilePath());
                     } else {
                         sysLogger.log(Level.INFO, "No ready job");
                     }
                 }
             }
-            return manifestLock;
+            return jobLock;
         }
 
         /**
          * Inspects the pending jobs queue, looking for the next job that is
-         * ready for processing. If such a job is found, it is removed from the
-         * queue and made the current job.
+         * ready for processing. If a ready pending job is found, it is removed
+         * from the queue, made the current job, and a coordination service lock
+         * on the auto ingest job is returned.
          *
          * @param enforceMaxJobsPerCase Whether or not to enforce the maximum
          *                              concurrent jobs per case setting.
          *
-         * @return A manifest file lock if a ready job was found, null
-         *         otherwise.
+         * @return An auto ingest job lock if a ready pending job was found,
+         *         null otherwise.
          *
-         * @throws CoordinationServiceException if there is an error while
-         *                                      acquiring or releasing a
-         *                                      manifest file lock.
-         * @throws InterruptedException         if the thread is interrupted
-         *                                      while reading the lock data
+         * @throws InterruptedException If the thread running the job processing
+         *                              task is interrupted while blocked, i.e.,
+         *                              if auto ingest is shutting down.
          */
-        private Lock dequeueAndLockNextJob(boolean enforceMaxJobsPerCase) throws InterruptedException {
-            Lock manifestLock = null;
-            synchronized (jobsLock) {
+        private Lock findAndLockNextJob(boolean enforceMaxJobsPerCase) throws InterruptedException {
+            /*
+             * IMPORTANT NOTE: There is no centralized job scheduling mechanism.
+             * Every node in an auto ingest cluster does its own input directory
+             * scans and has its own snapshot of the pending jobs queue for the
+             * entire cluster. An auto ingest node claims a job by acquiring an
+             * exclusive auto ingest job lock from the coordination service.
+             */
+            Lock currentJobLock = null;
+            synchronized (jobsQueueLock) {
                 Iterator<AutoIngestJob> iterator = pendingJobs.iterator();
                 while (iterator.hasNext()) {
                     AutoIngestJob job = iterator.next();
-                    Path manifestPath = job.getManifest().getFilePath();
-                    Callable<Lock> configDownloadTask = () -> {
+                    /*
+                     * Try to acquire an auto ingest job lock for the job from
+                     * the coordination service. Holding the lock for an auto
+                     * ingest job does the following: a) signals to all auto
+                     * ingest nodes, including this one, that the job is in
+                     * progress so it does not get put in pending jobs queues or
+                     * completed jobs lists by input directory scans and b)
+                     * prevents deletion of the associated case because
+                     * exclusive locks for all of the auto ingest jobs for a
+                     * case must be acquired for delete operations.
+                     *
+                     * RJCTODO: Is b) actually true?
+                     */
+                    final Path manifestPath = job.getManifest().getFilePath();
+                    Callable<Lock> acquireJobLockTask = () -> {
                         try {
                             return coordinationService.tryGetExclusiveLock(CoordinationService.CategoryNode.MANIFESTS, manifestPath.toString());
                         } catch (CoordinationServiceException ex) {
-                            sysLogger.log(Level.SEVERE, "RJCTODO", ex);
+                            sysLogger.log(Level.SEVERE, String.format("Error att3empting to acquire auto ingest job lock for %s", manifestPath), ex);
                             return null;
                         }
                     };
-                    try {
-                        manifestLock = trySubTask2(String.format("Locking auto ingest job node for %s", manifestPath), configDownloadTask);
-                    } catch (ExecutionException ex) {
-
-                    }
-                    if (null == manifestLock) {
+                    final Lock nextJobLock = tryTask(String.format("Attempting to acquire auto ingest job lock for %s", manifestPath), acquireJobLockTask, subTaskExecutor, retries);
+                    if (nextJobLock == null) {
                         /*
-                         * Skip the job. If it is exclusively locked for
-                         * processing or deletion by another node, the remote
-                         * job event handlers or the next input scan will flush
-                         * it out of the pending queue. If there was a
+                         * If the lock cannot be acquired, skip the job. It has
+                         * been claimed by another node in the cluster (see
+                         * remarks below). Receipt of a job status event from
+                         * another node in the cluster or the next input scan
+                         * will flush the job out of the pending queue.
                          */
+                        sysLogger.log(Level.INFO, String.format("Auto ingest job lock for %s held by another node", manifestPath));
                         continue;
                     }
 
-                    try {
-                        /*
-                         * There can be a race condition between queuing jobs
-                         * and case deletion. However, in practice eliminating
-                         * the race condition by acquiring a manifest file
-                         * coordination service lock when analyzing job state
-                         * during the input directory scan appears to have a
-                         * significant performance cost for both input directory
-                         * scanning and dequeuing jobs. Therefore, job state
-                         * must be checked again here, while actually holding
-                         * the lock, before executing the job.
-                         */
-                        AutoIngestJobNodeData nodeData = new AutoIngestJobNodeData(coordinationService.getNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestPath.toString()));
-                        if (!nodeData.getProcessingStatus().equals(PENDING)) {
-                            iterator.remove();
-                            manifestLock.release();
-                            manifestLock = null;
-                            continue;
+                    /*
+                     * Now that the lock on the job has been acquired, create a
+                     * sub task to release the lock now if the job has to be
+                     * skipped for some reason.
+                     */
+                    Callable<Lock> releaseJobLockTask = () -> {
+                        try {
+                            nextJobLock.release();
+                            return nextJobLock;
+                        } catch (CoordinationServiceException ex) {
+                            sysLogger.log(Level.SEVERE, String.format("Error releasing auto ingest job lock for %s", manifestPath), ex);
+                            return null;
                         }
+                    };
 
-                        /*
-                         * Ditto for the presence of the manifest file.
-                         */
-                        File manifestFile = nodeData.getManifestFilePath().toFile();
-                        if (!manifestFile.exists()) {
-                            iterator.remove();
-                            manifestLock.release();
-                            manifestLock = null;
-                            continue;
+                    /**
+                     * Check the possiblity that another node in the cluster
+                     * claimed and completed the job already, but the job has
+                     * not been flushed out of the oending queue yet.
+                     */
+                    Callable<AutoIngestJobNodeData> getJobNodeDataTask = () -> {
+                        try {
+                            return new AutoIngestJobNodeData(coordinationService.getNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestPath.toString()));
+                        } catch (CoordinationServiceException ex) {
+                            sysLogger.log(Level.SEVERE, String.format("Error obtaining auto ingest job node data for %s", manifestPath), ex);
+                            return null;
                         }
-
-                        /*
-                         * Finally, check for devoting too many resources to a
-                         * single case, if the check is enabled.
-                         */
-                        if (enforceMaxJobsPerCase) {
-                            int currentJobsForCase = 0;
-                            for (AutoIngestJob runningJob : hostNamesToRunningJobs.values()) {
-                                if (0 == job.getManifest().getCaseName().compareTo(runningJob.getManifest().getCaseName())) {
-                                    ++currentJobsForCase;
-                                }
-                            }
-                            if (currentJobsForCase >= AutoIngestUserPreferences.getMaxConcurrentJobsForOneCase()) {
-                                manifestLock.release();
-                                manifestLock = null;
-                                continue;
-                            }
-                        }
-
+                    };
+                    AutoIngestJobNodeData nodeData = tryTask(String.format("Obtaining auto ingest job node data for %s", manifestPath), getJobNodeDataTask, subTaskExecutor, retries);
+                    if (nodeData == null) {
                         iterator.remove();
-                        currentJob = job;
-                        break;
-
-                    } catch (AutoIngestJobNodeData.InvalidDataException ex) {
-                        sysLogger.log(Level.WARNING, String.format("Unable to use node data for %s", manifestPath), ex);
+                        tryTask(String.format("Missing auto ingest job node data, releasing auto ingest job lock for %s", manifestPath), releaseJobLockTask, subTaskExecutor, retries);
+                        continue;
                     }
+                    if (!nodeData.getProcessingStatus().equals(PENDING)) {
+                        iterator.remove();
+                        tryTask(String.format("Job state is %s, no longer PENDING, releasing auto ingest job lock for %s", nodeData.getProcessingStatus(), manifestPath), releaseJobLockTask, subTaskExecutor, retries);
+                        continue;
+                    }
+
+                    /*
+                     * Check whether processing the job would be devoting too
+                     * many resources to a single case.
+                     */
+                    if (enforceMaxJobsPerCase) {
+                        int currentJobsForCase = 0;
+                        for (AutoIngestJob runningJob : hostNamesToRunningJobs.values()) {
+                            if (0 == job.getManifest().getCaseName().compareTo(runningJob.getManifest().getCaseName())) {
+                                ++currentJobsForCase;
+                            }
+                        }
+                        if (currentJobsForCase >= AutoIngestUserPreferences.getMaxConcurrentJobsForOneCase()) {
+                            tryTask(String.format("Releasing auto ingest job node lock for %s", manifestPath), releaseJobLockTask, subTaskExecutor, retries);
+                            continue;
+                        }
+                    }
+
+                    iterator.remove();
+                    currentJobLock = nextJobLock;
+                    currentJob = job;
+                    break;
                 }
             }
-            return manifestLock;
+            return currentJobLock;
         }
 
         /**
@@ -2020,76 +2068,118 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          *                                       while blocked, i.e., if auto
          *                                       ingest is shutting down.
          */
-        private void processJob() throws CoordinationServiceException, SharedConfigDownloadException, ServiceDownException, AnalysisStartupException, InterruptedException {
-            updateConfiguration();
-
-            if (currentJob.isCanceled() || jobProcessingTaskFuture.isCancelled()) {
-                return;
-            }
-
-            verifyRequiredSevicesAreRunning();
-
-            if (currentJob.isCanceled() || jobProcessingTaskFuture.isCancelled()) {
-                return;
-            }
-
+        private void processJob() throws SharedConfigDownloadException, ServiceDownException, AnalysisStartupException, InterruptedException {
+            /*
+             * Define a task for updating the auto ingest job node data when
+             * processing begins and after processing completes.
+             */
             Path manifestPath = currentJob.getManifest().getFilePath();
+            Callable<Object> updateNodeDataTask = () -> {
+                try {
+                    updateAutoIngestJobData(currentJob);
+                    return currentJob;
+                } catch (CoordinationServiceException ex) {
+                    sysLogger.log(Level.SEVERE, String.format("Error obtaining auto ingest job node data for %s", manifestPath), ex);
+                    return null;
+                }
+            };
+
+            boolean retryJob = false;
             try {
+                updateIngestConfiguration();
+
+                if (currentJob.isCanceled() || jobProcessingTaskFuture.isCancelled()) {
+                    return;
+                }
+
+                verifyRequiredSevicesAreRunning();
+
+                if (currentJob.isCanceled() || jobProcessingTaskFuture.isCancelled()) {
+                    return;
+                }
+
                 /*
-                 * Update the job state in this process and in the ZooKeeper
-                 * database and publish the job state to the local auto ingest
-                 * control panel and any auto ingest dashboards on other nodes.
+                 * Update the job state to indicate it is being processed. This
+                 * includes wrting the state to the auto ingest job node data in
+                 * the coordination service.
                  */
                 sysLogger.log(Level.INFO, "Started processing of {0}", manifestPath);
                 currentJob.setProcessingStatus(AutoIngestJob.ProcessingStatus.PROCESSING);
                 currentJob.setProcessingStage(AutoIngestJob.Stage.STARTING, Date.from(Instant.now()));
                 currentJob.setProcessingHostName(AutoIngestManager.LOCAL_HOST_NAME);
-                updateAutoIngestJobData(currentJob);
+                Object result = tryTask(String.format("Updating auto ingest job data for %s", manifestPath), updateNodeDataTask, subTaskExecutor, retries);
+                if (result == null) {
+                    throw new ServiceDownException(String.format("Failed to update auto ingest job nmode data for %s", manifestPath));
+                }
+
+                /*
+                 * Notify both the local auto ingest control panel and event
+                 * subscribers on other nodes in the cluster of the current job
+                 * state.
+                 */
                 setChanged();
                 notifyObservers(Event.JOB_STARTED);
                 eventPublisher.publishRemotely(new AutoIngestJobStartedEvent(currentJob));
 
-                /*
-                 * Attempt the job.
-                 */
                 if (currentJob.isCanceled() || jobProcessingTaskFuture.isCancelled()) {
                     return;
                 }
+
                 attemptJob();
 
+            } catch (SharedConfigDownloadException | ServiceDownException | AnalysisStartupException ex) {
+                /*
+                 * The job was not started. It can be retried after auto ingest
+                 * is resumed after the auto-pause that will be triggered by the
+                 * propagation of these exceptions.
+                 */
+                retryJob = true;
+                currentJob.setProcessingStatus(AutoIngestJob.ProcessingStatus.PENDING);
+                throw ex;
+
             } finally {
+
+                /*
+                 * Update the job state to reflect the processing that just
+                 * completed. This includes wrting the state to the auto ingest
+                 * job node data in the coordination service.
+                 */
                 if (jobProcessingTaskFuture.isCancelled()) {
                     currentJob.cancel();
                 }
-
                 if (currentJob.isCompleted() || currentJob.isCanceled()) {
                     currentJob.setProcessingStatus(AutoIngestJob.ProcessingStatus.COMPLETED);
                     Date completedDate = new Date();
                     currentJob.setCompletedDate(completedDate);
-                } else {
-                    /*
-                     * The job may be retried, see below.
-                     */
-                    currentJob.setProcessingStatus(AutoIngestJob.ProcessingStatus.PENDING);
+                    if (currentJob.isCanceled()) {
+                        Path caseDirectoryPath = currentJob.getCaseDirectoryPath();
+                        if (null != caseDirectoryPath) {
+                            setErrorsOccurredFlagForCase(caseDirectoryPath);
+                            jobLogger.logJobCancelled();
+                        }
+                    }
                 }
                 currentJob.setProcessingHostName("");
-                updateAutoIngestJobData(currentJob);
+                tryTask(String.format("Updating auto ingest job data for %s", manifestPath), updateNodeDataTask, subTaskExecutor, retries);
+                // RJCTODO: Will need to throw, eventually
+
+                /*
+                 * Notify both the local auto ingest control panel and event
+                 * subscribers on other nodes in the cluster of the current job
+                 * state.
+                 */
+                setChanged();
+                notifyObservers(Event.JOB_COMPLETED);
+                eventPublisher.publishRemotely(new AutoIngestJobCompletedEvent(currentJob, retryJob));
 
                 /*
                  * Determine whether or not the job should be retried if it
                  * failed to complete.
                  */
                 boolean retry = (!currentJob.isCanceled() && !currentJob.isCompleted());
-                sysLogger.log(Level.INFO, "Completed processing of {0}, retry = {1}", new Object[]{manifestPath, retry});
-                if (currentJob.isCanceled()) {
-                    Path caseDirectoryPath = currentJob.getCaseDirectoryPath();
-                    if (null != caseDirectoryPath) {
-                        setErrorsOccurredFlagForCase(caseDirectoryPath);
-                        jobLogger.logJobCancelled();
-                    }
-                }
+                sysLogger.log(Level.INFO, "Completed processing of {0}, retry = {1}", new Object[]{manifestPath, retryJob});
 
-                synchronized (jobsLock) {
+                synchronized (jobsQueueLock) {
                     if (!retry) {
                         completedJobs.add(currentJob);
                     }
@@ -2130,17 +2220,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
 
             } catch (CaseOpeningException | AutoIngestDataSourceProcessorException ex) {
                 sysLogger.log(Level.SEVERE, String.format("Error processing auto ingest job for case %s for %s", caseName, manifestPath), ex);
-
-            } catch (AnalysisStartupException ex) {
-                sysLogger.log(Level.SEVERE, String.format("Error processing auto ingest job for case %s for %s", caseName, manifestPath), ex);
-                /*
-                 * If there was an error starting analyisis, it is likely that
-                 * there is an ingest modules configuration problem. Propagate
-                 * the exception to cause an auto ingest pause for a system
-                 * error.
-                 */
-                throw (AnalysisStartupException) ex;
-
+                // RJCTODO: Is this right?
             } finally {
                 if (caseForJob != null) {
                     try {
@@ -2165,7 +2245,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          *                                       while blocked, i.e., if auto
          *                                       ingest is shutting down.
          */
-        private void updateConfiguration() throws SharedConfigDownloadException, InterruptedException {
+        private void updateIngestConfiguration() throws SharedConfigDownloadException, InterruptedException {
             if (AutoIngestUserPreferences.getSharedConfigEnabled()) {
                 sysLogger.log(Level.INFO, "Downloading shared configuration");
                 currentJob.setProcessingStage(AutoIngestJob.Stage.UPDATING_SHARED_CONFIG, Date.from(Instant.now()));
@@ -2178,7 +2258,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                         return false;
                     }
                 };
-                boolean configUpdated = trySubTask("Downloading shared configuration", configDownloadTask);
+                boolean configUpdated = tryTask("Downloading shared configuration", configDownloadTask, subTaskExecutor, retries);
                 if (!configUpdated) {
                     throw new SharedConfigDownloadException("Shared configuration download failed");
                 }
@@ -2189,105 +2269,90 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          * Checks the availability of the services required to process an
          * automated ingest job.
          *
-         * @throws ServiceDownException If any of the core application services
-         *                              are down or there is an error querying
-         *                              the services monitor.
+         * @throws ServiceDownException If any of the required application
+         *                              services are down or there is an error
+         *                              querying the services monitor.
          * @throws InterruptedException If the thread running the job processing
          *                              task is interrupted while blocked, i.e.,
          *                              if auto ingest is shutting down.
          */
         private void verifyRequiredSevicesAreRunning() throws ServiceDownException, InterruptedException {
-            sysLogger.log(Level.INFO, "Verifying core application services are up");
             if (currentJob != null) {
                 currentJob.setProcessingStage(AutoIngestJob.Stage.CHECKING_SERVICES, Date.from(Instant.now()));
             }
             Callable<Boolean> servicesCheckTask = () -> {
-                try {
-                    return allServicesAreUp();
-                } catch (ServicesMonitorException ex) {
-                    sysLogger.log(Level.SEVERE, "Error verifying required services are available", ex);
-                    return false;
+                boolean allServicesUp = true;
+                for (ServicesMonitor.Service service : ServicesMonitor.Service.values()) {
+                    ServicesMonitor.ServiceStatusReport statusReport = ServicesMonitor.getInstance().getServiceStatusReport(service);
+                    if (statusReport == null || !statusReport.getStatus().equals(ServicesMonitor.ServiceStatus.UP.getDisplayName())) {
+                        sysLogger.log(Level.WARNING, String.format("Status of %s service is %s", service.getDisplayName(), statusReport != null ? statusReport.getStatus() : "not available"));
+                        allServicesUp = false;
+                    }
                 }
+                return allServicesUp;
             };
-            boolean servicesUp = trySubTask("verifying required services availability", servicesCheckTask);
+            boolean servicesUp = tryTask("Verifying required services availability", servicesCheckTask, subTaskExecutor, retries);
             if (!servicesUp) {
-                throw new ServiceDownException("A core application service is down");
+                throw new ServiceDownException("One or more required services are down");
             }
         }
 
         /**
-         * Queries the services monitor to determine if the core application
-         * services are up: the coordination service, the database server, the
-         * keyword search server and the messaging service.
+         * RJCTODO: Move to utility
          *
-         * @return True or false.
-         *
-         * @throws ServicesMonitorException If there is an error querying the
-         *                                  services monitor.
-         */
-        private boolean allServicesAreUp() throws ServicesMonitorException {
-            return (isServiceUp(ServicesMonitor.Service.COORDINATION_SERVICE)
-                    && isServiceUp(ServicesMonitor.Service.DATABASE_SERVER)
-                    && isServiceUp(ServicesMonitor.Service.KEYWORD_SEARCH_SERVICE)
-                    && isServiceUp(ServicesMonitor.Service.MESSAGING));
-        }
-
-        /**
-         * Queries the service monitor to determine if a specified service is
-         * up.
-         *
-         * @param service Name of the service.
-         *
-         * @return True or false.
-         */
-        private boolean isServiceUp(ServicesMonitor.Service service) {
-            ServicesMonitor.ServiceStatusReport statusReport = ServicesMonitor.getInstance().getServiceStatusReport(service);
-            return (statusReport != null && statusReport.getStatus().equals(ServicesMonitor.ServiceStatus.UP.getDisplayName()));
-        }
-
-        /**
-         * Tries a sub task up to three times with an increasing delay between
-         * attempts.
-         *
+         * @param <T>
          * @param taskDesc A description of the sub task.
          * @param task     The sub task.
+         * @param executor
+         * @param retries
          *
-         * @return True if the task was completed, false otherwise.
+         * @return The task result if the task was completed, null otherwise.
          *
-         * @throws InterruptedException If the thread running the job processing
-         *                              task is interrupted while blocked, i.e.,
-         *                              if auto ingest is shutting down.
+         * @throws InterruptedException If interrupted while blocked waiting for
+         *                              the sub task to complete.
          */
-        private boolean trySubTask(String taskDesc, Callable<Boolean> task) throws InterruptedException {
-            int attempt = 0;
-            long delayInMins = 0;
-            boolean success = false;
-            while (!success && attempt < MAX_SUB_TASK_RETRIES) {
-                sysLogger.log(Level.INFO, "{0} (attempt={1}, waited={2} minutes)", new Object[]{taskDesc, attempt + 1, delayInMins});
-                ScheduledFuture<Boolean> future = subTaskExecutor.schedule(task, delayInMins, TimeUnit.MINUTES);
-                try {
-                    success = future.get();
-                } catch (ExecutionException ex) {
-                    sysLogger.log(Level.SEVERE, String.format("Unexpected error %s", taskDesc), ex);
-                }
-                ++attempt;
-                delayInMins += (SUB_TASK_RETRY_INCR_MINS * attempt);
-            }
-            return success;
-        }
-
-        private <T> T trySubTask2(String taskDesc, Callable<T> task) throws ExecutionException, InterruptedException {
-            int attempt = 0;
-            long delayInMins = 0;
+        private <T> T tryTask(String taskDesc, Callable<T> task, ScheduledThreadPoolExecutor executor, List<Attempt> retries) throws InterruptedException {
+            List<Attempt> attempts = new ArrayList<>(retries);
+            Attempt initialAttempt = new Attempt(0, TimeUnit.MILLISECONDS);
+            attempts.add(0, initialAttempt);
             T result = null;
-            while (result == null && attempt < MAX_SUB_TASK_RETRIES) {
-                sysLogger.log(Level.INFO, "{0} (attempt={1}, waited={2} minutes)", new Object[]{taskDesc, attempt + 1, delayInMins});
-                ScheduledFuture<T> future = subTaskExecutor.schedule(task, delayInMins, TimeUnit.MINUTES);
-                result = future.get();
-                ++attempt;
-                delayInMins += (SUB_TASK_RETRY_INCR_MINS * attempt);
+            int attemptCounter = 0;
+            while (result == null && attemptCounter < attempts.size()) {
+                Attempt attempt = retries.get(attemptCounter);
+                sysLogger.log(Level.INFO, "{0} (attempt={1}, waited={2} {3})", new Object[]{taskDesc, attemptCounter + 1, attempt.getDelay(), attempt.getDelayTimeUnit()});
+                ScheduledFuture<T> future = subTaskExecutor.schedule(task, attempt.getDelay(), attempt.getDelayTimeUnit());
+                try {
+                    result = future.get();
+                } catch (ExecutionException ex) {
+                    sysLogger.log(Level.SEVERE, "Exception", ex); // RJCTODO
+                    break;
+                }
+                ++attemptCounter;
             }
             return result;
+        }
+
+        /**
+         * RJCTODO
+         */
+        private class Attempt {
+
+            private final long delay;
+            private final TimeUnit timeUnit;
+
+            Attempt(long delay, TimeUnit timeUnit) {
+                this.delay = delay;
+                this.timeUnit = timeUnit;
+            }
+
+            long getDelay() {
+                return delay;
+            }
+
+            TimeUnit getDelayTimeUnit() {
+                return timeUnit;
+            }
+
         }
 
         /**
@@ -2999,7 +3064,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         public void run() {
 
             try {
-                synchronized (jobsLock) {
+                synchronized (jobsQueueLock) {
                     if (currentJob != null) {
                         currentJob.getProcessingStageDetails();
                         currentJob.setIngestThreadSnapshot(IngestManager.getInstance().getIngestThreadActivitySnapshots());
