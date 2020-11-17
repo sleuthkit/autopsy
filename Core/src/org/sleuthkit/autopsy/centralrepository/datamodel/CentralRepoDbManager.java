@@ -383,6 +383,13 @@ public class CentralRepoDbManager {
         saveNewCentralRepo();
     }
     
+    /**
+     * Set up a PostgresDb using the settings for the given database choice
+     * enum.
+     * 
+     * @param choice Type of postgres DB to set up
+     * @throws CentralRepoException 
+     */
     public void setupPostgresDb(CentralRepoDbChoice choice) throws CentralRepoException {        
         selectedDbChoice = choice;
         DatabaseTestResult curStatus = testStatus();

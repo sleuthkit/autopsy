@@ -106,6 +106,8 @@ public class RegressionTest extends TestCase {
         
         try {
             if (Boolean.parseBoolean(System.getProperty("isMultiUser"))) {
+                // Set up a custom postgres CR using the configuration passed
+                // to system properties.
                 CentralRepoDbManager manager = new CentralRepoDbManager();
                 manager.getDbSettingsPostgres().setHost(System.getProperty("crHost"));
                 manager.getDbSettingsPostgres().setPort(Integer.parseInt(System.getProperty("crPort")));
