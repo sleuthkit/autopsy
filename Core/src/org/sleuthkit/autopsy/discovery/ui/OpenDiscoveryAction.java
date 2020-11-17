@@ -31,6 +31,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 
 /**
  * Class to open the Discovery dialog. Allows the user to run searches and see
@@ -76,6 +77,7 @@ public final class OpenDiscoveryAction extends CallableSystemAction implements P
      *
      * @return The toolbar button
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     public Component getToolbarPresenter() {
         ImageIcon icon = new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/discovery-icon-24.png")); //NON-NLS

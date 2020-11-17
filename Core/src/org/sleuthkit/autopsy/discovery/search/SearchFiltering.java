@@ -33,6 +33,7 @@ import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -215,6 +216,15 @@ public class SearchFiltering {
          */
         public ArtifactTypeFilter(List<ARTIFACT_TYPE> types) {
             this.types = types;
+        }
+
+        /**
+         * Get the list of artifact types specified by the filter.
+         *
+         * @return The list of artifact types specified by the filter.
+         */
+        public List<ARTIFACT_TYPE> getTypes() {
+            return Collections.unmodifiableList(types);
         }
 
         @Override
