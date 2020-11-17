@@ -19,15 +19,23 @@
 package org.sleuthkit.autopsy.datasourcesummary.ui;
 
 import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.logging.Level;
 import org.apache.commons.collections.CollectionUtils;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.TimelineDataSourceUtils;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.TimelineSummary;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.TimelineSummary.DailyActivityAmount;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.TimelineSummary.TimelineSummaryData;
@@ -41,7 +49,17 @@ import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetch
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.IngestRunningLabel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.LoadableComponent;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.LoadableLabel;
+import org.sleuthkit.autopsy.timeline.OpenTimelineAction;
+import org.sleuthkit.autopsy.timeline.TimeLineController;
+import org.sleuthkit.autopsy.timeline.TimeLineModule;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterState;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterState;
+import org.sleuthkit.autopsy.timeline.utils.FilterUtils;
 import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.TimelineEventType;
+import org.sleuthkit.datamodel.TimelineFilter;
+import org.sleuthkit.datamodel.TimelineFilter.DataSourceFilter;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * A tab shown in data source summary displaying information about a data
@@ -55,6 +73,7 @@ import org.sleuthkit.datamodel.DataSource;
     "TimlinePanel_last30DaysChart_artifactEvts_title=Artifact Events",})
 public class TimelinePanel extends BaseDataSourceSummaryPanel {
 
+    private static final Logger logger = Logger.getLogger(TimelinePanel.class.getName());
     private static final long serialVersionUID = 1L;
     private static final DateFormat EARLIEST_LATEST_FORMAT = getUtcFormat("MMM d, yyyy");
     private static final DateFormat CHART_FORMAT = getUtcFormat("MMM d");
@@ -75,6 +94,8 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
     private final LoadableLabel earliestLabel = new LoadableLabel(Bundle.TimelinePanel_earliestLabel_title());
     private final LoadableLabel latestLabel = new LoadableLabel(Bundle.TimelinePanel_latestLabel_title());
     private final BarChartPanel last30DaysChart = new BarChartPanel(Bundle.TimlinePanel_last30DaysChart_title(), "", "");
+    private final OpenTimelineAction openTimelineAction = new OpenTimelineAction();
+    private final TimelineDataSourceUtils timelineUtils = TimelineDataSourceUtils.getInstance();
 
     // all loadable components on this tab
     private final List<LoadableComponent<?>> loadableComponents = Arrays.asList(earliestLabel, latestLabel, last30DaysChart);
@@ -98,6 +119,7 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
         );
 
         initComponents();
+        setupChartClickListener();
     }
 
     /**
@@ -256,6 +278,27 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
             .addComponent(mainScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
+
+    private void setupChartClickListener() {
+        this.last30DaysChart.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        this.last30DaysChart.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+
+                TimelinePanel.this.notifyParentClose();
+                openTimelineAction.performAction();
+                try {
+                    TimeLineController controller = TimeLineModule.getController();
+                    DataSource dataSource = getDataSource();
+                    if (dataSource != null) {
+                        controller.pushFilters(timelineUtils.getDataSourceFilterState(dataSource));
+                    }
+                } catch (NoCurrentCaseException | TskCoreException ex) {
+                    logger.log(Level.WARNING, "Unable to open Timeline view", ex);
+                }
+            }
+        });
+    }
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

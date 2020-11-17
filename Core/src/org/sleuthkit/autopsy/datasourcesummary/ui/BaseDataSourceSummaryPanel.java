@@ -55,7 +55,8 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Base class from which other tabs in data source summary derive.
  */
-@Messages({"UserActivityPanel_goToArtifact=Go to Artifact"})
+@Messages({"UserActivityPanel_goToArtifact=Go to Artifact",
+    "UserActivityPanel_goToArtifactContent=Go to File"})
 abstract class BaseDataSourceSummaryPanel extends JPanel {
 
     private static final long serialVersionUID = 1L;
@@ -239,7 +240,7 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
      * @param artifact The artifact.
      * @return The menu item list for a go to artifact menu item.
      */
-    protected List<CellModelTableCellRenderer.MenuItem> navigateToArtifactPopup(BlackboardArtifact artifact) {
+    protected List<CellModelTableCellRenderer.MenuItem> getNavigateToArtifactPopup(BlackboardArtifact artifact) {
         return artifact == null ? null : Arrays.asList(
                 new CellModelTableCellRenderer.DefaultMenuItem(
                         Bundle.UserActivityPanel_goToArtifact(),
@@ -262,10 +263,10 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
      * @param artifact The artifact.
      * @return The menu item list for a go to artifact menu item.
      */
-    protected List<CellModelTableCellRenderer.MenuItem> navigateToArtifactContentPopup(BlackboardArtifact artifact) {
+    protected List<CellModelTableCellRenderer.MenuItem> getNavigateToArtifactContentPopup(BlackboardArtifact artifact) {
         return artifact == null ? null : Arrays.asList(
                 new CellModelTableCellRenderer.DefaultMenuItem(
-                        Bundle.UserActivityPanel_goToArtifact(),
+                        Bundle.UserActivityPanel_goToArtifactContent(),
                         () -> {
                             final DirectoryTreeTopComponent dtc = DirectoryTreeTopComponent.findInstance();
 

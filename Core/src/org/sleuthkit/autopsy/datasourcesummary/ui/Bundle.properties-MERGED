@@ -104,6 +104,7 @@ PastCasesPanel.sameIdLabel.text=Past Cases with the Same Device IDs
 DataSourceSummaryTabbedPane.noDataSourceLabel.text=No data source has been selected.
 TimelinePanel.activityRangeLabel.text=Activity Range
 UserActivityPanel_goToArtifact=Go to Artifact
+UserActivityPanel_goToArtifactContent=Go to File
 UserActivityPanel_noDataExists=No communication data exists
 UserActivityPanel_tab_title=User Activity
 UserActivityPanel_TopAccountTableModel_accountType_header=Account Type

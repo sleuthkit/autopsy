@@ -44,13 +44,24 @@ import org.sleuthkit.datamodel.TimelineFilter.RootFilter;
 import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.TskCoreException;
 import java.util.function.Supplier;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.core.UserPreferences;
+import org.sleuthkit.autopsy.timeline.TimeLineController;
+import org.sleuthkit.autopsy.timeline.TimeLineModule;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterState;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterState;
+import org.sleuthkit.autopsy.timeline.utils.FilterUtils;
 
 /**
  * Provides data source summary information pertaining to Timeline data.
  */
 public class TimelineSummary implements DefaultUpdateGovernor {
 
+
+    public interface DataSourceFilterFunction {
+        RootFilter apply(DataSource dataSource) throws NoCurrentCaseException, TskCoreException;
+    }
+    
     private static final long DAY_SECS = 24 * 60 * 60;
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS = new HashSet<>(
             Arrays.asList(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED));
@@ -64,12 +75,15 @@ public class TimelineSummary implements DefaultUpdateGovernor {
 
     private final SleuthkitCaseProvider caseProvider;
     private final Supplier<TimeZone> timeZoneProvider;
-
+    private final DataSourceFilterFunction filterFunction;
+    
     /**
      * Default constructor.
      */
     public TimelineSummary() {
-        this(SleuthkitCaseProvider.DEFAULT, () -> TimeZone.getTimeZone(UserPreferences.getTimeZoneForDisplays()));
+        this(SleuthkitCaseProvider.DEFAULT, 
+                () -> TimeZone.getTimeZone(UserPreferences.getTimeZoneForDisplays()), 
+                (ds) -> TimelineDataSourceUtils.getInstance().getDataSourceFilter(ds));
     }
 
     /**
@@ -77,10 +91,12 @@ public class TimelineSummary implements DefaultUpdateGovernor {
      *
      * @param caseProvider SleuthkitCaseProvider provider, cannot be null.
      * @param timeZoneProvider The timezone provider, cannot be null.
+     * @param defaulteStateSupplier Provides the default root filter 
      */
-    public TimelineSummary(SleuthkitCaseProvider caseProvider, Supplier<TimeZone> timeZoneProvider) {
+    public TimelineSummary(SleuthkitCaseProvider caseProvider, Supplier<TimeZone> timeZoneProvider, DataSourceFilterFunction filterFunction) {
         this.caseProvider = caseProvider;
         this.timeZoneProvider = timeZoneProvider;
+        this.filterFunction = filterFunction;
     }
 
     @Override
@@ -113,8 +129,9 @@ public class TimelineSummary implements DefaultUpdateGovernor {
      * @return The retrieved data.
      * @throws SleuthkitCaseProviderException
      * @throws TskCoreException
+     * @throws NoCurrentCaseException
      */
-    public TimelineSummaryData getData(DataSource dataSource, int recentDaysNum) throws SleuthkitCaseProviderException, TskCoreException {
+    public TimelineSummaryData getData(DataSource dataSource, int recentDaysNum) throws SleuthkitCaseProviderException, TskCoreException, NoCurrentCaseException {
         TimeZone timeZone = this.timeZoneProvider.get();
         TimelineManager timelineManager = this.caseProvider.get().getTimelineManager();
 
@@ -181,25 +198,15 @@ public class TimelineSummary implements DefaultUpdateGovernor {
      * belongs.
      * @return A Map mapping days from epoch to the activity for that day.
      * @throws TskCoreException
+     * @throws NoCurrentCaseException
      */
-    private Map<Long, DailyActivityAmount> getTimelineEventsByDay(DataSource dataSource, TimelineManager timelineManager, TimeZone timeZone) throws TskCoreException {
-
-        DataSourcesFilter dataSourceFilter = new DataSourcesFilter();
-        dataSourceFilter.addSubFilter(new TimelineFilter.DataSourceFilter(dataSource.getName(), dataSource.getId()));
-
-        RootFilter dataSourceRootFilter = new RootFilter(
-                null,
-                null,
-                null,
-                null,
-                null,
-                dataSourceFilter,
-                null,
-                Collections.emptySet());
+    private Map<Long, DailyActivityAmount> getTimelineEventsByDay(DataSource dataSource, TimelineManager timelineManager, TimeZone timeZone) 
+            throws TskCoreException, NoCurrentCaseException {
+        RootFilter rootFilter = this.filterFunction.apply(dataSource);
 
         // get events for data source
         long curRunTime = System.currentTimeMillis();
-        List<TimelineEvent> events = timelineManager.getEvents(new Interval(1, curRunTime), dataSourceRootFilter);
+        List<TimelineEvent> events = timelineManager.getEvents(new Interval(1, curRunTime), rootFilter);
 
         // get counts of events per day (left is file system events, right is everything else)
         Map<Long, DailyActivityAmount> dateCounts = new HashMap<>();

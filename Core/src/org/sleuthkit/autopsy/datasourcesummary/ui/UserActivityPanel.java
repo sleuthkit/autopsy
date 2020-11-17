@@ -336,7 +336,7 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
      * appropriate artifact and closing the data source summary dialog if open.
      */
     private List<MenuItem> getPopup(LastAccessedArtifact record) {
-        return record == null ? null : navigateToArtifactPopup(record.getArtifact());
+        return record == null ? null : getNavigateToArtifactPopup(record.getArtifact());
     }
 
     /**

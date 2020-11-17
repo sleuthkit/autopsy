@@ -21,9 +21,12 @@ package org.sleuthkit.autopsy.datasourcesummary.uiutils;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.util.Collections;
 import java.util.List;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import org.apache.commons.collections4.CollectionUtils;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
@@ -252,9 +255,43 @@ public class BarChartPanel extends AbstractLoadableComponent<List<BarChartPanel.
         ChartPanel panel = new ChartPanel(chart);
         panel.addOverlay(overlay);
         panel.setPopupMenu(null);
+        
+        panel.addMouseListener(getBubblingMouseListener());
 
         this.setLayout(new BorderLayout());
         this.add(panel, BorderLayout.CENTER);
+    }
+    
+    /**
+     * @return A listener that bubbles mouse events up to parent.
+     */
+    private MouseListener getBubblingMouseListener() {
+        return new MouseListener() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                BarChartPanel.this.processMouseEvent(e);
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+                BarChartPanel.this.processMouseEvent(e);
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                BarChartPanel.this.processMouseEvent(e);
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                BarChartPanel.this.processMouseEvent(e);
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                BarChartPanel.this.processMouseEvent(e);
+            }
+        };
     }
 
     /**
@@ -304,4 +341,6 @@ public class BarChartPanel extends AbstractLoadableComponent<List<BarChartPanel.
             }
         }
     }
+    
+    
 }
