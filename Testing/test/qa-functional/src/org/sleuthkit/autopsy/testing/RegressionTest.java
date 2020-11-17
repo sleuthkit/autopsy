@@ -105,12 +105,14 @@ public class RegressionTest extends TestCase {
         Timeouts.setDefault("ComponentOperator.WaitComponentTimeout", 1000000);
         
         try {
-            CentralRepoDbManager manager = new CentralRepoDbManager();
-            manager.getDbSettingsPostgres().setHost(System.getProperty("crHost"));
-            manager.getDbSettingsPostgres().setPort(Integer.parseInt(System.getProperty("crPort")));
-            manager.getDbSettingsPostgres().setUserName(System.getProperty("crUserName"));
-            manager.getDbSettingsPostgres().setPassword(System.getProperty("crPassword"));
-            manager.setupPostgresDb(CentralRepoDbChoice.POSTGRESQL_CUSTOM);
+            if (Boolean.parseBoolean(System.getProperty("isMultiUser"))) {
+                CentralRepoDbManager manager = new CentralRepoDbManager();
+                manager.getDbSettingsPostgres().setHost(System.getProperty("crHost"));
+                manager.getDbSettingsPostgres().setPort(Integer.parseInt(System.getProperty("crPort")));
+                manager.getDbSettingsPostgres().setUserName(System.getProperty("crUserName"));
+                manager.getDbSettingsPostgres().setPassword(System.getProperty("crPassword"));
+                manager.setupPostgresDb(CentralRepoDbChoice.POSTGRESQL_CUSTOM);
+            }
         } catch (CentralRepoException ex) {
             throw new RuntimeException("Error setting up multi user CR", ex);
         }
