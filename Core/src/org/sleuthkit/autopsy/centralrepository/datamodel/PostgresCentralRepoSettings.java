@@ -121,10 +121,12 @@ public final class PostgresCentralRepoSettings implements CentralRepoDbConnectiv
      * @return
      */
     String getConnectionURL(boolean usePostgresDb) {
-        StringBuilder url = new StringBuilder();
-        url.append(getJDBCBaseURI());
-        url.append(getHost());
-        url.append("/"); // NON-NLS
+        StringBuilder url = new StringBuilder()
+                .append(getJDBCBaseURI())
+                .append(getHost())
+                .append(":") // NON-NLS
+                .append(getPort())
+                .append("/"); // NON-NLS
         if (usePostgresDb) {
             url.append("postgres"); // NON-NLS
         } else {
