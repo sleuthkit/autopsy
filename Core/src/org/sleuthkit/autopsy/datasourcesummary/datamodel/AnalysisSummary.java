@@ -94,7 +94,7 @@ public class AnalysisSummary implements DefaultArtifactUpdateGovernor {
      * @throws SleuthkitCaseProviderException
      * @throws TskCoreException
      */
-    public List<AnalysisCountRecord> getHashsetCounts(DataSource dataSource) throws SleuthkitCaseProviderException, TskCoreException {
+    public List<Pair<String, Long>> getHashsetCounts(DataSource dataSource) throws SleuthkitCaseProviderException, TskCoreException {
         return getCountsData(dataSource, TYPE_SET_NAME, ARTIFACT_TYPE.TSK_HASHSET_HIT);
     }
 
@@ -108,10 +108,10 @@ public class AnalysisSummary implements DefaultArtifactUpdateGovernor {
      * @throws SleuthkitCaseProviderException
      * @throws TskCoreException
      */
-    public List<AnalysisCountRecord> getKeywordCounts(DataSource dataSource) throws SleuthkitCaseProviderException, TskCoreException {
+    public List<Pair<String, Long>> getKeywordCounts(DataSource dataSource) throws SleuthkitCaseProviderException, TskCoreException {
         return getCountsData(dataSource, TYPE_SET_NAME, ARTIFACT_TYPE.TSK_KEYWORD_HIT).stream()
                 // make sure we have a valid set and that that set does not belong to the set of excluded items
-                .filter((record) -> record != null && record.getIdentifier()!= null && !EXCLUDED_KEYWORD_SEARCH_ITEMS.contains(record.getIdentifier().toUpperCase().trim()))
+                .filter((pair) -> pair != null && pair.getKey() != null && !EXCLUDED_KEYWORD_SEARCH_ITEMS.contains(pair.getKey().toUpperCase().trim()))
                 .collect(Collectors.toList());
     }
 
@@ -119,32 +119,33 @@ public class AnalysisSummary implements DefaultArtifactUpdateGovernor {
      * Gets counts for interesting item hits.
      *
      * @param dataSource The datasource for which to identify interesting item
-     * hits.
+     *                   hits.
      *
      * @return The interesting item set name with the number of hits in
-     * descending order.
+     *         descending order.
      *
      * @throws SleuthkitCaseProviderException
      * @throws TskCoreException
      */
-    public List<AnalysisCountRecord> getInterestingItemCounts(DataSource dataSource) throws SleuthkitCaseProviderException, TskCoreException {
+    public List<Pair<String, Long>> getInterestingItemCounts(DataSource dataSource) throws SleuthkitCaseProviderException, TskCoreException {
         return getCountsData(dataSource, TYPE_SET_NAME, ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT);
     }
 
     /**
      * Get counts for the artifact of the specified type.
      *
-     * @param dataSource The datasource.
-     * @param keyType The attribute to use as the key type.
+     * @param dataSource    The datasource.
+     * @param keyType       The attribute to use as the key type.
      * @param artifactTypes The types of artifacts for which to query.
      *
-     * @return A list of AnalysisCountRecord. This list is sorted by the count
-     * descending max to min.
+     * @return A list of key value pairs where the key is the attribute type
+     *         value and the value is the count of items found. This list is
+     *         sorted by the count descending max to min.
      *
      * @throws SleuthkitCaseProviderException
      * @throws TskCoreException
      */
-    private List<AnalysisCountRecord> getCountsData(DataSource dataSource, BlackboardAttribute.Type keyType, ARTIFACT_TYPE... artifactTypes)
+    private List<Pair<String, Long>> getCountsData(DataSource dataSource, BlackboardAttribute.Type keyType, ARTIFACT_TYPE... artifactTypes)
             throws SleuthkitCaseProviderException, TskCoreException {
 
         if (dataSource == null) {
@@ -160,64 +161,18 @@ public class AnalysisSummary implements DefaultArtifactUpdateGovernor {
         }
 
         // group those based on the value of the attribute type that should serve as a key
-        Map<String, AnalysisCountRecord> countedKeys = artifacts.stream()
+        Map<String, Long> countedKeys = artifacts.stream()
                 .map((art) -> {
                     String key = DataSourceInfoUtilities.getStringOrNull(art, keyType);
-                    return (StringUtils.isBlank(key)) ? null : Pair.of(key, art);
+                    return (StringUtils.isBlank(key)) ? null : key;
                 })
                 .filter((key) -> key != null)
-                .collect(Collectors.toMap(
-                        (r) -> r.getLeft(), 
-                        (r) -> new AnalysisCountRecord(r.getLeft(), 1, r.getRight()), 
-                        (r1, r2) -> new AnalysisCountRecord(r1.getIdentifier(), r1.getCount() + r2.getCount(), r1.getArtifact())));
+                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
 
         // sort from max to min counts
-        return countedKeys.values().stream()
-                .sorted((a, b) -> -Long.compare(a.getCount(), b.getCount()))
+        return countedKeys.entrySet().stream()
+                .map((e) -> Pair.of(e.getKey(), e.getValue()))
+                .sorted((a, b) -> -a.getValue().compareTo(b.getValue()))
                 .collect(Collectors.toList());
-    }
-
-    /**
-     * A record for an analysis item and its count.
-     */
-    public static class AnalysisCountRecord {
-
-        private final String identifier;
-        private final long count;
-        private final BlackboardArtifact artifact;
-
-        /**
-         * Main constructor.
-         *
-         * @param identifier The identifier.
-         * @param count The count for how many times found.
-         * @param artifact The artifact.
-         */
-        AnalysisCountRecord(String identifier, long count, BlackboardArtifact artifact) {
-            this.identifier = identifier;
-            this.count = count;
-            this.artifact = artifact;
-        }
-
-        /**
-         * @return The identifier for this analysis record.
-         */
-        public String getIdentifier() {
-            return identifier;
-        }
-
-        /**
-         * @return How many times found.
-         */
-        public long getCount() {
-            return count;
-        }
-
-        /**
-         * @return The relevant artifact.
-         */
-        public BlackboardArtifact getArtifact() {
-            return artifact;
-        }
     }
 }

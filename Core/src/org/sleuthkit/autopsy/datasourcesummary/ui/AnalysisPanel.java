@@ -21,11 +21,10 @@ package org.sleuthkit.autopsy.datasourcesummary.ui;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
+import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.AnalysisSummary;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.AnalysisSummary.AnalysisCountRecord;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer.DefaultCellModel;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer.MenuItem;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.IngestRunningLabel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel;
@@ -59,30 +58,30 @@ public class AnalysisPanel extends BaseDataSourceSummaryPanel {
     /**
      * Default Column definitions for each table
      */
-    private final List<ColumnModel<AnalysisCountRecord>> DEFAULT_COLUMNS = Arrays.asList(
+    private static final List<ColumnModel<Pair<String, Long>>> DEFAULT_COLUMNS = Arrays.asList(
             new ColumnModel<>(
                     Bundle.AnalysisPanel_keyColumn_title(),
-                    (r) -> new DefaultCellModel(r.getIdentifier()).setPopupMenu(getPopup(r)),
+                    (pair) -> new DefaultCellModel(pair.getKey()),
                     300
             ),
             new ColumnModel<>(
                     Bundle.AnalysisPanel_countColumn_title(),
-                    (r) -> new DefaultCellModel(String.valueOf(Long.toString(r.getCount()))).setPopupMenu(getPopup(r)),
+                    (pair) -> new DefaultCellModel(String.valueOf(pair.getValue())),
                     100
             )
     );
 
-    private final Function<AnalysisCountRecord, String> DEFAULT_KEY_PROVIDER = (pair) -> pair.getIdentifier();
+    private static final Function<Pair<String, Long>, String> DEFAULT_KEY_PROVIDER = (pair) -> pair.getKey();
 
-    private final JTablePanel<AnalysisCountRecord> hashsetHitsTable
+    private final JTablePanel<Pair<String, Long>> hashsetHitsTable
             = JTablePanel.getJTablePanel(DEFAULT_COLUMNS)
                     .setKeyFunction(DEFAULT_KEY_PROVIDER);
 
-    private final JTablePanel<AnalysisCountRecord> keywordHitsTable
+    private final JTablePanel<Pair<String, Long>> keywordHitsTable
             = JTablePanel.getJTablePanel(DEFAULT_COLUMNS)
                     .setKeyFunction(DEFAULT_KEY_PROVIDER);
 
-    private final JTablePanel<AnalysisCountRecord> interestingItemsTable
+    private final JTablePanel<Pair<String, Long>> interestingItemsTable
             = JTablePanel.getJTablePanel(DEFAULT_COLUMNS)
                     .setKeyFunction(DEFAULT_KEY_PROVIDER);
 
@@ -91,8 +90,9 @@ public class AnalysisPanel extends BaseDataSourceSummaryPanel {
             keywordHitsTable,
             interestingItemsTable
     );
-
+    
     private final IngestRunningLabel ingestRunningLabel = new IngestRunningLabel();
+    
 
     /**
      * All of the components necessary for data fetch swing workers to load data
@@ -129,24 +129,14 @@ public class AnalysisPanel extends BaseDataSourceSummaryPanel {
         initComponents();
     }
 
-    /**
-     * Takes a base class of AnalysisCountRecord and provides the pertinent menu
-     * items. going to artifact.
-     *
-     * @param record The AnalysisCountRecord instance.
-     * @return The menu items list containing one action or navigating to the
-     * appropriate artifact and closing the data source summary dialog if open.
-     */
-    private List<MenuItem> getPopup(AnalysisCountRecord record) {
-        return record == null ? null : getNavigateToArtifactPopup(record.getArtifact());
-    }
-
+    
     @Override
     public void close() {
         ingestRunningLabel.unregister();
         super.close();
     }
-
+    
+    
     @Override
     protected void fetchInformation(DataSource dataSource) {
         fetchInformation(dataFetchComponents, dataSource);
@@ -172,17 +162,14 @@ public class AnalysisPanel extends BaseDataSourceSummaryPanel {
         javax.swing.JLabel hashsetHitsLabel = new javax.swing.JLabel();
         javax.swing.Box.Filler filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2), new java.awt.Dimension(32767, 2));
         javax.swing.JPanel hashSetHitsPanel = hashsetHitsTable;
-        rightClickForMoreOptions1 = new javax.swing.JLabel();
         javax.swing.Box.Filler filler2 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 20), new java.awt.Dimension(0, 20), new java.awt.Dimension(32767, 20));
         javax.swing.JLabel keywordHitsLabel = new javax.swing.JLabel();
         javax.swing.Box.Filler filler4 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2), new java.awt.Dimension(32767, 2));
         javax.swing.JPanel keywordHitsPanel = keywordHitsTable;
-        rightClickForMoreOptions2 = new javax.swing.JLabel();
         javax.swing.Box.Filler filler5 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 20), new java.awt.Dimension(0, 20), new java.awt.Dimension(32767, 20));
         javax.swing.JLabel interestingItemLabel = new javax.swing.JLabel();
         javax.swing.Box.Filler filler6 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2), new java.awt.Dimension(32767, 2));
         javax.swing.JPanel interestingItemPanel = interestingItemsTable;
-        rightClickForMoreOptions3 = new javax.swing.JLabel();
         javax.swing.Box.Filler filler3 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 32767));
 
         mainContentPanel.setBorder(javax.swing.BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -205,9 +192,6 @@ public class AnalysisPanel extends BaseDataSourceSummaryPanel {
         hashSetHitsPanel.setMinimumSize(new java.awt.Dimension(10, 106));
         hashSetHitsPanel.setPreferredSize(new java.awt.Dimension(10, 106));
         mainContentPanel.add(hashSetHitsPanel);
-
-        org.openide.awt.Mnemonics.setLocalizedText(rightClickForMoreOptions1, org.openide.util.NbBundle.getMessage(AnalysisPanel.class, "AnalysisPanel.rightClickForMoreOptions1.text")); // NOI18N
-        mainContentPanel.add(rightClickForMoreOptions1);
         mainContentPanel.add(filler2);
 
         org.openide.awt.Mnemonics.setLocalizedText(keywordHitsLabel, org.openide.util.NbBundle.getMessage(AnalysisPanel.class, "AnalysisPanel.keywordHitsLabel.text")); // NOI18N
@@ -219,9 +203,6 @@ public class AnalysisPanel extends BaseDataSourceSummaryPanel {
         keywordHitsPanel.setMinimumSize(new java.awt.Dimension(10, 106));
         keywordHitsPanel.setPreferredSize(new java.awt.Dimension(10, 106));
         mainContentPanel.add(keywordHitsPanel);
-
-        org.openide.awt.Mnemonics.setLocalizedText(rightClickForMoreOptions2, org.openide.util.NbBundle.getMessage(AnalysisPanel.class, "AnalysisPanel.rightClickForMoreOptions2.text")); // NOI18N
-        mainContentPanel.add(rightClickForMoreOptions2);
         mainContentPanel.add(filler5);
 
         org.openide.awt.Mnemonics.setLocalizedText(interestingItemLabel, org.openide.util.NbBundle.getMessage(AnalysisPanel.class, "AnalysisPanel.interestingItemLabel.text")); // NOI18N
@@ -233,9 +214,6 @@ public class AnalysisPanel extends BaseDataSourceSummaryPanel {
         interestingItemPanel.setMinimumSize(new java.awt.Dimension(10, 106));
         interestingItemPanel.setPreferredSize(new java.awt.Dimension(10, 106));
         mainContentPanel.add(interestingItemPanel);
-
-        org.openide.awt.Mnemonics.setLocalizedText(rightClickForMoreOptions3, org.openide.util.NbBundle.getMessage(AnalysisPanel.class, "AnalysisPanel.rightClickForMoreOptions3.text")); // NOI18N
-        mainContentPanel.add(rightClickForMoreOptions3);
         mainContentPanel.add(filler3);
 
         mainScrollPane.setViewportView(mainContentPanel);
@@ -254,8 +232,5 @@ public class AnalysisPanel extends BaseDataSourceSummaryPanel {
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel rightClickForMoreOptions1;
-    private javax.swing.JLabel rightClickForMoreOptions2;
-    private javax.swing.JLabel rightClickForMoreOptions3;
     // End of variables declaration//GEN-END:variables
 }
