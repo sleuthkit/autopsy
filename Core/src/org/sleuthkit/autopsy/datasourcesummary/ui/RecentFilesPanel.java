@@ -27,6 +27,7 @@ import org.sleuthkit.autopsy.datasourcesummary.datamodel.RecentFilesSummary;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.RecentFilesSummary.RecentAttachmentDetails;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.RecentFilesSummary.RecentDownloadDetails;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.RecentFilesSummary.RecentFileDetails;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer.DefaultCellModel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer.MenuItem;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
@@ -141,6 +142,7 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
         pane.setModel(tableModel);
         pane.setColumnModel(JTablePanel.getTableColumnModel(list));
         pane.setKeyFunction((recentFile) -> recentFile.getPath());
+        pane.setCellListener(CellModelTableCellRenderer.getMouseListener());
         tablePanelList.add(pane);
 
         DataFetchWorker.DataFetchComponents<DataSource, List<RecentFileDetails>> worker
@@ -183,6 +185,7 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
         pane.setModel(tableModel);
         pane.setKeyFunction((download) -> download.getPath());
         pane.setColumnModel(JTablePanel.getTableColumnModel(list));
+        pane.setCellListener(CellModelTableCellRenderer.getMouseListener());
         tablePanelList.add(pane);
 
         DataFetchWorker.DataFetchComponents<DataSource, List<RecentDownloadDetails>> worker
@@ -225,6 +228,7 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
         pane.setModel(tableModel);
         pane.setKeyFunction((attachment) -> attachment.getPath());
         pane.setColumnModel(JTablePanel.getTableColumnModel(list));
+        pane.setCellListener(CellModelTableCellRenderer.getMouseListener());
         tablePanelList.add(pane);
 
         DataFetchWorker.DataFetchComponents<DataSource, List<RecentAttachmentDetails>> worker
@@ -255,6 +259,9 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
         javax.swing.JLabel openDocsLabel = new javax.swing.JLabel();
         javax.swing.JLabel downloadLabel = new javax.swing.JLabel();
         javax.swing.JLabel attachmentLabel = new javax.swing.JLabel();
+        rightClickForMoreOptions1 = new javax.swing.JLabel();
+        rightClickForMoreOptions2 = new javax.swing.JLabel();
+        rightClickForMoreOptions3 = new javax.swing.JLabel();
 
         setLayout(new java.awt.BorderLayout());
 
@@ -284,7 +291,7 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
         tablePanel.add(openedDocPane, gridBagConstraints);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 4;
+        gridBagConstraints.gridy = 5;
         gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTH;
         gridBagConstraints.weightx = 1.0;
@@ -293,7 +300,7 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
         tablePanel.add(downloadsPane, gridBagConstraints);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 6;
+        gridBagConstraints.gridy = 8;
         gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTH;
         gridBagConstraints.weightx = 1.0;
@@ -312,7 +319,7 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
         org.openide.awt.Mnemonics.setLocalizedText(downloadLabel, org.openide.util.NbBundle.getMessage(RecentFilesPanel.class, "RecentFilesPanel.downloadLabel.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 3;
+        gridBagConstraints.gridy = 4;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.insets = new java.awt.Insets(20, 0, 0, 0);
         tablePanel.add(downloadLabel, gridBagConstraints);
@@ -320,11 +327,35 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
         org.openide.awt.Mnemonics.setLocalizedText(attachmentLabel, org.openide.util.NbBundle.getMessage(RecentFilesPanel.class, "RecentFilesPanel.attachmentLabel.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 5;
+        gridBagConstraints.gridy = 7;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTH;
         gridBagConstraints.insets = new java.awt.Insets(20, 0, 0, 0);
         tablePanel.add(attachmentLabel, gridBagConstraints);
+
+        org.openide.awt.Mnemonics.setLocalizedText(rightClickForMoreOptions1, org.openide.util.NbBundle.getMessage(RecentFilesPanel.class, "RecentFilesPanel.rightClickForMoreOptions1.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 3;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTH;
+        tablePanel.add(rightClickForMoreOptions1, gridBagConstraints);
+
+        org.openide.awt.Mnemonics.setLocalizedText(rightClickForMoreOptions2, org.openide.util.NbBundle.getMessage(RecentFilesPanel.class, "RecentFilesPanel.rightClickForMoreOptions2.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 6;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTH;
+        tablePanel.add(rightClickForMoreOptions2, gridBagConstraints);
+
+        org.openide.awt.Mnemonics.setLocalizedText(rightClickForMoreOptions3, org.openide.util.NbBundle.getMessage(RecentFilesPanel.class, "RecentFilesPanel.rightClickForMoreOptions3.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 9;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTH;
+        tablePanel.add(rightClickForMoreOptions3, gridBagConstraints);
 
         scrollPane.setViewportView(tablePanel);
 
@@ -336,5 +367,8 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
     private javax.swing.JPanel attachmentsPane;
     private javax.swing.JPanel downloadsPane;
     private javax.swing.JPanel openedDocPane;
+    private javax.swing.JLabel rightClickForMoreOptions1;
+    private javax.swing.JLabel rightClickForMoreOptions2;
+    private javax.swing.JLabel rightClickForMoreOptions3;
     // End of variables declaration//GEN-END:variables
 }

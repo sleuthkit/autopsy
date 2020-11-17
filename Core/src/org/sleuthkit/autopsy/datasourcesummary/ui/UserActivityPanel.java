@@ -382,22 +382,27 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
         javax.swing.JLabel programsRunLabel = new javax.swing.JLabel();
         javax.swing.Box.Filler filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2));
         javax.swing.JPanel topProgramsTablePanel = topProgramsTable;
+        rightClickForMoreOptions1 = new javax.swing.JLabel();
         javax.swing.Box.Filler filler3 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 20), new java.awt.Dimension(0, 20), new java.awt.Dimension(0, 20));
         javax.swing.JLabel recentDomainsLabel = new javax.swing.JLabel();
         javax.swing.Box.Filler filler2 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2));
         javax.swing.JPanel recentDomainsTablePanel = recentDomainsTable;
+        rightClickForMoreOptions2 = new javax.swing.JLabel();
         javax.swing.Box.Filler filler4 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 20), new java.awt.Dimension(0, 20), new java.awt.Dimension(0, 20));
         javax.swing.JLabel topWebSearchLabel = new javax.swing.JLabel();
         javax.swing.Box.Filler filler5 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2));
         javax.swing.JPanel topWebSearches = topWebSearchesTable;
+        rightClickForMoreOptions3 = new javax.swing.JLabel();
         javax.swing.Box.Filler filler6 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 20), new java.awt.Dimension(0, 20), new java.awt.Dimension(0, 20));
         javax.swing.JLabel topDevicesAttachedLabel = new javax.swing.JLabel();
         javax.swing.Box.Filler filler7 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2));
         javax.swing.JPanel recentDevicesAttached = topDevicesAttachedTable;
+        rightClickForMoreOptions4 = new javax.swing.JLabel();
         javax.swing.Box.Filler filler8 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 20), new java.awt.Dimension(0, 20), new java.awt.Dimension(0, 20));
         javax.swing.JLabel recentAccountsLabel = new javax.swing.JLabel();
         javax.swing.Box.Filler filler9 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2));
         javax.swing.JPanel topAccounts = topAccountsTable;
+        rightClickForMoreOptions5 = new javax.swing.JLabel();
 
         setLayout(new java.awt.BorderLayout());
 
@@ -426,6 +431,9 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
         topProgramsTablePanel.setMinimumSize(new java.awt.Dimension(10, 106));
         topProgramsTablePanel.setPreferredSize(new java.awt.Dimension(10, 106));
         contentPanel.add(topProgramsTablePanel);
+
+        org.openide.awt.Mnemonics.setLocalizedText(rightClickForMoreOptions1, org.openide.util.NbBundle.getMessage(UserActivityPanel.class, "UserActivityPanel.rightClickForMoreOptions1.text")); // NOI18N
+        contentPanel.add(rightClickForMoreOptions1);
         contentPanel.add(filler3);
 
         recentDomainsLabel.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
@@ -438,6 +446,9 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
         recentDomainsTablePanel.setMinimumSize(new java.awt.Dimension(10, 106));
         recentDomainsTablePanel.setPreferredSize(new java.awt.Dimension(10, 106));
         contentPanel.add(recentDomainsTablePanel);
+
+        org.openide.awt.Mnemonics.setLocalizedText(rightClickForMoreOptions2, org.openide.util.NbBundle.getMessage(UserActivityPanel.class, "UserActivityPanel.rightClickForMoreOptions2.text")); // NOI18N
+        contentPanel.add(rightClickForMoreOptions2);
         contentPanel.add(filler4);
 
         topWebSearchLabel.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
@@ -450,6 +461,9 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
         topWebSearches.setMinimumSize(new java.awt.Dimension(10, 106));
         topWebSearches.setPreferredSize(new java.awt.Dimension(10, 106));
         contentPanel.add(topWebSearches);
+
+        org.openide.awt.Mnemonics.setLocalizedText(rightClickForMoreOptions3, org.openide.util.NbBundle.getMessage(UserActivityPanel.class, "UserActivityPanel.rightClickForMoreOptions3.text")); // NOI18N
+        contentPanel.add(rightClickForMoreOptions3);
         contentPanel.add(filler6);
 
         topDevicesAttachedLabel.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
@@ -462,6 +476,9 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
         recentDevicesAttached.setMinimumSize(new java.awt.Dimension(10, 106));
         recentDevicesAttached.setPreferredSize(new java.awt.Dimension(10, 106));
         contentPanel.add(recentDevicesAttached);
+
+        org.openide.awt.Mnemonics.setLocalizedText(rightClickForMoreOptions4, org.openide.util.NbBundle.getMessage(UserActivityPanel.class, "UserActivityPanel.rightClickForMoreOptions4.text")); // NOI18N
+        contentPanel.add(rightClickForMoreOptions4);
         contentPanel.add(filler8);
 
         recentAccountsLabel.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
@@ -475,11 +492,19 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
         topAccounts.setPreferredSize(new java.awt.Dimension(10, 106));
         contentPanel.add(topAccounts);
 
+        org.openide.awt.Mnemonics.setLocalizedText(rightClickForMoreOptions5, org.openide.util.NbBundle.getMessage(UserActivityPanel.class, "UserActivityPanel.rightClickForMoreOptions5.text")); // NOI18N
+        contentPanel.add(rightClickForMoreOptions5);
+
         contentScrollPane.setViewportView(contentPanel);
 
         add(contentScrollPane, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel rightClickForMoreOptions1;
+    private javax.swing.JLabel rightClickForMoreOptions2;
+    private javax.swing.JLabel rightClickForMoreOptions3;
+    private javax.swing.JLabel rightClickForMoreOptions4;
+    private javax.swing.JLabel rightClickForMoreOptions5;
     // End of variables declaration//GEN-END:variables
 }

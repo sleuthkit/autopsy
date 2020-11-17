@@ -220,7 +220,8 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
         javax.swing.JPanel earliestLabelPanel = earliestLabel;
         javax.swing.JPanel latestLabelPanel = latestLabel;
         javax.swing.Box.Filler filler2 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 20), new java.awt.Dimension(0, 20), new java.awt.Dimension(0, 20));
-        javax.swing.JPanel sameIdPanel = last30DaysChart;
+        javax.swing.JPanel last30DaysPanel = last30DaysChart;
+        clickToNavLabel = new javax.swing.JLabel();
         javax.swing.Box.Filler filler5 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 32767));
 
         mainContentPanel.setBorder(javax.swing.BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -255,12 +256,15 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
         filler2.setAlignmentX(0.0F);
         mainContentPanel.add(filler2);
 
-        sameIdPanel.setAlignmentX(0.0F);
-        sameIdPanel.setMaximumSize(new java.awt.Dimension(600, 300));
-        sameIdPanel.setMinimumSize(new java.awt.Dimension(600, 300));
-        sameIdPanel.setPreferredSize(new java.awt.Dimension(600, 300));
-        sameIdPanel.setVerifyInputWhenFocusTarget(false);
-        mainContentPanel.add(sameIdPanel);
+        last30DaysPanel.setAlignmentX(0.0F);
+        last30DaysPanel.setMaximumSize(new java.awt.Dimension(600, 300));
+        last30DaysPanel.setMinimumSize(new java.awt.Dimension(600, 300));
+        last30DaysPanel.setPreferredSize(new java.awt.Dimension(600, 300));
+        last30DaysPanel.setVerifyInputWhenFocusTarget(false);
+        mainContentPanel.add(last30DaysPanel);
+
+        org.openide.awt.Mnemonics.setLocalizedText(clickToNavLabel, org.openide.util.NbBundle.getMessage(TimelinePanel.class, "TimelinePanel.clickToNavLabel.text")); // NOI18N
+        mainContentPanel.add(clickToNavLabel);
 
         filler5.setAlignmentX(0.0F);
         mainContentPanel.add(filler5);
@@ -302,5 +306,6 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel clickToNavLabel;
     // End of variables declaration//GEN-END:variables
 }
