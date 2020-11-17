@@ -26,7 +26,7 @@ import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import org.sleuthkit.autopsy.contentviewers.artifactviewers.DefaultArtifactContentViewer;
+import org.sleuthkit.autopsy.contentviewers.artifactviewers.DefaultTableArtifactContentViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils;
@@ -86,7 +86,7 @@ final class DomainArtifactsTabPanel extends JPanel {
                 rightPanel = new ContentViewerDetailsPanel();
                 break;
             default:
-                rightPanel = new DefaultArtifactContentViewer();
+                rightPanel = new DefaultTableArtifactContentViewer();
                 break;
         }
         if (rightPanel != null) {
@@ -166,7 +166,12 @@ final class DomainArtifactsTabPanel extends JPanel {
 
         jSplitPane1 = new javax.swing.JSplitPane();
 
+        setMinimumSize(new java.awt.Dimension(0, 0));
+        setPreferredSize(new java.awt.Dimension(0, 0));
         setLayout(new java.awt.BorderLayout());
+
+        jSplitPane1.setMinimumSize(new java.awt.Dimension(0, 0));
+        jSplitPane1.setPreferredSize(new java.awt.Dimension(0, 0));
         add(jSplitPane1, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 

@@ -76,10 +76,6 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
         BlackboardAttribute.ATTRIBUTE_TYPE.TSK_HEADERS.getTypeID()};
     private final GridBagLayout gridBagLayout = new GridBagLayout();
     private final GridBagConstraints gridBagConstraints = new GridBagConstraints();
-    private String dataSourceName;
-    private String sourceFileName;
-    private Integer artifactTypeId = -1;
-    private final Map<Integer, List<BlackboardAttribute>> attributeMap = new HashMap<>();
     private final Map<Integer, Integer[]> orderingMap = new HashMap<>();
 
     /**
@@ -88,52 +84,43 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public GeneralPurposeArtifactViewer() {
         orderingMap.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID(), DEFAULT_ORDERING);
-        orderingMap.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID(), DEFAULT_ORDERING);
-        orderingMap.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID(), DEFAULT_ORDERING);
-        orderingMap.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID(), DEFAULT_ORDERING);
-        orderingMap.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID(), DEFAULT_ORDERING);
+        orderingMap.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID(), DEFAULT_ORDERING);
+        orderingMap.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID(), DEFAULT_ORDERING);
+        orderingMap.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getTypeID(), DEFAULT_ORDERING);
+        orderingMap.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID(), DEFAULT_ORDERING);
         orderingMap.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID(), DEFAULT_ORDERING);
         initComponents();
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    @NbBundle.Messages({"GeneralPurposeArtifactViewer.unknown.text=Unknown"})
     @Override
     public void setArtifact(BlackboardArtifact artifact) {
         resetComponent();
         if (artifact != null) {
-            artifactTypeId = artifact.getArtifactTypeID();
+            String dataSourceName = Bundle.GeneralPurposeArtifactViewer_unknown_text();
+            String sourceFileName = Bundle.GeneralPurposeArtifactViewer_unknown_text();
+            Map<Integer, List<BlackboardAttribute>> attributeMap = new HashMap<>();
             try {
-                extractArtifactData(artifact);
+                // Get all the attributes and group them by the attributeType 
+                for (BlackboardAttribute bba : artifact.getAttributes()) {
+                    List<BlackboardAttribute> attrList = attributeMap.get(bba.getAttributeType().getTypeID());
+                    if (attrList == null) {
+                        attrList = new ArrayList<>();
+                    }
+                    attrList.add(bba);
+                    attributeMap.put(bba.getAttributeType().getTypeID(), attrList);
+                }
+                dataSourceName = artifact.getDataSource().getName();
+                sourceFileName = artifact.getParent().getName();
             } catch (TskCoreException ex) {
                 logger.log(Level.WARNING, "Unable to get attributes for artifact " + artifact.getArtifactID(), ex);
             }
-            updateView();
+            updateView(artifact.getArtifactTypeID(), attributeMap, dataSourceName, sourceFileName);
         }
         this.setLayout(this.gridBagLayout);
         this.revalidate();
         this.repaint();
-    }
-
-    /**
-     * Extracts data from the artifact to be displayed in the panel.
-     *
-     * @param artifact Artifact to show.
-     *
-     * @throws TskCoreException
-     */
-    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    private void extractArtifactData(BlackboardArtifact artifact) throws TskCoreException {
-        // Get all the attributes and group them by the attributeType 
-        for (BlackboardAttribute bba : artifact.getAttributes()) {
-            List<BlackboardAttribute> attrList = attributeMap.get(bba.getAttributeType().getTypeID());
-            if (attrList == null) {
-                attrList = new ArrayList<>();
-            }
-            attrList.add(bba);
-            attributeMap.put(bba.getAttributeType().getTypeID(), attrList);
-        }
-        dataSourceName = artifact.getDataSource().getName();
-        sourceFileName = artifact.getParent().getName();
     }
 
     /**
@@ -150,10 +137,6 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
         gridBagConstraints.weightx = TEXT_WEIGHT_X;    // keep components fixed horizontally.
         gridBagConstraints.fill = GridBagConstraints.NONE;
         gridBagConstraints.insets = ROW_INSETS;
-        artifactTypeId = -1;
-        dataSourceName = null;
-        sourceFileName = null;
-        attributeMap.clear();
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
@@ -186,6 +169,8 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        setPreferredSize(new java.awt.Dimension(0, 0));
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -200,17 +185,30 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
 
     /**
      * Update the view to reflect the current artifact's details.
+     *
+     * @param artifactTypeId The BlackboardArtifact type id for the artifact
+     *                       being displayed.
+     * @param attributeMap   The map of attributes that exist for the artifact.
+     * @param dataSourceName The name of the datasource that caused the creation
+     *                       of the artifact.
+     * @param sourceFileName The name of the file that caused the creation of
+     *                       the artifact.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    private void updateView() {
-        if (artifactTypeId != -1) {
+    private void updateView(Integer artifactTypeId, Map<Integer, List<BlackboardAttribute>> attributeMap, String dataSourceName, String sourceFileName) {
+        if (!(artifactTypeId < 1 || artifactTypeId >= Integer.MAX_VALUE)) {
             addHeader(Bundle.GeneralPurposeArtifactViewer_details_attrHeader());
             Integer[] orderingArray = orderingMap.get(artifactTypeId);
             if (orderingArray == null) {
                 orderingArray = DEFAULT_ORDERING;
             }
             for (Integer attrId : orderingArray) {
-                moveAttributesFromMapToPanel(attrId);
+                List<BlackboardAttribute> attrList = attributeMap.remove(attrId);
+                if (attrList != null) {
+                    for (BlackboardAttribute bba : attrList) {
+                        addNameValueRow(bba.getAttributeType().getDisplayName(), bba.getDisplayString());
+                    }
+                }
             }
             for (int key : attributeMap.keySet()) {
                 for (BlackboardAttribute bba : attributeMap.get(key)) {
@@ -222,23 +220,6 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
             addNameValueRow(Bundle.GeneralPurposeArtifactViewer_details_file(), sourceFileName);
             // add veritcal glue at the end
             addPageEndGlue();
-        }
-    }
-
-    /**
-     * Remove attributes of the specified type from the map and add them to the
-     * panel.
-     *
-     * @param type The type of BlackboardAttribute to remove from the map and
-     *             add to the panel.
-     */
-    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    private void moveAttributesFromMapToPanel(Integer attrId) {
-        List<BlackboardAttribute> attrList = attributeMap.remove(attrId);
-        if (attrList != null) {
-            for (BlackboardAttribute bba : attrList) {
-                addNameValueRow(bba.getAttributeType().getDisplayName(), bba.getDisplayString());
-            }
         }
     }
 

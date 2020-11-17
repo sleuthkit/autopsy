@@ -153,8 +153,11 @@ class ArtifactsListPanel extends JPanel {
         jTable1 = new javax.swing.JTable();
 
         setOpaque(false);
+        setPreferredSize(new java.awt.Dimension(0, 0));
 
         jScrollPane1.setBorder(null);
+        jScrollPane1.setMinimumSize(new java.awt.Dimension(0, 0));
+        jScrollPane1.setPreferredSize(new java.awt.Dimension(0, 0));
 
         jTable1.setAutoCreateRowSorter(true);
         jTable1.setModel(tableModel);
