@@ -88,7 +88,7 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
      * appropriate artifact and closing the data source summary dialog if open.
      */
     private List<MenuItem> getPopup(RecentFileDetails record) {
-        return record == null ? null : getNavigateToArtifactContentPopup(record.getArtifact());
+        return record == null ? null : geNavigateToArtifactContentPopup(record.getArtifact());
     }
 
     @Override

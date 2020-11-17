@@ -95,7 +95,7 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
                     (prog) -> {
                         return new DefaultCellModel(prog.getProgramName())
                                 .setTooltip(prog.getProgramPath())
-                                .setPopupMenu(getPopup(prog));
+                                .setPopupMenu(getNavigateToArtifactPopup(prog.getArtifact()));
                     },
                     250),
             // program folder column
@@ -107,7 +107,7 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
                                         prog.getProgramPath(),
                                         prog.getProgramName()))
                                 .setTooltip(prog.getProgramPath())
-                                .setPopupMenu(getPopup(prog));
+                                .setPopupMenu(getNavigateToArtifactPopup(prog.getArtifact()));
                     },
                     150),
             // run count column
@@ -116,7 +116,7 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
                     (prog) -> {
                         String runTimes = prog.getRunTimes() == null ? "" : Long.toString(prog.getRunTimes());
                         return new DefaultCellModel(runTimes)
-                                .setPopupMenu(getPopup(prog));
+                                .setPopupMenu(getNavigateToArtifactPopup(prog.getArtifact()));
                     },
                     80),
             // last run date column
@@ -124,7 +124,7 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
                     Bundle.UserActivityPanel_TopProgramsTableModel_lastrun_header(),
                     (prog) -> {
                         return new DefaultCellModel(getFormatted(prog.getLastAccessed()))
-                                .setPopupMenu(getPopup(prog));
+                                .setPopupMenu(getNavigateToArtifactPopup(prog.getArtifact()));
                     },
                     150)
     ))
@@ -137,7 +137,7 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
                     Bundle.UserActivityPanel_TopDomainsTableModel_domain_header(),
                     (recentDomain) -> {
                         return new DefaultCellModel(recentDomain.getDomain())
-                                .setPopupMenu(getPopup(recentDomain));
+                                .setPopupMenu(getNavigateToArtifactPopup(recentDomain.getArtifact()));
                     },
                     250),
             // count column
@@ -146,13 +146,16 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
                     (recentDomain) -> {
                         String visitTimes = recentDomain.getVisitTimes() == null ? "" : Long.toString(recentDomain.getVisitTimes());
                         return new DefaultCellModel(visitTimes)
-                                .setPopupMenu(getPopup(recentDomain));
+                                .setPopupMenu(getNavigateToArtifactPopup(recentDomain.getArtifact()));
                     },
                     100),
             // last accessed column
             new ColumnModel<>(
                     Bundle.UserActivityPanel_TopDomainsTableModel_lastAccess_header(),
-                    (recentDomain) -> new DefaultCellModel(getFormatted(recentDomain.getLastAccessed())),
+                    (recentDomain) -> {
+                        return new DefaultCellModel(getFormatted(recentDomain.getLastAccessed()))
+                                .setPopupMenu(getNavigateToArtifactPopup(recentDomain.getArtifact()));
+                    },
                     150)
     ))
             .setKeyFunction((domain) -> domain.getDomain());
@@ -164,7 +167,7 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
                     Bundle.UserActivityPanel_TopWebSearchTableModel_searchString_header(),
                     (webSearch) -> {
                         return new DefaultCellModel(webSearch.getSearchString())
-                                .setPopupMenu(getPopup(webSearch));
+                                .setPopupMenu(getNavigateToArtifactPopup(webSearch.getArtifact()));
                     },
                     250
             ),
@@ -173,7 +176,7 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
                     Bundle.UserActivityPanel_TopWebSearchTableModel_dateAccessed_header(),
                     (webSearch) -> {
                         return new DefaultCellModel(getFormatted(webSearch.getLastAccessed()))
-                                .setPopupMenu(getPopup(webSearch));
+                                .setPopupMenu(getNavigateToArtifactPopup(webSearch.getArtifact()));
                     },
                     150
             ),
@@ -182,7 +185,7 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
                     Bundle.UserActivityPanel_TopWebSearchTableModel_translatedResult_header(),
                     (webSearch) -> {
                         return new DefaultCellModel(webSearch.getTranslatedResult())
-                                .setPopupMenu(getPopup(webSearch));
+                                .setPopupMenu(getNavigateToArtifactPopup(webSearch.getArtifact()));
                     },
                     250
             )
@@ -196,7 +199,7 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
                     Bundle.UserActivityPanel_TopDeviceAttachedTableModel_deviceId_header(),
                     (device) -> {
                         return new DefaultCellModel(device.getDeviceId())
-                                .setPopupMenu(getPopup(device));
+                                .setPopupMenu(getNavigateToArtifactPopup(device.getArtifact()));
                     },
                     250
             ),
@@ -205,7 +208,7 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
                     Bundle.UserActivityPanel_TopDeviceAttachedTableModel_dateAccessed_header(),
                     (device) -> {
                         return new DefaultCellModel(getFormatted(device.getLastAccessed()))
-                                .setPopupMenu(getPopup(device));
+                                .setPopupMenu(getNavigateToArtifactPopup(device.getArtifact()));
                     },
                     150
             ),
@@ -219,7 +222,7 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
                         ? make + model
                         : String.format("%s - %s", make, model);
                         return new DefaultCellModel(makeModelString)
-                                .setPopupMenu(getPopup(device));
+                                .setPopupMenu(getNavigateToArtifactPopup(device.getArtifact()));
                     },
                     250
             )
@@ -233,7 +236,7 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
                     Bundle.UserActivityPanel_TopAccountTableModel_accountType_header(),
                     (account) -> {
                         return new DefaultCellModel(account.getAccountType())
-                                .setPopupMenu(getPopup(account));
+                                .setPopupMenu(getNavigateToArtifactPopup(account.getArtifact()));
                     },
                     250
             ),
@@ -242,7 +245,7 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
                     Bundle.UserActivityPanel_TopAccountTableModel_lastAccess_header(),
                     (account) -> {
                         return new DefaultCellModel(getFormatted(account.getLastAccessed()))
-                                .setPopupMenu(getPopup(account));
+                                .setPopupMenu(getNavigateToArtifactPopup(account.getArtifact()));
                     },
                     150
             )
