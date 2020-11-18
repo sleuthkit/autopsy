@@ -425,11 +425,13 @@ final class VcardParser {
                             attributeType = tskCase.getBlackboard().getOrAddAttributeType(attributeTypeName,
                                     BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING,
                                     String.format("Phone Number (%s)", StringUtils.capitalize(splitType.toLowerCase())));
+                            
+                            ThunderbirdMboxFileIngestModule.addArtifactAttribute(telephoneText, attributeType, attributes);
                         }catch (BlackboardException ex) {
-                            attributeType = tskCase.getAttributeType(attributeTypeName);
+                            logger.log(Level.WARNING, String.format("Unable to retrieve attribute type '%s' for file '%s' (id=%d).", attributeTypeName, abstractFile.getName(), abstractFile.getId()), ex);
                         }
                     }
-                    ThunderbirdMboxFileIngestModule.addArtifactAttribute(telephoneText, attributeType, attributes);
+                    
                 } catch (TskCoreException ex) {
                     logger.log(Level.WARNING, String.format("Unable to retrieve attribute type '%s' for file '%s' (id=%d).", attributeTypeName, abstractFile.getName(), abstractFile.getId()), ex);
                 }

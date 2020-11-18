@@ -984,10 +984,10 @@ public class PortableCaseReportModule implements ReportModule {
 
         BlackboardArtifact.Type oldCustomType = currentCase.getSleuthkitCase().getArtifactType(oldArtifact.getArtifactTypeName());
         try {
-            BlackboardArtifact.Type newCustomType = portableSkCase.addBlackboardArtifactType(oldCustomType.getTypeName(), oldCustomType.getDisplayName());
+            BlackboardArtifact.Type newCustomType = portableSkCase.getBlackboard().getOrAddArtifactType(oldCustomType.getTypeName(), oldCustomType.getDisplayName());
             oldArtTypeIdToNewArtTypeId.put(oldArtifact.getArtifactTypeID(), newCustomType.getTypeID());
             return newCustomType.getTypeID();
-        } catch (TskDataException ex) {
+        } catch (BlackboardException ex) {
             throw new TskCoreException("Error creating new artifact type " + oldCustomType.getTypeName(), ex); // NON-NLS
         }
     }
