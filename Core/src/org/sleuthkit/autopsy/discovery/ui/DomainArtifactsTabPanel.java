@@ -125,24 +125,24 @@ final class DomainArtifactsTabPanel extends JPanel {
      */
     @Subscribe
     void handleArtifactSearchResultEvent(DiscoveryEventUtils.ArtifactSearchResultEvent artifactresultEvent) {
-        SwingUtilities.invokeLater(() -> {
-            if (artifactType == artifactresultEvent.getArtifactType()) {
+        if (artifactType == artifactresultEvent.getArtifactType()) {
+            SwingUtilities.invokeLater(() -> {
                 listPanel.removeListSelectionListener(listener);
                 listPanel.addArtifacts(artifactresultEvent.getListOfArtifacts());
+                status = ArtifactRetrievalStatus.POPULATED;
+                setEnabled(!listPanel.isEmpty());
                 listPanel.addSelectionListener(listener);
                 listPanel.selectFirst();
+                revalidate();
+                repaint();
                 try {
                     DiscoveryEventUtils.getDiscoveryEventBus().unregister(this);
                 } catch (IllegalArgumentException notRegistered) {
                     logger.log(Level.INFO, "Attempting to unregister tab which was not registered");
                     // attempting to remove a tab that was never registered
                 }
-                status = ArtifactRetrievalStatus.POPULATED;
-                setEnabled(!listPanel.isEmpty());
-                validate();
-                repaint();
-            }
-        });
+            });
+        }
     }
 
     /**

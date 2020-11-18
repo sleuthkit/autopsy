@@ -96,22 +96,21 @@ final class DomainDetailsPanel extends JPanel {
      * Run the worker which retrieves the list of artifacts for the domain to
      * populate the details area.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private void runDomainWorker() {
-        SwingUtilities.invokeLater(() -> {
-            Component selectedComponent = jTabbedPane1.getSelectedComponent();
-            if (selectedComponent instanceof DomainArtifactsTabPanel) {
-                if (detailsWorker != null && !detailsWorker.isDone()) {
-                    detailsWorker.cancel(true);
-                }
-                DomainArtifactsTabPanel selectedTab = (DomainArtifactsTabPanel) selectedComponent;
-                if (selectedTab.getStatus() == DomainArtifactsTabPanel.ArtifactRetrievalStatus.UNPOPULATED) {
-                    selectedTab.setStatus(DomainArtifactsTabPanel.ArtifactRetrievalStatus.POPULATING);
-                    DiscoveryEventUtils.getDiscoveryEventBus().register(selectedTab);
-                    detailsWorker = new ArtifactsWorker(selectedTab.getArtifactType(), domain);
-                    detailsWorker.execute();
-                }
+        Component selectedComponent = jTabbedPane1.getSelectedComponent();
+        if (selectedComponent instanceof DomainArtifactsTabPanel) {
+            if (detailsWorker != null && !detailsWorker.isDone()) {
+                detailsWorker.cancel(true);
             }
-        });
+            DomainArtifactsTabPanel selectedTab = (DomainArtifactsTabPanel) selectedComponent;
+            if (selectedTab.getStatus() == DomainArtifactsTabPanel.ArtifactRetrievalStatus.UNPOPULATED) {
+                DiscoveryEventUtils.getDiscoveryEventBus().register(selectedTab);
+                selectedTab.setStatus(DomainArtifactsTabPanel.ArtifactRetrievalStatus.POPULATING);
+                detailsWorker = new ArtifactsWorker(selectedTab.getArtifactType(), domain);
+                detailsWorker.execute();
+            }
+        }
     }
 
     /**
@@ -122,8 +121,8 @@ final class DomainDetailsPanel extends JPanel {
      */
     @Subscribe
     void handlePopulateDomainTabsEvent(DiscoveryEventUtils.PopulateDomainTabsEvent populateEvent) {
+        domain = populateEvent.getDomain();
         SwingUtilities.invokeLater(() -> {
-            domain = populateEvent.getDomain();
             resetTabsStatus();
             selectTab();
             runDomainWorker();

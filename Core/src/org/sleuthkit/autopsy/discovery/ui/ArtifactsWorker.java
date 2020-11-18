@@ -63,10 +63,9 @@ class ArtifactsWorker extends SwingWorker<List<BlackboardArtifact>, Void> {
 
     @Override
     protected void done() {
-        List<BlackboardArtifact> listOfArtifacts = new ArrayList<>();
         if (!isCancelled()) {
             try {
-                listOfArtifacts.addAll(get());
+                DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.ArtifactSearchResultEvent(artifactType, get()));
             } catch (InterruptedException | ExecutionException ex) {
                 logger.log(Level.SEVERE, "Exception while trying to get list of artifacts for Domain details for artifact type: "
                         + artifactType.getDisplayName() + " and domain: " + domain, ex);
@@ -74,7 +73,5 @@ class ArtifactsWorker extends SwingWorker<List<BlackboardArtifact>, Void> {
                 //Worker was cancelled after previously finishing its background work, exception ignored to cut down on non-helpful logging
             }
         }
-        DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.ArtifactSearchResultEvent(artifactType, listOfArtifacts));
     }
-
 }
