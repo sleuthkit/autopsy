@@ -68,6 +68,7 @@ import java.util.Set;
 import java.util.HashSet;
 import static java.util.Locale.US;
 import static java.util.TimeZone.getTimeZone;
+import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -77,6 +78,7 @@ import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.recentactivity.ShellBagParser.ShellBag;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Account;
+import org.sleuthkit.datamodel.Blackboard.BlackboardException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_OS_ACCOUNT;
@@ -1961,18 +1963,11 @@ class ExtractRegistry extends Extract {
      */
     private BlackboardArtifact.Type getShellBagArtifact() throws TskCoreException {
         if (shellBagArtifactType == null) {
-            shellBagArtifactType = tskCase.getArtifactType(SHELLBAG_ARTIFACT_NAME);
-
-            if (shellBagArtifactType == null) {
-                try {
-                    tskCase.addBlackboardArtifactType(SHELLBAG_ARTIFACT_NAME, Bundle.Shellbag_Artifact_Display_Name()); //NON-NLS
-                } catch (TskDataException ex) {
-                    // Artifact already exists
-                    logger.log(Level.INFO, String.format("%s may have already been defined for this case", SHELLBAG_ARTIFACT_NAME));
-                }
-
-                shellBagArtifactType = tskCase.getArtifactType(SHELLBAG_ARTIFACT_NAME);
-            }
+            try {
+                shellBagArtifactType = tskCase.getBlackboard().getOrAddArtifactType(SHELLBAG_ARTIFACT_NAME, Bundle.Shellbag_Artifact_Display_Name());
+            } catch (BlackboardException ex) {
+                throw new TskCoreException(String.format("Failed to get shell bag artifact type", SHELLBAG_ARTIFACT_NAME), ex);
+            }  
         }
 
         return shellBagArtifactType;
@@ -1989,12 +1984,12 @@ class ExtractRegistry extends Extract {
     private BlackboardAttribute.Type getLastWriteAttribute() throws TskCoreException {
         if (shellBagLastWriteAttributeType == null) {
             try {
-                shellBagLastWriteAttributeType = tskCase.addArtifactAttributeType(SHELLBAG_ATTRIBUTE_LAST_WRITE,
+                shellBagLastWriteAttributeType = tskCase.getBlackboard().getOrAddAttributeType(SHELLBAG_ATTRIBUTE_LAST_WRITE,
                         BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DATETIME,
                         Bundle.Shellbag_Last_Write_Attribute_Display_Name());
-            } catch (TskDataException ex) {
+            } catch (BlackboardException ex) {
                 // Attribute already exists get it from the case
-                shellBagLastWriteAttributeType = tskCase.getAttributeType(SHELLBAG_ATTRIBUTE_LAST_WRITE);
+                throw new TskCoreException(String.format("Failed to get custom attribute %s", SHELLBAG_ATTRIBUTE_LAST_WRITE), ex);
             }
         }
         return shellBagLastWriteAttributeType;
@@ -2011,12 +2006,11 @@ class ExtractRegistry extends Extract {
     private BlackboardAttribute.Type getKeyAttribute() throws TskCoreException {
         if (shellBagKeyAttributeType == null) {
             try {
-                shellBagKeyAttributeType = tskCase.addArtifactAttributeType(SHELLBAG_ATTRIBUTE_KEY,
+                shellBagKeyAttributeType = tskCase.getBlackboard().getOrAddAttributeType(SHELLBAG_ATTRIBUTE_KEY,
                         BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING,
                         Bundle.Shellbag_Key_Attribute_Display_Name());
-            } catch (TskDataException ex) {
-                // The attribute already exists get it from the case
-                shellBagKeyAttributeType = tskCase.getAttributeType(SHELLBAG_ATTRIBUTE_KEY);
+            } catch (BlackboardException ex) {
+                throw new TskCoreException(String.format("Failed to get key attribute %s", SHELLBAG_ATTRIBUTE_KEY), ex);
             }
         }
         return shellBagKeyAttributeType;
