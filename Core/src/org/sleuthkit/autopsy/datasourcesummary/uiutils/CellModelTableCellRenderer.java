@@ -20,11 +20,11 @@ package org.sleuthkit.autopsy.datasourcesummary.uiutils;
 
 import java.awt.Component;
 import java.awt.Insets;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Supplier;
 import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
@@ -161,6 +161,7 @@ public class CellModelTableCellRenderer extends DefaultTableCellRenderer {
         private HorizontalAlign horizontalAlignment;
         private Insets insets;
         private List<MenuItem> popupMenu;
+        private Supplier<List<MenuItem>> menuItemSupplier;
 
         /**
          * Main constructor.
@@ -230,7 +231,25 @@ public class CellModelTableCellRenderer extends DefaultTableCellRenderer {
 
         @Override
         public List<MenuItem> getPopupMenu() {
-            return popupMenu == null ? null : Collections.unmodifiableList(popupMenu);
+            if (popupMenu != null) {
+                return Collections.unmodifiableList(popupMenu);
+            }
+            
+            if (menuItemSupplier != null) {
+                return this.menuItemSupplier.get();
+            }
+            
+            return null;
+        }
+        
+        /**
+         * Sets a function to lazy load the popup menu items.
+         * @param menuItemSupplier The lazy load function for popup items.
+         * @return 
+         */
+        public DefaultCellModel setPopupMenuRetriever(Supplier<List<MenuItem>> menuItemSupplier) {
+            this.menuItemSupplier = menuItemSupplier;
+            return this;
         }
 
         /**

@@ -19,17 +19,25 @@
 package org.sleuthkit.autopsy.datasourcesummary.ui;
 
 import java.beans.PropertyChangeEvent;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.logging.Level;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.swing.JPanel;
 import javax.swing.SwingWorker;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.IngestModuleCheckUtil;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
@@ -43,6 +51,7 @@ import org.sleuthkit.autopsy.datasourcesummary.uiutils.LoadableComponent;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.SwingWorkerSequentialExecutor;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.UpdateGovernor;
 import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
+import org.sleuthkit.autopsy.directorytree.ViewContextAction;
 import org.sleuthkit.autopsy.ingest.IngestManager.IngestJobEvent;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
@@ -56,7 +65,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Base class from which other tabs in data source summary derive.
  */
 @Messages({"UserActivityPanel_goToArtifact=Go to Artifact",
-    "UserActivityPanel_goToArtifactContent=Go to Artifact"})
+    "UserActivityPanel_goToFile=Go to File"})
 abstract class BaseDataSourceSummaryPanel extends JPanel {
 
     private static final long serialVersionUID = 1L;
@@ -238,22 +247,73 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
      * closes data source summary dialog if open.
      *
      * @param artifact The artifact.
-     * @return The menu item list for a go to artifact menu item.
+     * @return The menu item for a go to artifact menu item.
      */
-    protected List<CellModelTableCellRenderer.MenuItem> getNavigateToArtifactPopup(BlackboardArtifact artifact) {
-        return artifact == null ? null : Arrays.asList(
-                new CellModelTableCellRenderer.DefaultMenuItem(
-                        Bundle.UserActivityPanel_goToArtifact(),
-                        () -> {
-                            final DirectoryTreeTopComponent dtc = DirectoryTreeTopComponent.findInstance();
+    protected CellModelTableCellRenderer.MenuItem getArtifactNavigateItem(BlackboardArtifact artifact) {
+        if (artifact == null) {
+            return null;
+        }
 
-                            // Navigate to the source context artifact.
-                            if (dtc != null && artifact != null) {
-                                dtc.viewArtifact(artifact);
-                            }
+        return new CellModelTableCellRenderer.DefaultMenuItem(
+                Bundle.UserActivityPanel_goToArtifact(),
+                () -> {
+                    final DirectoryTreeTopComponent dtc = DirectoryTreeTopComponent.findInstance();
 
-                            notifyParentClose();
-                        }));
+                    // Navigate to the source context artifact.
+                    if (dtc != null && artifact != null) {
+                        dtc.viewArtifact(artifact);
+                    }
+
+                    notifyParentClose();
+                });
+    }
+
+    private static final Pattern windowsDrivePattern = Pattern.compile("^[A-Za-z]\\:(.*)$");
+
+    /**
+     * Normalizes the path for lookup in the sleuthkit database (unix endings; remove C:\).
+     * @param path The path to normalize.
+     * @return The normalized path.
+     */
+    private String normalizePath(String path) {
+        if (path == null) {
+            return null;
+        }
+
+        String trimmed = path.trim();
+        Matcher match = windowsDrivePattern.matcher(trimmed);
+        if (match.find()) {
+            return FilenameUtils.normalize(match.group(1), true);
+        } else {
+            return FilenameUtils.normalize(trimmed, true);
+        }
+    }
+
+    /**
+     * Creates a menu item to navigate to a file.
+     *
+     * @param path The path to the file.
+     * @return The menu item or null if file cannot be found in data source.
+     */
+    protected CellModelTableCellRenderer.MenuItem getFileNavigateItem(String path) {
+        if (StringUtils.isNotBlank(path)) {
+            Path p = Paths.get(path);
+            String fileName = normalizePath(p.getFileName().toString());
+            String directory = normalizePath(p.getParent().toString());
+
+            if (fileName != null && directory != null) {
+                try {
+                    List<AbstractFile> files = Case.getCurrentCaseThrows().getSleuthkitCase().findFiles(getDataSource(), fileName, directory);
+                    if (CollectionUtils.isNotEmpty(files)) {
+                        return getFileNavigateItem(files.get(0));
+                    }
+                } catch (TskCoreException | NoCurrentCaseException ex) {
+                    logger.log(Level.WARNING, "There was an error fetching file for path: " + path, ex);
+                }
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -263,20 +323,19 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
      * @param artifact The artifact.
      * @return The menu item list for a go to artifact menu item.
      */
-    protected List<CellModelTableCellRenderer.MenuItem> geNavigateToArtifactContentPopup(BlackboardArtifact artifact) {
-        return artifact == null ? null : Arrays.asList(
-                new CellModelTableCellRenderer.DefaultMenuItem(
-                        Bundle.UserActivityPanel_goToArtifactContent(),
-                        () -> {
-                            final DirectoryTreeTopComponent dtc = DirectoryTreeTopComponent.findInstance();
+    protected CellModelTableCellRenderer.MenuItem getFileNavigateItem(AbstractFile file) {
+        if (file == null) {
+            return null;
+        }
 
-                            // Navigate to the source context artifact.
-                            if (dtc != null && artifact != null) {
-                                dtc.viewArtifactContent(artifact);
-                            }
+        return new CellModelTableCellRenderer.DefaultMenuItem(
+                Bundle.UserActivityPanel_goToFile(),
+                () -> {
+                    new ViewContextAction(Bundle.UserActivityPanel_goToFile(), file)
+                            .actionPerformed(null);
 
-                            notifyParentClose();
-                        }));
+                    notifyParentClose();
+                });
     }
 
     /**
