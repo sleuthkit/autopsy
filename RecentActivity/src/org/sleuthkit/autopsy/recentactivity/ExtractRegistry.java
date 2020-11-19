@@ -1966,9 +1966,7 @@ class ExtractRegistry extends Extract {
             try {
                 shellBagArtifactType = tskCase.getBlackboard().getOrAddArtifactType(SHELLBAG_ARTIFACT_NAME, Bundle.Shellbag_Artifact_Display_Name());
             } catch (BlackboardException ex) {
-                String msg = String.format("Failed to get shell bag artifact type", SHELLBAG_ARTIFACT_NAME);
-                logger.log(Level.SEVERE, msg, ex);
-                throw new TskCoreException(msg, ex);
+                throw new TskCoreException(String.format("Failed to get shell bag artifact type", SHELLBAG_ARTIFACT_NAME), ex);
             }  
         }
 
@@ -1991,7 +1989,7 @@ class ExtractRegistry extends Extract {
                         Bundle.Shellbag_Last_Write_Attribute_Display_Name());
             } catch (BlackboardException ex) {
                 // Attribute already exists get it from the case
-                throw new TskCoreException(String.format("Failed to get costume attribute %s", SHELLBAG_ATTRIBUTE_LAST_WRITE), ex);
+                throw new TskCoreException(String.format("Failed to get custom attribute %s", SHELLBAG_ATTRIBUTE_LAST_WRITE), ex);
             }
         }
         return shellBagLastWriteAttributeType;
@@ -2012,7 +2010,7 @@ class ExtractRegistry extends Extract {
                         BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING,
                         Bundle.Shellbag_Key_Attribute_Display_Name());
             } catch (BlackboardException ex) {
-                throw new TskCoreException(String.format("Failed to get key attriubte %s", SHELLBAG_ATTRIBUTE_KEY), ex);
+                throw new TskCoreException(String.format("Failed to get key attribute %s", SHELLBAG_ATTRIBUTE_KEY), ex);
             }
         }
         return shellBagKeyAttributeType;
