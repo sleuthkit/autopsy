@@ -172,6 +172,14 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
         return ProcessResult.OK;
     }
 
+    /**
+     * Process each tar/zip file that is found in a logical image that contains xLeapp data
+     * @param dataSource Datasource where the file has been found
+     * @param currentCase current case
+     * @param statusHelper Progress bar for messages to show user
+     * @param filesProcessedCount count that is incremented for progress bar
+     * @param iLeappFile abstract file that will be processed
+     */
     private void processILeappFile(Content dataSource, Case currentCase, DataSourceIngestModuleProgress statusHelper, int filesProcessedCount,
             AbstractFile iLeappFile) {
         String currentTime = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss z", Locale.US).format(System.currentTimeMillis());//NON-NLS
@@ -211,6 +219,13 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
         }
     }
 
+    /**
+     * Process extracted files from a disk image using xLeapp
+     * @param dataSource Datasource where the file has been found
+     * @param currentCase current case
+     * @param statusHelper Progress bar for messages to show user
+     * @param directoryToProcess 
+     */
     private void processILeappFs(Content dataSource, Case currentCase, DataSourceIngestModuleProgress statusHelper, String directoryToProcess) {
         String currentTime = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss z", Locale.US).format(System.currentTimeMillis());//NON-NLS
         Path moduleOutputPath = Paths.get(currentCase.getModuleDirectory(), ILEAPP, currentTime);
@@ -285,6 +300,13 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
         return iLeappFilesToProcess;
     }
 
+    /**
+     * Build the command to run xLeapp
+     * @param moduleOutputPath output path for xLeapp
+     * @param sourceFilePath path where the xLeapp file is
+     * @param iLeappFileSystem type of file to process tar/zip/fs
+     * @return process to run
+     */
     private ProcessBuilder buildiLeappCommand(Path moduleOutputPath, String sourceFilePath, String iLeappFileSystemType) {
 
         ProcessBuilder processBuilder = buildProcessWithRunAsInvoker(
@@ -298,6 +320,11 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
         return processBuilder;
     }
 
+    /**
+     * Command to run xLeapp using the path option
+     * @param moduleOutputPath path where the file paths output will reside
+     * @return process to run
+     */
     private ProcessBuilder buildiLeappListCommand(Path moduleOutputPath) {
 
         ProcessBuilder processBuilder = buildProcessWithRunAsInvoker(
@@ -360,6 +387,7 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
     /*
      * Reads the iLeapp paths file to get the paths that we want to extract
      *
+     * @param moduleOutputPath path where the file paths output will reside
      */
     private List<String> loadIleappPathFile(Path moduleOutputPath) throws FileNotFoundException, IOException {
         List<String> iLeappPathsToProcess = new ArrayList<>();
@@ -381,6 +409,12 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
         return iLeappPathsToProcess;
     }
 
+    /**
+     * Extract files from a disk image to process with xLeapp
+     * @param dataSource Datasource of the image
+     * @param iLeappPathsToProcess List of paths to extract content from 
+     * @param moduleOutputPath path to write content to
+     */
     private void extractFilesFromImage(Content dataSource, List<String> iLeappPathsToProcess, Path moduleOutputPath) {
         FileManager fileManager = getCurrentCase().getServices().getFileManager();
 
@@ -417,6 +451,13 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
         }
     }
 
+    /**
+     * Create path and file from datasource in temp
+     * @param dataSource datasource of the image
+     * @param iLeappFile abstract file to write out
+     * @param fileParentPath parent file path
+     * @param parentPath parent file
+     */
     private void extractFileToOutput(Content dataSource, AbstractFile iLeappFile, File fileParentPath, Path parentPath) {
         if (fileParentPath.exists()) {
                     if (!iLeappFile.isDir()) {
@@ -446,6 +487,12 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
                 }
     }
     
+    /**
+     * Write out file to output
+     * @param dataSource datasource of disk image
+     * @param iLeappFile acstract file to write out
+     * @param parentPath path to write file to
+     */
     private void writeiLeappFile(Content dataSource, AbstractFile iLeappFile, String parentPath) {
         String fileName = iLeappFile.getName().replace(":", "-");
         if (!fileName.matches(".") && !fileName.matches("..") && !fileName.toLowerCase().endsWith("-slack")) {
