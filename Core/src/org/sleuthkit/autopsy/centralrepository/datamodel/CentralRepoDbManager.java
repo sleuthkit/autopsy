@@ -382,6 +382,31 @@ public class CentralRepoDbManager {
         CentralRepoDbUtil.setUseCentralRepo(true);
         saveNewCentralRepo();
     }
+    
+    /**
+     * Set up a PostgresDb using the settings for the given database choice
+     * enum.
+     * 
+     * @param choice Type of postgres DB to set up
+     * @throws CentralRepoException 
+     */
+    public void setupPostgresDb(CentralRepoDbChoice choice) throws CentralRepoException {        
+        selectedDbChoice = choice;
+        DatabaseTestResult curStatus = testStatus();
+        if (curStatus == DatabaseTestResult.DB_DOES_NOT_EXIST) {
+            createDb();
+            curStatus = testStatus();
+        }
+
+        // the only successful setup status is tested ok
+        if (curStatus != DatabaseTestResult.TESTED_OK) {
+            throw new CentralRepoException("Unable to successfully create postgres database. Test failed with: " + curStatus);
+        }
+
+        // if successfully got here, then save the settings
+        CentralRepoDbUtil.setUseCentralRepo(true);
+        saveNewCentralRepo();
+    }
 
     /**
      * This method returns if changes to the central repository configuration
