@@ -15,7 +15,7 @@
         <property name="inst-path" value="${nbdist.dir}\${app.name}-installer"/>
         
         <!-- see what JREs they have installed -->
-<!--        <condition property="jre.home.32">
+        <condition property="jre.home.32">
             <isset property="env.JRE_HOME_32"/>
         </condition>
         <if>
@@ -26,7 +26,7 @@
             <else>
                 <echo message="32-bit JRE not found. No 32-bit installer will be built. Set the JRE_HOME_32 environment variable to generate a 32-bit installer."/>
             </else>
-        </if>-->
+        </if>
         
         <condition property="jre.home.64">
             <isset property="env.JRE_HOME_64"/>
@@ -94,18 +94,16 @@
         <copy file="${aip-path-base}" tofile="${aip-path-64}" overwrite="true"/>
     </target>
     
-    <target name="createJavaRuntime" description="Create a Java runtime to be distributed with Autopsy">
-        <var name="java-runtime-path" value="${inst-path}\java-runtime"/>
-        <delete failonerror="false" dir="${java-runtime-path}"/>
-        <exec executable="jlink.exe">
-            <arg value="--no-header-files"/>
-            <arg value="--no-man-pages"/>
-            <arg value="--strip-debug"/>
-            <arg value="--add-modules"/>
-            <arg value="java.base,java.compiler,java.naming,java.desktop,java.instrument,java.logging,java.xml,java.prefs,java.sql,javafx.fxml,javafx.media,javafx.swing,javafx.web,jdk.charsets,jdk.management"/>
-            <arg value="--output"/>
-            <arg value="${java-runtime-path}"/>
-        </exec>
+
+    <target name="copyJRE" description="Copy a given JRE to the installation folder">
+        <var name="new-jre-path" value="${inst-path}\jre"/>
+        <delete failonerror="false" dir="${new-jre-path}"/>
+        <mkdir dir="${new-jre-path}"/>
+        <copy todir="${new-jre-path}" overwrite="true">
+            <fileset dir="${jre-path}">
+                <include name="**/*"/>
+            </fileset>
+        </copy>
     </target>
     
     <target name="build32" if="jre.home.32" description="Builds the 32 bit installer IF JRE_HOME_32 is set.">
@@ -122,8 +120,8 @@
 
         <var name="jvm.max.mem" value="512m" />
         
-<!--        <var name="jre-path" value="${env.JRE_HOME_32}"/>
-        <antcall target="copyJRE" inheritAll="true" />-->
+        <var name="jre-path" value="${env.JRE_HOME_32}"/>
+        <antcall target="copyJRE" inheritAll="true" />
         
         <exec executable="${ai-exe-path}">
             <arg line="/edit ${aip-path-base} /SetAppdir -buildname DefaultBuild -path [ProgramFilesFolder][ProductName]-${app.version}"/>
@@ -137,7 +135,7 @@
     
     
 
-    <target name="build64" description="Builds the 64 bit installer IF JRE_HOME_64 is set.">
+    <target name="build64" if="jre.home.64" description="Builds the 64 bit installer IF JRE_HOME_64 is set.">
         <property environment="env"/>
         <var name="aip-path" value="${aip-path-64}"/>
         
@@ -151,7 +149,8 @@
 
         <var name="jvm.max.mem" value="4G"/>
         
-        <antcall target="createJavaRuntime" inheritAll="true" />
+        <var name="jre-path" value="${env.JRE_HOME_64}"/>
+        <antcall target="copyJRE" inheritAll="true" />
 
         <echo message="aip-path: ${aip-path}" />
         <exec executable="${ai-exe-path}">
@@ -167,14 +166,15 @@
         <move file="${nbdist.dir}/installer_${app.name}_64-SetupFiles/installer_${app.name}_64.msi" tofile="${nbdist.dir}/${app.name}-${app.version}-64bit.msi" />
     </target>
 
+    <!-- 32/64 specific since config settings are different -->
     <target name="update-config" description="Updates configuration file with correct JVM args.">
         <property name="inst.property.file" value="${inst-path}/etc/${app.name}.conf" />
         <!-- Sets max heap size to be ${jvm.max.mem} which is set in the run-ai-(32/64) target -->
-        <var name="jvm.args" value="&quot;--branding ${app.name} -J-Xms24m -J-Xmx${jvm.max.mem} -J-Xverify:none -J-XX:+UseG1GC -J-XX:+UseStringDeduplication -J--illegal-access=warn -J-XX:+UseStringDeduplication -J--add-opens=javafx.controls/javafx.scene.control.skin=ALL-UNNAMED -J--add-exports=javafx.controls/com.sun.javafx.scene.control.inputmap=ALL-UNNAMED&quot;" />
+        <var name="jvm.args" value="&quot;--branding ${app.name} -J-Xms24m -J-Xmx${jvm.max.mem} -J--illegal-access=warn -J-Xverify:none -J-XX:+UseStringDeduplication -J--add-opens=javafx.controls/javafx.scene.control.skin=ALL-UNNAMED -J--add-exports=javafx.controls/com.sun.javafx.scene.control.inputmap=ALL-UNNAMED&quot;" />
         <propertyfile file="${inst.property.file}">
             <entry key="default_options" value="@JVM_OPTIONS" />
             <!-- Update configuration file to include runtime -->
-            <entry key="jdkhome" value="&quot;java-runtime&quot;" />
+            <entry key="jdkhome" value="&quot;jre&quot;" />
             <entry key="default_userdir" value="${DEFAULT_USERDIR_ROOT}" />
         </propertyfile>
         <!-- workaround for ant escaping : and = when setting properties -->
