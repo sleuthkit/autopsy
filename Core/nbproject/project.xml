@@ -565,6 +565,10 @@
                 <binary-origin>release\modules\ext\jsoup-1.10.3.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/YaraJNIWrapper.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/YaraJNIWrapper.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/grpc-context-1.19.0.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\grpc-context-1.19.0.jar</binary-origin>
             </class-path-extension>
