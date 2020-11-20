@@ -28,10 +28,11 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.SortedMap;
-import java.util.TreeMap;
+import java.util.stream.Collectors;
+import org.apache.commons.lang.StringUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -94,6 +95,46 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
     }
 
     /**
+     * Removes fileDetails entries with redundant paths, sorts by date
+     * descending and limits to the limit provided.
+     *
+     * @param fileDetails The file details list.
+     * @param limit The maximum number of entries to return.
+     * @return The sorted limited list with unique paths.
+     */
+    private <T extends RecentFileDetails> List<T> getSortedLimited(List<T> fileDetails, int limit) {
+        Map<String, T> fileDetailsMap = fileDetails.stream()
+                .filter(details -> details != null)
+                .collect(Collectors.toMap(
+                        d -> d.getPath().toUpperCase(),
+                        d -> d,
+                        (d1, d2) -> Long.compare(d1.getDateAsLong(), d2.getDateAsLong()) > 0 ? d1 : d2));
+
+        return fileDetailsMap.values().stream()
+                .sorted((a, b) -> -Long.compare(a.getDateAsLong(), b.getDateAsLong()))
+                .limit(limit)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Returns a RecentFileDetails object as derived from the recent document
+     * artifact or null if no appropriate object can be made.
+     *
+     * @param artifact The artifact.
+     * @return The derived object or null if artifact is invalid.
+     */
+    private RecentFileDetails getRecentlyOpenedDocument(BlackboardArtifact artifact) {
+        String path = DataSourceInfoUtilities.getStringOrNull(artifact, PATH_ATT);
+        Long lastOpened = DataSourceInfoUtilities.getLongOrNull(artifact, DATETIME_ATT);
+
+        if (StringUtils.isBlank(path) || lastOpened == null || lastOpened == 0) {
+            return null;
+        } else {
+            return new RecentFileDetails(artifact, path, lastOpened);
+        }
+    }
+
+    /**
      * Return a list of the most recently opened documents based on the
      * TSK_RECENT_OBJECT artifact.
      *
@@ -112,36 +153,45 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
             return Collections.emptyList();
         }
 
-        List<BlackboardArtifact> artifactList
-                = DataSourceInfoUtilities.getArtifacts(provider.get(),
-                        new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_RECENT_OBJECT),
-                        dataSource,
-                        DATETIME_ATT,
-                        DataSourceInfoUtilities.SortOrder.DESCENDING,
-                        maxCount);
+        throwOnNonPositiveCount(maxCount);
 
-        List<RecentFileDetails> fileDetails = new ArrayList<>();
-        for (BlackboardArtifact artifact : artifactList) {
-            Long accessedTime = null;
-            String path = "";
+        List<RecentFileDetails> details = provider.get().getBlackboard()
+                .getArtifacts(ARTIFACT_TYPE.TSK_RECENT_OBJECT.getTypeID(), dataSource.getId()).stream()
+                .map(art -> getRecentlyOpenedDocument(art))
+                .filter(d -> d != null)
+                .collect(Collectors.toList());
 
-            // Get all the attributes in one call.
-            List<BlackboardAttribute> attributeList = artifact.getAttributes();
-            for (BlackboardAttribute attribute : attributeList) {
+        return getSortedLimited(details, maxCount);
+    }
 
-                if (attribute.getAttributeType().equals(DATETIME_ATT)) {
-                    accessedTime = attribute.getValueLong();
-                } else if (attribute.getAttributeType().equals(PATH_ATT)) {
-                    path = attribute.getValueString();
-                }
-            }
+    /**
+     * Returns a RecentDownloadDetails object as derived from the recent
+     * download artifact or null if no appropriate object can be made.
+     *
+     * @param artifact The artifact.
+     * @return The derived object or null if artifact is invalid.
+     */
+    private RecentDownloadDetails getRecentDownload(BlackboardArtifact artifact) {
+        Long accessedTime = DataSourceInfoUtilities.getLongOrNull(artifact, DATETIME_ACCESSED_ATT);
+        String domain = DataSourceInfoUtilities.getStringOrNull(artifact, DOMAIN_ATT);
+        String path = DataSourceInfoUtilities.getStringOrNull(artifact, PATH_ATT);
 
-            if (accessedTime != null && accessedTime != 0) {
-                fileDetails.add(new RecentFileDetails(artifact, path, accessedTime));
-            }
+        if (StringUtils.isBlank(path) || accessedTime == null || accessedTime == 0) {
+            return null;
+        } else {
+            return new RecentDownloadDetails(artifact, path, accessedTime, domain);
         }
+    }
 
-        return fileDetails;
+    /**
+     * Throws an IllegalArgumentException if count is less than 1.
+     *
+     * @param count The count.
+     */
+    private void throwOnNonPositiveCount(int count) {
+        if (count < 1) {
+            throw new IllegalArgumentException("Invalid count: value must be greater than 0.");
+        }
     }
 
     /**
@@ -163,38 +213,15 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
             return Collections.emptyList();
         }
 
-        List<BlackboardArtifact> artifactList
-                = DataSourceInfoUtilities.getArtifacts(provider.get(),
-                        new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD),
-                        dataSource,
-                        DATETIME_ACCESSED_ATT,
-                        DataSourceInfoUtilities.SortOrder.DESCENDING,
-                        maxCount);
+        throwOnNonPositiveCount(maxCount);
 
-        List<RecentDownloadDetails> fileDetails = new ArrayList<>();
-        for (BlackboardArtifact artifact : artifactList) {
-            // Get all the attributes in one call.
-            Long accessedTime = null;
-            String domain = "";
-            String path = "";
+        List<RecentDownloadDetails> details = provider.get().getBlackboard()
+                .getArtifacts(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID(), dataSource.getId()).stream()
+                .map(art -> getRecentDownload(art))
+                .filter(d -> d != null)
+                .collect(Collectors.toList());
 
-            List<BlackboardAttribute> attributeList = artifact.getAttributes();
-            for (BlackboardAttribute attribute : attributeList) {
-
-                if (attribute.getAttributeType().equals(DATETIME_ACCESSED_ATT)) {
-                    accessedTime = attribute.getValueLong();
-                } else if (attribute.getAttributeType().equals(DOMAIN_ATT)) {
-                    domain = attribute.getValueString();
-                } else if (attribute.getAttributeType().equals(PATH_ATT)) {
-                    path = attribute.getValueString();
-                }
-            }
-            if (accessedTime != null && accessedTime != 0L) {
-                fileDetails.add(new RecentDownloadDetails(artifact, path, accessedTime, domain));
-            }
-        }
-
-        return fileDetails;
+        return getSortedLimited(details, maxCount);
     }
 
     /**
@@ -214,108 +241,65 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
             return Collections.emptyList();
         }
 
-        if (maxCount < 0) {
-            throw new IllegalArgumentException("Invalid maxCount passed to getRecentAttachments, value must be equal to or greater than 0");
+        throwOnNonPositiveCount(maxCount);
+
+        SleuthkitCase skCase = provider.get();
+
+        List<BlackboardArtifact> associatedArtifacts = skCase.getBlackboard()
+                .getArtifacts(ASSOCATED_OBJ_ART.getTypeID(), dataSource.getId());
+
+        List<RecentAttachmentDetails> details = new ArrayList<>();
+        for (BlackboardArtifact artifact : associatedArtifacts) {
+            RecentAttachmentDetails thisDetails = getRecentAttachment(artifact, skCase);
+
+            if (thisDetails != null) {
+                details.add(thisDetails);
+            }
         }
 
-        return createListFromMap(buildAttachmentMap(dataSource), maxCount);
+        return getSortedLimited(details, maxCount);
     }
 
     /**
-     * Build a map of all of the message attachment sorted in date order.
+     * Creates a RecentAttachmentDetails object from the associated object
+     * artifact or null if no RecentAttachmentDetails object can be derived.
      *
-     * @param dataSource Data source to query.
-     *
-     * @return Returns a SortedMap of details objects returned in descending
-     * order.
-     *
-     * @throws SleuthkitCaseProviderException
+     * @param artifact The associated object artifact.
+     * @param skCase The current case.
+     * @return The derived object or null.
      * @throws TskCoreException
      */
-    private SortedMap<Long, List<RecentAttachmentDetails>> buildAttachmentMap(DataSource dataSource) throws SleuthkitCaseProviderException, TskCoreException {
-        SleuthkitCase skCase = provider.get();
-        TreeMap<Long, List<RecentAttachmentDetails>> sortedMap = new TreeMap<>();
-
-        List<BlackboardArtifact> associatedArtifacts = skCase.getBlackboard().getArtifacts(ASSOCATED_OBJ_ART.getTypeID(), dataSource.getId());
-        for (BlackboardArtifact artifact : associatedArtifacts) {
-            BlackboardAttribute attribute = artifact.getAttribute(ASSOCATED_ATT);
-            if (attribute == null) {
-                continue;
-            }
-
-            BlackboardArtifact messageArtifact = skCase.getBlackboardArtifact(attribute.getValueLong());
-            if (messageArtifact != null && isMessageArtifact(messageArtifact)) {
-                Content content = artifact.getParent();
-                if (content instanceof AbstractFile) {
-                    String sender;
-                    Long date = null;
-                    String path;
-
-                    BlackboardAttribute senderAttribute = messageArtifact.getAttribute(EMAIL_FROM_ATT);
-                    if (senderAttribute != null) {
-                        sender = senderAttribute.getValueString();
-                    } else {
-                        sender = "";
-                    }
-                    senderAttribute = messageArtifact.getAttribute(MSG_DATEIME_SENT_ATT);
-                    if (senderAttribute != null) {
-                        date = senderAttribute.getValueLong();
-                    }
-
-                    AbstractFile abstractFile = (AbstractFile) content;
-
-                    path = Paths.get(abstractFile.getParentPath(), abstractFile.getName()).toString();
-
-                    if (date != null && date != 0) {
-                        List<RecentAttachmentDetails> list = sortedMap.get(date);
-                        if (list == null) {
-                            list = new ArrayList<>();
-                            sortedMap.put(date, list);
-                        }
-                        RecentAttachmentDetails details = new RecentAttachmentDetails(messageArtifact, path, date, sender);
-                        if (!list.contains(details)) {
-                            list.add(details);
-                        }
-                    }
-                }
-            }
-        }
-        return sortedMap.descendingMap();
-    }
-
-    /**
-     * Create a list of detail objects from the given sorted map of the max
-     * size.
-     *
-     * @param sortedMap A Map of attachment details sorted by date.
-     * @param maxCount Maximum number of values to return.
-     *
-     * @return A list of the details of the most recent attachments or empty
-     * list if none where found.
-     */
-    private List<RecentAttachmentDetails> createListFromMap(SortedMap<Long, List<RecentAttachmentDetails>> sortedMap, int maxCount) {
-        List<RecentAttachmentDetails> fileList = new ArrayList<>();
-
-        for (List<RecentAttachmentDetails> mapList : sortedMap.values()) {
-            if (maxCount == 0 || fileList.size() + mapList.size() <= maxCount) {
-                fileList.addAll(mapList);
-                continue;
-            }
-
-            if (maxCount == fileList.size()) {
-                break;
-            }
-
-            for (RecentAttachmentDetails details : mapList) {
-                if (fileList.size() < maxCount) {
-                    fileList.add(details);
-                } else {
-                    break;
-                }
-            }
+    private RecentAttachmentDetails getRecentAttachment(BlackboardArtifact artifact, SleuthkitCase skCase) throws TskCoreException {
+        // get associated artifact or return no result
+        BlackboardAttribute attribute = artifact.getAttribute(ASSOCATED_ATT);
+        if (attribute == null) {
+            return null;
         }
 
-        return fileList;
+        // get associated message artifact if exists or return no result
+        BlackboardArtifact messageArtifact = skCase.getBlackboardArtifact(attribute.getValueLong());
+        if (messageArtifact == null || !isMessageArtifact(messageArtifact)) {
+            return null;
+        }
+
+        // get abstract file if exists or return no result
+        Content content = artifact.getParent();
+        if (!(content instanceof AbstractFile)) {
+            return null;
+        }
+
+        AbstractFile abstractFile = (AbstractFile) content;
+
+        // get the path, sender, and date
+        String path = Paths.get(abstractFile.getParentPath(), abstractFile.getName()).toString();
+        String sender = DataSourceInfoUtilities.getStringOrNull(messageArtifact, EMAIL_FROM_ATT);
+        Long date = DataSourceInfoUtilities.getLongOrNull(messageArtifact, MSG_DATEIME_SENT_ATT);
+
+        if (date == null || date == 0 || StringUtils.isBlank(path)) {
+            return null;
+        } else {
+            return new RecentAttachmentDetails(artifact, path, date, sender);
+        }
     }
 
     /**
@@ -330,6 +314,7 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
         final int artifactTypeID = nodeArtifact.getArtifactTypeID();
         return artifactTypeID == ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()
                 || artifactTypeID == ARTIFACT_TYPE.TSK_MESSAGE.getTypeID();
+
     }
 
     /**

@@ -393,21 +393,22 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
                 .getArtifacts(ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getTypeID(), dataSource.getId());
 
         // group by search string (case insensitive)
-        Collection<List<TopWebSearchResult>> resultGroups = webSearchArtifacts
+        Collection<TopWebSearchResult> resultGroups = webSearchArtifacts
                 .stream()
                 // get items where search string and date is not null
                 .map(UserActivitySummary::getWebSearchResult)
                 // remove null records
                 .filter(result -> result != null)
-                // get these messages grouped by search to string
-                .collect(Collectors.groupingBy((result) -> result.getSearchString().toUpperCase()))
+                // get the latest message for each search string
+                .collect(Collectors.toMap(
+                        (result) -> result.getSearchString().toUpperCase(),
+                        result -> result,
+                        (result1, result2) -> TOP_WEBSEARCH_RESULT_DATE_COMPARE.compare(result1, result2) >= 0 ? result1 : result2))
                 .values();
 
         // get the most recent date for each search term
         List<TopWebSearchResult> results = resultGroups
                 .stream()
-                // get the most recent access per search type
-                .map((list) -> list.stream().max(TOP_WEBSEARCH_RESULT_DATE_COMPARE).get())
                 // get most recent searches first
                 .sorted(TOP_WEBSEARCH_RESULT_DATE_COMPARE.reversed())
                 .limit(count)
@@ -456,6 +457,26 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
     }
 
     /**
+     * Gives the most recent TopDeviceAttachedResult. If one is null, the other
+     * is returned.
+     *
+     * @param r1 A result.
+     * @param r2 Another result.
+     * @return The most recent one with a non-null date.
+     */
+    private TopDeviceAttachedResult getMostRecentDevice(TopDeviceAttachedResult r1, TopDeviceAttachedResult r2) {
+        if (r2.getLastAccessed()== null) {
+            return r1;
+        }
+
+        if (r1.getLastAccessed() == null) {
+            return r2;
+        }
+
+        return r1.getLastAccessed().compareTo(r2.getLastAccessed()) >= 0 ? r1 : r2;
+    }
+
+    /**
      * Retrieves most recent devices used by most recent date attached.
      *
      * @param dataSource The data source.
@@ -475,7 +496,7 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
             return Collections.emptyList();
         }
 
-        return DataSourceInfoUtilities.getArtifacts(caseProvider.get(), TYPE_DEVICE_ATTACHED,
+        Collection<TopDeviceAttachedResult> results = DataSourceInfoUtilities.getArtifacts(caseProvider.get(), TYPE_DEVICE_ATTACHED,
                 dataSource, TYPE_DATETIME, DataSourceInfoUtilities.SortOrder.DESCENDING, 0)
                 .stream()
                 .map(artifact -> {
@@ -489,9 +510,14 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
                 })
                 // remove Root Hub identifier
                 .filter(result -> {
-                    return result.getDeviceModel() == null
+                    return result.getDeviceId() == null
+                            || result.getDeviceModel() == null
                             || !DEVICE_EXCLUDE_LIST.contains(result.getDeviceModel().trim().toUpperCase());
                 })
+                .collect(Collectors.toMap(result -> result.getDeviceId(), result -> result, (r1, r2) -> getMostRecentDevice(r1, r2)))
+                .values();
+
+        return results.stream()
                 .limit(count)
                 .collect(Collectors.toList());
     }
@@ -591,18 +617,19 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
         Stream<TopAccountResult> allResults = Stream.concat(messageResults, Stream.concat(emailResults, calllogResults));
 
         // get them grouped by account type        
-        Collection<List<TopAccountResult>> groupedResults = allResults
+        Collection<TopAccountResult> groupedResults = allResults
                 // remove null records
                 .filter(result -> result != null)
-                // get these messages grouped by account type
-                .collect(Collectors.groupingBy(TopAccountResult::getAccountType))
+                // get these messages grouped by account type and get the most recent of each type
+                .collect(Collectors.toMap(
+                        result -> result.getAccountType(),
+                        result -> result,
+                        (result1, result2) -> TOP_ACCOUNT_RESULT_DATE_COMPARE.compare(result1, result2) >= 0 ? result1 : result2))
                 .values();
 
         // get account type sorted by most recent date
         return groupedResults
                 .stream()
-                // get the most recent access per account type
-                .map((accountGroup) -> accountGroup.stream().max(TOP_ACCOUNT_RESULT_DATE_COMPARE).get())
                 // get most recent accounts accessed
                 .sorted(TOP_ACCOUNT_RESULT_DATE_COMPARE.reversed())
                 // limit to count
@@ -765,7 +792,9 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
                 // The value will be a TopProgramsResult with the max run times 
                 // and most recent last run date for each program name / program path pair.
                 .collect(Collectors.toMap(
-                        res -> Pair.of(res.getProgramName(), res.getProgramPath()),
+                        res -> Pair.of(
+                                res.getProgramName() == null ? null : res.getProgramName().toUpperCase(),
+                                res.getProgramPath() == null ? null : res.getProgramPath().toUpperCase()),
                         res -> res,
                         (res1, res2) -> {
                             Long maxRunTimes = getMax(res1.getRunTimes(), res2.getRunTimes());
