@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.modules.yara.rules;
 
 import java.io.File;
+import java.io.Serializable;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
@@ -26,7 +27,9 @@ import java.util.List;
 /**
  * Represents a yara rule set which is a collection of yara rule files.
  */
-public class RuleSet implements Comparable<RuleSet> {
+public class RuleSet implements Comparable<RuleSet>, Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private final String name;
     private final Path path;

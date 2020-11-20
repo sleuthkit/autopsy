@@ -549,16 +549,8 @@
                 <binary-origin>release\modules\ext\checker-compat-qual-2.5.3.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/sleuthkit-4.10.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/sleuthkit-4.10.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/animal-sniffer-annotations-1.17.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\animal-sniffer-annotations-1.17.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/sleuthkit-caseuco-4.10.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/sleuthkit-caseuco-4.10.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/gax-1.44.0.jar</runtime-relative-path>
@@ -567,6 +559,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/jsoup-1.10.3.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\jsoup-1.10.3.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/YaraJNIWrapper.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/YaraJNIWrapper.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/grpc-context-1.19.0.jar</runtime-relative-path>
@@ -671,6 +667,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/grpc-alts-1.19.0.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\grpc-alts-1.19.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/sleuthkit-caseuco-4.10.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/sleuthkit-caseuco-4.10.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jdom-2.0.5.jar</runtime-relative-path>
@@ -795,6 +795,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/sevenzipjbinding-AllPlatforms.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\sevenzipjbinding-AllPlatforms.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/sleuthkit-4.10.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/sleuthkit-4.10.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jutf7-1.0.0.jar</runtime-relative-path>
