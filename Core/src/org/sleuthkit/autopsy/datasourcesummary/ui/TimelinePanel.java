@@ -211,8 +211,14 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
             }
             
             dataSource = curTimelineData.getDataSource();
-            minDate = curTimelineData.getMinDate();
-            maxDate = curTimelineData.getMaxDate();
+            if (CollectionUtils.isNotEmpty(curTimelineData.getMostRecentDaysActivity())) {
+                minDate = curTimelineData.getMostRecentDaysActivity().get(0).getDay();
+                maxDate = curTimelineData.getMostRecentDaysActivity().get(curTimelineData.getMostRecentDaysActivity().size() - 1).getDay();
+                // set outer bound to end of day instead of beginning
+                if (maxDate != null) {
+                    maxDate = new Date(maxDate.getTime() + 1000 * 60 * 60 * 24);
+                }
+            }
         }
                 
         // notify dialog (if in dialog) should close.

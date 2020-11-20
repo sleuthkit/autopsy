@@ -298,7 +298,7 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
         if (date == null || date == 0 || StringUtils.isBlank(path)) {
             return null;
         } else {
-            return new RecentAttachmentDetails(artifact, path, date, sender);
+            return new RecentAttachmentDetails(messageArtifact, path, date, sender);
         }
     }
 

@@ -240,7 +240,7 @@ public class TimelineSummary implements DefaultUpdateGovernor {
          *
          * @param minDate Earliest usage date recorded for the data source.
          * @param maxDate Latest usage date recorded for the data source.
-         * @param recentDaysActivity A list of activity prior to and including
+         * @param recentDaysActivity A list of activity prior to and including max date sorted by min to max date.
          * @param dataSource The data source for which this data applies.
          * the latest usage date by day.
          */
@@ -267,7 +267,7 @@ public class TimelineSummary implements DefaultUpdateGovernor {
 
         /**
          * @return A list of activity prior to and including the latest usage
-         * date by day.
+         * date by day sorted min to max date.
          */
         public List<DailyActivityAmount> getMostRecentDaysActivity() {
             return histogramActivity;
