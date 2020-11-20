@@ -70,20 +70,18 @@ final class FileDetailsPanel extends javax.swing.JPanel {
             @Override
             public void mousePressed(MouseEvent e) {
                 if (SwingUtilities.isRightMouseButton(e)) {
-                    SwingUtilities.invokeLater(() -> {
-                        instancesList.setSelectedIndex(instancesList.locationToIndex(e.getPoint()));
-                        Set<AbstractFile> files = new HashSet<>();
-                        files.add(instancesList.getSelectedValue());
-                        JPopupMenu menu = new JPopupMenu();
-                        menu.add(new ViewContextAction(Bundle.ResultsPanel_viewFileInDir_name(), instancesList.getSelectedValue()));
-                        menu.add(new ExternalViewerAction(Bundle.ResultsPanel_openInExternalViewer_name(), new FileNode(instancesList.getSelectedValue())));
-                        menu.add(ViewFileInTimelineAction.createViewFileAction(instancesList.getSelectedValue()));
-                        menu.add(new DiscoveryExtractAction(files));
-                        menu.add(AddContentTagAction.getInstance().getMenuForContent(files));
-                        menu.add(DeleteFileContentTagAction.getInstance().getMenuForFiles(files));
-                        menu.add(AddContentToHashDbAction.getInstance().getMenuForFiles(files));
-                        menu.show(instancesList, e.getPoint().x, e.getPoint().y);
-                    });
+                    instancesList.setSelectedIndex(instancesList.locationToIndex(e.getPoint()));
+                    Set<AbstractFile> files = new HashSet<>();
+                    files.add(instancesList.getSelectedValue());
+                    JPopupMenu menu = new JPopupMenu();
+                    menu.add(new ViewContextAction(Bundle.ResultsPanel_viewFileInDir_name(), instancesList.getSelectedValue()));
+                    menu.add(new ExternalViewerAction(Bundle.ResultsPanel_openInExternalViewer_name(), new FileNode(instancesList.getSelectedValue())));
+                    menu.add(ViewFileInTimelineAction.createViewFileAction(instancesList.getSelectedValue()));
+                    menu.add(new DiscoveryExtractAction(files));
+                    menu.add(AddContentTagAction.getInstance().getMenuForContent(files));
+                    menu.add(DeleteFileContentTagAction.getInstance().getMenuForFiles(files));
+                    menu.add(AddContentToHashDbAction.getInstance().getMenuForFiles(files));
+                    menu.show(instancesList, e.getPoint().x, e.getPoint().y);
                 }
             }
         });
@@ -91,14 +89,12 @@ final class FileDetailsPanel extends javax.swing.JPanel {
             @Override
             public void valueChanged(ListSelectionEvent e) {
                 if (!e.getValueIsAdjusting()) {
-                    SwingUtilities.invokeLater(() -> {
-                        AbstractFile file = getSelectedFile();
-                        if (file != null) {
-                            dataContentPanel.setNode(new TableFilterNode(new FileNode(file), false));
-                        } else {
-                            dataContentPanel.setNode(null);
-                        }
-                    });
+                    AbstractFile file = getSelectedFile();
+                    if (file != null) {
+                        dataContentPanel.setNode(new TableFilterNode(new FileNode(file), false));
+                    } else {
+                        dataContentPanel.setNode(null);
+                    }
                 }
             }
         };
@@ -127,8 +123,8 @@ final class FileDetailsPanel extends javax.swing.JPanel {
      */
     @Subscribe
     void handlePopulateInstancesListEvent(DiscoveryEventUtils.PopulateInstancesListEvent populateEvent) {
+        List<AbstractFile> files = populateEvent.getInstances();
         SwingUtilities.invokeLater(() -> {
-            List<AbstractFile> files = populateEvent.getInstances();
             if (files.isEmpty()) {
                 //if there are no files currently remove the current items without removing listener to cause content viewer to reset
                 instancesListModel.removeAllElements();

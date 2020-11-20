@@ -69,10 +69,8 @@ final class GroupListPanel extends javax.swing.JPanel {
      */
     @Subscribe
     void handleSearchStartedEvent(DiscoveryEventUtils.SearchStartedEvent searchStartedEvent) {
-        SwingUtilities.invokeLater(() -> {
-            type = searchStartedEvent.getType();
-            groupKeyList.setListData(new GroupKey[0]);
-        });
+        type = searchStartedEvent.getType();
+        groupKeyList.setListData(new GroupKey[0]);
     }
 
     @Messages({"GroupsListPanel.noFileResults.message.text=No files were found for the selected filters.\n\n"
@@ -94,29 +92,27 @@ final class GroupListPanel extends javax.swing.JPanel {
      */
     @Subscribe
     void handleSearchCompleteEvent(DiscoveryEventUtils.SearchCompleteEvent searchCompleteEvent) {
+        groupMap = searchCompleteEvent.getGroupMap();
+        searchfilters = searchCompleteEvent.getFilters();
+        groupingAttribute = searchCompleteEvent.getGroupingAttr();
+        groupSort = searchCompleteEvent.getGroupSort();
+        resultSortMethod = searchCompleteEvent.getResultSort();
+        groupKeyList.setListData(groupMap.keySet().toArray(new GroupKey[groupMap.keySet().size()]));
         SwingUtilities.invokeLater(() -> {
-            groupMap = searchCompleteEvent.getGroupMap();
-            searchfilters = searchCompleteEvent.getFilters();
-            groupingAttribute = searchCompleteEvent.getGroupingAttr();
-            groupSort = searchCompleteEvent.getGroupSort();
-            resultSortMethod = searchCompleteEvent.getResultSort();
-            groupKeyList.setListData(groupMap.keySet().toArray(new GroupKey[groupMap.keySet().size()]));
-            SwingUtilities.invokeLater(() -> {
-                if (groupKeyList.getModel().getSize() > 0) {
-                    groupKeyList.setSelectedIndex(0);
-                } else if (type == DOMAIN) {
-                    JOptionPane.showMessageDialog(DiscoveryTopComponent.getTopComponent(),
-                            Bundle.GroupsListPanel_noDomainResults_message_text(),
-                            Bundle.GroupsListPanel_noResults_title_text(),
-                            JOptionPane.PLAIN_MESSAGE);
-                } else {
-                    JOptionPane.showMessageDialog(DiscoveryTopComponent.getTopComponent(),
-                            Bundle.GroupsListPanel_noFileResults_message_text(),
-                            Bundle.GroupsListPanel_noResults_title_text(),
-                            JOptionPane.PLAIN_MESSAGE);
-                }
-                setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-            });
+            if (groupKeyList.getModel().getSize() > 0) {
+                groupKeyList.setSelectedIndex(0);
+            } else if (type == DOMAIN) {
+                JOptionPane.showMessageDialog(DiscoveryTopComponent.getTopComponent(),
+                        Bundle.GroupsListPanel_noDomainResults_message_text(),
+                        Bundle.GroupsListPanel_noResults_title_text(),
+                        JOptionPane.PLAIN_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(DiscoveryTopComponent.getTopComponent(),
+                        Bundle.GroupsListPanel_noFileResults_message_text(),
+                        Bundle.GroupsListPanel_noResults_title_text(),
+                        JOptionPane.PLAIN_MESSAGE);
+            }
+            setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         });
     }
 
