@@ -353,7 +353,7 @@ public class UserActivitySummaryTest {
         List<TopDeviceAttachedResult> results = summary.getRecentDevices(dataSource, 10);
 
         Assert.assertEquals(1, results.size());
-        Assert.assertEquals((long) (DAY_SECONDS + 2), results.get(0).getDateAccessed().getTime() / 1000);
+        Assert.assertEquals((long) (DAY_SECONDS + 2), results.get(0).getLastAccessed().getTime() / 1000);
         Assert.assertTrue("ID1".equalsIgnoreCase(results.get(0).getDeviceId()));
         Assert.assertTrue("MAKE1".equalsIgnoreCase(results.get(0).getDeviceMake()));
         Assert.assertTrue("MODEL1".equalsIgnoreCase(results.get(0).getDeviceModel()));
@@ -896,13 +896,13 @@ public class UserActivitySummaryTest {
         getRecentAccountsOneArtTest(ds1, email1,
                 new TopAccountResult(
                         Bundle.DataSourceUserActivitySummary_getRecentAccounts_emailMessage(),
-                        new Date(DAY_SECONDS * 1000)));
+                        new Date(DAY_SECONDS * 1000), email1));
 
         BlackboardArtifact email2 = getEmailArtifact(2, ds1, null, DAY_SECONDS);
         getRecentAccountsOneArtTest(ds1, email2,
                 new TopAccountResult(
                         Bundle.DataSourceUserActivitySummary_getRecentAccounts_emailMessage(),
-                        new Date(DAY_SECONDS * 1000)));
+                        new Date(DAY_SECONDS * 1000), email2));
 
         BlackboardArtifact email3 = getEmailArtifact(3, ds1, null, null);
         getRecentAccountsOneArtTest(ds1, email3, null);
@@ -911,19 +911,19 @@ public class UserActivitySummaryTest {
         getRecentAccountsOneArtTest(ds1, email4,
                 new TopAccountResult(
                         Bundle.DataSourceUserActivitySummary_getRecentAccounts_emailMessage(),
-                        new Date(DAY_SECONDS * 2 * 1000)));
+                        new Date(DAY_SECONDS * 2 * 1000), email4));
 
         BlackboardArtifact callog1 = getCallogArtifact(11, ds1, DAY_SECONDS, null);
         getRecentAccountsOneArtTest(ds1, callog1,
                 new TopAccountResult(
                         Bundle.DataSourceUserActivitySummary_getRecentAccounts_calllogMessage(),
-                        new Date(DAY_SECONDS * 1000)));
+                        new Date(DAY_SECONDS * 1000), callog1));
 
         BlackboardArtifact callog2 = getCallogArtifact(12, ds1, null, DAY_SECONDS);
         getRecentAccountsOneArtTest(ds1, callog2,
                 new TopAccountResult(
                         Bundle.DataSourceUserActivitySummary_getRecentAccounts_calllogMessage(),
-                        new Date(DAY_SECONDS * 1000)));
+                        new Date(DAY_SECONDS * 1000), callog2));
 
         BlackboardArtifact callog3 = getCallogArtifact(13, ds1, null, null);
         getRecentAccountsOneArtTest(ds1, callog3, null);
@@ -932,7 +932,7 @@ public class UserActivitySummaryTest {
         getRecentAccountsOneArtTest(ds1, callog4,
                 new TopAccountResult(
                         Bundle.DataSourceUserActivitySummary_getRecentAccounts_calllogMessage(),
-                        new Date(DAY_SECONDS * 2 * 1000)));
+                        new Date(DAY_SECONDS * 2 * 1000), callog4));
 
         BlackboardArtifact message1 = getMessageArtifact(21, ds1, "Skype", null);
         getRecentAccountsOneArtTest(ds1, message1, null);
@@ -944,7 +944,7 @@ public class UserActivitySummaryTest {
         getRecentAccountsOneArtTest(ds1, message3, null);
 
         BlackboardArtifact message4 = getMessageArtifact(24, ds1, "Skype", DAY_SECONDS);
-        getRecentAccountsOneArtTest(ds1, message4, new TopAccountResult("Skype", new Date(DAY_SECONDS * 1000)));
+        getRecentAccountsOneArtTest(ds1, message4, new TopAccountResult("Skype", new Date(DAY_SECONDS * 1000), message4));
 
     }
 
@@ -977,10 +977,10 @@ public class UserActivitySummaryTest {
         getRecentAccountsTest(ds1, 10,
                 Arrays.asList(email1, email2, email3, callog1, callog2, message1a, message1b, message2a, message2b),
                 Arrays.asList(
-                        new TopAccountResult("Facebook", new Date((DAY_SECONDS + 42) * 1000)),
-                        new TopAccountResult("Skype", new Date((DAY_SECONDS + 32) * 1000)),
-                        new TopAccountResult(Bundle.DataSourceUserActivitySummary_getRecentAccounts_calllogMessage(), new Date((DAY_SECONDS + 22) * 1000)),
-                        new TopAccountResult(Bundle.DataSourceUserActivitySummary_getRecentAccounts_emailMessage(), new Date((DAY_SECONDS + 13) * 1000))
+                        new TopAccountResult("Facebook", new Date((DAY_SECONDS + 42) * 1000), message2b),
+                        new TopAccountResult("Skype", new Date((DAY_SECONDS + 32) * 1000), message1b),
+                        new TopAccountResult(Bundle.DataSourceUserActivitySummary_getRecentAccounts_calllogMessage(), new Date((DAY_SECONDS + 22) * 1000), callog2),
+                        new TopAccountResult(Bundle.DataSourceUserActivitySummary_getRecentAccounts_emailMessage(), new Date((DAY_SECONDS + 13) * 1000), email3)
                 ));
     }
 

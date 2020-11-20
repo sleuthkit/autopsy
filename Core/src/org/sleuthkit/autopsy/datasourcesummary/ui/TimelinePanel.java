@@ -163,7 +163,7 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
                 new BarChartSeries(Bundle.TimlinePanel_last30DaysChart_fileEvts_title(), FILE_EVT_COLOR, fileEvtCounts),
                 new BarChartSeries(Bundle.TimlinePanel_last30DaysChart_artifactEvts_title(), ARTIFACT_EVT_COLOR, artifactEvtCounts));
     }
-    
+
     private final Object timelineBtnLock = new Object();
     private TimelineSummaryData curTimelineData = null;
 
@@ -183,10 +183,10 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
         if (result != null
                 && result.getResultType() == DataFetchResult.ResultType.SUCCESS
                 && result.getData() != null) {
-            
+
             synchronized (this.timelineBtnLock) {
                 this.curTimelineData = result.getData();
-                this.viewInTimelineBtn.setEnabled(true);    
+                this.viewInTimelineBtn.setEnabled(true);
             }
         } else {
             synchronized (this.timelineBtnLock) {
@@ -202,14 +202,13 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
         DataSource dataSource = null;
         Date minDate = null;
         Date maxDate = null;
-        
 
         // get date from current timelineData if that data exists.
         synchronized (this.timelineBtnLock) {
             if (curTimelineData == null) {
                 return;
             }
-            
+
             dataSource = curTimelineData.getDataSource();
             if (CollectionUtils.isNotEmpty(curTimelineData.getMostRecentDaysActivity())) {
                 minDate = curTimelineData.getMostRecentDaysActivity().get(0).getDay();
@@ -220,10 +219,10 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
                 }
             }
         }
-                
+
         // notify dialog (if in dialog) should close.
         TimelinePanel.this.notifyParentClose();
-        
+
         // open the timeline filtered to data source and zoomed in on interval
         openTimelineAction.performAction();
         try {
@@ -231,12 +230,12 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
             if (dataSource != null) {
                 controller.pushFilters(timelineUtils.getDataSourceFilterState(dataSource));
             }
-            
+
             if (minDate != null && maxDate != null) {
                 Interval timeSpan = new Interval(new DateTime(minDate), new DateTime(maxDate));
                 controller.pushTimeRange(timeSpan);
             }
-            
+
         } catch (NoCurrentCaseException | TskCoreException ex) {
             logger.log(Level.WARNING, "Unable to open Timeline view", ex);
         }

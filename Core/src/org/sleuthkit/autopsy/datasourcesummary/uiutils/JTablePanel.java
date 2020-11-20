@@ -42,13 +42,27 @@ import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRendere
  */
 public class JTablePanel<T> extends AbstractLoadableComponent<List<T>> {
 
+    /**
+     * An event that wraps a swing MouseEvent also providing context within the
+     * table cell.
+     */
     public static class CellMouseEvent {
+
         private final MouseEvent e;
         private final JTable table;
         private final int row;
         private final int col;
         private final Object cellValue;
 
+        /**
+         * Main constructor.
+         *
+         * @param e The underlying mouse event.
+         * @param table The table that was the target of the mouse event.
+         * @param row The row within the table that the event occurs.
+         * @param col The column within the table that the event occurs.
+         * @param cellValue The value within the cell.
+         */
         public CellMouseEvent(MouseEvent e, JTable table, int row, int col, Object cellValue) {
             this.e = e;
             this.table = table;
@@ -57,27 +71,42 @@ public class JTablePanel<T> extends AbstractLoadableComponent<List<T>> {
             this.cellValue = cellValue;
         }
 
+        /**
+         * @return The underlying mouse event.
+         */
         public MouseEvent getMouseEvent() {
             return e;
         }
 
+        /**
+         * @return The table that was the target of the mouse event.
+         */
         public JTable getTable() {
             return table;
         }
 
+        /**
+         * @return The row within the table that the event occurs.
+         */
         public int getRow() {
             return row;
         }
 
+        /**
+         * @return The column within the table that the event occurs.
+         */
         public int getCol() {
             return col;
         }
 
+        /**
+         * @return The value within the cell.
+         */
         public Object getCellValue() {
             return cellValue;
         }
     }
-    
+
     /**
      * Handles mouse events for cells in the table.
      */
@@ -86,7 +115,8 @@ public class JTablePanel<T> extends AbstractLoadableComponent<List<T>> {
         /**
          * Handles mouse events at a cell level for the table.
          *
-         * @param e The event containing information about the cell, the mouse event, and the table.
+         * @param e The event containing information about the cell, the mouse
+         * event, and the table.
          */
         void mouseClicked(CellMouseEvent e);
     }
@@ -251,7 +281,7 @@ public class JTablePanel<T> extends AbstractLoadableComponent<List<T>> {
         JTablePanel<T> resultTable = new JTablePanel<>(tableModel)
                 .setColumnModel(getTableColumnModel(columns))
                 .setCellListener(CellModelTableCellRenderer.getMouseListener());
-        
+
         return resultTable;
     }
 
@@ -317,17 +347,25 @@ public class JTablePanel<T> extends AbstractLoadableComponent<List<T>> {
         return this;
     }
 
-    
+    /**
+     * @return The current listener for mouse events. The events provided to
+     * this listener will have cell and table context.
+     */
     public CellMouseListener getCellListener() {
         return cellListener;
     }
 
+    /**
+     * Sets the current listener for mouse events.
+     *
+     * @param cellListener The event listener that will receive these events
+     * with cell and table context.
+     * @return
+     */
     public JTablePanel<T> setCellListener(CellMouseListener cellListener) {
         this.cellListener = cellListener;
         return this;
     }
-    
-    
 
     /**
      * @return The underlying JTable's column model.

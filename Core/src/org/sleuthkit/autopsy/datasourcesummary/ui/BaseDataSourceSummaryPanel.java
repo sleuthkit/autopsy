@@ -271,7 +271,9 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
     private static final Pattern windowsDrivePattern = Pattern.compile("^[A-Za-z]\\:(.*)$");
 
     /**
-     * Normalizes the path for lookup in the sleuthkit database (unix endings; remove C:\).
+     * Normalizes the path for lookup in the sleuthkit database (unix endings;
+     * remove C:\).
+     *
      * @param path The path to normalize.
      * @return The normalized path.
      */

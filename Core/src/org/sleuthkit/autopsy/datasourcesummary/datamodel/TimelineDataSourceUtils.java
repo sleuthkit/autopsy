@@ -85,9 +85,9 @@ public class TimelineDataSourceUtils {
         for (FilterState<? extends TimelineFilter.DataSourceFilter> filterState : dataSourceState.getDataSourcesFilterState().getSubFilterStates()) {
             DataSourceFilter dsFilter = filterState.getFilter();
             if (dsFilter != null) {
-                filterState.setSelected(dsFilter.getDataSourceID() == dataSource.getId());    
+                filterState.setSelected(dsFilter.getDataSourceID() == dataSource.getId());
             }
-            
+
         }
 
         return dataSourceState;

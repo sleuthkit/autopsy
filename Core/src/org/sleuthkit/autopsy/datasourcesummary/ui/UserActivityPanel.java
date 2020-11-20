@@ -41,7 +41,6 @@ import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetch
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.IngestRunningLabel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel.ColumnModel;
-import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.DataSource;
 
 /**
@@ -386,27 +385,27 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
         javax.swing.JLabel programsRunLabel = new javax.swing.JLabel();
         javax.swing.Box.Filler filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2));
         javax.swing.JPanel topProgramsTablePanel = topProgramsTable;
-        rightClickForMoreOptions1 = new javax.swing.JLabel();
+        javax.swing.JLabel rightClickForMoreOptions1 = new javax.swing.JLabel();
         javax.swing.Box.Filler filler3 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 20), new java.awt.Dimension(0, 20), new java.awt.Dimension(0, 20));
         javax.swing.JLabel recentDomainsLabel = new javax.swing.JLabel();
         javax.swing.Box.Filler filler2 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2));
         javax.swing.JPanel recentDomainsTablePanel = recentDomainsTable;
-        rightClickForMoreOptions2 = new javax.swing.JLabel();
+        javax.swing.JLabel rightClickForMoreOptions2 = new javax.swing.JLabel();
         javax.swing.Box.Filler filler4 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 20), new java.awt.Dimension(0, 20), new java.awt.Dimension(0, 20));
         javax.swing.JLabel topWebSearchLabel = new javax.swing.JLabel();
         javax.swing.Box.Filler filler5 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2));
         javax.swing.JPanel topWebSearches = topWebSearchesTable;
-        rightClickForMoreOptions3 = new javax.swing.JLabel();
+        javax.swing.JLabel rightClickForMoreOptions3 = new javax.swing.JLabel();
         javax.swing.Box.Filler filler6 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 20), new java.awt.Dimension(0, 20), new java.awt.Dimension(0, 20));
         javax.swing.JLabel topDevicesAttachedLabel = new javax.swing.JLabel();
         javax.swing.Box.Filler filler7 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2));
         javax.swing.JPanel recentDevicesAttached = topDevicesAttachedTable;
-        rightClickForMoreOptions4 = new javax.swing.JLabel();
+        javax.swing.JLabel rightClickForMoreOptions4 = new javax.swing.JLabel();
         javax.swing.Box.Filler filler8 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 20), new java.awt.Dimension(0, 20), new java.awt.Dimension(0, 20));
         javax.swing.JLabel recentAccountsLabel = new javax.swing.JLabel();
         javax.swing.Box.Filler filler9 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2));
         javax.swing.JPanel topAccounts = topAccountsTable;
-        rightClickForMoreOptions5 = new javax.swing.JLabel();
+        javax.swing.JLabel rightClickForMoreOptions5 = new javax.swing.JLabel();
 
         setLayout(new java.awt.BorderLayout());
 
@@ -505,10 +504,5 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel rightClickForMoreOptions1;
-    private javax.swing.JLabel rightClickForMoreOptions2;
-    private javax.swing.JLabel rightClickForMoreOptions3;
-    private javax.swing.JLabel rightClickForMoreOptions4;
-    private javax.swing.JLabel rightClickForMoreOptions5;
     // End of variables declaration//GEN-END:variables
 }

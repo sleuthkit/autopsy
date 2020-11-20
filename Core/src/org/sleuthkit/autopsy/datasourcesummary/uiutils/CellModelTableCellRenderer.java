@@ -109,10 +109,12 @@ public class CellModelTableCellRenderer extends DefaultTableCellRenderer {
             this.action = action;
         }
 
+        @Override
         public String getTitle() {
             return title;
         }
 
+        @Override
         public Runnable getAction() {
             return action;
         }
@@ -234,18 +236,19 @@ public class CellModelTableCellRenderer extends DefaultTableCellRenderer {
             if (popupMenu != null) {
                 return Collections.unmodifiableList(popupMenu);
             }
-            
+
             if (menuItemSupplier != null) {
                 return this.menuItemSupplier.get();
             }
-            
+
             return null;
         }
-        
+
         /**
          * Sets a function to lazy load the popup menu items.
+         *
          * @param menuItemSupplier The lazy load function for popup items.
-         * @return 
+         * @return
          */
         public DefaultCellModel setPopupMenuRetriever(Supplier<List<MenuItem>> menuItemSupplier) {
             this.menuItemSupplier = menuItemSupplier;
@@ -329,6 +332,10 @@ public class CellModelTableCellRenderer extends DefaultTableCellRenderer {
         return defaultCell;
     }
 
+    /**
+     * The default cell mouse listener that triggers popups for non-primary
+     * button events.
+     */
     private static final CellMouseListener DEFAULT_CELL_MOUSE_LISTENER = new CellMouseListener() {
 
         @Override
@@ -355,6 +362,10 @@ public class CellModelTableCellRenderer extends DefaultTableCellRenderer {
         }
     };
 
+    /**
+     * @return The default cell mouse listener that triggers popups for
+     * non-primary button events.
+     */
     public static CellMouseListener getMouseListener() {
         return DEFAULT_CELL_MOUSE_LISTENER;
     }

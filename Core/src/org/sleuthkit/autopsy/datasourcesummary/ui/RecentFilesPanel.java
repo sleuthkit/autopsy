@@ -278,9 +278,9 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
         javax.swing.JLabel openDocsLabel = new javax.swing.JLabel();
         javax.swing.JLabel downloadLabel = new javax.swing.JLabel();
         javax.swing.JLabel attachmentLabel = new javax.swing.JLabel();
-        rightClickForMoreOptions1 = new javax.swing.JLabel();
-        rightClickForMoreOptions2 = new javax.swing.JLabel();
-        rightClickForMoreOptions3 = new javax.swing.JLabel();
+        javax.swing.JLabel rightClickForMoreOptions1 = new javax.swing.JLabel();
+        javax.swing.JLabel rightClickForMoreOptions2 = new javax.swing.JLabel();
+        javax.swing.JLabel rightClickForMoreOptions3 = new javax.swing.JLabel();
 
         setLayout(new java.awt.BorderLayout());
 
@@ -386,8 +386,5 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
     private javax.swing.JPanel attachmentsPane;
     private javax.swing.JPanel downloadsPane;
     private javax.swing.JPanel openedDocPane;
-    private javax.swing.JLabel rightClickForMoreOptions1;
-    private javax.swing.JLabel rightClickForMoreOptions2;
-    private javax.swing.JLabel rightClickForMoreOptions3;
     // End of variables declaration//GEN-END:variables
 }
