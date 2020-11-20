@@ -19,8 +19,12 @@
     <target name="retrieve-experimental" depends="resolve">
         <ivy:retrieve conf="experimental"  pattern="${basedir}/release/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />   
     </target>
+    
+    <target name="get-thirdparty-dependencies">
+        <copy file="${thirdparty.dir}/JTidy/jtidy-r938.jar" todir="${ext.dir}" />
+    </target>
 
-    <target name="retrieve-all" depends="resolve">
+    <target name="retrieve-all" depends="resolve, get-thirdparty-dependencies">
         <ivy:retrieve conf="*"  pattern="${basedir}/release/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />   
     </target>
     

@@ -18,32 +18,65 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import org.w3c.tidy.Tidy;
 
 /**
- * Responsible for parsing the manifest files that
- * describe cases, devices, and data sources.
- * These are used by autoingest to create cases and add
- * data sources to the correct case.
+ * Responsible for parsing the manifest files that describe cases, devices, and
+ * data sources. These are used by autoingest to create cases and add data
+ * sources to the correct case.
  */
 public interface ManifestFileParser {
-    
+
     /**
      * Checks if a file is this type of manifest file
+     *
      * @param filePath Path to potential manifest file
+     *
      * @return True if the file is a manifest that this parser supports
-     */ 
+     */
     boolean fileIsManifest(Path filePath);
-    
+
     /**
-     * Parses the given file.  Will only be called if 
-     * fileIsManifest() previously returned true. 
+     * Parses the given file. Will only be called if fileIsManifest() previously
+     * returned true.
+     *
      * @param filePath Path to manifest file
+     *
      * @return Parsed results
-     * @throws org.sleuthkit.autopsy.experimental.autoingest.ManifestFileParser.ManifestFileParserException 
+     *
+     * @throws
+     * org.sleuthkit.autopsy.experimental.autoingest.ManifestFileParser.ManifestFileParserException
      */
     Manifest parse(Path filePath) throws ManifestFileParserException;
-    
+
+    /**
+     * Creates a "tidy" version of the given XML file in same parent directory.
+     *
+     * @param filePath Path to original XML file.
+     *
+     * @return Path to the newly created tidy version of the file.
+     *
+     * @throws IOException
+     */
+    static Path makeTidyManifestFile(Path filePath) throws IOException {
+        File tempFile = File.createTempFile("mani", "tdy", filePath.getParent().toFile());
+
+        try (FileInputStream br = new FileInputStream(filePath.toFile()); FileOutputStream out = new FileOutputStream(tempFile);) {
+            Tidy tidy = new Tidy();
+            tidy.setXmlOut(true);
+            tidy.setXmlTags(true);
+            tidy.parseDOM(br, out);
+        }
+
+        return Paths.get(tempFile.toString());
+    }
+
     public final static class ManifestFileParserException extends Exception {
 
         private static final long serialVersionUID = 1L;
@@ -67,5 +100,5 @@ public interface ManifestFileParser {
             super(message, cause);
         }
     }
-        
+
 }
