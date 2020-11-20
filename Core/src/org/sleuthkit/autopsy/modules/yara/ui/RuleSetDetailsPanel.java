@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.modules.yara.ui;
 
 import java.awt.Component;
 import java.awt.Desktop;
+import java.awt.Graphics;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -56,7 +57,8 @@ public class RuleSetDetailsPanel extends javax.swing.JPanel {
         fileList.setModel(fileListModel);
         fileList.setCellRenderer(new FileRenderer());
         openFolderButton.setEnabled(false);
-
+        scrollPane.setViewportView(fileList);
+        
     }
 
     /**
@@ -71,15 +73,17 @@ public class RuleSetDetailsPanel extends javax.swing.JPanel {
 
         if (ruleSet != null) {
             List<File> files = currentRuleSet.getRuleFiles();
-
-            for (File file : files) {
-                fileListModel.addElement(file);
+            
+            if(files != null) {
+                for (File file : files) {
+                    fileListModel.addElement(file);
+                }
             }
         }
 
         openFolderButton.setEnabled(ruleSet != null);
     }
-
+    
     /**
      * Simple ListCellRenderer for the file list.
      */
@@ -116,6 +120,7 @@ public class RuleSetDetailsPanel extends javax.swing.JPanel {
         openFolderButton = new javax.swing.JButton();
         openLabel = new javax.swing.JLabel();
         scrollPane = new javax.swing.JScrollPane();
+        javax.swing.JButton refreshButton = new javax.swing.JButton();
 
         setLayout(new java.awt.GridBagLayout());
 
@@ -159,12 +164,25 @@ public class RuleSetDetailsPanel extends javax.swing.JPanel {
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 4;
-        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.gridwidth = 3;
         gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
         gridBagConstraints.weightx = 1.0;
         gridBagConstraints.weighty = 1.0;
         gridBagConstraints.insets = new java.awt.Insets(5, 0, 0, 0);
         add(scrollPane, gridBagConstraints);
+
+        refreshButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/arrow-circle-double-135.png"))); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(refreshButton, org.openide.util.NbBundle.getMessage(RuleSetDetailsPanel.class, "RuleSetDetailsPanel.refreshButton.text")); // NOI18N
+        refreshButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                refreshButtonActionPerformed(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 2;
+        gridBagConstraints.gridy = 5;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.SOUTHEAST;
+        add(refreshButton, gridBagConstraints);
     }// </editor-fold>//GEN-END:initComponents
 
     @Messages({
@@ -187,6 +205,19 @@ public class RuleSetDetailsPanel extends javax.swing.JPanel {
             }
         }
     }//GEN-LAST:event_openFolderButtonActionPerformed
+
+    private void refreshButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_refreshButtonActionPerformed
+        if (currentRuleSet != null) {
+            fileListModel.clear();
+            List<File> files = currentRuleSet.getRuleFiles();
+            
+            if(files != null) {
+                for (File file : files) {
+                    fileListModel.addElement(file);
+                }
+            }
+        }
+    }//GEN-LAST:event_refreshButtonActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
