@@ -13,7 +13,7 @@ You should ensure that the database folder is backed up.
 
 To install PostgreSQL, perform the following steps:
 
-1. Download a 64-bit PostgreSQL installer from  http://www.enterprisedb.com/products-services-training/pgdownload#windows  Choose the one that says _Win X86-64_. Autopsy has been tested with PostgreSQL version 9.5.
+1. Download a 64-bit PostgreSQL installer from  https://www.enterprisedb.com/downloads/postgres-postgresql-downloads  Choose one under Windows x86-64. Autopsy has been tested with PostgreSQL version 9.5.
 
 2. Run the installer. The name will be similar to _postgresql-9.5.3-1-windows-x64.exe_.
 
