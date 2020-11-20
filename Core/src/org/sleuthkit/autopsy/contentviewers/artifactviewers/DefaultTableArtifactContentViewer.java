@@ -54,37 +54,36 @@ import com.google.gson.JsonArray;
 import java.util.Locale;
 import java.util.Map;
 import javax.swing.SwingUtilities;
+import org.sleuthkit.autopsy.discovery.ui.AbstractArtifactDetailsPanel;
 //import org.sleuthkit.autopsy.contentviewers.Bundle;
 
 /**
- * This class displays a Blackboard artifact as a table listing all it's 
- * attributes names and values.
+ * This class displays a Blackboard artifact as a table of its attributes.
  */
-
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
-public class DefaultArtifactContentViewer extends javax.swing.JPanel implements ArtifactContentViewer {
+public class DefaultTableArtifactContentViewer extends AbstractArtifactDetailsPanel implements ArtifactContentViewer {
 
     @NbBundle.Messages({
-        "DefaultArtifactContentViewer.attrsTableHeader.type=Type",
-        "DefaultArtifactContentViewer.attrsTableHeader.value=Value",
-        "DefaultArtifactContentViewer.attrsTableHeader.sources=Source(s)",
+        "DefaultTableArtifactContentViewer.attrsTableHeader.type=Type",
+        "DefaultTableArtifactContentViewer.attrsTableHeader.value=Value",
+        "DefaultTableArtifactContentViewer.attrsTableHeader.sources=Source(s)",
         "DataContentViewerArtifact.failedToGetSourcePath.message=Failed to get source file path from case database",
         "DataContentViewerArtifact.failedToGetAttributes.message=Failed to get some or all attributes from case database"
     })
-    
-    private final static Logger logger = Logger.getLogger(DefaultArtifactContentViewer.class.getName());
-   
+
+    private final static Logger logger = Logger.getLogger(DefaultTableArtifactContentViewer.class.getName());
+
     private static final long serialVersionUID = 1L;
-    
+
     private static final String[] COLUMN_HEADERS = {
-        Bundle.DefaultArtifactContentViewer_attrsTableHeader_type(),
-        Bundle.DefaultArtifactContentViewer_attrsTableHeader_value(),
-        Bundle.DefaultArtifactContentViewer_attrsTableHeader_sources()};
+        Bundle.DefaultTableArtifactContentViewer_attrsTableHeader_type(),
+        Bundle.DefaultTableArtifactContentViewer_attrsTableHeader_value(),
+        Bundle.DefaultTableArtifactContentViewer_attrsTableHeader_sources()};
     private static final int[] COLUMN_WIDTHS = {100, 800, 100};
     private static final int CELL_BOTTOM_MARGIN = 5;
     private static final int CELL_RIGHT_MARGIN = 1;
 
-    public DefaultArtifactContentViewer() {
+    public DefaultTableArtifactContentViewer() {
         initResultsTable();
         initComponents();
         resultsTableScrollPane.setViewportView(resultsTable);
@@ -124,7 +123,7 @@ public class DefaultArtifactContentViewer extends javax.swing.JPanel implements 
                 // do nothing
             }
 
-            @Override  
+            @Override
             public void columnMarginChanged(ChangeEvent e) {
                 updateRowHeights(); //When the user changes column width we may need to resize row height
             }
@@ -153,12 +152,12 @@ public class DefaultArtifactContentViewer extends javax.swing.JPanel implements 
                 Component comp = resultsTable.prepareRenderer(
                         resultsTable.getCellRenderer(row, valueColIndex), row, valueColIndex);
                 final int rowHeight;
-             if (comp instanceof JTextArea) {
+                if (comp instanceof JTextArea) {
                     final JTextArea tc = (JTextArea) comp;
                     final View rootView = tc.getUI().getRootView(tc);
                     java.awt.Insets i = tc.getInsets();
                     rootView.setSize(resultsTable.getColumnModel().getColumn(valueColIndex)
-                            .getWidth() - (i.left + i.right +CELL_RIGHT_MARGIN), //current width minus borders
+                            .getWidth() - (i.left + i.right + CELL_RIGHT_MARGIN), //current width minus borders
                             Integer.MAX_VALUE);
                     rowHeight = (int) rootView.getPreferredSpan(View.Y_AXIS);
                 } else {
@@ -202,17 +201,18 @@ public class DefaultArtifactContentViewer extends javax.swing.JPanel implements 
         selectAllMenuItem = new javax.swing.JMenuItem();
         resultsTableScrollPane = new javax.swing.JScrollPane();
 
-        copyMenuItem.setText(org.openide.util.NbBundle.getMessage(DefaultArtifactContentViewer.class, "DefaultArtifactContentViewer.copyMenuItem.text")); // NOI18N
+        copyMenuItem.setText(org.openide.util.NbBundle.getMessage(DefaultTableArtifactContentViewer.class, "DefaultTableArtifactContentViewer.copyMenuItem.text")); // NOI18N
         rightClickMenu.add(copyMenuItem);
 
-        selectAllMenuItem.setText(org.openide.util.NbBundle.getMessage(DefaultArtifactContentViewer.class, "DefaultArtifactContentViewer.selectAllMenuItem.text")); // NOI18N
+        selectAllMenuItem.setText(org.openide.util.NbBundle.getMessage(DefaultTableArtifactContentViewer.class, "DefaultTableArtifactContentViewer.selectAllMenuItem.text")); // NOI18N
         rightClickMenu.add(selectAllMenuItem);
 
-        setPreferredSize(new java.awt.Dimension(100, 58));
+        setPreferredSize(new java.awt.Dimension(0, 0));
 
         resultsTableScrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
         resultsTableScrollPane.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-        resultsTableScrollPane.setPreferredSize(new java.awt.Dimension(620, 34));
+        resultsTableScrollPane.setMinimumSize(new java.awt.Dimension(0, 0));
+        resultsTableScrollPane.setPreferredSize(new java.awt.Dimension(0, 0));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -267,7 +267,7 @@ public class DefaultArtifactContentViewer extends javax.swing.JPanel implements 
      * Resets the components to an empty view state.
      */
     private void resetComponents() {
-       
+
         ((DefaultTableModel) resultsTable.getModel()).setRowCount(0);
     }
 
@@ -279,7 +279,7 @@ public class DefaultArtifactContentViewer extends javax.swing.JPanel implements 
     @Override
     public void setArtifact(BlackboardArtifact artifact) {
         try {
-            ResultsTableArtifact resultsTableArtifact = new ResultsTableArtifact(artifact, artifact.getParent());
+            ResultsTableArtifact resultsTableArtifact = artifact == null ? null : new ResultsTableArtifact(artifact, artifact.getParent());
 
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
@@ -289,7 +289,7 @@ public class DefaultArtifactContentViewer extends javax.swing.JPanel implements 
             });
 
         } catch (TskCoreException ex) {
-             logger.log(Level.SEVERE, String.format("Error getting parent content for artifact (artifact_id=%d, obj_id=%d)", artifact.getArtifactID(), artifact.getObjectID()), ex);
+            logger.log(Level.SEVERE, String.format("Error getting parent content for artifact (artifact_id=%d, obj_id=%d)", artifact.getArtifactID(), artifact.getObjectID()), ex);
         }
 
     }
@@ -301,7 +301,7 @@ public class DefaultArtifactContentViewer extends javax.swing.JPanel implements 
     }
 
     /**
-     * This class is a container to hold the data necessary for the artifact 
+     * This class is a container to hold the data necessary for the artifact
      * being viewed.
      */
     private class ResultsTableArtifact {
@@ -340,20 +340,20 @@ public class DefaultArtifactContentViewer extends javax.swing.JPanel implements 
                      */
                     String value;
                     switch (attr.getAttributeType().getValueType()) {
-         
+
                         // Use Autopsy date formatting settings, not TSK defaults
                         case DATETIME:
                             value = epochTimeToString(attr.getValueLong());
                             break;
-                        case JSON: 
+                        case JSON:
                             // Get the attribute's JSON value and convert to indented multiline display string
                             String jsonVal = attr.getValueString();
                             JsonParser parser = new JsonParser();
                             JsonObject json = parser.parse(jsonVal).getAsJsonObject();
-                           
+
                             value = toJsonDisplayString(json, "");
                             break;
-                            
+
                         case STRING:
                         case INTEGER:
                         case LONG:
@@ -398,43 +398,43 @@ public class DefaultArtifactContentViewer extends javax.swing.JPanel implements 
         String getArtifactDisplayName() {
             return artifactDisplayName;
         }
-        
+
         private static final String INDENT_RIGHT = "    ";
         private static final String NEW_LINE = "\n";
-            
+
         /**
          * Recursively converts a JSON element into an indented multi-line
          * display string.
          *
-         * @param element JSON element to convert
+         * @param element     JSON element to convert
          * @param startIndent Starting indentation for the element.
          *
          * @return A multi-line display string.
          */
         private String toJsonDisplayString(JsonElement element, String startIndent) {
-           
+
             StringBuilder sb = new StringBuilder("");
             JsonObject obj = element.getAsJsonObject();
 
             for (Map.Entry<String, JsonElement> entry : obj.entrySet()) {
-                appendJsonElementToString(entry.getKey(), entry.getValue(), startIndent, sb );
+                appendJsonElementToString(entry.getKey(), entry.getValue(), startIndent, sb);
             }
 
             String returnString = sb.toString();
-            if (startIndent.length() == 0 &&  returnString.startsWith(NEW_LINE)) {
+            if (startIndent.length() == 0 && returnString.startsWith(NEW_LINE)) {
                 returnString = returnString.substring(NEW_LINE.length());
             }
             return returnString;
         }
-        
-       
+
         /**
-         * Converts the given JSON element into string and appends to the given string builder.
-         * 
+         * Converts the given JSON element into string and appends to the given
+         * string builder.
+         *
          * @param jsonKey
          * @param jsonElement
          * @param startIndent Starting indentation for the element.
-         * @param sb String builder to append to.
+         * @param sb          String builder to append to.
          */
         private void appendJsonElementToString(String jsonKey, JsonElement jsonElement, String startIndent, StringBuilder sb) {
             if (jsonElement.isJsonArray()) {
@@ -463,11 +463,12 @@ public class DefaultArtifactContentViewer extends javax.swing.JPanel implements 
                 sb.append(NEW_LINE).append(String.format("%s%s = null", startIndent, jsonKey));
             }
         }
-        
+
         /**
          * Converts epoch time to readable string.
-         * 
+         *
          * @param epochTime epoch time value to be converted to string.
+         *
          * @return String with human readable time.
          */
         private String epochTimeToString(long epochTime) {
@@ -482,21 +483,20 @@ public class DefaultArtifactContentViewer extends javax.swing.JPanel implements 
     }
 
     /**
-     * Updates the table view with the given artifact data. 
-     * 
+     * Updates the table view with the given artifact data.
+     *
      * It should be called on EDT.
      *
      * @param resultsTableArtifact Artifact data to display in the view.
      */
     private void updateView(ResultsTableArtifact resultsTableArtifact) {
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-
         DefaultTableModel tModel = ((DefaultTableModel) resultsTable.getModel());
-        tModel.setDataVector(resultsTableArtifact.getRows(), COLUMN_HEADERS);
+        String[][] rows = resultsTableArtifact == null ? new String[0][0] : resultsTableArtifact.getRows();
+        tModel.setDataVector(rows, COLUMN_HEADERS);
         updateColumnSizes();
         updateRowHeights();
         resultsTable.clearSelection();
-
         this.setCursor(null);
     }
 

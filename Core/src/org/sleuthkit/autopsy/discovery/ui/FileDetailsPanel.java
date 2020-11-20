@@ -36,6 +36,7 @@ import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
 import org.sleuthkit.autopsy.corecomponents.DataContentPanel;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
@@ -48,7 +49,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Panel to display the details of the selected result.
  */
-final class DetailsPanel extends javax.swing.JPanel {
+final class FileDetailsPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
 
@@ -59,7 +60,8 @@ final class DetailsPanel extends javax.swing.JPanel {
     /**
      * Creates new form DetailsPanel.
      */
-    DetailsPanel() {
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    FileDetailsPanel() {
         initComponents();
         dataContentPanel = DataContentPanel.createInstance();
         detailsSplitPane.setBottomComponent(dataContentPanel);
@@ -68,20 +70,18 @@ final class DetailsPanel extends javax.swing.JPanel {
             @Override
             public void mousePressed(MouseEvent e) {
                 if (SwingUtilities.isRightMouseButton(e)) {
-                    SwingUtilities.invokeLater(() -> {
-                        instancesList.setSelectedIndex(instancesList.locationToIndex(e.getPoint()));
-                        Set<AbstractFile> files = new HashSet<>();
-                        files.add(instancesList.getSelectedValue());
-                        JPopupMenu menu = new JPopupMenu();
-                        menu.add(new ViewContextAction(Bundle.ResultsPanel_viewFileInDir_name(), instancesList.getSelectedValue()));
-                        menu.add(new ExternalViewerAction(Bundle.ResultsPanel_openInExternalViewer_name(), new FileNode(instancesList.getSelectedValue())));
-                        menu.add(ViewFileInTimelineAction.createViewFileAction(instancesList.getSelectedValue()));
-                        menu.add(new DiscoveryExtractAction(files));
-                        menu.add(AddContentTagAction.getInstance().getMenuForContent(files));
-                        menu.add(DeleteFileContentTagAction.getInstance().getMenuForFiles(files));
-                        menu.add(AddContentToHashDbAction.getInstance().getMenuForFiles(files));
-                        menu.show(instancesList, e.getPoint().x, e.getPoint().y);
-                    });
+                    instancesList.setSelectedIndex(instancesList.locationToIndex(e.getPoint()));
+                    Set<AbstractFile> files = new HashSet<>();
+                    files.add(instancesList.getSelectedValue());
+                    JPopupMenu menu = new JPopupMenu();
+                    menu.add(new ViewContextAction(Bundle.ResultsPanel_viewFileInDir_name(), instancesList.getSelectedValue()));
+                    menu.add(new ExternalViewerAction(Bundle.ResultsPanel_openInExternalViewer_name(), new FileNode(instancesList.getSelectedValue())));
+                    menu.add(ViewFileInTimelineAction.createViewFileAction(instancesList.getSelectedValue()));
+                    menu.add(new DiscoveryExtractAction(files));
+                    menu.add(AddContentTagAction.getInstance().getMenuForContent(files));
+                    menu.add(DeleteFileContentTagAction.getInstance().getMenuForFiles(files));
+                    menu.add(AddContentToHashDbAction.getInstance().getMenuForFiles(files));
+                    menu.show(instancesList, e.getPoint().x, e.getPoint().y);
                 }
             }
         });
@@ -89,14 +89,12 @@ final class DetailsPanel extends javax.swing.JPanel {
             @Override
             public void valueChanged(ListSelectionEvent e) {
                 if (!e.getValueIsAdjusting()) {
-                    SwingUtilities.invokeLater(() -> {
-                        AbstractFile file = getSelectedFile();
-                        if (file != null) {
-                            dataContentPanel.setNode(new TableFilterNode(new FileNode(file), false));
-                        } else {
-                            dataContentPanel.setNode(null);
-                        }
-                    });
+                    AbstractFile file = getSelectedFile();
+                    if (file != null) {
+                        dataContentPanel.setNode(new TableFilterNode(new FileNode(file), false));
+                    } else {
+                        dataContentPanel.setNode(null);
+                    }
                 }
             }
         };
@@ -112,7 +110,9 @@ final class DetailsPanel extends javax.swing.JPanel {
      */
     @Subscribe
     void handleClearSelectionListener(DiscoveryEventUtils.ClearInstanceSelectionEvent clearEvent) {
-        instancesList.clearSelection();
+        SwingUtilities.invokeLater(() -> {
+            instancesList.clearSelection();
+        });
     }
 
     /**
@@ -122,9 +122,9 @@ final class DetailsPanel extends javax.swing.JPanel {
      *                      instances list should be populated
      */
     @Subscribe
-    synchronized void handlePopulateInstancesListEvent(DiscoveryEventUtils.PopulateInstancesListEvent populateEvent) {
+    void handlePopulateInstancesListEvent(DiscoveryEventUtils.PopulateInstancesListEvent populateEvent) {
+        List<AbstractFile> files = populateEvent.getInstances();
         SwingUtilities.invokeLater(() -> {
-            List<AbstractFile> files = populateEvent.getInstances();
             if (files.isEmpty()) {
                 //if there are no files currently remove the current items without removing listener to cause content viewer to reset
                 instancesListModel.removeAllElements();
@@ -154,7 +154,8 @@ final class DetailsPanel extends javax.swing.JPanel {
      *
      * @return The AbstractFile which is currently selected.
      */
-    synchronized AbstractFile getSelectedFile() {
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    AbstractFile getSelectedFile() {
         if (instancesList.getSelectedIndex() == -1) {
             return null;
         } else {
@@ -186,7 +187,7 @@ final class DetailsPanel extends javax.swing.JPanel {
 
         instancesScrollPane.setPreferredSize(new java.awt.Dimension(775, 60));
 
-        instancesList.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(DetailsPanel.class, "DetailsPanel.instancesList.border.title"))); // NOI18N
+        instancesList.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(FileDetailsPanel.class, "FileDetailsPanel.instancesList.border.title"))); // NOI18N
         instancesList.setModel(instancesListModel);
         instancesList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         instancesList.setCellRenderer(new InstancesCellRenderer());
@@ -241,6 +242,7 @@ final class DetailsPanel extends javax.swing.JPanel {
 
         private static final long serialVersionUID = 1L;
 
+        @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
         @Override
         public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
             super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
