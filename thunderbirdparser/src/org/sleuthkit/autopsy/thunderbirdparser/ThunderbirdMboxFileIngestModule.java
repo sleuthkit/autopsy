@@ -23,9 +23,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
@@ -139,6 +141,10 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         boolean isPstFile = PstParser.isPstFile(abstractFile);
         boolean isVcardFile = VcardParser.isVcardFile(abstractFile);
         
+        if (context.fileIngestIsCancelled()) {
+            return ProcessResult.OK;
+        }
+        
         if (isMbox || isEMLFile || isPstFile || isVcardFile  ) {
             try {
                 communicationArtifactsHelper = new CommunicationArtifactsHelper(currentCase.getSleuthkitCase(),
@@ -148,7 +154,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
                 return ProcessResult.ERROR;
             }
         }
-        
+
         if (isMbox) {
             return processMBox(abstractFile);
         }
@@ -164,7 +170,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         if (isVcardFile) {
             return processVcard(abstractFile);
         }
-
+        
         return ProcessResult.OK;
     }
 
@@ -207,12 +213,16 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
 
         PstParser parser = new PstParser(services);
         PstParser.ParseResult result = parser.open(file, abstractFile.getId());
-
+        
+        
         switch( result) {
             case OK:
                 Iterator<EmailMessage> pstMsgIterator = parser.getEmailMessageIterator();
                 if (pstMsgIterator != null) {
-                    processEmails(parser.getPartialEmailMessages(), pstMsgIterator , abstractFile);
+                    processEmails(parser.getPartialEmailMessages(), pstMsgIterator, abstractFile);
+                    if (context.fileIngestIsCancelled()) {
+                        return ProcessResult.OK;
+                    }
                 } else {
                     // sometimes parser returns ParseResult=OK but there are no messages
                     postErrorMessage(
@@ -265,7 +275,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         if (file.delete() == false) {
             logger.log(Level.INFO, "Failed to delete temp file: {0}", file.getName()); //NON-NLS
         }
-
+        
         return ProcessResult.OK;
     }
 
@@ -321,6 +331,9 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
             }
 
             processMboxFile(file, abstractFile, emailFolder);
+            if (context.fileIngestIsCancelled()) {
+                return ProcessResult.OK;
+            }
             
             if (file.delete() == false) {
                 logger.log(Level.INFO, "Failed to delete temp file: {0}", file.getName()); //NON-NLS
@@ -349,7 +362,9 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
                 if (splitFile.delete() == false) {
                     logger.log(Level.INFO, "Failed to delete temp file: {0}", splitFile); //NON-NLS
                 }
-
+                if (context.fileIngestIsCancelled()) {
+                    return ProcessResult.OK;
+                }
             }
         }                 
             
@@ -385,6 +400,9 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         List<EmailMessage> emails = new ArrayList<>();
         if(emailIterator != null) {
             while(emailIterator.hasNext()) {
+                if (context.fileIngestIsCancelled()) {
+                    return;
+                }
                 EmailMessage emailMessage = emailIterator.next();
                 if(emailMessage != null) {
                     emails.add(emailMessage);
@@ -436,7 +454,9 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
 
             List<AbstractFile> derivedFiles = new ArrayList<>();
 
-            BlackboardArtifact msgArtifact = addEmailArtifact(message, abstractFile);
+            AccountFileInstanceCache accountFileInstanceCache = new AccountFileInstanceCache(abstractFile, currentCase);
+            BlackboardArtifact msgArtifact = addEmailArtifact(message, abstractFile, accountFileInstanceCache);
+            accountFileInstanceCache.clear();
 
             if ((msgArtifact != null) && (message.hasAttachment())) {
                 derivedFiles.addAll(handleAttachments(message.getAttachments(), abstractFile, msgArtifact));
@@ -512,7 +532,11 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
      * @param fullMessageIterator
      * @param abstractFile
      */
-    private void processEmails(List<EmailMessage> partialEmailsForThreading, Iterator<EmailMessage> fullMessageIterator, AbstractFile abstractFile) {
+    private void processEmails(List<EmailMessage> partialEmailsForThreading, Iterator<EmailMessage> fullMessageIterator, 
+            AbstractFile abstractFile) {
+        
+        // Create cache for accounts
+        AccountFileInstanceCache accountFileInstanceCache = new AccountFileInstanceCache(abstractFile, currentCase);
         
         // Putting try/catch around this to catch any exception and still allow
         // the creation of the artifacts to continue.
@@ -526,6 +550,10 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
 
         int msgCnt = 0;
         while(fullMessageIterator.hasNext()) {
+            if (context.fileIngestIsCancelled()) {
+                return;
+            }
+            
             EmailMessage current = fullMessageIterator.next();
             
             if(current == null) {
@@ -541,7 +569,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
                 }
             }
             
-            BlackboardArtifact msgArtifact = addEmailArtifact(current, abstractFile);
+            BlackboardArtifact msgArtifact = addEmailArtifact(current, abstractFile, accountFileInstanceCache);
             
             if ((msgArtifact != null) && (current.hasAttachment()))  {
                 derivedFiles.addAll(handleAttachments(current.getAttachments(), abstractFile, msgArtifact ));
@@ -550,6 +578,9 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
 
         if (derivedFiles.isEmpty() == false) {
             for (AbstractFile derived : derivedFiles) {
+                if (context.fileIngestIsCancelled()) {
+                    return;
+                }
                 services.fireModuleContentEvent(new ModuleContentEvent(derived));
             }
         }
@@ -654,7 +685,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
      * @return The generated e-mail message artifact.
      */
     @Messages({"ThunderbirdMboxFileIngestModule.addArtifact.indexError.message=Failed to index email message detected artifact for keyword search."})
-    private BlackboardArtifact addEmailArtifact(EmailMessage email, AbstractFile abstractFile) {
+    private BlackboardArtifact addEmailArtifact(EmailMessage email, AbstractFile abstractFile, AccountFileInstanceCache accountFileInstanceCache) {
         BlackboardArtifact bbart = null;
         List<BlackboardAttribute> bbattributes = new ArrayList<>();
         String to = email.getRecipients();
@@ -675,12 +706,16 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         String senderAddress;
         senderAddressList.addAll(findEmailAddresess(from));
         
+        if (context.fileIngestIsCancelled()) {
+            return null;
+        }
+        
         AccountFileInstance senderAccountInstance = null;
 
         if (senderAddressList.size() == 1) {
             senderAddress = senderAddressList.get(0);
             try {
-                senderAccountInstance = currentCase.getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.EMAIL, senderAddress, EmailParserModuleFactory.getModuleName(), abstractFile);
+                senderAccountInstance = accountFileInstanceCache.getAccountInstance(senderAddress);
             }
             catch(TskCoreException ex) {
                  logger.log(Level.WARNING, "Failed to create account for email address  " + senderAddress, ex); //NON-NLS
@@ -690,23 +725,28 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
              logger.log(Level.WARNING, "Failed to find sender address, from  = {0}", from); //NON-NLS
         }
         
+        if (context.fileIngestIsCancelled()) {
+            return null;
+        }
+        
         List<String> recipientAddresses = new ArrayList<>();
         recipientAddresses.addAll(findEmailAddresess(to));
         recipientAddresses.addAll(findEmailAddresess(cc));
         recipientAddresses.addAll(findEmailAddresess(bcc));
         
         List<AccountFileInstance> recipientAccountInstances = new ArrayList<>();
-        recipientAddresses.forEach((addr) -> {
+        for (String addr : recipientAddresses) {
+            if (context.fileIngestIsCancelled()) {
+                return null;
+            }
             try {
-                AccountFileInstance recipientAccountInstance = 
-                currentCase.getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.EMAIL, addr,
-                        EmailParserModuleFactory.getModuleName(), abstractFile);
+                AccountFileInstance recipientAccountInstance = accountFileInstanceCache.getAccountInstance(addr);
                 recipientAccountInstances.add(recipientAccountInstance);
             }
             catch(TskCoreException ex) {
                 logger.log(Level.WARNING, "Failed to create account for email address  " + addr, ex); //NON-NLS
             }
-        });
+        }
                 
         addArtifactAttribute(headers, ATTRIBUTE_TYPE.TSK_HEADERS, bbattributes);
         addArtifactAttribute(from, ATTRIBUTE_TYPE.TSK_EMAIL_FROM, bbattributes);
@@ -731,12 +771,23 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         
    
         try {
+            if (context.fileIngestIsCancelled()) {
+                return null;
+            }
             
             bbart = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG);
             bbart.addAttributes(bbattributes);
 
+            if (context.fileIngestIsCancelled()) {
+                return null;
+            }
+            
             // Add account relationships
             currentCase.getSleuthkitCase().getCommunicationsManager().addRelationships(senderAccountInstance, recipientAccountInstances, bbart,Relationship.Type.MESSAGE, dateL);
+
+            if (context.fileIngestIsCancelled()) {
+                return null;
+            }
             
             try {
                 // index the artifact for keyword search
@@ -788,6 +839,56 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
     static void addArtifactAttribute(long longVal, ATTRIBUTE_TYPE attrType, Collection<BlackboardAttribute> bbattributes) {
         if (longVal > 0) {
             bbattributes.add(new BlackboardAttribute(attrType, EmailParserModuleFactory.getModuleName(), longVal));
+        }
+    }
+    
+    /**
+     * Cache for storing AccountFileInstance.
+     * The idea is that emails will be used multiple times in a file and
+     * we shouldn't do a database lookup each time.
+     */
+    static private class AccountFileInstanceCache {
+        private final Map<String, AccountFileInstance> cacheMap;
+        private final AbstractFile file;
+        private final Case currentCase;
+        
+        /**
+         * Create a new cache. Caches are linked to a specific file.
+         * @param file
+         * @param currentCase 
+         */
+        AccountFileInstanceCache(AbstractFile file, Case currentCase) {
+            cacheMap= new HashMap<>();
+            this.file = file;
+            this.currentCase = currentCase;
+        }
+        
+        /**
+         * Get the account file instance from the cache or the database.
+         * 
+         * @param email The email for this account.
+         * 
+         * @return The corresponding AccountFileInstance
+         * 
+         * @throws TskCoreException 
+         */
+        AccountFileInstance getAccountInstance(String email) throws TskCoreException {
+            if (cacheMap.containsKey(email)) {
+                return cacheMap.get(email);
+            }
+            
+            AccountFileInstance accountInstance = 
+                currentCase.getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.EMAIL, email,
+                        EmailParserModuleFactory.getModuleName(), file);
+            cacheMap.put(email, accountInstance);
+            return accountInstance;
+        }
+        
+        /**
+         * Clears the cache.
+         */
+        void clear() {
+            cacheMap.clear();
         }
     }
     

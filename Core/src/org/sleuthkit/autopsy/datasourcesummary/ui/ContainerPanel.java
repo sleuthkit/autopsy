@@ -26,6 +26,7 @@ import java.util.Set;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.table.DefaultTableModel;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.ContainerSummary;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult.ResultType;
@@ -52,7 +53,7 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
         /**
          * Main constructor.
          *
-         * @param dataSource           The original datasource.
+         * @param dataSource The original datasource.
          * @param unallocatedFilesSize The unallocated file size.
          */
         ContainerPanelData(DataSource dataSource, Long unallocatedFilesSize) {
@@ -165,8 +166,6 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
     private void updateDetailsPanelData(DataSource selectedDataSource, Long unallocatedFilesSize) {
         clearTableValues();
         if (selectedDataSource != null) {
-            unallocatedSizeValue.setText(SizeRepresentationUtil.getSizeString(unallocatedFilesSize));
-            timeZoneValue.setText(selectedDataSource.getTimeZone());
             displayNameValue.setText(selectedDataSource.getName());
             originalNameValue.setText(selectedDataSource.getName());
             deviceIdValue.setText(selectedDataSource.getDeviceId());
@@ -178,11 +177,32 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
             }
 
             if (selectedDataSource instanceof Image) {
-                setFieldsForImage((Image) selectedDataSource);
+                setFieldsForImage((Image) selectedDataSource, unallocatedFilesSize);
+            } else {
+                setFieldsForNonImageDataSource();
             }
         }
-        updateFieldVisibility();
+
         this.repaint();
+    }
+
+    @Messages({
+        "ContainerPanel_setFieldsForNonImageDataSource_na=N/A"
+    })
+    private void setFieldsForNonImageDataSource() {
+        String NA = Bundle.ContainerPanel_setFieldsForNonImageDataSource_na();
+
+        unallocatedSizeValue.setText(NA);
+        imageTypeValue.setText(NA);
+        sizeValue.setText(NA);
+        sectorSizeValue.setText(NA);
+        timeZoneValue.setText(NA);
+
+        ((DefaultTableModel) filePathsTable.getModel()).addRow(new Object[]{NA});
+
+        md5HashValue.setText(NA);
+        sha1HashValue.setText(NA);
+        sha256HashValue.setText(NA);
     }
 
     /**
@@ -191,11 +211,14 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
      * rendering.
      *
      * @param selectedImage The selected image.
+     * @param unallocatedFilesSize Unallocated file size in bytes.
      */
-    private void setFieldsForImage(Image selectedImage) {
+    private void setFieldsForImage(Image selectedImage, Long unallocatedFilesSize) {
+        unallocatedSizeValue.setText(SizeRepresentationUtil.getSizeString(unallocatedFilesSize));
         imageTypeValue.setText(selectedImage.getType().getName());
         sizeValue.setText(SizeRepresentationUtil.getSizeString(selectedImage.getSize()));
         sectorSizeValue.setText(SizeRepresentationUtil.getSizeString(selectedImage.getSsize()));
+        timeZoneValue.setText(selectedImage.getTimeZone());
 
         for (String path : selectedImage.getPaths()) {
             ((DefaultTableModel) filePathsTable.getModel()).addRow(new Object[]{path});
@@ -231,41 +254,6 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Unable to get SHA256 for selected data source", ex);
         }
-    }
-
-    /**
-     * Update the visibility of all fields and their labels based on whether
-     * they have contents. Empty fields have them and their contents hidden.
-     */
-    private void updateFieldVisibility() {
-        displayNameValue.setVisible(!displayNameValue.getText().isEmpty());
-        displayNameLabel.setVisible(!displayNameValue.getText().isEmpty());
-        originalNameValue.setVisible(!originalNameValue.getText().isEmpty());
-        originalNameLabel.setVisible(!originalNameValue.getText().isEmpty());
-        deviceIdValue.setVisible(!deviceIdValue.getText().isEmpty());
-        deviceIdLabel.setVisible(!deviceIdValue.getText().isEmpty());
-        timeZoneValue.setVisible(!timeZoneValue.getText().isEmpty());
-        timeZoneLabel.setVisible(!timeZoneValue.getText().isEmpty());
-        acquisitionDetailsTextArea.setVisible(!acquisitionDetailsTextArea.getText().isEmpty());
-        acquisitionDetailsLabel.setVisible(!acquisitionDetailsTextArea.getText().isEmpty());
-        acquisitionDetailsScrollPane.setVisible(!acquisitionDetailsTextArea.getText().isEmpty());
-        imageTypeValue.setVisible(!imageTypeValue.getText().isEmpty());
-        imageTypeLabel.setVisible(!imageTypeValue.getText().isEmpty());
-        sizeValue.setVisible(!sizeValue.getText().isEmpty());
-        sizeLabel.setVisible(!sizeValue.getText().isEmpty());
-        sectorSizeValue.setVisible(!sectorSizeValue.getText().isEmpty());
-        sectorSizeLabel.setVisible(!sectorSizeValue.getText().isEmpty());
-        md5HashValue.setVisible(!md5HashValue.getText().isEmpty());
-        md5HashLabel.setVisible(!md5HashValue.getText().isEmpty());
-        sha1HashValue.setVisible(!sha1HashValue.getText().isEmpty());
-        sha1HashLabel.setVisible(!sha1HashValue.getText().isEmpty());
-        sha256HashValue.setVisible(!sha256HashValue.getText().isEmpty());
-        sha256HashLabel.setVisible(!sha256HashValue.getText().isEmpty());
-        unallocatedSizeValue.setVisible(!unallocatedSizeValue.getText().isEmpty());
-        unallocatedSizeLabel.setVisible(!unallocatedSizeValue.getText().isEmpty());
-        filePathsTable.setVisible(filePathsTable.getRowCount() > 0);
-        filePathsLabel.setVisible(filePathsTable.getRowCount() > 0);
-        filePathsScrollPane.setVisible(filePathsTable.getRowCount() > 0);
     }
 
     /**

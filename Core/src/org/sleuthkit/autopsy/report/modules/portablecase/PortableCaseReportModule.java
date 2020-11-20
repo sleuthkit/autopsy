@@ -60,6 +60,7 @@ import org.sleuthkit.autopsy.coreutils.FileTypeUtils.FileTypeCategory;
 import org.sleuthkit.autopsy.report.ReportProgressPanel;
 import org.sleuthkit.caseuco.CaseUcoExporter;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Blackboard.BlackboardException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -983,10 +984,10 @@ public class PortableCaseReportModule implements ReportModule {
 
         BlackboardArtifact.Type oldCustomType = currentCase.getSleuthkitCase().getArtifactType(oldArtifact.getArtifactTypeName());
         try {
-            BlackboardArtifact.Type newCustomType = portableSkCase.addBlackboardArtifactType(oldCustomType.getTypeName(), oldCustomType.getDisplayName());
+            BlackboardArtifact.Type newCustomType = portableSkCase.getBlackboard().getOrAddArtifactType(oldCustomType.getTypeName(), oldCustomType.getDisplayName());
             oldArtTypeIdToNewArtTypeId.put(oldArtifact.getArtifactTypeID(), newCustomType.getTypeID());
             return newCustomType.getTypeID();
-        } catch (TskDataException ex) {
+        } catch (BlackboardException ex) {
             throw new TskCoreException("Error creating new artifact type " + oldCustomType.getTypeName(), ex); // NON-NLS
         }
     }
@@ -1007,11 +1008,11 @@ public class PortableCaseReportModule implements ReportModule {
         }
 
         try {
-            BlackboardAttribute.Type newCustomType = portableSkCase.addArtifactAttributeType(oldAttrType.getTypeName(),
+            BlackboardAttribute.Type newCustomType = portableSkCase.getBlackboard().getOrAddAttributeType(oldAttrType.getTypeName(),
                     oldAttrType.getValueType(), oldAttrType.getDisplayName());
             oldAttrTypeIdToNewAttrType.put(oldAttribute.getAttributeType().getTypeID(), newCustomType);
             return newCustomType;
-        } catch (TskDataException ex) {
+        } catch (BlackboardException ex) {
             throw new TskCoreException("Error creating new attribute type " + oldAttrType.getTypeName(), ex); // NON-NLS
         }
     }
@@ -1117,7 +1118,7 @@ public class PortableCaseReportModule implements ReportModule {
 
                                 newContent = portableSkCase.addLocalFile(abstractFile.getName(), relativePath, abstractFile.getSize(),
                                         abstractFile.getCtime(), abstractFile.getCrtime(), abstractFile.getAtime(), abstractFile.getMtime(),
-                                        abstractFile.getMd5Hash(), abstractFile.getKnown(), abstractFile.getMIMEType(),
+                                        abstractFile.getMd5Hash(), abstractFile.getSha256Hash(), abstractFile.getKnown(), abstractFile.getMIMEType(),
                                         true, TskData.EncodingType.NONE,
                                         newParent, trans);
                             } catch (IOException ex) {

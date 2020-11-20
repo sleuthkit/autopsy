@@ -471,6 +471,10 @@ class TestRunner(object):
         test_data.ant.append("-DsolrPort=" + str(test_config.solrPort))
         test_data.ant.append("-DmessageServiceHost=" + test_config.messageServiceHost)
         test_data.ant.append("-DmessageServicePort=" + str(test_config.messageServicePort))
+        test_data.ant.append("-DcrHost=" + str(test_config.crHost))
+        test_data.ant.append("-DcrPort=" + str(test_config.crPort))
+        test_data.ant.append("-DcrUserName=" + str(test_config.crUserName))
+        test_data.ant.append("-DcrPassword=" + str(test_config.crPassword))
         if test_data.isMultiUser:
             test_data.ant.append("-DisMultiUser=true")
         # Note: test_data has autopys_version attribute, but we couldn't see it from here. It's set after run ingest.
@@ -854,6 +858,14 @@ class TestConfiguration(object):
                 self.messageServicePort = parsed_config.getElementsByTagName("messageServicePort")[0].getAttribute("value").encode().decode("utf_8")
             if parsed_config.getElementsByTagName("multiUser_outdir"):
                 self.multiUser_outdir = parsed_config.getElementsByTagName("multiUser_outdir")[0].getAttribute("value").encode().decode("utf_8")
+            if parsed_config.getElementsByTagName("crHost"):
+                self.crHost = parsed_config.getElementsByTagName("crHost")[0].getAttribute("value").encode().decode("utf_8")
+            if parsed_config.getElementsByTagName("crPort"):
+                self.crPort = parsed_config.getElementsByTagName("crPort")[0].getAttribute("value").encode().decode("utf_8")
+            if parsed_config.getElementsByTagName("crUserName"):
+                self.crUserName = parsed_config.getElementsByTagName("crUserName")[0].getAttribute("value").encode().decode("utf_8")
+            if parsed_config.getElementsByTagName("crPassword"):
+                self.crPassword = parsed_config.getElementsByTagName("crPassword")[0].getAttribute("value").encode().decode("utf_8")
             self._init_imgs(parsed_config)
             self._init_build_info(parsed_config)
 
