@@ -13,7 +13,15 @@ extern "C" {
 	* Signature: (Ljava/lang/String;[B)Ljava/util/List;
 	*/
 	JNIEXPORT jobject JNICALL Java_org_sleuthkit_autopsy_yara_YaraJNIWrapper_findRuleMatch
-	(JNIEnv *, jclass, jstring, jbyteArray);
+	(JNIEnv *, jclass, jstring, jbyteArray, jint, jint);
+
+	/*
+	* Class:     org_sleuthkit_autopsy_yara_YaraJNIWrapper
+	* Method:    findRuleMatchFile
+	* Signature: (Ljava/lang/String;Ljava/lang/String;)Ljava/util/List;
+	*/
+	JNIEXPORT jobject JNICALL Java_org_sleuthkit_autopsy_yara_YaraJNIWrapper_findRuleMatchFile
+	(JNIEnv *, jclass, jstring, jstring, jint);
 
 #ifdef __cplusplus
 }

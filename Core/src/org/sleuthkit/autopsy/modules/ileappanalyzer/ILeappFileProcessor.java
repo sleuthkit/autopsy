@@ -44,6 +44,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.apache.commons.io.FilenameUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
@@ -76,11 +77,15 @@ public final class ILeappFileProcessor {
     private final Map<String, String> tsvFileArtifactComments;
     private final Map<String, List<List<String>>> tsvFileAttributes;
 
-    public ILeappFileProcessor() throws IOException, IngestModuleException {
+    Blackboard blkBoard;
+
+    public ILeappFileProcessor() throws IOException, IngestModuleException, NoCurrentCaseException {
         this.tsvFiles = new HashMap<>();
         this.tsvFileArtifacts = new HashMap<>();
         this.tsvFileArtifactComments = new HashMap<>();
         this.tsvFileAttributes = new HashMap<>();
+
+        blkBoard = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard();
 
         configExtractor();
         loadConfigFile();
@@ -110,6 +115,19 @@ public final class ILeappFileProcessor {
         return ProcessResult.OK;
     }
 
+    public ProcessResult processFileSystem(Content dataSource, Path moduleOutputPath) {
+
+        try {
+            List<String> iLeappTsvOutputFiles = findTsvFiles(moduleOutputPath);
+            processiLeappFiles(iLeappTsvOutputFiles, dataSource);
+        } catch (IOException | IngestModuleException ex) {
+            logger.log(Level.SEVERE, String.format("Error trying to process iLeapp output files in directory %s. ", moduleOutputPath.toString()), ex); //NON-NLS
+            return ProcessResult.ERROR;
+        }
+
+        return ProcessResult.OK;
+    }
+
     /**
      * Find the tsv files in the iLeapp output directory and match them to files
      * we know we want to process and return the list to process those files.
@@ -124,7 +142,7 @@ public final class ILeappFileProcessor {
                     .filter(f -> f.toLowerCase().endsWith(".tsv")).collect(Collectors.toList());
 
             for (String tsvFile : allTsvFiles) {
-                if (tsvFiles.containsKey(FilenameUtils.getName(tsvFile))) {
+                if (tsvFiles.containsKey(FilenameUtils.getName(tsvFile.toLowerCase()))) {
                     foundTsvFiles.add(tsvFile);
                 }
             }
@@ -160,7 +178,41 @@ public final class ILeappFileProcessor {
                     processFile(iLeappFile, attrList, fileName, artifactType, bbartifacts, iLeappImageFile);
 
                 } catch (TskCoreException ex) {
-                    // check this
+                    throw new IngestModuleException(String.format("Error getting Blackboard Artifact Type for %s", tsvFileArtifacts.get(fileName)), ex);
+                }
+            }
+
+        }
+
+        if (!bbartifacts.isEmpty()) {
+            postArtifacts(bbartifacts);
+        }
+
+    }
+
+    /**
+     * Process the iLeapp files that were found that match the xml mapping file
+     *
+     * @param iLeappFilesToProcess List of files to process
+     * @param iLeappImageFile      Abstract file to create artifact for
+     *
+     * @throws FileNotFoundException
+     * @throws IOException
+     */
+    private void processiLeappFiles(List<String> iLeappFilesToProcess, Content dataSource) throws FileNotFoundException, IOException, IngestModuleException {
+        List<BlackboardArtifact> bbartifacts = new ArrayList<>();
+
+        for (String iLeappFileName : iLeappFilesToProcess) {
+            String fileName = FilenameUtils.getName(iLeappFileName);
+            File iLeappFile = new File(iLeappFileName);
+            if (tsvFileAttributes.containsKey(fileName)) {
+                List<List<String>> attrList = tsvFileAttributes.get(fileName);
+                try {
+                    BlackboardArtifact.Type artifactType = Case.getCurrentCase().getSleuthkitCase().getArtifactType(tsvFileArtifacts.get(fileName));
+
+                    processFile(iLeappFile, attrList, fileName, artifactType, bbartifacts, dataSource);
+
+                } catch (TskCoreException ex) {
                     throw new IngestModuleException(String.format("Error getting Blackboard Artifact Type for %s", tsvFileArtifacts.get(fileName)), ex);
                 }
             }
@@ -174,7 +226,8 @@ public final class ILeappFileProcessor {
     }
 
     private void processFile(File iLeappFile, List<List<String>> attrList, String fileName, BlackboardArtifact.Type artifactType,
-        List<BlackboardArtifact> bbartifacts, AbstractFile iLeappImageFile) throws FileNotFoundException, IOException, IngestModuleException {
+            List<BlackboardArtifact> bbartifacts, Content dataSource) throws FileNotFoundException, IOException, IngestModuleException,
+            TskCoreException {
         try (BufferedReader reader = new BufferedReader(new FileReader(iLeappFile))) {
             String line = reader.readLine();
             // Check first line, if it is null then no heading so nothing to match to, close and go to next file.
@@ -183,8 +236,8 @@ public final class ILeappFileProcessor {
                 line = reader.readLine();
                 while (line != null) {
                     Collection<BlackboardAttribute> bbattributes = processReadLine(line, columnNumberToProcess, fileName);
-                    if (!bbattributes.isEmpty()) {
-                        BlackboardArtifact bbartifact = createArtifactWithAttributes(artifactType.getTypeID(), iLeappImageFile, bbattributes);
+                    if (!bbattributes.isEmpty() && !blkBoard.artifactExists(dataSource, BlackboardArtifact.ARTIFACT_TYPE.fromID(artifactType.getTypeID()), bbattributes)) {
+                        BlackboardArtifact bbartifact = createArtifactWithAttributes(artifactType.getTypeID(), dataSource, bbattributes);
                         if (bbartifact != null) {
                             bbartifacts.add(bbartifact);
                         }
@@ -234,8 +287,8 @@ public final class ILeappFileProcessor {
 
     }
 
-    private void checkAttributeType(Collection<BlackboardAttribute> bbattributes, String attrType, String[] columnValues, Integer columnNumber, BlackboardAttribute.Type attributeType, 
-                                    String fileName) {
+    private void checkAttributeType(Collection<BlackboardAttribute> bbattributes, String attrType, String[] columnValues, Integer columnNumber, BlackboardAttribute.Type attributeType,
+            String fileName) {
         if (attrType.matches("STRING")) {
             bbattributes.add(new BlackboardAttribute(attributeType, MODULE_NAME, columnValues[columnNumber]));
         } else if (attrType.matches("INTEGER")) {
@@ -340,7 +393,7 @@ public final class ILeappFileProcessor {
 
         for (int i = 0; i < nlist.getLength(); i++) {
             NamedNodeMap nnm = nlist.item(i).getAttributes();
-            tsvFiles.put(nnm.getNamedItem("filename").getNodeValue(), nnm.getNamedItem("description").getNodeValue());
+            tsvFiles.put(nnm.getNamedItem("filename").getNodeValue().toLowerCase(), nnm.getNamedItem("description").getNodeValue());
 
         }
 
@@ -393,22 +446,47 @@ public final class ILeappFileProcessor {
 
         }
     }
-        /**
-         * Generic method for creating a blackboard artifact with attributes
-         *
-         * @param type         is a blackboard.artifact_type enum to determine
-         *                     which type the artifact should be
-         * @param abstractFile is the AbstractFile object that needs to have the
-         *                     artifact added for it
-         * @param bbattributes is the collection of blackboard attributes that
-         *                     need to be added to the artifact after the
-         *                     artifact has been created
-         *
-         * @return The newly-created artifact, or null on error
-         */
+
+    /**
+     * Generic method for creating a blackboard artifact with attributes
+     *
+     * @param type         is a blackboard.artifact_type enum to determine which
+     *                     type the artifact should be
+     * @param abstractFile is the AbstractFile object that needs to have the
+     *                     artifact added for it
+     * @param bbattributes is the collection of blackboard attributes that need
+     *                     to be added to the artifact after the artifact has
+     *                     been created
+     *
+     * @return The newly-created artifact, or null on error
+     */
     private BlackboardArtifact createArtifactWithAttributes(int type, AbstractFile abstractFile, Collection<BlackboardAttribute> bbattributes) {
         try {
             BlackboardArtifact bbart = abstractFile.newArtifact(type);
+            bbart.addAttributes(bbattributes);
+            return bbart;
+        } catch (TskException ex) {
+            logger.log(Level.WARNING, Bundle.ILeappFileProcessor_error_creating_new_artifacts(), ex); //NON-NLS
+        }
+        return null;
+    }
+
+    /**
+     * Generic method for creating a blackboard artifact with attributes
+     *
+     * @param type         is a blackboard.artifact_type enum to determine which
+     *                     type the artifact should be
+     * @param datasource   is the Content object that needs to have the artifact
+     *                     added for it
+     * @param bbattributes is the collection of blackboard attributes that need
+     *                     to be added to the artifact after the artifact has
+     *                     been created
+     *
+     * @return The newly-created artifact, or null on error
+     */
+    private BlackboardArtifact createArtifactWithAttributes(int type, Content dataSource, Collection<BlackboardAttribute> bbattributes) {
+        try {
+            BlackboardArtifact bbart = dataSource.newArtifact(type);
             bbart.addAttributes(bbattributes);
             return bbart;
         } catch (TskException ex) {

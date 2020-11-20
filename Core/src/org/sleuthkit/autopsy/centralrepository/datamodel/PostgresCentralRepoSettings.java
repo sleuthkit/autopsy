@@ -121,10 +121,12 @@ public final class PostgresCentralRepoSettings implements CentralRepoDbConnectiv
      * @return
      */
     String getConnectionURL(boolean usePostgresDb) {
-        StringBuilder url = new StringBuilder();
-        url.append(getJDBCBaseURI());
-        url.append(getHost());
-        url.append("/"); // NON-NLS
+        StringBuilder url = new StringBuilder()
+                .append(getJDBCBaseURI())
+                .append(getHost())
+                .append(":") // NON-NLS
+                .append(getPort())
+                .append("/"); // NON-NLS
         if (usePostgresDb) {
             url.append("postgres"); // NON-NLS
         } else {
@@ -153,7 +155,7 @@ public final class PostgresCentralRepoSettings implements CentralRepoDbConnectiv
         } catch (ClassNotFoundException | SQLException ex) {
             // TODO: Determine why a connection failure (ConnectionException) re-throws
             // the SQLException and does not print this log message?
-            LOGGER.log(Level.SEVERE, "Failed to acquire ephemeral connection to postgresql."); // NON-NLS
+            LOGGER.log(Level.SEVERE, "Failed to acquire ephemeral connection to postgresql.", ex); // NON-NLS
             conn = null;
         }
         return conn;
