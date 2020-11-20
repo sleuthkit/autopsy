@@ -102,6 +102,7 @@
         <copy todir="${basedir}/release/yara" >
             <fileset dir="${thirdparty.dir}/yara/bin"/>
         </copy>
+        <copy file="${thirdparty.dir}/yara/bin/YaraJNIWrapper.jar" todir="${ext.dir}" />
     </target>
     
     

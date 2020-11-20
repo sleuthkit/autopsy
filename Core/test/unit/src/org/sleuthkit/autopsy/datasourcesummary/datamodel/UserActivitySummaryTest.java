@@ -66,18 +66,22 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Tests for UserActivitySummary.
  */
 public class UserActivitySummaryTest {
+
     /**
-     *  Function to retrieve data from UserActivitySummary with the provided arguments.
+     * Function to retrieve data from UserActivitySummary with the provided
+     * arguments.
      */
     private interface DataFunction<T> {
+
         /**
          * A UserActivitySummary method encapsulated in a uniform manner.
+         *
          * @param userActivitySummary The UserActivitySummary class to use.
          * @param datasource The data source.
          * @param count The count.
          * @return The list of objects to return.
          * @throws SleuthkitCaseProviderException
-         * @throws TskCoreException 
+         * @throws TskCoreException
          */
         List<T> retrieve(UserActivitySummary userActivitySummary, DataSource datasource, int count) throws
                 SleuthkitCaseProviderException, TskCoreException;
@@ -117,8 +121,8 @@ public class UserActivitySummaryTest {
     /**
      * Gets a UserActivitySummary class to test.
      *
-     * @param tskCase           The SleuthkitCase.
-     * @param hasTranslation    Whether the translation service is functional.
+     * @param tskCase The SleuthkitCase.
+     * @param hasTranslation Whether the translation service is functional.
      * @param translateFunction Function for translation.
      *
      * @return The UserActivitySummary class to use for testing.
@@ -331,6 +335,28 @@ public class UserActivitySummaryTest {
 
             Assert.assertEquals(Math.min(countRequested, returnedCount), results.size());
         }
+    }
+
+    @Test
+    public void getRecentDevices_uniqueByDeviceId()
+            throws TskCoreException, NoServiceProviderException, SleuthkitCaseProviderException, TskCoreException, TranslationException {
+
+        long dataSourceId = 1L;
+        DataSource dataSource = TskMockUtils.getDataSource(dataSourceId);
+        BlackboardArtifact item1 = getRecentDeviceArtifact(1001, dataSource, "ID1", "MAKE1", "MODEL1", DAY_SECONDS);
+        BlackboardArtifact item2 = getRecentDeviceArtifact(1002, dataSource, "ID1", "MAKE1", "MODEL1", DAY_SECONDS + 1);
+        BlackboardArtifact item3 = getRecentDeviceArtifact(1003, dataSource, "ID1", "MAKE1", "MODEL1", DAY_SECONDS + 2);
+
+        Pair<SleuthkitCase, Blackboard> tskPair = getArtifactsTSKMock(Arrays.asList(item1, item2, item3));
+        UserActivitySummary summary = getTestClass(tskPair.getLeft(), false, null);
+
+        List<TopDeviceAttachedResult> results = summary.getRecentDevices(dataSource, 10);
+
+        Assert.assertEquals(1, results.size());
+        Assert.assertEquals((long) (DAY_SECONDS + 2), results.get(0).getDateAccessed().getTime() / 1000);
+        Assert.assertTrue("ID1".equalsIgnoreCase(results.get(0).getDeviceId()));
+        Assert.assertTrue("MAKE1".equalsIgnoreCase(results.get(0).getDeviceMake()));
+        Assert.assertTrue("MODEL1".equalsIgnoreCase(results.get(0).getDeviceModel()));
     }
 
     private static BlackboardArtifact getWebSearchArtifact(long artifactId, DataSource dataSource, String query, Long date) {
@@ -708,8 +734,8 @@ public class UserActivitySummaryTest {
      *
      * @param artifactId The artifact id.
      * @param dataSource The datasource.
-     * @param dateRcvd   The date received in seconds or null to exclude.
-     * @param dateSent   The date sent in seconds or null to exclude.
+     * @param dateRcvd The date received in seconds or null to exclude.
+     * @param dateSent The date sent in seconds or null to exclude.
      *
      * @return The mock artifact.
      */
@@ -738,8 +764,8 @@ public class UserActivitySummaryTest {
      *
      * @param artifactId The artifact id.
      * @param dataSource The datasource.
-     * @param dateStart  The date start in seconds or null to exclude.
-     * @param dateEnd    The date end in seconds or null to exclude.
+     * @param dateStart The date start in seconds or null to exclude.
+     * @param dateEnd The date end in seconds or null to exclude.
      *
      * @return The mock artifact.
      */
@@ -768,8 +794,8 @@ public class UserActivitySummaryTest {
      *
      * @param artifactId The artifact id.
      * @param dataSource The datasource.
-     * @param type       The account type.
-     * @param dateSent   The date of the message in seconds.
+     * @param type The account type.
+     * @param dateSent The date of the message in seconds.
      */
     private static BlackboardArtifact getMessageArtifact(long artifactId, DataSource dataSource, String type, Long dateTime) {
         List<BlackboardAttribute> attributes = new ArrayList<>();
@@ -794,11 +820,11 @@ public class UserActivitySummaryTest {
     /**
      * Performs a test on UserActivitySummary.getRecentAccounts.
      *
-     * @param dataSource      The datasource to use as parameter.
-     * @param count           The count to use as a parameter.
-     * @param retArtifacts    The artifacts to return from
-     *                        SleuthkitCase.getArtifacts. This method filters
-     *                        based on artifact type from the call.
+     * @param dataSource The datasource to use as parameter.
+     * @param count The count to use as a parameter.
+     * @param retArtifacts The artifacts to return from
+     * SleuthkitCase.getArtifacts. This method filters based on artifact type
+     * from the call.
      * @param expectedResults The expected results.
      *
      * @throws TskCoreException
