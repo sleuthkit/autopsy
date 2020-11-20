@@ -77,6 +77,15 @@ public final class YaraIngestJobSettings implements IngestModuleIngestJobSetting
             selectedRuleSetNames.add(set.getName());
         }
     }
+    
+    /**
+     * Returns if there are selected Rule Sets.
+     * 
+     * @return True if there is at least one selected rule.
+     */
+    boolean hasSelectedRuleSets() {
+        return selectedRuleSetNames != null && !selectedRuleSetNames.isEmpty();
+    }
 
     /**
      * Process only executable Files.

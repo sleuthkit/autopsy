@@ -97,7 +97,11 @@ public class YaraIngestModule extends FileIngestModuleAdapter {
                 tempRuleSetDir.toFile().mkdir();
             }
 
-            YaraIngestHelper.compileRules(settings.getSelectedRuleSetNames(), tempRuleSetDir);
+            if(settings.hasSelectedRuleSets()) {
+                YaraIngestHelper.compileRules(settings.getSelectedRuleSetNames(), tempRuleSetDir);
+            } else {
+                logger.log(Level.INFO, "YARA ingest module: No rule set was selected for this ingest job.");
+            }
         }
     }
 
@@ -116,6 +120,10 @@ public class YaraIngestModule extends FileIngestModuleAdapter {
     @Override
     public ProcessResult process(AbstractFile file) {
 
+        if(!settings.hasSelectedRuleSets()) {
+            return ProcessResult.OK;
+        }
+        
         if (settings.onlyExecutableFiles()) {
             String extension = file.getNameExtension();
             if (!extension.equals("exe")) {
