@@ -38,19 +38,12 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TimelineEvent;
 import org.sleuthkit.datamodel.TimelineEventType;
-import org.sleuthkit.datamodel.TimelineFilter;
-import org.sleuthkit.datamodel.TimelineFilter.DataSourcesFilter;
 import org.sleuthkit.datamodel.TimelineFilter.RootFilter;
 import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.TskCoreException;
 import java.util.function.Supplier;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.core.UserPreferences;
-import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.TimeLineModule;
-import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterState;
-import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterState;
-import org.sleuthkit.autopsy.timeline.utils.FilterUtils;
 
 /**
  * Provides data source summary information pertaining to Timeline data.
@@ -89,9 +82,9 @@ public class TimelineSummary implements DefaultUpdateGovernor {
     /**
      * Construct object with given SleuthkitCaseProvider
      *
-     * @param caseProvider SleuthkitCaseProvider provider, cannot be null.
-     * @param timeZoneProvider The timezone provider, cannot be null.
-     * @param defaulteStateSupplier Provides the default root filter 
+     * @param caseProvider SleuthkitCaseProvider provider; cannot be null.
+     * @param timeZoneProvider The timezone provider; cannot be null.
+     * @param defaulteStateSupplier Provides the default root filter function filtered to the data source; cannot be null.
      */
     public TimelineSummary(SleuthkitCaseProvider caseProvider, Supplier<TimeZone> timeZoneProvider, DataSourceFilterFunction filterFunction) {
         this.caseProvider = caseProvider;
@@ -161,7 +154,7 @@ public class TimelineSummary implements DefaultUpdateGovernor {
         // get most recent days activity
         List<DailyActivityAmount> mostRecentActivityAmt = getMostRecentActivityAmounts(dateCounts, minRecentDay, maxDay);
 
-        return new TimelineSummaryData(minDate, maxDate, mostRecentActivityAmt);
+        return new TimelineSummaryData(minDate, maxDate, mostRecentActivityAmt, dataSource);
     }
 
     /**
@@ -240,6 +233,7 @@ public class TimelineSummary implements DefaultUpdateGovernor {
         private final Date minDate;
         private final Date maxDate;
         private final List<DailyActivityAmount> histogramActivity;
+        private final DataSource dataSource;
 
         /**
          * Main constructor.
@@ -247,12 +241,14 @@ public class TimelineSummary implements DefaultUpdateGovernor {
          * @param minDate Earliest usage date recorded for the data source.
          * @param maxDate Latest usage date recorded for the data source.
          * @param recentDaysActivity A list of activity prior to and including
+         * @param dataSource The data source for which this data applies.
          * the latest usage date by day.
          */
-        TimelineSummaryData(Date minDate, Date maxDate, List<DailyActivityAmount> recentDaysActivity) {
+        TimelineSummaryData(Date minDate, Date maxDate, List<DailyActivityAmount> recentDaysActivity, DataSource dataSource) {
             this.minDate = minDate;
             this.maxDate = maxDate;
             this.histogramActivity = (recentDaysActivity == null) ? Collections.emptyList() : Collections.unmodifiableList(recentDaysActivity);
+            this.dataSource = dataSource;
         }
 
         /**
@@ -275,6 +271,13 @@ public class TimelineSummary implements DefaultUpdateGovernor {
          */
         public List<DailyActivityAmount> getMostRecentDaysActivity() {
             return histogramActivity;
+        }
+
+        /**
+         * @return The data source that this data applies to.
+         */
+        public DataSource getDataSource() {
+            return dataSource;
         }
     }
 

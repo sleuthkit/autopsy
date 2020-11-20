@@ -19,19 +19,17 @@
 package org.sleuthkit.autopsy.datasourcesummary.ui;
 
 import java.awt.Color;
-import java.awt.Cursor;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.logging.Level;
 import org.apache.commons.collections.CollectionUtils;
+import org.joda.time.DateTime;
+import org.joda.time.Interval;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -52,13 +50,7 @@ import org.sleuthkit.autopsy.datasourcesummary.uiutils.LoadableLabel;
 import org.sleuthkit.autopsy.timeline.OpenTimelineAction;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.TimeLineModule;
-import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterState;
-import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterState;
-import org.sleuthkit.autopsy.timeline.utils.FilterUtils;
 import org.sleuthkit.datamodel.DataSource;
-import org.sleuthkit.datamodel.TimelineEventType;
-import org.sleuthkit.datamodel.TimelineFilter;
-import org.sleuthkit.datamodel.TimelineFilter.DataSourceFilter;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -119,7 +111,6 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
         );
 
         initComponents();
-        setupChartClickListener();
     }
 
     /**
@@ -172,6 +163,9 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
                 new BarChartSeries(Bundle.TimlinePanel_last30DaysChart_fileEvts_title(), FILE_EVT_COLOR, fileEvtCounts),
                 new BarChartSeries(Bundle.TimlinePanel_last30DaysChart_artifactEvts_title(), ARTIFACT_EVT_COLOR, artifactEvtCounts));
     }
+    
+    private final Object timelineBtnLock = new Object();
+    private TimelineSummaryData curTimelineData = null;
 
     /**
      * Handles displaying the result for each displayable item in the
@@ -185,6 +179,61 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
         earliestLabel.showDataFetchResult(DataFetchResult.getSubResult(result, r -> formatDate(r.getMinDate(), EARLIEST_LATEST_FORMAT)));
         latestLabel.showDataFetchResult(DataFetchResult.getSubResult(result, r -> formatDate(r.getMaxDate(), EARLIEST_LATEST_FORMAT)));
         last30DaysChart.showDataFetchResult(DataFetchResult.getSubResult(result, r -> parseChartData(r.getMostRecentDaysActivity())));
+
+        if (result != null
+                && result.getResultType() == DataFetchResult.ResultType.SUCCESS
+                && result.getData() != null) {
+            
+            synchronized (this.timelineBtnLock) {
+                this.curTimelineData = result.getData();
+                this.viewInTimelineBtn.setEnabled(true);    
+            }
+        } else {
+            synchronized (this.timelineBtnLock) {
+                this.viewInTimelineBtn.setEnabled(false);
+            }
+        }
+    }
+
+    /**
+     * Action that occurs when 'View in Timeline' button is pressed.
+     */
+    private void openFilteredChart() {
+        DataSource dataSource = null;
+        Date minDate = null;
+        Date maxDate = null;
+        
+
+        // get date from current timelineData if that data exists.
+        synchronized (this.timelineBtnLock) {
+            if (curTimelineData == null) {
+                return;
+            }
+            
+            dataSource = curTimelineData.getDataSource();
+            minDate = curTimelineData.getMinDate();
+            maxDate = curTimelineData.getMaxDate();
+        }
+                
+        // notify dialog (if in dialog) should close.
+        TimelinePanel.this.notifyParentClose();
+        
+        // open the timeline filtered to data source and zoomed in on interval
+        openTimelineAction.performAction();
+        try {
+            TimeLineController controller = TimeLineModule.getController();
+            if (dataSource != null) {
+                controller.pushFilters(timelineUtils.getDataSourceFilterState(dataSource));
+            }
+            
+            if (minDate != null && maxDate != null) {
+                Interval timeSpan = new Interval(new DateTime(minDate), new DateTime(maxDate));
+                controller.pushTimeRange(timeSpan);
+            }
+            
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            logger.log(Level.WARNING, "Unable to open Timeline view", ex);
+        }
     }
 
     @Override
@@ -221,7 +270,7 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
         javax.swing.JPanel latestLabelPanel = latestLabel;
         javax.swing.Box.Filler filler2 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 20), new java.awt.Dimension(0, 20), new java.awt.Dimension(0, 20));
         javax.swing.JPanel last30DaysPanel = last30DaysChart;
-        clickToNavLabel = new javax.swing.JLabel();
+        viewInTimelineBtn = new javax.swing.JButton();
         javax.swing.Box.Filler filler5 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 32767));
 
         mainContentPanel.setBorder(javax.swing.BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -263,8 +312,14 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
         last30DaysPanel.setVerifyInputWhenFocusTarget(false);
         mainContentPanel.add(last30DaysPanel);
 
-        org.openide.awt.Mnemonics.setLocalizedText(clickToNavLabel, org.openide.util.NbBundle.getMessage(TimelinePanel.class, "TimelinePanel.clickToNavLabel.text")); // NOI18N
-        mainContentPanel.add(clickToNavLabel);
+        org.openide.awt.Mnemonics.setLocalizedText(viewInTimelineBtn, org.openide.util.NbBundle.getMessage(TimelinePanel.class, "TimelinePanel.viewInTimelineBtn.text")); // NOI18N
+        viewInTimelineBtn.setEnabled(false);
+        viewInTimelineBtn.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                viewInTimelineBtnActionPerformed(evt);
+            }
+        });
+        mainContentPanel.add(viewInTimelineBtn);
 
         filler5.setAlignmentX(0.0F);
         mainContentPanel.add(filler5);
@@ -283,29 +338,11 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void setupChartClickListener() {
-        this.last30DaysChart.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        this.last30DaysChart.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-
-                TimelinePanel.this.notifyParentClose();
-                openTimelineAction.performAction();
-                try {
-                    TimeLineController controller = TimeLineModule.getController();
-                    DataSource dataSource = getDataSource();
-                    if (dataSource != null) {
-                        controller.pushFilters(timelineUtils.getDataSourceFilterState(dataSource));
-                    }
-                } catch (NoCurrentCaseException | TskCoreException ex) {
-                    logger.log(Level.WARNING, "Unable to open Timeline view", ex);
-                }
-            }
-        });
-    }
-
+    private void viewInTimelineBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_viewInTimelineBtnActionPerformed
+        openFilteredChart();
+    }//GEN-LAST:event_viewInTimelineBtnActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel clickToNavLabel;
+    private javax.swing.JButton viewInTimelineBtn;
     // End of variables declaration//GEN-END:variables
 }
