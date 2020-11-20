@@ -37,7 +37,7 @@ import org.sleuthkit.datamodel.DataSource;
  * A tab shown in data source summary displaying information about a data source's geolocation data.
  */
 @Messages({
-    "WhereUsedPanel_cityColumn_title=City",
+    "WhereUsedPanel_cityColumn_title=Closest City",
     "WhereUsedPanel_countColumn_title=Count",
     "WhereUsedPanel_onNoCrIngest_message=No results will be shown because the GPX Parser was not run."
 })
@@ -142,6 +142,9 @@ public class WhereUsedPanel extends BaseDataSourceSummaryPanel {
         javax.swing.JLabel cityCountsLabel = new javax.swing.JLabel();
         javax.swing.Box.Filler filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2));
         javax.swing.JPanel cityCountsPanel = cityCountsTable;
+        javax.swing.Box.Filler filler2 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2));
+        javax.swing.JLabel withinDistanceLabel = new javax.swing.JLabel();
+        javax.swing.Box.Filler filler3 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 10), new java.awt.Dimension(0, 10), new java.awt.Dimension(0, 10));
         viewInGeolocationBtn = new javax.swing.JButton();
         javax.swing.Box.Filler filler5 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 32767));
 
@@ -166,6 +169,15 @@ public class WhereUsedPanel extends BaseDataSourceSummaryPanel {
         cityCountsPanel.setMinimumSize(new java.awt.Dimension(100, 212));
         cityCountsPanel.setPreferredSize(new java.awt.Dimension(100, 212));
         mainContentPanel.add(cityCountsPanel);
+
+        filler2.setAlignmentX(0.0F);
+        mainContentPanel.add(filler2);
+
+        org.openide.awt.Mnemonics.setLocalizedText(withinDistanceLabel, org.openide.util.NbBundle.getMessage(WhereUsedPanel.class, "WhereUsedPanel.withinDistanceLabel.text")); // NOI18N
+        mainContentPanel.add(withinDistanceLabel);
+
+        filler3.setAlignmentX(0.0F);
+        mainContentPanel.add(filler3);
 
         org.openide.awt.Mnemonics.setLocalizedText(viewInGeolocationBtn, org.openide.util.NbBundle.getMessage(WhereUsedPanel.class, "WhereUsedPanel.viewInGeolocationBtn.text")); // NOI18N
         mainContentPanel.add(viewInGeolocationBtn);
