@@ -56,7 +56,7 @@ import org.sleuthkit.datamodel.DataSource;
 @Messages({
     "GeolocationSummary_cities_noRecordFound=Other"
 })
-public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
+public class WhereUsedSummary implements DefaultArtifactUpdateGovernor {
 
     /**
      * A count of hits for a particular city.
@@ -197,14 +197,14 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
             .map(artifactType -> artifactType.getTypeID())
             .collect(Collectors.toSet());
 
-    private static GeolocationSummary instance = null;
+    private static WhereUsedSummary instance = null;
 
     /**
      * @return The singleton instance of this class.
      */
-    public static GeolocationSummary getInstance() {
+    public static WhereUsedSummary getInstance() {
         if (instance == null) {
-            instance = new GeolocationSummary();
+            instance = new WhereUsedSummary();
         }
 
         return instance;
@@ -217,8 +217,8 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
     /**
      * Main constructor.
      */
-    private GeolocationSummary() {
-        this(SleuthkitCaseProvider.DEFAULT, Logger.getLogger(GeolocationSummary.class.getName()));
+    private WhereUsedSummary() {
+        this(SleuthkitCaseProvider.DEFAULT, Logger.getLogger(WhereUsedSummary.class.getName()));
     }
 
     /**
@@ -226,7 +226,7 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
      *
      * @param provider The means of obtaining a sleuthkit case.
      */
-    public GeolocationSummary(SleuthkitCaseProvider provider, java.util.logging.Logger logger) {
+    public WhereUsedSummary(SleuthkitCaseProvider provider, java.util.logging.Logger logger) {
         this.provider = provider;
         this.logger = logger;
     }
@@ -306,7 +306,7 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
      * Pre-loads city data.
      */
     public void load() throws IOException {
-        latLngMap = new LatLngMap<CityRecord>(parseCsvLines(GeolocationSummary.class.getResourceAsStream("worldcities.csv"), true));
+        latLngMap = new LatLngMap<CityRecord>(parseCsvLines(WhereUsedSummary.class.getResourceAsStream("worldcities.csv"), true));
     }
 
     private static CityRecord OTHER_RECORD = new CityRecord(Bundle.GeolocationSummary_cities_noRecordFound(), "", 0, 0);

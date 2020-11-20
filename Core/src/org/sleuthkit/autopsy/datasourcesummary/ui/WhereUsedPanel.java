@@ -22,9 +22,9 @@ import java.util.Arrays;
 import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.GeolocationSummary;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.GeolocationSummary.CityCount;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.GeolocationSummary.CityRecord;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.WhereUsedSummary;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.WhereUsedSummary.CityCount;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.WhereUsedSummary.CityRecord;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer.DefaultCellModel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
@@ -37,11 +37,11 @@ import org.sleuthkit.datamodel.DataSource;
  * A tab shown in data source summary displaying information about a data source's geolocation data.
  */
 @Messages({
-    "GeolocationPanel_cityColumn_title=City",
-    "GeolocationPanel_countColumn_title=Count",
-    "GeolocationPanel_onNoCrIngest_message=No results will be shown because the GPX Parser was not run."
+    "WhereUsedPanel_cityColumn_title=City",
+    "WhereUsedPanel_countColumn_title=Count",
+    "WhereUsedPanel_onNoCrIngest_message=No results will be shown because the GPX Parser was not run."
 })
-public class GeolocationPanel extends BaseDataSourceSummaryPanel {
+public class WhereUsedPanel extends BaseDataSourceSummaryPanel {
 
     private static final long serialVersionUID = 1L;
     private static final String GPX_FACTORY = "org.python.proxies.GPX_Parser_Module$GPXParserFileIngestModuleFactory";
@@ -65,13 +65,13 @@ public class GeolocationPanel extends BaseDataSourceSummaryPanel {
     }
     
     private static final ColumnModel<CityCount> CITY_COL = new ColumnModel<>(
-            Bundle.GeolocationPanel_cityColumn_title(),
+            Bundle.WhereUsedPanel_cityColumn_title(),
             (cityCount) -> new DefaultCellModel(getCityName(cityCount.getCityRecord())),
             300
     );
 
     private static final ColumnModel<CityCount> COUNT_COL = new ColumnModel<>(
-            Bundle.GeolocationPanel_countColumn_title(),
+            Bundle.WhereUsedPanel_countColumn_title(),
             (cityCount) -> new DefaultCellModel(Integer.toString(cityCount.getCount())),
             100
     );
@@ -93,15 +93,15 @@ public class GeolocationPanel extends BaseDataSourceSummaryPanel {
     /**
      * Main constructor.
      */
-    public GeolocationPanel() {
-        this(GeolocationSummary.getInstance());
+    public WhereUsedPanel() {
+        this(WhereUsedSummary.getInstance());
     }
 
     /**
      * Main constructor.
      * @param geolocationData The GeolocationSummary instance to use.
      */
-    public GeolocationPanel(GeolocationSummary geolocationData) {
+    public WhereUsedPanel(WhereUsedSummary geolocationData) {
         // set up data acquisition methods
         dataFetchComponents = Arrays.asList(
                 new DataFetchWorker.DataFetchComponents<>(
@@ -142,8 +142,7 @@ public class GeolocationPanel extends BaseDataSourceSummaryPanel {
         javax.swing.JLabel cityCountsLabel = new javax.swing.JLabel();
         javax.swing.Box.Filler filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2));
         javax.swing.JPanel cityCountsPanel = cityCountsTable;
-        javax.swing.Box.Filler filler2 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 20), new java.awt.Dimension(0, 20), new java.awt.Dimension(0, 20));
-        javax.swing.Box.Filler filler3 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2));
+        viewInGeolocationBtn = new javax.swing.JButton();
         javax.swing.Box.Filler filler5 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 32767));
 
         mainContentPanel.setBorder(javax.swing.BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -155,9 +154,9 @@ public class GeolocationPanel extends BaseDataSourceSummaryPanel {
         ingestRunningPanel.setPreferredSize(new java.awt.Dimension(10, 25));
         mainContentPanel.add(ingestRunningPanel);
 
-        org.openide.awt.Mnemonics.setLocalizedText(cityCountsLabel, org.openide.util.NbBundle.getMessage(GeolocationPanel.class, "GeolocationPanel.cityCountsLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(cityCountsLabel, org.openide.util.NbBundle.getMessage(WhereUsedPanel.class, "WhereUsedPanel.cityCountsLabel.text")); // NOI18N
         mainContentPanel.add(cityCountsLabel);
-        cityCountsLabel.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(GeolocationPanel.class, "PastCasesPanel.notableFileLabel.text")); // NOI18N
+        cityCountsLabel.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(WhereUsedPanel.class, "PastCasesPanel.notableFileLabel.text")); // NOI18N
 
         filler1.setAlignmentX(0.0F);
         mainContentPanel.add(filler1);
@@ -168,11 +167,8 @@ public class GeolocationPanel extends BaseDataSourceSummaryPanel {
         cityCountsPanel.setPreferredSize(new java.awt.Dimension(100, 212));
         mainContentPanel.add(cityCountsPanel);
 
-        filler2.setAlignmentX(0.0F);
-        mainContentPanel.add(filler2);
-
-        filler3.setAlignmentX(0.0F);
-        mainContentPanel.add(filler3);
+        org.openide.awt.Mnemonics.setLocalizedText(viewInGeolocationBtn, org.openide.util.NbBundle.getMessage(WhereUsedPanel.class, "WhereUsedPanel.viewInGeolocationBtn.text")); // NOI18N
+        mainContentPanel.add(viewInGeolocationBtn);
 
         filler5.setAlignmentX(0.0F);
         mainContentPanel.add(filler5);
@@ -193,5 +189,6 @@ public class GeolocationPanel extends BaseDataSourceSummaryPanel {
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton viewInGeolocationBtn;
     // End of variables declaration//GEN-END:variables
 }

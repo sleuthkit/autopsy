@@ -45,7 +45,7 @@ public final class Installer extends ModuleInstall {
 
     @Override
     public void restored() {
-        GeolocationSummary summary = GeolocationSummary.getInstance();
+        WhereUsedSummary summary = WhereUsedSummary.getInstance();
         try {
             summary.load();
         } catch (IOException ex) {
