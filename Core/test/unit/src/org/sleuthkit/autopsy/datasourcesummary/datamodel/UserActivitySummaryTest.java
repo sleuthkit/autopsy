@@ -870,6 +870,7 @@ public class UserActivitySummaryTest {
             // since this may be somewhat variable
             Assert.assertTrue(expectedItem.getAccountType().equalsIgnoreCase(receivedItem.getAccountType()));
             Assert.assertEquals(expectedItem.getLastAccessed().getTime(), receivedItem.getLastAccessed().getTime());
+            Assert.assertEquals(expectedItem.getArtifact(), receivedItem.getArtifact());
         }
     }
 
