@@ -18,39 +18,13 @@
  */
 package org.sleuthkit.autopsy.commandlineingest;
 
-import org.openide.util.NbPreferences;
-
 /**
  * Provides convenient access to a UserPreferences node for user preferences
  * with default values.
  */
 public final class UserPreferences {
 
-    private static final java.util.prefs.Preferences preferences = NbPreferences.forModule(UserPreferences.class);
-    private static final String COMMAND_LINE_MODE_RESULTS_FOLDER = "CommandLineModeResultsFolder"; // NON-NLS
     private static final String COMMAND_LINE_MODE_CONTEXT_STRING = "CommandLineModeContext"; // NON-NLS
-
-    // Prevent instantiation.
-    private UserPreferences() {
-    }
-
-    /**
-     * Get results folder for command line mode from persistent storage.
-     *
-     * @return String Selected output folder.
-     */
-    public static String getCommandLineModeResultsFolder() {
-        return preferences.get(COMMAND_LINE_MODE_RESULTS_FOLDER, "");
-    }
-
-    /**
-     * Set results folder for command line mode from persistent storage.
-     *
-     * @param folder Selected output folder.
-     */
-    public static void setCommandLineModeResultsFolder(String folder) {
-        preferences.put(COMMAND_LINE_MODE_RESULTS_FOLDER, folder);
-    }
 
     /**
      * Get context string for command line mode ingest module settings.

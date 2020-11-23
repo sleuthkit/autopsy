@@ -248,9 +248,6 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
 
         try {
             Index indexInfo = server.getIndexInfo();
-            if (!IndexFinder.getCurrentSolrVersion().equals(indexInfo.getSolrVersion())) {
-                throw new IngestModuleException(Bundle.KeywordSearchIngestModule_startupException_indexSolrVersionNotSupported(indexInfo.getSolrVersion()));
-            }
             if (!indexInfo.isCompatible(IndexFinder.getCurrentSchemaVersion())) {
                 throw new IngestModuleException(Bundle.KeywordSearchIngestModule_startupException_indexSchemaNotSupported(indexInfo.getSchemaVersion()));
             }
@@ -295,7 +292,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             } else {
                 // for single-user cases need to verify connection to local SOLR service
                 try {
-                    if (!server.isRunning()) {
+                    if (!server.isLocalSolrRunning()) {
                         throw new IngestModuleException(Bundle.KeywordSearchIngestModule_init_tryStopSolrMsg(Bundle.KeywordSearchIngestModule_init_badInitMsg()));
                     }
                 } catch (KeywordSearchModuleException ex) {
