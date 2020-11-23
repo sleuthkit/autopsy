@@ -489,6 +489,10 @@
                 <binary-origin>release\modules\ext\commons-dbcp2-2.1.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/httpclient-4.5.13.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\httpclient-4.5.13.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/google-http-client-appengine-1.29.0.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\google-http-client-appengine-1.29.0.jar</binary-origin>
             </class-path-extension>
@@ -533,10 +537,6 @@
                 <binary-origin>release\modules\ext\grpc-protobuf-lite-1.19.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/httpcore-4.4.9.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\httpcore-4.4.9.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/guava-27.1-android.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\guava-27.1-android.jar</binary-origin>
             </class-path-extension>
@@ -549,16 +549,8 @@
                 <binary-origin>release\modules\ext\checker-compat-qual-2.5.3.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/sleuthkit-4.10.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/sleuthkit-4.10.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/animal-sniffer-annotations-1.17.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\animal-sniffer-annotations-1.17.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/sleuthkit-caseuco-4.10.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/sleuthkit-caseuco-4.10.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/gax-1.44.0.jar</runtime-relative-path>
@@ -603,10 +595,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/mockito-core-3.5.7.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\mockito-core-3.5.7.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/httpclient-4.5.5.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\httpclient-4.5.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/curator-recipes-2.8.0.jar</runtime-relative-path>
@@ -673,6 +661,10 @@
                 <binary-origin>release\modules\ext\grpc-alts-1.19.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/sleuthkit-caseuco-4.10.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/sleuthkit-caseuco-4.10.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/jdom-2.0.5.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\jdom-2.0.5.jar</binary-origin>
             </class-path-extension>
@@ -737,6 +729,10 @@
                 <binary-origin>release\modules\ext\curator-client-2.8.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/httpcore-4.4.13.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\httpcore-4.4.13.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/grpc-core-1.19.0.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\grpc-core-1.19.0.jar</binary-origin>
             </class-path-extension>
@@ -789,12 +785,20 @@
                 <binary-origin>release\modules\ext\grpc-stub-1.19.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/httpmime-4.5.13.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\httpmime-4.5.13.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/google-oauth-client-1.28.0.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\google-oauth-client-1.28.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/sevenzipjbinding-AllPlatforms.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\sevenzipjbinding-AllPlatforms.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/sleuthkit-4.10.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/sleuthkit-4.10.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jutf7-1.0.0.jar</runtime-relative-path>
