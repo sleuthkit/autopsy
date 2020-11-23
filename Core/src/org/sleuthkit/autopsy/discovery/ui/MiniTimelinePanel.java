@@ -29,7 +29,7 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
-public class MiniTimelinePanel extends javax.swing.JPanel {
+class MiniTimelinePanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
 
@@ -38,11 +38,15 @@ public class MiniTimelinePanel extends javax.swing.JPanel {
     private DomainArtifactsTabPanel.ArtifactRetrievalStatus status = DomainArtifactsTabPanel.ArtifactRetrievalStatus.UNPOPULATED;
     private AbstractArtifactDetailsPanel rightPanel = null;
     private static final Logger logger = Logger.getLogger(MiniTimelinePanel.class.getName());
+
     private final ListSelectionListener dateListener = new ListSelectionListener() {
         @Override
         public void valueChanged(ListSelectionEvent event) {
             if (!event.getValueIsAdjusting()) {
                 artifactListPanel.addArtifacts(dateListPanel.getArtifactsForSelectedDate());
+                artifactListPanel.selectFirst();
+                validate();
+                repaint();
             }
         }
     };
@@ -56,7 +60,10 @@ public class MiniTimelinePanel extends javax.swing.JPanel {
                 } else {
                     rightPanel = new GeneralPurposeArtifactViewer();
                 }
+                mainSplitPane.setRightComponent(rightPanel);
                 rightPanel.setArtifact(selectedArtifact);
+                validate();
+                repaint();
             }
         }
     };
