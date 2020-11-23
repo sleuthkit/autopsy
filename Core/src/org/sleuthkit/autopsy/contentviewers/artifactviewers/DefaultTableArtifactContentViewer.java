@@ -61,29 +61,29 @@ import org.sleuthkit.autopsy.discovery.ui.AbstractArtifactDetailsPanel;
  * This class displays a Blackboard artifact as a table of its attributes.
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
-public class DefaultArtifactContentViewer extends AbstractArtifactDetailsPanel implements ArtifactContentViewer {
+public class DefaultTableArtifactContentViewer extends AbstractArtifactDetailsPanel implements ArtifactContentViewer {
 
     @NbBundle.Messages({
-        "DefaultArtifactContentViewer.attrsTableHeader.type=Type",
-        "DefaultArtifactContentViewer.attrsTableHeader.value=Value",
-        "DefaultArtifactContentViewer.attrsTableHeader.sources=Source(s)",
+        "DefaultTableArtifactContentViewer.attrsTableHeader.type=Type",
+        "DefaultTableArtifactContentViewer.attrsTableHeader.value=Value",
+        "DefaultTableArtifactContentViewer.attrsTableHeader.sources=Source(s)",
         "DataContentViewerArtifact.failedToGetSourcePath.message=Failed to get source file path from case database",
         "DataContentViewerArtifact.failedToGetAttributes.message=Failed to get some or all attributes from case database"
     })
 
-    private final static Logger logger = Logger.getLogger(DefaultArtifactContentViewer.class.getName());
+    private final static Logger logger = Logger.getLogger(DefaultTableArtifactContentViewer.class.getName());
 
     private static final long serialVersionUID = 1L;
 
     private static final String[] COLUMN_HEADERS = {
-        Bundle.DefaultArtifactContentViewer_attrsTableHeader_type(),
-        Bundle.DefaultArtifactContentViewer_attrsTableHeader_value(),
-        Bundle.DefaultArtifactContentViewer_attrsTableHeader_sources()};
+        Bundle.DefaultTableArtifactContentViewer_attrsTableHeader_type(),
+        Bundle.DefaultTableArtifactContentViewer_attrsTableHeader_value(),
+        Bundle.DefaultTableArtifactContentViewer_attrsTableHeader_sources()};
     private static final int[] COLUMN_WIDTHS = {100, 800, 100};
     private static final int CELL_BOTTOM_MARGIN = 5;
     private static final int CELL_RIGHT_MARGIN = 1;
 
-    public DefaultArtifactContentViewer() {
+    public DefaultTableArtifactContentViewer() {
         initResultsTable();
         initComponents();
         resultsTableScrollPane.setViewportView(resultsTable);
@@ -201,17 +201,18 @@ public class DefaultArtifactContentViewer extends AbstractArtifactDetailsPanel i
         selectAllMenuItem = new javax.swing.JMenuItem();
         resultsTableScrollPane = new javax.swing.JScrollPane();
 
-        copyMenuItem.setText(org.openide.util.NbBundle.getMessage(DefaultArtifactContentViewer.class, "DefaultArtifactContentViewer.copyMenuItem.text")); // NOI18N
+        copyMenuItem.setText(org.openide.util.NbBundle.getMessage(DefaultTableArtifactContentViewer.class, "DefaultTableArtifactContentViewer.copyMenuItem.text")); // NOI18N
         rightClickMenu.add(copyMenuItem);
 
-        selectAllMenuItem.setText(org.openide.util.NbBundle.getMessage(DefaultArtifactContentViewer.class, "DefaultArtifactContentViewer.selectAllMenuItem.text")); // NOI18N
+        selectAllMenuItem.setText(org.openide.util.NbBundle.getMessage(DefaultTableArtifactContentViewer.class, "DefaultTableArtifactContentViewer.selectAllMenuItem.text")); // NOI18N
         rightClickMenu.add(selectAllMenuItem);
 
-        setPreferredSize(new java.awt.Dimension(100, 58));
+        setPreferredSize(new java.awt.Dimension(0, 0));
 
         resultsTableScrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
         resultsTableScrollPane.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-        resultsTableScrollPane.setPreferredSize(new java.awt.Dimension(620, 34));
+        resultsTableScrollPane.setMinimumSize(new java.awt.Dimension(0, 0));
+        resultsTableScrollPane.setPreferredSize(new java.awt.Dimension(0, 0));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
