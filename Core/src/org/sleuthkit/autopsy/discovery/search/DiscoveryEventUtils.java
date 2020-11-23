@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryKeyUtils.GroupKey;
 import org.sleuthkit.autopsy.discovery.search.SearchData.Type;
+import org.sleuthkit.autopsy.discovery.ui.DateArtifactWrapper;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
@@ -267,6 +268,27 @@ public final class DiscoveryEventUtils {
          */
         public BlackboardArtifact.ARTIFACT_TYPE getArtifactType() {
             return artifactType;
+        }
+    }
+
+    /**
+     * Event to signal the completion of a search being performed.
+     */
+    public static final class MiniTimelineResultEvent {
+
+        private final List<DateArtifactWrapper> artifacts = new ArrayList<>();
+
+        public MiniTimelineResultEvent(List<DateArtifactWrapper> artifacts) {
+            this.artifacts.addAll(artifacts);
+        }
+
+        /**
+         * Get the map of artifacts included in the event.
+         *
+         * @return The map of artifacts retrieved.
+         */
+        public List<DateArtifactWrapper> getArtifactDateWrapperList() {
+            return Collections.unmodifiableList(artifacts);
         }
     }
 

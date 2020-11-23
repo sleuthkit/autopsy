@@ -43,7 +43,7 @@ final class DomainArtifactsTabPanel extends JPanel {
     private final BlackboardArtifact.ARTIFACT_TYPE artifactType;
     private AbstractArtifactDetailsPanel rightPanel = null;
 
-    private volatile ArtifactRetrievalStatus status = ArtifactRetrievalStatus.UNPOPULATED;
+    private ArtifactRetrievalStatus status = ArtifactRetrievalStatus.UNPOPULATED;
     private final ListSelectionListener listener = new ListSelectionListener() {
         @Override
         public void valueChanged(ListSelectionEvent event) {

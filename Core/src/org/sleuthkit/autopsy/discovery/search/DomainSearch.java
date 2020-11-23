@@ -23,7 +23,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryKeyUtils.GroupKey;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -42,7 +41,7 @@ public class DomainSearch {
      * Construct a new DomainSearch object.
      */
     public DomainSearch() {
-        this(new DomainSearchCache(), new DomainSearchThumbnailCache(), 
+        this(new DomainSearchCache(), new DomainSearchThumbnailCache(),
                 new DomainSearchArtifactsCache());
     }
 
@@ -54,7 +53,7 @@ public class DomainSearch {
      * @param thumbnailCache The DomainSearchThumnailCache to use for this
      *                       DomainSearch.
      */
-    DomainSearch(DomainSearchCache cache, DomainSearchThumbnailCache thumbnailCache, 
+    DomainSearch(DomainSearchCache cache, DomainSearchThumbnailCache thumbnailCache,
             DomainSearchArtifactsCache artifactsCache) {
         this.searchCache = cache;
         this.thumbnailCache = thumbnailCache;
@@ -155,10 +154,10 @@ public class DomainSearch {
      * @param thumbnailRequest Thumbnail request for domain.
      *
      * @return A thumbnail of the first matching JPEG, or a default thumbnail if
-     * no suitable JPEG exists.
+     *         no suitable JPEG exists.
      *
      * @throws DiscoveryException If there is an error with Discovery related
-     * processing.
+     *                            processing.
      */
     public Image getThumbnail(DomainSearchThumbnailRequest thumbnailRequest) throws DiscoveryException {
         return thumbnailCache.get(thumbnailRequest);
@@ -172,12 +171,22 @@ public class DomainSearch {
      * value. String matching is case insensitive.
      *
      * @param artifactsRequest The request containing the case, artifact type,
-     * and domain name.
+     *                         and domain name.
+     *
      * @return A list of blackboard artifacts that match the request criteria.
+     *
      * @throws DiscoveryException If an exception is encountered during
-     * processing.
+     *                            processing.
      */
     public List<BlackboardArtifact> getArtifacts(DomainSearchArtifactsRequest artifactsRequest) throws DiscoveryException {
         return artifactsCache.get(artifactsRequest);
+    }
+
+    public List<BlackboardArtifact> getAllArtifactsForDomain(SleuthkitCase sleuthkitCase, String domain) throws DiscoveryException {
+        List<BlackboardArtifact> artifacts = new ArrayList<>();
+        for (BlackboardArtifact.ARTIFACT_TYPE type : SearchData.Type.DOMAIN.getArtifactTypes()) {
+            artifacts.addAll(getArtifacts(new DomainSearchArtifactsRequest(sleuthkitCase, domain, type)));
+        }
+        return artifacts;
     }
 }
