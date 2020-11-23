@@ -37,8 +37,8 @@ import org.sleuthkit.autopsy.modules.yara.ui.YaraIngestSettingsPanel;
 public class YaraIngestModuleFactory extends IngestModuleFactoryAdapter {
 
     @Messages({
-        "Yara_Module_Name=YARA",
-        "Yara_Module_Description=With the YARA ingest module you use YARA rule files to search files for textual or binary patterns."
+        "Yara_Module_Name=YARA Analyzer",
+        "Yara_Module_Description=The YARA Analyzer uses YARA to search files for textual or binary patterns."
     })
 
     @Override
