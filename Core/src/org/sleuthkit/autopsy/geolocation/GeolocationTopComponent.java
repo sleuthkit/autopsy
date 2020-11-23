@@ -48,7 +48,6 @@ import static org.sleuthkit.autopsy.casemodule.Case.Events.CURRENT_CASE;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.geolocation.GeoFilterPanel.GeoFilter;
 import org.sleuthkit.autopsy.geolocation.datamodel.GeoLocationDataException;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import static org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent.DATA_ADDED;
@@ -295,6 +294,15 @@ public final class GeolocationTopComponent extends TopComponent {
             return;
         }
 
+        fetchAndShowWaypoints(filters);
+    }
+
+    /**
+     * Loads and shows waypoints based on the filters.
+     *
+     * @param filters The filters to use.
+     */
+    public void fetchAndShowWaypoints(GeoFilter filters) {
         setWaypointLoading(true);
         geoFilterPanel.setEnabled(false);
 
@@ -491,8 +499,8 @@ public final class GeolocationTopComponent extends TopComponent {
     // End of variables declaration//GEN-END:variables
 
     /**
-     *  Extends AbstractWaypointFetcher to handle the returning of
-     *  the filters set of MapWaypoints.
+     * Extends AbstractWaypointFetcher to handle the returning of the filters
+     * set of MapWaypoints.
      */
     @Messages({
         "GeolocationTopComponent.WaypointFetcher.onErrorTitle=Error gathering GPS Track Data",
@@ -507,13 +515,13 @@ public final class GeolocationTopComponent extends TopComponent {
         @Override
         void handleFilteredWaypointSet(Set<MapWaypoint> mapWaypoints, List<Set<MapWaypoint>> tracks, boolean wasEntirelySuccessful) {
             addWaypointsToMap(mapWaypoints, tracks);
-            
+
             // if there is an error, present to the user.
             if (!wasEntirelySuccessful) {
-                JOptionPane.showMessageDialog(GeolocationTopComponent.this, 
-                    Bundle.GeolocationTopComponent_WaypointFetcher_onErrorDescription(), 
-                    Bundle.GeolocationTopComponent_WaypointFetcher_onErrorTitle(),
-                    JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(GeolocationTopComponent.this,
+                        Bundle.GeolocationTopComponent_WaypointFetcher_onErrorDescription(),
+                        Bundle.GeolocationTopComponent_WaypointFetcher_onErrorTitle(),
+                        JOptionPane.ERROR_MESSAGE);
             }
         }
     }

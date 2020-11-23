@@ -39,14 +39,14 @@ abstract class AbstractWaypointFetcher implements WaypointBuilder.WaypointFilter
 
     private static final Logger logger = Logger.getLogger(AbstractWaypointFetcher.class.getName());
 
-    private final GeoFilterPanel.GeoFilter filters;
+    private final GeoFilter filters;
 
     /**
      * Constructs the Waypoint Runner
      *
      * @param filters
      */
-    AbstractWaypointFetcher(GeoFilterPanel.GeoFilter filters) {
+    AbstractWaypointFetcher(GeoFilter filters) {
         this.filters = filters;
     }
 

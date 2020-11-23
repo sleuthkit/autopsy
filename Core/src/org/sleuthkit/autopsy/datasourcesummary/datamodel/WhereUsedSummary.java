@@ -230,6 +230,13 @@ public class WhereUsedSummary implements DefaultArtifactUpdateGovernor {
         this.provider = provider;
         this.logger = logger;
     }
+    
+    /**
+     * @return Returns all the geolocation artifact types.
+     */
+    public List<ARTIFACT_TYPE> getGeoTypes() {
+        return GPS_ARTIFACT_TYPES;
+    }
 
     @Override
     public Set<Integer> getArtifactTypeIdsForRefresh() {
