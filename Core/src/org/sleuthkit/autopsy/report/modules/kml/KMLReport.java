@@ -747,7 +747,7 @@ public final class KMLReport implements GeneralReportModule {
         Element altitudeMode = new Element("altitudeMode", ns).addContent("clampToGround"); //NON-NLS
         polygon.addContent(altitudeMode);
         
-        // KML uses lon, lat. Deliberately reversed.1
+        // KML uses lon, lat. Deliberately reversed.
         Element coordinates = new Element("coordinates", ns);
         for (Waypoint wp : waypoints) {
             coordinates.addContent(wp.getLongitude() + "," + wp.getLatitude() + ",0 "); //NON-NLS

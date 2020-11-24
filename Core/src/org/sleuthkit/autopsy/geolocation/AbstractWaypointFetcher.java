@@ -118,12 +118,12 @@ abstract class AbstractWaypointFetcher implements WaypointBuilder.WaypointFilter
         for (List<Waypoint> t : geoDataSet.getAreas()) {
             areaSets.add(MapWaypoint.getWaypoints(t));
         }
-        // TODO check for area errors too TODO TODO
+
         handleFilteredWaypointSet(
             pointSet, trackSets, areaSets,
             (trackResults == null || trackResults.isSuccessfullyParsed()) 
-                    && (areaResults == null || areaResults.isSuccessfullyParsed())
-                    && waypointResults.isSuccessfullyParsed());
+                && (areaResults == null || areaResults.isSuccessfullyParsed())
+                && waypointResults.isSuccessfullyParsed());
     }
 
     /**
@@ -296,6 +296,9 @@ abstract class AbstractWaypointFetcher implements WaypointBuilder.WaypointFilter
         return -1L;
     }
     
+    /**
+     * Utility class to collect filtered GPS objects.
+     */
     static class GeoDataSet {
         private final List<Waypoint> waypoints;
         private final List<List<Waypoint>> tracks;
