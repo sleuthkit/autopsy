@@ -460,29 +460,27 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
          * If one of the child nodes of the root node is to be selected, select
          * it.
          */
-        SwingUtilities.invokeLater(() -> {
-            if (rootNode instanceof TableFilterNode) {
-                NodeSelectionInfo selectedChildInfo = ((TableFilterNode) rootNode).getChildNodeSelectionInfo();
-                if (null != selectedChildInfo) {
-                    Node[] childNodes = rootNode.getChildren().getNodes(true);
-                    for (int i = 0; i < childNodes.length; ++i) {
-                        Node childNode = childNodes[i];
-                        if (selectedChildInfo.matches(childNode)) {
-                            SwingUtilities.invokeLater(() -> {
-                                try {
-                                    this.getExplorerManager().setExploredContextAndSelection(this.rootNode, new Node[]{childNode});
-                                } catch (PropertyVetoException ex) {
-                                    LOGGER.log(Level.SEVERE, "Failed to select node specified by selected child info", ex);
-                                }
-                            });
+        if (rootNode instanceof TableFilterNode) {
+            NodeSelectionInfo selectedChildInfo = ((TableFilterNode) rootNode).getChildNodeSelectionInfo();
+            if (null != selectedChildInfo) {
+                Node[] childNodes = rootNode.getChildren().getNodes(true);
+                for (int i = 0; i < childNodes.length; ++i) {
+                    Node childNode = childNodes[i];
+                    if (selectedChildInfo.matches(childNode)) {
+                        SwingUtilities.invokeLater(() -> {
+                            try {
+                                this.getExplorerManager().setExploredContextAndSelection(this.rootNode, new Node[]{childNode});
+                            } catch (PropertyVetoException ex) {
+                                LOGGER.log(Level.SEVERE, "Failed to select node specified by selected child info", ex);
+                            }
+                        });
 
-                            break;
-                        }
+                        break;
                     }
-                    ((TableFilterNode) rootNode).setChildNodeSelectionInfo(null);
                 }
+                ((TableFilterNode) rootNode).setChildNodeSelectionInfo(null);
             }
-        });
+        }
 
         /*
          * The table setup is done, so any added/removed events can now be
