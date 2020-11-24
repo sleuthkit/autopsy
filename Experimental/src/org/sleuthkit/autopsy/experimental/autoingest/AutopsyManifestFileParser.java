@@ -18,6 +18,9 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -56,13 +59,6 @@ public final class AutopsyManifestFileParser implements ManifestFileParser {
         if (fileName.toString().toUpperCase().endsWith(MANIFEST_FILE_NAME_SIGNATURE)) {
             try {
                 fileIsManifest = isAutopsyManifestFile(filePath);
-                if (!fileIsManifest) {
-                    // if false was returned from above the mainfest file
-                    // try to fix the issue and check again.
-                    Path tempPath = ManifestFileParser.makeTidyManifestFile(filePath);
-                    fileIsManifest = isAutopsyManifestFile(tempPath);
-                    tempPath.toFile().delete();
-                }
             } catch (Exception unused) {
                 fileIsManifest = false;
             }
@@ -143,12 +139,23 @@ public final class AutopsyManifestFileParser implements ManifestFileParser {
      *
      * @return True if this a well formed autopsy auto ingest manifest file.
      */
-    private boolean isAutopsyManifestFile(Path filePath) {
+    private boolean isAutopsyManifestFile(Path filePath) throws IOException {
         try {
             Document doc = this.createManifestDOM(filePath);
             Element docElement = doc.getDocumentElement();
             return docElement.getTagName().equals(ROOT_ELEM_TAG_NAME);
         } catch (Exception unused) {
+            // Double check that this isn't a manifest file that may have bad
+            // characters that will be handled in the process method.
+            try (BufferedReader reader = new BufferedReader(new FileReader(filePath.toFile()))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    if (line.toLowerCase().contains(ROOT_ELEM_TAG_NAME.toLowerCase())) {
+                        return true;
+                    }
+                }
+            }
+
             return false;
         }
     }

@@ -73,10 +73,10 @@ public interface ManifestFileParser {
             tidy.setXmlTags(true);
             tidy.parseDOM(br, out);
         }
-
+        
         return Paths.get(tempFile.toString());
     }
-
+    
     public final static class ManifestFileParserException extends Exception {
 
         private static final long serialVersionUID = 1L;
