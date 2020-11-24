@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.discovery.ui;
 
+import org.sleuthkit.autopsy.contentviewers.artifactviewers.GeneralPurposeArtifactViewer;
 import com.google.common.eventbus.Subscribe;
 import java.util.logging.Level;
 import javax.swing.JPanel;
@@ -25,7 +26,7 @@ import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import org.sleuthkit.autopsy.contentviewers.artifactviewers.DefaultArtifactContentViewer;
+import org.sleuthkit.autopsy.contentviewers.artifactviewers.DefaultTableArtifactContentViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils;
@@ -75,19 +76,17 @@ final class DomainArtifactsTabPanel extends JPanel {
     private void setRightComponent() {
         switch (artifactType) {
             case TSK_WEB_HISTORY:
-                rightPanel = new WebHistoryDetailsPanel();
-                break;
             case TSK_WEB_COOKIE:
             case TSK_WEB_SEARCH_QUERY:
             case TSK_WEB_BOOKMARK:
-                rightPanel = new DefaultArtifactContentViewer();
+                rightPanel = new GeneralPurposeArtifactViewer();
                 break;
             case TSK_WEB_DOWNLOAD:
             case TSK_WEB_CACHE:
                 rightPanel = new ContentViewerDetailsPanel();
                 break;
             default:
-                rightPanel = new DefaultArtifactContentViewer();
+                rightPanel = new DefaultTableArtifactContentViewer();
                 break;
         }
         if (rightPanel != null) {
@@ -98,7 +97,7 @@ final class DomainArtifactsTabPanel extends JPanel {
     /**
      * Get the status of the panel which indicates if it is populated.
      *
-     * @return The ArtifactRetrievalStatuss of the panel.
+     * @return The ArtifactRetrievalStatus of the panel.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     ArtifactRetrievalStatus getStatus() {
@@ -126,24 +125,24 @@ final class DomainArtifactsTabPanel extends JPanel {
      */
     @Subscribe
     void handleArtifactSearchResultEvent(DiscoveryEventUtils.ArtifactSearchResultEvent artifactresultEvent) {
-        SwingUtilities.invokeLater(() -> {
-            if (artifactType == artifactresultEvent.getArtifactType()) {
+        if (artifactType == artifactresultEvent.getArtifactType()) {
+            SwingUtilities.invokeLater(() -> {
                 listPanel.removeListSelectionListener(listener);
                 listPanel.addArtifacts(artifactresultEvent.getListOfArtifacts());
+                status = ArtifactRetrievalStatus.POPULATED;
+                setEnabled(!listPanel.isEmpty());
                 listPanel.addSelectionListener(listener);
                 listPanel.selectFirst();
+                revalidate();
+                repaint();
                 try {
                     DiscoveryEventUtils.getDiscoveryEventBus().unregister(this);
                 } catch (IllegalArgumentException notRegistered) {
                     logger.log(Level.INFO, "Attempting to unregister tab which was not registered");
                     // attempting to remove a tab that was never registered
                 }
-                status = ArtifactRetrievalStatus.POPULATED;
-                setEnabled(!listPanel.isEmpty());
-                validate();
-                repaint();
-            }
-        });
+            });
+        }
     }
 
     /**
@@ -167,7 +166,12 @@ final class DomainArtifactsTabPanel extends JPanel {
 
         jSplitPane1 = new javax.swing.JSplitPane();
 
+        setMinimumSize(new java.awt.Dimension(0, 0));
+        setPreferredSize(new java.awt.Dimension(0, 0));
         setLayout(new java.awt.BorderLayout());
+
+        jSplitPane1.setMinimumSize(new java.awt.Dimension(0, 0));
+        jSplitPane1.setPreferredSize(new java.awt.Dimension(0, 0));
         add(jSplitPane1, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 

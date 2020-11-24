@@ -45,6 +45,7 @@ import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Blackboard.BlackboardException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_OS_ACCOUNT;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -415,6 +416,9 @@ final class ExtractRecycleBin extends Extract {
         return artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.fromID(type.getTypeID())));
     }
 
+    @Messages({
+        "ExtractRecycleBin_Recyle_Bin_Display_Name=Recycle Bin"
+    })
     /**
      * Create TSK_RECYCLE_BIN artifact type.
      *
@@ -422,9 +426,9 @@ final class ExtractRecycleBin extends Extract {
      */
     private void createRecycleBinArtifactType() throws TskCoreException {
         try {
-            tskCase.addBlackboardArtifactType(RECYCLE_BIN_ARTIFACT_NAME, "Recycle Bin"); //NON-NLS
-        } catch (TskDataException ex) {
-            logger.log(Level.INFO, String.format("%s may have already been defined for this case", RECYCLE_BIN_ARTIFACT_NAME));
+            tskCase.getBlackboard().getOrAddArtifactType(RECYCLE_BIN_ARTIFACT_NAME, Bundle.ExtractRecycleBin_Recyle_Bin_Display_Name()); //NON-NLS
+        } catch (BlackboardException ex) {
+            throw new TskCoreException(String.format("An exception was thrown while defining artifact type %s", RECYCLE_BIN_ARTIFACT_NAME), ex);
         }
 
     }
