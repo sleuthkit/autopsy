@@ -286,14 +286,12 @@ final class ExtractPrefetch extends Extract {
                                         BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, getName(), PREFETCH_TSK_COMMENT));
 
                         try {
-                            if (!blackboard.artifactExists(dataSource, BlackboardArtifact.ARTIFACT_TYPE.TSK_PROG_RUN, blkBrdAttributes)) {
-                                BlackboardArtifact blkBrdArt = pfAbstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_PROG_RUN);
-                                blkBrdArt.addAttributes(blkBrdAttributes);
-                                blkBrdArtList.add(blkBrdArt);
-                                BlackboardArtifact associatedBbArtifact = createAssociatedArtifact(applicationName.toLowerCase(), filePath, blkBrdArt, dataSource);
-                                if (associatedBbArtifact != null) {
-                                    blkBrdArtList.add(associatedBbArtifact);
-                                }
+                            BlackboardArtifact blkBrdArt = pfAbstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_PROG_RUN);
+                            blkBrdArt.addAttributes(blkBrdAttributes);
+                            blkBrdArtList.add(blkBrdArt);
+                            BlackboardArtifact associatedBbArtifact = createAssociatedArtifact(applicationName.toLowerCase(), filePath, blkBrdArt, dataSource);
+                            if (associatedBbArtifact != null) {
+                                blkBrdArtList.add(associatedBbArtifact);
                             }
                         } catch (TskCoreException ex) {
                             logger.log(Level.SEVERE, "Exception Adding Artifact.", ex);//NON-NLS
