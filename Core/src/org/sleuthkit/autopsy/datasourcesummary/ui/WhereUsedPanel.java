@@ -27,7 +27,7 @@ import org.openide.util.actions.CallableSystemAction;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.WhereUsedSummary;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.WhereUsedSummary.CityCount;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.WhereUsedSummary.CityRecordCount;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.WhereUsedSummary.CityRecord;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer.DefaultCellModel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult;
@@ -75,20 +75,20 @@ public class WhereUsedPanel extends BaseDataSourceSummaryPanel {
         return String.format("%s, %s", record.getCityName(), record.getCountry());
     }
 
-    private static final ColumnModel<CityCount> CITY_COL = new ColumnModel<>(
+    private static final ColumnModel<CityRecordCount> CITY_COL = new ColumnModel<>(
             Bundle.WhereUsedPanel_cityColumn_title(),
             (cityCount) -> new DefaultCellModel(getCityName(cityCount.getCityRecord())),
             300
     );
 
-    private static final ColumnModel<CityCount> COUNT_COL = new ColumnModel<>(
+    private static final ColumnModel<CityRecordCount> COUNT_COL = new ColumnModel<>(
             Bundle.WhereUsedPanel_countColumn_title(),
             (cityCount) -> new DefaultCellModel(Integer.toString(cityCount.getCount())),
             100
     );
 
     // table displaying city and number of hits for that city
-    private final JTablePanel<CityCount> cityCountsTable = JTablePanel.getJTablePanel(Arrays.asList(CITY_COL, COUNT_COL))
+    private final JTablePanel<CityRecordCount> cityCountsTable = JTablePanel.getJTablePanel(Arrays.asList(CITY_COL, COUNT_COL))
             .setKeyFunction((cityCount) -> cityCount.getCityRecord());
 
     // loadable components on this tab
@@ -126,7 +126,7 @@ public class WhereUsedPanel extends BaseDataSourceSummaryPanel {
         initComponents();
     }
 
-    private void handleData(DataFetchResult<List<CityCount>> result) {
+    private void handleData(DataFetchResult<List<CityRecordCount>> result) {
         if (result != null && result.getResultType() == DataFetchResult.ResultType.SUCCESS && CollectionUtils.isNotEmpty(result.getData())) {
             viewInGeolocationBtn.setEnabled(true);
         }

@@ -25,6 +25,7 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -37,6 +38,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
@@ -61,7 +63,7 @@ public class WhereUsedSummary implements DefaultArtifactUpdateGovernor {
     /**
      * A count of hits for a particular city.
      */
-    public class CityCount {
+    public class CityRecordCount {
 
         private final CityRecord cityRecord;
         private final int count;
@@ -73,7 +75,7 @@ public class WhereUsedSummary implements DefaultArtifactUpdateGovernor {
          * and location.
          * @param count The number of hits in proximity to that city.
          */
-        CityCount(CityRecord cityRecord, int count) {
+        CityRecordCount(CityRecord cityRecord, int count) {
             this.cityRecord = cityRecord;
             this.count = count;
         }
@@ -230,7 +232,7 @@ public class WhereUsedSummary implements DefaultArtifactUpdateGovernor {
         this.provider = provider;
         this.logger = logger;
     }
-    
+
     /**
      * @return Returns all the geolocation artifact types.
      */
@@ -243,6 +245,73 @@ public class WhereUsedSummary implements DefaultArtifactUpdateGovernor {
         return GPS_ARTIFACT_TYPE_IDS;
     }
 
+    public static class CityCountsList {
+
+        private final List<CityRecordCount> counts;
+        private final int otherCount;
+
+        public CityCountsList(List<CityRecordCount> counts, int otherCount) {
+            this.counts = Collections.unmodifiableList(new ArrayList<>(counts));
+            this.otherCount = otherCount;
+        }
+
+        public List<CityRecordCount> getCounts() {
+            return counts;
+        }
+
+        public int getOtherCount() {
+            return otherCount;
+        }
+    }
+
+    public static class CityData {
+
+        private final CityCountsList mostCommon;
+        private final CityCountsList mostRecent;
+        private final Long mostRecentSeen;
+
+        public CityData(CityCountsList mostCommon, CityCountsList mostRecent, Long mostRecentSeen) {
+            this.mostCommon = mostCommon;
+            this.mostRecent = mostRecent;
+            this.mostRecentSeen = mostRecentSeen;
+        }
+
+        public CityCountsList getMostCommon() {
+            return mostCommon;
+        }
+
+        public CityCountsList getMostRecent() {
+            return mostRecent;
+        }
+
+        public Long getMostRecentSeen() {
+            return mostRecentSeen;
+        }
+    }
+
+    private boolean greaterThanOrEqual(Long minTime, Long time) {
+        if ((minTime == null) || (time != null && time >= minTime)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private static final Pair<Integer, Integer> EMPTY_COUNT = Pair.of(0, 0);
+
+    // left is total count, right is count within time range
+    private Pair<Integer, Integer> getCounts(List<Waypoint> points, Long minTime) {
+
+        if (points == null) {
+            return EMPTY_COUNT;
+        }
+
+        return points.stream().reduce(
+                EMPTY_COUNT,
+                (Waypoint w) -> Pair.of(1, greaterThanOrEqual(minTime, w.getTimestamp()) ? 1 : 0),
+                (pair1, pair2) -> Pair.of(pair1.getLeft() + pair2.getLeft(), pair1.getRight() + pair2.getRight()));
+    }
+
     /**
      * Get this list of hits per city where the list is sorted descending by
      * number of found hits (i.e. most hits is first index).
@@ -253,20 +322,65 @@ public class WhereUsedSummary implements DefaultArtifactUpdateGovernor {
      * @throws GeoLocationDataException
      * @throws InterruptedException
      */
-    public List<CityCount> getCityCounts(DataSource dataSource) throws SleuthkitCaseProviderException, GeoLocationDataException, InterruptedException {
+    public CityData getCityCounts(DataSource dataSource, int daysCount, int maxCount) throws SleuthkitCaseProviderException, GeoLocationDataException, InterruptedException {
         if (this.latLngMap == null) {
             throw new IllegalStateException("City data hasn't been loaded");
         }
-        
-        List<Waypoint> dataSourcePoints = getPoints(dataSource);
-        Map<CityRecord, Integer> cityCounts = getCounts(dataSourcePoints);
 
-        return cityCounts.entrySet().stream()
-                .map(e -> new CityCount(e.getKey(), e.getValue()))
-                .sorted((cityCount1, cityCount2) -> -Integer.compare(cityCount1.getCount(), cityCount2.getCount()))
+        List<Waypoint> dataSourcePoints = getPoints(dataSource);
+
+        Map<CityRecord, List<Waypoint>> allCityPoints = new HashMap<>();
+        List<Waypoint> others = new ArrayList<>();
+        Long mostRecent = null;
+
+        for (Waypoint pt : dataSourcePoints) {
+            CityRecord city = latLngMap.findClosest(new CityRecord(null, null, pt.getLatitude(), pt.getLongitude()));
+            Long curTime = pt.getTimestamp();
+            if (curTime != null && (mostRecent == null || curTime > mostRecent)) {
+                mostRecent = curTime;
+            }
+
+            if (city == null) {
+                others.add(pt);
+            } else {
+                List<Waypoint> cityPoints = allCityPoints.get(city);
+                if (cityPoints == null) {
+                    cityPoints = new ArrayList<>();
+                    allCityPoints.put(city, cityPoints);
+                }
+
+                cityPoints.add(pt);
+            }
+        }
+
+        final Long mostRecentTime = mostRecent;
+
+        // pair left is total count and right is count within range (or mostRecent is null)
+        Map<CityRecord, Pair<Integer, Integer>> allCityCounts = allCityPoints.entrySet().stream()
+                .collect(Collectors.toMap((e) -> e.getKey(), (e) -> getCounts(e.getValue(), mostRecentTime)));
+
+        List<CityRecordCount> mostCommonCounts = allCityCounts.entrySet().stream()
+                .map(e -> new CityRecordCount(e.getKey(), e.getValue().getLeft()))
+                .sorted((a, b) -> -Integer.compare(a.getCount(), b.getCount()))
+                .limit(maxCount)
                 .collect(Collectors.toList());
+
+        List<CityRecordCount> mostRecentCounts = allCityCounts.entrySet().stream()
+                .map(e -> new CityRecordCount(e.getKey(), e.getValue().getRight()))
+                .sorted((a, b) -> -Integer.compare(a.getCount(), b.getCount()))
+                .limit(maxCount)
+                .collect(Collectors.toList());
+        
+        Pair<Integer, Integer> otherCounts = getCounts(others, mostRecentTime);
+        int otherMostCommonCount = otherCounts.getLeft();
+        int otherMostRecentCount = otherCounts.getRight();
+        
+        
+        return new CityData(
+                new CityCountsList(mostCommonCounts, otherMostCommonCount), 
+                new CityCountsList(mostRecentCounts, otherMostRecentCount), 
+                mostRecentTime);
     }
-    
 
     /**
      * Fetches all GPS data for the data source from the current case.
@@ -313,24 +427,8 @@ public class WhereUsedSummary implements DefaultArtifactUpdateGovernor {
      * Pre-loads city data.
      */
     public void load() throws IOException {
-        latLngMap = new LatLngMap<CityRecord>(parseCsvLines(WhereUsedSummary.class.getResourceAsStream("worldcities.csv"), true));
-    }
-
-    private static CityRecord OTHER_RECORD = new CityRecord(Bundle.GeolocationSummary_cities_noRecordFound(), "", 0, 0);
-
-    /**
-     * Determines closest city to each waypoint and returns a map of the city to
-     * the number of hits closest to that city.
-     *
-     * @param waypoints The waypoints.
-     * @return A map of city to the number of hits.
-     */
-    private Map<CityRecord, Integer> getCounts(List<Waypoint> waypoints) {
-        Map<CityRecord, Integer> toRet = waypoints.stream()
-                .map((point) -> latLngMap.findClosest(new CityRecord(null, null, point.getLatitude(), point.getLongitude())))
-                .collect(Collectors.toMap(city -> city == null ? OTHER_RECORD : city, city -> 1, (count1, count2) -> count1 + count2));
-
-        return toRet;
+        latLngMap = new LatLngMap<CityRecord>(parseCsvLines(WhereUsedSummary.class
+                .getResourceAsStream("worldcities.csv"), true));
     }
 
     private static final int CITY_NAME_IDX = 0;

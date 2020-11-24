@@ -31,7 +31,7 @@ import org.sleuthkit.autopsy.geolocation.KdTree.XYZPoint;
 /**
  * Divides map into grid and places each grid square in separate index in a hashmap.
  */
-public class LatLngMap<E extends KdTree.XYZPoint> {
+class LatLngMap<E extends KdTree.XYZPoint> {
     // radius of Earth in meters
     private static final double EARTH_RADIUS = 6371e3;
     
@@ -60,7 +60,7 @@ public class LatLngMap<E extends KdTree.XYZPoint> {
         return Pair.of((int) (double) dPair.getLeft(), (int) (double) dPair.getRight());
     };
 
-    public LatLngMap(List<E> pointsToAdd) {
+    LatLngMap(List<E> pointsToAdd) {
         Map<Pair<Integer, Integer>, List<E>> latLngBuckets = pointsToAdd.stream()
                 .collect(Collectors.groupingBy((pt) -> bucketCalculator.apply(pt)));
 
@@ -69,7 +69,7 @@ public class LatLngMap<E extends KdTree.XYZPoint> {
                 .collect(Collectors.toMap(p -> p.getKey(), p -> p.getValue()));
     }
 
-    public E findClosest(E point) {
+    E findClosest(E point) {
         Pair<Double, Double> calculated = vectorDistance(point);
         int latBucket = (int) (double) calculated.getLeft();
         int latBucket2 = Math.round(calculated.getLeft()) == latBucket ? latBucket - 1 : latBucket + 1;
