@@ -22,7 +22,9 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.util.StringTokenizer;
 import java.util.logging.Level;
+import org.openide.util.Exceptions;
 
 public class NetworkUtils {
 
@@ -54,6 +56,46 @@ public class NetworkUtils {
     }
 
     /**
+     * Attempt to manually extract the domain from a URL.
+     *
+     * @param url
+     * @return empty string if no domain could be found
+     */
+    private static String getBaseDomain(String url) {
+        String host = null;
+
+        //strip protocol
+        String cleanUrl = url.replaceFirst(".*:\\/\\/", "");
+
+        //strip after slashes
+        String dirToks[] = cleanUrl.split("\\/");
+        if (dirToks.length > 0) {
+            host = dirToks[0];
+        } else {
+            host = cleanUrl;
+        }
+
+        String base = host;
+        try {
+            base = DomainCategorizer.getInstance().getDomain(host);
+        } catch (IOException ex) {
+            logger.log(Level.WARNING, "Unable to load resources for domain categorization.", ex);
+        }
+
+        // verify there are no special characters in there
+        if (base.matches(".*[~`!@#$%^&\\*\\(\\)\\+={}\\[\\];:\\?<>,/ ].*")) {
+            return "";
+        }
+
+        //verify that the base domain actually has a '.', details JIRA-4609
+        if (!base.contains(".")) {
+            return "";
+        }
+
+        return base;
+    }
+
+    /**
      * Attempt to extract the domain from a URL. Will start by using the
      * built-in URL class, and if that fails will try to extract it manually.
      *
@@ -75,11 +117,7 @@ public class NetworkUtils {
 
         //was not a valid URL, try a less picky method
         if (result == null || result.trim().isEmpty()) {
-            try {
-                return DomainCategorizer.getInstance().getDomain(urlString);
-            } catch (IOException ex) {
-                logger.log(Level.SEVERE, "Unable to load resources for domain categorization.", ex);
-            }
+            return getBaseDomain(urlString);
         }
         return result;
     }

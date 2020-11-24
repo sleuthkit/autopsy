@@ -24,8 +24,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
@@ -134,53 +132,22 @@ class DomainCategorizer {
         }
     }
 
-    // based on syntax shown here: https://en.wikipedia.org/wiki/URL
-    // and intially based on regex provided here: https://stackoverflow.com/a/9608008
-    Pattern pattern = Pattern.compile("^\\s*(?:[^:\\/?#]+:)?(?:\\/\\/)?(?:[^\\/?#@]*@)?([^:\\/?#]*)");
-
-    /**
-     * Sanitizes a url string so that just the host is extracted ignoring
-     * scheme, userinfo, port, and path if present.
-     *
-     * @param url The url-like string.
-     * @return The host removing port, user info, scheme, and path
-     */
-    private String sanitizedHost(String url) {
-        if (StringUtils.isBlank(url)) {
-            return null;
-        }
-
-        Matcher m = pattern.matcher(url);
-        if (m.find()) {
-            return m.group(1);
-        } else {
-            return null;
-        }
-    }
-
     /**
      * Gets the domain by attempting to identify the host without the subdomain.
-     * If no host can be determined, the full parameter is returned. If no
-     * domain can be determined, the host is returned.
+     * If no domain can be determined, the domain is returned.
      *
-     * @param url The url/domain to query for.
-     * @return If provided argument is blank, null is returned. If no host can
-     * be determined the 'domain' parameter is returned. If no domain suffixes
-     * can be identified, the full host is returned. If a host and suffixes are
-     * identified, the domain (all suffixes with a prefix of the next token) are
-     * returned.
+     * @param domain The domain to query for.
+     * @return If provided argument is blank, null is returned. If no domain
+     * suffixes can be identified, the full host is returned. If a host and
+     * suffixes are identified, the domain (all suffixes with a prefix of the
+     * next token) are returned.
      */
-    String getDomain(String url) {
-        if (StringUtils.isBlank(url)) {
+    String getDomain(String domain) {
+        if (StringUtils.isBlank(domain)) {
             return null;
         }
 
-        String host = sanitizedHost(url);
-        if (host == null) {
-            return url;
-        }
-
-        List<String> tokens = Stream.of(host.split(DELIMITER))
+        List<String> tokens = Stream.of(domain.split(DELIMITER))
                 .filter(StringUtils::isNotBlank)
                 .collect(Collectors.toList());
 
@@ -196,7 +163,7 @@ class DomainCategorizer {
 
         // if first suffix cannot be found, return the whole domain
         if (idx == tokens.size() - 1) {
-            return host;
+            return domain;
         } else {
             int minIndex = Math.max(0, idx);
             List<String> subList = tokens.subList(minIndex, tokens.size());
