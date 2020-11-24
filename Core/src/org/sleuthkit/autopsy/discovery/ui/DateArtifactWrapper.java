@@ -28,7 +28,7 @@ public class DateArtifactWrapper {
     private final String date;
     private final List<BlackboardArtifact> artifactList = new ArrayList<>();
 
-    DateArtifactWrapper(String date, List<BlackboardArtifact> artifactList) {
+    public DateArtifactWrapper(String date, List<BlackboardArtifact> artifactList) {
         this.date = date;
         this.artifactList.addAll(artifactList);
     }

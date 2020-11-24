@@ -20,13 +20,18 @@ package org.sleuthkit.autopsy.discovery.search;
 
 import java.awt.Image;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryKeyUtils.GroupKey;
+import org.sleuthkit.autopsy.discovery.ui.DateArtifactWrapper;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Main class to perform the domain search.
@@ -182,11 +187,50 @@ public class DomainSearch {
         return artifactsCache.get(artifactsRequest);
     }
 
-    public List<BlackboardArtifact> getAllArtifactsForDomain(SleuthkitCase sleuthkitCase, String domain) throws DiscoveryException {
+    public List<DateArtifactWrapper> getAllArtifactsForDomain(SleuthkitCase sleuthkitCase, String domain) throws DiscoveryException {
         List<BlackboardArtifact> artifacts = new ArrayList<>();
-        for (BlackboardArtifact.ARTIFACT_TYPE type : SearchData.Type.DOMAIN.getArtifactTypes()) {
-            artifacts.addAll(getArtifacts(new DomainSearchArtifactsRequest(sleuthkitCase, domain, type)));
+        Map<String, List<BlackboardArtifact>> dateMap = new HashMap<>();
+        if (!StringUtils.isBlank(domain)) {
+            for (BlackboardArtifact.ARTIFACT_TYPE type : SearchData.Type.DOMAIN.getArtifactTypes()) {
+
+                artifacts.addAll(getArtifacts(new DomainSearchArtifactsRequest(sleuthkitCase, domain, type)));
+            }
+
+            for (BlackboardArtifact artifact : artifacts) {
+                String date;
+                try {
+                    date = getDate(artifact);
+                } catch (TskCoreException ex) {
+                    throw new DiscoveryException("Unable to get date for artifact with ID: " + artifact.getArtifactID(), ex);
+                }
+                if (!StringUtils.isBlank(date)) {
+                    List<BlackboardArtifact> artifactList = dateMap.get(date);
+                    if (artifactList == null) {
+                        artifactList = new ArrayList<>();
+                    }
+                    artifactList.add(artifact);
+                    dateMap.put(date, artifactList);
+                }
+            }
         }
-        return artifacts;
+        List<DateArtifactWrapper> dateArtifactList = new ArrayList<>();
+
+        for (String date : dateMap.keySet()) {
+            dateArtifactList.add(new DateArtifactWrapper(date, dateMap.get(date)));
+        }
+        return dateArtifactList;
     }
+
+    private String getDate(BlackboardArtifact artifact) throws TskCoreException {
+        for (BlackboardAttribute attribute : artifact.getAttributes()) {
+            if (attribute.getAttributeType().getTypeName().startsWith("TSK_DATETIME")) {
+                String dateString = attribute.getDisplayString();
+                if (dateString.length()>=10){
+                    return dateString.substring(0, 10);
+                }
+            }
+        }
+        return "";
+    }
+
 }

@@ -36,32 +36,34 @@ class MiniTimelinePanel extends javax.swing.JPanel {
     private final MiniTimelineDateListPanel dateListPanel = new MiniTimelineDateListPanel();
     private final MiniTimelineArtifactListPanel artifactListPanel = new MiniTimelineArtifactListPanel();
     private DomainArtifactsTabPanel.ArtifactRetrievalStatus status = DomainArtifactsTabPanel.ArtifactRetrievalStatus.UNPOPULATED;
-    private AbstractArtifactDetailsPanel rightPanel = null;
+    private AbstractArtifactDetailsPanel rightPanel = new GeneralPurposeArtifactViewer();
     private static final Logger logger = Logger.getLogger(MiniTimelinePanel.class.getName());
 
-    private final ListSelectionListener dateListener = new ListSelectionListener() {
+    private final ListSelectionListener artifactListener = new ListSelectionListener() {
         @Override
         public void valueChanged(ListSelectionEvent event) {
             if (!event.getValueIsAdjusting()) {
-                artifactListPanel.addArtifacts(dateListPanel.getArtifactsForSelectedDate());
-                artifactListPanel.selectFirst();
+                BlackboardArtifact artifact = artifactListPanel.getSelectedArtifact();
+                if (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID() || artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID()) {
+                    rightPanel = new ContentViewerDetailsPanel();
+                } else {
+                    rightPanel = new GeneralPurposeArtifactViewer();
+                }
+                rightPanel.setArtifact(artifact);
+                mainSplitPane.setRightComponent(rightPanel);
                 validate();
                 repaint();
             }
         }
     };
-    private final ListSelectionListener artifactListener = new ListSelectionListener() {
+    private final ListSelectionListener dateListener = new ListSelectionListener() {
         @Override
         public void valueChanged(ListSelectionEvent event) {
             if (!event.getValueIsAdjusting()) {
-                BlackboardArtifact selectedArtifact = artifactListPanel.getSelectedArtifact();
-                if (selectedArtifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID() || selectedArtifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID()) {
-                    rightPanel = new ContentViewerDetailsPanel();
-                } else {
-                    rightPanel = new GeneralPurposeArtifactViewer();
-                }
-                mainSplitPane.setRightComponent(rightPanel);
-                rightPanel.setArtifact(selectedArtifact);
+                artifactListPanel.removeListSelectionListener(artifactListener);
+                artifactListPanel.addArtifacts(dateListPanel.getArtifactsForSelectedDate());
+                artifactListPanel.addSelectionListener(artifactListener);
+                artifactListPanel.selectFirst();
                 validate();
                 repaint();
             }
@@ -72,12 +74,13 @@ class MiniTimelinePanel extends javax.swing.JPanel {
      * Creates new form MiniTimelinePanel
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    public MiniTimelinePanel() {
+    MiniTimelinePanel() {
         initComponents();
         dateListPanel.addSelectionListener(dateListener);
         artifactListPanel.addSelectionListener(artifactListener);
         leftSplitPane.setLeftComponent(dateListPanel);
         leftSplitPane.setRightComponent(artifactListPanel);
+        mainSplitPane.setRightComponent(rightPanel);
     }
 
     /**
@@ -125,7 +128,7 @@ class MiniTimelinePanel extends javax.swing.JPanel {
             try {
                 DiscoveryEventUtils.getDiscoveryEventBus().unregister(this);
             } catch (IllegalArgumentException notRegistered) {
-                logger.log(Level.INFO, "Attempting to unregister tab which was not registered");
+                logger.log(Level.INFO, "Attempting to unregister mini timeline view which was not registered");
                 // attempting to remove a tab that was never registered
             }
         });
@@ -147,9 +150,12 @@ class MiniTimelinePanel extends javax.swing.JPanel {
         setPreferredSize(new java.awt.Dimension(0, 0));
         setLayout(new java.awt.BorderLayout());
 
+        mainSplitPane.setResizeWeight(0.4);
+        mainSplitPane.setToolTipText(org.openide.util.NbBundle.getMessage(MiniTimelinePanel.class, "MiniTimelinePanel.mainSplitPane.toolTipText")); // NOI18N
         mainSplitPane.setMinimumSize(new java.awt.Dimension(0, 0));
         mainSplitPane.setPreferredSize(new java.awt.Dimension(0, 0));
 
+        leftSplitPane.setResizeWeight(0.5);
         leftSplitPane.setMinimumSize(new java.awt.Dimension(0, 0));
         leftSplitPane.setPreferredSize(new java.awt.Dimension(0, 0));
         mainSplitPane.setLeftComponent(leftSplitPane);

@@ -279,7 +279,9 @@ public final class DiscoveryEventUtils {
         private final List<DateArtifactWrapper> artifacts = new ArrayList<>();
 
         public MiniTimelineResultEvent(List<DateArtifactWrapper> artifacts) {
-            this.artifacts.addAll(artifacts);
+            if (artifacts != null) {
+                this.artifacts.addAll(artifacts);
+            }
         }
 
         /**

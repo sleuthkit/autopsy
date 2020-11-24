@@ -62,13 +62,13 @@ final class DomainDetailsPanel extends JPanel {
     @NbBundle.Messages({"DomainDetailsPanel.miniTimelineTitle.text=Mini Timeline"})
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private void addArtifactTabs(String tabName) {
-        
+
         jTabbedPane1.add(Bundle.DomainDetailsPanel_miniTimelineTitle_text(), new MiniTimelinePanel());
         for (BlackboardArtifact.ARTIFACT_TYPE type : SearchData.Type.DOMAIN.getArtifactTypes()) {
             jTabbedPane1.add(type.getDisplayName(), new DomainArtifactsTabPanel(type));
         }
         selectedTabName = tabName;
-        if (StringUtils.isBlank(selectedTabName)){
+        if (StringUtils.isBlank(selectedTabName)) {
             selectedTabName = Bundle.DomainDetailsPanel_miniTimelineTitle_text();
         }
         selectTab();
@@ -161,6 +161,8 @@ final class DomainDetailsPanel extends JPanel {
         for (Component comp : jTabbedPane1.getComponents()) {
             if (comp instanceof DomainArtifactsTabPanel) {
                 ((DomainArtifactsTabPanel) comp).setStatus(DomainArtifactsTabPanel.ArtifactRetrievalStatus.UNPOPULATED);
+            } else if (comp instanceof MiniTimelinePanel) {
+                ((MiniTimelinePanel) comp).setStatus(DomainArtifactsTabPanel.ArtifactRetrievalStatus.UNPOPULATED);
             }
         }
     }
