@@ -62,13 +62,13 @@ public class GeoPath {
     }
 
     /**
-     * Gets the list of Routes from the TSK_GPS_TRACK artifacts.
+     * Gets the list of Tracks from the TSK_GPS_TRACK artifacts.
      *
      * @param skCase     Currently open SleuthkitCase
      * @param sourceList List of source to return tracks from, maybe null to
      *                   return tracks from all sources
      *
-     * @return List of Route objects, empty list will be returned if no Routes
+     * @return List of Track objects, empty list will be returned if no tracks
      *         were found
      *
      * @throws GeoLocationDataException
@@ -94,6 +94,40 @@ public class GeoPath {
         }
         return new GeoLocationParseResult<Track>(tracks, allParsedSuccessfully);
     }
+    
+    /**
+     * Gets the list of Areas from the TSK_GPS_AREA artifacts.
+     *
+     * @param skCase     Currently open SleuthkitCase
+     * @param sourceList List of source to return areas from, may be null to
+     *                   return areas from all sources
+     *
+     * @return List of Area objects, empty list will be returned if no areas
+     *         were found
+     *
+     * @throws GeoLocationDataException
+     */
+    public static GeoLocationParseResult<Area> getAreas(SleuthkitCase skCase, List<? extends Content> sourceList) throws GeoLocationDataException {
+        List<BlackboardArtifact> artifacts = null;
+        boolean allParsedSuccessfully = true;
+        List<Area> areas = new ArrayList<>();
+        try {
+            artifacts = skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_AREA);
+            for (BlackboardArtifact artifact : artifacts) {
+                if (sourceList == null || sourceList.contains(artifact.getDataSource())) {
+                    try {
+                        areas.add(new Area(artifact));
+                        
+                    } catch (GeoLocationDataException e) {
+                        allParsedSuccessfully = false;
+                    }
+                }
+            }
+        } catch (TskCoreException ex) {
+            throw new GeoLocationDataException("Unable to get artifacts for type: TSK_GPS_BOOKMARK", ex);
+        }
+        return new GeoLocationParseResult<Area>(areas, allParsedSuccessfully);
+    }    
 
     /**
      * Path constructor.
