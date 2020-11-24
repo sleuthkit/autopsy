@@ -19,9 +19,7 @@
 package org.sleuthkit.autopsy.discovery.ui;
 
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
@@ -31,7 +29,6 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils;
 import org.sleuthkit.autopsy.discovery.search.DomainSearch;
-import org.sleuthkit.datamodel.BlackboardAttribute;
 
 /**
  * SwingWorker to retrieve a list of artifacts for a specified type and domain.

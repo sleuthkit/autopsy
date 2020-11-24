@@ -19,9 +19,7 @@
 package org.sleuthkit.autopsy.discovery.ui;
 
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.List;
-import java.util.Set;
 import java.util.logging.Level;
 import javax.swing.JPanel;
 import javax.swing.event.ListSelectionListener;

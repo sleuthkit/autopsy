@@ -22,7 +22,6 @@ import com.google.common.eventbus.Subscribe;
 import java.awt.Component;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
-import javax.swing.SwingWorker;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.apache.commons.lang.StringUtils;
@@ -39,7 +38,8 @@ import org.sleuthkit.autopsy.discovery.search.SearchData;
 final class DomainDetailsPanel extends JPanel {
 
     private static final long serialVersionUID = 1L;
-    private SwingWorker detailsWorker;
+    private ArtifactsWorker singleArtifactDomainWorker;
+    private MiniTimelineWorker miniTimelineWorker;
     private String domain;
     private String selectedTabName;
 
@@ -79,7 +79,12 @@ final class DomainDetailsPanel extends JPanel {
                     String newTabTitle = jTabbedPane1.getTitleAt(jTabbedPane1.getSelectedIndex());
                     if (selectedTabName == null || !selectedTabName.equals(newTabTitle)) {
                         selectedTabName = newTabTitle;
-                        runDomainWorker();
+                        Component selectedComponent = jTabbedPane1.getSelectedComponent();
+                        if (selectedComponent instanceof DomainArtifactsTabPanel) {
+                            runDomainWorker((DomainArtifactsTabPanel) selectedComponent);
+                        } else if (selectedComponent instanceof MiniTimelinePanel) {
+                            runMiniTimelineWorker((MiniTimelinePanel) selectedComponent);
+                        }
                     }
                 }
             }
@@ -105,27 +110,28 @@ final class DomainDetailsPanel extends JPanel {
      * populate the details area.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    private void runDomainWorker() {
-        Component selectedComponent = jTabbedPane1.getSelectedComponent();
-        if (detailsWorker != null && !detailsWorker.isDone()) {
-            detailsWorker.cancel(true);
+    private void runDomainWorker(DomainArtifactsTabPanel domainArtifactsTabPanel) {
+        if (singleArtifactDomainWorker != null && !singleArtifactDomainWorker.isDone()) {
+            singleArtifactDomainWorker.cancel(true);
         }
-        if (selectedComponent instanceof DomainArtifactsTabPanel) {
-            DomainArtifactsTabPanel selectedTab = (DomainArtifactsTabPanel) selectedComponent;
-            if (selectedTab.getStatus() == DomainArtifactsTabPanel.ArtifactRetrievalStatus.UNPOPULATED) {
-                DiscoveryEventUtils.getDiscoveryEventBus().register(selectedTab);
-                selectedTab.setStatus(DomainArtifactsTabPanel.ArtifactRetrievalStatus.POPULATING);
-                detailsWorker = new ArtifactsWorker(selectedTab.getArtifactType(), domain);
-                detailsWorker.execute();
-            }
-        } else if (selectedComponent instanceof MiniTimelinePanel) {
-            MiniTimelinePanel miniTimelinePanel = (MiniTimelinePanel) selectedComponent;
-            if (miniTimelinePanel.getStatus() == DomainArtifactsTabPanel.ArtifactRetrievalStatus.UNPOPULATED) {
-                DiscoveryEventUtils.getDiscoveryEventBus().register(miniTimelinePanel);
-                miniTimelinePanel.setStatus(DomainArtifactsTabPanel.ArtifactRetrievalStatus.POPULATING);
-                detailsWorker = new MiniTimelineWorker(domain);
-                detailsWorker.execute();
-            }
+        if (domainArtifactsTabPanel.getStatus() == DomainArtifactsTabPanel.ArtifactRetrievalStatus.UNPOPULATED) {
+            DiscoveryEventUtils.getDiscoveryEventBus().register(domainArtifactsTabPanel);
+            domainArtifactsTabPanel.setStatus(DomainArtifactsTabPanel.ArtifactRetrievalStatus.POPULATING);
+            singleArtifactDomainWorker = new ArtifactsWorker(domainArtifactsTabPanel.getArtifactType(), domain);
+            singleArtifactDomainWorker.execute();
+        }
+
+    }
+
+    private void runMiniTimelineWorker(MiniTimelinePanel miniTimelinePanel) {
+        if (miniTimelineWorker != null && !miniTimelineWorker.isDone()) {
+            miniTimelineWorker.cancel(true);
+        }
+        if (miniTimelinePanel.getStatus() == DomainArtifactsTabPanel.ArtifactRetrievalStatus.UNPOPULATED) {
+            DiscoveryEventUtils.getDiscoveryEventBus().register(miniTimelinePanel);
+            miniTimelinePanel.setStatus(DomainArtifactsTabPanel.ArtifactRetrievalStatus.POPULATING);
+            miniTimelineWorker = new MiniTimelineWorker(domain);
+            miniTimelineWorker.execute();
         }
     }
 
@@ -141,7 +147,12 @@ final class DomainDetailsPanel extends JPanel {
         SwingUtilities.invokeLater(() -> {
             resetTabsStatus();
             selectTab();
-            runDomainWorker();
+            Component selectedComponent = jTabbedPane1.getSelectedComponent();
+            if (selectedComponent instanceof DomainArtifactsTabPanel) {
+                runDomainWorker((DomainArtifactsTabPanel) selectedComponent);
+            } else if (selectedComponent instanceof MiniTimelinePanel) {
+                runMiniTimelineWorker((MiniTimelinePanel) selectedComponent);
+            }
             if (StringUtils.isBlank(domain)) {
                 //send fade out event
                 DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.DetailsVisibleEvent(false));
