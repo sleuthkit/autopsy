@@ -22,9 +22,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.UnknownHostException;
-import java.util.StringTokenizer;
 import java.util.logging.Level;
-import org.openide.util.Exceptions;
 
 public class NetworkUtils {
 
