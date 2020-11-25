@@ -26,8 +26,8 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
-import org.sleuthkit.datamodel.filerepository.FileRepository;
-import org.sleuthkit.datamodel.filerepository.FileRepositorySettings;
+import org.sleuthkit.datamodel.FileRepository;
+import org.sleuthkit.datamodel.FileRepositorySettings;
 
 /**
  * Options panel for the file repository.
@@ -84,7 +84,8 @@ public class FileRepositoryOptionsPanel  extends IngestModuleGlobalSettingsPanel
         if (enableCheckBox.isSelected()) {
             UserPreferences.setFileRepositoryAddress(addressTextField.getText());
             UserPreferences.setFileRepositoryPort(portTextField.getText());
-            FileRepository.initialize(new FileRepositorySettings(addressTextField.getText(), portTextField.getText()));
+            FileRepository.initialize(new FileRepositorySettings(addressTextField.getText(), 
+                    portTextField.getText()), FileRepositoryUtils.createDownloadFolder());
         } else {
             FileRepository.deinitialize();
         }
