@@ -41,6 +41,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -81,6 +83,9 @@ import org.sleuthkit.datamodel.TskDataException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.Volume;
 import org.sleuthkit.datamodel.VolumeSystem;
+import org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper;
+import org.sleuthkit.datamodel.blackboardutils.attributes.BlackboardJsonAttrUtil;
+import org.sleuthkit.datamodel.blackboardutils.attributes.MessageAttachments;
 
 /**
  * Creates a portable case from tagged files
@@ -883,6 +888,9 @@ public class PortableCaseReportModule implements ReportModule {
 
             // Copy the artifact
             BlackboardArtifact newArtifact = copyArtifact(newContentId, tag.getArtifact());
+            
+            // Copy any attachments
+            copyAttachments(newArtifact);
 
             // Tag the artfiact
             if (!oldTagNameToNewTagName.containsKey(tag.getName())) {
@@ -930,6 +938,11 @@ public class PortableCaseReportModule implements ReportModule {
 
             // The associated artifact has already been handled
             if (oldAttr.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID()) {
+                continue;
+            }
+            
+            // Attachments will be re-added later
+            if (oldAttr.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ATTACHMENTS.getTypeID()) {
                 continue;
             }
 
@@ -1141,6 +1154,39 @@ public class PortableCaseReportModule implements ReportModule {
         oldIdToNewContent.put(content.getId(), newContent);
         newIdToContent.put(newContent.getId(), newContent);
         return oldIdToNewContent.get(content.getId()).getId();
+    }
+    
+    private void copyAttachments(BlackboardArtifact artifact) throws TskCoreException {
+        // Get the attachments from TSK_ATTACHMENTS attribute.
+        BlackboardAttribute attachmentsAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ATTACHMENTS));
+        if (attachmentsAttr != null) {
+            try {
+                MessageAttachments msgAttachments = BlackboardJsonAttrUtil.fromAttribute(attachmentsAttr, MessageAttachments.class);
+
+                Collection<MessageAttachments.FileAttachment> fileAttachments = msgAttachments.getFileAttachments();
+                List<MessageAttachments.FileAttachment> newFileAttachments = new ArrayList<>();
+                for (MessageAttachments.FileAttachment fileAttachment : fileAttachments) {
+                    long attachedFileObjId = fileAttachment.getObjectId();
+                    if (attachedFileObjId >= 0) {
+                        // Copy the file
+                        AbstractFile attachedFile = artifact.getSleuthkitCase().getAbstractFileById(attachedFileObjId);
+                        long newFileID = copyContent(attachedFile);
+                        newFileAttachments.add(new MessageAttachments.FileAttachment(portableSkCase.getAbstractFileById(newFileID)));
+                    }
+                }
+                
+                //MessageAttachments newMsgAttachments = BlackboardJsonAttrUtil.toAttribute(attrType, caseName, artifact)
+            } 
+            catch (BlackboardJsonAttrUtil.InvalidJsonException ex) {
+                throw new TskCoreException(String.format("Unable to parse json for MessageAttachments object in artifact: %s", artifact.getName()), ex);
+            }
+        } else {    // backward compatibility - email message attachments are derived files, children of the message.
+            for (Content childContent : artifact.getChildren()) {
+                if (childContent instanceof AbstractFile) {
+                    copyContent(childContent);
+                }
+            }
+        }
     }
 
     /**
