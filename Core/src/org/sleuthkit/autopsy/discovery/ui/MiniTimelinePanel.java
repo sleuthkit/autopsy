@@ -30,6 +30,9 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
+/**
+ * Panel to display the entire mini timeline feature.
+ */
 class MiniTimelinePanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
@@ -39,44 +42,45 @@ class MiniTimelinePanel extends javax.swing.JPanel {
     private DomainArtifactsTabPanel.ArtifactRetrievalStatus status = DomainArtifactsTabPanel.ArtifactRetrievalStatus.UNPOPULATED;
     private AbstractArtifactDetailsPanel rightPanel = new GeneralPurposeArtifactViewer();
     private static final Logger logger = Logger.getLogger(MiniTimelinePanel.class.getName());
-
-    private final ListSelectionListener artifactListener = new ListSelectionListener() {
-        @Override
-        public void valueChanged(ListSelectionEvent event) {
-            if (!event.getValueIsAdjusting()) {
-                BlackboardArtifact artifact = artifactListPanel.getSelectedArtifact();
-                if (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID() || artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID()) {
-                    rightPanel = new ContentViewerDetailsPanel();
-                } else {
-                    rightPanel = new GeneralPurposeArtifactViewer();
-                }
-                rightPanel.setArtifact(artifact);
-                mainSplitPane.setRightComponent(new JScrollPane(rightPanel));
-                validate();
-                repaint();
-            }
-        }
-    };
-    private final ListSelectionListener dateListener = new ListSelectionListener() {
-        @Override
-        public void valueChanged(ListSelectionEvent event) {
-            if (!event.getValueIsAdjusting()) {
-                artifactListPanel.removeListSelectionListener(artifactListener);
-                artifactListPanel.addArtifacts(dateListPanel.getArtifactsForSelectedDate());
-                artifactListPanel.addSelectionListener(artifactListener);
-                artifactListPanel.selectFirst();
-                validate();
-                repaint();
-            }
-        }
-    };
+    private final ListSelectionListener artifactListener;
+    private final ListSelectionListener dateListener;
 
     /**
-     * Creates new form MiniTimelinePanel
+     * Creates new form MiniTimelinePanel.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     MiniTimelinePanel() {
         initComponents();
+        artifactListener = new ListSelectionListener() {
+            @Override
+            public void valueChanged(ListSelectionEvent event) {
+                if (!event.getValueIsAdjusting()) {
+                    BlackboardArtifact artifact = artifactListPanel.getSelectedArtifact();
+                    if (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID() || artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID()) {
+                        rightPanel = new ContentViewerDetailsPanel();
+                    } else {
+                        rightPanel = new GeneralPurposeArtifactViewer();
+                    }
+                    rightPanel.setArtifact(artifact);
+                    mainSplitPane.setRightComponent(new JScrollPane(rightPanel));
+                    validate();
+                    repaint();
+                }
+            }
+        };
+        dateListener = new ListSelectionListener() {
+            @Override
+            public void valueChanged(ListSelectionEvent event) {
+                if (!event.getValueIsAdjusting()) {
+                    artifactListPanel.removeListSelectionListener(artifactListener);
+                    artifactListPanel.addArtifacts(dateListPanel.getArtifactsForSelectedDate());
+                    artifactListPanel.addSelectionListener(artifactListener);
+                    artifactListPanel.selectFirst();
+                    validate();
+                    repaint();
+                }
+            }
+        };
         dateListPanel.addSelectionListener(dateListener);
         artifactListPanel.addSelectionListener(artifactListener);
         leftSplitPane.setLeftComponent(dateListPanel);
@@ -110,8 +114,8 @@ class MiniTimelinePanel extends javax.swing.JPanel {
     /**
      * Handle the event which indicates the artifacts have been retrieved.
      *
-     * @param artifactresultEvent The event which indicates the artifacts have
-     *                            been retrieved.
+     * @param miniTimelineResultEvent The event which indicates the artifacts
+     *                                have been retrieved.
      */
     @Subscribe
     void handleMiniTimelineResultEvent(DiscoveryEventUtils.MiniTimelineResultEvent miniTimelineResultEvent) {
@@ -152,7 +156,7 @@ class MiniTimelinePanel extends javax.swing.JPanel {
         setLayout(new java.awt.BorderLayout());
 
         mainSplitPane.setResizeWeight(0.4);
-        mainSplitPane.setToolTipText(org.openide.util.NbBundle.getMessage(MiniTimelinePanel.class, "MiniTimelinePanel.mainSplitPane.toolTipText")); // NOI18N
+        mainSplitPane.setToolTipText("");
         mainSplitPane.setMinimumSize(new java.awt.Dimension(0, 0));
         mainSplitPane.setPreferredSize(new java.awt.Dimension(0, 0));
 

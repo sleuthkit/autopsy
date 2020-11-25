@@ -137,8 +137,11 @@ class MiniTimelineArtifactListPanel extends JPanel {
         tableModel.fireTableDataChanged();
     }
 
+    /**
+     * Initialize the UI components.
+     */
     private void initComponents() {
-
+        //This class is a refactored copy of ArtifactsListPanel so lacks the form however the init method still constructs the proper UI elements.
         javax.swing.JScrollPane jScrollPane1 = new javax.swing.JScrollPane();
         jTable1 = new javax.swing.JTable();
 
@@ -234,7 +237,7 @@ class MiniTimelineArtifactListPanel extends JPanel {
                     }
                 }
             } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, "Unable to get description attribute for artifact id " + artifact.getArtifactID());
+                logger.log(Level.WARNING, "Unable to get description attribute for artifact id {0}", artifact.getArtifactID());
             }
             return Bundle.MiniTimelineArtifactListPanel_value_noValue();
         }

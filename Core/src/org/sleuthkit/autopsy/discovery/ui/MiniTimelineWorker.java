@@ -38,7 +38,7 @@ class MiniTimelineWorker extends SwingWorker<List<MiniTimelineResult>, Void> {
 
     private final static Logger logger = Logger.getLogger(MiniTimelineWorker.class.getName());
     private final String domain;
-  
+
     /**
      * Construct a new ArtifactsWorker.
      *

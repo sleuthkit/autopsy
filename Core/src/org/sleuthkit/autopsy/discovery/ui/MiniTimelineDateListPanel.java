@@ -36,8 +36,6 @@ class MiniTimelineDateListPanel extends JPanel {
     private static final long serialVersionUID = 1L;
     private final DateCountTableModel tableModel = new DateCountTableModel();
 
-    ;
-
     /**
      * Creates new form DiscoveryTimelineListPanel.
      */
@@ -92,6 +90,13 @@ class MiniTimelineDateListPanel extends JPanel {
         }
     }
 
+    /**
+     * Retrieves the list of BlackboardArtifacts for the selected date in the
+     * list.
+     *
+     * @return The list of BlackboardArtifacts for the selected date in the
+     *         list, or an empty list if a valid selection does not exist.
+     */
     List<BlackboardArtifact> getArtifactsForSelectedDate() {
         int selectedIndex = jTable1.getSelectionModel().getLeadSelectionIndex();
         if (selectedIndex < jTable1.getSelectionModel().getMinSelectionIndex() || jTable1.getSelectionModel().getMaxSelectionIndex() < 0 || selectedIndex > jTable1.getSelectionModel().getMaxSelectionIndex()) {
@@ -123,8 +128,11 @@ class MiniTimelineDateListPanel extends JPanel {
         tableModel.fireTableDataChanged();
     }
 
+    /**
+     * Initialize the UI components.
+     */
     private void initComponents() {
-
+        //This class is a refactored copy of ArtifactsListPanel so lacks the form however the init method still constructs the proper UI elements.
         javax.swing.JScrollPane jScrollPane1 = new javax.swing.JScrollPane();
         jTable1 = new javax.swing.JTable();
 

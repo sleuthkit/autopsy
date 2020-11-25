@@ -123,6 +123,10 @@ final class DomainDetailsPanel extends JPanel {
 
     }
 
+    /**
+     * Run the worker which retrieves the list of MiniTimelineResults for the
+     * mini timeline view to populate.
+     */
     private void runMiniTimelineWorker(MiniTimelinePanel miniTimelinePanel) {
         if (miniTimelineWorker != null && !miniTimelineWorker.isDone()) {
             miniTimelineWorker.cancel(true);

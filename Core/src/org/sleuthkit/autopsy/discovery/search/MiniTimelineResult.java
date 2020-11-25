@@ -56,7 +56,7 @@ public class MiniTimelineResult {
     /**
      * Get the number of artifacts observed on the specified date.
      *
-     * @return the count
+     * @return The number of artifacts observed on the specified date.
      */
     public int getCount() {
         return artifactList.size();

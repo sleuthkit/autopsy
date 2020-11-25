@@ -186,6 +186,18 @@ public class DomainSearch {
         return artifactsCache.get(artifactsRequest);
     }
 
+    /**
+     * Get a list of MiniTimelineResults one for each date any TSK_WEB artifacts
+     * existed for, which contains a list of artifacts observed on that date.
+     *
+     * @param sleuthkitCase The case database for the search.
+     * @param domain        The domain that artifacts are being requested for.
+     *
+     * @return The list of MiniTimelineResults
+     *
+     * @throws DiscoveryException if unable to get the artifacts or the date
+     *                            attributes from an artifact.
+     */
     public List<MiniTimelineResult> getAllArtifactsForDomain(SleuthkitCase sleuthkitCase, String domain) throws DiscoveryException {
         List<BlackboardArtifact> artifacts = new ArrayList<>();
         Map<String, List<BlackboardArtifact>> dateMap = new HashMap<>();
@@ -220,11 +232,21 @@ public class DomainSearch {
         return dateArtifactList;
     }
 
+    /**
+     * Private helper method to get a date from the artifact.
+     *
+     * @param artifact The artifact to get a date from.
+     *
+     * @return The date as a string in the form YYYY-MM-DD.
+     *
+     * @throws TskCoreException when unable to get the attributes for the
+     *                          artifact.
+     */
     private String getDate(BlackboardArtifact artifact) throws TskCoreException {
         for (BlackboardAttribute attribute : artifact.getAttributes()) {
             if (attribute.getAttributeType().getTypeName().startsWith("TSK_DATETIME")) {
                 String dateString = attribute.getDisplayString();
-                if (dateString.length()>=10){
+                if (dateString.length() >= 10) {
                     return dateString.substring(0, 10);
                 }
             }
