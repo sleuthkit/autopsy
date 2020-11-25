@@ -22,21 +22,17 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.blackboardutils.attributes.BlackboardJsonAttrUtil;
 import org.sleuthkit.datamodel.blackboardutils.attributes.BlackboardJsonAttrUtil.InvalidJsonException;
 import org.sleuthkit.datamodel.blackboardutils.attributes.GeoAreaPoints;
-import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * A GPS track with which wraps the TSK_GPS_AREA artifact.
  */
 public final class Area extends GeoPath {
-    private static final Logger LOGGER = Logger.getLogger(Track.class.getName());
-
     /**
      * Construct a new Area for the given artifact.
      *
@@ -108,14 +104,12 @@ public final class Area extends GeoPath {
     private GeoAreaPoints getPointsList(Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap) throws GeoLocationDataException {
         BlackboardAttribute attribute = attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_AREAPOINTS);
         if (attribute == null) {
-            LOGGER.log(Level.SEVERE, "No TSK_GEO_AREAPOINTS attribute was present on the artifact.");
             throw new GeoLocationDataException("No TSK_GEO_AREAPOINTS attribute present in attribute map to parse.");
         }
 
         try {
             return BlackboardJsonAttrUtil.fromAttribute(attribute, GeoAreaPoints.class);
         } catch (InvalidJsonException ex) {
-            LOGGER.log(Level.SEVERE, "TSK_GEO_AREAPOINTS could not be properly parsed from TSK_GEO_AREAPOINTS attribute.");
             throw new GeoLocationDataException("Unable to parse area points in TSK_GEO_AREAPOINTS attribute", ex);
         }
     }

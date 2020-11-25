@@ -22,6 +22,8 @@ package org.sleuthkit.autopsy.geolocation.datamodel;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.Level;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -31,6 +33,8 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Class representing a series of waypoints that form a path.
  */
 public class GeoPath {
+    private static final Logger LOGGER = Logger.getLogger(GeoPath.class.getName());
+    
     private final List<Waypoint> waypointList;
     private final String pathName;
     private final BlackboardArtifact artifact;
@@ -85,6 +89,7 @@ public class GeoPath {
                         tracks.add(new Track(artifact));
                         
                     } catch (GeoLocationDataException e) {
+                        LOGGER.log(Level.WARNING, "Error loading track from artifact with ID " + artifact.getArtifactID(), e);
                         allParsedSuccessfully = false;
                     }
                 }
@@ -108,7 +113,7 @@ public class GeoPath {
      * @throws GeoLocationDataException
      */
     public static GeoLocationParseResult<Area> getAreas(SleuthkitCase skCase, List<? extends Content> sourceList) throws GeoLocationDataException {
-        List<BlackboardArtifact> artifacts = null;
+        List<BlackboardArtifact> artifacts;
         boolean allParsedSuccessfully = true;
         List<Area> areas = new ArrayList<>();
         try {
@@ -119,6 +124,7 @@ public class GeoPath {
                         areas.add(new Area(artifact));
                         
                     } catch (GeoLocationDataException e) {
+                        LOGGER.log(Level.WARNING, "Error loading track from artifact with ID " + artifact.getArtifactID(), e);
                         allParsedSuccessfully = false;
                     }
                 }
@@ -126,7 +132,7 @@ public class GeoPath {
         } catch (TskCoreException ex) {
             throw new GeoLocationDataException("Unable to get artifacts for type: TSK_GPS_BOOKMARK", ex);
         }
-        return new GeoLocationParseResult<Area>(areas, allParsedSuccessfully);
+        return new GeoLocationParseResult<>(areas, allParsedSuccessfully);
     }    
 
     /**

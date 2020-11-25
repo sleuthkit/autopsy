@@ -905,8 +905,6 @@ final public class MapPanel extends javax.swing.JPanel {
             int lastY = 0;
 
             boolean first = true;
-            
-            GeneralPath polygon = new GeneralPath(GeneralPath.WIND_EVEN_ODD, track.size());
 
             for (MapWaypoint wp : track) {
                 Point2D p = map.getTileFactory().geoToPixel(wp.getPosition(), map.getZoom());
@@ -955,6 +953,13 @@ final public class MapPanel extends javax.swing.JPanel {
             this.areas = areas;
         }
 
+        /**
+         * Shade in the area on the map.
+         * 
+         * @param area The waypoints defining the outline of the area.
+         * @param g    Graphics2D
+         * @param map  JXMapViewer
+         */
         private void drawArea(Set<MapWaypoint> area, Graphics2D g, JXMapViewer map) {
             if (area.isEmpty()) {
                 return;
@@ -978,9 +983,10 @@ final public class MapPanel extends javax.swing.JPanel {
             polygon.closePath();
             
             Color areaColor = area.iterator().next().getColor();
-            g.setPaint(new Color((float)(areaColor.getRed() / 255.0), 
-                    (float)(areaColor.getGreen() / 255.0), 
-                    (float)(areaColor.getBlue() / 255.0),
+            final double maxColorValue = 255.0;
+            g.setPaint(new Color((float)(areaColor.getRed() / maxColorValue), 
+                    (float)(areaColor.getGreen() / maxColorValue), 
+                    (float)(areaColor.getBlue() / maxColorValue),
                     .2f));
             g.fill(polygon);
             g.draw(polygon);
