@@ -18,17 +18,24 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.ui;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import javax.swing.JButton;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.WhereUsedSummary;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.WhereUsedSummary.CityCountsList;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.WhereUsedSummary.CityData;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.WhereUsedSummary.CityRecordCount;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.WhereUsedSummary.CityRecord;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.CityRecord;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer.DefaultCellModel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
@@ -39,7 +46,6 @@ import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel.ColumnModel;
 import org.sleuthkit.autopsy.geolocation.GeoFilter;
 import org.sleuthkit.autopsy.geolocation.GeolocationTopComponent;
 import org.sleuthkit.autopsy.geolocation.OpenGeolocationAction;
-import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.DataSource;
 
 /**
@@ -49,13 +55,72 @@ import org.sleuthkit.datamodel.DataSource;
 @Messages({
     "WhereUsedPanel_cityColumn_title=Closest City",
     "WhereUsedPanel_countColumn_title=Count",
-    "WhereUsedPanel_onNoCrIngest_message=No results will be shown because the GPX Parser was not run."
-})
+    "WhereUsedPanel_onNoCrIngest_message=No results will be shown because the GPX Parser was not run.",
+    "WhereUsedPanel_unknownRow_title=Unknown",})
 public class WhereUsedPanel extends BaseDataSourceSummaryPanel {
 
     private static final long serialVersionUID = 1L;
     private static final String GPX_FACTORY = "org.python.proxies.GPX_Parser_Module$GPXParserFileIngestModuleFactory";
     private static final String GPX_NAME = "GPX Parser";
+    private static final int DAYS_COUNT = 30;
+    private static final int MAX_COUNT = 10;
+
+    private static final ColumnModel<Pair<String, Integer>> CITY_COL = new ColumnModel<>(
+            Bundle.WhereUsedPanel_cityColumn_title(),
+            (pair) -> new DefaultCellModel(pair.getLeft()),
+            300
+    );
+
+    private static final ColumnModel<Pair<String, Integer>> COUNT_COL = new ColumnModel<>(
+            Bundle.WhereUsedPanel_countColumn_title(),
+            (pair) -> new DefaultCellModel(Integer.toString(pair.getRight())),
+            100
+    );
+
+    // tables displaying city and number of hits for that city
+    private final JTablePanel<Pair<String, Integer>> mostCommonTable = JTablePanel.getJTablePanel(Arrays.asList(CITY_COL, COUNT_COL))
+            .setKeyFunction((pair) -> pair.getLeft());
+
+    private final JTablePanel<Pair<String, Integer>> mostRecentTable = JTablePanel.getJTablePanel(Arrays.asList(CITY_COL, COUNT_COL))
+            .setKeyFunction((pair) -> pair.getLeft());
+
+    // loadable components on this tab
+    private final List<JTablePanel<?>> tables = Arrays.asList(mostCommonTable, mostRecentTable);
+
+    // means of fetching and displaying data
+    private final List<DataFetchComponents<DataSource, ?>> dataFetchComponents;
+
+    private final IngestRunningLabel ingestRunningLabel = new IngestRunningLabel();
+
+    private final WhereUsedSummary whereUsedData;
+
+    /**
+     * Main constructor.
+     */
+    public WhereUsedPanel() {
+        this(new WhereUsedSummary());
+    }
+
+    /**
+     * Main constructor.
+     *
+     * @param whereUsedData The GeolocationSummary instance to use.
+     */
+    public WhereUsedPanel(WhereUsedSummary whereUsedData) {
+        this.whereUsedData = whereUsedData;
+        // set up data acquisition methods
+        dataFetchComponents = Arrays.asList(
+                new DataFetchWorker.DataFetchComponents<>(
+                        (dataSource) -> whereUsedData.getCityCounts(dataSource, DAYS_COUNT, MAX_COUNT),
+                        (result) -> handleData(result)));
+
+        initComponents();
+    }
+
+    private void handleData(DataFetchResult<CityData> result) {
+        showCityContent(DataFetchResult.getSubResult(result, (dr) -> dr.getMostCommon()), mostCommonTable, commonViewInGeolocationBtn);
+        showCityContent(DataFetchResult.getSubResult(result, (dr) -> dr.getMostRecent()), mostRecentTable, recentViewInGeolocationBtn);
+    }
 
     /**
      * Retrieves the city name to display from the record.
@@ -75,89 +140,79 @@ public class WhereUsedPanel extends BaseDataSourceSummaryPanel {
         return String.format("%s, %s", record.getCityName(), record.getCountry());
     }
 
-    private static final ColumnModel<CityRecordCount> CITY_COL = new ColumnModel<>(
-            Bundle.WhereUsedPanel_cityColumn_title(),
-            (cityCount) -> new DefaultCellModel(getCityName(cityCount.getCityRecord())),
-            300
-    );
-
-    private static final ColumnModel<CityRecordCount> COUNT_COL = new ColumnModel<>(
-            Bundle.WhereUsedPanel_countColumn_title(),
-            (cityCount) -> new DefaultCellModel(Integer.toString(cityCount.getCount())),
-            100
-    );
-
-    // table displaying city and number of hits for that city
-    private final JTablePanel<CityRecordCount> cityCountsTable = JTablePanel.getJTablePanel(Arrays.asList(CITY_COL, COUNT_COL))
-            .setKeyFunction((cityCount) -> cityCount.getCityRecord());
-
-    // loadable components on this tab
-    private final List<JTablePanel<?>> tables = Arrays.asList(
-            cityCountsTable
-    );
-
-    // means of fetching and displaying data
-    private final List<DataFetchComponents<DataSource, ?>> dataFetchComponents;
-
-    private final IngestRunningLabel ingestRunningLabel = new IngestRunningLabel();
-
-    private final WhereUsedSummary whereUsedData;
-    
-    /**
-     * Main constructor.
-     */
-    public WhereUsedPanel() {
-        this(WhereUsedSummary.getInstance());
-    }
-
-    /**
-     * Main constructor.
-     *
-     * @param whereUsedData The GeolocationSummary instance to use.
-     */
-    public WhereUsedPanel(WhereUsedSummary whereUsedData) {
-        this.whereUsedData = whereUsedData;
-        // set up data acquisition methods
-        dataFetchComponents = Arrays.asList(
-                new DataFetchWorker.DataFetchComponents<>(
-                        (dataSource) -> whereUsedData.getCityCounts(dataSource),
-                        (result) -> handleData(result)));
-
-        initComponents();
-    }
-
-    private void handleData(DataFetchResult<List<CityRecordCount>> result) {
-        if (result != null && result.getResultType() == DataFetchResult.ResultType.SUCCESS && CollectionUtils.isNotEmpty(result.getData())) {
-            viewInGeolocationBtn.setEnabled(true);
+    private Pair<String, Integer> convert(CityRecordCount cityCount) {
+        if (cityCount == null) {
+            return null;
         }
 
-        showResultWithModuleCheck(cityCountsTable, result, GPX_FACTORY, GPX_NAME);
+        String cityName = getCityName(cityCount.getCityRecord());
+        int count = cityCount.getCount();
+        return Pair.of(cityName, count);
     }
 
-    private void openGeolocationWindow(DataSource dataSource) {
+    private List<Pair<String, Integer>> convert(CityCountsList countsList) {
+        if (countsList == null) {
+            return null;
+        }
+
+        Stream<CityRecordCount> countsStream = ((countsList.getCounts() == null)
+                ? new ArrayList<CityRecordCount>()
+                : countsList.getCounts()).stream();
+
+        Stream<Pair<String, Integer>> pairStream = countsStream.map((r) -> convert(r));
+
+        Pair<String, Integer> unknownRecord = Pair.of(Bundle.WhereUsedPanel_unknownRow_title(), countsList.getOtherCount());
+
+        return Stream.concat(pairStream, Stream.of(unknownRecord))
+                .filter((p) -> p != null && p.getRight() != null && p.getRight() > 0)
+                .sorted((a, b) -> -Integer.compare(a.getRight(), b.getRight()))
+                .limit(MAX_COUNT)
+                .collect(Collectors.toList());
+    }
+
+    private void showCityContent(DataFetchResult<CityCountsList> result, JTablePanel<Pair<String, Integer>> table, JButton goToGeolocation) {
+        DataFetchResult<List<Pair<String, Integer>>> convertedData = DataFetchResult.getSubResult(result, (countsList) -> convert(countsList));
+        if (convertedData != null && convertedData.getResultType() == DataFetchResult.ResultType.SUCCESS && CollectionUtils.isNotEmpty(convertedData.getData())) {
+            goToGeolocation.setEnabled(true);
+        }
+
+        showResultWithModuleCheck(table, convertedData, GPX_FACTORY, GPX_NAME);
+    }
+
+    private void openGeolocationWindow(DataSource dataSource, Integer daysLimit) {
         // open the window
         OpenGeolocationAction geoAction = CallableSystemAction.get(OpenGeolocationAction.class);
         if (geoAction != null) {
             geoAction.performAction();
         }
-        
+
         // set the filter
         TopComponent topComponent = WindowManager.getDefault().findTopComponent(GeolocationTopComponent.class.getSimpleName());
         if (topComponent instanceof GeolocationTopComponent) {
             GeolocationTopComponent geoComponent = (GeolocationTopComponent) topComponent;
-            geoComponent.fetchAndShowWaypoints(new GeoFilter(true, false, 0, Arrays.asList(dataSource), whereUsedData.getGeoTypes()));
+
+            GeoFilter filter = (daysLimit == null)
+                    ? new GeoFilter(true, false, 0, Arrays.asList(dataSource), whereUsedData.getGeoTypes())
+                    : new GeoFilter(false, false, DAYS_COUNT, Arrays.asList(dataSource), whereUsedData.getGeoTypes());
+
+            geoComponent.fetchAndShowWaypoints(filter);
         }
     }
-    
+
+    private void disableNavButtons() {
+        commonViewInGeolocationBtn.setEnabled(false);
+        recentViewInGeolocationBtn.setEnabled(false);
+    }
+
     @Override
     protected void fetchInformation(DataSource dataSource) {
-        viewInGeolocationBtn.setEnabled(false);
+        disableNavButtons();
         fetchInformation(dataFetchComponents, dataSource);
     }
 
     @Override
     protected void onNewDataSource(DataSource dataSource) {
-        viewInGeolocationBtn.setEnabled(false);
+        disableNavButtons();
         onNewDataSource(dataFetchComponents, tables, dataSource);
     }
 
@@ -179,13 +234,21 @@ public class WhereUsedPanel extends BaseDataSourceSummaryPanel {
         javax.swing.JScrollPane mainScrollPane = new javax.swing.JScrollPane();
         javax.swing.JPanel mainContentPanel = new javax.swing.JPanel();
         javax.swing.JPanel ingestRunningPanel = ingestRunningLabel;
-        javax.swing.JLabel cityCountsLabel = new javax.swing.JLabel();
+        javax.swing.JLabel mostRecentLabel = new javax.swing.JLabel();
         javax.swing.Box.Filler filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2));
-        javax.swing.JPanel cityCountsPanel = cityCountsTable;
+        javax.swing.JPanel mostRecentPanel = mostRecentTable;
         javax.swing.Box.Filler filler2 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2));
         javax.swing.JLabel withinDistanceLabel = new javax.swing.JLabel();
-        javax.swing.Box.Filler filler3 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 10), new java.awt.Dimension(0, 10), new java.awt.Dimension(0, 10));
-        viewInGeolocationBtn = new javax.swing.JButton();
+        javax.swing.Box.Filler filler3 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 5), new java.awt.Dimension(0, 5), new java.awt.Dimension(0, 5));
+        recentViewInGeolocationBtn = new javax.swing.JButton();
+        javax.swing.Box.Filler filler8 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 20), new java.awt.Dimension(0, 20), new java.awt.Dimension(0, 20));
+        javax.swing.JLabel mostCommonLabel = new javax.swing.JLabel();
+        javax.swing.Box.Filler filler7 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2));
+        javax.swing.JPanel mostCommonPanel = mostCommonTable;
+        javax.swing.Box.Filler filler6 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2));
+        javax.swing.JLabel withinDistanceLabel1 = new javax.swing.JLabel();
+        javax.swing.Box.Filler filler4 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 5), new java.awt.Dimension(0, 5), new java.awt.Dimension(0, 5));
+        commonViewInGeolocationBtn = new javax.swing.JButton();
         javax.swing.Box.Filler filler5 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 32767));
 
         mainContentPanel.setBorder(javax.swing.BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -197,18 +260,18 @@ public class WhereUsedPanel extends BaseDataSourceSummaryPanel {
         ingestRunningPanel.setPreferredSize(new java.awt.Dimension(10, 25));
         mainContentPanel.add(ingestRunningPanel);
 
-        org.openide.awt.Mnemonics.setLocalizedText(cityCountsLabel, org.openide.util.NbBundle.getMessage(WhereUsedPanel.class, "WhereUsedPanel.cityCountsLabel.text")); // NOI18N
-        mainContentPanel.add(cityCountsLabel);
-        cityCountsLabel.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(WhereUsedPanel.class, "PastCasesPanel.notableFileLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(mostRecentLabel, org.openide.util.NbBundle.getMessage(WhereUsedPanel.class, "WhereUsedPanel.mostRecentLabel.text")); // NOI18N
+        mainContentPanel.add(mostRecentLabel);
+        mostRecentLabel.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(WhereUsedPanel.class, "PastCasesPanel.notableFileLabel.text")); // NOI18N
 
         filler1.setAlignmentX(0.0F);
         mainContentPanel.add(filler1);
 
-        cityCountsPanel.setAlignmentX(0.0F);
-        cityCountsPanel.setMaximumSize(new java.awt.Dimension(32767, 212));
-        cityCountsPanel.setMinimumSize(new java.awt.Dimension(100, 212));
-        cityCountsPanel.setPreferredSize(new java.awt.Dimension(100, 212));
-        mainContentPanel.add(cityCountsPanel);
+        mostRecentPanel.setAlignmentX(0.0F);
+        mostRecentPanel.setMaximumSize(new java.awt.Dimension(32767, 187));
+        mostRecentPanel.setMinimumSize(new java.awt.Dimension(100, 187));
+        mostRecentPanel.setPreferredSize(new java.awt.Dimension(100, 187));
+        mainContentPanel.add(mostRecentPanel);
 
         filler2.setAlignmentX(0.0F);
         mainContentPanel.add(filler2);
@@ -219,14 +282,47 @@ public class WhereUsedPanel extends BaseDataSourceSummaryPanel {
         filler3.setAlignmentX(0.0F);
         mainContentPanel.add(filler3);
 
-        org.openide.awt.Mnemonics.setLocalizedText(viewInGeolocationBtn, org.openide.util.NbBundle.getMessage(WhereUsedPanel.class, "WhereUsedPanel.viewInGeolocationBtn.text")); // NOI18N
-        viewInGeolocationBtn.setEnabled(false);
-        viewInGeolocationBtn.addActionListener(new java.awt.event.ActionListener() {
+        org.openide.awt.Mnemonics.setLocalizedText(recentViewInGeolocationBtn, org.openide.util.NbBundle.getMessage(WhereUsedPanel.class, "WhereUsedPanel.recentViewInGeolocationBtn.text")); // NOI18N
+        recentViewInGeolocationBtn.setEnabled(false);
+        recentViewInGeolocationBtn.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                viewInGeolocationBtnActionPerformed(evt);
+                recentViewInGeolocationBtnActionPerformed(evt);
             }
         });
-        mainContentPanel.add(viewInGeolocationBtn);
+        mainContentPanel.add(recentViewInGeolocationBtn);
+
+        filler8.setAlignmentX(0.0F);
+        mainContentPanel.add(filler8);
+
+        org.openide.awt.Mnemonics.setLocalizedText(mostCommonLabel, org.openide.util.NbBundle.getMessage(WhereUsedPanel.class, "WhereUsedPanel.mostCommonLabel.text")); // NOI18N
+        mainContentPanel.add(mostCommonLabel);
+
+        filler7.setAlignmentX(0.0F);
+        mainContentPanel.add(filler7);
+
+        mostCommonPanel.setAlignmentX(0.0F);
+        mostCommonPanel.setMaximumSize(new java.awt.Dimension(32767, 187));
+        mostCommonPanel.setMinimumSize(new java.awt.Dimension(100, 187));
+        mostCommonPanel.setPreferredSize(new java.awt.Dimension(100, 187));
+        mainContentPanel.add(mostCommonPanel);
+
+        filler6.setAlignmentX(0.0F);
+        mainContentPanel.add(filler6);
+
+        org.openide.awt.Mnemonics.setLocalizedText(withinDistanceLabel1, org.openide.util.NbBundle.getMessage(WhereUsedPanel.class, "WhereUsedPanel.withinDistanceLabel1.text")); // NOI18N
+        mainContentPanel.add(withinDistanceLabel1);
+
+        filler4.setAlignmentX(0.0F);
+        mainContentPanel.add(filler4);
+
+        org.openide.awt.Mnemonics.setLocalizedText(commonViewInGeolocationBtn, org.openide.util.NbBundle.getMessage(WhereUsedPanel.class, "WhereUsedPanel.commonViewInGeolocationBtn.text")); // NOI18N
+        commonViewInGeolocationBtn.setEnabled(false);
+        commonViewInGeolocationBtn.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                commonViewInGeolocationBtnActionPerformed(evt);
+            }
+        });
+        mainContentPanel.add(commonViewInGeolocationBtn);
 
         filler5.setAlignmentX(0.0F);
         mainContentPanel.add(filler5);
@@ -241,16 +337,21 @@ public class WhereUsedPanel extends BaseDataSourceSummaryPanel {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(mainScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
+            .addComponent(mainScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 746, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void viewInGeolocationBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_viewInGeolocationBtnActionPerformed
-        openGeolocationWindow(getDataSource());
-    }//GEN-LAST:event_viewInGeolocationBtnActionPerformed
+    private void recentViewInGeolocationBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_recentViewInGeolocationBtnActionPerformed
+        openGeolocationWindow(getDataSource(), DAYS_COUNT);
+    }//GEN-LAST:event_recentViewInGeolocationBtnActionPerformed
+
+    private void commonViewInGeolocationBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_commonViewInGeolocationBtnActionPerformed
+        openGeolocationWindow(getDataSource(), null);
+    }//GEN-LAST:event_commonViewInGeolocationBtnActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton viewInGeolocationBtn;
+    private javax.swing.JButton commonViewInGeolocationBtn;
+    private javax.swing.JButton recentViewInGeolocationBtn;
     // End of variables declaration//GEN-END:variables
 }

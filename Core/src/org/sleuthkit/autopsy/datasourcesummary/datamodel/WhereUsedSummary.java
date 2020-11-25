@@ -18,32 +18,22 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.datamodel;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.logging.Level;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultArtifactUpdateGovernor;
-import org.sleuthkit.autopsy.geolocation.KdTree.XYZPoint;
 import org.sleuthkit.autopsy.geolocation.datamodel.GeoLocationDataException;
 import org.sleuthkit.autopsy.geolocation.datamodel.GeoLocationParseResult;
 import org.sleuthkit.autopsy.geolocation.datamodel.Waypoint;
@@ -97,152 +87,39 @@ public class WhereUsedSummary implements DefaultArtifactUpdateGovernor {
     }
 
     /**
-     * A record for a particular city including country and location.
+     * Returned data providing counts of most common cities seen and most recent
+     * cities seen.
      */
-    public static class CityRecord extends XYZPoint {
+    public static class CityData {
 
-        private final String cityName;
-        private final String country;
+        private final CityCountsList mostCommon;
+        private final CityCountsList mostRecent;
+        private final Long mostRecentSeen;
 
         /**
          * Main constructor.
          *
-         * @param cityName The name of the city.
-         * @param country The country of that city.
-         * @param latitude Latitude for the city.
-         * @param longitude Longitude for the city.
+         * @param mostCommon The list of most common cities seen.
+         * @param mostRecent The list of most recent cities seen.
+         * @param mostRecentSeen
          */
-        CityRecord(String cityName, String country, double latitude, double longitude) {
-            super(latitude, longitude);
-            this.cityName = cityName;
-            this.country = country;
+        CityData(CityCountsList mostCommon, CityCountsList mostRecent, Long mostRecentSeen) {
+            this.mostCommon = mostCommon;
+            this.mostRecent = mostRecent;
+            this.mostRecentSeen = mostRecentSeen;
         }
 
-        /**
-         * @return The name of the city.
-         */
-        public String getCityName() {
-            return cityName;
+        public CityCountsList getMostCommon() {
+            return mostCommon;
         }
 
-        /**
-         * @return The country of that city.
-         */
-        public String getCountry() {
-            return country;
+        public CityCountsList getMostRecent() {
+            return mostRecent;
         }
 
-        /**
-         * @return Latitude for the city.
-         */
-        public double getLatitude() {
-            return getX();
+        public Long getMostRecentSeen() {
+            return mostRecentSeen;
         }
-
-        /**
-         * @return Longitude for the city.
-         */
-        public double getLongitude() {
-            return getY();
-        }
-
-        @Override
-        public int hashCode() {
-            int hash = super.hashCode();
-            hash = 37 * hash + Objects.hashCode(this.cityName);
-            hash = 37 * hash + Objects.hashCode(this.country);
-            return hash;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj) {
-                return true;
-            }
-            if (obj == null) {
-                return false;
-            }
-            if (getClass() != obj.getClass()) {
-                return false;
-            }
-            final CityRecord other = (CityRecord) obj;
-            if (!Objects.equals(this.cityName, other.cityName)) {
-                return false;
-            }
-            if (!Objects.equals(this.country, other.country)) {
-                return false;
-            }
-
-            return super.equals(obj);
-        }
-
-        @Override
-        public String toString() {
-            return "CityRecord{" + "cityName=" + cityName + ", country=" + country + ", lat=" + getX() + ", lng=" + getY() + '}';
-        }
-    }
-
-    // taken from GeoFilterPanel: all of the GPS artifact types.
-    @SuppressWarnings("deprecation")
-    private static final List<ARTIFACT_TYPE> GPS_ARTIFACT_TYPES = Arrays.asList(
-            BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_BOOKMARK,
-            BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_LAST_KNOWN_LOCATION,
-            BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_ROUTE,
-            BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_SEARCH,
-            BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACK,
-            BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACKPOINT,
-            BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF
-    );
-
-    // all GPS types
-    private static final Set<Integer> GPS_ARTIFACT_TYPE_IDS = GPS_ARTIFACT_TYPES.stream()
-            .map(artifactType -> artifactType.getTypeID())
-            .collect(Collectors.toSet());
-
-    private static WhereUsedSummary instance = null;
-
-    /**
-     * @return The singleton instance of this class.
-     */
-    public static WhereUsedSummary getInstance() {
-        if (instance == null) {
-            instance = new WhereUsedSummary();
-        }
-
-        return instance;
-    }
-
-    private final SleuthkitCaseProvider provider;
-    private LatLngMap<CityRecord> latLngMap = null;
-    private final java.util.logging.Logger logger;
-
-    /**
-     * Main constructor.
-     */
-    private WhereUsedSummary() {
-        this(SleuthkitCaseProvider.DEFAULT, Logger.getLogger(WhereUsedSummary.class.getName()));
-    }
-
-    /**
-     * Main constructor.
-     *
-     * @param provider The means of obtaining a sleuthkit case.
-     */
-    public WhereUsedSummary(SleuthkitCaseProvider provider, java.util.logging.Logger logger) {
-        this.provider = provider;
-        this.logger = logger;
-    }
-
-    /**
-     * @return Returns all the geolocation artifact types.
-     */
-    public List<ARTIFACT_TYPE> getGeoTypes() {
-        return GPS_ARTIFACT_TYPES;
-    }
-
-    @Override
-    public Set<Integer> getArtifactTypeIdsForRefresh() {
-        return GPS_ARTIFACT_TYPE_IDS;
     }
 
     public static class CityCountsList {
@@ -264,29 +141,55 @@ public class WhereUsedSummary implements DefaultArtifactUpdateGovernor {
         }
     }
 
-    public static class CityData {
+    // taken from GeoFilterPanel: all of the GPS artifact types.
+    @SuppressWarnings("deprecation")
+    private static final List<ARTIFACT_TYPE> GPS_ARTIFACT_TYPES = Arrays.asList(
+            BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_BOOKMARK,
+            BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_LAST_KNOWN_LOCATION,
+            BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_ROUTE,
+            BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_SEARCH,
+            BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACK,
+            BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACKPOINT,
+            BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF
+    );
 
-        private final CityCountsList mostCommon;
-        private final CityCountsList mostRecent;
-        private final Long mostRecentSeen;
+    // all GPS types
+    private static final Set<Integer> GPS_ARTIFACT_TYPE_IDS = GPS_ARTIFACT_TYPES.stream()
+            .map(artifactType -> artifactType.getTypeID())
+            .collect(Collectors.toSet());
 
-        public CityData(CityCountsList mostCommon, CityCountsList mostRecent, Long mostRecentSeen) {
-            this.mostCommon = mostCommon;
-            this.mostRecent = mostRecent;
-            this.mostRecentSeen = mostRecentSeen;
-        }
+    private final SleuthkitCaseProvider provider;
+    private final java.util.logging.Logger logger;
+    private final SupplierWithException<ClosestCityMapper, IOException> cityMapper;
 
-        public CityCountsList getMostCommon() {
-            return mostCommon;
-        }
+    public interface SupplierWithException<T, E extends Throwable> {
 
-        public CityCountsList getMostRecent() {
-            return mostRecent;
-        }
+        T get() throws E;
+    }
 
-        public Long getMostRecentSeen() {
-            return mostRecentSeen;
-        }
+    /**
+     * Main constructor.
+     */
+    public WhereUsedSummary() {
+        this(() -> ClosestCityMapper.getInstance(), SleuthkitCaseProvider.DEFAULT, Logger.getLogger(WhereUsedSummary.class.getName()));
+    }
+
+    public WhereUsedSummary(SupplierWithException<ClosestCityMapper, IOException> cityMapper, SleuthkitCaseProvider provider, java.util.logging.Logger logger) {
+        this.cityMapper = cityMapper;
+        this.provider = provider;
+        this.logger = logger;
+    }
+
+    /**
+     * @return Returns all the geolocation artifact types.
+     */
+    public List<ARTIFACT_TYPE> getGeoTypes() {
+        return GPS_ARTIFACT_TYPES;
+    }
+
+    @Override
+    public Set<Integer> getArtifactTypeIdsForRefresh() {
+        return GPS_ARTIFACT_TYPE_IDS;
     }
 
     private boolean greaterThanOrEqual(Long minTime, Long time) {
@@ -308,7 +211,7 @@ public class WhereUsedSummary implements DefaultArtifactUpdateGovernor {
 
         return points.stream().reduce(
                 EMPTY_COUNT,
-                (Waypoint w) -> Pair.of(1, greaterThanOrEqual(minTime, w.getTimestamp()) ? 1 : 0),
+                (total, w) -> Pair.of(total.getLeft() + 1, total.getRight() + (greaterThanOrEqual(minTime, w.getTimestamp()) ? 1 : 0)),
                 (pair1, pair2) -> Pair.of(pair1.getLeft() + pair2.getLeft(), pair1.getRight() + pair2.getRight()));
     }
 
@@ -322,10 +225,10 @@ public class WhereUsedSummary implements DefaultArtifactUpdateGovernor {
      * @throws GeoLocationDataException
      * @throws InterruptedException
      */
-    public CityData getCityCounts(DataSource dataSource, int daysCount, int maxCount) throws SleuthkitCaseProviderException, GeoLocationDataException, InterruptedException {
-        if (this.latLngMap == null) {
-            throw new IllegalStateException("City data hasn't been loaded");
-        }
+    public CityData getCityCounts(DataSource dataSource, int daysCount, int maxCount)
+            throws SleuthkitCaseProviderException, GeoLocationDataException, InterruptedException, IOException {
+
+        ClosestCityMapper closestCityMapper = ClosestCityMapper.getInstance();
 
         List<Waypoint> dataSourcePoints = getPoints(dataSource);
 
@@ -334,7 +237,7 @@ public class WhereUsedSummary implements DefaultArtifactUpdateGovernor {
         Long mostRecent = null;
 
         for (Waypoint pt : dataSourcePoints) {
-            CityRecord city = latLngMap.findClosest(new CityRecord(null, null, pt.getLatitude(), pt.getLongitude()));
+            CityRecord city = closestCityMapper.findClosest(new CityRecord(null, null, pt.getLatitude(), pt.getLongitude()));
             Long curTime = pt.getTimestamp();
             if (curTime != null && (mostRecent == null || curTime > mostRecent)) {
                 mostRecent = curTime;
@@ -370,15 +273,14 @@ public class WhereUsedSummary implements DefaultArtifactUpdateGovernor {
                 .sorted((a, b) -> -Integer.compare(a.getCount(), b.getCount()))
                 .limit(maxCount)
                 .collect(Collectors.toList());
-        
+
         Pair<Integer, Integer> otherCounts = getCounts(others, mostRecentTime);
         int otherMostCommonCount = otherCounts.getLeft();
         int otherMostRecentCount = otherCounts.getRight();
-        
-        
+
         return new CityData(
-                new CityCountsList(mostCommonCounts, otherMostCommonCount), 
-                new CityCountsList(mostRecentCounts, otherMostRecentCount), 
+                new CityCountsList(mostCommonCounts, otherMostCommonCount),
+                new CityCountsList(mostRecentCounts, otherMostRecentCount),
                 mostRecentTime);
     }
 
@@ -421,121 +323,5 @@ public class WhereUsedSummary implements DefaultArtifactUpdateGovernor {
         } else {
             return Collections.emptyList();
         }
-    }
-
-    /**
-     * Pre-loads city data.
-     */
-    public void load() throws IOException {
-        latLngMap = new LatLngMap<CityRecord>(parseCsvLines(WhereUsedSummary.class
-                .getResourceAsStream("worldcities.csv"), true));
-    }
-
-    private static final int CITY_NAME_IDX = 0;
-    private static final int COUNTRY_NAME_IDX = 4;
-    private static final int LAT_IDX = 2;
-    private static final int LONG_IDX = 3;
-
-    private static final int MAX_IDX = Stream.of(CITY_NAME_IDX, COUNTRY_NAME_IDX, LAT_IDX, LONG_IDX)
-            .max(Integer::compare)
-            .get();
-
-    private static Double tryParse(String s) {
-        if (s == null) {
-            return null;
-        }
-
-        try {
-            return Double.parseDouble(s);
-        } catch (NumberFormatException ex) {
-            return null;
-        }
-    }
-
-    private String parseCountryName(String orig, int lineNum) {
-        if (StringUtils.isBlank(orig)) {
-            logger.log(Level.WARNING, String.format("No country name determined for line %d.", lineNum));
-            return null;
-        }
-
-        Matcher m = COUNTRY_WITH_COMMA.matcher(orig);
-        if (m.find()) {
-            return String.format("%s %s", m.group(1), m.group(2));
-        }
-
-        return orig;
-    }
-
-    private CityRecord getCsvCityRecord(List<String> csvRow, int lineNum) {
-        if (csvRow == null || csvRow.size() <= MAX_IDX) {
-            logger.log(Level.WARNING, String.format("Row at line number %d is required to have at least %d elements and does not.", lineNum, (MAX_IDX + 1)));
-        }
-
-        String cityName = csvRow.get(CITY_NAME_IDX);
-        if (StringUtils.isBlank(cityName)) {
-            logger.log(Level.WARNING, String.format("No city name determined for line %d.", lineNum));
-            return null;
-        }
-
-        String countryName = parseCountryName(csvRow.get(COUNTRY_NAME_IDX), lineNum);
-
-        Double lattitude = tryParse(csvRow.get(LAT_IDX));
-        if (lattitude == null) {
-            logger.log(Level.WARNING, String.format("No lattitude determined for line %d.", lineNum));
-            return null;
-        }
-
-        Double longitude = tryParse(csvRow.get(LONG_IDX));
-        if (longitude == null) {
-            logger.log(Level.WARNING, String.format("No longitude determined for line %d.", lineNum));
-            return null;
-        }
-
-        return new CityRecord(cityName, countryName, lattitude, longitude);
-    }
-
-    private static Pattern CSV_NAIVE_REGEX = Pattern.compile("\"\\s*(([^\"]+?)?)\\s*\"");
-    private static Pattern COUNTRY_WITH_COMMA = Pattern.compile("^\\s*([^,]*)\\s*,\\s*([^,]*)\\s*$");
-
-    private List<String> parseCsvLine(String line, int lineNum) {
-        if (line == null || line.length() <= 0) {
-            logger.log(Level.INFO, String.format("Line at %d had no content", lineNum));
-            return null;
-        }
-
-        List<String> allMatches = new ArrayList<String>();
-        Matcher m = CSV_NAIVE_REGEX.matcher(line);
-        while (m.find()) {
-            allMatches.add(m.group(1));
-        }
-
-        return allMatches;
-    }
-
-    private List<CityRecord> parseCsvLines(InputStream csvInputStream, boolean ignoreHeaderRow) throws IOException {
-        List<CityRecord> cityRecords = new ArrayList<>();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(csvInputStream, "UTF-8"))) {
-            int lineNum = 1;
-            String line = reader.readLine();
-
-            if (line != null && ignoreHeaderRow) {
-                line = reader.readLine();
-                lineNum++;
-            }
-
-            while (line != null) {
-                // read next line
-                List<String> rowElements = parseCsvLine(line, lineNum);
-
-                if (rowElements != null) {
-                    cityRecords.add(getCsvCityRecord(rowElements, lineNum));
-                }
-
-                line = reader.readLine();
-                lineNum++;
-            }
-        }
-
-        return cityRecords;
     }
 }
