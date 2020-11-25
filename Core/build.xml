@@ -98,6 +98,11 @@
         <copy file="${thirdparty.dir}/jdom/jdom-2.0.5.jar" todir="${ext.dir}" />
         <copy file="${thirdparty.dir}/jdom/jdom-2.0.5-contrib.jar" todir="${ext.dir}" />
 		<copy file="${thirdparty.dir}/DatCon/3.6.9/DatCon.jar" todir="${ext.dir}" />
+        <!--Copy YARA to release-->
+        <copy todir="${basedir}/release/yara" >
+            <fileset dir="${thirdparty.dir}/yara/bin"/>
+        </copy>
+        <copy file="${thirdparty.dir}/yara/bin/YaraJNIWrapper.jar" todir="${ext.dir}" />
     </target>
     
     
