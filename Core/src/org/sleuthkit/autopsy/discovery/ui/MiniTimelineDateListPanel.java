@@ -25,6 +25,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
+import org.sleuthkit.autopsy.discovery.search.MiniTimelineResult;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
@@ -106,7 +107,7 @@ class MiniTimelineDateListPanel extends JPanel {
      * @param dateCountMap The list of dates to display.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    void addArtifacts(List<DateArtifactWrapper> dateArtifactList) {
+    void addArtifacts(List<MiniTimelineResult> dateArtifactList) {
         tableModel.setContents(dateArtifactList);
         jTable1.validate();
         jTable1.repaint();
@@ -157,7 +158,7 @@ class MiniTimelineDateListPanel extends JPanel {
     private class DateCountTableModel extends AbstractTableModel {
 
         private static final long serialVersionUID = 1L;
-        private final List<DateArtifactWrapper> dateCountList = new ArrayList<>();
+        private final List<MiniTimelineResult> dateCountList = new ArrayList<>();
 
         /**
          * Set the list of artifacts which should be represented by this table
@@ -166,7 +167,7 @@ class MiniTimelineDateListPanel extends JPanel {
          * @param artifacts The list of BlackboardArtifacts to represent.
          */
         @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-        void setContents(List<DateArtifactWrapper> dateCountList) {
+        void setContents(List<MiniTimelineResult> dateCountList) {
             jTable1.clearSelection();
             this.dateCountList.clear();
             this.dateCountList.addAll(dateCountList);
@@ -192,7 +193,7 @@ class MiniTimelineDateListPanel extends JPanel {
          * @return The BlackboardArtifact at the specified row.
          */
         @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-        DateArtifactWrapper getDateCountByRow(int rowIndex) {
+        MiniTimelineResult getDateCountByRow(int rowIndex) {
             return dateCountList.get(rowIndex);
         }
 

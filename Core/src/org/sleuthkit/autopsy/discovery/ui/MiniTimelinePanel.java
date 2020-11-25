@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.discovery.ui;
 
 import com.google.common.eventbus.Subscribe;
 import java.util.logging.Level;
+import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -50,7 +51,7 @@ class MiniTimelinePanel extends javax.swing.JPanel {
                     rightPanel = new GeneralPurposeArtifactViewer();
                 }
                 rightPanel.setArtifact(artifact);
-                mainSplitPane.setRightComponent(rightPanel);
+                mainSplitPane.setRightComponent(new JScrollPane(rightPanel));
                 validate();
                 repaint();
             }
@@ -117,7 +118,7 @@ class MiniTimelinePanel extends javax.swing.JPanel {
         SwingUtilities.invokeLater(() -> {
             dateListPanel.removeListSelectionListener(dateListener);
             artifactListPanel.removeListSelectionListener(artifactListener);
-            dateListPanel.addArtifacts(miniTimelineResultEvent.getArtifactDateWrapperList());
+            dateListPanel.addArtifacts(miniTimelineResultEvent.getResultList());
             status = DomainArtifactsTabPanel.ArtifactRetrievalStatus.POPULATED;
             setEnabled(!dateListPanel.isEmpty());
             dateListPanel.addSelectionListener(dateListener);

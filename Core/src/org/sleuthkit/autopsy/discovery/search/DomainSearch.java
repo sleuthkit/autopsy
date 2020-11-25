@@ -27,7 +27,6 @@ import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryKeyUtils.GroupKey;
-import org.sleuthkit.autopsy.discovery.ui.DateArtifactWrapper;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -187,7 +186,7 @@ public class DomainSearch {
         return artifactsCache.get(artifactsRequest);
     }
 
-    public List<DateArtifactWrapper> getAllArtifactsForDomain(SleuthkitCase sleuthkitCase, String domain) throws DiscoveryException {
+    public List<MiniTimelineResult> getAllArtifactsForDomain(SleuthkitCase sleuthkitCase, String domain) throws DiscoveryException {
         List<BlackboardArtifact> artifacts = new ArrayList<>();
         Map<String, List<BlackboardArtifact>> dateMap = new HashMap<>();
         if (!StringUtils.isBlank(domain)) {
@@ -213,10 +212,10 @@ public class DomainSearch {
                 }
             }
         }
-        List<DateArtifactWrapper> dateArtifactList = new ArrayList<>();
+        List<MiniTimelineResult> dateArtifactList = new ArrayList<>();
 
         for (String date : dateMap.keySet()) {
-            dateArtifactList.add(new DateArtifactWrapper(date, dateMap.get(date)));
+            dateArtifactList.add(new MiniTimelineResult(date, dateMap.get(date)));
         }
         return dateArtifactList;
     }

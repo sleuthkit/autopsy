@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Map;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryKeyUtils.GroupKey;
 import org.sleuthkit.autopsy.discovery.search.SearchData.Type;
-import org.sleuthkit.autopsy.discovery.ui.DateArtifactWrapper;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
@@ -240,10 +239,10 @@ public final class DiscoveryEventUtils {
 
         /**
          * Construct a new ArtifactSearchResultEvent with a list of specified
-         * artifacts and an artifact type.
+         * results and an artifact type.
          *
-         * @param artifactType    The type of artifacts in the list.
-         * @param listOfArtifacts The list of artifacts retrieved.
+         * @param artifactType    The type of results in the list.
+         * @param listOfArtifacts The list of results retrieved.
          */
         public ArtifactSearchResultEvent(BlackboardArtifact.ARTIFACT_TYPE artifactType, List<BlackboardArtifact> listOfArtifacts) {
             if (listOfArtifacts != null) {
@@ -253,9 +252,9 @@ public final class DiscoveryEventUtils {
         }
 
         /**
-         * Get the list of artifacts included in the event.
+         * Get the list of results included in the event.
          *
-         * @return The list of artifacts retrieved.
+         * @return The list of results retrieved.
          */
         public List<BlackboardArtifact> getListOfArtifacts() {
             return Collections.unmodifiableList(listOfArtifacts);
@@ -272,25 +271,32 @@ public final class DiscoveryEventUtils {
     }
 
     /**
-     * Event to signal the completion of a search being performed.
+     * Event to signal the completion of a search for mini timeline results
+     * being performed.
      */
     public static final class MiniTimelineResultEvent {
 
-        private final List<DateArtifactWrapper> artifacts = new ArrayList<>();
+        private final List<MiniTimelineResult> results = new ArrayList<>();
 
-        public MiniTimelineResultEvent(List<DateArtifactWrapper> artifacts) {
-            if (artifacts != null) {
-                this.artifacts.addAll(artifacts);
+        /**
+         * Construct a new MiniTimelineResultEvent.
+         *
+         * @param results The list of MiniTimelineResults contained in this
+         *                event.
+         */
+        public MiniTimelineResultEvent(List<MiniTimelineResult> results) {
+            if (results != null) {
+                this.results.addAll(results);
             }
         }
 
         /**
-         * Get the map of artifacts included in the event.
+         * Get the list of results included in the event.
          *
-         * @return The map of artifacts retrieved.
+         * @return The list of results found.
          */
-        public List<DateArtifactWrapper> getArtifactDateWrapperList() {
-            return Collections.unmodifiableList(artifacts);
+        public List<MiniTimelineResult> getResultList() {
+            return Collections.unmodifiableList(results);
         }
     }
 

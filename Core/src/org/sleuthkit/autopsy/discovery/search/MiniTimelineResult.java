@@ -16,38 +16,60 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.discovery.ui;
+package org.sleuthkit.autopsy.discovery.search;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
-public class DateArtifactWrapper {
+/**
+ * A wrapper to hold all the information that is associated with an item in the
+ * first column of the mini timeline view.
+ */
+public class MiniTimelineResult {
 
     private final String date;
     private final List<BlackboardArtifact> artifactList = new ArrayList<>();
 
-    public DateArtifactWrapper(String date, List<BlackboardArtifact> artifactList) {
+    /**
+     * Construct a new MiniTimelineResult.
+     *
+     * @param date         The date the list of artifacts were observed on as a
+     *                     String.
+     * @param artifactList The list of artifacts observed on the specified date.
+     */
+    MiniTimelineResult(String date, List<BlackboardArtifact> artifactList) {
         this.date = date;
         this.artifactList.addAll(artifactList);
     }
 
     /**
-     * @return the date
+     * Get the date the artifacts were observed.
+     *
+     * @return The date the artifacts were observed.
      */
-    String getDate() {
+    public String getDate() {
         return date;
     }
 
     /**
+     * Get the number of artifacts observed on the specified date.
+     *
      * @return the count
      */
-    int getCount() {
+    public int getCount() {
         return artifactList.size();
     }
 
-    List<BlackboardArtifact> getArtifactList() {
+    /**
+     * Get the list of artifacts that were observed for the date specified in
+     * this object.
+     *
+     * @return The list of artifacts that were observed for the date specified
+     *         in this object.
+     */
+    public List<BlackboardArtifact> getArtifactList() {
         return Collections.unmodifiableList(artifactList);
     }
 

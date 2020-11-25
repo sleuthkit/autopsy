@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.discovery.ui;
 
+import org.sleuthkit.autopsy.discovery.search.MiniTimelineResult;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CancellationException;
@@ -33,7 +34,7 @@ import org.sleuthkit.autopsy.discovery.search.DomainSearch;
 /**
  * SwingWorker to retrieve a list of artifacts for a specified type and domain.
  */
-class MiniTimelineWorker extends SwingWorker<List<DateArtifactWrapper>, Void> {
+class MiniTimelineWorker extends SwingWorker<List<MiniTimelineResult>, Void> {
 
     private final static Logger logger = Logger.getLogger(MiniTimelineWorker.class.getName());
     private final String domain;
@@ -49,7 +50,7 @@ class MiniTimelineWorker extends SwingWorker<List<DateArtifactWrapper>, Void> {
     }
 
     @Override
-    protected List<DateArtifactWrapper> doInBackground() throws Exception {
+    protected List<MiniTimelineResult> doInBackground() throws Exception {
         if (!StringUtils.isBlank(domain)) {
             DomainSearch domainSearch = new DomainSearch();
             return domainSearch.getAllArtifactsForDomain(Case.getCurrentCase().getSleuthkitCase(), domain);
@@ -60,7 +61,7 @@ class MiniTimelineWorker extends SwingWorker<List<DateArtifactWrapper>, Void> {
 
     @Override
     protected void done() {
-        List<DateArtifactWrapper> results = null;
+        List<MiniTimelineResult> results = null;
         if (!isCancelled()) {
             try {
                 results = get();
