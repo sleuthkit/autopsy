@@ -18,10 +18,12 @@
  */
 package org.sleuthkit.autopsy.discovery.ui;
 
+import java.awt.Point;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import org.apache.commons.io.FilenameUtils;
@@ -38,7 +40,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Panel to display list of artifacts for selected domain.
  *
  */
-class ArtifactsListPanel extends JPanel {
+final class ArtifactsListPanel extends JPanel implements ArtifactListPanelInterface {
 
     private static final long serialVersionUID = 1L;
     private final DomainArtifactTableModel tableModel;
@@ -53,8 +55,18 @@ class ArtifactsListPanel extends JPanel {
     ArtifactsListPanel(BlackboardArtifact.ARTIFACT_TYPE artifactType) {
         tableModel = new DomainArtifactTableModel(artifactType);
         initComponents();
-        jTable1.getRowSorter().toggleSortOrder(0);
-        jTable1.getRowSorter().toggleSortOrder(0);
+        artifactsTable.getRowSorter().toggleSortOrder(0);
+        artifactsTable.getRowSorter().toggleSortOrder(0);
+    }
+
+    @Override
+    public void addMouseListener(java.awt.event.MouseAdapter mouseListener) {
+        artifactsTable.addMouseListener(mouseListener);
+    }
+
+    @Override
+    public void showPopupMenu(JPopupMenu popupMenu, Point point) {
+        popupMenu.show(artifactsTable, point.x, point.y);
     }
 
     /**
@@ -64,8 +76,9 @@ class ArtifactsListPanel extends JPanel {
      * @param listener The listener to add to the table of artifacts.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    void addSelectionListener(ListSelectionListener listener) {
-        jTable1.getSelectionModel().addListSelectionListener(listener);
+    @Override
+    public void addSelectionListener(ListSelectionListener listener) {
+        artifactsTable.getSelectionModel().addListSelectionListener(listener);
     }
 
     /**
@@ -74,8 +87,9 @@ class ArtifactsListPanel extends JPanel {
      * @param listener The listener to remove from the table of artifacts.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    void removeListSelectionListener(ListSelectionListener listener) {
-        jTable1.getSelectionModel().removeListSelectionListener(listener);
+    @Override
+    public void removeSelectionListener(ListSelectionListener listener) {
+        artifactsTable.getSelectionModel().removeListSelectionListener(listener);
     }
 
     /**
@@ -86,12 +100,13 @@ class ArtifactsListPanel extends JPanel {
      *         selected.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    BlackboardArtifact getSelectedArtifact() {
-        int selectedIndex = jTable1.getSelectionModel().getLeadSelectionIndex();
-        if (selectedIndex < jTable1.getSelectionModel().getMinSelectionIndex() || jTable1.getSelectionModel().getMaxSelectionIndex() < 0 || selectedIndex > jTable1.getSelectionModel().getMaxSelectionIndex()) {
+    @Override
+    public BlackboardArtifact getSelectedArtifact() {
+        int selectedIndex = artifactsTable.getSelectionModel().getLeadSelectionIndex();
+        if (selectedIndex < artifactsTable.getSelectionModel().getMinSelectionIndex() || artifactsTable.getSelectionModel().getMaxSelectionIndex() < 0 || selectedIndex > artifactsTable.getSelectionModel().getMaxSelectionIndex()) {
             return null;
         }
-        return tableModel.getArtifactByRow(jTable1.convertRowIndexToModel(selectedIndex));
+        return tableModel.getArtifactByRow(artifactsTable.convertRowIndexToModel(selectedIndex));
     }
 
     /**
@@ -101,7 +116,8 @@ class ArtifactsListPanel extends JPanel {
      *         artifacts.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    boolean isEmpty() {
+    @Override
+    public boolean isEmpty() {
         return tableModel.getRowCount() <= 0;
     }
 
@@ -110,11 +126,12 @@ class ArtifactsListPanel extends JPanel {
      * populate the panel to the right.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    void selectFirst() {
+    @Override
+    public void selectFirst() {
         if (!isEmpty()) {
-            jTable1.setRowSelectionInterval(0, 0);
+            artifactsTable.setRowSelectionInterval(0, 0);
         } else {
-            jTable1.clearSelection();
+            artifactsTable.clearSelection();
         }
     }
 
@@ -125,10 +142,11 @@ class ArtifactsListPanel extends JPanel {
      * @param artifactList The list of artifacts to display.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    void addArtifacts(List<BlackboardArtifact> artifactList) {
+    @Override
+    public void addArtifacts(List<BlackboardArtifact> artifactList) {
         tableModel.setContents(artifactList);
-        jTable1.validate();
-        jTable1.repaint();
+        artifactsTable.validate();
+        artifactsTable.repaint();
         tableModel.fireTableDataChanged();
     }
 
@@ -150,19 +168,18 @@ class ArtifactsListPanel extends JPanel {
     private void initComponents() {
 
         javax.swing.JScrollPane jScrollPane1 = new javax.swing.JScrollPane();
-        jTable1 = new javax.swing.JTable();
+        artifactsTable = new javax.swing.JTable();
 
         setOpaque(false);
         setPreferredSize(new java.awt.Dimension(300, 0));
 
         jScrollPane1.setBorder(null);
         jScrollPane1.setMinimumSize(new java.awt.Dimension(0, 0));
-        jScrollPane1.setPreferredSize(new java.awt.Dimension(0, 0));
 
-        jTable1.setAutoCreateRowSorter(true);
-        jTable1.setModel(tableModel);
-        jTable1.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
-        jScrollPane1.setViewportView(jTable1);
+        artifactsTable.setAutoCreateRowSorter(true);
+        artifactsTable.setModel(tableModel);
+        artifactsTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        jScrollPane1.setViewportView(artifactsTable);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -172,7 +189,7 @@ class ArtifactsListPanel extends JPanel {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 607, Short.MAX_VALUE)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 0, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -204,7 +221,7 @@ class ArtifactsListPanel extends JPanel {
          */
         @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
         void setContents(List<BlackboardArtifact> artifacts) {
-            jTable1.clearSelection();
+            artifactsTable.clearSelection();
             artifactList.clear();
             artifactList.addAll(artifacts);
         }
@@ -347,6 +364,6 @@ class ArtifactsListPanel extends JPanel {
         }
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JTable jTable1;
+    private javax.swing.JTable artifactsTable;
     // End of variables declaration//GEN-END:variables
 }

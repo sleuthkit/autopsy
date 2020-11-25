@@ -18,10 +18,12 @@
  */
 package org.sleuthkit.autopsy.discovery.ui;
 
+import java.awt.Point;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import org.apache.commons.lang.StringUtils;
@@ -36,7 +38,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Panel to display list of dates and counts.
  */
-class MiniTimelineArtifactListPanel extends JPanel {
+class MiniTimelineArtifactListPanel extends JPanel implements ArtifactListPanelInterface {
 
     private static final long serialVersionUID = 1L;
     private final TypeDescriptionTableModel tableModel;
@@ -50,8 +52,18 @@ class MiniTimelineArtifactListPanel extends JPanel {
     MiniTimelineArtifactListPanel() {
         tableModel = new TypeDescriptionTableModel();
         initComponents();
-        jTable1.getRowSorter().toggleSortOrder(0);
-        jTable1.getRowSorter().toggleSortOrder(0);
+        artifactsTable.getRowSorter().toggleSortOrder(0);
+        artifactsTable.getRowSorter().toggleSortOrder(0);
+    }
+
+    @Override
+    public void addMouseListener(java.awt.event.MouseAdapter mouseListener) {
+        artifactsTable.addMouseListener(mouseListener);
+    }
+
+    @Override
+    public void showPopupMenu(JPopupMenu popupMenu, Point point) {
+        popupMenu.show(artifactsTable, point.x, point.y);
     }
 
     /**
@@ -61,8 +73,9 @@ class MiniTimelineArtifactListPanel extends JPanel {
      * @param listener The listener to add to the table of artifacts.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    void addSelectionListener(ListSelectionListener listener) {
-        jTable1.getSelectionModel().addListSelectionListener(listener);
+    @Override
+    public void addSelectionListener(ListSelectionListener listener) {
+        artifactsTable.getSelectionModel().addListSelectionListener(listener);
     }
 
     /**
@@ -71,8 +84,9 @@ class MiniTimelineArtifactListPanel extends JPanel {
      * @param listener The listener to remove from the table of dates.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    void removeListSelectionListener(ListSelectionListener listener) {
-        jTable1.getSelectionModel().removeListSelectionListener(listener);
+    @Override
+    public void removeSelectionListener(ListSelectionListener listener) {
+        artifactsTable.getSelectionModel().removeListSelectionListener(listener);
     }
 
     /**
@@ -81,7 +95,8 @@ class MiniTimelineArtifactListPanel extends JPanel {
      * @return True if the list of dates is empty, false if there are dates.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    boolean isEmpty() {
+    @Override
+    public boolean isEmpty() {
         return tableModel.getRowCount() <= 0;
     }
 
@@ -90,11 +105,12 @@ class MiniTimelineArtifactListPanel extends JPanel {
      * populate the list to the right.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    void selectFirst() {
+    @Override
+    public void selectFirst() {
         if (!isEmpty()) {
-            jTable1.setRowSelectionInterval(0, 0);
+            artifactsTable.setRowSelectionInterval(0, 0);
         } else {
-            jTable1.clearSelection();
+            artifactsTable.clearSelection();
         }
     }
 
@@ -106,12 +122,13 @@ class MiniTimelineArtifactListPanel extends JPanel {
      *         selected.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    BlackboardArtifact getSelectedArtifact() {
-        int selectedIndex = jTable1.getSelectionModel().getLeadSelectionIndex();
-        if (selectedIndex < jTable1.getSelectionModel().getMinSelectionIndex() || jTable1.getSelectionModel().getMaxSelectionIndex() < 0 || selectedIndex > jTable1.getSelectionModel().getMaxSelectionIndex()) {
+    @Override
+    public BlackboardArtifact getSelectedArtifact() {
+        int selectedIndex = artifactsTable.getSelectionModel().getLeadSelectionIndex();
+        if (selectedIndex < artifactsTable.getSelectionModel().getMinSelectionIndex() || artifactsTable.getSelectionModel().getMaxSelectionIndex() < 0 || selectedIndex > artifactsTable.getSelectionModel().getMaxSelectionIndex()) {
             return null;
         }
-        return tableModel.getArtifactByRow(jTable1.convertRowIndexToModel(selectedIndex));
+        return tableModel.getArtifactByRow(artifactsTable.convertRowIndexToModel(selectedIndex));
     }
 
     /**
@@ -121,10 +138,11 @@ class MiniTimelineArtifactListPanel extends JPanel {
      * @param dateCountList The list of dates to display.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    void addArtifacts(List<BlackboardArtifact> dateCountList) {
+    @Override
+    public void addArtifacts(List<BlackboardArtifact> dateCountList) {
         tableModel.setContents(dateCountList);
-        jTable1.validate();
-        jTable1.repaint();
+        artifactsTable.validate();
+        artifactsTable.repaint();
         tableModel.fireTableDataChanged();
     }
 
@@ -143,7 +161,7 @@ class MiniTimelineArtifactListPanel extends JPanel {
     private void initComponents() {
         //This class is a refactored copy of ArtifactsListPanel so lacks the form however the init method still constructs the proper UI elements.
         javax.swing.JScrollPane jScrollPane1 = new javax.swing.JScrollPane();
-        jTable1 = new javax.swing.JTable();
+        artifactsTable = new javax.swing.JTable();
 
         setOpaque(false);
         setPreferredSize(new java.awt.Dimension(300, 0));
@@ -151,10 +169,10 @@ class MiniTimelineArtifactListPanel extends JPanel {
         jScrollPane1.setBorder(null);
         jScrollPane1.setMinimumSize(new java.awt.Dimension(0, 0));
 
-        jTable1.setAutoCreateRowSorter(true);
-        jTable1.setModel(tableModel);
-        jTable1.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
-        jScrollPane1.setViewportView(jTable1);
+        artifactsTable.setAutoCreateRowSorter(true);
+        artifactsTable.setModel(tableModel);
+        artifactsTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        jScrollPane1.setViewportView(artifactsTable);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -185,7 +203,7 @@ class MiniTimelineArtifactListPanel extends JPanel {
          */
         @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
         void setContents(List<BlackboardArtifact> artifactList) {
-            jTable1.clearSelection();
+            artifactsTable.clearSelection();
             this.artifactList.clear();
             this.artifactList.addAll(artifactList);
         }
@@ -260,6 +278,6 @@ class MiniTimelineArtifactListPanel extends JPanel {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JTable jTable1;
+    private javax.swing.JTable artifactsTable;
     // End of variables declaration//GEN-END:variables
 }

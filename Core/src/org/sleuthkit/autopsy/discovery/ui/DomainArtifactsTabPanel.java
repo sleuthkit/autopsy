@@ -63,6 +63,7 @@ final class DomainArtifactsTabPanel extends JPanel {
         initComponents();
         this.artifactType = type;
         listPanel = new ArtifactsListPanel(artifactType);
+        listPanel.addMouseListener(new ArtifactMenuMouseAdapter(listPanel));
         jSplitPane1.setLeftComponent(listPanel);
         setRightComponent();
         listPanel.addSelectionListener(listener);
@@ -127,7 +128,7 @@ final class DomainArtifactsTabPanel extends JPanel {
     void handleArtifactSearchResultEvent(DiscoveryEventUtils.ArtifactSearchResultEvent artifactresultEvent) {
         if (artifactType == artifactresultEvent.getArtifactType()) {
             SwingUtilities.invokeLater(() -> {
-                listPanel.removeListSelectionListener(listener);
+                listPanel.removeSelectionListener(listener);
                 listPanel.addArtifacts(artifactresultEvent.getListOfArtifacts());
                 status = ArtifactRetrievalStatus.POPULATED;
                 setEnabled(!listPanel.isEmpty());
