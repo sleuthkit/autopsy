@@ -2197,7 +2197,7 @@ public class Server {
                 // Solr throws a lot of unexpected exception types
                 logger.log(Level.SEVERE, "Could not add batched documents to index", ex); //NON-NLS
                 throw new KeywordSearchModuleException(
-                        NbBundle.getMessage(this.getClass(), "Could not add batched documents to index"), ex); //NON-NLS
+                        NbBundle.getMessage(this.getClass(), "Server.addDocBatch.exception.msg"), ex); //NON-NLS
             } finally {
                 docBuffer.clear();
             }
