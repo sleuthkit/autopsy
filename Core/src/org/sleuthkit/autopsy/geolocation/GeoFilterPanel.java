@@ -26,6 +26,7 @@ import java.awt.image.BufferedImage;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -62,6 +63,9 @@ class GeoFilterPanel extends javax.swing.JPanel {
     private final CheckBoxListPanel<DataSource> dsCheckboxPanel;
     private final CheckBoxListPanel<ARTIFACT_TYPE> atCheckboxPanel;
 
+    private final Object initialFilterLock = new Object();
+    private GeoFilter initialFilter = null;
+
     // Make sure to update if other GPS artifacts are added
     @SuppressWarnings("deprecation")
     private static final ARTIFACT_TYPE[] GPS_ARTIFACT_TYPES = {
@@ -88,12 +92,12 @@ class GeoFilterPanel extends javax.swing.JPanel {
 
         initComponents();
 
-        dsCheckboxPanel = (CheckBoxListPanel<DataSource>)dsCBPanel;
+        dsCheckboxPanel = (CheckBoxListPanel<DataSource>) dsCBPanel;
         dsCheckboxPanel.setPanelTitle(Bundle.GeoFilterPanel_DataSource_List_Title());
         dsCheckboxPanel.setPanelTitleIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/image.png")));
         dsCheckboxPanel.setSetAllSelected(true);
 
-        atCheckboxPanel = (CheckBoxListPanel<ARTIFACT_TYPE>)atCBPanel;
+        atCheckboxPanel = (CheckBoxListPanel<ARTIFACT_TYPE>) atCBPanel;
         atCheckboxPanel.setPanelTitle(Bundle.GeoFilterPanel_ArtifactType_List_Title());
         atCheckboxPanel.setPanelTitleIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/extracted_content.png")));
         atCheckboxPanel.setSetAllSelected(true);
@@ -166,6 +170,49 @@ class GeoFilterPanel extends javax.swing.JPanel {
                 numberModel.getNumber().intValue(),
                 dataSources,
                 artifactTypes);
+    }
+
+    /**
+     * Sets up filter state in filter panel based on filter provided. NOTE:
+     * GeolocationTopComponent will overwrite these settings on open(). Also,
+     * this will not immediately trigger waypoints to be reloaded.
+     *
+     * @param filter The new filter state.
+     */
+    void setupFilter(GeoFilter filter) {
+        if (filter == null) {
+            return;
+        }
+
+        dsCheckboxPanel.setSelectedElements(filter.getDataSources() == null ? Collections.emptyList() : filter.getDataSources());
+        atCheckboxPanel.setSelectedElements(filter.getArtifactTypes() == null ? Collections.emptyList() : filter.getArtifactTypes());
+
+        if (filter.showAllWaypoints()) {
+            allButton.setSelected(true);
+        } else {
+            mostRecentButton.setSelected(true);
+        }
+
+        showWaypointsWOTSCheckBox.setSelected(filter.showWaypointsWithoutTimeStamp());
+        numberModel.setValue(filter.getMostRecentNumDays());
+    }
+
+    /**
+     * Sets the filter state that will be created when the DataSourceUpdater
+     * runs as a part of updating the data source list which is called during
+     * opening the GeolocationTopComponent.
+     *
+     * @param filter The initial filter.
+     * @throws GeoLocationUIException
+     */
+    void setInitialFilterState(GeoFilter filter) throws GeoLocationUIException {
+        synchronized (initialFilterLock) {
+            if (filter == null) {
+                throw new GeoLocationUIException("Unable to set filter state as no filter was provided.");
+            }
+
+            initialFilter = filter;
+        }
     }
 
     /**
@@ -514,6 +561,16 @@ class GeoFilterPanel extends javax.swing.JPanel {
                     Icon icon = getImageIcon(entry.getKey().getTypeID());
                     atCheckboxPanel.addElement(dispName, icon, entry.getKey());
                 }
+            }
+
+            GeoFilter filter = null;
+            synchronized (GeoFilterPanel.this.initialFilterLock) {
+                filter = GeoFilterPanel.this.initialFilter;
+                GeoFilterPanel.this.initialFilter = null;
+            }
+
+            if (filter != null) {
+                setupFilter(filter);
             }
 
             GeoFilterPanel.this.firePropertyChange(INITPROPERTY, false, true);

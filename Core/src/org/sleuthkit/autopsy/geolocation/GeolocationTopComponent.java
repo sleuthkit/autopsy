@@ -206,6 +206,25 @@ public final class GeolocationTopComponent extends TopComponent {
 
     }
 
+    /**
+     * Sets the filter state that will be set when the panel is opened. If the
+     * panel is already open, this has no effect.
+     *
+     * @param filter The filter to set in the GeoFilterPanel.
+     */
+    public void setFilterState(GeoFilter filter) throws GeoLocationUIException {
+        if (filter == null) {
+            throw new GeoLocationUIException("Filter provided cannot be null.");
+        }
+        
+        if (this.isOpened()) {
+            geoFilterPanel.setupFilter(filter);
+            updateWaypoints();
+        } else {
+            geoFilterPanel.setInitialFilterState(filter);    
+        }
+    }
+
     @Messages({
         "GeolocationTC_connection_failure_message=Failed to connect to map title source.\nPlease review map source in Options dialog.",
         "GeolocationTC_connection_failure_message_title=Connection Failure"
@@ -294,15 +313,6 @@ public final class GeolocationTopComponent extends TopComponent {
             return;
         }
 
-        fetchAndShowWaypoints(filters);
-    }
-
-    /**
-     * Loads and shows waypoints based on the filters.
-     *
-     * @param filters The filters to use.
-     */
-    public void fetchAndShowWaypoints(GeoFilter filters) {
         setWaypointLoading(true);
         geoFilterPanel.setEnabled(false);
 

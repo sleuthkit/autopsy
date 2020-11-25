@@ -21,12 +21,15 @@ package org.sleuthkit.autopsy.datasourcesummary.ui;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.swing.JButton;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.windows.TopComponent;
@@ -44,6 +47,7 @@ import org.sleuthkit.autopsy.datasourcesummary.uiutils.IngestRunningLabel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel.ColumnModel;
 import org.sleuthkit.autopsy.geolocation.GeoFilter;
+import org.sleuthkit.autopsy.geolocation.GeoLocationUIException;
 import org.sleuthkit.autopsy.geolocation.GeolocationTopComponent;
 import org.sleuthkit.autopsy.geolocation.OpenGeolocationAction;
 import org.sleuthkit.datamodel.DataSource;
@@ -86,6 +90,8 @@ public class WhereUsedPanel extends BaseDataSourceSummaryPanel {
 
     // loadable components on this tab
     private final List<JTablePanel<?>> tables = Arrays.asList(mostCommonTable, mostRecentTable);
+
+    private final Logger logger = Logger.getLogger(WhereUsedPanel.class.getName());
 
     // means of fetching and displaying data
     private final List<DataFetchComponents<DataSource, ?>> dataFetchComponents;
@@ -180,12 +186,6 @@ public class WhereUsedPanel extends BaseDataSourceSummaryPanel {
     }
 
     private void openGeolocationWindow(DataSource dataSource, Integer daysLimit) {
-        // open the window
-        OpenGeolocationAction geoAction = CallableSystemAction.get(OpenGeolocationAction.class);
-        if (geoAction != null) {
-            geoAction.performAction();
-        }
-
         // set the filter
         TopComponent topComponent = WindowManager.getDefault().findTopComponent(GeolocationTopComponent.class.getSimpleName());
         if (topComponent instanceof GeolocationTopComponent) {
@@ -195,7 +195,19 @@ public class WhereUsedPanel extends BaseDataSourceSummaryPanel {
                     ? new GeoFilter(true, false, 0, Arrays.asList(dataSource), whereUsedData.getGeoTypes())
                     : new GeoFilter(false, false, DAYS_COUNT, Arrays.asList(dataSource), whereUsedData.getGeoTypes());
 
-            geoComponent.fetchAndShowWaypoints(filter);
+            try {
+                geoComponent.setFilterState(filter);
+            } catch (GeoLocationUIException ex) {
+                logger.log(Level.WARNING, "There was an error setting filters in the GeoLocationTopComponent.", ex);
+            }
+        }
+
+        // open the window
+        OpenGeolocationAction action = CallableSystemAction.get(OpenGeolocationAction.class);
+        if (action == null) {
+            logger.log(Level.WARNING, "Unable to obtain an OpenGeolocationAction instance from CallableSystemAction.");
+        } else {
+            action.performAction();
         }
     }
 
@@ -268,9 +280,9 @@ public class WhereUsedPanel extends BaseDataSourceSummaryPanel {
         mainContentPanel.add(filler1);
 
         mostRecentPanel.setAlignmentX(0.0F);
-        mostRecentPanel.setMaximumSize(new java.awt.Dimension(32767, 187));
-        mostRecentPanel.setMinimumSize(new java.awt.Dimension(100, 187));
-        mostRecentPanel.setPreferredSize(new java.awt.Dimension(100, 187));
+        mostRecentPanel.setMaximumSize(new java.awt.Dimension(32767, 106));
+        mostRecentPanel.setMinimumSize(new java.awt.Dimension(100, 106));
+        mostRecentPanel.setPreferredSize(new java.awt.Dimension(100, 106));
         mainContentPanel.add(mostRecentPanel);
 
         filler2.setAlignmentX(0.0F);
@@ -301,9 +313,9 @@ public class WhereUsedPanel extends BaseDataSourceSummaryPanel {
         mainContentPanel.add(filler7);
 
         mostCommonPanel.setAlignmentX(0.0F);
-        mostCommonPanel.setMaximumSize(new java.awt.Dimension(32767, 187));
-        mostCommonPanel.setMinimumSize(new java.awt.Dimension(100, 187));
-        mostCommonPanel.setPreferredSize(new java.awt.Dimension(100, 187));
+        mostCommonPanel.setMaximumSize(new java.awt.Dimension(32767, 106));
+        mostCommonPanel.setMinimumSize(new java.awt.Dimension(100, 106));
+        mostCommonPanel.setPreferredSize(new java.awt.Dimension(100, 106));
         mainContentPanel.add(mostCommonPanel);
 
         filler6.setAlignmentX(0.0F);

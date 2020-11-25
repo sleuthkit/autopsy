@@ -29,37 +29,54 @@ import org.sleuthkit.autopsy.geolocation.KdTree;
 import org.sleuthkit.autopsy.geolocation.KdTree.XYZPoint;
 
 /**
- * Divides map into grid and places each grid square in separate index in a hashmap.
+ * Divides map into grid and places each grid square in separate index in a
+ * hashmap.
  */
 class LatLngMap<E extends KdTree.XYZPoint> {
+
     // radius of Earth in meters
     private static final double EARTH_RADIUS = 6371e3;
-    
+
     // 300 km buckets with 150km accuracy
     private static final double BUCKET_SIZE = 300 * 1000;
 
-    
+    // maps the determined pair of (east/west index, north/south index) to the KdTree containing all items within that bucket.
     private final Map<Pair<Integer, Integer>, KdTree<E>> latLngMap;
-    
-    private static Pair<Double, Double> vectorDistance(XYZPoint point) {
+
+    /**
+     * Calculates the bucket-normalized pair of (east/west index, north/south
+     * index) as a double value. For instance, for bucket size 300Km, if a value
+     * was 450Km east and 150Km north of lng/lat: (0,0), that will translate to
+     * (1.5, 0.5). This is used to determine the bucket to search in and the
+     * closest neighboring buckets.
+     *
+     * @param point The point to calculate the bucket location pair.
+     * @return The pair that was determined.
+     */
+    private static Pair<Double, Double> getBucketLocation(XYZPoint point) {
         double y = euclideanDistance(new XYZPoint(0D, 0D), new XYZPoint(0D, point.getY())) / BUCKET_SIZE;
         if (point.getY() < 0) {
             y = -y;
         }
-        
+
         double x = euclideanDistance(new XYZPoint(0D, point.getY()), new XYZPoint(point.getX(), point.getY())) / BUCKET_SIZE;
         if (point.getX() < 0) {
             x = -x;
         }
-        
+
         return Pair.of(x, y);
     }
-    
+
+    // calculates the bucket for a specific point provided.
     private static final Function<XYZPoint, Pair<Integer, Integer>> bucketCalculator = (point) -> {
-        Pair<Double, Double> dPair = vectorDistance(point);
+        Pair<Double, Double> dPair = getBucketLocation(point);
         return Pair.of((int) (double) dPair.getLeft(), (int) (double) dPair.getRight());
     };
 
+    /**
+     * Main contructor.
+     * @param pointsToAdd  The points to be added to the data structure.
+     */
     LatLngMap(List<E> pointsToAdd) {
         Map<Pair<Integer, Integer>, List<E>> latLngBuckets = pointsToAdd.stream()
                 .collect(Collectors.groupingBy((pt) -> bucketCalculator.apply(pt)));
@@ -69,8 +86,13 @@ class LatLngMap<E extends KdTree.XYZPoint> {
                 .collect(Collectors.toMap(p -> p.getKey(), p -> p.getValue()));
     }
 
+    /**
+     * Finds closest point within 150Km (.5 * BUCKET_SIZE) distance.
+     * @param point The point for which to find closest.
+     * @return Returns the found point.
+     */
     E findClosest(E point) {
-        Pair<Double, Double> calculated = vectorDistance(point);
+        Pair<Double, Double> calculated = getBucketLocation(point);
         int latBucket = (int) (double) calculated.getLeft();
         int latBucket2 = Math.round(calculated.getLeft()) == latBucket ? latBucket - 1 : latBucket + 1;
 
@@ -84,17 +106,24 @@ class LatLngMap<E extends KdTree.XYZPoint> {
 
         return Stream.of(closest1, closest2, closest3, closest4)
                 .filter(c -> c != null && euclideanDistance(point, c) <= BUCKET_SIZE / 2)
-                .min((a,b) -> Double.compare(euclideanDistance(point, a), euclideanDistance(point, b)))
+                .min((a, b) -> Double.compare(euclideanDistance(point, a), euclideanDistance(point, b)))
                 .orElse(null);
     }
 
-    private E findClosestInBucket(int lat, int lng, E point) {
-        KdTree<E> thisLatLngMap = latLngMap.get(Pair.of(lat, lng));
+    /**
+     * Within the specific bucket, finds the closest point if any exists.
+     * @param x The x axis bucket.
+     * @param y The y axis bucket.
+     * @param point The point to search for.
+     * @return The point, if any, that was found.
+     */
+    private E findClosestInBucket(int x, int y, E point) {
+        KdTree<E> thisLatLngMap = latLngMap.get(Pair.of(x, y));
         if (thisLatLngMap == null) {
             return null;
         }
-        
-        Collection<E> closest =  thisLatLngMap.nearestNeighbourSearch(1, point);
+
+        Collection<E> closest = thisLatLngMap.nearestNeighbourSearch(1, point);
         if (closest != null && closest.size() > 0) {
             return closest.iterator().next();
         } else {

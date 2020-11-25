@@ -111,13 +111,13 @@
               <Properties>
                 <Property name="alignmentX" type="float" value="0.0"/>
                 <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-                  <Dimension value="[32767, 187]"/>
+                  <Dimension value="[32767, 106]"/>
                 </Property>
                 <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-                  <Dimension value="[100, 187]"/>
+                  <Dimension value="[100, 106]"/>
                 </Property>
                 <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-                  <Dimension value="[100, 187]"/>
+                  <Dimension value="[100, 106]"/>
                 </Property>
               </Properties>
               <AuxValues>
@@ -241,13 +241,13 @@
               <Properties>
                 <Property name="alignmentX" type="float" value="0.0"/>
                 <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-                  <Dimension value="[32767, 187]"/>
+                  <Dimension value="[32767, 106]"/>
                 </Property>
                 <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-                  <Dimension value="[100, 187]"/>
+                  <Dimension value="[100, 106]"/>
                 </Property>
                 <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-                  <Dimension value="[100, 187]"/>
+                  <Dimension value="[100, 106]"/>
                 </Property>
               </Properties>
               <AuxValues>
