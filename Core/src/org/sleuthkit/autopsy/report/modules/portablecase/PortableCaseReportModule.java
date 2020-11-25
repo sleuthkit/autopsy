@@ -62,6 +62,7 @@ import org.sleuthkit.autopsy.coreutils.FileTypeUtils.FileTypeCategory;
 import org.sleuthkit.autopsy.report.ReportProgressPanel;
 import org.sleuthkit.caseuco.CaseUcoExporter;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.Blackboard.BlackboardException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
@@ -890,7 +891,7 @@ public class PortableCaseReportModule implements ReportModule {
             BlackboardArtifact newArtifact = copyArtifact(newContentId, tag.getArtifact());
             
             // Copy any attachments
-            copyAttachments(newArtifact);
+            copyAttachments(newArtifact, tag.getArtifact(), portableSkCase.getAbstractFileById(newContentId));
 
             // Tag the artfiact
             if (!oldTagNameToNewTagName.containsKey(tag.getName())) {
@@ -941,7 +942,7 @@ public class PortableCaseReportModule implements ReportModule {
                 continue;
             }
             
-            // Attachments will be re-added later
+            // Attachments will be handled later
             if (oldAttr.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ATTACHMENTS.getTypeID()) {
                 continue;
             }
@@ -1156,32 +1157,54 @@ public class PortableCaseReportModule implements ReportModule {
         return oldIdToNewContent.get(content.getId()).getId();
     }
     
-    private void copyAttachments(BlackboardArtifact artifact) throws TskCoreException {
+    /**
+     * Copy attachments to the portable case.
+     * 
+     * @param newArtifact The new artifact in the portable case. Should be complete apart from the TSK_ATTACHMENTS attribute.
+     * @param oldArtifact The old artifact.
+     * @param newFile     The new file in the portable case associated with the artifact.
+     * 
+     * @throws TskCoreException 
+     */
+    private void copyAttachments(BlackboardArtifact newArtifact, BlackboardArtifact oldArtifact, AbstractFile newFile) throws TskCoreException {
         // Get the attachments from TSK_ATTACHMENTS attribute.
-        BlackboardAttribute attachmentsAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ATTACHMENTS));
+        BlackboardAttribute attachmentsAttr = oldArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ATTACHMENTS));
         if (attachmentsAttr != null) {
             try {
                 MessageAttachments msgAttachments = BlackboardJsonAttrUtil.fromAttribute(attachmentsAttr, MessageAttachments.class);
 
-                Collection<MessageAttachments.FileAttachment> fileAttachments = msgAttachments.getFileAttachments();
+                Collection<MessageAttachments.FileAttachment> oldFileAttachments = msgAttachments.getFileAttachments();
                 List<MessageAttachments.FileAttachment> newFileAttachments = new ArrayList<>();
-                for (MessageAttachments.FileAttachment fileAttachment : fileAttachments) {
-                    long attachedFileObjId = fileAttachment.getObjectId();
+                for (MessageAttachments.FileAttachment oldFileAttachment : oldFileAttachments) {
+                    long attachedFileObjId = oldFileAttachment.getObjectId();
                     if (attachedFileObjId >= 0) {
-                        // Copy the file
-                        AbstractFile attachedFile = artifact.getSleuthkitCase().getAbstractFileById(attachedFileObjId);
+                        // Copy the attached file and save to the MessageAttachments object
+                        AbstractFile attachedFile = currentCase.getSleuthkitCase().getAbstractFileById(attachedFileObjId);
+                        if (attachedFile == null) {
+                            throw new TskCoreException("Error loading file with object ID " + attachedFileObjId + " from portable case");
+                        }
                         long newFileID = copyContent(attachedFile);
                         newFileAttachments.add(new MessageAttachments.FileAttachment(portableSkCase.getAbstractFileById(newFileID)));
                     }
                 }
                 
-                //MessageAttachments newMsgAttachments = BlackboardJsonAttrUtil.toAttribute(attrType, caseName, artifact)
+                // Get the name of the module(s) that created the attachment
+                String newSourceStr = "";
+                List<String> oldSources = attachmentsAttr.getSources();
+                if (! oldSources.isEmpty()) {
+                    newSourceStr = String.join(",", oldSources);
+                }
+                
+                // Add the attachment. The account type specified in the constructor will not be used.
+                CommunicationArtifactsHelper communicationArtifactsHelper = new CommunicationArtifactsHelper(currentCase.getSleuthkitCase(),
+                        newSourceStr, newFile, Account.Type.EMAIL);
+                communicationArtifactsHelper.addAttachments(newArtifact, new MessageAttachments(newFileAttachments, msgAttachments.getUrlAttachments()));
             } 
             catch (BlackboardJsonAttrUtil.InvalidJsonException ex) {
-                throw new TskCoreException(String.format("Unable to parse json for MessageAttachments object in artifact: %s", artifact.getName()), ex);
+                throw new TskCoreException(String.format("Unable to parse json for MessageAttachments object in artifact: %s", oldArtifact.getName()), ex);
             }
         } else {    // backward compatibility - email message attachments are derived files, children of the message.
-            for (Content childContent : artifact.getChildren()) {
+            for (Content childContent : oldArtifact.getChildren()) {
                 if (childContent instanceof AbstractFile) {
                     copyContent(childContent);
                 }
