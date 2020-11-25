@@ -30,7 +30,6 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.tuple.Pair;
-import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultArtifactUpdateGovernor;
@@ -45,9 +44,6 @@ import org.sleuthkit.datamodel.DataSource;
 /**
  * Gathers summary data about Geolocation information for a data source.
  */
-@Messages({
-    "GeolocationSummary_cities_noRecordFound=Other"
-})
 public class WhereUsedSummary implements DefaultArtifactUpdateGovernor {
 
     /**
