@@ -288,7 +288,7 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
 
                 // lower case the string and get it's size. NOTE: lower casing can 
                 // change the size of the string!
-                String lowerCasedSegment = chunkSegment.toString().toLowerCase();
+                String lowerCasedSegment = sanitize(chunkSegment.toString().toLowerCase()).toString();
                 int lowerCasedSegmentSize = lowerCasedSegment.getBytes(UTF_8).length;
 
                 //if it will not put us past maxBytes
@@ -357,7 +357,7 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
                 
                 // lower case the string and get it's size. NOTE: lower casing can 
                 // change the size of the string.
-                String lowerCasedSegment = sanitizedChunkSegment.toString().toLowerCase();
+                String lowerCasedSegment = sanitize(sanitizedChunkSegment.toString().toLowerCase()).toString();
                 int lowerCasedSegmentSize = lowerCasedSegment.getBytes(UTF_8).length;
                 
                 //if it will not put us past maxBytes
