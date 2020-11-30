@@ -85,6 +85,7 @@ public final class UserPreferences {
     private static final String GEO_OSM_TILE_ZIP_PATH = "GeolocationOsmZipPath";
     private static final String GEO_OSM_SERVER_ADDRESS = "GeolocationOsmServerAddress";
     private static final String GEO_MBTILES_FILE_PATH = "GeolcoationMBTilesFilePath";
+    private static final String HEALTH_MONITOR_REPORT_PATH = "HealthMonitorReportPath";
     
     // Prevent instantiation.
     private UserPreferences() {
@@ -631,5 +632,23 @@ public final class UserPreferences {
     public static String getAppTempDirectory() {
         return Paths.get(UserMachinePreferences.getBaseTempDirectory(), getAppName())
                 .toAbsolutePath().toString();
+    }
+    
+    /**
+     * Set the last used health monitor report path.
+     *
+     * @param reportPath Last used health monitor report path.
+     */
+    public static void setHealthMonitorReportPath(String reportPath) {
+        preferences.put(HEALTH_MONITOR_REPORT_PATH, reportPath);
+    }
+
+    /**
+     * Gets the last used health monitor report path.
+     *
+     * @return Last used health monitor report path. Empty string if no value has been recorded.
+     */
+    public static String getHealthMonitorReportPath() {
+        return preferences.get(HEALTH_MONITOR_REPORT_PATH, "");
     }
 }
