@@ -216,12 +216,12 @@ public final class GeolocationTopComponent extends TopComponent {
         if (filter == null) {
             throw new GeoLocationUIException("Filter provided cannot be null.");
         }
-        
+
         if (this.isOpened()) {
             geoFilterPanel.setupFilter(filter);
             updateWaypoints();
         } else {
-            geoFilterPanel.setInitialFilterState(filter);    
+            geoFilterPanel.setInitialFilterState(filter);
         }
     }
 

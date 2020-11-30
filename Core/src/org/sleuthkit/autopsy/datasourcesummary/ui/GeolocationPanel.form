@@ -75,7 +75,7 @@
             <Component class="javax.swing.JLabel" name="mostRecentLabel">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/datasourcesummary/ui/Bundle.properties" key="WhereUsedPanel.mostRecentLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/sleuthkit/autopsy/datasourcesummary/ui/Bundle.properties" key="GeolocationPanel.mostRecentLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
               <AccessibilityProperties>
@@ -150,7 +150,7 @@
             <Component class="javax.swing.JLabel" name="withinDistanceLabel">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/datasourcesummary/ui/Bundle.properties" key="WhereUsedPanel.withinDistanceLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/sleuthkit/autopsy/datasourcesummary/ui/Bundle.properties" key="GeolocationPanel.withinDistanceLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
               <AuxValues>
@@ -180,7 +180,7 @@
             <Component class="javax.swing.JButton" name="recentViewInGeolocationBtn">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/datasourcesummary/ui/Bundle.properties" key="WhereUsedPanel.recentViewInGeolocationBtn.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/sleuthkit/autopsy/datasourcesummary/ui/Bundle.properties" key="GeolocationPanel.recentViewInGeolocationBtn.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
                 <Property name="enabled" type="boolean" value="false"/>
               </Properties>
@@ -210,7 +210,7 @@
             <Component class="javax.swing.JLabel" name="mostCommonLabel">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/datasourcesummary/ui/Bundle.properties" key="WhereUsedPanel.mostCommonLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/sleuthkit/autopsy/datasourcesummary/ui/Bundle.properties" key="GeolocationPanel.mostCommonLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
               <AuxValues>
@@ -280,7 +280,7 @@
             <Component class="javax.swing.JLabel" name="withinDistanceLabel1">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/datasourcesummary/ui/Bundle.properties" key="WhereUsedPanel.withinDistanceLabel1.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/sleuthkit/autopsy/datasourcesummary/ui/Bundle.properties" key="GeolocationPanel.withinDistanceLabel1.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
               <AuxValues>
@@ -310,7 +310,7 @@
             <Component class="javax.swing.JButton" name="commonViewInGeolocationBtn">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/datasourcesummary/ui/Bundle.properties" key="WhereUsedPanel.commonViewInGeolocationBtn.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/sleuthkit/autopsy/datasourcesummary/ui/Bundle.properties" key="GeolocationPanel.commonViewInGeolocationBtn.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
                 <Property name="enabled" type="boolean" value="false"/>
               </Properties>

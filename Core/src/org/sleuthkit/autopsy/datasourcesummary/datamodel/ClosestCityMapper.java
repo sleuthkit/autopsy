@@ -65,7 +65,7 @@ class ClosestCityMapper {
      * @return The singleton instance of this class.
      * @throws IOException
      */
-    public static ClosestCityMapper getInstance() throws IOException {
+    static ClosestCityMapper getInstance() throws IOException {
         if (instance == null) {
             instance = new ClosestCityMapper();
         }
@@ -86,7 +86,7 @@ class ClosestCityMapper {
      */
     private ClosestCityMapper() throws IOException {
         this(
-                WhereUsedSummary.class.getResourceAsStream(CITIES_CSV_FILENAME),
+                GeolocationSummary.class.getResourceAsStream(CITIES_CSV_FILENAME),
                 Logger.getLogger(ClosestCityMapper.class.getName()));
     }
 
@@ -157,7 +157,9 @@ class ClosestCityMapper {
 
     /**
      * Parses a row from the csv creating a city record.
-     * @param csvRow The row of data where each item in the list is each column in the row.
+     *
+     * @param csvRow The row of data where each item in the list is each column
+     * in the row.
      * @param lineNum The line number for this csv row.
      * @return The parsed CityRecord or null if none can be determined.
      */
@@ -192,6 +194,7 @@ class ClosestCityMapper {
 
     /**
      * Parses a row of the csv into individual column values.
+     *
      * @param line The line to parse.
      * @param lineNum The line number in the csv where this line is.
      * @return The list of column values.
@@ -212,11 +215,14 @@ class ClosestCityMapper {
     }
 
     /**
-     * Parses all lines in the csv file input stream into a list of city records.
+     * Parses all lines in the csv file input stream into a list of city
+     * records.
+     *
      * @param csvInputStream The csv file input stream.
-     * @param ignoreHeaderRow Whether or not there is a header row in the csv file.
+     * @param ignoreHeaderRow Whether or not there is a header row in the csv
+     * file.
      * @return The list of city records.
-     * @throws IOException 
+     * @throws IOException
      */
     private List<CityRecord> parseCsvLines(InputStream csvInputStream, boolean ignoreHeaderRow) throws IOException {
         List<CityRecord> cityRecords = new ArrayList<>();

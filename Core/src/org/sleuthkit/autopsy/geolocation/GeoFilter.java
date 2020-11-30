@@ -40,15 +40,14 @@ public final class GeoFilter {
      *
      * withoutTimeStamp is only applicable if mostRecentNumDays is true.
      *
-     * When using the filters "most recent days" means to include waypoints
-     * for the numbers of days after the most recent waypoint, not the
-     * current date.
+     * When using the filters "most recent days" means to include waypoints for
+     * the numbers of days after the most recent waypoint, not the current date.
      *
      * @param showAll True if all waypoints should be shown
-     * @param withoutTimeStamp True to show waypoints without timeStamps,
-     * this filter is only applicable if mostRecentNumDays is true
-     * @param mostRecentNumDays Show Waypoint for the most recent given
-     * number of days. This parameter is ignored if showAll is true.
+     * @param withoutTimeStamp True to show waypoints without timeStamps, this
+     * filter is only applicable if mostRecentNumDays is true
+     * @param mostRecentNumDays Show Waypoint for the most recent given number
+     * of days. This parameter is ignored if showAll is true.
      * @param dataSources A list of dataSources to filter waypoint for.
      * @param artifactTypes A list of artifactTypes to filter waypoint for.
      */
@@ -81,8 +80,8 @@ public final class GeoFilter {
     }
 
     /**
-     * Returns the number of most recent days to show waypoints for. This
-     * value should be ignored if showAll is true.
+     * Returns the number of most recent days to show waypoints for. This value
+     * should be ignored if showAll is true.
      *
      * @return The number of most recent days to show waypoints for
      */
@@ -91,8 +90,8 @@ public final class GeoFilter {
     }
 
     /**
-     * Returns a list of data sources to filter the waypoints by, or null if
-     * all datasources should be include.
+     * Returns a list of data sources to filter the waypoints by, or null if all
+     * datasources should be include.
      *
      * @return A list of dataSources or null if all dataSources should be
      * included.
@@ -102,14 +101,14 @@ public final class GeoFilter {
     }
 
     /**
-     * Returns a list of artifact types to filter the waypoints by, or null
-     * if all types should be include.
+     * Returns a list of artifact types to filter the waypoints by, or null if
+     * all types should be include.
      *
-     * @return A list of artifactTypes or null if all artifactTypes should
-     * be included.
+     * @return A list of artifactTypes or null if all artifactTypes should be
+     * included.
      */
     List<BlackboardArtifact.ARTIFACT_TYPE> getArtifactTypes() {
         return Collections.unmodifiableList(artifactTypes);
     }
-    
+
 }

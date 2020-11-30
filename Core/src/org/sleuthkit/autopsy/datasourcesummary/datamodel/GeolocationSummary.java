@@ -44,7 +44,7 @@ import org.sleuthkit.datamodel.DataSource;
 /**
  * Gathers summary data about Geolocation information for a data source.
  */
-public class WhereUsedSummary implements DefaultArtifactUpdateGovernor {
+public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
 
     /**
      * A count of hits for a particular city.
@@ -105,33 +105,64 @@ public class WhereUsedSummary implements DefaultArtifactUpdateGovernor {
             this.mostRecentSeen = mostRecentSeen;
         }
 
+        /**
+         * @return The list of most common cities found in the data source.
+         */
         public CityCountsList getMostCommon() {
             return mostCommon;
         }
 
+        /**
+         * @return The list of cities seen in most recent use of data source.
+         */
         public CityCountsList getMostRecent() {
             return mostRecent;
         }
 
+        /**
+         * @return The time stamp in seconds from epoch of the most recently
+         * seen city
+         */
         public Long getMostRecentSeen() {
             return mostRecentSeen;
         }
     }
 
+    /**
+     * Indicates a list of cities to which way points are closest. Also includes
+     * the count of way points where no closest city was determined due to not
+     * being close enough.
+     */
     public static class CityCountsList {
 
         private final List<CityRecordCount> counts;
         private final int otherCount;
 
-        public CityCountsList(List<CityRecordCount> counts, int otherCount) {
+        /**
+         * Main constructor.
+         *
+         * @param counts The list of cities and the count of how many points are
+         * closest to that city.
+         * @param otherCount The count of points where no closest city was
+         * determined due to not being close enough.
+         */
+        CityCountsList(List<CityRecordCount> counts, int otherCount) {
             this.counts = Collections.unmodifiableList(new ArrayList<>(counts));
             this.otherCount = otherCount;
         }
 
+        /**
+         * @return The list of cities and the count of how many points are
+         * closest to that city.
+         */
         public List<CityRecordCount> getCounts() {
             return counts;
         }
 
+        /**
+         * @return The count of points where no closest city was determined due
+         * to not being close enough.
+         */
         public int getOtherCount() {
             return otherCount;
         }
@@ -158,19 +189,36 @@ public class WhereUsedSummary implements DefaultArtifactUpdateGovernor {
     private final java.util.logging.Logger logger;
     private final SupplierWithException<ClosestCityMapper, IOException> cityMapper;
 
+    /**
+     * A supplier of an item T that can throw an exception of type E.
+     */
     public interface SupplierWithException<T, E extends Throwable> {
 
+        /**
+         * A supplier method that can throw an exception of E.
+         *
+         * @return The object type.
+         * @throws E The exception type.
+         */
         T get() throws E;
     }
 
     /**
-     * Main constructor.
+     * Default constructor.
      */
-    public WhereUsedSummary() {
-        this(() -> ClosestCityMapper.getInstance(), SleuthkitCaseProvider.DEFAULT, Logger.getLogger(WhereUsedSummary.class.getName()));
+    public GeolocationSummary() {
+        this(() -> ClosestCityMapper.getInstance(), SleuthkitCaseProvider.DEFAULT, Logger.getLogger(GeolocationSummary.class.getName()));
     }
 
-    public WhereUsedSummary(SupplierWithException<ClosestCityMapper, IOException> cityMapper, SleuthkitCaseProvider provider, java.util.logging.Logger logger) {
+    /**
+     * Main constructor.
+     *
+     * @param cityMapper A means of acquiring a ClosestCityMapper that can throw
+     * an IOException.
+     * @param provider A means of acquiring a SleuthkitCaseProvider.
+     * @param logger The logger.
+     */
+    public GeolocationSummary(SupplierWithException<ClosestCityMapper, IOException> cityMapper, SleuthkitCaseProvider provider, java.util.logging.Logger logger) {
         this.cityMapper = cityMapper;
         this.provider = provider;
         this.logger = logger;
@@ -188,6 +236,17 @@ public class WhereUsedSummary implements DefaultArtifactUpdateGovernor {
         return GPS_ARTIFACT_TYPE_IDS;
     }
 
+    /**
+     * Returns whether or not the time is >= the provided minimum time handling
+     * the event where either time is null.
+     *
+     * @param minTime The minimum time. If null is provided, this function will
+     * return true.
+     * @param time The time to check. If null is provided and the min time is
+     * non-null, then this function will return false.
+     * @return If minTime == null then true. If minTime != null && time == null
+     * then false. Otherwise time >= minTime.
+     */
     private boolean greaterThanOrEqual(Long minTime, Long time) {
         if ((minTime == null) || (time != null && time >= minTime)) {
             return true;
@@ -198,7 +257,16 @@ public class WhereUsedSummary implements DefaultArtifactUpdateGovernor {
 
     private static final Pair<Integer, Integer> EMPTY_COUNT = Pair.of(0, 0);
 
-    // left is total count, right is count within time range
+    /**
+     * Based on a set of waypoints, determines the count of total waypoints and
+     * a total of waypoints whose time stamp is greater than or equal to
+     * minTime.
+     *
+     * @param points The list of way points.
+     * @param minTime The minimum time for most recent points count.
+     * @return A pair where the left value is the total count of way points and
+     * the right is the total list of way points that are >= minTime.
+     */
     private Pair<Integer, Integer> getCounts(List<Waypoint> points, Long minTime) {
 
         if (points == null) {

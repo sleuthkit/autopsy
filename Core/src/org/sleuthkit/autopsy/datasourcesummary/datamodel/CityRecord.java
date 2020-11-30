@@ -61,14 +61,14 @@ public class CityRecord extends KdTree.XYZPoint {
      * @return Latitude for the city.
      */
     public double getLatitude() {
-        return getX();
+        return getY();
     }
 
     /**
      * @return Longitude for the city.
      */
     public double getLongitude() {
-        return getY();
+        return getX();
     }
 
     @Override
@@ -104,5 +104,5 @@ public class CityRecord extends KdTree.XYZPoint {
     public String toString() {
         return "CityRecord{" + "cityName=" + cityName + ", country=" + country + ", lat=" + getX() + ", lng=" + getY() + '}';
     }
-    
+
 }

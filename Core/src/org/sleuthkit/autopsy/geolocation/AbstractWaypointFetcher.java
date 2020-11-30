@@ -71,17 +71,16 @@ abstract class AbstractWaypointFetcher implements WaypointBuilder.WaypointFilter
 
     }
 
-
     /**
      * Called after all of the MapWaypoints are created from all of the
      * TSK_GPS_XXX objects.
-     * 
+     *
      * @param mapWaypoints List of filtered MapWaypoints.
      * @param tracks The tracks that were successfully parsed.
      * @param wasEntirelySuccessful True if no errors occurred while processing.
      */
-    abstract void handleFilteredWaypointSet(Set<MapWaypoint> mapWaypoints, List<Set<MapWaypoint>> tracks, 
-        boolean wasEntirelySuccessful);
+    abstract void handleFilteredWaypointSet(Set<MapWaypoint> mapWaypoints, List<Set<MapWaypoint>> tracks,
+            boolean wasEntirelySuccessful);
 
     @Override
     public void process(GeoLocationParseResult<Waypoint> waypointResults) {
@@ -93,12 +92,11 @@ abstract class AbstractWaypointFetcher implements WaypointBuilder.WaypointFilter
                 logger.log(Level.WARNING, "Exception thrown while retrieving list of Tracks", ex);
             }
         }
-                
-        Pair<List<Waypoint>, List<List<Waypoint>>> waypointsAndTracks = createWaypointList(
-            waypointResults.getItems(),
-            (trackResults == null) ? new ArrayList<Track>() : trackResults.getItems());
 
-        
+        Pair<List<Waypoint>, List<List<Waypoint>>> waypointsAndTracks = createWaypointList(
+                waypointResults.getItems(),
+                (trackResults == null) ? new ArrayList<Track>() : trackResults.getItems());
+
         final Set<MapWaypoint> pointSet = MapWaypoint.getWaypoints(waypointsAndTracks.getKey());
         final List<Set<MapWaypoint>> trackSets = new ArrayList<>();
         for (List<Waypoint> t : waypointsAndTracks.getValue()) {
@@ -106,8 +104,8 @@ abstract class AbstractWaypointFetcher implements WaypointBuilder.WaypointFilter
         }
 
         handleFilteredWaypointSet(
-            pointSet, trackSets, 
-            (trackResults == null || trackResults.isSuccessfullyParsed()) && waypointResults.isSuccessfullyParsed());
+                pointSet, trackSets,
+                (trackResults == null || trackResults.isSuccessfullyParsed()) && waypointResults.isSuccessfullyParsed());
     }
 
     /**
@@ -115,10 +113,10 @@ abstract class AbstractWaypointFetcher implements WaypointBuilder.WaypointFilter
      * account the current filters and includes waypoints as approprate.
      *
      * @param waypoints List of waypoints
-     * @param tracks    List of tracks
+     * @param tracks List of tracks
      *
      * @return A list of waypoints including the tracks based on the current
-     *         filters.
+     * filters.
      */
     private Pair<List<Waypoint>, List<List<Waypoint>>> createWaypointList(List<Waypoint> waypoints, List<Track> tracks) {
         final List<Waypoint> completeList = new ArrayList<>();
@@ -134,7 +132,7 @@ abstract class AbstractWaypointFetcher implements WaypointBuilder.WaypointFilter
                 timeRangeStart = timeRangeEnd - (86400 * filters.getMostRecentNumDays());
 
                 completeList.addAll(getWaypointsInRange(timeRangeStart, timeRangeEnd, waypoints));
-                
+
                 filteredTracks = getTracksInRange(timeRangeStart, timeRangeEnd, tracks);
                 for (List<Waypoint> filteredTrack : filteredTracks) {
                     completeList.addAll(filteredTrack);
@@ -156,8 +154,8 @@ abstract class AbstractWaypointFetcher implements WaypointBuilder.WaypointFilter
      * Return a list of waypoints that fall into the given time range.
      *
      * @param timeRangeStart start timestamp of range (seconds from java epoch)
-     * @param timeRangeEnd   start timestamp of range (seconds from java epoch)
-     * @param waypoints      List of waypoints to filter.
+     * @param timeRangeEnd start timestamp of range (seconds from java epoch)
+     * @param waypoints List of waypoints to filter.
      *
      * @return A list of waypoints that fall into the time range.
      */
@@ -178,16 +176,16 @@ abstract class AbstractWaypointFetcher implements WaypointBuilder.WaypointFilter
     }
 
     /**
-     * Return a list of lists of waypoints from the given tracks that fall into 
+     * Return a list of lists of waypoints from the given tracks that fall into
      * the given time range. The track start time will used for determining if
      * the whole track falls into the range.
      *
      * @param timeRangeStart start timestamp of range (seconds from java epoch)
-     * @param timeRangeEnd   start timestamp of range (seconds from java epoch)
-     * @param tracks         Track list.
+     * @param timeRangeEnd start timestamp of range (seconds from java epoch)
+     * @param tracks Track list.
      *
      * @return A list of lists of waypoints corresponding to belong to tracks
-     *         that exist within the time range.
+     * that exist within the time range.
      */
     private List<List<Waypoint>> getTracksInRange(Long timeRangeStart, Long timeRangeEnd, List<Track> tracks) {
         List<List<Waypoint>> ret = new ArrayList<>();

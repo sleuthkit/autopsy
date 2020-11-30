@@ -120,14 +120,12 @@ public class KdTree<T extends KdTree.XYZPoint> implements Iterable<T> {
     }
 
     /**
-     * Recursively creates balanced KdNode's from the given list.
-     * NOTE: The approach is to:
-     * 1) sort the list based on the depth's comparator
-     * 2) find a center point
-     * 3) For lesser and greater, recurse until base case.
-     * 
-     * There may be more efficient means of achieving balanced nodes.  
-     * 
+     * Recursively creates balanced KdNode's from the given list. NOTE: The
+     * approach is to: 1) sort the list based on the depth's comparator 2) find
+     * a center point 3) For lesser and greater, recurse until base case.
+     *
+     * There may be more efficient means of achieving balanced nodes.
+     *
      * @param parent The parent of this node or null if this will be root.
      * @param points The points to be balanced in the tree.
      * @param depth The current depth (used to determine axis to sort on).
@@ -636,12 +634,12 @@ public class KdTree<T extends KdTree.XYZPoint> implements Iterable<T> {
         /**
          * Constructs a new XYZPoint.
          *
-         * @param latitude
-         * @param longitude
+         * @param x
+         * @param y
          */
-        public XYZPoint(Double latitude, Double longitude) {
-            x = latitude;
-            y = longitude;
+        public XYZPoint(Double x, Double y) {
+            this.x = x;
+            this.y = y;
             z = 0;
         }
 
