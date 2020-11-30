@@ -75,7 +75,7 @@ public class NetworkUtils {
 
         String base = host;
         try {
-            base = DomainCategorizer.getInstance().getDomain(host);
+            base = DomainTokenizer.getInstance().getDomain(host);
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Unable to load resources for domain categorization.", ex);
         }

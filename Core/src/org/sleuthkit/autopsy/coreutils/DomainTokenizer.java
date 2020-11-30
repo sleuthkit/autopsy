@@ -32,7 +32,7 @@ import org.apache.commons.lang3.StringUtils;
  * Attempts to get the domain from a url/domain provided removing the
  * subdomain(s).
  */
-class DomainCategorizer {
+class DomainTokenizer {
 
     /**
      * This is a node in the trie. Children in the hashmap are identified by
@@ -65,7 +65,7 @@ class DomainCategorizer {
     private static final String COMMENT_TOKEN = "//";
 
     // singleton instance of this class.
-    private static DomainCategorizer categorizer = null;
+    private static DomainTokenizer categorizer = null;
 
     /**
      * Returns the singleton instance of this class.
@@ -73,7 +73,7 @@ class DomainCategorizer {
      * @return The DomainCategorizer instance.
      * @throws IOException
      */
-    static DomainCategorizer getInstance() throws IOException {
+    static DomainTokenizer getInstance() throws IOException {
         if (categorizer == null) {
             categorizer = load();
         }
@@ -87,22 +87,25 @@ class DomainCategorizer {
      * @return The DomainCategorizer instance.
      * @throws IOException If there is an error reading the file.
      */
-    private static DomainCategorizer load() throws IOException {
-        InputStream is = DomainCategorizer.class.getResourceAsStream(DOMAIN_LIST);
-        BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-        DomainCategorizer categorizer = new DomainCategorizer();
-        while (reader.ready()) {
-            String line = reader.readLine();
-            String trimmed = line.trim();
-            if (!StringUtils.isBlank(trimmed) && !trimmed.startsWith(COMMENT_TOKEN)) {
-                categorizer.addDomainSuffix(trimmed);
-            }
-        }
+    private static DomainTokenizer load() throws IOException {
+        try (InputStream is = DomainTokenizer.class.getResourceAsStream(DOMAIN_LIST);
+                InputStreamReader isReader = new InputStreamReader(is);
+                BufferedReader reader = new BufferedReader(isReader)) {
 
-        return categorizer;
+            DomainTokenizer categorizer = new DomainTokenizer();
+            while (reader.ready()) {
+                String line = reader.readLine();
+                String trimmed = line.trim();
+                if (!StringUtils.isBlank(trimmed) && !trimmed.startsWith(COMMENT_TOKEN)) {
+                    categorizer.addDomainSuffix(trimmed);
+                }
+            }
+
+            return categorizer;
+        }
     }
 
-    private DomainCategorizer() {
+    private DomainTokenizer() {
     }
 
     // The top-level trie node.
@@ -144,7 +147,7 @@ class DomainCategorizer {
      */
     String getDomain(String domain) {
         if (StringUtils.isBlank(domain)) {
-            return null;
+            return "";
         }
 
         List<String> tokens = Stream.of(domain.split(DELIMITER))
