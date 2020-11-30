@@ -22,24 +22,24 @@ import javax.swing.SwingUtilities;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
-import org.sleuthkit.datamodel.FileRepository.FileRepositoryErrorHandler;
+import org.sleuthkit.datamodel.FileRepositoryErrorHandler;
 
 /**
  * Utility methods for file repository.
  */
 class FileRepositoryUtils {
-
-    /**
-     * Create a download folder in the Autopsy temp folder
-     * 
-     * @return The download folder.
-     */
-    static File createDownloadFolder() {
-        File repoTempDir = Paths.get(UserPreferences.getAppTempDirectory(), "File Repo").toFile();
-        if (repoTempDir.exists() == false) {
-            repoTempDir.mkdirs();
-        }
-        return repoTempDir;
+    
+    /**	
+     * Create a download folder in the Autopsy temp folder	
+     * 	
+     * @return The download folder.	
+     */	
+    static File createDownloadFolder() {	
+        File repoTempDir = Paths.get(UserPreferences.getAppTempDirectory(), "File Repo").toFile();	
+        if (repoTempDir.exists() == false) {	
+            repoTempDir.mkdirs();	
+        }	
+        return repoTempDir;	
     }
     
     /**

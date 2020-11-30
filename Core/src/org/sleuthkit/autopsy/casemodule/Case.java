@@ -127,7 +127,7 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.FileRepository;
-import org.sleuthkit.datamodel.FileRepository.FileRepositorySettings;
+import org.sleuthkit.datamodel.FileRepositorySettings;
 import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.Report;

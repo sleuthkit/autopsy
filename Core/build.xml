@@ -128,6 +128,12 @@
                       tofile="${ext.dir}/SparseBitSet-1.1.jar"/>	
         <copy file="${env.TSK_HOME}/case-uco/java/dist/sleuthkit-caseuco-${TSK_VERSION}.jar" 
               tofile="${ext.dir}/sleuthkit-caseuco-${TSK_VERSION}.jar"/>  
+        <copy file="${env.TSK_HOME}/bindings/java/lib/httpclient-4.5.13.jar"
+             tofile="${ext.dir}/httpclient-4.5.13.jar"/>
+        <copy file="${env.TSK_HOME}/bindings/java/lib/httpcore-4.4.13.jar"
+             tofile="${ext.dir}/httpcore-4.4.13.jar"/>
+        <copy file="${env.TSK_HOME}/bindings/java/lib/httpmime-4.5.13.jar"
+             tofile="${ext.dir}/httpmime-4.5.13.jar"/>
     </target>
 
     <target name="download-binlist">

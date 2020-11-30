@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.filerepository;
 import org.openide.modules.ModuleInstall;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.datamodel.FileRepository;
+import org.sleuthkit.datamodel.FileRepositorySettings;
 
 public class Installer extends ModuleInstall {
 
@@ -45,7 +46,7 @@ public class Installer extends ModuleInstall {
         FileRepository.setErrorHandler(new FileRepositoryUtils.AutopsyFileRepositoryErrorHandler());
         if (UserPreferences.getFileRepositoryEnabled()) {            
             // Initialize the file repository settings
-            FileRepository.initialize(new FileRepository.FileRepositorySettings(UserPreferences.getFileRepositoryAddress(),
+            FileRepository.initialize(new FileRepositorySettings(UserPreferences.getFileRepositoryAddress(),
                 UserPreferences.getFileRepositoryPort()), FileRepositoryUtils.createDownloadFolder());
         }
     }
