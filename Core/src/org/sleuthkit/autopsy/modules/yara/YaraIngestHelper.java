@@ -227,9 +227,12 @@ final class YaraIngestHelper {
 
             ProcessBuilder builder = new ProcessBuilder(commandList);
             try {
-                ExecUtil.execute(builder);
+                int result = ExecUtil.execute(builder);
+                if(result != 0) {
+                    throw new IngestModuleException(String.format("Failed to compile Yara rules file %s. Compile error %d", file.toString(), result));
+                }
             } catch (SecurityException | IOException ex) {
-                throw new IngestModuleException(String.format("Failed to compile Yara rules file", file.toString()), ex);
+                throw new IngestModuleException(String.format("Failed to compile Yara rules file, %s", file.toString()), ex);
             }
 
         }
