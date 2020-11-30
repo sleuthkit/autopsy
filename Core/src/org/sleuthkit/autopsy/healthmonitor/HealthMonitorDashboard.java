@@ -508,11 +508,14 @@ public class HealthMonitorDashboard {
                     File selectedFile = reportFileChooser.getSelectedFile();
                     UserPreferences.setHealthMonitorReportPath(selectedFile.getParent());
                     try {
+                        dialog.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
                         generateCSVUserReport(selectedFile);
                         MessageNotifyUtil.Message.info(Bundle.HealthMonitorDashboard_createUserControlPanel_reportDone(selectedFile.getAbsoluteFile()));
                     } catch (HealthMonitorException ex) {
                         logger.log(Level.SEVERE, "Error generating report", ex);
                         MessageNotifyUtil.Message.error(Bundle.HealthMonitorDashboard_createUserControlPanel_reportError());
+                    } finally {
+                        dialog.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
                     }
                 }
             }
