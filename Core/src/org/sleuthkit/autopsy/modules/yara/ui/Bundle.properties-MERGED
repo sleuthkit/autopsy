@@ -15,6 +15,7 @@ YaraIngestSettingsPanel.allFilesButton.text=All Files
 YaraIngestSettingsPanel.allFilesButton.toolTipText=
 YaraIngestSettingsPanel.executableFilesButton.text=Only Executable Files
 RuleSetDetailsPanel.refreshButton.text=Refresh File List
+YaraRuleSetOptionPanel_badName2_msg=Rule set is invalid.\nRule set names must be non-empty string and unique.
 # {0} - rule set name
 YaraRuleSetOptionPanel_badName_msg=Rule set name {0} already exists.\nRule set names must be unique.
 YaraRuleSetOptionPanel_badName_title=Create Rule Set
