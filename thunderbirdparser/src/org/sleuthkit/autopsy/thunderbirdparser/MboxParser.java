@@ -40,6 +40,7 @@ import org.apache.james.mime4j.mboxiterator.CharBufferWrapper;
 import org.apache.james.mime4j.mboxiterator.MboxIterator;
 import org.apache.tika.parser.txt.CharsetDetector;
 import org.apache.tika.parser.txt.CharsetMatch;
+import org.apache.commons.validator.routines.EmailValidator;
 import org.openide.util.NbBundle;
 
 /**
@@ -56,7 +57,13 @@ class MboxParser extends MimeJ4MessageParser implements Iterator<EmailMessage> {
     }
 
     static boolean isValidMimeTypeMbox(byte[] buffer) {
-        return (new String(buffer)).startsWith("From "); //NON-NLS
+        String mboxHeaderLine = new String(buffer);
+        if (mboxHeaderLine.startsWith("From ")) {
+            String[] mboxLineValues = mboxHeaderLine.split(" ");
+            EmailValidator validator = EmailValidator.getInstance(true, true);
+            return validator.isValid(mboxLineValues[1]);
+        }
+        return false; //NON-NLS
     }
 
     /**
