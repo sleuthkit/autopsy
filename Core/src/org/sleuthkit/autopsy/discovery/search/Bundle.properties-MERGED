@@ -10,6 +10,7 @@ DiscoveryAttributes.GroupingAttributeType.none.displayName=None
 DiscoveryAttributes.GroupingAttributeType.numberOfVisits.displayName=Number of Visits
 DiscoveryAttributes.GroupingAttributeType.object.displayName=Object Detected
 DiscoveryAttributes.GroupingAttributeType.parent.displayName=Parent Folder
+DiscoveryAttributes.GroupingAttributeType.previouslyNotable.displayName=Previous Notability
 DiscoveryAttributes.GroupingAttributeType.size.displayName=File Size
 DiscoveryAttributes.GroupingAttributeType.tag.displayName=Tag
 # {0} - Data source name
@@ -84,6 +85,8 @@ SearchData.Frequency.rare.displayName=Rare (2-10)
 SearchData.Frequency.unique.displayName=Unique (1)
 SearchData.Frequency.unknown.displayName=Unknown
 SearchData.Frequency.verycommon.displayName=Very Common (100+)
+SearchData.notPrevNotable.displayName=Previously Not Notable
+SearchData.prevNotable.displayName=Previously Notable
 SearchData.Score.interesting.displayName=Interesting
 SearchData.Score.notable.displayName=Notable
 SearchData.Score.unknown.displayName=Unknown
@@ -125,6 +128,7 @@ SearchFiltering.ParentSearchTerm.excludeString=\ (exclude)
 SearchFiltering.ParentSearchTerm.fullString=\ (exact)
 SearchFiltering.ParentSearchTerm.includeString=\ (include)
 SearchFiltering.ParentSearchTerm.subString=\ (substring)
+SearchFiltering.PreviouslyNotableFilter.desc=Previously marked as notable in central repository
 # {0} - filters
 SearchFiltering.ScoreFilter.desc=Score(s) of : {0}
 # {0} - filters

@@ -792,6 +792,50 @@ public class DiscoveryKeyUtils {
             return 0;
         }
     }
+    
+    /**
+     * Key representing a central repository notable status.
+     */
+    static class PreviouslyNotableGroupKey extends GroupKey {
+        
+        private final SearchData.PreviouslyNotable notableStatus;
+        
+        PreviouslyNotableGroupKey(Result result) {
+            this.notableStatus = result.getPreviouslyNotable();
+        }
+
+        @Override
+        String getDisplayName() {
+            return this.notableStatus.toString();
+        }
+
+        @Override
+        public boolean equals(Object otherKey) {
+            if (otherKey instanceof GroupKey) {
+                return compareTo((GroupKey) otherKey) == 0;
+            }
+            return false;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(getStatus().getRanking());
+        }
+
+        @Override
+        public int compareTo(GroupKey otherGroupKey) {
+            if (otherGroupKey instanceof PreviouslyNotableGroupKey) {
+                PreviouslyNotableGroupKey otherFrequencyGroupKey = (PreviouslyNotableGroupKey) otherGroupKey;
+                return Integer.compare(getStatus().getRanking(), otherFrequencyGroupKey.getStatus().getRanking());
+            } else {
+                return compareClassNames(otherGroupKey);
+            }
+        }
+        
+        SearchData.PreviouslyNotable getStatus() {
+            return notableStatus;
+        }
+    }
 
     /**
      * Key representing a central repository frequency group.

@@ -140,6 +140,7 @@ DomainSummaryPanel.totalVisitsLabel.text=
 FileDetailsPanel.instancesList.border.title=Instances
 CookieDetailsPanel.jLabel1.text=Artifact:
 CookieDetailsPanel.jLabel2.text=
+PreviouslyNotableFilterPanel.text_1=Include only previously notable domains
 VideoThumbnailPanel.bytes.text=bytes
 VideoThumbnailPanel.deleted.text=All instances of file are deleted.
 VideoThumbnailPanel.gigaBytes.text=GB
