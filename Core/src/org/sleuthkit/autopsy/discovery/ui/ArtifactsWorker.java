@@ -28,6 +28,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils;
+import org.sleuthkit.autopsy.discovery.search.DiscoveryException;
 import org.sleuthkit.autopsy.discovery.search.DomainSearch;
 import org.sleuthkit.autopsy.discovery.search.DomainSearchArtifactsRequest;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -56,7 +57,15 @@ class ArtifactsWorker extends SwingWorker<List<BlackboardArtifact>, Void> {
     protected List<BlackboardArtifact> doInBackground() throws Exception {
         if (artifactType != null && !StringUtils.isBlank(domain)) {
             DomainSearch domainSearch = new DomainSearch();
-            return domainSearch.getArtifacts(new DomainSearchArtifactsRequest(Case.getCurrentCase().getSleuthkitCase(), domain, artifactType));
+            try {
+                return domainSearch.getArtifacts(new DomainSearchArtifactsRequest(Case.getCurrentCase().getSleuthkitCase(), domain, artifactType));
+            } catch (DiscoveryException ex) {
+                if (ex.getCause() instanceof InterruptedException) {
+                    logger.log(Level.INFO, "MiniTimeline search was cancelled or interrupted for domain: {0}", domain);
+                } else {
+                    throw ex;
+                }
+            }
         }
         return new ArrayList<>();
     }
