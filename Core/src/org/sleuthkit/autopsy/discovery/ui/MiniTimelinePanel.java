@@ -73,6 +73,7 @@ class MiniTimelinePanel extends javax.swing.JPanel {
             public void valueChanged(ListSelectionEvent event) {
                 if (!event.getValueIsAdjusting()) {
                     artifactListPanel.removeListSelectionListener(artifactListener);
+                    artifactListPanel.clearList();
                     artifactListPanel.addArtifacts(dateListPanel.getArtifactsForSelectedDate());
                     artifactListPanel.addSelectionListener(artifactListener);
                     artifactListPanel.selectFirst();
@@ -106,8 +107,12 @@ class MiniTimelinePanel extends javax.swing.JPanel {
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     void setStatus(DomainArtifactsTabPanel.ArtifactRetrievalStatus status) {
         this.status = status;
-        if (status == DomainArtifactsTabPanel.ArtifactRetrievalStatus.UNPOPULATED && rightPanel != null) {
-            rightPanel.setArtifact(null);
+        if (status == DomainArtifactsTabPanel.ArtifactRetrievalStatus.UNPOPULATED) {
+            artifactListPanel.clearList();
+            dateListPanel.clearList();
+            if (rightPanel != null) {
+                rightPanel.setArtifact(null);
+            }
         }
     }
 

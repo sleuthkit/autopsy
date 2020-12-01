@@ -123,7 +123,7 @@ class MiniTimelineDateListPanel extends JPanel {
      * Remove all artifacts from the list of artifacts displayed.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    void clearDates() {
+    void clearList() {
         tableModel.setContents(new ArrayList<>());
         tableModel.fireTableDataChanged();
     }
