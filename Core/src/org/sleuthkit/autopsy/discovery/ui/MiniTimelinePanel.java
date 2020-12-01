@@ -56,7 +56,7 @@ class MiniTimelinePanel extends javax.swing.JPanel {
             public void valueChanged(ListSelectionEvent event) {
                 if (!event.getValueIsAdjusting()) {
                     BlackboardArtifact artifact = artifactListPanel.getSelectedArtifact();
-                    if (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID() || artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID()) {
+                    if (artifact != null && (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID() || artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID())) {
                         rightPanel = new ContentViewerDetailsPanel();
                     } else {
                         rightPanel = new GeneralPurposeArtifactViewer();
@@ -167,7 +167,7 @@ class MiniTimelinePanel extends javax.swing.JPanel {
 
         leftSplitPane.setResizeWeight(0.5);
         leftSplitPane.setMinimumSize(new java.awt.Dimension(0, 0));
-        leftSplitPane.setPreferredSize(new java.awt.Dimension(0, 0));
+        leftSplitPane.setPreferredSize(new java.awt.Dimension(300, 0));
         mainSplitPane.setLeftComponent(leftSplitPane);
 
         add(mainSplitPane, java.awt.BorderLayout.CENTER);

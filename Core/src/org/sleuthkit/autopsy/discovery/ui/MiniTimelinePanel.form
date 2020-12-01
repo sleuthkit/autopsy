@@ -50,7 +50,7 @@
               <Dimension value="[0, 0]"/>
             </Property>
             <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-              <Dimension value="[0, 0]"/>
+              <Dimension value="[300, 0]"/>
             </Property>
           </Properties>
           <Constraints>
