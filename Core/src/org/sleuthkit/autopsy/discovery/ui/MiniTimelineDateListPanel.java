@@ -99,7 +99,9 @@ class MiniTimelineDateListPanel extends JPanel {
      */
     List<BlackboardArtifact> getArtifactsForSelectedDate() {
         int selectedIndex = jTable1.getSelectionModel().getLeadSelectionIndex();
-        if (selectedIndex < jTable1.getSelectionModel().getMinSelectionIndex() || jTable1.getSelectionModel().getMaxSelectionIndex() < 0 || selectedIndex > jTable1.getSelectionModel().getMaxSelectionIndex()) {
+        if (selectedIndex < jTable1.getSelectionModel().getMinSelectionIndex()
+                || jTable1.getSelectionModel().getMaxSelectionIndex() < 0
+                || selectedIndex > jTable1.getSelectionModel().getMaxSelectionIndex()) {
             return new ArrayList<>();
         }
         return tableModel.getDateCountByRow(jTable1.convertRowIndexToModel(selectedIndex)).getArtifactList();

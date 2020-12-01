@@ -41,7 +41,10 @@ class MiniTimelineArtifactListPanel extends JPanel {
     private static final long serialVersionUID = 1L;
     private final TypeDescriptionTableModel tableModel;
     private static final Logger logger = Logger.getLogger(MiniTimelineArtifactListPanel.class.getName());
-    private static final BlackboardAttribute.ATTRIBUTE_TYPE[] DESCRIPTION_TYPES = {BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TITLE, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL};
+
+    private static final BlackboardAttribute.ATTRIBUTE_TYPE[] DESCRIPTION_TYPES = {BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TITLE,
+        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME,
+        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL};
 
     /**
      * Creates new form DiscoveryTimelineListPanel.
@@ -109,7 +112,9 @@ class MiniTimelineArtifactListPanel extends JPanel {
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     BlackboardArtifact getSelectedArtifact() {
         int selectedIndex = jTable1.getSelectionModel().getLeadSelectionIndex();
-        if (selectedIndex < jTable1.getSelectionModel().getMinSelectionIndex() || jTable1.getSelectionModel().getMaxSelectionIndex() < 0 || selectedIndex > jTable1.getSelectionModel().getMaxSelectionIndex()) {
+        if (selectedIndex < jTable1.getSelectionModel().getMinSelectionIndex()
+                || jTable1.getSelectionModel().getMaxSelectionIndex() < 0
+                || selectedIndex > jTable1.getSelectionModel().getMaxSelectionIndex()) {
             return null;
         }
         return tableModel.getArtifactByRow(jTable1.convertRowIndexToModel(selectedIndex));
