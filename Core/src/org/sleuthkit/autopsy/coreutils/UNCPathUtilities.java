@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,6 +25,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
@@ -315,7 +316,7 @@ public class UNCPathUtilities {
         }
         return driveMap;
     }
-    
+
     /**
      * Converts a path to UNC, if possible. This is accomplished by checking the
      * mapped drives list the operating system maintains and substituting where
@@ -339,5 +340,80 @@ public class UNCPathUtilities {
             return indexDir;
         }
         return result;
+    }
+
+    /**
+     * Converts a UNC path to a drive letter path, if possible. This is
+     * accomplished by checking the mapped drives list the operating system
+     * maintains and substituting where required. If the drive of the path
+     * passed in does not exist in the cached mapped drives list, a rescan of
+     * the mapped drives list is forced, and mapping is attempted one more time.
+     *
+     * @param uncPath the String of the UNC path to be converted to drive letter
+     *                path, if possible
+     *
+     * @return Drive letter path path if able to convert to drive letter,
+     *         original input path otherwise
+     */
+    synchronized public String convertUNCtoDriveLetter(String uncPath) {
+        // if we can check for UNC paths, do so, otherwise just return the input path
+        String result = UNCtoMappedDrive(uncPath);
+        if (result == null) {
+            rescanDrives();
+            result = UNCtoMappedDrive(uncPath);
+        }
+        if (result == null) {
+            return uncPath;
+        }
+        return result;
+    }
+
+    /**
+     * This method converts a passed in UNC to drive letter path if it is UNC.
+     * The input UNC path is expected in one of the following two forms:
+     * "\\hostname\somefolder\otherfolder" or
+     * "\\IP_ADDRESS\somefolder\otherfolder"
+     * 
+     * The output drive letter path will be:
+     * "Z:\otherfolder", if "Z" drive is mapped to "\\hostname\somefolder\" or
+     * "\\IP_ADDRESS\somefolder\".
+     *
+     * This is accomplished by checking the mapped drives list the operating
+     * system maintains and substituting where required. If the drive letter of the
+     * UNC path does not exist in the cached mapped drives list, you can
+     * force a rescan of the mapped drives list with rescanDrives(), then call
+     * this method again. This would be of use if the end user added a mapped
+     * drive while your dialog was up, for example.
+     *
+     * @param inputPath a String of the UNC path to convert
+     *
+     * @return returns a successfully converted inputPath, or null if unable to
+     *         find a matching drive and convert the UNC
+     */
+    synchronized public String UNCtoMappedDrive(String inputPath) {
+        if (inputPath != null) {
+            if (true == isUNC(inputPath)) {
+                String uncPath = null;
+                Iterator<Map.Entry<String, String>> it = drives.entrySet().iterator();
+                // look for the UNC path that matches the input path
+                while (it.hasNext()) {
+                    Map.Entry<String, String> pair = it.next();
+                    try {
+                        if (inputPath.startsWith(pair.getValue())) {
+                            String uncMapping = pair.getValue();
+                            String driveLetter = pair.getKey();
+                            uncPath = driveLetter + inputPath.substring(uncMapping.length(), inputPath.length());
+                        }
+                    } catch (Exception ex) {
+                        // Didn't work. Skip it.
+                    }
+                }
+                return uncPath;
+            } else {
+                return inputPath;
+            }
+        } else {
+            return null;
+        }
     }
 }

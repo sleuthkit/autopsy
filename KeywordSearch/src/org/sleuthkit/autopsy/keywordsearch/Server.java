@@ -86,6 +86,7 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.ThreadUtils;
+import org.sleuthkit.autopsy.coreutils.UNCPathUtilities;
 import org.sleuthkit.autopsy.healthmonitor.HealthMonitor;
 import org.sleuthkit.autopsy.healthmonitor.TimingMetric;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
@@ -239,6 +240,7 @@ public class Server {
     private static final String CORE_PROPERTIES = "core.properties";
     private static final boolean DEBUG = false;//(Version.getBuildType() == Version.Type.DEVELOPMENT);
     private static final int NUM_COLLECTION_CREATION_RETRIES = 5;
+    private final UNCPathUtilities uncPathUtilities = new UNCPathUtilities();
 
     public enum CORE_EVT_STATES {
 
@@ -1091,7 +1093,10 @@ public class Server {
             } else {
                 if (!coreIsLoaded(collectionName)) {
                     // In single user mode, the index is stored in case output directory
-                    File dataDir = new File(new File(index.getIndexPath()).getParent()); // "data dir" is the parent of the index directory
+                    String indexDir = new File(index.getIndexPath()).getParent(); // "data dir" is the parent of the index directory
+                    // NOTE: Solr 8 does not allow UNC paths for index directories. Convert path to drive letter, if necessary.
+                    indexDir = uncPathUtilities.convertUNCtoDriveLetter(indexDir);
+                    File dataDir = new File(indexDir);
                     if (!dataDir.exists()) {
                         dataDir.mkdirs();
                     }
