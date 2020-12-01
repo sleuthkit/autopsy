@@ -33,6 +33,7 @@ public class PortableCaseReportModuleSettings implements ReportModuleSettings {
     private final List<TagName> tagNames = new ArrayList<>();
     private final List<String> setNames = new ArrayList<>();
     private boolean compress;
+    private boolean useFileRepo;
     private ChunkSize chunkSize;
     private boolean allTagsSelected;
     private boolean allSetsSelected;
@@ -84,6 +85,7 @@ public class PortableCaseReportModuleSettings implements ReportModuleSettings {
         this.allTagsSelected = true;
         this.allSetsSelected = true;
         this.shouldIncludeApplication = false;
+        this.useFileRepo = false;
     }
 
     PortableCaseReportModuleSettings(List<String> setNames, List<TagName> tagNames,
@@ -95,6 +97,7 @@ public class PortableCaseReportModuleSettings implements ReportModuleSettings {
         this.allTagsSelected = allTagsSelected;
         this.allSetsSelected = allSetsSelected;
         this.shouldIncludeApplication = false;
+        this.useFileRepo = false;
     }
 
     @Override
@@ -148,6 +151,10 @@ public class PortableCaseReportModuleSettings implements ReportModuleSettings {
     public boolean includeApplication() {
         return shouldIncludeApplication;
     }
+    
+    public boolean getUseFileRepo() {
+        return useFileRepo;
+    }
 
     /**
      * @param allTagsSelected the allTagsSelected to set
@@ -165,6 +172,10 @@ public class PortableCaseReportModuleSettings implements ReportModuleSettings {
     
     public void setIncludeApplication(boolean includeApplication) {
         this.shouldIncludeApplication = includeApplication;
+    }
+    
+    public void setUseFileRepo(boolean useFileRepo) {
+        this.useFileRepo = useFileRepo;
     }
 
 }

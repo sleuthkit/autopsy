@@ -42,8 +42,11 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.util.NbBundle;
@@ -63,11 +66,16 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.BulkExistenceResult;
+import org.sleuthkit.datamodel.BulkExistenceEnum;
 import org.sleuthkit.datamodel.CaseDbAccessManager;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.FileRepository;
+import org.sleuthkit.datamodel.FileRepositoryException;
 import org.sleuthkit.datamodel.FileSystem;
+import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.LocalFilesDataSource;
 import org.sleuthkit.datamodel.Pool;
@@ -103,6 +111,12 @@ public class PortableCaseReportModule implements ReportModule {
     private String caseName = "";
     private File caseFolder = null;
     private File copiedFilesFolder = null;
+    
+    // Stores whether files are present in the file repository
+    private enum FileRepoState {
+        EXISTS, DOES_NOT_EXIST;
+    }
+    private final Map<Long, FileRepoState> fileRepositoryLookupCache = new HashMap<>();
 
     // Maps old object ID from current case to new object in portable case
     private final Map<Long, Content> oldIdToNewContent = new HashMap<>();
@@ -382,6 +396,17 @@ public class PortableCaseReportModule implements ReportModule {
         if (!setNames.isEmpty()) {
             try {
                 List<BlackboardArtifact> interestingFiles = currentCase.getSleuthkitCase().getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
+
+                if (settings.getUseFileRepo()) {
+                   // Check for cancellation 
+                    if (progressPanel.getStatus() == ReportProgressPanel.ReportStatus.CANCELED) {
+                        return;
+                    }   
+                    
+                    Set<Content> contentList = getContentForArtifacts(interestingFiles);
+                    prepopulateFileRepositoryCache(contentList, progressPanel);
+                }
+
                 for (BlackboardArtifact art : interestingFiles) {
                     // Check for cancellation 
                     if (progressPanel.getStatus() == ReportProgressPanel.ReportStatus.CANCELED) {
@@ -401,6 +426,17 @@ public class PortableCaseReportModule implements ReportModule {
 
             try {
                 List<BlackboardArtifact> interestingResults = currentCase.getSleuthkitCase().getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT);
+ 
+                if (settings.getUseFileRepo()) {
+                   // Check for cancellation 
+                    if (progressPanel.getStatus() == ReportProgressPanel.ReportStatus.CANCELED) {
+                        return;
+                    }   
+                    
+                    Set<Content> contentList = getContentForArtifacts(interestingResults);
+                    prepopulateFileRepositoryCache(contentList, progressPanel);
+                }
+                
                 for (BlackboardArtifact art : interestingResults) {
                     // Check for cancellation 
                     if (progressPanel.getStatus() == ReportProgressPanel.ReportStatus.CANCELED) {
@@ -763,6 +799,16 @@ public class PortableCaseReportModule implements ReportModule {
         // Get all the tags in the current case
         List<ContentTag> tags = currentCase.getServices().getTagsManager().getContentTagsByTagName(oldTagName);
 
+        if (settings.getUseFileRepo()) {
+           // Check for cancellation 
+            if (progressPanel.getStatus() == ReportProgressPanel.ReportStatus.CANCELED) {
+                return;
+            }   
+            
+            Set<Content> contentList = tags.stream().map(tag -> tag.getContent()).collect(Collectors.toSet());
+            prepopulateFileRepositoryCache(contentList, progressPanel);
+        }
+        
         // Copy the files into the portable case and tag
         for (ContentTag tag : tags) {
 
@@ -868,6 +914,16 @@ public class PortableCaseReportModule implements ReportModule {
 
         List<BlackboardArtifactTag> tags = currentCase.getServices().getTagsManager().getBlackboardArtifactTagsByTagName(oldTagName);
 
+        if (settings.getUseFileRepo()) {
+           // Check for cancellation 
+            if (progressPanel.getStatus() == ReportProgressPanel.ReportStatus.CANCELED) {
+                return;
+            }   
+            
+            Set<Content> contentList = tags.stream().map(tag -> tag.getContent()).collect(Collectors.toSet());
+            prepopulateFileRepositoryCache(contentList, progressPanel);
+        }
+        
         // Copy the artifacts into the portable case along with their content and tag
         for (BlackboardArtifactTag tag : tags) {
 
@@ -1098,28 +1154,59 @@ public class PortableCaseReportModule implements ReportModule {
                             newContent = portableSkCase.addLocalDirectory(parentId, abstractFile.getName(), trans);
                         } else {
                             try {
-                                // Copy the file
-                                String fileName = abstractFile.getId() + "-" + FileUtil.escapeFileName(abstractFile.getName());
-                                String exportSubFolder = getExportSubfolder(abstractFile);
-                                File exportFolder = Paths.get(copiedFilesFolder.toString(), exportSubFolder).toFile();
-                                File localFile = new File(exportFolder, fileName);
-                                ContentUtils.writeToFile(abstractFile, localFile);
-
                                 // Get the new parent object in the portable case database
                                 Content oldParent = abstractFile.getParent();
                                 if (!oldIdToNewContent.containsKey(oldParent.getId())) {
                                     throw new TskCoreException("Parent of file with ID " + abstractFile.getId() + " has not been created"); // NON-NLS
                                 }
                                 Content newParent = oldIdToNewContent.get(oldParent.getId());
+                                
+                                if (!settings.getUseFileRepo() || !fileIsInRepository(abstractFile)) {
+                                    // Copy the file to the portable case folder
+                                    String fileName = abstractFile.getId() + "-" + FileUtil.escapeFileName(abstractFile.getName());
+                                    String exportSubFolder = getExportSubfolder(abstractFile);
+                                    File exportFolder = Paths.get(copiedFilesFolder.toString(), exportSubFolder).toFile();
+                                    File localFile = new File(exportFolder, fileName);
+                                    ContentUtils.writeToFile(abstractFile, localFile);
 
-                                // Construct the relative path to the copied file
-                                String relativePath = FILE_FOLDER_NAME + File.separator + exportSubFolder + File.separator + fileName;
+                                    // Construct the relative path to the copied file
+                                    String relativePath = FILE_FOLDER_NAME + File.separator + exportSubFolder + File.separator + fileName;
 
-                                newContent = portableSkCase.addLocalFile(abstractFile.getName(), relativePath, abstractFile.getSize(),
-                                        abstractFile.getCtime(), abstractFile.getCrtime(), abstractFile.getAtime(), abstractFile.getMtime(),
-                                        abstractFile.getMd5Hash(), abstractFile.getSha256Hash(), abstractFile.getKnown(), abstractFile.getMIMEType(),
-                                        TskData.FileLocation.LOCAL, true, TskData.EncodingType.NONE,
-                                        newParent, trans);
+                                    newContent = portableSkCase.addLocalFile(abstractFile.getName(), relativePath, abstractFile.getSize(),
+                                            abstractFile.getCtime(), abstractFile.getCrtime(), abstractFile.getAtime(), abstractFile.getMtime(),
+                                            abstractFile.getMd5Hash(), abstractFile.getSha256Hash(), abstractFile.getKnown(), abstractFile.getMIMEType(),
+                                            TskData.FileLocation.LOCAL, true, TskData.EncodingType.NONE,
+                                            newParent, trans);
+                                } else {
+                                    if (abstractFile instanceof FsContent) {
+                                        FsContent fsContent = (FsContent)abstractFile;
+                                        
+                                        Content newFileSystem = oldIdToNewContent.get(fsContent.getFileSystemId());
+                                        long newFileSystemId = 0;
+                                        if (newFileSystem instanceof FileSystem) {
+                                            newFileSystemId = newFileSystem.getId();
+                                        } else {
+                                            throw new TskCoreException("Error getting file system ID");
+                                        }
+                                        
+                                        newContent = portableSkCase.addFileSystemFile(newFileSystemId,
+                                                fsContent.getName(), fsContent.getType(), 
+                                                fsContent.getMetaAddr(), fsContent.getMetaSeq(), 
+                                                fsContent.getAttrType(), fsContent.getAttributeId(),
+                                                fsContent.getDirFlag(), fsContent.getMetaFlagsAsInt(),
+                                                fsContent.getSize(),
+                                                fsContent.getCtime(), fsContent.getCrtime(), fsContent.getAtime(), fsContent.getMtime(),
+                                                fsContent.getMd5Hash(), fsContent.getSha256Hash(), fsContent.getKnown(), fsContent.getMIMEType(),
+                                                fsContent.isFile(), TskData.FileLocation.REPOSITORY, 
+                                                newParent, trans);
+                                    } else {
+                                        newContent = portableSkCase.addLocalFile(abstractFile.getName(), "", abstractFile.getSize(),
+                                            abstractFile.getCtime(), abstractFile.getCrtime(), abstractFile.getAtime(), abstractFile.getMtime(),
+                                            abstractFile.getMd5Hash(), abstractFile.getSha256Hash(), abstractFile.getKnown(), abstractFile.getMIMEType(),
+                                            TskData.FileLocation.REPOSITORY, true, TskData.EncodingType.NONE,
+                                            newParent, trans);
+                                    }
+                                }
                             } catch (IOException ex) {
                                 throw new TskCoreException("Error copying file " + abstractFile.getName() + " with original obj ID "
                                         + abstractFile.getId(), ex); // NON-NLS
@@ -1228,6 +1315,123 @@ public class PortableCaseReportModule implements ReportModule {
         String casePath = "..\\" + caseName;
         try (FileWriter writer = new FileWriter(filePath.toFile())) {
             writer.write(exePath + " \"" + casePath + "\"");
+        }
+    }
+    
+    /**
+     * Get a set of the content associated with the given artifacts.
+     * 
+     * @param arts The list of artifacts.
+     * 
+     * @return The set of content objects.
+     */
+    private Set<Content> getContentForArtifacts(List<BlackboardArtifact> arts) throws TskCoreException {
+        Set<Content> results = new HashSet<>();
+        for (BlackboardArtifact art : arts) {
+            results.add(art.getParent());
+        }
+        return results;
+    }
+    
+    /**
+     * Check if a given file is in the file repository.
+     * 
+     * @param file The file to look up.
+     * 
+     * @return 
+     * 
+     * @throws TskCoreException 
+     */
+    private boolean fileIsInRepository(AbstractFile file) throws TskCoreException {
+        if (fileRepositoryLookupCache.containsKey(file.getId())) {
+            return fileRepositoryLookupCache.get(file.getId()).equals(FileRepoState.EXISTS);
+        }
+        
+        if (file.getSha256Hash() == null || file.getSha256Hash().isEmpty()) {
+            throw new TskCoreException("Missing SHA-256 hash for file " + file.getName() + "(ID: " + file.getId() + ")");
+        }
+        
+        try {
+            // Do a single lookup then cache and return the result
+            boolean exists = FileRepository.exists(file);
+            if (exists) {
+                fileRepositoryLookupCache.put(file.getId(), FileRepoState.EXISTS);
+            } else {
+                fileRepositoryLookupCache.put(file.getId(), FileRepoState.DOES_NOT_EXIST);
+            }
+            return exists;
+        } catch (IOException | FileRepositoryException ex) {
+            throw new TskCoreException("Error looking up file in file repository");
+        }
+    }
+    
+    /**
+     * Looks up a list of files in the file repository and caches the results.
+     * The idea is to do the majority of the file lookups in bulk queries.
+     * 
+     * @param contentList   The list of content to check in the file repository.
+     * @param progressPanel the progress panel.
+     * 
+     * @throws TskCoreException 
+     */
+    private void prepopulateFileRepositoryCache(Set<Content> contentList, ReportProgressPanel progressPanel) throws TskCoreException {
+        List<AbstractFile> filesToLookUp = new ArrayList<>();
+        for (Content content : contentList) {
+            
+            if (progressPanel.getStatus() == ReportProgressPanel.ReportStatus.CANCELED) {
+                return;
+            }
+            
+            if (! (content instanceof AbstractFile)) {
+                continue;
+            }
+            AbstractFile file = (AbstractFile)content;
+            
+            // Make sure the hash has been calculated
+            if (file.getSha256Hash() == null || file.getSha256Hash().isEmpty()) {
+                throw new TskCoreException("Missing SHA-256 hash for file " + file.getName() + "(ID: " + file.getId() + ")");
+            }
+            
+            // Check whether we've already looked up this file
+            if (! fileRepositoryLookupCache.containsKey(file.getId())) {
+                filesToLookUp.add(file);
+            }
+            
+            // Look up a batch of files
+            if (filesToLookUp.size() > 200) {
+                doBulkFileRepositoryLookup(filesToLookUp);
+                filesToLookUp.clear();
+            }
+        }
+        
+        // Look up the final batch of files
+        if (! filesToLookUp.isEmpty()) {
+            doBulkFileRepositoryLookup(filesToLookUp);
+            filesToLookUp.clear();
+        }
+    }
+    
+    /**
+     * Look up the batch of files in the file repository and save the returned state
+     * to the cache.
+     * 
+     * @param files File to look up.
+     * 
+     * @throws TskCoreException 
+     */
+    private void doBulkFileRepositoryLookup(List<AbstractFile> files) throws TskCoreException {
+        try {
+            BulkExistenceResult results = FileRepository.exists(files);
+            for (AbstractFile file : files) {
+                BulkExistenceEnum result = results.getResult(file);
+                if (result != null && result.equals(BulkExistenceEnum.TRUE)) {
+                    fileRepositoryLookupCache.put(file.getId(), FileRepoState.EXISTS);
+                } else if (result != null && result.equals(BulkExistenceEnum.FALSE)) {
+                    fileRepositoryLookupCache.put(file.getId(), FileRepoState.DOES_NOT_EXIST);
+                }
+            }
+        } catch (IOException | FileRepositoryException ex) {
+            throw new TskCoreException("Error looking up file in file repository");
         }
     }
 
