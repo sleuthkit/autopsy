@@ -49,13 +49,14 @@ public class DomainSearchArtifactsCache {
     public List<BlackboardArtifact> get(DomainSearchArtifactsRequest request) throws DiscoveryException {
         String typeName = request.getArtifactType().getLabel();
         if (!typeName.startsWith("TSK_WEB")) {
-            throw new IllegalArgumentException("Only web artifacts are valid arguments");
+            throw new IllegalArgumentException("Only web artifacts are valid arguments. Type provided was " + typeName);
         }
-        
+
         try {
             return cache.get(request);
         } catch (ExecutionException ex) {
-            throw new DiscoveryException("Error fetching artifacts from cache", ex);
+            //throwing a new exception with the cause so that interrupted exceptions and other causes can be checked inside our wrapper
+            throw new DiscoveryException("Error fetching artifacts from cache for " + request.toString(), ex.getCause());
         }
     }
 }

@@ -29,6 +29,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils;
+import org.sleuthkit.autopsy.discovery.search.DiscoveryException;
 import org.sleuthkit.autopsy.discovery.search.DomainSearch;
 
 /**
@@ -53,10 +54,17 @@ class MiniTimelineWorker extends SwingWorker<List<MiniTimelineResult>, Void> {
     protected List<MiniTimelineResult> doInBackground() throws Exception {
         if (!StringUtils.isBlank(domain)) {
             DomainSearch domainSearch = new DomainSearch();
-            return domainSearch.getAllArtifactsForDomain(Case.getCurrentCase().getSleuthkitCase(), domain);
-        } else {
-            return new ArrayList<>();
+            try {
+                return domainSearch.getAllArtifactsForDomain(Case.getCurrentCase().getSleuthkitCase(), domain);
+            } catch (DiscoveryException ex) {
+                if (ex.getCause() instanceof InterruptedException) {
+                    logger.log(Level.INFO, "MiniTimeline search was interrupted for domain: {0}", domain);
+                } else {
+                    throw ex;
+                }
+            }
         }
+        return new ArrayList<>();
     }
 
     @Override
