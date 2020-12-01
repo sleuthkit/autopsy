@@ -44,7 +44,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
  * A class to help display a communication artifact in a panel using a
  * gridbaglayout.
  */
-public final class CommunicationArtifactViewerHelper {
+final class CommunicationArtifactViewerHelper {
 
     // Number of columns in the gridbag layout.
     private final static int MAX_COLS = 4;
@@ -68,7 +68,7 @@ public final class CommunicationArtifactViewerHelper {
      *
      * @return JLabel Heading label added.
      */
-    public static JLabel addHeader(JPanel panel, GridBagLayout gridbagLayout, GridBagConstraints constraints, String headerString) {
+    static JLabel addHeader(JPanel panel, GridBagLayout gridbagLayout, GridBagConstraints constraints, String headerString) {
 
         Insets savedInsets = constraints.insets;
 
@@ -121,7 +121,7 @@ public final class CommunicationArtifactViewerHelper {
      * @param valueString   Value string to display.
      *
      */
-    public static void addNameValueRow(JPanel panel, GridBagLayout gridbagLayout, GridBagConstraints constraints, String keyString, String valueString) {
+    static void addNameValueRow(JPanel panel, GridBagLayout gridbagLayout, GridBagConstraints constraints, String keyString, String valueString) {
         addKey(panel, gridbagLayout, constraints, keyString);
         addValue(panel, gridbagLayout, constraints, valueString);
     }
@@ -178,7 +178,7 @@ public final class CommunicationArtifactViewerHelper {
      * @param gridbagLayout Layout to use.
      * @param constraints   Constraints to use.
      */
-    public static void addPageEndGlue(JPanel panel, GridBagLayout gridbagLayout, GridBagConstraints constraints) {
+    static void addPageEndGlue(JPanel panel, GridBagLayout gridbagLayout, GridBagConstraints constraints) {
 
         constraints.gridx = 0;
 

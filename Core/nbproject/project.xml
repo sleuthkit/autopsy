@@ -437,6 +437,10 @@
                 <binary-origin>release\modules\ext\commons-codec-1.11.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/postgresql-42.2.18.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\postgresql-42.2.18.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/commons-pool2-2.4.2.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\commons-pool2-2.4.2.jar</binary-origin>
             </class-path-extension>
@@ -735,10 +739,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/jai_imageio-1.1.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\jai_imageio-1.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/postgresql-9.4.1211.jre7.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\postgresql-9.4.1211.jre7.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/junit-3.8.1.jar</runtime-relative-path>

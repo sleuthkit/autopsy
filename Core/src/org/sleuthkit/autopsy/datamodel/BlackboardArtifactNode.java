@@ -982,7 +982,21 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                     }
                     map.put(attribute.getAttributeType().getDisplayName(), value);
                 } else {
-                    map.put(attribute.getAttributeType().getDisplayName(), attribute.getDisplayString());
+                    switch(attribute.getAttributeType().getValueType()) {
+                        case INTEGER:
+                            map.put(attribute.getAttributeType().getDisplayName(), attribute.getValueInt());
+                            break;
+                        case DOUBLE:
+                            map.put(attribute.getAttributeType().getDisplayName(), attribute.getValueDouble());
+                            break;
+                        case LONG:
+                            map.put(attribute.getAttributeType().getDisplayName(), attribute.getValueLong());    
+                            break;
+                        default:
+                            map.put(attribute.getAttributeType().getDisplayName(), attribute.getDisplayString()); 
+                                
+                    }
+                    
                 }
             }
         } catch (TskCoreException ex) {
