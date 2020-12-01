@@ -22,6 +22,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -56,9 +57,13 @@ class DomainTokenizer {
     private static final String JOINER = ".";
     // delimiter when used with regex
     private static final String DELIMITER = "\\" + JOINER;
+    
+    private static final String WILDCARD = "*";
+    private static final String EXCEPTION_PREFIX = "!";
 
     // taken from https://publicsuffix.org/list/public_suffix_list.dat
     // file containing line seperated suffixes
+    // rules for parsing can be found here: https://publicsuffix.org/list/
     private static final String DOMAIN_LIST = "public_suffix_list.dat";
 
     // token for comments
@@ -89,7 +94,7 @@ class DomainTokenizer {
      */
     private static DomainTokenizer load() throws IOException {
         try (InputStream is = DomainTokenizer.class.getResourceAsStream(DOMAIN_LIST);
-                InputStreamReader isReader = new InputStreamReader(is);
+                InputStreamReader isReader = new InputStreamReader(is, StandardCharsets.UTF_8);
                 BufferedReader reader = new BufferedReader(isReader)) {
 
             DomainTokenizer categorizer = new DomainTokenizer();
@@ -122,7 +127,7 @@ class DomainTokenizer {
             return;
         }
 
-        String[] tokens = domainSuffix.split(DELIMITER);
+        String[] tokens = domainSuffix.trim().split(DELIMITER);
 
         DomainCategory cat = trie;
         for (int i = tokens.length - 1; i >= 0; i--) {
@@ -130,7 +135,7 @@ class DomainTokenizer {
             if (StringUtils.isBlank(token)) {
                 continue;
             }
-
+            
             cat = cat.getOrAddChild(tokens[i]);
         }
     }
@@ -158,10 +163,26 @@ class DomainTokenizer {
         DomainCategory cat = trie;
 
         for (; idx >= 0; idx--) {
-            cat = cat.get(tokens.get(idx));
-            if (cat == null) {
+            // an exception rule must be at the beginning of a suffix, and, in 
+            // practice, indicates a domain that would otherwise be a further
+            // suffix with a wildcard rule per: https://publicsuffix.org/list/
+            if (cat.get(EXCEPTION_PREFIX + tokens.get(idx)) != null) {
                 break;
             }
+            
+            DomainCategory newCat = cat.get(tokens.get(idx));
+            
+            // if no matching token can be found, look for wildcard token
+            if (newCat == null) {
+                // if no wildcard token can be found, the portion found 
+                // so far is the suffix.
+                newCat = cat.get(WILDCARD);
+                if (newCat == null) {
+                    break;   
+                }
+            }
+            
+            cat = newCat;
         }
 
         // if first suffix cannot be found, return the whole domain
