@@ -57,11 +57,10 @@ public final class AutopsyManifestFileParser implements ManifestFileParser {
 
         Path fileName = filePath.getFileName();
         if (fileName.toString().toUpperCase().endsWith(MANIFEST_FILE_NAME_SIGNATURE)) {
-            try {
-                fileIsManifest = isAutopsyManifestFile(filePath);
-            } catch (Exception unused) {
-                fileIsManifest = false;
-            }
+            
+            fileIsManifest = (ManifestFileParser.getManifestRootNode(filePath, (str) -> {
+                return (str.compareToIgnoreCase(ROOT_ELEM_TAG_NAME) == 0);
+            }) != null);
         }
 
         return fileIsManifest;
@@ -75,12 +74,12 @@ public final class AutopsyManifestFileParser implements ManifestFileParser {
             Date dateFileCreated = new Date(attrs.creationTime().toMillis());
             Document doc;
             try {
-                doc = createManifestDOM(filePath);
+                doc = ManifestFileParser.createManifestDOM(filePath);
             } catch (Exception ex) {
                 // If the above call to createManifestDOM threw an exception
                 // try to fix the given XML file.
                 tempPath = ManifestFileParser.makeTidyManifestFile(filePath);
-                doc = createManifestDOM(tempPath);
+                doc = ManifestFileParser.createManifestDOM(tempPath);
             }
 
             XPath xpath = XPathFactory.newInstance().newXPath();
@@ -115,23 +114,6 @@ public final class AutopsyManifestFileParser implements ManifestFileParser {
     }
 
     /**
-     * Creates the DOM object for the file at the given path.
-     *
-     * @param manifestFilePath Path to XML file.
-     *
-     * @return DOM object for the given XML file.
-     *
-     * @throws ParserConfigurationException
-     * @throws SAXException
-     * @throws IOException
-     */
-    private Document createManifestDOM(Path manifestFilePath) throws ParserConfigurationException, SAXException, IOException {
-        DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder docBuilder = docBuilderFactory.newDocumentBuilder();
-        return docBuilder.parse(manifestFilePath.toFile());
-    }
-
-    /**
      * Check to see if the given file is an autopsy auto ingest manifest file by
      * if the root element is ROOT_ELEM_TAG_NAME.
      *
@@ -141,7 +123,7 @@ public final class AutopsyManifestFileParser implements ManifestFileParser {
      */
     private boolean isAutopsyManifestFile(Path filePath) throws IOException {
         try {
-            Document doc = this.createManifestDOM(filePath);
+            Document doc = ManifestFileParser.createManifestDOM(filePath);
             Element docElement = doc.getDocumentElement();
             return docElement.getTagName().equals(ROOT_ELEM_TAG_NAME);
         } catch (Exception unused) {

@@ -24,7 +24,14 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.function.Predicate;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import org.w3c.tidy.Tidy;
+import org.xml.sax.SAXException;
 
 /**
  * Responsible for parsing the manifest files that describe cases, devices, and
@@ -75,6 +82,60 @@ public interface ManifestFileParser {
         }
         
         return Paths.get(tempFile.toString());
+    }
+    
+        /**
+     * Create a new DOM document object for the given manifest file.
+     *
+     * @param manifestFilePath Fully qualified path to manifest file.
+     *
+     * @return DOM document object
+     *
+     * @throws ParserConfigurationException
+     * @throws SAXException
+     * @throws IOException
+     */
+    static Document createManifestDOM(Path manifestFilePath) throws ParserConfigurationException, SAXException, IOException {
+        DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder docBuilder = docBuilderFactory.newDocumentBuilder();
+        return docBuilder.parse(manifestFilePath.toFile());
+    }
+
+    /**
+     * Return the root node of the given Manifest XML file.
+     * 
+     * @param filePath XML filePath
+     * @param isRootTester Predicate method for testing if a string is the root node.
+     * 
+     * @return The XML file root node or null if the node was not found or the 
+     *          file is not an XML file.
+     */
+    static String getManifestRootNode(Path filePath, Predicate<String> isRootTester) {
+        Document doc;
+        Path tempPath = null;
+        try {
+            try {
+                doc = ManifestFileParser.createManifestDOM(filePath);
+            } catch (Exception unused) {
+                // If the above call to createManifestDOM threw an exception
+                // try to fix the given XML file.
+                tempPath = ManifestFileParser.makeTidyManifestFile(filePath);
+                doc = ManifestFileParser.createManifestDOM(tempPath);
+            }
+            Element docElement = doc.getDocumentElement();
+            String rootElementTag = docElement.getTagName();
+            if(isRootTester.test(rootElementTag)) {
+                return rootElementTag;
+            }                 
+        } catch (Exception unused) {
+            // Unused exception. If an exception is thrown the given XML file
+            // cannot be parsed.
+        } finally {
+            if (tempPath != null) {
+                tempPath.toFile().delete();
+            }
+        }
+        return null;
     }
     
     public final static class ManifestFileParserException extends Exception {
