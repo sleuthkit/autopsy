@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.contentviewers.contextviewer;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.sleuthkit.autopsy.contentviewers.contextviewer.ContextViewer.DateTimePanel;
 import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT;
@@ -29,27 +30,36 @@ import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOC
  * usage, if known.
  *
  */
-public final class ContextSourcePanel extends javax.swing.JPanel {
+public final class ContextSourcePanel extends javax.swing.JPanel implements DateTimePanel {
 
     private static final long serialVersionUID = 1L;
 
     // defines a list of artifacts that provide context for a file
     private static final List<BlackboardArtifact.ARTIFACT_TYPE> SOURCE_CONTEXT_ARTIFACTS = new ArrayList<>();
+
     static {
         SOURCE_CONTEXT_ARTIFACTS.add(TSK_ASSOCIATED_OBJECT);
     }
 
     private final BlackboardArtifact sourceContextArtifact;
 
+    private final Long dateTime;
+
     /**
      * Creates new form ContextViewer
      */
-    public ContextSourcePanel(String sourceName, String sourceText, BlackboardArtifact associatedArtifact) {
+    public ContextSourcePanel(String sourceName, String sourceText, BlackboardArtifact associatedArtifact, Long dateTime) {
 
         initComponents();
         sourceContextArtifact = associatedArtifact;
         setSourceName(sourceName);
         setSourceText(sourceText);
+        this.dateTime = dateTime;
+    }
+
+    @Override
+    public Long getDateTime() {
+        return dateTime;
     }
 
     /**
@@ -140,10 +150,10 @@ public final class ContextSourcePanel extends javax.swing.JPanel {
     private void showSourceText(boolean show) {
         jSourceTextLabel.setVisible(show);
     }
-    
+
     private void showSourceButton(boolean show) {
         jSourceGoToResultButton.setVisible(show);
-        jSourceGoToResultButton.setEnabled(show);        
+        jSourceGoToResultButton.setEnabled(show);
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
