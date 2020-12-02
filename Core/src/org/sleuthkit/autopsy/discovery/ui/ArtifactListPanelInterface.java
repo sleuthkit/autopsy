@@ -39,6 +39,8 @@ interface ArtifactListPanelInterface {
     void addSelectionListener(ListSelectionListener listener);
 
     void selectFirst();
+    
+    void clearList();
 
     boolean isEmpty();
 

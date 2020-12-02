@@ -36,14 +36,17 @@ import org.sleuthkit.datamodel.BlackboardAttribute.Type;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Panel to display list of dates and counts.
+ * Panel to display list of artifacts types and descriptions.
  */
 class MiniTimelineArtifactListPanel extends JPanel implements ArtifactListPanelInterface {
 
     private static final long serialVersionUID = 1L;
     private final TypeDescriptionTableModel tableModel;
     private static final Logger logger = Logger.getLogger(MiniTimelineArtifactListPanel.class.getName());
-    private static final BlackboardAttribute.ATTRIBUTE_TYPE[] DESCRIPTION_TYPES = {BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TITLE, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL};
+
+    private static final BlackboardAttribute.ATTRIBUTE_TYPE[] DESCRIPTION_TYPES = {BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TITLE,
+        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME,
+        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL};
 
     /**
      * Creates new form DiscoveryTimelineListPanel.
@@ -67,8 +70,8 @@ class MiniTimelineArtifactListPanel extends JPanel implements ArtifactListPanelI
     }
 
     /**
-     * Add a listener to the table of dates to perform actions when a date is
-     * selected.
+     * Add a listener to the table of artifacts to perform actions when a
+     * artifact is selected.
      *
      * @param listener The listener to add to the table of artifacts.
      */
@@ -79,9 +82,9 @@ class MiniTimelineArtifactListPanel extends JPanel implements ArtifactListPanelI
     }
 
     /**
-     * Remove a listener from the table of dates.
+     * Remove a listener from the table of artifacts.
      *
-     * @param listener The listener to remove from the table of dates.
+     * @param listener The listener to remove from the table of artifacts.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
@@ -90,9 +93,10 @@ class MiniTimelineArtifactListPanel extends JPanel implements ArtifactListPanelI
     }
 
     /**
-     * Whether the list of dates is empty.
+     * Whether the list of artifacts is empty.
      *
-     * @return True if the list of dates is empty, false if there are dates.
+     * @return True if the list of artifacts is empty, false if there are
+     *         artifacts.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
@@ -101,7 +105,7 @@ class MiniTimelineArtifactListPanel extends JPanel implements ArtifactListPanelI
     }
 
     /**
-     * Select the first available date in the list if it is not empty to
+     * Select the first available artifact in the list if it is not empty to
      * populate the list to the right.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
@@ -125,22 +129,24 @@ class MiniTimelineArtifactListPanel extends JPanel implements ArtifactListPanelI
     @Override
     public BlackboardArtifact getSelectedArtifact() {
         int selectedIndex = artifactsTable.getSelectionModel().getLeadSelectionIndex();
-        if (selectedIndex < artifactsTable.getSelectionModel().getMinSelectionIndex() || artifactsTable.getSelectionModel().getMaxSelectionIndex() < 0 || selectedIndex > artifactsTable.getSelectionModel().getMaxSelectionIndex()) {
+        if (selectedIndex < artifactsTable.getSelectionModel().getMinSelectionIndex()
+                || artifactsTable.getSelectionModel().getMaxSelectionIndex() < 0
+                || selectedIndex > artifactsTable.getSelectionModel().getMaxSelectionIndex()) {
             return null;
         }
         return tableModel.getArtifactByRow(artifactsTable.convertRowIndexToModel(selectedIndex));
     }
 
     /**
-     * Add the specified list of dates to the list of dates which should be
-     * displayed.
+     * Add the specified list of artifacts to the list of artifacts which should
+     * be displayed.
      *
-     * @param dateCountList The list of dates to display.
+     * @param artifacttList The list of artifacts to display.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
-    public void addArtifacts(List<BlackboardArtifact> dateCountList) {
-        tableModel.setContents(dateCountList);
+    public void addArtifacts(List<BlackboardArtifact> artifactList) {
+        tableModel.setContents(artifactList);
         artifactsTable.validate();
         artifactsTable.repaint();
         tableModel.fireTableDataChanged();
@@ -150,7 +156,8 @@ class MiniTimelineArtifactListPanel extends JPanel implements ArtifactListPanelI
      * Remove all artifacts from the list of artifacts displayed.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    void clearDates() {
+    @Override
+    public void clearList() {
         tableModel.setContents(new ArrayList<>());
         tableModel.fireTableDataChanged();
     }

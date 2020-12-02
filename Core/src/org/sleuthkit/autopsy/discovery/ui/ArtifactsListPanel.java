@@ -154,7 +154,8 @@ final class ArtifactsListPanel extends JPanel implements ArtifactListPanelInterf
      * Remove all artifacts from the list of artifacts displayed.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    void clearArtifacts() {
+    @Override
+    public void clearList() {
         tableModel.setContents(new ArrayList<>());
         tableModel.fireTableDataChanged();
     }

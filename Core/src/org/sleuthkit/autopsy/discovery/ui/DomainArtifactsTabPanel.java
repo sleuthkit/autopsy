@@ -113,8 +113,12 @@ final class DomainArtifactsTabPanel extends JPanel {
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     void setStatus(ArtifactRetrievalStatus status) {
         this.status = status;
-        if (status == ArtifactRetrievalStatus.UNPOPULATED && rightPanel != null) {
-            rightPanel.setArtifact(null);
+        if (status == ArtifactRetrievalStatus.UNPOPULATED) {
+            listPanel.clearList();
+            if (rightPanel != null){
+                rightPanel.setArtifact(null);
+            }
+                
         }
     }
 
