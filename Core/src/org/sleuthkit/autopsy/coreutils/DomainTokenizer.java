@@ -127,7 +127,7 @@ class DomainTokenizer {
             return;
         }
 
-        String[] tokens = domainSuffix.trim().split(DELIMITER);
+        String[] tokens = domainSuffix.toLowerCase().trim().split(DELIMITER);
 
         DomainCategory cat = trie;
         for (int i = tokens.length - 1; i >= 0; i--) {
@@ -155,7 +155,7 @@ class DomainTokenizer {
             return "";
         }
 
-        List<String> tokens = Stream.of(domain.split(DELIMITER))
+        List<String> tokens = Stream.of(domain.toLowerCase().split(DELIMITER))
                 .filter(StringUtils::isNotBlank)
                 .collect(Collectors.toList());
 
