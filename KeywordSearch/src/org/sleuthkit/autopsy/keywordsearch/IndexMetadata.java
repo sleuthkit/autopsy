@@ -65,7 +65,7 @@ class IndexMetadata {
     
     IndexMetadata(String caseDirectory, Index index) throws TextIndexMetadataException {
         this.metadataFilePath = Paths.get(caseDirectory, METADATA_FILE_NAME);
-        this.caseDirectoryPath = Paths.get(uncPathUtilities.convertPathToUNC(caseDirectory));
+        this.caseDirectoryPath = Paths.get(caseDirectory);
         this.indexes.add(index);
         writeToFile();
     }
@@ -73,7 +73,7 @@ class IndexMetadata {
     IndexMetadata(String caseDirectory, List<Index> indexes) throws TextIndexMetadataException {
 
         this.metadataFilePath = Paths.get(caseDirectory, METADATA_FILE_NAME);
-        this.caseDirectoryPath = Paths.get(uncPathUtilities.convertPathToUNC(caseDirectory));
+        this.caseDirectoryPath = Paths.get(caseDirectory);
         this.indexes = indexes;
         writeToFile();
     }
