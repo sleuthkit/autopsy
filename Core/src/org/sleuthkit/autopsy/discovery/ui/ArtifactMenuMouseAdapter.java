@@ -45,6 +45,7 @@ import org.sleuthkit.autopsy.directorytree.actionhelpers.ExtractActionHelper;
 import org.sleuthkit.autopsy.timeline.actions.ViewArtifactInTimelineAction;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -90,7 +91,7 @@ class ArtifactMenuMouseAdapter extends java.awt.event.MouseAdapter {
     }
 
     /**
-     * Returns a list of JMenuItems for the waypoint. The list list may contain
+     * Returns a list of JMenuItems for the artifact. The list list may contain
      * nulls which should be removed or replaced with JSeparators.
      *
      * @return List of menu items
@@ -99,7 +100,14 @@ class ArtifactMenuMouseAdapter extends java.awt.event.MouseAdapter {
      */
     private JMenuItem[] getMenuItems(BlackboardArtifact artifact) throws TskCoreException {
         List<JMenuItem> menuItems = new ArrayList<>();
-        Content content = artifact.getSleuthkitCase().getContentById(artifact.getObjectID());
+        BlackboardAttribute pathIdAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID));
+        long contentId;
+        if (pathIdAttr != null) {
+            contentId = pathIdAttr.getValueLong();
+        } else {
+            contentId = artifact.getObjectID();
+        }
+        Content content = artifact.getSleuthkitCase().getContentById(contentId);
         menuItems.addAll(getTimelineMenuItems(artifact));
         menuItems.addAll(getDataModelActionFactoryMenuItems(artifact, content));
         menuItems.add(DeleteFileContentTagAction.getInstance().getMenuForFiles(Arrays.asList((AbstractFile) content)));
@@ -130,11 +138,11 @@ class ArtifactMenuMouseAdapter extends java.awt.event.MouseAdapter {
 
     /**
      * Use the DateModelActionsFactory to get some of the basic actions for the
-     * waypoint. The advantage to using the DataModelActionsFactory is that the
+     * artifact. The advantage to using the DataModelActionsFactory is that the
      * menu items can be put in a consistent order with other parts of the UI.
      *
-     * @param artifact Artifact for the selected waypoint
-     * @param content  Artifact content
+     * @param artifact Artifact for the selected item.
+     * @param content  The file the artifact is in regards to.
      *
      * @return List of JMenuItems for the DataModelActionFactory actions
      */
