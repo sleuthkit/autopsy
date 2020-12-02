@@ -19,13 +19,12 @@
 package org.sleuthkit.autopsy.recentactivity;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -34,6 +33,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.lang.StringUtils;
@@ -41,10 +42,8 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
-import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
-import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
@@ -201,6 +200,22 @@ class MessageURLAnalyzer extends Extract {
     private static final String CSV_DELIMITER = ",";
 
     private static final String MESSAGE_TYPE_CSV = "message_types.csv"; //NON-NLS
+
+    // The url regex is based on the regex provided in https://tools.ietf.org/html/rfc3986#appendix-B
+    // but expanded to be a little more flexible, and also properly parses user info and port in a url
+    // this item has optional colon since some urls were coming through without the colon
+    private static final String URL_REGEX_SCHEME = "(((?<scheme>[^:\\/?#]+):?)?\\/\\/)";
+
+    private static final String URL_REGEX_USERINFO = "((?<userinfo>[^\\/?#@]*)@)";
+    private static final String URL_REGEX_HOST = "(?<host>[^\\/\\.?#:]*\\.[^\\/?#:]*)";
+    private static final String URL_REGEX_PORT = "(:(?<port>[0-9]{1,5}))";
+    private static final String URL_REGEX_AUTHORITY = String.format("(%s?%s?%s?\\/?)", URL_REGEX_USERINFO, URL_REGEX_HOST, URL_REGEX_PORT);
+
+    private static final String URL_REGEX_PATH = "(?<path>([^?#]*)(\\?([^#]*))?(#(.*))?)";
+
+    private static final String URL_REGEX_STR = String.format("^\\s*%s?%s?%s?", URL_REGEX_SCHEME, URL_REGEX_AUTHORITY, URL_REGEX_PATH);
+    private static final Pattern URL_REGEX = Pattern.compile(URL_REGEX_STR);
+
     private static final Logger logger = Logger.getLogger(MessageURLAnalyzer.class.getName());
 
     private final MessageDomainTrieNode rootTrie;
@@ -213,8 +228,25 @@ class MessageURLAnalyzer extends Extract {
         rootTrie = getTrie();
     }
 
-    private String getHost(String url) {
+    private String getHost(String urlString) {
+        String host = null;
+        try {
+            URL url = new URL(urlString);
+            if (url != null) {
+                host = url.getHost();
+            }
+        } catch (MalformedURLException ignore) {
+            // ignore this and go to fallback regex
+        }
 
+        if (StringUtils.isBlank(host)) {
+            Matcher m = URL_REGEX.matcher(urlString);
+            if (m.find()) {
+                host = m.group("host");
+            }
+        }
+
+        return host;
     }
 
     private Pair<String, MessageType> findHostSuffix(String host) {
@@ -226,22 +258,25 @@ class MessageURLAnalyzer extends Extract {
                 .filter(StringUtils::isNotBlank)
                 .collect(Collectors.toList());
 
-        int idx = tokens.size() - 1;
         MessageDomainTrieNode node = rootTrie;
+        if (node == null) {
+            return null;
+        }
 
+        int idx = tokens.size() - 1;
         for (; idx >= 0; idx--) {
-            MessageDomainTrieNode newNode = node.getChild(tokens.get(idx));
-            if (newNode == null) {
+            node = node.getChild(tokens.get(idx));
+            if (node == null || node.getMessageType() != null) {
                 break;
-            } else {
-                node = newNode;
             }
         }
 
-        MessageType messageType = node.getMessageType();
+        MessageType messageType = node != null ? node.getMessageType() : null;
+
         if (messageType == null) {
             return null;
         } else {
+            // the index to be included should be one higher than last index (that was
             int minIndex = Math.max(0, idx);
             List<String> subList = tokens.subList(minIndex, tokens.size());
             String hostSuffix = String.join(JOINER, subList);
@@ -320,7 +355,9 @@ class MessageURLAnalyzer extends Extract {
             if (context.dataSourceIngestIsCancelled()) {
                 logger.info("Operation terminated by user."); //NON-NLS
             }
-            logger.log(Level.INFO, "Extracted {0} messaging domains from the blackboard", totalQueries); //NON-NLS
+            logger.log(Level.INFO, String.format("Extracted %s distinct messaging domain(s) from the blackboard.  "
+                    + "Of the %s artifact(s) with valid hosts, %s url(s) contained messaging domain suffix ",
+                    domainSuffixesSeen.size(), artifactsAnalyzed, messageDomainInstancesFound));
         }
     }
 
@@ -331,7 +368,6 @@ class MessageURLAnalyzer extends Extract {
 
         progressBar.progress(Bundle.Progress_Message_Find_Search_Query());
         this.findMessageDomains();
-        logger.log(Level.INFO, "Messaging Domain stats: \n{0}", getTotals()); //NON-NLS
     }
 
     @Override

@@ -81,6 +81,7 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
         Extract sru = new ExtractSru();
         Extract prefetch = new ExtractPrefetch();
         Extract webAccountType = new ExtractWebAccountType();
+        Extract messageDomainType = new MessageURLAnalyzer();
 
         extractors.add(chrome);
         extractors.add(firefox);
@@ -97,6 +98,7 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
         extractors.add(recycleBin); // this needs to run after ExtractRegistry and ExtractOS
         extractors.add(sru); 
         extractors.add(prefetch);
+        extractors.add(messageDomainType);
         
         browserExtractors.add(chrome);
         browserExtractors.add(firefox);
