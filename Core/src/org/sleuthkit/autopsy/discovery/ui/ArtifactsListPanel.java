@@ -22,7 +22,6 @@ import java.awt.Point;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
-import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
@@ -40,11 +39,11 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Panel to display list of artifacts for selected domain.
  *
  */
-final class ArtifactsListPanel extends JPanel implements ArtifactListPanelInterface {
+final class ArtifactsListPanel extends AbstractArtifactListPanel {
 
     private static final long serialVersionUID = 1L;
-    private final DomainArtifactTableModel tableModel;
     private static final Logger logger = Logger.getLogger(ArtifactsListPanel.class.getName());
+    private final DomainArtifactTableModel tableModel;
 
     /**
      * Creates new form ArtifactsListPanel.
@@ -60,48 +59,27 @@ final class ArtifactsListPanel extends JPanel implements ArtifactListPanelInterf
     }
 
     @Override
-    public void addMouseListener(java.awt.event.MouseAdapter mouseListener) {
+    void addMouseListener(java.awt.event.MouseAdapter mouseListener) {
         artifactsTable.addMouseListener(mouseListener);
     }
 
     @Override
-    public void showPopupMenu(JPopupMenu popupMenu, Point point) {
+    void showPopupMenu(JPopupMenu popupMenu, Point point) {
         popupMenu.show(artifactsTable, point.x, point.y);
     }
 
-    /**
-     * Add a listener to the table of artifacts to perform actions when an
-     * artifact is selected.
-     *
-     * @param listener The listener to add to the table of artifacts.
-     */
-    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
-    public void addSelectionListener(ListSelectionListener listener) {
+    void addSelectionListener(ListSelectionListener listener) {
         artifactsTable.getSelectionModel().addListSelectionListener(listener);
     }
 
-    /**
-     * Remove a listener from the table of artifacts.
-     *
-     * @param listener The listener to remove from the table of artifacts.
-     */
-    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
-    public void removeSelectionListener(ListSelectionListener listener) {
+    void removeSelectionListener(ListSelectionListener listener) {
         artifactsTable.getSelectionModel().removeListSelectionListener(listener);
     }
 
-    /**
-     * The artifact which is currently selected, null if no artifact is
-     * selected.
-     *
-     * @return The currently selected BlackboardArtifact or null if none is
-     *         selected.
-     */
-    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
-    public BlackboardArtifact getSelectedArtifact() {
+    BlackboardArtifact getSelectedArtifact() {
         int selectedIndex = artifactsTable.getSelectionModel().getLeadSelectionIndex();
         if (selectedIndex < artifactsTable.getSelectionModel().getMinSelectionIndex() || artifactsTable.getSelectionModel().getMaxSelectionIndex() < 0 || selectedIndex > artifactsTable.getSelectionModel().getMaxSelectionIndex()) {
             return null;
@@ -109,25 +87,13 @@ final class ArtifactsListPanel extends JPanel implements ArtifactListPanelInterf
         return tableModel.getArtifactByRow(artifactsTable.convertRowIndexToModel(selectedIndex));
     }
 
-    /**
-     * Whether the list of artifacts is empty.
-     *
-     * @return true if the list of artifacts is empty, false if there are
-     *         artifacts.
-     */
-    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
-    public boolean isEmpty() {
+    boolean isEmpty() {
         return tableModel.getRowCount() <= 0;
     }
 
-    /**
-     * Select the first available artifact in the list if it is not empty to
-     * populate the panel to the right.
-     */
-    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
-    public void selectFirst() {
+    void selectFirst() {
         if (!isEmpty()) {
             artifactsTable.setRowSelectionInterval(0, 0);
         } else {
@@ -143,7 +109,7 @@ final class ArtifactsListPanel extends JPanel implements ArtifactListPanelInterf
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
-    public void addArtifacts(List<BlackboardArtifact> artifactList) {
+    void addArtifacts(List<BlackboardArtifact> artifactList) {
         tableModel.setContents(artifactList);
         artifactsTable.validate();
         artifactsTable.repaint();
@@ -155,7 +121,7 @@ final class ArtifactsListPanel extends JPanel implements ArtifactListPanelInterf
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
-    public void clearList() {
+    void clearList() {
         tableModel.setContents(new ArrayList<>());
         tableModel.fireTableDataChanged();
     }
@@ -193,6 +159,7 @@ final class ArtifactsListPanel extends JPanel implements ArtifactListPanelInterf
             .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 0, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
+
 
     /**
      * Table model which allows the artifact table in this panel to mimic a list

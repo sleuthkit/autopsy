@@ -49,16 +49,21 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
+/**
+ * MouseAdapter to display a context menu on the specified
+ * AbstractArtifactListPanel when the user right clicks.
+ */
 class ArtifactMenuMouseAdapter extends java.awt.event.MouseAdapter {
 
-    private final ArtifactListPanelInterface listPanel;
+    private final AbstractArtifactListPanel listPanel;
     private static final Logger logger = Logger.getLogger(ArtifactMenuMouseAdapter.class.getName());
 
-    ArtifactMenuMouseAdapter() {
-        listPanel = null;
-    }
-
-    ArtifactMenuMouseAdapter(ArtifactListPanelInterface listPanel) {
+    /**
+     * Create a new ArtifactMenMouseAdapter.
+     *
+     * @param listPanel The panel which the menu should be in regards to.
+     */
+    ArtifactMenuMouseAdapter(AbstractArtifactListPanel listPanel) {
         this.listPanel = listPanel;
     }
 
@@ -69,6 +74,12 @@ class ArtifactMenuMouseAdapter extends java.awt.event.MouseAdapter {
         }
     }
 
+    /**
+     * If an artifact is selected display a JPopupMenu which has available
+     * actions.
+     *
+     * @param event The mouseEvent being responded to.
+     */
     private void showPopupMenu(java.awt.event.MouseEvent event) {
         BlackboardArtifact artifact = listPanel.getSelectedArtifact();
         if (artifact == null) {
@@ -94,7 +105,9 @@ class ArtifactMenuMouseAdapter extends java.awt.event.MouseAdapter {
      * Returns a list of JMenuItems for the artifact. The list list may contain
      * nulls which should be removed or replaced with JSeparators.
      *
-     * @return List of menu items
+     * @param artifact The artifact to get menu items for.
+     *
+     * @return List of menu items.
      *
      * @throws TskCoreException
      */
@@ -118,7 +131,7 @@ class ArtifactMenuMouseAdapter extends java.awt.event.MouseAdapter {
     /**
      * Gets the Timeline Menu Items for this artifact.
      *
-     * @param artifact Selected artifact
+     * @param artifact The artifact to get menu items for.
      *
      * @return List of timeline menu items.
      */
@@ -141,10 +154,10 @@ class ArtifactMenuMouseAdapter extends java.awt.event.MouseAdapter {
      * artifact. The advantage to using the DataModelActionsFactory is that the
      * menu items can be put in a consistent order with other parts of the UI.
      *
-     * @param artifact Artifact for the selected item.
+     * @param artifact The artifact to get menu items for.
      * @param content  The file the artifact is in regards to.
      *
-     * @return List of JMenuItems for the DataModelActionFactory actions
+     * @return List of JMenuItems for the DataModelActionFactory actions.
      */
     @NbBundle.Messages({
         "ArtifactMenuMouseAdapter_ExternalViewer_label=Open in external viewer"
@@ -180,7 +193,7 @@ class ArtifactMenuMouseAdapter extends java.awt.event.MouseAdapter {
     @NbBundle.Messages({
         "ArtifactMenuMouseAdapter_label=Extract Files"
     })
-    final class ExtractFileAction extends AbstractAction {
+    private final class ExtractFileAction extends AbstractAction {
 
         private static final long serialVersionUID = 1L;
         final private AbstractFile file;
@@ -190,7 +203,7 @@ class ArtifactMenuMouseAdapter extends java.awt.event.MouseAdapter {
          *
          * @param file The AbstractFile to be extracted.
          */
-        ExtractFileAction(AbstractFile file) {
+        private ExtractFileAction(AbstractFile file) {
             super(Bundle.ArtifactMenuMouseAdapter_label());
             this.file = file;
         }
