@@ -24,12 +24,17 @@ import java.awt.Dimension;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 import javax.swing.Box;
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -40,13 +45,19 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.BorderFactory;
-import java.util.Map;
 import javax.swing.BoxLayout;
 import java.awt.GridLayout;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Collections;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import javax.swing.JFileChooser;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
@@ -443,7 +454,11 @@ public class HealthMonitorDashboard {
      * Create the panel with controls for the user panel
      * @return the control panel
      */
-    @NbBundle.Messages({"HealthMonitorDashboard.createUserControlPanel.maxDays=Max days to display"})
+    @NbBundle.Messages({"HealthMonitorDashboard.createUserControlPanel.maxDays=Max days to display",
+        "HealthMonitorDashboard.createUserControlPanel.userReportButton=Generate Report",
+        "HealthMonitorDashboard.createUserControlPanel.reportError=Error generating report",
+        "# {0} - Report file name",
+        "HealthMonitorDashboard.createUserControlPanel.reportDone=Report saved to: {0}"})
     private JPanel createUserControlPanel() {
         JPanel userControlPanel = new JPanel();
         
@@ -473,7 +488,130 @@ public class HealthMonitorDashboard {
         userControlPanel.add(new JLabel(Bundle.HealthMonitorDashboard_createUserControlPanel_maxDays()));
         userControlPanel.add(userDateComboBox);
         
+        // Create a button to create a user report
+        JButton reportButton = new JButton(Bundle.HealthMonitorDashboard_createUserControlPanel_userReportButton());
+        
+        // Set up a listener on the report button
+        reportButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent arg0) {
+                JFileChooser reportFileChooser = new JFileChooser();
+                reportFileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+                reportFileChooser.setCurrentDirectory(new File(UserPreferences.getHealthMonitorReportPath()));
+                final DateFormat csvTimestampFormat = new SimpleDateFormat("yyyyMMdd_HHmmss");
+                String fileName = "UserReport_" + csvTimestampFormat.format(new Date())+ ".csv";
+                reportFileChooser.setSelectedFile(new File(fileName));
+                
+                int returnVal = reportFileChooser.showSaveDialog(userControlPanel);
+                if (returnVal == JFileChooser.APPROVE_OPTION) {
+
+                    File selectedFile = reportFileChooser.getSelectedFile();
+                    UserPreferences.setHealthMonitorReportPath(selectedFile.getParent());
+                    try {
+                        dialog.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                        generateCSVUserReport(selectedFile);
+                        MessageNotifyUtil.Message.info(Bundle.HealthMonitorDashboard_createUserControlPanel_reportDone(selectedFile.getAbsoluteFile()));
+                    } catch (HealthMonitorException ex) {
+                        logger.log(Level.SEVERE, "Error generating report", ex);
+                        MessageNotifyUtil.Message.error(Bundle.HealthMonitorDashboard_createUserControlPanel_reportError());
+                    } finally {
+                        dialog.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                    }
+                }
+            }
+        });
+        userControlPanel.add(reportButton);
+        
         return userControlPanel;
+    }
+    
+    /**
+     * Generate a csv report for the last week of user data.
+     * 
+     * @param reportFile
+     * 
+     * @throws HealthMonitorException 
+     */
+    private void generateCSVUserReport(File reportFile) throws HealthMonitorException {
+        final DateFormat timestampFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+        
+        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(reportFile), StandardCharsets.UTF_8))) {
+            // Write header
+            writer.write("Case open,Case close,Duration,Host,User,Case name");
+            writer.newLine();
+            
+            // Get the list of user data sorted by timestamp
+            List<HealthMonitor.UserData> dataForReport = HealthMonitor.getInstance().getUserMetricsFromDatabase(DateRange.ONE_WEEK.getTimestampRange());
+            Collections.sort(dataForReport);
+
+            // Go through the list of events in order of timestamp. For each case open event, look for the next case closed 
+            // event for that host/user/case name.
+            for (int caseOpenIndex = 0; caseOpenIndex < dataForReport.size() - 1; caseOpenIndex++) {
+                if (! dataForReport.get(caseOpenIndex).getEventType().equals(HealthMonitor.UserEvent.CASE_OPEN)) {
+                    continue;
+                }
+
+                // Try to find the next event logged for this user/host. We do not check that
+                // it is a case closed event.
+                HealthMonitor.UserData caseOpenEvent = dataForReport.get(caseOpenIndex);
+                HealthMonitor.UserData nextEventAfterCaseOpen = null;
+                for (int nextEventIndex = caseOpenIndex + 1; nextEventIndex < dataForReport.size(); nextEventIndex++) {
+                    HealthMonitor.UserData nextEvent = dataForReport.get(nextEventIndex);
+                    // If the user and host name do not match, ignore this event
+                    if ( nextEvent.getHostname().equals(caseOpenEvent.getHostname())
+                        && nextEvent.getUserName().equals(caseOpenEvent.getUserName())) {
+                        nextEventAfterCaseOpen = nextEvent;
+                        break;
+                    }
+                }
+
+                // Prepare the columns
+                String caseOpenTime = timestampFormat.format(caseOpenEvent.getTimestamp());
+
+                // If everything is recorded properly then the next event for a given user after
+                // a case open will be a case close. In this case we record the close time and
+                // how long the case was open. If the next event was not a case close event
+                // or if there is no next event (which could happen if Autopsy crashed or if 
+                // there were network issues, or if the user simply still has the case open), 
+                // leave the close time and duration blank.
+                String caseCloseTime = "";
+                String duration = "";
+                if (nextEventAfterCaseOpen != null
+                        && nextEventAfterCaseOpen.getEventType().equals(HealthMonitor.UserEvent.CASE_CLOSE)
+                        && nextEventAfterCaseOpen.getCaseName().equals(caseOpenEvent.getCaseName())) {
+                    caseCloseTime = timestampFormat.format(nextEventAfterCaseOpen.getTimestamp());
+                    duration = getDuration(caseOpenEvent.getTimestamp(), nextEventAfterCaseOpen.getTimestamp());
+                }
+
+                String host = caseOpenEvent.getHostname();
+                String user = caseOpenEvent.getUserName();
+                String caseName = caseOpenEvent.getCaseName();
+
+                String csvEntry = caseOpenTime + "," + caseCloseTime + "," + duration + "," + host + "," + user + ",\"" + caseName + "\"";
+                writer.write(csvEntry);
+                writer.newLine();
+            }
+        } catch (IOException ex) {
+            throw new HealthMonitorException("Error writing to output file " + reportFile.getAbsolutePath(), ex);
+        }
+    }
+    
+    /**
+     * Generate a string representing the time between
+     * the given timestamps.
+     * 
+     * @param start The starting timestamp.
+     * @param end   The ending timestamp.
+     * 
+     * @return The duration as a string.
+     */
+    private String getDuration(long start, long end) {
+        long durationInSeconds = (end - start) / 1000;
+        long second = durationInSeconds % 60;
+        long minute = (durationInSeconds / 60) % 60;
+        long hours = durationInSeconds / (60 * 60);
+
+        return String.format("%d:%02d:%02d", hours, minute, second);
     }
     
     /**
