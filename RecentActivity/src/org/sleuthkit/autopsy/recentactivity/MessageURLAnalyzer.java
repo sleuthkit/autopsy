@@ -18,10 +18,14 @@
  */
 package org.sleuthkit.autopsy.recentactivity;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
 import java.util.Arrays;
 import java.util.ArrayList;
@@ -34,9 +38,11 @@ import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.Set;
+import java.util.stream.Stream;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import org.apache.commons.lang.StringUtils;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -57,20 +63,12 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-/**
- * This recent activity extractor attempts to extract web queries from major
- * search engines by querying the blackboard for web history and bookmark
- * artifacts, and extracting search text from them.
- *
- *
- * To add search engines, edit SEUQAMappings.xml under RecentActivity
- *
- */
 @Messages({
-    "MessageURLAnalyzer_moduleName_text=MessageURLAnalyzer"
+    "MessageURLAnalyzer_moduleName_text=MessageURLAnalyzer",
+    "MessageURLAnalyzer_Progress_Message_Find_Message_URLs=Finding Messaging Domains"
 })
 class MessageURLAnalyzer extends Extract {
-    
+
     @Messages({
         "MessageType_disposableMail_displayName=Disposable Email",
         "MessageType_webmail_displayName=Web Email"
@@ -78,7 +76,7 @@ class MessageURLAnalyzer extends Extract {
     private enum MessageType {
         DISPOSABLE_EMAIL("disposable", Bundle.MessageType_disposableMail_displayName()),
         WEBMAIL("webmail", Bundle.MessageType_webmail_displayName());
-        
+
         private final String id;
         private final String displayName;
 
@@ -97,9 +95,9 @@ class MessageURLAnalyzer extends Extract {
     }
 
     private static class MessageDomainTrieNode {
+
         private final Map<String, MessageDomainTrieNode> children = new HashMap<>();
         private MessageType messageType = null;
-        
 
         MessageDomainTrieNode getOrAddChild(String childKey) {
             MessageDomainTrieNode child = children.get(childKey);
@@ -110,7 +108,7 @@ class MessageURLAnalyzer extends Extract {
 
             return child;
         }
-        
+
         MessageDomainTrieNode getChild(String childKey) {
             return children.get(childKey);
         }
@@ -123,48 +121,107 @@ class MessageURLAnalyzer extends Extract {
             this.messageType = messageType;
         }
     }
-    
-    
-    private static class MessageDomainTrie {
-        private MessageDomainTrieNode rootTrie = null;
-    
-        
-    }
-    
 
-    private static MessageDomainTrieNode loadTrie() {
-        
-    }
-    
-    private static void add
-    
-    private static MessageDomainTrieNode rootTrie = null;
-            
-    private static MessageDomainTrieNode getTrie() {
-        if (rootTrie == null) {
-            rootTrie = loadTrie();
+    private static MessageDomainTrieNode loadTrie() throws IOException {
+        try (InputStream is = MessageURLAnalyzer.class.getResourceAsStream(MESSAGE_TYPE_CSV);
+                InputStreamReader isReader = new InputStreamReader(is, StandardCharsets.UTF_8);
+                BufferedReader reader = new BufferedReader(isReader)) {
+
+            MessageDomainTrieNode trie = new MessageDomainTrieNode();
+            int lineNum = 1;
+            while (reader.ready()) {
+                String line = reader.readLine();
+                if (!StringUtils.isBlank(line)) {
+                    addItem(trie, line.trim(), lineNum);
+                    lineNum++;
+                }
+            }
+
+            return trie;
         }
-        
-        return rootTrie;
     }
-    
 
-    
-    private static final String XMLFILE = "message_types.csv"; //NON-NLS
+    private static void addItem(MessageDomainTrieNode trie, String line, int lineNumber) {
+        String[] csvItems = line.split(CSV_DELIMITER);
+        if (csvItems.length < 2) {
+            logger.log(Level.WARNING, String.format("Unable to properly parse line of \"%s\" at line %d", line, lineNumber));
+            return;
+        }
+
+        String messageTypeStr = csvItems[1];
+        MessageType messageType = (StringUtils.isNotBlank(messageTypeStr))
+                ? Stream.of(MessageType.values())
+                        .filter((m) -> m.getId().equalsIgnoreCase(messageTypeStr))
+                        .findFirst()
+                        .orElse(null)
+                : null;
+
+        if (messageType == null) {
+            logger.log(Level.WARNING, String.format("Could not determine message type for this line: \"%s\" at line %d", line, lineNumber));
+            return;
+        }
+
+        String domainSuffix = csvItems[0];
+        if (StringUtils.isBlank(domainSuffix)) {
+            logger.log(Level.WARNING, String.format("Could not determine domain suffix for this line: \"%s\" at line %d", line, lineNumber));
+            return;
+        }
+
+        String[] domainTokens = domainSuffix.split(DELIMITER);
+
+        MessageDomainTrieNode node = trie;
+        for (int i = domainTokens.length - 1; i >= 0; i--) {
+            String token = domainTokens[i];
+            if (StringUtils.isBlank(token)) {
+                continue;
+            }
+
+            node = node.getOrAddChild(domainTokens[i]);
+        }
+
+        node.setMessageType(messageType);
+
+    }
+
+    private static MessageDomainTrieNode trieSingleton = null;
+    private static final Object trieLock = new Object();
+
+    private static MessageDomainTrieNode getTrie() {
+        synchronized (trieLock) {
+            if (trieSingleton == null) {
+                try {
+                    trieSingleton = loadTrie();
+                } catch (IOException ex) {
+                    logger.log(Level.SEVERE, "Unable to load message domain csv", ex);
+                }
+            }
+        }
+
+        return trieSingleton;
+    }
+
+    // Character for joining domain segments.
+    private static final String JOINER = ".";
+    // delimiter when used with regex for domains
+    private static final String DELIMITER = "\\" + JOINER;
+
+    // csv delimiter
+    private static final String CSV_DELIMITER = ",";
+
+    private static final String MESSAGE_TYPE_CSV = "message_types.csv"; //NON-NLS
     private static final Logger logger = Logger.getLogger(MessageURLAnalyzer.class.getName());
 
+    private final MessageDomainTrieNode rootTrie;
+    
     private Content dataSource;
     private IngestJobContext context;
-    
+
     
     MessageURLAnalyzer() {
         moduleName = null;
-        
+        rootTrie = getTrie();
     }
 
-    
-    
-    
     private static class SearchEngine {
 
         private final String engineName;
@@ -361,15 +418,28 @@ class MessageURLAnalyzer extends Extract {
         return value;
     }
 
-    private void findSearchQueries() {
+    private String getHost(String url) {
+        
+    }
+    
+    private String getDomain(String host) {
+        
+    }
+    
+    private void findMessageDomains() {
         int totalQueries = 0;
         try {
             //from blackboard_artifacts
             Collection<BlackboardArtifact> listArtifacts = currentCase.getSleuthkitCase().getBlackboard().getArtifacts(
-                    Arrays.asList(new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_WEB_BOOKMARK), new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_WEB_HISTORY)),
+                    Arrays.asList(new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_WEB_HISTORY)),
                     Arrays.asList(dataSource.getId()));
+            
             logger.log(Level.INFO, "Processing {0} blackboard artifacts.", listArtifacts.size()); //NON-NLS
 
+            Map<String, BlackboardArtifact> 
+            listArtifacts.stream()
+            
+            
             for (BlackboardArtifact artifact : listArtifacts) {
                 if (context.dataSourceIngestIsCancelled()) {
                     break;       //User cancelled the process.
@@ -472,8 +542,8 @@ class MessageURLAnalyzer extends Extract {
         this.context = context;
 
         progressBar.progress(Bundle.Progress_Message_Find_Search_Query());
-        this.findSearchQueries();
-        logger.log(Level.INFO, "Search Engine stats: \n{0}", getTotals()); //NON-NLS
+        this.findMessageDomains();
+        logger.log(Level.INFO, "Messaging Domain stats: \n{0}", getTotals()); //NON-NLS
     }
 
     @Override
