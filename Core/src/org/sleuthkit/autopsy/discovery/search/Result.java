@@ -57,11 +57,19 @@ public abstract class Result {
      */
     public abstract TskData.FileKnown getKnown();
     
-    final public void markAsPreviouslyNotable() {
+    /**
+     * Mark the result as being previously notable in the CR.
+     */
+    final public void markAsPreviouslyNotableInCR() {
         this.isPreviouslyNotable = SearchData.PreviouslyNotable.PREVIOUSLY_NOTABLE;
     }
     
-    final public SearchData.PreviouslyNotable getPreviouslyNotable() {
+    /**
+     * Get the previously notable value of this result.
+     * 
+     * @return The previously notable status enum.
+     */
+    final public SearchData.PreviouslyNotable getPreviouslyNotableInCR() {
         return this.isPreviouslyNotable;
     }
 

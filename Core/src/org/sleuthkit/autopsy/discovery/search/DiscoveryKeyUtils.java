@@ -801,7 +801,7 @@ public class DiscoveryKeyUtils {
         private final SearchData.PreviouslyNotable notableStatus;
         
         PreviouslyNotableGroupKey(Result result) {
-            this.notableStatus = result.getPreviouslyNotable();
+            this.notableStatus = result.getPreviouslyNotableInCR();
         }
 
         @Override

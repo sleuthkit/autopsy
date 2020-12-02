@@ -334,7 +334,7 @@ public class DiscoveryAttributes {
                         String domain = resultSet.getString("domain_name");
                         List<ResultDomain> domainInstances = domainLookup.get(domain);
                         for (ResultDomain domainInstance : domainInstances) {
-                            domainInstance.markAsPreviouslyNotable();
+                            domainInstance.markAsPreviouslyNotableInCR();
                         }
                     }
                 } catch (SQLException ex) {

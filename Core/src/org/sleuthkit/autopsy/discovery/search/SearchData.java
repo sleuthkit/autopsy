@@ -39,6 +39,9 @@ public final class SearchData {
     private static final Set<BlackboardArtifact.ARTIFACT_TYPE> DOMAIN_ARTIFACT_TYPES = EnumSet.of(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK, BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE, BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE, BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY, BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY);
 
     
+    /**
+     * Enum representing the notability of the result in the Central Repository.
+     */
     @NbBundle.Messages({
         "SearchData.prevNotable.displayName=Previously Notable",
         "SearchData.notPrevNotable.displayName=Previously Not Notable"

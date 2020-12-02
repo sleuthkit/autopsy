@@ -713,7 +713,7 @@ public class SearchFiltering {
 
             List<Result> filteredResults = new ArrayList<>();
             for (Result file : currentResults) {
-                if (file.getPreviouslyNotable() == SearchData.PreviouslyNotable.PREVIOUSLY_NOTABLE) {
+                if (file.getPreviouslyNotableInCR() == SearchData.PreviouslyNotable.PREVIOUSLY_NOTABLE) {
                     filteredResults.add(file);
                 }
             }
