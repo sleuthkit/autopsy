@@ -71,7 +71,8 @@ class GeoFilterPanel extends javax.swing.JPanel {
         ARTIFACT_TYPE.TSK_GPS_SEARCH,
         ARTIFACT_TYPE.TSK_GPS_TRACK,
         ARTIFACT_TYPE.TSK_GPS_TRACKPOINT,
-        ARTIFACT_TYPE.TSK_METADATA_EXIF
+        ARTIFACT_TYPE.TSK_METADATA_EXIF,
+        ARTIFACT_TYPE.TSK_GPS_AREA
     };
 
     /**
@@ -523,6 +524,7 @@ class GeoFilterPanel extends javax.swing.JPanel {
                     + " or attrs.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID()
                     + " or attrs.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_TRACKPOINTS.getTypeID()
                     + " or attrs.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_WAYPOINTS.getTypeID()
+                    + " or attrs.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_AREAPOINTS.getTypeID()
                     + " )"
                     + " ) as innerTable";
             try (SleuthkitCase.CaseDbQuery queryResult = sleuthkitCase.executeQuery(queryStr);
