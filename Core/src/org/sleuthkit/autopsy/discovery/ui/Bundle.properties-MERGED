@@ -151,7 +151,3 @@ VideoThumbnailPanel.nameLabel.more.text=\ and {0} more
 # {1} - units
 VideoThumbnailPanel.sizeLabel.text=Size: {0} {1}
 VideoThumbnailPanel.terraBytes.text=TB
-WebHistoryDetailsPanel.details.attrHeader=Attributes
-WebHistoryDetailsPanel.details.dataSource=Data Source
-WebHistoryDetailsPanel.details.file=File
-WebHistoryDetailsPanel.details.sourceHeader=Source

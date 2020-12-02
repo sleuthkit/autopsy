@@ -45,6 +45,10 @@ public class RuleSetManager {
      */
     public RuleSet createRuleSet(String name) throws RuleSetException {
 
+        if(name == null || name.isEmpty()) {
+            throw new RuleSetException("YARA rule set name cannot be null or empty string" );
+        }
+        
         if (isRuleSetExists(name)) {
             throw new RuleSetException(String.format("Yara rule set with name %s already exits.", name));
         }

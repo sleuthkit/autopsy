@@ -29,11 +29,14 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -262,7 +265,7 @@ final class ExtractPrefetch extends Extract {
 
                 AbstractFile pfAbstractFile = getAbstractFile(prefetchFileName, PREFETCH_FILE_LOCATION, dataSource);
 
-                List<Long> prefetchExecutionTimes = findNonZeroExecutionTimes(executionTimes);
+                Set<Long> prefetchExecutionTimes = findNonZeroExecutionTimes(executionTimes);
 
                 if (pfAbstractFile != null) {
                     for (Long executionTime : prefetchExecutionTimes) {
@@ -321,8 +324,8 @@ final class ExtractPrefetch extends Extract {
      *
      * @return List of timestamps that are greater than zero
      */
-    private List<Long> findNonZeroExecutionTimes(List<Long> executionTimes) {
-        List<Long> prefetchExecutionTimes = new ArrayList<>();
+    private Set<Long> findNonZeroExecutionTimes(List<Long> executionTimes) {
+        Set<Long> prefetchExecutionTimes = new HashSet<>();
         for (Long executionTime : executionTimes) {                        // only add prefetch file entries that have an actual date associated with them
             if (executionTime > 0) {
                 prefetchExecutionTimes.add(executionTime);
