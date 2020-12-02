@@ -23,6 +23,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.logging.Level;
+import org.apache.commons.lang.StringUtils;
 
 public class NetworkUtils {
 
@@ -104,19 +105,21 @@ public class NetworkUtils {
         if (urlString == null) {
             return "";
         }
-        String result = "";
+        String urlHost = null;
 
         try {
             URL url = new URL(urlString);
-            result = url.getHost();
+            urlHost = url.getHost();
         } catch (MalformedURLException ex) {
             //do not log if not a valid URL - we will try to extract it ourselves
         }
 
-        //was not a valid URL, try a less picky method
-        if (result == null || result.trim().isEmpty()) {
-            return getBaseDomain(urlString);
-        }
+        // if there is a valid url host, get base domain from that host
+        // otherwise use urlString and parse the domain
+        String result = (StringUtils.isNotBlank(urlHost))
+                ? getBaseDomain(urlHost)
+                : getBaseDomain(urlString);
+
         return result;
     }
 

@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.util.logging.Level;
+import org.apache.solr.client.solrj.SolrServerException;
 import org.openide.modules.ModuleInstall;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
@@ -49,12 +50,12 @@ class Installer extends ModuleInstall {
             server.start();
         } catch (SolrServerNoPortException ex) {
             logger.log(Level.SEVERE, "Failed to start Keyword Search server: ", ex); //NON-NLS
-            if (ex.getPortNumber() == server.getCurrentSolrServerPort()) {
+            if (ex.getPortNumber() == server.getLocalSolrServerPort()) {
                 reportPortError(ex.getPortNumber());
             } else {
                 reportStopPortError(ex.getPortNumber());
             }
-        } catch (KeywordSearchModuleException ex) {
+        } catch (KeywordSearchModuleException | SolrServerException ex) {
             logger.log(Level.SEVERE, "Failed to start Keyword Search server: ", ex); //NON-NLS
             reportInitError(ex.getMessage());
         }
