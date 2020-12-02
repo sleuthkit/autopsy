@@ -38,11 +38,13 @@ import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -148,7 +150,8 @@ class MessageURLAnalyzer extends Extract {
             return;
         }
 
-        String messageTypeStr = csvItems[1];
+        String messageTypeStr = csvItems[1].trim();
+
         MessageType messageType = (StringUtils.isNotBlank(messageTypeStr))
                 ? Stream.of(MessageType.values())
                         .filter((m) -> m.getId().equalsIgnoreCase(messageTypeStr))
@@ -167,7 +170,7 @@ class MessageURLAnalyzer extends Extract {
             return;
         }
 
-        String[] domainTokens = domainSuffix.split(DELIMITER);
+        String[] domainTokens = domainSuffix.trim().toLowerCase().split(DELIMITER);
 
         MessageDomainTrieNode node = trie;
         for (int i = domainTokens.length - 1; i >= 0; i--) {
@@ -212,11 +215,10 @@ class MessageURLAnalyzer extends Extract {
     private static final Logger logger = Logger.getLogger(MessageURLAnalyzer.class.getName());
 
     private final MessageDomainTrieNode rootTrie;
-    
+
     private Content dataSource;
     private IngestJobContext context;
 
-    
     MessageURLAnalyzer() {
         moduleName = null;
         rootTrie = getTrie();
@@ -419,50 +421,101 @@ class MessageURLAnalyzer extends Extract {
     }
 
     private String getHost(String url) {
-        
+
     }
-    
+
     private String getDomain(String host) {
-        
+
     }
-    
+
+    private Pair<String, MessageType> findHostSuffix(String host) {
+        if (StringUtils.isBlank(host)) {
+            return null;
+        }
+
+        List<String> tokens = Stream.of(host.toLowerCase().split(DELIMITER))
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.toList());
+
+        int idx = tokens.size() - 1;
+        MessageDomainTrieNode node = rootTrie;
+
+        for (; idx >= 0; idx--) {
+            MessageDomainTrieNode newNode = node.getChild(tokens.get(idx));
+            if (newNode == null) {
+                break;
+            } else {
+                node = newNode;
+            }
+        }
+
+        MessageType messageType = node.getMessageType();
+        if (messageType == null) {
+            return null;
+        } else {
+            int minIndex = Math.max(0, idx);
+            List<String> subList = tokens.subList(minIndex, tokens.size());
+            String hostSuffix = String.join(JOINER, subList);
+            return Pair.of(hostSuffix, messageType);
+        }
+    }
+
     private void findMessageDomains() {
-        int totalQueries = 0;
+        if (this.rootTrie == null) {
+            logger.log(Level.SEVERE, "Not analyzing message domain.  No root trie loaded.");
+            return;
+        }
+        
+        int artifactsAnalyzed = 0;
+        int messageDomainInstancesFound = 0;
+        Set<String> domainSuffixesSeen = new HashSet<>();
+
         try {
             //from blackboard_artifacts
             Collection<BlackboardArtifact> listArtifacts = currentCase.getSleuthkitCase().getBlackboard().getArtifacts(
                     Arrays.asList(new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_WEB_HISTORY)),
                     Arrays.asList(dataSource.getId()));
-            
+
             logger.log(Level.INFO, "Processing {0} blackboard artifacts.", listArtifacts.size()); //NON-NLS
 
-            Map<String, BlackboardArtifact> 
-            listArtifacts.stream()
-            
-            
             for (BlackboardArtifact artifact : listArtifacts) {
                 if (context.dataSourceIngestIsCancelled()) {
                     break;       //User cancelled the process.
                 }
-
-                //initializing default attributes
-                String searchEngineDomain = "";
-                String browser = "";
-                long last_accessed = -1;
 
                 AbstractFile file = tskCase.getAbstractFileById(artifact.getObjectID());
                 if (file == null) {
                     continue;
                 }
 
-                // Try search engines on the URL to see if any produce a search string
-                Set<String> searchQueries = new HashSet<>();
                 BlackboardAttribute urlAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL));
                 if (urlAttr == null) {
                     continue;
                 }
 
-                final String urlString = urlAttr.getValueString();
+                String urlString = urlAttr.getValueString();
+                String host = getHost(urlString);
+                if (StringUtils.isBlank(host)) {
+                    continue;
+                }
+                
+                artifactsAnalyzed++;
+                
+                Pair<String, MessageType> messageEntryFound = findHostSuffix(host);
+                if (messageEntryFound == null) {
+                    continue;
+                }
+                
+                messageDomainInstancesFound++;
+                
+                String hostSuffix = messageEntryFound.getLeft();
+                MessageType messageType = messageEntryFound.getRight();
+                if (StringUtils.isBlank(hostSuffix) || messageType == null || domainSuffixesSeen.contains(hostSuffix)) {
+                    continue;
+                }
+                
+                
+
                 Collection<MessageURLAnalyzer.SearchEngine> possibleSearchEngines = getSearchEngineFromUrl(urlString);
                 for (MessageURLAnalyzer.SearchEngine se : possibleSearchEngines) {
                     String query = extractSearchEngineQuery(se, urlString);
