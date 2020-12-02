@@ -31,7 +31,7 @@ import org.sleuthkit.datamodel.TskData;
 public abstract class Result {
 
     private SearchData.Frequency frequency = SearchData.Frequency.UNKNOWN;
-    private SearchData.PreviouslyNotable isPreviouslyNotable = SearchData.PreviouslyNotable.NOT_PREVIOUSLY_NOTABLE;
+    private SearchData.PreviouslyNotable notabilityStatus = SearchData.PreviouslyNotable.NOT_PREVIOUSLY_NOTABLE;
     private final List<String> tagNames = new ArrayList<>();
 
     /**
@@ -61,7 +61,7 @@ public abstract class Result {
      * Mark the result as being previously notable in the CR.
      */
     final public void markAsPreviouslyNotableInCR() {
-        this.isPreviouslyNotable = SearchData.PreviouslyNotable.PREVIOUSLY_NOTABLE;
+        this.notabilityStatus = SearchData.PreviouslyNotable.PREVIOUSLY_NOTABLE;
     }
     
     /**
@@ -70,7 +70,7 @@ public abstract class Result {
      * @return The previously notable status enum.
      */
     final public SearchData.PreviouslyNotable getPreviouslyNotableInCR() {
-        return this.isPreviouslyNotable;
+        return this.notabilityStatus;
     }
 
     /**
