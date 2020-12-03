@@ -242,7 +242,7 @@ public class SearchFiltering {
         }
         
         /**
-         * Used by backend modules to query for additional artifact types.
+         * Used by backend domain search code to query for additional artifact types.
          */
         String getWhereClause(List<ARTIFACT_TYPE> nonVisibleArtifactTypesToInclude) {
             StringJoiner joiner = joinStandardArtifactTypes();
