@@ -39,7 +39,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
@@ -58,6 +57,11 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Analyzes a URL to determine if the url host is one that handles messages
  * (i.e. webmail, disposable mail). If found, a domain category type artifact is
  * created.
+ *
+ * CSV entries describing these message types are compiled from sources.
+ * Chiefly, webmail:
+ * https://github.com/mailcheck/mailcheck/wiki/List-of-Popular-Domains
+ * disposable mail: https://www.npmjs.com/package/disposable-email-domains
  */
 @Messages({
     "MessageURLAnalyzer_moduleName_text=MessageURLAnalyzer",
@@ -380,7 +384,7 @@ class MessageURLAnalyzer extends Extract {
 
         int artifactsAnalyzed = 0;
         int messageDomainInstancesFound = 0;
-        
+
         // only one suffix per ingest is captured so this tracks the suffixes seen.
         Set<String> domainSuffixesSeen = new HashSet<>();
 
@@ -391,7 +395,6 @@ class MessageURLAnalyzer extends Extract {
 
             logger.log(Level.INFO, "Processing {0} blackboard artifacts.", listArtifacts.size()); //NON-NLS
 
-            
             for (BlackboardArtifact artifact : listArtifacts) {
                 // make sure we haven't cancelled
                 if (context.dataSourceIngestIsCancelled()) {
@@ -411,7 +414,7 @@ class MessageURLAnalyzer extends Extract {
                 }
 
                 String urlString = urlAttr.getValueString();
-                
+
                 // atempt to get the host from the url provided.
                 String host = getHost(urlString);
                 if (StringUtils.isBlank(host)) {
@@ -456,7 +459,7 @@ class MessageURLAnalyzer extends Extract {
                 logger.info("Operation terminated by user."); //NON-NLS
             }
             logger.log(Level.INFO, String.format("Extracted %s distinct messaging domain(s) from the blackboard.  "
-                    + "Of the %s artifact(s) with valid hosts, %s url(s) contained messaging domain suffix ",
+                    + "Of the %s artifact(s) with valid hosts, %s url(s) contained messaging domain suffix.",
                     domainSuffixesSeen.size(), artifactsAnalyzed, messageDomainInstancesFound));
         }
     }
