@@ -187,6 +187,10 @@ public final class HealthMonitor implements PropertyChangeListener {
         try (Statement statement = conn.createStatement()) {
             conn.setAutoCommit(false);
 
+            // NOTE: Due to a bug in the upgrade code, earlier versions of Autopsy will erroneously
+            // run the upgrade if the database is a higher version than it expects. Therefore all
+            // table changes must account for the possiblility of running multiple times.
+            
             // Upgrade from 1.0 to 1.1
             // Changes: user_data table added
             if (currentSchema.compareTo(new CaseDbSchemaVersionNumber(1, 1)) < 0) {
