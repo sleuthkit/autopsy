@@ -24,6 +24,7 @@ import java.sql.SQLException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -41,6 +42,7 @@ import org.sleuthkit.autopsy.discovery.search.SearchFiltering.ArtifactTypeFilter
 import org.sleuthkit.autopsy.discovery.search.SearchFiltering.DataSourceFilter;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_ACCOUNT_TYPE;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN;
 import org.sleuthkit.datamodel.CaseDbAccessManager;
 import org.sleuthkit.datamodel.CaseDbAccessManager.CaseDbAccessQueryCallback;
@@ -160,6 +162,10 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
                 + "                      date BETWEEN " + sixtyDaysAgo.getEpochSecond() + " AND " + currentTime.getEpochSecond() + " THEN 1 "
                 + "                 ELSE 0 "
                 + "               END) AS last60,"
+                + "           SUM(CASE "
+                + "                 WHEN artifact_type_id = " + TSK_WEB_ACCOUNT_TYPE.getTypeID() + " THEN 1 "
+                + "                 ELSE 0 "
+                + "               END) AS countOfKnownAccountTypes,"
                 + "           MAX(data_source_obj_id) AS dataSource "
                 + "FROM blackboard_artifacts"
                 + "     JOIN (" + domainsTable + ") AS domains_table"
@@ -211,7 +217,8 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
 
         for (AbstractFilter filter : filters) {
             if (filter instanceof ArtifactTypeFilter) {
-                artifactTypeFilter = filter.getWhereClause();
+                artifactTypeFilter = ((ArtifactTypeFilter) filter)
+                        .getWhereClause(Arrays.asList(TSK_WEB_ACCOUNT_TYPE));
             } else if (!(filter instanceof DataSourceFilter) && !filter.useAlternateFilter()) {
                 if (filter instanceof ArtifactDateRangeFilter) {
                     hasDateTimeFilter = true;
@@ -307,12 +314,18 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
                     if (resultSet.wasNull()) {
                         visitsInLast60 = null;
                     }
+                    Long countOfKnownAccountTypes = resultSet.getLong("countOfKnownAccountTypes");
+                    if (resultSet.wasNull()) {
+                        countOfKnownAccountTypes = null;
+                    }
+                    
                     Long dataSourceID = resultSet.getLong("dataSource");
 
                     Content dataSource = skc.getContentById(dataSourceID);
 
                     resultDomains.add(new ResultDomain(domain, activityStart,
-                            activityEnd, totalVisits, visitsInLast60, filesDownloaded, dataSource));
+                            activityEnd, totalVisits, visitsInLast60, filesDownloaded, 
+                            countOfKnownAccountTypes, dataSource));
                 }
             } catch (SQLException ex) {
                 this.sqlCause = ex;

@@ -226,14 +226,29 @@ public class SearchFiltering {
         public List<ARTIFACT_TYPE> getTypes() {
             return Collections.unmodifiableList(types);
         }
-
-        @Override
-        public String getWhereClause() {
+        
+        private StringJoiner joinStandardArtifactTypes() {
             StringJoiner joiner = new StringJoiner(",");
             for (ARTIFACT_TYPE type : types) {
                 joiner.add("\'" + type.getTypeID() + "\'");
             }
+            return joiner;
+        }
 
+        @Override
+        public String getWhereClause() {
+            StringJoiner joiner = joinStandardArtifactTypes();
+            return "artifact_type_id IN (" + joiner + ")";
+        }
+        
+        /**
+         * Used by backend modules to query for additional artifact types.
+         */
+        String getWhereClause(List<ARTIFACT_TYPE> nonVisibleArtifactTypesToInclude) {
+            StringJoiner joiner = joinStandardArtifactTypes();
+            for (ARTIFACT_TYPE type : nonVisibleArtifactTypesToInclude) {
+                joiner.add("\'" + type.getTypeID() + "\'");
+            }
             return "artifact_type_id IN (" + joiner + ")";
         }
 
@@ -688,6 +703,48 @@ public class SearchFiltering {
             }
             return Bundle.SearchFiltering_FrequencyFilter_desc(desc);
         }
+    }
+    
+    /**
+     * A filter for domains with known account types.
+     */
+    public static class KnownAccountTypeFilter extends AbstractFilter {
+
+        @Override
+        public String getWhereClause() {
+            throw new UnsupportedOperationException("Not supported, this is an alternative filter.");
+        }
+        
+        @Override
+        public boolean useAlternateFilter() {
+            return true;
+        }
+        
+        @Override
+        public List<Result> applyAlternateFilter(List<Result> currentResults, SleuthkitCase caseDb,
+                CentralRepository centralRepoDb) throws DiscoveryException {
+            List<Result> filteredResults = new ArrayList<>();
+            for (Result result : currentResults) {
+                if (result instanceof ResultDomain) {
+                    ResultDomain domain = (ResultDomain) result;
+                    if (domain.hasKnownAccountType()) {
+                        filteredResults.add(domain);
+                    }
+                } else {
+                    filteredResults.add(result);
+                }
+            }
+            return filteredResults;
+        }
+
+        @NbBundle.Messages({
+            "SearchFiltering.KnownAccountTypeFilter.desc=Only domains with known account type"
+        })
+        @Override
+        public String getDesc() {
+            return Bundle.SearchFiltering_KnownAccountTypeFilter_desc();
+        }
+        
     }
     
     /**
