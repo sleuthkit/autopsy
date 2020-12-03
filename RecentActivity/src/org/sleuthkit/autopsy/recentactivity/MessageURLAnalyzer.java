@@ -59,8 +59,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * created.
  *
  * CSV entries describing these message types are compiled from sources.
- * Chiefly, webmail:
- * https://github.com/mailcheck/mailcheck/wiki/List-of-Popular-Domains
+ * webmail: https://github.com/mailcheck/mailcheck/wiki/List-of-Popular-Domains
  * disposable mail: https://www.npmjs.com/package/disposable-email-domains
  */
 @Messages({
