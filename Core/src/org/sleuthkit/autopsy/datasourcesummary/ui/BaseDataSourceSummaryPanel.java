@@ -64,8 +64,8 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Base class from which other tabs in data source summary derive.
  */
-@Messages({"UserActivityPanel_goToArtifact=Go to Artifact",
-    "UserActivityPanel_goToFile=Go to File"})
+@Messages({"BaseDataSourceSummaryPanel_goToArtifact=View Source Result",
+    "BaseDataSourceSummaryPanel_goToFile=View Source File in Directory"})
 abstract class BaseDataSourceSummaryPanel extends JPanel {
 
     private static final long serialVersionUID = 1L;
@@ -255,7 +255,7 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
         }
 
         return new CellModelTableCellRenderer.DefaultMenuItem(
-                Bundle.UserActivityPanel_goToArtifact(),
+                Bundle.BaseDataSourceSummaryPanel_goToArtifact(),
                 () -> {
                     final DirectoryTreeTopComponent dtc = DirectoryTreeTopComponent.findInstance();
 
@@ -331,9 +331,9 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
         }
 
         return new CellModelTableCellRenderer.DefaultMenuItem(
-                Bundle.UserActivityPanel_goToFile(),
+                Bundle.BaseDataSourceSummaryPanel_goToFile(),
                 () -> {
-                    new ViewContextAction(Bundle.UserActivityPanel_goToFile(), file)
+                    new ViewContextAction(Bundle.BaseDataSourceSummaryPanel_goToFile(), file)
                             .actionPerformed(null);
 
                     notifyParentClose();
