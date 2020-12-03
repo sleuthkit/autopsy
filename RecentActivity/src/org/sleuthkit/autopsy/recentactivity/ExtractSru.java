@@ -331,9 +331,9 @@ final class ExtractSru extends Extract {
     private void createNetUsageArtifacts(String sruDb, AbstractFile sruAbstractFile) {
         List<BlackboardArtifact> bba = new ArrayList<>();
 
-        String sqlStatement = "SELECT STRFTIME('%s', timestamp) ExecutionTime, Application_Name, User_Name, "
-                + " bytesSent, BytesRecvd FROM network_Usage , SruDbIdMapTable "
-                + " where appId = IdIndex and IdType = 0 order by ExecutionTime;"; //NON-NLS
+        String sqlStatement = "SELECT STRFTIME('%s', timestamp) ExecutionTime, a.application_name, b.Application_Name formatted_application_name, User_Name, "
+                + " bytesSent, BytesRecvd FROM network_Usage a, SruDbIdMapTable, exe_to_app b "
+                + " where appId = IdIndex and IdType = 0 and a.application_name = b.source_name order by ExecutionTime;"; //NON-NLS
 
         try (SQLiteDBConnect tempdbconnect = new SQLiteDBConnect("org.sqlite.JDBC", "jdbc:sqlite:" + sruDb); //NON-NLS
                 ResultSet resultSet = tempdbconnect.executeQry(sqlStatement)) {
@@ -346,6 +346,7 @@ final class ExtractSru extends Extract {
                 }
 
                 String applicationName = resultSet.getString("Application_Name"); //NON-NLS
+                String formattedApplicationName = resultSet.getString("formatted_Application_name");
                 Long executionTime = Long.valueOf(resultSet.getInt("ExecutionTime")); //NON-NLS
                 Long bytesSent = Long.valueOf(resultSet.getInt("bytesSent")); //NON-NLS
                 Long bytesRecvd = Long.valueOf(resultSet.getInt("BytesRecvd")); //NON-NLS
@@ -354,7 +355,7 @@ final class ExtractSru extends Extract {
                 Collection<BlackboardAttribute> bbattributes = Arrays.asList(
                         new BlackboardAttribute(
                                 BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME, getName(),
-                                applicationName),//NON-NLS
+                                formattedApplicationName),//NON-NLS
                         new BlackboardAttribute(
                                 BlackboardAttribute.ATTRIBUTE_TYPE.TSK_USER_NAME, getName(),
                                 userName),
@@ -395,9 +396,9 @@ final class ExtractSru extends Extract {
     private void createAppUsageArtifacts(String sruDb, AbstractFile sruAbstractFile) {
         List<BlackboardArtifact> bba = new ArrayList<>();
 
-        String sqlStatement = "SELECT STRFTIME('%s', timestamp) ExecutionTime, Application_Name, User_Name "
-                + " FROM Application_Resource_Usage, SruDbIdMapTable WHERE "
-                + " idType = 0 and idIndex = appId order by ExecutionTime;"; //NON-NLS
+        String sqlStatement = "SELECT STRFTIME('%s', timestamp) ExecutionTime, a.application_name, b.Application_Name formatted_application_name, User_Name "
+                + " FROM Application_Resource_Usage a, SruDbIdMapTable, exe_to_app b WHERE "
+                + " idType = 0 and idIndex = appId and a.application_name = b.source_name order by ExecutionTime;"; //NON-NLS
 
         try (SQLiteDBConnect tempdbconnect = new SQLiteDBConnect("org.sqlite.JDBC", "jdbc:sqlite:" + sruDb); //NON-NLS
                 ResultSet resultSet = tempdbconnect.executeQry(sqlStatement)) {
@@ -410,13 +411,14 @@ final class ExtractSru extends Extract {
                 }
 
                 String applicationName = resultSet.getString("Application_Name"); //NON-NLS
+                String formattedApplicationName = resultSet.getString("formatted_application_name");
                 Long executionTime = Long.valueOf(resultSet.getInt("ExecutionTime")); //NON-NLS
                 String userName = resultSet.getString("User_Name");
 
                 Collection<BlackboardAttribute> bbattributes = Arrays.asList(
                         new BlackboardAttribute(
                                 BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME, getName(),
-                                applicationName),//NON-NLS
+                                formattedApplicationName),//NON-NLS
                         new BlackboardAttribute(
                                 BlackboardAttribute.ATTRIBUTE_TYPE.TSK_USER_NAME, getName(),
                                 userName),
