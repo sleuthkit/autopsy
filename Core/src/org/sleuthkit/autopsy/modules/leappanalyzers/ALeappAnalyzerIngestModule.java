@@ -175,6 +175,14 @@ public class ALeappAnalyzerIngestModule implements DataSourceIngestModule {
         return ProcessResult.OK;
     }
 
+    /**
+     * Process a file from a logical image using the aLeapp program
+     * @param dataSource datasource to process
+     * @param currentCase current case that is being worked on
+     * @param statusHelper show progress and update what is being processed
+     * @param filesProcessedCount number of files that have been processed
+     * @param aLeappFile the abstract file to process
+     */
     private void processALeappFile(Content dataSource, Case currentCase, DataSourceIngestModuleProgress statusHelper, int filesProcessedCount,
             AbstractFile aLeappFile) {
         String currentTime = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss z", Locale.US).format(System.currentTimeMillis());//NON-NLS
@@ -214,6 +222,13 @@ public class ALeappAnalyzerIngestModule implements DataSourceIngestModule {
         }
     }
 
+    /**
+     * Process a image/directory using the aLeapp program
+     * @param dataSource datasource to process
+     * @param currentCase current case being procesed
+     * @param statusHelper show progress and update what is being processed
+     * @param directoryToProcess directory to run aLeapp against
+     */
     private void processALeappFs(Content dataSource, Case currentCase, DataSourceIngestModuleProgress statusHelper, String directoryToProcess) {
         String currentTime = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss z", Locale.US).format(System.currentTimeMillis());//NON-NLS
         Path moduleOutputPath = Paths.get(currentCase.getModuleDirectory(), ALEAPP, currentTime);
@@ -288,6 +303,15 @@ public class ALeappAnalyzerIngestModule implements DataSourceIngestModule {
         return aLeappFilesToProcess;
     }
 
+    /**
+     * Build the aLeapp command to run
+     * 
+     * @param moduleOutputPath output path for the aLeapp program.
+     * @param sourceFilePath where the source files to process reside.
+     * @param aLeappFileSystemType the filesystem type to process
+     * 
+     * @return the command to execute
+     */
     private ProcessBuilder buildaLeappCommand(Path moduleOutputPath, String sourceFilePath, String aLeappFileSystemType) {
 
         ProcessBuilder processBuilder = buildProcessWithRunAsInvoker(
