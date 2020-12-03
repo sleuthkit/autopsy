@@ -157,8 +157,8 @@ public final class HealthMonitor implements PropertyChangeListener {
             if (!databaseIsInitialized()) {
                 initializeDatabaseSchema();
             }
-
-            if (!CURRENT_DB_SCHEMA_VERSION.equals(getVersion())) {
+            
+            if (getVersion().compareTo(CURRENT_DB_SCHEMA_VERSION) < 0) {
                 upgradeDatabaseSchema();
             }
 
@@ -207,7 +207,7 @@ public final class HealthMonitor implements PropertyChangeListener {
             if (currentSchema.compareTo(new CaseDbSchemaVersionNumber(1, 2)) < 0) {
 
                 // Add the user_data table
-                statement.execute("ALTER TABLE user_data ADD COLUMN username text");
+                statement.execute("ALTER TABLE user_data ADD COLUMN IF NOT EXISTS username text");
             }
 
             // Update the schema version
