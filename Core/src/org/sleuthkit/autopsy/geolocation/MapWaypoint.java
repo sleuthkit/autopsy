@@ -79,6 +79,7 @@ final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewe
         artifactTypesToColors.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACK.getTypeID(), Color.ORANGE);
         artifactTypesToColors.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACKPOINT.getTypeID(), Color.ORANGE);
         artifactTypesToColors.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID(), Color.MAGENTA);
+        artifactTypesToColors.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_AREA.getTypeID(), new Color(0x8a2be2)); // Blue violet
     }
 
     private final Waypoint dataModelWaypoint;
