@@ -7,6 +7,10 @@ HealthMonitorDashboard.createTimingControlPanel.skipOutliers=Do not plot outlier
 HealthMonitorDashboard.createTimingPanel.noData=No data to display - monitor is not enabled
 HealthMonitorDashboard.createTimingPanel.timingMetricsTitle=Timing Metrics
 HealthMonitorDashboard.createUserControlPanel.maxDays=Max days to display
+# {0} - Report file name
+HealthMonitorDashboard.createUserControlPanel.reportDone=Report saved to: {0}
+HealthMonitorDashboard.createUserControlPanel.reportError=Error generating report
+HealthMonitorDashboard.createUserControlPanel.userReportButton=Generate Report
 HealthMonitorDashboard.createUserPanel.noData=No data to display - monitor is not enabled
 HealthMonitorDashboard.createUserPanel.userMetricsTitle=User Metrics
 HealthMonitorDashboard.DateRange.oneDay=One day

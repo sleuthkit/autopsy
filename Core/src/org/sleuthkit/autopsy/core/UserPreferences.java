@@ -55,13 +55,18 @@ public final class UserPreferences {
     public static final String EXTERNAL_DATABASE_USER = "ExternalDatabaseUsername"; //NON-NLS
     public static final String EXTERNAL_DATABASE_PASSWORD = "ExternalDatabasePassword"; //NON-NLS
     public static final String EXTERNAL_DATABASE_TYPE = "ExternalDatabaseType"; //NON-NLS
-    public static final String INDEXING_SERVER_HOST = "IndexingServerHost"; //NON-NLS
-    public static final String INDEXING_SERVER_PORT = "IndexingServerPort"; //NON-NLS
+    private static final String SOLR8_SERVER_HOST = "Solr8ServerHost"; //NON-NLS
+    private static final String SOLR8_SERVER_PORT = "Solr8ServerPort"; //NON-NLS
+    private static final String SOLR4_SERVER_HOST = "IndexingServerHost"; //NON-NLS
+    private static final String SOLR4_SERVER_PORT = "IndexingServerPort"; //NON-NLS
+    private static final String ZK_SERVER_HOST = "ZookeeperServerHost"; //NON-NLS
+    private static final String ZK_SERVER_PORT = "ZookeeperServerPort"; //NON-NLS
     private static final String MESSAGE_SERVICE_PASSWORD = "MessageServicePassword"; //NON-NLS
     private static final String MESSAGE_SERVICE_USER = "MessageServiceUser"; //NON-NLS
     private static final String MESSAGE_SERVICE_HOST = "MessageServiceHost"; //NON-NLS
     private static final String MESSAGE_SERVICE_PORT = "MessageServicePort"; //NON-NLS
     public static final String TEXT_TRANSLATOR_NAME = "TextTranslatorName";
+    public static final String OCR_TRANSLATION_ENABLED = "OcrTranslationEnabled";
     public static final String PROCESS_TIME_OUT_ENABLED = "ProcessTimeOutEnabled"; //NON-NLS
     public static final String PROCESS_TIME_OUT_HOURS = "ProcessTimeOutHours"; //NON-NLS
     private static final int DEFAULT_PROCESS_TIMEOUT_HR = 60;
@@ -84,6 +89,7 @@ public final class UserPreferences {
     private static final String GEO_OSM_TILE_ZIP_PATH = "GeolocationOsmZipPath";
     private static final String GEO_OSM_SERVER_ADDRESS = "GeolocationOsmServerAddress";
     private static final String GEO_MBTILES_FILE_PATH = "GeolcoationMBTilesFilePath";
+    private static final String HEALTH_MONITOR_REPORT_PATH = "HealthMonitorReportPath";
     
     // Prevent instantiation.
     private UserPreferences() {
@@ -325,21 +331,53 @@ public final class UserPreferences {
     }
 
     public static String getIndexingServerHost() {
-        return preferences.get(INDEXING_SERVER_HOST, "");
+        return preferences.get(SOLR8_SERVER_HOST, "");
     }
 
     public static void setIndexingServerHost(String hostName) {
-        preferences.put(INDEXING_SERVER_HOST, hostName);
+        preferences.put(SOLR8_SERVER_HOST, hostName);
     }
 
     public static String getIndexingServerPort() {
-        return preferences.get(INDEXING_SERVER_PORT, "8983");
+        return preferences.get(SOLR8_SERVER_PORT, "8983");
     }
 
     public static void setIndexingServerPort(int port) {
-        preferences.putInt(INDEXING_SERVER_PORT, port);
+        preferences.putInt(SOLR8_SERVER_PORT, port);
+    }
+    
+    public static String getSolr4ServerHost() {
+        return preferences.get(SOLR4_SERVER_HOST, "");
     }
 
+    public static void setSolr4ServerHost(String hostName) {
+        preferences.put(SOLR4_SERVER_HOST, hostName);
+    }    
+    
+    public static String getSolr4ServerPort() {
+        return preferences.get(SOLR4_SERVER_PORT, "");
+    }
+
+    public static void setSolr4ServerPort(String port) {
+        preferences.put(SOLR4_SERVER_PORT, port);
+    }    
+    
+    public static String getZkServerHost() {
+        return preferences.get(ZK_SERVER_HOST, "");
+    }
+    
+    public static void setZkServerHost(String hostName) {
+        preferences.put(ZK_SERVER_HOST, hostName);
+    }
+
+    public static String getZkServerPort() {
+        return preferences.get(ZK_SERVER_PORT, "9983");
+    }
+
+    public static void setZkServerPort(String port) {
+        preferences.put(ZK_SERVER_PORT, port);
+    }
+    
     public static void setTextTranslatorName(String textTranslatorName) {
         preferences.put(TEXT_TRANSLATOR_NAME, textTranslatorName);
     }
@@ -347,6 +385,14 @@ public final class UserPreferences {
     public static String getTextTranslatorName() {
         return preferences.get(TEXT_TRANSLATOR_NAME, null);
     }
+    
+    public static void setUseOcrInTranslation(boolean enableOcr) {
+        preferences.putBoolean(OCR_TRANSLATION_ENABLED, enableOcr);
+    }
+
+    public static boolean getUseOcrInTranslation() {
+        return preferences.getBoolean(OCR_TRANSLATION_ENABLED, true);
+    }    
 
     /**
      * Persists message service connection info.
@@ -622,5 +668,23 @@ public final class UserPreferences {
     public static String getAppTempDirectory() {
         return Paths.get(UserMachinePreferences.getBaseTempDirectory(), getAppName())
                 .toAbsolutePath().toString();
+    }
+    
+    /**
+     * Set the last used health monitor report path.
+     *
+     * @param reportPath Last used health monitor report path.
+     */
+    public static void setHealthMonitorReportPath(String reportPath) {
+        preferences.put(HEALTH_MONITOR_REPORT_PATH, reportPath);
+    }
+
+    /**
+     * Gets the last used health monitor report path.
+     *
+     * @return Last used health monitor report path. Empty string if no value has been recorded.
+     */
+    public static String getHealthMonitorReportPath() {
+        return preferences.get(HEALTH_MONITOR_REPORT_PATH, "");
     }
 }

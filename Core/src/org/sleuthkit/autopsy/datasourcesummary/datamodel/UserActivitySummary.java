@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.datamodel;
 
+import java.io.File;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultArtifactUpdateGovernor;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,6 +31,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -54,6 +56,36 @@ import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
  */
 public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
 
+    /**
+     * Functions that determine the folder name of a list of path elements. If
+     * not matched, function returns null.
+     */
+    private static final List<Function<List<String>, String>> SHORT_FOLDER_MATCHERS = Arrays.asList(
+            // handle Program Files and Program Files (x86) - if true, return the next folder
+            (pathList) -> {
+                if (pathList.size() < 2) {
+                    return null;
+                }
+
+                String rootParent = pathList.get(0).toUpperCase();
+                if ("PROGRAM FILES".equals(rootParent) || "PROGRAM FILES (X86)".equals(rootParent)) {
+                    return pathList.get(1);
+                } else {
+                    return null;
+                }
+            },
+            // if there is a folder named "APPLICATION DATA" or "APPDATA"
+            (pathList) -> {
+                for (String pathEl : pathList) {
+                    String uppered = pathEl.toUpperCase();
+                    if ("APPLICATION DATA".equals(uppered) || "APPDATA".equals(uppered)) {
+                        return "AppData";
+                    }
+                }
+                return null;
+            }
+    );
+
     private static final BlackboardArtifact.Type TYPE_DEVICE_ATTACHED = new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_DEVICE_ATTACHED);
     private static final BlackboardArtifact.Type TYPE_WEB_HISTORY = new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_WEB_HISTORY);
 
@@ -69,9 +101,42 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
     private static final BlackboardAttribute.Type TYPE_DATETIME_START = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DATETIME_START);
     private static final BlackboardAttribute.Type TYPE_DATETIME_END = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DATETIME_END);
     private static final BlackboardAttribute.Type TYPE_DOMAIN = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DOMAIN);
+    private static final BlackboardAttribute.Type TYPE_PROG_NAME = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PROG_NAME);
+    private static final BlackboardAttribute.Type TYPE_PATH = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PATH);
+    private static final BlackboardAttribute.Type TYPE_COUNT = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_COUNT);
+
+    private static final String NTOS_BOOT_IDENTIFIER = "NTOSBOOT";
+    private static final String WINDOWS_PREFIX = "/WINDOWS";
 
     private static final Comparator<TopAccountResult> TOP_ACCOUNT_RESULT_DATE_COMPARE = (a, b) -> a.getLastAccess().compareTo(b.getLastAccess());
     private static final Comparator<TopWebSearchResult> TOP_WEBSEARCH_RESULT_DATE_COMPARE = (a, b) -> a.getDateAccessed().compareTo(b.getDateAccessed());
+
+    /**
+     * Sorts TopProgramsResults pushing highest run time count then most recent
+     * run and then the program name that comes earliest in the alphabet.
+     */
+    private static final Comparator<TopProgramsResult> TOP_PROGRAMS_RESULT_COMPARE = (a, b) -> {
+        // first priority for sorting is the run times 
+        // if non-0, this is the return value for the comparator
+        int runTimesCompare = nullableCompare(a.getRunTimes(), b.getRunTimes());
+        if (runTimesCompare != 0) {
+            return -runTimesCompare;
+        }
+
+        // second priority for sorting is the last run date
+        // if non-0, this is the return value for the comparator
+        int lastRunCompare = nullableCompare(
+                a.getLastRun() == null ? null : a.getLastRun().getTime(),
+                b.getLastRun() == null ? null : b.getLastRun().getTime());
+
+        if (lastRunCompare != 0) {
+            return -lastRunCompare;
+        }
+
+        // otherwise sort alphabetically
+        return (a.getProgramName() == null ? "" : a.getProgramName())
+                .compareToIgnoreCase((b.getProgramName() == null ? "" : b.getProgramName()));
+    };
 
     private static final Set<Integer> ARTIFACT_UPDATE_TYPE_IDS = new HashSet<>(Arrays.asList(
             ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getTypeID(),
@@ -79,7 +144,8 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
             ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID(),
             ARTIFACT_TYPE.TSK_CALLLOG.getTypeID(),
             ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID(),
-            ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID()
+            ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID(),
+            ARTIFACT_TYPE.TSK_PROG_RUN.getTypeID()
     ));
 
     private static final Set<String> DEVICE_EXCLUDE_LIST = new HashSet<>(Arrays.asList("ROOT_HUB", "ROOT_HUB20"));
@@ -106,9 +172,9 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
      * is designed with unit testing in mind since mocked dependencies can be
      * utilized.
      *
-     * @param provider           The object providing the current SleuthkitCase.
+     * @param provider The object providing the current SleuthkitCase.
      * @param translationService The translation service.
-     * @param logger             The logger to use.
+     * @param logger The logger to use.
      */
     public UserActivitySummary(
             SleuthkitCaseProvider provider,
@@ -140,7 +206,7 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
      * Gets a list of recent domains based on the datasource.
      *
      * @param dataSource The datasource to query for recent domains.
-     * @param count      The max count of items to return.
+     * @param count The max count of items to return.
      *
      * @return The list of items retrieved from the database.
      *
@@ -176,12 +242,12 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
      * Creates a TopDomainsResult from data or null if no visit date exists
      * within DOMAIN_WINDOW_MS of mostRecentMs.
      *
-     * @param domain       The domain.
-     * @param visits       The number of visits.
+     * @param domain The domain.
+     * @param visits The number of visits.
      * @param mostRecentMs The most recent visit of any domain.
      *
      * @return The TopDomainsResult or null if no visits to this domain within
-     *         30 days of mostRecentMs.
+     * 30 days of mostRecentMs.
      */
     private TopDomainsResult getDomainsResult(String domain, List<Long> visits, long mostRecentMs) {
         long visitCount = 0;
@@ -214,9 +280,8 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
      * @param dataSource The datasource.
      *
      * @return A tuple where the first value is the latest web history accessed
-     *         date in milliseconds and the second value maps normalized
-     *         (lowercase; trimmed) domain names to when those domains were
-     *         visited.
+     * date in milliseconds and the second value maps normalized (lowercase;
+     * trimmed) domain names to when those domains were visited.
      *
      * @throws TskCoreException
      * @throws SleuthkitCaseProviderException
@@ -283,7 +348,7 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
      * @param artifact The artifact.
      *
      * @return The TopWebSearchResult or null if the search string or date
-     *         accessed cannot be determined.
+     * accessed cannot be determined.
      */
     private static TopWebSearchResult getWebSearchResult(BlackboardArtifact artifact) {
         String searchString = DataSourceInfoUtilities.getStringOrNull(artifact, TYPE_TEXT);
@@ -298,11 +363,10 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
      * term.
      *
      * @param dataSource The data source.
-     * @param count      The maximum number of records to be shown (must be >
-     *                   0).
+     * @param count The maximum number of records to be shown (must be > 0).
      *
      * @return The list of most recent web searches where most recent search
-     *         appears first.
+     * appears first.
      *
      * @throws
      * org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException
@@ -320,21 +384,22 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
                 .getArtifacts(ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getTypeID(), dataSource.getId());
 
         // group by search string (case insensitive)
-        Collection<List<TopWebSearchResult>> resultGroups = webSearchArtifacts
+        Collection<TopWebSearchResult> resultGroups = webSearchArtifacts
                 .stream()
                 // get items where search string and date is not null
                 .map(UserActivitySummary::getWebSearchResult)
                 // remove null records
                 .filter(result -> result != null)
-                // get these messages grouped by search to string
-                .collect(Collectors.groupingBy((result) -> result.getSearchString().toUpperCase()))
+                // get the latest message for each search string
+                .collect(Collectors.toMap(
+                        (result) -> result.getSearchString().toUpperCase(),
+                        result -> result,
+                        (result1, result2) -> TOP_WEBSEARCH_RESULT_DATE_COMPARE.compare(result1, result2) >= 0 ? result1 : result2))
                 .values();
 
         // get the most recent date for each search term
         List<TopWebSearchResult> results = resultGroups
                 .stream()
-                // get the most recent access per search type
-                .map((list) -> list.stream().max(TOP_WEBSEARCH_RESULT_DATE_COMPARE).get())
                 // get most recent searches first
                 .sorted(TOP_WEBSEARCH_RESULT_DATE_COMPARE.reversed())
                 .limit(count)
@@ -358,7 +423,7 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
      * @param original The original text.
      *
      * @return The translated text or null if no translation can be determined
-     *         or exists.
+     * or exists.
      */
     private String getTranslationOrNull(String original) {
         if (!translationService.hasProvider() || StringUtils.isBlank(original)) {
@@ -383,14 +448,33 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
     }
 
     /**
+     * Gives the most recent TopDeviceAttachedResult. If one is null, the other
+     * is returned.
+     *
+     * @param r1 A result.
+     * @param r2 Another result.
+     * @return The most recent one with a non-null date.
+     */
+    private TopDeviceAttachedResult getMostRecentDevice(TopDeviceAttachedResult r1, TopDeviceAttachedResult r2) {
+        if (r2.getDateAccessed() == null) {
+            return r1;
+        }
+
+        if (r1.getDateAccessed() == null) {
+            return r2;
+        }
+
+        return r1.getDateAccessed().compareTo(r2.getDateAccessed()) >= 0 ? r1 : r2;
+    }
+
+    /**
      * Retrieves most recent devices used by most recent date attached.
      *
      * @param dataSource The data source.
-     * @param count      The maximum number of records to be shown (must be >
-     *                   0).
+     * @param count The maximum number of records to be shown (must be > 0).
      *
      * @return The list of most recent devices attached where most recent device
-     *         attached appears first.
+     * attached appears first.
      *
      * @throws
      * org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException
@@ -403,7 +487,7 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
             return Collections.emptyList();
         }
 
-        return DataSourceInfoUtilities.getArtifacts(caseProvider.get(), TYPE_DEVICE_ATTACHED,
+        Collection<TopDeviceAttachedResult> results = DataSourceInfoUtilities.getArtifacts(caseProvider.get(), TYPE_DEVICE_ATTACHED,
                 dataSource, TYPE_DATETIME, DataSourceInfoUtilities.SortOrder.DESCENDING, 0)
                 .stream()
                 .map(artifact -> {
@@ -416,9 +500,14 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
                 })
                 // remove Root Hub identifier
                 .filter(result -> {
-                    return result.getDeviceModel() == null
+                    return result.getDeviceId() == null
+                            || result.getDeviceModel() == null
                             || !DEVICE_EXCLUDE_LIST.contains(result.getDeviceModel().trim().toUpperCase());
                 })
+                .collect(Collectors.toMap(result -> result.getDeviceId(), result -> result, (r1, r2) -> getMostRecentDevice(r1, r2)))
+                .values();
+
+        return results.stream()
                 .limit(count)
                 .collect(Collectors.toList());
     }
@@ -429,7 +518,7 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
      * @param artifact The artifact.
      *
      * @return The TopAccountResult or null if the account type or message date
-     *         cannot be determined.
+     * cannot be determined.
      */
     private static TopAccountResult getMessageAccountResult(BlackboardArtifact artifact) {
         String type = DataSourceInfoUtilities.getStringOrNull(artifact, TYPE_MESSAGE_TYPE);
@@ -443,12 +532,12 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
      * Obtains a TopAccountResult from a blackboard artifact. The date is
      * maximum of any found dates for attribute types provided.
      *
-     * @param artifact    The artifact.
+     * @param artifact The artifact.
      * @param messageType The type of message this is.
-     * @param dateAttrs   The date attribute types.
+     * @param dateAttrs The date attribute types.
      *
      * @return The TopAccountResult or null if the account type or max date are
-     *         not provided.
+     * not provided.
      */
     private static TopAccountResult getAccountResult(BlackboardArtifact artifact, String messageType, BlackboardAttribute.Type... dateAttrs) {
         String type = messageType;
@@ -472,11 +561,10 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
      * sent.
      *
      * @param dataSource The data source.
-     * @param count      The maximum number of records to be shown (must be >
-     *                   0).
+     * @param count The maximum number of records to be shown (must be > 0).
      *
      * @return The list of most recent accounts used where the most recent
-     *         account by last message sent occurs first.
+     * account by last message sent occurs first.
      *
      * @throws
      * org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException
@@ -519,24 +607,209 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
         Stream<TopAccountResult> allResults = Stream.concat(messageResults, Stream.concat(emailResults, calllogResults));
 
         // get them grouped by account type        
-        Collection<List<TopAccountResult>> groupedResults = allResults
+        Collection<TopAccountResult> groupedResults = allResults
                 // remove null records
                 .filter(result -> result != null)
-                // get these messages grouped by account type
-                .collect(Collectors.groupingBy(TopAccountResult::getAccountType))
+                // get these messages grouped by account type and get the most recent of each type
+                .collect(Collectors.toMap(
+                        result -> result.getAccountType(),
+                        result -> result,
+                        (result1, result2) -> TOP_ACCOUNT_RESULT_DATE_COMPARE.compare(result1, result2) >= 0 ? result1 : result2))
                 .values();
 
         // get account type sorted by most recent date
         return groupedResults
                 .stream()
-                // get the most recent access per account type
-                .map((accountGroup) -> accountGroup.stream().max(TOP_ACCOUNT_RESULT_DATE_COMPARE).get())
                 // get most recent accounts accessed
                 .sorted(TOP_ACCOUNT_RESULT_DATE_COMPARE.reversed())
                 // limit to count
                 .limit(count)
                 // get as list
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Determines a short folder name if any. Otherwise, returns empty string.
+     *
+     * @param strPath The string path.
+     * @param applicationName The application name.
+     *
+     * @return The short folder name or empty string if not found.
+     */
+    public String getShortFolderName(String strPath, String applicationName) {
+        if (strPath == null) {
+            return "";
+        }
+
+        List<String> pathEls = new ArrayList<>(Arrays.asList(applicationName));
+
+        File file = new File(strPath);
+        while (file != null && org.apache.commons.lang.StringUtils.isNotBlank(file.getName())) {
+            pathEls.add(file.getName());
+            file = file.getParentFile();
+        }
+
+        Collections.reverse(pathEls);
+
+        for (Function<List<String>, String> matchEntry : SHORT_FOLDER_MATCHERS) {
+            String result = matchEntry.apply(pathEls);
+            if (org.apache.commons.lang.StringUtils.isNotBlank(result)) {
+                return result;
+            }
+        }
+
+        return "";
+    }
+
+    /**
+     * Creates a TopProgramsResult from a TSK_PROG_RUN blackboard artifact.
+     *
+     * @param artifact The TSK_PROG_RUN blackboard artifact.
+     *
+     * @return The generated TopProgramsResult.
+     */
+    private TopProgramsResult getTopProgramsResult(BlackboardArtifact artifact) {
+        String programName = DataSourceInfoUtilities.getStringOrNull(artifact, TYPE_PROG_NAME);
+
+        // ignore items with no name or a ntos boot identifier
+        if (StringUtils.isBlank(programName) || NTOS_BOOT_IDENTIFIER.equalsIgnoreCase(programName)) {
+            return null;
+        }
+
+        String path = DataSourceInfoUtilities.getStringOrNull(artifact, TYPE_PATH);
+
+        // ignore windows directory
+        if (StringUtils.startsWithIgnoreCase(path, WINDOWS_PREFIX)) {
+            return null;
+        }
+
+        Integer count = DataSourceInfoUtilities.getIntOrNull(artifact, TYPE_COUNT);
+        Long longCount = (count == null) ? null : (long) count;
+
+        return new TopProgramsResult(
+                programName,
+                path,
+                longCount,
+                DataSourceInfoUtilities.getDateOrNull(artifact, TYPE_DATETIME)
+        );
+    }
+
+    /**
+     * Retrieves the maximum date given two (possibly null) dates.
+     *
+     * @param date1 First date.
+     * @param date2 Second date.
+     *
+     * @return The maximum non-null date or null if both items are null.
+     */
+    private static Date getMax(Date date1, Date date2) {
+        if (date1 == null) {
+            return date2;
+        } else if (date2 == null) {
+            return date1;
+        } else {
+            return date1.compareTo(date2) > 0 ? date1 : date2;
+        }
+    }
+
+    /**
+     * Returns the compare value favoring the higher non-null number.
+     *
+     * @param long1 First possibly null long.
+     * @param long2 Second possibly null long.
+     *
+     * @return Returns the compare value: 1,0,-1 favoring the higher non-null
+     * value.
+     */
+    private static int nullableCompare(Long long1, Long long2) {
+        if (long1 == null && long2 == null) {
+            return 0;
+        } else if (long1 != null && long2 == null) {
+            return 1;
+        } else if (long1 == null && long2 != null) {
+            return -1;
+        }
+
+        return Long.compare(long1, long2);
+    }
+
+    /**
+     * Returns true if number is non-null and higher than 0.
+     *
+     * @param longNum The number.
+     *
+     * @return True if non-null and higher than 0.
+     */
+    private static boolean isPositiveNum(Long longNum) {
+        return longNum != null && longNum > 0;
+    }
+
+    /**
+     * Retrieves the top programs results for the given data source limited to
+     * the count provided as a parameter. The highest run times are at the top
+     * of the list. If that information isn't available the last run date is
+     * used. If both, the last run date and the number of run times are
+     * unavailable, the programs will be sorted alphabetically, the count will
+     * be ignored and all items will be returned.
+     *
+     * @param dataSource The datasource. If the datasource is null, an empty
+     * list will be returned.
+     * @param count The number of results to return. This value must be > 0 or
+     * an IllegalArgumentException will be thrown.
+     *
+     * @return The sorted list and limited to the count if last run or run count
+     * information is available on any item.
+     *
+     * @throws SleuthkitCaseProviderException
+     * @throws TskCoreException
+     */
+    public List<TopProgramsResult> getTopPrograms(DataSource dataSource, int count) throws SleuthkitCaseProviderException, TskCoreException {
+        assertValidCount(count);
+
+        if (dataSource == null) {
+            return Collections.emptyList();
+        }
+
+        // Get TopProgramsResults for each TSK_PROG_RUN artifact
+        Collection<TopProgramsResult> results = caseProvider.get().getBlackboard().getArtifacts(ARTIFACT_TYPE.TSK_PROG_RUN.getTypeID(), dataSource.getId())
+                .stream()
+                // convert to a TopProgramsResult object or null if missing critical information
+                .map((art) -> getTopProgramsResult(art))
+                // remove any null items
+                .filter((res) -> res != null)
+                // group by the program name and program path
+                // The value will be a TopProgramsResult with the max run times 
+                // and most recent last run date for each program name / program path pair.
+                .collect(Collectors.toMap(
+                        res -> Pair.of(
+                                res.getProgramName() == null ? null : res.getProgramName().toUpperCase(),
+                                res.getProgramPath() == null ? null : res.getProgramPath().toUpperCase()),
+                        res -> res,
+                        (res1, res2) -> {
+                            return new TopProgramsResult(
+                                    res1.getProgramName(),
+                                    res1.getProgramPath(),
+                                    getMax(res1.getRunTimes(), res2.getRunTimes()),
+                                    getMax(res1.getLastRun(), res2.getLastRun()));
+                        })).values();
+
+        List<TopProgramsResult> orderedResults = results.stream()
+                .sorted(TOP_PROGRAMS_RESULT_COMPARE)
+                .collect(Collectors.toList());
+
+        // only limit the list to count if there is no last run date and no run times.
+        if (!orderedResults.isEmpty()) {
+            TopProgramsResult topResult = orderedResults.get(0);
+            // if run times / last run information is available, the first item should have some value,
+            // and then the items should be limited accordingly.
+            if (isPositiveNum(topResult.getRunTimes())
+                    || (topResult.getLastRun() != null && isPositiveNum(topResult.getLastRun().getTime()))) {
+                return orderedResults.stream().limit(count).collect(Collectors.toList());
+            }
+        }
+
+        // otherwise return the alphabetized list with no limit applied.
+        return orderedResults;
     }
 
     /**
@@ -603,10 +876,10 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
         /**
          * Main constructor.
          *
-         * @param deviceId     The device id.
+         * @param deviceId The device id.
          * @param dateAccessed The date last attached.
-         * @param deviceMake   The device make.
-         * @param deviceModel  The device model.
+         * @param deviceMake The device make.
+         * @param deviceModel The device model.
          */
         public TopDeviceAttachedResult(String deviceId, Date dateAccessed, String deviceMake, String deviceModel) {
             this.deviceId = deviceId;
@@ -657,7 +930,7 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
          * Main constructor.
          *
          * @param accountType The account type.
-         * @param lastAccess  The date the account was last accessed.
+         * @param lastAccess The date the account was last accessed.
          */
         public TopAccountResult(String accountType, Date lastAccess) {
             this.accountType = accountType;
@@ -691,9 +964,9 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
         /**
          * Describes a top domain result.
          *
-         * @param domain     The domain.
+         * @param domain The domain.
          * @param visitTimes The number of times it was visited.
-         * @param lastVisit  The date of the last visit.
+         * @param lastVisit The date of the last visit.
          */
         public TopDomainsResult(String domain, Long visitTimes, Date lastVisit) {
             this.domain = domain;
@@ -720,6 +993,59 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
          */
         public Date getLastVisit() {
             return lastVisit;
+        }
+    }
+
+    /**
+     * Describes a result of a program run on a datasource.
+     */
+    public static class TopProgramsResult {
+
+        private final String programName;
+        private final String programPath;
+        private final Long runTimes;
+        private final Date lastRun;
+
+        /**
+         * Main constructor.
+         *
+         * @param programName The name of the program.
+         * @param programPath The path of the program.
+         * @param runTimes The number of runs.
+         */
+        TopProgramsResult(String programName, String programPath, Long runTimes, Date lastRun) {
+            this.programName = programName;
+            this.programPath = programPath;
+            this.runTimes = runTimes;
+            this.lastRun = lastRun;
+        }
+
+        /**
+         * @return The name of the program
+         */
+        public String getProgramName() {
+            return programName;
+        }
+
+        /**
+         * @return The path of the program.
+         */
+        public String getProgramPath() {
+            return programPath;
+        }
+
+        /**
+         * @return The number of run times or null if not present.
+         */
+        public Long getRunTimes() {
+            return runTimes;
+        }
+
+        /**
+         * @return The last time the program was run or null if not present.
+         */
+        public Date getLastRun() {
+            return lastRun;
         }
     }
 }

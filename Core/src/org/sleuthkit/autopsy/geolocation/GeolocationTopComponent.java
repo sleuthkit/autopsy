@@ -115,7 +115,8 @@ public final class GeolocationTopComponent extends TopComponent {
                         || eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_ROUTE.getTypeID()
                         || eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID()
                         || eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_BOOKMARK.getTypeID()
-                        || eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACK.getTypeID())) {
+                        || eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACK.getTypeID()
+                        || eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_AREA.getTypeID())) {
 
                     showRefreshPanel(true);
                 }
@@ -330,7 +331,7 @@ public final class GeolocationTopComponent extends TopComponent {
      *
      * @param waypointList
      */
-    void addWaypointsToMap(Set<MapWaypoint> waypointList, List<Set<MapWaypoint>> tracks) {
+    void addWaypointsToMap(Set<MapWaypoint> waypointList, List<Set<MapWaypoint>> tracks, List<Set<MapWaypoint>> areas) {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
@@ -348,6 +349,7 @@ public final class GeolocationTopComponent extends TopComponent {
                 mapPanel.clearWaypoints();
                 mapPanel.setWaypoints(waypointList);
                 mapPanel.setTracks(tracks);
+                mapPanel.setAreas(areas);
                 mapPanel.initializePainter();
                 setWaypointLoading(false);
                 geoFilterPanel.setEnabled(true);
@@ -505,8 +507,9 @@ public final class GeolocationTopComponent extends TopComponent {
         }
 
         @Override
-        void handleFilteredWaypointSet(Set<MapWaypoint> mapWaypoints, List<Set<MapWaypoint>> tracks, boolean wasEntirelySuccessful) {
-            addWaypointsToMap(mapWaypoints, tracks);
+        void handleFilteredWaypointSet(Set<MapWaypoint> mapWaypoints, List<Set<MapWaypoint>> tracks,
+                List<Set<MapWaypoint>> areas, boolean wasEntirelySuccessful) {
+            addWaypointsToMap(mapWaypoints, tracks, areas);
             
             // if there is an error, present to the user.
             if (!wasEntirelySuccessful) {

@@ -27,7 +27,7 @@ def make_os_path(platform, *dirs):
             path += str(dir).replace('\\', '/') + '/'
         return path_fix(path)
     elif platform == "win32":
-        return make_path(dirs)
+        return make_path(*dirs)
     else:
         print("Couldn't make path, because we only support Windows and Cygwin at this time.")
         sys.exit(1)

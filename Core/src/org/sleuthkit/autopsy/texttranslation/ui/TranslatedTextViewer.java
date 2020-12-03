@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,16 +38,15 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
-import org.sleuthkit.autopsy.corecomponents.DataContentViewerUtility;
 import org.sleuthkit.autopsy.coreutils.ExecUtil.ProcessTerminator;
 import org.sleuthkit.autopsy.textextractors.TextExtractor;
 import org.sleuthkit.autopsy.textextractors.TextExtractorFactory;
 import org.sleuthkit.autopsy.textextractors.configs.ImageConfig;
 import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
-import org.sleuthkit.datamodel.Content;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.SwingUtilities;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.texttranslation.ui.TranslationContentPanel.DisplayDropdownOptions;
@@ -60,8 +59,6 @@ public final class TranslatedTextViewer implements TextViewer {
 
     private static final Logger logger = Logger.getLogger(TranslatedTextViewer.class.getName());
 
-    private static final boolean OCR_ENABLED = true;
-    private static final boolean OCR_DISABLED = false;
     private static final int MAX_EXTRACT_SIZE_BYTES = 25600;
     private static final List<String> INSTALLED_LANGUAGE_PACKS = PlatformUtil.getOcrLanguagePacks();
     private final TranslationContentPanel panel = new TranslationContentPanel();
@@ -81,15 +78,10 @@ public final class TranslatedTextViewer implements TextViewer {
         SelectionChangeListener displayDropDownListener = new DisplayDropDownChangeListener();
         panel.addDisplayTextActionListener(displayDropDownListener);
         panel.addOcrDropDownActionListener(new OCRDropdownChangeListener());
-        Content source = DataContentViewerUtility.getDefaultContent(node);
-
-        if (source instanceof AbstractFile) {
-            boolean isImage = ((AbstractFile) source).getMIMEType().toLowerCase().startsWith("image/");
-            if (isImage) {
-                panel.enableOCRSelection(OCR_ENABLED);
-                panel.addLanguagePackNames(INSTALLED_LANGUAGE_PACKS);
-            }
+        if (UserPreferences.getUseOcrInTranslation()) {
+            panel.addLanguagePackNames(INSTALLED_LANGUAGE_PACKS);
         }
+        panel.enableOCRSelection(UserPreferences.getUseOcrInTranslation());
 
         int payloadMaxInKB = TextTranslationService.getInstance().getMaxTextChars() / 1000;
         panel.setWarningLabelMsg(String.format(Bundle.TranslatedTextViewer_maxPayloadSize(), payloadMaxInKB));
@@ -201,14 +193,16 @@ public final class TranslatedTextViewer implements TextViewer {
          * @throws
          * org.sleuthkit.autopsy.textextractors.TextExtractor.InitReaderException
          */
+        @NbBundle.Messages({
+            "TranslatedContentViewer.ocrNotEnabled=OCR is not enabled. To change, go to Tools->Options->Machine Translation",
+        })
         private String getFileText(AbstractFile file) throws IOException, InterruptedException, TextExtractor.InitReaderException {
             final boolean isImage = file.getMIMEType().toLowerCase().startsWith("image/"); // NON-NLS
-            String result;
-            if (isImage) {
-                result = extractText(file, OCR_ENABLED);
-            } else {
-                result = extractText(file, OCR_DISABLED);
+            if (isImage && ! UserPreferences.getUseOcrInTranslation()) {
+                return Bundle.TranslatedContentViewer_ocrNotEnabled();
             }
+            
+            String result = extractText(file, UserPreferences.getUseOcrInTranslation());
 
             //Correct for UTF-8
             byte[] resultInUTF8Bytes = result.getBytes("UTF8");

@@ -20,6 +20,8 @@ package org.sleuthkit.autopsy.contentviewers.contextviewer;
 
 import java.awt.Component;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -56,8 +58,8 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
 
     // defines a list of artifacts that provide context for a file
     private static final List<BlackboardArtifact.ARTIFACT_TYPE> CONTEXT_ARTIFACTS = new ArrayList<>();
-    private final List<javax.swing.JPanel> contextSourcePanels = new ArrayList<>();
-    private final List<javax.swing.JPanel> contextUsagePanels = new ArrayList<>();
+    private final List<ContextSourcePanel> contextSourcePanels = new ArrayList<>();
+    private final List<ContextUsagePanel> contextUsagePanels = new ArrayList<>();
 
     static {
         CONTEXT_ARTIFACTS.add(TSK_ASSOCIATED_OBJECT);
@@ -338,32 +340,36 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
         "ContextViewer.programExecution=Program Execution: "
     })
     private void addArtifactToPanels(BlackboardArtifact associatedArtifact) throws TskCoreException {
+        Long dateTime = getArtifactDateTime(associatedArtifact);
         if (BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE.getTypeID() == associatedArtifact.getArtifactTypeID()
                 || BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID() == associatedArtifact.getArtifactTypeID()) {
             String sourceName = Bundle.ContextViewer_attachmentSource();
             String sourceText = msgArtifactToAbbreviatedString(associatedArtifact);
-            javax.swing.JPanel sourcePanel = new ContextSourcePanel(sourceName, sourceText, associatedArtifact);
+            ContextSourcePanel sourcePanel = new ContextSourcePanel(sourceName, sourceText, associatedArtifact, dateTime);
             contextSourcePanels.add(sourcePanel);
 
         } else if (BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID() == associatedArtifact.getArtifactTypeID()
                 || BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID() == associatedArtifact.getArtifactTypeID()) {
             String sourceName = Bundle.ContextViewer_downloadSource();
             String sourceText = webDownloadArtifactToString(associatedArtifact);
-            javax.swing.JPanel sourcePanel = new ContextSourcePanel(sourceName, sourceText, associatedArtifact);
+            ContextSourcePanel sourcePanel = new ContextSourcePanel(sourceName, sourceText, associatedArtifact, dateTime);
             contextSourcePanels.add(sourcePanel);
 
         } else if (BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT.getTypeID() == associatedArtifact.getArtifactTypeID()) {
             String sourceName = Bundle.ContextViewer_recentDocs();
             String sourceText = recentDocArtifactToString(associatedArtifact);
-            javax.swing.JPanel usagePanel = new ContextUsagePanel(sourceName, sourceText, associatedArtifact);        
+            ContextUsagePanel usagePanel = new ContextUsagePanel(sourceName, sourceText, associatedArtifact, dateTime);        
             contextUsagePanels.add(usagePanel);
             
         } else if (BlackboardArtifact.ARTIFACT_TYPE.TSK_PROG_RUN.getTypeID() == associatedArtifact.getArtifactTypeID()) {
             String sourceName = Bundle.ContextViewer_programExecution();
             String sourceText = programExecArtifactToString(associatedArtifact);
-            javax.swing.JPanel usagePanel = new ContextUsagePanel(sourceName, sourceText, associatedArtifact);        
+            ContextUsagePanel usagePanel = new ContextUsagePanel(sourceName, sourceText, associatedArtifact, dateTime);        
             contextUsagePanels.add(usagePanel);
         }
+        
+        Collections.sort(contextSourcePanels, new SortByDateTime());
+        Collections.sort(contextUsagePanels, new SortByDateTime());
     }
 
     /**
@@ -531,6 +537,59 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
         }
 
         return attributeMap;
+    }
+    
+    interface DateTimePanel {
+        /**
+         * Return the date time value for this panel.
+         *
+         * @return Date time value or null of one is not available.
+         */
+        Long getDateTime();
+    }
+    
+        /**
+     * Return the dateTime value for the given message artifact.
+     * 
+     * @param artifact 
+     * 
+     * @return Long dateTime value or null if the attribute was not found.
+     * 
+     * @throws TskCoreException 
+     */
+    private Long getArtifactDateTime(BlackboardArtifact artifact) throws TskCoreException {
+        BlackboardAttribute attribute =  artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME));
+        
+        if (BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID() == artifact.getArtifactTypeID()) {
+            attribute =  artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_SENT));
+        } else if (BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID() == artifact.getArtifactTypeID()
+                || BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID() == artifact.getArtifactTypeID()) {
+            attribute =  artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED));
+        }
+        return (attribute != null ? attribute.getValueLong() : null);
+    }
+    
+    /**
+     * Class for sorting lists of DateTimePanels.
+     */
+    class SortByDateTime implements Comparator<DateTimePanel> {
+
+        @Override
+        public int compare(DateTimePanel panel1, DateTimePanel panel2) {
+            Long dateTime1 = panel1.getDateTime();
+            Long dateTime2 = panel2.getDateTime();
+            
+            if(dateTime1 == null && dateTime2 == null) {
+                return 0;
+            } else if(dateTime1 == null) {
+                return -1;
+            } else if(dateTime2 == null) {
+                return 1;
+            }
+            
+            return dateTime1.compareTo(dateTime2);
+        }
+        
     }
 
 
