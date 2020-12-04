@@ -39,9 +39,10 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.openide.util.ImageUtilities;
 
 /**
- * Loads a thumbnail for the given request. Thumbnail candidates are JPEG files
- * that have either TSK_WEB_DOWNLOAD or TSK_WEB_CACHE artifacts that match the
- * domain name (see the DomainSearch getArtifacts() API). JPEG files are sorted
+ * Loads a thumbnail for the given request. Thumbnail candidates types are defined below. 
+ * These candidates types must be the source of either TSK_WEB_DOWNLOAD or 
+ * TSK_WEB_CACHE artifacts that match the
+ * domain name (see the DomainSearch getArtifacts() API). Candidate files are sorted
  * by most recent if sourced from TSK_WEB_DOWNLOADs and by size if sourced from
  * TSK_WEB_CACHE artifacts. The first suitable thumbnail is selected.
  */
@@ -139,12 +140,12 @@ public class DomainSearchThumbnailLoader extends CacheLoader<DomainSearchThumbna
     }
 
     /**
-     * Finds all JPEG source files from TSK_WEB_DOWNLOAD instances.
+     * Finds all supported image files from TSK_WEB_DOWNLOAD instances.
      *
      * @param caseDb    The case database being searched.
-     * @param artifacts The list of artifacts to get jpegs from.
+     * @param artifacts The list of artifacts to search.
      *
-     * @return The list of AbstractFiles representing jpegs which were
+     * @return The list of AbstractFiles representing supported images which were
      *         associated with the artifacts.
      *
      * @throws TskCoreException
@@ -167,12 +168,12 @@ public class DomainSearchThumbnailLoader extends CacheLoader<DomainSearchThumbna
     }
 
     /**
-     * Finds all JPEG source files from TSK_WEB_CACHE instances.
+     * Finds all supported image files from TSK_WEB_CACHE instances.
      *
      * @param caseDb    The case database being searched.
-     * @param artifacts The list of artifacts to get jpegs from.
+     * @param artifacts The list of artifacts to get images from.
      *
-     * @return The list of AbstractFiles representing jpegs which were
+     * @return The list of AbstractFiles representing supported images which were
      *         associated with the artifacts.
      */
     private List<AbstractFile> getCandidatesFromWebCache(SleuthkitCase caseDb, List<BlackboardArtifact> artifacts) throws TskCoreException, InterruptedException {
@@ -192,10 +193,9 @@ public class DomainSearchThumbnailLoader extends CacheLoader<DomainSearchThumbna
     }
 
     /**
-     * Checks if the candidate source content is indeed a JPEG file.
+     * Checks if the candidate source content is indeed a supported type.
      *
-     * @param files         The list of source content files which are jpegs to
-     *                      add to.
+     * @param files         The list of source content files which are supported.
      * @param sourceContent The source content to check and possibly add.
      */
     private void addIfSupported(List<AbstractFile> files, Content sourceContent) {
