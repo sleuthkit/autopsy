@@ -81,7 +81,7 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
         Extract sru = new ExtractSru();
         Extract prefetch = new ExtractPrefetch();
         Extract webAccountType = new ExtractWebAccountType();
-        Extract messageDomainType = new MessageURLAnalyzer();
+        Extract messageDomainType = new DomainCategorizer();
 
         extractors.add(chrome);
         extractors.add(firefox);

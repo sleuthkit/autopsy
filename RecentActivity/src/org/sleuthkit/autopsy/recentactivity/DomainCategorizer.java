@@ -54,31 +54,31 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Analyzes a URL to determine if the url host is one that handles messages
- * (i.e. webmail, disposable mail). If found, a domain category type artifact is
+ * Analyzes a URL to determine if the url host is one of a certain kind of category
+ * (i.e. webmail, disposable mail). If found, a web category artifact is
  * created.
  *
- * CSV entries describing these message types are compiled from sources.
+ * CSV entries describing these domain types are compiled from sources.
  * webmail: https://github.com/mailcheck/mailcheck/wiki/List-of-Popular-Domains
  * disposable mail: https://www.npmjs.com/package/disposable-email-domains
  */
 @Messages({
     "DomainCategorizer_moduleName_text=DomainCategorizer",
-    "DomainCategorizer_Progress_Message_Find_Message_URLs=Finding Messaging Domains",
+    "DomainCategorizer_Progress_Message_Domain_Types=Finding Domain Types",
     "DomainCategorizer_parentModuleName=Recent Activity"
 })
 class DomainCategorizer extends Extract {
 
     /**
-     * The message service type (i.e. webmail, disposable mail).
+     * The domain type (i.e. webmail, disposable mail).
      */
     @Messages({
-        "MessageType_disposableMail_displayName=Disposable Email",
-        "MessageType_webmail_displayName=Web Email"
+        "DomainType_disposableMail_displayName=Disposable Email",
+        "DomainType_webmail_displayName=Web Email"
     })
-    private enum MessageType {
-        DISPOSABLE_EMAIL("disposable", Bundle.MessageType_disposableMail_displayName()),
-        WEBMAIL("webmail", Bundle.MessageType_webmail_displayName());
+    private enum DomainType {
+        DISPOSABLE_EMAIL("Disposable Email", Bundle.DomainType_disposableMail_displayName()),
+        WEBMAIL("Web Email", Bundle.DomainType_webmail_displayName());
 
         private final String csvId;
         private final String attrDisplayName;
@@ -90,7 +90,7 @@ class DomainCategorizer extends Extract {
          * @param attrDisplayName The display name in the artifact for this
          * domain category.
          */
-        private MessageType(String csvId, String attrDisplayName) {
+        private DomainType(String csvId, String attrDisplayName) {
             this.csvId = csvId;
             this.attrDisplayName = attrDisplayName;
         }
@@ -112,14 +112,14 @@ class DomainCategorizer extends Extract {
 
     /**
      * A node in the trie indicating a domain suffix token. For instance, the
-     * csv entry: "hotmail.com,webmail" would get parsed to a node, "com" having
+     * csv entry: "hotmail.com,Web Email" would get parsed to a node, "com" having
      * a child of "hotmail". That child node, as a leaf, would have a webmail
      * message type.
      */
-    private static class MessageDomainTrieNode {
+    private static class DomainTypeTrieNode {
 
-        private final Map<String, MessageDomainTrieNode> children = new HashMap<>();
-        private MessageType messageType = null;
+        private final Map<String, DomainTypeTrieNode> children = new HashMap<>();
+        private DomainType domainType = null;
 
         /**
          * Retrieves the child node of the given key. If that child key does not
@@ -128,10 +128,10 @@ class DomainCategorizer extends Extract {
          * @param childKey The key for the child (i.e. "com").
          * @return The retrieved or newly created child node.
          */
-        MessageDomainTrieNode getOrAddChild(String childKey) {
-            MessageDomainTrieNode child = children.get(childKey);
+        DomainTypeTrieNode getOrAddChild(String childKey) {
+            DomainTypeTrieNode child = children.get(childKey);
             if (child == null) {
-                child = new MessageDomainTrieNode();
+                child = new DomainTypeTrieNode();
                 children.put(childKey, child);
             }
 
@@ -145,24 +145,24 @@ class DomainCategorizer extends Extract {
          * @param childKey The key for the child node (i.e. "com").
          * @return The child node or null if it does not exist.
          */
-        MessageDomainTrieNode getChild(String childKey) {
+        DomainTypeTrieNode getChild(String childKey) {
             return children.get(childKey);
         }
 
         /**
-         * @return If this is a leaf node, the type of message for this node.
+         * @return If this is a leaf node, the type of domain for this node.
          */
-        MessageType getMessageType() {
-            return messageType;
+        DomainType getDomainType() {
+            return domainType;
         }
 
         /**
-         * If this is a leaf node, this sets the message type for this node.
+         * If this is a leaf node, this sets the domain type for this node.
          *
-         * @param messageType The message type for this leaf node.
+         * @param domainType The domain type for this leaf node.
          */
-        void setMessageType(MessageType messageType) {
-            this.messageType = messageType;
+        void setDomainType(DomainType domainType) {
+            this.domainType = domainType;
         }
     }
 
@@ -172,12 +172,12 @@ class DomainCategorizer extends Extract {
      * @return The root trie node.
      * @throws IOException
      */
-    private static MessageDomainTrieNode loadTrie() throws IOException {
-        try (InputStream is = DomainCategorizer.class.getResourceAsStream(MESSAGE_TYPE_CSV);
+    private static DomainTypeTrieNode loadTrie() throws IOException {
+        try (InputStream is = DomainCategorizer.class.getResourceAsStream(DOMAIN_TYPE_CSV);
                 InputStreamReader isReader = new InputStreamReader(is, StandardCharsets.UTF_8);
                 BufferedReader reader = new BufferedReader(isReader)) {
 
-            MessageDomainTrieNode trie = new MessageDomainTrieNode();
+            DomainTypeTrieNode trie = new DomainTypeTrieNode();
             int lineNum = 1;
             while (reader.ready()) {
                 String line = reader.readLine();
@@ -198,7 +198,7 @@ class DomainCategorizer extends Extract {
      * @param line The line to be parsed.
      * @param lineNumber The line number of this csv line.
      */
-    private static void addItem(MessageDomainTrieNode trie, String line, int lineNumber) {
+    private static void addItem(DomainTypeTrieNode trie, String line, int lineNumber) {
         // make sure this isn't a blank line.
         if (StringUtils.isBlank(line)) {
             return;
@@ -211,18 +211,18 @@ class DomainCategorizer extends Extract {
             return;
         }
 
-        // determine the message type from the value, and return if can't be determined.
-        String messageTypeStr = csvItems[1].trim();
+        // determine the domain type from the value, and return if can't be determined.
+        String domainTypeStr = csvItems[1].trim();
 
-        MessageType messageType = (StringUtils.isNotBlank(messageTypeStr))
-                ? Stream.of(MessageType.values())
-                        .filter((m) -> m.getCsvId().equalsIgnoreCase(messageTypeStr))
+        DomainType domainType = (StringUtils.isNotBlank(domainTypeStr))
+                ? Stream.of(DomainType.values())
+                        .filter((m) -> m.getCsvId().equalsIgnoreCase(domainTypeStr))
                         .findFirst()
                         .orElse(null)
                 : null;
 
-        if (messageType == null) {
-            logger.log(Level.WARNING, String.format("Could not determine message type for this line: \"%s\" at line %d", line, lineNumber));
+        if (domainType == null) {
+            logger.log(Level.WARNING, String.format("Could not determine domain type for this line: \"%s\" at line %d", line, lineNumber));
             return;
         }
 
@@ -236,7 +236,7 @@ class DomainCategorizer extends Extract {
         String[] domainTokens = domainSuffix.trim().toLowerCase().split(DELIMITER);
 
         // add into the trie
-        MessageDomainTrieNode node = trie;
+        DomainTypeTrieNode node = trie;
         for (int i = domainTokens.length - 1; i >= 0; i--) {
             String token = domainTokens[i];
             if (StringUtils.isBlank(token)) {
@@ -246,7 +246,7 @@ class DomainCategorizer extends Extract {
             node = node.getOrAddChild(domainTokens[i]);
         }
 
-        node.setMessageType(messageType);
+        node.setDomainType(domainType);
 
     }
 
@@ -258,7 +258,7 @@ class DomainCategorizer extends Extract {
     // csv delimiter
     private static final String CSV_DELIMITER = ",";
 
-    private static final String MESSAGE_TYPE_CSV = "message_types.csv"; //NON-NLS
+    private static final String DOMAIN_TYPE_CSV = "default_domain_categories.csv"; //NON-NLS
 
     // The url regex is based on the regex provided in https://tools.ietf.org/html/rfc3986#appendix-B
     // but expanded to be a little more flexible, and also properly parses user info and port in a url
@@ -278,7 +278,7 @@ class DomainCategorizer extends Extract {
     private static final Logger logger = Logger.getLogger(DomainCategorizer.class.getName());
 
     // the root node for the trie containing suffixes for domain categories.
-    private MessageDomainTrieNode rootTrie = null;
+    private DomainTypeTrieNode rootTrie = null;
 
     private Content dataSource;
     private IngestJobContext context;
@@ -321,15 +321,15 @@ class DomainCategorizer extends Extract {
     }
 
     /**
-     * Determines if the host is a message type domain. If so, returns the
-     * portion of the host suffix that signifies the message domain (i.e.
-     * "hotmail.com" or "mail.google.com") and the message type.
+     * Determines if the host is a known type of domain. If so, returns the
+     * portion of the host suffix that signifies the domain type (i.e.
+     * "hotmail.com" or "mail.google.com") and the domain type.
      *
      * @param host The host.
-     * @return A pair of the host suffix and message type for that suffix if
+     * @return A pair of the host suffix and domain type for that suffix if
      * found. Otherwise, returns null.
      */
-    private Pair<String, MessageType> findHostSuffix(String host) {
+    private Pair<String, DomainType> findHostSuffix(String host) {
         // if no host, return none.
         if (StringUtils.isBlank(host)) {
             return null;
@@ -340,7 +340,7 @@ class DomainCategorizer extends Extract {
                 .filter(StringUtils::isNotBlank)
                 .collect(Collectors.toList());
 
-        MessageDomainTrieNode node = rootTrie;
+        DomainTypeTrieNode node = rootTrie;
         // the root node is null indicating we won't be able to do a lookup.
         if (node == null) {
             return null;
@@ -351,38 +351,38 @@ class DomainCategorizer extends Extract {
         for (; idx >= 0; idx--) {
             node = node.getChild(tokens.get(idx));
             // if we hit a leaf node or we have no matching child node, continue.
-            if (node == null || node.getMessageType() != null) {
+            if (node == null || node.getDomainType() != null) {
                 break;
             }
         }
 
-        MessageType messageType = node != null ? node.getMessageType() : null;
+        DomainType domainType = node != null ? node.getDomainType() : null;
 
-        if (messageType == null) {
+        if (domainType == null) {
             return null;
         } else {
-            // if there is a message type, we have a result.  Concatenate the 
+            // if there is a domain type, we have a result.  Concatenate the 
             // appropriate domain tokens and return.
             int minIndex = Math.max(0, idx);
             List<String> subList = tokens.subList(minIndex, tokens.size());
             String hostSuffix = String.join(JOINER, subList);
-            return Pair.of(hostSuffix, messageType);
+            return Pair.of(hostSuffix, domainType);
         }
     }
 
     /**
      * Goes through web history artifacts and attempts to determine any hosts of
-     * a message type. If any are found, a TSK_WEB_CATEGORIZATION artifact is
+     * a domain type. If any are found, a TSK_WEB_CATEGORIZATION artifact is
      * created (at most one per host suffix).
      */
-    private void findMessageDomains() {
+    private void findDomainTypes() {
         if (this.rootTrie == null) {
-            logger.log(Level.SEVERE, "Not analyzing message domain.  No root trie loaded.");
+            logger.log(Level.SEVERE, "Not analyzing domain types.  No root trie loaded.");
             return;
         }
 
         int artifactsAnalyzed = 0;
-        int messageDomainInstancesFound = 0;
+        int domainTypeInstancesFound = 0;
 
         // only one suffix per ingest is captured so this tracks the suffixes seen.
         Set<String> domainSuffixesSeen = new HashSet<>();
@@ -423,18 +423,18 @@ class DomainCategorizer extends Extract {
                 // if we reached this point, we are at least analyzing this item
                 artifactsAnalyzed++;
 
-                // attempt to get the message type for the host using the suffix trie
-                Pair<String, MessageType> messageEntryFound = findHostSuffix(host);
-                if (messageEntryFound == null) {
+                // attempt to get the domain type for the host using the suffix trie
+                Pair<String, DomainType> domainEntryFound = findHostSuffix(host);
+                if (domainEntryFound == null) {
                     continue;
                 }
 
-                // if we got this far, we found a message domain, but it may not be unique
-                messageDomainInstancesFound++;
+                // if we got this far, we found a domain type, but it may not be unique
+                domainTypeInstancesFound++;
 
-                String hostSuffix = messageEntryFound.getLeft();
-                MessageType messageType = messageEntryFound.getRight();
-                if (StringUtils.isBlank(hostSuffix) || messageType == null || domainSuffixesSeen.contains(hostSuffix)) {
+                String hostSuffix = domainEntryFound.getLeft();
+                DomainType domainType = domainEntryFound.getRight();
+                if (StringUtils.isBlank(hostSuffix) || domainType == null || domainSuffixesSeen.contains(hostSuffix)) {
                     continue;
                 }
 
@@ -447,7 +447,7 @@ class DomainCategorizer extends Extract {
                 Collection<BlackboardAttribute> bbattributes = Arrays.asList(
                         new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN, moduleName, NetworkUtils.extractDomain(host)),
                         new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_HOST, moduleName, host),
-                        new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME, moduleName, messageType.getAttrDisplayName())
+                        new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME, moduleName, domainType.getAttrDisplayName())
                 );
                 postArtifact(createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_CATEGORIZATION, file, bbattributes));
             }
@@ -459,7 +459,7 @@ class DomainCategorizer extends Extract {
             }
             logger.log(Level.INFO, String.format("Extracted %s distinct messaging domain(s) from the blackboard.  "
                     + "Of the %s artifact(s) with valid hosts, %s url(s) contained messaging domain suffix.",
-                    domainSuffixesSeen.size(), artifactsAnalyzed, messageDomainInstancesFound));
+                    domainSuffixesSeen.size(), artifactsAnalyzed, domainTypeInstancesFound));
         }
     }
 
@@ -469,7 +469,7 @@ class DomainCategorizer extends Extract {
         this.context = context;
 
         progressBar.progress(Bundle.Progress_Message_Find_Search_Query());
-        this.findMessageDomains();
+        this.findDomainTypes();
     }
 
     @Override
@@ -477,7 +477,7 @@ class DomainCategorizer extends Extract {
         try {
             this.rootTrie = loadTrie();
         } catch (IOException ex) {
-            throw new IngestModule.IngestModuleException("Unable to load message type csv for domain category analysis", ex);
+            throw new IngestModule.IngestModuleException("Unable to load domain type csv for domain category analysis", ex);
         }
     }
 
