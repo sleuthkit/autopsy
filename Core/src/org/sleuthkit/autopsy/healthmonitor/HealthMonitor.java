@@ -984,7 +984,7 @@ public final class HealthMonitor implements PropertyChangeListener {
                 getInstance().writeCurrentStateToDatabase();
             }
         } catch (HealthMonitorException ex) {
-            logger.log(Level.SEVERE, "Error performing periodic task", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Error recording health monitor metrics", ex); //NON-NLS
         }
     }
 
