@@ -21,13 +21,16 @@ package org.sleuthkit.autopsy.datasourcesummary.ui;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Supplier;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.IngestModuleCheckUtil;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.RecentFilesSummary;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.RecentFilesSummary.RecentAttachmentDetails;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.RecentFilesSummary.RecentDownloadDetails;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.RecentFilesSummary.RecentFileDetails;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer.DefaultCellModel;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer.MenuItem;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.IngestRunningLabel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel;
@@ -77,6 +80,36 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
         initalizeTables();
     }
 
+    /**
+     * Takes a base class of RecentFileDetails and provides the pertinent menu
+     * items.
+     *
+     * @param record The RecentFileDetails instance.
+     * @return The menu items list containing one action or navigating to the
+     * appropriate artifact/file and closing the data source summary dialog if
+     * open.
+     */
+    private Supplier<List<MenuItem>> getPopupFunct(RecentFileDetails record) {
+        return () -> {
+            if (record == null) {
+                return null;
+            }
+
+            List<MenuItem> toRet = new ArrayList<>();
+
+            MenuItem fileNav = getFileNavigateItem(record.getPath());
+            if (fileNav != null) {
+                toRet.add(fileNav);
+            }
+
+            if (record.getArtifact() != null) {
+                toRet.add(getArtifactNavigateItem(record.getArtifact()));
+            }
+
+            return (toRet.size() > 0) ? toRet : null;
+        };
+    }
+
     @Override
     protected void fetchInformation(DataSource dataSource) {
         fetchInformation(dataFetchComponents, dataSource);
@@ -113,11 +146,13 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
         List<ColumnModel<RecentFileDetails>> list = Arrays.asList(
                 new ColumnModel<>(Bundle.RecentFilePanel_col_header_path(),
                         (prog) -> {
-                            return new DefaultCellModel(prog.getPath());
+                            return new DefaultCellModel(prog.getPath())
+                                    .setPopupMenuRetriever(getPopupFunct(prog));
                         }, 250),
                 new ColumnModel<>(Bundle.RecentFilesPanel_col_head_date(),
                         (prog) -> {
-                            return new DefaultCellModel(prog.getDateAsString());
+                            return new DefaultCellModel(prog.getDateAsString())
+                                    .setPopupMenuRetriever(getPopupFunct(prog));
                         }, 80));
 
         ListTableModel<RecentFileDetails> tableModel = JTablePanel.getTableModel(list);
@@ -126,6 +161,7 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
         pane.setModel(tableModel);
         pane.setColumnModel(JTablePanel.getTableColumnModel(list));
         pane.setKeyFunction((recentFile) -> recentFile.getPath());
+        pane.setCellListener(CellModelTableCellRenderer.getMouseListener());
         tablePanelList.add(pane);
 
         DataFetchWorker.DataFetchComponents<DataSource, List<RecentFileDetails>> worker
@@ -148,15 +184,18 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
         List<ColumnModel<RecentDownloadDetails>> list = Arrays.asList(
                 new ColumnModel<>(Bundle.RecentFilePanel_col_header_domain(),
                         (prog) -> {
-                            return new DefaultCellModel(prog.getWebDomain());
+                            return new DefaultCellModel(prog.getWebDomain())
+                                    .setPopupMenuRetriever(getPopupFunct(prog));
                         }, 100),
                 new ColumnModel<>(Bundle.RecentFilePanel_col_header_path(),
                         (prog) -> {
-                            return new DefaultCellModel(prog.getPath());
+                            return new DefaultCellModel(prog.getPath())
+                                    .setPopupMenuRetriever(getPopupFunct(prog));
                         }, 250),
                 new ColumnModel<>(Bundle.RecentFilesPanel_col_head_date(),
                         (prog) -> {
-                            return new DefaultCellModel(prog.getDateAsString());
+                            return new DefaultCellModel(prog.getDateAsString())
+                                    .setPopupMenuRetriever(getPopupFunct(prog));
                         }, 80));
 
         ListTableModel<RecentDownloadDetails> tableModel = JTablePanel.getTableModel(list);
@@ -165,6 +204,7 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
         pane.setModel(tableModel);
         pane.setKeyFunction((download) -> download.getPath());
         pane.setColumnModel(JTablePanel.getTableColumnModel(list));
+        pane.setCellListener(CellModelTableCellRenderer.getMouseListener());
         tablePanelList.add(pane);
 
         DataFetchWorker.DataFetchComponents<DataSource, List<RecentDownloadDetails>> worker
@@ -187,15 +227,18 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
         List<ColumnModel<RecentAttachmentDetails>> list = Arrays.asList(
                 new ColumnModel<>(Bundle.RecentFilePanel_col_header_path(),
                         (prog) -> {
-                            return new DefaultCellModel(prog.getPath());
+                            return new DefaultCellModel(prog.getPath())
+                                    .setPopupMenuRetriever(getPopupFunct(prog));
                         }, 250),
                 new ColumnModel<>(Bundle.RecentFilesPanel_col_head_date(),
                         (prog) -> {
-                            return new DefaultCellModel(prog.getDateAsString());
+                            return new DefaultCellModel(prog.getDateAsString())
+                                    .setPopupMenuRetriever(getPopupFunct(prog));
                         }, 80),
                 new ColumnModel<>(Bundle.RecentFilePanel_col_header_sender(),
                         (prog) -> {
-                            return new DefaultCellModel(prog.getSender());
+                            return new DefaultCellModel(prog.getSender())
+                                    .setPopupMenuRetriever(getPopupFunct(prog));
                         }, 150));
 
         ListTableModel<RecentAttachmentDetails> tableModel = JTablePanel.getTableModel(list);
@@ -204,6 +247,7 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
         pane.setModel(tableModel);
         pane.setKeyFunction((attachment) -> attachment.getPath());
         pane.setColumnModel(JTablePanel.getTableColumnModel(list));
+        pane.setCellListener(CellModelTableCellRenderer.getMouseListener());
         tablePanelList.add(pane);
 
         DataFetchWorker.DataFetchComponents<DataSource, List<RecentAttachmentDetails>> worker
@@ -234,6 +278,9 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
         javax.swing.JLabel openDocsLabel = new javax.swing.JLabel();
         javax.swing.JLabel downloadLabel = new javax.swing.JLabel();
         javax.swing.JLabel attachmentLabel = new javax.swing.JLabel();
+        javax.swing.JLabel rightClickForMoreOptions1 = new javax.swing.JLabel();
+        javax.swing.JLabel rightClickForMoreOptions2 = new javax.swing.JLabel();
+        javax.swing.JLabel rightClickForMoreOptions3 = new javax.swing.JLabel();
 
         setLayout(new java.awt.BorderLayout());
 
@@ -263,7 +310,7 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
         tablePanel.add(openedDocPane, gridBagConstraints);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 4;
+        gridBagConstraints.gridy = 5;
         gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTH;
         gridBagConstraints.weightx = 1.0;
@@ -272,7 +319,7 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
         tablePanel.add(downloadsPane, gridBagConstraints);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 6;
+        gridBagConstraints.gridy = 8;
         gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTH;
         gridBagConstraints.weightx = 1.0;
@@ -291,7 +338,7 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
         org.openide.awt.Mnemonics.setLocalizedText(downloadLabel, org.openide.util.NbBundle.getMessage(RecentFilesPanel.class, "RecentFilesPanel.downloadLabel.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 3;
+        gridBagConstraints.gridy = 4;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.insets = new java.awt.Insets(20, 0, 0, 0);
         tablePanel.add(downloadLabel, gridBagConstraints);
@@ -299,11 +346,35 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
         org.openide.awt.Mnemonics.setLocalizedText(attachmentLabel, org.openide.util.NbBundle.getMessage(RecentFilesPanel.class, "RecentFilesPanel.attachmentLabel.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 5;
+        gridBagConstraints.gridy = 7;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTH;
         gridBagConstraints.insets = new java.awt.Insets(20, 0, 0, 0);
         tablePanel.add(attachmentLabel, gridBagConstraints);
+
+        org.openide.awt.Mnemonics.setLocalizedText(rightClickForMoreOptions1, org.openide.util.NbBundle.getMessage(RecentFilesPanel.class, "RecentFilesPanel.rightClickForMoreOptions1.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 3;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTH;
+        tablePanel.add(rightClickForMoreOptions1, gridBagConstraints);
+
+        org.openide.awt.Mnemonics.setLocalizedText(rightClickForMoreOptions2, org.openide.util.NbBundle.getMessage(RecentFilesPanel.class, "RecentFilesPanel.rightClickForMoreOptions2.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 6;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTH;
+        tablePanel.add(rightClickForMoreOptions2, gridBagConstraints);
+
+        org.openide.awt.Mnemonics.setLocalizedText(rightClickForMoreOptions3, org.openide.util.NbBundle.getMessage(RecentFilesPanel.class, "RecentFilesPanel.rightClickForMoreOptions3.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 9;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTH;
+        tablePanel.add(rightClickForMoreOptions3, gridBagConstraints);
 
         scrollPane.setViewportView(tablePanel);
 
