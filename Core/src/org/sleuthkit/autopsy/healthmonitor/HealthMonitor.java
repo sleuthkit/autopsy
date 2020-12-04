@@ -183,6 +183,7 @@ public final class HealthMonitor implements PropertyChangeListener {
         if (conn == null) {
             throw new HealthMonitorException("Error getting database connection");
         }
+        ResultSet resultSet = null;
 
         try (Statement statement = conn.createStatement()) {
             conn.setAutoCommit(false);
@@ -210,8 +211,13 @@ public final class HealthMonitor implements PropertyChangeListener {
             // Changes: username added to user_data table
             if (currentSchema.compareTo(new CaseDbSchemaVersionNumber(1, 2)) < 0) {
 
-                // Add the user_data table
-                statement.execute("ALTER TABLE user_data ADD COLUMN IF NOT EXISTS username text");
+                resultSet = statement.executeQuery("SELECT column_name " +
+                        "FROM information_schema.columns " +
+                        "WHERE table_name='user_data' and column_name='username'");
+                if (! resultSet.next()) {
+                    // Add the user_data table
+                    statement.execute("ALTER TABLE user_data ADD COLUMN username text");
+                }
             }
 
             // Update the schema version
@@ -228,6 +234,13 @@ public final class HealthMonitor implements PropertyChangeListener {
             }
             throw new HealthMonitorException("Error upgrading database", ex);
         } finally {
+            if (resultSet != null) {
+                try {
+                    resultSet.close();
+                } catch (SQLException ex2) {
+                    logger.log(Level.SEVERE, "Error closing result set");
+                }   
+            }
             try {
                 conn.close();
             } catch (SQLException ex) {
@@ -971,7 +984,7 @@ public final class HealthMonitor implements PropertyChangeListener {
                 getInstance().writeCurrentStateToDatabase();
             }
         } catch (HealthMonitorException ex) {
-            logger.log(Level.SEVERE, "Error performing periodic task", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Error recording health monitor metrics", ex); //NON-NLS
         }
     }
 
