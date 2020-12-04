@@ -1445,6 +1445,7 @@ public class PortableCaseReportModule implements ReportModule {
         oldArtTypeIdToNewArtTypeId.clear();
         oldAttrTypeIdToNewAttrType.clear();
         oldArtifactIdToNewArtifact.clear();
+        fileRepositoryLookupCache.clear();
 
         closePortableCaseDatabase();
 
