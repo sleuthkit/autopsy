@@ -184,7 +184,8 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
         return new StringBuilder(UTF_16.decode(UTF_16.encode(s)));
     }
 
-    private static StringBuilder sanitize(String s) {
+    // ELTODO
+    static StringBuilder sanitize(String s) {
         String normStr = Normalizer.normalize(s, Normalizer.Form.NFKC);
         return sanitizeToUTF8(replaceInvalidUTF16(normStr));
     }
@@ -288,7 +289,7 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
 
                 // lower case the string and get it's size. NOTE: lower casing can 
                 // change the size of the string!
-                String lowerCasedSegment = sanitize(chunkSegment.toString().toLowerCase()).toString();
+                String lowerCasedSegment = chunkSegment.toString().toLowerCase();
                 int lowerCasedSegmentSize = lowerCasedSegment.getBytes(UTF_8).length;
 
                 //if it will not put us past maxBytes
@@ -357,7 +358,7 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
                 
                 // lower case the string and get it's size. NOTE: lower casing can 
                 // change the size of the string.
-                String lowerCasedSegment = sanitize(sanitizedChunkSegment.toString().toLowerCase()).toString();
+                String lowerCasedSegment = sanitizedChunkSegment.toString().toLowerCase();
                 int lowerCasedSegmentSize = lowerCasedSegment.getBytes(UTF_8).length;
                 
                 //if it will not put us past maxBytes

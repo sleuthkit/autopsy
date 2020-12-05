@@ -232,7 +232,7 @@ class Ingester {
         //Make a SolrInputDocument out of the field map
         SolrInputDocument updateDoc = new SolrInputDocument();
         for (String key : fields.keySet()) {
-            updateDoc.addField(key, fields.get(key));
+            updateDoc.addField(key, Chunker.sanitize((String)fields.get(key)).toString());
         }
 
         try {
