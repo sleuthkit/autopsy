@@ -52,10 +52,12 @@ class MiniTimelineWorker extends SwingWorker<List<MiniTimelineResult>, Void> {
 
     @Override
     protected List<MiniTimelineResult> doInBackground() throws Exception {
+        List<MiniTimelineResult> results = new ArrayList<>();
         if (!StringUtils.isBlank(domain)) {
             DomainSearch domainSearch = new DomainSearch();
             try {
-                return domainSearch.getAllArtifactsForDomain(Case.getCurrentCase().getSleuthkitCase(), domain);
+                results.addAll(domainSearch.getAllArtifactsForDomain(Case.getCurrentCase().getSleuthkitCase(), domain));
+
             } catch (DiscoveryException ex) {
                 if (ex.getCause() instanceof InterruptedException) {
                     logger.log(Level.INFO, "MiniTimeline search was cancelled or interrupted for domain: {0}", domain);
@@ -64,24 +66,22 @@ class MiniTimelineWorker extends SwingWorker<List<MiniTimelineResult>, Void> {
                 }
             }
         }
-        return new ArrayList<>();
+        return results;
     }
 
     @Override
     protected void done() {
-        List<MiniTimelineResult> results = null;
+        List<MiniTimelineResult> results = new ArrayList<>();
         if (!isCancelled()) {
             try {
-                results = get();
+                results.addAll(get());
+                DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.MiniTimelineResultEvent(results));
             } catch (InterruptedException | ExecutionException ex) {
                 logger.log(Level.SEVERE, "Exception while trying to get list of artifacts for Domain details for mini timeline view for domain: " + domain, ex);
             } catch (CancellationException ignored) {
                 //Worker was cancelled after previously finishing its background work, exception ignored to cut down on non-helpful logging
             }
         }
-        if (results == null) {
-            results = new ArrayList<>();
-        }
-        DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.MiniTimelineResultEvent(results));
+
     }
 }
