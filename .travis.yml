@@ -6,6 +6,7 @@ jobs:
     - os: linux
       dist: bionic
     - os: osx
+      osx_image: xcode12.2
 
 env:
  global:
