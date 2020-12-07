@@ -39,6 +39,7 @@ import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
 import javax.swing.SwingUtilities;
+import org.apache.commons.lang.StringUtils;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -129,6 +130,9 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
             String dataSourceName = Bundle.GeneralPurposeArtifactViewer_unknown_text();
             String sourceFileName = Bundle.GeneralPurposeArtifactViewer_unknown_text();
             Map<Integer, List<BlackboardAttribute>> attributeMap = new HashMap<>();
+            String cookieCreatedDate = "";
+            String cookieStartDate = "";
+            String cookieEndDate = "";
             try {
                 // Get all the attributes and group them by the attributeType 
                 for (BlackboardAttribute bba : artifact.getAttributes()) {
@@ -136,7 +140,15 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
                     if (attrList == null) {
                         attrList = new ArrayList<>();
                     }
-                    attrList.add(bba);
+                    if (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE.getTypeID() && bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID()) {
+                        cookieCreatedDate = bba.getDisplayString();
+                    } else if (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE.getTypeID() && bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID()) {
+                        cookieStartDate = bba.getDisplayString();
+                    } else if (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE.getTypeID() && bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID()) {
+                        cookieEndDate = bba.getDisplayString();
+                    } else {
+                        attrList.add(bba);
+                    }
                     attributeMap.put(bba.getAttributeType().getTypeID(), attrList);
                 }
                 dataSourceName = artifact.getDataSource().getName();
@@ -144,7 +156,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
             } catch (TskCoreException ex) {
                 logger.log(Level.WARNING, "Unable to get attributes for artifact " + artifact.getArtifactID(), ex);
             }
-            updateView(artifact.getArtifactTypeID(), attributeMap, dataSourceName, sourceFileName);
+            updateView(artifact.getArtifactTypeID(), attributeMap, dataSourceName, sourceFileName, cookieCreatedDate, cookieStartDate, cookieEndDate);
         }
         this.setLayout(this.gridBagLayout);
         this.revalidate();
@@ -229,7 +241,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
      *                       the artifact.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    private void updateView(Integer artifactTypeId, Map<Integer, List<BlackboardAttribute>> attributeMap, String dataSourceName, String sourceFileName) {
+    private void updateView(Integer artifactTypeId, Map<Integer, List<BlackboardAttribute>> attributeMap, String dataSourceName, String sourceFileName, String cookieCreatedDate, String cookieStartDate, String cookieEndDate) {
         if (!(artifactTypeId < 1 || artifactTypeId >= Integer.MAX_VALUE)) {
             addDetailsHeader(artifactTypeId);
             Integer[] orderingArray = orderingMap.get(artifactTypeId);
@@ -244,9 +256,20 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
                     }
                 }
             }
+
             if (artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID()) {
                 addHeader(Bundle.GeneralPurposeArtifactViewer_details_datesHeader());
+                if (!StringUtils.isBlank(cookieCreatedDate)) {
+                    addNameValueRow("Created", cookieCreatedDate);
+                }
+                if (!StringUtils.isBlank(cookieStartDate)) {
+                    addNameValueRow("Start", cookieStartDate);
+                }
+                if (!StringUtils.isBlank(cookieCreatedDate)) {
+                    addNameValueRow("End", cookieEndDate);
+                }
             }
+            addHeader("Other");
             for (int key : attributeMap.keySet()) {
                 for (BlackboardAttribute bba : attributeMap.get(key)) {
                     addNameValueRow(bba.getAttributeType().getDisplayName(), bba.getDisplayString());
