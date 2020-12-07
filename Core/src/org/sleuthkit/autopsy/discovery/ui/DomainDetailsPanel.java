@@ -41,7 +41,7 @@ final class DomainDetailsPanel extends JPanel {
     private ArtifactsWorker singleArtifactDomainWorker;
     private MiniTimelineWorker miniTimelineWorker;
     private String domain;
-    private String selectedTabName;
+    private String selectedTabName = null;
 
     /**
      * Creates new form ArtifactDetailsPanel.
@@ -49,24 +49,23 @@ final class DomainDetailsPanel extends JPanel {
      * @param selectedTabName The name of the tab to select initially.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    DomainDetailsPanel(String selectedTabName) {
+    DomainDetailsPanel() {
         initComponents();
-        addArtifactTabs(selectedTabName);
+        jTabbedPane1.add(Bundle.DomainDetailsPanel_miniTimelineTitle_text(), new MiniTimelinePanel());
+        for (BlackboardArtifact.ARTIFACT_TYPE type : SearchData.Type.DOMAIN.getArtifactTypes()) {
+            jTabbedPane1.add(type.getDisplayName(), new DomainArtifactsTabPanel(type));
+        }
     }
 
     /**
-     * Add the tabs for each of the artifact types which we will be displaying.
+     * Configure the tabs for each of the artifact types which we will be
+     * displaying.
      *
      * @param tabName The name of the tab to select initially.
      */
     @NbBundle.Messages({"DomainDetailsPanel.miniTimelineTitle.text=Mini Timeline"})
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    private void addArtifactTabs(String tabName) {
-
-        jTabbedPane1.add(Bundle.DomainDetailsPanel_miniTimelineTitle_text(), new MiniTimelinePanel());
-        for (BlackboardArtifact.ARTIFACT_TYPE type : SearchData.Type.DOMAIN.getArtifactTypes()) {
-            jTabbedPane1.add(type.getDisplayName(), new DomainArtifactsTabPanel(type));
-        }
+    void configureArtifactTabs(String tabName) {
         selectedTabName = tabName;
         if (StringUtils.isBlank(selectedTabName)) {
             selectedTabName = Bundle.DomainDetailsPanel_miniTimelineTitle_text();
