@@ -49,7 +49,7 @@ class LanguageSpecificContentIndexingHelper {
         List<String> values = new ArrayList<>();
         values.add(chunk.toString());
         if (fields.containsKey(Server.Schema.FILE_NAME.toString())) {
-            values.add(fields.get(Server.Schema.FILE_NAME.toString()).toString());
+            values.add(Chunker.sanitize(fields.get(Server.Schema.FILE_NAME.toString()).toString()).toString());
         }
 
         // index the chunk to a language specific field
