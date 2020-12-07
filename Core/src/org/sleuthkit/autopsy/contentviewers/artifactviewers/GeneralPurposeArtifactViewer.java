@@ -151,7 +151,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
             }
             updateView(artifact.getArtifactTypeID(), attributeMap, dataSourceName, sourceFileName);
         }
-        this.setLayout(this.gridBagLayout);
+        detailsScrollPane.setLayout(this.gridBagLayout);
         this.revalidate();
         this.repaint();
     }
@@ -208,18 +208,11 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        setPreferredSize(new java.awt.Dimension(400, 50));
+        detailsScrollPane = new javax.swing.JScrollPane();
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
-        );
+        setPreferredSize(new java.awt.Dimension(400, 50));
+        setLayout(new java.awt.BorderLayout());
+        add(detailsScrollPane, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
     /**
@@ -329,7 +322,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
         // the first section
         if (gridBagConstraints.gridy != 0) {
             gridBagConstraints.gridy++;
-            add(new javax.swing.JLabel(" "), gridBagConstraints);
+            detailsScrollPane.add(new javax.swing.JLabel(" "), gridBagConstraints);
             addLineEndGlue();
         }
         gridBagConstraints.gridy++;
@@ -342,7 +335,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
         // make it large and bold
         headingLabel.setFont(headingLabel.getFont().deriveFont(Font.BOLD, headingLabel.getFont().getSize() + 2));
         // add to panel
-        add(headingLabel, gridBagConstraints);
+        detailsScrollPane.add(headingLabel, gridBagConstraints);
         // reset constraints to normal
         gridBagConstraints.gridwidth = LABEL_WIDTH;
         // add line end glue
@@ -373,7 +366,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
         gridBagConstraints.weightx = GLUE_WEIGHT_X; // take up all the horizontal space
         gridBagConstraints.fill = GridBagConstraints.BOTH;
         javax.swing.Box.Filler horizontalFiller = new javax.swing.Box.Filler(new Dimension(0, 0), new Dimension(0, 0), new Dimension(32767, 0));
-        add(horizontalFiller, gridBagConstraints);
+        detailsScrollPane.add(horizontalFiller, gridBagConstraints);
         // restore fill & weight
         gridBagConstraints.fill = GridBagConstraints.NONE;
         gridBagConstraints.weightx = TEXT_WEIGHT_X;
@@ -387,7 +380,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
         gridBagConstraints.weighty = 1.0; // take up all the vertical space
         gridBagConstraints.fill = GridBagConstraints.VERTICAL;
         javax.swing.Box.Filler vertFiller = new javax.swing.Box.Filler(new Dimension(0, 0), new Dimension(0, 0), new Dimension(0, 32767));
-        add(vertFiller, gridBagConstraints);
+        detailsScrollPane.add(vertFiller, gridBagConstraints);
     }
 
     /**
@@ -406,7 +399,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
         // set text
         keyLabel.setText(keyString + ": ");
         // add to panel
-        add(keyLabel, gridBagConstraints);
+        detailsScrollPane.add(keyLabel, gridBagConstraints);
         return keyLabel;
     }
 
@@ -437,7 +430,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
             }
         });
         // add label to panel
-        add(valueField, cloneConstraints);
+        detailsScrollPane.add(valueField, cloneConstraints);
         // end the line
         addLineEndGlue();
         return valueField;
@@ -470,5 +463,6 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JScrollPane detailsScrollPane;
     // End of variables declaration//GEN-END:variables
 }
