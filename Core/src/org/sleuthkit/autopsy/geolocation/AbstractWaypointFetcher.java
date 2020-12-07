@@ -22,11 +22,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
-import javafx.util.Pair;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.geolocation.datamodel.GeoLocationDataException;
 import org.sleuthkit.autopsy.geolocation.datamodel.GeoLocationParseResult;
+import org.sleuthkit.autopsy.geolocation.datamodel.Area;
 import org.sleuthkit.autopsy.geolocation.datamodel.Track;
 import org.sleuthkit.autopsy.geolocation.datamodel.Waypoint;
 import org.sleuthkit.autopsy.geolocation.datamodel.WaypointBuilder;
@@ -79,8 +79,8 @@ abstract class AbstractWaypointFetcher implements WaypointBuilder.WaypointFilter
      * @param tracks The tracks that were successfully parsed.
      * @param wasEntirelySuccessful True if no errors occurred while processing.
      */
-    abstract void handleFilteredWaypointSet(Set<MapWaypoint> mapWaypoints, List<Set<MapWaypoint>> tracks,
-            boolean wasEntirelySuccessful);
+    abstract void handleFilteredWaypointSet(Set<MapWaypoint> mapWaypoints, List<Set<MapWaypoint>> tracks, 
+        List<Set<MapWaypoint>> areas, boolean wasEntirelySuccessful);
 
     @Override
     public void process(GeoLocationParseResult<Waypoint> waypointResults) {
@@ -92,35 +92,54 @@ abstract class AbstractWaypointFetcher implements WaypointBuilder.WaypointFilter
                 logger.log(Level.WARNING, "Exception thrown while retrieving list of Tracks", ex);
             }
         }
+        
+        GeoLocationParseResult<Area> areaResults = null;
+        if (filters.getArtifactTypes().contains(ARTIFACT_TYPE.TSK_GPS_AREA)) {
+            try {
+                areaResults = Area.getAreas(Case.getCurrentCase().getSleuthkitCase(), filters.getDataSources());
+            } catch (GeoLocationDataException ex) {
+                logger.log(Level.WARNING, "Exception thrown while retrieving list of Areas", ex);
+            }
+        }
+              
+        GeoDataSet geoDataSet = createWaypointList(
+            waypointResults.getItems(),
+            (trackResults == null) ? new ArrayList<>() : trackResults.getItems(),
+            (areaResults == null) ? new ArrayList<>() : areaResults.getItems());
 
-        Pair<List<Waypoint>, List<List<Waypoint>>> waypointsAndTracks = createWaypointList(
-                waypointResults.getItems(),
-                (trackResults == null) ? new ArrayList<Track>() : trackResults.getItems());
-
-        final Set<MapWaypoint> pointSet = MapWaypoint.getWaypoints(waypointsAndTracks.getKey());
+        
+        final Set<MapWaypoint> pointSet = MapWaypoint.getWaypoints(geoDataSet.getWaypoints());
         final List<Set<MapWaypoint>> trackSets = new ArrayList<>();
-        for (List<Waypoint> t : waypointsAndTracks.getValue()) {
+        for (List<Waypoint> t : geoDataSet.getTracks()) {
             trackSets.add(MapWaypoint.getWaypoints(t));
+        }
+        final List<Set<MapWaypoint>> areaSets = new ArrayList<>();
+        for (List<Waypoint> t : geoDataSet.getAreas()) {
+            areaSets.add(MapWaypoint.getWaypoints(t));
         }
 
         handleFilteredWaypointSet(
-                pointSet, trackSets,
-                (trackResults == null || trackResults.isSuccessfullyParsed()) && waypointResults.isSuccessfullyParsed());
+            pointSet, trackSets, areaSets,
+            (trackResults == null || trackResults.isSuccessfullyParsed()) 
+                && (areaResults == null || areaResults.isSuccessfullyParsed())
+                && waypointResults.isSuccessfullyParsed());
     }
 
     /**
-     * Returns a complete list of waypoints including the tracks. Takes into
+     * Returns a complete list of waypoints including the tracks and areas. Takes into
      * account the current filters and includes waypoints as approprate.
      *
      * @param waypoints List of waypoints
-     * @param tracks List of tracks
+     * @param tracks    List of tracks
+     * @param areas     List of areas
      *
-     * @return A list of waypoints including the tracks based on the current
-     * filters.
+     * @return A GeoDataSet object containing a list of waypoints including the tracks and areas based on the current
+         filters.
      */
-    private Pair<List<Waypoint>, List<List<Waypoint>>> createWaypointList(List<Waypoint> waypoints, List<Track> tracks) {
+    private GeoDataSet createWaypointList(List<Waypoint> waypoints, List<Track> tracks, List<Area> areas) {
         final List<Waypoint> completeList = new ArrayList<>();
         List<List<Waypoint>> filteredTracks = new ArrayList<>();
+        List<List<Waypoint>> filteredAreas = new ArrayList<>();
 
         if (tracks != null) {
             Long timeRangeEnd;
@@ -147,7 +166,14 @@ abstract class AbstractWaypointFetcher implements WaypointBuilder.WaypointFilter
         } else {
             completeList.addAll(waypoints);
         }
-        return new Pair<>(completeList, filteredTracks);
+        
+        // Areas don't have timestamps so add all of them
+        for (Area area : areas) {
+            completeList.addAll(area.getPath());
+            filteredAreas.add(area.getPath());
+        }
+        
+        return new GeoDataSet(completeList, filteredTracks, filteredAreas);
     }
 
     /**
@@ -268,4 +294,31 @@ abstract class AbstractWaypointFetcher implements WaypointBuilder.WaypointFilter
 
         return -1L;
     }
+    
+    /**
+     * Utility class to collect filtered GPS objects.
+     */
+    static class GeoDataSet {
+        private final List<Waypoint> waypoints;
+        private final List<List<Waypoint>> tracks;
+        private final List<List<Waypoint>> areas;
+        
+        GeoDataSet(List<Waypoint> waypoints, List<List<Waypoint>> tracks, List<List<Waypoint>> areas) {
+            this.waypoints = waypoints;
+            this.tracks = tracks;
+            this.areas = areas;
+        }
+        
+        List<Waypoint> getWaypoints() {
+            return waypoints;
+        }
+        
+        List<List<Waypoint>> getTracks() {
+            return tracks;
+        }
+        
+        List<List<Waypoint>> getAreas() {
+            return areas;
+        }
+    }        
 }

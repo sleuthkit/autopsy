@@ -93,7 +93,8 @@ public class YaraRuleSetOptionPanel extends javax.swing.JPanel {
         "YaraRuleSetOptionPanel_new_rule_set_name_title=Rule Set Name",
         "# {0} - rule set name",
         "YaraRuleSetOptionPanel_badName_msg=Rule set name {0} already exists.\nRule set names must be unique.",
-        "YaraRuleSetOptionPanel_badName_title=Create Rule Set"
+        "YaraRuleSetOptionPanel_badName_title=Create Rule Set",
+        "YaraRuleSetOptionPanel_badName2_msg=Rule set is invalid.\nRule set names must be non-empty string and unique.",
     })
     /**
      * Handle the new rule set action. Prompt the user for a rule set name,
@@ -103,6 +104,15 @@ public class YaraRuleSetOptionPanel extends javax.swing.JPanel {
         String value = JOptionPane.showInputDialog(this,
                 Bundle.YaraRuleSetOptionPanel_new_rule_set_name_msg(),
                 Bundle.YaraRuleSetOptionPanel_new_rule_set_name_title());
+        
+        if(value == null || value.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                    Bundle.YaraRuleSetOptionPanel_badName2_msg(),
+                    Bundle.YaraRuleSetOptionPanel_badName_title(),
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
         try {
             ruleSetPanel.addRuleSet(manager.createRuleSet(value));
         } catch (RuleSetException ex) {
@@ -110,7 +120,7 @@ public class YaraRuleSetOptionPanel extends javax.swing.JPanel {
                     Bundle.YaraRuleSetOptionPanel_badName_msg(value),
                     Bundle.YaraRuleSetOptionPanel_badName_title(),
                     JOptionPane.ERROR_MESSAGE);
-            logger.log(Level.WARNING, "Failed to create new rule set, user provide existing name.", ex);
+            logger.log(Level.WARNING, "Failed to create new rule set, user provided existing name.", ex);
         }
     }
 
