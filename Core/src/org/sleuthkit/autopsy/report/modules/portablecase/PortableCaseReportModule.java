@@ -1361,7 +1361,7 @@ public class PortableCaseReportModule implements ReportModule {
             }
             return exists;
         } catch (IOException | FileRepositoryException ex) {
-            throw new TskCoreException("Error looking up file in file repository");
+            throw new TskCoreException("Error looking up file in file repository", ex);
         }
     }
     
@@ -1431,7 +1431,7 @@ public class PortableCaseReportModule implements ReportModule {
                 }
             }
         } catch (IOException | FileRepositoryException ex) {
-            throw new TskCoreException("Error looking up file in file repository");
+            throw new TskCoreException("Error looking up file in file repository", ex);
         }
     }
 
