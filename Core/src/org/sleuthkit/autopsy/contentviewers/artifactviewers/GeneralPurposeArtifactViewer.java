@@ -181,13 +181,19 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
                 && (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID()
                 || artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getTypeID()
                 || artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE.getTypeID()
-                || artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID());
+                || artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID()
+                || artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID()
+                || artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID()
+                || artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_ACCOUNT_TYPE.getTypeID()
+                || artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_FORM_ADDRESS.getTypeID()
+                || artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_FORM_AUTOFILL.getTypeID());
     }
 
-    @NbBundle.Messages({"GeneralPurposeArtifactViewer.details.attrHeader=Attributes",
+    @NbBundle.Messages({"GeneralPurposeArtifactViewer.details.attrHeader=Details",
         "GeneralPurposeArtifactViewer.details.sourceHeader=Source",
         "GeneralPurposeArtifactViewer.details.dataSource=Data Source",
-        "GeneralPurposeArtifactViewer.details.file=File"})
+        "GeneralPurposeArtifactViewer.details.file=File",
+        "GeneralPurposeArtifactViewer.details.datesHeader=Dates"})
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -225,7 +231,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private void updateView(Integer artifactTypeId, Map<Integer, List<BlackboardAttribute>> attributeMap, String dataSourceName, String sourceFileName) {
         if (!(artifactTypeId < 1 || artifactTypeId >= Integer.MAX_VALUE)) {
-            addHeader(Bundle.GeneralPurposeArtifactViewer_details_attrHeader());
+            addDetailsHeader(artifactTypeId);
             Integer[] orderingArray = orderingMap.get(artifactTypeId);
             if (orderingArray == null) {
                 orderingArray = DEFAULT_ORDERING;
@@ -238,6 +244,9 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
                     }
                 }
             }
+            if (artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID()) {
+                addHeader(Bundle.GeneralPurposeArtifactViewer_details_datesHeader());
+            }
             for (int key : attributeMap.keySet()) {
                 for (BlackboardAttribute bba : attributeMap.get(key)) {
                     addNameValueRow(bba.getAttributeType().getDisplayName(), bba.getDisplayString());
@@ -249,6 +258,32 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
             // add veritcal glue at the end
             addPageEndGlue();
         }
+    }
+
+    @NbBundle.Messages({"GeneralPurposeArtifactViewer.details.bookmarkHeader=Bookmark Details",
+        "GeneralPurposeArtifactViewer.details.historyHeader=Visit Details",
+        "GeneralPurposeArtifactViewer.details.downloadHeader=Downloaded File",
+        "GeneralPurposeArtifactViewer.details.searchHeader=Web Search",
+        "GeneralPurposeArtifactViewer.details.cachedHeader=Cached File",
+        "GeneralPurposeArtifactViewer.details.cookieHeader=Cookie Details",})
+    private void addDetailsHeader(int artifactTypeId) {
+        String header;
+        if (artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID()) {
+            header = Bundle.GeneralPurposeArtifactViewer_details_historyHeader();
+        } else if (artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_ACCOUNT_TYPE.getTypeID()) {
+            header = Bundle.GeneralPurposeArtifactViewer_details_bookmarkHeader();
+        } else if (artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID()) {
+            header = Bundle.GeneralPurposeArtifactViewer_details_cachedHeader();
+        } else if (artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE.getTypeID()) {
+            header = Bundle.GeneralPurposeArtifactViewer_details_cookieHeader();
+        } else if (artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID()) {
+            header = Bundle.GeneralPurposeArtifactViewer_details_downloadHeader();
+        } else if (artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getTypeID()) {
+            header = Bundle.GeneralPurposeArtifactViewer_details_searchHeader();
+        } else {
+            header = Bundle.GeneralPurposeArtifactViewer_details_attrHeader();
+        }
+        addHeader(header);
     }
 
     /**
