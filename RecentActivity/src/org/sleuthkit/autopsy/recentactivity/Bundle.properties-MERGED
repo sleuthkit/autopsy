@@ -16,6 +16,11 @@ DataSourceUsage_FlashDrive=Flash Drive
 # {0} - OS name
 DataSourceUsageAnalyzer.customVolume.label=OS Drive ({0})
 DataSourceUsageAnalyzer.parentModuleName=Recent Activity
+DomainCategorizer_moduleName_text=DomainCategorizer
+DomainCategorizer_parentModuleName=Recent Activity
+DomainCategorizer_Progress_Message_Domain_Types=Finding Domain Types
+DomainType_disposableMail_displayName=Disposable Email
+DomainType_webmail_displayName=Web Email
 Extract.indexError.message=Failed to index artifact for keyword search.
 Extract.noOpenCase.errMsg=No open case available.
 ExtractEdge_getHistory_containerFileNotFound=Error while trying to analyze Edge history

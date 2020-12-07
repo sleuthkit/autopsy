@@ -76,5 +76,4 @@ class ArtifactsWorker extends SwingWorker<List<BlackboardArtifact>, Void> {
         }
         DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.ArtifactSearchResultEvent(artifactType, listOfArtifacts));
     }
-
 }

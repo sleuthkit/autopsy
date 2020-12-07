@@ -52,7 +52,7 @@ class ArtifactsListPanel extends JPanel {
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     ArtifactsListPanel(BlackboardArtifact.ARTIFACT_TYPE artifactType) {
         tableModel = new DomainArtifactTableModel(artifactType);
-        initComponents();        
+        initComponents();
         jTable1.getRowSorter().toggleSortOrder(0);
         jTable1.getRowSorter().toggleSortOrder(0);
     }
@@ -153,8 +153,11 @@ class ArtifactsListPanel extends JPanel {
         jTable1 = new javax.swing.JTable();
 
         setOpaque(false);
+        setPreferredSize(new java.awt.Dimension(300, 0));
 
         jScrollPane1.setBorder(null);
+        jScrollPane1.setMinimumSize(new java.awt.Dimension(0, 0));
+        jScrollPane1.setPreferredSize(new java.awt.Dimension(0, 0));
 
         jTable1.setAutoCreateRowSorter(true);
         jTable1.setModel(tableModel);
@@ -311,6 +314,10 @@ class ArtifactsListPanel extends JPanel {
                     return bba.getDisplayString();
                 } else if (columnIndex == 1 && bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID() && !StringUtils.isBlank(bba.getDisplayString())) {
                     return bba.getDisplayString();
+                } else if (columnIndex == 1 && bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID() && !StringUtils.isBlank(bba.getDisplayString())) {
+                    return bba.getDisplayString();
+                } else if (columnIndex == 1 && bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT.getTypeID() && !StringUtils.isBlank(bba.getDisplayString())) {
+                    return bba.getDisplayString();
                 }
             }
             return Bundle.ArtifactsListPanel_value_noValue();
@@ -339,7 +346,6 @@ class ArtifactsListPanel extends JPanel {
             }
         }
     }
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTable jTable1;
     // End of variables declaration//GEN-END:variables
