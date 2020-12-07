@@ -525,7 +525,7 @@ public final class GeolocationTopComponent extends TopComponent {
         }
 
         @Override
-        void handleFilteredWaypointSet(Set<MapWaypoint> mapWaypoints, List<Set<MapWaypoint>> tracks,
+        protected void handleFilteredWaypointSet(Set<MapWaypoint> mapWaypoints, List<Set<MapWaypoint>> tracks,
                 List<Set<MapWaypoint>> areas, boolean wasEntirelySuccessful) {
             addWaypointsToMap(mapWaypoints, tracks, areas);
             

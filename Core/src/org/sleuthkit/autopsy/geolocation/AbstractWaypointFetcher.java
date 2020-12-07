@@ -35,7 +35,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 /**
  * The business logic for filtering waypoints.
  */
-abstract class AbstractWaypointFetcher implements WaypointBuilder.WaypointFilterQueryCallBack {
+public abstract class AbstractWaypointFetcher implements WaypointBuilder.WaypointFilterQueryCallBack {
 
     private static final Logger logger = Logger.getLogger(AbstractWaypointFetcher.class.getName());
 
@@ -46,7 +46,7 @@ abstract class AbstractWaypointFetcher implements WaypointBuilder.WaypointFilter
      *
      * @param filters
      */
-    AbstractWaypointFetcher(GeoFilter filters) {
+    protected AbstractWaypointFetcher(GeoFilter filters) {
         this.filters = filters;
     }
 
@@ -79,7 +79,7 @@ abstract class AbstractWaypointFetcher implements WaypointBuilder.WaypointFilter
      * @param tracks The tracks that were successfully parsed.
      * @param wasEntirelySuccessful True if no errors occurred while processing.
      */
-    abstract void handleFilteredWaypointSet(Set<MapWaypoint> mapWaypoints, List<Set<MapWaypoint>> tracks, 
+    protected abstract void handleFilteredWaypointSet(Set<MapWaypoint> mapWaypoints, List<Set<MapWaypoint>> tracks, 
         List<Set<MapWaypoint>> areas, boolean wasEntirelySuccessful);
 
     @Override
