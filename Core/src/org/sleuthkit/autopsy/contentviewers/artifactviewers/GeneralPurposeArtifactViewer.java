@@ -83,13 +83,41 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public GeneralPurposeArtifactViewer() {
-        orderingMap.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID(), DEFAULT_ORDERING);
-        orderingMap.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID(), DEFAULT_ORDERING);
-        orderingMap.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID(), DEFAULT_ORDERING);
-        orderingMap.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getTypeID(), DEFAULT_ORDERING);
-        orderingMap.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID(), DEFAULT_ORDERING);
-        orderingMap.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID(), DEFAULT_ORDERING);
+        addOrderings();
         initComponents();
+    }
+
+    private void addOrderings() {
+        orderingMap.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID(), new Integer[]{BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID(),
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TITLE.getTypeID(),
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID(),
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID(),
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID(),
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()});
+        orderingMap.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID(), new Integer[]{BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID(),
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID(),
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID(),
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_HEADERS.getTypeID(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH.getTypeID(),
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()});
+        orderingMap.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID(), new Integer[]{BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID(),
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID(),
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID(),
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH.getTypeID(),
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()});
+        orderingMap.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getTypeID(), new Integer[]{BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT.getTypeID(),
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID(),
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID(),
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()});
+        orderingMap.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID(), new Integer[]{BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TITLE.getTypeID(),
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID(),
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID(),
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID(),
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_REFERRER.getTypeID(),
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()});
+        orderingMap.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE.getTypeID(), new Integer[]{BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID(),
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID(),
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(),
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()});
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
