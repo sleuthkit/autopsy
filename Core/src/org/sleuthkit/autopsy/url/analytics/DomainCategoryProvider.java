@@ -16,38 +16,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.recentactivity;
+package org.sleuthkit.autopsy.url.analytics;
 
+import com.google.common.annotations.Beta;
 import org.sleuthkit.autopsy.ingest.IngestModule;
 
 /**
- * Interface providing the category of a domain for creating
- * TSK_WEB_CATEGORIZATION artifacts.
+ * Interface providing the category of a domain for the purposes of creating
+ * TSK_WEB_CATEGORIZATION artifacts. These implementations are used in
+ * RecentActivity as a part of the ingest process. Implementers of this class
+ * should have a no-argument constructor in order to be properly instantiated.
  */
+@Beta
 public interface DomainCategoryProvider {
-    public static class DomainCategoryResult {
-        private final String hostSuffix;
-        private final String category;
-        private final boolean hasChildren;
-        
-        public DomainCategoryResult(String hostSuffix, String category, boolean hasChildren) {
-            this.hostSuffix = hostSuffix;
-            this.category = category;
-            this.hasChildren = hasChildren;
-        }
-
-        public String getHostSuffix() {
-            return hostSuffix;
-        }
-
-        public String getCategory() {
-            return category;
-        }
-        
-        public boolean hasChildren() {
-            return hasChildren;
-        }
-    }
 
     /**
      * Provides the DomainCategory for a given domain/host or null if none can
@@ -59,6 +40,14 @@ public interface DomainCategoryProvider {
      * null if not.
      */
     DomainCategoryResult getCategory(String domain, String host);
-    
-    void initialize() throws IngestModule.IngestModuleException;
+
+    /**
+     * Initializes this provider in preparation to handle 'getCategory' requests
+     * during ingest. Conceivably, the same instance of this class may have this
+     * called multiple times and should handle that possibility gracefully.
+     *
+     * @throws IngestModule.IngestModuleException
+     */
+    default void initialize() throws IngestModule.IngestModuleException {
+    }
 }

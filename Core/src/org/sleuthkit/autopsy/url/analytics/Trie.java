@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.sleuthkit.autopsy.recentactivity;
+package org.sleuthkit.autopsy.url.analytics;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -11,15 +11,15 @@ import java.util.List;
 import java.util.Map;
 import org.apache.commons.collections4.MapUtils;
 
-public class Trie<K, V> {
+class Trie<K, V> {
 
     private class Node<K, V> {
 
-        private final Map<K, Node> children = new HashMap<>();
+        private final Map<K, Node<K, V>> children = new HashMap<>();
         private V leafValue = null;
 
-        Node getOrAddChild(K childKey) {
-            Node child = children.get(childKey);
+        Node<K, V> getOrAddChild(K childKey) {
+            Node<K, V> child = children.get(childKey);
             if (child == null) {
                 child = new Node();
                 children.put(childKey, child);
@@ -28,7 +28,7 @@ public class Trie<K, V> {
             return child;
         }
 
-        Node getChild(K childKey) {
+        Node<K, V> getChild(K childKey) {
             return children.get(childKey);
         }
 
@@ -42,35 +42,36 @@ public class Trie<K, V> {
 
     }
 
-    public static class TrieResult<K, V> {
+    static class TrieResult<K, V> {
 
         private final V value;
         private final List<K> keys;
         private final boolean hasChildren;
 
-        public TrieResult(V value, List<K> keys, boolean hasChildren) {
+        TrieResult(V value, List<K> keys, boolean hasChildren) {
             this.value = value;
             this.keys = keys;
             this.hasChildren = hasChildren;
         }
 
-        public V getValue() {
+        V getValue() {
             return value;
         }
 
-        public List<K> getKeys() {
+        List<K> getKeys() {
             return keys;
         }
 
-        public boolean hasChildren() {
+        boolean hasChildren() {
             return hasChildren;
         }
     }
 
+    
     private Node<K, V> root = new Node<>();
 
-    public void add(Iterable<K> keyTokens, V leafValue) {
-        Node node = root;
+    void add(Iterable<K> keyTokens, V leafValue) {
+        Node<K, V> node = root;
         for (K key : keyTokens) {
             node = node.getOrAddChild(key);
         }
@@ -78,7 +79,7 @@ public class Trie<K, V> {
         node.setLeafValue(leafValue);
     }
 
-    public V getExact(Iterable<K> keys) {
+    V getExact(Iterable<K> keys) {
         Node<K, V> node = root;
         for (K key : keys) {
             node = node.getChild(key);
@@ -90,7 +91,7 @@ public class Trie<K, V> {
         return node.getLeafValue();
     }
 
-    public TrieResult<K, V> getDeepest(Iterable<K> keys) {
+    TrieResult<K, V> getDeepest(Iterable<K> keys) {
         Node<K, V> node = root;
         List<K> visited = new ArrayList<>();
         TrieResult<K, V> bestMatch = null;
@@ -110,7 +111,7 @@ public class Trie<K, V> {
         return bestMatch;
     }
 
-    public TrieResult<K, V> getFirst(Iterable<K> keys) {
+    TrieResult<K, V> getFirst(Iterable<K> keys) {
         Node<K, V> node = root;
         List<K> visited = new ArrayList<>();
         for (K key : keys) {

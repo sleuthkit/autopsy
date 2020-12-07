@@ -16,18 +16,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.recentactivity;
+package org.sleuthkit.autopsy.url.analytics;
 
+import com.google.common.annotations.Beta;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.lang.StringUtils;
-import org.sleuthkit.autopsy.recentactivity.DomainCategoryProvider.DomainCategoryResult;
-import org.sleuthkit.autopsy.recentactivity.Trie.TrieResult;
+import org.sleuthkit.autopsy.url.analytics.Trie.TrieResult;
 
+@Beta
 public class DomainSuffixTrie {
+
     private static Iterable<String> getSuffixIter(String host) {
         // parse the tokens splitting on delimiter
         List<String> tokens = Stream.of(host.toLowerCase().split(DELIMITER))
@@ -44,24 +46,32 @@ public class DomainSuffixTrie {
     // delimiter when used with regex for domains
     private static final String DELIMITER = "\\" + JOINER;
 
-    
-    
     private final Trie<String, String> trie = new Trie<>();
 
-    void add(String suffix, String leaf) {
+    /**
+     *
+     * @param suffix
+     * @param leaf
+     */
+    public void add(String suffix, String leaf) {
         this.trie.add(getSuffixIter(suffix), leaf);
     }
 
     /**
      * Determines if the host is a known type of host. If so, returns the
      * portion of the host suffix that signifies the domain type (i.e.
-     * "hotmail.com" or "mail.google.com") and the domain type.
+     * "hotmail.com" or "mail.google.com") and the domain type. Also returned in
+     * the DomainCategoryResult is whether or not any children of the found node
+     * in the trie and consequently, whether or not 
      *
      * @param host The host.
-     * @return A pair of the host suffix and domain type for that suffix if
+     * @return The DomainCategoryResult if a portion of the suffix was found
+     * 
+     * 
+     * A pair of the host suffix and domain type for that suffix if
      * found. Otherwise, returns null.
      */
-    DomainCategoryResult findHostCategory(String host) {
+    public DomainCategoryResult findHostCategory(String host) {
         // if no host, return none.
         if (StringUtils.isBlank(host)) {
             return null;
@@ -71,6 +81,6 @@ public class DomainSuffixTrie {
         List<String> keys = new ArrayList<>(result.getKeys());
         Collections.reverse(keys);
         String suffix = String.join(JOINER, keys);
-        return new DomainCategoryResult(suffix, result.getValue(), result.hasChildren());
+        return new DefaultDomainCategoryResult(suffix, result.getValue(), result.hasChildren());
     }
 }

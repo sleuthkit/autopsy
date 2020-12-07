@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.recentactivity;
 
+import org.sleuthkit.autopsy.url.analytics.DomainSuffixTrie;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,6 +29,8 @@ import org.apache.commons.lang.StringUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
+import org.sleuthkit.autopsy.url.analytics.DomainCategoryProvider;
+import org.sleuthkit.autopsy.url.analytics.DomainCategoryResult;
 
 /**
  * The default domain category provider that makes use of the default csv
@@ -39,7 +42,6 @@ class DefaultDomainCategoryProvider implements DomainCategoryProvider {
     private static final String CSV_DELIMITER = ",";
     private static final String DOMAIN_TYPE_CSV = "default_domain_categories.csv"; //NON-NLS
     private static final Logger logger = Logger.getLogger(DefaultDomainCategoryProvider.class.getName());
-
 
     /**
      * Loads the trie of suffixes from the csv resource file.
@@ -99,19 +101,21 @@ class DefaultDomainCategoryProvider implements DomainCategoryProvider {
             logger.log(Level.WARNING, String.format("Could not determine host suffix for this line: \"%s\" at line %d", line, lineNumber));
             return;
         }
-        
+
         trie.add(hostSuffix, domainTypeStr);
     }
 
     // the root node for the trie containing suffixes for domain categories.
     private DomainSuffixTrie trie = null;
-    
+
     @Override
     public void initialize() throws IngestModuleException {
-        try {
-            this.trie = loadTrie();
-        } catch (IOException ex) {
-            throw new IngestModule.IngestModuleException("Unable to load domain type csv for domain category analysis", ex);
+        if (this.trie == null) {
+            try {
+                this.trie = loadTrie();
+            } catch (IOException ex) {
+                throw new IngestModule.IngestModuleException("Unable to load domain type csv for domain category analysis", ex);
+            }
         }
     }
 

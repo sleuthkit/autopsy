@@ -22,20 +22,25 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import org.apache.commons.lang.StringUtils;
-import org.apache.http.conn.util.DomainType;
+import org.openide.util.Lookup;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestModule;
-import org.sleuthkit.autopsy.recentactivity.DomainCategoryProvider.DomainCategoryResult;
+import org.sleuthkit.autopsy.url.analytics.DomainCategoryProvider;
+import org.sleuthkit.autopsy.url.analytics.DomainCategoryResult;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
@@ -45,12 +50,12 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Analyzes a URL to determine if the url host is one of a certain kind of category
- * (i.e. webmail, disposable mail). If found, a web category artifact is
- * created.
+ * Analyzes a URL to determine if the url host is one of a certain kind of
+ * category (i.e. webmail, disposable mail). If found, a web category artifact
+ * is created.
  *
- * CSV entries describing these domain types are compiled from sources.
- * webmail: https://github.com/mailcheck/mailcheck/wiki/List-of-Popular-Domains
+ * CSV entries describing these domain types are compiled from sources. webmail:
+ * https://github.com/mailcheck/mailcheck/wiki/List-of-Popular-Domains
  * disposable mail: https://www.npmjs.com/package/disposable-email-domains
  */
 @Messages({
@@ -59,7 +64,6 @@ import org.sleuthkit.datamodel.TskCoreException;
     "DomainCategorizer_parentModuleName=Recent Activity"
 })
 class DomainCategorizer extends Extract {
-
 
     // The url regex is based on the regex provided in https://tools.ietf.org/html/rfc3986#appendix-B
     // but expanded to be a little more flexible, and also properly parses user info and port in a url
@@ -80,6 +84,7 @@ class DomainCategorizer extends Extract {
 
     private Content dataSource;
     private IngestJobContext context;
+    private List<DomainCategoryProvider> domainProviders = Collections.emptyList();
 
     /**
      * Main constructor.
@@ -117,8 +122,20 @@ class DomainCategorizer extends Extract {
 
         return host;
     }
-
     
+    
+    private DomainCategoryResult findCategory(String domain, String host) {
+        List<DomainCategoryProvider> safeProviders = domainProviders == null ? Collections.emptyList() : domainProviders;
+        for (DomainCategoryProvider provider : safeProviders) {
+            DomainCategoryResult result = provider.getCategory(domain, host);
+            if (result != null) {
+                return result;
+            }
+        }
+        
+        return null;
+    }
+
     /**
      * Goes through web history artifacts and attempts to determine any hosts of
      * a domain type. If any are found, a TSK_WEB_CATEGORIZATION artifact is
@@ -160,15 +177,21 @@ class DomainCategorizer extends Extract {
 
                 // atempt to get the host from the url provided.
                 String host = getHost(urlString);
-                if (StringUtils.isBlank(host)) {
+                
+                // get the url string from the artifact
+                BlackboardAttribute domainAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN));
+                String domainString = domainAttr.getValueString();
+                
+                // make sure we have at least one of host or domain
+                if (StringUtils.isBlank(host) && StringUtils.isBlank(domainString)) {
                     continue;
                 }
-
+                
                 // if we reached this point, we are at least analyzing this item
                 artifactsAnalyzed++;
 
                 // attempt to get the domain type for the host using the suffix trie
-                DomainCategoryResult domainEntryFound = findHostSuffix(host);
+                DomainCategoryResult domainEntryFound = findCategory(host, domainString);
                 if (domainEntryFound == null) {
                     continue;
                 }
@@ -216,9 +239,36 @@ class DomainCategorizer extends Extract {
         this.findDomainTypes();
     }
 
+    private static final Comparator<DomainCategoryProvider> PROVIDER_COMPARATOR
+            = (a, b) -> {
+                // if one item is the DefaultDomainCategoryProvider, and one is it, compare based on that.
+                int isDefaultCompare = Integer.compare(
+                        a instanceof DefaultDomainCategoryProvider ? 0 : 1,
+                        b instanceof DefaultDomainCategoryProvider ? 0 : 1);
+
+                if (isDefaultCompare != 0) {
+                    return isDefaultCompare;
+                }
+
+                // otherwise, sort by the name of the fully qualified class for deterministic results.
+                return a.getClass().getName().compareToIgnoreCase(b.getClass().getName());
+            };
+
     @Override
     void configExtractor() throws IngestModule.IngestModuleException {
-        // TODO lookup needs to go here
+        List<DomainCategoryProvider> foundProviders
+                = Lookup.getDefault().lookupAll(DomainCategoryProvider.class).stream()
+                        .filter(provider -> provider != null)
+                        .sorted(PROVIDER_COMPARATOR)
+                        .collect(Collectors.toList());
+
+        for (DomainCategoryProvider provider : foundProviders) {
+            provider.initialize();
+        }
+
+        this.domainProviders = foundProviders == null ? 
+                Collections.emptyList() : 
+                foundProviders;
     }
 
     @Override
