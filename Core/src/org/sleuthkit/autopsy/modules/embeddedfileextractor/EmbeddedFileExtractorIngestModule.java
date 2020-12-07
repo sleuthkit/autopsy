@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015-2018 Basis Technology Corp.
+ * Copyright 2015-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,12 +18,17 @@
  */
 package org.sleuthkit.autopsy.modules.embeddedfileextractor;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.io.File;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import javax.imageio.ImageIO;
 import javax.imageio.spi.IIORegistry;
 import org.openide.util.NbBundle;
@@ -35,6 +40,8 @@ import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import net.sf.sevenzipjbinding.SevenZipNativeInitializationException;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.coreutils.ThreadUtils;
+import org.sleuthkit.autopsy.coreutils.ThreadUtils.TaskAttempt;
 import org.sleuthkit.autopsy.ingest.FileIngestModuleAdapter;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.autopsy.modules.embeddedfileextractor.SevenZipExtractor.Archive;
@@ -69,49 +76,57 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
 
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
+        jobId = context.getJobId();
+
         /*
          * Construct absolute and relative paths to the output directory. The
          * relative path is relative to the case folder, and will be used in the
          * case database for extracted (derived) file paths. The absolute path
          * is used to write the extracted (derived) files to local storage.
          */
-        jobId = context.getJobId();
-        String moduleDirRelative = null;
-        String moduleDirAbsolute = null;
+        Case currentCase = Case.getCurrentCase();
+        final String moduleDirRelative = Paths.get(currentCase.getModuleOutputDirectoryRelativePath(), EmbeddedFileExtractorModuleFactory.getModuleName()).toString();
+        final String moduleDirAbsolute = Paths.get(currentCase.getModuleDirectory(), EmbeddedFileExtractorModuleFactory.getModuleName()).toString();
 
-        try {
-            final Case currentCase = Case.getCurrentCaseThrows();
-            moduleDirRelative = Paths.get(currentCase.getModuleOutputDirectoryRelativePath(), EmbeddedFileExtractorModuleFactory.getModuleName()).toString();
-            moduleDirAbsolute = Paths.get(currentCase.getModuleDirectory(), EmbeddedFileExtractorModuleFactory.getModuleName()).toString();
-        } catch (NoCurrentCaseException ex) {
-            throw new IngestModuleException(Bundle.EmbeddedFileExtractorIngestModule_NoOpenCase_errMsg(), ex);
-        }
-        /*
-         * Create the output directory.
-         */
-        File extractionDirectory = new File(moduleDirAbsolute);
-        if (!extractionDirectory.exists()) {
-            try {
-                extractionDirectory.mkdirs();
-            } catch (SecurityException ex) {
-                throw new IngestModuleException(Bundle.CannotCreateOutputFolder(), ex);
-            }
-        }
-
-        /*
-         * Construct a file type detector.
-         */
         try {
             fileTypeDetector = new FileTypeDetector();
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
             throw new IngestModuleException(Bundle.CannotRunFileTypeDetection(), ex);
         }
+
         try {
             this.archiveExtractor = new SevenZipExtractor(context, fileTypeDetector, moduleDirRelative, moduleDirAbsolute);
         } catch (SevenZipNativeInitializationException ex) {
             throw new IngestModuleException(Bundle.UnableToInitializeLibraries(), ex);
         }
+
         if (refCounter.incrementAndGet(jobId) == 1) {
+            /*
+             * Create the output directory, if it does not already exist.
+             */
+            Callable<Boolean> createOutptuDirTask = () -> {
+                File extractionDirectory = new File(moduleDirAbsolute);
+                if (!extractionDirectory.exists()) {
+                    return extractionDirectory.mkdirs();
+                } else {
+                    return true;
+                }
+            };
+            List<TaskAttempt> attempts = new ArrayList<>();
+            attempts.add(new TaskAttempt(0L, TimeUnit.SECONDS, 5L, TimeUnit.SECONDS));
+            attempts.add(new TaskAttempt(1L, TimeUnit.SECONDS, 5L, TimeUnit.SECONDS));
+            attempts.add(new TaskAttempt(1L, TimeUnit.SECONDS, 5L, TimeUnit.SECONDS));
+            ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(3, new ThreadFactoryBuilder().setNameFormat("").build());
+            try {
+                if (!ThreadUtils.attemptTask(createOutptuDirTask, attempts, executor, null, null)) {
+                    throw new IngestModuleException(Bundle.CannotCreateOutputFolder());
+                }
+            } catch (InterruptedException ex) {
+                throw new IngestModuleException(Bundle.CannotCreateOutputFolder(), ex);
+            } finally {
+                executor.shutdownNow();
+            }
+
             /*
              * Construct a concurrentHashmap to keep track of depth in archives
              * while processing archive files.
@@ -124,6 +139,7 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
              */
             initializeImageIO();
         }
+
         /*
          * Construct an embedded content extractor for processing Microsoft
          * Office documents and PDF documents.
@@ -134,23 +150,23 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
             throw new IngestModuleException(Bundle.EmbeddedFileExtractorIngestModule_UnableToGetMSOfficeExtractor_errMsg(), ex);
         }
     }
-    
+
     /**
-     * Initializes the ImageIO API and sorts the providers for
-     * deterministic image reading and writing.
+     * Initializes the ImageIO API and sorts the providers for deterministic
+     * image reading and writing.
      */
     private void initializeImageIO() {
         ImageIO.scanForPlugins();
-        
+
         // Sift through each registry category and sort category providers by
         // their canonical class name.
         IIORegistry pluginRegistry = IIORegistry.getDefaultInstance();
         Iterator<Class<?>> categories = pluginRegistry.getCategories();
-        while(categories.hasNext()) {
+        while (categories.hasNext()) {
             sortPluginsInCategory(pluginRegistry, categories.next());
         }
     }
-    
+
     /**
      * Sorts all ImageIO SPI providers by their class name.
      */
@@ -163,11 +179,11 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
         Collections.sort(providers, (first, second) -> {
             return first.getClass().getCanonicalName().compareToIgnoreCase(second.getClass().getCanonicalName());
         });
-        for(int i = 0; i < providers.size() - 1; i++) {
-            for(int j = i + 1; j < providers.size(); j++) {
+        for (int i = 0; i < providers.size() - 1; i++) {
+            for (int j = i + 1; j < providers.size(); j++) {
                 // The registry only accepts pairwise orderings. To guarantee a 
                 // total order, all pairs need to be exhausted.
-                pluginRegistry.setOrdering(category, providers.get(i), 
+                pluginRegistry.setOrdering(category, providers.get(i),
                         providers.get(j));
             }
         }
