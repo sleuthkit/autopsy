@@ -91,7 +91,7 @@ final class DomainArtifactsTabPanel extends JPanel {
                 break;
         }
         if (rightPanel != null) {
-            jSplitPane1.setRightComponent(new JScrollPane(rightPanel));
+            jSplitPane1.setRightComponent(rightPanel.getComponent());
         }
     }
 

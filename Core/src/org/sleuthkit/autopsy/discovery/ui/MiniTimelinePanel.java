@@ -64,7 +64,7 @@ class MiniTimelinePanel extends javax.swing.JPanel {
                         rightPanel = new GeneralPurposeArtifactViewer();
                     }
                     rightPanel.setArtifact(artifact);
-                    mainSplitPane.setRightComponent(new JScrollPane(rightPanel));
+                    mainSplitPane.setRightComponent(rightPanel.getComponent());
                     validate();
                     repaint();
                 }
@@ -88,7 +88,7 @@ class MiniTimelinePanel extends javax.swing.JPanel {
         artifactListPanel.addSelectionListener(artifactListener);
         leftSplitPane.setLeftComponent(dateListPanel);
         leftSplitPane.setRightComponent(artifactListPanel);
-        mainSplitPane.setRightComponent(rightPanel);
+        mainSplitPane.setRightComponent(rightPanel.getComponent());
     }
 
     /**
