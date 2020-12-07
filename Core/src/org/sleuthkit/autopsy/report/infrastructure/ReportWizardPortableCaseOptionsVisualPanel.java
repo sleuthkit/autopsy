@@ -26,6 +26,7 @@ import java.util.Map;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.report.modules.portablecase.PortableCaseReportModuleSettings.ChunkSize;
+import org.sleuthkit.datamodel.FileRepository;
 
 /**
  * The UI portion of the Portable Case config panel
@@ -87,6 +88,13 @@ class ReportWizardPortableCaseOptionsVisualPanel extends javax.swing.JPanel {
         compressCheckbox.setSelected(settings.shouldCompress());
         chunkSizeComboBox.setEnabled(settings.shouldCompress());
         chunkSizeComboBox.setSelectedItem(settings.getChunkSize());
+        if (FileRepository.isEnabled()) {
+            fileRepoCheckbox.setEnabled(true);
+            fileRepoCheckbox.setSelected(settings.getUseFileRepo());
+        } else {
+            fileRepoCheckbox.setEnabled(false);
+            fileRepoCheckbox.setSelected(false);
+        }
 
         // initialize other panels and pass them the settings
         listPanel.setLayout(new GridLayout(1, 2));
@@ -154,6 +162,7 @@ class ReportWizardPortableCaseOptionsVisualPanel extends javax.swing.JPanel {
         errorLabel = new javax.swing.JLabel();
         listPanel = new javax.swing.JPanel();
         includeAppCheckbox = new javax.swing.JCheckBox();
+        fileRepoCheckbox = new javax.swing.JCheckBox();
 
         chunkSizeComboBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -180,13 +189,20 @@ class ReportWizardPortableCaseOptionsVisualPanel extends javax.swing.JPanel {
         );
         listPanelLayout.setVerticalGroup(
             listPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 190, Short.MAX_VALUE)
+            .addGap(0, 205, Short.MAX_VALUE)
         );
 
         org.openide.awt.Mnemonics.setLocalizedText(includeAppCheckbox, org.openide.util.NbBundle.getMessage(ReportWizardPortableCaseOptionsVisualPanel.class, "ReportWizardPortableCaseOptionsVisualPanel.includeAppCheckbox.text")); // NOI18N
         includeAppCheckbox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 includeAppCheckboxActionPerformed(evt);
+            }
+        });
+
+        org.openide.awt.Mnemonics.setLocalizedText(fileRepoCheckbox, org.openide.util.NbBundle.getMessage(ReportWizardPortableCaseOptionsVisualPanel.class, "ReportWizardPortableCaseOptionsVisualPanel.fileRepoCheckbox.text")); // NOI18N
+        fileRepoCheckbox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                fileRepoCheckboxActionPerformed(evt);
             }
         });
 
@@ -198,27 +214,32 @@ class ReportWizardPortableCaseOptionsVisualPanel extends javax.swing.JPanel {
             .addGroup(mainPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(includeAppCheckbox)
                     .addGroup(mainPanelLayout.createSequentialGroup()
-                        .addComponent(compressCheckbox)
+                        .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                            .addComponent(fileRepoCheckbox, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, mainPanelLayout.createSequentialGroup()
+                                .addComponent(compressCheckbox)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(chunkSizeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 187, javax.swing.GroupLayout.PREFERRED_SIZE)))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(chunkSizeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 187, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(errorLabel))
-                    .addComponent(includeAppCheckbox))
+                        .addComponent(errorLabel)))
                 .addContainerGap(41, Short.MAX_VALUE))
         );
         mainPanelLayout.setVerticalGroup(
             mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(mainPanelLayout.createSequentialGroup()
+                .addContainerGap()
                 .addComponent(listPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(compressCheckbox)
                     .addComponent(chunkSizeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(errorLabel))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(includeAppCheckbox)
-                .addContainerGap())
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(fileRepoCheckbox))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -231,7 +252,7 @@ class ReportWizardPortableCaseOptionsVisualPanel extends javax.swing.JPanel {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 259, Short.MAX_VALUE)
+            .addGap(0, 290, Short.MAX_VALUE)
             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addComponent(mainPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
@@ -256,11 +277,18 @@ class ReportWizardPortableCaseOptionsVisualPanel extends javax.swing.JPanel {
         updateIncludeApplication();
     }//GEN-LAST:event_includeAppCheckboxActionPerformed
 
+    private void fileRepoCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fileRepoCheckboxActionPerformed
+        if (settings != null) {
+            settings.setUseFileRepo(fileRepoCheckbox.isSelected());
+        }
+    }//GEN-LAST:event_fileRepoCheckboxActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JComboBox<ChunkSize> chunkSizeComboBox;
     private javax.swing.JCheckBox compressCheckbox;
     private javax.swing.JLabel errorLabel;
+    private javax.swing.JCheckBox fileRepoCheckbox;
     private javax.swing.JCheckBox includeAppCheckbox;
     private javax.swing.JPanel listPanel;
     private javax.swing.JPanel mainPanel;

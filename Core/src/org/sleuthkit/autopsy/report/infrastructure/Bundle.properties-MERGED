@@ -221,4 +221,5 @@ FileReportDataTypes.perms.text=Permissions
 FileReportDataTypes.path.text=Full Path
 ReportWizardPortableCaseOptionsVisualPanel.getName.title=Choose Portable Case settings
 ReportWizardPortableCaseOptionsVisualPanel.includeAppCheckbox.text=Include application in folder (may add up to 1GB of files)
+ReportWizardPortableCaseOptionsVisualPanel.fileRepoCheckbox.text=Do not copy files that are present in the File Repository
 TableReportGenerator.StatusColumn.Header=Review Status
