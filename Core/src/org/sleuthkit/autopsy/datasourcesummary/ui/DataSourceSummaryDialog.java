@@ -61,6 +61,7 @@ final class DataSourceSummaryDialog extends javax.swing.JDialog implements Obser
         Map<Long, Long> fileCountsMap = CaseDataSourcesSummary.getCountsOfFiles();
         dataSourcesPanel = new DataSourceBrowser(usageMap, fileCountsMap);
         dataSourceSummaryTabbedPane = new DataSourceSummaryTabbedPane();
+        dataSourceSummaryTabbedPane.setParentCloseListener(() -> DataSourceSummaryDialog.this.dispose());
         initComponents();
         dataSourceSummarySplitPane.setLeftComponent(dataSourcesPanel);
         dataSourcesPanel.addListSelectionListener((ListSelectionEvent e) -> {
@@ -169,7 +170,7 @@ final class DataSourceSummaryDialog extends javax.swing.JDialog implements Obser
      * source matches the dataSourceID it will select the first datasource.
      *
      * @param dataSourceID the ID of the datasource to select, null will cause
-     *                     the first datasource to be selected
+     * the first datasource to be selected
      */
     void selectDataSource(Long dataSourceId) {
         dataSourcesPanel.selectDataSource(dataSourceId);

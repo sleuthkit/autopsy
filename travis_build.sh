@@ -15,10 +15,7 @@ echo "Testing Autopsy..." && echo -en 'travis_fold:start:script.tests\\r'
 echo "Free Space:"
 echo `df -h .` 
 
-if [ "${TRAVIS_OS_NAME}" = "osx" ]; then
-    # if os x, just run it
-    # ant -q test-no-regression
-elif [ "${TRAVIS_OS_NAME}" = "linux" ]; then
+if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
     # if linux use xvfb
     xvfb-run ant -q test-no-regression
 fi
