@@ -28,6 +28,9 @@ DiscoveryKeyUtils.NoGroupingGroupKey.allFiles=All Files
 DiscoveryKeyUtils.NumberOfVisitsGroupKey.displayName={0} visits
 DiscoveryKeyUtils.NumberOfVisitsGroupKey.noVisits=No visits
 DiscoveryKeyUtils.ObjectDetectedGroupKey.noSets=None
+# {0} - domain
+# {1} - artifactType
+DomainSearchArtifactsRequest.toString.text=Domain: {0} ArtifactType: {1}
 FileGroup.groupSortingAlgorithm.groupName.text=Group Name
 FileGroup.groupSortingAlgorithm.groupSize.text=Group Size
 FileSearch.documentSummary.noBytes=No bytes read for document, unable to display preview.

@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.discovery.ui;
 
+import org.sleuthkit.autopsy.discovery.search.MiniTimelineResult;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CancellationException;
@@ -30,16 +31,13 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryException;
 import org.sleuthkit.autopsy.discovery.search.DomainSearch;
-import org.sleuthkit.autopsy.discovery.search.DomainSearchArtifactsRequest;
-import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
  * SwingWorker to retrieve a list of artifacts for a specified type and domain.
  */
-class ArtifactsWorker extends SwingWorker<List<BlackboardArtifact>, Void> {
+class MiniTimelineWorker extends SwingWorker<List<MiniTimelineResult>, Void> {
 
-    private final BlackboardArtifact.ARTIFACT_TYPE artifactType;
-    private final static Logger logger = Logger.getLogger(ArtifactsWorker.class.getName());
+    private final static Logger logger = Logger.getLogger(MiniTimelineWorker.class.getName());
     private final String domain;
 
     /**
@@ -48,17 +46,18 @@ class ArtifactsWorker extends SwingWorker<List<BlackboardArtifact>, Void> {
      * @param artifactType The type of artifact being retrieved.
      * @param domain       The domain the artifacts should have as an attribute.
      */
-    ArtifactsWorker(BlackboardArtifact.ARTIFACT_TYPE artifactType, String domain) {
-        this.artifactType = artifactType;
+    MiniTimelineWorker(String domain) {
         this.domain = domain;
     }
 
     @Override
-    protected List<BlackboardArtifact> doInBackground() throws Exception {
-        if (artifactType != null && !StringUtils.isBlank(domain)) {
+    protected List<MiniTimelineResult> doInBackground() throws Exception {
+        List<MiniTimelineResult> results = new ArrayList<>();
+        if (!StringUtils.isBlank(domain)) {
             DomainSearch domainSearch = new DomainSearch();
             try {
-                return domainSearch.getArtifacts(new DomainSearchArtifactsRequest(Case.getCurrentCase().getSleuthkitCase(), domain, artifactType));
+                results.addAll(domainSearch.getAllArtifactsForDomain(Case.getCurrentCase().getSleuthkitCase(), domain));
+
             } catch (DiscoveryException ex) {
                 if (ex.getCause() instanceof InterruptedException) {
                     logger.log(Level.INFO, "MiniTimeline search was cancelled or interrupted for domain: {0}", domain);
@@ -67,23 +66,22 @@ class ArtifactsWorker extends SwingWorker<List<BlackboardArtifact>, Void> {
                 }
             }
         }
-        return new ArrayList<>();
+        return results;
     }
 
     @Override
     protected void done() {
-        List<BlackboardArtifact> listOfArtifacts = new ArrayList<>();
+        List<MiniTimelineResult> results = new ArrayList<>();
         if (!isCancelled()) {
             try {
-                listOfArtifacts.addAll(get());
-                DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.ArtifactSearchResultEvent(artifactType, listOfArtifacts));
+                results.addAll(get());
+                DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.MiniTimelineResultEvent(results));
             } catch (InterruptedException | ExecutionException ex) {
-                logger.log(Level.SEVERE, "Exception while trying to get list of artifacts for Domain details for artifact type: "
-                        + artifactType.getDisplayName() + " and domain: " + domain, ex);
+                logger.log(Level.SEVERE, "Exception while trying to get list of artifacts for Domain details for mini timeline view for domain: " + domain, ex);
             } catch (CancellationException ignored) {
                 //Worker was cancelled after previously finishing its background work, exception ignored to cut down on non-helpful logging
             }
         }
-        
+
     }
 }
