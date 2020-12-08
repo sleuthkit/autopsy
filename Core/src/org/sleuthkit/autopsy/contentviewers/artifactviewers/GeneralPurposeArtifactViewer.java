@@ -31,18 +31,14 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.logging.Level;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
-import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
 import javax.swing.SwingUtilities;
-import org.apache.commons.lang.StringUtils;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -73,7 +69,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
     private static final Integer[] DEFAULT_ORDERING = new Integer[]{BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TITLE.getTypeID(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID(),
         BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID(),
         BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID(),
-        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID(),
+        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID(),
         BlackboardAttribute.ATTRIBUTE_TYPE.TSK_REFERRER.getTypeID(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),
         BlackboardAttribute.ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT.getTypeID(),
         BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH.getTypeID(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID(),
@@ -90,8 +86,13 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
     public GeneralPurposeArtifactViewer() {
         addOrderings();
         initComponents();
+        detailsPanel.setLayout(gridBagLayout);
     }
 
+    /**
+     * Private helper method to add the orderings used for each artifact type to
+     * the map for lookup.
+     */
     private void addOrderings() {
         orderingMap.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID(), new Integer[]{BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID(),
             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TITLE.getTypeID(),
@@ -151,9 +152,15 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
             }
             updateView(artifact.getArtifactTypeID(), attributeMap, dataSourceName, sourceFileName);
         }
-        detailsScrollPane.setLayout(this.gridBagLayout);
-        this.revalidate();
-        this.repaint();
+        detailsScrollPane.setViewportView(detailsPanel);
+        detailsPanel.updateUI();
+        detailsPanel.revalidate();
+        detailsPanel.repaint();
+        detailsScrollPane.updateUI();
+        detailsScrollPane.validate();
+        detailsScrollPane.repaint();
+        revalidate();
+        repaint();
     }
 
     /**
@@ -162,7 +169,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private void resetComponent() {
         // clear the panel 
-        this.removeAll();
+        detailsPanel.removeAll();
         gridBagConstraints.anchor = GridBagConstraints.FIRST_LINE_START;
         gridBagConstraints.gridy = 0;
         gridBagConstraints.gridx = LABEL_COLUMN;
@@ -175,8 +182,8 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     public Component getComponent() {
-        // Slap a vertical scrollbar on the panel.
-        return new JScrollPane(this, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+//         Slap a vertical scrollbar on the panel.
+        return this; //new JScrollPane(this, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
@@ -209,9 +216,31 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
     private void initComponents() {
 
         detailsScrollPane = new javax.swing.JScrollPane();
+        detailsPanel = new javax.swing.JPanel();
 
-        setPreferredSize(new java.awt.Dimension(400, 50));
+        setPreferredSize(new java.awt.Dimension(0, 0));
         setLayout(new java.awt.BorderLayout());
+
+        detailsScrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
+        detailsScrollPane.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+        detailsScrollPane.setMinimumSize(new java.awt.Dimension(0, 0));
+        detailsScrollPane.setPreferredSize(new java.awt.Dimension(0, 0));
+
+        detailsPanel.setPreferredSize(new java.awt.Dimension(0, 0));
+
+        javax.swing.GroupLayout detailsPanelLayout = new javax.swing.GroupLayout(detailsPanel);
+        detailsPanel.setLayout(detailsPanelLayout);
+        detailsPanelLayout.setHorizontalGroup(
+            detailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 0, Short.MAX_VALUE)
+        );
+        detailsPanelLayout.setVerticalGroup(
+            detailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 0, Short.MAX_VALUE)
+        );
+
+        detailsScrollPane.setViewportView(detailsPanel);
+
         add(detailsScrollPane, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
@@ -247,21 +276,33 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
                 }
             }
             if (TYPES_WITH_DATE_SECTION.contains(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE.getTypeID())) {
-                addHeader(Bundle.GeneralPurposeArtifactViewer_details_datesHeader());
+                boolean headerAdded = false;
                 List<BlackboardAttribute> attrList = attributeMap.remove(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID());
                 if (attrList != null) {
+                    if (!headerAdded) {
+                        addHeader(Bundle.GeneralPurposeArtifactViewer_details_datesHeader());
+                        headerAdded = true;
+                    }
                     for (BlackboardAttribute bba : attrList) {
                         addNameValueRow(Bundle.GeneralPurposeArtifactViewer_dates_created(), bba.getDisplayString());
                     }
                 }
                 attrList = attributeMap.remove(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID());
                 if (attrList != null) {
+                    if (!headerAdded) {
+                        addHeader(Bundle.GeneralPurposeArtifactViewer_details_datesHeader());
+                        headerAdded = true;
+                    }
                     for (BlackboardAttribute bba : attrList) {
                         addNameValueRow(Bundle.GeneralPurposeArtifactViewer_dates_start(), bba.getDisplayString());
                     }
                 }
                 attrList = attributeMap.remove(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID());
                 if (attrList != null) {
+                    if (!headerAdded) {
+                        addHeader(Bundle.GeneralPurposeArtifactViewer_details_datesHeader());
+                        headerAdded = true;
+                    }
                     for (BlackboardAttribute bba : attrList) {
                         addNameValueRow(Bundle.GeneralPurposeArtifactViewer_dates_end(), bba.getDisplayString());
                     }
@@ -322,7 +363,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
         // the first section
         if (gridBagConstraints.gridy != 0) {
             gridBagConstraints.gridy++;
-            detailsScrollPane.add(new javax.swing.JLabel(" "), gridBagConstraints);
+            detailsPanel.add(new javax.swing.JLabel(" "), gridBagConstraints);
             addLineEndGlue();
         }
         gridBagConstraints.gridy++;
@@ -335,7 +376,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
         // make it large and bold
         headingLabel.setFont(headingLabel.getFont().deriveFont(Font.BOLD, headingLabel.getFont().getSize() + 2));
         // add to panel
-        detailsScrollPane.add(headingLabel, gridBagConstraints);
+        detailsPanel.add(headingLabel, gridBagConstraints);
         // reset constraints to normal
         gridBagConstraints.gridwidth = LABEL_WIDTH;
         // add line end glue
@@ -366,7 +407,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
         gridBagConstraints.weightx = GLUE_WEIGHT_X; // take up all the horizontal space
         gridBagConstraints.fill = GridBagConstraints.BOTH;
         javax.swing.Box.Filler horizontalFiller = new javax.swing.Box.Filler(new Dimension(0, 0), new Dimension(0, 0), new Dimension(32767, 0));
-        detailsScrollPane.add(horizontalFiller, gridBagConstraints);
+        detailsPanel.add(horizontalFiller, gridBagConstraints);
         // restore fill & weight
         gridBagConstraints.fill = GridBagConstraints.NONE;
         gridBagConstraints.weightx = TEXT_WEIGHT_X;
@@ -380,7 +421,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
         gridBagConstraints.weighty = 1.0; // take up all the vertical space
         gridBagConstraints.fill = GridBagConstraints.VERTICAL;
         javax.swing.Box.Filler vertFiller = new javax.swing.Box.Filler(new Dimension(0, 0), new Dimension(0, 0), new Dimension(0, 32767));
-        detailsScrollPane.add(vertFiller, gridBagConstraints);
+        detailsPanel.add(vertFiller, gridBagConstraints);
     }
 
     /**
@@ -399,7 +440,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
         // set text
         keyLabel.setText(keyString + ": ");
         // add to panel
-        detailsScrollPane.add(keyLabel, gridBagConstraints);
+        detailsPanel.add(keyLabel, gridBagConstraints);
         return keyLabel;
     }
 
@@ -430,7 +471,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
             }
         });
         // add label to panel
-        detailsScrollPane.add(valueField, cloneConstraints);
+        detailsPanel.add(valueField, cloneConstraints);
         // end the line
         addLineEndGlue();
         return valueField;
@@ -463,6 +504,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JPanel detailsPanel;
     private javax.swing.JScrollPane detailsScrollPane;
     // End of variables declaration//GEN-END:variables
 }
