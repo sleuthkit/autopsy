@@ -122,8 +122,7 @@ class DomainCategorizer extends Extract {
 
         return host;
     }
-    
-    
+
     private DomainCategoryResult findCategory(String domain, String host) {
         List<DomainCategoryProvider> safeProviders = domainProviders == null ? Collections.emptyList() : domainProviders;
         for (DomainCategoryProvider provider : safeProviders) {
@@ -132,7 +131,7 @@ class DomainCategorizer extends Extract {
                 return result;
             }
         }
-        
+
         return null;
     }
 
@@ -177,16 +176,16 @@ class DomainCategorizer extends Extract {
 
                 // atempt to get the host from the url provided.
                 String host = getHost(urlString);
-                
+
                 // get the url string from the artifact
                 BlackboardAttribute domainAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN));
                 String domainString = domainAttr.getValueString();
-                
-                // make sure we have at least one of host or domain
-                if (StringUtils.isBlank(host) && StringUtils.isBlank(domainString)) {
+
+                // make sure we have at least one of host or domain, and the host hasn't been seen before
+                if ((StringUtils.isBlank(host) && StringUtils.isBlank(domainString)) || (domainSuffixesSeen.contains(host))) {
                     continue;
                 }
-                
+
                 // if we reached this point, we are at least analyzing this item
                 artifactsAnalyzed++;
 
@@ -266,9 +265,9 @@ class DomainCategorizer extends Extract {
             provider.initialize();
         }
 
-        this.domainProviders = foundProviders == null ? 
-                Collections.emptyList() : 
-                foundProviders;
+        this.domainProviders = foundProviders == null
+                ? Collections.emptyList()
+                : foundProviders;
     }
 
     @Override

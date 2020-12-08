@@ -35,16 +35,4 @@ public interface DomainCategoryResult {
      * @return The category (i.e. 'Web Email').
      */
     String getCategory();
-
-    /**
-     * @return In the event that there would be different matches for additional
-     * prefixes, this can return true. For instance, if there was an entry for
-     * 'mail.google.com' and 'chatenabled.mail.google.com', a search for
-     * 'mail.google.com' would return the host suffix: 'mail.google.com' and
-     * 'true' for hasMorePrefixes since an additional category could be added
-     * for the 'chatenabled' prefix.
-     */
-    default boolean hasMorePrefixes() {
-        return true;
-    }
 }

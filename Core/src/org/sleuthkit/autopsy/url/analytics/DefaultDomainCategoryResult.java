@@ -28,30 +28,16 @@ public class DefaultDomainCategoryResult implements DomainCategoryResult {
 
     private final String hostSuffix;
     private final String category;
-    private final boolean morePrefixes;
 
     /**
-     * Default constructor assuming default for hasMorePrefixes of true.
+     * Default constructor.
      * @param hostSuffix The portion of the suffix from the host or domain that was a
      * match (i.e. 'mail.google.com' or 'hotmail.com').
      * @param category The category (i.e. 'Web Email').
      */
     public DefaultDomainCategoryResult(String hostSuffix, String category) {
-        this(hostSuffix, category, true);
-    }
-
-    /**
-     * Main constructor.
-     * @param hostSuffix The portion of the suffix from the host or domain that was a
-     * match (i.e. 'mail.google.com' or 'hotmail.com').
-     * @param category The category (i.e. 'Web Email').
-     * @param morePrefixes In the event that there would be different matches for additional
-     * prefixes, this can be true.
-     */
-    public DefaultDomainCategoryResult(String hostSuffix, String category, boolean morePrefixes) {
         this.hostSuffix = hostSuffix;
         this.category = category;
-        this.morePrefixes = morePrefixes;
     }
 
     @Override
@@ -63,10 +49,4 @@ public class DefaultDomainCategoryResult implements DomainCategoryResult {
     public String getCategory() {
         return category;
     }
-
-    @Override
-    public boolean hasMorePrefixes() {
-        return morePrefixes;
-    }
-
 }

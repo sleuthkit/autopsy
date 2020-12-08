@@ -18,17 +18,21 @@
  */
 package org.sleuthkit.autopsy.recentactivity;
 
-import org.sleuthkit.autopsy.url.analytics.DomainSuffixTrie;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import org.apache.commons.lang.StringUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
+import org.sleuthkit.autopsy.url.analytics.DefaultDomainCategoryResult;
 import org.sleuthkit.autopsy.url.analytics.DomainCategoryProvider;
 import org.sleuthkit.autopsy.url.analytics.DomainCategoryResult;
 
@@ -44,38 +48,38 @@ class DefaultDomainCategoryProvider implements DomainCategoryProvider {
     private static final Logger logger = Logger.getLogger(DefaultDomainCategoryProvider.class.getName());
 
     /**
-     * Loads the trie of suffixes from the csv resource file.
+     * Loads the domain suffixes from the csv resource file.
      *
-     * @return The root trie node.
+     * @return The mapping.
      * @throws IOException
      */
-    private static DomainSuffixTrie loadTrie() throws IOException {
+    private static Map<String, String> loadMapping() throws IOException {
         try (InputStream is = DomainCategorizer.class.getResourceAsStream(DOMAIN_TYPE_CSV);
                 InputStreamReader isReader = new InputStreamReader(is, StandardCharsets.UTF_8);
                 BufferedReader reader = new BufferedReader(isReader)) {
 
-            DomainSuffixTrie trie = new DomainSuffixTrie();
+            Map<String, String> mapping = new HashMap<>();
             int lineNum = 1;
             while (reader.ready()) {
                 String line = reader.readLine();
                 if (!StringUtils.isBlank(line)) {
-                    addItem(trie, line.trim(), lineNum);
+                    addItem(mapping, line.trim(), lineNum);
                     lineNum++;
                 }
             }
 
-            return trie;
+            return mapping;
         }
     }
 
     /**
-     * Adds a trie node based on the csv line.
+     * Adds a mapping based on the csv line.
      *
-     * @param trie The root trie node.
+     * @param mapping The suffix to category mapping.
      * @param line The line to be parsed.
      * @param lineNumber The line number of this csv line.
      */
-    private static void addItem(DomainSuffixTrie trie, String line, int lineNumber) {
+    private static void addItem(Map<String, String> mapping, String line, int lineNumber) {
         // make sure this isn't a blank line.
         if (StringUtils.isBlank(line)) {
             return;
@@ -102,17 +106,17 @@ class DefaultDomainCategoryProvider implements DomainCategoryProvider {
             return;
         }
 
-        trie.add(hostSuffix, domainTypeStr);
+        mapping.put(hostSuffix, domainTypeStr);
     }
 
-    // the root node for the trie containing suffixes for domain categories.
-    private DomainSuffixTrie trie = null;
+    // the host suffix to category mapping.
+    private Map<String, String> mapping = null;
 
     @Override
     public void initialize() throws IngestModuleException {
-        if (this.trie == null) {
+        if (this.mapping == null) {
             try {
-                this.trie = loadTrie();
+                this.mapping = loadMapping();
             } catch (IOException ex) {
                 throw new IngestModule.IngestModuleException("Unable to load domain type csv for domain category analysis", ex);
             }
@@ -121,6 +125,21 @@ class DefaultDomainCategoryProvider implements DomainCategoryProvider {
 
     @Override
     public DomainCategoryResult getCategory(String domain, String host) {
-        return trie.findHostCategory(host);
+        String hostToUse = StringUtils.isBlank(host) ? domain : host;
+        
+        if (StringUtils.isBlank(hostToUse)) {
+            return null;
+        }
+        
+        List<String> tokens = Arrays.asList(hostToUse.split("\\."));
+        for (int i = 0; i < tokens.size(); i++) {
+            String searchString = String.join(".", tokens.subList(i, tokens.size()));
+            String category = mapping.get(searchString);
+            if (StringUtils.isNotBlank(category)) {
+                return new DefaultDomainCategoryResult(searchString, category);
+            }
+        }
+        
+        return null;
     }
 }
