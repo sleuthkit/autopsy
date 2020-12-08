@@ -333,7 +333,9 @@ public final class DiscoveryTopComponent extends TopComponent {
                     descriptionText += Bundle.DiscoveryTopComponent_additionalFilters_text();
                 }
                 selectedDomainTabName = validateLastSelectedType(searchCompleteEvent);
-                rightSplitPane.setBottomComponent(new DomainDetailsPanel(selectedDomainTabName));
+                DomainDetailsPanel domainDetailsPanel = new DomainDetailsPanel();
+                rightSplitPane.setBottomComponent(domainDetailsPanel);
+                domainDetailsPanel.configureArtifactTabs(selectedDomainTabName);
             } else {
                 rightSplitPane.setBottomComponent(new FileDetailsPanel());
             }
