@@ -48,6 +48,7 @@ DocumentPanel.numberOfImages.noImages=No images
 # {0} - numberOfImages
 DocumentPanel.numberOfImages.text=1 of {0} images
 DocumentWrapper.previewInitialValue=Preview not generated yet.
+DomainDetailsPanel.miniTimelineTitle.text=Mini Timeline
 # {0} - startDate
 # {1} - endDate
 DomainSummaryPanel.activity.text=Activity: {0} to {1}
@@ -63,6 +64,12 @@ ImageThumbnailPanel.isDeleted.text=All instances of file are deleted.
 # {0} - otherInstanceCount
 ImageThumbnailPanel.nameLabel.more.text=\ and {0} more
 InterestingItemsFilterPanel.error.text=At least one interesting file set name must be selected.
+MiniTimelineArtifactListPanel.descriptionColumn.name=\ Description
+MiniTimelineArtifactListPanel.typeColumn.name=Result Type
+MiniTimelineArtifactListPanel.value.noValue=No value available.
+MiniTimelineDateListPanel.countColumn.name=Count
+MiniTimelineDateListPanel.dateColumn.name=Date
+MiniTimelineDateListPanel.value.noValue=No value available.
 ObjectDetectedFilterPanel.error.text=At least one object type name must be selected.
 ParentFolderFilterPanel.error.text=At least one parent path must be entered.
 PastOccurrencesFilterPanel.error.text=At least one value in the past occurrence filter must be selected.

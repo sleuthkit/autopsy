@@ -304,4 +304,5 @@ public class BarChartPanel extends AbstractLoadableComponent<List<BarChartPanel.
             }
         }
     }
+
 }

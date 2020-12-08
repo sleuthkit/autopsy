@@ -43,7 +43,7 @@ final class DomainArtifactsTabPanel extends JPanel {
     private final BlackboardArtifact.ARTIFACT_TYPE artifactType;
     private AbstractArtifactDetailsPanel rightPanel = null;
 
-    private volatile ArtifactRetrievalStatus status = ArtifactRetrievalStatus.UNPOPULATED;
+    private ArtifactRetrievalStatus status = ArtifactRetrievalStatus.UNPOPULATED;
     private final ListSelectionListener listener = new ListSelectionListener() {
         @Override
         public void valueChanged(ListSelectionEvent event) {
@@ -112,8 +112,12 @@ final class DomainArtifactsTabPanel extends JPanel {
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     void setStatus(ArtifactRetrievalStatus status) {
         this.status = status;
-        if (status == ArtifactRetrievalStatus.UNPOPULATED && rightPanel != null) {
-            rightPanel.setArtifact(null);
+        if (status == ArtifactRetrievalStatus.UNPOPULATED) {
+            listPanel.clearArtifacts();
+            if (rightPanel != null){
+                rightPanel.setArtifact(null);
+            }
+                
         }
     }
 
