@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import org.apache.commons.lang.StringUtils;
+import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
@@ -40,7 +41,8 @@ import org.sleuthkit.autopsy.url.analytics.DomainCategoryResult;
  * The default domain category provider that makes use of the default csv
  * resource.
  */
-class DefaultDomainCategoryProvider implements DomainCategoryProvider {
+@ServiceProvider(service = DomainCategoryProvider.class)
+public class DefaultDomainCategoryProvider implements DomainCategoryProvider {
 
     // csv delimiter
     private static final String CSV_DELIMITER = ",";
@@ -106,7 +108,7 @@ class DefaultDomainCategoryProvider implements DomainCategoryProvider {
             return;
         }
 
-        mapping.put(hostSuffix, domainTypeStr);
+        mapping.put(hostSuffix.toLowerCase(), domainTypeStr);
     }
 
     // the host suffix to category mapping.

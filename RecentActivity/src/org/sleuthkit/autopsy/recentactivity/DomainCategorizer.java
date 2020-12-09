@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.recentactivity;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
@@ -141,12 +142,15 @@ class DomainCategorizer extends Extract {
      * created (at most one per host suffix).
      */
     private void findDomainTypes() {
+        String moduleName = Bundle.DomainCategorizer_parentModuleName();
         int artifactsAnalyzed = 0;
         int domainTypeInstancesFound = 0;
 
+        // this will track the different hosts seen to avoid a search for the same host more than once
+        Set<String> hostsSeen = new HashSet<>();
+
         // only one suffix per ingest is captured so this tracks the suffixes seen.
         Set<String> domainSuffixesSeen = new HashSet<>();
-
         try {
             Collection<BlackboardArtifact> listArtifacts = currentCase.getSleuthkitCase().getBlackboard().getArtifacts(
                     Arrays.asList(new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_WEB_HISTORY)),
@@ -166,49 +170,59 @@ class DomainCategorizer extends Extract {
                     continue;
                 }
 
-                // get the url string from the artifact
+                // get the host from the url attribute and the domain from the attribute
                 BlackboardAttribute urlAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL));
-                if (urlAttr == null) {
-                    continue;
+                String host = null;
+                if (urlAttr != null) {
+                    String urlString = urlAttr.getValueString();
+                    host = getHost(urlString);
                 }
 
-                String urlString = urlAttr.getValueString();
-
-                // atempt to get the host from the url provided.
-                String host = getHost(urlString);
-
-                // get the url string from the artifact
                 BlackboardAttribute domainAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN));
-                String domainString = domainAttr.getValueString();
+                String domainString = null;
+                if (domainAttr != null) {
+                    domainString = domainAttr.getValueString();
+                }
 
-                // make sure we have at least one of host or domain, and the host hasn't been seen before
-                if ((StringUtils.isBlank(host) && StringUtils.isBlank(domainString)) || (domainSuffixesSeen.contains(host))) {
+                boolean hostIsBlank = StringUtils.isBlank(host);
+                if (hostIsBlank && StringUtils.isBlank(domainString)) {
+                    // make sure we have at least one of host or domain, and the host hasn't been seen before
                     continue;
+                } else if (!hostIsBlank) {
+                    if (domainSuffixesSeen.contains(host)) {
+                        // if host already seen continue
+                        continue;
+                    } else {
+                        // if there is a new host, track it
+                        hostsSeen.add(host);
+                    }
                 }
 
                 // if we reached this point, we are at least analyzing this item
                 artifactsAnalyzed++;
 
                 // attempt to get the domain type for the host using the suffix trie
-                DomainCategoryResult domainEntryFound = findCategory(host, domainString);
+                DomainCategoryResult domainEntryFound = findCategory(domainString, host);
                 if (domainEntryFound == null) {
+                    continue;
+                }
+
+                String hostSuffix = domainEntryFound.getHostSuffix();
+                String domainCategory = domainEntryFound.getCategory();
+                if (StringUtils.isBlank(hostSuffix) || StringUtils.isBlank(domainCategory)) {
                     continue;
                 }
 
                 // if we got this far, we found a domain type, but it may not be unique
                 domainTypeInstancesFound++;
 
-                String hostSuffix = domainEntryFound.getHostSuffix();
-                String domainCategory = domainEntryFound.getCategory();
-                if (StringUtils.isBlank(hostSuffix) || domainCategory == null || domainSuffixesSeen.contains(hostSuffix)) {
+                if (domainSuffixesSeen.contains(hostSuffix)) {
                     continue;
                 }
 
                 // if we got this far, this is a unique suffix.  Add to the set, so we don't create
                 // multiple of same suffix and add an artifact.
                 domainSuffixesSeen.add(hostSuffix);
-
-                String moduleName = Bundle.DomainCategorizer_parentModuleName();
 
                 Collection<BlackboardAttribute> bbattributes = Arrays.asList(
                         new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN, moduleName, NetworkUtils.extractDomain(host)),
@@ -272,6 +286,16 @@ class DomainCategorizer extends Extract {
 
     @Override
     public void complete() {
-        logger.info("Search Engine URL Query Analyzer has completed."); //NON-NLS
+        if (this.domainProviders != null) {
+            for (DomainCategoryProvider provider : this.domainProviders) {
+                try {
+                    provider.close();
+                } catch (IOException ex) {
+                    logger.log(Level.WARNING, "There was an error closing " + provider.getClass().getName(), ex);
+                }
+            }
+        }
+
+        logger.info("Domain categorization completed."); //NON-NLS
     }
 }
