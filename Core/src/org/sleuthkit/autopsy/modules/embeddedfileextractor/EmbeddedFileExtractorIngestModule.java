@@ -29,7 +29,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import javax.imageio.ImageIO;
 import javax.imageio.spi.IIORegistry;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -40,8 +39,9 @@ import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import net.sf.sevenzipjbinding.SevenZipNativeInitializationException;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.coreutils.ThreadUtils;
-import org.sleuthkit.autopsy.coreutils.ThreadUtils.TaskAttempt;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.threadutils.TaskRetryUtil;
+import org.sleuthkit.autopsy.threadutils.TaskRetryUtil.TaskAttempt;
 import org.sleuthkit.autopsy.ingest.FileIngestModuleAdapter;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.autopsy.modules.embeddedfileextractor.SevenZipExtractor.Archive;
@@ -59,6 +59,8 @@ import org.sleuthkit.autopsy.modules.embeddedfileextractor.SevenZipExtractor.Arc
 })
 public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAdapter {
 
+    private static final Logger logger = Logger.getLogger(EmbeddedFileExtractorIngestModule.class.getName());    
+    
     //Outer concurrent hashmap with keys of JobID, inner concurrentHashmap with keys of objectID
     private static final ConcurrentHashMap<Long, ConcurrentHashMap<Long, Archive>> mapOfDepthTrees = new ConcurrentHashMap<>();
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
@@ -80,64 +82,92 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
 
         /*
          * Construct absolute and relative paths to the output directory. The
-         * relative path is relative to the case folder, and will be used in the
-         * case database for extracted (derived) file paths. The absolute path
-         * is used to write the extracted (derived) files to local storage.
+         * output directory is a subdirectory of the ModuleOutput folder in the
+         * case directory and is named for the module.
+         *
+         * The relative path is relative to the case folder, and will be used in
+         * the case database for extracted (derived) file paths.
+         *
+         * The absolute path is used to write the extracted (derived) files to
+         * local storage.
          */
         Case currentCase = Case.getCurrentCase();
         final String moduleDirRelative = Paths.get(currentCase.getModuleOutputDirectoryRelativePath(), EmbeddedFileExtractorModuleFactory.getModuleName()).toString();
         final String moduleDirAbsolute = Paths.get(currentCase.getModuleDirectory(), EmbeddedFileExtractorModuleFactory.getModuleName()).toString();
 
+        /*
+         * Do tasks that only need to be done by the first module instance for
+         * an ingest job.
+         */
+        if (refCounter.incrementAndGet(jobId) == 1) {
+            /*
+             * Create the output directory, if it was not already created for
+             * another job.
+             *
+             * RC NOTE: Retries are employed here due to observed issues with
+             * hangs for a certain type of network file system. The problem was
+             * that calls to File.exists() and File.mkdirs() were never
+             * returning and auto ingest nodes were getting stuck indefinitely
+             * (see Jira-6735). There is a severe downside to this approach,
+             * where attempts can be abandoned after a timeout: threads stuck in
+             * infinite loops (?) may accumulate. However, this was deemed
+             * better than having an auto ingest node hang for nineteen days, as
+             * in the Jira story.
+             */
+            Callable<Boolean> createOutptuDirTask = () -> {
+                File extractionDirectory = new File(moduleDirAbsolute);
+                if (extractionDirectory.exists()) {
+                    return Boolean.TRUE;
+                } else if (extractionDirectory.mkdirs()) {
+                    return Boolean.TRUE;                    
+                } else {
+                    return null;
+                }
+            };
+            List<TaskAttempt> attempts = new ArrayList<>(); // RJCTODO: Adjust
+            attempts.add(new TaskAttempt(0L, TimeUnit.SECONDS, 5L, TimeUnit.SECONDS));
+            attempts.add(new TaskAttempt(1L, TimeUnit.SECONDS, 5L, TimeUnit.SECONDS));
+            attempts.add(new TaskAttempt(1L, TimeUnit.SECONDS, 5L, TimeUnit.SECONDS));
+            ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(3, new ThreadFactoryBuilder().setNameFormat("").build()); // RJCTODO
+            try {
+                Boolean success = TaskRetryUtil.attemptTask(createOutptuDirTask, attempts, executor, logger, String.format("Creating %s if it does not exist", moduleDirAbsolute));
+                if (success == null) {
+                    throw new IngestModuleException(Bundle.CannotCreateOutputFolder());
+                }
+            } catch (InterruptedException ex) {
+                throw new IngestModuleException(Bundle.CannotCreateOutputFolder(), ex); // RJCTODO
+            } finally {
+                executor.shutdownNow();
+            }
+
+            /*
+             * Construct a hash map to keep track of depth in archives while
+             * processing archive files.
+             *
+             * RC: A ConcurrentHashMap is almost certainly the wrong data
+             * structure here. It is intended to efficiently provide snapshots
+             * to multiple threads. A thread may not see the current state. See
+             * Jira-7119.
+             */
+            mapOfDepthTrees.put(jobId, new ConcurrentHashMap<>());
+        }
+
+        /*
+         * Construct a file type detector.
+         */
         try {
             fileTypeDetector = new FileTypeDetector();
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
             throw new IngestModuleException(Bundle.CannotRunFileTypeDetection(), ex);
         }
 
+        /*
+         * Construct an archive file extractor that uses the 7Zip Java bindings.
+         */
         try {
             this.archiveExtractor = new SevenZipExtractor(context, fileTypeDetector, moduleDirRelative, moduleDirAbsolute);
         } catch (SevenZipNativeInitializationException ex) {
             throw new IngestModuleException(Bundle.UnableToInitializeLibraries(), ex);
-        }
-
-        if (refCounter.incrementAndGet(jobId) == 1) {
-            /*
-             * Create the output directory, if it does not already exist.
-             */
-            Callable<Boolean> createOutptuDirTask = () -> {
-                File extractionDirectory = new File(moduleDirAbsolute);
-                if (!extractionDirectory.exists()) {
-                    return extractionDirectory.mkdirs();
-                } else {
-                    return true;
-                }
-            };
-            List<TaskAttempt> attempts = new ArrayList<>();
-            attempts.add(new TaskAttempt(0L, TimeUnit.SECONDS, 5L, TimeUnit.SECONDS));
-            attempts.add(new TaskAttempt(1L, TimeUnit.SECONDS, 5L, TimeUnit.SECONDS));
-            attempts.add(new TaskAttempt(1L, TimeUnit.SECONDS, 5L, TimeUnit.SECONDS));
-            ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(3, new ThreadFactoryBuilder().setNameFormat("").build());
-            try {
-                if (!ThreadUtils.attemptTask(createOutptuDirTask, attempts, executor, null, null)) {
-                    throw new IngestModuleException(Bundle.CannotCreateOutputFolder());
-                }
-            } catch (InterruptedException ex) {
-                throw new IngestModuleException(Bundle.CannotCreateOutputFolder(), ex);
-            } finally {
-                executor.shutdownNow();
-            }
-
-            /*
-             * Construct a concurrentHashmap to keep track of depth in archives
-             * while processing archive files.
-             */
-            mapOfDepthTrees.put(jobId, new ConcurrentHashMap<>());
-            /**
-             * Initialize Java's Image I/O API so that image reading and writing
-             * (needed for image extraction) happens consistently through the
-             * same providers. See JIRA-6951 for more details.
-             */
-            initializeImageIO();
         }
 
         /*
@@ -149,22 +179,7 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
         } catch (NoCurrentCaseException ex) {
             throw new IngestModuleException(Bundle.EmbeddedFileExtractorIngestModule_UnableToGetMSOfficeExtractor_errMsg(), ex);
         }
-    }
 
-    /**
-     * Initializes the ImageIO API and sorts the providers for deterministic
-     * image reading and writing.
-     */
-    private void initializeImageIO() {
-        ImageIO.scanForPlugins();
-
-        // Sift through each registry category and sort category providers by
-        // their canonical class name.
-        IIORegistry pluginRegistry = IIORegistry.getDefaultInstance();
-        Iterator<Class<?>> categories = pluginRegistry.getCategories();
-        while (categories.hasNext()) {
-            sortPluginsInCategory(pluginRegistry, categories.next());
-        }
     }
 
     /**
