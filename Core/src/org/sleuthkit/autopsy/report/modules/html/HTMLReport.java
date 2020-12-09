@@ -387,6 +387,9 @@ public class HTMLReport implements TableReportModule {
                 case TSK_GPS_AREA:
                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/gps-area.png"); //NON-NLS
                     break;
+                case TSK_WEB_CATEGORIZATION:
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/domain-16.png"); //NON-NLS
+                    break;
                 default:
                     logger.log(Level.WARNING, "useDataTypeIcon: unhandled artifact type = {0}", dataType); //NON-NLS
                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/star.png"); //NON-NLS

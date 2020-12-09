@@ -54,6 +54,11 @@
             <fileset dir="${thirdparty.dir}/iLeapp"/>
         </copy>
 		
+        <!--Copy aLeapp to release-->
+        <copy todir="${basedir}/release/aLeapp" >
+            <fileset dir="${thirdparty.dir}/aLeapp"/>
+        </copy>
+		
         <!--Copy 7-Zip to release-->
         <copy todir="${basedir}/release/7-Zip" >
             <fileset dir="${thirdparty.dir}/7-Zip"/>

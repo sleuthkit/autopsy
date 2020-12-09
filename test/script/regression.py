@@ -475,6 +475,8 @@ class TestRunner(object):
         test_data.ant.append("-DcrPort=" + str(test_config.crPort))
         test_data.ant.append("-DcrUserName=" + str(test_config.crUserName))
         test_data.ant.append("-DcrPassword=" + str(test_config.crPassword))
+        test_data.ant.append("-DzooKeeperHost=" + str(test_config.zooKeeperHost))
+        test_data.ant.append("-DzooKeeperPort=" + str(test_config.zooKeeperPort))
         if test_data.isMultiUser:
             test_data.ant.append("-DisMultiUser=true")
         # Note: test_data has autopys_version attribute, but we couldn't see it from here. It's set after run ingest.
@@ -866,6 +868,10 @@ class TestConfiguration(object):
                 self.crUserName = parsed_config.getElementsByTagName("crUserName")[0].getAttribute("value").encode().decode("utf_8")
             if parsed_config.getElementsByTagName("crPassword"):
                 self.crPassword = parsed_config.getElementsByTagName("crPassword")[0].getAttribute("value").encode().decode("utf_8")
+            if parsed_config.getElementsByTagName("zooKeeperHost"):
+                self.zooKeeperHost = parsed_config.getElementsByTagName("zooKeeperHost")[0].getAttribute("value").encode().decode("utf_8")
+            if parsed_config.getElementsByTagName("zooKeeperPort"):
+                self.zooKeeperPort = parsed_config.getElementsByTagName("zooKeeperPort")[0].getAttribute("value").encode().decode("utf_8")
             self._init_imgs(parsed_config)
             self._init_build_info(parsed_config)
 

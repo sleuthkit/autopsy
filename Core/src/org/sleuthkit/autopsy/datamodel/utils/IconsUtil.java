@@ -121,6 +121,8 @@ public final class IconsUtil {
             imageFile = "web-account-type.png"; //NON-NLS
         } else if (typeID == ARTIFACT_TYPE.TSK_WEB_FORM_ADDRESS.getTypeID()) {
             imageFile = "web-form-address.png"; //NON-NLS
+        } else if (typeID == ARTIFACT_TYPE.TSK_WEB_CATEGORIZATION.getTypeID()) {
+            imageFile = "domain-16.png"; //NON-NLS
         } else if (typeID == ARTIFACT_TYPE.TSK_GPS_AREA.getTypeID()) {
             imageFile = "gps-area.png"; //NON-NLS
         } else {
