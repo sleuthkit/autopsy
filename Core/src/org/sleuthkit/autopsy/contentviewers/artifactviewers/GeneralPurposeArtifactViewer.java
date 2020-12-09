@@ -39,6 +39,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.JTextPane;
 import javax.swing.SwingUtilities;
+import org.apache.commons.lang.StringUtils;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -277,36 +278,10 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
             }
             if (TYPES_WITH_DATE_SECTION.contains(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE.getTypeID())) {
                 boolean headerAdded = false;
-                List<BlackboardAttribute> attrList = attributeMap.remove(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID());
-                if (attrList != null) {
-                    if (!headerAdded) {
-                        addHeader(Bundle.GeneralPurposeArtifactViewer_details_datesHeader());
-                        headerAdded = true;
-                    }
-                    for (BlackboardAttribute bba : attrList) {
-                        addNameValueRow(Bundle.GeneralPurposeArtifactViewer_dates_created(), bba.getDisplayString());
-                    }
-                }
-                attrList = attributeMap.remove(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID());
-                if (attrList != null) {
-                    if (!headerAdded) {
-                        addHeader(Bundle.GeneralPurposeArtifactViewer_details_datesHeader());
-                        headerAdded = true;
-                    }
-                    for (BlackboardAttribute bba : attrList) {
-                        addNameValueRow(Bundle.GeneralPurposeArtifactViewer_dates_start(), bba.getDisplayString());
-                    }
-                }
-                attrList = attributeMap.remove(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID());
-                if (attrList != null) {
-                    if (!headerAdded) {
-                        addHeader(Bundle.GeneralPurposeArtifactViewer_details_datesHeader());
-                        headerAdded = true;
-                    }
-                    for (BlackboardAttribute bba : attrList) {
-                        addNameValueRow(Bundle.GeneralPurposeArtifactViewer_dates_end(), bba.getDisplayString());
-                    }
-                }
+                headerAdded = addDates(Bundle.GeneralPurposeArtifactViewer_dates_created(), attributeMap.remove(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID()), headerAdded);
+                headerAdded = addDates(Bundle.GeneralPurposeArtifactViewer_dates_start(), attributeMap.remove(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID()), headerAdded);
+                headerAdded = addDates(Bundle.GeneralPurposeArtifactViewer_dates_end(), attributeMap.remove(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID()), headerAdded);
+                addDates("", attributeMap.remove(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()), headerAdded);
             }
             addHeader(Bundle.GeneralPurposeArtifactViewer_details_otherHeader());
             for (int key : attributeMap.keySet()) {
@@ -320,6 +295,34 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
             // add veritcal glue at the end
             addPageEndGlue();
         }
+    }
+
+    /**
+     * Private helper method to add all dates in a given attribute list.
+     *
+     * @param label        Specific String to use in place of attributes display
+     *                     name.
+     * @param attrList     List of attributes to add dates for.
+     * @param headerExists If the "Dates" header has already been displayed.
+     *
+     * @return True if the "Dates" header has been displayed, false otherwise.
+     */
+    private boolean addDates(String label, List<BlackboardAttribute> attrList, boolean headerExists) {
+        boolean headerAdded = headerExists;
+        if (attrList != null) {
+            if (!headerAdded) {
+                addHeader(Bundle.GeneralPurposeArtifactViewer_details_datesHeader());
+                headerAdded = true;
+            }
+            String labelToUse = label;
+            for (BlackboardAttribute bba : attrList) {
+                if (StringUtils.isBlank(label)) {
+                    labelToUse = bba.getAttributeType().getDisplayName();
+                }
+                addNameValueRow(labelToUse, bba.getDisplayString());
+            }
+        }
+        return headerAdded;
     }
 
     @NbBundle.Messages({"GeneralPurposeArtifactViewer.details.bookmarkHeader=Bookmark Details",
