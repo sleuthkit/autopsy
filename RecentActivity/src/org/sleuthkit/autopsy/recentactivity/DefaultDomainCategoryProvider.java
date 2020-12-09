@@ -142,4 +142,10 @@ class DefaultDomainCategoryProvider implements DomainCategoryProvider {
         
         return null;
     }
+
+    @Override
+    public void close() throws IOException {
+        // clear out the mapping to release resources
+        mapping = null;
+    }
 }

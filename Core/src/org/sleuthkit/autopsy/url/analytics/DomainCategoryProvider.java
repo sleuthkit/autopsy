@@ -20,6 +20,8 @@ package org.sleuthkit.autopsy.url.analytics;
 
 import com.google.common.annotations.Beta;
 import org.sleuthkit.autopsy.ingest.IngestModule;
+import java.io.Closeable;
+import java.io.IOException;
 
 /**
  * Interface providing the category of a domain for the purposes of creating
@@ -28,7 +30,7 @@ import org.sleuthkit.autopsy.ingest.IngestModule;
  * should have a no-argument constructor in order to be properly instantiated.
  */
 @Beta
-public interface DomainCategoryProvider {
+public interface DomainCategoryProvider extends Closeable {
 
     /**
      * Provides the DomainCategory for a given domain/host or null if none can
@@ -49,5 +51,15 @@ public interface DomainCategoryProvider {
      * @throws IngestModule.IngestModuleException
      */
     default void initialize() throws IngestModule.IngestModuleException {
+    }
+
+    /**
+     * These providers close methods are explicitly called when ingest is
+     * finished.
+     *
+     * @throws IOException
+     */
+    @Override
+    default void close() throws IOException {
     }
 }
