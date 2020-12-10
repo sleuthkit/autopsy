@@ -136,6 +136,67 @@ class DomainCategorizer extends Extract {
         return null;
     }
 
+    private static class ArtifactHost {
+
+        private final AbstractFile abstractFile;
+        private final String host;
+        private final String domain;
+
+        ArtifactHost(AbstractFile abstractFile, String host, String domain) {
+            this.abstractFile = abstractFile;
+            this.host = host;
+            this.domain = domain;
+        }
+
+        AbstractFile getAbstractFile() {
+            return abstractFile;
+        }
+
+        String getHost() {
+            return host;
+        }
+
+        String getDomain() {
+            return domain;
+        }
+    }
+
+    private ArtifactHost getUnseenDomainHost(BlackboardArtifact artifact) throws TskCoreException {
+        // make sure there is attached file
+        AbstractFile file = tskCase.getAbstractFileById(artifact.getObjectID());
+        if (file == null) {
+            return null;
+        }
+
+        // get the host from the url attribute and the domain from the attribute
+        BlackboardAttribute urlAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL));
+        String host = null;
+        if (urlAttr != null) {
+            String urlString = urlAttr.getValueString();
+            if (StringUtils.isNotBlank(urlString)) {
+                host = getHost(urlString);
+            }
+        }
+
+        BlackboardAttribute domainAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN));
+        String domainString = null;
+        if (domainAttr != null) {
+            domainString = domainAttr.getValueString();
+        }
+
+        if (StringUtils.isBlank(host) && StringUtils.isBlank(domainString)) {
+            // make sure we have at least one of host or domain
+            return null;
+        }
+
+        return new ArtifactHost(file, host.toLowerCase(), domainString.toLowerCase());
+    }
+    
+    private static boolean isDuplicateOrAdd(String item, Set<String> items) {
+        
+    }
+    
+
     /**
      * Goes through web history artifacts and attempts to determine any hosts of
      * a domain type. If any are found, a TSK_WEB_CATEGORIZATION artifact is
@@ -150,7 +211,7 @@ class DomainCategorizer extends Extract {
         Set<String> hostsSeen = new HashSet<>();
 
         // only one suffix per ingest is captured so this tracks the suffixes seen.
-        Set<String> domainSuffixesSeen = new HashSet<>();
+        Set<String> hostSuffixesSeen = new HashSet<>();
         try {
             Collection<BlackboardArtifact> listArtifacts = currentCase.getSleuthkitCase().getBlackboard().getArtifacts(
                     Arrays.asList(new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_WEB_HISTORY)),
@@ -163,35 +224,23 @@ class DomainCategorizer extends Extract {
                 if (context.dataSourceIngestIsCancelled()) {
                     break;       //User cancelled the process.
                 }
-
-                // make sure there is attached file
-                AbstractFile file = tskCase.getAbstractFileById(artifact.getObjectID());
-                if (file == null) {
+                
+                ArtifactHost curArtHost = getUnseenDomainHost(artifact);
+                if (curArtHost == null) {
                     continue;
                 }
+                
+                
+                
 
-                // get the host from the url attribute and the domain from the attribute
-                BlackboardAttribute urlAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL));
-                String host = null;
-                if (urlAttr != null) {
-                    String urlString = urlAttr.getValueString();
-                    if (StringUtils.isNotBlank(urlString)) {
-                        host = getHost(urlString);    
-                    }
-                }
+                // if we reached this point, we are at least analyzing this item
+                artifactsAnalyzed++;
 
-                BlackboardAttribute domainAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN));
-                String domainString = null;
-                if (domainAttr != null) {
-                    domainString = domainAttr.getValueString();
-                }
-
-                boolean hostIsBlank = StringUtils.isBlank(host);
-                if (hostIsBlank && StringUtils.isBlank(domainString)) {
-                    // make sure we have at least one of host or domain
-                    continue;
-                } else if (!hostIsBlank) {
-                    if (domainSuffixesSeen.contains(host)) {
+                
+                
+                
+                if (!hostIsBlank) {
+                    if (hostSuffixesSeen.contains(host)) {
                         // if host already seen continue
                         continue;
                     } else {
@@ -199,10 +248,9 @@ class DomainCategorizer extends Extract {
                         hostsSeen.add(host);
                     }
                 }
-
-                // if we reached this point, we are at least analyzing this item
-                artifactsAnalyzed++;
-
+                
+                
+                
                 // attempt to get the domain type for the host using the suffix trie
                 DomainCategoryResult domainEntryFound = findCategory(domainString, host);
                 if (domainEntryFound == null) {
@@ -218,13 +266,13 @@ class DomainCategorizer extends Extract {
                 // if we got this far, we found a domain type, but it may not be unique
                 domainTypeInstancesFound++;
 
-                if (domainSuffixesSeen.contains(hostSuffix)) {
+                if (hostSuffixesSeen.contains(hostSuffix)) {
                     continue;
                 }
 
                 // if we got this far, this is a unique suffix.  Add to the set, so we don't create
                 // multiple of same suffix and add an artifact.
-                domainSuffixesSeen.add(hostSuffix);
+                hostSuffixesSeen.add(hostSuffix);
 
                 Collection<BlackboardAttribute> bbattributes = Arrays.asList(
                         new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN, moduleName, NetworkUtils.extractDomain(host)),
@@ -241,7 +289,7 @@ class DomainCategorizer extends Extract {
             }
             logger.log(Level.INFO, String.format("Extracted %s distinct messaging domain(s) from the blackboard.  "
                     + "Of the %s artifact(s) with valid hosts, %s url(s) contained messaging domain suffix.",
-                    domainSuffixesSeen.size(), artifactsAnalyzed, domainTypeInstancesFound));
+                    hostSuffixesSeen.size(), artifactsAnalyzed, domainTypeInstancesFound));
         }
     }
 
