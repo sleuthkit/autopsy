@@ -51,6 +51,7 @@ class MiniTimelinePanel extends javax.swing.JPanel {
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     MiniTimelinePanel() {
         initComponents();
+        artifactListPanel.addMouseListener(new ArtifactMenuMouseAdapter(artifactListPanel));
         artifactListener = new ListSelectionListener() {
             @Override
             public void valueChanged(ListSelectionEvent event) {
@@ -73,7 +74,7 @@ class MiniTimelinePanel extends javax.swing.JPanel {
             @Override
             public void valueChanged(ListSelectionEvent event) {
                 if (!event.getValueIsAdjusting()) {
-                    artifactListPanel.removeListSelectionListener(artifactListener);
+                    artifactListPanel.removeSelectionListener(artifactListener);
                     artifactListPanel.clearList();
                     artifactListPanel.addArtifacts(dateListPanel.getArtifactsForSelectedDate());
                     artifactListPanel.addSelectionListener(artifactListener);
@@ -127,7 +128,7 @@ class MiniTimelinePanel extends javax.swing.JPanel {
     void handleMiniTimelineResultEvent(DiscoveryEventUtils.MiniTimelineResultEvent miniTimelineResultEvent) {
         SwingUtilities.invokeLater(() -> {
             dateListPanel.removeListSelectionListener(dateListener);
-            artifactListPanel.removeListSelectionListener(artifactListener);
+            artifactListPanel.removeSelectionListener(artifactListener);
             dateListPanel.addArtifacts(miniTimelineResultEvent.getResultList());
             status = DomainArtifactsTabPanel.ArtifactRetrievalStatus.POPULATED;
             setEnabled(!dateListPanel.isEmpty());
