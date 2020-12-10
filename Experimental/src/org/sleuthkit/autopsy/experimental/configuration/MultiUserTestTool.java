@@ -153,7 +153,7 @@ class MultiUserTestTool {
                 return Bundle.MultiUserTestTool_unableToReadDatabase() + ". " + ex.getMessage();
             }
 
-            // Make a text file in Windows TEMP folder 
+            // Make a text file in TEMP folder
             Path tempFilePath = Paths.get(System.getProperty("java.io.tmpdir"), TEST_FILE_NAME + "_" + TimeStampUtils.createTimeStamp() + ".txt");
             try {
                 FileUtils.writeStringToFile(tempFilePath.toFile(), "Test", Charset.forName("UTF-8"));
