@@ -20,12 +20,22 @@ package org.sleuthkit.autopsy.datasourcesummary.uiutils;
 
 import java.awt.Component;
 import java.awt.Insets;
+import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.function.Supplier;
 import javax.swing.BorderFactory;
 import javax.swing.JLabel;
+import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
 import javax.swing.JTable;
 import javax.swing.border.Border;
 import javax.swing.table.DefaultTableCellRenderer;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel.CellMouseEvent;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel.CellMouseListener;
 
 /**
  * A Table cell renderer that renders a cell of a table based off of the
@@ -49,7 +59,7 @@ public class CellModelTableCellRenderer extends DefaultTableCellRenderer {
          * Constructor for a HorizontalAlign enum.
          *
          * @param jlabelAlignment The corresponding JLabel horizontal alignment
-         *                        number.
+         * number.
          */
         HorizontalAlign(int jlabelAlignment) {
             this.jlabelAlignment = jlabelAlignment;
@@ -57,11 +67,58 @@ public class CellModelTableCellRenderer extends DefaultTableCellRenderer {
 
         /**
          * @return The corresponding JLabel horizontal alignment (i.e.
-         *         JLabel.LEFT).
+         * JLabel.LEFT).
          */
         int getJLabelAlignment() {
             return this.jlabelAlignment;
         }
+    }
+
+    /**
+     * A menu item to be used within a popup menu.
+     */
+    public interface MenuItem {
+
+        /**
+         * @return The title for that popup menu item.
+         */
+        String getTitle();
+
+        /**
+         * @return The action if that popup menu item is clicked.
+         */
+        Runnable getAction();
+    }
+
+    /**
+     * Default implementation of a menu item.
+     */
+    public static class DefaultMenuItem implements MenuItem {
+
+        private final String title;
+        private final Runnable action;
+
+        /**
+         * Main constructor.
+         *
+         * @param title The title for the menu item.
+         * @param action The action should the menu item be clicked.
+         */
+        public DefaultMenuItem(String title, Runnable action) {
+            this.title = title;
+            this.action = action;
+        }
+
+        @Override
+        public String getTitle() {
+            return title;
+        }
+
+        @Override
+        public Runnable getAction() {
+            return action;
+        }
+
     }
 
     /**
@@ -88,6 +145,12 @@ public class CellModelTableCellRenderer extends DefaultTableCellRenderer {
          * @return The insets for the cell text.
          */
         Insets getInsets();
+
+        /**
+         * @return The popup menu associated with this cell or null if no popup
+         * menu should be shown for this cell.
+         */
+        List<MenuItem> getPopupMenu();
     }
 
     /**
@@ -99,6 +162,8 @@ public class CellModelTableCellRenderer extends DefaultTableCellRenderer {
         private String tooltip;
         private HorizontalAlign horizontalAlignment;
         private Insets insets;
+        private List<MenuItem> popupMenu;
+        private Supplier<List<MenuItem>> menuItemSupplier;
 
         /**
          * Main constructor.
@@ -167,6 +232,41 @@ public class CellModelTableCellRenderer extends DefaultTableCellRenderer {
         }
 
         @Override
+        public List<MenuItem> getPopupMenu() {
+            if (popupMenu != null) {
+                return Collections.unmodifiableList(popupMenu);
+            }
+
+            if (menuItemSupplier != null) {
+                return this.menuItemSupplier.get();
+            }
+
+            return null;
+        }
+
+        /**
+         * Sets a function to lazy load the popup menu items.
+         *
+         * @param menuItemSupplier The lazy load function for popup items.
+         * @return
+         */
+        public DefaultCellModel setPopupMenuRetriever(Supplier<List<MenuItem>> menuItemSupplier) {
+            this.menuItemSupplier = menuItemSupplier;
+            return this;
+        }
+
+        /**
+         * Sets the list of items for a popup menu
+         *
+         * @param popupMenu
+         * @return As a utility, returns this.
+         */
+        public DefaultCellModel setPopupMenu(List<MenuItem> popupMenu) {
+            this.popupMenu = popupMenu == null ? null : new ArrayList<>(popupMenu);
+            return this;
+        }
+
+        @Override
         public String toString() {
             return getText();
         }
@@ -192,8 +292,8 @@ public class CellModelTableCellRenderer extends DefaultTableCellRenderer {
      * Customizes the jlabel to match the column model and cell model provided.
      *
      * @param defaultCell The cell to customize that will be displayed in the
-     *                    jtable.
-     * @param cellModel   The cell model for this cell.
+     * jtable.
+     * @param cellModel The cell model for this cell.
      *
      * @return The provided defaultCell.
      */
@@ -230,5 +330,43 @@ public class CellModelTableCellRenderer extends DefaultTableCellRenderer {
         defaultCell.setHorizontalAlignment(alignment);
 
         return defaultCell;
+    }
+
+    /**
+     * The default cell mouse listener that triggers popups for non-primary
+     * button events.
+     */
+    private static final CellMouseListener DEFAULT_CELL_MOUSE_LISTENER = new CellMouseListener() {
+
+        @Override
+        public void mouseClicked(CellMouseEvent cellEvent) {
+            if (cellEvent.getCellValue() instanceof CellModel && cellEvent.getMouseEvent().getButton() != MouseEvent.BUTTON1) {
+                cellEvent.getTable().setRowSelectionInterval(cellEvent.getRow(), cellEvent.getRow());
+                CellModel cellModel = (CellModel) cellEvent.getCellValue();
+                List<MenuItem> menuItems = cellModel.getPopupMenu();
+
+                // if there are menu items, show a popup menu for 
+                // this item with all the menu items.
+                if (CollectionUtils.isNotEmpty(menuItems)) {
+                    final JPopupMenu popupMenu = new JPopupMenu();
+                    for (MenuItem mItem : menuItems) {
+                        JMenuItem jMenuItem = new JMenuItem(mItem.getTitle());
+                        if (mItem.getAction() != null) {
+                            jMenuItem.addActionListener((evt) -> mItem.getAction().run());
+                        }
+                        popupMenu.add(jMenuItem);
+                    }
+                    popupMenu.show(cellEvent.getTable(), cellEvent.getMouseEvent().getX(), cellEvent.getMouseEvent().getY());
+                }
+            }
+        }
+    };
+
+    /**
+     * @return The default cell mouse listener that triggers popups for
+     * non-primary button events.
+     */
+    public static CellMouseListener getMouseListener() {
+        return DEFAULT_CELL_MOUSE_LISTENER;
     }
 }

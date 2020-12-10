@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.discovery.search;
 
 import java.util.Objects;
+import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 
@@ -89,5 +90,14 @@ public class DomainSearchArtifactsRequest {
     @Override
     public int hashCode() {
         return 79 * 5 + Objects.hash(this.domain, this.artifactType);
+    }
+
+    @NbBundle.Messages({
+        "# {0} - domain",
+        "# {1} - artifactType",
+        "DomainSearchArtifactsRequest.toString.text=Domain: {0} ArtifactType: {1}"})
+    @Override
+    public String toString() {
+        return Bundle.DomainSearchArtifactsRequest_toString_text(domain, artifactType.getDisplayName());
     }
 }

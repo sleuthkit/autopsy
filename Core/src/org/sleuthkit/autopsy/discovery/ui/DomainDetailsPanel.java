@@ -25,6 +25,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.apache.commons.lang.StringUtils;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -37,9 +38,10 @@ import org.sleuthkit.autopsy.discovery.search.SearchData;
 final class DomainDetailsPanel extends JPanel {
 
     private static final long serialVersionUID = 1L;
-    private ArtifactsWorker detailsWorker;
+    private ArtifactsWorker singleArtifactDomainWorker;
+    private MiniTimelineWorker miniTimelineWorker;
     private String domain;
-    private String selectedTabName;
+    private String selectedTabName = null;
 
     /**
      * Creates new form ArtifactDetailsPanel.
@@ -47,22 +49,27 @@ final class DomainDetailsPanel extends JPanel {
      * @param selectedTabName The name of the tab to select initially.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    DomainDetailsPanel(String selectedTabName) {
+    DomainDetailsPanel() {
         initComponents();
-        addArtifactTabs(selectedTabName);
-    }
-
-    /**
-     * Add the tabs for each of the artifact types which we will be displaying.
-     *
-     * @param tabName The name of the tab to select initially.
-     */
-    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    private void addArtifactTabs(String tabName) {
+        jTabbedPane1.add(Bundle.DomainDetailsPanel_miniTimelineTitle_text(), new MiniTimelinePanel());
         for (BlackboardArtifact.ARTIFACT_TYPE type : SearchData.Type.DOMAIN.getArtifactTypes()) {
             jTabbedPane1.add(type.getDisplayName(), new DomainArtifactsTabPanel(type));
         }
+    }
+
+    /**
+     * Configure the tabs for each of the artifact types which we will be
+     * displaying.
+     *
+     * @param tabName The name of the tab to select initially.
+     */
+    @NbBundle.Messages({"DomainDetailsPanel.miniTimelineTitle.text=Mini Timeline"})
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    void configureArtifactTabs(String tabName) {
         selectedTabName = tabName;
+        if (StringUtils.isBlank(selectedTabName)) {
+            selectedTabName = Bundle.DomainDetailsPanel_miniTimelineTitle_text();
+        }
         selectTab();
         jTabbedPane1.addChangeListener(new ChangeListener() {
             @Override
@@ -71,7 +78,12 @@ final class DomainDetailsPanel extends JPanel {
                     String newTabTitle = jTabbedPane1.getTitleAt(jTabbedPane1.getSelectedIndex());
                     if (selectedTabName == null || !selectedTabName.equals(newTabTitle)) {
                         selectedTabName = newTabTitle;
-                        runDomainWorker();
+                        Component selectedComponent = jTabbedPane1.getSelectedComponent();
+                        if (selectedComponent instanceof DomainArtifactsTabPanel) {
+                            runDomainWorker((DomainArtifactsTabPanel) selectedComponent);
+                        } else if (selectedComponent instanceof MiniTimelinePanel) {
+                            runMiniTimelineWorker((MiniTimelinePanel) selectedComponent);
+                        }
                     }
                 }
             }
@@ -97,19 +109,32 @@ final class DomainDetailsPanel extends JPanel {
      * populate the details area.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    private void runDomainWorker() {
-        Component selectedComponent = jTabbedPane1.getSelectedComponent();
-        if (selectedComponent instanceof DomainArtifactsTabPanel) {
-            if (detailsWorker != null && !detailsWorker.isDone()) {
-                detailsWorker.cancel(true);
-            }
-            DomainArtifactsTabPanel selectedTab = (DomainArtifactsTabPanel) selectedComponent;
-            if (selectedTab.getStatus() == DomainArtifactsTabPanel.ArtifactRetrievalStatus.UNPOPULATED) {
-                DiscoveryEventUtils.getDiscoveryEventBus().register(selectedTab);
-                selectedTab.setStatus(DomainArtifactsTabPanel.ArtifactRetrievalStatus.POPULATING);
-                detailsWorker = new ArtifactsWorker(selectedTab.getArtifactType(), domain);
-                detailsWorker.execute();
-            }
+    private void runDomainWorker(DomainArtifactsTabPanel domainArtifactsTabPanel) {
+        if (singleArtifactDomainWorker != null && !singleArtifactDomainWorker.isDone()) {
+            singleArtifactDomainWorker.cancel(true);
+        }
+        if (domainArtifactsTabPanel.getStatus() == DomainArtifactsTabPanel.ArtifactRetrievalStatus.UNPOPULATED) {
+            DiscoveryEventUtils.getDiscoveryEventBus().register(domainArtifactsTabPanel);
+            domainArtifactsTabPanel.setStatus(DomainArtifactsTabPanel.ArtifactRetrievalStatus.POPULATING);
+            singleArtifactDomainWorker = new ArtifactsWorker(domainArtifactsTabPanel.getArtifactType(), domain);
+            singleArtifactDomainWorker.execute();
+        }
+
+    }
+
+    /**
+     * Run the worker which retrieves the list of MiniTimelineResults for the
+     * mini timeline view to populate.
+     */
+    private void runMiniTimelineWorker(MiniTimelinePanel miniTimelinePanel) {
+        if (miniTimelineWorker != null && !miniTimelineWorker.isDone()) {
+            miniTimelineWorker.cancel(true);
+        }
+        if (miniTimelinePanel.getStatus() == DomainArtifactsTabPanel.ArtifactRetrievalStatus.UNPOPULATED) {
+            DiscoveryEventUtils.getDiscoveryEventBus().register(miniTimelinePanel);
+            miniTimelinePanel.setStatus(DomainArtifactsTabPanel.ArtifactRetrievalStatus.POPULATING);
+            miniTimelineWorker = new MiniTimelineWorker(domain);
+            miniTimelineWorker.execute();
         }
     }
 
@@ -125,7 +150,12 @@ final class DomainDetailsPanel extends JPanel {
         SwingUtilities.invokeLater(() -> {
             resetTabsStatus();
             selectTab();
-            runDomainWorker();
+            Component selectedComponent = jTabbedPane1.getSelectedComponent();
+            if (selectedComponent instanceof DomainArtifactsTabPanel) {
+                runDomainWorker((DomainArtifactsTabPanel) selectedComponent);
+            } else if (selectedComponent instanceof MiniTimelinePanel) {
+                runMiniTimelineWorker((MiniTimelinePanel) selectedComponent);
+            }
             if (StringUtils.isBlank(domain)) {
                 //send fade out event
                 DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.DetailsVisibleEvent(false));
@@ -145,6 +175,8 @@ final class DomainDetailsPanel extends JPanel {
         for (Component comp : jTabbedPane1.getComponents()) {
             if (comp instanceof DomainArtifactsTabPanel) {
                 ((DomainArtifactsTabPanel) comp).setStatus(DomainArtifactsTabPanel.ArtifactRetrievalStatus.UNPOPULATED);
+            } else if (comp instanceof MiniTimelinePanel) {
+                ((MiniTimelinePanel) comp).setStatus(DomainArtifactsTabPanel.ArtifactRetrievalStatus.UNPOPULATED);
             }
         }
     }

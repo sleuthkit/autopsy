@@ -157,8 +157,8 @@ public final class HealthMonitor implements PropertyChangeListener {
             if (!databaseIsInitialized()) {
                 initializeDatabaseSchema();
             }
-
-            if (!CURRENT_DB_SCHEMA_VERSION.equals(getVersion())) {
+            
+            if (getVersion().compareTo(CURRENT_DB_SCHEMA_VERSION) < 0) {
                 upgradeDatabaseSchema();
             }
 
@@ -183,10 +183,15 @@ public final class HealthMonitor implements PropertyChangeListener {
         if (conn == null) {
             throw new HealthMonitorException("Error getting database connection");
         }
+        ResultSet resultSet = null;
 
         try (Statement statement = conn.createStatement()) {
             conn.setAutoCommit(false);
 
+            // NOTE: Due to a bug in the upgrade code, earlier versions of Autopsy will erroneously
+            // run the upgrade if the database is a higher version than it expects. Therefore all
+            // table changes must account for the possiblility of running multiple times.
+            
             // Upgrade from 1.0 to 1.1
             // Changes: user_data table added
             if (currentSchema.compareTo(new CaseDbSchemaVersionNumber(1, 1)) < 0) {
@@ -206,8 +211,13 @@ public final class HealthMonitor implements PropertyChangeListener {
             // Changes: username added to user_data table
             if (currentSchema.compareTo(new CaseDbSchemaVersionNumber(1, 2)) < 0) {
 
-                // Add the user_data table
-                statement.execute("ALTER TABLE user_data ADD COLUMN username text");
+                resultSet = statement.executeQuery("SELECT column_name " +
+                        "FROM information_schema.columns " +
+                        "WHERE table_name='user_data' and column_name='username'");
+                if (! resultSet.next()) {
+                    // Add the user_data table
+                    statement.execute("ALTER TABLE user_data ADD COLUMN username text");
+                }
             }
 
             // Update the schema version
@@ -224,6 +234,13 @@ public final class HealthMonitor implements PropertyChangeListener {
             }
             throw new HealthMonitorException("Error upgrading database", ex);
         } finally {
+            if (resultSet != null) {
+                try {
+                    resultSet.close();
+                } catch (SQLException ex2) {
+                    logger.log(Level.SEVERE, "Error closing result set");
+                }   
+            }
             try {
                 conn.close();
             } catch (SQLException ex) {
@@ -967,7 +984,7 @@ public final class HealthMonitor implements PropertyChangeListener {
                 getInstance().writeCurrentStateToDatabase();
             }
         } catch (HealthMonitorException ex) {
-            logger.log(Level.SEVERE, "Error performing periodic task", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Error recording health monitor metrics", ex); //NON-NLS
         }
     }
 

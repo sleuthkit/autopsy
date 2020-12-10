@@ -197,11 +197,6 @@ public final class Track extends GeoPath {
         private List<Waypoint.Property> createPropertyList(GeoTrackPoints.TrackPoint point) {
             List<Waypoint.Property> list = new ArrayList<>();
 
-            Long timestamp = point.getTimeStamp();
-            if (timestamp != null) {
-                list.add(new Property(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getDisplayName(), timestamp.toString()));
-            }
-
             Double value = point.getVelocity();
             if (value != null) {
                 list.add(new Property(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_VELOCITY.getDisplayName(), value.toString()));
