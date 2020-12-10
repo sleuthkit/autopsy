@@ -71,7 +71,8 @@ public class DomainSearchArtifactsCache {
         
         try {
             Map<String, List<BlackboardArtifact>> artifactsByDomain = cache.get(new ArtifactCacheKey(request));
-            return artifactsByDomain.getOrDefault(request.getDomain(), Collections.emptyList());
+            final String normalizedDomain = request.getDomain().trim().toLowerCase();
+            return artifactsByDomain.getOrDefault(normalizedDomain, Collections.emptyList());
         } catch (ExecutionException ex) {
             //throwing a new exception with the cause so that interrupted exceptions and other causes can be checked inside our wrapper
             throw new DiscoveryException("Error fetching artifacts from cache for " + request.toString(), ex.getCause());

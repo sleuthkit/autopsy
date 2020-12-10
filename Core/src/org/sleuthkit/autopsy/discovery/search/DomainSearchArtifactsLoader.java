@@ -52,7 +52,7 @@ public class DomainSearchArtifactsLoader extends CacheLoader<DomainSearchArtifac
             }
             final BlackboardAttribute tskDomain = artifact.getAttribute(TSK_DOMAIN);
             if (tskDomain != null) {
-                final String normalizedDomain = tskDomain.getValueString().toLowerCase();
+                final String normalizedDomain = tskDomain.getValueString().trim().toLowerCase();
                 List<BlackboardArtifact> artifactsWithDomain = artifactsByDomain.getOrDefault(normalizedDomain, new ArrayList<>());
                 artifactsWithDomain.add(artifact);
                 artifactsByDomain.put(normalizedDomain, artifactsWithDomain);
