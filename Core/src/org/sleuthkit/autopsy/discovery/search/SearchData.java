@@ -38,6 +38,35 @@ public final class SearchData {
     private final static long BYTES_PER_MB = 1000000;
     private static final Set<BlackboardArtifact.ARTIFACT_TYPE> DOMAIN_ARTIFACT_TYPES = EnumSet.of(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK, BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE, BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE, BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY, BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY);
 
+    
+    /**
+     * Enum representing the notability of the result in the Central Repository.
+     */
+    @NbBundle.Messages({
+        "SearchData.prevNotable.displayName=Previously Notable",
+        "SearchData.notPrevNotable.displayName=Previously Not Notable"
+    })
+    public enum PreviouslyNotable {
+        PREVIOUSLY_NOTABLE(0, Bundle.SearchData_prevNotable_displayName()),
+        NOT_PREVIOUSLY_NOTABLE(1, Bundle.SearchData_notPrevNotable_displayName());
+        
+        private final int ranking;
+        private final String displayName;
+        
+        PreviouslyNotable(int ranking, String displayName) {
+            this.ranking = ranking;
+            this.displayName = displayName;
+        }
+        
+        public int getRanking() {
+            return ranking;
+        }
+        
+        @Override
+        public String toString() {
+            return displayName;
+        }
+    }
     /**
      * Enum representing how often the result occurs in the Central Repository.
      */

@@ -71,6 +71,7 @@ public class ResultsSorter implements Comparator<Result> {
                 break;
             case BY_PAGE_VIEWS:
                 comparators.add(getPageViewComparator());
+                break;
             default:
                 // The default comparator will be added afterward
                 break;
