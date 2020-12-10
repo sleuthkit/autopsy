@@ -140,6 +140,7 @@ public final class CheckBoxJList<T extends CheckBoxJList.CheckboxListItem> exten
             label.setText(value.getDisplayName());
             label.setEnabled(list.isEnabled());
             label.setOpaque(list.isOpaque());
+            label.setBackground(list.getBackground());
             if (value.hasIcon()) {
                 label.setIcon(value.getIcon());
             }
