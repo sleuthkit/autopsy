@@ -69,6 +69,8 @@ public class ResultsSorter implements Comparator<Result> {
             case BY_DOMAIN_NAME:
                 comparators.add(getDomainNameComparator());
                 break;
+            case BY_PAGE_VIEWS:
+                comparators.add(getPageViewComparator());
             default:
                 // The default comparator will be added afterward
                 break;
@@ -248,21 +250,31 @@ public class ResultsSorter implements Comparator<Result> {
             return compareStrings(first.getDomain().toLowerCase(), second.getDomain().toLowerCase());
         };
     }
-
+    
     /**
-     * Sorts results by most recent date time.
-     *
-     * @return -1 if domain1 comes before domain2, 0 if equal, 1 otherwise.
+     * Sorts domains by page view count. If a result domain reports it's 
+     * page view count as `null`, then it's assumed to be equivalent to 0.
+     * 
+     * This comparator sorts results in descending order (largest -> smallest).
      */
-    private static Comparator<Result> getMostRecentDateTimeComparator() {
-        return (Result result1, Result result2) -> {
-            if (result1.getType() != SearchData.Type.DOMAIN) {
+    private static Comparator<Result> getPageViewComparator() {
+        return (Result domain1, Result domain2) -> {
+            if (domain1.getType() != SearchData.Type.DOMAIN) {
                 return 0;
             }
 
-            ResultDomain first = (ResultDomain) result1;
-            ResultDomain second = (ResultDomain) result2;
-            return Long.compare(second.getActivityEnd(), first.getActivityEnd());
+            ResultDomain first = (ResultDomain) domain1;
+            ResultDomain second = (ResultDomain) domain2;
+            
+            Long firstPageViews = first.getTotalPageViews();
+            Long secondPageViews = second.getTotalPageViews();
+            if (firstPageViews != null && secondPageViews != null) {
+                return Long.compare(secondPageViews, firstPageViews);
+            } else if (firstPageViews == null) {
+                return 1;
+            } else {
+                return -1;
+            }
         };
     }
 
@@ -318,7 +330,8 @@ public class ResultsSorter implements Comparator<Result> {
         "FileSorter.SortingMethod.frequency.displayName=Central Repo Frequency",
         "FileSorter.SortingMethod.keywordlist.displayName=Keyword List Names",
         "FileSorter.SortingMethod.fullPath.displayName=Full Path",
-        "FileSorter.SortingMethod.domain.displayName=Domain"})
+        "FileSorter.SortingMethod.domain.displayName=Domain",
+        "FileSorter.SortingMethod.pageViews.displayName=Page Views"})
     public enum SortingMethod {
         BY_FILE_NAME(new ArrayList<>(),
                 Bundle.FileSorter_SortingMethod_filename_displayName()), // Sort alphabetically by file name
@@ -335,7 +348,8 @@ public class ResultsSorter implements Comparator<Result> {
         BY_FULL_PATH(new ArrayList<>(),
                 Bundle.FileSorter_SortingMethod_fullPath_displayName()), // Sort alphabetically by path
         BY_DOMAIN_NAME(new ArrayList<>(),
-                Bundle.FileSorter_SortingMethod_domain_displayName());
+                Bundle.FileSorter_SortingMethod_domain_displayName()),
+        BY_PAGE_VIEWS(new ArrayList<>(), Bundle.FileSorter_SortingMethod_pageViews_displayName());
 
         private final String displayName;
         private final List<DiscoveryAttributes.AttributeType> requiredAttributes;
@@ -381,7 +395,7 @@ public class ResultsSorter implements Comparator<Result> {
          * @return Enum values that can be used to ordering files.
          */
         public static List<SortingMethod> getOptionsForOrderingDomains() {
-            return Arrays.asList(BY_DOMAIN_NAME, BY_DATA_SOURCE);
+            return Arrays.asList(BY_PAGE_VIEWS, BY_DOMAIN_NAME, BY_DATA_SOURCE);
         }
 
     }
