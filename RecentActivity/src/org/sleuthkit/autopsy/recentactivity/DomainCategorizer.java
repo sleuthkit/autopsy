@@ -175,7 +175,9 @@ class DomainCategorizer extends Extract {
                 String host = null;
                 if (urlAttr != null) {
                     String urlString = urlAttr.getValueString();
-                    host = getHost(urlString);
+                    if (StringUtils.isNotBlank(urlString)) {
+                        host = getHost(urlString);    
+                    }
                 }
 
                 BlackboardAttribute domainAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN));
@@ -186,7 +188,7 @@ class DomainCategorizer extends Extract {
 
                 boolean hostIsBlank = StringUtils.isBlank(host);
                 if (hostIsBlank && StringUtils.isBlank(domainString)) {
-                    // make sure we have at least one of host or domain, and the host hasn't been seen before
+                    // make sure we have at least one of host or domain
                     continue;
                 } else if (!hostIsBlank) {
                     if (domainSuffixesSeen.contains(host)) {
