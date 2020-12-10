@@ -40,6 +40,7 @@ public class DomainFilterPanel extends AbstractFiltersPanel {
         super();
         initComponents();
         addFilter(new DataSourceFilterPanel(), false, null, 0);
+        addFilter(new PreviouslyNotableFilterPanel(), false, null, 1);
         addFilter(new ArtifactTypeFilterPanel(), false, null, 1);
         addFilter(new DateFilterPanel(), false, null, 1);
         int[] pastOccurrencesIndices = null;
