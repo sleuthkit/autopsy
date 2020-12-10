@@ -170,32 +170,45 @@ class DomainCategorizer extends Extract {
 
         // get the host from the url attribute and the domain from the attribute
         BlackboardAttribute urlAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL));
+        String urlString = null;
         String host = null;
         if (urlAttr != null) {
-            String urlString = urlAttr.getValueString();
+             urlString = urlAttr.getValueString();
             if (StringUtils.isNotBlank(urlString)) {
                 host = getHost(urlString);
             }
         }
-
+        
         BlackboardAttribute domainAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN));
         String domainString = null;
         if (domainAttr != null) {
             domainString = domainAttr.getValueString();
         }
 
-        if (StringUtils.isBlank(host) && StringUtils.isBlank(domainString)) {
-            // make sure we have at least one of host or domain
+        boolean hasDomain = StringUtils.isNotBlank(domainString);
+        boolean hasHost = StringUtils.isNotBlank(host);
+        
+        if (!hasDomain && !hasHost) {
             return null;
+        } else if (!hasDomain) {
+            domainString = NetworkUtils.extractDomain(host);
+        } else if (!hasHost) {
+            host = domainString;
         }
-
+  
         return new ArtifactHost(file, host.toLowerCase(), domainString.toLowerCase());
     }
-    
-    private static boolean isDuplicateOrAdd(String item, Set<String> items) {
-        
+
+    private static boolean isDuplicateOrAdd(Set<String> items, String item) {
+        if (StringUtils.isBlank(item)) {
+            return false;
+        } else if (items.contains(item)) {
+            return true;
+        } else {
+            items.add(item);
+            return false;
+        }
     }
-    
 
     /**
      * Goes through web history artifacts and attempts to determine any hosts of
@@ -203,7 +216,6 @@ class DomainCategorizer extends Extract {
      * created (at most one per host suffix).
      */
     private void findDomainTypes() {
-        String moduleName = Bundle.DomainCategorizer_parentModuleName();
         int artifactsAnalyzed = 0;
         int domainTypeInstancesFound = 0;
 
@@ -224,39 +236,22 @@ class DomainCategorizer extends Extract {
                 if (context.dataSourceIngestIsCancelled()) {
                     break;       //User cancelled the process.
                 }
-                
+
                 ArtifactHost curArtHost = getUnseenDomainHost(artifact);
-                if (curArtHost == null) {
+                if (curArtHost == null || isDuplicateOrAdd(hostsSeen, curArtHost.getHost())) {
                     continue;
                 }
-                
-                
-                
 
                 // if we reached this point, we are at least analyzing this item
                 artifactsAnalyzed++;
 
-                
-                
-                
-                if (!hostIsBlank) {
-                    if (hostSuffixesSeen.contains(host)) {
-                        // if host already seen continue
-                        continue;
-                    } else {
-                        // if there is a new host, track it
-                        hostsSeen.add(host);
-                    }
-                }
-                
-                
-                
                 // attempt to get the domain type for the host using the suffix trie
-                DomainCategoryResult domainEntryFound = findCategory(domainString, host);
+                DomainCategoryResult domainEntryFound = findCategory(curArtHost.getDomain(), curArtHost.getHost());
                 if (domainEntryFound == null) {
                     continue;
                 }
 
+                // make sure both the host suffix and the category are present.
                 String hostSuffix = domainEntryFound.getHostSuffix();
                 String domainCategory = domainEntryFound.getCategory();
                 if (StringUtils.isBlank(hostSuffix) || StringUtils.isBlank(domainCategory)) {
@@ -266,20 +261,12 @@ class DomainCategorizer extends Extract {
                 // if we got this far, we found a domain type, but it may not be unique
                 domainTypeInstancesFound++;
 
-                if (hostSuffixesSeen.contains(hostSuffix)) {
+                if (isDuplicateOrAdd(hostSuffixesSeen, hostSuffix)) {
                     continue;
                 }
-
-                // if we got this far, this is a unique suffix.  Add to the set, so we don't create
-                // multiple of same suffix and add an artifact.
-                hostSuffixesSeen.add(hostSuffix);
-
-                Collection<BlackboardAttribute> bbattributes = Arrays.asList(
-                        new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN, moduleName, NetworkUtils.extractDomain(host)),
-                        new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_HOST, moduleName, host),
-                        new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME, moduleName, domainCategory)
-                );
-                postArtifact(createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_CATEGORIZATION, file, bbattributes));
+                
+                // if we got this far, we have a unique domain category to post.
+                addCategoryArtifact(curArtHost, domainCategory);
             }
         } catch (TskCoreException e) {
             logger.log(Level.SEVERE, "Encountered error retrieving artifacts for messaging domains", e); //NON-NLS
@@ -291,6 +278,16 @@ class DomainCategorizer extends Extract {
                     + "Of the %s artifact(s) with valid hosts, %s url(s) contained messaging domain suffix.",
                     hostSuffixesSeen.size(), artifactsAnalyzed, domainTypeInstancesFound));
         }
+    }
+
+    private void addCategoryArtifact(ArtifactHost artHost, String domainCategory) {
+        String moduleName = Bundle.DomainCategorizer_parentModuleName();
+        Collection<BlackboardAttribute> bbattributes = Arrays.asList(
+                new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN, moduleName, artHost.getDomain()),
+                new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_HOST, moduleName, artHost.getHost()),
+                new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME, moduleName, domainCategory)
+        );
+        postArtifact(createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_CATEGORIZATION, artHost.getAbstractFile(), bbattributes));
     }
 
     @Override
