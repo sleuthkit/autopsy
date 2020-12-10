@@ -79,6 +79,18 @@ final class ArtifactsListPanel extends AbstractArtifactListPanel {
     }
 
     @Override
+    boolean selectAtPoint(Point point) {
+        boolean pointSelected = false;
+        int row = artifactsTable.rowAtPoint(point);
+        if (row < artifactsTable.getRowCount() && row >= 0) {
+            artifactsTable.clearSelection();
+            artifactsTable.addRowSelectionInterval(row, row);
+            pointSelected = true;
+        }
+        return pointSelected;
+    }
+
+    @Override
     BlackboardArtifact getSelectedArtifact() {
         int selectedIndex = artifactsTable.getSelectionModel().getLeadSelectionIndex();
         if (selectedIndex < artifactsTable.getSelectionModel().getMinSelectionIndex() || artifactsTable.getSelectionModel().getMaxSelectionIndex() < 0 || selectedIndex > artifactsTable.getSelectionModel().getMaxSelectionIndex()) {
@@ -159,7 +171,6 @@ final class ArtifactsListPanel extends AbstractArtifactListPanel {
             .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 0, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
-
 
     /**
      * Table model which allows the artifact table in this panel to mimic a list

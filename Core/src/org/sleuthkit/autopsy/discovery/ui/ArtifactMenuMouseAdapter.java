@@ -70,7 +70,9 @@ class ArtifactMenuMouseAdapter extends java.awt.event.MouseAdapter {
     @Override
     public void mouseClicked(java.awt.event.MouseEvent evt) {
         if (!evt.isPopupTrigger() && SwingUtilities.isRightMouseButton(evt) && listPanel != null && !listPanel.isEmpty()) {
-            showPopupMenu(evt);
+            if (listPanel.selectAtPoint(evt.getPoint())) {
+                showPopupMenu(evt);
+            }
         }
     }
 
