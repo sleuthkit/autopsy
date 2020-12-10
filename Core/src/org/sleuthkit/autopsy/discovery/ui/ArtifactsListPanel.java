@@ -30,8 +30,10 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
+import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.TimeUtilities;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -242,10 +244,11 @@ class ArtifactsListPanel extends JPanel {
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
             if (columnIndex < 2 || artifactType == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE) {
+                final BlackboardArtifact artifact = getArtifactByRow(rowIndex);
                 try {
-                    for (BlackboardAttribute bba : getArtifactByRow(rowIndex).getAttributes()) {
+                    for (BlackboardAttribute bba : artifact.getAttributes()) {
                         if (!StringUtils.isBlank(bba.getDisplayString())) {
-                            String stringFromAttribute = getStringForColumn(bba, columnIndex);
+                            String stringFromAttribute = getStringForColumn(artifact, bba, columnIndex);
                             if (!StringUtils.isBlank(stringFromAttribute)) {
                                 return stringFromAttribute;
                             }
@@ -253,7 +256,7 @@ class ArtifactsListPanel extends JPanel {
                     }
                     return getFallbackValue(rowIndex, columnIndex);
                 } catch (TskCoreException ex) {
-                    logger.log(Level.WARNING, "Error getting attributes for artifact " + getArtifactByRow(rowIndex).getArtifactID(), ex);
+                    logger.log(Level.WARNING, "Error getting attributes for artifact " + artifact.getArtifactID(), ex);
                 }
             }
             return Bundle.ArtifactsListPanel_value_noValue();
@@ -274,9 +277,9 @@ class ArtifactsListPanel extends JPanel {
          *                          the TSK_PATH_ID.
          */
         @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-        private String getStringForColumn(BlackboardAttribute bba, int columnIndex) throws TskCoreException {
+        private String getStringForColumn(BlackboardArtifact artifact, BlackboardAttribute bba, int columnIndex) throws TskCoreException {
             if (columnIndex == 0 && bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()) {
-                return bba.getDisplayString();
+                return TimeUtilities.epochToTime(bba.getValueLong(), ContentUtils.getTimeZone(artifact));
             } else if (columnIndex == 1) {
                 if (artifactType == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD || artifactType == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE) {
                     if (bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID()) {
@@ -309,9 +312,10 @@ class ArtifactsListPanel extends JPanel {
          */
         @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
         private String getFallbackValue(int rowIndex, int columnIndex) throws TskCoreException {
-            for (BlackboardAttribute bba : getArtifactByRow(rowIndex).getAttributes()) {
+            final BlackboardArtifact artifact = getArtifactByRow(rowIndex);
+            for (BlackboardAttribute bba : artifact.getAttributes()) {
                 if (columnIndex == 0 && bba.getAttributeType().getTypeName().startsWith("TSK_DATETIME") && !StringUtils.isBlank(bba.getDisplayString())) {
-                    return bba.getDisplayString();
+                    return TimeUtilities.epochToTime(bba.getValueLong(), ContentUtils.getTimeZone(artifact));
                 } else if (columnIndex == 1 && bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID() && !StringUtils.isBlank(bba.getDisplayString())) {
                     return bba.getDisplayString();
                 } else if (columnIndex == 1 && bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID() && !StringUtils.isBlank(bba.getDisplayString())) {
