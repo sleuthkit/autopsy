@@ -48,7 +48,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * expires after 10 of non-use.
  *
  */
-final class ContactCache {
+final public class ContactCache {
 
     private static final Logger logger = Logger.getLogger(ContactCache.class.getName());
 
@@ -66,7 +66,7 @@ final class ContactCache {
      *
      * @throws ExecutionException
      */
-    static synchronized List<BlackboardArtifact> getContacts(Account account) throws ExecutionException {
+    static public synchronized List<BlackboardArtifact> getContacts(Account account) throws ExecutionException {
         return getInstance().accountMap.get("realMap").get(account.getTypeSpecificID());
     }
 
