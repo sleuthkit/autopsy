@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -71,6 +71,12 @@ public class ResultsSorter implements Comparator<Result> {
                 break;
             case BY_PAGE_VIEWS:
                 comparators.add(getPageViewComparator());
+                break;
+            case BY_LAST_ACTIVITY:
+                comparators.add(getLastActivityDateTimeComparator());
+                break;
+            case BY_DOWNLOADS:
+                comparators.add(getWebDownloadsComparator());
                 break;
             default:
                 // The default comparator will be added afterward
@@ -253,29 +259,61 @@ public class ResultsSorter implements Comparator<Result> {
     }
     
     /**
-     * Sorts domains by page view count. If a result domain reports it's 
-     * page view count as `null`, then it's assumed to be equivalent to 0.
+     * Sorts domains by page view count.
      * 
      * This comparator sorts results in descending order (largest -> smallest).
      */
     private static Comparator<Result> getPageViewComparator() {
         return (Result domain1, Result domain2) -> {
-            if (domain1.getType() != SearchData.Type.DOMAIN) {
+            if (domain1.getType() != SearchData.Type.DOMAIN || 
+                    domain2.getType() != SearchData.Type.DOMAIN) {
                 return 0;
             }
 
             ResultDomain first = (ResultDomain) domain1;
             ResultDomain second = (ResultDomain) domain2;
             
-            Long firstPageViews = first.getTotalPageViews();
-            Long secondPageViews = second.getTotalPageViews();
-            if (firstPageViews != null && secondPageViews != null) {
-                return Long.compare(secondPageViews, firstPageViews);
-            } else if (firstPageViews == null) {
-                return 1;
-            } else {
-                return -1;
+            long firstPageViews = first.getTotalPageViews();
+            long secondPageViews = second.getTotalPageViews();
+            return Long.compare(secondPageViews, firstPageViews);
+        };
+    }
+    
+    /**
+     * Sorts result domains by last activity date time. The results will be in 
+     * descending order.
+     */
+    private static Comparator<Result> getLastActivityDateTimeComparator() {
+        return (Result domain1, Result domain2) -> {
+            if (domain1.getType() != SearchData.Type.DOMAIN || 
+                    domain2.getType() != SearchData.Type.DOMAIN) {
+                return 0;
             }
+            ResultDomain first = (ResultDomain) domain1;
+            ResultDomain second = (ResultDomain) domain2;
+            
+            long firstActivityEnd = first.getActivityEnd();
+            long secondActivityEnd = second.getActivityEnd();
+            return Long.compare(secondActivityEnd, firstActivityEnd);
+        };
+    }
+    
+    /**
+     * Sorts result domains by most file downloads. The results will be in 
+     * descending order.
+     */
+    private static Comparator<Result> getWebDownloadsComparator() {
+        return (Result domain1, Result domain2) -> {
+            if (domain1.getType() != SearchData.Type.DOMAIN || 
+                    domain2.getType() != SearchData.Type.DOMAIN) {
+                return 0;
+            }
+            ResultDomain first = (ResultDomain) domain1;
+            ResultDomain second = (ResultDomain) domain2;
+            
+            long firstFilesDownloaded = first.getFilesDownloaded();
+            long secondFilesDownloaded = second.getFilesDownloaded();
+            return Long.compare(secondFilesDownloaded, firstFilesDownloaded);
         };
     }
 
@@ -331,8 +369,10 @@ public class ResultsSorter implements Comparator<Result> {
         "FileSorter.SortingMethod.frequency.displayName=Central Repo Frequency",
         "FileSorter.SortingMethod.keywordlist.displayName=Keyword List Names",
         "FileSorter.SortingMethod.fullPath.displayName=Full Path",
-        "FileSorter.SortingMethod.domain.displayName=Domain",
-        "FileSorter.SortingMethod.pageViews.displayName=Page Views"})
+        "FileSorter.SortingMethod.domain.displayName=Domain Name",
+        "FileSorter.SortingMethod.pageViews.displayName=Page Views",
+        "FileSorter.SortingMethod.downloads.displayName=File Downloads",
+        "FileSorter.SortingMethod.activity.displayName=Last Activity Date"})
     public enum SortingMethod {
         BY_FILE_NAME(new ArrayList<>(),
                 Bundle.FileSorter_SortingMethod_filename_displayName()), // Sort alphabetically by file name
@@ -348,9 +388,10 @@ public class ResultsSorter implements Comparator<Result> {
                 Bundle.FileSorter_SortingMethod_keywordlist_displayName()), // Sort alphabetically by list of keyword list names found
         BY_FULL_PATH(new ArrayList<>(),
                 Bundle.FileSorter_SortingMethod_fullPath_displayName()), // Sort alphabetically by path
-        BY_DOMAIN_NAME(new ArrayList<>(),
-                Bundle.FileSorter_SortingMethod_domain_displayName()),
-        BY_PAGE_VIEWS(new ArrayList<>(), Bundle.FileSorter_SortingMethod_pageViews_displayName());
+        BY_DOMAIN_NAME(new ArrayList<>(),Bundle.FileSorter_SortingMethod_domain_displayName()),
+        BY_PAGE_VIEWS(new ArrayList<>(), Bundle.FileSorter_SortingMethod_pageViews_displayName()),
+        BY_DOWNLOADS(new ArrayList<>(), Bundle.FileSorter_SortingMethod_downloads_displayName()),
+        BY_LAST_ACTIVITY(new ArrayList<>(), Bundle.FileSorter_SortingMethod_activity_displayName());
 
         private final String displayName;
         private final List<DiscoveryAttributes.AttributeType> requiredAttributes;
@@ -396,7 +437,7 @@ public class ResultsSorter implements Comparator<Result> {
          * @return Enum values that can be used to ordering files.
          */
         public static List<SortingMethod> getOptionsForOrderingDomains() {
-            return Arrays.asList(BY_PAGE_VIEWS, BY_DOMAIN_NAME, BY_DATA_SOURCE);
+            return Arrays.asList(BY_PAGE_VIEWS, BY_DOWNLOADS, BY_LAST_ACTIVITY, BY_DOMAIN_NAME);
         }
 
     }

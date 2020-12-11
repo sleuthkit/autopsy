@@ -286,28 +286,12 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
                         continue;
                     }
 
-                    Long activityStart = resultSet.getLong("activity_start");
-                    if (resultSet.wasNull()) {
-                        activityStart = null;
-                    }
-                    Long activityEnd = resultSet.getLong("activity_end");
-                    if (resultSet.wasNull()) {
-                        activityEnd = null;
-                    }
-                    Long filesDownloaded = resultSet.getLong("fileDownloads");
-                    if (resultSet.wasNull()) {
-                        filesDownloaded = null;
-                    }
-                    Long totalPageViews = resultSet.getLong("totalPageViews");
-                    if (resultSet.wasNull()) {
-                        totalPageViews = null;
-                    }
-
-                    Long pageViewsInLast60 = resultSet.getLong("pageViewsInLast60");
-                    if (resultSet.wasNull()) {
-                        pageViewsInLast60 = null;
-                    }
-                    Long dataSourceID = resultSet.getLong("dataSource");
+                    long activityStart = resultSet.getLong("activity_start");
+                    long activityEnd = resultSet.getLong("activity_end");
+                    long filesDownloaded = resultSet.getLong("fileDownloads");
+                    long totalPageViews = resultSet.getLong("totalPageViews");
+                    long pageViewsInLast60 = resultSet.getLong("pageViewsInLast60");
+                    long dataSourceID = resultSet.getLong("dataSource");
 
                     Content dataSource = skc.getContentById(dataSourceID);
 
