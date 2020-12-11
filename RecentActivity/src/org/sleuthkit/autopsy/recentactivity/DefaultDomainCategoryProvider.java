@@ -40,6 +40,10 @@ import org.sleuthkit.autopsy.url.analytics.DomainCategoryResult;
 /**
  * The default domain category provider that makes use of the default csv
  * resource.
+ * 
+ * CSV entries describing these domain types are compiled from sources. webmail:
+ * https://github.com/mailcheck/mailcheck/wiki/List-of-Popular-Domains
+ * disposable mail: https://www.npmjs.com/package/disposable-email-domains
  */
 @ServiceProvider(service = DomainCategoryProvider.class)
 public class DefaultDomainCategoryProvider implements DomainCategoryProvider {

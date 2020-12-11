@@ -54,10 +54,6 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Analyzes a URL to determine if the url host is one of a certain kind of
  * category (i.e. webmail, disposable mail). If found, a web category artifact
  * is created.
- *
- * CSV entries describing these domain types are compiled from sources. webmail:
- * https://github.com/mailcheck/mailcheck/wiki/List-of-Popular-Domains
- * disposable mail: https://www.npmjs.com/package/disposable-email-domains
  */
 @Messages({
     "DomainCategorizer_moduleName_text=DomainCategorizer",
