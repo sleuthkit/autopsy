@@ -142,8 +142,8 @@ class DomainSummaryPanel extends javax.swing.JPanel implements ListCellRenderer<
     @NbBundle.Messages({"# {0} - startDate",
         "# {1} - endDate",
         "DomainSummaryPanel.activity.text=Activity: {0} to {1}",
-        "DomainSummaryPanel.pages.text=Pages in past 60 days: ",
-        "DomainSummaryPanel.totalPages.text=Total visits: ",
+        "DomainSummaryPanel.pages.text=Page views in past 60 days: ",
+        "DomainSummaryPanel.totalPages.text=Total page views: ",
         "DomainSummaryPanel.downloads.text=Files downloaded: ",
         "DomainSummaryPanel.loadingImages.text=Loading thumbnail..."})
     @Override
@@ -152,8 +152,8 @@ class DomainSummaryPanel extends javax.swing.JPanel implements ListCellRenderer<
         String startDate = dateFormat.format(new Date(value.getResultDomain().getActivityStart() * 1000));
         String endDate = dateFormat.format(new Date(value.getResultDomain().getActivityEnd() * 1000));
         activityLabel.setText(Bundle.DomainSummaryPanel_activity_text(startDate, endDate));
-        totalVisitsLabel.setText(Bundle.DomainSummaryPanel_totalPages_text() + value.getResultDomain().getTotalVisits());
-        pagesLabel.setText(Bundle.DomainSummaryPanel_pages_text() + value.getResultDomain().getVisitsInLast60());
+        totalVisitsLabel.setText(Bundle.DomainSummaryPanel_totalPages_text() + value.getResultDomain().getTotalPageViews());
+        pagesLabel.setText(Bundle.DomainSummaryPanel_pages_text() + value.getResultDomain().getPageViewsInLast60Days());
         filesDownloadedLabel.setText(Bundle.DomainSummaryPanel_downloads_text() + value.getResultDomain().getFilesDownloaded());
         if (value.getThumbnail() == null) {
             numberOfImagesLabel.setText(Bundle.DomainSummaryPanel_loadingImages_text());

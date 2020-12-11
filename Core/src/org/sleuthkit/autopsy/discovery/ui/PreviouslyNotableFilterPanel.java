@@ -22,6 +22,7 @@ import org.sleuthkit.autopsy.discovery.search.AbstractFilter;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.discovery.search.SearchFiltering;
 
@@ -35,6 +36,9 @@ final class PreviouslyNotableFilterPanel extends AbstractDiscoveryFilterPanel {
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     PreviouslyNotableFilterPanel() {
         initComponents();
+        if (!CentralRepository.isEnabled()) {
+            previouslyNotableCheckbox.setEnabled(false);
+        }
     }
 
     /**
