@@ -24,7 +24,8 @@ import com.google.common.annotations.Beta;
  * The result of finding a match for the host or domain provided as an argument.
  */
 @Beta
-public interface DomainCategoryResult {            
+public interface DomainCategoryResult {
+
     /**
      * @return The portion of the suffix from the host or domain that was a
      * match (i.e. 'mail.google.com' or 'hotmail.com').

@@ -31,8 +31,9 @@ public class DefaultDomainCategoryResult implements DomainCategoryResult {
 
     /**
      * Default constructor.
-     * @param hostSuffix The portion of the suffix from the host or domain that was a
-     * match (i.e. 'mail.google.com' or 'hotmail.com').
+     *
+     * @param hostSuffix The portion of the suffix from the host or domain that
+     * was a match (i.e. 'mail.google.com' or 'hotmail.com').
      * @param category The category (i.e. 'Web Email').
      */
     public DefaultDomainCategoryResult(String hostSuffix, String category) {

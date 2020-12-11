@@ -44,13 +44,13 @@ import org.sleuthkit.autopsy.url.analytics.DomainCategoryResult;
 @ServiceProvider(service = DomainCategoryProvider.class)
 public class DefaultDomainCategoryProvider implements DomainCategoryProvider {
 
-    // csv delimiter
     private static final String CSV_DELIMITER = ",";
     private static final String DOMAIN_TYPE_CSV = "default_domain_categories.csv"; //NON-NLS
     private static final Logger logger = Logger.getLogger(DefaultDomainCategoryProvider.class.getName());
 
     /**
-     * Loads the domain suffixes from the csv resource file.
+     * Loads the domain suffixes from the csv resource file into a mapping of
+     * domain suffix to category name.
      *
      * @return The mapping.
      * @throws IOException
@@ -75,7 +75,8 @@ public class DefaultDomainCategoryProvider implements DomainCategoryProvider {
     }
 
     /**
-     * Adds a mapping based on the csv line.
+     * Adds a mapping of domain suffix to category based on the csv line found
+     * in the file.
      *
      * @param mapping The suffix to category mapping.
      * @param line The line to be parsed.
@@ -127,12 +128,15 @@ public class DefaultDomainCategoryProvider implements DomainCategoryProvider {
 
     @Override
     public DomainCategoryResult getCategory(String domain, String host) {
+        // use host; use domain as fallback if no host provided
         String hostToUse = StringUtils.isBlank(host) ? domain : host;
-        
+
         if (StringUtils.isBlank(hostToUse)) {
             return null;
         }
-        
+
+        // split the host into tokens and find longest matching suffix 
+        // (or return null if not found)
         List<String> tokens = Arrays.asList(hostToUse.split("\\."));
         for (int i = 0; i < tokens.size(); i++) {
             String searchString = String.join(".", tokens.subList(i, tokens.size()));
@@ -141,7 +145,7 @@ public class DefaultDomainCategoryProvider implements DomainCategoryProvider {
                 return new DefaultDomainCategoryResult(searchString, category);
             }
         }
-        
+
         return null;
     }
 

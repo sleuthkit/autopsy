@@ -67,8 +67,8 @@ import org.sleuthkit.datamodel.TskCoreException;
 class DomainCategorizer extends Extract {
 
     // The url regex is based on the regex provided in https://tools.ietf.org/html/rfc3986#appendix-B
-    // but expanded to be a little more flexible, and also properly parses user info and port in a url
-    // this item has optional colon since some urls were coming through without the colon
+    // but expanded to be a little more flexible.  This regex also properly parses user info and port in a url.
+    // this regex has optional colon in front of the scheme (i.e. http// instead of http://) since some urls were coming through without the colon.
     private static final String URL_REGEX_SCHEME = "(((?<scheme>[^:\\/?#]+):?)?\\/\\/)";
 
     private static final String URL_REGEX_USERINFO = "((?<userinfo>[^\\/?#@]*)@)";
@@ -124,6 +124,13 @@ class DomainCategorizer extends Extract {
         return host;
     }
 
+    /**
+     * Attempts to find the category for the given host/domain.
+     *
+     * @param domain The domain for the item.
+     * @param host The host for the item.
+     * @return The domain category result or null if none can be determined.
+     */
     private DomainCategoryResult findCategory(String domain, String host) {
         List<DomainCategoryProvider> safeProviders = domainProviders == null ? Collections.emptyList() : domainProviders;
         for (DomainCategoryProvider provider : safeProviders) {
@@ -136,32 +143,60 @@ class DomainCategorizer extends Extract {
         return null;
     }
 
+    /**
+     * Information concerning an artifact's host, domain, and parent file.
+     */
     private static class ArtifactHost {
 
         private final AbstractFile abstractFile;
         private final String host;
         private final String domain;
 
+        /**
+         * Main constructor.
+         *
+         * @param abstractFile The parent file of the artifact.
+         * @param host The host of the artifact found in the url attribute.
+         * @param domain The domain of the artifact in the TSK_DOMAIN attribute.
+         */
         ArtifactHost(AbstractFile abstractFile, String host, String domain) {
             this.abstractFile = abstractFile;
             this.host = host;
             this.domain = domain;
         }
 
+        /**
+         * @return The parent file of this artifact.
+         */
         AbstractFile getAbstractFile() {
             return abstractFile;
         }
 
+        /**
+         * @return The host of this artifact if one can be determined.
+         */
         String getHost() {
             return host;
         }
 
+        /**
+         * @return The domain of the artifact.
+         */
         String getDomain() {
             return domain;
         }
     }
 
-    private ArtifactHost getUnseenDomainHost(BlackboardArtifact artifact) throws TskCoreException {
+    /**
+     * Determines pertinent information in the artifact like host, domain, and
+     * parent file.
+     *
+     * @param artifact The web artifact to parse.
+     * @return The pertinent information or null if important information cannot
+     * be determined.
+     * @throws TskCoreException
+     */
+    private ArtifactHost getDomainAndHost(BlackboardArtifact artifact) throws TskCoreException {
         // make sure there is attached file
         AbstractFile file = tskCase.getAbstractFileById(artifact.getObjectID());
         if (file == null) {
@@ -173,12 +208,13 @@ class DomainCategorizer extends Extract {
         String urlString = null;
         String host = null;
         if (urlAttr != null) {
-             urlString = urlAttr.getValueString();
+            urlString = urlAttr.getValueString();
             if (StringUtils.isNotBlank(urlString)) {
                 host = getHost(urlString);
             }
         }
-        
+
+        // get the domain from the attribute
         BlackboardAttribute domainAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN));
         String domainString = null;
         if (domainAttr != null) {
@@ -187,7 +223,8 @@ class DomainCategorizer extends Extract {
 
         boolean hasDomain = StringUtils.isNotBlank(domainString);
         boolean hasHost = StringUtils.isNotBlank(host);
-        
+
+        // we need at least a host or a domain, if one is missing, compensate with the other.
         if (!hasDomain && !hasHost) {
             return null;
         } else if (!hasDomain) {
@@ -195,10 +232,19 @@ class DomainCategorizer extends Extract {
         } else if (!hasHost) {
             host = domainString;
         }
-  
+
         return new ArtifactHost(file, host.toLowerCase(), domainString.toLowerCase());
     }
 
+    /**
+     * Determines if the given item is already found in the set. If not, the
+     * item is added to the set.
+     *
+     * @param items The set of items.
+     * @param item The item whose existence will be checked in the set.
+     * @return True if item is already contained in 'items'. False if the is
+     * null or if not contained in 'items'.
+     */
     private static boolean isDuplicateOrAdd(Set<String> items, String item) {
         if (StringUtils.isBlank(item)) {
             return false;
@@ -237,7 +283,8 @@ class DomainCategorizer extends Extract {
                     break;       //User cancelled the process.
                 }
 
-                ArtifactHost curArtHost = getUnseenDomainHost(artifact);
+                // get the pertinent details for this artifact.
+                ArtifactHost curArtHost = getDomainAndHost(artifact);
                 if (curArtHost == null || isDuplicateOrAdd(hostsSeen, curArtHost.getHost())) {
                     continue;
                 }
@@ -264,7 +311,7 @@ class DomainCategorizer extends Extract {
                 if (isDuplicateOrAdd(hostSuffixesSeen, hostSuffix)) {
                     continue;
                 }
-                
+
                 // if we got this far, we have a unique domain category to post.
                 addCategoryArtifact(curArtHost, domainCategory);
             }
@@ -280,6 +327,13 @@ class DomainCategorizer extends Extract {
         }
     }
 
+    /**
+     * Adds a TSK_WEB_CATEGORIZATION artifact for the given information.
+     *
+     * @param artHost Pertinent details for the artifact (i.e. host, domain,
+     * parent file).
+     * @param domainCategory The category for this host/domain.
+     */
     private void addCategoryArtifact(ArtifactHost artHost, String domainCategory) {
         String moduleName = Bundle.DomainCategorizer_parentModuleName();
         Collection<BlackboardAttribute> bbattributes = Arrays.asList(
@@ -299,6 +353,11 @@ class DomainCategorizer extends Extract {
         this.findDomainTypes();
     }
 
+    /**
+     * A comparator of DomainCategoryProvider pushing the
+     * DefaultDomainCategoryProvider to the bottom of the list, and otherwise
+     * alphabetizing.
+     */
     private static final Comparator<DomainCategoryProvider> PROVIDER_COMPARATOR
             = (a, b) -> {
                 // if one item is the DefaultDomainCategoryProvider, and one is it, compare based on that.

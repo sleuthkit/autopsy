@@ -24,8 +24,8 @@ import java.io.Closeable;
 import java.io.IOException;
 
 /**
- * Interface providing the category of a domain for the purposes of creating
- * TSK_WEB_CATEGORIZATION artifacts. These implementations are used in
+ * Interface providing the category of a domain/host for the purposes of
+ * creating TSK_WEB_CATEGORIZATION artifacts. These implementations are used in
  * RecentActivity as a part of the ingest process. Implementers of this class
  * should have a no-argument constructor in order to be properly instantiated.
  */
@@ -55,7 +55,9 @@ public interface DomainCategoryProvider extends Closeable {
 
     /**
      * These providers close methods are explicitly called when ingest is
-     * finished.
+     * finished. Conceivably, the same instance of this class may have this
+     * method called multiple times and should handle that possibility
+     * gracefully.
      *
      * @throws IOException
      */
