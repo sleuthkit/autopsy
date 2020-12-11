@@ -360,10 +360,10 @@ class DomainCategorizer extends Extract {
      */
     private static final Comparator<DomainCategoryProvider> PROVIDER_COMPARATOR
             = (a, b) -> {
-                // if one item is the DefaultDomainCategoryProvider, and one is it, compare based on that.
+                // if one item is the DefaultDomainCategoryProvider, and one is not, compare based on that.
                 int isDefaultCompare = Integer.compare(
-                        a instanceof DefaultDomainCategoryProvider ? 0 : 1,
-                        b instanceof DefaultDomainCategoryProvider ? 0 : 1);
+                        a instanceof DefaultDomainCategoryProvider ? 1 : 0,
+                        b instanceof DefaultDomainCategoryProvider ? 1 : 0);
 
                 if (isDefaultCompare != 0) {
                     return isDefaultCompare;
