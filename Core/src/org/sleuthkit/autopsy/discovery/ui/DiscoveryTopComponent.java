@@ -27,6 +27,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 import javax.swing.SwingUtilities;
 import javax.swing.plaf.basic.BasicSplitPaneDivider;
@@ -100,6 +101,7 @@ public final class DiscoveryTopComponent extends TopComponent {
             }
         });
         rightSplitPane.setTopComponent(resultsPanel);
+        rightSplitPane.setBottomComponent(new JPanel());
     }
 
     /**
