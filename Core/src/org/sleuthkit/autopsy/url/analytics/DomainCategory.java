@@ -21,33 +21,19 @@ package org.sleuthkit.autopsy.url.analytics;
 import com.google.common.annotations.Beta;
 
 /**
- * Default implementation of the DomainCategoryResult.
+ * The result of finding a match for the host or domain provided as an argument.
  */
 @Beta
-public class DefaultDomainCategoryResult implements DomainCategoryResult {
-
-    private final String hostSuffix;
-    private final String category;
+public interface DomainCategory {
 
     /**
-     * Default constructor.
-     *
-     * @param hostSuffix The portion of the suffix from the host or domain that
-     * was a match (i.e. 'mail.google.com' or 'hotmail.com').
-     * @param category The category (i.e. 'Web Email').
+     * @return The portion of the suffix from the host or domain that was a
+     * match (i.e. 'mail.google.com' or 'hotmail.com').
      */
-    public DefaultDomainCategoryResult(String hostSuffix, String category) {
-        this.hostSuffix = hostSuffix;
-        this.category = category;
-    }
+    String getHostSuffix();
 
-    @Override
-    public String getHostSuffix() {
-        return hostSuffix;
-    }
-
-    @Override
-    public String getCategory() {
-        return category;
-    }
+    /**
+     * @return The category (i.e. 'Web Email').
+     */
+    String getCategory();
 }
