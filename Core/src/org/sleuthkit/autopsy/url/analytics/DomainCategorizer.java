@@ -19,18 +19,15 @@
 package org.sleuthkit.autopsy.url.analytics;
 
 import com.google.common.annotations.Beta;
-import org.sleuthkit.autopsy.ingest.IngestModule;
-import java.io.Closeable;
-import java.io.IOException;
 
 /**
- * Interface providing the category of a domain/host for the purposes of
- * creating TSK_WEB_CATEGORIZATION artifacts. These implementations are used in
- * RecentActivity as a part of the ingest process. Implementers of this class
- * should have a no-argument constructor in order to be properly instantiated.
+ * Interface providing the category of a domain/host. Implementers of this class
+ * should have a no-argument constructor in order to be properly instantiated,
+ * and should have a class annotation of '@ServiceProvider(service =
+ * DomainCategoryProvider.class)'.
  */
 @Beta
-public interface DomainCategoryProvider extends Closeable {
+public interface DomainCategorizer extends AutoCloseable {
 
     /**
      * Provides the DomainCategory for a given domain/host or null if none can
@@ -41,16 +38,16 @@ public interface DomainCategoryProvider extends Closeable {
      * @return The domain category if the domain/host combination was found or
      * null if not.
      */
-    DomainCategoryResult getCategory(String domain, String host);
+    DomainCategory getCategory(String domain, String host) throws DomainCategorizerException;
 
     /**
      * Initializes this provider in preparation to handle 'getCategory' requests
      * during ingest. Conceivably, the same instance of this class may have this
      * called multiple times and should handle that possibility gracefully.
      *
-     * @throws IngestModule.IngestModuleException
+     * @throws DomainCategorizerException
      */
-    default void initialize() throws IngestModule.IngestModuleException {
+    default void initialize() throws DomainCategorizerException {
     }
 
     /**
@@ -59,9 +56,9 @@ public interface DomainCategoryProvider extends Closeable {
      * method called multiple times and should handle that possibility
      * gracefully.
      *
-     * @throws IOException
+     * @throws Exception
      */
     @Override
-    default void close() throws IOException {
+    default void close() throws Exception {
     }
 }

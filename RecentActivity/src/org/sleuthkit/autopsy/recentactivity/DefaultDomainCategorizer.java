@@ -29,29 +29,26 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import org.apache.commons.lang.StringUtils;
-import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.ingest.IngestModule;
-import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
-import org.sleuthkit.autopsy.url.analytics.DefaultDomainCategoryResult;
-import org.sleuthkit.autopsy.url.analytics.DomainCategoryProvider;
-import org.sleuthkit.autopsy.url.analytics.DomainCategoryResult;
+import org.sleuthkit.autopsy.url.analytics.DomainCategorizer;
+import org.sleuthkit.autopsy.url.analytics.DomainCategorizerException;
+import org.sleuthkit.autopsy.url.analytics.DomainCategory;
 
 /**
  * The default domain category provider that makes use of the default csv
- * resource.
- * 
+ * resource. This implementation is used if no other DomainCategorizer can
+ * determine a category for a host/domain entry.
+ *
  * CSV entries describing these domain types are compiled from sources. webmail:
  * https://github.com/mailcheck/mailcheck/wiki/List-of-Popular-Domains
  * disposable mail: https://www.npmjs.com/package/disposable-email-domains
  * messaging: https://www.raymond.cc/blog/list-of-web-messengers-for-your-convenience/
  */
-@ServiceProvider(service = DomainCategoryProvider.class)
-public class DefaultDomainCategoryProvider implements DomainCategoryProvider {
+public class DefaultDomainCategorizer implements DomainCategorizer {
 
     private static final String CSV_DELIMITER = ",";
     private static final String DOMAIN_TYPE_CSV = "default_domain_categories.csv"; //NON-NLS
-    private static final Logger logger = Logger.getLogger(DefaultDomainCategoryProvider.class.getName());
+    private static final Logger logger = Logger.getLogger(DefaultDomainCategorizer.class.getName());
 
     /**
      * Loads the domain suffixes from the csv resource file into a mapping of
@@ -61,7 +58,7 @@ public class DefaultDomainCategoryProvider implements DomainCategoryProvider {
      * @throws IOException
      */
     private static Map<String, String> loadMapping() throws IOException {
-        try (InputStream is = DomainCategorizer.class.getResourceAsStream(DOMAIN_TYPE_CSV);
+        try (InputStream is = DomainCategoryRunner.class.getResourceAsStream(DOMAIN_TYPE_CSV);
                 InputStreamReader isReader = new InputStreamReader(is, StandardCharsets.UTF_8);
                 BufferedReader reader = new BufferedReader(isReader)) {
 
@@ -121,18 +118,18 @@ public class DefaultDomainCategoryProvider implements DomainCategoryProvider {
     private Map<String, String> mapping = null;
 
     @Override
-    public void initialize() throws IngestModuleException {
+    public void initialize() throws DomainCategorizerException {
         if (this.mapping == null) {
             try {
                 this.mapping = loadMapping();
             } catch (IOException ex) {
-                throw new IngestModule.IngestModuleException("Unable to load domain type csv for domain category analysis", ex);
+                throw new DomainCategorizerException("Unable to load domain type csv for domain category analysis", ex);
             }
         }
     }
 
     @Override
-    public DomainCategoryResult getCategory(String domain, String host) {
+    public DomainCategory getCategory(String domain, String host) throws DomainCategorizerException {
         // use host; use domain as fallback if no host provided
         String hostToUse = StringUtils.isBlank(host) ? domain : host;
 
@@ -147,7 +144,7 @@ public class DefaultDomainCategoryProvider implements DomainCategoryProvider {
             String searchString = String.join(".", tokens.subList(i, tokens.size()));
             String category = mapping.get(searchString);
             if (StringUtils.isNotBlank(category)) {
-                return new DefaultDomainCategoryResult(searchString, category);
+                return new DomainCategory(searchString, category);
             }
         }
 
@@ -155,7 +152,7 @@ public class DefaultDomainCategoryProvider implements DomainCategoryProvider {
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() throws Exception {
         // clear out the mapping to release resources
         mapping = null;
     }

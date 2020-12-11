@@ -18,13 +18,11 @@
  */
 package org.sleuthkit.autopsy.recentactivity;
 
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.logging.Level;
@@ -40,8 +38,6 @@ import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestModule;
-import org.sleuthkit.autopsy.url.analytics.DomainCategoryProvider;
-import org.sleuthkit.autopsy.url.analytics.DomainCategoryResult;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
@@ -49,6 +45,9 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.autopsy.url.analytics.DomainCategorizer;
+import org.sleuthkit.autopsy.url.analytics.DomainCategorizerException;
+import org.sleuthkit.autopsy.url.analytics.DomainCategory;
 
 /**
  * Analyzes a URL to determine if the url host is one of a certain kind of
@@ -56,11 +55,11 @@ import org.sleuthkit.datamodel.TskCoreException;
  * is created.
  */
 @Messages({
-    "DomainCategorizer_moduleName_text=DomainCategorizer",
-    "DomainCategorizer_Progress_Message_Domain_Types=Finding Domain Types",
-    "DomainCategorizer_parentModuleName=Recent Activity"
+    "DomainCategoryRunner_moduleName_text=DomainCategoryRunner",
+    "DomainCategoryRunner_Progress_Message_Domain_Types=Finding Domain Types",
+    "DomainCategoryRunner_parentModuleName=Recent Activity"
 })
-class DomainCategorizer extends Extract {
+class DomainCategoryRunner extends Extract {
 
     // The url regex is based on the regex provided in https://tools.ietf.org/html/rfc3986#appendix-B
     // but expanded to be a little more flexible.  This regex also properly parses user info and port in a url.
@@ -77,16 +76,16 @@ class DomainCategorizer extends Extract {
     private static final String URL_REGEX_STR = String.format("^\\s*%s?%s?%s?", URL_REGEX_SCHEME, URL_REGEX_AUTHORITY, URL_REGEX_PATH);
     private static final Pattern URL_REGEX = Pattern.compile(URL_REGEX_STR);
 
-    private static final Logger logger = Logger.getLogger(DomainCategorizer.class.getName());
+    private static final Logger logger = Logger.getLogger(DomainCategoryRunner.class.getName());
 
     private Content dataSource;
     private IngestJobContext context;
-    private List<DomainCategoryProvider> domainProviders = Collections.emptyList();
+    private List<DomainCategorizer> domainProviders = Collections.emptyList();
 
     /**
      * Main constructor.
      */
-    DomainCategorizer() {
+    DomainCategoryRunner() {
         moduleName = null;
     }
 
@@ -127,13 +126,19 @@ class DomainCategorizer extends Extract {
      * @param host The host for the item.
      * @return The domain category result or null if none can be determined.
      */
-    private DomainCategoryResult findCategory(String domain, String host) {
-        List<DomainCategoryProvider> safeProviders = domainProviders == null ? Collections.emptyList() : domainProviders;
-        for (DomainCategoryProvider provider : safeProviders) {
-            DomainCategoryResult result = provider.getCategory(domain, host);
-            if (result != null) {
-                return result;
+    private DomainCategory findCategory(String domain, String host) {
+        List<DomainCategorizer> safeProviders = domainProviders == null ? Collections.emptyList() : domainProviders;
+        for (DomainCategorizer provider : safeProviders) {
+            DomainCategory result;
+            try {
+                result = provider.getCategory(domain, host);
+                if (result != null) {
+                    return result;
+                }
+            } catch (DomainCategorizerException ex) {
+                logger.log(Level.WARNING, "There was an error processing results with " + provider.getClass().getCanonicalName(), ex);
             }
+
         }
 
         return null;
@@ -289,7 +294,7 @@ class DomainCategorizer extends Extract {
                 artifactsAnalyzed++;
 
                 // attempt to get the domain type for the host using the suffix trie
-                DomainCategoryResult domainEntryFound = findCategory(curArtHost.getDomain(), curArtHost.getHost());
+                DomainCategory domainEntryFound = findCategory(curArtHost.getDomain(), curArtHost.getHost());
                 if (domainEntryFound == null) {
                     continue;
                 }
@@ -331,7 +336,7 @@ class DomainCategorizer extends Extract {
      * @param domainCategory The category for this host/domain.
      */
     private void addCategoryArtifact(ArtifactHost artHost, String domainCategory) {
-        String moduleName = Bundle.DomainCategorizer_parentModuleName();
+        String moduleName = Bundle.DomainCategoryRunner_parentModuleName();
         Collection<BlackboardAttribute> bbattributes = Arrays.asList(
                 new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN, moduleName, artHost.getDomain()),
                 new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_HOST, moduleName, artHost.getHost()),
@@ -345,40 +350,28 @@ class DomainCategorizer extends Extract {
         this.dataSource = dataSource;
         this.context = context;
 
-        progressBar.progress(Bundle.DomainCategorizer_Progress_Message_Domain_Types());
+        progressBar.progress(Bundle.DomainCategoryRunner_Progress_Message_Domain_Types());
         this.findDomainTypes();
     }
 
-    /**
-     * A comparator of DomainCategoryProvider pushing the
-     * DefaultDomainCategoryProvider to the bottom of the list, and otherwise
-     * alphabetizing.
-     */
-    private static final Comparator<DomainCategoryProvider> PROVIDER_COMPARATOR
-            = (a, b) -> {
-                // if one item is the DefaultDomainCategoryProvider, and one is not, compare based on that.
-                int isDefaultCompare = Integer.compare(
-                        a instanceof DefaultDomainCategoryProvider ? 1 : 0,
-                        b instanceof DefaultDomainCategoryProvider ? 1 : 0);
-
-                if (isDefaultCompare != 0) {
-                    return isDefaultCompare;
-                }
-
-                // otherwise, sort by the name of the fully qualified class for deterministic results.
-                return a.getClass().getName().compareToIgnoreCase(b.getClass().getName());
-            };
-
     @Override
     void configExtractor() throws IngestModule.IngestModuleException {
-        List<DomainCategoryProvider> foundProviders
-                = Lookup.getDefault().lookupAll(DomainCategoryProvider.class).stream()
+        // lookup all providers, filter null providers, and sort providers
+        List<DomainCategorizer> foundProviders
+                = Lookup.getDefault().lookupAll(DomainCategorizer.class).stream()
                         .filter(provider -> provider != null)
-                        .sorted(PROVIDER_COMPARATOR)
+                        .sorted((a, b) -> a.getClass().getName().compareToIgnoreCase(b.getClass().getName()))
                         .collect(Collectors.toList());
 
-        for (DomainCategoryProvider provider : foundProviders) {
-            provider.initialize();
+        // add the default categorizer last as a last resort
+        foundProviders.add(new DefaultDomainCategorizer());
+
+        for (DomainCategorizer provider : foundProviders) {
+            try {
+                provider.initialize();
+            } catch (DomainCategorizerException ex) {
+                throw new IngestModule.IngestModuleException("There was an error instantiating the provider: " + provider.getClass().getSimpleName(), ex);
+            }
         }
 
         this.domainProviders = foundProviders == null
@@ -389,10 +382,10 @@ class DomainCategorizer extends Extract {
     @Override
     public void complete() {
         if (this.domainProviders != null) {
-            for (DomainCategoryProvider provider : this.domainProviders) {
+            for (DomainCategorizer provider : this.domainProviders) {
                 try {
                     provider.close();
-                } catch (IOException ex) {
+                } catch (Exception ex) {
                     logger.log(Level.WARNING, "There was an error closing " + provider.getClass().getName(), ex);
                 }
             }
