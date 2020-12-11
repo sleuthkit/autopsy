@@ -23,7 +23,6 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.logging.Level;
@@ -355,33 +354,17 @@ class DomainCategoryRunner extends Extract {
         this.findDomainTypes();
     }
 
-    /**
-     * A comparator of DomainCategoryProvider pushing the
-     * DefaultDomainCategoryProvider to the bottom of the list, and otherwise
-     * alphabetizing.
-     */
-    private static final Comparator<DomainCategorizer> PROVIDER_COMPARATOR
-            = (a, b) -> {
-                // if one item is the DefaultDomainCategoryProvider, and one is not, compare based on that.
-                int isDefaultCompare = Integer.compare(
-                        a instanceof DefaultDomainCategorizer ? 1 : 0,
-                        b instanceof DefaultDomainCategorizer ? 1 : 0);
-
-                if (isDefaultCompare != 0) {
-                    return isDefaultCompare;
-                }
-
-                // otherwise, sort by the name of the fully qualified class for deterministic results.
-                return a.getClass().getName().compareToIgnoreCase(b.getClass().getName());
-            };
-
     @Override
     void configExtractor() throws IngestModule.IngestModuleException {
+        // lookup all providers, filter null providers, and sort providers
         List<DomainCategorizer> foundProviders
                 = Lookup.getDefault().lookupAll(DomainCategorizer.class).stream()
                         .filter(provider -> provider != null)
-                        .sorted(PROVIDER_COMPARATOR)
+                        .sorted((a, b) -> a.getClass().getName().compareToIgnoreCase(b.getClass().getName()))
                         .collect(Collectors.toList());
+
+        // add the default categorizer last as a last resort
+        foundProviders.add(new DefaultDomainCategorizer());
 
         for (DomainCategorizer provider : foundProviders) {
             try {

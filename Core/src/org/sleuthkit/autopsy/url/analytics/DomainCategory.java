@@ -24,16 +24,35 @@ import com.google.common.annotations.Beta;
  * The result of finding a match for the host or domain provided as an argument.
  */
 @Beta
-public interface DomainCategory {
+public class DomainCategory {
+
+    private final String hostSuffix;
+    private final String category;
+
+    /**
+     * Default constructor.
+     *
+     * @param hostSuffix The portion of the suffix from the host or domain that
+     * was a match (i.e. 'mail.google.com' or 'hotmail.com').
+     * @param category The category (i.e. 'Web Email').
+     */
+    public DomainCategory(String hostSuffix, String category) {
+        this.hostSuffix = hostSuffix;
+        this.category = category;
+    }
 
     /**
      * @return The portion of the suffix from the host or domain that was a
      * match (i.e. 'mail.google.com' or 'hotmail.com').
      */
-    String getHostSuffix();
+    public String getHostSuffix() {
+        return hostSuffix;
+    }
 
     /**
      * @return The category (i.e. 'Web Email').
      */
-    String getCategory();
+    public String getCategory() {
+        return category;
+    }
 }

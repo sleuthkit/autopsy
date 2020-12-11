@@ -29,22 +29,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import org.apache.commons.lang.StringUtils;
-import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.url.analytics.DefaultDomainCategory;
 import org.sleuthkit.autopsy.url.analytics.DomainCategorizer;
 import org.sleuthkit.autopsy.url.analytics.DomainCategorizerException;
 import org.sleuthkit.autopsy.url.analytics.DomainCategory;
 
 /**
  * The default domain category provider that makes use of the default csv
- * resource.
- * 
+ * resource. This implementation is used if no other DomainCategorizer can
+ * determine a category for a host/domain entry.
+ *
  * CSV entries describing these domain types are compiled from sources. webmail:
  * https://github.com/mailcheck/mailcheck/wiki/List-of-Popular-Domains
  * disposable mail: https://www.npmjs.com/package/disposable-email-domains
  */
-@ServiceProvider(service = DomainCategorizer.class)
 public class DefaultDomainCategorizer implements DomainCategorizer {
 
     private static final String CSV_DELIMITER = ",";
@@ -145,7 +143,7 @@ public class DefaultDomainCategorizer implements DomainCategorizer {
             String searchString = String.join(".", tokens.subList(i, tokens.size()));
             String category = mapping.get(searchString);
             if (StringUtils.isNotBlank(category)) {
-                return new DefaultDomainCategory(searchString, category);
+                return new DomainCategory(searchString, category);
             }
         }
 
