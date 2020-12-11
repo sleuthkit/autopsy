@@ -37,6 +37,7 @@ import java.util.logging.Level;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
+import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
 import javax.swing.SwingUtilities;
 import org.apache.commons.lang.StringUtils;
@@ -153,13 +154,6 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
             }
             updateView(artifact.getArtifactTypeID(), attributeMap, dataSourceName, sourceFileName);
         }
-        detailsScrollPane.setViewportView(detailsPanel);
-        detailsPanel.updateUI();
-        detailsPanel.revalidate();
-        detailsPanel.repaint();
-        detailsScrollPane.updateUI();
-        detailsScrollPane.validate();
-        detailsScrollPane.repaint();
         revalidate();
         repaint();
     }
@@ -184,7 +178,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
     @Override
     public Component getComponent() {
 //         Slap a vertical scrollbar on the panel.
-        return this; //new JScrollPane(this, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        return new JScrollPane(this, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
@@ -216,18 +210,9 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        detailsScrollPane = new javax.swing.JScrollPane();
         detailsPanel = new javax.swing.JPanel();
 
-        setPreferredSize(new java.awt.Dimension(0, 0));
         setLayout(new java.awt.BorderLayout());
-
-        detailsScrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
-        detailsScrollPane.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-        detailsScrollPane.setMinimumSize(new java.awt.Dimension(0, 0));
-        detailsScrollPane.setPreferredSize(new java.awt.Dimension(0, 0));
-
-        detailsPanel.setPreferredSize(new java.awt.Dimension(0, 0));
 
         javax.swing.GroupLayout detailsPanelLayout = new javax.swing.GroupLayout(detailsPanel);
         detailsPanel.setLayout(detailsPanelLayout);
@@ -240,9 +225,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
             .addGap(0, 0, Short.MAX_VALUE)
         );
 
-        detailsScrollPane.setViewportView(detailsPanel);
-
-        add(detailsScrollPane, java.awt.BorderLayout.CENTER);
+        add(detailsPanel, java.awt.BorderLayout.PAGE_START);
     }// </editor-fold>//GEN-END:initComponents
 
     /**
@@ -508,6 +491,5 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel detailsPanel;
-    private javax.swing.JScrollPane detailsScrollPane;
     // End of variables declaration//GEN-END:variables
 }
