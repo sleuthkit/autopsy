@@ -7,8 +7,8 @@ DiscoveryAttributes.GroupingAttributeType.interestingItem.displayName=Interestin
 DiscoveryAttributes.GroupingAttributeType.keywordList.displayName=Keyword
 DiscoveryAttributes.GroupingAttributeType.mostRecentDate.displayName=Most Recent Activity Date
 DiscoveryAttributes.GroupingAttributeType.none.displayName=None
-DiscoveryAttributes.GroupingAttributeType.numberOfVisits.displayName=Number of Visits
 DiscoveryAttributes.GroupingAttributeType.object.displayName=Object Detected
+DiscoveryAttributes.GroupingAttributeType.pageViews.displayName=Page Views
 DiscoveryAttributes.GroupingAttributeType.parent.displayName=Parent Folder
 DiscoveryAttributes.GroupingAttributeType.previouslyNotable.displayName=Previous Notability
 DiscoveryAttributes.GroupingAttributeType.size.displayName=File Size
@@ -25,10 +25,10 @@ DiscoveryKeyUtils.InterestingItemGroupKey.noSets=None
 DiscoveryKeyUtils.KeywordListGroupKey.noKeywords=None
 DiscoveryKeyUtils.MostRecentActivityDateGroupKey.noDate=No Date Available
 DiscoveryKeyUtils.NoGroupingGroupKey.allFiles=All Files
-# {0} - totalVisits
-DiscoveryKeyUtils.NumberOfVisitsGroupKey.displayName={0} visits
-DiscoveryKeyUtils.NumberOfVisitsGroupKey.noVisits=No visits
 DiscoveryKeyUtils.ObjectDetectedGroupKey.noSets=None
+# {0} - totalVisits
+DiscoveryKeyUtils.PageViewsGroupKey.displayName={0} page views
+DiscoveryKeyUtils.PageViewsGroupKey.noVisits=No page views
 # {0} - domain
 # {1} - artifactType
 DomainSearchArtifactsRequest.toString.text=Domain: {0} ArtifactType: {1}
@@ -53,6 +53,7 @@ FileSorter.SortingMethod.filetype.displayName=File Type
 FileSorter.SortingMethod.frequency.displayName=Central Repo Frequency
 FileSorter.SortingMethod.fullPath.displayName=Full Path
 FileSorter.SortingMethod.keywordlist.displayName=Keyword List Names
+FileSorter.SortingMethod.pageViews.displayName=Page Views
 ResultFile.score.interestingResult.description=At least one instance of the file has an interesting result associated with it.
 ResultFile.score.notableFile.description=At least one instance of the file was recognized as notable.
 ResultFile.score.notableTaggedFile.description=At least one instance of the file is tagged with a notable tag.
