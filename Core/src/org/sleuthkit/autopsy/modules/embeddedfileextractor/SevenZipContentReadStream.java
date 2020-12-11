@@ -48,22 +48,13 @@ class SevenZipContentReadStream implements IInStream {
         long newPosition = curPosition;
         switch (origin) {
             case SEEK_CUR:
-                if (curPosition + offset < 0) {
-                    throw new SevenZipException("Attempted seek to negative offset " + offset);
-                }
                 newPosition = wrapped.seek(curPosition + offset);
                 break;
             case SEEK_END:
-                if (length + offset < 0) {
-                    throw new SevenZipException("Attempted seek to negative offset " + offset);
-                }
                 //(offset <= 0) offset is set from EOF
                 newPosition = wrapped.seek(length + offset);
                 break;
             case SEEK_SET:
-                if (offset < 0) {
-                    throw new SevenZipException("Attempted seek to negative offset " + offset);
-                }
                 newPosition = wrapped.seek(offset);
                 break;
             default:
