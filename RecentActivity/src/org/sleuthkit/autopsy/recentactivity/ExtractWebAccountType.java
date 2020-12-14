@@ -32,6 +32,7 @@ import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -103,12 +104,19 @@ class ExtractWebAccountType extends Extract {
         String url = urlAttr.getValueString().toLowerCase();
         String domain = domainAttr.getValueString().toLowerCase();
 
-        findMyBbRole(url, domain, artifact, roleProcessor);
-        findPhpBbRole(url, domain, artifact, roleProcessor);
-        findJoomlaRole(url, domain, artifact, roleProcessor);
-        findWordPressRole(url, domain, artifact, roleProcessor);
+        boolean roleFound = false;
+        roleFound = findMyBbRole(url, domain, artifact, roleProcessor) || roleFound;
+        roleFound = findPhpBbRole(url, domain, artifact, roleProcessor) || roleFound;
+        roleFound = findJoomlaRole(url, domain, artifact, roleProcessor) || roleFound;
+        roleFound = findWordPressRole(url, domain, artifact, roleProcessor) || roleFound;
+        
+        // if no other role for this url was found and it is a TSK_SERVICE_ACCOUNT, add a general user role.
+        if (!roleFound && artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_SERVICE_ACCOUNT.getTypeID()) {
+            roleProcessor.addRole(domain, domain, Role.USER, url, artifact);
+        }
     }
-
+    
+    
     /**
      * Extract myBB role.
      *
@@ -116,16 +124,22 @@ class ExtractWebAccountType extends Extract {
      * @param domain The domain.
      * @param artifact The original artifact.
      * @param roleProcessor Object to collect and process domain roles.
+     * @return True if a myBB role is found.
      */
-    private void findMyBbRole(String url, String domain, BlackboardArtifact artifact, RoleProcessor roleProcessor) {
+    private boolean findMyBbRole(String url, String domain, BlackboardArtifact artifact, RoleProcessor roleProcessor) {
         String platformName = "myBB platform"; // NON-NLS
 
         if (url.contains("/admin/index.php")) {
             roleProcessor.addRole(domain, platformName, Role.ADMIN, url, artifact);
+            return true;
         } else if (url.contains("/modcp.php")) {
             roleProcessor.addRole(domain, platformName, Role.MOD, url, artifact);
+            return true;
         } else if (url.contains("/usercp.php")) {
             roleProcessor.addRole(domain, platformName, Role.USER, url, artifact);
+            return true;
+        } else {
+            return false;
         }
     }
 
@@ -136,16 +150,22 @@ class ExtractWebAccountType extends Extract {
      * @param domain The domain.
      * @param artifact The original artifact.
      * @param roleProcessor Object to collect and process domain roles.
+     * @return True if a phpBB role is found.
      */
-    private void findPhpBbRole(String url, String domain, BlackboardArtifact artifact, RoleProcessor roleProcessor) {
+    private boolean findPhpBbRole(String url, String domain, BlackboardArtifact artifact, RoleProcessor roleProcessor) {
         String platformName = "phpBB platform"; // NON-NLS
 
         if (url.contains("/adm/index.php")) {
             roleProcessor.addRole(domain, platformName, Role.ADMIN, url, artifact);
+            return true;
         } else if (url.contains("/mcp.php")) {
             roleProcessor.addRole(domain, platformName, Role.MOD, url, artifact);
+            return true;
         } else if (url.contains("/ucp.php")) {
             roleProcessor.addRole(domain, platformName, Role.USER, url, artifact);
+            return true;
+        } else {
+            return false;
         }
     }
 
@@ -156,12 +176,16 @@ class ExtractWebAccountType extends Extract {
      * @param domain The domain.
      * @param artifact The original artifact.
      * @param roleProcessor Object to collect and process domain roles.
+     * @return True if a Joomla role is found.
      */
-    private void findJoomlaRole(String url, String domain, BlackboardArtifact artifact, RoleProcessor roleProcessor) {
+    private boolean findJoomlaRole(String url, String domain, BlackboardArtifact artifact, RoleProcessor roleProcessor) {
         String platformName = "Joomla platform"; // NON-NLS
 
         if (url.contains("/administrator/index.php")) { // NON-NLS
             roleProcessor.addRole(domain, platformName, Role.ADMIN, url, artifact);
+            return true;
+        } else {
+            return false;
         }
     }
 
@@ -172,8 +196,9 @@ class ExtractWebAccountType extends Extract {
      * @param domain The domain.
      * @param artifact The original artifact.
      * @param roleProcessor Object to collect and process domain roles.
+     * @return True if a WordPress role is found.
      */
-    private void findWordPressRole(String url, String domain, BlackboardArtifact artifact, RoleProcessor roleProcessor) {
+    private boolean findWordPressRole(String url, String domain, BlackboardArtifact artifact, RoleProcessor roleProcessor) {
         String platformName = "WordPress platform"; // NON-NLS
 
         // For WordPress, any logged in user can get to /wp-admin/, /wp-admin/index.php and /wp-admin/profile.php, so
@@ -184,9 +209,13 @@ class ExtractWebAccountType extends Extract {
                     || url.contains("/wp-admin/index.php")
                     || url.contains("/wp-admin/profile.php")) {
                 roleProcessor.addRole(domain, platformName, Role.USER, url, artifact);
+                return true;
             } else {
                 roleProcessor.addRole(domain, platformName, Role.ADMIN, url, artifact);
+                return true;
             }
+        } else {
+            return false;
         }
     }
 
