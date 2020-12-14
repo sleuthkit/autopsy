@@ -21,7 +21,7 @@
     </target>
     
     <target name="get-thirdparty-dependencies">
-        <copy file="${thirdparty.dir}/JTidy/jtidy-r938.jar" todir="${ext.dir}" />
+        
     </target>
 
     <target name="retrieve-all" depends="resolve, get-thirdparty-dependencies">
