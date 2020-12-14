@@ -18,10 +18,11 @@
  */
 package org.sleuthkit.autopsy.discovery.ui;
 
+import java.awt.Point;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
-import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import org.apache.commons.io.FilenameUtils;
@@ -30,19 +31,21 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
+import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.TimeUtilities;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Panel to display list of artifacts for selected domain.
  *
  */
-class ArtifactsListPanel extends JPanel {
+final class ArtifactsListPanel extends AbstractArtifactListPanel {
 
     private static final long serialVersionUID = 1L;
-    private final DomainArtifactTableModel tableModel;
     private static final Logger logger = Logger.getLogger(ArtifactsListPanel.class.getName());
+    private final DomainArtifactTableModel tableModel;
 
     /**
      * Creates new form ArtifactsListPanel.
@@ -53,68 +56,62 @@ class ArtifactsListPanel extends JPanel {
     ArtifactsListPanel(BlackboardArtifact.ARTIFACT_TYPE artifactType) {
         tableModel = new DomainArtifactTableModel(artifactType);
         initComponents();
-        jTable1.getRowSorter().toggleSortOrder(0);
-        jTable1.getRowSorter().toggleSortOrder(0);
+        artifactsTable.getRowSorter().toggleSortOrder(0);
+        artifactsTable.getRowSorter().toggleSortOrder(0);
     }
 
-    /**
-     * Add a listener to the table of artifacts to perform actions when an
-     * artifact is selected.
-     *
-     * @param listener The listener to add to the table of artifacts.
-     */
-    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    @Override
+    void addMouseListener(java.awt.event.MouseAdapter mouseListener) {
+        artifactsTable.addMouseListener(mouseListener);
+    }
+
+    @Override
+    void showPopupMenu(JPopupMenu popupMenu, Point point) {
+        popupMenu.show(artifactsTable, point.x, point.y);
+    }
+
+    @Override
     void addSelectionListener(ListSelectionListener listener) {
-        jTable1.getSelectionModel().addListSelectionListener(listener);
+        artifactsTable.getSelectionModel().addListSelectionListener(listener);
     }
 
-    /**
-     * Remove a listener from the table of artifacts.
-     *
-     * @param listener The listener to remove from the table of artifacts.
-     */
-    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    void removeListSelectionListener(ListSelectionListener listener) {
-        jTable1.getSelectionModel().removeListSelectionListener(listener);
+    @Override
+    void removeSelectionListener(ListSelectionListener listener) {
+        artifactsTable.getSelectionModel().removeListSelectionListener(listener);
     }
 
-    /**
-     * The artifact which is currently selected, null if no artifact is
-     * selected.
-     *
-     * @return The currently selected BlackboardArtifact or null if none is
-     *         selected.
-     */
-    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    @Override
+    boolean selectAtPoint(Point point) {
+        boolean pointSelected = false;
+        int row = artifactsTable.rowAtPoint(point);
+        if (row < artifactsTable.getRowCount() && row >= 0) {
+            artifactsTable.clearSelection();
+            artifactsTable.addRowSelectionInterval(row, row);
+            pointSelected = true;
+        }
+        return pointSelected;
+    }
+
+    @Override
     BlackboardArtifact getSelectedArtifact() {
-        int selectedIndex = jTable1.getSelectionModel().getLeadSelectionIndex();
-        if (selectedIndex < jTable1.getSelectionModel().getMinSelectionIndex() || jTable1.getSelectionModel().getMaxSelectionIndex() < 0 || selectedIndex > jTable1.getSelectionModel().getMaxSelectionIndex()) {
+        int selectedIndex = artifactsTable.getSelectionModel().getLeadSelectionIndex();
+        if (selectedIndex < artifactsTable.getSelectionModel().getMinSelectionIndex() || artifactsTable.getSelectionModel().getMaxSelectionIndex() < 0 || selectedIndex > artifactsTable.getSelectionModel().getMaxSelectionIndex()) {
             return null;
         }
-        return tableModel.getArtifactByRow(jTable1.convertRowIndexToModel(selectedIndex));
+        return tableModel.getArtifactByRow(artifactsTable.convertRowIndexToModel(selectedIndex));
     }
 
-    /**
-     * Whether the list of artifacts is empty.
-     *
-     * @return true if the list of artifacts is empty, false if there are
-     *         artifacts.
-     */
-    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    @Override
     boolean isEmpty() {
         return tableModel.getRowCount() <= 0;
     }
 
-    /**
-     * Select the first available artifact in the list if it is not empty to
-     * populate the panel to the right.
-     */
-    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    @Override
     void selectFirst() {
         if (!isEmpty()) {
-            jTable1.setRowSelectionInterval(0, 0);
+            artifactsTable.setRowSelectionInterval(0, 0);
         } else {
-            jTable1.clearSelection();
+            artifactsTable.clearSelection();
         }
     }
 
@@ -125,10 +122,11 @@ class ArtifactsListPanel extends JPanel {
      * @param artifactList The list of artifacts to display.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    @Override
     void addArtifacts(List<BlackboardArtifact> artifactList) {
         tableModel.setContents(artifactList);
-        jTable1.validate();
-        jTable1.repaint();
+        artifactsTable.validate();
+        artifactsTable.repaint();
         tableModel.fireTableDataChanged();
     }
 
@@ -136,7 +134,8 @@ class ArtifactsListPanel extends JPanel {
      * Remove all artifacts from the list of artifacts displayed.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    void clearArtifacts() {
+    @Override
+    void clearList() {
         tableModel.setContents(new ArrayList<>());
         tableModel.fireTableDataChanged();
     }
@@ -150,19 +149,18 @@ class ArtifactsListPanel extends JPanel {
     private void initComponents() {
 
         javax.swing.JScrollPane jScrollPane1 = new javax.swing.JScrollPane();
-        jTable1 = new javax.swing.JTable();
+        artifactsTable = new javax.swing.JTable();
 
         setOpaque(false);
         setPreferredSize(new java.awt.Dimension(300, 0));
 
         jScrollPane1.setBorder(null);
         jScrollPane1.setMinimumSize(new java.awt.Dimension(0, 0));
-        jScrollPane1.setPreferredSize(new java.awt.Dimension(0, 0));
 
-        jTable1.setAutoCreateRowSorter(true);
-        jTable1.setModel(tableModel);
-        jTable1.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
-        jScrollPane1.setViewportView(jTable1);
+        artifactsTable.setAutoCreateRowSorter(true);
+        artifactsTable.setModel(tableModel);
+        artifactsTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        jScrollPane1.setViewportView(artifactsTable);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -172,7 +170,7 @@ class ArtifactsListPanel extends JPanel {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 607, Short.MAX_VALUE)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 0, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -204,7 +202,7 @@ class ArtifactsListPanel extends JPanel {
          */
         @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
         void setContents(List<BlackboardArtifact> artifacts) {
-            jTable1.clearSelection();
+            artifactsTable.clearSelection();
             artifactList.clear();
             artifactList.addAll(artifacts);
         }
@@ -242,10 +240,11 @@ class ArtifactsListPanel extends JPanel {
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
             if (columnIndex < 2 || artifactType == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE) {
+                final BlackboardArtifact artifact = getArtifactByRow(rowIndex);
                 try {
-                    for (BlackboardAttribute bba : getArtifactByRow(rowIndex).getAttributes()) {
+                    for (BlackboardAttribute bba : artifact.getAttributes()) {
                         if (!StringUtils.isBlank(bba.getDisplayString())) {
-                            String stringFromAttribute = getStringForColumn(bba, columnIndex);
+                            String stringFromAttribute = getStringForColumn(artifact, bba, columnIndex);
                             if (!StringUtils.isBlank(stringFromAttribute)) {
                                 return stringFromAttribute;
                             }
@@ -253,7 +252,7 @@ class ArtifactsListPanel extends JPanel {
                     }
                     return getFallbackValue(rowIndex, columnIndex);
                 } catch (TskCoreException ex) {
-                    logger.log(Level.WARNING, "Error getting attributes for artifact " + getArtifactByRow(rowIndex).getArtifactID(), ex);
+                    logger.log(Level.WARNING, "Error getting attributes for artifact " + artifact.getArtifactID(), ex);
                 }
             }
             return Bundle.ArtifactsListPanel_value_noValue();
@@ -274,9 +273,9 @@ class ArtifactsListPanel extends JPanel {
          *                          the TSK_PATH_ID.
          */
         @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-        private String getStringForColumn(BlackboardAttribute bba, int columnIndex) throws TskCoreException {
+        private String getStringForColumn(BlackboardArtifact artifact, BlackboardAttribute bba, int columnIndex) throws TskCoreException {
             if (columnIndex == 0 && bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()) {
-                return bba.getDisplayString();
+                return TimeUtilities.epochToTime(bba.getValueLong(), ContentUtils.getTimeZone(artifact));
             } else if (columnIndex == 1) {
                 if (artifactType == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD || artifactType == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE) {
                     if (bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID()) {
@@ -309,9 +308,10 @@ class ArtifactsListPanel extends JPanel {
          */
         @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
         private String getFallbackValue(int rowIndex, int columnIndex) throws TskCoreException {
-            for (BlackboardAttribute bba : getArtifactByRow(rowIndex).getAttributes()) {
+            final BlackboardArtifact artifact = getArtifactByRow(rowIndex);
+            for (BlackboardAttribute bba : artifact.getAttributes()) {
                 if (columnIndex == 0 && bba.getAttributeType().getTypeName().startsWith("TSK_DATETIME") && !StringUtils.isBlank(bba.getDisplayString())) {
-                    return bba.getDisplayString();
+                    return TimeUtilities.epochToTime(bba.getValueLong(), ContentUtils.getTimeZone(artifact));
                 } else if (columnIndex == 1 && bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID() && !StringUtils.isBlank(bba.getDisplayString())) {
                     return bba.getDisplayString();
                 } else if (columnIndex == 1 && bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID() && !StringUtils.isBlank(bba.getDisplayString())) {
@@ -347,6 +347,6 @@ class ArtifactsListPanel extends JPanel {
         }
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JTable jTable1;
+    private javax.swing.JTable artifactsTable;
     // End of variables declaration//GEN-END:variables
 }

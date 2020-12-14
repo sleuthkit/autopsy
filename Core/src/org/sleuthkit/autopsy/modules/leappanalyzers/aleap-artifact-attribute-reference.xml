@@ -1,0 +1,307 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+    <!---
+    This file contains the parameters for how to map aLeapp plugin output to attributes inside Autopsy for the aleapp Analyser module.
+
+    Each FileName node corresponds to a tab seperated values (tsv) file that is produced from iLeapp.
+
+    A FileName will have an associated TSK artifact assigned to it.
+
+    Each TSK artifact may have multiple attributes that correspond to the columns of the output from the iLeapp program tsv file.
+
+
+    FileName:
+        filename:           The aLeapp TSV file that you want to process. 
+        description:        A description of the tsv file name, this is defined in the iLeapp plugin for each tsv file.
+        
+    ArtifactName:
+        artifactname:       The artifact that is to be created for the data in the tsv file.
+        comment:            This will be the data that will be added to the TSK_COMMENT attribute for each artifact.  If the artifact 
+                            does not need/require a comment then make the value null, a null comment will be ignored.
+                            
+    AttributeName:
+        attributeName:      The TSK attribute that the data corresponds to in the TSV file.  If the data has no corresponding TSK attribute then
+                            make the value null, this will make sure the data in this column is ignored.
+        columnName:         This is the column name that is defined in the tsv file and what the attributeName corresponds to.
+        required:           whether the attribute is required or not (yes or no)
+
+
+    -->
+    <aLeap_Files_To_Process>
+
+        <FileName filename="accounts ce 0.tsv" description="Accounts_ce">
+            <ArtifactName artifactname="TSK_SERVICE_ACCOUNT" comment="accounts ce 0">
+                <AttributeName attributename="TSK_USER_ID" columnName="Name" required="yes" />
+                <AttributeName attributename="TSK_PROG_NAME" columnName=" Type" required="yes" />
+                <AttributeName attributename="TSK_PASSWORD" columnName=" Password" required="yes" />
+            </ArtifactName>
+        </FileName>
+
+        <FileName filename="authtokens 0.tsv" description="Authtokens">
+            <ArtifactName artifactname="TSK_SERVICE_ACCOUNT" comment="Authtokens">
+                <AttributeName attributename="null" columnName="ID" required="no" />
+                <AttributeName attributename="TSK_USER_ID" columnName=" Name" required="yes" />
+                <AttributeName attributename="TSK_PROG_NAME" columnName=" Account Type" required="yes" />
+                <AttributeName attributename="null" columnName="Authtoken Type" required="no" />
+                <AttributeName attributename="TSK_PASSWORD" columnName=" Authtoken" required="yes" />
+            </ArtifactName>
+        </FileName>
+
+        <FileName filename="accounts de 0.tsv" description="Accounts_de">
+            <ArtifactName artifactname="TSK_SERVICE_ACCOUNT" comment="accounts de 0">
+                <AttributeName attributename="TSK_DATETIME_ACCESSED" columnName="Last password entry" required="no" />
+                <AttributeName attributename="TSK_USER_ID" columnName="Name" required="yes" />
+                <AttributeName attributename="TSK_PROG_NAME" columnName="Type" required="yes" />
+            </ArtifactName>
+        </FileName>
+
+        <FileName filename="Browser Bookmarks.tsv" description="Browser Bookmarks">
+            <ArtifactName artifactname="TSK_WEB_BOOKMARK" comment="Browser Bookmarks">
+                <AttributeName attributename="TSK_DATETIME_CREATED " columnName="Added Date" required="yes" />
+                <AttributeName attributename="TSK_URL" columnName=" URL" required="yes" />
+                <AttributeName attributename="TSK_TITLE" columnName=" Name" required="yes" />
+                <AttributeName attributename="null" columnName=" Parent" required="no" />
+                <AttributeName attributename="null" columnName=" Type" required="no" />
+            </ArtifactName>
+        </FileName>
+
+        <FileName filename="Browser cookies.tsv" description="Browser Cookies">
+            <ArtifactName artifactname="TSK_WEB_COOKIE" comment="Browser Cookies">
+                <AttributeName attributename="TSK_DATETIME_ACCESS" columnName="Last Access Date" required="yes" />
+                <AttributeName attributename="TSK_DOMAIN" columnName="Host" required="yes" />
+                <AttributeName attributename="TSK_NAME" columnName="Name" required="yes" />
+                <AttributeName attributename="TSK_VALUE" columnName="Value" required="yes" />
+                <AttributeName attributename="TSK_DATETIME_CREATED" columnName="Created Date" required="yes" />
+                <AttributeName attributename="TSK_DATETIME_END" columnName="Expiration Date" required="yes" />
+                <AttributeName attributename="TSK_PATH" columnName="Path" required="yes" />
+            </ArtifactName>
+        </FileName>
+
+        <FileName filename="Browser History.tsv" description="Browser History">
+            <ArtifactName artifactname="TSK_WEB_HISTORY" comment="Browser History">
+                <AttributeName attributename="TSK_DATETIME_ACCESSED" columnName="Last Visit Time" required="yes"/>
+                <AttributeName attributename="TSK_URL" columnName="URL" required="yes"/>
+                <AttributeName attributename="TSK_TITLE" columnName="Title" required="yes"/>
+                <AttributeName attributename="null" columnName="Visit Count" required="no"/>
+                <AttributeName attributename="null" columnName="Hidden" required="no"/>
+            </ArtifactName>
+        </FileName>
+
+        <FileName filename="Browser keyword search terms.tsv" description="Browser keyword Search Terms">
+            <ArtifactName artifactname="TSK_WEB_SEARCH_QUERY" comment="Browser Keyword Search Terms">
+                <AttributeName attributename="TSK_DATETIME_ACCESSED" columnName="Last Visit Time" required="yes"/>
+                <AttributeName attributename="TSK_TEXT" columnName="Term" required="yes"/>
+                <AttributeName attributename="TSK_URL" columnName="URL" required="yes"/>
+            </ArtifactName>
+        </FileName>
+
+        <FileName filename="Browser login data.tsv" description="Browser Login Data">
+            <ArtifactName artifactname="TSK_SERVICE_ACCOUNT" comment="Browser Login">
+                <AttributeName attributename="TSK_DATETIME_CREATED" columnName="Created Time" required="yes" />
+                <AttributeName attributename="TSK_USER_NAME" columnName="Username" required="yes" />
+                <AttributeName attributename="TSK_PASSWORD" columnName="Password" required="yes" />
+                <AttributeName attributename="TSK_URL" columnName="Origin URL" required="no" />
+                <AttributeName attributename="null" columnName="Blacklisted by User" required="no" />
+            </ArtifactName>
+        </FileName>
+
+        <FileName filename="Browser offline pages.tsv" description="Browser Offline Pages">
+            <ArtifactName artifactname="TSK_WEB_HISTORY" comment="Browser Offline Pages">
+                <AttributeName attributename="TSK_DATETIME_CREATED" columnName="Creation Time" required="yes" />
+                <AttributeName attributename="TSK_DATETIME_ACCESSED" columnName="Last Access Time" required="yes" />
+                <AttributeName attributename="TSK_URL" columnName=" Online URL" required="yes" />
+                <AttributeName attributename="null" columnName=" File Path" required="no" />
+                <AttributeName attributename="TSK_TITLE" columnName=" Title" required="no" />
+                <AttributeName attributename="null" columnName=" Access Count" required="no" />
+                <AttributeName attributename="null" columnName=" File Size" required="no" />
+            </ArtifactName>
+        </FileName>
+
+        <FileName filename="Browser search terms.tsv" description="Browser Search Terms">
+            <ArtifactName artifactname="TSK_WEB_SEARCH_QUERY" comment="Browser Search Terms">
+                <AttributeName attributename="TSK_DATETIME_ACCESSED" columnName="Last Visit Time" required="yes"/>
+                <AttributeName attributename="TSK_TEXT" columnName="Search Term" required="yes"/>
+                <AttributeName attributename="TSK_URL" columnName="URL" required="yes"/>
+                <AttributeName attributename="null" columnName="Title" required="no"/>
+                <AttributeName attributename="null" columnName="Visit Count" required="no"/>
+            </ArtifactName>
+        </FileName>
+
+    <FileName filename="Browser top sites.tsv" description="Browser Top Sites">
+        <ArtifactName artifactname="TSK_WEB_HISTORY" comment="Browser Top Sites">
+            <AttributeName attributename="TSK_URL" columnName="URL" required="yes" />
+            <AttributeName attributename="null" columnName="Rank" required="no" />
+            <AttributeName attributename="TSK_TITLE" columnName="Title" required="no" />
+            <AttributeName attributename="null" columnName="Redirects" required="no" />
+        </ArtifactName>
+    </FileName>
+
+        <FileName filename="Call Logs.tsv" description="Call logs">
+        <ArtifactName artifactname="TSK_CALLLOG" comment="null">
+            <AttributeName attributename="TSK_DATETIME_START" columnName="Call Date" required="yes"/>
+            <AttributeName attributename="TSK_PHONE_NUMBER_FROM" columnName="Phone Account Address" required="yes"/>
+            <AttributeName attributename="TSK_PHONE_NUMBER_TO" columnName="Partner" required="yes"/>
+            <AttributeName attributename="TSK_DIRECTION" columnName="Type" required="yes"/>
+            <AttributeName attributename="null" columnName="Duration in Secs" required="no"/>
+            <AttributeName attributename="null" columnName="Partner Location" required="no"/>
+            <AttributeName attributename="null" columnName="Country ISO" required="no"/>
+            <AttributeName attributename="null" columnName="Data" required="no"/>
+            <AttributeName attributename="null" columnName="Mime Type" required="no"/>
+            <AttributeName attributename="null" columnName="Transcription" required="no"/>
+            <AttributeName attributename="null" columnName="Deleted" required="no"/>
+        </ArtifactName>
+    </FileName>
+
+    <FileName filename="Chrome Bookmarks.tsv" description="Chrome Bookmarks">
+        <ArtifactName artifactname="TSK_WEB_BOOKMARK" comment="Chrome Bookmarks">
+            <AttributeName attributename="TSK_DATETIME_CREATED " columnName="Added Date" required="yes" />
+            <AttributeName attributename="TSK_URL" columnName=" URL" required="yes" />
+            <AttributeName attributename="TSK_TITLE" columnName=" Name" required="yes" />
+            <AttributeName attributename="null" columnName=" Parent" required="no" />
+            <AttributeName attributename="null" columnName=" Type" required="no" />
+        </ArtifactName>
+    </FileName>
+
+    <FileName filename="Chrome cookies.tsv" description="Chrome Cookies">
+        <ArtifactName artifactname="TSK_WEB_COOKIE" comment="Chrome Cookies">
+            <AttributeName attributename="TSK_DATETIME_ACCESS" columnName="Last Access Date" required="yes" />
+            <AttributeName attributename="TSK_DOMAIN" columnName="Host" required="yes" />
+            <AttributeName attributename="TSK_NAME" columnName="Name" required="yes" />
+            <AttributeName attributename="TSK_VALUE" columnName="Value" required="yes" />
+            <AttributeName attributename="TSK_DATETIME_CREATED" columnName="Created Date" required="yes" />
+            <AttributeName attributename="TSK_DATETIME_END" columnName="Expiration Date" required="yes" />
+            <AttributeName attributename="TSK_PATH" columnName="Path" required="yes" />
+        </ArtifactName>
+    </FileName>
+
+    <FileName filename="Chrome History.tsv" description="Chrome History">
+        <ArtifactName artifactname="TSK_WEB_HISTORY" comment="Chrome History">
+            <AttributeName attributename="TSK_DATETIME_ACCESSED" columnName="Last Visit Time" required="yes"/>
+            <AttributeName attributename="TSK_URL" columnName="URL" required="yes"/>
+            <AttributeName attributename="TSK_TITLE" columnName="Title" required="yes"/>
+            <AttributeName attributename="null" columnName="Visit Count" required="no"/>
+            <AttributeName attributename="null" columnName="Hidden" required="no"/>
+        </ArtifactName>
+    </FileName>
+
+    <FileName filename="Chrome login data.tsv" description="Chrome Login Data">
+        <ArtifactName artifactname="TSK_SERVICE_ACCOUNT" comment="Chrome Login">
+            <AttributeName attributename="TSK_DATETIME_CREATED" columnName="Created Time" required="yes" />
+            <AttributeName attributename="TSK_USER_NAME" columnName="Username" required="yes" />
+            <AttributeName attributename="TSK_PASSWORD" columnName="Password" required="yes" />
+            <AttributeName attributename="TSK_URL" columnName="Origin URL" required="no" />
+            <AttributeName attributename="null" columnName="Blacklisted by User" required="no" />
+        </ArtifactName>
+    </FileName>
+
+    <FileName filename="Chrome offline pages.tsv" description="Chrome Offline Pages">
+        <ArtifactName artifactname="TSK_WEB_HISTORY" comment="Chrome Offline Pages">
+            <AttributeName attributename="TSK_DATETIME_CREATED" columnName="Creation Time" required="yes" />
+            <AttributeName attributename="TSK_DATETIME_ACCESSED" columnName="Last Access Time" required="yes" />
+            <AttributeName attributename="TSK_URL" columnName=" Online URL" required="yes" />
+            <AttributeName attributename="null" columnName=" File Path" required="no" />
+            <AttributeName attributename="TSK_TITLE" columnName=" Title" required="no" />
+            <AttributeName attributename="null" columnName=" Access Count" required="no" />
+            <AttributeName attributename="null" columnName=" File Size" required="no" />
+        </ArtifactName>
+    </FileName>
+
+    <FileName filename="Chrome search terms.tsv" description="Chrome Search Terms">
+        <ArtifactName artifactname="TSK_WEB_SEARCH_QUERY" comment="Chrome Search Terms">
+            <AttributeName attributename="TSK_DATETIME_ACCESSED" columnName="Last Visit Time" required="yes"/>
+            <AttributeName attributename="TSK_TEXT" columnName="Search Term" required="yes"/>
+            <AttributeName attributename="TSK_URL" columnName="URL" required="yes"/>
+            <AttributeName attributename="null" columnName="Title" required="no"/>
+            <AttributeName attributename="null" columnName="Visit Count" required="no"/>
+        </ArtifactName>
+    </FileName>
+
+    <FileName filename="Chrome top sites.tsv" description="Chrome Top Sites">
+        <ArtifactName artifactname="TSK_WEB_HISTORY" comment="Chrome Top Sites">
+            <AttributeName attributename="TSK_URL" columnName="URL" required="yes" />
+            <AttributeName attributename="null" columnName="Rank" required="no" />
+            <AttributeName attributename="TSK_TITLE" columnName="Title" required="no" />
+            <AttributeName attributename="null" columnName="Redirects" required="no" />
+        </ArtifactName>
+    </FileName>
+
+    <FileName filename="google play searches.tsv" description="Google Play Searches">
+        <ArtifactName artifactname="TSK_WEB_SEARCH" comment="Google Play Search">
+            <AttributeName attributename="TSK_DATETIME_ACCESSED" columnName="Timestamp" required="yes" />
+            <AttributeName attributename="TSK_PROG_NAME" columnName="Display" required="yes" />
+            <AttributeName attributename="TSK_TEXT" columnName="query" required="yes" />
+        </ArtifactName>
+    </FileName>
+
+    <FileName filename="google quick search box.tsv" description="Google quick search box">
+        <ArtifactName artifactname="TSK_WEB_SEARCH" comment="Google Quick Search Search">
+            <AttributeName attributename="TSK_DATETIME" columnName="File Timestamp" required="yes" />
+            <AttributeName attributename="null" columnName="Type" required="no" />
+            <AttributeName attributename="TSK_TEXT" columnName="Queries	Response" required="yes" />
+            <AttributeName attributename="null" columnName="Source File" required="no" />
+        </ArtifactName>
+    </FileName>
+
+    <FileName filename="installed apps library.tsv" description="Installed Apps (Library)">
+        <ArtifactName artifactname="TSK_INSTALLED_PROG" comment="Installed Apps (Library)">
+            <AttributeName attributename="TSK_DATETIME" columnName="Purchase Time" required="yes"/>
+            <AttributeName attributename="TSK_USER_NAME" columnName="Account" required="yes"/>
+            <AttributeName attributename="TSK_PROG_NAME" columnName="Doc ID" required="yes"/>
+        </ArtifactName>
+    </FileName>
+
+    <FileName filename="installed apps - GMS.tsv" description="Installed Apps">
+        <ArtifactName artifactname="TSK_INSTALLED_PROG" comment="Installed Apps GSM">
+            <AttributeName attributename="TSK_PROG_NAME" columnName="Bundle ID" required="yes" />
+        </ArtifactName>
+    </FileName>
+    
+    <FileName filename="installed apps vending.tsv" description="Installed Apps (Vending)">
+        <ArtifactName artifactname="TSK_INSTALLED_PROG" comment="Installed Apps (VEnding)">
+            <AttributeName attributename="TSK_DATETIME" columnName="First Download" required="yes" />
+            <AttributeName attributename="TSK_PROG_NAME" columnName="Package Name" required="yes" />
+            <AttributeName attributename="TSK_TITLE" columnName=" Title" required="yes" />
+            <AttributeName attributename="null" columnName="Install Reason" required="no" />
+            <AttributeName attributename="null" columnName=" Auto Update?" required="no" />
+        </ArtifactName>
+    </FileName>
+
+    <FileName filename="mms messages.tsv" description="MMS messages">
+        <ArtifactName artifactname="TSK_MESSAGE" comment="MMS messages">
+            <AttributeName attributename="TSK_DATETIME" columnName="Date" required="yes"/>
+            <AttributeName attributename="null" columnName="MSG ID" required="no"/>
+            <AttributeName attributename="TSK_THREAD_ID" columnName="Thread ID" required="yes"/>
+            <AttributeName attributename="TSK_DATETIME_SENT" columnName="Date sent" required="yes"/>
+            <AttributeName attributename="TSK_READ_STATUS" columnName="Read" required="yes"/>
+            <AttributeName attributename="TSK_PHONE_NUMBER_FROM" columnName="From" required="yes"/>
+            <AttributeName attributename="TSK_PHONE_NUMBER_TO" columnName="To" required="yes"/>
+            <AttributeName attributename="null" columnName="Cc" required="no"/>
+            <AttributeName attributename="null" columnName="Bcc" required="no"/>
+            <AttributeName attributename="TSK_TEXT" columnName="Body" required="yes"/>            
+        </ArtifactName>
+    </FileName>
+
+<!--    <FileName filename="partner settings.tsv" description="Partner Settings">
+        <ArtifactName artifactname="TSK_" comment="null">
+            <AttributeName attributename="null" columnName="Name" required="no" />
+            <AttributeName attributename="null" columnName="Value ) # Dont remove the comma" required="no" />
+            <AttributeName attributename="null" columnName=" that is required to make this a tuple as there is only 1 eleme" required="no" />
+        </ArtifactName>
+    </FileName>
+-->
+
+    <FileName filename="sms messages.tsv" description="SMS messages">
+        <ArtifactName artifactname="TSK_MESSAGE" comment="SMS messages">
+            <AttributeName attributename="TSK_DATETIME" columnName="Date" required="yes"/>
+            <AttributeName attributename="null" columnName="MSG ID" required="no"/>
+            <AttributeName attributename="TSK_THREAD_ID" columnName="Thread ID" required="yes"/>
+            <AttributeName attributename="null" columnName="Address" required="yes" />
+            <AttributeName attributename="TSK_PHONE_NUMBER_FROM" columnName="Contact ID" required="yes"/>
+            <AttributeName attributename="TSK_DATETIME_SENT" columnName="Date sent" required="yes"/>
+            <AttributeName attributename="TSK_READ_STATUS" columnName="Read" required="yes"/>
+            <AttributeName attributename="TSK_TEXT" columnName="Body" required="yes"/>            
+            <AttributeName attributename="null" columnName="Service Center" required="yes"/>
+            <AttributeName attributename="null" columnName="Error Code" required="no"/>
+        </ArtifactName>
+    </FileName>
+
+    </aLeap_Files_To_Process>
