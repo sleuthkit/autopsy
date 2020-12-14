@@ -156,12 +156,12 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
                 + "           SUM(CASE "
                 + "                 WHEN artifact_type_id = " + TSK_WEB_HISTORY.getTypeID() + " THEN 1 "
                 + "                 ELSE 0 "
-                + "               END) AS totalVisits,"
+                + "               END) AS totalPageViews,"
                 + "           SUM(CASE "
                 + "                 WHEN artifact_type_id = " + TSK_WEB_HISTORY.getTypeID() + " AND"
                 + "                      date BETWEEN " + sixtyDaysAgo.getEpochSecond() + " AND " + currentTime.getEpochSecond() + " THEN 1 "
                 + "                 ELSE 0 "
-                + "               END) AS last60,"
+                + "               END) AS pageViewsInLast60,"
                 + "           SUM(CASE "
                 + "                 WHEN artifact_type_id = " + TSK_WEB_ACCOUNT_TYPE.getTypeID() + " THEN 1 "
                 + "                 ELSE 0 "
@@ -293,38 +293,17 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
                         continue;
                     }
 
-                    Long activityStart = resultSet.getLong("activity_start");
-                    if (resultSet.wasNull()) {
-                        activityStart = null;
-                    }
-                    Long activityEnd = resultSet.getLong("activity_end");
-                    if (resultSet.wasNull()) {
-                        activityEnd = null;
-                    }
-                    Long filesDownloaded = resultSet.getLong("fileDownloads");
-                    if (resultSet.wasNull()) {
-                        filesDownloaded = null;
-                    }
-                    Long totalVisits = resultSet.getLong("totalVisits");
-                    if (resultSet.wasNull()) {
-                        totalVisits = null;
-                    }
-
-                    Long visitsInLast60 = resultSet.getLong("last60");
-                    if (resultSet.wasNull()) {
-                        visitsInLast60 = null;
-                    }
-                    Long countOfKnownAccountTypes = resultSet.getLong("countOfKnownAccountTypes");
-                    if (resultSet.wasNull()) {
-                        countOfKnownAccountTypes = null;
-                    }
-                    
-                    Long dataSourceID = resultSet.getLong("dataSource");
-
+                    long activityStart = resultSet.getLong("activity_start");
+                    long activityEnd = resultSet.getLong("activity_end");
+                    long filesDownloaded = resultSet.getLong("fileDownloads");
+                    long totalPageViews = resultSet.getLong("totalPageViews");
+                    long pageViewsInLast60 = resultSet.getLong("pageViewsInLast60");
+                    long countOfKnownAccountTypes = resultSet.getLong("countOfKnownAccountTypes");
+                    long dataSourceID = resultSet.getLong("dataSource");
                     Content dataSource = skc.getContentById(dataSourceID);
 
                     resultDomains.add(new ResultDomain(domain, activityStart,
-                            activityEnd, totalVisits, visitsInLast60, filesDownloaded, 
+                            activityEnd, totalPageViews, pageViewsInLast60, filesDownloaded, 
                             countOfKnownAccountTypes, dataSource));
                 }
             } catch (SQLException ex) {

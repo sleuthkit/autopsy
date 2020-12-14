@@ -784,13 +784,14 @@ public class DiscoveryAttributes {
     }
 
     /**
-     * Attribute for grouping/sorting by number of visits.
+     * Attribute for grouping/sorting domains by number of page views.
+     * Page views is defined at the number of TSK_WEB_HISTORY artifacts.
      */
-    static class NumberOfVisitsAttribute extends AttributeType {
+    static class PageViewsAttribute extends AttributeType {
 
         @Override
         public DiscoveryKeyUtils.GroupKey getGroupKey(Result result) {
-            return new DiscoveryKeyUtils.NumberOfVisitsGroupKey(result);
+            return new DiscoveryKeyUtils.PageViewsGroupKey(result);
         }
     }
 
@@ -918,7 +919,7 @@ public class DiscoveryAttributes {
         "DiscoveryAttributes.GroupingAttributeType.object.displayName=Object Detected",
         "DiscoveryAttributes.GroupingAttributeType.mostRecentDate.displayName=Most Recent Activity Date",
         "DiscoveryAttributes.GroupingAttributeType.firstDate.displayName=First Activity Date",
-        "DiscoveryAttributes.GroupingAttributeType.numberOfVisits.displayName=Number of Visits",
+        "DiscoveryAttributes.GroupingAttributeType.pageViews.displayName=Page Views",
         "DiscoveryAttributes.GroupingAttributeType.none.displayName=None",
         "DiscoveryAttributes.GroupingAttributeType.previouslyNotable.displayName=Previous Notability",
         "DiscoveryAttributes.GroupingAttributeType.webCategory.displayName=Domain Category"})
@@ -934,7 +935,7 @@ public class DiscoveryAttributes {
         OBJECT_DETECTED(new ObjectDetectedAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_object_displayName()),
         MOST_RECENT_DATE(new MostRecentActivityDateAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_mostRecentDate_displayName()),
         FIRST_DATE(new FirstActivityDateAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_firstDate_displayName()),
-        NUMBER_OF_VISITS(new NumberOfVisitsAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_numberOfVisits_displayName()),
+        PAGE_VIEWS(new PageViewsAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_pageViews_displayName()),
         NO_GROUPING(new NoGroupingAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_none_displayName()),
         PREVIOUSLY_NOTABLE(new PreviouslyNotableAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_previouslyNotable_displayName()),
         DOMAIN_CATEGORY(new DomainCategoryAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_webCategory_displayName());
@@ -984,7 +985,11 @@ public class DiscoveryAttributes {
          * @return Enums that can be used to group files.
          */
         public static List<GroupingAttributeType> getOptionsForGroupingForDomains() {
-            return Arrays.asList(FREQUENCY, MOST_RECENT_DATE, FIRST_DATE, NUMBER_OF_VISITS, PREVIOUSLY_NOTABLE, DOMAIN_CATEGORY);
+            if (CentralRepository.isEnabled()) {
+                return Arrays.asList(FREQUENCY, MOST_RECENT_DATE, FIRST_DATE, PAGE_VIEWS, PREVIOUSLY_NOTABLE, DOMAIN_CATEGORY);
+            } else {
+                return Arrays.asList(MOST_RECENT_DATE, FIRST_DATE, PAGE_VIEWS, DOMAIN_CATEGORY);
+            }
         }
     }
 

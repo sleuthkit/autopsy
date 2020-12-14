@@ -43,7 +43,7 @@ final class DomainArtifactsTabPanel extends JPanel {
     private final BlackboardArtifact.ARTIFACT_TYPE artifactType;
     private AbstractArtifactDetailsPanel rightPanel = null;
 
-    private volatile ArtifactRetrievalStatus status = ArtifactRetrievalStatus.UNPOPULATED;
+    private ArtifactRetrievalStatus status = ArtifactRetrievalStatus.UNPOPULATED;
     private final ListSelectionListener listener = new ListSelectionListener() {
         @Override
         public void valueChanged(ListSelectionEvent event) {
@@ -63,6 +63,7 @@ final class DomainArtifactsTabPanel extends JPanel {
         initComponents();
         this.artifactType = type;
         listPanel = new ArtifactsListPanel(artifactType);
+        listPanel.addMouseListener(new ArtifactMenuMouseAdapter(listPanel));
         jSplitPane1.setLeftComponent(listPanel);
         setRightComponent();
         listPanel.addSelectionListener(listener);
@@ -112,8 +113,12 @@ final class DomainArtifactsTabPanel extends JPanel {
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     void setStatus(ArtifactRetrievalStatus status) {
         this.status = status;
-        if (status == ArtifactRetrievalStatus.UNPOPULATED && rightPanel != null) {
-            rightPanel.setArtifact(null);
+        if (status == ArtifactRetrievalStatus.UNPOPULATED) {
+            listPanel.clearList();
+            if (rightPanel != null){
+                rightPanel.setArtifact(null);
+            }
+                
         }
     }
 
@@ -127,7 +132,7 @@ final class DomainArtifactsTabPanel extends JPanel {
     void handleArtifactSearchResultEvent(DiscoveryEventUtils.ArtifactSearchResultEvent artifactresultEvent) {
         if (artifactType == artifactresultEvent.getArtifactType()) {
             SwingUtilities.invokeLater(() -> {
-                listPanel.removeListSelectionListener(listener);
+                listPanel.removeSelectionListener(listener);
                 listPanel.addArtifacts(artifactresultEvent.getListOfArtifacts());
                 status = ArtifactRetrievalStatus.POPULATED;
                 setEnabled(!listPanel.isEmpty());

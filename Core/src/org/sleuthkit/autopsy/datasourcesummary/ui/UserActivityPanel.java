@@ -29,12 +29,14 @@ import org.apache.commons.lang.StringUtils;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.IngestModuleCheckUtil;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.LastAccessedArtifact;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopAccountResult;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopDeviceAttachedResult;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopWebSearchResult;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopDomainsResult;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopProgramsResult;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer.DefaultCellModel;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer.MenuItem;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.IngestRunningLabel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel;
@@ -92,7 +94,8 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
                     Bundle.UserActivityPanel_TopProgramsTableModel_name_header(),
                     (prog) -> {
                         return new DefaultCellModel(prog.getProgramName())
-                                .setTooltip(prog.getProgramPath());
+                                .setTooltip(prog.getProgramPath())
+                                .setPopupMenu(getPopup(prog));
                     },
                     250),
             // program folder column
@@ -103,7 +106,8 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
                                 getShortFolderName(
                                         prog.getProgramPath(),
                                         prog.getProgramName()))
-                                .setTooltip(prog.getProgramPath());
+                                .setTooltip(prog.getProgramPath())
+                                .setPopupMenu(getPopup(prog));
                     },
                     150),
             // run count column
@@ -111,13 +115,17 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
                     Bundle.UserActivityPanel_TopProgramsTableModel_count_header(),
                     (prog) -> {
                         String runTimes = prog.getRunTimes() == null ? "" : Long.toString(prog.getRunTimes());
-                        return new DefaultCellModel(runTimes);
+                        return new DefaultCellModel(runTimes)
+                                .setPopupMenu(getPopup(prog));
                     },
                     80),
             // last run date column
             new ColumnModel<>(
                     Bundle.UserActivityPanel_TopProgramsTableModel_lastrun_header(),
-                    (prog) -> new DefaultCellModel(getFormatted(prog.getLastRun())),
+                    (prog) -> {
+                        return new DefaultCellModel(getFormatted(prog.getLastAccessed()))
+                                .setPopupMenu(getPopup(prog));
+                    },
                     150)
     ))
             .setKeyFunction((prog) -> prog.getProgramPath() + ":" + prog.getProgramName());
@@ -127,20 +135,27 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
             // domain column
             new ColumnModel<TopDomainsResult>(
                     Bundle.UserActivityPanel_TopDomainsTableModel_domain_header(),
-                    (recentDomain) -> new DefaultCellModel(recentDomain.getDomain()),
+                    (recentDomain) -> {
+                        return new DefaultCellModel(recentDomain.getDomain())
+                                .setPopupMenu(getPopup(recentDomain));
+                    },
                     250),
             // count column
             new ColumnModel<>(
                     Bundle.UserActivityPanel_TopDomainsTableModel_count_header(),
                     (recentDomain) -> {
                         String visitTimes = recentDomain.getVisitTimes() == null ? "" : Long.toString(recentDomain.getVisitTimes());
-                        return new DefaultCellModel(visitTimes);
+                        return new DefaultCellModel(visitTimes)
+                                .setPopupMenu(getPopup(recentDomain));
                     },
                     100),
             // last accessed column
             new ColumnModel<>(
                     Bundle.UserActivityPanel_TopDomainsTableModel_lastAccess_header(),
-                    (recentDomain) -> new DefaultCellModel(getFormatted(recentDomain.getLastVisit())),
+                    (recentDomain) -> {
+                        return new DefaultCellModel(getFormatted(recentDomain.getLastAccessed()))
+                                .setPopupMenu(getPopup(recentDomain));
+                    },
                     150)
     ))
             .setKeyFunction((domain) -> domain.getDomain());
@@ -150,19 +165,28 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
             // search string column
             new ColumnModel<TopWebSearchResult>(
                     Bundle.UserActivityPanel_TopWebSearchTableModel_searchString_header(),
-                    (webSearch) -> new DefaultCellModel(webSearch.getSearchString()),
+                    (webSearch) -> {
+                        return new DefaultCellModel(webSearch.getSearchString())
+                                .setPopupMenu(getPopup(webSearch));
+                    },
                     250
             ),
             // last accessed
             new ColumnModel<>(
                     Bundle.UserActivityPanel_TopWebSearchTableModel_dateAccessed_header(),
-                    (webSearch) -> new DefaultCellModel(getFormatted(webSearch.getDateAccessed())),
+                    (webSearch) -> {
+                        return new DefaultCellModel(getFormatted(webSearch.getLastAccessed()))
+                                .setPopupMenu(getPopup(webSearch));
+                    },
                     150
             ),
             // translated value
             new ColumnModel<>(
                     Bundle.UserActivityPanel_TopWebSearchTableModel_translatedResult_header(),
-                    (webSearch) -> new DefaultCellModel(webSearch.getTranslatedResult()),
+                    (webSearch) -> {
+                        return new DefaultCellModel(webSearch.getTranslatedResult())
+                                .setPopupMenu(getPopup(webSearch));
+                    },
                     250
             )
     ))
@@ -173,13 +197,19 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
             // device id column
             new ColumnModel<TopDeviceAttachedResult>(
                     Bundle.UserActivityPanel_TopDeviceAttachedTableModel_deviceId_header(),
-                    (device) -> new DefaultCellModel(device.getDeviceId()),
+                    (device) -> {
+                        return new DefaultCellModel(device.getDeviceId())
+                                .setPopupMenu(getPopup(device));
+                    },
                     250
             ),
             // last accessed
             new ColumnModel<>(
                     Bundle.UserActivityPanel_TopDeviceAttachedTableModel_dateAccessed_header(),
-                    (device) -> new DefaultCellModel(getFormatted(device.getDateAccessed())),
+                    (device) -> {
+                        return new DefaultCellModel(getFormatted(device.getLastAccessed()))
+                                .setPopupMenu(getPopup(device));
+                    },
                     150
             ),
             // make and model
@@ -191,7 +221,8 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
                         String makeModelString = (make.isEmpty() || model.isEmpty())
                         ? make + model
                         : String.format("%s - %s", make, model);
-                        return new DefaultCellModel(makeModelString);
+                        return new DefaultCellModel(makeModelString)
+                                .setPopupMenu(getPopup(device));
                     },
                     250
             )
@@ -203,13 +234,19 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
             // account type column
             new ColumnModel<TopAccountResult>(
                     Bundle.UserActivityPanel_TopAccountTableModel_accountType_header(),
-                    (account) -> new DefaultCellModel(account.getAccountType()),
+                    (account) -> {
+                        return new DefaultCellModel(account.getAccountType())
+                                .setPopupMenu(getPopup(account));
+                    },
                     250
             ),
             // last accessed
             new ColumnModel<>(
                     Bundle.UserActivityPanel_TopAccountTableModel_lastAccess_header(),
-                    (account) -> new DefaultCellModel(getFormatted(account.getLastAccess())),
+                    (account) -> {
+                        return new DefaultCellModel(getFormatted(account.getLastAccessed()))
+                                .setPopupMenu(getPopup(account));
+                    },
                     150
             )
     ))
@@ -227,7 +264,7 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
 
     private final List<DataFetchComponents<DataSource, ?>> dataFetchComponents;
     private final UserActivitySummary userActivityData;
-    
+
     /**
      * Creates a new UserActivityPanel.
      */
@@ -239,7 +276,7 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
      * Creates a new UserActivityPanel.
      *
      * @param userActivityData Class from which to obtain remaining user
-     *                         activity data.
+     * activity data.
      */
     public UserActivityPanel(UserActivitySummary userActivityData) {
         super(userActivityData);
@@ -293,9 +330,22 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
     }
 
     /**
+     * Takes a base class of LastAccessedArtifact and provides the pertinent
+     * menu items. going to artifact.
+     *
+     * @param record The LastAccessedArtifact instance.
+     * @param navigateToArtifact Navigate right tot the artifact.
+     * @return The menu items list containing one action or navigating to the
+     * appropriate artifact and closing the data source summary dialog if open.
+     */
+    private List<MenuItem> getPopup(LastAccessedArtifact record) {
+        return record == null ? null : Arrays.asList(getArtifactNavigateItem(record.getArtifact()));
+    }
+
+    /**
      * Queries DataSourceTopProgramsSummary instance for short folder name.
      *
-     * @param path    The path for the application.
+     * @param path The path for the application.
      * @param appName The application name.
      *
      * @return The underlying short folder name if one exists.
@@ -335,22 +385,27 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
         javax.swing.JLabel programsRunLabel = new javax.swing.JLabel();
         javax.swing.Box.Filler filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2));
         javax.swing.JPanel topProgramsTablePanel = topProgramsTable;
+        javax.swing.JLabel rightClickForMoreOptions1 = new javax.swing.JLabel();
         javax.swing.Box.Filler filler3 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 20), new java.awt.Dimension(0, 20), new java.awt.Dimension(0, 20));
         javax.swing.JLabel recentDomainsLabel = new javax.swing.JLabel();
         javax.swing.Box.Filler filler2 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2));
         javax.swing.JPanel recentDomainsTablePanel = recentDomainsTable;
+        javax.swing.JLabel rightClickForMoreOptions2 = new javax.swing.JLabel();
         javax.swing.Box.Filler filler4 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 20), new java.awt.Dimension(0, 20), new java.awt.Dimension(0, 20));
         javax.swing.JLabel topWebSearchLabel = new javax.swing.JLabel();
         javax.swing.Box.Filler filler5 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2));
         javax.swing.JPanel topWebSearches = topWebSearchesTable;
+        javax.swing.JLabel rightClickForMoreOptions3 = new javax.swing.JLabel();
         javax.swing.Box.Filler filler6 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 20), new java.awt.Dimension(0, 20), new java.awt.Dimension(0, 20));
         javax.swing.JLabel topDevicesAttachedLabel = new javax.swing.JLabel();
         javax.swing.Box.Filler filler7 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2));
         javax.swing.JPanel recentDevicesAttached = topDevicesAttachedTable;
+        javax.swing.JLabel rightClickForMoreOptions4 = new javax.swing.JLabel();
         javax.swing.Box.Filler filler8 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 20), new java.awt.Dimension(0, 20), new java.awt.Dimension(0, 20));
         javax.swing.JLabel recentAccountsLabel = new javax.swing.JLabel();
         javax.swing.Box.Filler filler9 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2));
         javax.swing.JPanel topAccounts = topAccountsTable;
+        javax.swing.JLabel rightClickForMoreOptions5 = new javax.swing.JLabel();
 
         setLayout(new java.awt.BorderLayout());
 
@@ -379,6 +434,9 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
         topProgramsTablePanel.setMinimumSize(new java.awt.Dimension(10, 106));
         topProgramsTablePanel.setPreferredSize(new java.awt.Dimension(10, 106));
         contentPanel.add(topProgramsTablePanel);
+
+        org.openide.awt.Mnemonics.setLocalizedText(rightClickForMoreOptions1, org.openide.util.NbBundle.getMessage(UserActivityPanel.class, "UserActivityPanel.rightClickForMoreOptions1.text")); // NOI18N
+        contentPanel.add(rightClickForMoreOptions1);
         contentPanel.add(filler3);
 
         recentDomainsLabel.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
@@ -391,6 +449,9 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
         recentDomainsTablePanel.setMinimumSize(new java.awt.Dimension(10, 106));
         recentDomainsTablePanel.setPreferredSize(new java.awt.Dimension(10, 106));
         contentPanel.add(recentDomainsTablePanel);
+
+        org.openide.awt.Mnemonics.setLocalizedText(rightClickForMoreOptions2, org.openide.util.NbBundle.getMessage(UserActivityPanel.class, "UserActivityPanel.rightClickForMoreOptions2.text")); // NOI18N
+        contentPanel.add(rightClickForMoreOptions2);
         contentPanel.add(filler4);
 
         topWebSearchLabel.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
@@ -403,6 +464,9 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
         topWebSearches.setMinimumSize(new java.awt.Dimension(10, 106));
         topWebSearches.setPreferredSize(new java.awt.Dimension(10, 106));
         contentPanel.add(topWebSearches);
+
+        org.openide.awt.Mnemonics.setLocalizedText(rightClickForMoreOptions3, org.openide.util.NbBundle.getMessage(UserActivityPanel.class, "UserActivityPanel.rightClickForMoreOptions3.text")); // NOI18N
+        contentPanel.add(rightClickForMoreOptions3);
         contentPanel.add(filler6);
 
         topDevicesAttachedLabel.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
@@ -415,6 +479,9 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
         recentDevicesAttached.setMinimumSize(new java.awt.Dimension(10, 106));
         recentDevicesAttached.setPreferredSize(new java.awt.Dimension(10, 106));
         contentPanel.add(recentDevicesAttached);
+
+        org.openide.awt.Mnemonics.setLocalizedText(rightClickForMoreOptions4, org.openide.util.NbBundle.getMessage(UserActivityPanel.class, "UserActivityPanel.rightClickForMoreOptions4.text")); // NOI18N
+        contentPanel.add(rightClickForMoreOptions4);
         contentPanel.add(filler8);
 
         recentAccountsLabel.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
@@ -427,6 +494,9 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
         topAccounts.setMinimumSize(new java.awt.Dimension(10, 106));
         topAccounts.setPreferredSize(new java.awt.Dimension(10, 106));
         contentPanel.add(topAccounts);
+
+        org.openide.awt.Mnemonics.setLocalizedText(rightClickForMoreOptions5, org.openide.util.NbBundle.getMessage(UserActivityPanel.class, "UserActivityPanel.rightClickForMoreOptions5.text")); // NOI18N
+        contentPanel.add(rightClickForMoreOptions5);
 
         contentScrollPane.setViewportView(contentPanel);
 
