@@ -1,7 +1,7 @@
 This folder contains the projects you need for building and testing the yarabridge.dll and YaraJNIWrapper.jar.
 
 bin:
-Contains the built dll and jar.
+Contains the built jar and jarac64.exe.  jarac64.exe is used to by the ingest module to compile the rule files.
 
 yarabridge:
 VS project to create the dll that wraps the the libyara library.
@@ -18,7 +18,8 @@ Steps for building yarabridge, YaraJNIWrapper and YaraWrapperTest.
 	- Build Release x64.
 3. Open the yarabridge project and build Release x64.
 	-If you have link issues, make sure you build release x64 in the previous step.
-	-This project will automatically copy the built dll to the bin folder.
+	-This project will automatically copy the built dll into the YaraJNIWrapper src\org\sleuthkit\autopsy\yara folder.
+		- This is where is needs to be so that its included into the jar file.
 4. Build YaraJNIWrapper
 	- Open in netbeans and select Build.
 	- Manually move the newly build jar file to the bin folder. After building the jar file can be found in

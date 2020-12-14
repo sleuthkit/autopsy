@@ -63,7 +63,9 @@ public class RegressionTest extends TestCase {
                 clusters(".*").
                 enableModules(".*");
         if (img_path.isFile()) {
-            conf = conf.addTest("testNewCaseWizardOpen",
+            conf = conf.addTest(
+                    "testConfigureCustomCR",
+                    "testNewCaseWizardOpen",
                     "testNewCaseWizard",
                     "testStartAddImageFileDataSource",
                     "testConfigureIngest1",
@@ -78,7 +80,9 @@ public class RegressionTest extends TestCase {
         }
 
         if (img_path.isDirectory()) {
-            conf = conf.addTest("testNewCaseWizardOpen",
+            conf = conf.addTest(
+                    "testConfigureCustomCR",
+                    "testNewCaseWizardOpen",
                     "testNewCaseWizard",
                     "testStartAddLogicalFilesDataSource",
                     "testConfigureIngest1",
@@ -103,7 +107,11 @@ public class RegressionTest extends TestCase {
     public void setUp() {
         logger.info("########  " + AutopsyTestCases.getEscapedPath(System.getProperty("img_path")) + "  #######");
         Timeouts.setDefault("ComponentOperator.WaitComponentTimeout", 1000000);
-        
+    }
+    
+    public void testConfigureCustomCR() {
+        // Configure a custom CR before proceeding with the test (and creating
+        // a case).
         try {
             if (Boolean.parseBoolean(System.getProperty("isMultiUser"))) {
                 // Set up a custom postgres CR using the configuration passed

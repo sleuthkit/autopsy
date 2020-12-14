@@ -215,6 +215,141 @@ public class DiscoveryAttributes {
             }
         }
     }
+    
+    /**
+     * Organizes the domain instances by normalized domain value.
+     * This helps reduce the complexity of updating ResultDomain instances
+     * after the query has been executed.
+     * 
+     * Example: query for notable status of google.com. Result: notable
+     * With this map, all domain instances that represent google.com can
+     * be updated after one simple lookup.
+     */
+    private static Map<String, List<ResultDomain>> organizeByValue(List<ResultDomain> domainsBatch, CorrelationAttributeInstance.Type attributeType) {
+            final Map<String, List<ResultDomain>> resultDomainTable = new HashMap<>();
+            for (ResultDomain domainInstance : domainsBatch) {
+                try {
+                    final String domainValue = domainInstance.getDomain();
+                    final String normalizedDomain = CorrelationAttributeNormalizer.normalize(attributeType, domainValue);
+                    final List<ResultDomain> bucket = resultDomainTable.getOrDefault(normalizedDomain, new ArrayList<>());
+                    bucket.add(domainInstance);
+                    resultDomainTable.put(normalizedDomain, bucket);
+                } catch (CorrelationAttributeNormalizationException ex) {
+                    logger.log(Level.INFO, String.format("Domain [%s] failed normalization, skipping...", domainInstance.getDomain()));
+                }
+            }
+            return resultDomainTable;
+    }
+
+    /**
+     * Helper function to create a string of comma separated values.
+     * Each value is wrapped in `'`. This method is used to bundle up
+     * a collection of values for use in a SQL WHERE IN (...) clause.
+     */
+    private static String createCSV(Set<String> values) {
+        StringJoiner joiner = new StringJoiner(", ");
+        for (String value : values) {
+            joiner.add("'" + value + "'");
+        }
+        return joiner.toString();
+    }
+    
+    /**
+     * Attribute for grouping/sorting by notability in the CR.
+     */
+    static class PreviouslyNotableAttribute extends AttributeType {
+        
+        static final int DOMAIN_BATCH_SIZE = 500; // Number of domains to look up at one time
+
+        @Override
+        public DiscoveryKeyUtils.GroupKey getGroupKey(Result result) {
+            return new DiscoveryKeyUtils.PreviouslyNotableGroupKey(result);
+        }
+        
+        @Override
+        public void addAttributeToResults(List<Result> results, SleuthkitCase caseDb,
+                CentralRepository centralRepoDb) throws DiscoveryException {
+            
+            if (centralRepoDb != null) {
+                processFilesWithCr(results, centralRepoDb);
+            }            
+        }
+        
+        private void processFilesWithCr(List<Result> results, CentralRepository centralRepo) throws DiscoveryException {
+            
+            List<ResultDomain> domainsBatch = new ArrayList<>();
+            for (Result result : results) {
+                if (result.getType() == SearchData.Type.DOMAIN) {
+                    domainsBatch.add((ResultDomain) result);
+                    if (domainsBatch.size() == DOMAIN_BATCH_SIZE) {
+                        queryPreviouslyNotable(domainsBatch, centralRepo);
+                        domainsBatch.clear();
+                    }
+                }
+            }
+            
+            queryPreviouslyNotable(domainsBatch, centralRepo);
+        }
+        
+        private void queryPreviouslyNotable(List<ResultDomain> domainsBatch, CentralRepository centralRepo) throws DiscoveryException {
+            if (domainsBatch.isEmpty()) {
+                return;
+            }
+            
+            try {
+                final CorrelationAttributeInstance.Type attributeType = centralRepo.getCorrelationTypeById(CorrelationAttributeInstance.DOMAIN_TYPE_ID);
+                final Map<String, List<ResultDomain>> resultDomainTable = organizeByValue(domainsBatch, attributeType);
+                final String values = createCSV(resultDomainTable.keySet());
+
+                final String tableName = CentralRepoDbUtil.correlationTypeToInstanceTableName(attributeType);
+                final String domainFrequencyQuery = " value AS domain_name "
+                        + "FROM " + tableName + " "
+                        + "WHERE value IN (" + values + ") "
+                        + "AND known_status = " + TskData.FileKnown.BAD.getFileKnownValue();
+
+                final DomainPreviouslyNotableCallback previouslyNotableCallback = new DomainPreviouslyNotableCallback(resultDomainTable);
+                centralRepo.processSelectClause(domainFrequencyQuery, previouslyNotableCallback);
+
+                if (previouslyNotableCallback.getCause() != null) {
+                    throw previouslyNotableCallback.getCause();
+                }
+            } catch (CentralRepoException | SQLException ex) {
+                throw new DiscoveryException("Fatal exception encountered querying the CR.", ex);
+            }
+        }
+        
+        private static class DomainPreviouslyNotableCallback implements InstanceTableCallback {
+            
+            private final Map<String, List<ResultDomain>> domainLookup;
+            private SQLException sqlCause;
+
+            private DomainPreviouslyNotableCallback(Map<String, List<ResultDomain>> domainLookup) {
+                this.domainLookup = domainLookup;
+            }
+            
+            @Override
+            public void process(ResultSet resultSet) {
+                try {
+                    while (resultSet.next()) {
+                        String domain = resultSet.getString("domain_name");
+                        List<ResultDomain> domainInstances = domainLookup.get(domain);
+                        for (ResultDomain domainInstance : domainInstances) {
+                            domainInstance.markAsPreviouslyNotableInCR();
+                        }
+                    }
+                } catch (SQLException ex) {
+                    this.sqlCause = ex;
+                }
+            }
+
+            /**
+             * Get the SQL exception if one occurred during this callback.
+             */
+            SQLException getCause() {
+                return this.sqlCause;
+            } 
+        }
+    }
 
     /**
      * Attribute for grouping/sorting by frequency in the central repository.
@@ -307,27 +442,14 @@ public class DiscoveryAttributes {
             return;
         }
         try {
-            final Map<String, List<ResultDomain>> resultDomainTable = new HashMap<>();
-            final StringJoiner joiner = new StringJoiner(", ");
-
             final CorrelationAttributeInstance.Type attributeType = centralRepository.getCorrelationTypeById(CorrelationAttributeInstance.DOMAIN_TYPE_ID);
-            for (ResultDomain domainInstance : domainsToQuery) {
-                try {
-                    final String domainValue = domainInstance.getDomain();
-                    final String normalizedDomain = CorrelationAttributeNormalizer.normalize(attributeType, domainValue);
-                    final List<ResultDomain> bucket = resultDomainTable.getOrDefault(normalizedDomain, new ArrayList<>());
-                    bucket.add(domainInstance);
-                    resultDomainTable.put(normalizedDomain, bucket);
-                    joiner.add("'" + normalizedDomain + "'");
-                } catch (CorrelationAttributeNormalizationException ex) {
-                    logger.log(Level.INFO, String.format("Domain [%s] failed normalization, skipping...", domainInstance.getDomain()));
-                }
-            }
+            final Map<String, List<ResultDomain>> resultDomainTable = organizeByValue(domainsToQuery, attributeType);
+            final String values = createCSV(resultDomainTable.keySet());
 
             final String tableName = CentralRepoDbUtil.correlationTypeToInstanceTableName(attributeType);
             final String domainFrequencyQuery = " value AS domain_name, COUNT(*) AS frequency "
                     + "FROM " + tableName + " "
-                    + "WHERE value IN (" + joiner + ") "
+                    + "WHERE value IN (" + values + ") "
                     + "GROUP BY value";
 
             final DomainFrequencyCallback frequencyCallback = new DomainFrequencyCallback(resultDomainTable);
@@ -608,13 +730,14 @@ public class DiscoveryAttributes {
     }
 
     /**
-     * Attribute for grouping/sorting by number of visits.
+     * Attribute for grouping/sorting domains by number of page views.
+     * Page views is defined at the number of TSK_WEB_HISTORY artifacts.
      */
-    static class NumberOfVisitsAttribute extends AttributeType {
+    static class PageViewsAttribute extends AttributeType {
 
         @Override
         public DiscoveryKeyUtils.GroupKey getGroupKey(Result result) {
-            return new DiscoveryKeyUtils.NumberOfVisitsGroupKey(result);
+            return new DiscoveryKeyUtils.PageViewsGroupKey(result);
         }
     }
 
@@ -742,8 +865,9 @@ public class DiscoveryAttributes {
         "DiscoveryAttributes.GroupingAttributeType.object.displayName=Object Detected",
         "DiscoveryAttributes.GroupingAttributeType.mostRecentDate.displayName=Most Recent Activity Date",
         "DiscoveryAttributes.GroupingAttributeType.firstDate.displayName=First Activity Date",
-        "DiscoveryAttributes.GroupingAttributeType.numberOfVisits.displayName=Number of Visits",
-        "DiscoveryAttributes.GroupingAttributeType.none.displayName=None"})
+        "DiscoveryAttributes.GroupingAttributeType.pageViews.displayName=Page Views",
+        "DiscoveryAttributes.GroupingAttributeType.none.displayName=None",
+        "DiscoveryAttributes.GroupingAttributeType.previouslyNotable.displayName=Previous Notability"})
     public enum GroupingAttributeType {
         FILE_SIZE(new FileSizeAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_size_displayName()),
         FREQUENCY(new FrequencyAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_frequency_displayName()),
@@ -756,8 +880,9 @@ public class DiscoveryAttributes {
         OBJECT_DETECTED(new ObjectDetectedAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_object_displayName()),
         MOST_RECENT_DATE(new MostRecentActivityDateAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_mostRecentDate_displayName()),
         FIRST_DATE(new FirstActivityDateAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_firstDate_displayName()),
-        NUMBER_OF_VISITS(new NumberOfVisitsAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_numberOfVisits_displayName()),
-        NO_GROUPING(new NoGroupingAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_none_displayName());
+        PAGE_VIEWS(new PageViewsAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_pageViews_displayName()),
+        NO_GROUPING(new NoGroupingAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_none_displayName()),
+        PREVIOUSLY_NOTABLE(new PreviouslyNotableAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_previouslyNotable_displayName());
 
         private final AttributeType attributeType;
         private final String displayName;
@@ -799,12 +924,16 @@ public class DiscoveryAttributes {
         }
 
         /**
-         * Get the list of enums that are valid for grouping files.
+         * Get the list of enums that are valid for grouping domains.
          *
          * @return Enums that can be used to group files.
          */
         public static List<GroupingAttributeType> getOptionsForGroupingForDomains() {
-            return Arrays.asList(FREQUENCY, MOST_RECENT_DATE, FIRST_DATE, NUMBER_OF_VISITS);
+            if (CentralRepository.isEnabled()) {
+                return Arrays.asList(FREQUENCY, MOST_RECENT_DATE, FIRST_DATE, PAGE_VIEWS, PREVIOUSLY_NOTABLE);
+            } else {
+                return Arrays.asList(MOST_RECENT_DATE, FIRST_DATE, PAGE_VIEWS);
+            }
         }
     }
 
@@ -889,4 +1018,4 @@ public class DiscoveryAttributes {
     private DiscoveryAttributes() {
         // Class should not be instantiated
     }
-}
+    }

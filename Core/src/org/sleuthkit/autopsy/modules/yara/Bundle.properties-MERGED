@@ -1,0 +1,5 @@
+Yara_Module_Description=The YARA Analyzer uses YARA to search files for textual or binary patterns.
+Yara_Module_Name=YARA Analyzer
+YaraIngestModule_no_ruleSets=Unable to run YARA ingest, list of YARA rule sets was empty.
+YaraIngestModule_windows_error_msg=The YARA ingest module is only available on 64bit Windows.
+YaraIngestModule_yarac_not_found=Unable to compile YARA rules files. Unable to find executable at.

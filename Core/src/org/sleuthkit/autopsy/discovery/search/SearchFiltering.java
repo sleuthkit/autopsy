@@ -689,6 +689,46 @@ public class SearchFiltering {
             return Bundle.SearchFiltering_FrequencyFilter_desc(desc);
         }
     }
+    
+    /**
+     * A filter for previously notable content in the central repository.
+     */
+    public static class PreviouslyNotableFilter extends AbstractFilter {
+
+        @Override
+        public String getWhereClause() {
+            throw new UnsupportedOperationException("Not supported, this is an alternative filter.");
+        }
+        
+        @Override
+        public boolean useAlternateFilter() {
+            return true;
+        }
+        
+        @Override
+        public List<Result> applyAlternateFilter(List<Result> currentResults, SleuthkitCase caseDb,
+                CentralRepository centralRepoDb) throws DiscoveryException {
+            DiscoveryAttributes.PreviouslyNotableAttribute previouslyNotableAttr = new DiscoveryAttributes.PreviouslyNotableAttribute();
+            previouslyNotableAttr.addAttributeToResults(currentResults, caseDb, centralRepoDb);
+
+            List<Result> filteredResults = new ArrayList<>();
+            for (Result file : currentResults) {
+                if (file.getPreviouslyNotableInCR() == SearchData.PreviouslyNotable.PREVIOUSLY_NOTABLE) {
+                    filteredResults.add(file);
+                }
+            }
+            return filteredResults;
+        }
+
+        @NbBundle.Messages({
+            "SearchFiltering.PreviouslyNotableFilter.desc=Previously marked as notable in central repository"
+        })
+        @Override
+        public String getDesc() {
+            return Bundle.SearchFiltering_PreviouslyNotableFilter_desc();
+        }
+        
+    }
 
     /**
      * A filter for specifying hash set names. A file must match one of the

@@ -27,6 +27,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 import javax.swing.SwingUtilities;
 import javax.swing.plaf.basic.BasicSplitPaneDivider;
@@ -56,12 +57,12 @@ public final class DiscoveryTopComponent extends TopComponent {
     private static final long serialVersionUID = 1L;
     private static final String PREFERRED_ID = "DiscoveryTc"; // NON-NLS
     private static final int ANIMATION_INCREMENT = 30;
-    private volatile static int resultsAreaSize = 250;
+    private volatile static int previousDividerLocation = 250;
     private final GroupListPanel groupListPanel;
     private final ResultsPanel resultsPanel;
     private String selectedDomainTabName;
     private Type searchType;
-    private int dividerLocation = -1;
+    private int dividerLocation = JSplitPane.UNDEFINED_CONDITION;
     private SwingAnimator animator = null;
 
     /**
@@ -87,15 +88,20 @@ public final class DiscoveryTopComponent extends TopComponent {
             public void propertyChange(PropertyChangeEvent evt) {
                 if (evt.getPropertyName().equalsIgnoreCase(JSplitPane.DIVIDER_LOCATION_PROPERTY)) {
                     //Only change the saved location when it was a manual change by the user and not the animation or the window opening initially
-                    if ((animator == null || !animator.isRunning()) && evt.getNewValue() instanceof Integer
-                            && ((int) evt.getNewValue() + 5) < (rightSplitPane.getHeight() - rightSplitPane.getDividerSize())) {
-                        resultsAreaSize = (int) evt.getNewValue();
+                    if ((animator == null || !animator.isRunning())
+                            && evt.getNewValue() instanceof Integer
+                            && evt.getOldValue() instanceof Integer
+                            && ((int) evt.getNewValue() + 5) < (rightSplitPane.getHeight() - rightSplitPane.getDividerSize())
+                            && (JSplitPane.UNDEFINED_CONDITION != (int) evt.getNewValue())
+                            && ((int) evt.getOldValue() != JSplitPane.UNDEFINED_CONDITION)) {
+                        previousDividerLocation = (int) evt.getNewValue();
 
                     }
                 }
             }
         });
         rightSplitPane.setTopComponent(resultsPanel);
+        rightSplitPane.setBottomComponent(new JPanel());
     }
 
     /**
@@ -160,6 +166,7 @@ public final class DiscoveryTopComponent extends TopComponent {
         if (rightSplitPane.getBottomComponent() instanceof DomainDetailsPanel) {
             selectedDomainTabName = ((DomainDetailsPanel) rightSplitPane.getBottomComponent()).getSelectedTabName();
         }
+        rightSplitPane.setDividerLocation(JSplitPane.UNDEFINED_CONDITION);
         super.componentClosed();
     }
 
@@ -328,7 +335,9 @@ public final class DiscoveryTopComponent extends TopComponent {
                     descriptionText += Bundle.DiscoveryTopComponent_additionalFilters_text();
                 }
                 selectedDomainTabName = validateLastSelectedType(searchCompleteEvent);
-                rightSplitPane.setBottomComponent(new DomainDetailsPanel(selectedDomainTabName));
+                DomainDetailsPanel domainDetailsPanel = new DomainDetailsPanel();
+                rightSplitPane.setBottomComponent(domainDetailsPanel);
+                domainDetailsPanel.configureArtifactTabs(selectedDomainTabName);
             } else {
                 rightSplitPane.setBottomComponent(new FileDetailsPanel());
             }
@@ -350,6 +359,7 @@ public final class DiscoveryTopComponent extends TopComponent {
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private String validateLastSelectedType(DiscoveryEventUtils.SearchCompleteEvent searchCompleteEvent) {
         String typeFilteredOn = selectedDomainTabName;
+
         for (AbstractFilter filter : searchCompleteEvent.getFilters()) {
             if (filter instanceof ArtifactTypeFilter) {
                 for (ARTIFACT_TYPE type : ((ArtifactTypeFilter) filter).getTypes()) {
@@ -396,8 +406,8 @@ public final class DiscoveryTopComponent extends TopComponent {
         @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
         @Override
         public boolean hasTerminated() {
-            if (dividerLocation != JSplitPane.UNDEFINED_CONDITION && dividerLocation < resultsAreaSize) {
-                dividerLocation = resultsAreaSize;
+            if (dividerLocation != JSplitPane.UNDEFINED_CONDITION && dividerLocation < previousDividerLocation) {
+                dividerLocation = previousDividerLocation;
                 animator = null;
                 return true;
             }
@@ -448,7 +458,7 @@ public final class DiscoveryTopComponent extends TopComponent {
         @Override
         public void paintComponent(Graphics g) {
             if (animator != null && animator.isRunning() && (dividerLocation == JSplitPane.UNDEFINED_CONDITION
-                    || (dividerLocation <= getHeight() && dividerLocation >= resultsAreaSize))) {
+                    || (dividerLocation <= getHeight() && dividerLocation >= previousDividerLocation))) {
                 setDividerLocation(dividerLocation);
             }
             super.paintComponent(g);
