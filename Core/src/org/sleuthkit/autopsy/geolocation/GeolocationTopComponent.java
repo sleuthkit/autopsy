@@ -48,7 +48,6 @@ import static org.sleuthkit.autopsy.casemodule.Case.Events.CURRENT_CASE;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.geolocation.GeoFilterPanel.GeoFilter;
 import org.sleuthkit.autopsy.geolocation.datamodel.GeoLocationDataException;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import static org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent.DATA_ADDED;
@@ -206,6 +205,25 @@ public final class GeolocationTopComponent extends TopComponent {
         super.componentOpened();
         WindowManager.getDefault().setTopComponentFloating(this, true);
 
+    }
+
+    /**
+     * Sets the filter state that will be set when the panel is opened. If the
+     * panel is already open, this has no effect.
+     *
+     * @param filter The filter to set in the GeoFilterPanel.
+     */
+    public void setFilterState(GeoFilter filter) throws GeoLocationUIException {
+        if (filter == null) {
+            throw new GeoLocationUIException("Filter provided cannot be null.");
+        }
+
+        if (this.isOpened()) {
+            geoFilterPanel.setupFilter(filter);
+            updateWaypoints();
+        } else {
+            geoFilterPanel.setInitialFilterState(filter);
+        }
     }
 
     @Messages({
@@ -493,8 +511,8 @@ public final class GeolocationTopComponent extends TopComponent {
     // End of variables declaration//GEN-END:variables
 
     /**
-     *  Extends AbstractWaypointFetcher to handle the returning of
-     *  the filters set of MapWaypoints.
+     * Extends AbstractWaypointFetcher to handle the returning of the filters
+     * set of MapWaypoints.
      */
     @Messages({
         "GeolocationTopComponent.WaypointFetcher.onErrorTitle=Error gathering GPS Track Data",
@@ -507,16 +525,16 @@ public final class GeolocationTopComponent extends TopComponent {
         }
 
         @Override
-        void handleFilteredWaypointSet(Set<MapWaypoint> mapWaypoints, List<Set<MapWaypoint>> tracks,
+        protected void handleFilteredWaypointSet(Set<MapWaypoint> mapWaypoints, List<Set<MapWaypoint>> tracks,
                 List<Set<MapWaypoint>> areas, boolean wasEntirelySuccessful) {
             addWaypointsToMap(mapWaypoints, tracks, areas);
             
             // if there is an error, present to the user.
             if (!wasEntirelySuccessful) {
-                JOptionPane.showMessageDialog(GeolocationTopComponent.this, 
-                    Bundle.GeolocationTopComponent_WaypointFetcher_onErrorDescription(), 
-                    Bundle.GeolocationTopComponent_WaypointFetcher_onErrorTitle(),
-                    JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(GeolocationTopComponent.this,
+                        Bundle.GeolocationTopComponent_WaypointFetcher_onErrorDescription(),
+                        Bundle.GeolocationTopComponent_WaypointFetcher_onErrorTitle(),
+                        JOptionPane.ERROR_MESSAGE);
             }
         }
     }

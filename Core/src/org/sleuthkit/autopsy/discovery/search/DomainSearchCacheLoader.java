@@ -154,12 +154,12 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
                 + "           SUM(CASE "
                 + "                 WHEN artifact_type_id = " + TSK_WEB_HISTORY.getTypeID() + " THEN 1 "
                 + "                 ELSE 0 "
-                + "               END) AS totalVisits,"
+                + "               END) AS totalPageViews,"
                 + "           SUM(CASE "
                 + "                 WHEN artifact_type_id = " + TSK_WEB_HISTORY.getTypeID() + " AND"
                 + "                      date BETWEEN " + sixtyDaysAgo.getEpochSecond() + " AND " + currentTime.getEpochSecond() + " THEN 1 "
                 + "                 ELSE 0 "
-                + "               END) AS last60,"
+                + "               END) AS pageViewsInLast60,"
                 + "           MAX(data_source_obj_id) AS dataSource "
                 + "FROM blackboard_artifacts"
                 + "     JOIN (" + domainsTable + ") AS domains_table"
@@ -298,21 +298,21 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
                     if (resultSet.wasNull()) {
                         filesDownloaded = null;
                     }
-                    Long totalVisits = resultSet.getLong("totalVisits");
+                    Long totalPageViews = resultSet.getLong("totalPageViews");
                     if (resultSet.wasNull()) {
-                        totalVisits = null;
+                        totalPageViews = null;
                     }
 
-                    Long visitsInLast60 = resultSet.getLong("last60");
+                    Long pageViewsInLast60 = resultSet.getLong("pageViewsInLast60");
                     if (resultSet.wasNull()) {
-                        visitsInLast60 = null;
+                        pageViewsInLast60 = null;
                     }
                     Long dataSourceID = resultSet.getLong("dataSource");
 
                     Content dataSource = skc.getContentById(dataSourceID);
 
                     resultDomains.add(new ResultDomain(domain, activityStart,
-                            activityEnd, totalVisits, visitsInLast60, filesDownloaded, dataSource));
+                            activityEnd, totalPageViews, pageViewsInLast60, filesDownloaded, dataSource));
                 }
             } catch (SQLException ex) {
                 this.sqlCause = ex;

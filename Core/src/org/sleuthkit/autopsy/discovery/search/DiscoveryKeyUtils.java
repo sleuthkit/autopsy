@@ -792,6 +792,50 @@ public class DiscoveryKeyUtils {
             return 0;
         }
     }
+    
+    /**
+     * Key representing a central repository notable status.
+     */
+    static class PreviouslyNotableGroupKey extends GroupKey {
+        
+        private final SearchData.PreviouslyNotable notableStatus;
+        
+        PreviouslyNotableGroupKey(Result result) {
+            this.notableStatus = result.getPreviouslyNotableInCR();
+        }
+
+        @Override
+        String getDisplayName() {
+            return this.notableStatus.toString();
+        }
+
+        @Override
+        public boolean equals(Object otherKey) {
+            if (otherKey instanceof GroupKey) {
+                return compareTo((GroupKey) otherKey) == 0;
+            }
+            return false;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(getStatus().getRanking());
+        }
+
+        @Override
+        public int compareTo(GroupKey otherGroupKey) {
+            if (otherGroupKey instanceof PreviouslyNotableGroupKey) {
+                PreviouslyNotableGroupKey otherFrequencyGroupKey = (PreviouslyNotableGroupKey) otherGroupKey;
+                return Integer.compare(getStatus().getRanking(), otherFrequencyGroupKey.getStatus().getRanking());
+            } else {
+                return compareClassNames(otherGroupKey);
+            }
+        }
+        
+        SearchData.PreviouslyNotable getStatus() {
+            return notableStatus;
+        }
+    }
 
     /**
      * Key representing a central repository frequency group.
@@ -1216,12 +1260,14 @@ public class DiscoveryKeyUtils {
     }
 
     /**
-     * Key representing the number of visits.
+     * Key representing the number of page views.
+     * Page views are defined as the number of TSK_WEB_HISTORY artifacts that match
+     * a domain value.
      */
-    static class NumberOfVisitsGroupKey extends GroupKey {
+    static class PageViewsGroupKey extends GroupKey {
 
         private final String displayName;
-        private final Long visits;
+        private final Long pageViews;
 
         /**
          * Construct a new NumberOfVisitsGroupKey.
@@ -1230,19 +1276,19 @@ public class DiscoveryKeyUtils {
          */
         @NbBundle.Messages({
             "# {0} - totalVisits",
-            "DiscoveryKeyUtils.NumberOfVisitsGroupKey.displayName={0} visits",
-            "DiscoveryKeyUtils.NumberOfVisitsGroupKey.noVisits=No visits"})
-        NumberOfVisitsGroupKey(Result result) {
+            "DiscoveryKeyUtils.PageViewsGroupKey.displayName={0} page views",
+            "DiscoveryKeyUtils.PageViewsGroupKey.noVisits=No page views"})
+        PageViewsGroupKey(Result result) {
             if (result instanceof ResultDomain) {
-                Long totalVisits = ((ResultDomain) result).getTotalVisits();
-                if (totalVisits == null) {
-                    totalVisits = 0L;
+                Long totalPageViews = ((ResultDomain) result).getTotalPageViews();
+                if (totalPageViews == null) {
+                    totalPageViews = 0L;
                 }
-                visits = totalVisits;
-                displayName = Bundle.DiscoveryKeyUtils_NumberOfVisitsGroupKey_displayName(Long.toString(visits));
+                pageViews = totalPageViews;
+                displayName = Bundle.DiscoveryKeyUtils_PageViewsGroupKey_displayName(Long.toString(pageViews));
             } else {
-                displayName = Bundle.DiscoveryKeyUtils_NumberOfVisitsGroupKey_noVisits();
-                visits = -1L;
+                displayName = Bundle.DiscoveryKeyUtils_PageViewsGroupKey_noVisits();
+                pageViews = -1L;
             }
         }
 
@@ -1257,12 +1303,12 @@ public class DiscoveryKeyUtils {
         }
 
         /**
-         * Get the number of visits this group is for.
+         * Get the number of page views this group is for.
          *
-         * @return The number of visits this group is for.
+         * @return The number of page views this group is for.
          */
-        Long getVisits() {
-            return visits;
+        Long getPageViews() {
+            return pageViews;
         }
 
         @Override
@@ -1271,19 +1317,19 @@ public class DiscoveryKeyUtils {
                 return true;
             }
 
-            if (!(otherKey instanceof NumberOfVisitsGroupKey)) {
+            if (!(otherKey instanceof PageViewsGroupKey)) {
                 return false;
             }
 
-            NumberOfVisitsGroupKey visitsKey = (NumberOfVisitsGroupKey) otherKey;
-            return visits.equals(visitsKey.getVisits());
+            PageViewsGroupKey pageViewsKey = (PageViewsGroupKey) otherKey;
+            return pageViews.equals(pageViewsKey.getPageViews());
         }
 
         @Override
         public int compareTo(GroupKey otherGroupKey) {
-            if (otherGroupKey instanceof NumberOfVisitsGroupKey) {
-                NumberOfVisitsGroupKey visitsKey = (NumberOfVisitsGroupKey) otherGroupKey;
-                return Long.compare(getVisits(), visitsKey.getVisits());
+            if (otherGroupKey instanceof PageViewsGroupKey) {
+                PageViewsGroupKey pageViewsKey = (PageViewsGroupKey) otherGroupKey;
+                return Long.compare(getPageViews(), pageViewsKey.getPageViews());
             } else {
                 return compareClassNames(otherGroupKey);
             }

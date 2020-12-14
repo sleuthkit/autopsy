@@ -484,7 +484,12 @@ public class Server {
         
         // This is our customized version of the Solr batch script to start/stop Solr.
         File solr8Folder = InstalledFileLocator.getDefault().locate("solr", Server.class.getPackage().getName(), false); //NON-NLS
-        Path solr8CmdPath = Paths.get(solr8Folder.getAbsolutePath(), "bin", "autopsy-solr.cmd"); //NON-NLS
+        Path solr8CmdPath;
+        if(PlatformUtil.isWindowsOS()){
+            solr8CmdPath = Paths.get(solr8Folder.getAbsolutePath(), "bin", "autopsy-solr.cmd"); //NON-NLS
+        } else {
+            solr8CmdPath = Paths.get(solr8Folder.getAbsolutePath(), "bin", "autopsy-solr"); //NON-NLS
+        }
         Path solr8Home = Paths.get(PlatformUtil.getUserDirectory().getAbsolutePath(), "solr"); //NON-NLS
 
         List<String> commandLine = new ArrayList<>();

@@ -63,7 +63,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  *
  */
 @SuppressWarnings("deprecation")
-final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewer.Waypoint {
+public final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewer.Waypoint {
 
     private static final Logger logger = Logger.getLogger(MapWaypoint.class.getName());
     private final static String HTML_PROP_FORMAT = "<b>%s: </b>%s<br>";
@@ -364,6 +364,13 @@ final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewe
      */
     Color getColor() {
         return getColor(dataModelWaypoint.getArtifact().getArtifactTypeID());
+    }
+
+    /**
+     * @return The timestamp associated with this map way point or null.
+     */
+    public Long getTimestamp() {
+        return dataModelWaypoint.getTimestamp();
     }
 
     /**

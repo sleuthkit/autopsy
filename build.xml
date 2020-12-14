@@ -364,6 +364,9 @@
                 <include name="*_linux"/>
                 <include name="*_macos"/>
             </fileset>
+	    <fileset dir="${cluster}/solr/bin" casesensitive="no" id="solr">
+		<include name="autopsy-solr"/>
+	    </fileset>
         </chmod>
     </target>
 </project>
