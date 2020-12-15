@@ -33,6 +33,7 @@ public class ResultDomain extends Result {
     private final Long totalPageViews;
     private final Long pageViewsInLast60;
     private final Long filesDownloaded;
+    private final Long countOfKnownAccountTypes;
 
     private final Content dataSource;
     private final long dataSourceId;
@@ -43,7 +44,7 @@ public class ResultDomain extends Result {
      * @param domain The domain the result is being created from.
      */
     ResultDomain(String domain, Long activityStart, Long activityEnd, Long totalPageViews,
-            Long pageViewsInLast60, Long filesDownloaded, Content dataSource) {
+            Long pageViewsInLast60, Long filesDownloaded, Long countOfKnownAccountTypes, Content dataSource) {
         this.domain = domain;
         this.dataSource = dataSource;
         this.dataSourceId = dataSource.getId();
@@ -52,6 +53,7 @@ public class ResultDomain extends Result {
         this.totalPageViews = totalPageViews;
         this.pageViewsInLast60 = pageViewsInLast60;
         this.filesDownloaded = filesDownloaded;
+        this.countOfKnownAccountTypes = countOfKnownAccountTypes;
     }
 
     /**
@@ -109,6 +111,15 @@ public class ResultDomain extends Result {
      */
     public Long getFilesDownloaded() {
         return filesDownloaded;
+    }
+    
+    /**
+     * Determines if the domain has been associated with a known account type
+     * (TSK_WEB_ACCOUNT_TYPE).
+     */
+    public boolean hasKnownAccountType() {
+        return countOfKnownAccountTypes != null 
+                && countOfKnownAccountTypes > 0;
     }
 
     @Override
