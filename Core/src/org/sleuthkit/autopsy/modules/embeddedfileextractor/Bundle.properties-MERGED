@@ -1,5 +1,6 @@
 CannotCreateOutputFolder=Unable to create output folder.
 CannotRunFileTypeDetection=Unable to run file type detection.
+EmbeddedFileExtractor_make_output_dir_err=Failed to create module output directory for Embedded File Extractor
 EmbeddedFileExtractorIngestModule.ArchiveExtractor.moduleDesc.text=Extracts embedded files (doc, docx, ppt, pptx, xls, xlsx, zip, rar, arj, 7z, gzip, bzip2, tar), schedules them for ingestion, and populates the directory tree with them.
 EmbeddedFileExtractorIngestModule.ArchiveExtractor.moduleName=Embedded File Extractor
 EmbeddedFileExtractorIngestModule.NoOpenCase.errMsg=No open case available.

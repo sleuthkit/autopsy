@@ -18,18 +18,9 @@
  */
 package org.sleuthkit.autopsy.modules.embeddedfileextractor;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.io.File;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import javax.imageio.spi.IIORegistry;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -39,9 +30,6 @@ import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import net.sf.sevenzipjbinding.SevenZipNativeInitializationException;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.threadutils.TaskRetryUtil;
-import org.sleuthkit.autopsy.threadutils.TaskRetryUtil.TaskAttempt;
 import org.sleuthkit.autopsy.ingest.FileIngestModuleAdapter;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.autopsy.modules.embeddedfileextractor.SevenZipExtractor.Archive;
@@ -59,11 +47,10 @@ import org.sleuthkit.autopsy.modules.embeddedfileextractor.SevenZipExtractor.Arc
 })
 public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAdapter {
 
-    private static final Logger logger = Logger.getLogger(EmbeddedFileExtractorIngestModule.class.getName());    
-    
     //Outer concurrent hashmap with keys of JobID, inner concurrentHashmap with keys of objectID
     private static final ConcurrentHashMap<Long, ConcurrentHashMap<Long, Archive>> mapOfDepthTrees = new ConcurrentHashMap<>();
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
+    private FileTaskExecutor fileIoTaskExecutor;
     private DocumentEmbeddedContentExtractor documentExtractor;
     private SevenZipExtractor archiveExtractor;
     private FileTypeDetector fileTypeDetector;
@@ -77,11 +64,29 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
     }
 
     @Override
+    @NbBundle.Messages({
+        "EmbeddedFileExtractor_make_output_dir_err=Failed to create module output directory for Embedded File Extractor"
+    })
     public void startUp(IngestJobContext context) throws IngestModuleException {
         jobId = context.getJobId();
 
         /*
-         * Construct absolute and relative paths to the output directory. The
+         * Construct a file type detector.
+         */
+        try {
+            fileTypeDetector = new FileTypeDetector();
+        } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
+            throw new IngestModuleException(Bundle.CannotRunFileTypeDetection(), ex);
+        }
+
+        /*
+         * Construct a file I/O tasks executor. See FileIoTaskExecutor class
+         * header docs for an explanation of the use of this object.
+         */
+        fileIoTaskExecutor = new FileTaskExecutor(context);
+
+        /*
+         * Construct relative and absolute paths to the output directory. The
          * output directory is a subdirectory of the ModuleOutput folder in the
          * case directory and is named for the module.
          *
@@ -96,76 +101,10 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
         final String moduleDirAbsolute = Paths.get(currentCase.getModuleDirectory(), EmbeddedFileExtractorModuleFactory.getModuleName()).toString();
 
         /*
-         * Do tasks that only need to be done by the first module instance for
-         * an ingest job.
-         */
-        if (refCounter.incrementAndGet(jobId) == 1) {
-            /*
-             * Create the output directory, if it was not already created for
-             * another job.
-             *
-             * RC NOTE: Retries are employed here due to observed issues with
-             * hangs for a certain type of network file system. The problem was
-             * that calls to File.exists() and File.mkdirs() were never
-             * returning and auto ingest nodes were getting stuck indefinitely
-             * (see Jira-6735). There is a severe downside to this approach,
-             * where attempts can be abandoned after a timeout: threads stuck in
-             * infinite loops (?) may accumulate. However, this was deemed
-             * better than having an auto ingest node hang for nineteen days, as
-             * in the Jira story.
-             */
-            Callable<Boolean> createOutptuDirTask = () -> {
-                File extractionDirectory = new File(moduleDirAbsolute);
-                if (extractionDirectory.exists()) {
-                    return Boolean.TRUE;
-                } else if (extractionDirectory.mkdirs()) {
-                    return Boolean.TRUE;                    
-                } else {
-                    return null;
-                }
-            };
-            List<TaskAttempt> attempts = new ArrayList<>(); // RJCTODO: Adjust
-            attempts.add(new TaskAttempt(0L, TimeUnit.SECONDS, 5L, TimeUnit.SECONDS));
-            attempts.add(new TaskAttempt(1L, TimeUnit.SECONDS, 5L, TimeUnit.SECONDS));
-            attempts.add(new TaskAttempt(1L, TimeUnit.SECONDS, 5L, TimeUnit.SECONDS));
-            ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(3, new ThreadFactoryBuilder().setNameFormat("").build()); // RJCTODO
-            try {
-                Boolean success = TaskRetryUtil.attemptTask(createOutptuDirTask, attempts, executor, logger, String.format("Creating %s if it does not exist", moduleDirAbsolute));
-                if (success == null) {
-                    throw new IngestModuleException(Bundle.CannotCreateOutputFolder());
-                }
-            } catch (InterruptedException ex) {
-                throw new IngestModuleException(Bundle.CannotCreateOutputFolder(), ex); // RJCTODO
-            } finally {
-                executor.shutdownNow();
-            }
-
-            /*
-             * Construct a hash map to keep track of depth in archives while
-             * processing archive files.
-             *
-             * RC: A ConcurrentHashMap is almost certainly the wrong data
-             * structure here. It is intended to efficiently provide snapshots
-             * to multiple threads. A thread may not see the current state. See
-             * Jira-7119.
-             */
-            mapOfDepthTrees.put(jobId, new ConcurrentHashMap<>());
-        }
-
-        /*
-         * Construct a file type detector.
-         */
-        try {
-            fileTypeDetector = new FileTypeDetector();
-        } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
-            throw new IngestModuleException(Bundle.CannotRunFileTypeDetection(), ex);
-        }
-
-        /*
          * Construct an archive file extractor that uses the 7Zip Java bindings.
          */
         try {
-            this.archiveExtractor = new SevenZipExtractor(context, fileTypeDetector, moduleDirRelative, moduleDirAbsolute);
+            this.archiveExtractor = new SevenZipExtractor(context, fileTypeDetector, moduleDirRelative, moduleDirAbsolute, fileIoTaskExecutor);
         } catch (SevenZipNativeInitializationException ex) {
             throw new IngestModuleException(Bundle.UnableToInitializeLibraries(), ex);
         }
@@ -180,27 +119,31 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
             throw new IngestModuleException(Bundle.EmbeddedFileExtractorIngestModule_UnableToGetMSOfficeExtractor_errMsg(), ex);
         }
 
-    }
-
-    /**
-     * Sorts all ImageIO SPI providers by their class name.
-     */
-    private <T> void sortPluginsInCategory(IIORegistry pluginRegistry, Class<T> category) {
-        Iterator<T> serviceProviderIter = pluginRegistry.getServiceProviders(category, false);
-        ArrayList<T> providers = new ArrayList<>();
-        while (serviceProviderIter.hasNext()) {
-            providers.add(serviceProviderIter.next());
-        }
-        Collections.sort(providers, (first, second) -> {
-            return first.getClass().getCanonicalName().compareToIgnoreCase(second.getClass().getCanonicalName());
-        });
-        for (int i = 0; i < providers.size() - 1; i++) {
-            for (int j = i + 1; j < providers.size(); j++) {
-                // The registry only accepts pairwise orderings. To guarantee a 
-                // total order, all pairs need to be exhausted.
-                pluginRegistry.setOrdering(category, providers.get(i),
-                        providers.get(j));
+        if (refCounter.incrementAndGet(jobId) == 1) {
+            /*
+             * Create the output directory, if it was not already created for
+             * another job.
+             */
+            try {
+                File extractionDirectory = new File(moduleDirAbsolute);
+                if (!fileIoTaskExecutor.exists(extractionDirectory)) {
+                    fileIoTaskExecutor.mkdirs(extractionDirectory);
+                }
+            } catch (FileTaskExecutor.FileTaskFailedException | InterruptedException ex) {
+                fileIoTaskExecutor.shutDown();
+                throw new IngestModuleException(Bundle.EmbeddedFileExtractor_make_output_dir_err(), ex);
             }
+
+            /*
+             * Construct a hash map to keep track of depth in archives while
+             * processing archive files.
+             *
+             * TODO (Jira-7119): A ConcurrentHashMap is almost certainly the
+             * wrong data structure here. It is intended to efficiently provide
+             * snapshots to multiple threads. A thread may not see the current
+             * state.
+             */
+            mapOfDepthTrees.put(jobId, new ConcurrentHashMap<>());
         }
     }
 
@@ -244,6 +187,7 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
     public void shutDown() {
         if (refCounter.decrementAndGet(jobId) == 0) {
             mapOfDepthTrees.remove(jobId);
+            fileIoTaskExecutor.shutDown();
         }
     }
 

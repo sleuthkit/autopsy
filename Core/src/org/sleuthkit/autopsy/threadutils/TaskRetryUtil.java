@@ -131,29 +131,49 @@ public class TaskRetryUtil {
     }
 
     /**
+     * A TaskTerminator can be supplied to the attemptTask() utility. The
+     * utility will query the RetryTerminator before starting each task attempt
+     */
+    public interface Terminator {
+
+        /**
+         * RJCTODO
+         *
+         * @return
+         */
+        boolean stopTaskAttempts();
+
+    }
+
+    /**
      * Attempts a task a specified number of times with a specified delay before
      * each attempt and an optional timeout for each attempt. If an attempt
-     * times out, the attempt will be cancelled and the next attempt, if any,
-     * will begin.
+     * times out, that particular attempt will be cancelled.
      *
-     * @param <T>      The return type of the task.
-     * @param task     The task.
-     * @param attempts The details of each attempt of the task.
-     * @param executor The scheduled task executor to be used to attempt the
-     *                 task.
-     * @param logger   A logger that will be used for info messages about each
-     *                 task and for error messages. Optional, may be null.
-     * @param taskDesc A description of the task for log messages. Optional, may
-     *                 be null.
+     * @param <T>        The return type of the task.
+     * @param task       The task.
+     * @param attempts   The details for each attempt of the task.
+     * @param executor   The scheduled task executor to be used to attempt the
+     *                   task.
+     * @param terminator A task terminator that can be used to stop the task
+     *                   attempts between attempts. Optional, may be null.
+     * @param logger     A logger that will be used to log info messages about
+     *                   each task attempt and for error messages. Optional, may
+     *                   be null.
+     * @param taskDesc   A description of the task for log messages. Optional,
+     *                   may be null.
      *
      * @return The task result if the task was completed, null otherwise.
      *
      * @throws InterruptedException
      */
-    public static <T> T attemptTask(Callable<T> task, List<TaskAttempt> attempts, ScheduledThreadPoolExecutor executor, Logger logger, String taskDesc) throws InterruptedException {
+    public static <T> T attemptTask(Callable<T> task, List<TaskAttempt> attempts, ScheduledThreadPoolExecutor executor, Terminator terminator, Logger logger, String taskDesc) throws InterruptedException {
         T result = null;
         int attemptCounter = 0;
         while (result == null && attemptCounter < attempts.size()) {
+            if (terminator != null && terminator.stopTaskAttempts()) {
+                break;
+            }
             TaskAttempt attempt = attempts.get(attemptCounter);
             if (logger != null) {
                 if (attempt.getTimeout() != null) {
