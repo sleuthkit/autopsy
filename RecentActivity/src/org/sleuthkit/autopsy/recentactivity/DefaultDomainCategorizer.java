@@ -103,7 +103,7 @@ public class DefaultDomainCategorizer implements DomainCategorizer {
             return;
         }
 
-        // gather the domainSuffix and parse into domain trie tokens
+        // determine the host
         String hostSuffix = csvItems[0];
         if (StringUtils.isBlank(hostSuffix)) {
             logger.log(Level.WARNING, String.format("Could not determine host suffix for this line: \"%s\" at line %d", line, lineNumber));
