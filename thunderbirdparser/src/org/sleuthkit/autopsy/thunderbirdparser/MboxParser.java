@@ -35,6 +35,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.apache.james.mime4j.dom.Message;
 import org.apache.james.mime4j.mboxiterator.CharBufferWrapper;
 import org.apache.james.mime4j.mboxiterator.MboxIterator;
@@ -42,6 +43,7 @@ import org.apache.tika.parser.txt.CharsetDetector;
 import org.apache.tika.parser.txt.CharsetMatch;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.openide.util.NbBundle;
+import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  * An Iterator for parsing mbox files. Wraps an instance of MBoxEmailIterator.
@@ -56,12 +58,25 @@ class MboxParser extends MimeJ4MessageParser implements Iterator<EmailMessage> {
         setLocalPath(localPath);
     }
 
-    static boolean isValidMimeTypeMbox(byte[] buffer) {
+    static boolean isValidMimeTypeMbox(byte[] buffer, AbstractFile abstractFile) {
         String mboxHeaderLine = new String(buffer);
         if (mboxHeaderLine.startsWith("From ")) {
-            String[] mboxLineValues = mboxHeaderLine.split(" ");
-            EmailValidator validator = EmailValidator.getInstance(true, true);
-            return validator.isValid(mboxLineValues[1]);
+            String mimeType = abstractFile.getMIMEType();
+        
+            // if it is not present, attempt to use the FileTypeDetector to determine
+            if (mimeType == null || mimeType.isEmpty()) {
+                FileTypeDetector fileTypeDetector = null;
+                try {
+                    fileTypeDetector = new FileTypeDetector();
+                } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
+                    logger.log(Level.WARNING, String.format("Unable to create file type detector for determining MIME type for file %s with id of %d", abstractFile.getName(), abstractFile.getId()));
+                    return false;
+                }
+                mimeType = fileTypeDetector.getMIMEType(abstractFile);
+            } 
+            if (mimeType.equalsIgnoreCase("application/mbox")) {
+                return true;
+            }
         }
         return false; //NON-NLS
     }
