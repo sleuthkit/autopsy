@@ -203,8 +203,8 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
             services.postMessage(msg);
             return ProcessResult.OK;
         }
-
-        try{
+        
+        try (PstParser parser = new PstParser(services)){
             try {
                 ContentUtils.writeToFile(abstractFile, file, context::fileIngestIsCancelled);
             } catch (IOException ex) {
@@ -212,9 +212,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
                 return ProcessResult.OK;
             }
 
-            PstParser parser = new PstParser(services);
             PstParser.ParseResult result = parser.open(file, abstractFile.getId());
-
 
             switch( result) {
                 case OK:
@@ -264,6 +262,8 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
                     logger.log(Level.INFO, "PSTParser failed to parse {0}", abstractFile.getName()); //NON-NLS
                     return ProcessResult.ERROR;
             }
+        } catch(Exception ex) {
+          logger.log(Level.WARNING, String.format("Failed to close temp pst file %s", file.getAbsolutePath()));
         } finally {
             file.delete();
         }
@@ -388,28 +388,30 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
     
     private void processMboxFile(File file, AbstractFile abstractFile, String emailFolder) {
             
-
-        MboxParser emailIterator = MboxParser.getEmailIterator( emailFolder, file, abstractFile.getId());
-        List<EmailMessage> emails = new ArrayList<>();
-        if(emailIterator != null) {
-            while(emailIterator.hasNext()) {
-                if (context.fileIngestIsCancelled()) {
-                    return;
+        try(MboxParser emailIterator = MboxParser.getEmailIterator( emailFolder, file, abstractFile.getId())) {
+            List<EmailMessage> emails = new ArrayList<>();
+            if(emailIterator != null) {
+                while(emailIterator.hasNext()) {
+                    if (context.fileIngestIsCancelled()) {
+                        return;
+                    }
+                    EmailMessage emailMessage = emailIterator.next();
+                    if(emailMessage != null) {
+                        emails.add(emailMessage);
+                    }
                 }
-                EmailMessage emailMessage = emailIterator.next();
-                if(emailMessage != null) {
-                    emails.add(emailMessage);
+
+                String errors = emailIterator.getErrors();
+                if (!errors.isEmpty()) {
+                    postErrorMessage(
+                            NbBundle.getMessage(this.getClass(), "ThunderbirdMboxFileIngestModule.processMBox.errProcFile.msg2",
+                                    abstractFile.getName()), errors);
                 }
             }
-
-            String errors = emailIterator.getErrors();
-            if (!errors.isEmpty()) {
-                postErrorMessage(
-                        NbBundle.getMessage(this.getClass(), "ThunderbirdMboxFileIngestModule.processMBox.errProcFile.msg2",
-                                abstractFile.getName()), errors);
-            }
+            processEmails(emails, MboxParser.getEmailIterator( emailFolder, file, abstractFile.getId()), abstractFile);
+        } catch(Exception ex) {
+            logger.log(Level.WARNING, String.format("Failed to close mbox temp file %s", file.getAbsolutePath()));
         }
-        processEmails(emails, MboxParser.getEmailIterator( emailFolder, file, abstractFile.getId()), abstractFile);
 
     }
     

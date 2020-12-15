@@ -50,7 +50,7 @@ import org.sleuthkit.datamodel.TskData;
 /**
  * Super class for email parsers that can use the james.mime4J.Message objects.
  */
-class MimeJ4MessageParser {
+class MimeJ4MessageParser implements AutoCloseable{
 
     private static final Logger logger = Logger.getLogger(MimeJ4MessageParser.class.getName());
 
@@ -369,5 +369,10 @@ class MimeJ4MessageParser {
      */
     private static String getAddresses(AddressList addressList) {
         return (addressList == null) ? "" : getAddresses(addressList.flatten());
+    }
+
+    @Override
+    public void close() throws Exception {
+        
     }
 }
