@@ -794,6 +794,55 @@ public class DiscoveryKeyUtils {
     }
     
     /**
+     * Group key representing a domain category (TSK_WEB_CATEGORY artifact).
+     */
+    static class DomainCategoryGroupKey extends GroupKey {
+        
+        private final String webCategory;
+        
+        DomainCategoryGroupKey(Result result) {
+            if (result instanceof ResultDomain) {
+                ResultDomain domain = (ResultDomain) result;
+                this.webCategory = domain.getWebCategory();
+            } else {
+                throw new IllegalArgumentException("Input result should be of type ResultDomain");
+            }
+        }
+
+        @Override
+        String getDisplayName() {
+            return this.webCategory;
+        }
+
+        @Override
+        public boolean equals(Object otherKey) {
+            if (otherKey instanceof GroupKey) {
+                return compareTo((GroupKey) otherKey) == 0;
+            }
+            return false;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(getWebCategory());
+        }
+
+        @Override
+        public int compareTo(GroupKey otherGroupKey) {
+            if (otherGroupKey instanceof DomainCategoryGroupKey) {
+                DomainCategoryGroupKey webCategoryKey = (DomainCategoryGroupKey) otherGroupKey;
+                return this.webCategory.compareTo(webCategoryKey.getWebCategory());
+            } else {
+                return compareClassNames(otherGroupKey);
+            }
+        }
+        
+        String getWebCategory() {
+            return this.webCategory;
+        }
+    }
+    
+    /**
      * Key representing a central repository notable status.
      */
     static class PreviouslyNotableGroupKey extends GroupKey {

@@ -13,6 +13,7 @@ DiscoveryAttributes.GroupingAttributeType.parent.displayName=Parent Folder
 DiscoveryAttributes.GroupingAttributeType.previouslyNotable.displayName=Previous Notability
 DiscoveryAttributes.GroupingAttributeType.size.displayName=File Size
 DiscoveryAttributes.GroupingAttributeType.tag.displayName=Tag
+DiscoveryAttributes.GroupingAttributeType.webCategory.displayName=Domain Category
 # {0} - Data source name
 # {1} - Data source ID
 DiscoveryKeyUtils.DataSourceGroupKey.datasourceAndID={0}(ID: {1})
@@ -54,6 +55,7 @@ FileSorter.SortingMethod.frequency.displayName=Central Repo Frequency
 FileSorter.SortingMethod.fullPath.displayName=Full Path
 FileSorter.SortingMethod.keywordlist.displayName=Keyword List Names
 FileSorter.SortingMethod.pageViews.displayName=Page Views
+ResultDomain_getDefaultCategory=Uncategorized
 ResultFile.score.interestingResult.description=At least one instance of the file has an interesting result associated with it.
 ResultFile.score.notableFile.description=At least one instance of the file was recognized as notable.
 ResultFile.score.notableTaggedFile.description=At least one instance of the file is tagged with a notable tag.
