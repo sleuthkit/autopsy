@@ -119,6 +119,7 @@ SearchFiltering.FrequencyFilter.or=,
 SearchFiltering.InterestingItemSetFilter.desc=Interesting item hits in set(s): {0}
 # {0} - filters
 SearchFiltering.KeywordListFilter.desc=Keywords in list(s): {0}
+SearchFiltering.KnownAccountTypeFilter.desc=Only domains with known account type
 # {0} - filters
 SearchFiltering.ObjectDetectionFilter.desc=Objects detected in set(s): {0}
 # {0} - filters
