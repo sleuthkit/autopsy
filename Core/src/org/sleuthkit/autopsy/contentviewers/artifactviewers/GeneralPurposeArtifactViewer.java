@@ -244,6 +244,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
     @NbBundle.Messages({"GeneralPurposeArtifactViewer.dates.created=Created",
         "GeneralPurposeArtifactViewer.dates.start=Start",
         "GeneralPurposeArtifactViewer.dates.end=End",
+        "GeneralPurposeArtifactViewer.dates.time=Time",
         "GeneralPurposeArtifactViewer.details.otherHeader=Other"})
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private void updateView(BlackboardArtifact artifact, Map<Integer, List<BlackboardAttribute>> attributeMap, String dataSourceName, String sourceFileName) {
@@ -271,7 +272,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
                 headerAdded = addDates(Bundle.GeneralPurposeArtifactViewer_dates_created(), attributeMap.remove(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID()), headerAdded);
                 headerAdded = addDates(Bundle.GeneralPurposeArtifactViewer_dates_start(), attributeMap.remove(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID()), headerAdded);
                 headerAdded = addDates(Bundle.GeneralPurposeArtifactViewer_dates_end(), attributeMap.remove(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID()), headerAdded);
-                addDates("", attributeMap.remove(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()), headerAdded);
+                addDates(Bundle.GeneralPurposeArtifactViewer_dates_time(), attributeMap.remove(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()), headerAdded);
             }
             addHeader(Bundle.GeneralPurposeArtifactViewer_details_otherHeader());
             for (int key : attributeMap.keySet()) {
