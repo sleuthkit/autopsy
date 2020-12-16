@@ -184,7 +184,14 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
         return new StringBuilder(UTF_16.decode(UTF_16.encode(s)));
     }
 
-    private static StringBuilder sanitize(String s) {
+    /**
+     * Wrapper method that performs UTF-8 string sanitization.
+     *
+     * @param s String to be sanitized.
+     *
+     * @return Sanitized string.
+     */
+    static StringBuilder sanitize(String s) {
         String normStr = Normalizer.normalize(s, Normalizer.Form.NFKC);
         return sanitizeToUTF8(replaceInvalidUTF16(normStr));
     }
