@@ -83,8 +83,8 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
          *
          */
         Case currentCase = Case.getCurrentCase();
-        final String moduleDirAbsolute = Paths.get(currentCase.getModuleDirectory(), EmbeddedFileExtractorModuleFactory.getModuleName()).toString();
-        final String moduleDirRelative = Paths.get(currentCase.getModuleOutputDirectoryRelativePath(), EmbeddedFileExtractorModuleFactory.getModuleName()).toString();
+        String moduleDirAbsolute = Paths.get(currentCase.getModuleDirectory(), EmbeddedFileExtractorModuleFactory.getModuleName()).toString();
+        String moduleDirRelative = Paths.get(currentCase.getModuleOutputDirectoryRelativePath(), EmbeddedFileExtractorModuleFactory.getModuleName()).toString();
 
         /*
          * Construct an executor that will be used for calling java.io.File
@@ -94,31 +94,7 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
          * FileTaskExecutor class header docs for more details.
          */
         fileTaskExecutor = new FileTaskExecutor(context);
-
-        try {
-            fileTypeDetector = new FileTypeDetector();
-        } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
-            throw new IngestModuleException(Bundle.CannotRunFileTypeDetection(), ex);
-        }
-
-        try {
-            archiveExtractor = new SevenZipExtractor(context, fileTypeDetector, moduleDirRelative, moduleDirAbsolute, fileTaskExecutor);
-        } catch (SevenZipNativeInitializationException ex) {
-            throw new IngestModuleException(Bundle.UnableToInitializeLibraries(), ex);
-        }
-
-        try {
-            documentExtractor = new DocumentEmbeddedContentExtractor(context, fileTypeDetector, moduleDirRelative, moduleDirAbsolute);
-        } catch (NoCurrentCaseException ex) {
-            fileTaskExecutor.shutDown();
-            /*
-             * Exception message is localized because these ingestmodule start
-             * up exceptions are displayed to the user when running with the RCP
-             * GUI.
-             */
-            throw new IngestModuleException(Bundle.EmbeddedFileExtractorIngestModule_UnableToGetMSOfficeExtractor_errMsg(), ex);
-        }
-
+        
         if (refCounter.incrementAndGet(jobId) == 1) {
             try {
                 File extractionDirectory = new File(moduleDirAbsolute);
@@ -146,6 +122,30 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
              */
             mapOfDepthTrees.put(jobId, new ConcurrentHashMap<>());
         }
+        
+        try {
+            fileTypeDetector = new FileTypeDetector();
+        } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
+            throw new IngestModuleException(Bundle.CannotRunFileTypeDetection(), ex);
+        }
+        
+        try {
+            archiveExtractor = new SevenZipExtractor(context, fileTypeDetector, moduleDirRelative, moduleDirAbsolute, fileTaskExecutor);
+        } catch (SevenZipNativeInitializationException ex) {
+            throw new IngestModuleException(Bundle.UnableToInitializeLibraries(), ex);
+        }
+
+        try {
+            documentExtractor = new DocumentEmbeddedContentExtractor(context, fileTypeDetector, moduleDirRelative, moduleDirAbsolute);
+        } catch (NoCurrentCaseException ex) {
+            fileTaskExecutor.shutDown();
+            /*
+             * Exception message is localized because these ingestmodule start
+             * up exceptions are displayed to the user when running with the RCP
+             * GUI.
+             */
+            throw new IngestModuleException(Bundle.EmbeddedFileExtractorIngestModule_UnableToGetMSOfficeExtractor_errMsg(), ex);
+        }        
     }
 
     @Override
