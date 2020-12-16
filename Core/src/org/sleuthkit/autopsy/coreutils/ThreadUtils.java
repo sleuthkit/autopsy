@@ -52,5 +52,4 @@ final public class ThreadUtils {
 
     private ThreadUtils() {
     }
-    
 }

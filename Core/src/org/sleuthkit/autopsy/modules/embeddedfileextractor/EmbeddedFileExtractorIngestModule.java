@@ -50,7 +50,7 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
     //Outer concurrent hashmap with keys of JobID, inner concurrentHashmap with keys of objectID
     private static final ConcurrentHashMap<Long, ConcurrentHashMap<Long, Archive>> mapOfDepthTrees = new ConcurrentHashMap<>();
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
-    private FileTaskExecutor fileIoTaskExecutor;
+    private FileTaskExecutor fileTaskExecutor;
     private DocumentEmbeddedContentExtractor documentExtractor;
     private SevenZipExtractor archiveExtractor;
     private FileTypeDetector fileTypeDetector;
@@ -71,66 +71,67 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
         jobId = context.getJobId();
 
         /*
-         * Construct a file type detector.
+         * Construct absolute and relative paths to the output directory. The
+         * output directory is a subdirectory of the ModuleOutput folder in the
+         * case directory and is named for the module.
+         *
+         * The absolute path is used to write the extracted (derived) files to
+         * local storage.
+         *
+         * The relative path is relative to the case folder, and will be used in
+         * the case database for extracted (derived) file paths.
+         *
          */
+        Case currentCase = Case.getCurrentCase();
+        final String moduleDirAbsolute = Paths.get(currentCase.getModuleDirectory(), EmbeddedFileExtractorModuleFactory.getModuleName()).toString();
+        final String moduleDirRelative = Paths.get(currentCase.getModuleOutputDirectoryRelativePath(), EmbeddedFileExtractorModuleFactory.getModuleName()).toString();
+
+        /*
+         * Construct an executor that will be used for calling java.io.File
+         * methods as tasks with retries. Retries are employed here due to
+         * observed issues with hangs when attempting these operations on case
+         * folders stored on a certain type of network file system. See the
+         * FileTaskExecutor class header docs for more details.
+         */
+        fileTaskExecutor = new FileTaskExecutor(context);
+
         try {
             fileTypeDetector = new FileTypeDetector();
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
             throw new IngestModuleException(Bundle.CannotRunFileTypeDetection(), ex);
         }
 
-        /*
-         * Construct a file I/O tasks executor. See FileIoTaskExecutor class
-         * header docs for an explanation of the use of this object.
-         */
-        fileIoTaskExecutor = new FileTaskExecutor(context);
-
-        /*
-         * Construct relative and absolute paths to the output directory. The
-         * output directory is a subdirectory of the ModuleOutput folder in the
-         * case directory and is named for the module.
-         *
-         * The relative path is relative to the case folder, and will be used in
-         * the case database for extracted (derived) file paths.
-         *
-         * The absolute path is used to write the extracted (derived) files to
-         * local storage.
-         */
-        Case currentCase = Case.getCurrentCase();
-        final String moduleDirRelative = Paths.get(currentCase.getModuleOutputDirectoryRelativePath(), EmbeddedFileExtractorModuleFactory.getModuleName()).toString();
-        final String moduleDirAbsolute = Paths.get(currentCase.getModuleDirectory(), EmbeddedFileExtractorModuleFactory.getModuleName()).toString();
-
-        /*
-         * Construct an archive file extractor that uses the 7Zip Java bindings.
-         */
         try {
-            this.archiveExtractor = new SevenZipExtractor(context, fileTypeDetector, moduleDirRelative, moduleDirAbsolute, fileIoTaskExecutor);
+            archiveExtractor = new SevenZipExtractor(context, fileTypeDetector, moduleDirRelative, moduleDirAbsolute, fileTaskExecutor);
         } catch (SevenZipNativeInitializationException ex) {
             throw new IngestModuleException(Bundle.UnableToInitializeLibraries(), ex);
         }
 
-        /*
-         * Construct an embedded content extractor for processing Microsoft
-         * Office documents and PDF documents.
-         */
         try {
-            this.documentExtractor = new DocumentEmbeddedContentExtractor(context, fileTypeDetector, moduleDirRelative, moduleDirAbsolute);
+            documentExtractor = new DocumentEmbeddedContentExtractor(context, fileTypeDetector, moduleDirRelative, moduleDirAbsolute);
         } catch (NoCurrentCaseException ex) {
+            fileTaskExecutor.shutDown();
+            /*
+             * Exception message is localized because these ingestmodule start
+             * up exceptions are displayed to the user when running with the RCP
+             * GUI.
+             */
             throw new IngestModuleException(Bundle.EmbeddedFileExtractorIngestModule_UnableToGetMSOfficeExtractor_errMsg(), ex);
         }
 
         if (refCounter.incrementAndGet(jobId) == 1) {
-            /*
-             * Create the output directory, if it was not already created for
-             * another job.
-             */
             try {
                 File extractionDirectory = new File(moduleDirAbsolute);
-                if (!fileIoTaskExecutor.exists(extractionDirectory)) {
-                    fileIoTaskExecutor.mkdirs(extractionDirectory);
+                if (!fileTaskExecutor.exists(extractionDirectory)) {
+                    fileTaskExecutor.mkdirs(extractionDirectory);
                 }
             } catch (FileTaskExecutor.FileTaskFailedException | InterruptedException ex) {
-                fileIoTaskExecutor.shutDown();
+                fileTaskExecutor.shutDown();
+                /*
+                 * Exception message is localized because these ingestmodule
+                 * start up exceptions are displayed to the user when running
+                 * with the RCP GUI.
+                 */
                 throw new IngestModuleException(Bundle.EmbeddedFileExtractor_make_output_dir_err(), ex);
             }
 
@@ -138,10 +139,10 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
              * Construct a hash map to keep track of depth in archives while
              * processing archive files.
              *
-             * TODO (Jira-7119): A ConcurrentHashMap is almost certainly the
-             * wrong data structure here. It is intended to efficiently provide
-             * snapshots to multiple threads. A thread may not see the current
-             * state.
+             * TODO (Jira-7119): A ConcurrentHashMap of ConcurrentHashMaps is
+             * almost certainly the wrong data structure here. ConcurrentHashMap
+             * is intended to efficiently provide snapshots to multiple threads.
+             * A thread may not see the current state.
              */
             mapOfDepthTrees.put(jobId, new ConcurrentHashMap<>());
         }
@@ -187,7 +188,7 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
     public void shutDown() {
         if (refCounter.decrementAndGet(jobId) == 0) {
             mapOfDepthTrees.remove(jobId);
-            fileIoTaskExecutor.shutDown();
+            fileTaskExecutor.shutDown();
         }
     }
 
