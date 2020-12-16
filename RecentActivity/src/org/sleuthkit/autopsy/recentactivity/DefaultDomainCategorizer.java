@@ -42,6 +42,7 @@ import org.sleuthkit.autopsy.url.analytics.DomainCategory;
  * CSV entries describing these domain types are compiled from sources. webmail:
  * https://github.com/mailcheck/mailcheck/wiki/List-of-Popular-Domains
  * disposable mail: https://www.npmjs.com/package/disposable-email-domains
+ * messaging: https://www.raymond.cc/blog/list-of-web-messengers-for-your-convenience/
  */
 public class DefaultDomainCategorizer implements DomainCategorizer {
 
