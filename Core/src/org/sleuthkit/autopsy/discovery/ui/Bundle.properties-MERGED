@@ -66,12 +66,16 @@ ImageThumbnailPanel.isDeleted.text=All instances of file are deleted.
 # {0} - otherInstanceCount
 ImageThumbnailPanel.nameLabel.more.text=\ and {0} more
 InterestingItemsFilterPanel.error.text=At least one interesting file set name must be selected.
+LoadingPanel.loading.text=Loading please wait.
+# {0} - resultInfo
+LoadingPanel.retrieving.text=Retrieving results for {0}.
 MiniTimelineArtifactListPanel.descriptionColumn.name=\ Description
 MiniTimelineArtifactListPanel.typeColumn.name=Result Type
 MiniTimelineArtifactListPanel.value.noValue=No value available.
 MiniTimelineDateListPanel.countColumn.name=Count
 MiniTimelineDateListPanel.dateColumn.name=Date
 MiniTimelineDateListPanel.value.noValue=No value available.
+MiniTimelinePanel.loadingPanel.details=the Mini Timeline view
 ObjectDetectedFilterPanel.error.text=At least one object type name must be selected.
 ParentFolderFilterPanel.error.text=At least one parent path must be entered.
 PastOccurrencesFilterPanel.error.text=At least one value in the past occurrence filter must be selected.

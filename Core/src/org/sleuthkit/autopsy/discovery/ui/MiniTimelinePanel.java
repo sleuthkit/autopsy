@@ -23,6 +23,7 @@ import java.util.logging.Level;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.contentviewers.artifactviewers.GeneralPurposeArtifactViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
@@ -32,7 +33,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 /**
  * Panel to display the entire mini timeline feature.
  */
-class MiniTimelinePanel extends javax.swing.JPanel {
+final class MiniTimelinePanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
 
@@ -43,13 +44,17 @@ class MiniTimelinePanel extends javax.swing.JPanel {
     private static final Logger logger = Logger.getLogger(MiniTimelinePanel.class.getName());
     private final ListSelectionListener artifactListener;
     private final ListSelectionListener dateListener;
+    private final LoadingPanel loadingPanel = new LoadingPanel(Bundle.MiniTimelinePanel_loadingPanel_details());
 
+    @NbBundle.Messages({"MiniTimelinePanel.loadingPanel.details=the Mini Timeline view"})
     /**
      * Creates new form MiniTimelinePanel.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     MiniTimelinePanel() {
         initComponents();
+        remove(mainSplitPane);
+        add(loadingPanel);
         artifactListPanel.addMouseListener(new ArtifactMenuMouseAdapter(artifactListPanel));
         artifactListener = new ListSelectionListener() {
             @Override
@@ -126,6 +131,8 @@ class MiniTimelinePanel extends javax.swing.JPanel {
     @Subscribe
     void handleMiniTimelineResultEvent(DiscoveryEventUtils.MiniTimelineResultEvent miniTimelineResultEvent) {
         SwingUtilities.invokeLater(() -> {
+            remove(loadingPanel);
+            add(mainSplitPane);
             dateListPanel.removeListSelectionListener(dateListener);
             artifactListPanel.removeSelectionListener(artifactListener);
             dateListPanel.addArtifacts(miniTimelineResultEvent.getResultList());
