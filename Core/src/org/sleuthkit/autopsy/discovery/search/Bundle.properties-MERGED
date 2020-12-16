@@ -5,13 +5,15 @@ DiscoveryAttributes.GroupingAttributeType.frequency.displayName=Past Occurrences
 DiscoveryAttributes.GroupingAttributeType.hash.displayName=Hash Set
 DiscoveryAttributes.GroupingAttributeType.interestingItem.displayName=Interesting Item
 DiscoveryAttributes.GroupingAttributeType.keywordList.displayName=Keyword
-DiscoveryAttributes.GroupingAttributeType.mostRecentDate.displayName=Most Recent Activity Date
+DiscoveryAttributes.GroupingAttributeType.lastDate.displayName=Last Activity Date
 DiscoveryAttributes.GroupingAttributeType.none.displayName=None
-DiscoveryAttributes.GroupingAttributeType.numberOfVisits.displayName=Number of Visits
 DiscoveryAttributes.GroupingAttributeType.object.displayName=Object Detected
+DiscoveryAttributes.GroupingAttributeType.pageViews.displayName=Page Views
 DiscoveryAttributes.GroupingAttributeType.parent.displayName=Parent Folder
+DiscoveryAttributes.GroupingAttributeType.previouslyNotable.displayName=Previous Notability
 DiscoveryAttributes.GroupingAttributeType.size.displayName=File Size
 DiscoveryAttributes.GroupingAttributeType.tag.displayName=Tag
+DiscoveryAttributes.GroupingAttributeType.webCategory.displayName=Domain Category
 # {0} - Data source name
 # {1} - Data source ID
 DiscoveryKeyUtils.DataSourceGroupKey.datasourceAndID={0}(ID: {1})
@@ -22,12 +24,12 @@ DiscoveryKeyUtils.FirstActivityDateGroupKey.noDate=No Date Available
 DiscoveryKeyUtils.HashHitsGroupKey.noHashHits=None
 DiscoveryKeyUtils.InterestingItemGroupKey.noSets=None
 DiscoveryKeyUtils.KeywordListGroupKey.noKeywords=None
-DiscoveryKeyUtils.MostRecentActivityDateGroupKey.noDate=No Date Available
+DiscoveryKeyUtils.LastActivityDateGroupKey.noDate=No Date Available
 DiscoveryKeyUtils.NoGroupingGroupKey.allFiles=All Files
-# {0} - totalVisits
-DiscoveryKeyUtils.NumberOfVisitsGroupKey.displayName={0} visits
-DiscoveryKeyUtils.NumberOfVisitsGroupKey.noVisits=No visits
 DiscoveryKeyUtils.ObjectDetectedGroupKey.noSets=None
+# {0} - totalVisits
+DiscoveryKeyUtils.PageViewsGroupKey.displayName={0} page views
+DiscoveryKeyUtils.PageViewsGroupKey.noVisits=No page views
 # {0} - domain
 # {1} - artifactType
 DomainSearchArtifactsRequest.toString.text=Domain: {0} ArtifactType: {1}
@@ -44,14 +46,18 @@ FileSearchFiltering.PreviouslyNotableFilter.desc=that were previously marked as 
 FileSearchFiltering.TagsFilter.desc=Tagged {0}
 FileSearchFiltering.TagsFilter.or=, 
 FileSearchFiltering.UserCreatedFilter.desc=that contain EXIF data
+FileSorter.SortingMethod.activity.displayName=Last Activity Date
 FileSorter.SortingMethod.datasource.displayName=Data Source
-FileSorter.SortingMethod.domain.displayName=Domain
+FileSorter.SortingMethod.domain.displayName=Domain Name
+FileSorter.SortingMethod.downloads.displayName=File Downloads
 FileSorter.SortingMethod.filename.displayName=File Name
 FileSorter.SortingMethod.filesize.displayName=File Size
 FileSorter.SortingMethod.filetype.displayName=File Type
 FileSorter.SortingMethod.frequency.displayName=Central Repo Frequency
 FileSorter.SortingMethod.fullPath.displayName=Full Path
 FileSorter.SortingMethod.keywordlist.displayName=Keyword List Names
+FileSorter.SortingMethod.pageViews.displayName=Page Views
+ResultDomain_getDefaultCategory=Uncategorized
 ResultFile.score.interestingResult.description=At least one instance of the file has an interesting result associated with it.
 ResultFile.score.notableFile.description=At least one instance of the file was recognized as notable.
 ResultFile.score.notableTaggedFile.description=At least one instance of the file is tagged with a notable tag.
@@ -87,6 +93,8 @@ SearchData.Frequency.rare.displayName=Rare (2-10)
 SearchData.Frequency.unique.displayName=Unique (1)
 SearchData.Frequency.unknown.displayName=Unknown
 SearchData.Frequency.verycommon.displayName=Very Common (100+)
+SearchData.notPrevNotable.displayName=Previously Not Notable
+SearchData.prevNotable.displayName=Previously Notable
 SearchData.Score.interesting.displayName=Interesting
 SearchData.Score.notable.displayName=Notable
 SearchData.Score.unknown.displayName=Unknown
@@ -115,6 +123,7 @@ SearchFiltering.FrequencyFilter.or=,
 SearchFiltering.InterestingItemSetFilter.desc=Interesting item hits in set(s): {0}
 # {0} - filters
 SearchFiltering.KeywordListFilter.desc=Keywords in list(s): {0}
+SearchFiltering.KnownAccountTypeFilter.desc=Only domains with known account type
 # {0} - filters
 SearchFiltering.ObjectDetectionFilter.desc=Objects detected in set(s): {0}
 # {0} - filters
@@ -128,6 +137,7 @@ SearchFiltering.ParentSearchTerm.excludeString=\ (exclude)
 SearchFiltering.ParentSearchTerm.fullString=\ (exact)
 SearchFiltering.ParentSearchTerm.includeString=\ (include)
 SearchFiltering.ParentSearchTerm.subString=\ (substring)
+SearchFiltering.PreviouslyNotableFilter.desc=Previously marked as notable in central repository
 # {0} - filters
 SearchFiltering.ScoreFilter.desc=Score(s) of : {0}
 # {0} - filters

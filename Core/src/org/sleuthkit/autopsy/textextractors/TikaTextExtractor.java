@@ -73,7 +73,9 @@ import org.xml.sax.helpers.DefaultHandler;
 import com.google.common.collect.ImmutableMap; 
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import org.apache.tika.parser.pdf.PDFParserConfig.OCR_STRATEGY;
+import org.sleuthkit.autopsy.coreutils.ExecUtil.HybridTerminator;
 
 /**
  * Extracts text from Tika supported content. Protects against Tika parser hangs
@@ -526,8 +528,9 @@ final class TikaTextExtractor implements TextExtractor {
      * @param context Instance containing config classes
      */
     @Override
-    public void setExtractionSettings(Lookup context) {
+    public void setExtractionSettings(Lookup context) {    
         if (context != null) {
+            List<ProcessTerminator> terminators = new ArrayList<>();
             ImageConfig configInstance = context.lookup(ImageConfig.class);
             if (configInstance != null) {
                 if (Objects.nonNull(configInstance.getOCREnabled())) {
@@ -537,11 +540,17 @@ final class TikaTextExtractor implements TextExtractor {
                 if (Objects.nonNull(configInstance.getOCRLanguages())) {
                     this.languagePacks = formatLanguagePacks(configInstance.getOCRLanguages());
                 }
+                
+                terminators.add(configInstance.getOCRTimeoutTerminator());
             }
 
             ProcessTerminator terminatorInstance = context.lookup(ProcessTerminator.class);
             if (terminatorInstance != null) {
-                this.processTerminator = terminatorInstance;
+                terminators.add(terminatorInstance);
+            }
+            
+            if(!terminators.isEmpty()) {
+                this.processTerminator = new HybridTerminator(terminators);
             }
         }
     }

@@ -45,9 +45,11 @@ import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
+import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.discovery.ui.AbstractArtifactDetailsPanel;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.TimeUtilities;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -152,7 +154,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
             } catch (TskCoreException ex) {
                 logger.log(Level.WARNING, "Unable to get attributes for artifact " + artifact.getArtifactID(), ex);
             }
-            updateView(artifact.getArtifactTypeID(), attributeMap, dataSourceName, sourceFileName);
+            updateView(artifact, attributeMap, dataSourceName, sourceFileName);
         }
         revalidate();
         repaint();
@@ -244,7 +246,8 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
         "GeneralPurposeArtifactViewer.dates.end=End",
         "GeneralPurposeArtifactViewer.details.otherHeader=Other"})
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    private void updateView(Integer artifactTypeId, Map<Integer, List<BlackboardAttribute>> attributeMap, String dataSourceName, String sourceFileName) {
+    private void updateView(BlackboardArtifact artifact, Map<Integer, List<BlackboardAttribute>> attributeMap, String dataSourceName, String sourceFileName) {
+        final Integer artifactTypeId = artifact.getArtifactTypeID();
         if (!(artifactTypeId < 1 || artifactTypeId >= Integer.MAX_VALUE)) {
             addDetailsHeader(artifactTypeId);
             Integer[] orderingArray = orderingMap.get(artifactTypeId);
@@ -255,7 +258,11 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
                 List<BlackboardAttribute> attrList = attributeMap.remove(attrId);
                 if (attrList != null) {
                     for (BlackboardAttribute bba : attrList) {
-                        addNameValueRow(bba.getAttributeType().getDisplayName(), bba.getDisplayString());
+                        if (bba.getAttributeType().getTypeName().startsWith("TSK_DATETIME")) {
+                            addNameValueRow(bba.getAttributeType().getDisplayName(), TimeUtilities.epochToTime(bba.getValueLong(), ContentUtils.getTimeZone(artifact)));
+                        } else {
+                            addNameValueRow(bba.getAttributeType().getDisplayName(), bba.getDisplayString());
+                        }
                     }
                 }
             }
@@ -269,7 +276,11 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
             addHeader(Bundle.GeneralPurposeArtifactViewer_details_otherHeader());
             for (int key : attributeMap.keySet()) {
                 for (BlackboardAttribute bba : attributeMap.get(key)) {
-                    addNameValueRow(bba.getAttributeType().getDisplayName(), bba.getDisplayString());
+                    if (bba.getAttributeType().getTypeName().startsWith("TSK_DATETIME")) {
+                        addNameValueRow(bba.getAttributeType().getDisplayName(), TimeUtilities.epochToTime(bba.getValueLong(), ContentUtils.getTimeZone(artifact)));
+                    } else {
+                        addNameValueRow(bba.getAttributeType().getDisplayName(), bba.getDisplayString());
+                    }
                 }
             }
             addHeader(Bundle.GeneralPurposeArtifactViewer_details_sourceHeader());

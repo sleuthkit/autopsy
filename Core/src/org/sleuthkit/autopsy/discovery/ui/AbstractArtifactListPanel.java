@@ -62,6 +62,16 @@ abstract class AbstractArtifactListPanel extends JPanel {
     abstract BlackboardArtifact getSelectedArtifact();
 
     /**
+     * Select the row at the specified point.
+     *
+     * @param point The point which if a row exists it should be selected.
+     *
+     * @return True if a row was selected, false if no row was selected.
+     */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    abstract boolean selectAtPoint(Point point);
+
+    /**
      * Add the specified list of artifacts to the list of artifacts which should
      * be displayed.
      *

@@ -93,6 +93,18 @@ class MiniTimelineArtifactListPanel extends AbstractArtifactListPanel {
     }
 
     @Override
+    boolean selectAtPoint(Point point) {
+        boolean pointSelected = false;
+        int row = artifactsTable.rowAtPoint(point);
+        artifactsTable.clearSelection();
+        if (row < artifactsTable.getRowCount() && row >= 0) {
+            artifactsTable.addRowSelectionInterval(row, row);
+            pointSelected = true;
+        }
+        return pointSelected;
+    }
+
+    @Override
     BlackboardArtifact getSelectedArtifact() {
         int selectedIndex = artifactsTable.getSelectionModel().getLeadSelectionIndex();
         if (selectedIndex < artifactsTable.getSelectionModel().getMinSelectionIndex()
