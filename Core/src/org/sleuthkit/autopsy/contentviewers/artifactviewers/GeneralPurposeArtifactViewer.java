@@ -266,13 +266,11 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
                             } else {
                                 addNameValueRow(bba.getAttributeType().getDisplayName(), TimeUtilities.epochToTime(bba.getValueLong(), ContentUtils.getTimeZone(artifact)));
                             }
-
+                        } else if (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getTypeID() && bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT.getTypeID()) {
+                            addNameValueRow(Bundle.GeneralPurposeArtifactViewer_term_label(), bba.getDisplayString());
                         } else {
-                            if (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getTypeID() && bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT.getTypeID()) {
-                                addNameValueRow(Bundle.GeneralPurposeArtifactViewer_term_label(), bba.getDisplayString());
-                            } else {
-                                addNameValueRow(bba.getAttributeType().getDisplayName(), bba.getDisplayString());
-                            }
+                            addNameValueRow(bba.getAttributeType().getDisplayName(), bba.getDisplayString());
+
                         }
                     }
                 }
