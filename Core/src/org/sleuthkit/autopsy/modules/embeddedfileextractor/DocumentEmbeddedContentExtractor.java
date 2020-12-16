@@ -123,7 +123,7 @@ class DocumentEmbeddedContentExtractor {
 
     DocumentEmbeddedContentExtractor(IngestJobContext context, FileTypeDetector fileTypeDetector, String moduleDirRelative, String moduleDirAbsolute) throws NoCurrentCaseException {
 
-        this.fileManager = Case.getCurrentCaseThrows().getServices().getFileManager();
+        this.fileManager = Case.getCurrentCase().getServices().getFileManager();
         this.services = IngestServices.getInstance();
         this.context = context;
         this.fileTypeDetector = fileTypeDetector;

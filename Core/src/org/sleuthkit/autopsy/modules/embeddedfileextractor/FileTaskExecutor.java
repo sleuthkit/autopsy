@@ -50,10 +50,12 @@ import org.sleuthkit.autopsy.threadutils.TaskRetryUtil;
 class FileTaskExecutor {
 
     private static final Logger logger = Logger.getLogger(FileTaskExecutor.class.getName());
+    private static final int MIN_THREADS_IN_POOL = 4;
+    private static final int MAX_THREADS_IN_POOL = Integer.MAX_VALUE;
+    private static final String FILE_IO_TASK_THREAD_NAME = "file-io-executor-task-%d";
     private static final String FILE_EXISTS_TASK_DESC_FMT_STR = "Checking if %s already exists";
     private static final String MKDIRS_TASK_DESC_FMT_STR = "Making directory %s";
     private static final String NEW_FILE_TASK_DESC_FMT_STR = "Creating new file %s";
-    private static final String FILE_IO_TASK_THREAD_NAME = "file-io-executor-task-%d";
     private final ScheduledThreadPoolExecutor executor;
     private final TaskTerminator terminator;
 
@@ -81,7 +83,8 @@ class FileTaskExecutor {
      *                be null.
      */
     FileTaskExecutor(IngestJobContext context) {
-        executor = new ScheduledThreadPoolExecutor(3, new ThreadFactoryBuilder().setNameFormat(FILE_IO_TASK_THREAD_NAME).build());
+        executor = new ScheduledThreadPoolExecutor(MIN_THREADS_IN_POOL, new ThreadFactoryBuilder().setNameFormat(FILE_IO_TASK_THREAD_NAME).build());
+        executor.setMaximumPoolSize(MAX_THREADS_IN_POOL);
         if (context != null) {
             terminator = new TaskTerminator(context);
         } else {

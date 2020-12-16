@@ -90,7 +90,7 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
          * Construct an executor that will be used for calling java.io.File
          * methods as tasks with retries. Retries are employed here due to
          * observed issues with hangs when attempting these operations on case
-         * folders stored on a certain type of network file system. See the
+         * directories stored on a certain type of network file system. See the
          * FileTaskExecutor class header docs for more details.
          */
         fileTaskExecutor = new FileTaskExecutor(context);
