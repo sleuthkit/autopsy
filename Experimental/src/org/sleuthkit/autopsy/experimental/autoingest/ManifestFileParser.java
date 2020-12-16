@@ -72,16 +72,25 @@ public interface ManifestFileParser {
      * @throws IOException
      */
     static Path makeTidyManifestFile(Path filePath) throws IOException {
-        File tempFile = File.createTempFile("mani", "tdy", filePath.getParent().toFile());
+        File tempFile = null;
+        try{
+            tempFile = File.createTempFile("mani", "tdy", filePath.getParent().toFile());
 
-        try (FileInputStream br = new FileInputStream(filePath.toFile()); FileOutputStream out = new FileOutputStream(tempFile);) {
-            Tidy tidy = new Tidy();
-            tidy.setXmlOut(true);
-            tidy.setXmlTags(true);
-            tidy.parseDOM(br, out);
+            try (FileInputStream br = new FileInputStream(filePath.toFile()); FileOutputStream out = new FileOutputStream(tempFile);) {
+                Tidy tidy = new Tidy();
+                tidy.setXmlOut(true);
+                tidy.setXmlTags(true);
+                tidy.parseDOM(br, out);
+            }
+
+            return Paths.get(tempFile.toString());
+        } catch(IOException ex) {
+            // If there is an exception delete the temp file.
+            if(tempFile != null && tempFile.exists()) {
+                tempFile.delete();
+            }
+            throw ex;
         }
-        
-        return Paths.get(tempFile.toString());
     }
     
         /**
