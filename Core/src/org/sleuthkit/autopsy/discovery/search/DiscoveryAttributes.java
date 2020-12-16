@@ -760,13 +760,13 @@ public class DiscoveryAttributes {
     }
 
     /**
-     * Attribute for grouping/sorting by date of most recent activity.
+     * Attribute for grouping/sorting by date of last activity.
      */
-    static class MostRecentActivityDateAttribute extends AttributeType {
+    static class LastActivityDateAttribute extends AttributeType {
 
         @Override
         public DiscoveryKeyUtils.GroupKey getGroupKey(Result result) {
-            return new DiscoveryKeyUtils.MostRecentActivityDateGroupKey(result);
+            return new DiscoveryKeyUtils.LastActivityDateGroupKey(result);
         }
 
     }
@@ -917,7 +917,7 @@ public class DiscoveryAttributes {
         "DiscoveryAttributes.GroupingAttributeType.interestingItem.displayName=Interesting Item",
         "DiscoveryAttributes.GroupingAttributeType.tag.displayName=Tag",
         "DiscoveryAttributes.GroupingAttributeType.object.displayName=Object Detected",
-        "DiscoveryAttributes.GroupingAttributeType.mostRecentDate.displayName=Most Recent Activity Date",
+        "DiscoveryAttributes.GroupingAttributeType.lastDate.displayName=Last Activity Date",
         "DiscoveryAttributes.GroupingAttributeType.firstDate.displayName=First Activity Date",
         "DiscoveryAttributes.GroupingAttributeType.pageViews.displayName=Page Views",
         "DiscoveryAttributes.GroupingAttributeType.none.displayName=None",
@@ -933,8 +933,8 @@ public class DiscoveryAttributes {
         INTERESTING_ITEM_SET(new InterestingItemAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_interestingItem_displayName()),
         FILE_TAG(new FileTagAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_tag_displayName()),
         OBJECT_DETECTED(new ObjectDetectedAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_object_displayName()),
-        MOST_RECENT_DATE(new MostRecentActivityDateAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_mostRecentDate_displayName()),
-        FIRST_DATE(new FirstActivityDateAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_firstDate_displayName()),
+        LAST_ACTIVITY_DATE(new LastActivityDateAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_lastDate_displayName()),
+        FIRST_ACTIVITY_DATE(new FirstActivityDateAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_firstDate_displayName()),
         PAGE_VIEWS(new PageViewsAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_pageViews_displayName()),
         NO_GROUPING(new NoGroupingAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_none_displayName()),
         PREVIOUSLY_NOTABLE(new PreviouslyNotableAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_previouslyNotable_displayName()),
@@ -986,9 +986,9 @@ public class DiscoveryAttributes {
          */
         public static List<GroupingAttributeType> getOptionsForGroupingForDomains() {
             if (CentralRepository.isEnabled()) {
-                return Arrays.asList(FREQUENCY, MOST_RECENT_DATE, FIRST_DATE, PAGE_VIEWS, PREVIOUSLY_NOTABLE, DOMAIN_CATEGORY);
+                return Arrays.asList(FREQUENCY, LAST_ACTIVITY_DATE, FIRST_ACTIVITY_DATE, PAGE_VIEWS, PREVIOUSLY_NOTABLE, DOMAIN_CATEGORY);
             } else {
-                return Arrays.asList(MOST_RECENT_DATE, FIRST_DATE, PAGE_VIEWS, DOMAIN_CATEGORY);
+                return Arrays.asList(LAST_ACTIVITY_DATE, FIRST_ACTIVITY_DATE, PAGE_VIEWS, DOMAIN_CATEGORY);
             }
         }
     }
