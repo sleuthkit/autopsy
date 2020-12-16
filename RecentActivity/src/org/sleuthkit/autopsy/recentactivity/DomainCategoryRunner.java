@@ -80,7 +80,6 @@ class DomainCategoryRunner extends Extract {
 
     private static int DATETIME_ACCESSED_TYPEID = ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID();
     private static int URL_TYPEID = ATTRIBUTE_TYPE.TSK_URL.getTypeID();
-    private static int PROG_NAME_TYPEID = ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID();
 
     private static final Logger logger = Logger.getLogger(DomainCategoryRunner.class.getName());
 
@@ -132,7 +131,7 @@ class DomainCategoryRunner extends Extract {
                     .stream()
                     .collect(Collectors.toMap(attr -> attr.getAttributeType().getTypeID(), attr -> attr, (attr1, attr2) -> attr1));
 
-            attrMapB = a.getAttributes()
+            attrMapB = b.getAttributes()
                     .stream()
                     .collect(Collectors.toMap(attr -> attr.getAttributeType().getTypeID(), attr -> attr, (attr1, attr2) -> attr1));
 
@@ -144,13 +143,8 @@ class DomainCategoryRunner extends Extract {
         // sort first on time
         int timeCompare = Long.compare(getTimeOrZero(attrMapA, DATETIME_ACCESSED_TYPEID), getTimeOrZero(attrMapB, DATETIME_ACCESSED_TYPEID));
         if (timeCompare != 0) {
-            return timeCompare;
-        }
-
-        // sort next on program that generated the artifact
-        int progNameCompare = getStringOrEmpty(attrMapA, PROG_NAME_TYPEID).compareToIgnoreCase(getStringOrEmpty(attrMapB, PROG_NAME_TYPEID));
-        if (progNameCompare != 0) {
-            return progNameCompare;
+            // negate to push latest times to the front
+            return -timeCompare;
         }
 
         // sort next on url
