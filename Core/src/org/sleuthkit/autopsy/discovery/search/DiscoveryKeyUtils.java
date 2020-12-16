@@ -29,6 +29,7 @@ import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.discovery.search.SearchData.PageViews;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -1316,28 +1317,23 @@ public class DiscoveryKeyUtils {
     static class PageViewsGroupKey extends GroupKey {
 
         private final String displayName;
-        private final Long pageViews;
+        private final PageViews pageViews;
 
         /**
          * Construct a new NumberOfVisitsGroupKey.
          *
          * @param result The Result to create the group key for.
          */
-        @NbBundle.Messages({
-            "# {0} - totalVisits",
-            "DiscoveryKeyUtils.PageViewsGroupKey.displayName={0} page views",
-            "DiscoveryKeyUtils.PageViewsGroupKey.noVisits=No page views"})
         PageViewsGroupKey(Result result) {
             if (result instanceof ResultDomain) {
                 Long totalPageViews = ((ResultDomain) result).getTotalPageViews();
                 if (totalPageViews == null) {
                     totalPageViews = 0L;
                 }
-                pageViews = totalPageViews;
-                displayName = Bundle.DiscoveryKeyUtils_PageViewsGroupKey_displayName(Long.toString(pageViews));
+                pageViews = PageViews.fromPageViewCount(totalPageViews);
+                displayName = pageViews.toString();
             } else {
-                displayName = Bundle.DiscoveryKeyUtils_PageViewsGroupKey_noVisits();
-                pageViews = -1L;
+                throw new IllegalArgumentException("Expected a domain instance only.");
             }
         }
 
@@ -1356,7 +1352,7 @@ public class DiscoveryKeyUtils {
          *
          * @return The number of page views this group is for.
          */
-        Long getPageViews() {
+        PageViews getPageViews() {
             return pageViews;
         }
 
@@ -1378,7 +1374,7 @@ public class DiscoveryKeyUtils {
         public int compareTo(GroupKey otherGroupKey) {
             if (otherGroupKey instanceof PageViewsGroupKey) {
                 PageViewsGroupKey pageViewsKey = (PageViewsGroupKey) otherGroupKey;
-                return Long.compare(getPageViews(), pageViewsKey.getPageViews());
+                return getPageViews().compareTo(pageViewsKey.getPageViews());
             } else {
                 return compareClassNames(otherGroupKey);
             }

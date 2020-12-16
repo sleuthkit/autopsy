@@ -67,6 +67,52 @@ public final class SearchData {
             return displayName;
         }
     }
+    
+    @NbBundle.Messages({
+        "# {0} - minValue",
+        "# {1} - maxValue",
+        "SearchData.PageViews.rangeTemplate={0}-{1} page views",
+        "SearchData.PageViews.over1000=1000+ page views"
+    })
+    public enum PageViews {
+        OVER_1000(1001, Long.MAX_VALUE), // ranking, minValue, maxValue
+        UP_TO_1000(501, 1000),
+        UP_TO_500(101, 500),
+        UP_TO_100(51, 100),
+        UP_TO_50(11, 50),
+        UP_TO_10(0, 10);
+        
+        private final long minValue;
+        private final long maxValue;
+        
+        PageViews(long minValue, long maxValue) {
+            this.maxValue = maxValue;
+            this.minValue = minValue;
+        }
+        
+        @Override
+        public String toString() {
+            if (this == PageViews.OVER_1000) {
+                return Bundle.SearchData_PageViews_over1000();
+            } else {
+                return Bundle.SearchData_PageViews_rangeTemplate(Long.toString(minValue), Long.toString(maxValue));
+            }
+        }
+        
+        boolean covers(long count) {
+            return count >= minValue && count <= maxValue;
+        }
+        
+        public static PageViews fromPageViewCount(long count) {
+            for (PageViews view : PageViews.values()) {
+                if (view.covers(count)) {
+                    return view;
+                }
+            }
+            return null;
+        }
+    }
+    
     /**
      * Enum representing how often the result occurs in the Central Repository.
      */

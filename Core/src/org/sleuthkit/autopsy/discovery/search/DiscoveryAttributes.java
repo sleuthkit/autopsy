@@ -986,9 +986,9 @@ public class DiscoveryAttributes {
          */
         public static List<GroupingAttributeType> getOptionsForGroupingForDomains() {
             if (CentralRepository.isEnabled()) {
-                return Arrays.asList(FREQUENCY, MOST_RECENT_DATE, FIRST_DATE, PAGE_VIEWS, PREVIOUSLY_NOTABLE, DOMAIN_CATEGORY);
+                return Arrays.asList(PAGE_VIEWS, FREQUENCY, MOST_RECENT_DATE, FIRST_DATE, PREVIOUSLY_NOTABLE, DOMAIN_CATEGORY);
             } else {
-                return Arrays.asList(MOST_RECENT_DATE, FIRST_DATE, PAGE_VIEWS, DOMAIN_CATEGORY);
+                return Arrays.asList(PAGE_VIEWS, MOST_RECENT_DATE, FIRST_DATE, DOMAIN_CATEGORY);
             }
         }
     }

@@ -27,9 +27,6 @@ DiscoveryKeyUtils.KeywordListGroupKey.noKeywords=None
 DiscoveryKeyUtils.MostRecentActivityDateGroupKey.noDate=No Date Available
 DiscoveryKeyUtils.NoGroupingGroupKey.allFiles=All Files
 DiscoveryKeyUtils.ObjectDetectedGroupKey.noSets=None
-# {0} - totalVisits
-DiscoveryKeyUtils.PageViewsGroupKey.displayName={0} page views
-DiscoveryKeyUtils.PageViewsGroupKey.noVisits=No page views
 # {0} - domain
 # {1} - artifactType
 DomainSearchArtifactsRequest.toString.text=Domain: {0} ArtifactType: {1}
@@ -92,6 +89,10 @@ SearchData.Frequency.unique.displayName=Unique (1)
 SearchData.Frequency.unknown.displayName=Unknown
 SearchData.Frequency.verycommon.displayName=Very Common (100+)
 SearchData.notPrevNotable.displayName=Previously Not Notable
+SearchData.PageViews.over1000=1000+ page views
+# {0} - minValue
+# {1} - maxValue
+SearchData.PageViews.rangeTemplate={0}-{1} page views
 SearchData.prevNotable.displayName=Previously Notable
 SearchData.Score.interesting.displayName=Interesting
 SearchData.Score.notable.displayName=Notable
