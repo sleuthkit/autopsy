@@ -293,7 +293,7 @@ class DomainCategoryRunner extends Extract {
                 // if we reached this point, we are at least analyzing this item
                 artifactsAnalyzed++;
 
-                // attempt to get the domain type for the host using the suffix trie
+                // attempt to get the domain type for the host using the domain categorizers found
                 DomainCategory domainEntryFound = findCategory(curArtHost.getDomain(), curArtHost.getHost());
                 if (domainEntryFound == null) {
                     continue;
@@ -357,8 +357,12 @@ class DomainCategoryRunner extends Extract {
     @Override
     void configExtractor() throws IngestModule.IngestModuleException {
         // lookup all providers, filter null providers, and sort providers
-        List<DomainCategorizer> foundProviders
-                = Lookup.getDefault().lookupAll(DomainCategorizer.class).stream()
+        Collection<? extends DomainCategorizer> lookupList = Lookup.getDefault().lookupAll(DomainCategorizer.class);
+        if (lookupList == null) {
+            lookupList = Collections.emptyList();
+        }
+        
+        List<DomainCategorizer> foundProviders = lookupList.stream()
                         .filter(provider -> provider != null)
                         .sorted((a, b) -> a.getClass().getName().compareToIgnoreCase(b.getClass().getName()))
                         .collect(Collectors.toList());
@@ -374,9 +378,7 @@ class DomainCategoryRunner extends Extract {
             }
         }
 
-        this.domainProviders = foundProviders == null
-                ? Collections.emptyList()
-                : foundProviders;
+        this.domainProviders = foundProviders;
     }
 
     @Override
