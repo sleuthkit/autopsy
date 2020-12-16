@@ -20,11 +20,7 @@
         <ivy:retrieve conf="experimental"  pattern="${basedir}/release/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />   
     </target>
     
-    <target name="get-thirdparty-dependencies">
-        
-    </target>
-
-    <target name="retrieve-all" depends="resolve, get-thirdparty-dependencies">
+    <target name="retrieve-all" depends="resolve">
         <ivy:retrieve conf="*"  pattern="${basedir}/release/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />   
     </target>
     
