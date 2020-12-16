@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.discovery.search;
 
+import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -34,6 +35,7 @@ public class ResultDomain extends Result {
     private final Long pageViewsInLast60;
     private final Long filesDownloaded;
     private final Long countOfKnownAccountTypes;
+    private String webCategory;
 
     private final Content dataSource;
     private final long dataSourceId;
@@ -111,6 +113,27 @@ public class ResultDomain extends Result {
      */
     public Long getFilesDownloaded() {
         return filesDownloaded;
+    }
+    
+    /**
+     * Get the web category (TSK_WEB_CATEGORY) type for this domain.
+     */
+    @NbBundle.Messages({
+        "ResultDomain_getDefaultCategory=Uncategorized"
+    })
+    public String getWebCategory() {
+        if (webCategory == null) {
+            return Bundle.ResultDomain_getDefaultCategory();
+        } else {
+            return webCategory;
+        }
+    }
+    
+    /**
+     * Set the web category for this domain (derived from TSK_WEB_CATEGORY) artifacts.
+     */
+    public void setWebCategory(String webCategory) {
+        this.webCategory = webCategory;
     }
     
     /**
