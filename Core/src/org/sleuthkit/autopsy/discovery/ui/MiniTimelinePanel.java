@@ -53,7 +53,6 @@ final class MiniTimelinePanel extends javax.swing.JPanel {
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     MiniTimelinePanel() {
         initComponents();
-        remove(mainSplitPane);
         add(loadingPanel);
         artifactListPanel.addMouseListener(new ArtifactMenuMouseAdapter(artifactListPanel));
         artifactListener = new ListSelectionListener() {
@@ -131,8 +130,6 @@ final class MiniTimelinePanel extends javax.swing.JPanel {
     @Subscribe
     void handleMiniTimelineResultEvent(DiscoveryEventUtils.MiniTimelineResultEvent miniTimelineResultEvent) {
         SwingUtilities.invokeLater(() -> {
-            remove(loadingPanel);
-            add(mainSplitPane);
             dateListPanel.removeListSelectionListener(dateListener);
             artifactListPanel.removeSelectionListener(artifactListener);
             dateListPanel.addArtifacts(miniTimelineResultEvent.getResultList());
@@ -141,6 +138,8 @@ final class MiniTimelinePanel extends javax.swing.JPanel {
             dateListPanel.addSelectionListener(dateListener);
             artifactListPanel.addSelectionListener(artifactListener);
             dateListPanel.selectFirst();
+            remove(loadingPanel);
+            add(mainSplitPane);
             revalidate();
             repaint();
             try {
@@ -164,10 +163,6 @@ final class MiniTimelinePanel extends javax.swing.JPanel {
         mainSplitPane = new javax.swing.JSplitPane();
         leftSplitPane = new javax.swing.JSplitPane();
 
-        setMinimumSize(new java.awt.Dimension(0, 0));
-        setPreferredSize(new java.awt.Dimension(0, 0));
-        setLayout(new java.awt.BorderLayout());
-
         mainSplitPane.setResizeWeight(0.4);
         mainSplitPane.setToolTipText("");
         mainSplitPane.setMinimumSize(new java.awt.Dimension(0, 0));
@@ -178,7 +173,9 @@ final class MiniTimelinePanel extends javax.swing.JPanel {
         leftSplitPane.setPreferredSize(new java.awt.Dimension(300, 0));
         mainSplitPane.setLeftComponent(leftSplitPane);
 
-        add(mainSplitPane, java.awt.BorderLayout.CENTER);
+        setMinimumSize(new java.awt.Dimension(0, 0));
+        setPreferredSize(new java.awt.Dimension(0, 0));
+        setLayout(new java.awt.BorderLayout());
     }// </editor-fold>//GEN-END:initComponents
 
 
