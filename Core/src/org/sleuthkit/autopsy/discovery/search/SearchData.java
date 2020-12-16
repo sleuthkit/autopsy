@@ -74,6 +74,10 @@ public final class SearchData {
         }
     }
     
+    /**
+     * Enum representing the number of page views a domain has received. Page 
+     * views a grouped into ranges for cleaner display and management.
+     */
     @NbBundle.Messages({
         "# {0} - minValue",
         "# {1} - maxValue",
@@ -105,10 +109,16 @@ public final class SearchData {
             }
         }
         
+        /**
+         * Determines if the given count is covered by this PageView interval.
+         */
         boolean covers(long count) {
             return count >= minValue && count <= maxValue;
         }
         
+        /**
+         * Utility to fetch the appropriate PageView interval for the given count.
+         */
         public static PageViews fromPageViewCount(long count) {
             for (PageViews view : PageViews.values()) {
                 if (view.covers(count)) {
