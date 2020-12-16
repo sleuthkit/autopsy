@@ -26,7 +26,7 @@ import org.openide.util.NbBundle;
  * Panel to let user know that the information is loading.
  */
 class LoadingPanel extends JPanel {
-
+    
     private static final long serialVersionUID = 1L;
 
     /**
@@ -35,15 +35,16 @@ class LoadingPanel extends JPanel {
     LoadingPanel() {
         this(null);
     }
-
+    
     @NbBundle.Messages({"LoadingPanel.loading.text=Loading please wait.",
         "# {0} - resultInfo",
         "LoadingPanel.retrieving.text=Retrieving results for {0}."})
-
+    
     LoadingPanel(String details) {
         initComponents();
+        loadingLabel.setText(Bundle.LoadingPanel_loading_text());
         if (!StringUtils.isBlank(details)) {
-            jLabel1.setText(Bundle.LoadingPanel_retrieving_text(details));
+            detailsLabel.setText(Bundle.LoadingPanel_retrieving_text(details));
         }
     }
 
@@ -56,27 +57,27 @@ class LoadingPanel extends JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jLabel1 = new javax.swing.JLabel();
-        jLabel2 = new javax.swing.JLabel();
+        loadingLabel = new javax.swing.JLabel();
+        detailsLabel = new javax.swing.JLabel();
 
-        setLayout(new javax.swing.BoxLayout(this, javax.swing.BoxLayout.PAGE_AXIS));
+        setLayout(new java.awt.BorderLayout());
 
-        jLabel1.setFont(jLabel1.getFont().deriveFont(jLabel1.getFont().getSize()+2f));
-        jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel1.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        add(jLabel1);
+        loadingLabel.setFont(loadingLabel.getFont().deriveFont(loadingLabel.getFont().getSize()+2f));
+        loadingLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        loadingLabel.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        add(loadingLabel, java.awt.BorderLayout.PAGE_END);
 
-        jLabel2.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel2.setVerticalAlignment(javax.swing.SwingConstants.TOP);
-        jLabel2.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        jLabel2.setVerticalTextPosition(javax.swing.SwingConstants.TOP);
-        add(jLabel2);
+        detailsLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        detailsLabel.setVerticalAlignment(javax.swing.SwingConstants.TOP);
+        detailsLabel.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        detailsLabel.setVerticalTextPosition(javax.swing.SwingConstants.TOP);
+        add(detailsLabel, java.awt.BorderLayout.PAGE_START);
     }// </editor-fold>//GEN-END:initComponents
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel detailsLabel;
+    private javax.swing.JLabel loadingLabel;
     // End of variables declaration//GEN-END:variables
 
 }

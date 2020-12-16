@@ -73,7 +73,7 @@ class ArtifactsWorker extends SwingWorker<List<BlackboardArtifact>, Void> {
     @Override
     protected void done() {
         List<BlackboardArtifact> listOfArtifacts = new ArrayList<>();
-        if (!isCancelled()) {
+        if (!isCancelled() && isDone()) {
             try {
                 listOfArtifacts.addAll(get());
                 DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.ArtifactSearchResultEvent(artifactType, listOfArtifacts));

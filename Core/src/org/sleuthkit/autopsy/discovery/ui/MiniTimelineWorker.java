@@ -72,7 +72,7 @@ class MiniTimelineWorker extends SwingWorker<List<MiniTimelineResult>, Void> {
     @Override
     protected void done() {
         List<MiniTimelineResult> results = new ArrayList<>();
-        if (!isCancelled()) {
+        if (!isCancelled() && isDone()) {
             try {
                 results.addAll(get());
                 DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.MiniTimelineResultEvent(results));
