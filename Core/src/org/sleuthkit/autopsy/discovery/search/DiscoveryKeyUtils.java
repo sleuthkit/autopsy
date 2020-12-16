@@ -1130,27 +1130,27 @@ public class DiscoveryKeyUtils {
     }
 
     /**
-     * Key representing a date of most recent activity.
+     * Key representing a date of last activity.
      */
-    static class MostRecentActivityDateGroupKey extends GroupKey {
+    static class LastActivityDateGroupKey extends GroupKey {
 
         private final Long epochDate;
         private final String dateNameString;
 
         /**
-         * Construct a new MostRecentActivityDateGroupKey.
+         * Construct a new LastActivityDateGroupKey.
          *
          * @param result The Result to create the group key for.
          */
         @NbBundle.Messages({
-            "DiscoveryKeyUtils.MostRecentActivityDateGroupKey.noDate=No Date Available"})
-        MostRecentActivityDateGroupKey(Result result) {
+            "DiscoveryKeyUtils.LastActivityDateGroupKey.noDate=No Date Available"})
+        LastActivityDateGroupKey(Result result) {
             if (result instanceof ResultDomain) {
                 epochDate = ((ResultDomain) result).getActivityEnd();
                 dateNameString = new SimpleDateFormat("yyyy/MM/dd", Locale.getDefault()).format(new Date(TimeUnit.SECONDS.toMillis(epochDate)));
             } else {
                 epochDate = Long.MAX_VALUE;
-                dateNameString = Bundle.DiscoveryKeyUtils_MostRecentActivityDateGroupKey_noDate();
+                dateNameString = Bundle.DiscoveryKeyUtils_LastActivityDateGroupKey_noDate();
             }
         }
 
@@ -1165,11 +1165,11 @@ public class DiscoveryKeyUtils {
                 return true;
             }
 
-            if (!(otherKey instanceof MostRecentActivityDateGroupKey)) {
+            if (!(otherKey instanceof LastActivityDateGroupKey)) {
                 return false;
             }
 
-            MostRecentActivityDateGroupKey dateGroupKey = (MostRecentActivityDateGroupKey) otherKey;
+            LastActivityDateGroupKey dateGroupKey = (LastActivityDateGroupKey) otherKey;
             return getDateNameString().equals(dateGroupKey.getDateNameString());
         }
 
@@ -1180,8 +1180,8 @@ public class DiscoveryKeyUtils {
 
         @Override
         public int compareTo(GroupKey otherGroupKey) {
-            if (otherGroupKey instanceof MostRecentActivityDateGroupKey) {
-                MostRecentActivityDateGroupKey otherDateGroupKey = (MostRecentActivityDateGroupKey) otherGroupKey;
+            if (otherGroupKey instanceof LastActivityDateGroupKey) {
+                LastActivityDateGroupKey otherDateGroupKey = (LastActivityDateGroupKey) otherGroupKey;
 
                 // Put the empty list at the end
                 if (this.getEpochDate().equals(Long.MAX_VALUE)) {

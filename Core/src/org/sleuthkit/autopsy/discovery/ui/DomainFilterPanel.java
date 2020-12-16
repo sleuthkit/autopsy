@@ -50,7 +50,7 @@ public class DomainFilterPanel extends AbstractFiltersPanel {
         }
         addFilter(new PastOccurrencesFilterPanel(TYPE), true, pastOccurrencesIndices, 0);
         addPanelsToScrollPane(domainFiltersSplitPane);
-        setLastGroupingAttributeType(DiscoveryAttributes.GroupingAttributeType.MOST_RECENT_DATE);
+        setLastGroupingAttributeType(DiscoveryAttributes.GroupingAttributeType.LAST_ACTIVITY_DATE);
         setLastSortingMethod(ResultsSorter.SortingMethod.BY_DOMAIN_NAME);
     }
 
