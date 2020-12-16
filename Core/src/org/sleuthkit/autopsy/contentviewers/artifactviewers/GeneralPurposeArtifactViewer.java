@@ -245,6 +245,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
         "GeneralPurposeArtifactViewer.dates.start=Start",
         "GeneralPurposeArtifactViewer.dates.end=End",
         "GeneralPurposeArtifactViewer.dates.time=Time",
+        "GeneralPurposeArtifactViewer.term.label=Term",
         "GeneralPurposeArtifactViewer.details.otherHeader=Other"})
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private void updateView(BlackboardArtifact artifact, Map<Integer, List<BlackboardAttribute>> attributeMap, String dataSourceName, String sourceFileName) {
@@ -260,9 +261,18 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
                 if (attrList != null) {
                     for (BlackboardAttribute bba : attrList) {
                         if (bba.getAttributeType().getTypeName().startsWith("TSK_DATETIME")) {
-                            addNameValueRow(bba.getAttributeType().getDisplayName(), TimeUtilities.epochToTime(bba.getValueLong(), ContentUtils.getTimeZone(artifact)));
+                            if (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getTypeID()) {
+                                addNameValueRow(Bundle.GeneralPurposeArtifactViewer_dates_time(), TimeUtilities.epochToTime(bba.getValueLong(), ContentUtils.getTimeZone(artifact)));
+                            } else {
+                                addNameValueRow(bba.getAttributeType().getDisplayName(), TimeUtilities.epochToTime(bba.getValueLong(), ContentUtils.getTimeZone(artifact)));
+                            }
+
                         } else {
-                            addNameValueRow(bba.getAttributeType().getDisplayName(), bba.getDisplayString());
+                            if (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getTypeID() && bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT.getTypeID()) {
+                                addNameValueRow(Bundle.GeneralPurposeArtifactViewer_term_label(), bba.getDisplayString());
+                            } else {
+                                addNameValueRow(bba.getAttributeType().getDisplayName(), bba.getDisplayString());
+                            }
                         }
                     }
                 }
@@ -272,7 +282,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
                 headerAdded = addDates(Bundle.GeneralPurposeArtifactViewer_dates_created(), attributeMap.remove(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID()), headerAdded);
                 headerAdded = addDates(Bundle.GeneralPurposeArtifactViewer_dates_start(), attributeMap.remove(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID()), headerAdded);
                 headerAdded = addDates(Bundle.GeneralPurposeArtifactViewer_dates_end(), attributeMap.remove(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID()), headerAdded);
-                addDates(Bundle.GeneralPurposeArtifactViewer_dates_time(), attributeMap.remove(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()), headerAdded);
+                addDates(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getDisplayName(), attributeMap.remove(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()), headerAdded);
             }
             addHeader(Bundle.GeneralPurposeArtifactViewer_details_otherHeader());
             for (int key : attributeMap.keySet()) {
