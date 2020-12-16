@@ -22,15 +22,16 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Point;
 import java.awt.event.MouseEvent;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
+import java.time.Instant;
+import java.time.ZonedDateTime;
+import java.util.TimeZone;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JList;
 import javax.swing.ListCellRenderer;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
+import org.sleuthkit.autopsy.datamodel.ContentUtils;
 
 /**
  * Class which displays a preview and details about a domain.
@@ -39,7 +40,6 @@ class DomainSummaryPanel extends javax.swing.JPanel implements ListCellRenderer<
 
     private static final long serialVersionUID = 1L;
     private static final Color SELECTION_COLOR = new Color(0, 120, 215);
-    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd yyyy", Locale.getDefault());
 
     /**
      * Creates new form DomainPanel.
@@ -149,8 +149,9 @@ class DomainSummaryPanel extends javax.swing.JPanel implements ListCellRenderer<
     @Override
     public Component getListCellRendererComponent(JList<? extends DomainWrapper> list, DomainWrapper value, int index, boolean isSelected, boolean cellHasFocus) {
         domainNameLabel.setText(value.getResultDomain().getDomain());
-        String startDate = dateFormat.format(new Date(value.getResultDomain().getActivityStart() * 1000));
-        String endDate = dateFormat.format(new Date(value.getResultDomain().getActivityEnd() * 1000));
+        TimeZone timeZone = ContentUtils.getTimeZone(value.getResultDomain().getDataSource());
+        String startDate = formatDate(value.getResultDomain().getActivityStart(), timeZone);
+        String endDate = formatDate(value.getResultDomain().getActivityEnd(), timeZone);
         activityLabel.setText(Bundle.DomainSummaryPanel_activity_text(startDate, endDate));
         totalVisitsLabel.setText(Bundle.DomainSummaryPanel_totalPages_text() + value.getResultDomain().getTotalPageViews());
         pagesLabel.setText(Bundle.DomainSummaryPanel_pages_text() + value.getResultDomain().getPageViewsInLast60Days());
@@ -164,6 +165,22 @@ class DomainSummaryPanel extends javax.swing.JPanel implements ListCellRenderer<
         }
         setBackground(isSelected ? SELECTION_COLOR : list.getBackground());
         return this;
+    }
+    
+    /**
+     * Formats an epoch time in a given time zone using the following pattern
+     * 
+     *      MMM dd YYYY
+     * 
+     * The pattern below is formatted manually to reuse the MonthAbbreviation utility.
+     */
+    private String formatDate(long epochSeconds, TimeZone timeZone) {
+        Instant epochSecondsAsInstant = Instant.ofEpochSecond(epochSeconds);
+        ZonedDateTime dateTime = ZonedDateTime.ofInstant(epochSecondsAsInstant, timeZone.toZoneId());
+        MonthAbbreviation currentCutOffMonth = MonthAbbreviation.fromMonthValue(dateTime.getMonthValue());
+        return String.format("%s %02d %04d", 
+                currentCutOffMonth.toString(), 
+                dateTime.getDayOfMonth(), dateTime.getYear());
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)

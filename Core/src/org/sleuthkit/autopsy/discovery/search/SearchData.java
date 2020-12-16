@@ -36,7 +36,13 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 public final class SearchData {
 
     private final static long BYTES_PER_MB = 1000000;
-    private static final Set<BlackboardArtifact.ARTIFACT_TYPE> DOMAIN_ARTIFACT_TYPES = EnumSet.of(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK, BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE, BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE, BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY, BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY);
+    private static final Set<BlackboardArtifact.ARTIFACT_TYPE> DOMAIN_ARTIFACT_TYPES = 
+            EnumSet.of(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK, 
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE, 
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE, 
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, 
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY, 
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY);
 
     
     /**

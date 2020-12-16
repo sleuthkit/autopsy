@@ -151,7 +151,7 @@ public class ResultDomain extends Result {
     }
 
     @Override
-    public Content getDataSource() throws TskCoreException {
+    public Content getDataSource() {
         return this.dataSource;
     }
 
