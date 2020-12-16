@@ -24,6 +24,7 @@ import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
@@ -179,7 +180,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     public Component getComponent() {
-//         Slap a vertical scrollbar on the panel.
+        //         Slap a vertical scrollbar on the panel 
         return new JScrollPane(this, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     }
 
@@ -328,6 +329,11 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
         return headerAdded;
     }
 
+    /**
+     * Helper method to add an artifact specific details header.
+     *
+     * @param artifactTypeId ID of artifact type to add header for.
+     */
     @NbBundle.Messages({"GeneralPurposeArtifactViewer.details.bookmarkHeader=Bookmark Details",
         "GeneralPurposeArtifactViewer.details.historyHeader=Visit Details",
         "GeneralPurposeArtifactViewer.details.downloadHeader=Downloaded File",
@@ -469,6 +475,8 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
         cloneConstraints.fill = GridBagConstraints.BOTH;
         // set text
         valueField.setText(valueString);
+        // scroll to start of text
+        valueField.setCaretPosition(0);
         // attach a right click menu with Copy option
         valueField.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
