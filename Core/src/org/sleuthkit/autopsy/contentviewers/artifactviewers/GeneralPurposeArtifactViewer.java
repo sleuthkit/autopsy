@@ -343,7 +343,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
         String header;
         if (artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID()) {
             header = Bundle.GeneralPurposeArtifactViewer_details_historyHeader();
-        } else if (artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_ACCOUNT_TYPE.getTypeID()) {
+        } else if (artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID()) {
             header = Bundle.GeneralPurposeArtifactViewer_details_bookmarkHeader();
         } else if (artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID()) {
             header = Bundle.GeneralPurposeArtifactViewer_details_cachedHeader();
