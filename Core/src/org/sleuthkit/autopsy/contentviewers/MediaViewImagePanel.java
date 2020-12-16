@@ -521,7 +521,9 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
                 if (nonNull(fxImage)) {
                     // We have a non-null image, so let's show it.
                     fxImageView.setImage(fxImage);
-                    resetView(panelWidth, panelHeight);
+                    if (panelWidth != 0 && panelHeight != 0) {
+                        resetView(panelWidth, panelHeight);
+                    }
                     masterGroup.getChildren().add(fxImageView);
                     masterGroup.getChildren().add(tagsGroup);
 
