@@ -183,15 +183,6 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
-    public Component getComponent() {
-        JScrollPane scrollPane = new JScrollPane(this);
-        scrollPane.getVerticalScrollBar().setValue(0);
-        scrollPane.getHorizontalScrollBar().setValue(0);
-        return scrollPane;
-    }
-
-    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    @Override
     public boolean isSupported(BlackboardArtifact artifact) {
         return (artifact != null)
                 && (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID()
@@ -219,6 +210,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        detailsScrollPane = new javax.swing.JScrollPane();
         detailsPanel = new javax.swing.JPanel();
 
         setLayout(new java.awt.BorderLayout());
@@ -234,7 +226,9 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
             .addGap(0, 0, Short.MAX_VALUE)
         );
 
-        add(detailsPanel, java.awt.BorderLayout.PAGE_START);
+        detailsScrollPane.setViewportView(detailsPanel);
+
+        add(detailsScrollPane, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
     /**
@@ -440,6 +434,8 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
         gridBagConstraints.fill = GridBagConstraints.VERTICAL;
         javax.swing.Box.Filler vertFiller = new javax.swing.Box.Filler(new Dimension(0, 0), new Dimension(0, 0), new Dimension(0, 32767));
         detailsPanel.add(vertFiller, gridBagConstraints);
+        detailsScrollPane.getVerticalScrollBar().setValue(0);
+        detailsScrollPane.getHorizontalScrollBar().setValue(0);
     }
 
     /**
@@ -523,5 +519,6 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel detailsPanel;
+    private javax.swing.JScrollPane detailsScrollPane;
     // End of variables declaration//GEN-END:variables
 }

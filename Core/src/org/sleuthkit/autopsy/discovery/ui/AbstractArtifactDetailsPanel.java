@@ -18,7 +18,9 @@
  */
 package org.sleuthkit.autopsy.discovery.ui;
 
+import java.awt.Component;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
@@ -29,6 +31,11 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 public abstract class AbstractArtifactDetailsPanel extends JPanel {
 
     private static final long serialVersionUID = 1L;
+
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    public Component getComponent() {
+        return this;
+    }
 
     /**
      * Called to display the contents of the given artifact.
