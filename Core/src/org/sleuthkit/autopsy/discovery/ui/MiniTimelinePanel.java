@@ -65,8 +65,8 @@ final class MiniTimelinePanel extends javax.swing.JPanel {
                     } else {
                         rightPanel = new GeneralPurposeArtifactViewer();
                     }
-                    rightPanel.setArtifact(artifact);
                     mainSplitPane.setRightComponent(rightPanel.getComponent());
+                    rightPanel.setArtifact(artifact);
                     validate();
                     repaint();
                 }
@@ -114,7 +114,7 @@ final class MiniTimelinePanel extends javax.swing.JPanel {
         if (status == DomainArtifactsTabPanel.ArtifactRetrievalStatus.UNPOPULATED) {
             artifactListPanel.clearList();
             dateListPanel.clearList();
-            remove(mainSplitPane);
+            removeAll();
             add(new LoadingPanel(Bundle.MiniTimelinePanel_loadingPanel_details()));
             if (rightPanel != null) {
                 rightPanel.setArtifact(null);

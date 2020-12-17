@@ -18,9 +18,7 @@
  */
 package org.sleuthkit.autopsy.discovery.ui;
 
-import java.awt.Component;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
@@ -29,12 +27,6 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
  *
  */
 public abstract class AbstractArtifactDetailsPanel extends JPanel {
-
-    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    public Component getComponent() {
-        // Slap a vertical scrollbar on the panel.
-        return new JScrollPane(this, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-    }
 
     private static final long serialVersionUID = 1L;
 

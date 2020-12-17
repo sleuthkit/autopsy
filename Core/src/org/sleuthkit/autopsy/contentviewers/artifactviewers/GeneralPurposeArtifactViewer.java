@@ -90,6 +90,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
     public GeneralPurposeArtifactViewer() {
         addOrderings();
         initComponents();
+        gridBagConstraints.anchor = GridBagConstraints.FIRST_LINE_START;
         detailsPanel.setLayout(gridBagLayout);
     }
 
@@ -104,13 +105,13 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID(),
             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID(),
             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()});
-        orderingMap.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID(), new Integer[]{BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), 
+        orderingMap.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID(), new Integer[]{BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),
             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID(),
             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID(),
             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID(),
             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_HEADERS.getTypeID(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH.getTypeID(),
             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()});
-        orderingMap.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID(), new Integer[]{BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), 
+        orderingMap.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID(), new Integer[]{BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),
             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID(),
             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID(),
             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID(),
@@ -128,7 +129,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID(),
             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_REFERRER.getTypeID(),
             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()});
-        orderingMap.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE.getTypeID(), new Integer[]{BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), 
+        orderingMap.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE.getTypeID(), new Integer[]{BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),
             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID(),
             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID(),
             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(),
@@ -172,7 +173,6 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
     private void resetComponent() {
         // clear the panel 
         detailsPanel.removeAll();
-        gridBagConstraints.anchor = GridBagConstraints.FIRST_LINE_START;
         gridBagConstraints.gridy = 0;
         gridBagConstraints.gridx = LABEL_COLUMN;
         gridBagConstraints.weighty = 0.0;
@@ -184,11 +184,8 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     public Component getComponent() {
-        //         Slap a vertical scrollbar on the panel 
-        JScrollPane scrollPane = new JScrollPane(this, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        //scroll to top
+        JScrollPane scrollPane = new JScrollPane(this);
         scrollPane.getVerticalScrollBar().setValue(0);
-        //scroll to left
         scrollPane.getHorizontalScrollBar().setValue(0);
         return scrollPane;
     }
@@ -484,8 +481,6 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
         cloneConstraints.fill = GridBagConstraints.BOTH;
         // set text
         valueField.setText(valueString);
-        // scroll to start of text
-        valueField.setCaretPosition(0);
         // attach a right click menu with Copy option
         valueField.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
