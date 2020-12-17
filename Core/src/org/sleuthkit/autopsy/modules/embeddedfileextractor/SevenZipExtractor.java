@@ -750,7 +750,7 @@ class SevenZipExtractor {
                 //TODO decide if anything to cleanup, for now bailing
             }
 
-        } catch (SevenZipException ex) {
+        } catch (SevenZipException | IllegalArgumentException ex) {
             logger.log(Level.WARNING, "Error unpacking file: " + archiveFile, ex); //NON-NLS
             //inbox message
 
@@ -1138,8 +1138,13 @@ class SevenZipExtractor {
             final String localAbsPath = archiveDetailsMap.get(
                     inArchiveItemIndex).getLocalAbsPath();
             if (result != ExtractOperationResult.OK) {
-                logger.log(Level.WARNING, "Extraction of : {0} encountered error {1}", //NON-NLS
-                        new Object[]{localAbsPath, result});
+                if (archiveFile.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.UNALLOC)) {
+                    logger.log(Level.WARNING, "Extraction of : {0} encountered error {1} (file is unallocated and may be corrupt)", //NON-NLS
+                            new Object[]{localAbsPath, result});
+                } else {
+                    logger.log(Level.WARNING, "Extraction of : {0} encountered error {1}", //NON-NLS
+                            new Object[]{localAbsPath, result});
+                }
                 unpackSuccessful = false;
             }
 

@@ -119,6 +119,33 @@ public final class ExecUtil {
             }
         }
     }
+    
+    /**
+     * This class takes a list of ProcessTerminators checking all of them
+     * during shouldTerminateProcess.
+     */
+    public static class HybridTerminator implements ProcessTerminator {
+        private final List<ProcessTerminator> terminatorList;
+        
+        /**
+         * Constructs a new instance of the terminator.
+         * 
+         * @param terminators A list of terminators.
+         */
+        public HybridTerminator(List<ProcessTerminator> terminators) {
+            this.terminatorList = terminators;
+        }
+        
+        @Override
+        public boolean shouldTerminateProcess() {
+            for(ProcessTerminator terminator: terminatorList) {
+                if(terminator.shouldTerminateProcess()) {
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
 
     /**
      * Runs a process without a process terminator. This method should be used
