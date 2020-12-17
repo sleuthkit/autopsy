@@ -102,7 +102,7 @@ class SevenZipExtractor {
     private static final long MIN_FREE_DISK_SPACE = 1 * 1000 * 1000000L; //1GB
 
     private IngestServices services = IngestServices.getInstance();
-    private final IngestJobContext ingestJobContext;
+    private final IngestJobContext context;
     private final FileTypeDetector fileTypeDetector;
     private final FileTaskExecutor fileTaskExecutor;
 
@@ -162,16 +162,16 @@ class SevenZipExtractor {
      *                                               initializing the 7Zip Java
      *                                               bindings.
      */
-    SevenZipExtractor(IngestJobContext context, FileTypeDetector fileTypeDetector, String moduleDirRelative, String moduleDirAbsolute, FileTaskExecutor fileIoTaskExecutor) throws SevenZipNativeInitializationException {
+    SevenZipExtractor(IngestJobContext context, FileTypeDetector fileTypeDetector, String moduleDirRelative, String moduleDirAbsolute, FileTaskExecutor fileTaskExecutor) throws SevenZipNativeInitializationException {
         if (!SevenZip.isInitializedSuccessfully()) {
             throw new SevenZipNativeInitializationException("SevenZip has not been previously initialized.");
         }
 
-        this.ingestJobContext = context;
+        this.context = context;
         this.fileTypeDetector = fileTypeDetector;
         this.moduleDirRelative = moduleDirRelative;
         this.moduleDirAbsolute = moduleDirAbsolute;
-        this.fileTaskExecutor = fileIoTaskExecutor;
+        this.fileTaskExecutor = fileTaskExecutor;
     }
 
     /**
@@ -379,26 +379,31 @@ class SevenZipExtractor {
     }
 
     /**
-     * Gets any files already extracted from the given archive. The archive file
-     * path is used to find the files by parent path.
+     * Queries the case database to gets any files already extracted from the
+     * given archive. The archive file path is used to find the files by parent
+     * path.
      *
      * @param archiveFile     The archive.
      * @param archiveFilePath The archive file path.
      *
      * @return A list of the files already extracted from the given archive.
      *
-     * @throws TskCoreException
-     * @throws InterruptedException
-     * @throws
-     * org.sleuthkit.autopsy.modules.embeddedfileextractor.FileIoTaskExecutor.FileIoTaskFailedException
+     * @throws TskCoreException          If there is an error querying the case
+     *                                   database.
+     * @throws InterruptedException      If checking for the existence of the
+     *                                   extracted file directory is
+     *                                   interrupted.
+     * @throws FileIoTaskFailedException If there is an error checking for the
+     *                                   existence of the extracted file
+     *                                   directory.
      */
     private List<AbstractFile> getAlreadyExtractedFiles(AbstractFile archiveFile, String archiveFilePath) throws TskCoreException, InterruptedException, FileTaskExecutor.FileTaskFailedException {
         /*
          * TODO (Jira-7145): Is this logic correct?
          */
         List<AbstractFile> extractedFiles = new ArrayList<>();
-        File rootExtractedFilesDir = new File(moduleDirAbsolute, EmbeddedFileExtractorIngestModule.getUniqueName(archiveFile));
-        if (archiveFile.hasChildren() && fileTaskExecutor.exists(rootExtractedFilesDir)) {
+        File extractedFilesDir = new File(moduleDirAbsolute, EmbeddedFileExtractorIngestModule.getUniqueName(archiveFile));
+        if (archiveFile.hasChildren() && fileTaskExecutor.exists(extractedFilesDir)) {
             Case currentCase = Case.getCurrentCase();
             FileManager fileManager = currentCase.getServices().getFileManager();
             extractedFiles.addAll(fileManager.findFilesByParentPath(getRootArchiveId(archiveFile), archiveFilePath));
@@ -426,7 +431,7 @@ class SevenZipExtractor {
      *
      * @return True on success, false on failure.
      */
-    private boolean makeRootExtractedFilesDirectory(String uniqueArchiveFileName) {
+    private boolean makeExtractedFilesDirectory(String uniqueArchiveFileName) {
         boolean success = true;
         Path rootDirectoryPath = Paths.get(moduleDirAbsolute, uniqueArchiveFileName);
         File rootDirectory = rootDirectoryPath.toFile();
@@ -612,7 +617,7 @@ class SevenZipExtractor {
 
             //setup the archive local root folder
             final String uniqueArchiveFileName = FileUtil.escapeFileName(EmbeddedFileExtractorIngestModule.getUniqueName(archiveFile));
-            if (!makeRootExtractedFilesDirectory(uniqueArchiveFileName)) {
+            if (!makeExtractedFilesDirectory(uniqueArchiveFileName)) {
                 return false;
             }
 
@@ -683,8 +688,8 @@ class SevenZipExtractor {
 
                 //create local dirs and empty files before extracted
                 //cannot rely on files in top-bottom order
-                File localFile = new java.io.File(localAbsPath);
-                boolean localFileCreated = false;
+                File localFile = new File(localAbsPath);
+                boolean localFileCreated;
                 if ((Boolean) inArchive.getProperty(inArchiveItemIndex, PropID.IS_FOLDER)) {
                     localFileCreated = this.createExtractedDirectory(localFile);
                 } else {
@@ -818,8 +823,8 @@ class SevenZipExtractor {
         if (!unpackedFiles.isEmpty()) {
             //currently sending a single event for all new files
             services.fireModuleContentEvent(new ModuleContentEvent(archiveFile));
-            if (ingestJobContext != null) {
-                ingestJobContext.addFilesToJob(unpackedFiles);
+            if (context != null) {
+                context.addFilesToJob(unpackedFiles);
             }
         }
 

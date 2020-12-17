@@ -65,6 +65,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
+import org.sleuthkit.autopsy.modules.embeddedfileextractor.FileTaskExecutor.FileTaskFailedException;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.EncodedFileOutputStream;
@@ -87,6 +88,7 @@ class DocumentEmbeddedContentExtractor {
     private String parentFileName;
     private final String UNKNOWN_IMAGE_NAME_PREFIX = "image_"; //NON-NLS
     private final FileTypeDetector fileTypeDetector;
+    private final FileTaskExecutor fileTaskExecutor;
 
     private String moduleDirRelative;
     private String moduleDirAbsolute;
@@ -121,7 +123,7 @@ class DocumentEmbeddedContentExtractor {
     }
     private SupportedExtractionFormats abstractFileExtractionFormat;
 
-    DocumentEmbeddedContentExtractor(IngestJobContext context, FileTypeDetector fileTypeDetector, String moduleDirRelative, String moduleDirAbsolute) throws NoCurrentCaseException {
+    DocumentEmbeddedContentExtractor(IngestJobContext context, FileTypeDetector fileTypeDetector, String moduleDirRelative, String moduleDirAbsolute, FileTaskExecutor fileTaskExecutor) throws NoCurrentCaseException {
 
         this.fileManager = Case.getCurrentCaseThrows().getServices().getFileManager();
         this.services = IngestServices.getInstance();
@@ -129,6 +131,7 @@ class DocumentEmbeddedContentExtractor {
         this.fileTypeDetector = fileTypeDetector;
         this.moduleDirRelative = moduleDirRelative;
         this.moduleDirAbsolute = moduleDirAbsolute;
+        this.fileTaskExecutor = fileTaskExecutor;
     }
 
     /**
@@ -164,19 +167,22 @@ class DocumentEmbeddedContentExtractor {
         List<ExtractedFile> listOfExtractedImages = null;
         List<AbstractFile> listOfExtractedImageAbstractFiles = null;
         //save the parent file name with out illegal windows characters
-        this.parentFileName = utf8SanitizeFileName(EmbeddedFileExtractorIngestModule.getUniqueName(abstractFile));
+        this.parentFileName = utf8SanitizeFileName(EmbeddedFileExtractorIngestModule.getUniqueName(abstractFile)); // RJCTODO
 
         // Skip files that already have been unpacked.
+        /*
+         * TODO (Jira-7145): Is the logic of this check correct?
+         */
         try {
             if (abstractFile.hasChildren()) {
                 //check if local unpacked dir exists
-                if (new File(getOutputFolderPath(parentFileName)).exists()) {
-                    LOGGER.log(Level.INFO, "File already has been processed as it has children and local unpacked file, skipping: {0}", abstractFile.getName()); //NON-NLS
+                File outputFolder = Paths.get(moduleDirAbsolute, parentFileName).toFile();
+                if (fileTaskExecutor.exists(outputFolder)) {
                     return;
                 }
             }
-        } catch (TskCoreException e) {
-            LOGGER.log(Level.SEVERE, String.format("Error checking if file already has been processed, skipping: %s", parentFileName), e); //NON-NLS
+        } catch (TskCoreException | FileTaskExecutor.FileTaskFailedException | InterruptedException e) {
+            LOGGER.log(Level.SEVERE, String.format("Error checking if %s (objID = %d) has already has been processed, skipping", abstractFile.getName(), abstractFile.getId()), e); //NON-NLS
             return;
         }
 
@@ -487,9 +493,13 @@ class DocumentEmbeddedContentExtractor {
      * @return List of extracted files to be made into derived file instances.
      */
     private List<ExtractedFile> extractEmbeddedContentFromPDF(AbstractFile abstractFile) {
+        String outputFolderPathString = getOutputFolderPath(parentFileName);
+        if (outputFolderPathString == null) {
+            return Collections.emptyList();
+        }
         PDFAttachmentExtractor pdfExtractor = new PDFAttachmentExtractor(parser);
         try {
-            Path outputDirectory = Paths.get(getOutputFolderPath(parentFileName));
+            Path outputDirectory = Paths.get(outputFolderPathString);
             //Get map of attachment name -> location disk.
             Map<String, PDFAttachmentExtractor.NewResourceData> extractedAttachments = pdfExtractor.extract(
                     new ReadContentInputStream(abstractFile), abstractFile.getId(),
@@ -529,25 +539,29 @@ class DocumentEmbeddedContentExtractor {
     }
 
     /**
-     * Gets path to the output folder for file extraction. If the path does not
-     * exist, it is created.
+     * Gets the path to an output folder for extraction of embedded content from
+     * a file. If the folder does not exist, it is created. The folder name is a
+     * unique name derived from the file name and its object ID.
      *
-     * @param parentFileName name of the abstract file being processed
+     * @param parentFileName The file name.
      *
-     * @return path to the file extraction folder for a given abstract file.
+     * @return The output folder path or null if the folder could not be found
+     *         or created.
      */
     private String getOutputFolderPath(String parentFileName) {
-        String outputFolderPath = moduleDirAbsolute + File.separator + parentFileName;
-        File outputFilePath = new File(outputFolderPath);
-        if (!outputFilePath.exists()) {
-            try {
-                outputFilePath.mkdirs();
-            } catch (SecurityException ex) {
-                LOGGER.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.getOutputFolderPath.exception.msg", parentFileName), ex);
-                return null;
+        String outputFolderPath = Paths.get(moduleDirAbsolute, parentFileName).toString();
+        try {
+            File outputFolder = new File(outputFolderPath);
+            if (!fileTaskExecutor.exists(outputFolder)) {
+                if (!fileTaskExecutor.mkdirs(outputFolder)) {
+                    outputFolderPath = null;
+                }
             }
+            return outputFolderPath;
+        } catch (SecurityException | FileTaskFailedException | InterruptedException ex) {
+            LOGGER.log(Level.SEVERE, String.format("Failed to find or create %s", outputFolderPath), ex);
+            return null;
         }
-        return outputFolderPath;
     }
 
     /**
@@ -648,7 +662,7 @@ class DocumentEmbeddedContentExtractor {
         // plain old list after we upgrade to Tika 1.16 or above.
         private final Map<String, ExtractedFile> nameToExtractedFileMap = new HashMap<>();
 
-        public EmbeddedContentExtractor(ParseContext context) {
+        private EmbeddedContentExtractor(ParseContext context) {
             super(context);
         }
 
@@ -682,7 +696,8 @@ class DocumentEmbeddedContentExtractor {
             }
 
             if (name == null) {
-                name = UNKNOWN_IMAGE_NAME_PREFIX + fileCount++;
+                fileCount++;
+                name = UNKNOWN_IMAGE_NAME_PREFIX + fileCount;
             } else {
                 //make sure to select only the file name (not any directory paths
                 //that might be included in the name) and make sure
@@ -701,10 +716,13 @@ class DocumentEmbeddedContentExtractor {
                 }
             }
 
-            File extractedFile = new File(Paths.get(getOutputFolderPath(parentFileName), name).toString());
-            byte[] fileData = IOUtils.toByteArray(stream);
-            writeExtractedImage(extractedFile.getAbsolutePath(), fileData);
-            nameToExtractedFileMap.put(name, new ExtractedFile(name, getFileRelativePath(name), fileData.length));
+            String outputFolderPath = getOutputFolderPath(parentFileName);
+            if (outputFolderPath != null) {
+                File extractedFile = new File(Paths.get(outputFolderPath, name).toString());
+                byte[] fileData = IOUtils.toByteArray(stream);
+                writeExtractedImage(extractedFile.getAbsolutePath(), fileData);
+                nameToExtractedFileMap.put(name, new ExtractedFile(name, getFileRelativePath(name), fileData.length));
+            }
         }
 
         /**

@@ -25,6 +25,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
@@ -35,6 +36,10 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * any, will begin.
  */
 public class TaskRetryUtil {
+
+    private static final AtomicLong totalTaskRetries = new AtomicLong();
+    private static final AtomicLong totalTaskTimeOuts = new AtomicLong();
+    private static final AtomicLong totalFailedTasks = new AtomicLong();
 
     /**
      * Encapsulates the specification of a task attempt for the attemptTask()
@@ -182,6 +187,9 @@ public class TaskRetryUtil {
                     logger.log(Level.INFO, "{0} (attempt = {1}, waited = {2} {3}, timeout = {4} {5})", new Object[]{taskDesc, attemptCounter + 1, attempt.getDelay(), attempt.getDelayTimeUnit(), attempt.getTimeout(), attempt.getTimeoutTimeUnit()});
                 }
             }
+            if (attemptCounter > 0) {
+                totalTaskRetries.incrementAndGet();
+            }
             ScheduledFuture<T> future = executor.schedule(task, attempt.getDelay(), attempt.getDelayTimeUnit());
             try {
                 if (attempt.getTimeout() != null) {
@@ -197,9 +205,15 @@ public class TaskRetryUtil {
                 if (logger != null) {
                     logger.log(Level.SEVERE, String.format("Time out executing %s, cancelling attempt", taskDesc != null ? taskDesc : "task"), ex);
                 }
+                totalTaskTimeOuts.incrementAndGet();
                 future.cancel(true);
             }
             ++attemptCounter;
+        }
+        if (result == null) {
+            if (terminator == null || !terminator.stopTaskAttempts()) {
+                totalFailedTasks.incrementAndGet();
+            }
         }
         return result;
     }
