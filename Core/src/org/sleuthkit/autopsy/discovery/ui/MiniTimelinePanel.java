@@ -44,7 +44,6 @@ final class MiniTimelinePanel extends javax.swing.JPanel {
     private static final Logger logger = Logger.getLogger(MiniTimelinePanel.class.getName());
     private final ListSelectionListener artifactListener;
     private final ListSelectionListener dateListener;
-    private final LoadingPanel loadingPanel = new LoadingPanel(Bundle.MiniTimelinePanel_loadingPanel_details());
 
     @NbBundle.Messages({"MiniTimelinePanel.loadingPanel.details=the Mini Timeline view"})
     /**
@@ -53,7 +52,7 @@ final class MiniTimelinePanel extends javax.swing.JPanel {
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     MiniTimelinePanel() {
         initComponents();
-        add(loadingPanel);
+        add(new LoadingPanel(Bundle.MiniTimelinePanel_loadingPanel_details()));
         artifactListPanel.addMouseListener(new ArtifactMenuMouseAdapter(artifactListPanel));
         artifactListener = new ListSelectionListener() {
             @Override
@@ -115,6 +114,8 @@ final class MiniTimelinePanel extends javax.swing.JPanel {
         if (status == DomainArtifactsTabPanel.ArtifactRetrievalStatus.UNPOPULATED) {
             artifactListPanel.clearList();
             dateListPanel.clearList();
+            remove(mainSplitPane);
+            add(new LoadingPanel(Bundle.MiniTimelinePanel_loadingPanel_details()));
             if (rightPanel != null) {
                 rightPanel.setArtifact(null);
             }
@@ -138,7 +139,7 @@ final class MiniTimelinePanel extends javax.swing.JPanel {
             dateListPanel.addSelectionListener(dateListener);
             artifactListPanel.addSelectionListener(artifactListener);
             dateListPanel.selectFirst();
-            remove(loadingPanel);
+            removeAll();
             add(mainSplitPane);
             revalidate();
             repaint();
@@ -163,18 +164,17 @@ final class MiniTimelinePanel extends javax.swing.JPanel {
         mainSplitPane = new javax.swing.JSplitPane();
         leftSplitPane = new javax.swing.JSplitPane();
 
-        mainSplitPane.setResizeWeight(0.4);
+        mainSplitPane.setDividerLocation(400);
+        mainSplitPane.setResizeWeight(0.1);
         mainSplitPane.setToolTipText("");
         mainSplitPane.setMinimumSize(new java.awt.Dimension(0, 0));
-        mainSplitPane.setPreferredSize(new java.awt.Dimension(0, 0));
 
+        leftSplitPane.setDividerLocation(198);
         leftSplitPane.setResizeWeight(0.5);
         leftSplitPane.setMinimumSize(new java.awt.Dimension(0, 0));
-        leftSplitPane.setPreferredSize(new java.awt.Dimension(300, 0));
         mainSplitPane.setLeftComponent(leftSplitPane);
 
         setMinimumSize(new java.awt.Dimension(0, 0));
-        setPreferredSize(new java.awt.Dimension(0, 0));
         setLayout(new java.awt.BorderLayout());
     }// </editor-fold>//GEN-END:initComponents
 

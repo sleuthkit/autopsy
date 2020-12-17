@@ -152,10 +152,12 @@ final class ArtifactsListPanel extends AbstractArtifactListPanel {
         artifactsTable = new javax.swing.JTable();
 
         setOpaque(false);
-        setPreferredSize(new java.awt.Dimension(300, 0));
+        setPreferredSize(new java.awt.Dimension(350, 10));
 
         jScrollPane1.setBorder(null);
+        jScrollPane1.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         jScrollPane1.setMinimumSize(new java.awt.Dimension(0, 0));
+        jScrollPane1.setPreferredSize(new java.awt.Dimension(350, 10));
 
         artifactsTable.setAutoCreateRowSorter(true);
         artifactsTable.setModel(tableModel);
@@ -166,11 +168,11 @@ final class ArtifactsListPanel extends AbstractArtifactListPanel {
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 400, Short.MAX_VALUE)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 0, Short.MAX_VALUE)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 

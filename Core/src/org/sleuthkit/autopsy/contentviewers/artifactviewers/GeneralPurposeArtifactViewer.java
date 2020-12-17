@@ -185,7 +185,12 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
     @Override
     public Component getComponent() {
         //         Slap a vertical scrollbar on the panel 
-        return new JScrollPane(this, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        JScrollPane scrollPane = new JScrollPane(this, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        //scroll to top
+        scrollPane.getVerticalScrollBar().setValue(0);
+        //scroll to left
+        scrollPane.getHorizontalScrollBar().setValue(0);
+        return scrollPane;
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)

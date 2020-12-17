@@ -139,8 +139,8 @@ class MiniTimelineDateListPanel extends JPanel {
         jTable1 = new javax.swing.JTable();
 
         setOpaque(false);
-        setPreferredSize(new java.awt.Dimension(200, 0));
-
+        setPreferredSize(new java.awt.Dimension(200, 10));
+        jScrollPane1.setPreferredSize(new java.awt.Dimension(200, 10));
         jScrollPane1.setBorder(null);
         jScrollPane1.setMinimumSize(new java.awt.Dimension(0, 0));
 

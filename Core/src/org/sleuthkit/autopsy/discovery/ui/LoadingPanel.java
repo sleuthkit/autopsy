@@ -36,7 +36,7 @@ class LoadingPanel extends JPanel {
         this(null);
     }
     
-    @NbBundle.Messages({"LoadingPanel.loading.text=Loading please wait.",
+    @NbBundle.Messages({"LoadingPanel.loading.text=Loading, please wait.",
         "# {0} - resultInfo",
         "LoadingPanel.retrieving.text=Retrieving results for {0}."})
     
@@ -60,18 +60,32 @@ class LoadingPanel extends JPanel {
         loadingLabel = new javax.swing.JLabel();
         detailsLabel = new javax.swing.JLabel();
 
-        setLayout(new java.awt.BorderLayout());
-
-        loadingLabel.setFont(loadingLabel.getFont().deriveFont(loadingLabel.getFont().getSize()+2f));
+        loadingLabel.setFont(loadingLabel.getFont().deriveFont(loadingLabel.getFont().getSize()+4f));
         loadingLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         loadingLabel.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        add(loadingLabel, java.awt.BorderLayout.PAGE_END);
 
         detailsLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         detailsLabel.setVerticalAlignment(javax.swing.SwingConstants.TOP);
         detailsLabel.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         detailsLabel.setVerticalTextPosition(javax.swing.SwingConstants.TOP);
-        add(detailsLabel, java.awt.BorderLayout.PAGE_START);
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
+        this.setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(loadingLabel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(detailsLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 390, Short.MAX_VALUE)
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(loadingLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 48, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(detailsLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 33, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(30, Short.MAX_VALUE))
+        );
+
+        detailsLabel.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(LoadingPanel.class, "LoadingPanel.detailsLabel.AccessibleContext.accessibleName")); // NOI18N
     }// </editor-fold>//GEN-END:initComponents
 
 

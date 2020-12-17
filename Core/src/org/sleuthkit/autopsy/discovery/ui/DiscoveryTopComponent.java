@@ -27,6 +27,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 import javax.swing.SwingUtilities;
 import javax.swing.plaf.basic.BasicSplitPaneDivider;
@@ -82,6 +83,8 @@ public final class DiscoveryTopComponent extends TopComponent {
 
             }
         });
+        rightSplitPane.setTopComponent(resultsPanel);
+        resetBottomComponent();
         rightSplitPane.addPropertyChangeListener(JSplitPane.DIVIDER_LOCATION_PROPERTY, new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
@@ -94,13 +97,11 @@ public final class DiscoveryTopComponent extends TopComponent {
                             && (JSplitPane.UNDEFINED_CONDITION != (int) evt.getNewValue())
                             && ((int) evt.getOldValue() != JSplitPane.UNDEFINED_CONDITION)) {
                         previousDividerLocation = (int) evt.getNewValue();
-
                     }
                 }
             }
         });
-        rightSplitPane.setTopComponent(resultsPanel);
-        rightSplitPane.setBottomComponent(new LoadingPanel());
+
     }
 
     /**
@@ -130,7 +131,9 @@ public final class DiscoveryTopComponent extends TopComponent {
      * @return The open DiscoveryTopComponent or null if it has not been opened.
      */
     public static DiscoveryTopComponent getTopComponent() {
-        return (DiscoveryTopComponent) WindowManager.getDefault().findTopComponent(PREFERRED_ID);
+        DiscoveryTopComponent discoveryTopComp = (DiscoveryTopComponent) WindowManager.getDefault().findTopComponent(PREFERRED_ID);
+        discoveryTopComp.resetBottomComponent();
+        return discoveryTopComp;
     }
 
     /**
@@ -152,6 +155,11 @@ public final class DiscoveryTopComponent extends TopComponent {
         DiscoveryEventUtils.getDiscoveryEventBus().register(groupListPanel);
     }
 
+    private void resetBottomComponent() {
+        rightSplitPane.setBottomComponent(new JPanel());
+        rightSplitPane.setDividerLocation(JSplitPane.UNDEFINED_CONDITION);
+    }
+
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     protected void componentClosed() {
@@ -165,7 +173,7 @@ public final class DiscoveryTopComponent extends TopComponent {
         if (rightSplitPane.getBottomComponent() instanceof DomainDetailsPanel) {
             selectedDomainTabName = ((DomainDetailsPanel) rightSplitPane.getBottomComponent()).getSelectedTabName();
         }
-        rightSplitPane.setDividerLocation(JSplitPane.UNDEFINED_CONDITION);
+        resetBottomComponent();
         super.componentClosed();
     }
 

@@ -146,20 +146,19 @@ final class DomainDetailsPanel extends JPanel {
      */
     @Subscribe
     void handlePopulateDomainTabsEvent(DiscoveryEventUtils.PopulateDomainTabsEvent populateEvent) {
-        domain = populateEvent.getDomain();
         SwingUtilities.invokeLater(() -> {
-            resetTabsStatus();
-            selectTab();
-            Component selectedComponent = jTabbedPane1.getSelectedComponent();
-            if (selectedComponent instanceof DomainArtifactsTabPanel) {
-                runDomainWorker((DomainArtifactsTabPanel) selectedComponent);
-            } else if (selectedComponent instanceof MiniTimelinePanel) {
-                runMiniTimelineWorker((MiniTimelinePanel) selectedComponent);
-            }
-            if (StringUtils.isBlank(domain)) {
+            if (StringUtils.isBlank(populateEvent.getDomain())) {
+                resetTabsStatus();
                 //send fade out event
                 DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.DetailsVisibleEvent(false));
             } else {
+                domain = populateEvent.getDomain();
+                Component selectedComponent = jTabbedPane1.getSelectedComponent();
+                if (selectedComponent instanceof DomainArtifactsTabPanel) {
+                    runDomainWorker((DomainArtifactsTabPanel) selectedComponent);
+                } else if (selectedComponent instanceof MiniTimelinePanel) {
+                    runMiniTimelineWorker((MiniTimelinePanel) selectedComponent);
+                }
                 //send fade in event
                 DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.DetailsVisibleEvent(true));
             }
