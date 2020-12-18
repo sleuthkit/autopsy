@@ -377,6 +377,9 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
             gridBagConstraints.gridy++;
             detailsPanel.add(new javax.swing.JLabel(" "), gridBagConstraints);
             addLineEndGlue();
+            headingLabel.setFocusable(false);
+        } else {
+            headingLabel.requestFocusInWindow();
         }
         gridBagConstraints.gridy++;
         gridBagConstraints.gridx = LABEL_COLUMN;;
@@ -434,6 +437,8 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
         gridBagConstraints.fill = GridBagConstraints.VERTICAL;
         javax.swing.Box.Filler vertFiller = new javax.swing.Box.Filler(new Dimension(0, 0), new Dimension(0, 0), new Dimension(0, 32767));
         detailsPanel.add(vertFiller, gridBagConstraints);
+        detailsPanel.revalidate();
+        detailsScrollPane.revalidate();
         detailsScrollPane.getVerticalScrollBar().setValue(0);
         detailsScrollPane.getHorizontalScrollBar().setValue(0);
     }
@@ -448,6 +453,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
     private JLabel addKeyAtCol(String keyString) {
         // create label
         javax.swing.JLabel keyLabel = new javax.swing.JLabel();
+        keyLabel.setFocusable(false);
         gridBagConstraints.gridy++;
         gridBagConstraints.gridx = LABEL_COLUMN;
         gridBagConstraints.gridwidth = LABEL_WIDTH;
@@ -468,6 +474,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
     private JTextPane addValueAtCol(String valueString) {
         // create label,
         JTextPane valueField = new JTextPane();
+        valueField.setFocusable(false);
         valueField.setEditable(false);
         valueField.setOpaque(false);
         gridBagConstraints.gridx = VALUE_COLUMN;
