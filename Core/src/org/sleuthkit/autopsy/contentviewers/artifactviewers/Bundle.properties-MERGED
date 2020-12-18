@@ -27,7 +27,7 @@ ContactArtifactViewer_emails_header=Email
 ContactArtifactViewer_found_all_accounts_label=All accounts found.
 ContactArtifactViewer_heading_Source=Source
 # {0} - accountIdentifer
-ContactArtifactViewer_id_not_found_in_cr=Unable to find an account with identifier {0} in the Central Repository.
+ContactArtifactViewer_id_not_found_in_cr=Unable to find account(s) associated with contact {0} in the Central Repository.
 ContactArtifactViewer_label_datasource=Data Source
 ContactArtifactViewer_missing_account_label=Missing contact account
 ContactArtifactViewer_others_header=Other
@@ -97,5 +97,7 @@ DefaultTableArtifactContentViewer.selectAllMenuItem.text=Select All
 
 DefaultTableArtifactContentViewer.copyMenuItem.text=Copy
 PersonaAccountFetcher.account.justification=Account found in Call Log artifact
+# {0} - accountIdentifer
+PersonaAccountFetcher_not_account_in_cr=Unable to find an account with identifier {0} in the Central Repository.
 # {0} - Persona count
 PersonaDisplayTask_persona_count_suffix=(1 of {0})

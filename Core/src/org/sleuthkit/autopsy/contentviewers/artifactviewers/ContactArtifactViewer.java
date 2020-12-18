@@ -754,7 +754,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
         @NbBundle.Messages({
             "ContactArtifactViewer_persona_account_justification=Account found in Contact artifact",
             "# {0} - accountIdentifer",
-            "ContactArtifactViewer_id_not_found_in_cr=Unable to find an account with identifier {0} in the Central Repository."
+            "ContactArtifactViewer_id_not_found_in_cr=Unable to find account(s) associated with contact {0} in the Central Repository."
         })
 
         @Override
