@@ -104,13 +104,13 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID(),
             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID(),
             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()});
-        orderingMap.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID(), new Integer[]{BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), 
+        orderingMap.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID(), new Integer[]{BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),
             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID(),
             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID(),
             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID(),
             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_HEADERS.getTypeID(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH.getTypeID(),
             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()});
-        orderingMap.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID(), new Integer[]{BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), 
+        orderingMap.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID(), new Integer[]{BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),
             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID(),
             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID(),
             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID(),
@@ -128,7 +128,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID(),
             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_REFERRER.getTypeID(),
             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()});
-        orderingMap.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE.getTypeID(), new Integer[]{BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), 
+        orderingMap.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE.getTypeID(), new Integer[]{BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),
             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID(),
             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID(),
             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(),
@@ -155,7 +155,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
                     attributeMap.put(bba.getAttributeType().getTypeID(), attrList);
                 }
                 dataSourceName = artifact.getDataSource().getName();
-                sourceFileName = artifact.getParent().getName();
+                sourceFileName = artifact.getParent().getUniquePath();
             } catch (TskCoreException ex) {
                 logger.log(Level.WARNING, "Unable to get attributes for artifact " + artifact.getArtifactID(), ex);
             }
@@ -253,7 +253,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
         "GeneralPurposeArtifactViewer.term.label=Term",
         "GeneralPurposeArtifactViewer.details.otherHeader=Other"})
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    private void updateView(BlackboardArtifact artifact, Map<Integer, List<BlackboardAttribute>> attributeMap, String dataSourceName, String sourceFileName) {
+    private void updateView(BlackboardArtifact artifact, Map<Integer, List<BlackboardAttribute>> attributeMap, String dataSourceName, String sourceFilePath) {
         final Integer artifactTypeId = artifact.getArtifactTypeID();
         if (!(artifactTypeId < 1 || artifactTypeId >= Integer.MAX_VALUE)) {
             addDetailsHeader(artifactTypeId);
@@ -287,19 +287,21 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
                 headerAdded = addDates(Bundle.GeneralPurposeArtifactViewer_dates_end(), attributeMap.remove(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID()), headerAdded);
                 addDates(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getDisplayName(), attributeMap.remove(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()), headerAdded);
             }
-            addHeader(Bundle.GeneralPurposeArtifactViewer_details_otherHeader());
-            for (int key : attributeMap.keySet()) {
-                for (BlackboardAttribute bba : attributeMap.get(key)) {
-                    if (bba.getAttributeType().getTypeName().startsWith("TSK_DATETIME")) {
-                        addNameValueRow(bba.getAttributeType().getDisplayName(), TimeUtilities.epochToTime(bba.getValueLong(), ContentUtils.getTimeZone(artifact)));
-                    } else {
-                        addNameValueRow(bba.getAttributeType().getDisplayName(), bba.getDisplayString());
+            if (!attributeMap.keySet().isEmpty()) {
+                addHeader(Bundle.GeneralPurposeArtifactViewer_details_otherHeader());
+                for (int key : attributeMap.keySet()) {
+                    for (BlackboardAttribute bba : attributeMap.get(key)) {
+                        if (bba.getAttributeType().getTypeName().startsWith("TSK_DATETIME")) {
+                            addNameValueRow(bba.getAttributeType().getDisplayName(), TimeUtilities.epochToTime(bba.getValueLong(), ContentUtils.getTimeZone(artifact)));
+                        } else {
+                            addNameValueRow(bba.getAttributeType().getDisplayName(), bba.getDisplayString());
+                        }
                     }
                 }
             }
             addHeader(Bundle.GeneralPurposeArtifactViewer_details_sourceHeader());
             addNameValueRow(Bundle.GeneralPurposeArtifactViewer_details_dataSource(), dataSourceName);
-            addNameValueRow(Bundle.GeneralPurposeArtifactViewer_details_file(), sourceFileName);
+            addNameValueRow(Bundle.GeneralPurposeArtifactViewer_details_file(), sourceFilePath);
             // add veritcal glue at the end
             addPageEndGlue();
         }
