@@ -57,7 +57,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 @ServiceProvider(service = ArtifactContentViewer.class)
 public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel implements ArtifactContentViewer {
-
+    
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(GeneralPurposeArtifactViewer.class.getName());
     // Number of columns in the gridbag layout.
@@ -134,7 +134,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(),
             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()});
     }
-
+    
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @NbBundle.Messages({"GeneralPurposeArtifactViewer.unknown.text=Unknown"})
     @Override
@@ -180,14 +180,14 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
         gridBagConstraints.fill = GridBagConstraints.NONE;
         gridBagConstraints.insets = ROW_INSETS;
     }
-
+    
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     public Component getComponent() {
         //         Slap a vertical scrollbar on the panel 
         return new JScrollPane(this, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     }
-
+    
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     public boolean isSupported(BlackboardArtifact artifact) {
@@ -202,7 +202,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
                 || artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_FORM_ADDRESS.getTypeID()
                 || artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_FORM_AUTOFILL.getTypeID());
     }
-
+    
     @NbBundle.Messages({"GeneralPurposeArtifactViewer.details.attrHeader=Details",
         "GeneralPurposeArtifactViewer.details.sourceHeader=Source",
         "GeneralPurposeArtifactViewer.details.dataSource=Data Source",
@@ -251,7 +251,8 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
         "GeneralPurposeArtifactViewer.dates.end=End",
         "GeneralPurposeArtifactViewer.dates.time=Time",
         "GeneralPurposeArtifactViewer.term.label=Term",
-        "GeneralPurposeArtifactViewer.details.otherHeader=Other"})
+        "GeneralPurposeArtifactViewer.details.otherHeader=Other",
+        "GeneralPurposeArtifactViewer.noFile.text= (no longer exists)"})
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private void updateView(BlackboardArtifact artifact, Map<Integer, List<BlackboardAttribute>> attributeMap, String dataSourceName, String sourceFilePath) {
         final Integer artifactTypeId = artifact.getArtifactTypeID();
@@ -271,11 +272,17 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
                             } else {
                                 addNameValueRow(bba.getAttributeType().getDisplayName(), TimeUtilities.epochToTime(bba.getValueLong(), ContentUtils.getTimeZone(artifact)));
                             }
-                        } else if (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getTypeID() && bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT.getTypeID()) {
+                        } else if (bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT.getTypeID() && artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getTypeID()) {
                             addNameValueRow(Bundle.GeneralPurposeArtifactViewer_term_label(), bba.getDisplayString());
+                        } else if (bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH) {
+                            String displayString = bba.getDisplayString();
+                            if (attributeMap.containsKey(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID())) {
+                                displayString += Bundle.GeneralPurposeArtifactViewer_noFile_text();
+                            }
+                            addNameValueRow(bba.getAttributeType().getDisplayName(), displayString);
                         } else {
                             addNameValueRow(bba.getAttributeType().getDisplayName(), bba.getDisplayString());
-
+                            
                         }
                     }
                 }
