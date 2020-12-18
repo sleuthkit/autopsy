@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.modules.embeddedfileextractor;
 import java.io.File;
 import java.nio.file.Paths;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -29,10 +30,13 @@ import org.sleuthkit.autopsy.ingest.IngestModule.ProcessResult;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import net.sf.sevenzipjbinding.SevenZipNativeInitializationException;
+import org.sleuthkit.autopsy.apputils.ApplicationLoggers;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.FileIngestModuleAdapter;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.autopsy.modules.embeddedfileextractor.SevenZipExtractor.Archive;
+import org.sleuthkit.autopsy.threadutils.TaskRetryUtil;
 
 /**
  * A file level ingest module that extracts embedded files from supported
@@ -47,6 +51,7 @@ import org.sleuthkit.autopsy.modules.embeddedfileextractor.SevenZipExtractor.Arc
 })
 public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAdapter {
 
+    private static final String TASK_RETRY_STATS_LOG_NAME = "task_retry_stats";
     //Outer concurrent hashmap with keys of JobID, inner concurrentHashmap with keys of objectID
     private static final ConcurrentHashMap<Long, ConcurrentHashMap<Long, Archive>> mapOfDepthTrees = new ConcurrentHashMap<>();
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
@@ -189,6 +194,8 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
         fileTaskExecutor.shutDown();
         if (refCounter.decrementAndGet(jobId) == 0) {
             mapOfDepthTrees.remove(jobId);
+            Logger logger = ApplicationLoggers.getLogger(TASK_RETRY_STATS_LOG_NAME);
+            logger.log(Level.INFO, String.format("total task retries: %d, total task timeouts: %d, total task failures: %d", TaskRetryUtil.getTotalTaskRetriesCount(), TaskRetryUtil.getTotalTaskTimeOutsCount(), TaskRetryUtil.getTotalFailedTasksCount()));
         }
     }
 

@@ -218,8 +218,37 @@ public class TaskRetryUtil {
         return result;
     }
 
+    /**
+     * RJCTODO
+     *
+     * @return
+     */
+    public static long getTotalTaskRetriesCount() {
+        return totalTaskRetries.get();
+    }
+
+    /**
+     * RJCTODO
+     *
+     * @return
+     */
+    public static long getTotalTaskTimeOutsCount() {
+        return totalTaskTimeOuts.get();
+    }
+
+    /**
+     * RJCTODO
+     *
+     * @return
+     */
+    public static long getTotalFailedTasksCount() {
+        return totalFailedTasks.get();
+    }
+
+    /**
+     * Private contructor to prevent TaskRetryUtil object instantiation.
+     */
     private TaskRetryUtil() {
-        // Private contructor to prevent TaskRetryUtil object instantiation. 
     }
 
 }

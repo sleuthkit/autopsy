@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import org.sleuthkit.autopsy.apputils.ApplicationLoggers;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.threadutils.TaskRetryUtil;
@@ -49,13 +50,14 @@ import org.sleuthkit.autopsy.threadutils.TaskRetryUtil;
  */
 class FileTaskExecutor {
 
-    private static final Logger logger = Logger.getLogger(FileTaskExecutor.class.getName());
     private static final int MIN_THREADS_IN_POOL = 4;
     private static final int MAX_THREADS_IN_POOL = Integer.MAX_VALUE;
     private static final String FILE_IO_TASK_THREAD_NAME = "file-io-executor-task-%d";
-    private static final String FILE_EXISTS_TASK_DESC_FMT_STR = "Checking if %s already exists";
-    private static final String MKDIRS_TASK_DESC_FMT_STR = "Making directory %s";
-    private static final String NEW_FILE_TASK_DESC_FMT_STR = "Creating new file %s";
+    private static final String FILE_EXISTS_TASK_DESC_FMT_STR = "Checking if %s already exists (case directory = %s)";
+    private static final String MKDIRS_TASK_DESC_FMT_STR = "Making directory %s (case directory = %s)";
+    private static final String NEW_FILE_TASK_DESC_FMT_STR = "Creating new file %s (case directory = %s)";
+    private static final String FILE_OPS_LOG_NAME = "efe_file-ops";    
+    private static final Logger logger = ApplicationLoggers.getLogger(FILE_OPS_LOG_NAME);
     private final ScheduledThreadPoolExecutor executor;
     private final TaskTerminator terminator;
 
