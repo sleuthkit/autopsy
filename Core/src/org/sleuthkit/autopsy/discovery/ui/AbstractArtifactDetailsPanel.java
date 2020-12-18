@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.discovery.ui;
 
 import java.awt.Component;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
