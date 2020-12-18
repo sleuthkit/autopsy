@@ -247,7 +247,7 @@ class SearchEngineURLQueryAnalyzer extends Extract {
             }
         }
         try { //try to decode the url
-            String decoded = URLDecoder.decode(x, "UTF-8"); //NON-NLS
+            String decoded = URLDecoder.decode(x.replaceAll("%(?![0-9a-fA-F]{2})", "%25"), "UTF-8"); //NON-NLS
             return decoded;
         } catch (UnsupportedEncodingException exception) { //if it fails, return the encoded string
             logger.log(Level.FINE, "Error during URL decoding, returning undecoded value:"
