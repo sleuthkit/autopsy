@@ -130,7 +130,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
             if (abstractFile.getSize() > 64) {
                 int byteRead = abstractFile.read(t, 0, 64);
                 if (byteRead > 0) {
-                    isMbox = MboxParser.isValidMimeTypeMbox(t);
+                    isMbox = MboxParser.isValidMimeTypeMbox(t, abstractFile);
                     isEMLFile = EMLParser.isEMLFile(abstractFile, t);
                 }
             }
