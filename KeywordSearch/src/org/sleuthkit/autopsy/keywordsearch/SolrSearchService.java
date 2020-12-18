@@ -125,7 +125,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
                     // Try the StringsTextExtractor if Tika extractions fails.
                     TextExtractor stringsExtractor = TextExtractorFactory.getStringsExtractor(content, null);
                     Reader stringsExtractedTextReader = stringsExtractor.getReader();
-                    ingester.indexText(stringsExtractedTextReader, content.getId(), content.getName(), content, null);
+                    ingester.indexStrings(stringsExtractedTextReader, content.getId(), content.getName(), content, null);
                 } catch (Ingester.IngesterException | TextExtractor.InitReaderException ex1) {
                     throw new TskCoreException("Error indexing content", ex1);
                 }
