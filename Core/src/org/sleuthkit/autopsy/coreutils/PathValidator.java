@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2018 Basis Technology Corp.
+ * Copyright 2013-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -40,7 +40,7 @@ public final class PathValidator {
      *
      * @return - boolean true for valid path, false for invalid path
      */
-    public static boolean isValidForMultiUserCase(String path, Case.CaseType caseType) {
+    public static boolean isValidForCaseType(String path, Case.CaseType caseType) {
 
         if (caseType == Case.CaseType.MULTI_USER_CASE) {
             // check that path is not on "C:" drive
@@ -48,7 +48,10 @@ public final class PathValidator {
                 return false;
             }
         } else {
-            // single user case - no validation needed
+            // check that path is not a UNC path. Solr 8 does not allow UNC paths for indexes.
+            if (UNCPathUtilities.isUNC(path)) {
+                return false;
+            }
         }
 
         return true;
@@ -113,6 +116,19 @@ public final class PathValidator {
      */
     @Deprecated
     public static boolean isValid(String path, Case.CaseType caseType) {
-        return isValidForMultiUserCase(path, caseType);
+        return isValidForCaseType(path, caseType);
+    }
+    
+    /**
+     * Checks if the provided path is valid given the case type.
+     *
+     * @param path     - the path to validate
+     * @param caseType - the type of case which the path is being validated for
+     *
+     * @return - boolean true for valid path, false for invalid path
+     */
+    @Deprecated    
+    public static boolean isValidForMultiUserCase(String path, Case.CaseType caseType) {
+        return isValidForCaseType(path, caseType);
     }
 }
