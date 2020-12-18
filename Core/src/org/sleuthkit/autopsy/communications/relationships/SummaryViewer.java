@@ -226,7 +226,7 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
                     List<Persona> personaList = results.getPersonaList();
 
                     if (CentralRepository.isEnabled()) {
-                        ((SummaryPersonaPane) personaPanel).updatePersonaList(results.getCRAccount(), personaList);
+                        ((SummaryPersonaPane) personaPanel).updatePersonaList(account, results.getCRAccount(), personaList);
                     } else {
                         ((SummaryPersonaPane) personaPanel).setMessage("Bundle.SummaryViewer_Persona_Message()");
                         ((SummaryPersonaPane) personaPanel).showMessagePanel();

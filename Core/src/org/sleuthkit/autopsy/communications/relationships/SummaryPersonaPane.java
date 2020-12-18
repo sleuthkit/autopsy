@@ -24,17 +24,25 @@ import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import javax.swing.Box;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoAccount;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.Persona;
+import org.sleuthkit.autopsy.centralrepository.datamodel.PersonaAccount;
 import org.sleuthkit.autopsy.centralrepository.persona.PersonaDetailsDialog;
 import org.sleuthkit.autopsy.centralrepository.persona.PersonaDetailsDialogCallback;
 import org.sleuthkit.autopsy.centralrepository.persona.PersonaDetailsMode;
 import org.sleuthkit.autopsy.centralrepository.persona.PersonaDetailsPanel;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.Account;
 
 /**
  * Panel to show the Personas for a given account. That is apart SummaryViewer.
@@ -43,9 +51,12 @@ public final class SummaryPersonaPane extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
 
+    private final static Logger logger = Logger.getLogger(SummaryPersonaPane.class.getName());
+
     private final Map<Component, Persona> personaMap;
     private final ViewButtonHandler viewButtonHandler = new ViewButtonHandler();
-    private CentralRepoAccount currentAccount = null;
+    private CentralRepoAccount currentCRAccount = null;
+    private Account currentAccount = null;
 
     /**
      * Creates new form SummaryPersonaPane
@@ -87,14 +98,16 @@ public final class SummaryPersonaPane extends javax.swing.JPanel {
      *
      * @param personaList New list of personas to show
      */
-    void updatePersonaList(CentralRepoAccount account, List<Persona> personaList) {
+    void updatePersonaList(Account account, CentralRepoAccount crAccount, List<Persona> personaList) {
         JPanel panel = new JPanel();
+        currentCRAccount = crAccount;
         currentAccount = account;
+
         CardLayout layout = (CardLayout) getLayout();
         if (personaList.isEmpty()) {
             layout.show(this, "create");
         } else {
-            panel.setLayout(new GridLayout(personaList.size(), 1));
+            panel.setLayout(new GridLayout(personaList.size() + 1, 1));
             int maxWidth = 0;
             List<PersonaPanel> panelList = new ArrayList<>();
             for (Persona persona : personaList) {
@@ -116,6 +129,7 @@ public final class SummaryPersonaPane extends javax.swing.JPanel {
                 }
             }
 
+            panel.add(Box.createVerticalGlue());
             personaScrollPane.setViewportView(panel);
             layout.show(this, "persona");
         }
@@ -158,7 +172,23 @@ public final class SummaryPersonaPane extends javax.swing.JPanel {
             if (persona != null) {
                 List<Persona> list = new ArrayList<>();
                 list.add(persona);
-                updatePersonaList(null, list);
+
+                CentralRepoAccount crAccount = null;
+                Collection<PersonaAccount> personaAccounts = null;
+                try {
+                    personaAccounts = persona.getPersonaAccounts();
+                } catch (CentralRepoException ex) {
+                    logger.log(Level.WARNING, String.format("Failed to get cr account from person %s (%d)", persona.getName(), persona.getId()), ex);
+                }
+
+                if (personaAccounts != null) {
+                    Iterator<PersonaAccount> iterator = personaAccounts.iterator();
+                    if (iterator.hasNext()) {
+                        crAccount = iterator.next().getAccount();
+                    }
+                }
+
+                updatePersonaList(currentAccount, crAccount, list);
             }
         }
     }
@@ -236,8 +266,11 @@ public final class SummaryPersonaPane extends javax.swing.JPanel {
 
         // Pre populate the persona name and accounts if we have them.
         PersonaDetailsPanel personaPanel = createPersonaDialog.getDetailsPanel();
-        personaPanel.addAccount(currentAccount, "", Persona.Confidence.HIGH);
+        if (currentCRAccount != null) {
+            personaPanel.addAccount(currentCRAccount, "", Persona.Confidence.HIGH);
 
+        }
+        personaPanel.setPersonaName(currentAccount.getTypeSpecificID());
         // display the dialog now
         createPersonaDialog.display();
     }//GEN-LAST:event_createButtonActionPerformed

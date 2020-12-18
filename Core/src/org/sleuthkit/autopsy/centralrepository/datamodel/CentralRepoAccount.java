@@ -336,7 +336,7 @@ public final class CentralRepoAccount {
                 normalizedAccountIdentifier = accountIdentifier.toLowerCase();
             }
         } catch (CorrelationAttributeNormalizationException ex) {
-            throw new InvalidAccountIDException("Invalid account identifier", ex);
+            throw new InvalidAccountIDException(String.format("Account id normaization failed, invalid account identifier %s", accountIdentifier), ex);
         }
 
         return normalizedAccountIdentifier;

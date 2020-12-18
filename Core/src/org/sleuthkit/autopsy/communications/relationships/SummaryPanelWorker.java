@@ -21,20 +21,25 @@ package org.sleuthkit.autopsy.communications.relationships;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.logging.Level;
 import javax.swing.SwingWorker;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoAccount;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.centralrepository.datamodel.Persona;
 import org.sleuthkit.autopsy.centralrepository.datamodel.PersonaAccount;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.AccountFileInstance;
+import org.sleuthkit.datamodel.InvalidAccountIDException;
 
 /**
  * Runnable SwingWorker for gather the data that the Summary panel needs.
  */
 class SummaryPanelWorker extends SwingWorker<SummaryPanelWorker.SummaryWorkerResults, Void> {
 
+    private final static Logger logger = Logger.getLogger(SummaryPanelWorker.class.getName());
+    
     private final Account account;
 
     // Construct a instance
@@ -69,7 +74,13 @@ class SummaryPanelWorker extends SwingWorker<SummaryPanelWorker.SummaryWorkerRes
                 personaList.add(pAccount.getPersona());
             }
 
-            crAccount = CentralRepository.getInstance().getAccount(CentralRepository.getInstance().getAccountTypeByName(account.getAccountType().getTypeName()), account.getTypeSpecificID());
+            try {
+                crAccount = CentralRepository.getInstance().getAccount(CentralRepository.getInstance().getAccountTypeByName(account.getAccountType().getTypeName()), account.getTypeSpecificID());
+            } catch (InvalidAccountIDException unused) {
+                // This was probably caused to a phone number not making
+                // threw the normalization.
+                logger.log(Level.WARNING, String.format("Exception thrown from CR getAccount for account %s (%d)", account.getTypeSpecificID(), account.getAccountID()));
+            }
         }
 
         return new SummaryWorkerResults(stringList, personaList, crAccount);
