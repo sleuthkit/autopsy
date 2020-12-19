@@ -274,7 +274,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
                             }
                         } else if (bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT.getTypeID() && artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getTypeID()) {
                             addNameValueRow(Bundle.GeneralPurposeArtifactViewer_term_label(), bba.getDisplayString());
-                        } else if (bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH) {
+                        } else if (bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH.getTypeID()) {
                             String displayString = bba.getDisplayString();
                             if (attributeMap.containsKey(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID())) {
                                 displayString += Bundle.GeneralPurposeArtifactViewer_noFile_text();
