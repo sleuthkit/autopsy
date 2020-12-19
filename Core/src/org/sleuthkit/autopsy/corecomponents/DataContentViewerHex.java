@@ -44,8 +44,10 @@ import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import static org.sleuthkit.autopsy.corecomponents.Bundle.*;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
+import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.datamodel.DataConversion;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -606,7 +608,24 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
             return false;
         }
         Content content = DataContentViewerUtility.getDefaultContent(node);
-        return content != null && content.getSize() > 0;
+        if (content == null || content.getSize() <= 0) {
+            return false;
+        } else if (node instanceof BlackboardArtifactNode) {
+            BlackboardArtifact theArtifact = ((BlackboardArtifactNode) node).getArtifact();
+            //disable the content viewer when a download or cached file does not exist instead of displaying its parent
+            try {
+                if ((theArtifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID()
+                        || theArtifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID())
+                        && content.getId() == theArtifact.getParent().getId()) {
+                    return false;
+                }
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, String.format("Error getting parent of artifact with type %s and objID = %d can not confirm content with name %s and objId = %d is not the parent. Hex content viewer will not be supported.",
+                        theArtifact.getArtifactTypeName(), theArtifact.getObjectID(), content.getName(), content.getId()), ex);
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override

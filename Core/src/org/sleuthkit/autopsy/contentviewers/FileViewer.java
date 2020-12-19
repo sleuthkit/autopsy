@@ -28,8 +28,11 @@ import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Generic Application content viewer
@@ -82,8 +85,7 @@ public class FileViewer extends javax.swing.JPanel implements DataContentViewer 
      *
      * @param file
      *
-     * @return FileTypeViewer, null if no known content viewer supports the
-     *         file
+     * @return FileTypeViewer, null if no known content viewer supports the file
      */
     private FileTypeViewer getSupportingViewer(AbstractFile file) {
         FileTypeViewer viewer = mimeTypeToViewerMap.get(file.getMIMEType());
@@ -193,7 +195,21 @@ public class FileViewer extends javax.swing.JPanel implements DataContentViewer 
         if ((aFile == null) || (aFile.isDir())) {
             return false;
         }
-
+        if (node instanceof BlackboardArtifactNode) {
+            BlackboardArtifact theArtifact = ((BlackboardArtifactNode) node).getArtifact();
+            //disable the content viewer when a download or cached file does not exist instead of displaying its parent
+            try {
+                if ((theArtifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID()
+                        || theArtifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID())
+                        && aFile.getId() == theArtifact.getParent().getId()) {
+                    return false;
+                }
+            } catch (TskCoreException ex) {
+                LOGGER.log(Level.WARNING, String.format("Error getting parent of artifact with type %s and objID = %d can not confirm file with name %s and objId = %d is not the parent. File content viewer will not be supported.",
+                        theArtifact.getArtifactTypeName(), theArtifact.getObjectID(), aFile.getName(), aFile.getId()), ex);
+                return false;
+            }
+        }
         String mimeType = aFile.getMIMEType();
         if (Strings.isNullOrEmpty(mimeType)) {
             LOGGER.log(Level.INFO, "Mimetype not known for file: {0}", aFile.getName()); //NON-NLS
