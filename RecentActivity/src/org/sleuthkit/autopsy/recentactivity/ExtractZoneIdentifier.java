@@ -240,9 +240,11 @@ final class ExtractZoneIdentifier extends Extract {
                 zoneInfo.getURL(), null,
                 (zoneInfo.getURL() != null ? NetworkUtils.extractDomain(zoneInfo.getURL()) : ""),
                 null);
-        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT,
-                    RecentActivityExtracterModuleFactory.getModuleName(),
-                    zoneInfo.getZoneIdAsString()));
+        if (zoneInfo.getZoneIdAsString() != null) {
+            bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT,
+                        RecentActivityExtracterModuleFactory.getModuleName(),
+                        zoneInfo.getZoneIdAsString()));
+        }
         return createArtifactWithAttributes(TSK_WEB_DOWNLOAD, zoneFile, bbattributes);
     }
 
