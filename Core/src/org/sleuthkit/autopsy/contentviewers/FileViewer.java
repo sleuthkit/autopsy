@@ -40,11 +40,11 @@ import org.sleuthkit.datamodel.TskCoreException;
 @ServiceProvider(service = DataContentViewer.class, position = 3)
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class FileViewer extends javax.swing.JPanel implements DataContentViewer {
-
+    
     private static final int CONFIDENCE_LEVEL = 5;
     private static final long serialVersionUID = 1L;
     private static final Logger LOGGER = Logger.getLogger(FileViewer.class.getName());
-
+    
     private final Map<String, FileTypeViewer> mimeTypeToViewerMap = new HashMap<>();
 
     // TBD: This hardcoded list of viewers should be replaced with a dynamic lookup
@@ -56,7 +56,7 @@ public class FileViewer extends javax.swing.JPanel implements DataContentViewer 
         new WindowsRegistryViewer(),
         new PDFViewer()
     };
-
+    
     private FileTypeViewer lastViewer;
 
     /**
@@ -74,9 +74,9 @@ public class FileViewer extends javax.swing.JPanel implements DataContentViewer 
                 }
             });
         }
-
+        
         initComponents();
-
+        
         LOGGER.log(Level.INFO, "Created ApplicationContentViewer instance: {0}", this); //NON-NLS
     }
 
@@ -112,18 +112,18 @@ public class FileViewer extends javax.swing.JPanel implements DataContentViewer 
     // End of variables declaration//GEN-END:variables
     @Override
     public void setNode(Node selectedNode) {
-
+        
         resetComponent();
-
-        if (selectedNode == null) {
+        
+        if (selectedNode == null || !isSupported(selectedNode)) {
             return;
         }
-
+        
         AbstractFile file = selectedNode.getLookup().lookup(AbstractFile.class);
         if ((file == null) || (file.isDir())) {
             return;
         }
-
+        
         String mimeType = file.getMIMEType();
         if (Strings.isNullOrEmpty(mimeType)) {
             LOGGER.log(Level.INFO, "Mimetype not known for file: {0}", file.getName()); //NON-NLS
@@ -135,62 +135,62 @@ public class FileViewer extends javax.swing.JPanel implements DataContentViewer 
                 return;
             }
         }
-
+        
         if (mimeType.equalsIgnoreCase("application/octet-stream")) {
             return;
         } else {
             FileTypeViewer viewer = getSupportingViewer(file);
             if (viewer != null) {
                 lastViewer = viewer;
-
+                
                 viewer.setFile(file);
                 this.removeAll();
                 this.add(viewer.getComponent());
                 this.validate();
             }
         }
-
+        
     }
-
+    
     @Override
     @NbBundle.Messages("ApplicationContentViewer.title=Application")
     public String getTitle() {
         return Bundle.ApplicationContentViewer_title();
     }
-
+    
     @Override
     @NbBundle.Messages("ApplicationContentViewer.toolTip=Displays file contents.")
     public String getToolTip() {
         return Bundle.ApplicationContentViewer_toolTip();
     }
-
+    
     @Override
     public DataContentViewer createInstance() {
         return new FileViewer();
     }
-
+    
     @Override
     public Component getComponent() {
         return this;
     }
-
+    
     @Override
     public void resetComponent() {
-
+        
         if (lastViewer != null) {
             lastViewer.resetComponent();
         }
         this.removeAll();
         lastViewer = null;
     }
-
+    
     @Override
     public boolean isSupported(Node node) {
-
+        
         if (node == null) {
             return false;
         }
-
+        
         AbstractFile aFile = node.getLookup().lookup(AbstractFile.class);
         if ((aFile == null) || (aFile.isDir())) {
             return false;
@@ -221,20 +221,20 @@ public class FileViewer extends javax.swing.JPanel implements DataContentViewer 
                 return false;
             }
         }
-
+        
         if (mimeType.equalsIgnoreCase("application/octet-stream")) {
             return false;
         } else {
             return (getSupportingViewer(aFile) != null);
         }
-
+        
     }
-
+    
     @Override
     public int isPreferred(Node node) {
         AbstractFile file = node.getLookup().lookup(AbstractFile.class);
         String mimeType = file.getMIMEType();
-
+        
         if (Strings.isNullOrEmpty(mimeType)) {
             LOGGER.log(Level.INFO, "Mimetype not known for file: {0}", file.getName()); //NON-NLS
             try {
@@ -245,7 +245,7 @@ public class FileViewer extends javax.swing.JPanel implements DataContentViewer 
                 return 0;
             }
         }
-
+        
         if (mimeType.equalsIgnoreCase("application/octet-stream")) {
             return 0;
         } else {
@@ -253,7 +253,7 @@ public class FileViewer extends javax.swing.JPanel implements DataContentViewer 
                 return CONFIDENCE_LEVEL;
             }
         }
-
+        
         return 0;
     }
 }

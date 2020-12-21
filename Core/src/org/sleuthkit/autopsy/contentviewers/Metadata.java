@@ -149,6 +149,10 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
         "Metadata.nodeText.none=None"})
     @Override
     public void setNode(Node node) {
+        if ((node == null) || (!isSupported(node))) {
+            resetComponent();
+            return;
+        }
         AbstractFile file = node.getLookup().lookup(AbstractFile.class);
         Image image = node.getLookup().lookup(Image.class);
         DataSource dataSource = node.getLookup().lookup(DataSource.class);

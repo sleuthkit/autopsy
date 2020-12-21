@@ -520,7 +520,9 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
                     Collection<? extends BlackboardArtifact> nodeArtifacts = lookup.lookupAll(BlackboardArtifact.class);
                     if (!nodeArtifacts.isEmpty()) {
                         BlackboardArtifact originalArtifact = nodeArtifacts.iterator().next();
-                        if (!underlyingContent.equals(originalArtifact.getParent())) {
+                        if ((originalArtifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID()
+                                || originalArtifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID())
+                                && underlyingContent.getId() == originalArtifact.getParent().getId()) {
                             contentArtifacts.add(originalArtifact);
                         }
                     }

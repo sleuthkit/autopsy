@@ -58,6 +58,10 @@ public class TextContentViewer implements DataContentViewer {
 
     @Override
     public void setNode(Node selectedNode) {
+        if ((selectedNode == null) || (!isSupported(selectedNode))) {
+            resetComponent();
+            return;
+        }
         currentNode = selectedNode;
         panel.setNode(currentNode);
 

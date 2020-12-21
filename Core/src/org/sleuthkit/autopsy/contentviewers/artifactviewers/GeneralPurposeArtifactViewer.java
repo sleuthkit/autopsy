@@ -190,6 +190,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
     
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
+
     public boolean isSupported(BlackboardArtifact artifact) {
         return (artifact != null)
                 && (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID()
