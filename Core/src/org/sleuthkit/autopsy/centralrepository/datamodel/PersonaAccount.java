@@ -327,11 +327,13 @@ public class PersonaAccount {
     public static Collection<PersonaAccount> getPersonaAccountsForAccount(Account account) throws CentralRepoException {
         String querySQL = PERSONA_ACCOUNTS_QUERY_CLAUSE
                 + " WHERE LOWER(accounts.account_unique_identifier) LIKE LOWER(?)"
+                + " AND LOWER(accounts.account_unique_identifier) != ?"
                 + " AND type_name = ?"
                 + " AND personas.status_id != ?";
 
         List<Object> queryParams = new ArrayList<>();
         queryParams.add("%" + account.getTypeSpecificID() + "%"); // substring match
+        queryParams.add("+"  + account.getTypeSpecificID().toLowerCase());
         queryParams.add(account.getAccountType().getTypeName());
         queryParams.add(Persona.PersonaStatus.DELETED.getStatusId());
 
