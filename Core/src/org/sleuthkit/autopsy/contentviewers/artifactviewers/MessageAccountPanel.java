@@ -562,7 +562,9 @@ final class MessageAccountPanel extends JPanel {
         }
 
         @NbBundle.Messages({
-            "MessageAccountPanel.account.justification=Account found in Message artifact"
+            "MessageAccountPanel.account.justification=Account found in Message artifact",
+            "# {0} - accountIdentifer",
+            "MessageAccountPanel_id_not_found_in_cr=Unable to find an account with identifier {0} in the Central Repository."
         })
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -591,6 +593,8 @@ final class MessageAccountPanel extends JPanel {
                             CentralRepoAccount account = CentralRepository.getInstance().getAccount(type, accountContainer.getAccount().getTypeSpecificID());
                             if (account != null) {
                                 personaPanel.addAccount(account, Bundle.MessageAccountPanel_account_justification(), Persona.Confidence.HIGH);
+                            } else {
+                                 createPersonaDialog.setStartupPopupMessage(Bundle.MessageAccountPanel_id_not_found_in_cr(accountContainer.getAccount().getTypeSpecificID()));
                             }
                         } catch (InvalidAccountIDException ex2) {
                             // These are expected when the account identifier doesn't match the format of the account type.

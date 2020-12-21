@@ -411,6 +411,7 @@ class Chromium extends Extract {
                 }
             }
             postArtifacts(bbartifacts);
+            bbartifacts.clear();
             dbFile.delete();
         }
     }

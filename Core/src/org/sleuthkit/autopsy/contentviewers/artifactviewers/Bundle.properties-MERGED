@@ -26,6 +26,8 @@ ContactArtifactViewer_cr_disabled_message=Enable Central Repository to view, cre
 ContactArtifactViewer_emails_header=Email
 ContactArtifactViewer_found_all_accounts_label=All accounts found.
 ContactArtifactViewer_heading_Source=Source
+# {0} - accountIdentifer
+ContactArtifactViewer_id_not_found_in_cr=Unable to find account(s) associated with contact {0} in the Central Repository.
 ContactArtifactViewer_label_datasource=Data Source
 ContactArtifactViewer_missing_account_label=Missing contact account
 ContactArtifactViewer_others_header=Other
@@ -69,6 +71,8 @@ MessageAccountPanel_button_create_label=Create
 MessageAccountPanel_button_view_label=View
 MessageAccountPanel_contact_label=Contact:
 MessageAccountPanel_copy_label=Copy
+# {0} - accountIdentifer
+MessageAccountPanel_id_not_found_in_cr=Unable to find an account with identifier {0} in the Central Repository.
 MessageAccountPanel_no_matches=No matches found.
 MessageAccountPanel_persona_label=Persona:
 MessageAccountPanel_unknown_label=Unknown
@@ -107,5 +111,7 @@ DefaultTableArtifactContentViewer.selectAllMenuItem.text=Select All
 
 DefaultTableArtifactContentViewer.copyMenuItem.text=Copy
 PersonaAccountFetcher.account.justification=Account found in Call Log artifact
+# {0} - accountIdentifer
+PersonaAccountFetcher_not_account_in_cr=Unable to find an account with identifier {0} in the Central Repository.
 # {0} - Persona count
 PersonaDisplayTask_persona_count_suffix=(1 of {0})
