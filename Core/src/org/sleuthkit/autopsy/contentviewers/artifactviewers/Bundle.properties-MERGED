@@ -60,6 +60,7 @@ GeneralPurposeArtifactViewer.details.historyHeader=Visit Details
 GeneralPurposeArtifactViewer.details.otherHeader=Other
 GeneralPurposeArtifactViewer.details.searchHeader=Web Search
 GeneralPurposeArtifactViewer.details.sourceHeader=Source
+GeneralPurposeArtifactViewer.noFile.text=\ (no longer exists)
 GeneralPurposeArtifactViewer.term.label=Term
 GeneralPurposeArtifactViewer.unknown.text=Unknown
 GeneralPurposeArtifactViewer_menuitem_copy=Copy
