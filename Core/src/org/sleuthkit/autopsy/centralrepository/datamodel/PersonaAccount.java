@@ -46,7 +46,7 @@ public class PersonaAccount {
     private final long dateAdded;
     private final CentralRepoExaminer examiner;
 
-    public PersonaAccount(long id, Persona persona, CentralRepoAccount account, String justification, Persona.Confidence confidence, long dateAdded, CentralRepoExaminer examiner) {
+    private PersonaAccount(long id, Persona persona, CentralRepoAccount account, String justification, Persona.Confidence confidence, long dateAdded, CentralRepoExaminer examiner) {
         this.id = id;
         this.persona = persona;
         this.account = account;
@@ -326,14 +326,12 @@ public class PersonaAccount {
      */
     public static Collection<PersonaAccount> getPersonaAccountsForAccount(Account account) throws CentralRepoException {
         String querySQL = PERSONA_ACCOUNTS_QUERY_CLAUSE
-                + " WHERE LOWER(accounts.account_unique_identifier) LIKE LOWER(?)"
-                + " AND LOWER(accounts.account_unique_identifier) != ?"
+                + " WHERE LOWER(accounts.account_unique_identifier) = LOWER(?)"
                 + " AND type_name = ?"
                 + " AND personas.status_id != ?";
 
         List<Object> queryParams = new ArrayList<>();
-        queryParams.add("%" + account.getTypeSpecificID() + "%"); // substring match
-        queryParams.add("+"  + account.getTypeSpecificID().toLowerCase());
+        queryParams.add(account.getTypeSpecificID()); // substring match
         queryParams.add(account.getAccountType().getTypeName());
         queryParams.add(Persona.PersonaStatus.DELETED.getStatusId());
 
