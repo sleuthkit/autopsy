@@ -23,6 +23,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.logging.Level;
 import org.netbeans.spi.options.OptionsPanelController;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
@@ -372,6 +373,7 @@ class KeywordSearchGlobalSearchSettingsPanel extends javax.swing.JPanel implemen
         return UpdateFrequency.DEFAULT;
     }
 
+    @NbBundle.Messages({"KeywordSearchGlobalSearchSettingsPanel.customizeComponents.windowsOCR=Enable Optical Character Recognition (OCR) (Requires Windows 64-bit)"})
     private void customizeComponents() {
 
         timeGroup.add(timeRadioButton1);
@@ -390,7 +392,7 @@ class KeywordSearchGlobalSearchSettingsPanel extends javax.swing.JPanel implemen
         }
         
         if (!PlatformUtil.isWindowsOS() || !PlatformUtil.is64BitOS()) {
-            ocrCheckBox.setText("Enable Optical Character Recognition (OCR) (Requires Windows 64-bit)");
+            ocrCheckBox.setText(Bundle.KeywordSearchGlobalSearchSettingsPanel_customizeComponents_windowsOCR());
             ocrCheckBox.setSelected(false);
             ocrCheckBox.setEnabled(false);
         }        

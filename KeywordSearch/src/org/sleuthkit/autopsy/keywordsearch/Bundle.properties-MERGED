@@ -19,6 +19,7 @@ IndexedText.errorMessage.errorGettingText=<span style='font-style:italic'>Error 
 IndexedText.warningMessage.knownFile=<span style='font-style:italic'>This file is a known file (based on MD5 hash) and does not have indexed text.</span>
 IndexedText.warningMessage.noTextAvailable=<span style='font-style:italic'>No indexed text for this file.</span>
 KeywordSearchGlobalLanguageSettingsPanel.enableOcrCheckbox.text=Enable Optical Character Recognition (OCR)
+KeywordSearchGlobalSearchSettingsPanel.customizeComponents.windowsOCR=Enable Optical Character Recognition (OCR) (Requires Windows 64-bit)
 KeywordSearchGlobalSettingsPanel.Title=Global Keyword Search Settings
 KeywordSearchIngestModule.init.badInitMsg=Keyword search server was not properly initialized, cannot run keyword search ingest.
 # {0} - Reason for not connecting to Solr
