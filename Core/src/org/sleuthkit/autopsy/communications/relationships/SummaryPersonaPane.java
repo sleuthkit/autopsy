@@ -33,6 +33,7 @@ import java.util.logging.Level;
 import javax.swing.Box;
 import javax.swing.JButton;
 import javax.swing.JPanel;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoAccount;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.Persona;
@@ -260,6 +261,11 @@ public final class SummaryPersonaPane extends javax.swing.JPanel {
         add(createPersonaPanel, "create");
     }// </editor-fold>//GEN-END:initComponents
 
+    @NbBundle.Messages({
+        "# {0} - accountIdentifer",
+        "SummaryPersonaPane_not_account_in_cr=Unable to find an account with identifier {0} in the Central Repository."
+    })
+    
     private void createButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_createButtonActionPerformed
         PersonaDetailsDialog createPersonaDialog = new PersonaDetailsDialog(SummaryPersonaPane.this,
                 PersonaDetailsMode.CREATE, null, new PersonaCreateCallbackImpl(), false);
@@ -269,6 +275,8 @@ public final class SummaryPersonaPane extends javax.swing.JPanel {
         if (currentCRAccount != null) {
             personaPanel.addAccount(currentCRAccount, "", Persona.Confidence.HIGH);
 
+        } else {
+            createPersonaDialog.setStartupPopupMessage(Bundle.SummaryPersonaPane_not_account_in_cr(currentAccount.getTypeSpecificID()));
         }
         personaPanel.setPersonaName(currentAccount.getTypeSpecificID());
         // display the dialog now

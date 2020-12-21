@@ -35,6 +35,8 @@ MessageViewer_viewMessage_all=All
 MessageViewer_viewMessage_calllogs=Call Logs
 MessageViewer_viewMessage_selected=Selected
 MessageViewer_viewMessage_unthreaded=Unthreaded
+# {0} - accountIdentifer
+SummaryPersonaPane_not_account_in_cr=Unable to find an account with identifier {0} in the Central Repository.
 SummaryViewer.countsPanel.border.title=Communications
 OutlineViewPanel.messageLabel.text=<Control Disabled>
 SummaryViewer.messagesDataLabel.text=messages
