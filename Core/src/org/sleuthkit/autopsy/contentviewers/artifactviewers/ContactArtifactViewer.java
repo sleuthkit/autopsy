@@ -40,6 +40,7 @@ import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.SwingWorker;
 import org.apache.commons.lang.StringUtils;
@@ -751,7 +752,9 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
         }
 
         @NbBundle.Messages({
-            "ContactArtifactViewer_persona_account_justification=Account found in Contact artifact"
+            "ContactArtifactViewer_persona_account_justification=Account found in Contact artifact",
+            "# {0} - accountIdentifer",
+            "ContactArtifactViewer_id_not_found_in_cr=Unable to find account(s) associated with contact {0} in the Central Repository."
         })
 
         @Override
@@ -770,6 +773,10 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
             // pass the list of accounts to the dialog
             for (CentralRepoAccount account : contactUniqueAccountsList) {
                 personaPanel.addAccount(account, Bundle.ContactArtifactViewer_persona_account_justification(), Persona.Confidence.HIGH);
+            }
+            
+            if(contactName != null && contactUniqueAccountsList.isEmpty()) {
+                createPersonaDialog.setStartupPopupMessage(Bundle.ContactArtifactViewer_id_not_found_in_cr(contactName));
             }
 
             // display the dialog now

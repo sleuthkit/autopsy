@@ -89,8 +89,15 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
                 return;
             }
                     
-            if (CURRENT_CASE == Case.Events.valueOf(evt.getPropertyName())) {
-                refresh();
+            // Check whether we have a case open or case close event.
+            if ((CURRENT_CASE == Case.Events.valueOf(evt.getPropertyName()))) {
+                if (evt.getNewValue() != null) {
+                    // Case open
+                    refresh();
+                } else {
+                    // Case close
+                    reset();
+                }
             }
         });
     }
@@ -124,7 +131,7 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
      */
     private void refresh() {
         try {
-            if (Case.isCaseOpen()) {
+            if (Case.isCaseOpen()) { // Note - this will generally return true when handling a case close event
                 SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
                 this.ingestJobs = skCase.getIngestJobs();
                 setDataSource(selectedDataSource);
@@ -137,6 +144,14 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
             logger.log(Level.SEVERE, "Failed to load ingest jobs.", ex);
             JOptionPane.showMessageDialog(this, Bundle.IngestJobInfoPanel_loadIngestJob_error_text(), Bundle.IngestJobInfoPanel_loadIngestJob_error_title(), JOptionPane.ERROR_MESSAGE);
         }
+    }
+    
+    /**
+     * Reset the panel.
+     */
+    private void reset() {
+        this.ingestJobs = new ArrayList<>();
+        setDataSource(null);
     }
 
     @Messages({"IngestJobInfoPanel.IngestJobTableModel.StartTime.header=Start Time",

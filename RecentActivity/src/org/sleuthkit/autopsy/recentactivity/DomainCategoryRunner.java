@@ -23,8 +23,10 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -76,7 +78,84 @@ class DomainCategoryRunner extends Extract {
     private static final String URL_REGEX_STR = String.format("^\\s*%s?%s?%s?", URL_REGEX_SCHEME, URL_REGEX_AUTHORITY, URL_REGEX_PATH);
     private static final Pattern URL_REGEX = Pattern.compile(URL_REGEX_STR);
 
+    private static int DATETIME_ACCESSED_TYPEID = ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID();
+    private static int URL_TYPEID = ATTRIBUTE_TYPE.TSK_URL.getTypeID();
+
     private static final Logger logger = Logger.getLogger(DomainCategoryRunner.class.getName());
+
+    /**
+     * Get seconds from epoch from the mapping for the attribute type id.
+     *
+     * @param attrMap A mapping of attribute type id to BlackboardAttribute for
+     * an artifact.
+     * @param attrTypeId The attribute type id to fetch.
+     * @return The time in seconds from epoch or 0 if cannot be found.
+     */
+    private static long getTimeOrZero(Map<Integer, BlackboardAttribute> attrMap, int attrTypeId) {
+        if (attrMap == null) {
+            return 0;
+        }
+
+        BlackboardAttribute attr = attrMap.get(attrTypeId);
+        return attr == null ? 0 : attr.getValueLong();
+    }
+
+    /**
+     * Get string for attribute type id or "" if cannot be determined.
+     *
+     * @param attrMap A mapping of attribute type id to BlackboardAttribute for
+     * an artifact.
+     * @param attrTypeId The attribute type id to fetch.
+     * @return The string value or "" if cannot be determined or null.
+     */
+    private static String getStringOrEmpty(Map<Integer, BlackboardAttribute> attrMap, int attrTypeId) {
+        if (attrMap == null) {
+            return "";
+        }
+
+        BlackboardAttribute attr = attrMap.get(attrTypeId);
+        String attrStr = attr == null ? "" : attr.getValueString();
+        return attrStr == null ? "" : attrStr;
+    }
+
+    /**
+     * Comparator for ensuring deterministic order of processing artifacts.
+     */
+    private static final Comparator<BlackboardArtifact> ARTIFACT_COMPARATOR = (a, b) -> {
+        // get attributes in map by type id
+        Map<Integer, BlackboardAttribute> attrMapA = null;
+        Map<Integer, BlackboardAttribute> attrMapB = null;
+
+        try {
+            attrMapA = a.getAttributes()
+                    .stream()
+                    .collect(Collectors.toMap(attr -> attr.getAttributeType().getTypeID(), attr -> attr, (attr1, attr2) -> attr1));
+
+            attrMapB = b.getAttributes()
+                    .stream()
+                    .collect(Collectors.toMap(attr -> attr.getAttributeType().getTypeID(), attr -> attr, (attr1, attr2) -> attr1));
+
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, "There was an error fetching attributes for artifacts", ex);
+            return 0;
+        }
+
+        // sort first on time
+        int timeCompare = Long.compare(getTimeOrZero(attrMapA, DATETIME_ACCESSED_TYPEID), getTimeOrZero(attrMapB, DATETIME_ACCESSED_TYPEID));
+        if (timeCompare != 0) {
+            // negate to push latest times to the front
+            return -timeCompare;
+        }
+
+        // sort next on url
+        int urlCompare = getStringOrEmpty(attrMapA, URL_TYPEID).compareToIgnoreCase(getStringOrEmpty(attrMapB, URL_TYPEID));
+        if (urlCompare != 0) {
+            return urlCompare;
+        }
+
+        // use id as last resort
+        return Long.compare(a.getId(), b.getId());
+    };
 
     private Content dataSource;
     private IngestJobContext context;
@@ -272,11 +351,12 @@ class DomainCategoryRunner extends Extract {
         // only one suffix per ingest is captured so this tracks the suffixes seen.
         Set<String> hostSuffixesSeen = new HashSet<>();
         try {
-            Collection<BlackboardArtifact> listArtifacts = currentCase.getSleuthkitCase().getBlackboard().getArtifacts(
+            List<BlackboardArtifact> listArtifacts = currentCase.getSleuthkitCase().getBlackboard().getArtifacts(
                     Arrays.asList(new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_WEB_HISTORY)),
                     Arrays.asList(dataSource.getId()));
 
             logger.log(Level.INFO, "Processing {0} blackboard artifacts.", listArtifacts.size()); //NON-NLS
+            Collections.sort(listArtifacts, ARTIFACT_COMPARATOR);
 
             for (BlackboardArtifact artifact : listArtifacts) {
                 // make sure we haven't cancelled
@@ -361,11 +441,11 @@ class DomainCategoryRunner extends Extract {
         if (lookupList == null) {
             lookupList = Collections.emptyList();
         }
-        
+
         List<DomainCategorizer> foundProviders = lookupList.stream()
-                        .filter(provider -> provider != null)
-                        .sorted((a, b) -> a.getClass().getName().compareToIgnoreCase(b.getClass().getName()))
-                        .collect(Collectors.toList());
+                .filter(provider -> provider != null)
+                .sorted((a, b) -> a.getClass().getName().compareToIgnoreCase(b.getClass().getName()))
+                .collect(Collectors.toList());
 
         // add the default categorizer last as a last resort
         foundProviders.add(new DefaultDomainCategorizer());
