@@ -24,13 +24,16 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Date;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Scanner;
 import java.util.logging.Level;
 import org.openide.modules.InstalledFileLocator;
@@ -99,7 +102,13 @@ final class ExtractEdge extends Extract {
     private static final String ESE_TOOL_FOLDER = "ESEDatabaseView"; //NON-NLS
     private static final String EDGE_RESULT_FOLDER_NAME = "results"; //NON-NLS
 
-    private static final SimpleDateFormat DATE_FORMATTER = new SimpleDateFormat("MM/dd/yyyy hh:mm:ss a"); //NON-NLS
+    // ESEDatabaseView converts long timestamps into a string based on the current locale, so
+    // we have to use the current locale format to convert back into a long.
+    private static final SimpleDateFormat DATE_FORMATTER = new SimpleDateFormat("MM/dd/yyyy hh:mm:ss a", Locale.getDefault()); //NON-NLS
+    private static final DateFormat formatter = DateFormat.getDateTimeInstance(
+                           DateFormat.SHORT, 
+                           DateFormat.SHORT, 
+                           Locale.getDefault());
 
     @Messages({
         "ExtractEdge_process_errMsg_unableFindESEViewer=Unable to find ESEDatabaseViewer",
@@ -130,6 +139,8 @@ final class ExtractEdge extends Extract {
         this.dataSource = dataSource;
         this.context = context;
         this.setFoundData(false);
+        
+        System.out.println("### number of locales: " + Locale.getAvailableLocales().length);
 
         List<AbstractFile> webCacheFiles = null;
         List<AbstractFile> spartanFiles = null;
@@ -611,10 +622,13 @@ final class ExtractEdge extends Extract {
         String accessTime = rowSplit[index].trim();
         Long ftime = null;
         try {
-            Long epochtime = DATE_FORMATTER.parse(accessTime).getTime();
+            formatter.setLenient(true);
+            Long epochtime = formatter.parse(accessTime).getTime();
+           //Long epochtime = DATE_FORMATTER.parse(accessTime).getTime();
             ftime = epochtime / 1000;
         } catch (ParseException ex) {
-            LOG.log(Level.WARNING, "The Accessed Time format in history file seems invalid " + accessTime, ex); //NON-NLS
+            LOG.log(Level.WARNING, "The Accessed Time format in history file seems invalid " + accessTime 
+                    + " (Expected format: " + formatter.format(new Date()) + ")", ex); //NON-NLS
         }
 
         BlackboardArtifact bbart = origFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY);
@@ -642,10 +656,12 @@ final class ExtractEdge extends Extract {
         String accessTime = lineSplit[headers.indexOf(EDGE_HEAD_LASTMOD)].trim();
         Long ftime = null;
         try {
-            Long epochtime = DATE_FORMATTER.parse(accessTime).getTime();
+            Long epochtime = formatter.parse(accessTime).getTime();
+            //Long epochtime = DATE_FORMATTER.parse(accessTime).getTime();
             ftime = epochtime / 1000;
         } catch (ParseException ex) {
-            LOG.log(Level.WARNING, "The Accessed Time format in history file seems invalid " + accessTime, ex); //NON-NLS
+            LOG.log(Level.WARNING, "The Accessed Time format in history file seems invalid " + accessTime 
+                    + " (Expected format: " + formatter.format(new Date()) + ")", ex); //NON-NLS
         }
 
         String domain = lineSplit[headers.indexOf(EDGE_HEAD_RDOMAIN)].trim();
