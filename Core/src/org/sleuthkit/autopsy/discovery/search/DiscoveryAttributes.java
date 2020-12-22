@@ -46,6 +46,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import java.util.StringJoiner;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizer;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CATEGORIZATION;
 
 /**
  * Class which contains the search attributes which can be specified for
@@ -137,6 +138,59 @@ public class DiscoveryAttributes {
         @Override
         public DiscoveryKeyUtils.GroupKey getGroupKey(Result file) {
             return new DiscoveryKeyUtils.FileTypeGroupKey(file);
+        }
+    }
+    
+    /**
+     * Attribute for grouping/sorting by domain category (TSK_WEB_CATEGORY artifacts).
+     */
+    static class DomainCategoryAttribute extends AttributeType {
+
+        @Override
+        public DiscoveryKeyUtils.GroupKey getGroupKey(Result result) {
+            return new DiscoveryKeyUtils.DomainCategoryGroupKey(result);
+        }
+        
+        @Override
+        public void addAttributeToResults(List<Result> results, SleuthkitCase caseDb,
+                CentralRepository centralRepoDb) throws DiscoveryException {
+            try {
+                Map<String, String> domainsToCategories = getDomainsWithWebCategories(caseDb);
+                for (Result result : results) {
+                    if (result instanceof ResultDomain) {
+                        ResultDomain domain = (ResultDomain) result;
+                        String webCategory = domainsToCategories.get(domain.getDomain());
+                        domain.setWebCategory(webCategory);
+                    }
+                }
+            } catch (TskCoreException | InterruptedException ex) {
+                throw new DiscoveryException("Error fetching TSK_WEB_CATEGORY artifacts from the database", ex);
+            }
+        }
+        
+        /**
+         * Loads all TSK_WEB_CATEGORY artifacts and maps the domain attribute to the category name attribute.
+         * Each ResultDomain is then parsed and matched against this map of values.
+         */
+        private Map<String, String> getDomainsWithWebCategories(SleuthkitCase caseDb) throws TskCoreException, InterruptedException {
+            Map<String, String> domainToCategory = new HashMap<>();
+
+            for (BlackboardArtifact artifact : caseDb.getBlackboardArtifacts(TSK_WEB_CATEGORIZATION)) {
+                if (Thread.currentThread().isInterrupted()) {
+                    throw new InterruptedException();
+                }
+
+                BlackboardAttribute webCategory = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME));
+                BlackboardAttribute domain = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN));
+
+                if (webCategory != null && domain != null) {
+                    String webCatDisplayName = webCategory.getValueString();
+                    String domainDisplayName = domain.getValueString().trim().toLowerCase();
+                    domainToCategory.put(domainDisplayName, webCatDisplayName);
+                }
+            }
+
+           return domainToCategory;
         }
     }
 
@@ -706,13 +760,13 @@ public class DiscoveryAttributes {
     }
 
     /**
-     * Attribute for grouping/sorting by date of most recent activity.
+     * Attribute for grouping/sorting by date of last activity.
      */
-    static class MostRecentActivityDateAttribute extends AttributeType {
+    static class LastActivityDateAttribute extends AttributeType {
 
         @Override
         public DiscoveryKeyUtils.GroupKey getGroupKey(Result result) {
-            return new DiscoveryKeyUtils.MostRecentActivityDateGroupKey(result);
+            return new DiscoveryKeyUtils.LastActivityDateGroupKey(result);
         }
 
     }
@@ -863,11 +917,12 @@ public class DiscoveryAttributes {
         "DiscoveryAttributes.GroupingAttributeType.interestingItem.displayName=Interesting Item",
         "DiscoveryAttributes.GroupingAttributeType.tag.displayName=Tag",
         "DiscoveryAttributes.GroupingAttributeType.object.displayName=Object Detected",
-        "DiscoveryAttributes.GroupingAttributeType.mostRecentDate.displayName=Most Recent Activity Date",
+        "DiscoveryAttributes.GroupingAttributeType.lastDate.displayName=Last Activity Date",
         "DiscoveryAttributes.GroupingAttributeType.firstDate.displayName=First Activity Date",
         "DiscoveryAttributes.GroupingAttributeType.pageViews.displayName=Page Views",
         "DiscoveryAttributes.GroupingAttributeType.none.displayName=None",
-        "DiscoveryAttributes.GroupingAttributeType.previouslyNotable.displayName=Previous Notability"})
+        "DiscoveryAttributes.GroupingAttributeType.previouslyNotable.displayName=Previous Notability",
+        "DiscoveryAttributes.GroupingAttributeType.webCategory.displayName=Domain Category"})
     public enum GroupingAttributeType {
         FILE_SIZE(new FileSizeAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_size_displayName()),
         FREQUENCY(new FrequencyAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_frequency_displayName()),
@@ -878,11 +933,12 @@ public class DiscoveryAttributes {
         INTERESTING_ITEM_SET(new InterestingItemAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_interestingItem_displayName()),
         FILE_TAG(new FileTagAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_tag_displayName()),
         OBJECT_DETECTED(new ObjectDetectedAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_object_displayName()),
-        MOST_RECENT_DATE(new MostRecentActivityDateAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_mostRecentDate_displayName()),
-        FIRST_DATE(new FirstActivityDateAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_firstDate_displayName()),
+        LAST_ACTIVITY_DATE(new LastActivityDateAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_lastDate_displayName()),
+        FIRST_ACTIVITY_DATE(new FirstActivityDateAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_firstDate_displayName()),
         PAGE_VIEWS(new PageViewsAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_pageViews_displayName()),
         NO_GROUPING(new NoGroupingAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_none_displayName()),
-        PREVIOUSLY_NOTABLE(new PreviouslyNotableAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_previouslyNotable_displayName());
+        PREVIOUSLY_NOTABLE(new PreviouslyNotableAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_previouslyNotable_displayName()),
+        DOMAIN_CATEGORY(new DomainCategoryAttribute(), Bundle.DiscoveryAttributes_GroupingAttributeType_webCategory_displayName());
 
         private final AttributeType attributeType;
         private final String displayName;
@@ -930,9 +986,9 @@ public class DiscoveryAttributes {
          */
         public static List<GroupingAttributeType> getOptionsForGroupingForDomains() {
             if (CentralRepository.isEnabled()) {
-                return Arrays.asList(FREQUENCY, MOST_RECENT_DATE, FIRST_DATE, PAGE_VIEWS, PREVIOUSLY_NOTABLE);
+                return Arrays.asList(FREQUENCY, LAST_ACTIVITY_DATE, FIRST_ACTIVITY_DATE, PAGE_VIEWS, PREVIOUSLY_NOTABLE, DOMAIN_CATEGORY);
             } else {
-                return Arrays.asList(MOST_RECENT_DATE, FIRST_DATE, PAGE_VIEWS);
+                return Arrays.asList(LAST_ACTIVITY_DATE, FIRST_ACTIVITY_DATE, PAGE_VIEWS, DOMAIN_CATEGORY);
             }
         }
     }
