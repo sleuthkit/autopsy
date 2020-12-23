@@ -73,8 +73,14 @@ public class CentralRepositoryService implements AutopsyService {
         
     }
     
+    @NbBundle.Messages({
+        "CentralRepositoryService.progressMsg.waitingForListeners=Waiting for tasks to finish..."
+    })
     @Override
     public void closeCaseResources(CaseContext context) throws AutopsyServiceException {
+        ProgressIndicator progress = context.getProgressIndicator();
+        progress.progress(Bundle.CentralRepositoryService_progressMsg_waitingForListeners());
+        
         if (caseEventListener != null) {
             caseEventListener.uninstallListeners();
             caseEventListener.shutdown();
