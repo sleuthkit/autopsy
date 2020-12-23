@@ -87,8 +87,8 @@ public class CentralRepositoryService implements AutopsyService {
         }
         
         if (ingestEventListener != null) {
-            ingestEventListener.shutdown();
             ingestEventListener.uninstallListeners();
+            ingestEventListener.shutdown();
         }
     }
 
