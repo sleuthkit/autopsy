@@ -25,8 +25,12 @@ import com.google.common.annotations.Beta;
  * should have a no-argument constructor in order to be properly instantiated,
  * and should have a class annotation of '@ServiceProvider(service =
  * DomainCategoryProvider.class)'.
+ * 
+ * NOTE: The @SuppressWarnings("try") on the class is to suppress warnings relating to
+ * the fact that the close method can throw an InterruptedException.
  */
 @Beta
+@SuppressWarnings("try")
 public interface DomainCategorizer extends AutoCloseable {
 
     /**

@@ -43,7 +43,11 @@ import org.sleuthkit.autopsy.url.analytics.DomainCategory;
  * https://github.com/mailcheck/mailcheck/wiki/List-of-Popular-Domains
  * disposable mail: https://www.npmjs.com/package/disposable-email-domains
  * messaging: https://www.raymond.cc/blog/list-of-web-messengers-for-your-convenience/
+ * 
+ * NOTE: The @SuppressWarnings("try") on the class is to suppress warnings relating to
+ * the fact that the close method can throw an InterruptedException.
  */
+@SuppressWarnings("try")
 public class DefaultDomainCategorizer implements DomainCategorizer {
 
     private static final String CSV_DELIMITER = ",";
