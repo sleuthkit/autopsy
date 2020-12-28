@@ -18,17 +18,21 @@
  */
 package org.sleuthkit.autopsy.discovery.search;
 
-import java.text.SimpleDateFormat;
+import java.time.DayOfWeek;
+import java.time.Instant;
+import java.time.ZonedDateTime;
+import java.time.temporal.TemporalAdjusters;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
+import java.util.TimeZone;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import org.sleuthkit.autopsy.discovery.search.SearchData.PageViews;
+import org.sleuthkit.autopsy.discovery.ui.MonthAbbreviation;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -1133,29 +1137,34 @@ public class DiscoveryKeyUtils {
      */
     static class LastActivityDateGroupKey extends GroupKey {
 
-        private final Long epochDate;
-        private final String dateNameString;
+        private ZonedDateTime currentWeekCutOff;
 
         /**
          * Construct a new LastActivityDateGroupKey.
          *
          * @param result The Result to create the group key for.
          */
-        @NbBundle.Messages({
-            "DiscoveryKeyUtils.LastActivityDateGroupKey.noDate=No Date Available"})
         LastActivityDateGroupKey(Result result) {
             if (result instanceof ResultDomain) {
-                epochDate = ((ResultDomain) result).getActivityEnd();
-                dateNameString = new SimpleDateFormat("yyyy/MM/dd", Locale.getDefault()).format(new Date(TimeUnit.SECONDS.toMillis(epochDate)));
+                ResultDomain domainResult = ((ResultDomain) result);
+                currentWeekCutOff = getCurrentWeekCutOff(domainResult.getActivityEnd(), domainResult);
             } else {
-                epochDate = Long.MAX_VALUE;
-                dateNameString = Bundle.DiscoveryKeyUtils_LastActivityDateGroupKey_noDate();
+                throw new IllegalArgumentException("Expected a domain result only.");
             }
         }
 
+        @NbBundle.Messages({
+            "# {0} - month abbreviation",
+            "# {1} - day of month",
+            "# {2} - year",
+            "DiscoveryAttributes.ActivityDateGroupKey.getDisplayNameTemplate=Week of {0} {1}, {2}"
+        })
         @Override
         String getDisplayName() {
-            return getDateNameString();
+            MonthAbbreviation currentCutOffMonth = MonthAbbreviation.fromMonthValue(currentWeekCutOff.getMonthValue());
+            return Bundle.DiscoveryAttributes_ActivityDateGroupKey_getDisplayNameTemplate(
+                    currentCutOffMonth.toString(), Integer.toString(currentWeekCutOff.getDayOfMonth()), 
+                    Integer.toString(currentWeekCutOff.getYear()));
         }
 
         @Override
@@ -1169,53 +1178,40 @@ public class DiscoveryKeyUtils {
             }
 
             LastActivityDateGroupKey dateGroupKey = (LastActivityDateGroupKey) otherKey;
-            return getDateNameString().equals(dateGroupKey.getDateNameString());
+            return getDisplayName().equals(dateGroupKey.getDisplayName());
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(getDateNameString());
+            return Objects.hash(getDisplayName());
         }
 
         @Override
         public int compareTo(GroupKey otherGroupKey) {
             if (otherGroupKey instanceof LastActivityDateGroupKey) {
                 LastActivityDateGroupKey otherDateGroupKey = (LastActivityDateGroupKey) otherGroupKey;
-
-                // Put the empty list at the end
-                if (this.getEpochDate().equals(Long.MAX_VALUE)) {
-                    if (otherDateGroupKey.getEpochDate().equals(Long.MAX_VALUE)) {
-                        return 0;
-                    } else {
-                        return 1;
-                    }
-                } else if (otherDateGroupKey.getEpochDate().equals(Long.MAX_VALUE)) {
-                    return -1;
-                }
-
-                return getDateNameString().compareTo(otherDateGroupKey.getDateNameString());
+                return Long.compare(otherDateGroupKey.currentWeekCutOff.toEpochSecond(), currentWeekCutOff.toEpochSecond());
             } else {
                 return compareClassNames(otherGroupKey);
             }
         }
-
-        /**
-         * Get the date this group is for as a Long.
-         *
-         * @return The date.
-         */
-        Long getEpochDate() {
-            return epochDate;
-        }
-
-        /**
-         * Get the name which identifies this group.
-         *
-         * @return The dateNameString.
-         */
-        String getDateNameString() {
-            return dateNameString;
-        }
+    }
+    
+    /**
+     * Get the next closed Sunday given an epoch time and timezone.
+     * Dates for grouping are managed on a weekly basis. Each Sunday
+     * acts as the boundary and representative for the week.
+     */
+    private static ZonedDateTime getCurrentWeekCutOff(long epochSeconds, ResultDomain domainResult) {
+        Instant startActivityAsInsant = Instant.ofEpochSecond(epochSeconds);
+        // Determines the timezone using the settings panel or value parsed from the
+        // parent data source
+        TimeZone currentTimeZone = ContentUtils.getTimeZone(domainResult.getDataSource());
+        // Convert to a datetime using epoch and timezone.
+        ZonedDateTime startActivityAsDateTime = ZonedDateTime.ofInstant(startActivityAsInsant, currentTimeZone.toZoneId());
+        // Get the closest Sunday, which is the cut off for the current week.
+        // Use this cut off to perform grouping and comparing.
+        return startActivityAsDateTime.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY));
     }
 
     /**
@@ -1223,29 +1219,28 @@ public class DiscoveryKeyUtils {
      */
     static class FirstActivityDateGroupKey extends GroupKey {
 
-        private final Long epochDate;
-        private final String dateNameString;
+        private ZonedDateTime currentWeekCutOff;
 
         /**
          * Construct a new FirstActivityDateGroupKey.
          *
          * @param result The Result to create the group key for.
          */
-        @NbBundle.Messages({
-            "DiscoveryKeyUtils.FirstActivityDateGroupKey.noDate=No Date Available"})
         FirstActivityDateGroupKey(Result result) {
             if (result instanceof ResultDomain) {
-                epochDate = ((ResultDomain) result).getActivityStart();
-                dateNameString = new SimpleDateFormat("yyyy/MM/dd", Locale.getDefault()).format(new Date(TimeUnit.SECONDS.toMillis(epochDate)));
+                ResultDomain domainResult = ((ResultDomain) result);
+                currentWeekCutOff = getCurrentWeekCutOff(domainResult.getActivityStart(), domainResult);
             } else {
-                epochDate = Long.MAX_VALUE;
-                dateNameString = Bundle.DiscoveryKeyUtils_FirstActivityDateGroupKey_noDate();
+                throw new IllegalArgumentException("Expected a domain result only.");
             }
         }
-
+        
         @Override
         String getDisplayName() {
-            return getDateNameString();
+            MonthAbbreviation currentCutOffMonth = MonthAbbreviation.fromMonthValue(currentWeekCutOff.getMonthValue());
+            return Bundle.DiscoveryAttributes_ActivityDateGroupKey_getDisplayNameTemplate(
+                    currentCutOffMonth.toString(), Integer.toString(currentWeekCutOff.getDayOfMonth()), 
+                    Integer.toString(currentWeekCutOff.getYear()));
         }
 
         @Override
@@ -1259,52 +1254,22 @@ public class DiscoveryKeyUtils {
             }
 
             FirstActivityDateGroupKey dateGroupKey = (FirstActivityDateGroupKey) otherKey;
-            return getDateNameString().equals(dateGroupKey.getDateNameString());
+            return getDisplayName().equals(dateGroupKey.getDisplayName());
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(getDateNameString());
+            return Objects.hash(getDisplayName());
         }
 
         @Override
         public int compareTo(GroupKey otherGroupKey) {
             if (otherGroupKey instanceof FirstActivityDateGroupKey) {
                 FirstActivityDateGroupKey otherDateGroupKey = (FirstActivityDateGroupKey) otherGroupKey;
-
-                // Put the empty list at the end
-                if (this.getEpochDate().equals(Long.MAX_VALUE)) {
-                    if (otherDateGroupKey.getEpochDate().equals(Long.MAX_VALUE)) {
-                        return 0;
-                    } else {
-                        return 1;
-                    }
-                } else if (otherDateGroupKey.getEpochDate().equals(Long.MAX_VALUE)) {
-                    return -1;
-                }
-
-                return getDateNameString().compareTo(otherDateGroupKey.getDateNameString());
+                return Long.compare(otherDateGroupKey.currentWeekCutOff.toEpochSecond(), currentWeekCutOff.toEpochSecond());
             } else {
                 return compareClassNames(otherGroupKey);
             }
-        }
-
-        /**
-         * Get the date this group is for as a Long.
-         *
-         * @return The date.
-         */
-        Long getEpochDate() {
-            return epochDate;
-        }
-
-        /**
-         * Get the name which identifies this group.
-         *
-         * @return The dateNameString.
-         */
-        String getDateNameString() {
-            return dateNameString;
         }
     }
 
@@ -1316,28 +1281,23 @@ public class DiscoveryKeyUtils {
     static class PageViewsGroupKey extends GroupKey {
 
         private final String displayName;
-        private final Long pageViews;
+        private final PageViews pageViews;
 
         /**
          * Construct a new NumberOfVisitsGroupKey.
          *
          * @param result The Result to create the group key for.
          */
-        @NbBundle.Messages({
-            "# {0} - totalVisits",
-            "DiscoveryKeyUtils.PageViewsGroupKey.displayName={0} page views",
-            "DiscoveryKeyUtils.PageViewsGroupKey.noVisits=No page views"})
         PageViewsGroupKey(Result result) {
             if (result instanceof ResultDomain) {
                 Long totalPageViews = ((ResultDomain) result).getTotalPageViews();
                 if (totalPageViews == null) {
                     totalPageViews = 0L;
                 }
-                pageViews = totalPageViews;
-                displayName = Bundle.DiscoveryKeyUtils_PageViewsGroupKey_displayName(Long.toString(pageViews));
+                pageViews = PageViews.fromPageViewCount(totalPageViews);
+                displayName = pageViews.toString();
             } else {
-                displayName = Bundle.DiscoveryKeyUtils_PageViewsGroupKey_noVisits();
-                pageViews = -1L;
+                throw new IllegalArgumentException("Expected a domain instance only.");
             }
         }
 
@@ -1356,7 +1316,7 @@ public class DiscoveryKeyUtils {
          *
          * @return The number of page views this group is for.
          */
-        Long getPageViews() {
+        PageViews getPageViews() {
             return pageViews;
         }
 
@@ -1378,7 +1338,7 @@ public class DiscoveryKeyUtils {
         public int compareTo(GroupKey otherGroupKey) {
             if (otherGroupKey instanceof PageViewsGroupKey) {
                 PageViewsGroupKey pageViewsKey = (PageViewsGroupKey) otherGroupKey;
-                return Long.compare(getPageViews(), pageViewsKey.getPageViews());
+                return getPageViews().compareTo(pageViewsKey.getPageViews());
             } else {
                 return compareClassNames(otherGroupKey);
             }

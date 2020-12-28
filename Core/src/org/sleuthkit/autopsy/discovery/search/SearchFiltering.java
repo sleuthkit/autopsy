@@ -33,6 +33,7 @@ import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -206,7 +207,7 @@ public class SearchFiltering {
      */
     public static class ArtifactTypeFilter extends AbstractFilter {
 
-        private final List<ARTIFACT_TYPE> types;
+        private final Collection<ARTIFACT_TYPE> types;
 
         /**
          * Construct a new ArtifactTypeFilter.
@@ -214,7 +215,7 @@ public class SearchFiltering {
          * @param types The list of BlackboardArtifact types to include in
          *              results from.
          */
-        public ArtifactTypeFilter(List<ARTIFACT_TYPE> types) {
+        public ArtifactTypeFilter(Collection<ARTIFACT_TYPE> types) {
             this.types = types;
         }
 
@@ -223,8 +224,8 @@ public class SearchFiltering {
          *
          * @return The list of artifact types specified by the filter.
          */
-        public List<ARTIFACT_TYPE> getTypes() {
-            return Collections.unmodifiableList(types);
+        public Collection<ARTIFACT_TYPE> getTypes() {
+            return Collections.unmodifiableCollection(types);
         }
         
         private StringJoiner joinStandardArtifactTypes() {
