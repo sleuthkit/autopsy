@@ -88,8 +88,8 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
          * The absolute path is used to write the extracted (derived) files to
          * local storage.
          *
-         * The relative path is relative to the case folder, and will be used in
-         * the case database for extracted (derived) file paths.
+         * The relative path is relative to the case folder and is used in the
+         * case database for extracted (derived) file paths.
          *
          */
         Case currentCase = Case.getCurrentCase();

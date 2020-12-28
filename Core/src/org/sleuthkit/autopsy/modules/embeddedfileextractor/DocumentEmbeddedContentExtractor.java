@@ -167,7 +167,7 @@ class DocumentEmbeddedContentExtractor {
         List<ExtractedFile> listOfExtractedImages = null;
         List<AbstractFile> listOfExtractedImageAbstractFiles = null;
         //save the parent file name with out illegal windows characters
-        this.parentFileName = utf8SanitizeFileName(EmbeddedFileExtractorIngestModule.getUniqueName(abstractFile)); // RJCTODO
+        this.parentFileName = utf8SanitizeFileName(EmbeddedFileExtractorIngestModule.getUniqueName(abstractFile));
 
         // Skip files that already have been unpacked.
         /*
@@ -305,7 +305,7 @@ class DocumentEmbeddedContentExtractor {
             return null;
         }
 
-        String outputFolderPath;
+        Path outputFolderPath;
         if (listOfAllPictures.isEmpty()) {
             return null;
         } else {
@@ -324,7 +324,7 @@ class DocumentEmbeddedContentExtractor {
             } catch (Exception ex) {
                 return null;
             }
-            writeExtractedImage(Paths.get(outputFolderPath, fileName).toString(), data);
+            writeExtractedImage(Paths.get(outputFolderPath.toString(), fileName).toString(), data);
             // TODO Extract more info from the Picture viz ctime, crtime, atime, mtime
             listOfExtractedImages.add(new ExtractedFile(fileName, getFileRelativePath(fileName), picture.getSize()));
             pictureNumber++;
@@ -365,7 +365,7 @@ class DocumentEmbeddedContentExtractor {
 
         // if no images are extracted from the PPT, return null, else initialize
         // the output folder for image extraction.
-        String outputFolderPath;
+        Path outputFolderPath;
         if (listOfAllPictures.isEmpty()) {
             return null;
         } else {
@@ -411,7 +411,7 @@ class DocumentEmbeddedContentExtractor {
             } catch (Exception ex) {
                 return null;
             }
-            writeExtractedImage(Paths.get(outputFolderPath, imageName).toString(), data);
+            writeExtractedImage(Paths.get(outputFolderPath.toString(), imageName).toString(), data);
             listOfExtractedImages.add(new ExtractedFile(imageName, getFileRelativePath(imageName), pictureData.getData().length));
             i++;
         }
@@ -457,7 +457,7 @@ class DocumentEmbeddedContentExtractor {
 
         // if no images are extracted from the PPT, return null, else initialize
         // the output folder for image extraction.
-        String outputFolderPath;
+        Path outputFolderPath;
         if (listOfAllPictures.isEmpty()) {
             return null;
         } else {
@@ -477,7 +477,7 @@ class DocumentEmbeddedContentExtractor {
             } catch (Exception ex) {
                 return null;
             }
-            writeExtractedImage(Paths.get(outputFolderPath, imageName).toString(), data);
+            writeExtractedImage(Paths.get(outputFolderPath.toString(), imageName).toString(), data);
             listOfExtractedImages.add(new ExtractedFile(imageName, getFileRelativePath(imageName), pictureData.getData().length));
             i++;
         }
@@ -493,13 +493,12 @@ class DocumentEmbeddedContentExtractor {
      * @return List of extracted files to be made into derived file instances.
      */
     private List<ExtractedFile> extractEmbeddedContentFromPDF(AbstractFile abstractFile) {
-        String outputFolderPathString = getOutputFolderPath(parentFileName);
-        if (outputFolderPathString == null) {
+        Path outputDirectory = getOutputFolderPath(parentFileName);
+        if (outputDirectory == null) {
             return Collections.emptyList();
         }
         PDFAttachmentExtractor pdfExtractor = new PDFAttachmentExtractor(parser);
         try {
-            Path outputDirectory = Paths.get(outputFolderPathString);
             //Get map of attachment name -> location disk.
             Map<String, PDFAttachmentExtractor.NewResourceData> extractedAttachments = pdfExtractor.extract(
                     new ReadContentInputStream(abstractFile), abstractFile.getId(),
@@ -548,10 +547,10 @@ class DocumentEmbeddedContentExtractor {
      * @return The output folder path or null if the folder could not be found
      *         or created.
      */
-    private String getOutputFolderPath(String parentFileName) {
-        String outputFolderPath = Paths.get(moduleDirAbsolute, parentFileName).toString();
+    private Path getOutputFolderPath(String parentFileName) {
+        Path outputFolderPath = Paths.get(moduleDirAbsolute, parentFileName);
         try {
-            File outputFolder = new File(outputFolderPath);
+            File outputFolder = outputFolderPath.toFile();
             if (!fileTaskExecutor.exists(outputFolder)) {
                 if (!fileTaskExecutor.mkdirs(outputFolder)) {
                     outputFolderPath = null;
@@ -716,9 +715,9 @@ class DocumentEmbeddedContentExtractor {
                 }
             }
 
-            String outputFolderPath = getOutputFolderPath(parentFileName);
+            Path outputFolderPath = getOutputFolderPath(parentFileName);
             if (outputFolderPath != null) {
-                File extractedFile = new File(Paths.get(outputFolderPath, name).toString());
+                File extractedFile = new File(Paths.get(outputFolderPath.toString(), name).toString());
                 byte[] fileData = IOUtils.toByteArray(stream);
                 writeExtractedImage(extractedFile.getAbsolutePath(), fileData);
                 nameToExtractedFileMap.put(name, new ExtractedFile(name, getFileRelativePath(name), fileData.length));
