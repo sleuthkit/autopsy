@@ -19,16 +19,11 @@
 package org.sleuthkit.autopsy.contentviewers.textcontentviewer;
 
 import java.awt.Component;
-import java.util.logging.Level;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
-import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * A DataContentViewer that displays text with the TextViewers available.
@@ -38,7 +33,6 @@ public class TextContentViewer implements DataContentViewer {
 
     private final TextContentViewerPanel panel;
     private volatile Node currentNode = null;
-    private static final Logger logger = Logger.getLogger(TextContentViewer.class.getName());
 
     /**
      * No arg constructor for creating the main instance of this Content Viewer.
@@ -58,10 +52,6 @@ public class TextContentViewer implements DataContentViewer {
 
     @Override
     public void setNode(Node selectedNode) {
-        if ((selectedNode == null) || (!isSupported(selectedNode))) {
-            resetComponent();
-            return;
-        }
         currentNode = selectedNode;
         panel.setNode(currentNode);
 
@@ -106,26 +96,12 @@ public class TextContentViewer implements DataContentViewer {
         if (file == null) {
             return false;
         }
-        if (node instanceof BlackboardArtifactNode) {
-            BlackboardArtifact theArtifact = ((BlackboardArtifactNode) node).getArtifact();
-            //disable the content viewer when a download or cached file does not exist instead of displaying its parent
-            try {
-                if ((theArtifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID()
-                        || theArtifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID())
-                        && file.getId() == theArtifact.getParent().getId()) {
-                    return false;
-                }
-            } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, String.format("Error getting parent of artifact with type %s and objID = %d can not confirm file with name %s and objId = %d is not the parent. Text content viewer will not be supported.",
-                        theArtifact.getArtifactTypeName(), theArtifact.getObjectID(), file.getName(), file.getId()), ex);
-                return false;
-            }
-        }
+        
         // disable the text content viewer for directories and empty files
         if (file.isDir() || file.getSize() == 0) {
             return false;
         }
-
+        
         return panel.isSupported(node);
     }
 
