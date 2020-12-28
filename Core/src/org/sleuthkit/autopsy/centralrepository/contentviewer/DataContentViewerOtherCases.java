@@ -52,11 +52,9 @@ import javax.swing.JPanel;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
-import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDateTime;
 import org.openide.nodes.Node;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -78,7 +76,6 @@ import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
-import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 
 /**
  * View correlation results from other cases
@@ -469,16 +466,11 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         if (bbArtifact != null && CentralRepository.isEnabled()) {
             ret.addAll(CorrelationAttributeUtil.makeCorrAttrsForCorrelation(bbArtifact));
         }
-        boolean isSupported = false;
-        try {
-            isSupported = this.file != null && this.file.getSize() > 0 && isDownloadParentSupported(node);
-        } catch (TskCoreException ex) {
-            LOGGER.log(Level.WARNING, ex.getMessage(), ex);
-        }
 
         // we can correlate based on the MD5 if it is enabled      
-        if (isSupported && CentralRepository.isEnabled()) {
+        if (this.file != null && CentralRepository.isEnabled() && this.file.getSize() > 0) {
             try {
+
                 List<CorrelationAttributeInstance.Type> artifactTypes = CentralRepository.getInstance().getDefinedCorrelationTypes();
                 String md5 = this.file.getMd5Hash();
                 if (md5 != null && !md5.isEmpty() && null != artifactTypes && !artifactTypes.isEmpty()) {
@@ -506,7 +498,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                 LOGGER.log(Level.SEVERE, "Error connecting to DB", ex); // NON-NLS
             }
             // If EamDb not enabled, get the Files default correlation type to allow Other Occurances to be enabled.  
-        } else if (isSupported) {
+        } else if (this.file != null && this.file.getSize() > 0) {
             String md5 = this.file.getMd5Hash();
             if (md5 != null && !md5.isEmpty()) {
                 try {
@@ -525,37 +517,8 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                 }
             }
         }
-        return ret;
-    }
 
-    /**
-     * Private helper method to check if the node is an TSK_WEB_DOWNLOAD or
-     * TSK_WEB_CACHE artifact and if it is, if the file reflects the parent file
-     * or the downloaded file.
-     *
-     * @param node The node to check support for.
-     *
-     * @return False if the node is for a Web Cache or a Web Download artifact,
-     *         and that artifact's content file is it's parent.
-     *
-     * @throws TskCoreException Unable to retrieve the parent of the artifact in
-     *                          this node.
-     */
-    private boolean isDownloadParentSupported(Node node) throws TskCoreException {
-        if (node instanceof BlackboardArtifactNode) {
-            BlackboardArtifact theArtifact = ((BlackboardArtifactNode) node).getArtifact();
-            try {
-                //disable the content viewer when a download or cached file does not exist instead of displaying its parent
-                if ((theArtifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID()
-                        || theArtifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID())
-                        && this.file.getId() == theArtifact.getParent().getId()) {
-                    return false;
-                }
-            } catch (TskCoreException ex) {
-                throw new TskCoreException(String.format("Error getting parent of artifact with type %s and objID = %d can not confirm content with name %s and objId = %d is not the parent. Other occurences will not correlate on the file.", theArtifact.getArtifactTypeName(), theArtifact.getObjectID(), this.file.getName(), this.file.getId()), ex);
-            }
-        }
-        return true;
+        return ret;
     }
 
     @Messages({"DataContentViewerOtherCases.earliestCaseNotAvailable= Not Enabled."})
@@ -738,16 +701,11 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         this.file = this.getAbstractFileFromNode(node);
         if (CentralRepository.isEnabled()) {
             return !getCorrelationAttributesFromNode(node).isEmpty();
-        } else if (this.file == null || this.file.getSize() <= 0 || StringUtils.isBlank(file.getMd5Hash())) {
-            return false;
+        } else {
+            return this.file != null
+                    && this.file.getSize() > 0
+                    && ((this.file.getMd5Hash() != null) && (!this.file.getMd5Hash().isEmpty()));
         }
-        boolean isSupported = false;
-        try {
-            isSupported = isDownloadParentSupported(node);
-        } catch (TskCoreException ex) {
-            LOGGER.log(Level.WARNING, ex.getMessage(), ex);
-        }
-        return isSupported;
     }
 
     @Override
