@@ -20,10 +20,13 @@ package org.sleuthkit.autopsy.datasourcesummary.ui;
 
 import java.awt.CardLayout;
 import java.awt.Component;
+import java.beans.PropertyChangeListener;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.function.Consumer;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.IngestJobInfoPanel;
 import org.sleuthkit.datamodel.DataSource;
 
@@ -142,11 +145,21 @@ public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
     private CardLayout cardLayout;
 
     /**
+     * On case close, clear the currently held data source summary node.
+     */
+    private final PropertyChangeListener caseEventsListener = (evt) -> {
+        if (evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString()) && evt.getNewValue() == null) {
+            setDataSource(null);
+        }
+    };
+
+    /**
      * Creates new form TabPane
      */
     public DataSourceSummaryTabbedPane() {
         initComponents();
         postInit();
+        Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), caseEventsListener);
     }
 
     /**
@@ -199,12 +212,14 @@ public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
      */
     public void setDataSource(DataSource dataSource) {
         this.dataSource = dataSource;
+        
+        for (DataSourceTab tab : tabs) {
+            tab.getOnDataSource().accept(dataSource);
+        }
+                    
         if (this.dataSource == null) {
             cardLayout.show(this, NO_DATASOURCE_PANE);
         } else {
-            for (DataSourceTab tab : tabs) {
-                tab.getOnDataSource().accept(dataSource);
-            }
             cardLayout.show(this, TABBED_PANE);
         }
     }
@@ -216,6 +231,8 @@ public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
         for (DataSourceTab tab : tabs) {
             tab.getOnClose().run();
         }
+
+        Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), caseEventsListener);
     }
 
     /**
