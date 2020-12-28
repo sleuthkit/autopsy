@@ -20,8 +20,11 @@ package org.sleuthkit.autopsy.modules.embeddedfileextractor;
 
 import java.io.File;
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
+import javax.annotation.concurrent.GuardedBy;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -52,10 +55,12 @@ import org.sleuthkit.autopsy.threadutils.TaskRetryUtil;
 public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAdapter {
 
     private static final String TASK_RETRY_STATS_LOG_NAME = "task_retry_stats";
+    private static final Object execMapLock = new Object();
+    @GuardedBy("execMapLock")
+    private static final Map<Long, FileTaskExecutor> fileTaskExecsByJob = new HashMap<>();
     //Outer concurrent hashmap with keys of JobID, inner concurrentHashmap with keys of objectID
     private static final ConcurrentHashMap<Long, ConcurrentHashMap<Long, Archive>> mapOfDepthTrees = new ConcurrentHashMap<>();
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
-    private FileTaskExecutor fileTaskExecutor;
     private DocumentEmbeddedContentExtractor documentExtractor;
     private SevenZipExtractor archiveExtractor;
     private FileTypeDetector fileTypeDetector;
@@ -91,25 +96,29 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
         String moduleDirAbsolute = Paths.get(currentCase.getModuleDirectory(), EmbeddedFileExtractorModuleFactory.getModuleName()).toString();
         String moduleDirRelative = Paths.get(currentCase.getModuleOutputDirectoryRelativePath(), EmbeddedFileExtractorModuleFactory.getModuleName()).toString();
 
-        /*
-         * Construct an executor that will be used for calling java.io.File
-         * methods as tasks with retries. Retries are employed here due to
-         * observed issues with hangs when attempting these operations on case
-         * directories stored on a certain type of network file system. See the
-         * FileTaskExecutor class header docs for more details.
-         */
-        fileTaskExecutor = new FileTaskExecutor(context);
-
         if (refCounter.incrementAndGet(jobId) == 1) {
+
+            /*
+             * Construct a per ingest job executor that will be used for calling
+             * java.io.File methods as tasks with retries. Retries are employed
+             * here due to observed issues with hangs when attempting these
+             * operations on case directories stored on a certain type of
+             * network file system. See the FileTaskExecutor class header docs
+             * for more details.
+             */
+            FileTaskExecutor fileTaskExecutor = new FileTaskExecutor(context);
+            synchronized (execMapLock) {
+                fileTaskExecsByJob.put(jobId, fileTaskExecutor);
+            }
+
             try {
                 File extractionDirectory = new File(moduleDirAbsolute);
                 if (!fileTaskExecutor.exists(extractionDirectory)) {
                     fileTaskExecutor.mkdirs(extractionDirectory);
                 }
             } catch (FileTaskExecutor.FileTaskFailedException | InterruptedException ex) {
-                fileTaskExecutor.shutDown();
                 /*
-                 * Exception message is localized because these ingestmodule
+                 * The exception message is localized because ingest module
                  * start up exceptions are displayed to the user when running
                  * with the RCP GUI.
                  */
@@ -135,18 +144,22 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
         }
 
         try {
-            archiveExtractor = new SevenZipExtractor(context, fileTypeDetector, moduleDirRelative, moduleDirAbsolute, fileTaskExecutor);
+            archiveExtractor = new SevenZipExtractor(context, fileTypeDetector, moduleDirRelative, moduleDirAbsolute, fileTaskExecsByJob.get(jobId));
         } catch (SevenZipNativeInitializationException ex) {
+            /*
+             * The exception message is localized because ingest module start up
+             * exceptions are displayed to the user when running with the RCP
+             * GUI.
+             */
             throw new IngestModuleException(Bundle.UnableToInitializeLibraries(), ex);
         }
 
         try {
-            documentExtractor = new DocumentEmbeddedContentExtractor(context, fileTypeDetector, moduleDirRelative, moduleDirAbsolute, fileTaskExecutor);
+            documentExtractor = new DocumentEmbeddedContentExtractor(context, fileTypeDetector, moduleDirRelative, moduleDirAbsolute, fileTaskExecsByJob.get(jobId));
         } catch (NoCurrentCaseException ex) {
-            fileTaskExecutor.shutDown();
             /*
-             * Exception message is localized because these ingestmodule start
-             * up exceptions are displayed to the user when running with the RCP
+             * The exception message is localized because ingest module start up
+             * exceptions are displayed to the user when running with the RCP
              * GUI.
              */
             throw new IngestModuleException(Bundle.EmbeddedFileExtractorIngestModule_UnableToGetMSOfficeExtractor_errMsg(), ex);
@@ -191,11 +204,15 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
 
     @Override
     public void shutDown() {
-        fileTaskExecutor.shutDown();
         if (refCounter.decrementAndGet(jobId) == 0) {
             mapOfDepthTrees.remove(jobId);
+            FileTaskExecutor fileTaskExecutor;
+            synchronized (execMapLock) {
+                fileTaskExecutor = fileTaskExecsByJob.remove(jobId);
+            }
+            fileTaskExecutor.shutDown();
             Logger logger = ApplicationLoggers.getLogger(TASK_RETRY_STATS_LOG_NAME);
-            logger.log(Level.INFO, String.format("total task retries: %d, total task timeouts: %d, total task failures: %d", TaskRetryUtil.getTotalTaskRetriesCount(), TaskRetryUtil.getTotalTaskTimeOutsCount(), TaskRetryUtil.getTotalFailedTasksCount()));
+            logger.log(Level.INFO, String.format("total task timeouts: %d, total task retries: %d, total task failures: %d (ingest job ID = %d)", TaskRetryUtil.getTotalTaskTimeOutsCount(), TaskRetryUtil.getTotalTaskRetriesCount(), TaskRetryUtil.getTotalFailedTasksCount(), jobId));
         }
     }
 

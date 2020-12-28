@@ -32,16 +32,23 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
 /**
  * A utility that creates and stores application loggers.
+ *
+ * TODO (Jira-7175): This code is the third copy of code that originally
+ * appeared in org.sleuthkit.autopsy.coreutils.Logger. The second copy is in
+ * org.sleuthkit.autopsy.experimental.autoingest.AutoIngestSystemLogger. This
+ * class should allow the replacement of AutoIngestSystemLogger and the
+ * elimination of duplicate code in coreutils.Logger through delegation
+ * (maintaining the public API for coreutils.Logger).
  */
 final public class ApplicationLoggers {
 
-    private static final int LOG_SIZE = 50000000; // In bytes, zero is unlimited, set to roughly 10mb currently
+    private static final int LOG_SIZE = 50000000; // In bytes, zero is unlimited.
     private static final int LOG_FILE_COUNT = 10;
     private static final String NEWLINE = System.lineSeparator();
     private static final Map<String, Logger> loggers = new HashMap<>();
 
     /**
-     * Gets the logger for a given log application file. The log file will be
+     * Gets the logger for a given application log file. The log file will be
      * located in the var/log directory of the platform user directory and will
      * have a name of the form [log name].log.
      *
