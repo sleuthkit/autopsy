@@ -171,7 +171,10 @@ class DocumentEmbeddedContentExtractor {
 
         // Skip files that already have been unpacked.
         /*
-         * TODO (Jira-7145): Is the logic of this check correct?
+         * TODO (Jira-7145): Is the logic of this check correct? Also note that
+         * this suspect code used to have a bug in that makeOutputFolder() was
+         * called, so the directory was always created here if it did not exist,
+         * making this check only a call to AbstractFile.hasChildren().
          */
         try {
             if (abstractFile.hasChildren()) {
