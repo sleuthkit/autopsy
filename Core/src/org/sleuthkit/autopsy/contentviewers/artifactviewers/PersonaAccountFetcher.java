@@ -180,7 +180,9 @@ class PersonaAccountFetcher extends SwingWorker<Map<String, Collection<Persona>>
         }
 
         @NbBundle.Messages({
-            "PersonaAccountFetcher.account.justification=Account found in Call Log artifact"
+            "PersonaAccountFetcher.account.justification=Account found in Call Log artifact",
+            "# {0} - accountIdentifer",
+            "PersonaAccountFetcher_not_account_in_cr=Unable to find an account with identifier {0} in the Central Repository."
         })
         @Override
         public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -205,6 +207,11 @@ class PersonaAccountFetcher extends SwingWorker<Map<String, Collection<Persona>>
                         CentralRepoAccount account = CentralRepository.getInstance().getAccount(type, personaSearcherData.getAccountIdentifer());
                         if (account != null) {
                             personaPanel.addAccount(account, Bundle.PersonaAccountFetcher_account_justification(), Persona.Confidence.HIGH);
+                        }
+                        
+                        if((personaSearcherData.getAccountIdentifer() != null &&
+                                !personaSearcherData.getAccountIdentifer().isEmpty()) && account == null) {
+                            dialog.setStartupPopupMessage(Bundle.PersonaAccountFetcher_not_account_in_cr(personaSearcherData.getAccountIdentifer()));
                         }
                     } catch (InvalidAccountIDException ex2) {
                         // These are expected when the account identifier doesn't match the format of the account type.

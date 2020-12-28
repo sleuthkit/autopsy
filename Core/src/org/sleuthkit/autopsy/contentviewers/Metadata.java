@@ -29,6 +29,7 @@ import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
@@ -50,7 +51,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 public class Metadata extends javax.swing.JPanel implements DataContentViewer {
 
     private static final Logger LOGGER = Logger.getLogger(Metadata.class.getName());
-    
+
     /**
      * Creates new form Metadata
      */
@@ -148,6 +149,10 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
         "Metadata.nodeText.none=None"})
     @Override
     public void setNode(Node node) {
+        if ((node == null) || (!isSupported(node))) {
+            resetComponent();
+            return;
+        }
         AbstractFile file = node.getLookup().lookup(AbstractFile.class);
         Image image = node.getLookup().lookup(Image.class);
         DataSource dataSource = node.getLookup().lookup(DataSource.class);
@@ -176,7 +181,6 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
             addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.created"), ContentUtils.getStringTime(file.getCrtime(), file));
             addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.changed"), ContentUtils.getStringTime(file.getCtime(), file));
 
-
             String md5 = file.getMd5Hash();
             if (md5 == null) {
                 md5 = NbBundle.getMessage(this.getClass(), "Metadata.tableRowContent.md5notCalc");
@@ -189,12 +193,12 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
             addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.sha256"), sha256);
             addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.hashLookupResults"), file.getKnown().toString());
             addAcquisitionDetails(sb, dataSource);
-            
+
             addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.internalid"), Long.toString(file.getId()));
             if (file.getType().compareTo(TSK_DB_FILES_TYPE_ENUM.LOCAL) == 0) {
                 addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.localPath"), file.getLocalAbsPath());
             }
-            
+
             try {
                 List<BlackboardArtifact> associatedObjectArtifacts = file.getArtifacts(ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT);
                 if (!associatedObjectArtifacts.isEmpty()) {
@@ -207,14 +211,14 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
                     }
                 }
             } catch (TskCoreException ex) {
-               sb.append(NbBundle.getMessage(this.getClass(), "Metadata.nodeText.exceptionNotice.text")).append(ex.getLocalizedMessage());
+                sb.append(NbBundle.getMessage(this.getClass(), "Metadata.nodeText.exceptionNotice.text")).append(ex.getLocalizedMessage());
             }
-            
+
             endTable(sb);
 
             /*
-             * If we have a file system file, grab the more detailed metadata text
-             * too
+             * If we have a file system file, grab the more detailed metadata
+             * text too
              */
             try {
                 if (file instanceof FsContent) {
@@ -226,11 +230,11 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
                     for (String str : fsFile.getMetaDataText()) {
                         sb.append(str).append("<br />"); //NON-NLS
 
-                        /* 
-                         * Very long results can cause the UI to hang before displaying,
-                         * so truncate the results if necessary.
+                        /*
+                         * Very long results can cause the UI to hang before
+                         * displaying, so truncate the results if necessary.
                          */
-                        if(sb.length() > 50000){
+                        if (sb.length() > 50000) {
                             sb.append(NbBundle.getMessage(this.getClass(), "Metadata.nodeText.truncated"));
                             break;
                         }
@@ -246,7 +250,7 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
             } catch (TskCoreException ex) {
                 addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.name"), image.getName());
             }
-            addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.imageType"), image.getType().getName());        
+            addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.imageType"), image.getType().getName());
             addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.size"), Long.toString(image.getSize()));
 
             try {
@@ -282,46 +286,46 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
                 StringBuilder pathValues = new StringBuilder("<div>");
                 pathValues.append(imagePaths[0]);
                 pathValues.append("</div>");
-                for (int i=1; i < imagePaths.length; i++) {
+                for (int i = 1; i < imagePaths.length; i++) {
                     pathValues.append("<div>");
                     pathValues.append(imagePaths[i]);
                     pathValues.append("</div>");
                 }
                 addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.localPath"), pathValues.toString());
             } else {
-                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.localPath"), 
+                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.localPath"),
                         NbBundle.getMessage(this.getClass(), "Metadata.nodeText.none"));
             }
         }
-        
+
         setText(sb.toString());
         jTextPane1.setCaretPosition(0);
         this.setCursor(null);
     }
-    
+
     /**
-     * Adds a row for download source from the given associated artifact, 
-     * if the associated artifacts specifies a source.
-     * 
-     * @param sb    string builder.
+     * Adds a row for download source from the given associated artifact, if the
+     * associated artifacts specifies a source.
+     *
+     * @param sb                 string builder.
      * @param associatedArtifact
-     * 
+     *
      * @throws TskCoreException if there is an error
      */
-    private void addDownloadSourceRow(StringBuilder sb, BlackboardArtifact associatedArtifact ) throws TskCoreException {
-        if (associatedArtifact != null && 
-                ((associatedArtifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID()) || 
-                 (associatedArtifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID())) ) {
+    private void addDownloadSourceRow(StringBuilder sb, BlackboardArtifact associatedArtifact) throws TskCoreException {
+        if (associatedArtifact != null
+                && ((associatedArtifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID())
+                || (associatedArtifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID()))) {
             BlackboardAttribute urlAttr = associatedArtifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_URL));
             if (urlAttr != null) {
                 addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.downloadSource"), urlAttr.getValueString());
             }
         }
     }
-    
+
     /**
      * Add the acquisition details to the results (if applicable)
-     * 
+     *
      * @param sb         The output StringBuilder object
      * @param dataSource The data source (may be null)
      */
@@ -369,6 +373,22 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
     public boolean isSupported(Node node) {
         Image image = node.getLookup().lookup(Image.class);
         AbstractFile file = node.getLookup().lookup(AbstractFile.class);
+        if (file != null && node instanceof BlackboardArtifactNode) {
+            BlackboardArtifact theArtifact = ((BlackboardArtifactNode) node).getArtifact();
+            //disable the content viewer when a download or cached file does not exist instead of displaying its parent
+            try {
+                if ((theArtifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID()
+                        || theArtifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID())
+                        && file.getId() == theArtifact.getParent().getId()) {
+                    return false;
+                }
+            } catch (TskCoreException ex) {
+                LOGGER.log(Level.WARNING, String.format("Error getting parent of artifact with type %s and objID = %d can not confirm file with name %s and objId = %d is not the parent. Metadata viewer will not be supported.",
+                        theArtifact.getArtifactTypeName(), theArtifact.getObjectID(), file.getName(), file.getId()), ex);
+                return false;
+            }
+        }
+
         return (file != null) || (image != null);
     }
 
