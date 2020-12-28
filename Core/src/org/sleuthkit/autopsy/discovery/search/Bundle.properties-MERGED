@@ -1,3 +1,7 @@
+# {0} - month abbreviation
+# {1} - day of month
+# {2} - year
+DiscoveryAttributes.ActivityDateGroupKey.getDisplayNameTemplate=Week of {0} {1}, {2}
 DiscoveryAttributes.GroupingAttributeType.datasource.displayName=Data Source
 DiscoveryAttributes.GroupingAttributeType.fileType.displayName=File Type
 DiscoveryAttributes.GroupingAttributeType.firstDate.displayName=First Activity Date
@@ -20,16 +24,11 @@ DiscoveryKeyUtils.DataSourceGroupKey.datasourceAndID={0}(ID: {1})
 # {0} - Data source ID
 DiscoveryKeyUtils.DataSourceGroupKey.idOnly=Data source (ID: {0})
 DiscoveryKeyUtils.FileTagGroupKey.noSets=None
-DiscoveryKeyUtils.FirstActivityDateGroupKey.noDate=No Date Available
 DiscoveryKeyUtils.HashHitsGroupKey.noHashHits=None
 DiscoveryKeyUtils.InterestingItemGroupKey.noSets=None
 DiscoveryKeyUtils.KeywordListGroupKey.noKeywords=None
-DiscoveryKeyUtils.LastActivityDateGroupKey.noDate=No Date Available
 DiscoveryKeyUtils.NoGroupingGroupKey.allFiles=All Files
 DiscoveryKeyUtils.ObjectDetectedGroupKey.noSets=None
-# {0} - totalVisits
-DiscoveryKeyUtils.PageViewsGroupKey.displayName={0} page views
-DiscoveryKeyUtils.PageViewsGroupKey.noVisits=No page views
 # {0} - domain
 # {1} - artifactType
 DomainSearchArtifactsRequest.toString.text=Domain: {0} ArtifactType: {1}
@@ -94,6 +93,10 @@ SearchData.Frequency.unique.displayName=Unique (1)
 SearchData.Frequency.unknown.displayName=Unknown
 SearchData.Frequency.verycommon.displayName=Very Common (100+)
 SearchData.notPrevNotable.displayName=Previously Not Notable
+SearchData.PageViews.over1000=1000+ page views
+# {0} - minValue
+# {1} - maxValue
+SearchData.PageViews.rangeTemplate={0}-{1} page views
 SearchData.prevNotable.displayName=Previously Notable
 SearchData.Score.interesting.displayName=Interesting
 SearchData.Score.notable.displayName=Notable

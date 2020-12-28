@@ -1784,7 +1784,8 @@ class ExtractRegistry extends Extract {
             line = line.trim();
             usedTime = Long.valueOf(0);
             if (!line.contains("**") && !line.contains("----------") && !line.contains("LastWrite")
-                    && !line.contains(SECTION_DIVIDER) && !line.isEmpty() && !line.contains("TrustRecords")) {
+                    && !line.contains(SECTION_DIVIDER) && !line.isEmpty() && !line.contains("TrustRecords")
+                    && !line.contains("VBAWarnings =")) {
                 // Columns are
                 // Date : <File Name>/<Website>
                 // Split line on " : " which is the record delimiter between position and file
