@@ -212,13 +212,14 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
         final StringJoiner whereClause = new StringJoiner(" OR ");
         final StringJoiner havingClause = new StringJoiner(" AND ");
 
-        String artifactTypeFilter = null;
+        // Capture all types by default.
+        ArtifactTypeFilter artifactTypeFilter = new ArtifactTypeFilter(SearchData.Type.DOMAIN.getArtifactTypes());
         boolean hasDateTimeFilter = false;
 
         for (AbstractFilter filter : filters) {
             if (filter instanceof ArtifactTypeFilter) {
-                artifactTypeFilter = ((ArtifactTypeFilter) filter)
-                        .getWhereClause(Arrays.asList(TSK_WEB_ACCOUNT_TYPE));
+                // Replace with user defined types.
+                artifactTypeFilter = ((ArtifactTypeFilter) filter);
             } else if (!(filter instanceof DataSourceFilter) && !filter.useAlternateFilter()) {
                 if (filter instanceof ArtifactDateRangeFilter) {
                     hasDateTimeFilter = true;
@@ -240,7 +241,7 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
         havingClause.add("SUM(CASE WHEN " + domainAttributeFilter + " THEN 1 ELSE 0 END) > 0");
 
         return Pair.of(
-                whereClause.toString() + ((artifactTypeFilter != null) ? " AND (" + artifactTypeFilter + ")" : ""),
+                whereClause.toString() + " AND (" + artifactTypeFilter.getWhereClause(Arrays.asList(TSK_WEB_ACCOUNT_TYPE)) + ")",
                 havingClause.toString()
         );
     }

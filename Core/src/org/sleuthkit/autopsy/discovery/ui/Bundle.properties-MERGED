@@ -77,7 +77,22 @@ MiniTimelineArtifactListPanel.value.noValue=No value available.
 MiniTimelineDateListPanel.countColumn.name=Count
 MiniTimelineDateListPanel.dateColumn.name=Date
 MiniTimelineDateListPanel.value.noValue=No value available.
+<<<<<<< HEAD
 MiniTimelinePanel.loadingPanel.details=the Mini Timeline view
+=======
+MonthAbbreviation.aprilAbbrev=Apr
+MonthAbbreviation.augustAbbrev=Aug
+MonthAbbreviation.decemberAbbrev=Dec
+MonthAbbreviation.feburaryAbbrev=Feb
+MonthAbbreviation.januraryAbbrev=Jan
+MonthAbbreviation.julyAbbrev=Jul
+MonthAbbreviation.juneAbbrev=Jun
+MonthAbbreviation.marchAbbrev=Mar
+MonthAbbreviation.mayAbbrev=May
+MonthAbbreviation.novemberAbbrev=Nov
+MonthAbbreviation.octoberAbbrev=Oct
+MonthAbbreviation.septemberAbbrev=Sep
+>>>>>>> 1dd895dc72ac6e7c796a9883a2c790b46c27c47c
 ObjectDetectedFilterPanel.error.text=At least one object type name must be selected.
 ParentFolderFilterPanel.error.text=At least one parent path must be entered.
 PastOccurrencesFilterPanel.error.text=At least one value in the past occurrence filter must be selected.

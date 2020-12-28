@@ -36,7 +36,6 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT;
@@ -226,21 +225,6 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
         // check if the node has an abstract file and the file has any context defining artifacts.
         if (node.getLookup().lookup(AbstractFile.class) != null) {
             AbstractFile abstractFile = node.getLookup().lookup(AbstractFile.class);
-            if (node instanceof BlackboardArtifactNode) {
-                BlackboardArtifact theArtifact = ((BlackboardArtifactNode) node).getArtifact();
-                //disable the content viewer when a download or cached file does not exist instead of displaying its parent
-                try {
-                    if ((theArtifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID()
-                            || theArtifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID())
-                            && abstractFile.getId() == theArtifact.getParent().getId()) {
-                        return false;
-                    }
-                } catch (TskCoreException ex) {
-                    logger.log(Level.WARNING, String.format("Error getting parent of artifact with type %s and objID = %d can not confirm file with name %s and objId = %d is not the parent. Context content viewer will not be supported.",
-                            theArtifact.getArtifactTypeName(), theArtifact.getObjectID(), abstractFile.getName(), abstractFile.getId()), ex);
-                    return false;
-                }
-            }
             for (BlackboardArtifact.ARTIFACT_TYPE artifactType : CONTEXT_ARTIFACTS) {
                 List<BlackboardArtifact> artifactsList;
                 try {
@@ -265,7 +249,8 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
     }
 
     @NbBundle.Messages({
-        "ContextViewer.unknownSource=Unknown ",})
+        "ContextViewer.unknownSource=Unknown ",
+    })
     /**
      * Looks for context providing artifacts for the given file and populates
      * the source context.
@@ -278,7 +263,7 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
     private void populatePanels(AbstractFile sourceFile) throws NoCurrentCaseException, TskCoreException {
 
         SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-
+        
         // Check for all context artifacts
         boolean foundASource = false;
         for (BlackboardArtifact.ARTIFACT_TYPE artifactType : CONTEXT_ARTIFACTS) {
@@ -307,7 +292,7 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
                 contextContainer.add(usagePanel);
             }
         }
-
+        
         contextContainer.setBackground(javax.swing.UIManager.getDefaults().getColor("window"));
         contextContainer.setEnabled(foundASource);
         contextContainer.setVisible(foundASource);
@@ -316,12 +301,12 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
         jScrollPane.setVisible(foundASource);
         jScrollPane.repaint();
         jScrollPane.revalidate();
-
+        
+        
     }
 
     /**
-     * Resolves an TSK_ASSOCIATED_OBJECT artifact and adds it to the appropriate
-     * panel
+     * Resolves an TSK_ASSOCIATED_OBJECT artifact and adds it to the appropriate panel
      *
      * @param artifact Artifact that may provide context.
      *
@@ -373,16 +358,16 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
         } else if (BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT.getTypeID() == associatedArtifact.getArtifactTypeID()) {
             String sourceName = Bundle.ContextViewer_recentDocs();
             String sourceText = recentDocArtifactToString(associatedArtifact);
-            ContextUsagePanel usagePanel = new ContextUsagePanel(sourceName, sourceText, associatedArtifact, dateTime);
+            ContextUsagePanel usagePanel = new ContextUsagePanel(sourceName, sourceText, associatedArtifact, dateTime);        
             contextUsagePanels.add(usagePanel);
-
+            
         } else if (BlackboardArtifact.ARTIFACT_TYPE.TSK_PROG_RUN.getTypeID() == associatedArtifact.getArtifactTypeID()) {
             String sourceName = Bundle.ContextViewer_programExecution();
             String sourceText = programExecArtifactToString(associatedArtifact);
-            ContextUsagePanel usagePanel = new ContextUsagePanel(sourceName, sourceText, associatedArtifact, dateTime);
+            ContextUsagePanel usagePanel = new ContextUsagePanel(sourceName, sourceText, associatedArtifact, dateTime);        
             contextUsagePanels.add(usagePanel);
         }
-
+        
         Collections.sort(contextSourcePanels, new SortByDateTime());
         Collections.sort(contextUsagePanels, new SortByDateTime());
     }
@@ -414,7 +399,8 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
     }
 
     /**
-     * Returns a display string with recent Doc artifact.
+     * Returns a display string with recent Doc
+     * artifact.
      *
      * @param artifact artifact to get doc from.
      *
@@ -429,9 +415,9 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
     private String recentDocArtifactToString(BlackboardArtifact artifact) throws TskCoreException {
         StringBuilder sb = new StringBuilder(ARTIFACT_STR_MAX_LEN);
         Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributesMap = getAttributesMap(artifact);
-
+        
         BlackboardAttribute attribute = attributesMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME);
-
+        
         if (BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT.getTypeID() == artifact.getArtifactTypeID()) {
             if (attribute != null && attribute.getValueLong() > 0) {
                 appendAttributeString(sb, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME, attributesMap, Bundle.ContextViewer_on());
@@ -443,7 +429,8 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
     }
 
     /**
-     * Returns a display string with Program Execution artifact.
+     * Returns a display string with Program Execution
+     * artifact.
      *
      * @param artifact artifact to get doc from.
      *
@@ -458,9 +445,9 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
     private String programExecArtifactToString(BlackboardArtifact artifact) throws TskCoreException {
         StringBuilder sb = new StringBuilder(ARTIFACT_STR_MAX_LEN);
         Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributesMap = getAttributesMap(artifact);
-
+        
         BlackboardAttribute attribute = attributesMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME);
-
+        
         if (BlackboardArtifact.ARTIFACT_TYPE.TSK_PROG_RUN.getTypeID() == artifact.getArtifactTypeID()) {
             if (attribute != null && attribute.getValueLong() > 0) {
                 appendAttributeString(sb, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME, attributesMap, Bundle.ContextViewer_runOn());
@@ -551,9 +538,8 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
 
         return attributeMap;
     }
-
+    
     interface DateTimePanel {
-
         /**
          * Return the date time value for this panel.
          *
@@ -561,28 +547,28 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
          */
         Long getDateTime();
     }
-
-    /**
+    
+        /**
      * Return the dateTime value for the given message artifact.
-     *
-     * @param artifact
-     *
+     * 
+     * @param artifact 
+     * 
      * @return Long dateTime value or null if the attribute was not found.
-     *
-     * @throws TskCoreException
+     * 
+     * @throws TskCoreException 
      */
     private Long getArtifactDateTime(BlackboardArtifact artifact) throws TskCoreException {
-        BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME));
-
+        BlackboardAttribute attribute =  artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME));
+        
         if (BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID() == artifact.getArtifactTypeID()) {
-            attribute = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_SENT));
+            attribute =  artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_SENT));
         } else if (BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID() == artifact.getArtifactTypeID()
                 || BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID() == artifact.getArtifactTypeID()) {
-            attribute = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED));
+            attribute =  artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED));
         }
         return (attribute != null ? attribute.getValueLong() : null);
     }
-
+    
     /**
      * Class for sorting lists of DateTimePanels.
      */
@@ -592,18 +578,18 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
         public int compare(DateTimePanel panel1, DateTimePanel panel2) {
             Long dateTime1 = panel1.getDateTime();
             Long dateTime2 = panel2.getDateTime();
-
-            if (dateTime1 == null && dateTime2 == null) {
+            
+            if(dateTime1 == null && dateTime2 == null) {
                 return 0;
-            } else if (dateTime1 == null) {
+            } else if(dateTime1 == null) {
                 return -1;
-            } else if (dateTime2 == null) {
+            } else if(dateTime2 == null) {
                 return 1;
             }
-
+            
             return dateTime1.compareTo(dateTime2);
         }
-
+        
     }
 
 

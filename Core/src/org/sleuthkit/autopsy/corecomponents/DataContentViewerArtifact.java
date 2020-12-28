@@ -501,39 +501,24 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
             Lookup lookup = selectedNode.getLookup();
 
             // Get the content. We may get BlackboardArtifacts, ignore those here.
+            ArrayList<BlackboardArtifact> artifacts = new ArrayList<>();
             Collection<? extends Content> contents = lookup.lookupAll(Content.class);
             if (contents.isEmpty()) {
                 return new ViewUpdate(getArtifactContents().size(), currentPage, ERROR_TEXT);
             }
             Content underlyingContent = null;
-            //find the first non-artifact content from the lookup results
             for (Content content : contents) {
                 if ((content != null) && (!(content instanceof BlackboardArtifact))) {
-                    underlyingContent = content;
-                    break;
-                }
-            }
-            ArrayList<BlackboardArtifact> contentArtifacts = new ArrayList<>();
-            if (underlyingContent != null) {
-                try {
-                    //get the artifacts seperately for the use case where an artifact is about a file that exists other than its parent such as a TSK_WEB_DOWNLOAD or TSK_WEB_CACHE
-                    Collection<? extends BlackboardArtifact> nodeArtifacts = lookup.lookupAll(BlackboardArtifact.class);
-                    if (!nodeArtifacts.isEmpty()) {
-                        BlackboardArtifact originalArtifact = nodeArtifacts.iterator().next();
-                        if ((originalArtifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID()
-                                || originalArtifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID())
-                                && underlyingContent.getId() == originalArtifact.getParent().getId()) {
-                            contentArtifacts.add(originalArtifact);
-                        }
+                    // Get all of the blackboard artifacts associated with the content. These are what this
+                    // viewer displays.
+                    try {
+                        artifacts = content.getAllArtifacts();
+                        underlyingContent = content;
+                        break;
+                    } catch (TskException ex) {
+                        logger.log(Level.SEVERE, "Couldn't get artifacts", ex); //NON-NLS
+                        return new ViewUpdate(getArtifactContents().size(), currentPage, ERROR_TEXT);
                     }
-                    if (contentArtifacts.isEmpty()) {
-                        // Get all of the blackboard artifacts associated with the content. These are what this
-                        // viewer displays.
-                        contentArtifacts = underlyingContent.getAllArtifacts();
-                    }
-                } catch (TskException ex) {
-                    logger.log(Level.SEVERE, "Couldn't get artifacts", ex); //NON-NLS
-                    return new ViewUpdate(getArtifactContents().size(), currentPage, ERROR_TEXT);
                 }
             }
 
@@ -543,7 +528,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
 
             // Build the new artifact contents cache.
             ArrayList<BlackboardArtifact> artifactContents = new ArrayList<>();
-            for (BlackboardArtifact artifact : contentArtifacts) {
+            for (BlackboardArtifact artifact : artifacts) {
                 artifactContents.add(artifact);
             }
 
@@ -552,7 +537,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
             int index = 0;
             BlackboardArtifact artifact = lookup.lookup(BlackboardArtifact.class);
             if (artifact != null) {
-                index = contentArtifacts.indexOf(artifact);
+                index = artifacts.indexOf(artifact);
                 if (index == -1) {
                     index = 0;
                 } else {
@@ -562,9 +547,9 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
                             if (attr.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID()) {
                                 long assocArtifactId = attr.getValueLong();
                                 int assocArtifactIndex = -1;
-                                for (BlackboardArtifact art : contentArtifacts) {
+                                for (BlackboardArtifact art : artifacts) {
                                     if (assocArtifactId == art.getArtifactID()) {
-                                        assocArtifactIndex = contentArtifacts.indexOf(art);
+                                        assocArtifactIndex = artifacts.indexOf(art);
                                         break;
                                     }
                                 }

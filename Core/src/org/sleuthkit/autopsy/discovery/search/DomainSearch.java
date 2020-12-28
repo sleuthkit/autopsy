@@ -24,12 +24,15 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryKeyUtils.GroupKey;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TimeUtilities;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -245,7 +248,8 @@ public class DomainSearch {
     private String getDate(BlackboardArtifact artifact) throws TskCoreException {
         for (BlackboardAttribute attribute : artifact.getAttributes()) {
             if (attribute.getAttributeType().getTypeName().startsWith("TSK_DATETIME")) {
-                String dateString = attribute.getDisplayString();
+                TimeZone timeZone = ContentUtils.getTimeZone(artifact);
+                String dateString = TimeUtilities.epochToTime(attribute.getValueLong(), timeZone);
                 if (dateString.length() >= 10) {
                     return dateString.substring(0, 10);
                 }
