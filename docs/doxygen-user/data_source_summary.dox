@@ -56,6 +56,14 @@ The Past Cases tab shows which cases had results or notable files in common with
 
 Note that because these entries are based on the Interesting Items results created during ingest and not querying the central repository, they will not reflect any matches in cases processed after this case. For example, suppose we create Case A and ingest a data source with Device Z. If we make a new case Case B afterward and ingest a data source that also has Device Z, we would see Case A listed in this tab for Case B, but if we reopened Case A we would not see Case B listed unless ingest was run again. 
 
+\subsection ds_summary_geo Geolocation
+
+\subsection ds_summary_timeline Timeline
+
+The Timeline tab shows a simplified version of the \ref timeline_page "Timeline Viewer". It displays all fi
+
+\image html ds_summary_timeline.png
+
 \subsection ds_summary_ingest_history Ingest History
 
 The Ingest History tab shows which ingest modules have been run on the data source and the version of each module.
