@@ -27,10 +27,12 @@ import com.google.common.annotations.Beta;
  * DomainCategoryProvider.class)'.
  * 
  * NOTE: The @SuppressWarnings("try") on the class is to suppress warnings relating to
- * the fact that the close method can throw an InterruptedException.  See the
- * following github issue: https://github.com/joyent/java-manta/issues/322#issuecomment-326391239, 
- * and bugs for more information: https://bugs.openjdk.java.net/browse/JDK-8155591, 
- * https://bugs.eclipse.org/bugs/show_bug.cgi?id=350279
+ * the fact that the close method can throw an InterruptedException since Exception can 
+ * encompass the InterruptedException.  See the following github issue and bugs for more 
+ * information:
+ * https://github.com/joyent/java-manta/issues/322#issuecomment-326391239,
+ * https://bugs.openjdk.java.net/browse/JDK-8155591, 
+ * https://bugs.eclipse.org/bugs/show_bug.cgi?id=350279.
  */
 @Beta
 @SuppressWarnings("try")
