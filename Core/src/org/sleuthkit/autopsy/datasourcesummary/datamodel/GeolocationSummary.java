@@ -288,7 +288,11 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
      * number of found hits (i.e. most hits is first index).
      *
      * @param dataSource The data source.
+     * @param daysCount  Number of days to go back.
+     * @param maxCount   Maximum number of results.
+     * 
      * @return The sorted list.
+     * 
      * @throws SleuthkitCaseProviderException
      * @throws GeoLocationDataException
      * @throws InterruptedException

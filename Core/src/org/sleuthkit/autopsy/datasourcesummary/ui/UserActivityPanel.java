@@ -334,7 +334,7 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
      * menu items. going to artifact.
      *
      * @param record The LastAccessedArtifact instance.
-     * @param navigateToArtifact Navigate right tot the artifact.
+     *
      * @return The menu items list containing one action or navigating to the
      * appropriate artifact and closing the data source summary dialog if open.
      */

@@ -889,7 +889,7 @@ public class Server {
             // making a statusRequest request here instead of just doing solrServer.ping(), because
             // that doesn't work when there are no cores
             //TODO handle timeout in cases when some other type of server on that port
-            connectToEbmeddedSolrServer();
+            connectToEmbeddedSolrServer();
 
             logger.log(Level.INFO, "Solr server is running"); //NON-NLS
         } catch (SolrServerException ex) {
@@ -1853,12 +1853,10 @@ public class Server {
     /**
      * Attempts to connect to the local Solr server, which is NOT running in SolrCloud mode.
      *
-     * @param solrServer
-     *
      * @throws SolrServerException
      * @throws IOException
      */
-    private void connectToEbmeddedSolrServer() throws SolrServerException, IOException {
+    private void connectToEmbeddedSolrServer() throws SolrServerException, IOException {
         HttpSolrClient solrServer = getSolrClient("http://localhost:" + localSolrServerPort + "/solr");
         TimingMetric metric = HealthMonitor.getTimingMetric("Solr: Connectivity check");
         CoreAdminRequest.getStatus(null, solrServer);
