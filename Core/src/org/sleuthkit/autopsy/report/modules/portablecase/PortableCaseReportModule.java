@@ -42,7 +42,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -80,7 +79,6 @@ import org.sleuthkit.datamodel.SleuthkitCase.CaseDbTransaction;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TaggingManager.ContentTagChange;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskDataException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.Volume;
 import org.sleuthkit.datamodel.VolumeSystem;
@@ -104,6 +102,11 @@ public class PortableCaseReportModule implements ReportModule {
     // These are the types for the exported file subfolders
     private static final List<FileTypeCategory> FILE_TYPE_CATEGORIES = Arrays.asList(FileTypeCategory.AUDIO, FileTypeCategory.DOCUMENTS,
             FileTypeCategory.EXECUTABLE, FileTypeCategory.IMAGE, FileTypeCategory.VIDEO);
+    
+    // These are attribute types that have special handling and should not be copied
+    // into the new artifact directly.
+    private static final List<Integer> SPECIALLY_HANDLED_ATTRS = Arrays.asList(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID(),
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ATTACHMENTS.getTypeID(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID());
 
     private Case currentCase = null;
     private SleuthkitCase portableSkCase = null;
@@ -892,6 +895,9 @@ public class PortableCaseReportModule implements ReportModule {
             
             // Copy any attachments
             copyAttachments(newArtifact, tag.getArtifact(), portableSkCase.getAbstractFileById(newContentId));
+            
+            // Copy any files associated with this artifact through the TSK_PATH_ID attribute
+            copyPathID(newArtifact, tag.getArtifact(), portableSkCase.getAbstractFileById(newContentId));
 
             // Tag the artfiact
             if (!oldTagNameToNewTagName.containsKey(tag.getName())) {
@@ -937,13 +943,8 @@ public class PortableCaseReportModule implements ReportModule {
         // Copy over each attribute, making sure the type is in the new case.
         for (BlackboardAttribute oldAttr : oldAttrs) {
 
-            // The associated artifact has already been handled
-            if (oldAttr.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID()) {
-                continue;
-            }
-            
-            // Attachments will be handled later
-            if (oldAttr.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ATTACHMENTS.getTypeID()) {
+            // Skip attributes that are handled elsewhere
+            if (SPECIALLY_HANDLED_ATTRS.contains(oldAttr.getAttributeType().getTypeID())) {
                 continue;
             }
 
@@ -1156,11 +1157,33 @@ public class PortableCaseReportModule implements ReportModule {
         newIdToContent.put(newContent.getId(), newContent);
         return oldIdToNewContent.get(content.getId()).getId();
     }
-    
+
+    /**
+     * Copy path ID attribute to new case along with the referenced file.
+     * 
+     * @param newArtifact The new artifact in the portable case. Should not have a TSK_PATH_ID attribute.
+     * @param oldArtifact The old artifact.
+     * @param newFile     The new file in the portable case associated with the artifact.
+     * 
+     * @throws TskCoreException 
+     */    
+    private void copyPathID(BlackboardArtifact newArtifact, BlackboardArtifact oldArtifact, AbstractFile newFile) throws TskCoreException {
+        // Get the path ID attribute
+        BlackboardAttribute oldPathIdAttr = oldArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID));
+        if (oldPathIdAttr != null) {
+            // Copy the file and remake the attribute
+            long oldContentId = oldPathIdAttr.getValueLong();
+            Content oldContent = currentCase.getSleuthkitCase().getContentById(oldContentId);
+            long newContentId = copyContent(oldContent);
+            newArtifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID,
+                    String.join(",", oldPathIdAttr.getSources()), newContentId));
+        }
+    }
+        
     /**
      * Copy attachments to the portable case.
      * 
-     * @param newArtifact The new artifact in the portable case. Should be complete apart from the TSK_ATTACHMENTS attribute.
+     * @param newArtifact The new artifact in the portable case. Should not have a TSK_ATTACHMENTS attribute.
      * @param oldArtifact The old artifact.
      * @param newFile     The new file in the portable case associated with the artifact.
      * 
