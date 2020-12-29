@@ -307,7 +307,7 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
      * Build the command to run xLeapp
      * @param moduleOutputPath output path for xLeapp
      * @param sourceFilePath path where the xLeapp file is
-     * @param iLeappFileSystem type of file to process tar/zip/fs
+     * @param iLeappFileSystemType type of file to process tar/zip/fs
      * @return process to run
      */
     private ProcessBuilder buildiLeappCommand(Path moduleOutputPath, String sourceFilePath, String iLeappFileSystemType) {

@@ -232,8 +232,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
     /**
      * Update the view to reflect the current artifact's details.
      *
-     * @param artifactTypeId The BlackboardArtifact type id for the artifact
-     *                       being displayed.
+     * @param artifact       The artifact being displayed.
      * @param attributeMap   The map of attributes that exist for the artifact.
      * @param dataSourceName The name of the datasource that caused the creation
      *                       of the artifact.

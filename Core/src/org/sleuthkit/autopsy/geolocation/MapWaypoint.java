@@ -293,7 +293,6 @@ public final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewe
      * Get the nicely formatted details for the given waypoint.
      *
      * @param point Waypoint object
-     * @param header String details header
      *
      * @return HTML formatted String of details for given waypoint
      */

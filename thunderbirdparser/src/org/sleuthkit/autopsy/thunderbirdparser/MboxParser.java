@@ -42,6 +42,7 @@ import org.apache.james.mime4j.mboxiterator.MboxIterator;
 import org.apache.tika.parser.txt.CharsetDetector;
 import org.apache.tika.parser.txt.CharsetMatch;
 import org.apache.commons.validator.routines.EmailValidator;
+import org.apache.james.mime4j.mboxiterator.MboxIterator.Builder;
 import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.AbstractFile;
 
@@ -53,6 +54,8 @@ class MboxParser extends MimeJ4MessageParser implements Iterator<EmailMessage> {
     private static final Logger logger = Logger.getLogger(MboxParser.class.getName());
 
     private Iterator<EmailMessage> emailIterator = null;
+    
+    private MboxIterator mboxIterable;
 
     private MboxParser(String localPath) {
         setLocalPath(localPath);
@@ -130,7 +133,7 @@ class MboxParser extends MimeJ4MessageParser implements Iterator<EmailMessage> {
         // That will usually be one of the first ones.
         for (CharsetEncoder encoder : encoders) {
             try {
-                Iterable<CharBufferWrapper> mboxIterable = MboxIterator.fromFile(mboxFile).charset(encoder.charset()).build();
+                mboxIterable = MboxIterator.fromFile(mboxFile).charset(encoder.charset()).build();
                 if (mboxIterable != null) {
                     emailIterator = new MBoxEmailIterator(mboxIterable.iterator(), encoder, fileID, wholeMsg);
                 }
@@ -154,6 +157,13 @@ class MboxParser extends MimeJ4MessageParser implements Iterator<EmailMessage> {
     @Override
     public EmailMessage next() {
         return emailIterator != null ? emailIterator.next() : null;
+    }
+    
+    @Override
+    public void close() throws Exception {
+        if(mboxIterable != null) {
+            mboxIterable.close();
+        }
     }
 
     /**
