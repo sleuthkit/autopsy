@@ -212,7 +212,7 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
             }
             fileTaskExecutor.shutDown();
             Logger logger = ApplicationLoggers.getLogger(TASK_RETRY_STATS_LOG_NAME);
-            logger.log(Level.INFO, String.format("total task timeouts: %d, total task retries: %d, total task failures: %d (ingest job ID = %d)", TaskRetryUtil.getTotalTaskTimeOutsCount(), TaskRetryUtil.getTotalTaskRetriesCount(), TaskRetryUtil.getTotalFailedTasksCount(), jobId));
+            logger.log(Level.INFO, String.format("total tasks: %d, total task timeouts: %d, total task retries: %d, total task failures: %d (ingest job ID = %d)", TaskRetryUtil.getTotalTasksCount(), TaskRetryUtil.getTotalTaskAttemptTimeOutsCount(), TaskRetryUtil.getTotalTaskRetriesCount(), TaskRetryUtil.getTotalFailedTasksCount(), jobId));
         }
     }
 

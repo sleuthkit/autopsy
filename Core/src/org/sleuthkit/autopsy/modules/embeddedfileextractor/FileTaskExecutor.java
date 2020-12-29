@@ -51,12 +51,12 @@ import org.sleuthkit.autopsy.threadutils.TaskRetryUtil;
 class FileTaskExecutor {
 
     private static final int MIN_THREADS_IN_POOL = 4;
-    private static final int MAX_THREADS_IN_POOL = Integer.MAX_VALUE;
+    private static final int MAX_THREADS_IN_POOL = Integer.MAX_VALUE; // Effectively no limit
     private static final String FILE_IO_TASK_THREAD_NAME = "file-io-executor-task-%d";
-    private static final String FILE_EXISTS_TASK_DESC_FMT_STR = "Checking if %s already exists (case directory = %s)";
-    private static final String MKDIRS_TASK_DESC_FMT_STR = "Making directory %s (case directory = %s)";
-    private static final String NEW_FILE_TASK_DESC_FMT_STR = "Creating new file %s (case directory = %s)";
-    private static final String FILE_OPS_LOG_NAME = "efe_file-ops";    
+    private static final String FILE_EXISTS_TASK_DESC_FMT_STR = "Checking if %s already exists";
+    private static final String MKDIRS_TASK_DESC_FMT_STR = "Making directory %s";
+    private static final String NEW_FILE_TASK_DESC_FMT_STR = "Creating new file %s";
+    private static final String FILE_OPS_LOG_NAME = "efe_file_ops";
     private static final Logger logger = ApplicationLoggers.getLogger(FILE_OPS_LOG_NAME);
     private final ScheduledThreadPoolExecutor executor;
     private final TaskTerminator terminator;
@@ -81,8 +81,8 @@ class FileTaskExecutor {
      *
      * @param context An ingest job context that will be used in a
      *                TaskRetryUtil.Terminator to cut off attempts to do a file
-     *                I/O operation if the ingest job is cancelled. Optonal, may
-     *                be null.
+     *                I/O operation if the ingest job is cancelled. Optional,
+     *                may be null.
      */
     FileTaskExecutor(IngestJobContext context) {
         executor = new ScheduledThreadPoolExecutor(MIN_THREADS_IN_POOL, new ThreadFactoryBuilder().setNameFormat(FILE_IO_TASK_THREAD_NAME).build());
@@ -95,17 +95,17 @@ class FileTaskExecutor {
     }
 
     /**
-     * Attempts to check whether a given java.io.File exists, retrying several times if
+     * Attempts to check whether a given file exists, retrying several times if
      * necessary.
      *
      * @param file The file.
      *
      * @return True or false.
      *
-     * @throws FileTaskFailedException Thrown if the file I/O task could not
-     *                                   be completed.
-     * @throws InterruptedException      Thrown if the file I/O task is
-     *                                   interrupted.
+     * @throws FileTaskFailedException Thrown if the file I/O task could not be
+     *                                 completed.
+     * @throws InterruptedException    Thrown if the file I/O task is
+     *                                 interrupted.
      */
     boolean exists(final File file) throws FileTaskFailedException, InterruptedException {
         Callable<Boolean> task = () -> {
@@ -115,17 +115,17 @@ class FileTaskExecutor {
     }
 
     /**
-     * Attempts to create the directories for a given java.io.File, retrying several
-     * times if necessary.
+     * Attempts to create the parent directories for a given file, retrying
+     * several times if necessary.
      *
      * @param file The file.
      *
      * @return True on success or false on failure.
      *
-     * @throws FileTaskFailedException Thrown if the file I/O task could not
-     *                                   be completed.
-     * @throws InterruptedException      Thrown if the file I/O task is
-     *                                   interrupted.
+     * @throws FileTaskFailedException Thrown if the file I/O task could not be
+     *                                 completed.
+     * @throws InterruptedException    Thrown if the file I/O task is
+     *                                 interrupted.
      */
     boolean mkdirs(final File file) throws FileTaskFailedException, InterruptedException {
         Callable<Boolean> task = () -> {
@@ -135,17 +135,16 @@ class FileTaskExecutor {
     }
 
     /**
-     * Attempts to create a new file for a given java.io.File, retrying several times if
-     * necessary.
+     * Attempts to create a new empty file, retrying several times if necessary.
      *
      * @param file The file.
      *
      * @return True on success or false on failure.
      *
-     * @throws FileTaskFailedException Thrown if the file I/O task could not
-     *                                   be completed.
-     * @throws InterruptedException      Thrown if the file I/O task is
-     *                                   interrupted.
+     * @throws FileTaskFailedException Thrown if the file I/O task could not be
+     *                                 completed.
+     * @throws InterruptedException    Thrown if the file I/O task is
+     *                                 interrupted.
      */
     boolean createNewFile(final File file) throws FileTaskFailedException, InterruptedException {
         Callable<Boolean> task = () -> {
@@ -162,10 +161,9 @@ class FileTaskExecutor {
      *
      * @return True on success or false on failure.
      *
-     * @throws FileTaskFailedException Thrown if the file I/O task could not
-     *                                   be completed.
-     * @throws InterruptedException      Thrown if the file I/O task is
-     *                                   interrupted.
+     * @throws FileTaskFailedException Thrown if the task could not be
+     *                                 completed.
+     * @throws InterruptedException    Thrown if the task is interrupted.
      */
     private boolean attemptTask(Callable<Boolean> task, String taskDesc) throws FileTaskFailedException, InterruptedException {
         List<TaskRetryUtil.TaskAttempt> attempts = new ArrayList<>();
@@ -175,7 +173,7 @@ class FileTaskExecutor {
         attempts.add(new TaskRetryUtil.TaskAttempt(15L, TimeUnit.MINUTES, 10L, TimeUnit.MINUTES));
         Boolean success = TaskRetryUtil.attemptTask(task, attempts, executor, terminator, logger, taskDesc);
         if (success == null) {
-            throw new FileTaskFailedException(taskDesc + "failed"); // RJCTODO
+            throw new FileTaskFailedException(taskDesc + " failed");
         }
         return success;
     }
@@ -204,8 +202,8 @@ class FileTaskExecutor {
 
         /**
          * Construct a TaskRetryUtil.Terminator that uses an ingest job context
-         * to cut off attempts to do a java.io.File operation if the ingest job is
-         * cancelled.
+         * to cut off attempts to do a java.io.File operation if the ingest job
+         * is cancelled.
          *
          * @param context The ingest job context.
          */

@@ -37,8 +37,9 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  */
 public class TaskRetryUtil {
 
+    private static final AtomicLong totalTasks = new AtomicLong();
     private static final AtomicLong totalTaskRetries = new AtomicLong();
-    private static final AtomicLong totalTaskTimeOuts = new AtomicLong();
+    private static final AtomicLong totalTaskAttemptTimeOuts = new AtomicLong();
     private static final AtomicLong totalFailedTasks = new AtomicLong();
 
     /**
@@ -70,22 +71,22 @@ public class TaskRetryUtil {
          * attempt for the attemptTask() utility.
          *
          * @param delay           The delay before the task should be attempted,
-         *                        may be zero or any positive integer.
+         *                        must be zero or any positive integer.
          * @param delayTimeUnit   The time unit for the delay before the task
          *                        should be attempted.
-         * @param timeOut         The timeout for the task attempt, may be zero
+         * @param timeOut         The timeout for the task attempt, must be zero
          *                        or any positive integer.
          * @param timeOutTimeUnit The time unit for the task timeout.
          */
         public TaskAttempt(Long delay, TimeUnit delayTimeUnit, Long timeOut, TimeUnit timeOutTimeUnit) {
             if (delay == null || delay < 0) {
-                throw new IllegalArgumentException(String.format("Argument for delay parameter = %d", delay));
+                throw new IllegalArgumentException(String.format("Argument for delay parameter = %d, must be zero or any positive integer", delay));
             }
             if (delayTimeUnit == null) {
                 throw new IllegalArgumentException("Argument for delayTimeUnit parameter is null");
             }
             if (timeOut != null && timeOut < 0) {
-                throw new IllegalArgumentException(String.format("Argument for timeout parameter = %d", delay));
+                throw new IllegalArgumentException(String.format("Argument for timeout parameter = %d, must be zero or any positive integer", delay));
             }
             if (timeOut != null && timeOutTimeUnit == null) {
                 throw new IllegalArgumentException("Argument for timeOutTimeUnit parameter is null");
@@ -136,15 +137,16 @@ public class TaskRetryUtil {
     }
 
     /**
-     * A TaskTerminator can be supplied to the attemptTask() utility. The
-     * utility will query the RetryTerminator before starting each task attempt
+     * A Terminator can be supplied to the attemptTask() utility. The utility
+     * will query the RetryTerminator before starting each task attempt
      */
     public interface Terminator {
 
         /**
-         * RJCTODO
+         * Indicates whether or not the task should be abandoned with no further
+         * attempts.
          *
-         * @return
+         * @return True or false.
          */
         boolean stopTaskAttempts();
 
@@ -153,11 +155,11 @@ public class TaskRetryUtil {
     /**
      * Attempts a task a specified number of times with a specified delay before
      * each attempt and an optional timeout for each attempt. If an attempt
-     * times out, that particular attempt will be cancelled.
+     * times out, that particular attempt task will be cancelled.
      *
      * @param <T>        The return type of the task.
      * @param task       The task.
-     * @param attempts   The details for each attempt of the task.
+     * @param attempts   The defining details for each attempt of the task.
      * @param executor   The scheduled task executor to be used to attempt the
      *                   task.
      * @param terminator A task terminator that can be used to stop the task
@@ -175,6 +177,9 @@ public class TaskRetryUtil {
     public static <T> T attemptTask(Callable<T> task, List<TaskAttempt> attempts, ScheduledThreadPoolExecutor executor, Terminator terminator, Logger logger, String taskDesc) throws InterruptedException {
         T result = null;
         int attemptCounter = 0;
+        if (attempts.size() > 0) {
+            totalTasks.incrementAndGet();
+        }
         while (result == null && attemptCounter < attempts.size()) {
             if (terminator != null && terminator.stopTaskAttempts()) {
                 break;
@@ -182,9 +187,9 @@ public class TaskRetryUtil {
             TaskAttempt attempt = attempts.get(attemptCounter);
             if (logger != null) {
                 if (attempt.getTimeout() != null) {
-                    logger.log(Level.INFO, "{0} (attempt = {1}, waited = {2} {3}, timeout = {4} {5})", new Object[]{taskDesc, attemptCounter + 1, attempt.getDelay(), attempt.getDelayTimeUnit(), attempt.getTimeout(), attempt.getTimeoutTimeUnit()});
+                    logger.log(Level.INFO, "{0} (attempt = {1}, delay = {2} {3}, timeout = {4} {5})", new Object[]{taskDesc, attemptCounter + 1, attempt.getDelay(), attempt.getDelayTimeUnit(), attempt.getTimeout(), attempt.getTimeoutTimeUnit()});
                 } else {
-                    logger.log(Level.INFO, "{0} (attempt = {1}, waited = {2} {3}, timeout = {4} {5})", new Object[]{taskDesc, attemptCounter + 1, attempt.getDelay(), attempt.getDelayTimeUnit(), attempt.getTimeout(), attempt.getTimeoutTimeUnit()});
+                    logger.log(Level.INFO, "{0} (attempt = {1}, delay = {2} {3}, timeout = {4} {5})", new Object[]{taskDesc, attemptCounter + 1, attempt.getDelay(), attempt.getDelayTimeUnit(), attempt.getTimeout(), attempt.getTimeoutTimeUnit()});
                 }
             }
             if (attemptCounter > 0) {
@@ -199,13 +204,13 @@ public class TaskRetryUtil {
                 }
             } catch (ExecutionException ex) {
                 if (logger != null) {
-                    logger.log(Level.SEVERE, String.format("Error executing %s", taskDesc != null ? taskDesc : "task"), ex);
+                    logger.log(Level.SEVERE, String.format("Error executing '%s'", taskDesc != null ? taskDesc : "task"), ex);
                 }
             } catch (TimeoutException ex) {
                 if (logger != null) {
-                    logger.log(Level.SEVERE, String.format("Time out executing %s, cancelling attempt", taskDesc != null ? taskDesc : "task"), ex);
+                    logger.log(Level.SEVERE, String.format("Time out executing '%s', cancelling attempt", taskDesc != null ? taskDesc : "task"), ex);
                 }
-                totalTaskTimeOuts.incrementAndGet();
+                totalTaskAttemptTimeOuts.incrementAndGet();
                 future.cancel(true);
             }
             ++attemptCounter;
@@ -219,27 +224,37 @@ public class TaskRetryUtil {
     }
 
     /**
-     * RJCTODO
+     * Returns a count of the total number of tasks submitted to this utility.
      *
-     * @return
+     * @return The tasks count.
+     */
+    public static long getTotalTasksCount() {
+        return totalTasks.get();
+    }
+
+    /**
+     * Returns a count of the total number of task retry attempts.
+     *
+     * @return The task retries count.
      */
     public static long getTotalTaskRetriesCount() {
         return totalTaskRetries.get();
     }
 
     /**
-     * RJCTODO
+     * Returns a count of the total number of task attempts that timed out.
      *
-     * @return
+     * @return The timed out task attempts count.
      */
-    public static long getTotalTaskTimeOutsCount() {
-        return totalTaskTimeOuts.get();
+    public static long getTotalTaskAttemptTimeOutsCount() {
+        return totalTaskAttemptTimeOuts.get();
     }
 
     /**
-     * RJCTODO
+     * Returns a count of the total number of tasks submitted to this utility
+     * that were not able to be completed despite retry attempts.
      *
-     * @return
+     * @return The failed tasks count. 
      */
     public static long getTotalFailedTasksCount() {
         return totalFailedTasks.get();

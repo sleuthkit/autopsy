@@ -174,7 +174,8 @@ class DocumentEmbeddedContentExtractor {
          * TODO (Jira-7145): Is the logic of this check correct? Also note that
          * this suspect code used to have a bug in that makeOutputFolder() was
          * called, so the directory was always created here if it did not exist,
-         * making this check only a call to AbstractFile.hasChildren().
+         * making this check only a call to AbstractFile.hasChildren() in
+         * practice.
          */
         try {
             if (abstractFile.hasChildren()) {
@@ -542,8 +543,8 @@ class DocumentEmbeddedContentExtractor {
 
     /**
      * Gets the path to an output folder for extraction of embedded content from
-     * a file. If the folder does not exist, it is created. The folder name is a
-     * unique name derived from the file name and its object ID.
+     * a file. The folder will have the same name as the file name passed in. If
+     * the folder does not exist, it is created.
      *
      * @param parentFileName The file name.
      *

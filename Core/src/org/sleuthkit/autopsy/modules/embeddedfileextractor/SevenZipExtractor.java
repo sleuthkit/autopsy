@@ -152,7 +152,7 @@ class SevenZipExtractor {
      * @param fileTypeDetector   A file type detector.
      * @param moduleDirRelative  The relative path to the output directory for
      *                           the extracted files. Used in the case database
-     *                           for extracted (derived) file pathsr the
+     *                           for extracted (derived) file paths for the
      *                           extracted files.
      * @param moduleDirAbsolute  The absolute path to the output directory for
      *                           the extracted files.
@@ -166,7 +166,6 @@ class SevenZipExtractor {
         if (!SevenZip.isInitializedSuccessfully()) {
             throw new SevenZipNativeInitializationException("SevenZip has not been previously initialized.");
         }
-
         this.context = context;
         this.fileTypeDetector = fileTypeDetector;
         this.moduleDirRelative = moduleDirRelative;
@@ -379,7 +378,7 @@ class SevenZipExtractor {
     }
 
     /**
-     * Queries the case database to gets any files already extracted from the
+     * Queries the case database to get any files already extracted from the
      * given archive. The archive file path is used to find the files by parent
      * path.
      *
@@ -402,8 +401,8 @@ class SevenZipExtractor {
          * TODO (Jira-7145): Is this logic correct?
          */
         List<AbstractFile> extractedFiles = new ArrayList<>();
-        File extractedFilesDir = new File(moduleDirAbsolute, EmbeddedFileExtractorIngestModule.getUniqueName(archiveFile));
-        if (archiveFile.hasChildren() && fileTaskExecutor.exists(extractedFilesDir)) {
+        File outputDirectory = new File(moduleDirAbsolute, EmbeddedFileExtractorIngestModule.getUniqueName(archiveFile));
+        if (archiveFile.hasChildren() && fileTaskExecutor.exists(outputDirectory)) {
             Case currentCase = Case.getCurrentCase();
             FileManager fileManager = currentCase.getServices().getFileManager();
             extractedFiles.addAll(fileManager.findFilesByParentPath(getRootArchiveId(archiveFile), archiveFilePath));
@@ -689,15 +688,22 @@ class SevenZipExtractor {
                 //create local dirs and empty files before extracted
                 //cannot rely on files in top-bottom order
                 File localFile = new File(localAbsPath);
-                boolean localFileCreated;
-                if ((Boolean) inArchive.getProperty(inArchiveItemIndex, PropID.IS_FOLDER)) {
-                    localFileCreated = this.createExtractedDirectory(localFile);
-                } else {
-                    localFileCreated = this.createEmptyExtractedFile(localFile);
+                boolean localFileExists;
+                try {
+                    if ((Boolean) inArchive.getProperty(inArchiveItemIndex, PropID.IS_FOLDER)) {
+                        localFileExists = this.findOrCreateDirectory(localFile);
+                    } else {
+                        localFileExists = this.findOrCreateEmptyFile(localFile);
+                    }
+                } catch (FileTaskFailedException | InterruptedException ex) {
+                    localFileExists = false;
+                    logger.log(Level.SEVERE, String.format("Error fiding or creating %s", localFile.getAbsolutePath()), ex); //NON-NLS
                 }
+
                 // skip the rest of this loop if we couldn't create the file
                 //continue will skip details from being added to the map
-                if (!localFileCreated) {
+                if (!localFileExists) {
+                    logger.log(Level.SEVERE, String.format("Skipping %s because it does not exist and could not be created", localFile.getAbsolutePath())); //NON-NLS
                     continue;
                 }
 
@@ -832,44 +838,33 @@ class SevenZipExtractor {
     }
 
     /**
-     * Create an extracted directory.
+     * Finds or creates a given directory.
      *
-     * @param extractedDirectory The directory to create.
+     * @param directory The directory.
      *
      * @return True on success, false on failure.
      */
-    private boolean createExtractedDirectory(File extractedDirectory) {
-        boolean success = true;
-        try {
-            if (!this.fileTaskExecutor.exists(extractedDirectory)) {
-                success = this.fileTaskExecutor.mkdirs(extractedDirectory);
-            }
-        } catch (FileTaskFailedException | InterruptedException ex) {
-            // RJCTODO
-            success = false;
+    private boolean findOrCreateDirectory(File directory) throws FileTaskFailedException, InterruptedException {
+        if (!fileTaskExecutor.exists(directory)) {
+            return fileTaskExecutor.mkdirs(directory);
+        } else {
+            return true;
         }
-        return success;
     }
 
     /**
-     * Create an empty extracted file.
+     * Finds or creates a given file. If the file is created, it will be empty.
      *
-     * @param extractedFile The file to create.
+     * @param file The file.
      *
      * @return True on success, false on failure.
      */
-    private boolean createEmptyExtractedFile(File extractedFile) {
-        boolean success = true;
-        try {
-            if (!fileTaskExecutor.exists(extractedFile)) {
-
-                success = this.fileTaskExecutor.mkdirs(extractedFile.getParentFile()) && fileTaskExecutor.createNewFile(extractedFile);
-            }
-        } catch (FileTaskFailedException | InterruptedException ex) {
-            // RJCTODO
-            success = false;
+    private boolean findOrCreateEmptyFile(File file) throws FileTaskFailedException, InterruptedException {
+        if (!fileTaskExecutor.exists(file)) {
+            return fileTaskExecutor.mkdirs(file.getParentFile()) && fileTaskExecutor.createNewFile(file);
+        } else {
+            return true;
         }
-        return success;
     }
 
     private Charset detectFilenamesCharset(List<byte[]> byteDatas) {
