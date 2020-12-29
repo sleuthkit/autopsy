@@ -74,7 +74,7 @@ public class CentralRepositoryService implements AutopsyService {
     }
     
     @NbBundle.Messages({
-        "CentralRepositoryService.progressMsg.waitingForListeners=Waiting for tasks to finish..."
+        "CentralRepositoryService.progressMsg.waitingForListeners=Finishing adding data to central repository database...."
     })
     @Override
     public void closeCaseResources(CaseContext context) throws AutopsyServiceException {
