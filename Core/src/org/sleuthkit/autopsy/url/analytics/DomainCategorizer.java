@@ -23,7 +23,7 @@ import com.google.common.annotations.Beta;
 /**
  * Interface providing the category of a domain/host. Implementers of this class
  * should have a no-argument constructor in order to be properly instantiated,
- * and should have a class annotation of '@ServiceProvider(service =
+ * and should have a class annotation of '(at)ServiceProvider(service =
  * DomainCategoryProvider.class)'.
  */
 @Beta

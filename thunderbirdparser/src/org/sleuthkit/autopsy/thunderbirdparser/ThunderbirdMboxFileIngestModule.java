@@ -681,6 +681,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
      *
      * @param email        The e-mail message.
      * @param abstractFile The associated file.
+     * @param accountFileInstanceCache  The current cache of account instances.
      * 
      * @return The generated e-mail message artifact.
      */

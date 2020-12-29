@@ -262,6 +262,7 @@ final class ArtifactsListPanel extends AbstractArtifactListPanel {
          * Get the appropriate String for the specified column from the
          * BlackboardAttribute.
          *
+         * @param artifact    The artifact.
          * @param bba         The BlackboardAttribute which may contain a value.
          * @param columnIndex The column the value will be displayed in.
          *

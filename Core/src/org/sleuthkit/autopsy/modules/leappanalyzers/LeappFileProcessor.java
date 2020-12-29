@@ -195,7 +195,7 @@ public final class LeappFileProcessor {
      * Process the Leapp files that were found that match the xml mapping file
      *
      * @param LeappFilesToProcess List of files to process
-     * @param LeappImageFile      Abstract file to create artifact for
+     * @param dataSource          The data source.
      *
      * @throws FileNotFoundException
      * @throws IOException
@@ -481,7 +481,7 @@ public final class LeappFileProcessor {
      *
      * @param type         is a blackboard.artifact_type enum to determine which
      *                     type the artifact should be
-     * @param datasource   is the Content object that needs to have the artifact
+     * @param dataSource   is the Content object that needs to have the artifact
      *                     added for it
      * @param bbattributes is the collection of blackboard attributes that need
      *                     to be added to the artifact after the artifact has
