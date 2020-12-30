@@ -223,6 +223,9 @@ public class GeolocationPanel extends BaseDataSourceSummaryPanel {
      * common table).
      */
     private void openGeolocationWindow(DataSource dataSource, Integer daysLimit) {
+        // notify dialog (if in dialog) should close.
+        notifyParentClose();
+        
         // set the filter
         TopComponent topComponent = WindowManager.getDefault().findTopComponent(GeolocationTopComponent.class.getSimpleName());
         if (topComponent instanceof GeolocationTopComponent) {

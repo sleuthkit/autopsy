@@ -262,6 +262,7 @@ final class ArtifactsListPanel extends AbstractArtifactListPanel {
          * Get the appropriate String for the specified column from the
          * BlackboardAttribute.
          *
+         * @param artifact    The artifact.
          * @param bba         The BlackboardAttribute which may contain a value.
          * @param columnIndex The column the value will be displayed in.
          *
@@ -327,6 +328,8 @@ final class ArtifactsListPanel extends AbstractArtifactListPanel {
         @NbBundle.Messages({"ArtifactsListPanel.titleColumn.name=Title",
             "ArtifactsListPanel.fileNameColumn.name=Name",
             "ArtifactsListPanel.dateColumn.name=Date/Time",
+            "ArtifactsListPanel.urlColumn.name=URL",
+            "ArtifactsListPanel.termColumn.name=Term",
             "ArtifactsListPanel.mimeTypeColumn.name=MIME Type"})
         @Override
         public String getColumnName(int column) {
@@ -334,11 +337,19 @@ final class ArtifactsListPanel extends AbstractArtifactListPanel {
                 case 0:
                     return Bundle.ArtifactsListPanel_dateColumn_name();
                 case 1:
-                    if (artifactType == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE || artifactType == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD) {
-                        return Bundle.ArtifactsListPanel_fileNameColumn_name();
-                    } else {
-                        return Bundle.ArtifactsListPanel_titleColumn_name();
+                    if (artifactType != null) {
+                        switch (artifactType) {
+                            case TSK_WEB_CACHE:
+                            case TSK_WEB_DOWNLOAD:
+                                return Bundle.ArtifactsListPanel_fileNameColumn_name();
+                            case TSK_WEB_COOKIE:
+                                return Bundle.ArtifactsListPanel_urlColumn_name();
+                            case TSK_WEB_SEARCH_QUERY:
+                                return Bundle.ArtifactsListPanel_termColumn_name();
+                            default:
+                        }
                     }
+                    return Bundle.ArtifactsListPanel_titleColumn_name();
                 case 2:
                     return Bundle.ArtifactsListPanel_mimeTypeColumn_name();
                 default:

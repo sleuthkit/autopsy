@@ -75,7 +75,7 @@ SizeRepresentationUtil_units_petabytes=\ PB
 SizeRepresentationUtil_units_terabytes=\ TB
 TimelinePanel_earliestLabel_title=Earliest
 TimelinePanel_latestLabel_title=Latest
-TimlinePanel_last30DaysChart_artifactEvts_title=Artifact Events
+TimlinePanel_last30DaysChart_artifactEvts_title=Result Events
 TimlinePanel_last30DaysChart_fileEvts_title=File Events
 TimlinePanel_last30DaysChart_title=Last 30 Days
 TypesPanel_artifactsTypesPieChart_title=Artifact Types
@@ -110,10 +110,17 @@ PastCasesPanel.notableFileLabel.text=Cases with Common Items That Were Tagged as
 PastCasesPanel.sameIdLabel.text=Past Cases with the Same Device IDs
 DataSourceSummaryTabbedPane.noDataSourceLabel.text=No data source has been selected.
 TimelinePanel.activityRangeLabel.text=Activity Range
+<<<<<<< HEAD
 GeolocationPanel.withinDistanceLabel.text=Locations further than 150km from a city will be listed as 'Unknown'
 GeolocationPanel.mostRecentLabel.text=Recent Cities from Geolocation Artifacts
 GeolocationPanel.withinDistanceLabel1.text=Locations further than 150km from a city will be listed as 'Unknown'
 GeolocationPanel.mostCommonLabel.text=Most Common Cities from Geolocation Artifacts
+=======
+GeolocationPanel.withinDistanceLabel.text=Locations further than 150Km from a city are not included
+GeolocationPanel.mostRecentLabel.text=Recent Cities from Geolocation Results
+GeolocationPanel.withinDistanceLabel1.text=Locations further than 150Km from a city are not included
+GeolocationPanel.mostCommonLabel.text=Most Common Cities from Geolocation Results
+>>>>>>> ab87da96f48897bae09a6164e16ff1e9bc68b8be
 GeolocationPanel.recentViewInGeolocationBtn.text=View in Map
 GeolocationPanel.commonViewInGeolocationBtn.text=View in Map
 RecentFilesPanel.rightClickForMoreOptions1.text=Right click on row for more options

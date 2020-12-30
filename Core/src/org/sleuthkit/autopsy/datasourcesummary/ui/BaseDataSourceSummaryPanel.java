@@ -319,10 +319,10 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
     }
 
     /**
-     * Given the relevant artifact, navigates to the artifact's content in the
+     * Given the relevant file, navigates to the file in the
      * tree and closes data source summary dialog if open.
      *
-     * @param artifact The artifact.
+     * @param file The file.
      * @return The menu item list for a go to artifact menu item.
      */
     protected CellModelTableCellRenderer.MenuItem getFileNavigateItem(AbstractFile file) {

@@ -63,7 +63,7 @@ import org.sleuthkit.datamodel.TskCoreException;
     "TimelinePanel_latestLabel_title=Latest",
     "TimlinePanel_last30DaysChart_title=Last 30 Days",
     "TimlinePanel_last30DaysChart_fileEvts_title=File Events",
-    "TimlinePanel_last30DaysChart_artifactEvts_title=Artifact Events",})
+    "TimlinePanel_last30DaysChart_artifactEvts_title=Result Events",})
 public class TimelinePanel extends BaseDataSourceSummaryPanel {
     
     private static final Logger logger = Logger.getLogger(TimelinePanel.class.getName());
