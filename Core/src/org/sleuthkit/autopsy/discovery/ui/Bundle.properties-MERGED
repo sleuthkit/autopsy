@@ -52,7 +52,7 @@ DocumentPanel.numberOfImages.noImages=No images
 # {0} - numberOfImages
 DocumentPanel.numberOfImages.text=1 of {0} images
 DocumentWrapper.previewInitialValue=Preview not generated yet.
-DomainDetailsPanel.miniTimelineTitle.text=Mini Timeline
+DomainDetailsPanel.miniTimelineTitle.text=Timeline
 # {0} - startDate
 # {1} - endDate
 DomainSummaryPanel.activity.text=Activity: {0} to {1}
@@ -77,9 +77,7 @@ MiniTimelineArtifactListPanel.value.noValue=No value available.
 MiniTimelineDateListPanel.countColumn.name=Count
 MiniTimelineDateListPanel.dateColumn.name=Date
 MiniTimelineDateListPanel.value.noValue=No value available.
-<<<<<<< HEAD
-MiniTimelinePanel.loadingPanel.details=the Mini Timeline view
-=======
+MiniTimelinePanel.loadingPanel.details=the Timeline view
 MonthAbbreviation.aprilAbbrev=Apr
 MonthAbbreviation.augustAbbrev=Aug
 MonthAbbreviation.decemberAbbrev=Dec
@@ -92,7 +90,6 @@ MonthAbbreviation.mayAbbrev=May
 MonthAbbreviation.novemberAbbrev=Nov
 MonthAbbreviation.octoberAbbrev=Oct
 MonthAbbreviation.septemberAbbrev=Sep
->>>>>>> 1dd895dc72ac6e7c796a9883a2c790b46c27c47c
 ObjectDetectedFilterPanel.error.text=At least one object type name must be selected.
 ParentFolderFilterPanel.error.text=At least one parent path must be entered.
 PastOccurrencesFilterPanel.error.text=At least one value in the past occurrence filter must be selected.

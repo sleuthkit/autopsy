@@ -63,7 +63,7 @@ final class DomainDetailsPanel extends JPanel {
      *
      * @param tabName The name of the tab to select initially.
      */
-    @NbBundle.Messages({"DomainDetailsPanel.miniTimelineTitle.text=Mini Timeline"})
+    @NbBundle.Messages({"DomainDetailsPanel.miniTimelineTitle.text=Timeline"})
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     void configureArtifactTabs(String tabName) {
         selectedTabName = tabName;

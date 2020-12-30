@@ -45,7 +45,7 @@ final class MiniTimelinePanel extends javax.swing.JPanel {
     private final ListSelectionListener artifactListener;
     private final ListSelectionListener dateListener;
 
-    @NbBundle.Messages({"MiniTimelinePanel.loadingPanel.details=the Mini Timeline view"})
+    @NbBundle.Messages({"MiniTimelinePanel.loadingPanel.details=the Timeline view"})
     /**
      * Creates new form MiniTimelinePanel.
      */
