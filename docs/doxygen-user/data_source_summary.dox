@@ -58,11 +58,13 @@ Note that because these entries are based on the Interesting Items results creat
 
 \subsection ds_summary_geo Geolocation
 
+The Geolocation tab uses the coordinates from geolocation results to find the nearest city for each and displays the most recent cities and most common cities. If the location is more than 150 km from a city then it will be displayed as "Unknown". The "View in Map" button under the recent cities table will open the \ref geolocation_page "Geolocation window" showing all waypoints for this data source with timestamps in the last 30 days. The "View in Map" button under the most common cities will show all waypoints for this data source. 
+
 \image html ds_summary_geo.png
 
 \subsection ds_summary_timeline Timeline
 
-The Timeline tab shows a simplified version of the \ref timeline_page "Timeline Viewer" for the selected data source. It will show events for the last 30 days of activity in the data source and give the first and last dates of activity. "File events" represent file creation, modification, access, and change and "Result events" represent the results from running ingest, such as the time a message was sent or when a URL was accessed.
+The Timeline tab shows a simplified version of the \ref timeline_page "Timeline Viewer" for the selected data source. It will show events for the last 30 days of activity in the data source and give the first and last dates of activity. "File events" represent file creation, modification, access, and change. "Result events" represent the results from running ingest, such as the time a message was sent or when a URL was accessed. The "View in Timeline" button will open the main \ref timeline_page "Timeline Viewer".
 
 \image html ds_summary_timeline.png
 
