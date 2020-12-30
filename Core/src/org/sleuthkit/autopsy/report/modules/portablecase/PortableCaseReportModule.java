@@ -897,7 +897,7 @@ public class PortableCaseReportModule implements ReportModule {
             copyAttachments(newArtifact, tag.getArtifact(), portableSkCase.getAbstractFileById(newContentId));
             
             // Copy any files associated with this artifact through the TSK_PATH_ID attribute
-            copyPathID(newArtifact, tag.getArtifact(), portableSkCase.getAbstractFileById(newContentId));
+            copyPathID(newArtifact, tag.getArtifact());
 
             // Tag the artfiact
             if (!oldTagNameToNewTagName.containsKey(tag.getName())) {
@@ -1163,20 +1163,21 @@ public class PortableCaseReportModule implements ReportModule {
      * 
      * @param newArtifact The new artifact in the portable case. Should not have a TSK_PATH_ID attribute.
      * @param oldArtifact The old artifact.
-     * @param newFile     The new file in the portable case associated with the artifact.
      * 
      * @throws TskCoreException 
      */    
-    private void copyPathID(BlackboardArtifact newArtifact, BlackboardArtifact oldArtifact, AbstractFile newFile) throws TskCoreException {
+    private void copyPathID(BlackboardArtifact newArtifact, BlackboardArtifact oldArtifact) throws TskCoreException {
         // Get the path ID attribute
         BlackboardAttribute oldPathIdAttr = oldArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID));
         if (oldPathIdAttr != null) {
-            // Copy the file and remake the attribute
+            // Copy the file and remake the attribute if the path ID is valid
             long oldContentId = oldPathIdAttr.getValueLong();
-            Content oldContent = currentCase.getSleuthkitCase().getContentById(oldContentId);
-            long newContentId = copyContent(oldContent);
-            newArtifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID,
-                    String.join(",", oldPathIdAttr.getSources()), newContentId));
+            if (oldContentId > 0) {
+                Content oldContent = currentCase.getSleuthkitCase().getContentById(oldContentId);
+                long newContentId = copyContent(oldContent);
+                newArtifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID,
+                        String.join(",", oldPathIdAttr.getSources()), newContentId));
+            }
         }
     }
         
