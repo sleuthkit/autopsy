@@ -32,7 +32,7 @@ The Types tab shows counts of different file types found in the data source.
 
 \subsection ds_summary_user_activity User Activity
 
-The User Activity tab shows the most recent results found in the data source.
+The User Activity tab shows the most recent results found in the data source. You can right click on a row to navigate directly to the corresponding result.
 
 \image html ds_summary_user_activity.png
 
@@ -44,7 +44,7 @@ The Analysis tab shows the sets with the most results from the \ref hash_db_page
 
 \subsection ds_summary_recent_files Recent Files
 
-The Recent Files tab shows information on the most recent files opened and downloaded.
+The Recent Files tab shows information on the most recent files opened and downloaded. You can right click on a row to navigate directly to the corresponding file or result.
 
 \image html ds_summary_recent_files.png
 
