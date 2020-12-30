@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.swing.DefaultListModel;
 import javax.swing.event.ListSelectionListener;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
@@ -37,6 +38,7 @@ final class ImageThumbnailViewer extends javax.swing.JPanel {
     /**
      * Creates new form ImageThumbnailViewer.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     ImageThumbnailViewer() {
         initComponents();
 
@@ -77,6 +79,7 @@ final class ImageThumbnailViewer extends javax.swing.JPanel {
      *
      * @param listener The ListSelectionListener to add to the selection model.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     void addListSelectionListener(ListSelectionListener listener) {
         thumbnailList.getSelectionModel().addListSelectionListener(listener);
     }
@@ -88,24 +91,23 @@ final class ImageThumbnailViewer extends javax.swing.JPanel {
      * @return The list of AbstractFiles which are represented by the selected
      *         image thumbnail.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     List<AbstractFile> getInstancesForSelected() {
-        synchronized (this) {
-            if (thumbnailList.getSelectedIndex() == -1) {
-                return new ArrayList<>();
-            } else {
-                return thumbnailListModel.getElementAt(thumbnailList.getSelectedIndex()).getResultFile().getAllInstances();
-            }
+        if (thumbnailList.getSelectedIndex() == -1) {
+            return new ArrayList<>();
+        } else {
+            return thumbnailListModel.getElementAt(thumbnailList.getSelectedIndex()).getResultFile().getAllInstances();
         }
     }
 
     /**
      * Clear the list of thumbnails being displayed.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     void clearViewer() {
-        synchronized (this) {
-            thumbnailListModel.removeAllElements();
-            thumbnailListScrollPane.getVerticalScrollBar().setValue(0);
-        }
+        thumbnailListModel.removeAllElements();
+        thumbnailListScrollPane.getVerticalScrollBar().setValue(0);
+
     }
 
     /**
@@ -114,9 +116,8 @@ final class ImageThumbnailViewer extends javax.swing.JPanel {
      * @param thumbnailWrapper The object which contains the thumbnail which
      *                         will be displayed.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     void addImage(ImageThumbnailWrapper thumbnailWrapper) {
-        synchronized (this) {
-            thumbnailListModel.addElement(thumbnailWrapper);
-        }
+        thumbnailListModel.addElement(thumbnailWrapper);
     }
 }

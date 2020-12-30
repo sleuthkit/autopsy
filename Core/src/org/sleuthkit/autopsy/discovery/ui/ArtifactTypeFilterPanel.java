@@ -26,6 +26,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.discovery.search.SearchData;
 import org.sleuthkit.autopsy.discovery.search.SearchFiltering.ArtifactTypeFilter;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -40,6 +41,7 @@ class ArtifactTypeFilterPanel extends AbstractDiscoveryFilterPanel {
     /**
      * Creates new form ArtifactTypeFilterPanel
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     ArtifactTypeFilterPanel() {
         initComponents();
         setUpArtifactTypeFilter();
@@ -49,6 +51,7 @@ class ArtifactTypeFilterPanel extends AbstractDiscoveryFilterPanel {
     /**
      * Initialize the data source filter.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private void setUpArtifactTypeFilter() {
         int count = 0;
         DefaultListModel<ArtifactTypeItem> artifactTypeModel = (DefaultListModel<ArtifactTypeItem>) artifactList.getModel();
@@ -104,6 +107,7 @@ class ArtifactTypeFilterPanel extends AbstractDiscoveryFilterPanel {
         artifactList.setEnabled(artifactTypeCheckbox.isSelected());
     }//GEN-LAST:event_artifactTypeCheckboxActionPerformed
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     void configurePanel(boolean selected, int[] indicesSelected) {
         artifactTypeCheckbox.setSelected(selected);
@@ -119,11 +123,13 @@ class ArtifactTypeFilterPanel extends AbstractDiscoveryFilterPanel {
         }
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     JCheckBox getCheckbox() {
         return artifactTypeCheckbox;
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     JList<?> getList() {
         return artifactList;
@@ -134,6 +140,7 @@ class ArtifactTypeFilterPanel extends AbstractDiscoveryFilterPanel {
         return null;
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @NbBundle.Messages({"ArtifactTypeFilterPanel.selectionNeeded.text=At least one Result type must be selected."})
     @Override
     String checkForError() {
@@ -143,6 +150,7 @@ class ArtifactTypeFilterPanel extends AbstractDiscoveryFilterPanel {
         return "";
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     AbstractFilter getFilter() {
         if (artifactTypeCheckbox.isSelected() && !artifactList.getSelectedValuesList().isEmpty()) {

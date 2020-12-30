@@ -33,6 +33,8 @@ import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -205,7 +207,7 @@ public class SearchFiltering {
      */
     public static class ArtifactTypeFilter extends AbstractFilter {
 
-        private final List<ARTIFACT_TYPE> types;
+        private final Collection<ARTIFACT_TYPE> types;
 
         /**
          * Construct a new ArtifactTypeFilter.
@@ -213,17 +215,41 @@ public class SearchFiltering {
          * @param types The list of BlackboardArtifact types to include in
          *              results from.
          */
-        public ArtifactTypeFilter(List<ARTIFACT_TYPE> types) {
+        public ArtifactTypeFilter(Collection<ARTIFACT_TYPE> types) {
             this.types = types;
         }
 
-        @Override
-        public String getWhereClause() {
+        /**
+         * Get the list of artifact types specified by the filter.
+         *
+         * @return The list of artifact types specified by the filter.
+         */
+        public Collection<ARTIFACT_TYPE> getTypes() {
+            return Collections.unmodifiableCollection(types);
+        }
+        
+        private StringJoiner joinStandardArtifactTypes() {
             StringJoiner joiner = new StringJoiner(",");
             for (ARTIFACT_TYPE type : types) {
                 joiner.add("\'" + type.getTypeID() + "\'");
             }
+            return joiner;
+        }
 
+        @Override
+        public String getWhereClause() {
+            StringJoiner joiner = joinStandardArtifactTypes();
+            return "artifact_type_id IN (" + joiner + ")";
+        }
+        
+        /**
+         * Used by backend domain search code to query for additional artifact types.
+         */
+        String getWhereClause(List<ARTIFACT_TYPE> nonVisibleArtifactTypesToInclude) {
+            StringJoiner joiner = joinStandardArtifactTypes();
+            for (ARTIFACT_TYPE type : nonVisibleArtifactTypesToInclude) {
+                joiner.add("\'" + type.getTypeID() + "\'");
+            }
             return "artifact_type_id IN (" + joiner + ")";
         }
 
@@ -678,6 +704,88 @@ public class SearchFiltering {
             }
             return Bundle.SearchFiltering_FrequencyFilter_desc(desc);
         }
+    }
+    
+    /**
+     * A filter for domains with known account types.
+     */
+    public static class KnownAccountTypeFilter extends AbstractFilter {
+
+        @Override
+        public String getWhereClause() {
+            throw new UnsupportedOperationException("Not supported, this is an alternative filter.");
+        }
+        
+        @Override
+        public boolean useAlternateFilter() {
+            return true;
+        }
+        
+        @Override
+        public List<Result> applyAlternateFilter(List<Result> currentResults, SleuthkitCase caseDb,
+                CentralRepository centralRepoDb) throws DiscoveryException {
+            List<Result> filteredResults = new ArrayList<>();
+            for (Result result : currentResults) {
+                if (result instanceof ResultDomain) {
+                    ResultDomain domain = (ResultDomain) result;
+                    if (domain.hasKnownAccountType()) {
+                        filteredResults.add(domain);
+                    }
+                } else {
+                    filteredResults.add(result);
+                }
+            }
+            return filteredResults;
+        }
+
+        @NbBundle.Messages({
+            "SearchFiltering.KnownAccountTypeFilter.desc=Only domains with known account type"
+        })
+        @Override
+        public String getDesc() {
+            return Bundle.SearchFiltering_KnownAccountTypeFilter_desc();
+        }
+        
+    }
+    
+    /**
+     * A filter for previously notable content in the central repository.
+     */
+    public static class PreviouslyNotableFilter extends AbstractFilter {
+
+        @Override
+        public String getWhereClause() {
+            throw new UnsupportedOperationException("Not supported, this is an alternative filter.");
+        }
+        
+        @Override
+        public boolean useAlternateFilter() {
+            return true;
+        }
+        
+        @Override
+        public List<Result> applyAlternateFilter(List<Result> currentResults, SleuthkitCase caseDb,
+                CentralRepository centralRepoDb) throws DiscoveryException {
+            DiscoveryAttributes.PreviouslyNotableAttribute previouslyNotableAttr = new DiscoveryAttributes.PreviouslyNotableAttribute();
+            previouslyNotableAttr.addAttributeToResults(currentResults, caseDb, centralRepoDb);
+
+            List<Result> filteredResults = new ArrayList<>();
+            for (Result file : currentResults) {
+                if (file.getPreviouslyNotableInCR() == SearchData.PreviouslyNotable.PREVIOUSLY_NOTABLE) {
+                    filteredResults.add(file);
+                }
+            }
+            return filteredResults;
+        }
+
+        @NbBundle.Messages({
+            "SearchFiltering.PreviouslyNotableFilter.desc=Previously marked as notable in central repository"
+        })
+        @Override
+        public String getDesc() {
+            return Bundle.SearchFiltering_PreviouslyNotableFilter_desc();
+        }
+        
     }
 
     /**

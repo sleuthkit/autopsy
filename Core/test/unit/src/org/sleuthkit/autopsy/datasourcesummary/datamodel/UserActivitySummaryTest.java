@@ -66,18 +66,22 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Tests for UserActivitySummary.
  */
 public class UserActivitySummaryTest {
+
     /**
-     *  Function to retrieve data from UserActivitySummary with the provided arguments.
+     * Function to retrieve data from UserActivitySummary with the provided
+     * arguments.
      */
     private interface DataFunction<T> {
+
         /**
          * A UserActivitySummary method encapsulated in a uniform manner.
+         *
          * @param userActivitySummary The UserActivitySummary class to use.
          * @param datasource The data source.
          * @param count The count.
          * @return The list of objects to return.
          * @throws SleuthkitCaseProviderException
-         * @throws TskCoreException 
+         * @throws TskCoreException
          */
         List<T> retrieve(UserActivitySummary userActivitySummary, DataSource datasource, int count) throws
                 SleuthkitCaseProviderException, TskCoreException;
@@ -117,8 +121,8 @@ public class UserActivitySummaryTest {
     /**
      * Gets a UserActivitySummary class to test.
      *
-     * @param tskCase           The SleuthkitCase.
-     * @param hasTranslation    Whether the translation service is functional.
+     * @param tskCase The SleuthkitCase.
+     * @param hasTranslation Whether the translation service is functional.
      * @param translateFunction Function for translation.
      *
      * @return The UserActivitySummary class to use for testing.
@@ -296,7 +300,7 @@ public class UserActivitySummaryTest {
         Assert.assertEquals(acceptedDevice, results.get(0).getDeviceModel());
         Assert.assertEquals("MAKE " + acceptedDevice, results.get(0).getDeviceMake());
         Assert.assertEquals("ID " + acceptedDevice, results.get(0).getDeviceId());
-        Assert.assertEquals(time, results.get(0).getDateAccessed().getTime() / 1000);
+        Assert.assertEquals(time, results.get(0).getLastAccessed().getTime() / 1000);
     }
 
     /**
@@ -331,6 +335,28 @@ public class UserActivitySummaryTest {
 
             Assert.assertEquals(Math.min(countRequested, returnedCount), results.size());
         }
+    }
+
+    @Test
+    public void getRecentDevices_uniqueByDeviceId()
+            throws TskCoreException, NoServiceProviderException, SleuthkitCaseProviderException, TskCoreException, TranslationException {
+
+        long dataSourceId = 1L;
+        DataSource dataSource = TskMockUtils.getDataSource(dataSourceId);
+        BlackboardArtifact item1 = getRecentDeviceArtifact(1001, dataSource, "ID1", "MAKE1", "MODEL1", DAY_SECONDS);
+        BlackboardArtifact item2 = getRecentDeviceArtifact(1002, dataSource, "ID1", "MAKE1", "MODEL1", DAY_SECONDS + 1);
+        BlackboardArtifact item3 = getRecentDeviceArtifact(1003, dataSource, "ID1", "MAKE1", "MODEL1", DAY_SECONDS + 2);
+
+        Pair<SleuthkitCase, Blackboard> tskPair = getArtifactsTSKMock(Arrays.asList(item1, item2, item3));
+        UserActivitySummary summary = getTestClass(tskPair.getLeft(), false, null);
+
+        List<TopDeviceAttachedResult> results = summary.getRecentDevices(dataSource, 10);
+
+        Assert.assertEquals(1, results.size());
+        Assert.assertEquals((long) (DAY_SECONDS + 2), results.get(0).getLastAccessed().getTime() / 1000);
+        Assert.assertTrue("ID1".equalsIgnoreCase(results.get(0).getDeviceId()));
+        Assert.assertTrue("MAKE1".equalsIgnoreCase(results.get(0).getDeviceMake()));
+        Assert.assertTrue("MODEL1".equalsIgnoreCase(results.get(0).getDeviceModel()));
     }
 
     private static BlackboardArtifact getWebSearchArtifact(long artifactId, DataSource dataSource, String query, Long date) {
@@ -377,9 +403,9 @@ public class UserActivitySummaryTest {
 
         Assert.assertEquals("Expected two different search queries", 2, results.size());
         Assert.assertTrue(query1.equalsIgnoreCase(results.get(0).getSearchString()));
-        Assert.assertEquals(DAY_SECONDS * 5, results.get(0).getDateAccessed().getTime() / 1000);
+        Assert.assertEquals(DAY_SECONDS * 5, results.get(0).getLastAccessed().getTime() / 1000);
         Assert.assertTrue(query2.equalsIgnoreCase(results.get(1).getSearchString()));
-        Assert.assertEquals(DAY_SECONDS * 3, results.get(1).getDateAccessed().getTime() / 1000);
+        Assert.assertEquals(DAY_SECONDS * 3, results.get(1).getLastAccessed().getTime() / 1000);
     }
 
     private void webSearchTranslationTest(List<String> queries, boolean hasProvider, String translationSuffix)
@@ -573,11 +599,11 @@ public class UserActivitySummaryTest {
         Assert.assertEquals(2, domains.size());
 
         Assert.assertTrue("Expected " + domain1 + " to be first domain", domain1.equalsIgnoreCase(domains.get(0).getDomain()));
-        Assert.assertEquals(DAY_SECONDS * DOMAIN_WINDOW_DAYS * 2, domains.get(0).getLastVisit().getTime() / 1000);
+        Assert.assertEquals(DAY_SECONDS * DOMAIN_WINDOW_DAYS * 2, domains.get(0).getLastAccessed().getTime() / 1000);
         Assert.assertEquals((Long) 2L, domains.get(0).getVisitTimes());
 
         Assert.assertTrue("Expected " + domain3 + " to be second domain", domain3.equalsIgnoreCase(domains.get(1).getDomain()));
-        Assert.assertEquals(DAY_SECONDS * DOMAIN_WINDOW_DAYS, domains.get(1).getLastVisit().getTime() / 1000);
+        Assert.assertEquals(DAY_SECONDS * DOMAIN_WINDOW_DAYS, domains.get(1).getLastAccessed().getTime() / 1000);
         Assert.assertEquals((Long) 1L, domains.get(1).getVisitTimes());
     }
 
@@ -617,7 +643,7 @@ public class UserActivitySummaryTest {
         Assert.assertEquals(1, domains.size());
 
         Assert.assertTrue("Expected " + domain1 + " to be most recent domain", domain1.equalsIgnoreCase(domains.get(0).getDomain()));
-        Assert.assertEquals(DAY_SECONDS, domains.get(0).getLastVisit().getTime() / 1000);
+        Assert.assertEquals(DAY_SECONDS, domains.get(0).getLastAccessed().getTime() / 1000);
     }
 
     /**
@@ -654,11 +680,11 @@ public class UserActivitySummaryTest {
         Assert.assertEquals(2, domains.size());
 
         Assert.assertTrue(domain1.equalsIgnoreCase(domains.get(1).getDomain()));
-        Assert.assertEquals(6L, domains.get(1).getLastVisit().getTime() / 1000);
+        Assert.assertEquals(6L, domains.get(1).getLastAccessed().getTime() / 1000);
         Assert.assertEquals((Long) 2L, domains.get(1).getVisitTimes());
 
         Assert.assertTrue(domain2.equalsIgnoreCase(domains.get(0).getDomain()));
-        Assert.assertEquals(4L, domains.get(0).getLastVisit().getTime() / 1000);
+        Assert.assertEquals(4L, domains.get(0).getLastAccessed().getTime() / 1000);
         Assert.assertEquals((Long) 3L, domains.get(0).getVisitTimes());
     }
 
@@ -708,8 +734,8 @@ public class UserActivitySummaryTest {
      *
      * @param artifactId The artifact id.
      * @param dataSource The datasource.
-     * @param dateRcvd   The date received in seconds or null to exclude.
-     * @param dateSent   The date sent in seconds or null to exclude.
+     * @param dateRcvd The date received in seconds or null to exclude.
+     * @param dateSent The date sent in seconds or null to exclude.
      *
      * @return The mock artifact.
      */
@@ -738,8 +764,8 @@ public class UserActivitySummaryTest {
      *
      * @param artifactId The artifact id.
      * @param dataSource The datasource.
-     * @param dateStart  The date start in seconds or null to exclude.
-     * @param dateEnd    The date end in seconds or null to exclude.
+     * @param dateStart The date start in seconds or null to exclude.
+     * @param dateEnd The date end in seconds or null to exclude.
      *
      * @return The mock artifact.
      */
@@ -768,8 +794,8 @@ public class UserActivitySummaryTest {
      *
      * @param artifactId The artifact id.
      * @param dataSource The datasource.
-     * @param type       The account type.
-     * @param dateSent   The date of the message in seconds.
+     * @param type The account type.
+     * @param dateSent The date of the message in seconds.
      */
     private static BlackboardArtifact getMessageArtifact(long artifactId, DataSource dataSource, String type, Long dateTime) {
         List<BlackboardAttribute> attributes = new ArrayList<>();
@@ -794,11 +820,11 @@ public class UserActivitySummaryTest {
     /**
      * Performs a test on UserActivitySummary.getRecentAccounts.
      *
-     * @param dataSource      The datasource to use as parameter.
-     * @param count           The count to use as a parameter.
-     * @param retArtifacts    The artifacts to return from
-     *                        SleuthkitCase.getArtifacts. This method filters
-     *                        based on artifact type from the call.
+     * @param dataSource The datasource to use as parameter.
+     * @param count The count to use as a parameter.
+     * @param retArtifacts The artifacts to return from
+     * SleuthkitCase.getArtifacts. This method filters based on artifact type
+     * from the call.
      * @param expectedResults The expected results.
      *
      * @throws TskCoreException
@@ -843,7 +869,8 @@ public class UserActivitySummaryTest {
 
             // since this may be somewhat variable
             Assert.assertTrue(expectedItem.getAccountType().equalsIgnoreCase(receivedItem.getAccountType()));
-            Assert.assertEquals(expectedItem.getLastAccess().getTime(), receivedItem.getLastAccess().getTime());
+            Assert.assertEquals(expectedItem.getLastAccessed().getTime(), receivedItem.getLastAccessed().getTime());
+            Assert.assertEquals(expectedItem.getArtifact(), receivedItem.getArtifact());
         }
     }
 
@@ -870,13 +897,13 @@ public class UserActivitySummaryTest {
         getRecentAccountsOneArtTest(ds1, email1,
                 new TopAccountResult(
                         Bundle.DataSourceUserActivitySummary_getRecentAccounts_emailMessage(),
-                        new Date(DAY_SECONDS * 1000)));
+                        new Date(DAY_SECONDS * 1000), email1));
 
         BlackboardArtifact email2 = getEmailArtifact(2, ds1, null, DAY_SECONDS);
         getRecentAccountsOneArtTest(ds1, email2,
                 new TopAccountResult(
                         Bundle.DataSourceUserActivitySummary_getRecentAccounts_emailMessage(),
-                        new Date(DAY_SECONDS * 1000)));
+                        new Date(DAY_SECONDS * 1000), email2));
 
         BlackboardArtifact email3 = getEmailArtifact(3, ds1, null, null);
         getRecentAccountsOneArtTest(ds1, email3, null);
@@ -885,19 +912,19 @@ public class UserActivitySummaryTest {
         getRecentAccountsOneArtTest(ds1, email4,
                 new TopAccountResult(
                         Bundle.DataSourceUserActivitySummary_getRecentAccounts_emailMessage(),
-                        new Date(DAY_SECONDS * 2 * 1000)));
+                        new Date(DAY_SECONDS * 2 * 1000), email4));
 
         BlackboardArtifact callog1 = getCallogArtifact(11, ds1, DAY_SECONDS, null);
         getRecentAccountsOneArtTest(ds1, callog1,
                 new TopAccountResult(
                         Bundle.DataSourceUserActivitySummary_getRecentAccounts_calllogMessage(),
-                        new Date(DAY_SECONDS * 1000)));
+                        new Date(DAY_SECONDS * 1000), callog1));
 
         BlackboardArtifact callog2 = getCallogArtifact(12, ds1, null, DAY_SECONDS);
         getRecentAccountsOneArtTest(ds1, callog2,
                 new TopAccountResult(
                         Bundle.DataSourceUserActivitySummary_getRecentAccounts_calllogMessage(),
-                        new Date(DAY_SECONDS * 1000)));
+                        new Date(DAY_SECONDS * 1000), callog2));
 
         BlackboardArtifact callog3 = getCallogArtifact(13, ds1, null, null);
         getRecentAccountsOneArtTest(ds1, callog3, null);
@@ -906,7 +933,7 @@ public class UserActivitySummaryTest {
         getRecentAccountsOneArtTest(ds1, callog4,
                 new TopAccountResult(
                         Bundle.DataSourceUserActivitySummary_getRecentAccounts_calllogMessage(),
-                        new Date(DAY_SECONDS * 2 * 1000)));
+                        new Date(DAY_SECONDS * 2 * 1000), callog4));
 
         BlackboardArtifact message1 = getMessageArtifact(21, ds1, "Skype", null);
         getRecentAccountsOneArtTest(ds1, message1, null);
@@ -918,7 +945,7 @@ public class UserActivitySummaryTest {
         getRecentAccountsOneArtTest(ds1, message3, null);
 
         BlackboardArtifact message4 = getMessageArtifact(24, ds1, "Skype", DAY_SECONDS);
-        getRecentAccountsOneArtTest(ds1, message4, new TopAccountResult("Skype", new Date(DAY_SECONDS * 1000)));
+        getRecentAccountsOneArtTest(ds1, message4, new TopAccountResult("Skype", new Date(DAY_SECONDS * 1000), message4));
 
     }
 
@@ -951,10 +978,10 @@ public class UserActivitySummaryTest {
         getRecentAccountsTest(ds1, 10,
                 Arrays.asList(email1, email2, email3, callog1, callog2, message1a, message1b, message2a, message2b),
                 Arrays.asList(
-                        new TopAccountResult("Facebook", new Date((DAY_SECONDS + 42) * 1000)),
-                        new TopAccountResult("Skype", new Date((DAY_SECONDS + 32) * 1000)),
-                        new TopAccountResult(Bundle.DataSourceUserActivitySummary_getRecentAccounts_calllogMessage(), new Date((DAY_SECONDS + 22) * 1000)),
-                        new TopAccountResult(Bundle.DataSourceUserActivitySummary_getRecentAccounts_emailMessage(), new Date((DAY_SECONDS + 13) * 1000))
+                        new TopAccountResult("Facebook", new Date((DAY_SECONDS + 42) * 1000), message2b),
+                        new TopAccountResult("Skype", new Date((DAY_SECONDS + 32) * 1000), message1b),
+                        new TopAccountResult(Bundle.DataSourceUserActivitySummary_getRecentAccounts_calllogMessage(), new Date((DAY_SECONDS + 22) * 1000), callog2),
+                        new TopAccountResult(Bundle.DataSourceUserActivitySummary_getRecentAccounts_emailMessage(), new Date((DAY_SECONDS + 13) * 1000), email3)
                 ));
     }
 
@@ -1130,17 +1157,17 @@ public class UserActivitySummaryTest {
         Assert.assertTrue("program1.exe".equalsIgnoreCase(results.get(0).getProgramName()));
         Assert.assertTrue("/Program Files/another/".equalsIgnoreCase(results.get(0).getProgramPath()));
         Assert.assertEquals((Long) 31L, results.get(0).getRunTimes());
-        Assert.assertEquals((Long) 31L, (Long) (results.get(0).getLastRun().getTime() / 1000));
+        Assert.assertEquals((Long) 31L, (Long) (results.get(0).getLastAccessed().getTime() / 1000));
 
         Assert.assertTrue("program1.exe".equalsIgnoreCase(results.get(1).getProgramName()));
         Assert.assertTrue("/Program Files/etc/".equalsIgnoreCase(results.get(1).getProgramPath()));
         Assert.assertEquals((Long) 21L, results.get(1).getRunTimes());
-        Assert.assertEquals((Long) 31L, (Long) (results.get(1).getLastRun().getTime() / 1000));
+        Assert.assertEquals((Long) 31L, (Long) (results.get(1).getLastAccessed().getTime() / 1000));
 
         Assert.assertTrue("program2.exe".equalsIgnoreCase(results.get(2).getProgramName()));
         Assert.assertTrue("/Program Files/another/".equalsIgnoreCase(results.get(2).getProgramPath()));
         Assert.assertEquals((Long) 10L, results.get(2).getRunTimes());
-        Assert.assertEquals((Long) 22L, (Long) (results.get(2).getLastRun().getTime() / 1000));
+        Assert.assertEquals((Long) 22L, (Long) (results.get(2).getLastAccessed().getTime() / 1000));
     }
 
     private void assertProgramOrder(DataSource ds1, List<BlackboardArtifact> artifacts, List<String> programNamesReturned)

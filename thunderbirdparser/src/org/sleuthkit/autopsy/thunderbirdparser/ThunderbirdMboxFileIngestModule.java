@@ -130,7 +130,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
             if (abstractFile.getSize() > 64) {
                 int byteRead = abstractFile.read(t, 0, 64);
                 if (byteRead > 0) {
-                    isMbox = MboxParser.isValidMimeTypeMbox(t);
+                    isMbox = MboxParser.isValidMimeTypeMbox(t, abstractFile);
                     isEMLFile = EMLParser.isEMLFile(abstractFile, t);
                 }
             }
@@ -203,79 +203,70 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
             services.postMessage(msg);
             return ProcessResult.OK;
         }
-
-        try {
-            ContentUtils.writeToFile(abstractFile, file, context::fileIngestIsCancelled);
-        } catch (IOException ex) {
-            logger.log(Level.WARNING, "Failed writing pst file to disk.", ex); //NON-NLS
-            return ProcessResult.OK;
-        }
-
-        PstParser parser = new PstParser(services);
-        PstParser.ParseResult result = parser.open(file, abstractFile.getId());
         
-        
-        switch( result) {
-            case OK:
-                Iterator<EmailMessage> pstMsgIterator = parser.getEmailMessageIterator();
-                if (pstMsgIterator != null) {
-                    processEmails(parser.getPartialEmailMessages(), pstMsgIterator, abstractFile);
-                    if (context.fileIngestIsCancelled()) {
-                        return ProcessResult.OK;
+        try (PstParser parser = new PstParser(services)){
+            try {
+                ContentUtils.writeToFile(abstractFile, file, context::fileIngestIsCancelled);
+            } catch (IOException ex) {
+                logger.log(Level.WARNING, "Failed writing pst file to disk.", ex); //NON-NLS
+                return ProcessResult.OK;
+            }
+
+            PstParser.ParseResult result = parser.open(file, abstractFile.getId());
+
+            switch( result) {
+                case OK:
+                    Iterator<EmailMessage> pstMsgIterator = parser.getEmailMessageIterator();
+                    if (pstMsgIterator != null) {
+                        processEmails(parser.getPartialEmailMessages(), pstMsgIterator, abstractFile);
+                        if (context.fileIngestIsCancelled()) {
+                            return ProcessResult.OK;
+                        }
+                    } else {
+                        // sometimes parser returns ParseResult=OK but there are no messages
+                        postErrorMessage(
+                                NbBundle.getMessage(this.getClass(), "ThunderbirdMboxFileIngestModule.processPst.errProcFile.msg",
+                                        abstractFile.getName()),
+                                NbBundle.getMessage(this.getClass(),
+                                        "ThunderbirdMboxFileIngestModule.processPst.errProcFile.details"));
+                        logger.log(Level.INFO, "PSTParser failed to parse {0}", abstractFile.getName()); //NON-NLS
+                        return ProcessResult.ERROR;
                     }
-                } else {
-                    // sometimes parser returns ParseResult=OK but there are no messages
+                    break;
+
+                case ENCRYPT:
+                    // encrypted pst: Add encrypted file artifact
+                    try {
+
+                        BlackboardArtifact artifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED);
+                        artifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME, EmailParserModuleFactory.getModuleName(), NbBundle.getMessage(this.getClass(), "ThunderbirdMboxFileIngestModule.encryptionFileLevel")));
+
+                        try {
+                            // index the artifact for keyword search
+                            blackboard.postArtifact(artifact, EmailParserModuleFactory.getModuleName());
+                        } catch (Blackboard.BlackboardException ex) {
+                            MessageNotifyUtil.Notify.error(Bundle.ThunderbirdMboxFileIngestModule_processPst_indexError_message(), artifact.getDisplayName());
+                            logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
+                        }
+                    } catch (TskCoreException ex) {
+                        logger.log(Level.INFO, "Failed to add encryption attribute to file: {0}", abstractFile.getName()); //NON-NLS
+                    }
+                    break;
+                default:
+                    // parsing error: log message
                     postErrorMessage(
                             NbBundle.getMessage(this.getClass(), "ThunderbirdMboxFileIngestModule.processPst.errProcFile.msg",
                                     abstractFile.getName()),
                             NbBundle.getMessage(this.getClass(),
                                     "ThunderbirdMboxFileIngestModule.processPst.errProcFile.details"));
                     logger.log(Level.INFO, "PSTParser failed to parse {0}", abstractFile.getName()); //NON-NLS
-                    // delete the temp file
-                    if (file.delete() == false) {
-                        logger.log(Level.INFO, "Failed to delete temp file: {0}", file.getName()); //NON-NLS
-                    }
                     return ProcessResult.ERROR;
-                }
-                break;
-
-            case ENCRYPT:
-                // encrypted pst: Add encrypted file artifact
-                try {
-
-                    BlackboardArtifact artifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED);
-                    artifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME, EmailParserModuleFactory.getModuleName(), NbBundle.getMessage(this.getClass(), "ThunderbirdMboxFileIngestModule.encryptionFileLevel")));
-
-                    try {
-                        // index the artifact for keyword search
-                        blackboard.postArtifact(artifact, EmailParserModuleFactory.getModuleName());
-                    } catch (Blackboard.BlackboardException ex) {
-                        MessageNotifyUtil.Notify.error(Bundle.ThunderbirdMboxFileIngestModule_processPst_indexError_message(), artifact.getDisplayName());
-                        logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
-                    }
-                } catch (TskCoreException ex) {
-                    logger.log(Level.INFO, "Failed to add encryption attribute to file: {0}", abstractFile.getName()); //NON-NLS
-                }
-                break;
-            default:
-                // parsing error: log message
-                postErrorMessage(
-                        NbBundle.getMessage(this.getClass(), "ThunderbirdMboxFileIngestModule.processPst.errProcFile.msg",
-                                abstractFile.getName()),
-                        NbBundle.getMessage(this.getClass(),
-                                "ThunderbirdMboxFileIngestModule.processPst.errProcFile.details"));
-                logger.log(Level.INFO, "PSTParser failed to parse {0}", abstractFile.getName()); //NON-NLS
-                // delete the temp file
-                if (file.delete() == false) {
-                    logger.log(Level.INFO, "Failed to delete temp file: {0}", file.getName()); //NON-NLS
-                }
-                return ProcessResult.ERROR;
+            }
+        } catch(Exception ex) {
+          logger.log(Level.WARNING, String.format("Failed to close temp pst file %s", file.getAbsolutePath()));
+        } finally {
+            file.delete();
         }
-
-        if (file.delete() == false) {
-            logger.log(Level.INFO, "Failed to delete temp file: {0}", file.getName()); //NON-NLS
-        }
-        
         return ProcessResult.OK;
     }
 
@@ -330,13 +321,13 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
                 return ProcessResult.OK;
             }
 
-            processMboxFile(file, abstractFile, emailFolder);
-            if (context.fileIngestIsCancelled()) {
-                return ProcessResult.OK;
-            }
-            
-            if (file.delete() == false) {
-                logger.log(Level.INFO, "Failed to delete temp file: {0}", file.getName()); //NON-NLS
+            try{
+                processMboxFile(file, abstractFile, emailFolder);
+                if (context.fileIngestIsCancelled()) {
+                    return ProcessResult.OK;
+                }
+            }finally {
+                file.delete();
             }
         } else {
 
@@ -357,11 +348,13 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
                     logger.log(Level.WARNING, "Failed writing split mbox file to disk.", ex); //NON-NLS
                     return ProcessResult.OK;
                 }
-                processMboxFile(splitFile, abstractFile, emailFolder);
-                startingOffset = mboxSplitOffset; 
-                if (splitFile.delete() == false) {
-                    logger.log(Level.INFO, "Failed to delete temp file: {0}", splitFile); //NON-NLS
+                try{
+                    processMboxFile(splitFile, abstractFile, emailFolder);
+                    startingOffset = mboxSplitOffset; 
+                } finally {
+                    splitFile.delete();
                 }
+                
                 if (context.fileIngestIsCancelled()) {
                     return ProcessResult.OK;
                 }
@@ -395,28 +388,30 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
     
     private void processMboxFile(File file, AbstractFile abstractFile, String emailFolder) {
             
-
-        MboxParser emailIterator = MboxParser.getEmailIterator( emailFolder, file, abstractFile.getId());
-        List<EmailMessage> emails = new ArrayList<>();
-        if(emailIterator != null) {
-            while(emailIterator.hasNext()) {
-                if (context.fileIngestIsCancelled()) {
-                    return;
+        try(MboxParser emailIterator = MboxParser.getEmailIterator( emailFolder, file, abstractFile.getId())) {
+            List<EmailMessage> emails = new ArrayList<>();
+            if(emailIterator != null) {
+                while(emailIterator.hasNext()) {
+                    if (context.fileIngestIsCancelled()) {
+                        return;
+                    }
+                    EmailMessage emailMessage = emailIterator.next();
+                    if(emailMessage != null) {
+                        emails.add(emailMessage);
+                    }
                 }
-                EmailMessage emailMessage = emailIterator.next();
-                if(emailMessage != null) {
-                    emails.add(emailMessage);
+
+                String errors = emailIterator.getErrors();
+                if (!errors.isEmpty()) {
+                    postErrorMessage(
+                            NbBundle.getMessage(this.getClass(), "ThunderbirdMboxFileIngestModule.processMBox.errProcFile.msg2",
+                                    abstractFile.getName()), errors);
                 }
             }
-
-            String errors = emailIterator.getErrors();
-            if (!errors.isEmpty()) {
-                postErrorMessage(
-                        NbBundle.getMessage(this.getClass(), "ThunderbirdMboxFileIngestModule.processMBox.errProcFile.msg2",
-                                abstractFile.getName()), errors);
-            }
+            processEmails(emails, MboxParser.getEmailIterator( emailFolder, file, abstractFile.getId()), abstractFile);
+        } catch(Exception ex) {
+            logger.log(Level.WARNING, String.format("Failed to close mbox temp file %s", file.getAbsolutePath()));
         }
-        processEmails(emails, MboxParser.getEmailIterator( emailFolder, file, abstractFile.getId()), abstractFile);
 
     }
     
@@ -681,6 +676,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
      *
      * @param email        The e-mail message.
      * @param abstractFile The associated file.
+     * @param accountFileInstanceCache  The current cache of account instances.
      * 
      * @return The generated e-mail message artifact.
      */

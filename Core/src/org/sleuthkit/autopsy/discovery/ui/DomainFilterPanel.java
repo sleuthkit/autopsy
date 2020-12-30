@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.discovery.ui;
 
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryAttributes;
 import org.sleuthkit.autopsy.discovery.search.ResultsSorter;
 import org.sleuthkit.autopsy.discovery.search.SearchData;
@@ -34,10 +35,13 @@ public class DomainFilterPanel extends AbstractFiltersPanel {
     /**
      * Creates new form DomainFilterPanel.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public DomainFilterPanel() {
         super();
         initComponents();
         addFilter(new DataSourceFilterPanel(), false, null, 0);
+        addFilter(new PreviouslyNotableFilterPanel(), false, null, 1);
+        addFilter(new KnownAccountTypeFilterPanel(), false, null, 1);
         addFilter(new ArtifactTypeFilterPanel(), false, null, 1);
         addFilter(new DateFilterPanel(), false, null, 1);
         int[] pastOccurrencesIndices = null;
@@ -46,7 +50,7 @@ public class DomainFilterPanel extends AbstractFiltersPanel {
         }
         addFilter(new PastOccurrencesFilterPanel(TYPE), true, pastOccurrencesIndices, 0);
         addPanelsToScrollPane(domainFiltersSplitPane);
-        setLastGroupingAttributeType(DiscoveryAttributes.GroupingAttributeType.MOST_RECENT_DATE);
+        setLastGroupingAttributeType(DiscoveryAttributes.GroupingAttributeType.LAST_ACTIVITY_DATE);
         setLastSortingMethod(ResultsSorter.SortingMethod.BY_DOMAIN_NAME);
     }
 

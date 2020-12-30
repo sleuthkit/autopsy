@@ -40,6 +40,7 @@ import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryAttributes;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryKeyUtils.GroupKey;
@@ -85,6 +86,7 @@ final class ResultsPanel extends javax.swing.JPanel {
      */
     @Messages({"ResultsPanel.viewFileInDir.name=View File in Directory",
         "ResultsPanel.openInExternalViewer.name=Open in External Viewer"})
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     ResultsPanel() {
         initComponents();
         imageThumbnailViewer = new ImageThumbnailViewer();
@@ -125,9 +127,14 @@ final class ResultsPanel extends javax.swing.JPanel {
                 }
             }
         });
-        //JIRA-TODO 6307 Add listener for domainSummaryViewer when 6782, 6773, and the other details area related stories are done
+        domainSummaryViewer.addListSelectionListener((e) -> {
+            if (resultType == SearchData.Type.DOMAIN) {
+                domainSummaryViewer.sendPopulateEvent(!e.getValueIsAdjusting());
+            }
+        });
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     SearchData.Type getActiveType() {
         return resultType;
     }
@@ -139,6 +146,7 @@ final class ResultsPanel extends javax.swing.JPanel {
      * @return The list of AbstractFiles which are represented by the item
      *         selected in the results viewer area.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private List<AbstractFile> getInstancesForSelected() {
         if (null != resultType) {
             switch (resultType) {
@@ -174,12 +182,12 @@ final class ResultsPanel extends javax.swing.JPanel {
      */
     @Subscribe
     void handlePageRetrievedEvent(DiscoveryEventUtils.PageRetrievedEvent pageRetrievedEvent) {
+        //send populateMesage
+        if (pageRetrievedEvent.getType() != DOMAIN) {
+            DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.PopulateInstancesListEvent(getInstancesForSelected()));
+        }
+        currentPage = pageRetrievedEvent.getPageNumber();
         SwingUtilities.invokeLater(() -> {
-            //send populateMesage
-            if (pageRetrievedEvent.getType() != DOMAIN) {
-                DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.PopulateInstancesListEvent(getInstancesForSelected()));
-            }
-            currentPage = pageRetrievedEvent.getPageNumber();
             updateControls();
             resetResultViewer();
             if (null != pageRetrievedEvent.getType()) {
@@ -206,10 +214,9 @@ final class ResultsPanel extends javax.swing.JPanel {
             }
             resultsViewerPanel.revalidate();
             resultsViewerPanel.repaint();
-        }
-        );
+        });
     }
-    
+
     @Subscribe
     void handleCancelBackgroundTasksEvent(DiscoveryEventUtils.CancelBackgroundTasksEvent cancelEvent) {
         for (SwingWorker<Void, Void> thumbWorker : resultContentWorkers) {
@@ -217,7 +224,6 @@ final class ResultsPanel extends javax.swing.JPanel {
                 thumbWorker.cancel(true);
             }
         }
-        
         resultContentWorkers.clear();
     }
 
@@ -225,7 +231,8 @@ final class ResultsPanel extends javax.swing.JPanel {
      * Reset the result viewer and any associate workers to a default empty
      * state.
      */
-    synchronized void resetResultViewer() {
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    void resetResultViewer() {
         resultsViewerPanel.remove(imageThumbnailViewer);
         resultsViewerPanel.remove(videoThumbnailViewer);
         resultsViewerPanel.remove(documentPreviewViewer);
@@ -250,7 +257,8 @@ final class ResultsPanel extends javax.swing.JPanel {
      *
      * @param results The list of ResultFiles to populate the video viewer with.
      */
-    synchronized void populateVideoViewer(List<Result> results) {
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    void populateVideoViewer(List<Result> results) {
         for (Result result : results) {
             VideoThumbnailWorker thumbWorker = new VideoThumbnailWorker((ResultFile) result);
             thumbWorker.execute();
@@ -265,7 +273,8 @@ final class ResultsPanel extends javax.swing.JPanel {
      *
      * @param results The list of ResultFiles to populate the image viewer with.
      */
-    synchronized void populateImageViewer(List<Result> results) {
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    void populateImageViewer(List<Result> results) {
         for (Result result : results) {
             ImageThumbnailWorker thumbWorker = new ImageThumbnailWorker((ResultFile) result);
             thumbWorker.execute();
@@ -281,7 +290,8 @@ final class ResultsPanel extends javax.swing.JPanel {
      * @param results The list of ResultFiles to populate the document viewer
      *                with.
      */
-    synchronized void populateDocumentViewer(List<Result> results) {
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    void populateDocumentViewer(List<Result> results) {
         for (Result result : results) {
             DocumentPreviewWorker documentWorker = new DocumentPreviewWorker((ResultFile) result);
             documentWorker.execute();
@@ -297,7 +307,8 @@ final class ResultsPanel extends javax.swing.JPanel {
      * @param results The list of ResultDomains to populate the domain summary
      *                viewer with.
      */
-    synchronized void populateDomainViewer(List<Result> results) {
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    void populateDomainViewer(List<Result> results) {
         SleuthkitCase currentCase;
         try {
             currentCase = Case.getCurrentCaseThrows().getSleuthkitCase();
@@ -322,14 +333,14 @@ final class ResultsPanel extends javax.swing.JPanel {
      */
     @Subscribe
     void handleGroupSelectedEvent(DiscoveryEventUtils.GroupSelectedEvent groupSelectedEvent) {
+        searchFilters = groupSelectedEvent.getFilters();
+        groupingAttribute = groupSelectedEvent.getGroupingAttr();
+        groupSort = groupSelectedEvent.getGroupSort();
+        fileSortMethod = groupSelectedEvent.getResultSort();
+        selectedGroupKey = groupSelectedEvent.getGroupKey();
+        resultType = groupSelectedEvent.getResultType();
+        groupSize = groupSelectedEvent.getGroupSize();
         SwingUtilities.invokeLater(() -> {
-            searchFilters = groupSelectedEvent.getFilters();
-            groupingAttribute = groupSelectedEvent.getGroupingAttr();
-            groupSort = groupSelectedEvent.getGroupSort();
-            fileSortMethod = groupSelectedEvent.getResultSort();
-            selectedGroupKey = groupSelectedEvent.getGroupKey();
-            resultType = groupSelectedEvent.getResultType();
-            groupSize = groupSelectedEvent.getGroupSize();
             resetResultViewer();
             setPage(0);
         });
@@ -343,9 +354,9 @@ final class ResultsPanel extends javax.swing.JPanel {
      */
     @Subscribe
     void handleNoResultsEvent(DiscoveryEventUtils.NoResultsEvent noResultsEvent) {
+        groupSize = 0;
+        currentPage = 0;
         SwingUtilities.invokeLater(() -> {
-            groupSize = 0;
-            currentPage = 0;
             updateControls();
             videoThumbnailViewer.clearViewer();
             imageThumbnailViewer.clearViewer();
@@ -374,37 +385,33 @@ final class ResultsPanel extends javax.swing.JPanel {
      * @param startingEntry The index of the first file in the group to include
      *                      in this page.
      */
-    @Subscribe
-    private synchronized void setPage(int startingEntry
-    ) {
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    private void setPage(int startingEntry) {
         int pageSize = pageSizeComboBox.getItemAt(pageSizeComboBox.getSelectedIndex());
-        synchronized (this) {
-            if (pageWorker != null && !pageWorker.isDone()) {
-                pageWorker.cancel(true);
+        if (pageWorker != null && !pageWorker.isDone()) {
+            pageWorker.cancel(true);
+        }
+        CentralRepository centralRepo = null;
+        if (CentralRepository.isEnabled()) {
+            try {
+                centralRepo = CentralRepository.getInstance();
+            } catch (CentralRepoException ex) {
+                centralRepo = null;
+                logger.log(Level.SEVERE, "Error loading central repository database, no central repository options will be available for Discovery", ex);
             }
-            CentralRepository centralRepo = null;
-            if (CentralRepository.isEnabled()) {
-                try {
-                    centralRepo = CentralRepository.getInstance();
-                } catch (CentralRepoException ex) {
-                    centralRepo = null;
-                    logger.log(Level.SEVERE, "Error loading central repository database, no central repository options will be available for Discovery", ex);
-                }
-            }
-            if (groupSize != 0) {
-                pageWorker = new PageWorker(searchFilters, groupingAttribute, groupSort, fileSortMethod, selectedGroupKey, startingEntry, pageSize, resultType, centralRepo);
-                pageWorker.execute();
-            } else {
-                SwingUtilities.invokeLater(() -> {
-                    pageSizeComboBox.setEnabled(true);
-                });
-            }
+        }
+        if (groupSize != 0) {
+            pageWorker = new PageWorker(searchFilters, groupingAttribute, groupSort, fileSortMethod, selectedGroupKey, startingEntry, pageSize, resultType, centralRepo);
+            pageWorker.execute();
+        } else {
+            pageSizeComboBox.setEnabled(true);
         }
     }
 
     /**
      * Enable the paging controls based on what exists in the page.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Messages({"# {0} - currentPage",
         "# {1} - totalPages",
         "ResultsPanel.currentPage.displayValue=Page: {0} of {1}"})
@@ -678,6 +685,7 @@ final class ResultsPanel extends javax.swing.JPanel {
     /**
      * Disable all the paging controls.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private void disablePagingControls() {
         nextPageButton.setEnabled(false);
         previousPageButton.setEnabled(false);
@@ -708,6 +716,7 @@ final class ResultsPanel extends javax.swing.JPanel {
          * @param file The ResultFile which represents the video file thumbnails
          *             are being retrieved for.
          */
+        @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
         VideoThumbnailWorker(ResultFile file) {
             thumbnailWrapper = new VideoThumbnailsWrapper(file);
             videoThumbnailViewer.addVideo(thumbnailWrapper);
@@ -746,6 +755,7 @@ final class ResultsPanel extends javax.swing.JPanel {
          * @param file The ResultFile which represents the image file thumbnails
          *             are being retrieved for.
          */
+        @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
         ImageThumbnailWorker(ResultFile file) {
             thumbnailWrapper = new ImageThumbnailWrapper(file);
             imageThumbnailViewer.addImage(thumbnailWrapper);
@@ -788,6 +798,7 @@ final class ResultsPanel extends javax.swing.JPanel {
          * @param file The ResultFile which represents the document file a
          *             preview is being retrieved for.
          */
+        @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
         DocumentPreviewWorker(ResultFile file) {
             documentWrapper = new DocumentWrapper(file);
             documentPreviewViewer.addDocument(documentWrapper);
@@ -836,6 +847,7 @@ final class ResultsPanel extends javax.swing.JPanel {
          * @param file The ResultFile which represents the domain attribute the
          *             preview is being retrieved for.
          */
+        @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
         DomainThumbnailWorker(SleuthkitCase caseDb, ResultDomain domain) {
             this.caseDb = caseDb;
             domainWrapper = new DomainWrapper(domain);

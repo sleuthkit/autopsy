@@ -18,6 +18,8 @@ GlobalEditListPanel.warning.title=Warning
 IndexedText.errorMessage.errorGettingText=<span style='font-style:italic'>Error retrieving indexed text.</span>
 IndexedText.warningMessage.knownFile=<span style='font-style:italic'>This file is a known file (based on MD5 hash) and does not have indexed text.</span>
 IndexedText.warningMessage.noTextAvailable=<span style='font-style:italic'>No indexed text for this file.</span>
+KeywordSearchGlobalLanguageSettingsPanel.enableOcrCheckbox.text=Enable Optical Character Recognition (OCR)
+KeywordSearchGlobalSearchSettingsPanel.customizeComponents.windowsOCR=Enable Optical Character Recognition (OCR) (Requires Windows 64-bit)
 KeywordSearchGlobalSettingsPanel.Title=Global Keyword Search Settings
 KeywordSearchIngestModule.init.badInitMsg=Keyword search server was not properly initialized, cannot run keyword search ingest.
 # {0} - Reason for not connecting to Solr
@@ -212,8 +214,11 @@ KeywordSearchSettings.propertiesNSRL.text={0}_NSRL
 KeywordSearchSettings.propertiesScripts.text={0}_Scripts
 NoOpenCoreException.err.noOpenSorlCore.msg=No currently open Solr core.
 SearchRunner.query.exception.msg=Error performing query:
-# {0} - core name
-Server.deleteCore.exception.msg=Failed to delete Solr core {0}
+# {0} - colelction name
+Server.deleteCore.exception.msg=Failed to delete Solr colelction {0}
+Server.exceptionMessage.unableToBackupCollection=Unable to backup Solr collection
+Server.exceptionMessage.unableToCreateCollection=Unable to create Solr collection
+Server.exceptionMessage.unableToRestoreCollection=Unable to restore Solr collection
 Server.start.exception.cantStartSolr.msg=Could not start Solr server process
 Server.start.exception.cantStartSolr.msg2=Could not start Solr server process
 Server.isRunning.exception.errCheckSolrRunning.msg=Error checking if Solr server is running
@@ -234,7 +239,12 @@ Server.openCore.exception.noIndexDir.msg=Index directory could not be created or
 Server.request.exception.exception.msg=Could not issue Solr request
 Server.commit.exception.msg=Could not commit index
 Server.addDoc.exception.msg=Could not add document to index via update handler: {0}
+Server.addDoc.exception.msg2=Could not add document to index via update handler: {0}
+Server.addDocBatch.exception.msg=Could not add batched documents to index
 Server.close.exception.msg=Cannot close Core
+Server.connect.exception.msg=Unable to connect to Solr server {0}
+Server.serverList.exception.msg=Unable to get the list of Solr servers from server {0}
+Server.connectionInfoMissing.exception.msg=Solr version {0} multi-user connection info is not configured
 Server.solrServerNoPortException.msg=Indexing server could not bind to port {0}, port is not available, consider change the default {1} port.
 KeywordSearchJobSettingsPanel.keywordSearchEncodings.text=-
 KeywordSearchJobSettingsPanel.languagesValLabel.toolTipText=
@@ -246,7 +256,6 @@ KeywordSearchJobSettingsPanel.languagesLabel.text=Scripts enabled for string ext
 KeywordSearchGlobalLanguageSettingsPanel.enableUTF8Checkbox.text=Enable UTF8 text extraction
 KeywordSearchGlobalLanguageSettingsPanel.ingestSettingsLabel.text=Ingest settings for string extraction from unknown file types (changes effective on next ingest):
 KeywordSearchGlobalLanguageSettingsPanel.enableUTF16Checkbox.text=Enable UTF16LE and UTF16BE string extraction
-KeywordSearchGlobalLanguageSettingsPanel.enableOcrCheckbox.text=Enable Optical Character Recognition (OCR)
 KeywordSearchGlobalLanguageSettingsPanel.languagesLabel.text=Enabled scripts (languages):
 KeywordSearchGlobalSearchSettingsPanel.timeRadioButton1.toolTipText=20 mins. (fastest ingest time)
 KeywordSearchGlobalSearchSettingsPanel.timeRadioButton1.text=20 minutes (slowest feedback, fastest ingest)
@@ -334,19 +343,17 @@ SolrSearch.creatingNewIndex.msg=Creating new text index
 SolrSearch.findingIndexes.msg=Looking for existing text index directories
 SolrSearch.indentifyingIndex.msg=Identifying text index to use
 SolrSearch.lookingForMetadata.msg=Looking for text index metadata file
-SolrSearch.openCore.msg=Opening text index
-SolrSearch.openGiantCore.msg=Opening text index. Text index for this case is very large and may take long time to load.
-SolrSearch.openLargeCore.msg=Opening text index. This may take several minutes.
+SolrSearch.openCore.msg=Opening text index. For large cases this may take several minutes.
 SolrSearch.readingIndexes.msg=Reading text index metadata file
 # {0} - index folder path
 SolrSearchService.exceptionMessage.failedToDeleteIndexFiles=Failed to delete text index files at {0}
 SolrSearchService.exceptionMessage.noCurrentSolrCore=IndexMetadata did not contain a current Solr core so could not delete the case
 # {0} - case directory
 SolrSearchService.exceptionMessage.noIndexMetadata=Unable to create IndexMetaData from case directory: {0}
+# {0} - collection name
+SolrSearchService.exceptionMessage.unableToDeleteCollection=Unable to delete collection {0}
 SolrSearchService.indexingError=Unable to index blackboard artifact.
 SolrSearchService.ServiceName=Solr Keyword Search Service
-SolrSearchService.IndexReadOnlyDialog.title=Text Index Is Read-Only
-SolrSearchService.IndexReadOnlyDialog.msg=<html>The text index for this case is read-only. <br />You will be able to see existing keyword search results and perform exact match and substring match keyword searches,<br />but you will not be able to add new text to the index or perform regex searches. You may instead open the case<br /> with your previous version of this application.</html>
 SolrSearchService.DeleteDataSource.msg=Error Deleting Solr data for data source id {0}
 DropdownSingleTermSearchPanel.dataSourceCheckBox.text=Restrict search to the selected data sources:
 DropdownListSearchPanel.dataSourceCheckBox.text=Restrict search to the selected data sources:
@@ -376,6 +383,7 @@ ExtractedContentPanel.pageTotalLabel.text=-
 ExtractedContentPanel.pageOfLabel.text=of
 ExtractedContentPanel.pageCurLabel.text=-
 ExtractedContentPanel.pagesLabel.text=Page:
+KeywordSearchGlobalSearchSettingsPanel.ocrCheckBox.text=Enable Optical Character Recognition (OCR)
 TextZoomPanel.zoomInButton.text=
 TextZoomPanel.zoomOutButton.text=
 TextZoomPanel.zoomResetButton.text=Reset

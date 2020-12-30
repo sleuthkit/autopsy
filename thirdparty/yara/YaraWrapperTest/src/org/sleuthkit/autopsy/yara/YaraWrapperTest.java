@@ -26,8 +26,6 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.sleuthkit.autopsy.yara.YaraJNIWrapper;
-import org.sleuthkit.autopsy.yara.YaraWrapperException;
 
 /**
  * Tests the YaraJNIWrapper code.
@@ -43,6 +41,7 @@ public class YaraWrapperTest {
         }
 
         testFileRuleMatch(args[0], args[1]);
+        testFileRuleMatchFile(args[0], args[1]);
     }
 
     /**
@@ -58,7 +57,7 @@ public class YaraWrapperTest {
         try {
             byte[] data = Files.readAllBytes(path);
 
-            List<String> list = YaraJNIWrapper.findRuleMatch(compiledRulePath, data);
+            List<String> list = YaraJNIWrapper.findRuleMatch(compiledRulePath, data, data.length, 100);
 
             if (list != null) {
                 if (list.isEmpty()) {
@@ -74,6 +73,35 @@ public class YaraWrapperTest {
             }
 
         } catch (IOException | YaraWrapperException ex) {
+            logger.log(Level.SEVERE, "Error thrown from yarabridge", ex);
+        }
+    }
+    
+    /**
+     * Test the call to findRuleMatchFile which takes a compiled rule file
+     * path and a path to a file.
+     * 
+     * @param compiledRulePath
+     * @param filePath 
+     */
+    private static void testFileRuleMatchFile(String compiledRulePath, String filePath) {
+        try {
+            List<String> list = YaraJNIWrapper.findRuleMatchFile(compiledRulePath, filePath, 100);
+
+            if (list != null) {
+                if (list.isEmpty()) {
+                    System.out.println("FindRuleMatch return an empty list");
+                } else {
+                    System.out.println("Matching Rules:");
+                    for (String s : list) {
+                        System.out.println(s);
+                    }
+                }
+            } else {
+                logger.log(Level.SEVERE, "FindRuleMatch return a null list");
+            }
+
+        } catch (YaraWrapperException ex) {
             logger.log(Level.SEVERE, "Error thrown from yarabridge", ex);
         }
     }

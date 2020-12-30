@@ -26,6 +26,7 @@ import java.util.Set;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.table.DefaultTableModel;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.ContainerSummary;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult.ResultType;
@@ -52,7 +53,7 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
         /**
          * Main constructor.
          *
-         * @param dataSource           The original datasource.
+         * @param dataSource The original datasource.
          * @param unallocatedFilesSize The unallocated file size.
          */
         ContainerPanelData(DataSource dataSource, Long unallocatedFilesSize) {
@@ -165,8 +166,6 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
     private void updateDetailsPanelData(DataSource selectedDataSource, Long unallocatedFilesSize) {
         clearTableValues();
         if (selectedDataSource != null) {
-            unallocatedSizeValue.setText(SizeRepresentationUtil.getSizeString(unallocatedFilesSize));
-            timeZoneValue.setText(selectedDataSource.getTimeZone());
             displayNameValue.setText(selectedDataSource.getName());
             originalNameValue.setText(selectedDataSource.getName());
             deviceIdValue.setText(selectedDataSource.getDeviceId());
@@ -174,15 +173,36 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
             try {
                 acquisitionDetailsTextArea.setText(selectedDataSource.getAcquisitionDetails());
             } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, "Unable to get aquisition details for selected data source", ex);
+                logger.log(Level.WARNING, "Unable to get acquisition details for selected data source", ex);
             }
 
             if (selectedDataSource instanceof Image) {
-                setFieldsForImage((Image) selectedDataSource);
+                setFieldsForImage((Image) selectedDataSource, unallocatedFilesSize);
+            } else {
+                setFieldsForNonImageDataSource();
             }
         }
-        
+
         this.repaint();
+    }
+
+    @Messages({
+        "ContainerPanel_setFieldsForNonImageDataSource_na=N/A"
+    })
+    private void setFieldsForNonImageDataSource() {
+        String NA = Bundle.ContainerPanel_setFieldsForNonImageDataSource_na();
+
+        unallocatedSizeValue.setText(NA);
+        imageTypeValue.setText(NA);
+        sizeValue.setText(NA);
+        sectorSizeValue.setText(NA);
+        timeZoneValue.setText(NA);
+
+        ((DefaultTableModel) filePathsTable.getModel()).addRow(new Object[]{NA});
+
+        md5HashValue.setText(NA);
+        sha1HashValue.setText(NA);
+        sha256HashValue.setText(NA);
     }
 
     /**
@@ -191,11 +211,14 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
      * rendering.
      *
      * @param selectedImage The selected image.
+     * @param unallocatedFilesSize Unallocated file size in bytes.
      */
-    private void setFieldsForImage(Image selectedImage) {
+    private void setFieldsForImage(Image selectedImage, Long unallocatedFilesSize) {
+        unallocatedSizeValue.setText(SizeRepresentationUtil.getSizeString(unallocatedFilesSize));
         imageTypeValue.setText(selectedImage.getType().getName());
         sizeValue.setText(SizeRepresentationUtil.getSizeString(selectedImage.getSize()));
         sectorSizeValue.setText(SizeRepresentationUtil.getSizeString(selectedImage.getSsize()));
+        timeZoneValue.setText(selectedImage.getTimeZone());
 
         for (String path : selectedImage.getPaths()) {
             ((DefaultTableModel) filePathsTable.getModel()).addRow(new Object[]{path});

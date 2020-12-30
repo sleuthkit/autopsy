@@ -32,6 +32,7 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.ListCellRenderer;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 
 /**
  * Class which displays thumbnails and information for a video file.
@@ -47,6 +48,7 @@ final class VideoThumbnailPanel extends javax.swing.JPanel implements ListCellRe
     /**
      * Creates new form VideoThumbnailPanel.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     VideoThumbnailPanel() {
         initComponents();
         this.setFocusable(true);
@@ -58,6 +60,7 @@ final class VideoThumbnailPanel extends javax.swing.JPanel implements ListCellRe
      * @param thumbnailWrapper The object which contains the video thumbnails to
      *                         add.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private void addThumbnails(VideoThumbnailsWrapper thumbnailWrapper) {
         imagePanel.removeAll();
         GridBagConstraints gridBagConstraints = new GridBagConstraints();
@@ -164,6 +167,7 @@ final class VideoThumbnailPanel extends javax.swing.JPanel implements ListCellRe
     private javax.swing.JLabel scoreLabel;
     // End of variables declaration//GEN-END:variables
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Messages({
         "# {0} - otherInstanceCount",
         "VideoThumbnailPanel.nameLabel.more.text= and {0} more",
@@ -231,6 +235,7 @@ final class VideoThumbnailPanel extends javax.swing.JPanel implements ListCellRe
         return Bundle.VideoThumbnailPanel_sizeLabel_text(size, units);
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     public String getToolTipText(MouseEvent event) {
         if (event != null) {

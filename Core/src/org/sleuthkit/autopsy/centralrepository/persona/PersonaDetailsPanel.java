@@ -225,6 +225,10 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
     void addEditExistingAlias(PersonaAlias alias, String justification, Persona.Confidence confidence) {
         aliasesToEdit.put(alias, new PAlias(alias.getAlias(), justification, confidence));
     }
+    
+    PersonaDetailsMode getMode() {
+        return mode;
+    }
 
     /**
      * A data bucket class for yet-to-be-created PersonaAccount
@@ -383,6 +387,12 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
         casesLbl = new javax.swing.JLabel();
         casesTablePane = new javax.swing.JScrollPane();
         casesTable = new javax.swing.JTable();
+
+        addComponentListener(new java.awt.event.ComponentAdapter() {
+            public void componentShown(java.awt.event.ComponentEvent evt) {
+                formComponentShown(evt);
+            }
+        });
 
         org.openide.awt.Mnemonics.setLocalizedText(examinerLbl, org.openide.util.NbBundle.getMessage(PersonaDetailsPanel.class, "PersonaDetailsPanel.examinerLbl.text")); // NOI18N
 
@@ -621,6 +631,10 @@ public final class PersonaDetailsPanel extends javax.swing.JPanel {
                     .addGap(0, 0, Short.MAX_VALUE)))
         );
     }// </editor-fold>//GEN-END:initComponents
+
+    private void formComponentShown(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentShown
+       
+    }//GEN-LAST:event_formComponentShown
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel accountsLbl;

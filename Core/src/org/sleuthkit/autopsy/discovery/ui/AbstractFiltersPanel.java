@@ -32,6 +32,7 @@ import javax.swing.JSplitPane;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.apache.commons.lang3.StringUtils;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryAttributes.GroupingAttributeType;
 import org.sleuthkit.autopsy.discovery.search.Group;
 import org.sleuthkit.autopsy.discovery.search.ResultsSorter.SortingMethod;
@@ -65,6 +66,7 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
     /**
      * Setup necessary for implementations of this abstract class.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     AbstractFiltersPanel() {
         firstColumnPanel.setLayout(new GridBagLayout());
         secondColumnPanel.setLayout(new GridBagLayout());
@@ -75,6 +77,7 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
      *
      * @return The type of results this panel filters.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     abstract SearchData.Type getType();
 
     /**
@@ -88,7 +91,8 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
      *                        list, null if none are selected.
      * @param column          The column to add the DiscoveryFilterPanel to.
      */
-    final synchronized void addFilter(AbstractDiscoveryFilterPanel filterPanel, boolean isSelected, int[] indicesSelected, int column) {
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    final void addFilter(AbstractDiscoveryFilterPanel filterPanel, boolean isSelected, int[] indicesSelected, int column) {
         if (!isInitialized) {
             constraints.gridy = 0;
             constraints.anchor = GridBagConstraints.FIRST_LINE_START;
@@ -110,8 +114,8 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
         constraints.weightx = LABEL_WEIGHT;
         constraints.weighty = LABEL_WEIGHT;
         constraints.gridwidth = LABEL_WIDTH;
-        addToGridBagLayout(filterPanel.getCheckbox(), filterPanel.getAdditionalLabel(), column);
         if (filterPanel.hasPanel()) {
+            addToGridBagLayout(filterPanel.getCheckbox(), filterPanel.getAdditionalLabel(), column);
             constraints.gridx += constraints.gridwidth;
             constraints.fill = GridBagConstraints.BOTH;
             constraints.gridheight = PANEL_HEIGHT;
@@ -119,6 +123,11 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
             constraints.weighty = PANEL_WEIGHT;
             constraints.gridwidth = PANEL_WIDTH;
             addToGridBagLayout(filterPanel, null, column);
+        } else {
+            constraints.weightx = PANEL_WEIGHT;
+            constraints.fill = GridBagConstraints.BOTH;
+            constraints.gridwidth = PANEL_WIDTH + LABEL_WIDTH;
+            addToGridBagLayout(filterPanel.getCheckbox(), filterPanel.getAdditionalLabel(), column);
         }
         if (column == 0) {
             firstColumnY += constraints.gridheight;
@@ -132,6 +141,7 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
      *
      * @param splitPane The JSplitPane which the columns are added to.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     final void addPanelsToScrollPane(JSplitPane splitPane) {
         splitPane.setLeftComponent(firstColumnPanel);
         splitPane.setRightComponent(secondColumnPanel);
@@ -142,7 +152,8 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
     /**
      * Clear the filters from the panel
      */
-    final synchronized void clearFilters() {
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    final void clearFilters() {
         for (AbstractDiscoveryFilterPanel filterPanel : filters) {
             filterPanel.removeListeners();
         }
@@ -159,6 +170,7 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
      *                                 column.
      * @param columnIndex              The column to add the Component to.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private void addToGridBagLayout(Component componentToAdd, Component additionalComponentToAdd, int columnIndex) {
         addToColumn(componentToAdd, columnIndex);
         if (additionalComponentToAdd != null) {
@@ -174,6 +186,7 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
      * @param component    The Component to add.
      * @param columnNumber The column to add the Component to.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private void addToColumn(Component component, int columnNumber) {
         if (columnNumber == 0) {
             firstColumnPanel.add(component, constraints);
@@ -186,7 +199,8 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
      * Check if the fields are valid, and fire a property change event to
      * indicate any errors.
      */
-    synchronized void validateFields() {
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    void validateFields() {
         String errorString = null;
         for (AbstractDiscoveryFilterPanel filterPanel : filters) {
             errorString = filterPanel.checkForError();
@@ -197,6 +211,7 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
         firePropertyChange("FilterError", null, errorString);
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     public void actionPerformed(ActionEvent e) {
         validateFields();
@@ -209,6 +224,7 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
      *
      * @return True if the ObjectsDetectedFilter is supported, false otherwise.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     boolean isObjectsFilterSupported() {
         for (AbstractDiscoveryFilterPanel filter : filters) {
             if (filter instanceof ObjectDetectedFilterPanel) {
@@ -223,6 +239,7 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
      *
      * @return True if the HashSetFilter is supported, false otherwise.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     boolean isHashSetFilterSupported() {
         for (AbstractDiscoveryFilterPanel filter : filters) {
             if (filter instanceof HashSetFilterPanel) {
@@ -237,6 +254,7 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
      *
      * @return True if the InterestingItemsFilter is supported, false otherwise.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     boolean isInterestingItemsFilterSupported() {
         for (AbstractDiscoveryFilterPanel filter : filters) {
             if (filter instanceof InterestingItemsFilterPanel) {
@@ -251,8 +269,8 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
      *
      * @return The list of filters selected by the user.
      */
-    synchronized List<AbstractFilter> getFilters() {
-
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    List<AbstractFilter> getFilters() {
         List<AbstractFilter> filtersToUse = new ArrayList<>();
         if (getType() != SearchData.Type.DOMAIN) { //Domain type does not have a file type
             filtersToUse.add(new SearchFiltering.FileTypeFilter(getType()));
@@ -268,6 +286,7 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
         return filtersToUse;
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     public void valueChanged(ListSelectionEvent evt) {
         if (!evt.getValueIsAdjusting()) {
@@ -282,6 +301,7 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
      *
      * @return The most recently used sorting method.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     SortingMethod getLastSortingMethod() {
         return lastSortingMethod;
     }
@@ -291,6 +311,7 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
      *
      * @param lastSortingMethod The most recently used sorting method.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     final void setLastSortingMethod(SortingMethod lastSortingMethod) {
         this.lastSortingMethod = lastSortingMethod;
     }
@@ -300,6 +321,7 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
      *
      * @return The most recently used grouping attribute.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     GroupingAttributeType getLastGroupingAttributeType() {
         return lastGroupingAttributeType;
     }
@@ -310,6 +332,7 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
      * @param lastGroupingAttributeType The most recently used grouping
      *                                  attribute.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     final void setLastGroupingAttributeType(GroupingAttributeType lastGroupingAttributeType) {
         this.lastGroupingAttributeType = lastGroupingAttributeType;
     }
@@ -319,6 +342,7 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
      *
      * @return The most recently used group sorting algorithm.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     Group.GroupSortingAlgorithm getLastGroupSortingAlg() {
         return lastGroupSortingAlg;
     }
@@ -329,6 +353,7 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
      * @param lastGroupSortingAlg The most recently used group sorting
      *                            algorithm.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     final void setLastGroupSortingAlg(Group.GroupSortingAlgorithm lastGroupSortingAlg) {
         this.lastGroupSortingAlg = lastGroupSortingAlg;
     }

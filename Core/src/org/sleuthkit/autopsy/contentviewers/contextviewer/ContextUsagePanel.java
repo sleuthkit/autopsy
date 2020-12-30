@@ -29,27 +29,36 @@ import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOC
  * usage, if known.
  *
  */
-public final class ContextUsagePanel extends javax.swing.JPanel {
+public final class ContextUsagePanel extends javax.swing.JPanel implements ContextViewer.DateTimePanel {
 
     private static final long serialVersionUID = 1L;
 
     // defines a list of artifacts that provide context for a file
     private static final List<BlackboardArtifact.ARTIFACT_TYPE> SOURCE_CONTEXT_ARTIFACTS = new ArrayList<>();
+
     static {
         SOURCE_CONTEXT_ARTIFACTS.add(TSK_ASSOCIATED_OBJECT);
     }
 
     private final BlackboardArtifact sourceContextArtifact;
 
+    private final Long dateTime;
+
     /**
      * Creates new form ContextViewer
      */
-    public ContextUsagePanel(String sourceName, String sourceText, BlackboardArtifact associatedArtifact) {
+    public ContextUsagePanel(String sourceName, String sourceText, BlackboardArtifact associatedArtifact, Long dateTime) {
 
         initComponents();
         sourceContextArtifact = associatedArtifact;
         setUsageName(sourceName);
         setUsageText(sourceText);
+        this.dateTime = dateTime;
+    }
+
+    @Override
+    public Long getDateTime() {
+        return dateTime;
     }
 
     /**
@@ -138,10 +147,10 @@ public final class ContextUsagePanel extends javax.swing.JPanel {
     private void showUsageText(boolean show) {
         jUsageTextLabel.setVisible(show);
     }
-    
+
     private void showUsageButton(boolean show) {
         jUsageGoToResultButton.setVisible(show);
-        jUsageGoToResultButton.setEnabled(show);        
+        jUsageGoToResultButton.setEnabled(show);
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
