@@ -38,7 +38,7 @@ public final class DataFetchResult<R> {
      * function on the underlying data to create a new DataFetchResult.
      *
      * @param inputResult The input result.
-     * @param getSubComponent The means of getting the data given the original
+     * @param getSubResult The means of getting the data given the original
      * data.
      *
      * @return The new result with the error of the original or the processed

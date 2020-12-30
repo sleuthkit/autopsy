@@ -166,15 +166,10 @@ public class EXIFProcessor implements PictureProcessor {
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Failed to create blackboard artifact for " //NON-NLS
                     + "exif metadata ({0}).", ex.getLocalizedMessage()); //NON-NLS
-        } catch (ImageProcessingException ex) {
-            logger.log(Level.WARNING, String.format("Failed to process the image " //NON-NLS
-                    + "file '%s/%s' (id=%d).", file.getParentPath(), file.getName(), file.getId()), ex);
-        } catch (ReadContentInputStream.ReadContentInputStreamException ex) {
-            logger.log(Level.WARNING, String.format("Error while trying to read " //NON-NLS
-                    + "image file '%s/%s' (id=%d).", file.getParentPath(), file.getName(), file.getId()), ex); //NON-NLS
-        } catch (IOException ex) {
-            logger.log(Level.WARNING, String.format("IOException when parsing " //NON-NLS
-                    + "image file '%s/%s' (id=%d).", file.getParentPath(), file.getName(), file.getId()), ex); //NON-NLS
+        } catch (IOException | ImageProcessingException unused) {
+            // In this case the stack trace is not needed in the log.
+            logger.log(Level.WARNING, String.format("Error parsing " //NON-NLS
+                    + "image file '%s/%s' (id=%d).", file.getParentPath(), file.getName(), file.getId())); //NON-NLS
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.INFO, "Exception while getting open case.", ex); //NON-NLS
         }

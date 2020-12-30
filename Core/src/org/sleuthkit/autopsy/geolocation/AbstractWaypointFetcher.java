@@ -77,6 +77,7 @@ public abstract class AbstractWaypointFetcher implements WaypointBuilder.Waypoin
      *
      * @param mapWaypoints List of filtered MapWaypoints.
      * @param tracks The tracks that were successfully parsed.
+     * @param areas  The areas that were successfully parsed.
      * @param wasEntirelySuccessful True if no errors occurred while processing.
      */
     protected abstract void handleFilteredWaypointSet(Set<MapWaypoint> mapWaypoints, List<Set<MapWaypoint>> tracks, 
