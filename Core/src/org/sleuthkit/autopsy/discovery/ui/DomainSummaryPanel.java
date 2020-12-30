@@ -66,6 +66,8 @@ class DomainSummaryPanel extends javax.swing.JPanel implements ListCellRenderer<
         pagesLabel = new javax.swing.JLabel();
         filesDownloadedLabel = new javax.swing.JLabel();
         totalVisitsLabel = new javax.swing.JLabel();
+        userRoleLabel = new javax.swing.JLabel();
+        domainNotabilityLabel = new javax.swing.JLabel();
 
         setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
@@ -75,13 +77,11 @@ class DomainSummaryPanel extends javax.swing.JPanel implements ListCellRenderer<
         sampleImageLabel.setMinimumSize(new java.awt.Dimension(100, 100));
         sampleImageLabel.setPreferredSize(new java.awt.Dimension(100, 100));
 
-        org.openide.awt.Mnemonics.setLocalizedText(activityLabel, org.openide.util.NbBundle.getMessage(DomainSummaryPanel.class, "DomainSummaryPanel.activityLabel.text")); // NOI18N
-
         org.openide.awt.Mnemonics.setLocalizedText(pagesLabel, org.openide.util.NbBundle.getMessage(DomainSummaryPanel.class, "DomainSummaryPanel.pagesLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(filesDownloadedLabel, org.openide.util.NbBundle.getMessage(DomainSummaryPanel.class, "DomainSummaryPanel.filesDownloadedLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(totalVisitsLabel, org.openide.util.NbBundle.getMessage(DomainSummaryPanel.class, "DomainSummaryPanel.totalVisitsLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(userRoleLabel, org.openide.util.NbBundle.getMessage(DomainSummaryPanel.class, "DomainSummaryPanel.userRoleLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -90,14 +90,18 @@ class DomainSummaryPanel extends javax.swing.JPanel implements ListCellRenderer<
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(domainNameLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(domainNameLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 539, Short.MAX_VALUE)
-                        .addGap(47, 47, 47))
-                    .addComponent(activityLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(pagesLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(filesDownloadedLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(totalVisitsLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                            .addComponent(activityLabel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 273, Short.MAX_VALUE)
+                            .addComponent(totalVisitsLabel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(filesDownloadedLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(userRoleLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(domainNotabilityLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(pagesLabel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 284, Short.MAX_VALUE))))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(numberOfImagesLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(sampleImageLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
@@ -107,35 +111,45 @@ class DomainSummaryPanel extends javax.swing.JPanel implements ListCellRenderer<
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(numberOfImagesLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 17, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(sampleImageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(domainNameLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(activityLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 15, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(userRoleLabel))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(activityLabel)
-                        .addGap(11, 11, 11)
-                        .addComponent(totalVisitsLabel)
-                        .addGap(11, 11, 11)
-                        .addComponent(pagesLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(filesDownloadedLabel)
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(totalVisitsLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(domainNotabilityLabel))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(filesDownloadedLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 13, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(pagesLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 15, javax.swing.GroupLayout.PREFERRED_SIZE))))
                 .addContainerGap())
         );
+
+        layout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {activityLabel, userRoleLabel});
+
+        layout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {domainNotabilityLabel, totalVisitsLabel});
+
     }// </editor-fold>//GEN-END:initComponents
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel activityLabel;
     private javax.swing.JLabel domainNameLabel;
+    private javax.swing.JLabel domainNotabilityLabel;
     private javax.swing.JLabel filesDownloadedLabel;
     private javax.swing.JLabel numberOfImagesLabel;
     private javax.swing.JLabel pagesLabel;
     private javax.swing.JLabel sampleImageLabel;
     private javax.swing.JLabel totalVisitsLabel;
+    private javax.swing.JLabel userRoleLabel;
     // End of variables declaration//GEN-END:variables
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
@@ -145,6 +159,9 @@ class DomainSummaryPanel extends javax.swing.JPanel implements ListCellRenderer<
         "DomainSummaryPanel.pages.text=Page views in past 60 days: ",
         "DomainSummaryPanel.totalPages.text=Total page views: ",
         "DomainSummaryPanel.downloads.text=Files downloaded: ",
+        "DomainSummaryPanel.notability.text=Domain notability: ",
+        "DomainSummaryPanel.unknown.text=User role: Unknown",
+        "DomainSummaryPanel.known.text=User role: Known account type(s)",
         "DomainSummaryPanel.loadingImages.text=Loading thumbnail..."})
     @Override
     public Component getListCellRendererComponent(JList<? extends DomainWrapper> list, DomainWrapper value, int index, boolean isSelected, boolean cellHasFocus) {
@@ -152,6 +169,13 @@ class DomainSummaryPanel extends javax.swing.JPanel implements ListCellRenderer<
         TimeZone timeZone = ContentUtils.getTimeZone(value.getResultDomain().getDataSource());
         String startDate = formatDate(value.getResultDomain().getActivityStart(), timeZone);
         String endDate = formatDate(value.getResultDomain().getActivityEnd(), timeZone);
+        String notability = value.getResultDomain().getPreviouslyNotableInCR().toString();
+        String userRole = Bundle.DomainSummaryPanel_unknown_text();
+        if (value.getResultDomain().hasKnownAccountType()){
+            userRole = Bundle.DomainSummaryPanel_known_text();
+        }
+        userRoleLabel.setText(userRole);
+        domainNotabilityLabel.setText(Bundle.DomainSummaryPanel_notability_text() + notability);
         activityLabel.setText(Bundle.DomainSummaryPanel_activity_text(startDate, endDate));
         totalVisitsLabel.setText(Bundle.DomainSummaryPanel_totalPages_text() + value.getResultDomain().getTotalPageViews());
         pagesLabel.setText(Bundle.DomainSummaryPanel_pages_text() + value.getResultDomain().getPageViewsInLast60Days());
@@ -166,20 +190,21 @@ class DomainSummaryPanel extends javax.swing.JPanel implements ListCellRenderer<
         setBackground(isSelected ? SELECTION_COLOR : list.getBackground());
         return this;
     }
-    
+
     /**
      * Formats an epoch time in a given time zone using the following pattern
-     * 
-     *      MMM dd YYYY
-     * 
-     * The pattern below is formatted manually to reuse the MonthAbbreviation utility.
+     *
+     * MMM dd YYYY
+     *
+     * The pattern below is formatted manually to reuse the MonthAbbreviation
+     * utility.
      */
     private String formatDate(long epochSeconds, TimeZone timeZone) {
         Instant epochSecondsAsInstant = Instant.ofEpochSecond(epochSeconds);
         ZonedDateTime dateTime = ZonedDateTime.ofInstant(epochSecondsAsInstant, timeZone.toZoneId());
         MonthAbbreviation currentCutOffMonth = MonthAbbreviation.fromMonthValue(dateTime.getMonthValue());
-        return String.format("%s %02d %04d", 
-                currentCutOffMonth.toString(), 
+        return String.format("%s %02d %04d",
+                currentCutOffMonth.toString(),
                 dateTime.getDayOfMonth(), dateTime.getYear());
     }
 

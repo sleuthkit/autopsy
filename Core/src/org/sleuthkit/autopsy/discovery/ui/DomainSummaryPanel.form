@@ -24,18 +24,24 @@
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" attributes="0">
-              <EmptySpace max="-2" attributes="0"/>
+              <EmptySpace min="-2" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Group type="102" attributes="0">
-                      <Component id="domainNameLabel" pref="539" max="32767" attributes="0"/>
-                      <EmptySpace min="-2" pref="47" max="-2" attributes="0"/>
+                  <Component id="domainNameLabel" alignment="0" max="32767" attributes="0"/>
+                  <Group type="102" alignment="0" attributes="0">
+                      <Group type="103" groupAlignment="1" max="-2" attributes="0">
+                          <Component id="activityLabel" alignment="0" pref="273" max="32767" attributes="0"/>
+                          <Component id="totalVisitsLabel" alignment="0" max="32767" attributes="0"/>
+                          <Component id="filesDownloadedLabel" max="32767" attributes="0"/>
+                      </Group>
+                      <EmptySpace type="unrelated" min="-2" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Component id="userRoleLabel" max="32767" attributes="0"/>
+                          <Component id="domainNotabilityLabel" max="32767" attributes="0"/>
+                          <Component id="pagesLabel" alignment="1" pref="284" max="32767" attributes="0"/>
+                      </Group>
                   </Group>
-                  <Component id="activityLabel" alignment="0" max="32767" attributes="0"/>
-                  <Component id="pagesLabel" max="32767" attributes="0"/>
-                  <Component id="filesDownloadedLabel" alignment="0" max="32767" attributes="0"/>
-                  <Component id="totalVisitsLabel" max="32767" attributes="0"/>
               </Group>
-              <EmptySpace max="-2" attributes="0"/>
+              <EmptySpace max="32767" attributes="0"/>
               <Group type="103" groupAlignment="0" max="-2" attributes="0">
                   <Component id="numberOfImagesLabel" max="32767" attributes="0"/>
                   <Component id="sampleImageLabel" max="32767" attributes="0"/>
@@ -48,23 +54,29 @@
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" alignment="1" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
-              <Group type="103" groupAlignment="0" attributes="0">
+              <Group type="103" groupAlignment="1" attributes="0">
                   <Group type="102" attributes="0">
                       <Component id="numberOfImagesLabel" min="-2" pref="17" max="-2" attributes="0"/>
                       <EmptySpace max="32767" attributes="0"/>
                       <Component id="sampleImageLabel" min="-2" max="-2" attributes="0"/>
                   </Group>
-                  <Group type="102" attributes="0">
+                  <Group type="102" alignment="1" attributes="0">
                       <Component id="domainNameLabel" min="-2" pref="32" max="-2" attributes="0"/>
+                      <EmptySpace max="32767" attributes="0"/>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Component id="activityLabel" linkSize="1" min="-2" pref="15" max="-2" attributes="0"/>
+                          <Component id="userRoleLabel" linkSize="1" min="-2" max="-2" attributes="0"/>
+                      </Group>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="activityLabel" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="-2" pref="11" max="-2" attributes="0"/>
-                      <Component id="totalVisitsLabel" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="-2" pref="11" max="-2" attributes="0"/>
-                      <Component id="pagesLabel" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                      <Component id="filesDownloadedLabel" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Component id="totalVisitsLabel" linkSize="2" min="-2" pref="14" max="-2" attributes="0"/>
+                          <Component id="domainNotabilityLabel" linkSize="2" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Component id="filesDownloadedLabel" min="-2" pref="13" max="-2" attributes="0"/>
+                          <Component id="pagesLabel" min="-2" pref="15" max="-2" attributes="0"/>
+                      </Group>
                   </Group>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
@@ -97,11 +109,6 @@
     <Component class="javax.swing.JLabel" name="numberOfImagesLabel">
     </Component>
     <Component class="javax.swing.JLabel" name="activityLabel">
-      <Properties>
-        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/discovery/ui/Bundle.properties" key="DomainSummaryPanel.activityLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-        </Property>
-      </Properties>
     </Component>
     <Component class="javax.swing.JLabel" name="pagesLabel">
       <Properties>
@@ -118,11 +125,15 @@
       </Properties>
     </Component>
     <Component class="javax.swing.JLabel" name="totalVisitsLabel">
+    </Component>
+    <Component class="javax.swing.JLabel" name="userRoleLabel">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/discovery/ui/Bundle.properties" key="DomainSummaryPanel.totalVisitsLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/sleuthkit/autopsy/discovery/ui/Bundle.properties" key="DomainSummaryPanel.userRoleLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="domainNotabilityLabel">
     </Component>
   </SubComponents>
 </Form>
