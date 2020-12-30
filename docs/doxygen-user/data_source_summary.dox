@@ -58,9 +58,11 @@ Note that because these entries are based on the Interesting Items results creat
 
 \subsection ds_summary_geo Geolocation
 
+\image html ds_summary_geo.png
+
 \subsection ds_summary_timeline Timeline
 
-The Timeline tab shows a simplified version of the \ref timeline_page "Timeline Viewer". It displays all fi
+The Timeline tab shows a simplified version of the \ref timeline_page "Timeline Viewer" for the selected data source. It will show events for the last 30 days of activity in the data source and give the first and last dates of activity. "File events" represent file creation, modification, access, and change and "Result events" represent the results from running ingest, such as the time a message was sent or when a URL was accessed.
 
 \image html ds_summary_timeline.png
 
