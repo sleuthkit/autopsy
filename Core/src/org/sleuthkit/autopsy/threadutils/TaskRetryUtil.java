@@ -176,20 +176,24 @@ public class TaskRetryUtil {
      */
     public static <T> T attemptTask(Callable<T> task, List<TaskAttempt> attempts, ScheduledThreadPoolExecutor executor, Terminator terminator, Logger logger, String taskDesc) throws InterruptedException {
         T result = null;
+        String taskDescForLog = taskDesc != null ? taskDesc : "Task";
         int attemptCounter = 0;
         if (attempts.size() > 0) {
             totalTasks.incrementAndGet();
         }
         while (result == null && attemptCounter < attempts.size()) {
             if (terminator != null && terminator.stopTaskAttempts()) {
+                if (logger != null) {
+                    logger.log(Level.WARNING, String.format("Attempts to execute '%s' terminated ", taskDescForLog));
+                }
                 break;
             }
             TaskAttempt attempt = attempts.get(attemptCounter);
             if (logger != null) {
                 if (attempt.getTimeout() != null) {
-                    logger.log(Level.INFO, "{0} (attempt = {1}, delay = {2} {3}, timeout = {4} {5})", new Object[]{taskDesc, attemptCounter + 1, attempt.getDelay(), attempt.getDelayTimeUnit(), attempt.getTimeout(), attempt.getTimeoutTimeUnit()});
+                    logger.log(Level.INFO, "{0} (attempt = {1}, delay = {2} {3}, timeout = {4} {5})", new Object[]{taskDescForLog, attemptCounter + 1, attempt.getDelay(), attempt.getDelayTimeUnit(), attempt.getTimeout(), attempt.getTimeoutTimeUnit()});
                 } else {
-                    logger.log(Level.INFO, "{0} (attempt = {1}, delay = {2} {3}, timeout = {4} {5})", new Object[]{taskDesc, attemptCounter + 1, attempt.getDelay(), attempt.getDelayTimeUnit(), attempt.getTimeout(), attempt.getTimeoutTimeUnit()});
+                    logger.log(Level.INFO, "{0} (attempt = {1}, delay = {2} {3}, timeout = {4} {5})", new Object[]{taskDescForLog, attemptCounter + 1, attempt.getDelay(), attempt.getDelayTimeUnit(), attempt.getTimeout(), attempt.getTimeoutTimeUnit()});
                 }
             }
             if (attemptCounter > 0) {
@@ -202,13 +206,18 @@ public class TaskRetryUtil {
                 } else {
                     result = future.get();
                 }
+            } catch (InterruptedException ex) {
+                if (logger != null) {
+                    logger.log(Level.SEVERE, String.format("Interrupted executing '%s'", taskDescForLog), ex);
+                }      
+                throw ex;
             } catch (ExecutionException ex) {
                 if (logger != null) {
-                    logger.log(Level.SEVERE, String.format("Error executing '%s'", taskDesc != null ? taskDesc : "task"), ex);
+                    logger.log(Level.SEVERE, String.format("Error executing '%s'", taskDescForLog), ex);
                 }
             } catch (TimeoutException ex) {
                 if (logger != null) {
-                    logger.log(Level.SEVERE, String.format("Time out executing '%s', cancelling attempt", taskDesc != null ? taskDesc : "task"), ex);
+                    logger.log(Level.SEVERE, String.format("Time out executing '%s'", taskDescForLog), ex);
                 }
                 totalTaskAttemptTimeOuts.incrementAndGet();
                 future.cancel(true);
@@ -254,7 +263,7 @@ public class TaskRetryUtil {
      * Returns a count of the total number of tasks submitted to this utility
      * that were not able to be completed despite retry attempts.
      *
-     * @return The failed tasks count. 
+     * @return The failed tasks count.
      */
     public static long getTotalFailedTasksCount() {
         return totalFailedTasks.get();

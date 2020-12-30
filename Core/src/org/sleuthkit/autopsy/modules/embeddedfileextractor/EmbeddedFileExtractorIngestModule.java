@@ -55,6 +55,7 @@ import org.sleuthkit.autopsy.threadutils.TaskRetryUtil;
 public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAdapter {
 
     private static final String TASK_RETRY_STATS_LOG_NAME = "task_retry_stats";
+    private static final Logger taskStatsLogger = ApplicationLoggers.getLogger(TASK_RETRY_STATS_LOG_NAME);
     private static final Object execMapLock = new Object();
     @GuardedBy("execMapLock")
     private static final Map<Long, FileTaskExecutor> fileTaskExecsByJob = new HashMap<>();
@@ -211,8 +212,7 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
                 fileTaskExecutor = fileTaskExecsByJob.remove(jobId);
             }
             fileTaskExecutor.shutDown();
-            Logger logger = ApplicationLoggers.getLogger(TASK_RETRY_STATS_LOG_NAME);
-            logger.log(Level.INFO, String.format("total tasks: %d, total task timeouts: %d, total task retries: %d, total task failures: %d (ingest job ID = %d)", TaskRetryUtil.getTotalTasksCount(), TaskRetryUtil.getTotalTaskAttemptTimeOutsCount(), TaskRetryUtil.getTotalTaskRetriesCount(), TaskRetryUtil.getTotalFailedTasksCount(), jobId));
+            taskStatsLogger.log(Level.INFO, String.format("total tasks: %d, total task timeouts: %d, total task retries: %d, total task failures: %d (ingest job ID = %d)", TaskRetryUtil.getTotalTasksCount(), TaskRetryUtil.getTotalTaskAttemptTimeOutsCount(), TaskRetryUtil.getTotalTaskRetriesCount(), TaskRetryUtil.getTotalFailedTasksCount(), jobId));
         }
     }
 

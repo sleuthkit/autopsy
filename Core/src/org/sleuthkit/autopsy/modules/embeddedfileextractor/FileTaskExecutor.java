@@ -20,11 +20,13 @@ package org.sleuthkit.autopsy.modules.embeddedfileextractor;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.apputils.ApplicationLoggers;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
@@ -111,6 +113,8 @@ class FileTaskExecutor {
         Callable<Boolean> task = () -> {
             return file.exists();
         };
+//        Callable<Boolean> task = new HangSimulationTestTask();
+//        Callable<Boolean> task = new FailureSimulationTestTask();
         return attemptTask(task, String.format(FILE_EXISTS_TASK_DESC_FMT_STR, file.getPath()));
     }
 
@@ -147,9 +151,11 @@ class FileTaskExecutor {
      *                                 interrupted.
      */
     boolean createNewFile(final File file) throws FileTaskFailedException, InterruptedException {
-        Callable<Boolean> task = () -> {
-            return file.createNewFile();
-        };
+//        Callable<Boolean> task = () -> {
+//            return file.createNewFile();
+//        };
+//        Callable<Boolean> task = new HangSimulationTestTask();
+        Callable<Boolean> task = new FailureSimulationTestTask();
         return attemptTask(task, String.format(NEW_FILE_TASK_DESC_FMT_STR, file.getPath()));
     }
 
@@ -248,4 +254,46 @@ class FileTaskExecutor {
             super(message, cause);
         }
     }
+
+    /**
+     * A test task that simulates the sort of hang reported in Jira-6735,
+     * although this task is responsive to cancellation via interrupt and can be
+     * cleaned up in a more deterministic fashion.
+     */
+    private static class HangSimulationTestTask implements Callable<Boolean> {
+
+        @Override
+        public Boolean call() throws Exception {
+            while (true) {
+                try {
+                    sleep();
+                } catch (InterruptedException ex) {
+                    return false;
+                }
+            }
+        }
+
+        /**
+         * Makes the executing thread sleep(). Called from call() to fool the
+         * IDE into not complaining about a sleep() in a loop.
+         *
+         * @throws InterruptedException Thrown if the sleep is interrupted.
+         */
+        private void sleep() throws InterruptedException {
+            java.lang.Thread.sleep(5000);
+        }
+
+    }
+
+    /**
+     * A test task that simulates task failure due to repeated exceptions.
+     */
+    private static class FailureSimulationTestTask implements Callable<Boolean> {
+
+        @Override
+        public Boolean call() throws Exception {
+            throw new IOException("This task always throws");
+        }
+    }
+
 }
