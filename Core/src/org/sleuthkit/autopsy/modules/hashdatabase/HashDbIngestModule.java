@@ -41,6 +41,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.AnalysisResult;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
@@ -48,6 +49,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.HashHitInfo;
 import org.sleuthkit.datamodel.HashUtility;
+import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -516,7 +518,7 @@ public class HashDbIngestModule implements FileIngestModule {
     private void postHashSetHitToBlackboard(AbstractFile abstractFile, String md5Hash, String hashSetName, String comment, boolean showInboxMessage) {
         try {
             String moduleName = HashLookupModuleFactory.getModuleName();
-            BlackboardArtifact badFile = abstractFile.newArtifact(ARTIFACT_TYPE.TSK_HASHSET_HIT);
+            //BlackboardArtifact badFile = abstractFile.newArtifact(ARTIFACT_TYPE.TSK_HASHSET_HIT);
             Collection<BlackboardAttribute> attributes = new ArrayList<>();
             //TODO Revisit usage of deprecated constructor as per TSK-583
             //BlackboardAttribute att2 = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(), MODULE_NAME, "Known Bad", hashSetName);
@@ -524,14 +526,21 @@ public class HashDbIngestModule implements FileIngestModule {
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_HASH_MD5, moduleName, md5Hash));
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COMMENT, moduleName, comment));
 
-            badFile.addAttributes(attributes);
+            SleuthkitCase.CaseDbTransaction trans = this.skCase.beginTransaction();
+            
+            AnalysisResult badFile = blackboard.newAnalysisResult(new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_HASHSET_HIT), abstractFile.getId(), abstractFile.getDataSourceObjectId(), new Score(Score.Significance.MEDIUM, Score.Confidence.HIGH), moduleName, comment, hashSetName, attributes, trans);
+            trans.commit();
 
             try {
                 /*
                  * post the artifact which will index the artifact for keyword
                  * search, and fire an event to notify UI of this new artifact
                  */
+                
+               
+                
                 blackboard.postArtifact(badFile, moduleName);
+                
             } catch (Blackboard.BlackboardException ex) {
                 logger.log(Level.SEVERE, "Unable to index blackboard artifact " + badFile.getArtifactID(), ex); //NON-NLS
                 MessageNotifyUtil.Notify.error(
@@ -574,7 +583,7 @@ public class HashDbIngestModule implements FileIngestModule {
                         abstractFile.getName() + md5Hash,
                         badFile));
             }
-        } catch (TskException ex) {
+        } catch (TskException | Blackboard.BlackboardException ex) {
             logger.log(Level.WARNING, "Error creating blackboard artifact", ex); //NON-NLS
         }
     }
