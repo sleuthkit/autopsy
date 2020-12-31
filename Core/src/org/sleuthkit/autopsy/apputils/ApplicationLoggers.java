@@ -27,7 +27,7 @@ import java.util.Map;
 import java.util.logging.FileHandler;
 import java.util.logging.Formatter;
 import java.util.logging.LogRecord;
-import org.sleuthkit.autopsy.coreutils.Logger;
+import java.util.logging.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
 /**

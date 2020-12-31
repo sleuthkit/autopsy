@@ -27,7 +27,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
+import java.util.logging.Logger;
 
 /**
  * A utility that attempts a task a specified number of times with a specified
@@ -49,57 +49,75 @@ public class TaskRetryUtil {
     public static class TaskAttempt {
 
         private final Long delay;
-        private final TimeUnit delayTimeUnit;
         private final Long timeOut;
-        private final TimeUnit timeOutTimeUnit;
+        private final TimeUnit timeUnit;
 
         /**
          * Constructs an object that encapsulates the specification of a task
-         * attempt for the attemptTask() utility.
+         * attempt for the attemptTask() utility. The attempt will have neither
+         * a delay nor a time out.
          *
          * @param delay         The delay before the task should be attempted,
          *                      may be zero or any positive integer.
          * @param delayTimeUnit The time unit for the delay before the task
          *                      should be attempted.
          */
-        public TaskAttempt(Long delay, TimeUnit delayTimeUnit) {
-            this(delay, delayTimeUnit, null, null);
+        public TaskAttempt() {
+            this.delay = 0L;
+            this.timeOut = 0L;
+            this.timeUnit = TimeUnit.SECONDS;
         }
 
         /**
          * Constructs an object that encapsulates the specification of a task
          * attempt for the attemptTask() utility.
          *
-         * @param delay           The delay before the task should be attempted,
-         *                        must be zero or any positive integer.
-         * @param delayTimeUnit   The time unit for the delay before the task
-         *                        should be attempted.
-         * @param timeOut         The timeout for the task attempt, must be zero
-         *                        or any positive integer.
-         * @param timeOutTimeUnit The time unit for the task timeout.
+         * @param delay    The delay before the task should be attempted, may be
+         *                 zero or any positive integer.
+         * @param timeUnit The time unit for the delay before the task should be
+         *                 attempted.
          */
-        public TaskAttempt(Long delay, TimeUnit delayTimeUnit, Long timeOut, TimeUnit timeOutTimeUnit) {
+        public TaskAttempt(Long delay, TimeUnit timeUnit) {
             if (delay == null || delay < 0) {
                 throw new IllegalArgumentException(String.format("Argument for delay parameter = %d, must be zero or any positive integer", delay));
             }
-            if (delayTimeUnit == null) {
-                throw new IllegalArgumentException("Argument for delayTimeUnit parameter is null");
-            }
-            if (timeOut != null && timeOut < 0) {
-                throw new IllegalArgumentException(String.format("Argument for timeout parameter = %d, must be zero or any positive integer", delay));
-            }
-            if (timeOut != null && timeOutTimeUnit == null) {
-                throw new IllegalArgumentException("Argument for timeOutTimeUnit parameter is null");
+            if (timeUnit == null) {
+                throw new IllegalArgumentException("Argument for timeUnit parameter is null");
             }
             this.delay = delay;
-            this.delayTimeUnit = delayTimeUnit;
-            this.timeOut = timeOut;
-            this.timeOutTimeUnit = timeOutTimeUnit;
+            this.timeOut = 0L;
+            this.timeUnit = TimeUnit.SECONDS;
         }
 
         /**
-         * Gets the delay before the task should be attempted, may be zero or
-         * any positive integer.
+         * Constructs an object that encapsulates the specification of a task
+         * attempt for the attemptTask() utility.
+         *
+         * @param delay    The delay before the task should be attempted, must
+         *                 be zero or any positive integer.
+         * @param timeOut  The timeout for the task attempt, must be zero or any
+         *                 positive integer.
+         * @param timeUnit The time unit for the delay before the task should be
+         *                 attempted and the time out.
+         */
+        public TaskAttempt(Long delay, Long timeOut, TimeUnit timeUnit) {
+            if (delay == null || delay < 0) {
+                throw new IllegalArgumentException(String.format("Argument for delay parameter = %d, must be zero or any positive integer", delay));
+            }
+            if (timeOut == null || timeOut < 0) {
+                throw new IllegalArgumentException(String.format("Argument for timeOut parameter = %d, must be zero or any positive integer", delay));
+            }
+            if (timeUnit == null) {
+                throw new IllegalArgumentException("Argument for timeUnit parameter is null");
+            }
+            this.delay = delay;
+            this.timeOut = timeOut;
+            this.timeUnit = timeUnit;
+        }
+
+        /**
+         * Gets the optional delay before the task should be attempted, may be
+         * zero.
          *
          * @return The delay.
          */
@@ -108,30 +126,22 @@ public class TaskRetryUtil {
         }
 
         /**
-         * Gets the time unit for the delay before the task should be attempted.
+         * Gets the the optional timeout for the task attempt, may be zero.
          *
-         * @return The delay time unit.
-         */
-        public TimeUnit getDelayTimeUnit() {
-            return delayTimeUnit;
-        }
-
-        /**
-         * Gets the the optional timeout for the task attempt.
-         *
-         * @return The timeout or null if there is no timeout.
+         * @return The timeout.
          */
         public Long getTimeout() {
             return timeOut;
         }
 
         /**
-         * Gets the time unit for the optional task attempt timeout.
+         * Gets the time unit for the optional delay before the task should be
+         * attempted and the optional time out.
          *
-         * @return The timeout time unit or null if there is no timeout.
+         * @return The time unit.
          */
-        public TimeUnit getTimeoutTimeUnit() {
-            return timeOutTimeUnit;
+        public TimeUnit getTimeUnit() {
+            return timeUnit;
         }
 
     }
@@ -190,26 +200,18 @@ public class TaskRetryUtil {
             }
             TaskAttempt attempt = attempts.get(attemptCounter);
             if (logger != null) {
-                if (attempt.getTimeout() != null) {
-                    logger.log(Level.INFO, "{0} (attempt = {1}, delay = {2} {3}, timeout = {4} {5})", new Object[]{taskDescForLog, attemptCounter + 1, attempt.getDelay(), attempt.getDelayTimeUnit(), attempt.getTimeout(), attempt.getTimeoutTimeUnit()});
-                } else {
-                    logger.log(Level.INFO, "{0} (attempt = {1}, delay = {2} {3}, timeout = {4} {5})", new Object[]{taskDescForLog, attemptCounter + 1, attempt.getDelay(), attempt.getDelayTimeUnit(), attempt.getTimeout(), attempt.getTimeoutTimeUnit()});
-                }
+                logger.log(Level.INFO, String.format("SCHEDULING '%s' (attempt = %d, delay = %d %s, timeout = %d %s)", taskDescForLog, attemptCounter + 1, attempt.getDelay(), attempt.getTimeUnit(), attempt.getTimeout(), attempt.getTimeUnit()));
             }
             if (attemptCounter > 0) {
                 totalTaskRetries.incrementAndGet();
             }
-            ScheduledFuture<T> future = executor.schedule(task, attempt.getDelay(), attempt.getDelayTimeUnit());
+            ScheduledFuture<T> future = executor.schedule(task, attempt.getDelay(), attempt.getTimeUnit());
             try {
-                if (attempt.getTimeout() != null) {
-                    result = future.get(attempt.getTimeout(), attempt.getTimeoutTimeUnit());
-                } else {
-                    result = future.get();
-                }
+                result = future.get(attempt.getDelay() + attempt.getTimeout(), attempt.getTimeUnit());
             } catch (InterruptedException ex) {
                 if (logger != null) {
                     logger.log(Level.SEVERE, String.format("Interrupted executing '%s'", taskDescForLog), ex);
-                }      
+                }
                 throw ex;
             } catch (ExecutionException ex) {
                 if (logger != null) {

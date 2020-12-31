@@ -26,9 +26,8 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.apputils.ApplicationLoggers;
-import org.sleuthkit.autopsy.coreutils.Logger;
+import java.util.logging.Logger;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.threadutils.TaskRetryUtil;
 
@@ -173,10 +172,14 @@ class FileTaskExecutor {
      */
     private boolean attemptTask(Callable<Boolean> task, String taskDesc) throws FileTaskFailedException, InterruptedException {
         List<TaskRetryUtil.TaskAttempt> attempts = new ArrayList<>();
-        attempts.add(new TaskRetryUtil.TaskAttempt(0L, TimeUnit.MINUTES, 10L, TimeUnit.MINUTES));
-        attempts.add(new TaskRetryUtil.TaskAttempt(5L, TimeUnit.MINUTES, 10L, TimeUnit.MINUTES));
-        attempts.add(new TaskRetryUtil.TaskAttempt(10L, TimeUnit.MINUTES, 10L, TimeUnit.MINUTES));
-        attempts.add(new TaskRetryUtil.TaskAttempt(15L, TimeUnit.MINUTES, 10L, TimeUnit.MINUTES));
+//        attempts.add(new TaskRetryUtil.TaskAttempt(0L, 10L, TimeUnit.MINUTES));
+        attempts.add(new TaskRetryUtil.TaskAttempt(0L, 10L, TimeUnit.SECONDS)); /* Test */
+//        attempts.add(new TaskRetryUtil.TaskAttempt(5L, 10L, TimeUnit.MINUTES));
+        attempts.add(new TaskRetryUtil.TaskAttempt(5L, 10L, TimeUnit.SECONDS)); /* Test */
+//        attempts.add(new TaskRetryUtil.TaskAttempt(10L, 10L, TimeUnit.MINUTES));
+        attempts.add(new TaskRetryUtil.TaskAttempt(10L, 10L, TimeUnit.SECONDS)); /* Test */
+//        attempts.add(new TaskRetryUtil.TaskAttempt(15L, 10L, TimeUnit.MINUTES));
+        attempts.add(new TaskRetryUtil.TaskAttempt(15L, 10L, TimeUnit.SECONDS)); /* Test */
         Boolean success = TaskRetryUtil.attemptTask(task, attempts, executor, terminator, logger, taskDesc);
         if (success == null) {
             throw new FileTaskFailedException(taskDesc + " failed");
