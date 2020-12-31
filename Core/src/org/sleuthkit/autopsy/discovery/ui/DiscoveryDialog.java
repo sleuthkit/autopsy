@@ -40,6 +40,7 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryAttributes;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils;
 import org.sleuthkit.autopsy.discovery.search.Group;
@@ -99,6 +100,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
     /**
      * Private constructor to construct a new DiscoveryDialog
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Messages("DiscoveryDialog.name.text=Discovery")
     private DiscoveryDialog() {
         super(WindowManager.getDefault().getMainWindow(), Bundle.DiscoveryDialog_name_text(), true);
@@ -116,10 +118,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
             @Override
             public void itemStateChanged(ItemEvent event) {
                 if (event.getStateChange() == ItemEvent.SELECTED) {
-                    SwingUtilities.invokeLater(() -> {
-                        getSelectedFilterPanel().setLastGroupingAttributeType(groupByCombobox.getItemAt(groupByCombobox.getSelectedIndex()));
-                    });
-
+                    getSelectedFilterPanel().setLastGroupingAttributeType(groupByCombobox.getItemAt(groupByCombobox.getSelectedIndex()));
                 }
             }
         });
@@ -127,9 +126,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
             @Override
             public void itemStateChanged(ItemEvent event) {
                 if (event.getStateChange() == ItemEvent.SELECTED) {
-                    SwingUtilities.invokeLater(() -> {
-                        getSelectedFilterPanel().setLastSortingMethod(orderByCombobox.getItemAt(orderByCombobox.getSelectedIndex()));
-                    });
+                    getSelectedFilterPanel().setLastSortingMethod(orderByCombobox.getItemAt(orderByCombobox.getSelectedIndex()));
                 }
             }
         });
@@ -137,9 +134,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
             @Override
             public void itemStateChanged(ItemEvent event) {
                 if (event.getStateChange() == ItemEvent.SELECTED) {
-                    SwingUtilities.invokeLater(() -> {
-                        getSelectedFilterPanel().setLastGroupSortingAlg(groupSortingComboBox.getItemAt(groupSortingComboBox.getSelectedIndex()));
-                    });
+                    getSelectedFilterPanel().setLastGroupSortingAlg(groupSortingComboBox.getItemAt(groupSortingComboBox.getSelectedIndex()));
                 }
             }
         });
@@ -151,6 +146,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
     /**
      * Update the search settings to a default state.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     void updateSearchSettings() {
         removeAllPanels();
         imageFilterPanel = null;
@@ -176,6 +172,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
     /**
      * Set the type buttons to a default state where none are selected.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private void unselectAllButtons() {
         imagesButton.setSelected(false);
         imagesButton.setEnabled(true);
@@ -194,6 +191,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
     /**
      * Private helper method to perform update of comboboxes update.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private void updateComboBoxes() {
         // Set up the grouping attributes
         List<GroupingAttributeType> groupingAttrs = new ArrayList<>();
@@ -230,6 +228,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
      *
      * @return The panel that corresponds to the currently selected type.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private AbstractFiltersPanel getSelectedFilterPanel() {
         switch (type) {
             case IMAGE:
@@ -251,6 +250,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
      *
      * @param type The Type of GroupingAttribute to add.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private void addTypeToGroupByComboBox(GroupingAttributeType type) {
         switch (type) {
             case FREQUENCY:
@@ -282,7 +282,8 @@ final class DiscoveryDialog extends javax.swing.JDialog {
     /**
      * Validate the filter settings for File type filters.
      */
-    synchronized void validateDialog() {
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    void validateDialog() {
         AbstractFiltersPanel panel = getSelectedFilterPanel();
         if (panel != null) {
             panel.validateFields();
@@ -551,6 +552,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
     /**
      * Helper method to remove all filter panels and their listeners
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private void removeAllPanels() {
         if (imageFilterPanel != null) {
             remove(imageFilterPanel);
@@ -635,6 +637,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         repaint();
     }//GEN-LAST:event_domainsButtonActionPerformed
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     public void dispose() {
         setVisible(false);
@@ -643,6 +646,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
     /**
      * Cancel the searchWorker if it exists.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     void cancelSearch() {
         if (searchWorker != null) {
             searchWorker.cancel(true);
@@ -656,6 +660,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
      * @param error The error message to display, empty string if there is no
      *              error.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private void setValid(String error) {
         if (StringUtils.isBlank(error)) {
             errorLabel.setText("");

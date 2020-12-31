@@ -22,6 +22,8 @@ package org.sleuthkit.autopsy.geolocation.datamodel;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.Level;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -31,6 +33,8 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Class representing a series of waypoints that form a path.
  */
 public class GeoPath {
+    private static final Logger LOGGER = Logger.getLogger(GeoPath.class.getName());
+    
     private final List<Waypoint> waypointList;
     private final String pathName;
     private final BlackboardArtifact artifact;
@@ -62,13 +66,13 @@ public class GeoPath {
     }
 
     /**
-     * Gets the list of Routes from the TSK_GPS_TRACK artifacts.
+     * Gets the list of Tracks from the TSK_GPS_TRACK artifacts.
      *
      * @param skCase     Currently open SleuthkitCase
      * @param sourceList List of source to return tracks from, maybe null to
      *                   return tracks from all sources
      *
-     * @return List of Route objects, empty list will be returned if no Routes
+     * @return List of Track objects, empty list will be returned if no tracks
      *         were found
      *
      * @throws GeoLocationDataException
@@ -85,6 +89,7 @@ public class GeoPath {
                         tracks.add(new Track(artifact));
                         
                     } catch (GeoLocationDataException e) {
+                        LOGGER.log(Level.WARNING, "Error loading track from artifact with ID " + artifact.getArtifactID(), e);
                         allParsedSuccessfully = false;
                     }
                 }
@@ -94,6 +99,41 @@ public class GeoPath {
         }
         return new GeoLocationParseResult<Track>(tracks, allParsedSuccessfully);
     }
+    
+    /**
+     * Gets the list of Areas from the TSK_GPS_AREA artifacts.
+     *
+     * @param skCase     Currently open SleuthkitCase
+     * @param sourceList List of source to return areas from, may be null to
+     *                   return areas from all sources
+     *
+     * @return List of Area objects, empty list will be returned if no areas
+     *         were found
+     *
+     * @throws GeoLocationDataException
+     */
+    public static GeoLocationParseResult<Area> getAreas(SleuthkitCase skCase, List<? extends Content> sourceList) throws GeoLocationDataException {
+        List<BlackboardArtifact> artifacts;
+        boolean allParsedSuccessfully = true;
+        List<Area> areas = new ArrayList<>();
+        try {
+            artifacts = skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_AREA);
+            for (BlackboardArtifact artifact : artifacts) {
+                if (sourceList == null || sourceList.contains(artifact.getDataSource())) {
+                    try {
+                        areas.add(new Area(artifact));
+                        
+                    } catch (GeoLocationDataException e) {
+                        LOGGER.log(Level.WARNING, "Error loading track from artifact with ID " + artifact.getArtifactID(), e);
+                        allParsedSuccessfully = false;
+                    }
+                }
+            }
+        } catch (TskCoreException ex) {
+            throw new GeoLocationDataException("Unable to get artifacts for type: TSK_GPS_BOOKMARK", ex);
+        }
+        return new GeoLocationParseResult<>(areas, allParsedSuccessfully);
+    }    
 
     /**
      * Path constructor.

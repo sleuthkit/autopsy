@@ -31,6 +31,7 @@ import org.sleuthkit.datamodel.TskData;
 public abstract class Result {
 
     private SearchData.Frequency frequency = SearchData.Frequency.UNKNOWN;
+    private SearchData.PreviouslyNotable notabilityStatus = SearchData.PreviouslyNotable.NOT_PREVIOUSLY_NOTABLE;
     private final List<String> tagNames = new ArrayList<>();
 
     /**
@@ -50,11 +51,27 @@ public abstract class Result {
     }
 
     /**
-     * Get the known status of the result.
+     * Get the known status of the result (known status being NSRL).
      *
      * @return The Known status of the result.
      */
     public abstract TskData.FileKnown getKnown();
+    
+    /**
+     * Mark the result as being previously notable in the CR.
+     */
+    final public void markAsPreviouslyNotableInCR() {
+        this.notabilityStatus = SearchData.PreviouslyNotable.PREVIOUSLY_NOTABLE;
+    }
+    
+    /**
+     * Get the previously notable value of this result.
+     * 
+     * @return The previously notable status enum.
+     */
+    final public SearchData.PreviouslyNotable getPreviouslyNotableInCR() {
+        return this.notabilityStatus;
+    }
 
     /**
      * Set the frequency of this result in the central repository.

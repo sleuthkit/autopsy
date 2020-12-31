@@ -19,6 +19,8 @@
 package org.sleuthkit.autopsy.textextractors.configs;
 
 import java.util.List;
+import org.sleuthkit.autopsy.coreutils.ExecUtil.ProcessTerminator;
+import org.sleuthkit.autopsy.coreutils.ExecUtil.TimedProcessTerminator;
 
 /**
  * Allows for configuration of OCR on image files. Extractors that use
@@ -27,9 +29,12 @@ import java.util.List;
  * @see org.openide.util.Lookup
  */
 public class ImageConfig {
+    
+    private static final int OCR_TIMEOUT_SECONDS = 30 * 60;
 
     private Boolean OCREnabled;
     private List<String> ocrLanguages;
+    private final TimedProcessTerminator ocrTimedTerminator = new TimedProcessTerminator(OCR_TIMEOUT_SECONDS);
 
     /**
      * Enables OCR to be run on the text reader responsible for handling image
@@ -68,5 +73,14 @@ public class ImageConfig {
      */
     public List<String> getOCRLanguages() {
         return this.ocrLanguages;
+    }
+    
+    /**
+     * Returns a ProcessTerminator for timing out the OCR process.
+     * 
+     * @return ProcessTerminator instance.
+     */
+    public ProcessTerminator getOCRTimeoutTerminator() {
+        return ocrTimedTerminator;
     }
 }

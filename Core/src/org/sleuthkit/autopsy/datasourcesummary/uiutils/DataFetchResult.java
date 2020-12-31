@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.uiutils;
 
+import java.util.function.Function;
+
 /**
  * The result of a loading process.
  */
@@ -28,6 +30,29 @@ public final class DataFetchResult<R> {
      */
     public enum ResultType {
         SUCCESS, ERROR
+    }
+
+    /**
+     * A utility method that, given an input data fetch result, creates an error
+     * result if the original is an error. Otherwise, uses the getSubResult
+     * function on the underlying data to create a new DataFetchResult.
+     *
+     * @param inputResult The input result.
+     * @param getSubResult The means of getting the data given the original
+     * data.
+     *
+     * @return The new result with the error of the original or the processed
+     * data.
+     */
+    public static <I, O> DataFetchResult<O> getSubResult(DataFetchResult<I> inputResult, Function<I, O> getSubResult) {
+        if (inputResult == null) {
+            return null;
+        } else if (inputResult.getResultType() == ResultType.SUCCESS) {
+            O innerData = (inputResult.getData() == null) ? null : getSubResult.apply(inputResult.getData());
+            return DataFetchResult.getSuccessResult(innerData);
+        } else {
+            return DataFetchResult.getErrorResult(inputResult.getException());
+        }
     }
 
     /**
@@ -59,9 +84,8 @@ public final class DataFetchResult<R> {
     /**
      * Main constructor for the DataLoadingResult.
      *
-     * @param state     The state of the result.
-     * @param data      If the result is SUCCESS, the data related to this
-     *                  result.
+     * @param state The state of the result.
+     * @param data If the result is SUCCESS, the data related to this result.
      * @param exception If the result is ERROR, the related exception.
      */
     private DataFetchResult(ResultType state, R data, Throwable exception) {

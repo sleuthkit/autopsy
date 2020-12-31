@@ -1,18 +1,3 @@
-# Copyright 2020 Basis Technology Corp.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the
-# License. You may obtain a copy of the License at
-#
-#        http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing,
-# software distributed under the License is distributed on an "AS
-# IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
-# express or implied. See the License for the specific language
-# governing permissions and limitations under the License.
-#
-
 CalllogArtifactViewer_cr_disabled_message=Enable Central Repository to view, create and edit personas.
 CallLogArtifactViewer_heading_metadata=Metadata
 CallLogArtifactViewer_heading_others=Other Attributes
@@ -41,6 +26,8 @@ ContactArtifactViewer_cr_disabled_message=Enable Central Repository to view, cre
 ContactArtifactViewer_emails_header=Email
 ContactArtifactViewer_found_all_accounts_label=All accounts found.
 ContactArtifactViewer_heading_Source=Source
+# {0} - accountIdentifer
+ContactArtifactViewer_id_not_found_in_cr=Unable to find account(s) associated with contact {0} in the Central Repository.
 ContactArtifactViewer_label_datasource=Data Source
 ContactArtifactViewer_missing_account_label=Missing contact account
 ContactArtifactViewer_others_header=Other
@@ -56,16 +43,36 @@ ContactArtifactViewer_persona_unknown=Unknown
 ContactArtifactViewer_phones_header=Phone
 DataContentViewerArtifact.failedToGetAttributes.message=Failed to get some or all attributes from case database
 DataContentViewerArtifact.failedToGetSourcePath.message=Failed to get source file path from case database
-DefaultArtifactContentViewer.attrsTableHeader.sources=Source(s)
-DefaultArtifactContentViewer.attrsTableHeader.type=Type
-DefaultArtifactContentViewer.attrsTableHeader.value=Value
-DefaultArtifactContentViewer.copyMenuItem.text=Copy
-DefaultArtifactContentViewer.selectAllMenuItem.text=Select All
+DefaultTableArtifactContentViewer.attrsTableHeader.sources=Source(s)
+DefaultTableArtifactContentViewer.attrsTableHeader.type=Type
+DefaultTableArtifactContentViewer.attrsTableHeader.value=Value
+GeneralPurposeArtifactViewer.dates.created=Created
+GeneralPurposeArtifactViewer.dates.end=End
+GeneralPurposeArtifactViewer.dates.start=Start
+GeneralPurposeArtifactViewer.dates.time=Time
+GeneralPurposeArtifactViewer.details.attrHeader=Details
+GeneralPurposeArtifactViewer.details.bookmarkHeader=Bookmark Details
+GeneralPurposeArtifactViewer.details.cachedHeader=Cached File
+GeneralPurposeArtifactViewer.details.cookieHeader=Cookie Details
+GeneralPurposeArtifactViewer.details.dataSource=Data Source
+GeneralPurposeArtifactViewer.details.datesHeader=Dates
+GeneralPurposeArtifactViewer.details.downloadHeader=Downloaded File
+GeneralPurposeArtifactViewer.details.file=File
+GeneralPurposeArtifactViewer.details.historyHeader=Visit Details
+GeneralPurposeArtifactViewer.details.otherHeader=Other
+GeneralPurposeArtifactViewer.details.searchHeader=Web Search
+GeneralPurposeArtifactViewer.details.sourceHeader=Source
+GeneralPurposeArtifactViewer.noFile.text=\ (no longer exists)
+GeneralPurposeArtifactViewer.term.label=Term
+GeneralPurposeArtifactViewer.unknown.text=Unknown
+GeneralPurposeArtifactViewer_menuitem_copy=Copy
 MessageAccountPanel.account.justification=Account found in Message artifact
 MessageAccountPanel_button_create_label=Create
 MessageAccountPanel_button_view_label=View
 MessageAccountPanel_contact_label=Contact:
 MessageAccountPanel_copy_label=Copy
+# {0} - accountIdentifer
+MessageAccountPanel_id_not_found_in_cr=Unable to find an account with identifier {0} in the Central Repository.
 MessageAccountPanel_no_matches=No matches found.
 MessageAccountPanel_persona_label=Persona:
 MessageAccountPanel_unknown_label=Unknown
@@ -87,6 +94,24 @@ MessageArtifactViewer.subjectLabel.text=Subject:
 MessageArtifactViewer.attachmentsPanel.TabConstraints.tabTitle=Attachments
 MessageArtifactViewer.ccText.text=cc list goes here
 MessageArtifactViewer.textbodyScrollPane.TabConstraints.tabTitle=Text
+DefaultTableArtifactContentViewer.selectAllMenuItem.text=Select All
+# Copyright 2020 Basis Technology Corp.
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the
+# License. You may obtain a copy of the License at
+
+#        http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an "AS
+# IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+# express or implied. See the License for the specific language
+# governing permissions and limitations under the License.
+
+DefaultTableArtifactContentViewer.copyMenuItem.text=Copy
 PersonaAccountFetcher.account.justification=Account found in Call Log artifact
+# {0} - accountIdentifer
+PersonaAccountFetcher_not_account_in_cr=Unable to find an account with identifier {0} in the Central Repository.
 # {0} - Persona count
 PersonaDisplayTask_persona_count_suffix=(1 of {0})

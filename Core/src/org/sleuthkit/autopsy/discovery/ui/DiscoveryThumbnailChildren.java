@@ -27,6 +27,7 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -42,28 +43,27 @@ class DiscoveryThumbnailChildren extends Children.Keys<AbstractFile> {
     /*
      * Creates the list of thumbnails from the given list of AbstractFiles.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     DiscoveryThumbnailChildren(List<AbstractFile> files) {
         super(false);
-
         this.files = files;
-
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     protected Node[] createNodes(AbstractFile t) {
         return new Node[]{new ThumbnailNode(t)};
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     protected void addNotify() {
         super.addNotify();
-
         Set<AbstractFile> thumbnails = new TreeSet<>((AbstractFile file1, AbstractFile file2) -> {
             int result = Long.compare(file1.getSize(), file2.getSize());
             if (result == 0) {
                 result = file1.getName().compareTo(file2.getName());
             }
-
             return result;
         });
         thumbnails.addAll(files);
@@ -75,10 +75,12 @@ class DiscoveryThumbnailChildren extends Children.Keys<AbstractFile> {
      */
     static class ThumbnailNode extends FileNode {
 
+        @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
         ThumbnailNode(AbstractFile file) {
             super(file, false);
         }
 
+        @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
         @Override
         protected Sheet createSheet() {
             Sheet sheet = super.createSheet();

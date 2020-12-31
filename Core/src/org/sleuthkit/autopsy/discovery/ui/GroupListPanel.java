@@ -31,6 +31,7 @@ import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryAttributes;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryKeyUtils.GroupKey;
@@ -56,6 +57,7 @@ final class GroupListPanel extends javax.swing.JPanel {
     /**
      * Creates new form GroupListPanel.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     GroupListPanel() {
         initComponents();
     }
@@ -168,10 +170,9 @@ final class GroupListPanel extends javax.swing.JPanel {
     /**
      * Reset the group list to be empty.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     void resetGroupList() {
-        SwingUtilities.invokeLater(() -> {
-            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        });
+        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         groupKeyList.setListData(new GroupKey[0]);
     }
 
@@ -211,6 +212,7 @@ final class GroupListPanel extends javax.swing.JPanel {
 
         private static final long serialVersionUID = 1L;
 
+        @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
         @Override
         public java.awt.Component getListCellRendererComponent(
                 JList<?> list,
