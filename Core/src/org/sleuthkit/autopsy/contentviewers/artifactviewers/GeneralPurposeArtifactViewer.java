@@ -29,6 +29,7 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,13 +40,16 @@ import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
 import javax.swing.SwingUtilities;
+import org.apache.commons.lang.StringUtils;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
+import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.discovery.ui.AbstractArtifactDetailsPanel;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.TimeUtilities;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -53,7 +57,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 @ServiceProvider(service = ArtifactContentViewer.class)
 public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel implements ArtifactContentViewer {
-
+    
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(GeneralPurposeArtifactViewer.class.getName());
     // Number of columns in the gridbag layout.
@@ -74,6 +78,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
         BlackboardAttribute.ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT.getTypeID(),
         BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH.getTypeID(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID(),
         BlackboardAttribute.ATTRIBUTE_TYPE.TSK_HEADERS.getTypeID()};
+    private static final List<Integer> TYPES_WITH_DATE_SECTION = Arrays.asList(new Integer[]{BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE.getTypeID()});
     private final GridBagLayout gridBagLayout = new GridBagLayout();
     private final GridBagConstraints gridBagConstraints = new GridBagConstraints();
     private final Map<Integer, Integer[]> orderingMap = new HashMap<>();
@@ -83,15 +88,53 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public GeneralPurposeArtifactViewer() {
-        orderingMap.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID(), DEFAULT_ORDERING);
-        orderingMap.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID(), DEFAULT_ORDERING);
-        orderingMap.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID(), DEFAULT_ORDERING);
-        orderingMap.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getTypeID(), DEFAULT_ORDERING);
-        orderingMap.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID(), DEFAULT_ORDERING);
-        orderingMap.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID(), DEFAULT_ORDERING);
+        addOrderings();
         initComponents();
+        detailsPanel.setLayout(gridBagLayout);
     }
 
+    /**
+     * Private helper method to add the orderings used for each artifact type to
+     * the map for lookup.
+     */
+    private void addOrderings() {
+        orderingMap.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID(), new Integer[]{BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID(),
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TITLE.getTypeID(),
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID(),
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID(),
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID(),
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()});
+        orderingMap.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID(), new Integer[]{BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID(),
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID(),
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID(),
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_HEADERS.getTypeID(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH.getTypeID(),
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()});
+        orderingMap.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID(), new Integer[]{BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID(),
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID(),
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID(),
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH.getTypeID(),
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()});
+        orderingMap.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getTypeID(), new Integer[]{BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT.getTypeID(),
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID(),
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID(),
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()});
+        orderingMap.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID(), new Integer[]{BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TITLE.getTypeID(),
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_USER_NAME.getTypeID(),
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID(),
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID(),
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID(),
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_REFERRER.getTypeID(),
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()});
+        orderingMap.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE.getTypeID(), new Integer[]{BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID(),
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID(),
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(),
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()});
+    }
+    
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @NbBundle.Messages({"GeneralPurposeArtifactViewer.unknown.text=Unknown"})
     @Override
@@ -112,15 +155,14 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
                     attributeMap.put(bba.getAttributeType().getTypeID(), attrList);
                 }
                 dataSourceName = artifact.getDataSource().getName();
-                sourceFileName = artifact.getParent().getName();
+                sourceFileName = artifact.getParent().getUniquePath();
             } catch (TskCoreException ex) {
                 logger.log(Level.WARNING, "Unable to get attributes for artifact " + artifact.getArtifactID(), ex);
             }
-            updateView(artifact.getArtifactTypeID(), attributeMap, dataSourceName, sourceFileName);
+            updateView(artifact, attributeMap, dataSourceName, sourceFileName);
         }
-        this.setLayout(this.gridBagLayout);
-        this.revalidate();
-        this.repaint();
+        revalidate();
+        repaint();
     }
 
     /**
@@ -129,7 +171,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private void resetComponent() {
         // clear the panel 
-        this.removeAll();
+        detailsPanel.removeAll();
         gridBagConstraints.anchor = GridBagConstraints.FIRST_LINE_START;
         gridBagConstraints.gridy = 0;
         gridBagConstraints.gridx = LABEL_COLUMN;
@@ -138,28 +180,35 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
         gridBagConstraints.fill = GridBagConstraints.NONE;
         gridBagConstraints.insets = ROW_INSETS;
     }
-
+    
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     public Component getComponent() {
-        // Slap a vertical scrollbar on the panel.
-        return new JScrollPane(this, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        //         Slap a vertical scrollbar on the panel 
+        return new JScrollPane(this, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     }
-
+    
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
+
     public boolean isSupported(BlackboardArtifact artifact) {
         return (artifact != null)
                 && (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID()
                 || artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getTypeID()
                 || artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE.getTypeID()
-                || artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID());
+                || artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID()
+                || artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID()
+                || artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID()
+                || artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_ACCOUNT_TYPE.getTypeID()
+                || artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_FORM_ADDRESS.getTypeID()
+                || artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_FORM_AUTOFILL.getTypeID());
     }
-
-    @NbBundle.Messages({"GeneralPurposeArtifactViewer.details.attrHeader=Attributes",
+    
+    @NbBundle.Messages({"GeneralPurposeArtifactViewer.details.attrHeader=Details",
         "GeneralPurposeArtifactViewer.details.sourceHeader=Source",
         "GeneralPurposeArtifactViewer.details.dataSource=Data Source",
-        "GeneralPurposeArtifactViewer.details.file=File"})
+        "GeneralPurposeArtifactViewer.details.file=File",
+        "GeneralPurposeArtifactViewer.details.datesHeader=Dates"})
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -169,35 +218,46 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        setPreferredSize(new java.awt.Dimension(0, 0));
+        detailsPanel = new javax.swing.JPanel();
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 400, Short.MAX_VALUE)
+        setLayout(new java.awt.BorderLayout());
+
+        javax.swing.GroupLayout detailsPanelLayout = new javax.swing.GroupLayout(detailsPanel);
+        detailsPanel.setLayout(detailsPanelLayout);
+        detailsPanelLayout.setHorizontalGroup(
+            detailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 0, Short.MAX_VALUE)
         );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 300, Short.MAX_VALUE)
+        detailsPanelLayout.setVerticalGroup(
+            detailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 0, Short.MAX_VALUE)
         );
+
+        add(detailsPanel, java.awt.BorderLayout.PAGE_START);
     }// </editor-fold>//GEN-END:initComponents
 
     /**
      * Update the view to reflect the current artifact's details.
      *
-     * @param artifactTypeId The BlackboardArtifact type id for the artifact
-     *                       being displayed.
+     * @param artifact       The artifact being displayed.
      * @param attributeMap   The map of attributes that exist for the artifact.
      * @param dataSourceName The name of the datasource that caused the creation
      *                       of the artifact.
      * @param sourceFileName The name of the file that caused the creation of
      *                       the artifact.
      */
+    @NbBundle.Messages({"GeneralPurposeArtifactViewer.dates.created=Created",
+        "GeneralPurposeArtifactViewer.dates.start=Start",
+        "GeneralPurposeArtifactViewer.dates.end=End",
+        "GeneralPurposeArtifactViewer.dates.time=Time",
+        "GeneralPurposeArtifactViewer.term.label=Term",
+        "GeneralPurposeArtifactViewer.details.otherHeader=Other",
+        "GeneralPurposeArtifactViewer.noFile.text= (no longer exists)"})
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    private void updateView(Integer artifactTypeId, Map<Integer, List<BlackboardAttribute>> attributeMap, String dataSourceName, String sourceFileName) {
+    private void updateView(BlackboardArtifact artifact, Map<Integer, List<BlackboardAttribute>> attributeMap, String dataSourceName, String sourceFilePath) {
+        final Integer artifactTypeId = artifact.getArtifactTypeID();
         if (!(artifactTypeId < 1 || artifactTypeId >= Integer.MAX_VALUE)) {
-            addHeader(Bundle.GeneralPurposeArtifactViewer_details_attrHeader());
+            addDetailsHeader(artifactTypeId);
             Integer[] orderingArray = orderingMap.get(artifactTypeId);
             if (orderingArray == null) {
                 orderingArray = DEFAULT_ORDERING;
@@ -206,21 +266,111 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
                 List<BlackboardAttribute> attrList = attributeMap.remove(attrId);
                 if (attrList != null) {
                     for (BlackboardAttribute bba : attrList) {
-                        addNameValueRow(bba.getAttributeType().getDisplayName(), bba.getDisplayString());
+                        if (bba.getAttributeType().getTypeName().startsWith("TSK_DATETIME")) {
+                            if (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getTypeID()) {
+                                addNameValueRow(Bundle.GeneralPurposeArtifactViewer_dates_time(), TimeUtilities.epochToTime(bba.getValueLong(), ContentUtils.getTimeZone(artifact)));
+                            } else {
+                                addNameValueRow(bba.getAttributeType().getDisplayName(), TimeUtilities.epochToTime(bba.getValueLong(), ContentUtils.getTimeZone(artifact)));
+                            }
+                        } else if (bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT.getTypeID() && artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getTypeID()) {
+                            addNameValueRow(Bundle.GeneralPurposeArtifactViewer_term_label(), bba.getDisplayString());
+                        } else if (bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH.getTypeID()) {
+                            String displayString = bba.getDisplayString();
+                            if (!attributeMap.containsKey(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID())) {
+                                displayString += Bundle.GeneralPurposeArtifactViewer_noFile_text();
+                            }
+                            addNameValueRow(bba.getAttributeType().getDisplayName(), displayString);
+                        } else {
+                            addNameValueRow(bba.getAttributeType().getDisplayName(), bba.getDisplayString());
+                            
+                        }
                     }
                 }
             }
-            for (int key : attributeMap.keySet()) {
-                for (BlackboardAttribute bba : attributeMap.get(key)) {
-                    addNameValueRow(bba.getAttributeType().getDisplayName(), bba.getDisplayString());
+            if (TYPES_WITH_DATE_SECTION.contains(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE.getTypeID())) {
+                boolean headerAdded = false;
+                headerAdded = addDates(Bundle.GeneralPurposeArtifactViewer_dates_created(), attributeMap.remove(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID()), headerAdded);
+                headerAdded = addDates(Bundle.GeneralPurposeArtifactViewer_dates_start(), attributeMap.remove(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID()), headerAdded);
+                headerAdded = addDates(Bundle.GeneralPurposeArtifactViewer_dates_end(), attributeMap.remove(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID()), headerAdded);
+                addDates(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getDisplayName(), attributeMap.remove(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()), headerAdded);
+            }
+            if (!attributeMap.keySet().isEmpty()) {
+                addHeader(Bundle.GeneralPurposeArtifactViewer_details_otherHeader());
+                for (int key : attributeMap.keySet()) {
+                    for (BlackboardAttribute bba : attributeMap.get(key)) {
+                        if (bba.getAttributeType().getTypeName().startsWith("TSK_DATETIME")) {
+                            addNameValueRow(bba.getAttributeType().getDisplayName(), TimeUtilities.epochToTime(bba.getValueLong(), ContentUtils.getTimeZone(artifact)));
+                        } else {
+                            addNameValueRow(bba.getAttributeType().getDisplayName(), bba.getDisplayString());
+                        }
+                    }
                 }
             }
             addHeader(Bundle.GeneralPurposeArtifactViewer_details_sourceHeader());
             addNameValueRow(Bundle.GeneralPurposeArtifactViewer_details_dataSource(), dataSourceName);
-            addNameValueRow(Bundle.GeneralPurposeArtifactViewer_details_file(), sourceFileName);
+            addNameValueRow(Bundle.GeneralPurposeArtifactViewer_details_file(), sourceFilePath);
             // add veritcal glue at the end
             addPageEndGlue();
         }
+    }
+
+    /**
+     * Private helper method to add all dates in a given attribute list.
+     *
+     * @param label        Specific String to use in place of attributes display
+     *                     name.
+     * @param attrList     List of attributes to add dates for.
+     * @param headerExists If the "Dates" header has already been displayed.
+     *
+     * @return True if the "Dates" header has been displayed, false otherwise.
+     */
+    private boolean addDates(String label, List<BlackboardAttribute> attrList, boolean headerExists) {
+        boolean headerAdded = headerExists;
+        if (attrList != null) {
+            if (!headerAdded) {
+                addHeader(Bundle.GeneralPurposeArtifactViewer_details_datesHeader());
+                headerAdded = true;
+            }
+            String labelToUse = label;
+            for (BlackboardAttribute bba : attrList) {
+                if (StringUtils.isBlank(label)) {
+                    labelToUse = bba.getAttributeType().getDisplayName();
+                }
+                addNameValueRow(labelToUse, bba.getDisplayString());
+            }
+        }
+        return headerAdded;
+    }
+
+    /**
+     * Helper method to add an artifact specific details header.
+     *
+     * @param artifactTypeId ID of artifact type to add header for.
+     */
+    @NbBundle.Messages({"GeneralPurposeArtifactViewer.details.bookmarkHeader=Bookmark Details",
+        "GeneralPurposeArtifactViewer.details.historyHeader=Visit Details",
+        "GeneralPurposeArtifactViewer.details.downloadHeader=Downloaded File",
+        "GeneralPurposeArtifactViewer.details.searchHeader=Web Search",
+        "GeneralPurposeArtifactViewer.details.cachedHeader=Cached File",
+        "GeneralPurposeArtifactViewer.details.cookieHeader=Cookie Details",})
+    private void addDetailsHeader(int artifactTypeId) {
+        String header;
+        if (artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID()) {
+            header = Bundle.GeneralPurposeArtifactViewer_details_historyHeader();
+        } else if (artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID()) {
+            header = Bundle.GeneralPurposeArtifactViewer_details_bookmarkHeader();
+        } else if (artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID()) {
+            header = Bundle.GeneralPurposeArtifactViewer_details_cachedHeader();
+        } else if (artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE.getTypeID()) {
+            header = Bundle.GeneralPurposeArtifactViewer_details_cookieHeader();
+        } else if (artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID()) {
+            header = Bundle.GeneralPurposeArtifactViewer_details_downloadHeader();
+        } else if (artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getTypeID()) {
+            header = Bundle.GeneralPurposeArtifactViewer_details_searchHeader();
+        } else {
+            header = Bundle.GeneralPurposeArtifactViewer_details_attrHeader();
+        }
+        addHeader(header);
     }
 
     /**
@@ -238,7 +388,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
         // the first section
         if (gridBagConstraints.gridy != 0) {
             gridBagConstraints.gridy++;
-            add(new javax.swing.JLabel(" "), gridBagConstraints);
+            detailsPanel.add(new javax.swing.JLabel(" "), gridBagConstraints);
             addLineEndGlue();
         }
         gridBagConstraints.gridy++;
@@ -251,7 +401,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
         // make it large and bold
         headingLabel.setFont(headingLabel.getFont().deriveFont(Font.BOLD, headingLabel.getFont().getSize() + 2));
         // add to panel
-        add(headingLabel, gridBagConstraints);
+        detailsPanel.add(headingLabel, gridBagConstraints);
         // reset constraints to normal
         gridBagConstraints.gridwidth = LABEL_WIDTH;
         // add line end glue
@@ -282,7 +432,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
         gridBagConstraints.weightx = GLUE_WEIGHT_X; // take up all the horizontal space
         gridBagConstraints.fill = GridBagConstraints.BOTH;
         javax.swing.Box.Filler horizontalFiller = new javax.swing.Box.Filler(new Dimension(0, 0), new Dimension(0, 0), new Dimension(32767, 0));
-        add(horizontalFiller, gridBagConstraints);
+        detailsPanel.add(horizontalFiller, gridBagConstraints);
         // restore fill & weight
         gridBagConstraints.fill = GridBagConstraints.NONE;
         gridBagConstraints.weightx = TEXT_WEIGHT_X;
@@ -296,7 +446,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
         gridBagConstraints.weighty = 1.0; // take up all the vertical space
         gridBagConstraints.fill = GridBagConstraints.VERTICAL;
         javax.swing.Box.Filler vertFiller = new javax.swing.Box.Filler(new Dimension(0, 0), new Dimension(0, 0), new Dimension(0, 32767));
-        add(vertFiller, gridBagConstraints);
+        detailsPanel.add(vertFiller, gridBagConstraints);
     }
 
     /**
@@ -315,7 +465,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
         // set text
         keyLabel.setText(keyString + ": ");
         // add to panel
-        add(keyLabel, gridBagConstraints);
+        detailsPanel.add(keyLabel, gridBagConstraints);
         return keyLabel;
     }
 
@@ -338,6 +488,8 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
         cloneConstraints.fill = GridBagConstraints.BOTH;
         // set text
         valueField.setText(valueString);
+        // scroll to start of text
+        valueField.setCaretPosition(0);
         // attach a right click menu with Copy option
         valueField.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
@@ -346,7 +498,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
             }
         });
         // add label to panel
-        add(valueField, cloneConstraints);
+        detailsPanel.add(valueField, cloneConstraints);
         // end the line
         addLineEndGlue();
         return valueField;
@@ -379,5 +531,6 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JPanel detailsPanel;
     // End of variables declaration//GEN-END:variables
 }

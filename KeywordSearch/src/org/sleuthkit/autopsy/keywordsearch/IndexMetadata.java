@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,7 +39,6 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import org.sleuthkit.autopsy.coreutils.UNCPathUtilities;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -61,11 +60,10 @@ class IndexMetadata {
     private final static String SOLR_VERSION_ELEMENT_NAME = "SolrVersion"; //NON-NLS
     private final static String TEXT_INDEX_PATH_ELEMENT_NAME = "TextIndexPath"; //NON-NLS
     private List<Index> indexes = new ArrayList<>();
-    private final UNCPathUtilities uncPathUtilities = new UNCPathUtilities();
     
     IndexMetadata(String caseDirectory, Index index) throws TextIndexMetadataException {
         this.metadataFilePath = Paths.get(caseDirectory, METADATA_FILE_NAME);
-        this.caseDirectoryPath = Paths.get(uncPathUtilities.convertPathToUNC(caseDirectory));
+        this.caseDirectoryPath = Paths.get(caseDirectory);
         this.indexes.add(index);
         writeToFile();
     }
@@ -73,7 +71,7 @@ class IndexMetadata {
     IndexMetadata(String caseDirectory, List<Index> indexes) throws TextIndexMetadataException {
 
         this.metadataFilePath = Paths.get(caseDirectory, METADATA_FILE_NAME);
-        this.caseDirectoryPath = Paths.get(uncPathUtilities.convertPathToUNC(caseDirectory));
+        this.caseDirectoryPath = Paths.get(caseDirectory);
         this.indexes = indexes;
         writeToFile();
     }

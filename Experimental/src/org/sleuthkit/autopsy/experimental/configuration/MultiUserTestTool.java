@@ -23,6 +23,7 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -152,17 +153,17 @@ class MultiUserTestTool {
                 return Bundle.MultiUserTestTool_unableToReadDatabase() + ". " + ex.getMessage();
             }
 
-            // Make a text file in Windows TEMP folder 
-            String tempFilePath = System.getProperty("java.io.tmpdir") + TEST_FILE_NAME + "_" + TimeStampUtils.createTimeStamp() + ".txt";
+            // Make a text file in TEMP folder
+            Path tempFilePath = Paths.get(System.getProperty("java.io.tmpdir"), TEST_FILE_NAME + "_" + TimeStampUtils.createTimeStamp() + ".txt");
             try {
-                FileUtils.writeStringToFile(new File(tempFilePath), "Test", Charset.forName("UTF-8"));
+                FileUtils.writeStringToFile(tempFilePath.toFile(), "Test", Charset.forName("UTF-8"));
             } catch (IOException ex) {
                 LOGGER.log(Level.SEVERE, Bundle.MultiUserTestTool_unableCreatFile(), ex);
                 return Bundle.MultiUserTestTool_unableCreatFile() + ". " + ex.getMessage();
             }
 
             //  Add it as a logical file set data source.
-            AutoIngestDataSource dataSource = new AutoIngestDataSource("", Paths.get(tempFilePath));
+            AutoIngestDataSource dataSource = new AutoIngestDataSource("", tempFilePath);
             try {
                 String error = runLogicalFilesDSP(caseForJob, dataSource);
                 if (!error.isEmpty()) {
@@ -178,7 +179,7 @@ class MultiUserTestTool {
             FileManager fileManager = caseForJob.getServices().getFileManager();
             List<AbstractFile> listOfFiles = null;
             try {
-                listOfFiles = fileManager.findFiles(new File(tempFilePath).getName());
+                listOfFiles = fileManager.findFiles(tempFilePath.toFile().getName());
                 if (listOfFiles == null || listOfFiles.isEmpty()) {
                     LOGGER.log(Level.SEVERE, Bundle.MultiUserTestTool_unableToReadTestFileFromDatabase());
                     return Bundle.MultiUserTestTool_unableToReadTestFileFromDatabase();

@@ -19,46 +19,46 @@
 package org.sleuthkit.autopsy.discovery.search;
 
 import com.google.common.cache.CacheLoader;
-import java.util.List;
 import java.util.ArrayList;
-import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
-import org.sleuthkit.datamodel.BlackboardAttribute.Type;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
+import org.sleuthkit.datamodel.BlackboardAttribute;
 
 /**
- * Loads artifacts for the given request. Searches TSK_DOMAIN and TSK_URL
- * attributes for the requested domain name. TSK_DOMAIN is exact match (ignoring
- * case). TSK_URL is sub-string match (ignoring case).
+ * Loads artifacts for the given request. Searches for TSK domain attributes and
+ * organizes artifacts by those values.
  */
-public class DomainSearchArtifactsLoader extends CacheLoader<DomainSearchArtifactsRequest, List<BlackboardArtifact>> {
+public class DomainSearchArtifactsLoader extends CacheLoader<DomainSearchArtifactsCache.ArtifactCacheKey, Map<String, List<BlackboardArtifact>>> {
 
-    private static final Type TSK_DOMAIN = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DOMAIN);
-    private static final Type TSK_URL = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_URL);
-
+    private static final BlackboardAttribute.Type TSK_DOMAIN = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN);
+    
     @Override
-    public List<BlackboardArtifact> load(DomainSearchArtifactsRequest artifactsRequest) throws TskCoreException, InterruptedException {
-        final SleuthkitCase caseDb = artifactsRequest.getSleuthkitCase();
-        final String normalizedDomain = artifactsRequest.getDomain().toLowerCase();
-        final List<BlackboardArtifact> artifacts = caseDb.getBlackboardArtifacts(artifactsRequest.getArtifactType());
-        final List<BlackboardArtifact> matchingDomainArtifacts = new ArrayList<>();
-
+    public Map<String, List<BlackboardArtifact>> load(DomainSearchArtifactsCache.ArtifactCacheKey artifactKey) throws TskCoreException, InterruptedException {
+        final SleuthkitCase caseDb = artifactKey.getSleuthkitCase();
+        final ARTIFACT_TYPE type = artifactKey.getType();
+        List<BlackboardArtifact> artifacts = caseDb.getBlackboardArtifacts(type);
+        
+        Map<String, List<BlackboardArtifact>> artifactsByDomain = new HashMap<>();
+            
+        // Grab artifacts with matching domain names.
         for (BlackboardArtifact artifact : artifacts) {
             if(Thread.currentThread().isInterrupted()) {
                 throw new InterruptedException();
             }
             final BlackboardAttribute tskDomain = artifact.getAttribute(TSK_DOMAIN);
-            final BlackboardAttribute tskUrl = artifact.getAttribute(TSK_URL);
-
-            if (tskDomain != null && tskDomain.getValueString().equalsIgnoreCase(normalizedDomain)) {
-                matchingDomainArtifacts.add(artifact);
-            } else if (tskUrl != null && tskUrl.getValueString().toLowerCase().contains(normalizedDomain)) {
-                matchingDomainArtifacts.add(artifact);
+            if (tskDomain != null) {
+                final String normalizedDomain = tskDomain.getValueString().trim().toLowerCase();
+                List<BlackboardArtifact> artifactsWithDomain = artifactsByDomain.getOrDefault(normalizedDomain, new ArrayList<>());
+                artifactsWithDomain.add(artifact);
+                artifactsByDomain.put(normalizedDomain, artifactsWithDomain);
             }
         }
 
-        return matchingDomainArtifacts;
+        return artifactsByDomain;
     }
 }

@@ -28,6 +28,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -51,7 +52,7 @@ import org.sleuthkit.datamodel.TskData;
  *
  * @author jwallace
  */
-class PstParser {
+class PstParser  implements AutoCloseable{
 
     private static final Logger logger = Logger.getLogger(PstParser.class.getName());
     /**
@@ -119,6 +120,16 @@ class PstParser {
         }
 
         return ParseResult.OK;
+    }
+    
+    @Override
+    public void close() throws Exception{
+        if(pstFile != null) {
+            RandomAccessFile file = pstFile.getFileHandle();
+            if(file != null) {
+                file.close();
+            }
+        }
     }
 
     /**

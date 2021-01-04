@@ -19,20 +19,29 @@
 package org.sleuthkit.autopsy.datasourcesummary.ui;
 
 import java.beans.PropertyChangeEvent;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.logging.Level;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.swing.JPanel;
 import javax.swing.SwingWorker;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.IngestModuleCheckUtil;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult.ResultType;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
@@ -41,6 +50,8 @@ import org.sleuthkit.autopsy.datasourcesummary.uiutils.EventUpdateHandler;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.LoadableComponent;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.SwingWorkerSequentialExecutor;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.UpdateGovernor;
+import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
+import org.sleuthkit.autopsy.directorytree.ViewContextAction;
 import org.sleuthkit.autopsy.ingest.IngestManager.IngestJobEvent;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
@@ -53,6 +64,8 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Base class from which other tabs in data source summary derive.
  */
+@Messages({"BaseDataSourceSummaryPanel_goToArtifact=View Source Result",
+    "BaseDataSourceSummaryPanel_goToFile=View Source File in Directory"})
 abstract class BaseDataSourceSummaryPanel extends JPanel {
 
     private static final long serialVersionUID = 1L;
@@ -63,6 +76,8 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
     private final IngestModuleCheckUtil ingestModuleCheck = new IngestModuleCheckUtil();
     private final EventUpdateHandler updateHandler;
     private final List<UpdateGovernor> governors;
+
+    private Runnable notifyParentClose = null;
 
     private DataSource dataSource;
 
@@ -77,7 +92,7 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
          * Checks to see if artifact is from a datasource.
          *
          * @param art The artifact.
-         * @param ds  The datasource.
+         * @param ds The datasource.
          *
          * @return True if in datasource; false if not or exception.
          */
@@ -219,12 +234,110 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
      * Main constructor.
      *
      * @param governors The items governing when this panel should receive
-     *                  updates.
+     * updates.
      */
     protected BaseDataSourceSummaryPanel(UpdateGovernor... governors) {
         this.governors = (governors == null) ? Collections.emptyList() : Arrays.asList(governors);
         this.updateHandler = new EventUpdateHandler(this::onRefresh, updateGovernor);
         this.updateHandler.register();
+    }
+
+    /**
+     * Given the relevant artifact, navigates to the artifact in the tree and
+     * closes data source summary dialog if open.
+     *
+     * @param artifact The artifact.
+     * @return The menu item for a go to artifact menu item.
+     */
+    protected CellModelTableCellRenderer.MenuItem getArtifactNavigateItem(BlackboardArtifact artifact) {
+        if (artifact == null) {
+            return null;
+        }
+
+        return new CellModelTableCellRenderer.DefaultMenuItem(
+                Bundle.BaseDataSourceSummaryPanel_goToArtifact(),
+                () -> {
+                    final DirectoryTreeTopComponent dtc = DirectoryTreeTopComponent.findInstance();
+
+                    // Navigate to the source context artifact.
+                    if (dtc != null && artifact != null) {
+                        dtc.viewArtifact(artifact);
+                    }
+
+                    notifyParentClose();
+                });
+    }
+
+    private static final Pattern windowsDrivePattern = Pattern.compile("^[A-Za-z]\\:(.*)$");
+
+    /**
+     * Normalizes the path for lookup in the sleuthkit database (unix endings;
+     * remove C:\).
+     *
+     * @param path The path to normalize.
+     * @return The normalized path.
+     */
+    private String normalizePath(String path) {
+        if (path == null) {
+            return null;
+        }
+
+        String trimmed = path.trim();
+        Matcher match = windowsDrivePattern.matcher(trimmed);
+        if (match.find()) {
+            return FilenameUtils.normalize(match.group(1), true);
+        } else {
+            return FilenameUtils.normalize(trimmed, true);
+        }
+    }
+
+    /**
+     * Creates a menu item to navigate to a file.
+     *
+     * @param path The path to the file.
+     * @return The menu item or null if file cannot be found in data source.
+     */
+    protected CellModelTableCellRenderer.MenuItem getFileNavigateItem(String path) {
+        if (StringUtils.isNotBlank(path)) {
+            Path p = Paths.get(path);
+            String fileName = normalizePath(p.getFileName().toString());
+            String directory = normalizePath(p.getParent().toString());
+
+            if (fileName != null && directory != null) {
+                try {
+                    List<AbstractFile> files = Case.getCurrentCaseThrows().getSleuthkitCase().findFiles(getDataSource(), fileName, directory);
+                    if (CollectionUtils.isNotEmpty(files)) {
+                        return getFileNavigateItem(files.get(0));
+                    }
+                } catch (TskCoreException | NoCurrentCaseException ex) {
+                    logger.log(Level.WARNING, "There was an error fetching file for path: " + path, ex);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Given the relevant file, navigates to the file in the
+     * tree and closes data source summary dialog if open.
+     *
+     * @param file The file.
+     * @return The menu item list for a go to artifact menu item.
+     */
+    protected CellModelTableCellRenderer.MenuItem getFileNavigateItem(AbstractFile file) {
+        if (file == null) {
+            return null;
+        }
+
+        return new CellModelTableCellRenderer.DefaultMenuItem(
+                Bundle.BaseDataSourceSummaryPanel_goToFile(),
+                () -> {
+                    new ViewContextAction(Bundle.BaseDataSourceSummaryPanel_goToFile(), file)
+                            .actionPerformed(null);
+
+                    notifyParentClose();
+                });
     }
 
     /**
@@ -244,6 +357,24 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
         this.dataSource = dataSource;
         this.executor.cancelRunning();
         onNewDataSource(this.dataSource);
+    }
+
+    /**
+     * Sends event that parent should close.
+     */
+    protected void notifyParentClose() {
+        if (notifyParentClose != null) {
+            notifyParentClose.run();
+        }
+    }
+
+    /**
+     * Sets the listener for parent close events.
+     *
+     * @param action The action to run when parent is to close.
+     */
+    void setParentCloseListener(Runnable action) {
+        notifyParentClose = action;
     }
 
     /**
@@ -287,7 +418,7 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
      * argument and data fetch components and then submits them to run.
      *
      * @param dataFetchComponents The components to be run.
-     * @param dataSource          The data source argument.
+     * @param dataSource The data source argument.
      */
     protected void fetchInformation(List<DataFetchComponents<DataSource, ?>> dataFetchComponents, DataSource dataSource) {
         if (dataSource == null || !Case.isCaseOpen()) {
@@ -320,8 +451,8 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
      * argument and submits them to be executed.
      *
      * @param dataFetchComponents The components to register.
-     * @param loadableComponents  The components to set to a loading screen.
-     * @param dataSource          The data source argument.
+     * @param loadableComponents The components to set to a loading screen.
+     * @param dataSource The data source argument.
      */
     protected void onNewDataSource(
             List<DataFetchComponents<DataSource, ?>> dataFetchComponents,
@@ -371,12 +502,11 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
      * message indicating the unrun ingest module will be shown. Otherwise, the
      * default LoadableComponent.showDataFetchResult behavior will be used.
      *
-     * @param component    The component.
-     * @param result       The data result.
+     * @param component The component.
+     * @param result The data result.
      * @param factoryClass The fully qualified class name of the relevant
-     *                     factory.
-     * @param moduleName   The name of the ingest module (i.e. 'Keyword
-     *                     Search').
+     * factory.
+     * @param moduleName The name of the ingest module (i.e. 'Keyword Search').
      */
     protected <T> void showResultWithModuleCheck(LoadableComponent<List<T>> component, DataFetchResult<List<T>> result, String factoryClass, String moduleName) {
         Predicate<List<T>> hasResults = (lst) -> lst != null && !lst.isEmpty();
@@ -389,14 +519,13 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
      * message indicating the unrun ingest module will be shown. Otherwise, the
      * default LoadableComponent.showDataFetchResult behavior will be used.
      *
-     * @param component    The component.
-     * @param result       The data result.
-     * @param hasResults   Given the data type, will provide whether or not the
-     *                     data contains any actual results.
+     * @param component The component.
+     * @param result The data result.
+     * @param hasResults Given the data type, will provide whether or not the
+     * data contains any actual results.
      * @param factoryClass The fully qualified class name of the relevant
-     *                     factory.
-     * @param moduleName   The name of the ingest module (i.e. 'Keyword
-     *                     Search').
+     * factory.
+     * @param moduleName The name of the ingest module (i.e. 'Keyword Search').
      */
     protected <T> void showResultWithModuleCheck(LoadableComponent<T> component, DataFetchResult<T> result,
             Predicate<T> hasResults, String factoryClass, String moduleName) {

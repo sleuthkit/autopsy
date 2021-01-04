@@ -22,6 +22,7 @@ import java.awt.Component;
 import java.util.logging.Level;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.Persona;
@@ -38,6 +39,8 @@ public class PersonaDetailsDialog extends JDialog {
     private static final Logger logger = Logger.getLogger(PersonaDetailsDialog.class.getName());
 
     private final PersonaDetailsDialogCallback callback;
+    
+    private String popupMessageOnStartup = "";
 
     @NbBundle.Messages({
         "PersonaDetailsDialogCreateTitle=Create Persona",
@@ -91,6 +94,11 @@ public class PersonaDetailsDialog extends JDialog {
         pdp = new org.sleuthkit.autopsy.centralrepository.persona.PersonaDetailsPanel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            public void windowOpened(java.awt.event.WindowEvent evt) {
+                formWindowOpened(evt);
+            }
+        });
 
         org.openide.awt.Mnemonics.setLocalizedText(cancelBtn, org.openide.util.NbBundle.getMessage(PersonaDetailsDialog.class, "PersonaDetailsDialog.cancelBtn.text")); // NOI18N
         cancelBtn.setMaximumSize(new java.awt.Dimension(79, 23));
@@ -159,8 +167,18 @@ public class PersonaDetailsDialog extends JDialog {
         dispose();
     }//GEN-LAST:event_cancelBtnActionPerformed
 
+    private void formWindowOpened(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowOpened
+        if(!popupMessageOnStartup.isEmpty()) {
+            JOptionPane.showMessageDialog(this, popupMessageOnStartup, "Persona Details", JOptionPane.INFORMATION_MESSAGE);
+        }
+    }//GEN-LAST:event_formWindowOpened
+
     public PersonaDetailsPanel getDetailsPanel() {
         return this.pdp;
+    }
+    
+    public void setStartupPopupMessage(String message) {
+        popupMessageOnStartup = message;
     }
     
     // Variables declaration - do not modify//GEN-BEGIN:variables

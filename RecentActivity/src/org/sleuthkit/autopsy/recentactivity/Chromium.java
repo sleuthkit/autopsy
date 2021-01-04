@@ -69,18 +69,17 @@ class Chromium extends Extract {
     private static final String DOWNLOAD_QUERY = "SELECT full_path, url, start_time, received_bytes FROM downloads"; //NON-NLS
     private static final String DOWNLOAD_QUERY_V30 = "SELECT current_path AS full_path, url, start_time, received_bytes FROM downloads, downloads_url_chains WHERE downloads.id=downloads_url_chains.id"; //NON-NLS
     private static final String LOGIN_QUERY = "SELECT origin_url, username_value, date_created, signon_realm from logins"; //NON-NLS
-    private static final String AUTOFILL_QUERY = "SELECT name, value, count, date_created " + 
-                                                    " FROM autofill, autofill_dates " +
-                                                    " WHERE autofill.pair_id = autofill_dates.pair_id"
-                                                    ; //NON-NLS
+    private static final String AUTOFILL_QUERY = "SELECT name, value, count, date_created "
+            + " FROM autofill, autofill_dates "
+            + " WHERE autofill.pair_id = autofill_dates.pair_id"; //NON-NLS
     private static final String AUTOFILL_QUERY_V8X = "SELECT name, value, count, date_created, date_last_used from autofill"; //NON-NLS
-    private static final String WEBFORM_ADDRESS_QUERY = "SELECT first_name, middle_name, last_name, address_line_1, address_line_2, city, state, zipcode, country_code, number, email, date_modified " +
-                                                        " FROM autofill_profiles, autofill_profile_names, autofill_profile_emails, autofill_profile_phones" +
-                                                        " WHERE autofill_profiles.guid = autofill_profile_names.guid AND autofill_profiles.guid = autofill_profile_emails.guid AND autofill_profiles.guid = autofill_profile_phones.guid";
-    
-    private static final String WEBFORM_ADDRESS_QUERY_V8X = "SELECT first_name, middle_name, last_name, full_name, street_address, city, state, zipcode, country_code, number, email, date_modified, use_date, use_count" +
-                                                            " FROM autofill_profiles, autofill_profile_names, autofill_profile_emails, autofill_profile_phones" +
-                                                            " WHERE autofill_profiles.guid = autofill_profile_names.guid AND autofill_profiles.guid = autofill_profile_emails.guid AND autofill_profiles.guid = autofill_profile_phones.guid";
+    private static final String WEBFORM_ADDRESS_QUERY = "SELECT first_name, middle_name, last_name, address_line_1, address_line_2, city, state, zipcode, country_code, number, email, date_modified "
+            + " FROM autofill_profiles, autofill_profile_names, autofill_profile_emails, autofill_profile_phones"
+            + " WHERE autofill_profiles.guid = autofill_profile_names.guid AND autofill_profiles.guid = autofill_profile_emails.guid AND autofill_profiles.guid = autofill_profile_phones.guid";
+
+    private static final String WEBFORM_ADDRESS_QUERY_V8X = "SELECT first_name, middle_name, last_name, full_name, street_address, city, state, zipcode, country_code, number, email, date_modified, use_date, use_count"
+            + " FROM autofill_profiles, autofill_profile_names, autofill_profile_emails, autofill_profile_phones"
+            + " WHERE autofill_profiles.guid = autofill_profile_names.guid AND autofill_profiles.guid = autofill_profile_emails.guid AND autofill_profiles.guid = autofill_profile_phones.guid";
     private static final String HISTORY_FILE_NAME = "History";
     private static final String BOOKMARK_FILE_NAME = "Bookmarks";
     private static final String COOKIE_FILE_NAME = "Cookies";
@@ -88,16 +87,15 @@ class Chromium extends Extract {
     private static final String WEB_DATA_FILE_NAME = "Web Data";
     private static final String UC_BROWSER_NAME = "UC Browser";
 
-    
     private final Logger logger = Logger.getLogger(this.getClass().getName());
     private Content dataSource;
     private IngestJobContext context;
 
-    private static final Map<String, String> BROWSERS_MAP = ImmutableMap.<String, String>builder()  
-            .put("Microsoft Edge", "Microsoft/Edge/User Data/Default") 
-            .put("Yandex", "YandexBrowser/User Data/Default") 
-            .put("Opera", "Opera Software/Opera Stable") 
-            .put("SalamWeb", "SalamWeb/User Data/Default") 
+    private static final Map<String, String> BROWSERS_MAP = ImmutableMap.<String, String>builder()
+            .put("Microsoft Edge", "Microsoft/Edge/User Data/Default")
+            .put("Yandex", "YandexBrowser/User Data/Default")
+            .put("Opera", "Opera Software/Opera Stable")
+            .put("SalamWeb", "SalamWeb/User Data/Default")
             .put("UC Browser", "UCBrowser/User Data%/Default")
             .put("Brave", "BraveSoftware/Brave-Browser/User Data/Default")
             .put("Google Chrome", "Chrome/User Data/Default")
@@ -116,8 +114,7 @@ class Chromium extends Extract {
         "Progress_Message_Chrome_AutoFill=Chrome Auto Fill Browser {0}",
         "# {0} - browserName",
         "Progress_Message_Chrome_Logins=Chrome Logins Browser {0}",
-        "Progress_Message_Chrome_Cache=Chrome Cache",
-    })
+        "Progress_Message_Chrome_Cache=Chrome Cache",})
 
     Chromium() {
         moduleName = NbBundle.getMessage(Chromium.class, "Chrome.moduleName");
@@ -128,7 +125,7 @@ class Chromium extends Extract {
         this.dataSource = dataSource;
         this.context = context;
         dataFound = false;
-        
+
         for (Map.Entry<String, String> browser : BROWSERS_MAP.entrySet()) {
             String browserName = browser.getKey();
             String browserLocation = browser.getValue();
@@ -168,11 +165,11 @@ class Chromium extends Extract {
                 return;
             }
         }
-        
+
         progressBar.progress(Bundle.Progress_Message_Chrome_Cache());
         ChromeCacheExtractor chromeCacheExtractor = new ChromeCacheExtractor(dataSource, context, progressBar);
         chromeCacheExtractor.processCaches();
-        
+
     }
 
     /**
@@ -270,8 +267,8 @@ class Chromium extends Extract {
             }
             dbFile.delete();
         }
-        
-        if( !bbartifacts.isEmpty() ){
+
+        if (!bbartifacts.isEmpty()) {
             postArtifacts(bbartifacts);
         }
     }
@@ -414,6 +411,7 @@ class Chromium extends Extract {
                 }
             }
             postArtifacts(bbartifacts);
+            bbartifacts.clear();
             dbFile.delete();
         }
     }
@@ -476,7 +474,7 @@ class Chromium extends Extract {
             }
 
             List<HashMap<String, Object>> tempList = this.dbConnect(temps, COOKIE_QUERY);
-            logger.log(Level.INFO, "{0}- Now getting cookies from {1} with {2}artifacts identified.", new Object[]{moduleName, temps, tempList.size()}); //NON-NLS
+            logger.log(Level.INFO, "{0}- Now getting cookies from {1} with {2} artifacts identified.", new Object[]{moduleName, temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
@@ -507,8 +505,8 @@ class Chromium extends Extract {
 
             dbFile.delete();
         }
-        
-        if( !bbartifacts.isEmpty() ) {
+
+        if (!bbartifacts.isEmpty()) {
             postArtifacts(bbartifacts);
         }
     }
@@ -542,11 +540,11 @@ class Chromium extends Extract {
         int j = 0;
         while (j < downloadFiles.size()) {
             AbstractFile downloadFile = downloadFiles.get(j++);
-            if ((downloadFile.getSize() == 0) || (downloadFile.getName().toLowerCase().contains("-slack")) 
-                    || (downloadFile.getName().toLowerCase().contains("cache"))  || (downloadFile.getName().toLowerCase().contains("index"))) {
+            if ((downloadFile.getSize() == 0) || (downloadFile.getName().toLowerCase().contains("-slack"))
+                    || (downloadFile.getName().toLowerCase().contains("cache")) || (downloadFile.getName().toLowerCase().contains("index"))) {
                 continue;
             }
-            
+
             String temps = RAImageIngestModule.getRATempPath(currentCase, browser) + File.separator + downloadFile.getName() + j + ".db"; //NON-NLS
             try {
                 ContentUtils.writeToFile(downloadFile, new File(temps), context::dataSourceIngestIsCancelled);
@@ -582,8 +580,8 @@ class Chromium extends Extract {
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                 String fullPath = result.get("full_path").toString(); //NON-NLS
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH,
-                        RecentActivityExtracterModuleFactory.getModuleName(), fullPath)); 
-                long pathID = Util.findID(dataSource, fullPath); 
+                        RecentActivityExtracterModuleFactory.getModuleName(), fullPath));
+                long pathID = Util.findID(dataSource, fullPath);
                 if (pathID != -1) {
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH_ID,
                             NbBundle.getMessage(this.getClass(),
@@ -611,7 +609,7 @@ class Chromium extends Extract {
 
                     // find the downloaded file and create a TSK_ASSOCIATED_OBJECT for it, associating it with the TSK_WEB_DOWNLOAD artifact.
                     try {
-                         String normalizedFullPath = FilenameUtils.normalize(fullPath, true);
+                        String normalizedFullPath = FilenameUtils.normalize(fullPath, true);
                         for (AbstractFile downloadedFile : fileManager.findFiles(dataSource, FilenameUtils.getName(normalizedFullPath), FilenameUtils.getPath(normalizedFullPath))) {
                             BlackboardArtifact associatedObjectArtifact = downloadedFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT);
                             associatedObjectArtifact.addAttribute(
@@ -629,8 +627,8 @@ class Chromium extends Extract {
 
             dbFile.delete();
         }
-        
-        if( !bbartifacts.isEmpty() ) {
+
+        if (!bbartifacts.isEmpty()) {
             postArtifacts(bbartifacts);
         }
     }
@@ -639,7 +637,7 @@ class Chromium extends Extract {
      * Gets user logins from Login Data sqlite database
      */
     private void getLogins(String browser, String browserLocation) {
-        
+
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> loginDataFiles;
         String loginDataFileName = LOGIN_DATA_FILE_NAME;
@@ -660,7 +658,7 @@ class Chromium extends Extract {
             logger.log(Level.INFO, "Didn't find any Chrome Login Data files."); //NON-NLS
             return;
         }
-        
+
         dataFound = true;
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         int j = 0;
@@ -694,28 +692,31 @@ class Chromium extends Extract {
             logger.log(Level.INFO, "{0}- Now getting login information from {1} with {2}artifacts identified.", new Object[]{moduleName, temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
-                
+
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
                         RecentActivityExtracterModuleFactory.getModuleName(),
                         ((result.get("origin_url").toString() != null) ? result.get("origin_url").toString() : ""))); //NON-NLS
-                
-                
+
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
                         RecentActivityExtracterModuleFactory.getModuleName(),
                         (Long.valueOf(result.get("date_created").toString()) / 1000000) - Long.valueOf("11644473600"))); //NON-NLS
-               
+
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED,
                         RecentActivityExtracterModuleFactory.getModuleName(),
                         (NetworkUtils.extractDomain((result.get("origin_url").toString() != null) ? result.get("origin_url").toString() : "")))); //NON-NLS
-                
+
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME,
                         RecentActivityExtracterModuleFactory.getModuleName(),
                         ((result.get("username_value").toString() != null) ? result.get("username_value").toString().replaceAll("'", "''") : ""))); //NON-NLS
-                
+
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_REALM,
+                        RecentActivityExtracterModuleFactory.getModuleName(),
+                        ((result.get("signon_realm") != null && result.get("signon_realm").toString() != null) ? result.get("signon_realm").toString() : ""))); //NON-NLS
+
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
                         RecentActivityExtracterModuleFactory.getModuleName(),
-                        ((result.get("signon_realm").toString() != null) ? result.get("signon_realm").toString() : ""))); //NON-NLS
-                        
+                        result.containsKey("signon_realm") ? NetworkUtils.extractDomain(result.get("signon_realm").toString()) : "")); //NON-NLS
+
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
                         RecentActivityExtracterModuleFactory.getModuleName(), browser));
 
@@ -727,18 +728,18 @@ class Chromium extends Extract {
 
             dbFile.delete();
         }
-        
-        if( !bbartifacts.isEmpty() ) {
+
+        if (!bbartifacts.isEmpty()) {
             postArtifacts(bbartifacts);
         }
     }
-    
+
     /**
-     * Gets and parses Autofill data from 'Web Data' database, 
-     * and creates TSK_WEB_FORM_AUTOFILL, TSK_WEB_FORM_ADDRESS artifacts
+     * Gets and parses Autofill data from 'Web Data' database, and creates
+     * TSK_WEB_FORM_AUTOFILL, TSK_WEB_FORM_ADDRESS artifacts
      */
     private void getAutofill(String browser, String browserLocation) {
-        
+
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> webDataFiles;
         String webDataFileName = WEB_DATA_FILE_NAME;
@@ -759,7 +760,7 @@ class Chromium extends Extract {
             logger.log(Level.INFO, "Didn't find any Chrome Web Data files."); //NON-NLS
             return;
         }
-        
+
         dataFound = true;
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         int j = 0;
@@ -789,10 +790,10 @@ class Chromium extends Extract {
                 dbFile.delete();
                 break;
             }
-            
+
             // The DB schema is little different in schema version 8x vs older versions
             boolean isSchemaV8X = Util.checkColumn("date_created", "autofill", tempFilePath);
-                   
+
             // get form autofill artifacts
             bbartifacts.addAll(getFormAutofillArtifacts(webDataFile, tempFilePath, isSchemaV8X, browser));
             try {
@@ -802,31 +803,32 @@ class Chromium extends Extract {
                 logger.log(Level.SEVERE, String.format("Error adding artifacts to the case database "
                         + "for chrome file %s [objId=%d]", webDataFile.getName(), webDataFile.getId()), ex);
             }
-            
+
             dbFile.delete();
         }
-        
-        if( !bbartifacts.isEmpty() ){
+
+        if (!bbartifacts.isEmpty()) {
             postArtifacts(bbartifacts);
         }
     }
-    
+
     /**
      * Extracts and returns autofill artifacts from the given database file
-     * 
+     *
      * @param webDataFile - the database file in the data source
-     * @param dbFilePath - path to a temporary file where the DB file is extracted 
+     * @param dbFilePath - path to a temporary file where the DB file is
+     * extracted
      * @param isSchemaV8X - indicates of the DB schema version is 8X or greater
-     * 
+     *
      * @return collection of TSK_WEB_FORM_AUTOFILL artifacts
      */
-    private Collection<BlackboardArtifact> getFormAutofillArtifacts (AbstractFile webDataFile, String dbFilePath , boolean isSchemaV8X, String browser ) {
-        
+    private Collection<BlackboardArtifact> getFormAutofillArtifacts(AbstractFile webDataFile, String dbFilePath, boolean isSchemaV8X, String browser) {
+
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
-         
+
         // The DB Schema is little different in version 8x vs older versions
-        String autoFillquery = (isSchemaV8X) ? AUTOFILL_QUERY_V8X  
-                                             : AUTOFILL_QUERY;
+        String autoFillquery = (isSchemaV8X) ? AUTOFILL_QUERY_V8X
+                : AUTOFILL_QUERY;
 
         List<HashMap<String, Object>> autofills = this.dbConnect(dbFilePath, autoFillquery);
         logger.log(Level.INFO, "{0}- Now getting Autofill information from {1} with {2}artifacts identified.", new Object[]{moduleName, dbFilePath, autofills.size()}); //NON-NLS
@@ -850,12 +852,12 @@ class Chromium extends Extract {
                     RecentActivityExtracterModuleFactory.getModuleName(),
                     Long.valueOf(result.get("date_created").toString()))); //NON-NLS
 
-             // get schema version specific attributes
+            // get schema version specific attributes
             if (isSchemaV8X) {
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
-                    RecentActivityExtracterModuleFactory.getModuleName(),
-                    Long.valueOf(result.get("date_last_used").toString()))); //NON-NLS
-            }            
+                        RecentActivityExtracterModuleFactory.getModuleName(),
+                        Long.valueOf(result.get("date_last_used").toString()))); //NON-NLS
+            }
 
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
                     RecentActivityExtracterModuleFactory.getModuleName(), browser));
@@ -870,29 +872,31 @@ class Chromium extends Extract {
         // return all extracted artifacts
         return bbartifacts;
     }
-    
+
     /**
-     * Extracts and returns autofill form address artifacts from the given database file
-     * 
+     * Extracts and returns autofill form address artifacts from the given
+     * database file
+     *
      * @param webDataFile - the database file in the data source
-     * @param dbFilePath - path to a temporary file where the DB file is extracted 
+     * @param dbFilePath - path to a temporary file where the DB file is
+     * extracted
      * @param isSchemaV8X - indicates of the DB schema version is 8X or greater
-     * 
+     *
      * @return collection of TSK_WEB_FORM_ADDRESS artifacts
      */
-    private void getFormAddressArtifacts (AbstractFile webDataFile, String dbFilePath , boolean isSchemaV8X ) throws NoCurrentCaseException, 
+    private void getFormAddressArtifacts(AbstractFile webDataFile, String dbFilePath, boolean isSchemaV8X) throws NoCurrentCaseException,
             TskCoreException, Blackboard.BlackboardException {
-        
-        String webformAddressQuery = (isSchemaV8X) ? WEBFORM_ADDRESS_QUERY_V8X 
-                                                    : WEBFORM_ADDRESS_QUERY;
-           
+
+        String webformAddressQuery = (isSchemaV8X) ? WEBFORM_ADDRESS_QUERY_V8X
+                : WEBFORM_ADDRESS_QUERY;
+
         // Helper to create web form address artifacts.
         WebBrowserArtifactsHelper helper = new WebBrowserArtifactsHelper(
                 Case.getCurrentCaseThrows().getSleuthkitCase(),
                 NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
                 webDataFile
         );
-        
+
         // Get Web form addresses
         List<HashMap<String, Object>> addresses = this.dbConnect(dbFilePath, webformAddressQuery);
         logger.log(Level.INFO, "{0}- Now getting Web form addresses from {1} with {2}artifacts identified.", new Object[]{moduleName, dbFilePath, addresses.size()}); //NON-NLS
@@ -907,7 +911,7 @@ class Chromium extends Extract {
             String email_Addr = result.get("email").toString() != null ? result.get("email").toString() : "";
             String phone_number = result.get("number").toString() != null ? result.get("number").toString() : "";
 
-             // Get the address fields
+            // Get the address fields
             String city = result.get("city").toString() != null ? result.get("city").toString() : "";
             String state = result.get("state").toString() != null ? result.get("state").toString() : "";
             String zipcode = result.get("zipcode").toString() != null ? result.get("zipcode").toString() : "";
@@ -917,7 +921,7 @@ class Chromium extends Extract {
             String full_name = "";
             String street_address = "";
             long date_modified = 0;
-            int  use_count = 0;
+            int use_count = 0;
             long use_date = 0;
 
             if (isSchemaV8X) {
@@ -925,9 +929,9 @@ class Chromium extends Extract {
                 street_address = result.get("street_address").toString() != null ? result.get("street_address").toString() : "";
                 date_modified = result.get("date_modified").toString() != null ? Long.valueOf(result.get("date_modified").toString()) : 0;
                 use_count = result.get("use_count").toString() != null ? Integer.valueOf(result.get("use_count").toString()) : 0;
-                use_date = result.get("use_date").toString() != null ? Long.valueOf(result.get("use_date").toString()) : 0;   
+                use_date = result.get("use_date").toString() != null ? Long.valueOf(result.get("use_date").toString()) : 0;
             } else {
-                String address_line_1 = result.get("address_line_1").toString() != null ? result.get("street_address").toString() : ""; 
+                String address_line_1 = result.get("address_line_1").toString() != null ? result.get("street_address").toString() : "";
                 String address_line_2 = result.get("address_line_2").toString() != null ? result.get("address_line_2").toString() : "";
                 street_address = String.join(" ", address_line_1, address_line_2);
             }
@@ -942,17 +946,17 @@ class Chromium extends Extract {
             List<BlackboardAttribute> otherAttributes = new ArrayList<>();
             if (date_modified > 0) {
                 otherAttributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_MODIFIED,
-                    RecentActivityExtracterModuleFactory.getModuleName(),
-                    date_modified)); //NON-NLS
+                        RecentActivityExtracterModuleFactory.getModuleName(),
+                        date_modified)); //NON-NLS
             }
-            
+
             helper.addWebFormAddress(
-                    full_name, email_Addr, phone_number, 
-                    locationAddress, 0, use_date, 
+                    full_name, email_Addr, phone_number,
+                    locationAddress, 0, use_date,
                     use_count, otherAttributes);
         }
     }
-       
+
     private boolean isChromePreVersion30(String temps) {
         String query = "PRAGMA table_info(downloads)"; //NON-NLS
         List<HashMap<String, Object>> columns = this.dbConnect(temps, query);

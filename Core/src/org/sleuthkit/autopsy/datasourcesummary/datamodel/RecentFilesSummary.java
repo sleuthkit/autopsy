@@ -130,7 +130,7 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
         if (StringUtils.isBlank(path) || lastOpened == null || lastOpened == 0) {
             return null;
         } else {
-            return new RecentFileDetails(path, lastOpened);
+            return new RecentFileDetails(artifact, path, lastOpened);
         }
     }
 
@@ -179,7 +179,7 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
         if (StringUtils.isBlank(path) || accessedTime == null || accessedTime == 0) {
             return null;
         } else {
-            return new RecentDownloadDetails(path, accessedTime, domain);
+            return new RecentDownloadDetails(artifact, path, accessedTime, domain);
         }
     }
 
@@ -298,7 +298,7 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
         if (date == null || date == 0 || StringUtils.isBlank(path)) {
             return null;
         } else {
-            return new RecentAttachmentDetails(path, date, sender);
+            return new RecentAttachmentDetails(messageArtifact, path, date, sender);
         }
     }
 
@@ -324,14 +324,17 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
 
         private final String path;
         private final long date;
+        private final BlackboardArtifact artifact;
 
         /**
          * Constructor for files with just a path and date.
          *
+         * @param artifact The relevant artifact.
          * @param path File path.
          * @param date File access date\time in seconds with java epoch
          */
-        RecentFileDetails(String path, long date) {
+        RecentFileDetails(BlackboardArtifact artifact, String path, long date) {
+            this.artifact = artifact;
             this.path = path;
             this.date = date;
         }
@@ -364,6 +367,12 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
             return path;
         }
 
+        /**
+         * @return The pertinent artifact for this recent file hit.
+         */
+        public BlackboardArtifact getArtifact() {
+            return artifact;
+        }
     }
 
     /**
@@ -376,12 +385,13 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
         /**
          * Constructor for files with just a path and date.
          *
+         * @param artifact The relevant artifact.
          * @param path File path.
          * @param date File access date\time in seconds with java epoch.
          * @param webDomain The webdomain from which the file was downloaded.
          */
-        RecentDownloadDetails(String path, long date, String webDomain) {
-            super(path, date);
+        RecentDownloadDetails(BlackboardArtifact artifact, String path, long date, String webDomain) {
+            super(artifact, path, date);
             this.webDomain = webDomain;
         }
 
@@ -407,13 +417,14 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
          * Constructor for recent download files which have a path, date and
          * domain value.
          *
+         * @param artifact The relevant artifact.
          * @param path File path.
          * @param date File crtime.
          * @param sender The sender of the message from which the file was
          * attached.
          */
-        RecentAttachmentDetails(String path, long date, String sender) {
-            super(path, date);
+        RecentAttachmentDetails(BlackboardArtifact artifact, String path, long date, String sender) {
+            super(artifact, path, date);
             this.sender = sender;
         }
 
