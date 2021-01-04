@@ -62,7 +62,7 @@ import org.sleuthkit.autopsy.events.AutopsyEvent;
  * accordingly
  */
 @Messages({"caseeventlistener.evidencetag=Evidence"})
-final class CaseEventListener implements PropertyChangeListener {
+public final class CaseEventListener implements PropertyChangeListener {
 
     private static final Logger LOGGER = Logger.getLogger(CaseEventListener.class.getName());
     private final ExecutorService jobProcessingExecutor;
@@ -77,11 +77,11 @@ final class CaseEventListener implements PropertyChangeListener {
             Case.Events.CURRENT_CASE,
             Case.Events.DATA_SOURCE_NAME_CHANGED);
 
-    CaseEventListener() {
+    public CaseEventListener() {
         jobProcessingExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat(CASE_EVENT_THREAD_NAME).build());
     }
 
-    void shutdown() {
+    public void shutdown() {
         ThreadUtils.shutDownTaskExecutor(jobProcessingExecutor);
     }
 
@@ -136,14 +136,14 @@ final class CaseEventListener implements PropertyChangeListener {
     /*
      * Add all of our Case Event Listeners to the case.
      */
-    void installListeners() {
+    public void installListeners() {
         Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, this);
     }
 
     /*
      * Remove all of our Case Event Listeners from the case.
      */
-    void uninstallListeners() {
+    public void uninstallListeners() {
         Case.removeEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, this);
     }
 

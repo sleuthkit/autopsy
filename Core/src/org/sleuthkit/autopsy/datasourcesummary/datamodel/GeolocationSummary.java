@@ -242,14 +242,14 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
      * the event where either time is null.
      *
      * @param minTime The minimum time. If null is provided, this function will
-     * return true.
+     * return false.
      * @param time The time to check. If null is provided and the min time is
      * non-null, then this function will return false.
-     * @return If minTime == null then true. If minTime != null && time == null
+     * @return If minTime == null then false. If minTime != null && time == null
      * then false. Otherwise time >= minTime.
      */
     private boolean greaterThanOrEqual(Long minTime, Long time) {
-        if ((minTime == null) || (time != null && time >= minTime)) {
+        if (minTime != null && time != null && time >= minTime) {
             return true;
         } else {
             return false;
