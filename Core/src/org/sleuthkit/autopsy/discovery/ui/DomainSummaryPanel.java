@@ -32,6 +32,7 @@ import javax.swing.ListCellRenderer;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import org.sleuthkit.autopsy.discovery.search.SearchData;
 
 /**
  * Class which displays a preview and details about a domain.
@@ -149,17 +150,25 @@ class DomainSummaryPanel extends javax.swing.JPanel implements ListCellRenderer<
         "DomainSummaryPanel.pages.text=Page views in past 60 days: ",
         "DomainSummaryPanel.totalPages.text=Total page views: ",
         "DomainSummaryPanel.downloads.text=Files downloaded: ",
-        "DomainSummaryPanel.notability.text=Domain notability: ",
+        "DomainSummaryPanel.notability.text=Previously tagged as notable: ",
         "DomainSummaryPanel.unknown.text=User role: Unknown",
         "DomainSummaryPanel.known.text=User role: Known account type(s)",
-        "DomainSummaryPanel.loadingImages.text=Loading thumbnail..."})
+        "DomainSummaryPanel.loadingImages.text=Loading thumbnail...",
+        "DomainSummaryPanel.no.text=No",
+        "DomainSummaryPanel.yes.text=Yes"})
     @Override
     public Component getListCellRendererComponent(JList<? extends DomainWrapper> list, DomainWrapper value, int index, boolean isSelected, boolean cellHasFocus) {
         domainNameLabel.setText(value.getResultDomain().getDomain());
         TimeZone timeZone = ContentUtils.getTimeZone(value.getResultDomain().getDataSource());
         String startDate = formatDate(value.getResultDomain().getActivityStart(), timeZone);
         String endDate = formatDate(value.getResultDomain().getActivityEnd(), timeZone);
-        domainNotabilityLabel.setText(Bundle.DomainSummaryPanel_notability_text() + value.getResultDomain().getPreviouslyNotableInCR().toString());
+        String notability = Bundle.DomainSummaryPanel_notability_text();
+        if (value.getResultDomain().getPreviouslyNotableInCR() == SearchData.PreviouslyNotable.PREVIOUSLY_NOTABLE) {
+            notability += Bundle.DomainSummaryPanel_yes_text();
+        } else {
+            notability += Bundle.DomainSummaryPanel_no_text();
+        }
+        domainNotabilityLabel.setText(notability);
         activityLabel.setText(Bundle.DomainSummaryPanel_activity_text(startDate, endDate));
         totalVisitsLabel.setText(Bundle.DomainSummaryPanel_totalPages_text() + value.getResultDomain().getTotalPageViews());
         pagesLabel.setText(Bundle.DomainSummaryPanel_pages_text() + value.getResultDomain().getPageViewsInLast60Days());
