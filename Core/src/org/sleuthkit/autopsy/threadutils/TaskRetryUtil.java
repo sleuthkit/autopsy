@@ -86,7 +86,7 @@ public class TaskRetryUtil {
             }
             this.delay = delay;
             this.timeOut = 0L;
-            this.timeUnit = TimeUnit.SECONDS;
+            this.timeUnit = timeUnit;
         }
 
         /**
@@ -117,7 +117,7 @@ public class TaskRetryUtil {
 
         /**
          * Gets the optional delay before the task should be attempted, may be
-         * zero.
+         * zero. Call getTimeUnit() to get the time unit for the delay.
          *
          * @return The delay.
          */
@@ -126,7 +126,8 @@ public class TaskRetryUtil {
         }
 
         /**
-         * Gets the the optional timeout for the task attempt, may be zero.
+         * Gets the the optional timeout for the task attempt, may be zero. Call
+         * getTimeUnit() to get the time unit for the delay.
          *
          * @return The timeout.
          */
@@ -136,7 +137,7 @@ public class TaskRetryUtil {
 
         /**
          * Gets the time unit for the optional delay before the task should be
-         * attempted and the optional time out.
+         * attempted and/or the optional time out.
          *
          * @return The time unit.
          */
