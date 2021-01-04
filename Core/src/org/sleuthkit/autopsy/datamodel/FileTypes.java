@@ -36,6 +36,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AnalysisResult;
+import org.sleuthkit.datamodel.AnalysisResultAdded;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
@@ -389,7 +390,7 @@ public final class FileTypes implements AutopsyVisitableItem {
         }
 
         @Override
-        public AnalysisResult newAnalysisResult(BlackboardArtifact.Type artifactType, Score score, String conclusion, String configuration, String justification, Collection<BlackboardAttribute> attributesList) throws TskCoreException {
+        public AnalysisResultAdded newAnalysisResult(BlackboardArtifact.Type artifactType, Score score, String conclusion, String configuration, String justification, Collection<BlackboardAttribute> attributesList) throws TskCoreException {
             return content.newAnalysisResult(artifactType, score, conclusion, configuration, justification, attributesList);
         }
 
@@ -465,6 +466,11 @@ public final class FileTypes implements AutopsyVisitableItem {
         @Override
         public long getAllArtifactsCount() throws TskCoreException {
             return content.getAllArtifactsCount();
+        }
+
+        @Override
+        public Score getAggregateScore() throws TskCoreException {
+            return content.getAggregateScore();
         }
     }
 }
