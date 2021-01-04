@@ -173,7 +173,7 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
             try {
                 acquisitionDetailsTextArea.setText(selectedDataSource.getAcquisitionDetails());
             } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, "Unable to get aquisition details for selected data source", ex);
+                logger.log(Level.WARNING, "Unable to get acquisition details for selected data source", ex);
             }
 
             if (selectedDataSource instanceof Image) {

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015-2019 Basis Technology Corp.
+ * Copyright 2015-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -125,7 +125,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
                     // Try the StringsTextExtractor if Tika extractions fails.
                     TextExtractor stringsExtractor = TextExtractorFactory.getStringsExtractor(content, null);
                     Reader stringsExtractedTextReader = stringsExtractor.getReader();
-                    ingester.indexText(stringsExtractedTextReader, content.getId(), content.getName(), content, null);
+                    ingester.indexStrings(stringsExtractedTextReader, content.getId(), content.getName(), content, null);
                 } catch (Ingester.IngesterException | TextExtractor.InitReaderException ex1) {
                     throw new TskCoreException("Error indexing content", ex1);
                 }

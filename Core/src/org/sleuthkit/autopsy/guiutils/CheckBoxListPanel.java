@@ -19,9 +19,12 @@
 package org.sleuthkit.autopsy.guiutils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import javax.swing.DefaultListModel;
 import javax.swing.Icon;
 
@@ -51,27 +54,27 @@ public final class CheckBoxListPanel<T> extends javax.swing.JPanel {
      *
      * @param displayName display name for the checkbox
      * @param icon
-     * @param obj         Object that the checkbox represents
+     * @param obj Object that the checkbox represents
      */
     public void addElement(String displayName, Icon icon, T obj) {
         ObjectCheckBox<T> newCheckBox = new ObjectCheckBox<>(displayName, icon, true, obj);
-        
-        if(!model.contains(newCheckBox)) {
+
+        if (!model.contains(newCheckBox)) {
             model.addElement(newCheckBox);
         }
     }
-    
+
     /**
      * Remove all objects from the checkbox list.
      */
     public void clearList() {
         model.removeAllElements();
     }
-    
+
     public boolean isEmpty() {
         return model.isEmpty();
     }
-    
+
     @Override
     public void setEnabled(boolean enabled) {
         checkboxList.setEnabled(enabled);
@@ -97,6 +100,28 @@ public final class CheckBoxListPanel<T> extends javax.swing.JPanel {
         }
 
         return selectedElements;
+    }
+
+    /**
+     * Sets the selected items within the checkbox list panel.
+     *
+     * @param selected The items that should be selected. If the checkbox data
+     * is present in this list, it will be selected, otherwise it will be
+     * deselected.
+     */
+    public void setSelectedElements(List<T> selected) {
+        Set<T> toSelect = selected == null ? Collections.emptySet() : new HashSet<>(selected);
+        for (int i = 0; i < model.size(); i++) {
+            ObjectCheckBox<T> item = model.get(i);
+            boolean shouldBeSelected = toSelect.contains(item.getObject());
+            if (item.isChecked() != shouldBeSelected) {
+                item.setChecked(shouldBeSelected);
+                model.set(i, item);
+            }
+        }
+
+        checkboxList.repaint();
+        checkboxList.revalidate();
     }
 
     /**
@@ -211,8 +236,8 @@ public final class CheckBoxListPanel<T> extends javax.swing.JPanel {
     // End of variables declaration//GEN-END:variables
 
     /**
-     * Wrapper around T that implements CheckboxListItem 
-     * 
+     * Wrapper around T that implements CheckboxListItem
+     *
      * @param <T>
      */
     final class ObjectCheckBox<T> implements CheckBoxJList.CheckboxListItem {
@@ -226,7 +251,7 @@ public final class CheckBoxListPanel<T> extends javax.swing.JPanel {
 
         /**
          * Constructs a new ObjectCheckBox
-         * 
+         *
          * @param displayName String to show as the check box label
          * @param icon Icon to show before the check box (may be null)
          * @param initialState Sets the initial state of the check box
@@ -257,7 +282,7 @@ public final class CheckBoxListPanel<T> extends javax.swing.JPanel {
         public String getDisplayName() {
             return displayName;
         }
-        
+
         @Override
         public boolean hasIcon() {
             return icon != null;
@@ -270,8 +295,8 @@ public final class CheckBoxListPanel<T> extends javax.swing.JPanel {
 
         @Override
         public boolean equals(Object obj) {
-            if(obj instanceof ObjectCheckBox) {
-                return object.equals(((ObjectCheckBox)obj).object);
+            if (obj instanceof ObjectCheckBox) {
+                return object.equals(((ObjectCheckBox) obj).object);
             }
             return false;
         }
