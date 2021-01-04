@@ -145,11 +145,19 @@ public class GeolocationPanel extends BaseDataSourceSummaryPanel {
             return null;
         }
 
-        if (StringUtils.isBlank(record.getCountry())) {
-            return record.getCityName();
-        }
+        List<String> cityIdentifiers = Stream.of(record.getCityName(), record.getState(), record.getCountry())
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.toList());
 
-        return String.format("%s, %s", record.getCityName(), record.getCountry());
+        if (cityIdentifiers.size() == 1) {
+            return cityIdentifiers.get(0);
+        } else if (cityIdentifiers.size() == 2) {
+            return String.format("%s, %s", cityIdentifiers.get(0), cityIdentifiers.get(1));
+        } else if (cityIdentifiers.size() >= 3) {
+            return String.format("%s, %s; %s", cityIdentifiers.get(0), cityIdentifiers.get(1), cityIdentifiers.get(2));
+        }
+        
+        return null;
     }
 
     /**
