@@ -42,6 +42,7 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.AnalysisResult;
+import org.sleuthkit.datamodel.AnalysisResultAdded;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
@@ -528,7 +529,8 @@ public class HashDbIngestModule implements FileIngestModule {
 
             SleuthkitCase.CaseDbTransaction trans = this.skCase.beginTransaction();
             
-            AnalysisResult badFile = blackboard.newAnalysisResult(new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_HASHSET_HIT), abstractFile.getId(), abstractFile.getDataSourceObjectId(), new Score(Score.Significance.MEDIUM, Score.Confidence.HIGH), moduleName, comment, hashSetName, attributes, trans);
+            AnalysisResultAdded resultAdded = blackboard.newAnalysisResult(new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_HASHSET_HIT), abstractFile.getId(), abstractFile.getDataSourceObjectId(), new Score(Score.Significance.MEDIUM, Score.Confidence.HIGH), moduleName, comment, hashSetName, attributes, trans);
+            AnalysisResult badFile = resultAdded.getAnalysisResult();
             trans.commit();
 
             try {
