@@ -691,9 +691,9 @@ class SevenZipExtractor {
                 boolean localFileExists;
                 try {
                     if ((Boolean) inArchive.getProperty(inArchiveItemIndex, PropID.IS_FOLDER)) {
-                        localFileExists = this.findOrCreateDirectory(localFile);
+                        localFileExists = findOrCreateDirectory(localFile);
                     } else {
-                        localFileExists = this.findOrCreateEmptyFile(localFile);
+                        localFileExists = findOrCreateEmptyFile(localFile);
                     }
                 } catch (FileTaskFailedException | InterruptedException ex) {
                     localFileExists = false;
@@ -703,7 +703,7 @@ class SevenZipExtractor {
                 // skip the rest of this loop if we couldn't create the file
                 //continue will skip details from being added to the map
                 if (!localFileExists) {
-                    logger.log(Level.SEVERE, String.format("Skipping %s because it does not exist and could not be created", localFile.getAbsolutePath())); //NON-NLS
+                    logger.log(Level.SEVERE, String.format("Skipping %s because it could not be created", localFile.getAbsolutePath())); //NON-NLS
                     continue;
                 }
 
@@ -861,7 +861,8 @@ class SevenZipExtractor {
      */
     private boolean findOrCreateEmptyFile(File file) throws FileTaskFailedException, InterruptedException {
         if (!fileTaskExecutor.exists(file)) {
-            return fileTaskExecutor.mkdirs(file.getParentFile()) && fileTaskExecutor.createNewFile(file);
+            fileTaskExecutor.mkdirs(file.getParentFile());
+            return fileTaskExecutor.createNewFile(file);
         } else {
             return true;
         }
