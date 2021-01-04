@@ -171,7 +171,6 @@ CookieDetailsPanel.jLabel2.text=
 PreviouslyNotableFilterPanel.text_1=Include only previously notable domains
 KnownAccountTypeFilterPanel.text_1=Include only domains with a known account type
 LoadingPanel.detailsLabel.AccessibleContext.accessibleName=detailsLabel
-DomainSummaryPanel.userRoleLabel.text=
 VideoThumbnailPanel.bytes.text=bytes
 VideoThumbnailPanel.deleted.text=All instances of file are deleted.
 VideoThumbnailPanel.gigaBytes.text=GB
