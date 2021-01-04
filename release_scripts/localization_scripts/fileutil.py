@@ -24,6 +24,19 @@ def get_path_pieces(orig_path: str) -> Tuple[str, Union[str, None], Union[str, N
         return potential_parent_dir, filename, file_extension
 
 
+def get_joined_path(folder: str, file_name: str) -> str:
+    """
+    Gets a joined folder and filename.
+    Args:
+        folder: The folder.
+        file_name: The filename.
+
+    Returns: The joined string path.
+
+    """
+    return str(Path(folder) / Path(file_name))
+
+
 def get_new_path(orig_path: str, new_filename: str) -> str:
     """Obtains a new path.  This tries to determine if the provided path is a directory or filename (has an
     extension containing '.') then constructs the new path with the old parent directory and the new filename.
@@ -45,6 +58,9 @@ OMITTED_ADDITION = '-omitted'
 
 # For use with creating csv filenames for entries that have been deleted.
 DELETED_ADDITION = '-deleted'
+
+# For translations where
+FOUND_ADDITION = '-found'
 
 
 def get_filename_addition(orig_path: str, filename_addition: str) -> str:

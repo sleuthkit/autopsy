@@ -4,7 +4,7 @@ from typing import List, Iterable, Tuple
 import csv
 import os
 
-from fileutil import OMITTED_ADDITION, get_filename_addition, DELETED_ADDITION
+from fileutil import OMITTED_ADDITION, get_filename_addition, DELETED_ADDITION, FOUND_ADDITION
 from outputresult import OutputResult
 
 
@@ -69,3 +69,5 @@ def write_results_to_csv(results: OutputResult, output_path: str):
         records_to_csv(get_filename_addition(output_path, OMITTED_ADDITION), results.omitted)
     if results.deleted:
         records_to_csv(get_filename_addition(output_path, DELETED_ADDITION), results.deleted)
+    if results.found:
+        records_to_csv(get_filename_addition(output_path, FOUND_ADDITION), results.found)

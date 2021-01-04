@@ -41,6 +41,10 @@ def main():
                         help='Specify the path to the properties file containing key value pairs of language mapped to '
                              'the commit of when bundles for that language were most recently updated.')
 
+    parser.add_argument('-t', '--translation-dict', dest='translation_dict', type=bool, required=False, default=False,
+                        help='If this flag is specified, a dictionary mapping original prop key values to translated '
+                             'values.  If this flag is specified, it will ')
+
     parser.add_argument('-nt', '--no-translated-col', dest='no_translated_col', action='store_true', default=False,
                         required=False, help="Don't include a column for translation.")
 
