@@ -44,7 +44,7 @@ If this is your first module, then  you will need to make a NetBeans module. If 
 
 To make a NetBeans module:
 - Open the NetBeans IDE and go to File -> New Project.
-- From the list of categories, choose "NetBeans Modules" and then "Module" from the list of "Projects".  Click Next. 
+- From the list of categories on the left, choose "Java with Ant" and then "NetBeans Modules". Next select "Module" from the list of projects on the right and click Next. 
 - In the next panel of the wizard, give the module a name and directory. Select Standalone Module (the default is typically "Add to Suite") so that you build the module as an external module against Autopsy.  You will need to tell NetBeans about the Autopsy platform, so choose the "Manage" button.  Choose the "Add Platform" button and browse to the location of the platform discussed in the previous sections (as a reminder this will either be the location that you installed Autopsy into or where you opened up the ZIP file you created from source).  Click Next.
 - Finally, enter the code base name.  We use the same naming convention as used for naming packages (http://docs.oracle.com/javase/tutorial/java/package/namingpkgs.html).  Press Finish. 
 
