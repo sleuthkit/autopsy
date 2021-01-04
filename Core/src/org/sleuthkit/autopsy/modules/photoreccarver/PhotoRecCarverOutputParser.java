@@ -43,6 +43,7 @@ import org.sleuthkit.datamodel.TskFileRange;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
+import org.w3c.dom.Node;
 
 /**
  * This class parses the xml output from PhotoRec, and creates a list of entries
@@ -63,13 +64,12 @@ class PhotoRecCarverOutputParser {
      * database as $CarvedFiles under the passed-in parent id.
      *
      * @param xmlInputFile The XML file we are trying to read and parse
-     * @param id           The parent id of the unallocated space we are
-     *                     parsing.
-     * @param af           The AbstractFile representing the unallocated space
-     *                     we are parsing.
+     * @param id The parent id of the unallocated space we are parsing.
+     * @param af The AbstractFile representing the unallocated space we are
+     * parsing.
      *
      * @return A List<LayoutFile> containing all the files added into the
-     *         database
+     * database
      *
      * @throws FileNotFoundException
      * @throws IOException
@@ -126,30 +126,37 @@ class PhotoRecCarverOutputParser {
                 List<TskFileRange> tskRanges = new ArrayList<>();
                 for (int rangeIndex = 0; rangeIndex < fileRanges.getLength(); ++rangeIndex) {
 
-                    Long img_offset = Long.parseLong(((Element) fileRanges.item(rangeIndex)).getAttribute("img_offset")); //NON-NLS
-                    Long len = Long.parseLong(((Element) fileRanges.item(rangeIndex)).getAttribute("len")); //NON-NLS
+                    Long unallocFileOffset = null;
+                    Long len = null;
 
-                    // Verify PhotoRec's output
-                    long fileByteStart = af.convertToImgOffset(img_offset);
-                    if (fileByteStart == -1) {
-                        // This better never happen... Data for this file is corrupted. Skip it.
-                        logger.log(Level.INFO, "Error while parsing PhotoRec output for file {0}", fileName); //NON-NLS
-                        continue;
+                    // attempt to parse a range for a file.  on error, log.
+                    Node rangeNode = fileRanges.item(rangeIndex);
+                    if (rangeNode instanceof Element) {
+                        Element rangeElement = (Element) rangeNode;
+                        String imgOffsetStr = rangeElement.getAttribute("img_offset");
+                        String lenStr = rangeElement.getAttribute("len");
+
+                        try {
+                            unallocFileOffset = Long.parseLong(imgOffsetStr);
+                            len = Long.parseLong(lenStr);
+                        } catch (NumberFormatException ex) {
+                            logger.log(Level.SEVERE,
+                                    String.format("There was an error parsing ranges in %s with file index: %d and range index: %d.",
+                                            xmlInputFile.getPath(), fileIndex, rangeIndex), ex);
+                        }
+                    } else {
+                        logger.log(Level.SEVERE,
+                                String.format("Malformed node in %s with file index: %d and range index: %d.",
+                                        xmlInputFile.getPath(), fileIndex, rangeIndex));
                     }
-
-                    // check that carved file is within unalloc block
-                    long fileByteEnd = img_offset + len;
-                    if (fileByteEnd > af.getSize()) {
-                        long overshoot = fileByteEnd - af.getSize();
-                        if (fileSize > overshoot) {
-                            fileSize -= overshoot;
-                        } else {
-                            // This better never happen... Data for this file is corrupted. Skip it.
-                            continue;
+                    
+                    // if we have a valid file offset and length, get the ranges relative to the image for the carved file.
+                    if (unallocFileOffset != null && unallocFileOffset >= 0 && len != null && len > 0) {
+                        for (TskFileRange rangeToAdd : af.convertToImgRanges(unallocFileOffset, len)) {
+                            tskRanges.add(new TskFileRange(rangeToAdd.getByteStart(), rangeToAdd.getByteLen(), tskRanges.size()));
                         }
                     }
-
-                    tskRanges.add(new TskFileRange(fileByteStart, len, rangeIndex));
+                    
                 }
 
                 if (!tskRanges.isEmpty()) {
