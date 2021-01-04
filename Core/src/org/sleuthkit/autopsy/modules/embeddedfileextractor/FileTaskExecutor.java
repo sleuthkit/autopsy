@@ -112,8 +112,8 @@ class FileTaskExecutor {
         Callable<Boolean> task = () -> {
             return file.exists();
         };
-//        Callable<Boolean> task = new HangSimulationTestTask();
-//        Callable<Boolean> task = new FailureSimulationTestTask();
+//        Callable<Boolean> task = new HangSimulationTestTask(); /* Test */
+//        Callable<Boolean> task = new FailureSimulationTestTask(); /* Test */
         return attemptTask(task, String.format(FILE_EXISTS_TASK_DESC_FMT_STR, file.getPath()));
     }
 
@@ -150,11 +150,11 @@ class FileTaskExecutor {
      *                                 interrupted.
      */
     boolean createNewFile(final File file) throws FileTaskFailedException, InterruptedException {
-//        Callable<Boolean> task = () -> {
-//            return file.createNewFile();
-//        };
-//        Callable<Boolean> task = new HangSimulationTestTask();
-        Callable<Boolean> task = new FailureSimulationTestTask();
+        Callable<Boolean> task = () -> {
+            return file.createNewFile();
+        };
+//        Callable<Boolean> task = new HangSimulationTestTask(); /* Test */
+//        Callable<Boolean> task = new FailureSimulationTestTask(); /* Test */
         return attemptTask(task, String.format(NEW_FILE_TASK_DESC_FMT_STR, file.getPath()));
     }
 
@@ -172,14 +172,14 @@ class FileTaskExecutor {
      */
     private boolean attemptTask(Callable<Boolean> task, String taskDesc) throws FileTaskFailedException, InterruptedException {
         List<TaskRetryUtil.TaskAttempt> attempts = new ArrayList<>();
-//        attempts.add(new TaskRetryUtil.TaskAttempt(0L, 10L, TimeUnit.MINUTES));
-        attempts.add(new TaskRetryUtil.TaskAttempt(0L, 10L, TimeUnit.SECONDS)); /* Test */
-//        attempts.add(new TaskRetryUtil.TaskAttempt(5L, 10L, TimeUnit.MINUTES));
-        attempts.add(new TaskRetryUtil.TaskAttempt(5L, 10L, TimeUnit.SECONDS)); /* Test */
-//        attempts.add(new TaskRetryUtil.TaskAttempt(10L, 10L, TimeUnit.MINUTES));
-        attempts.add(new TaskRetryUtil.TaskAttempt(10L, 10L, TimeUnit.SECONDS)); /* Test */
-//        attempts.add(new TaskRetryUtil.TaskAttempt(15L, 10L, TimeUnit.MINUTES));
-        attempts.add(new TaskRetryUtil.TaskAttempt(15L, 10L, TimeUnit.SECONDS)); /* Test */
+        attempts.add(new TaskRetryUtil.TaskAttempt(0L, 10L, TimeUnit.MINUTES));
+//        attempts.add(new TaskRetryUtil.TaskAttempt(0L, 10L, TimeUnit.SECONDS)); /* Test */
+        attempts.add(new TaskRetryUtil.TaskAttempt(5L, 10L, TimeUnit.MINUTES));
+//        attempts.add(new TaskRetryUtil.TaskAttempt(5L, 10L, TimeUnit.SECONDS)); /* Test */
+        attempts.add(new TaskRetryUtil.TaskAttempt(10L, 10L, TimeUnit.MINUTES));
+//        attempts.add(new TaskRetryUtil.TaskAttempt(10L, 10L, TimeUnit.SECONDS)); /* Test */
+        attempts.add(new TaskRetryUtil.TaskAttempt(15L, 10L, TimeUnit.MINUTES));
+//        attempts.add(new TaskRetryUtil.TaskAttempt(15L, 10L, TimeUnit.SECONDS)); /* Test */
         Boolean success = TaskRetryUtil.attemptTask(task, attempts, executor, terminator, logger, taskDesc);
         if (success == null) {
             throw new FileTaskFailedException(taskDesc + " failed");
