@@ -1,8 +1,3 @@
-# {0} - PersonaAccount count
-AccountInstanceNode_Tooltip_suffix=(1 of {0})
-# {0} - Contact Name
-# {1} - Persona Name
-AccountInstanceNode_Tooltip_Template=Contact: {0} - Persona: {1}
 AccountNode.accountName=Account
 AccountNode.accountType=Type
 AccountNode.device=Device
