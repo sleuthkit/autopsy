@@ -860,7 +860,7 @@ final class ResultsPanel extends javax.swing.JPanel {
             DomainSearchThumbnailRequest request = new DomainSearchThumbnailRequest(
                     caseDb,
                     domainWrapper.getResultDomain().getDomain(),
-                    ImageUtils.ICON_SIZE_LARGE
+                    ImageUtils.ICON_SIZE_MEDIUM
             );
 
             Image thumbnail = domainSearch.getThumbnail(request);
