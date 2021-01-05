@@ -125,7 +125,7 @@ public class ExtractArchiveWithPasswordAction extends AbstractAction {
                     return false;
                 }
                 try {
-                    SevenZipExtractor extractor = new SevenZipExtractor(null, fileTypeDetector, moduleDirRelative, moduleDirAbsolute);
+                    SevenZipExtractor extractor = new SevenZipExtractor(null, fileTypeDetector, moduleDirRelative, moduleDirAbsolute, new FileTaskExecutor(null));
                     done = extractor.unpack(archive, new ConcurrentHashMap<>(), password);
                 } catch (SevenZipNativeInitializationException ex) {
                     IngestServices.getInstance().postMessage(IngestMessage.createWarningMessage(EmbeddedFileExtractorModuleFactory.getModuleName(), "Unable to extract file with password", password));
