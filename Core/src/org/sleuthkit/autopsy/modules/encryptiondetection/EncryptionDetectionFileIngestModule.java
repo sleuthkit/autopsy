@@ -322,9 +322,12 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
                     databaseBuilder.setChannel(memFileChannel);
                     databaseBuilder.setCodecProvider(codecProvider);
                     Database accessDatabase;
-                    try {
+                                        try {
                         accessDatabase = databaseBuilder.open();
-                    } catch (IOException | BufferUnderflowException | IndexOutOfBoundsException ignored) {
+                    } catch (Exception ex) { // Firewall, see JIRA-7097
+                        logger.log(Level.WARNING, String.format("Unexpected exception "
+                                + "trying to open msaccess database using Jackcess "
+                                + "(name: %s, id: %d)", file.getName(), file.getId()), ex);
                         return passwordProtected; 
                     }
                     /*
