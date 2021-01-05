@@ -225,7 +225,7 @@
     </FileName>
 
     <FileName filename="google play searches.tsv" description="Google Play Searches">
-        <ArtifactName artifactname="TSK_WEB_SEARCH" comment="Google Play Search">
+        <ArtifactName artifactname="TSK_WEB_SEARCH_QUERY" comment="Google Play Search">
             <AttributeName attributename="TSK_DATETIME_ACCESSED" columnName="Timestamp" required="yes" />
             <AttributeName attributename="TSK_PROG_NAME" columnName="Display" required="yes" />
             <AttributeName attributename="TSK_TEXT" columnName="query" required="yes" />
@@ -233,7 +233,7 @@
     </FileName>
 
     <FileName filename="google quick search box.tsv" description="Google quick search box">
-        <ArtifactName artifactname="TSK_WEB_SEARCH" comment="Google Quick Search Search">
+        <ArtifactName artifactname="TSK_WEB_SEARCH_QUERY" comment="Google Quick Search Search">
             <AttributeName attributename="TSK_DATETIME" columnName="File Timestamp" required="yes" />
             <AttributeName attributename="null" columnName="Type" required="no" />
             <AttributeName attributename="TSK_TEXT" columnName="Queries	Response" required="yes" />

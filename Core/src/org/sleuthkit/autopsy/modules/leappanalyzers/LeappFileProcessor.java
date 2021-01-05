@@ -30,7 +30,9 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import static java.util.Locale.US;
@@ -239,7 +241,6 @@ public final class LeappFileProcessor {
                     Collection<BlackboardAttribute> bbattributes = processReadLine(line, columnNumberToProcess, fileName);
                     if (artifactType == null) {
                         logger.log(Level.SEVERE, "Error trying to process Leapp output files in directory . "); //NON-NLS
-                        
                     }
                     if (!bbattributes.isEmpty() && !blkBoard.artifactExists(dataSource, BlackboardArtifact.ARTIFACT_TYPE.fromID(artifactType.getTypeID()), bbattributes)) {
                         BlackboardArtifact bbartifact = createArtifactWithAttributes(artifactType.getTypeID(), dataSource, bbattributes);
@@ -264,7 +265,17 @@ public final class LeappFileProcessor {
      * @return
      */
     private Collection<BlackboardAttribute> processReadLine(String line, Map<Integer, String> columnNumberToProcess, String fileName) throws IngestModuleException {
-        String[] columnValues = line.split("\\t");
+         
+        String[] columnValues;
+        
+        // Check to see if the 2 values are equal, they may not be equal if there is no corresponding data in the line.
+        // If this happens then adding an empty value(s) for each columnValue where data does not exist
+        Integer maxColumnNumber = Collections.max(columnNumberToProcess.keySet());
+        if (maxColumnNumber > line.split("\\t").length) {
+            columnValues = Arrays.copyOf(line.split("\\t"), maxColumnNumber + 1);
+        } else {
+            columnValues = line.split("\\t");
+        }
 
         Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
 
