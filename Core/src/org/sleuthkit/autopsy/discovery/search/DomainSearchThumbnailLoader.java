@@ -86,7 +86,7 @@ public class DomainSearchThumbnailLoader extends CacheLoader<DomainSearchThumbna
             // Push ICO to the back of the sorted collection, so that ICO
             // is a last resort matching type.
             if (isIco(file1) && isIco(file2)) {
-                return Long.compare(file1.getCrtime(), file2.getCrtime());
+                return Long.compare(file1.getSize(), file2.getSize());
             } else if (isIco(file1)) {
                 return 1;
             } else if (isIco(file2)) {
