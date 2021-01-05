@@ -112,8 +112,6 @@ class FileTaskExecutor {
         Callable<Boolean> task = () -> {
             return file.exists();
         };
-//        Callable<Boolean> task = new HangSimulationTestTask(); /* Test */
-//        Callable<Boolean> task = new FailureSimulationTestTask(); /* Test */
         return attemptTask(task, String.format(FILE_EXISTS_TASK_DESC_FMT_STR, file.getPath()));
     }
 
@@ -153,8 +151,6 @@ class FileTaskExecutor {
         Callable<Boolean> task = () -> {
             return file.createNewFile();
         };
-//        Callable<Boolean> task = new HangSimulationTestTask(); /* Test */
-//        Callable<Boolean> task = new FailureSimulationTestTask(); /* Test */
         return attemptTask(task, String.format(NEW_FILE_TASK_DESC_FMT_STR, file.getPath()));
     }
 
@@ -173,13 +169,9 @@ class FileTaskExecutor {
     private boolean attemptTask(Callable<Boolean> task, String taskDesc) throws FileTaskFailedException, InterruptedException {
         List<TaskRetryUtil.TaskAttempt> attempts = new ArrayList<>();
         attempts.add(new TaskRetryUtil.TaskAttempt(0L, 10L, TimeUnit.MINUTES));
-//        attempts.add(new TaskRetryUtil.TaskAttempt(0L, 10L, TimeUnit.SECONDS)); /* Test */
         attempts.add(new TaskRetryUtil.TaskAttempt(5L, 10L, TimeUnit.MINUTES));
-//        attempts.add(new TaskRetryUtil.TaskAttempt(5L, 10L, TimeUnit.SECONDS)); /* Test */
         attempts.add(new TaskRetryUtil.TaskAttempt(10L, 10L, TimeUnit.MINUTES));
-//        attempts.add(new TaskRetryUtil.TaskAttempt(10L, 10L, TimeUnit.SECONDS)); /* Test */
         attempts.add(new TaskRetryUtil.TaskAttempt(15L, 10L, TimeUnit.MINUTES));
-//        attempts.add(new TaskRetryUtil.TaskAttempt(15L, 10L, TimeUnit.SECONDS)); /* Test */
         Boolean success = TaskRetryUtil.attemptTask(task, attempts, executor, terminator, logger, taskDesc);
         if (success == null) {
             throw new FileTaskFailedException(taskDesc + " failed");
@@ -255,47 +247,6 @@ class FileTaskExecutor {
          */
         private FileTaskFailedException(String message, Throwable cause) {
             super(message, cause);
-        }
-    }
-
-    /**
-     * A test task that simulates the sort of hang reported in Jira-6735,
-     * although this task is responsive to cancellation via interrupt and can be
-     * cleaned up in a more deterministic fashion.
-     */
-    private static class HangSimulationTestTask implements Callable<Boolean> {
-
-        @Override
-        public Boolean call() throws Exception {
-            while (true) {
-                try {
-                    sleep();
-                } catch (InterruptedException ex) {
-                    return false;
-                }
-            }
-        }
-
-        /**
-         * Makes the executing thread sleep(). Called from call() to fool the
-         * IDE into not complaining about a sleep() in a loop.
-         *
-         * @throws InterruptedException Thrown if the sleep is interrupted.
-         */
-        private void sleep() throws InterruptedException {
-            java.lang.Thread.sleep(5000);
-        }
-
-    }
-
-    /**
-     * A test task that simulates task failure due to repeated exceptions.
-     */
-    private static class FailureSimulationTestTask implements Callable<Boolean> {
-
-        @Override
-        public Boolean call() throws Exception {
-            throw new IOException("This task always throws");
         }
     }
 
