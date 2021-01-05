@@ -195,6 +195,7 @@ class DataRows:
                  deleted_results: Union[List[List[str]], None] = None):
         """
         Creates a DataRows object.
+
         Args:
             results: The 2d list of strings representing cells.
             header: The header row if present.
@@ -208,6 +209,7 @@ class DataRows:
 def get_csv_rows(input_path: str, has_header: bool) -> DataRows:
     """
     Gets rows of a csv file in a DataRows format.
+
     Args:
         input_path: The input path of the file.
         has_header: Whether or not it has a header.
@@ -222,6 +224,7 @@ def get_csv_rows(input_path: str, has_header: bool) -> DataRows:
 def get_xlsx_rows(input_path: str, has_header: bool, results_sheet: str, deleted_sheet: str) -> DataRows:
     """
     Gets worksheets of an excel workbook in a DataRows format.
+
     Args:
         input_path: The input path of the file.
         has_header: Whether or not is has a header.
@@ -250,6 +253,7 @@ def get_prop_entries_from_data(datarows: DataRows, path_idx: int, key_idx: int, 
                                path_converter: Callable) -> List[PropEntry]:
     """
     Converts a DataRows object into PropEntry objects.
+
     Args:
         datarows: The DataRows object.
         path_idx: The index of the column containing the path.

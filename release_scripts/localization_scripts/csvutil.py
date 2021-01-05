@@ -4,7 +4,7 @@ from typing import List, Iterable, Tuple
 import csv
 import os
 
-from fileutil import OMITTED_ADDITION, get_filename_addition, DELETED_ADDITION, FOUND_ADDITION
+from fileutil import get_filename_addition
 from outputresult import OutputResult
 
 
@@ -52,6 +52,16 @@ def csv_to_records(input_path: str, header_row: bool) -> Tuple[List[List[str]], 
             raise Exception("There was an error parsing csv {path}".format(path=input_path), e)
 
         return results, header
+
+
+# For use with creating csv filenames for entries that have been omitted.
+OMITTED_ADDITION = '-omitted'
+
+# For use with creating csv filenames for entries that have been deleted.
+DELETED_ADDITION = '-deleted'
+
+# For translations where
+FOUND_ADDITION = '-found'
 
 
 def write_results_to_csv(results: OutputResult, output_path: str):

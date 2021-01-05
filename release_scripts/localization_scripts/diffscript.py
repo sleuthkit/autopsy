@@ -5,12 +5,14 @@ As a consequence, it also requires git >= 1.7.0 and python >= 3.4.
 import sys
 from envutil import get_proj_dir
 from excelutil import write_results_to_xlsx
-from gitutil import get_property_files_diff, get_git_root, get_commit_id
+from gitutil import get_property_files_diff, get_git_root, get_commit_id, get_tree
 from itemchange import convert_to_output
 from csvutil import write_results_to_csv
 import argparse
 from langpropsutil import get_commit_for_language, LANG_FILENAME
 from outputtype import OutputType
+from languagedictutil import extract_translations
+from propsutil import get_lang_bundle_name, DEFAULT_PROPS_FILENAME
 
 
 def main():
@@ -41,7 +43,7 @@ def main():
                         help='Specify the path to the properties file containing key value pairs of language mapped to '
                              'the commit of when bundles for that language were most recently updated.')
 
-    parser.add_argument('-t', '--translation-dict', dest='translation_dict', type=bool, required=False, default=False,
+    parser.add_argument('-td', '--translation-dict', dest='translation_dict', type=bool, required=False, default=False,
                         help='If this flag is specified, a dictionary mapping original prop key values to translated '
                              'values.  If this flag is specified, it will ')
 
@@ -55,7 +57,7 @@ def main():
     output_type = args.output_type
     show_translated_col = not args.no_translated_col
     language_updates_file = args.language_file
-
+    use_translation_dict = args.translation_dict
     lang = args.language
     if lang is not None:
         commit_1_id = get_commit_for_language(lang, language_updates_file)
@@ -66,6 +68,13 @@ def main():
         parser.print_help(sys.stderr)
         sys.exit(1)
 
+    translation_dict = None
+    if use_translation_dict and lang:
+        translation_dict = extract_translations(
+            file_iter=get_tree(repo_path, commit_1_id),
+            orig_filename=DEFAULT_PROPS_FILENAME,
+            translated_filename=get_lang_bundle_name(lang))
+
     commit_2_id = args.commit_2_id
     show_commits = not args.no_commits
 
@@ -73,6 +82,7 @@ def main():
     processing_result = convert_to_output(changes,
                                           commit1_id=get_commit_id(repo_path, commit_1_id) if show_commits else None,
                                           commit2_id=get_commit_id(repo_path, commit_2_id) if show_commits else None,
+                                          translation_dict=translation_dict,
                                           show_translated_col=show_translated_col,
                                           separate_deleted=True)
 

@@ -58,6 +58,7 @@ class ItemChange:
 
     def get_row(self, show_translated_col: bool) -> List[str]:
         """Returns the list of values to be entered as a row in csv serialization.
+
         Args:
             show_translated_col (bool): Whether or not the translated columns are showing; otherwise use default.
 
@@ -92,6 +93,7 @@ def convert_to_output(items: Iterator[ItemChange],
                       separate_deleted: bool = True) -> OutputResult:
     """
     Converts PropEntry objects to an output result to be written to a tabular datasource.
+
     Args:
         items: The PropEntry items.
         commit1_id: The first commit id to be shown in the header or None.

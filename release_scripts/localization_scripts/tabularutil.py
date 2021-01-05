@@ -32,6 +32,7 @@ def create_output_result(row_header: List[str], results: List[List[str]],
 
     """
     Creates OutputResult from components.
+
     Args:
         row_header: The row header.
         results: The results.
@@ -47,4 +48,9 @@ def create_output_result(row_header: List[str], results: List[List[str]],
     deleted_result = [row_header] + deleted if deleted else None
     found_result = [row_header] + found_translation if found_translation else None
 
-    return OutputResult([row_header] + results, omitted_result, deleted_result, style)
+    return OutputResult(
+        results=[row_header] + results,
+        omitted=omitted_result,
+        deleted=deleted_result,
+        found=found_result,
+        style=style)

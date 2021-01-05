@@ -5,8 +5,10 @@ from jproperties import Properties
 import os
 
 # The default extension for property files in autopsy repo
-
 DEFAULT_PROPS_EXTENSION = 'properties-MERGED'
+
+# The default filename for property files in autopsy repo
+DEFAULT_PROPS_FILENAME = 'Bundle.{ext}'.format(ext=DEFAULT_PROPS_EXTENSION)
 
 
 def get_lang_bundle_name(language: str) -> str:
@@ -43,6 +45,7 @@ def get_entry_dict_from_path(props_path: str) -> Union[Dict[str, str], None]:
     """
     Retrieves a dictionary mapping the properties represented in the string or None if no properties file can be found
     at that path.
+
     Args:
         props_path: The path to the properties file.
 

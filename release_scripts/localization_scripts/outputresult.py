@@ -25,6 +25,7 @@ class OutputResult:
                  style: Union[List[ColumnStyle], None] = None, freeze_first_row: bool = True):
         """
         Constructs a ProcessingResult.
+
         Args:
             results: Items to be written as results.  Data will be written such that the item at row,cell will be
             located within result at results[row][col].
