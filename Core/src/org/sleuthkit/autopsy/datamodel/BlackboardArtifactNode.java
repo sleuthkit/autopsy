@@ -40,6 +40,7 @@ import javax.swing.Action;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.nodes.Sheet;
+import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.WeakListeners;
@@ -137,6 +138,10 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      * artifact the node represents.
      */
     private List<NodeProperty<? extends Object>> customProperties;
+
+    void setSrcContent(Content srcContent) {
+        this.srcContent = srcContent;
+    }
 
     private final PropertyChangeListener listener = new PropertyChangeListener() {
         @Override
@@ -236,24 +241,24 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     public BlackboardArtifactNode(BlackboardArtifact artifact, String iconPath) {
         super(artifact, createLookup(artifact));
         this.artifact = artifact;
-        for (Content lookupContent : this.getLookup().lookupAll(Content.class)) {
-            if ((lookupContent != null) && (!(lookupContent instanceof BlackboardArtifact))) {
-                srcContent = lookupContent;
-                try {
-                    /*
-                     * Calling this getter causes the unique path of the source
-                     * content to be cached in the Content object. This is
-                     * advantageous as long as this node is constructed in a
-                     * background thread instead of a UI thread.
-                     */
-                    srcContent.getUniquePath();
-                } catch (TskCoreException ex) {
-                    logger.log(Level.WARNING, MessageFormat.format("Error getting the unique path of the source content (artifact objID={0})", artifact.getId()), ex);
-                }
-                break;
-            }
+        try {
+            srcContent = artifact.getParent();
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, MessageFormat.format("Error getting the parent of the artifact for (artifact objID={0})", artifact.getId()), ex);
         }
-        if (srcContent == null) {
+        if (srcContent != null) {
+            try {
+                /*
+                 * Calling this getter causes the unique path of the source
+                 * content to be cached in the Content object. This is
+                 * advantageous as long as this node is constructed in a
+                 * background thread instead of a UI thread.
+                 */
+                srcContent.getUniquePath();
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, MessageFormat.format("Error getting the unique path of the source content (artifact objID={0})", artifact.getId()), ex);
+            }
+        } else {
             throw new IllegalArgumentException(MessageFormat.format("Artifact missing source content (artifact objID={0})", artifact));
         }
         setName(Long.toString(artifact.getArtifactID()));
@@ -288,8 +293,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         try {
             if (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID() || artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID()) {
                 content = getPathIdFile(artifact);
-            }
-            if (content == null) {
+            } else {
                 content = contentCache.get(objectID, () -> artifact.getSleuthkitCase().getContentById(objectID));
             }
         } catch (ExecutionException ex) {
@@ -982,7 +986,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                     }
                     map.put(attribute.getAttributeType().getDisplayName(), value);
                 } else {
-                    switch(attribute.getAttributeType().getValueType()) {
+                    switch (attribute.getAttributeType().getValueType()) {
                         case INTEGER:
                             map.put(attribute.getAttributeType().getDisplayName(), attribute.getValueInt());
                             break;
@@ -990,13 +994,13 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                             map.put(attribute.getAttributeType().getDisplayName(), attribute.getValueDouble());
                             break;
                         case LONG:
-                            map.put(attribute.getAttributeType().getDisplayName(), attribute.getValueLong());    
+                            map.put(attribute.getAttributeType().getDisplayName(), attribute.getValueLong());
                             break;
                         default:
-                            map.put(attribute.getAttributeType().getDisplayName(), attribute.getDisplayString()); 
-                                
+                            map.put(attribute.getAttributeType().getDisplayName(), attribute.getDisplayString());
+
                     }
-                    
+
                 }
             }
         } catch (TskCoreException ex) {
