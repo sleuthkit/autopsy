@@ -21,3 +21,6 @@ YaraRuleSetOptionPanel_badName_msg=Rule set name {0} already exists.\nRule set n
 YaraRuleSetOptionPanel_badName_title=Create Rule Set
 YaraRuleSetOptionPanel_new_rule_set_name_msg=Supply a new unique rule set name:
 YaraRuleSetOptionPanel_new_rule_set_name_title=Rule Set Name
+# {0} - rule set name
+YaraRuleSetOptionPanel_RuleSet_Missing=The folder for the selected YARA rule set {0}, no longer exists.
+YaraRuleSetOptionPanel_RuleSet_Missing_title=Folder removed

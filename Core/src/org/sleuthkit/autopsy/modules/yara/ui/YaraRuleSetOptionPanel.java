@@ -26,7 +26,7 @@ import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.modules.yara.rules.RuleSet;
 import org.sleuthkit.autopsy.modules.yara.rules.RuleSetException;
 import org.sleuthkit.autopsy.modules.yara.rules.RuleSetManager;
@@ -79,16 +79,36 @@ public class YaraRuleSetOptionPanel extends javax.swing.JPanel {
     void updatePanel() {
         ruleSetPanel.addSetList(manager.getRuleSetList());
     }
+    
+    @Messages({
+        "# {0} - rule set name",
+        "YaraRuleSetOptionPanel_RuleSet_Missing=The folder for the selected YARA rule set {0}, no longer exists.",
+        "YaraRuleSetOptionPanel_RuleSet_Missing_title=Folder removed",
+    })
 
     /**
      * Handle the change in rule set selection. Update the detail panel with the
      * selected rule.
      */
     private void handleSelectionChange() {
-        ruleSetDetailsPanel.setRuleSet(ruleSetPanel.getSelectedRule());
+        RuleSet ruleSet = ruleSetPanel.getSelectedRule();
+        
+        if(ruleSet == null) {
+            return;
+        }
+        
+        if(!ruleSet.getPath().toFile().exists()) {
+            ruleSetDetailsPanel.setRuleSet(null);
+            JOptionPane.showMessageDialog(this,
+                    Bundle.YaraRuleSetOptionPanel_RuleSet_Missing(ruleSet.getName()),
+                    Bundle.YaraRuleSetOptionPanel_RuleSet_Missing_title(),
+                    JOptionPane.ERROR_MESSAGE);
+        } else {
+            ruleSetDetailsPanel.setRuleSet(ruleSetPanel.getSelectedRule());
+        }
     }
 
-    @NbBundle.Messages({
+    @Messages({
         "YaraRuleSetOptionPanel_new_rule_set_name_msg=Supply a new unique rule set name:",
         "YaraRuleSetOptionPanel_new_rule_set_name_title=Rule Set Name",
         "# {0} - rule set name",
