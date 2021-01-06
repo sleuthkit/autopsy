@@ -28,18 +28,21 @@ public class CityRecord extends KdTree.XYZPoint {
 
     private final String cityName;
     private final String country;
+    private final String state;
 
     /**
      * Main constructor.
      *
      * @param cityName The name of the city.
+     * @param state The state of the city.
      * @param country The country of that city.
      * @param latitude Latitude for the city.
      * @param longitude Longitude for the city.
      */
-    CityRecord(String cityName, String country, double latitude, double longitude) {
+    CityRecord(String cityName, String state, String country, double latitude, double longitude) {
         super(latitude, longitude);
         this.cityName = cityName;
+        this.state = state;
         this.country = country;
     }
 
@@ -50,6 +53,13 @@ public class CityRecord extends KdTree.XYZPoint {
         return cityName;
     }
 
+    /**
+     * @return The state of the city.
+     */
+    public String getState() {
+        return state;
+    }
+    
     /**
      * @return The country of that city.
      */

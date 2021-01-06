@@ -35,6 +35,11 @@ MessageViewer_viewMessage_all=All
 MessageViewer_viewMessage_calllogs=Call Logs
 MessageViewer_viewMessage_selected=Selected
 MessageViewer_viewMessage_unthreaded=Unthreaded
+# {0} - PersonaAccount count
+RelationshipsNodeUtilities_Tooltip_suffix=(1 of {0})
+# {0} - Contact Name
+# {1} - Persona Name
+RelationshipsNodeUtilities_Tooltip_Template=Contact: {0} - Persona: {1}
 # {0} - accountIdentifer
 SummaryPersonaPane_not_account_in_cr=Unable to find an account with identifier {0} in the Central Repository.
 SummaryViewer.countsPanel.border.title=Communications

@@ -34,8 +34,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 
 /**
- * Adds/removes application event listeners responsible for adding data to the
- * central repository, sets up a default, single-user SQLite central repository
+ * Sets up a default, single-user SQLite central repository
  * if no central repository is configured, and updates the central repository
  * schema as required.
  */
@@ -44,8 +43,6 @@ public class Installer extends ModuleInstall {
     private static final Logger logger = Logger.getLogger(Installer.class.getName());
     private static final long serialVersionUID = 1L;
     private static Installer instance;
-    private final CaseEventListener caseEventListener = new CaseEventListener();
-    private final IngestEventsListener ingestEventListener = new IngestEventsListener();
 
     /**
      * Gets the singleton "package installer" used by the registered Installer
@@ -72,8 +69,7 @@ public class Installer extends ModuleInstall {
     }
 
     /*
-     * Adds/removes application event listeners responsible for adding data to
-     * the central repository and sets up a default, single-user SQLite central
+     * Sets up a default, single-user SQLite central
      * repository if no central repository is configured.
      *
      * Called by the registered Installer for the Autopsy-Core module located in
@@ -82,17 +78,7 @@ public class Installer extends ModuleInstall {
      */
     @Override
     public void restored() {
-        addApplicationEventListeners();
         setupDefaultCentralRepository();
-    }
-
-    /**
-     * Adds the application event listeners responsible for adding data to the
-     * central repository.
-     */
-    private void addApplicationEventListeners() {
-        caseEventListener.installListeners();
-        ingestEventListener.installListeners();
     }
 
     /**
@@ -184,9 +170,5 @@ public class Installer extends ModuleInstall {
          * 
          * THIS CODE IS NEVER EXECUTED.
          */
-        caseEventListener.uninstallListeners();
-        caseEventListener.shutdown();
-        ingestEventListener.shutdown();
-        ingestEventListener.uninstallListeners();
     }
 }

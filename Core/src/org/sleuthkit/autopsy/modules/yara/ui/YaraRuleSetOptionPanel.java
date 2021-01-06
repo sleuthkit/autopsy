@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.modules.yara.ui;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
@@ -41,15 +40,11 @@ public class YaraRuleSetOptionPanel extends javax.swing.JPanel {
 
     private static final Logger logger = Logger.getLogger(YaraRuleSetOptionPanel.class.getName());
 
-    private final RuleSetManager manager;
-
     /**
      * Creates new form YaraRuleSetOptionPanel
      */
     public YaraRuleSetOptionPanel() {
         initComponents();
-
-        manager = new RuleSetManager();
 
         ruleSetPanel.addListSelectionListener(new ListSelectionListener() {
             @Override
@@ -77,7 +72,7 @@ public class YaraRuleSetOptionPanel extends javax.swing.JPanel {
      * Update the panel with the current rule set.
      */
     void updatePanel() {
-        ruleSetPanel.addSetList(manager.getRuleSetList());
+        ruleSetPanel.addSetList(RuleSetManager.getInstance().getRuleSetList());
     }
     
     @Messages({
@@ -92,20 +87,16 @@ public class YaraRuleSetOptionPanel extends javax.swing.JPanel {
      */
     private void handleSelectionChange() {
         RuleSet ruleSet = ruleSetPanel.getSelectedRule();
-        
-        if(ruleSet == null) {
-            return;
-        }
-        
-        if(!ruleSet.getPath().toFile().exists()) {
+
+        if(ruleSet != null && !ruleSet.getPath().toFile().exists()) {
             ruleSetDetailsPanel.setRuleSet(null);
             JOptionPane.showMessageDialog(this,
                     Bundle.YaraRuleSetOptionPanel_RuleSet_Missing(ruleSet.getName()),
                     Bundle.YaraRuleSetOptionPanel_RuleSet_Missing_title(),
                     JOptionPane.ERROR_MESSAGE);
-        } else {
-            ruleSetDetailsPanel.setRuleSet(ruleSetPanel.getSelectedRule());
-        }
+        } 
+        
+        ruleSetDetailsPanel.setRuleSet(ruleSet);
     }
 
     @Messages({
@@ -114,8 +105,7 @@ public class YaraRuleSetOptionPanel extends javax.swing.JPanel {
         "# {0} - rule set name",
         "YaraRuleSetOptionPanel_badName_msg=Rule set name {0} already exists.\nRule set names must be unique.",
         "YaraRuleSetOptionPanel_badName_title=Create Rule Set",
-        "YaraRuleSetOptionPanel_badName2_msg=Rule set is invalid.\nRule set names must be non-empty string and unique.",
-    })
+        "YaraRuleSetOptionPanel_badName2_msg=Rule set is invalid.\nRule set names must be non-empty string and unique.",})
     /**
      * Handle the new rule set action. Prompt the user for a rule set name,
      * create the new set and update the rule set list.
@@ -124,17 +114,17 @@ public class YaraRuleSetOptionPanel extends javax.swing.JPanel {
         String value = JOptionPane.showInputDialog(this,
                 Bundle.YaraRuleSetOptionPanel_new_rule_set_name_msg(),
                 Bundle.YaraRuleSetOptionPanel_new_rule_set_name_title());
-        
-        if(value == null || value.isEmpty()) {
+
+        if (value == null || value.isEmpty()) {
             JOptionPane.showMessageDialog(this,
                     Bundle.YaraRuleSetOptionPanel_badName2_msg(),
                     Bundle.YaraRuleSetOptionPanel_badName_title(),
                     JOptionPane.ERROR_MESSAGE);
             return;
         }
-        
+
         try {
-            ruleSetPanel.addRuleSet(manager.createRuleSet(value));
+            ruleSetPanel.addRuleSet(RuleSetManager.getInstance().createRuleSet(value));
         } catch (RuleSetException ex) {
             JOptionPane.showMessageDialog(this,
                     Bundle.YaraRuleSetOptionPanel_badName_msg(value),
@@ -144,31 +134,29 @@ public class YaraRuleSetOptionPanel extends javax.swing.JPanel {
         }
     }
 
+    @Messages({
+        "# {0} - rule set name",
+        "YaraRuleSetOptionPanel_rule_set_delete=Unable to delete the selected YARA rule set {0}.\nRule set may have already been removed."
+    })
+
     /**
      * Handle the delete rule action. Delete the rule set and update the the
      * rule set list.
      */
     private void handleDeleteRuleSet() {
         RuleSet ruleSet = ruleSetPanel.getSelectedRule();
-        ruleSetPanel.removeRuleSet(ruleSet);
-        deleteDirectory(ruleSet.getPath().toFile());
-    }
-
-    /**
-     * Recursively delete the given directory and its children.
-     *
-     * @param directoryToBeDeleted
-     *
-     * @return True if the delete was successful.
-     */
-    private boolean deleteDirectory(File directoryToBeDeleted) {
-        File[] allContents = directoryToBeDeleted.listFiles();
-        if (allContents != null) {
-            for (File file : allContents) {
-                deleteDirectory(file);
+        if (ruleSet != null) {
+            try {
+                RuleSetManager.getInstance().deleteRuleSet(ruleSet);
+            } catch (RuleSetException ex) {
+                JOptionPane.showMessageDialog(this,
+                        Bundle.YaraRuleSetOptionPanel_rule_set_delete(ruleSet.getName()),
+                        Bundle.YaraRuleSetOptionPanel_badName_title(),
+                        JOptionPane.ERROR_MESSAGE);
+                logger.log(Level.WARNING, String.format("Failed to delete YARA rule set %s", ruleSet.getName()), ex);
             }
+            ruleSetPanel.removeRuleSet(ruleSet);
         }
-        return directoryToBeDeleted.delete();
     }
 
     /**
@@ -192,6 +180,8 @@ public class YaraRuleSetOptionPanel extends javax.swing.JPanel {
 
         scrollPane.setBorder(null);
 
+        viewportPanel.setMinimumSize(new java.awt.Dimension(1000, 127));
+        viewportPanel.setPreferredSize(new java.awt.Dimension(1020, 400));
         viewportPanel.setLayout(new java.awt.GridBagLayout());
 
         separator.setOrientation(javax.swing.SwingConstants.VERTICAL);
