@@ -114,6 +114,8 @@ public class GeolocationPanel extends BaseDataSourceSummaryPanel {
      * @param whereUsedData The GeolocationSummary instance to use.
      */
     public GeolocationPanel(GeolocationSummary whereUsedData) {
+        super(whereUsedData);
+        
         this.whereUsedData = whereUsedData;
         // set up data acquisition methods
         dataFetchComponents = Arrays.asList(

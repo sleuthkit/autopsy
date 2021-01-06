@@ -84,6 +84,8 @@ public class PastCasesPanel extends BaseDataSourceSummaryPanel {
      * Creates new form PastCasesPanel
      */
     public PastCasesPanel(PastCasesSummary pastCaseData) {
+        super(pastCaseData);
+        
         // set up data acquisition methods
         dataFetchComponents = Arrays.asList(
                 new DataFetchWorker.DataFetchComponents<>(
