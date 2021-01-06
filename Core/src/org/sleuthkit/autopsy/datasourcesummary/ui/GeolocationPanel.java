@@ -63,8 +63,6 @@ import org.sleuthkit.datamodel.DataSource;
 public class GeolocationPanel extends BaseDataSourceSummaryPanel {
 
     private static final long serialVersionUID = 1L;
-    private static final String GPX_FACTORY = "org.python.proxies.GPX_Parser_Module$GPXParserFileIngestModuleFactory";
-    private static final String GPX_NAME = "GPX Parser";
     private static final int DAYS_COUNT = 30;
     private static final int MAX_COUNT = 10;
 
@@ -115,7 +113,7 @@ public class GeolocationPanel extends BaseDataSourceSummaryPanel {
      */
     public GeolocationPanel(GeolocationSummary whereUsedData) {
         super(whereUsedData);
-        
+
         this.whereUsedData = whereUsedData;
         // set up data acquisition methods
         dataFetchComponents = Arrays.asList(
@@ -213,7 +211,7 @@ public class GeolocationPanel extends BaseDataSourceSummaryPanel {
             goToGeolocation.setEnabled(true);
         }
 
-        showResultWithModuleCheck(table, convertedData, GPX_FACTORY, GPX_NAME);
+        table.showDataFetchResult(convertedData);
     }
 
     /**
@@ -227,7 +225,7 @@ public class GeolocationPanel extends BaseDataSourceSummaryPanel {
     private void openGeolocationWindow(DataSource dataSource, Integer daysLimit) {
         // notify dialog (if in dialog) should close.
         notifyParentClose();
-        
+
         // set the filter
         TopComponent topComponent = WindowManager.getDefault().findTopComponent(GeolocationTopComponent.class.getSimpleName());
         if (topComponent instanceof GeolocationTopComponent) {

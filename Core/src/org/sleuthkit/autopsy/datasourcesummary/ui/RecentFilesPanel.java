@@ -23,7 +23,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Supplier;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.IngestModuleCheckUtil;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.RecentFilesSummary;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.RecentFilesSummary.RecentAttachmentDetails;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.RecentFilesSummary.RecentDownloadDetails;
@@ -44,8 +43,6 @@ import org.sleuthkit.datamodel.DataSource;
 public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
 
     private static final long serialVersionUID = 1L;
-    private static final String EMAIL_PARSER_FACTORY = "org.sleuthkit.autopsy.thunderbirdparser.EmailParserModuleFactory";
-    private static final String EMAIL_PARSER_MODULE_NAME = Bundle.RecentFilePanel_emailParserModuleName();
 
     private final List<JTablePanel<?>> tablePanelList = new ArrayList<>();
     private final List<DataFetchWorker.DataFetchComponents<DataSource, ?>> dataFetchComponents = new ArrayList<>();
@@ -167,11 +164,7 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
         DataFetchWorker.DataFetchComponents<DataSource, List<RecentFileDetails>> worker
                 = new DataFetchWorker.DataFetchComponents<>(
                         (dataSource) -> dataHandler.getRecentlyOpenedDocuments(dataSource, 10),
-                        (result) -> {
-                            showResultWithModuleCheck(pane, result,
-                                    IngestModuleCheckUtil.RECENT_ACTIVITY_FACTORY,
-                                    IngestModuleCheckUtil.RECENT_ACTIVITY_MODULE_NAME);
-                        });
+                        (result) -> pane.showDataFetchResult(result));
 
         dataFetchComponents.add(worker);
     }
@@ -210,11 +203,7 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
         DataFetchWorker.DataFetchComponents<DataSource, List<RecentDownloadDetails>> worker
                 = new DataFetchWorker.DataFetchComponents<>(
                         (dataSource) -> dataHandler.getRecentDownloads(dataSource, 10),
-                        (result) -> {
-                            showResultWithModuleCheck(pane, result,
-                                    IngestModuleCheckUtil.RECENT_ACTIVITY_FACTORY,
-                                    IngestModuleCheckUtil.RECENT_ACTIVITY_MODULE_NAME);
-                        });
+                        (result) -> pane.showDataFetchResult(result));
 
         dataFetchComponents.add(worker);
     }
@@ -253,7 +242,7 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
         DataFetchWorker.DataFetchComponents<DataSource, List<RecentAttachmentDetails>> worker
                 = new DataFetchWorker.DataFetchComponents<>(
                         (dataSource) -> dataHandler.getRecentAttachments(dataSource, 10),
-                        (result) -> showResultWithModuleCheck(pane, result, EMAIL_PARSER_FACTORY, EMAIL_PARSER_MODULE_NAME)
+                        (result) -> pane.showDataFetchResult(result)
                 );
 
         dataFetchComponents.add(worker);
