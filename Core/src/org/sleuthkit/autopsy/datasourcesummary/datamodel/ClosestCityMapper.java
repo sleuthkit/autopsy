@@ -42,6 +42,7 @@ class ClosestCityMapper {
 
     // index within a csv row of pertinent data
     private static final int CITY_NAME_IDX = 0;
+    private static final int STATE_NAME_IDX = 7;
     private static final int COUNTRY_NAME_IDX = 4;
     private static final int LAT_IDX = 2;
     private static final int LONG_IDX = 3;
@@ -52,7 +53,7 @@ class ClosestCityMapper {
     // Identifies if cities are in last, first format like "Korea, South"
     private static final Pattern COUNTRY_WITH_COMMA = Pattern.compile("^\\s*([^,]*)\\s*,\\s*([^,]*)\\s*$");
 
-    private static final int MAX_IDX = Stream.of(CITY_NAME_IDX, COUNTRY_NAME_IDX, LAT_IDX, LONG_IDX)
+    private static final int MAX_IDX = Stream.of(CITY_NAME_IDX, STATE_NAME_IDX, COUNTRY_NAME_IDX, LAT_IDX, LONG_IDX)
             .max(Integer::compare)
             .get();
 
@@ -169,12 +170,15 @@ class ClosestCityMapper {
             return null;
         }
 
+        // city is required
         String cityName = csvRow.get(CITY_NAME_IDX);
         if (StringUtils.isBlank(cityName)) {
             logger.log(Level.WARNING, String.format("No city name determined for line %d.", lineNum));
             return null;
         }
 
+        // state and country can be optional
+        String stateName = csvRow.get(STATE_NAME_IDX);
         String countryName = parseCountryName(csvRow.get(COUNTRY_NAME_IDX), lineNum);
 
         Double lattitude = tryParse(csvRow.get(LAT_IDX));
@@ -189,7 +193,7 @@ class ClosestCityMapper {
             return null;
         }
 
-        return new CityRecord(cityName, countryName, lattitude, longitude);
+        return new CityRecord(cityName, stateName, countryName, lattitude, longitude);
     }
 
     /**
