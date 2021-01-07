@@ -109,7 +109,10 @@ final class YaraIngestHelper {
     }
 
     /**
-     *
+     * Scan the given AbstractFile for yara rule matches from the rule sets in
+     * the given directory creating a blackboard artifact for each matching
+     * rule.
+     * 
      * @param file                 The Abstract File being processed.
      * @param baseRuleSetDirectory Base directory of the compiled rule sets.
      * @param localFile            Local copy of file.
@@ -138,8 +141,8 @@ final class YaraIngestHelper {
      * Scan the given file byte array for rule matches using the YaraJNIWrapper
      * API.
      *
-     * @param fileBytes
-     * @param ruleSetDirectory
+     * @param fileBytes An array of the file data.
+     * @param ruleSetDirectory Base directory of the compiled rule sets.
      *
      * @return List of rules that match from the given file from the given rule
      *         set. Empty list is returned if no matches where found.
@@ -158,6 +161,17 @@ final class YaraIngestHelper {
         return matchingRules;
     }
 
+    /**
+     * Scan the given file for rules that match from the given rule set directory.
+     * 
+     * @param scanFile Locally stored file to scan.
+     * @param ruleSetDirectory Base directory of the compiled rule sets.
+     * @param timeout YARA Scanner timeout value.
+     * 
+     * @return List of matching rules, if none were found the list will be empty.
+     * 
+     * @throws YaraWrapperException 
+     */
     private static List<String> scanFileForMatch(File scanFile, File ruleSetDirectory, int timeout) throws YaraWrapperException {
         List<String> matchingRules = new ArrayList<>();
 
@@ -228,7 +242,7 @@ final class YaraIngestHelper {
             ProcessBuilder builder = new ProcessBuilder(commandList);
             try {
                 int result = ExecUtil.execute(builder);
-                if(result != 0) {
+                if (result != 0) {
                     throw new IngestModuleException(String.format("Failed to compile Yara rules file %s. Compile error %d", file.toString(), result));
                 }
             } catch (SecurityException | IOException ex) {
@@ -249,7 +263,7 @@ final class YaraIngestHelper {
     private static List<RuleSet> getRuleSetsForNames(List<String> names) {
         List<RuleSet> ruleSetList = new ArrayList<>();
 
-        RuleSetManager manager = new RuleSetManager();
+        RuleSetManager manager = RuleSetManager.getInstance();
         for (RuleSet set : manager.getRuleSetList()) {
             if (names.contains(set.getName())) {
                 ruleSetList.add(set);

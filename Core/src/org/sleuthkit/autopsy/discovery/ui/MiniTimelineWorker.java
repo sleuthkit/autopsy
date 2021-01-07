@@ -60,7 +60,7 @@ class MiniTimelineWorker extends SwingWorker<List<MiniTimelineResult>, Void> {
 
             } catch (DiscoveryException ex) {
                 if (ex.getCause() instanceof InterruptedException) {
-                    logger.log(Level.INFO, "MiniTimeline search was cancelled or interrupted for domain: {0}", domain);
+                   //ignore the exception as it was cancelled while the cache was performing its get and we support cancellation
                 } else {
                     throw ex;
                 }
@@ -72,7 +72,7 @@ class MiniTimelineWorker extends SwingWorker<List<MiniTimelineResult>, Void> {
     @Override
     protected void done() {
         List<MiniTimelineResult> results = new ArrayList<>();
-        if (!isCancelled() && isDone()) {
+        if (!isCancelled()) {
             try {
                 results.addAll(get());
                 DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.MiniTimelineResultEvent(results));

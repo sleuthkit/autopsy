@@ -25,8 +25,10 @@ import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
+import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
+import org.sleuthkit.autopsy.modules.yara.ui.YaraGlobalSettingsPanel;
 import org.sleuthkit.autopsy.modules.yara.ui.YaraIngestSettingsPanel;
 
 /**
@@ -63,7 +65,7 @@ public class YaraIngestModuleFactory extends IngestModuleFactoryAdapter {
 
     @Override
     public IngestModuleIngestJobSettingsPanel getIngestJobSettingsPanel(IngestModuleIngestJobSettings settings) {
-        return new YaraIngestSettingsPanel((YaraIngestJobSettings)settings);
+        return new YaraIngestSettingsPanel((YaraIngestJobSettings) settings);
     }
 
     @Override
@@ -88,5 +90,17 @@ public class YaraIngestModuleFactory extends IngestModuleFactoryAdapter {
      */
     static String getModuleName() {
         return Bundle.Yara_Module_Name();
+    }
+
+    @Override
+    public boolean hasGlobalSettingsPanel() {
+        return true;
+    }
+
+    @Override
+    public IngestModuleGlobalSettingsPanel getGlobalSettingsPanel() {
+        YaraGlobalSettingsPanel globalOptionsPanel = new YaraGlobalSettingsPanel();
+        globalOptionsPanel.load();
+        return globalOptionsPanel;
     }
 }

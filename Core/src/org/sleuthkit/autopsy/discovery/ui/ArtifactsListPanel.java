@@ -94,11 +94,15 @@ final class ArtifactsListPanel extends AbstractArtifactListPanel {
 
     @Override
     BlackboardArtifact getSelectedArtifact() {
-        int selectedIndex = artifactsTable.getSelectionModel().getLeadSelectionIndex();
-        if (selectedIndex < artifactsTable.getSelectionModel().getMinSelectionIndex() || artifactsTable.getSelectionModel().getMaxSelectionIndex() < 0 || selectedIndex > artifactsTable.getSelectionModel().getMaxSelectionIndex()) {
+        if (artifactsTable.getModel() instanceof DomainArtifactTableModel) {
+            int selectedIndex = artifactsTable.getSelectionModel().getLeadSelectionIndex();
+            if (selectedIndex < artifactsTable.getSelectionModel().getMinSelectionIndex() || artifactsTable.getSelectionModel().getMaxSelectionIndex() < 0 || selectedIndex > artifactsTable.getSelectionModel().getMaxSelectionIndex()) {
+                return null;
+            }
+            return tableModel.getArtifactByRow(artifactsTable.convertRowIndexToModel(selectedIndex));
+        } else {
             return null;
         }
-        return tableModel.getArtifactByRow(artifactsTable.convertRowIndexToModel(selectedIndex));
     }
 
     @Override
@@ -124,7 +128,12 @@ final class ArtifactsListPanel extends AbstractArtifactListPanel {
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     void addArtifacts(List<BlackboardArtifact> artifactList) {
-        tableModel.setContents(artifactList);
+        if (!artifactList.isEmpty()) {
+            artifactsTable.setModel(tableModel);
+            tableModel.setContents(artifactList);
+        } else {
+            artifactsTable.setModel(new EmptyTableModel());
+        }
         artifactsTable.validate();
         artifactsTable.repaint();
         tableModel.fireTableDataChanged();
@@ -359,6 +368,45 @@ final class ArtifactsListPanel extends AbstractArtifactListPanel {
             }
         }
     }
+
+    /**
+     * Table model which displays only that no results were found.
+     */
+    private class EmptyTableModel extends AbstractTableModel {
+
+        private static final long serialVersionUID = 1L;
+
+        @Override
+        public int getRowCount() {
+            return 1;
+        }
+
+        @Override
+        public int getColumnCount() {
+            return 1;
+        }
+
+        @NbBundle.Messages({"ArtifactsListPanel.noResultsFound.text=No results found"})
+        @Override
+        public Object getValueAt(int rowIndex, int columnIndex) {
+            return Bundle.ArtifactsListPanel_noResultsFound_text();
+        }
+         @Override
+        public String getColumnName(int column) {
+            switch (column) {
+                case 0:
+                    return Bundle.ArtifactsListPanel_dateColumn_name();
+                case 1:
+                    return Bundle.ArtifactsListPanel_titleColumn_name();
+                case 2:
+                    return Bundle.ArtifactsListPanel_mimeTypeColumn_name();
+                default:
+                    return "";
+            }
+        }
+
+    }
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTable artifactsTable;
     // End of variables declaration//GEN-END:variables

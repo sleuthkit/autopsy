@@ -1,0 +1,20 @@
+/*! \page aleapp_page Android Analyzer (aLEAPP)
+
+[TOC]
+
+\section aleapp_overview Overview
+
+The Android Analyzer ingest module runs aLEAPP (https://github.com/abrignoni/aLEAPP) and converts the results into results that can be viewed in Autopsy.
+
+\section aleapp_config Using the Module
+
+Select the checkbox in the Ingest Modules settings screen to enable the Android Analzyer (ALEAPP) module. The module will run on .tar/.zip files found in a \ref ds_log "logical files data source" or a \ref ds_img "disk image".
+
+\section aleapp_results Seeing Results
+
+Results from the Android Analyzer module will appear in the \ref tree_viewer_page under Results->Extracted Content.
+
+\image html aleapp_main.jpg
+
+
+*/

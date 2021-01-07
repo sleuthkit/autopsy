@@ -294,6 +294,7 @@ final class ExtractZoneIdentifier extends Extract {
         private static final String REFERRER_URL = "ReferrerUrl"; //NON-NLS
         private static final String HOST_URL = "HostUrl"; //NON-NLS
         private static final String FAMILY_NAME = "LastWriterPackageFamilyName"; //NON-NLS
+        private static String fileName;
 
         private final Properties properties = new Properties(null);
 
@@ -307,6 +308,7 @@ final class ExtractZoneIdentifier extends Extract {
          * @throws IOException
          */
         ZoneIdentifierInfo(AbstractFile zoneFile) throws IOException {
+            fileName = zoneFile.getName();
             properties.load(new ReadContentInputStream(zoneFile));
         }
 
@@ -318,8 +320,13 @@ final class ExtractZoneIdentifier extends Extract {
         private int getZoneId() {
             int zoneValue = -1;
             String value = properties.getProperty(ZONE_ID);
-            if (value != null) {
-                zoneValue = Integer.parseInt(value);
+            try {
+                if (value != null) {
+                    zoneValue = Integer.parseInt(value);
+                }
+            } catch (NumberFormatException ex) {
+               String message = String.format("Unable to parse Zone Id for File %s", fileName); //NON-NLS
+               LOG.log(Level.WARNING, message); 
             }
 
             return zoneValue;

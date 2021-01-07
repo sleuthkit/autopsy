@@ -3,6 +3,7 @@ ArtifactMenuMouseAdapter_label=Extract Files
 ArtifactsListPanel.dateColumn.name=Date/Time
 ArtifactsListPanel.fileNameColumn.name=Name
 ArtifactsListPanel.mimeTypeColumn.name=MIME Type
+ArtifactsListPanel.noResultsFound.text=No results found
 ArtifactsListPanel.termColumn.name=Term
 ArtifactsListPanel.titleColumn.name=Title
 ArtifactsListPanel.urlColumn.name=URL

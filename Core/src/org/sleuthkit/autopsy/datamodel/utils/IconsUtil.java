@@ -125,6 +125,8 @@ public final class IconsUtil {
             imageFile = "domain-16.png"; //NON-NLS
         } else if (typeID == ARTIFACT_TYPE.TSK_GPS_AREA.getTypeID()) {
             imageFile = "gps-area.png"; //NON-NLS
+        } else if (typeID == ARTIFACT_TYPE.TSK_YARA_HIT.getTypeID()) {
+            imageFile = "yara_16.png"; //NON-NLS
         } else {
             imageFile = "artifact-icon.png"; //NON-NLS
         }
