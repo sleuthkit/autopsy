@@ -40,6 +40,7 @@ import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils;
+import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils.PopulateDomainTabsEvent;
 import org.sleuthkit.autopsy.discovery.search.SearchData.Type;
 import static org.sleuthkit.autopsy.discovery.search.SearchData.Type.DOMAIN;
 import org.sleuthkit.autopsy.discovery.search.SearchFiltering.ArtifactTypeFilter;
@@ -60,9 +61,11 @@ public final class DiscoveryTopComponent extends TopComponent {
     private volatile static int previousDividerLocation = 250;
     private final GroupListPanel groupListPanel;
     private final ResultsPanel resultsPanel;
+    private JPanel detailsPanel = new JPanel();
     private String selectedDomainTabName;
     private Type searchType;
     private int dividerLocation = JSplitPane.UNDEFINED_CONDITION;
+
     private SwingAnimator animator = null;
 
     /**
@@ -88,19 +91,19 @@ public final class DiscoveryTopComponent extends TopComponent {
         rightSplitPane.addPropertyChangeListener(JSplitPane.DIVIDER_LOCATION_PROPERTY, new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
-                if (evt.getPropertyName().equalsIgnoreCase(JSplitPane.DIVIDER_LOCATION_PROPERTY)) {
+                if (evt.getPropertyName().equalsIgnoreCase(JSplitPane.DIVIDER_LOCATION_PROPERTY)
+                        && ((animator == null || !animator.isRunning())
+                        && evt.getNewValue() instanceof Integer
+                        && evt.getOldValue() instanceof Integer
+                        && ((int) evt.getNewValue() + 5) < (rightSplitPane.getHeight() - rightSplitPane.getDividerSize())
+                        && (JSplitPane.UNDEFINED_CONDITION != (int) evt.getNewValue())
+                        && ((int) evt.getOldValue() != JSplitPane.UNDEFINED_CONDITION))) {
                     //Only change the saved location when it was a manual change by the user and not the animation or the window opening initially
-                    if ((animator == null || !animator.isRunning())
-                            && evt.getNewValue() instanceof Integer
-                            && evt.getOldValue() instanceof Integer
-                            && ((int) evt.getNewValue() + 5) < (rightSplitPane.getHeight() - rightSplitPane.getDividerSize())
-                            && (JSplitPane.UNDEFINED_CONDITION != (int) evt.getNewValue())
-                            && ((int) evt.getOldValue() != JSplitPane.UNDEFINED_CONDITION)) {
-                        previousDividerLocation = (int) evt.getNewValue();
-                    }
+                    previousDividerLocation = (int) evt.getNewValue();
                 }
             }
-        });
+        }
+        );
 
     }
 
@@ -132,7 +135,6 @@ public final class DiscoveryTopComponent extends TopComponent {
      */
     public static DiscoveryTopComponent getTopComponent() {
         DiscoveryTopComponent discoveryTopComp = (DiscoveryTopComponent) WindowManager.getDefault().findTopComponent(PREFERRED_ID);
-        discoveryTopComp.resetBottomComponent();
         return discoveryTopComp;
     }
 
@@ -169,9 +171,9 @@ public final class DiscoveryTopComponent extends TopComponent {
         DiscoveryEventUtils.getDiscoveryEventBus().unregister(this);
         DiscoveryEventUtils.getDiscoveryEventBus().unregister(groupListPanel);
         DiscoveryEventUtils.getDiscoveryEventBus().unregister(resultsPanel);
-        DiscoveryEventUtils.getDiscoveryEventBus().unregister(rightSplitPane.getBottomComponent());
-        if (rightSplitPane.getBottomComponent() instanceof DomainDetailsPanel) {
-            selectedDomainTabName = ((DomainDetailsPanel) rightSplitPane.getBottomComponent()).getSelectedTabName();
+        DiscoveryEventUtils.getDiscoveryEventBus().unregister(detailsPanel);
+        if (detailsPanel instanceof DomainDetailsPanel) {
+            selectedDomainTabName = ((DomainDetailsPanel) detailsPanel).getSelectedTabName();
         }
         resetBottomComponent();
         super.componentClosed();
@@ -275,6 +277,25 @@ public final class DiscoveryTopComponent extends TopComponent {
     }
 
     /**
+     * Respond to the PopulateDomainTabsEvent to ensure the bottom area only
+     * shows when it has data
+     *
+     * @param populateDomainTabsEvent The event which indicates the domain tabs
+     *                                contents should change.
+     */
+    @Subscribe
+    private void handlePopulateDomainTabsEvent(PopulateDomainTabsEvent populateDomainTabsEvent) {
+        if (detailsPanel instanceof DomainDetailsPanel) {
+            SwingUtilities.invokeLater(() -> {
+                if (((DomainDetailsPanel) detailsPanel).getCurrentTabStatus() == DomainArtifactsTabPanel.ArtifactRetrievalStatus.POPULATED
+                        || ((DomainDetailsPanel) detailsPanel).getCurrentTabStatus() == DomainArtifactsTabPanel.ArtifactRetrievalStatus.POPULATING) {
+                    rightSplitPane.setBottomComponent(detailsPanel);
+                }
+            });
+        }
+    }
+
+    /**
      * Subscribe to the DetailsVisible event and animate the panel as it changes
      * visibility.
      *
@@ -311,6 +332,7 @@ public final class DiscoveryTopComponent extends TopComponent {
     @Subscribe
     void handleSearchStartedEvent(DiscoveryEventUtils.SearchStartedEvent searchStartedEvent) {
         SwingUtilities.invokeLater(() -> {
+            rightSplitPane.setBottomComponent(new JPanel());
             newSearchButton.setText(Bundle.DiscoveryTopComponent_cancelButton_text());
             progressMessageTextArea.setForeground(Color.red);
             searchType = searchStartedEvent.getType();
@@ -343,12 +365,16 @@ public final class DiscoveryTopComponent extends TopComponent {
                 }
                 selectedDomainTabName = validateLastSelectedType(searchCompleteEvent);
                 DomainDetailsPanel domainDetailsPanel = new DomainDetailsPanel();
-                rightSplitPane.setBottomComponent(domainDetailsPanel);
                 domainDetailsPanel.configureArtifactTabs(selectedDomainTabName);
+                detailsPanel = domainDetailsPanel;
             } else {
-                rightSplitPane.setBottomComponent(new FileDetailsPanel());
+                FileDetailsPanel fileDetailsPanel = new FileDetailsPanel();
+                DiscoveryEventUtils.getDiscoveryEventBus().register(fileDetailsPanel);
+                detailsPanel = new FileDetailsPanel();
+                rightSplitPane.setBottomComponent(detailsPanel);
             }
-            DiscoveryEventUtils.getDiscoveryEventBus().register(rightSplitPane.getBottomComponent());
+
+            DiscoveryEventUtils.getDiscoveryEventBus().register(detailsPanel);
             descriptionText += searchCompleteEvent.getFilters().stream().map(AbstractFilter::getDesc).collect(Collectors.joining("; "));
             progressMessageTextArea.setText(Bundle.DiscoveryTopComponent_searchComplete_text(descriptionText));
             progressMessageTextArea.setCaretPosition(0);

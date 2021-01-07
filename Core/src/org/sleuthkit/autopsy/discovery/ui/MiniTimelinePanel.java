@@ -102,7 +102,7 @@ final class MiniTimelinePanel extends javax.swing.JPanel {
     DomainArtifactsTabPanel.ArtifactRetrievalStatus getStatus() {
         return status;
     }
-
+    
     /**
      * Manually set the status of the panel.
      *

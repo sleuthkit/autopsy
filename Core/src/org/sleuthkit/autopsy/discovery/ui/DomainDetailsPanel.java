@@ -105,6 +105,20 @@ final class DomainDetailsPanel extends JPanel {
     }
 
     /**
+     * Get the status of the currently selected tab.
+     *
+     * @return The loading status of the currently selected tab.
+     */
+    DomainArtifactsTabPanel.ArtifactRetrievalStatus getCurrentTabStatus() {
+        if (jTabbedPane1.getSelectedComponent() instanceof MiniTimelinePanel) {
+            return ((MiniTimelinePanel) jTabbedPane1.getSelectedComponent()).getStatus();
+        } else if (jTabbedPane1.getSelectedComponent() instanceof DomainArtifactsTabPanel) {
+            return ((DomainArtifactsTabPanel) jTabbedPane1.getSelectedComponent()).getStatus();
+        }
+        return null;
+    }
+
+    /**
      * Run the worker which retrieves the list of artifacts for the domain to
      * populate the details area.
      */
