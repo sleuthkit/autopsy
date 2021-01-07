@@ -52,7 +52,6 @@ final class MiniTimelinePanel extends javax.swing.JPanel {
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     MiniTimelinePanel() {
         initComponents();
-        add(new LoadingPanel(Bundle.MiniTimelinePanel_loadingPanel_details()));
         artifactListPanel.addMouseListener(new ArtifactMenuMouseAdapter(artifactListPanel));
         artifactListener = new ListSelectionListener() {
             @Override
@@ -91,6 +90,7 @@ final class MiniTimelinePanel extends javax.swing.JPanel {
         leftSplitPane.setLeftComponent(dateListPanel);
         leftSplitPane.setRightComponent(artifactListPanel);
         mainSplitPane.setRightComponent(rightPanel.getComponent());
+        add(mainSplitPane);
     }
 
     /**
@@ -102,7 +102,7 @@ final class MiniTimelinePanel extends javax.swing.JPanel {
     DomainArtifactsTabPanel.ArtifactRetrievalStatus getStatus() {
         return status;
     }
-    
+
     /**
      * Manually set the status of the panel.
      *
@@ -115,11 +115,15 @@ final class MiniTimelinePanel extends javax.swing.JPanel {
             artifactListPanel.clearList();
             dateListPanel.clearList();
             removeAll();
-            add(new LoadingPanel(Bundle.MiniTimelinePanel_loadingPanel_details()));
+            add(mainSplitPane);
             if (rightPanel != null) {
                 rightPanel.setArtifact(null);
             }
+        } else if (status == DomainArtifactsTabPanel.ArtifactRetrievalStatus.POPULATING) {
+            removeAll();
+            add(new LoadingPanel(Bundle.MiniTimelinePanel_loadingPanel_details()));
         }
+
     }
 
     /**

@@ -389,7 +389,7 @@ final class ArtifactsListPanel extends AbstractArtifactListPanel {
         @NbBundle.Messages({"ArtifactsListPanel.noResultsFound.text=No results found"})
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            return Bundle.ArtifactsListPanel_value_noValue();
+            return Bundle.ArtifactsListPanel_noResultsFound_text();
         }
          @Override
         public String getColumnName(int column) {

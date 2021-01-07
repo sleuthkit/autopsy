@@ -32,6 +32,7 @@ import javax.swing.JSplitPane;
 import javax.swing.SwingUtilities;
 import javax.swing.plaf.basic.BasicSplitPaneDivider;
 import javax.swing.plaf.basic.BasicSplitPaneUI;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.Mode;
@@ -40,7 +41,6 @@ import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils;
-import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils.PopulateDomainTabsEvent;
 import org.sleuthkit.autopsy.discovery.search.SearchData.Type;
 import static org.sleuthkit.autopsy.discovery.search.SearchData.Type.DOMAIN;
 import org.sleuthkit.autopsy.discovery.search.SearchFiltering.ArtifactTypeFilter;
@@ -276,25 +276,25 @@ public final class DiscoveryTopComponent extends TopComponent {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Respond to the PopulateDomainTabsEvent to ensure the bottom area only
-     * shows when it has data
-     *
-     * @param populateDomainTabsEvent The event which indicates the domain tabs
-     *                                contents should change.
-     */
-    @Subscribe
-    private void handlePopulateDomainTabsEvent(PopulateDomainTabsEvent populateDomainTabsEvent) {
-        if (detailsPanel instanceof DomainDetailsPanel) {
-            SwingUtilities.invokeLater(() -> {
-                if (((DomainDetailsPanel) detailsPanel).getCurrentTabStatus() == DomainArtifactsTabPanel.ArtifactRetrievalStatus.POPULATED
-                        || ((DomainDetailsPanel) detailsPanel).getCurrentTabStatus() == DomainArtifactsTabPanel.ArtifactRetrievalStatus.POPULATING) {
-                    rightSplitPane.setBottomComponent(detailsPanel);
-                }
-            });
-        }
-    }
-
+//    /**
+//     * Respond to the PopulateDomainTabsEvent to ensure the bottom area only
+//     * shows when it has data
+//     *
+//     * @param populateDomainTabsEvent The event which indicates the domain tabs
+//     *                                contents should change.
+//     */
+//    @Subscribe
+//    private void handlePopulateDomainTabsEvent(PopulateDomainTabsEvent populateDomainTabsEvent) {
+//        if (!StringUtils.isBlank(populateDomainTabsEvent.getDomain())) {
+//            SwingUtilities.invokeLater(() -> {
+//                rightSplitPane.setBottomComponent(detailsPanel);
+//            });
+//        } else if (detailsPanel instanceof DomainDetailsPanel && ((DomainDetailsPanel) detailsPanel).getCurrentTabStatus() != DomainArtifactsTabPanel.ArtifactRetrievalStatus.POPULATING) {
+//            SwingUtilities.invokeLater(() -> {
+//                rightSplitPane.setBottomComponent(new JPanel());
+//            });
+//        }
+//    }
     /**
      * Subscribe to the DetailsVisible event and animate the panel as it changes
      * visibility.
@@ -332,7 +332,6 @@ public final class DiscoveryTopComponent extends TopComponent {
     @Subscribe
     void handleSearchStartedEvent(DiscoveryEventUtils.SearchStartedEvent searchStartedEvent) {
         SwingUtilities.invokeLater(() -> {
-            rightSplitPane.setBottomComponent(new JPanel());
             newSearchButton.setText(Bundle.DiscoveryTopComponent_cancelButton_text());
             progressMessageTextArea.setForeground(Color.red);
             searchType = searchStartedEvent.getType();
@@ -369,11 +368,9 @@ public final class DiscoveryTopComponent extends TopComponent {
                 detailsPanel = domainDetailsPanel;
             } else {
                 FileDetailsPanel fileDetailsPanel = new FileDetailsPanel();
-                DiscoveryEventUtils.getDiscoveryEventBus().register(fileDetailsPanel);
                 detailsPanel = new FileDetailsPanel();
-                rightSplitPane.setBottomComponent(detailsPanel);
             }
-
+            rightSplitPane.setBottomComponent(detailsPanel);
             DiscoveryEventUtils.getDiscoveryEventBus().register(detailsPanel);
             descriptionText += searchCompleteEvent.getFilters().stream().map(AbstractFilter::getDesc).collect(Collectors.joining("; "));
             progressMessageTextArea.setText(Bundle.DiscoveryTopComponent_searchComplete_text(descriptionText));

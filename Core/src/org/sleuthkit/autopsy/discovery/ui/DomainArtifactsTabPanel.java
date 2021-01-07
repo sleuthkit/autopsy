@@ -61,10 +61,10 @@ final class DomainArtifactsTabPanel extends JPanel {
     DomainArtifactsTabPanel(BlackboardArtifact.ARTIFACT_TYPE type) {
         initComponents();
         this.artifactType = type;
-        add(new LoadingPanel(artifactType.getDisplayName()));
         listPanel = new ArtifactsListPanel(artifactType);
         listPanel.addMouseListener(new ArtifactMenuMouseAdapter(listPanel));
         mainSplitPane.setLeftComponent(listPanel);
+        add(mainSplitPane);
         setRightComponent();
         listPanel.addSelectionListener(listener);
     }
@@ -116,11 +116,13 @@ final class DomainArtifactsTabPanel extends JPanel {
         if (status == ArtifactRetrievalStatus.UNPOPULATED) {
             listPanel.clearList();
             removeAll();
-            add(new LoadingPanel(artifactType.getDisplayName()));
+            add(mainSplitPane);
             if (rightPanel != null) {
                 rightPanel.setArtifact(null);
             }
-
+        } else if (status == ArtifactRetrievalStatus.POPULATING) {
+            removeAll();
+            add(new LoadingPanel(artifactType.getDisplayName()));
         }
     }
 
