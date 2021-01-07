@@ -90,13 +90,14 @@ public class YaraRuleSetOptionPanel extends javax.swing.JPanel {
 
         if(ruleSet != null && !ruleSet.getPath().toFile().exists()) {
             ruleSetDetailsPanel.setRuleSet(null);
+            ruleSetPanel.removeRuleSet(ruleSet);
             JOptionPane.showMessageDialog(this,
                     Bundle.YaraRuleSetOptionPanel_RuleSet_Missing(ruleSet.getName()),
                     Bundle.YaraRuleSetOptionPanel_RuleSet_Missing_title(),
                     JOptionPane.ERROR_MESSAGE);
-        } 
-        
-        ruleSetDetailsPanel.setRuleSet(ruleSet);
+        } else {
+            ruleSetDetailsPanel.setRuleSet(ruleSet);
+        }
     }
 
     @Messages({
