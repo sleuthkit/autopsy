@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,6 +25,7 @@ import java.beans.PropertyChangeListener;
 import static javax.swing.SwingUtilities.isDescendingFrom;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
+import javax.swing.table.TableColumn;
 import org.netbeans.swing.outline.DefaultOutlineModel;
 import org.netbeans.swing.outline.Outline;
 import org.openide.explorer.ExplorerManager;
@@ -65,6 +66,8 @@ class MessagesPanel extends javax.swing.JPanel implements Lookup.Provider {
         proxyLookup = new ModifiableProxyLookup(createLookup(outlineViewPanel.getExplorerManager(), getActionMap()));
 
         outline = outlineViewPanel.getOutlineView().getOutline();
+        // When changing this column this, if the from and to columns pos is
+        // effected make sure to modify the renderer code below.
         outlineViewPanel.getOutlineView().setPropertyColumns(
                 "From", Bundle.MessageViewer_columnHeader_From(),
                 "To", Bundle.MessageViewer_columnHeader_To(),
@@ -98,7 +101,13 @@ class MessagesPanel extends javax.swing.JPanel implements Lookup.Provider {
                 }
             }
         });
-
+        
+        TableColumn column = outline.getColumnModel().getColumn(1);
+        column.setCellRenderer(new NodeTableCellRenderer());
+        
+        column = outline.getColumnModel().getColumn(2);
+        column.setCellRenderer(new NodeTableCellRenderer());
+        
         splitPane.setResizeWeight(0.5);
         splitPane.setDividerLocation(0.5);
         outlineViewPanel.setTableColumnsWidth(5, 10, 10, 15, 50, 10);
@@ -164,7 +173,7 @@ class MessagesPanel extends javax.swing.JPanel implements Lookup.Provider {
                                         Children.create(nodeFactory, true)),
                                 outlineViewPanel.getExplorerManager()), true));
     }
-
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always

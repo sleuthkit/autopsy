@@ -318,7 +318,8 @@ public class ALeappAnalyzerIngestModule implements DataSourceIngestModule {
                 "\"" + aLeappExecutable + "\"", //NON-NLS
                 "-t", aLeappFileSystemType, //NON-NLS
                 "-i", sourceFilePath, //NON-NLS
-                "-o", moduleOutputPath.toString()
+                "-o", moduleOutputPath.toString(),
+                "-w"
         );
         processBuilder.redirectError(moduleOutputPath.resolve("aLeapp_err.txt").toFile());  //NON-NLS
         processBuilder.redirectOutput(moduleOutputPath.resolve("aLeapp_out.txt").toFile());  //NON-NLS
