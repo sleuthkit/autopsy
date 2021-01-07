@@ -98,8 +98,13 @@ public class YaraRuleSetOptionPanel extends javax.swing.JPanel {
         String value = JOptionPane.showInputDialog(this,
                 Bundle.YaraRuleSetOptionPanel_new_rule_set_name_msg(),
                 Bundle.YaraRuleSetOptionPanel_new_rule_set_name_title());
+        
+        // User hit cancel.
+        if(value == null) {
+            return;
+        }
 
-        if (value == null || value.isEmpty()) {
+        if (value.isEmpty()) {
             JOptionPane.showMessageDialog(this,
                     Bundle.YaraRuleSetOptionPanel_badName2_msg(),
                     Bundle.YaraRuleSetOptionPanel_badName_title(),
