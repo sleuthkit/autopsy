@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.Locale;
 import org.apache.commons.lang.StringUtils;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.IngestModuleCheckUtil;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.LastAccessedArtifact;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopAccountResult;
@@ -287,43 +286,23 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
                 // top programs query
                 new DataFetchComponents<DataSource, List<TopProgramsResult>>(
                         (dataSource) -> userActivityData.getTopPrograms(dataSource, TOP_PROGS_COUNT),
-                        (result) -> {
-                            showResultWithModuleCheck(topProgramsTable, result,
-                                    IngestModuleCheckUtil.RECENT_ACTIVITY_FACTORY,
-                                    IngestModuleCheckUtil.RECENT_ACTIVITY_MODULE_NAME);
-                        }),
+                        (result) -> topProgramsTable.showDataFetchResult(result)),
                 // top domains query
                 new DataFetchComponents<DataSource, List<TopDomainsResult>>(
                         (dataSource) -> userActivityData.getRecentDomains(dataSource, TOP_DOMAINS_COUNT),
-                        (result) -> {
-                            showResultWithModuleCheck(recentDomainsTable, result,
-                                    IngestModuleCheckUtil.RECENT_ACTIVITY_FACTORY,
-                                    IngestModuleCheckUtil.RECENT_ACTIVITY_MODULE_NAME);
-                        }),
+                        (result) -> recentDomainsTable.showDataFetchResult(result)),
                 // top web searches query
                 new DataFetchComponents<DataSource, List<TopWebSearchResult>>(
                         (dataSource) -> userActivityData.getMostRecentWebSearches(dataSource, TOP_SEARCHES_COUNT),
-                        (result) -> {
-                            showResultWithModuleCheck(topWebSearchesTable, result,
-                                    IngestModuleCheckUtil.RECENT_ACTIVITY_FACTORY,
-                                    IngestModuleCheckUtil.RECENT_ACTIVITY_MODULE_NAME);
-                        }),
+                        (result) -> topWebSearchesTable.showDataFetchResult(result)),
                 // top devices query
                 new DataFetchComponents<DataSource, List<TopDeviceAttachedResult>>(
                         (dataSource) -> userActivityData.getRecentDevices(dataSource, TOP_DEVICES_COUNT),
-                        (result) -> {
-                            showResultWithModuleCheck(topDevicesAttachedTable, result,
-                                    IngestModuleCheckUtil.RECENT_ACTIVITY_FACTORY,
-                                    IngestModuleCheckUtil.RECENT_ACTIVITY_MODULE_NAME);
-                        }),
+                        (result) -> topDevicesAttachedTable.showDataFetchResult(result)),
                 // top accounts query
                 new DataFetchComponents<DataSource, List<TopAccountResult>>(
                         (dataSource) -> userActivityData.getRecentAccounts(dataSource, TOP_ACCOUNTS_COUNT),
-                        (result) -> {
-                            showResultWithModuleCheck(topAccountsTable, result,
-                                    ANDROID_FACTORY,
-                                    ANDROID_MODULE_NAME);
-                        })
+                        (result) -> topAccountsTable.showDataFetchResult(result))
         );
 
         initComponents();

@@ -26,16 +26,13 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.FileTypeUtils.FileTypeCategory;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.TypesSummary;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.ContainerSummary;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.IngestModuleCheckUtil;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.MimeTypeSummary;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult;
@@ -251,25 +248,11 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
                 // usage label worker
                 new DataFetchWorker.DataFetchComponents<>(
                         containerData::getDataSourceType,
-                        (result) -> {
-                            showResultWithModuleCheck(
-                                    usageLabel,
-                                    result,
-                                    StringUtils::isNotBlank,
-                                    IngestModuleCheckUtil.RECENT_ACTIVITY_FACTORY,
-                                    IngestModuleCheckUtil.RECENT_ACTIVITY_MODULE_NAME);
-                        }),
+                        (result) -> usageLabel.showDataFetchResult(result)),
                 // os label worker
                 new DataFetchWorker.DataFetchComponents<>(
                         containerData::getOperatingSystems,
-                        (result) -> {
-                            showResultWithModuleCheck(
-                                    osLabel,
-                                    result,
-                                    StringUtils::isNotBlank,
-                                    IngestModuleCheckUtil.RECENT_ACTIVITY_FACTORY,
-                                    IngestModuleCheckUtil.RECENT_ACTIVITY_MODULE_NAME);
-                        }),
+                        (result) -> osLabel.showDataFetchResult(result)),
                 // size label worker
                 new DataFetchWorker.DataFetchComponents<>(
                         (dataSource) -> {
@@ -379,50 +362,22 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
      * @param result The result to be shown.
      */
     private void showMimeTypeCategories(DataFetchResult<TypesPieChartData> result) {
-        // if result is null check for ingest module and show empty results.
         if (result == null) {
-            showPieResultWithModuleCheck(null);
+            fileMimeTypesChart.showDataFetchResult(DataFetchResult.getSuccessResult(null));
             return;
         }
 
         // if error, show error
         if (result.getResultType() == ResultType.ERROR) {
-            this.fileMimeTypesChart.showDataFetchResult(DataFetchResult.getErrorResult(result.getException()));
+            fileMimeTypesChart.showDataFetchResult(DataFetchResult.getErrorResult(result.getException()));
             return;
         }
 
         TypesPieChartData data = result.getData();
         if (data == null) {
-            // if no data, do an ingest module check with empty results
-            showPieResultWithModuleCheck(null);
-        } else if (!data.isUsefulContent()) {
-            // if no useful data, do an ingest module check and show data
-            showPieResultWithModuleCheck(data.getPieSlices());
+            fileMimeTypesChart.showDataFetchResult(DataFetchResult.getSuccessResult(null));
         } else {
-            // otherwise, show the data
-            this.fileMimeTypesChart.showDataFetchResult(DataFetchResult.getSuccessResult(data.getPieSlices()));
-        }
-    }
-
-    /**
-     * Shows a message in the fileMimeTypesChart about the data source not being
-     * ingested with the file type ingest module if the data source has not been
-     * ingested with that module. Also shows data if present.
-     *
-     * @param items The list of items to show.
-     */
-    private void showPieResultWithModuleCheck(List<PieChartItem> items) {
-        boolean hasBeenIngested = false;
-        try {
-            hasBeenIngested = this.getIngestModuleCheckUtil().isModuleIngested(getDataSource(), FILE_TYPE_FACTORY);
-        } catch (TskCoreException | SleuthkitCaseProviderException ex) {
-            logger.log(Level.WARNING, "There was an error fetching whether or not the current data source has been ingested with the file type ingest module.", ex);
-        }
-
-        if (hasBeenIngested) {
-            this.fileMimeTypesChart.showDataFetchResult(DataFetchResult.getSuccessResult(items));
-        } else {
-            this.fileMimeTypesChart.showDataWithMessage(items, getDefaultNoIngestMessage(FILE_TYPE_MODULE_NAME));
+            fileMimeTypesChart.showDataFetchResult(DataFetchResult.getSuccessResult(data.getPieSlices()));
         }
     }
 
