@@ -238,8 +238,11 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
             } catch (KeywordSearchModuleException ex) {
                 throw new KeywordSearchServiceException(Bundle.SolrSearchService_exceptionMessage_unableToDeleteCollection(index.getIndexName()), ex);
             }
-            if (!FileUtil.deleteDir(new File(index.getIndexPath()).getParentFile())) {
-                throw new KeywordSearchServiceException(Bundle.SolrSearchService_exceptionMessage_failedToDeleteIndexFiles(index.getIndexPath()));
+            File indexDir = new File(index.getIndexPath()).getParentFile();
+            if (indexDir.exists()) {
+                if (!FileUtil.deleteDir(indexDir)) {
+                    throw new KeywordSearchServiceException(Bundle.SolrSearchService_exceptionMessage_failedToDeleteIndexFiles(index.getIndexPath()));
+                }
             }
         }
     }
