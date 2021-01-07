@@ -57,6 +57,7 @@ DomainDetailsPanel.miniTimelineTitle.text=Timeline
 # {0} - startDate
 # {1} - endDate
 DomainSummaryPanel.activity.text=Activity: {0} to {1}
+DomainSummaryPanel.category.text=Category: 
 DomainSummaryPanel.downloads.text=Files downloaded: 
 DomainSummaryPanel.known.text=User role: Known account type(s)
 DomainSummaryPanel.loadingImages.text=Loading thumbnail...
