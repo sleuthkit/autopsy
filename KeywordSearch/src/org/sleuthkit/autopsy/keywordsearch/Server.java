@@ -1013,16 +1013,34 @@ public class Server {
         "# {0} - colelction name", "Server.deleteCore.exception.msg=Failed to delete Solr colelction {0}",})
     void deleteCollection(String coreName, CaseMetadata metadata) throws KeywordSearchServiceException, KeywordSearchModuleException {
         try {
-            IndexingServerProperties properties = getMultiUserServerProperties(metadata.getCaseDirectory());
-            HttpSolrClient solrServer = getSolrClient("http://" + properties.getHost() + ":" + properties.getPort() + "/solr");
-            connectToSolrServer(solrServer);
-            
-            CollectionAdminRequest.Delete deleteCollectionRequest = CollectionAdminRequest.deleteCollection(coreName);
-            CollectionAdminResponse response = deleteCollectionRequest.process(solrServer);
-            if (response.isSuccess()) {
-                logger.log(Level.INFO, "Deleted collection {0}", coreName); //NON-NLS
+            HttpSolrClient solrServer;
+            if (metadata.getCaseType() == CaseType.SINGLE_USER_CASE) {
+                solrServer = getSolrClient("http://localhost:" + localSolrServerPort + "/solr"); //NON-NLS
+                CoreAdminResponse response = CoreAdminRequest.getStatus(coreName, solrServer);
+                if (null != response.getCoreStatus(coreName).get("instanceDir")) {             //NON-NLS
+                    /*
+                     * Send a core unload request to the Solr server, with the
+                     * parameter set that request deleting the index and the
+                     * instance directory (deleteInstanceDir = true). Note that
+                     * this removes everything related to the core on the server
+                     * (the index directory, the configuration files, etc.), but
+                     * does not delete the actual Solr text index because it is
+                     * currently stored in the case directory.
+                     */
+                    org.apache.solr.client.solrj.request.CoreAdminRequest.unloadCore(coreName, true, true, solrServer);
+                }
             } else {
-                logger.log(Level.WARNING, "Unable to delete collection {0}", coreName); //NON-NLS
+                IndexingServerProperties properties = getMultiUserServerProperties(metadata.getCaseDirectory());
+                solrServer = getSolrClient("http://" + properties.getHost() + ":" + properties.getPort() + "/solr");
+                connectToSolrServer(solrServer);
+
+                CollectionAdminRequest.Delete deleteCollectionRequest = CollectionAdminRequest.deleteCollection(coreName);
+                CollectionAdminResponse response = deleteCollectionRequest.process(solrServer);
+                if (response.isSuccess()) {
+                    logger.log(Level.INFO, "Deleted collection {0}", coreName); //NON-NLS
+                } else {
+                    logger.log(Level.WARNING, "Unable to delete collection {0}", coreName); //NON-NLS
+                }
             }
         } catch (SolrServerException | IOException ex) {
             // We will get a RemoteSolrException with cause == null and detailsMessage

@@ -6,7 +6,7 @@
 What Does It Do
 ========
 
-The Hash Lookup Module calculates MD5 hash values for files and looks up hash values in a database to determine if the file is notable, known (in general), included in a specific set of files, or unknown.
+The Hash Lookup Module calculates MD5 hash values for files and looks up hash values in a database to determine if the file is notable, known (in general), included in a specific set of files, or unknown. SHA-256 hashes are also calculated, though these will not be used in hash set lookups.
 
 
 Configuration

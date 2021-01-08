@@ -82,9 +82,9 @@ final public class CVTPersonaCache {
     }
 
     /**
-     * Returns the list of PersonaAccounts for the given Account typeSpecificId.
+     * Returns the list of PersonaAccounts for the given Account.
      *
-     * @param typeSpecificID Account typeSpecificId.
+     * @param account The account.
      *
      * @return List of PersonaAccounts for id or empty list if none were found.
      *

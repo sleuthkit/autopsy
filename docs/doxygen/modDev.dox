@@ -44,21 +44,24 @@ If this is your first module, then  you will need to make a NetBeans module. If 
 
 To make a NetBeans module:
 - Open the NetBeans IDE and go to File -> New Project.
-- From the list of categories, choose "NetBeans Modules" and then "Module" from the list of "Projects".  Click Next. 
+- From the list of categories on the left, choose "Java with Ant" and then "NetBeans Modules". Next select "Module" from the list of projects on the right and click Next. 
 - In the next panel of the wizard, give the module a name and directory. Select Standalone Module (the default is typically "Add to Suite") so that you build the module as an external module against Autopsy.  You will need to tell NetBeans about the Autopsy platform, so choose the "Manage" button.  Choose the "Add Platform" button and browse to the location of the platform discussed in the previous sections (as a reminder this will either be the location that you installed Autopsy into or where you opened up the ZIP file you created from source).  Click Next.
 - Finally, enter the code base name.  We use the same naming convention as used for naming packages (http://docs.oracle.com/javase/tutorial/java/package/namingpkgs.html).  Press Finish. 
 
 \subsubsection mod_dev_mod_nb_config Configuring the NetBeans Module
 
 After the module is created, you will need to do some further configuration. 
-- Right click on the newly created module and choose "Properties".
-- You will need to configure the module to be dependent on modules from within the Autopsy platform. Go to the "Libraries" area and choose "Add" in the "Module Dependencies" section.  Choose the:
--- "Autopsy-core" library to get access to the Autopsy services.
--- NetBeans "Lookup API" library so that your module can be discovered by Autopsy. 
-- If you later determine that you need to pull in external JAR files, then you will use the "Wrapped Jar" section to add them in.  
-- Note, you will also need to come back to this section if you update the platform.  You may need to add a new dependency for the version of the Autopsy-core that comes with the updated platform. 
-- Autopsy requires that all modules restart Autopsy after they are installed. Configure your module this way under Build -> Packaging.  Check the box that says Needs Restart on Install.
-
+<ul>
+<li>Right click on the newly created module and choose "Properties".
+<li>You will need to configure the module to be dependent on modules from within the Autopsy platform. Go to the "Libraries" area and choose "Add" in the "Module Dependencies" section.  Choose the:
+<ul>
+<li>"Autopsy-Core" library to get access to the Autopsy services.
+<li>NetBeans "Lookup API" library so that your module can be discovered by Autopsy. 
+</ul>
+<li>If you later determine that you need to pull in external JAR files, then you will use the "Wrapped Jar" section to add them in.  
+<li>Note, you will also need to come back to this section if you update the platform.  You may need to add a new dependency for the version of the Autopsy-Core that comes with the updated platform. 
+<li>Autopsy requires that all modules restart Autopsy after they are installed. Configure your module this way under Build -> Packaging.  Check the box that says Needs Restart on Install.
+</ul>
 You now have a NetBeans module that is using Autopsy as its build platform.  That means you will have access to all of the services and utilities that Autopsy provides. 
 
 
@@ -76,7 +79,7 @@ For general NetBeans module information, refer to <a href="http://bits.netbeans.
 \section mod_dev_aut Creating Autopsy Modules
 
 You can now add Autopsy modules into the NetBeans container module.  There are other pages that focus on that and are listed on the main page.  The rest of this document contains info that you will eventually want to come back to though. 
-As you will read in the later sections about the different module types, each Autopsy Module is a java class that extends an interface (the interface depends on the type of module). 
+As you will read in the later sections about the different module types, each Autopsy Module is a Java class that extends an interface (the interface depends on the type of module). 
 
 
 \subsection mod_dev_aut_run1 Running Your Module During Development

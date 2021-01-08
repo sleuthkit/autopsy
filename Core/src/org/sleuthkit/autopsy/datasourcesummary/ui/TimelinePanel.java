@@ -69,7 +69,7 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
     private static final Logger logger = Logger.getLogger(TimelinePanel.class.getName());
     private static final long serialVersionUID = 1L;
     private static final DateFormat EARLIEST_LATEST_FORMAT = getUtcFormat("MMM d, yyyy");
-    private static final DateFormat CHART_FORMAT = getUtcFormat("MMM d");
+    private static final DateFormat CHART_FORMAT = getUtcFormat("MMM d, yyyy");
     private static final int MOST_RECENT_DAYS_COUNT = 30;
 
     /**
@@ -103,6 +103,8 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
      * Creates new form PastCasesPanel
      */
     public TimelinePanel(TimelineSummary timelineData) {
+        super(timelineData);
+        
         // set up data acquisition methods
         dataFetchComponents = Arrays.asList(
                 new DataFetchWorker.DataFetchComponents<>(

@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.modules.yara.rules;
 import java.io.File;
 import java.io.Serializable;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -69,7 +70,15 @@ public class RuleSet implements Comparable<RuleSet>, Serializable {
      * @return List of Files in current directory.
      */
     public List<File> getRuleFiles() {
-        return Arrays.asList(path.toFile().listFiles());
+        List<File> fileList = new ArrayList<>();
+        if(path.toFile().exists()) {
+            File[] fileArray = path.toFile().listFiles();
+            if(fileArray != null) {
+                fileList.addAll(Arrays.asList(fileArray));
+            }
+        }
+        
+        return fileList;
     }
 
     @Override
