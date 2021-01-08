@@ -128,7 +128,7 @@ def get_property_files_diff(repo_path: str, commit_1_id: str, commit_2_id: str,
         yield from get_changed_from_diff(rel_path, diff)
 
 
-def list_paths(root_tree, path: Path = Path('.')) -> Iterator[Tuple[str, Blob]]:
+def list_paths(root_tree: Tree, path: Path = Path('.')) -> Iterator[Tuple[str, Blob]]:
     """
     Given the root path to serve as a prefix, walks the tree of a git commit returning all files and blobs.
     Repurposed from: https://www.enricozini.org/blog/2019/debian/gitpython-list-all-files-in-a-git-commit/
@@ -174,7 +174,7 @@ def get_property_file_entries(repo_path: str, at_commit: str = 'HEAD',
 
     Returns: An iterator of PropEntry objects.
     """
-    for item in get_tree(repo_path, at_commit):
+    for item in list_paths(get_tree(repo_path, at_commit)):
         path, blob = item
         if path.endswith(property_file_extension):
             for key, val in get_entry_dict(get_text(blob)).items():

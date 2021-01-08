@@ -1,6 +1,6 @@
 from typing import Iterator, List, Union, Dict
 
-from languagedictutil import FoundValue
+from foundvalue import FoundValue
 from outputresult import OutputResult
 from propsutil import get_entry_dict
 from enum import Enum
@@ -127,7 +127,7 @@ def convert_to_output(items: Iterator[ItemChange],
         elif value_regex is not None and re.match(value_regex, item.cur_val):
             omitted.append(item_row)
         elif translation_dict is not None and item.cur_val.strip() in translation_dict:
-            found_translation.append(item_row + [translation_dict[item.cur_val.strim()].translated_val])
+            found_translation.append(item_row + [translation_dict[item.cur_val.strip()].translated_val])
         else:
             results.append(item_row)
 
