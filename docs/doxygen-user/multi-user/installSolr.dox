@@ -1,149 +1,142 @@
 /*! \page install_solr_page Install and Configure Solr
 
+[TOC]
+
 \section install_solr_overview Overview
+Autopsy uses Apache Solr to store keyword text indexes. A central server is needed in a multi-user cluster to maintain and search the indexes.
 
-Autopsy uses Apache Solr to store keyword text indexes.  A central server is needed in a multi-user cluster to maintain and search the indexes.  
+A new text index is created for each case. The index can be stored either on shared storage or on the local drive of the Solr server(s) (large amount of local storage is required).
 
-A new text index is created for each case and is stored in the case folder on shared storage (not on the local drive of the Solr server). 
-
-Solr's embedded ZooKeeper is also used as a coordination service for Autopsy. 
+Solr's embedded ZooKeeper is also used as a coordination service for Autopsy.
 
 \section install_solr_prereq Prerequisites
 
-We use Bitnami Solr, which packages Solr as a Windows service. 
+We have prepared a pre-packaged version of Solr which packages Solr as Windows service.
 
 You will need:
-- A 64-bit version of the Java 8 Runtime Environment (JRE) from https://github.com/ojdkbuild/ojdkbuild. (<a href="https://github.com/ojdkbuild/ojdkbuild/releases/download/java-1.8.0-openjdk-1.8.0.242-1.b08/java-1.8.0-openjdk-1.8.0.242-1.b08.ojdkbuild.windows.x86_64.msi"> Link to installer</a>)
-- The Apache Solr 4.10.3-0 installation package.  This is no longer available from its original source, but you can find it on our site: https://sourceforge.net/projects/autopsy/files/CollaborativeServices/Solr.
--- NOTE: We tested Solr 6 at one point, but ran into stability problems when loading and unloading cores.  For now, you need to use Solr 4. 
-- An installed version of Autopsy so that you can copy files from it.   You can install Autopsy on one of the planned client systems.  You do not need to install it on the Solr server. 
-- A network-accessible machine to install Solr on. Note that the Solr process will need to write data out to the main shared storage drive, and needs adequate permissions to write to this location, which may be across a network.
-
-
+•	A 64-bit version of the Java 8 Runtime Environment (JRE) from <a href="https://github.com/ojdkbuild/ojdkbuild">https://github.com/ojdkbuild/ojdkbuild</a>. (<a href="https://github.com/ojdkbuild/ojdkbuild/blob/master/README.md">Download links</a>)
+•	Pre-packaged Autopsy version of Solr (LINK TO SOURCEFORGE HERE)
+•	A network-accessible machine to install Solr on. Note that the Solr process will need to write data out to the main shared storage drive, and needs adequate permissions to write to this location, which may be across a network.
 
 \section install_solr_install Installation
 
-\subsection install_solr_install_java JRE Installation
-1.  Install the Java JRE if needed. You can test this by running _where java_ from the command line. If you see output similar to the results below, you have a JRE.
-<br><br>
+\subsection install_solr_jre JRE Installation
+
+Solr requires a Java Runtime Environment (JRE), which may already be installed. You can test this by running "where java" from the command line. If you see output similar to the results below, you have a JRE.
+
 \image html wherejava.PNG
-<br><br>   
-If you need the JRE, install it with the default settings.
 
-\subsection install_solr_install_solr Solr Installation
-
-The following steps will configure Solr to run using an account that will have access to the network storage.
-
-1.	Run the Bitnami installer, <i>"bitnami-solr-4.10.3-0-windows-installer.exe"</i>
-2.	If Windows prompts with User Account Control, click _Yes_
-3.	Follow the prompts through to completion. You do not need to <i>"Learn more about Bitnami cloud hosting"</i> so you can clear the check box.
-4.	If you see an error dialog like the following, you may safely ignore it.
-<br><br>
-\image html apachebadmessage.PNG
-<br>
-5.	When the installation completes, clear the <i>"Launch Bitnami Apache Solr Stack Now?"</i> checkbox and click _Finish_.
-
-
+If you need the JRE, use the link in the \ref install_solr_prereq section above to download an installer. Accept the default settings during installation.
 
 \subsection install_solr_config Solr Configuration
 
-1. Stop the _solrJetty_ service by pressing _Start_, typing _services.msc_, pressing _Enter_, and locating the _solrJetty_ Windows service. Select the service and press _Stop the service_. If the service is already stopped and there is no _Stop the service_ available, this is okay.
-2. <b>Service Configuration</b>: Edit the <i>"C:\Bitnami\solr-4.10.3-0\apache-solr\scripts\serviceinstall.bat"</i> script. You need administrator rights to change this file. The easiest way around this is to save a copy on the Desktop, edit the Desktop version, and copy the new one back over the top of the old. Windows will ask for permission to overwrite the old file; allow it. You should make the following changes to this file:
-    <br>
-    <br>
-    - Add the following options in the line that begins with <i>"C:\Bitnami\solr-4.10.3-0/apache-solr\scripts\prunsrv.exe"</i> :
-        + <i>++JvmOptions=-Dcollection.configName=AutopsyConfig</i>
-	+ <i>++JvmOptions=-Dbootstrap_confdir="C:\Bitnami\solr-4.10.3-0\apache-solr\solr\configsets\AutopsyConfig\conf"</i>
-	+ <i>++JvmOptions=-DzkRun </i>
-               <br>
-    - Replace the path to JavaHome with the path to your 64-bit version of the JRE. If you do not know the path, the correct JavaHome path can be obtained by running the command "where java" from the Windows command line. An example is shown below. The text in yellow is what we are interested in. Do not include the "bin" folder in the path you place into the JavaHome variable. A correct example of the final result will look something like this: <i>–-JavaHome="C:\Program Files\ojdkbuild\java-1.8.0-openjdk-1.8.0.222-1"</i>
-	<br><br>
-	A portion of an updated _serviceinstall.bat_ is shown below, with the changes marked in yellow.
-     <br><br>
-     \image html serviceinstall.PNG
-	     <br><br>
-3. <b>Solr Configuration</b>: Edit <i>"C:\Bitnami\solr-4.10.3-0\apache-solr\solr\solr.xml"</i> to set the _transientCacheSize_ to the maximum number of cases expected to be open concurrently. If you expect ten concurrent cases, the text to add is
- <i>\<int name="transientCacheSize">10\</int></i>
- <br><br>
- The added part is highlighted in yellow below. Ensure that it is inside the <i>\<solr></i> tag as follows:
- <br>
- \image html transientcache.PNG
- <br><br>
-4. <b>Log Configuration</b>: Edit <i>"C:\Bitnami\solr-4.10.3-0\apache-solr\resources/log4j.properties"</i> to configure Solr log settings:
+Follow these steps to configure Solr:
+
 <ol>
-<li>Increase the log rotation size threshold (_log4j\.appender\.file\.MaxFileSize_) from 4MB to 100MB.
-<li>Remove the _CONSOLE_ appender from the _log4j\.rootLogger_ line.
-<li>Add the line "log4j.logger.org.apache.solr.update.processor.LogUpdateProcessor=WARN".
+<li>Extract the solr-8.6.3.zip archive from the location given in the \ref install_solr_prereq section into a directory of your choice. The rest of this document assumes that the archive is extracted into C:\solr-8.6.3 directory.
+<li>Go to C:\solr-8.6.3\bin directory and open the solr.in.cmd file in a text editor.
+\image html solr_config_folder.png
+<li>Search for each "TODO" and specify a valid path for each of the required configuration parameters. These parameters will be described in detail \ref install_solr_params "below".
+
+\image html solr_config_todo.png
+\image html solr_config_param.png
 </ol>
-The log file should end up looking like this (modified lines are highlighted in yellow
 
-\image html log4j.PNG
+\subsubsection install_solr_params Solr Configuration Parameters
 
- 
-5. <b>Schema Configuration</b>: From an Autopsy installation, copy the following into <i>"C:\Bitnami\solr-4.10.3-0\apache-solr\solr"</i>:
-- The folder <i>"C:\Program Files\Autopsy-XXX(current version)\autopsy\solr\solr\configsets"</i>
-- The folder <i>"C:\Program Files\Autopsy-XXX(current version)\autopsy\solr\solr\lib"</i>  
-- The file <i>"C:\Program Files\Autopsy-XXX(current version)\autopsy\solr\solr\zoo.cfg"</i>
+Required Solr Configuration Parameters:
+<ul>
+<li><b>JAVA_HOME</b> – path to 64-bit JRE installation. For example "JAVA_HOME=C:\Program Files\Java\jre1.8.0_151" or "JAVA_HOME=C:\Program Files\ojdkbuild\java-1.8.0-openjdk-1.8.0.222-1"
+<li><b>DEFAULT_CONFDIR</b> – path to Autopsy configuration directory. If the Solr archive was extracted into C:\solr-8.6.3 directory, then this path will be “C:\ solr-8.6.3\server\solr\configsets\AutopsyConfig\conf”.
+<li><b>Dbootstrap_confdir</b> – same path as DEFAULT_CONFDIR
+<li><b>SOLR_JAVA_MEM</b> - Solr JVM heap size should be somewhere between one third and one half of the total RAM available on the machine. A rule of thumb would be to set the heap size to "set SOLR_JAVA_MEM=-Xms2G -Xmx14G" for a machine with 32GB of RAM or more, and "set SOLR_JAVA_MEM=-Xms2G -Xmx8G" for a machine with 16GB of RAM.
+<li><b>SOLR_DATA_HOME</b> – location where Solr indexes will be stored. If this is not configured, the indexes will be stored in the "C:\solr-8.6.3\server\solr" directory. NOTE: for Autopsy cases consisting of large number of data sources, Solr indexes can get very large (hundreds of GBs, or TBs) so they should probably be stored on a larger network share.
+</ul>
 
+Optional Solr Configuration Parameters:
+<ul>
+<li><b>SOLR_HOST</b> – by default, the Solr node name is “localhost”. If multiple Solr nodes are going to be used as part of Solr Cloud, then specify the current computer’s host name as SOLR_HOST variable. 
+</ul>
 
-\subsection install_solr_reinstall Reinstall Service
+\subsubsection install_sorl_index_file_loc Solr Text Index File Location
 
-Because we made changes to the service configuration, we need to reinstall it. 
+Important note: previous versions of Autopsy (Autopsy 4.17.0 and earlier) were storing the Solr text indexes in the case output directory. As a result, the Solr indexes would get deleted if a user deleted the case output directory. Solr 8 (i.e. Autpsy 4.18.0 and later) no longer stores the Solr text index files in the case output directory but instead stores them in location defined by the SOLR_DATA_HOME parameter. As a consequence, if a user choses to manually delete case output directories (for example, to free up disk space), the Solr index directories located in SOLR_DATA_HOME need to be manually deleted as well.
 
-1. Start a Windows command prompt as administrator by pressing Start, typing <i>command</i>, right clicking on <i>Command Prompt</i>, and clicking on <i>Run as administrator</i>. Then run the following command to uninstall the solrJetty service:
+Text index for an Autopsy case will follow a naming structure according to following rules: [Autopsy case name] [Case creation time stamp] [Text index creation time stamp] [shardX_replica_nY]. For example, the text index for an Autopsy case "Test Case" will be located in the following directory inside SOLR_DATA_HOME:
 
-              cmd /c C:\Bitnami\solr-4.10.3-0\apache-solr\scripts\serviceinstall.bat UNINSTALL
+\image html solr_config_case.png
 
-       You will very likely see a result that says "The solrJetty service is not started." This is okay.
-2. In the same prompt, run the following command to install the solrJetty service:
+\subsection install_solr_service Windows Service Installation
 
-               cmd /c C:\Bitnami\solr-4.10.3-0\apache-solr\scripts\serviceinstall.bat INSTALL
-<br> Note the argument "INSTALL" is case sensitive. Your command prompt should look like the screenshot below. Very likely your command prompt will say "The solrJetty service could not be started." This is okay.
- <br><br>
- \image html solrinstall1.PNG
- <br><br>
- 
+At this point Solr has been configured and ready to be installed as Windows service. Open a command line console as Administrator and navigate to C:\solr-8.6.3\bin directory. From there, run the following command: "nssm install Solr_8.6.3".
 
-At this point you should be able to access the Solr admin panel in a web browser via the URL http://localhost:8983/solr/#/
+\image html solr_install_1.png
 
+An NSSM UI window will appear. Click the “Path” navigation button:
+
+\image html solr_install_2.png
+
+And select the “C:\solr-8.6.3\bin\solr.cmd” file. NOTE: Make sure you don’t select the “solr.in.cmd” file by accident.
+In the “Arguments” parameter, type in “start –f –c”:
+
+\image html solr_install_3.png
+
+Optionally, configure service’s display name, startup type, and account info: 
+
+\image html solr_install_4.png
 
 \subsection install_solr_service_user Configure Service User
 
-Back in \ref install_multiuseruser_page, you should have decided what user to run Solr as.   To configure Solr to run as that user, you'll use Windows Service Manager. 
+Back in Pick Your User Accounts (TODO FIX), you should have decided what user to run Solr as. To configure Solr to run as that user, you'll use Windows Service Manager.
+Switch to the Log On tab to change the logon credentials to the chosen user who will have access to the shared storage.
+<ul><li>If you specify a domain account, the account name will be in the form of DOMAINNAME\username as shown in the example below<ul>
 
+\image html solr_user_1.png
 
-- Press _Start_, type _services.msc_, and press _Enter_. 
-- Find _solrJetty_. If the service is running, press _Stop the service_, 
-- Double click the service and switch to the _Log On_ tab to change the logon credentials to the chosen user who will have access to the shared storage. 
- - If you specify a domain account, the account name will be in the form of _DOMAINNAME\\username_ as shown in the example below
+Click “Install Service”. You should see the following UI window appear:
 
-\image html solrinstall2.PNG
+\image html solr_user_2.png
 
+\section install_solr_start Start Solr Service
 
-- Start the service again. 
+At this point the Solr service has been configured and installed. You can verify this by opening Windows “Services” window:
 
-\section install_solr_test Testing
+\image html solr_start_1.png
 
-There are two tests that you should perform to confirm that the Solr machine is configured correctly. 
+Start the “Solr_8.6.3” service, and verify that the service status changes to “Running”.
 
-- <b>Web Interface</b>: You should attempt to access the Solr admin panel in a web browser from another machine on the network. Replace the IP address in the following URL with the IP address or the host name that the Solr service is running on: <i>http://172.16.12.61:8983/solr/#/</i>.
- <br><br>
- \image html solrinstall3.PNG
- <br><br>
+\image html solr_start_2.png
 
-If the service is appropriately started but you are unable to see the screenshot above, then it could be that port 8983 for Solr and port 9983 for ZooKeeper are blocked by your firewall. Contact your network administrator to open these ports. 
+\section install_solr_testing
 
-- <b>Shared Storage</b>: Log into the Solr computer as the user you decided to run the Solr service as and attempt to access the shared storage paths. Ensure that you can access the UNC paths (or drive letters if you have hardware NAS).  If everything is configured correctly you should be able to access the storage paths without having to provide credentials. 
-If you are prompted for a password to access the shared storage, then either enter the password and choose to save the credentials or reconfigure the setup so that the same passwords are used, etc. See \ref multiuser_users_store for steps on storing credentials.  If you needed to store the credentials, then you should restart the service or reboot the computer (we have observed that a running service does not get the updated credentials). 
+There are two tests that you should perform to confirm that the Solr machine is configured correctly.
 
-NOTE: You can not do a full test of permissions until you make a test case after all of the services are configured.
+<ul>
+<li><b>Web Interface:</b> You should attempt to access the Solr admin panel in a web browser. On the Solr machine, navigate to http://localhost:8983/solr/#/ and verify that Solr admin console gets displayed. You should also attempt to access the Solr admin panel in a web browser from another machine on the network. Replace the IP address in the following URL with the IP address or the host name that the Solr service is running on
 
-\section install_solr_backup Backing Up
+\image html solr_testing_1.png
 
-Solr creates two types of data that need to be backed up:
-- <b>Text Indexes</b>: These are stored in the case folder on the shared storage.
-- <b>ZooKeeper Data</b>: Autopsy uses a service called ZooKeeper embedded in Solr that stores data about what cases exist and who has them open. This data needs to be backed up so that you can have a list of all available multi-user cases. 
- - In a default installation that data is stored in C:\\Bitnami\\solr-4.10.3-0\\apache-solr\\solr\\zoo_data.
+If the service is appropriately started but you are unable to see the screenshot above, then it could be that port 8983 for Solr and port 9983 for ZooKeeper are blocked by your firewall. Contact your network administrator to open these ports.
 
+<li><b>Shared Storage:<b> Log into the Solr computer as the user you decided to run the Solr service as and attempt to access the shared storage paths. Ensure that you can access the UNC paths (or drive letters if you have hardware NAS). If everything is configured correctly you should be able to access the storage paths without having to provide credentials. If you are prompted for a password to access the shared storage, then either enter the password and choose to save the credentials or reconfigure the setup so that the same passwords are used, etc. See Storing Credentials (TODO) for steps on storing credentials. If you needed to store the credentials, then you should restart the service or reboot the computer (we have observed that a running service does not get the updated credentials).
+</ul>
+
+\section install_solr_autopsy
+
+Once the infrastructure is in place, you can configure Autopsy clients to use them.
+<ol>
+<li>Install Autopsy on each client system. Use the normal installer and pick the defaults.
+<li>Test that the user has access to the shared storage by opening the shared storage folders using Windows Explorer. If a password prompt is given, then enter the password and store the credentials (see Storing Credentials).
+<li>Start Autopsy and open the multi-user settings panel from "Tools", "Options", "Multi-user". As shown in the screenshot below, you can then enter all of the address and authentication information for the network-based services. Note that in order to create or open Multi-user cases, "Enable Multi-user cases" must be checked and the settings below must be correct.
+<li>To use a Solr 8 server, configure the Solr 8 Service and the ZooKeeper service connection info. ZooKeeper connection info is required. The ZooKeeper port number is 1000 higher than Solr service port number. By default, Solr service port is 8983 so the embedded ZooKeeper port is 9983.
+\image html solr_autopsy.png
+<li>For each setting, press the "Test Connection" button to ensure that Autopsy can communicate with each service. If any fail, then refer to the specific setup page for testing options. Also check that a firewall is not blocking the communications.
+<ul><li>NOTE: None of these tests are for permissions on the shared storage because Autopsy does not know about the shared storage. It can't test that until you make a case.</ul>
+<li>Make a test case (see Creating Multi-user cases (TODO)). You can add a single file in as a logical data source. The key concept is to look for errors.
+<ul>
+<li>If you find errors, look for errors in the log file on the Autopsy client.
+<li>If you followed all of the previous steps in all of the previous pages, then a common error at this point is that Solr cannot access the shared storage and it is running as a Service account. When this happens, you'll see an error message about Solr not being able to create or access a "core". If this happens, review what user Solr should be running as (see Solr Service) and change the shared storage configuration or ensure that credentials are stored.</ul>
+
+</ol>
 
 */
