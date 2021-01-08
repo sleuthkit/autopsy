@@ -77,7 +77,7 @@ public class YaraRuleSetOptionPanel extends javax.swing.JPanel {
     
     @Messages({
         "# {0} - rule set name",
-        "YaraRuleSetOptionPanel_RuleSet_Missing=The folder for the selected YARA rule set {0}, no longer exists.",
+        "YaraRuleSetOptionPanel_RuleSet_Missing=The folder for the selected YARA rule set, {0}, no longer exists.",
         "YaraRuleSetOptionPanel_RuleSet_Missing_title=Folder removed",
     })
 
