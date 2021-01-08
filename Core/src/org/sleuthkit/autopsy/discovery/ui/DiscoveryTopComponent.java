@@ -347,7 +347,6 @@ public final class DiscoveryTopComponent extends TopComponent {
                 domainDetailsPanel.configureArtifactTabs(selectedDomainTabName);
                 detailsPanel = domainDetailsPanel;
             } else {
-                FileDetailsPanel fileDetailsPanel = new FileDetailsPanel();
                 detailsPanel = new FileDetailsPanel();
             }
             rightSplitPane.setBottomComponent(detailsPanel);
