@@ -61,6 +61,7 @@ class ArtifactsWorker extends SwingWorker<List<BlackboardArtifact>, Void> {
                 return domainSearch.getArtifacts(new DomainSearchArtifactsRequest(Case.getCurrentCase().getSleuthkitCase(), domain, artifactType));
             } catch (DiscoveryException ex) {
                 if (ex.getCause() instanceof InterruptedException) {
+                      this.cancel(true);
                     //ignore the exception as it was cancelled while the cache was performing its get and we support cancellation
                 } else {
                     throw ex;

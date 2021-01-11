@@ -866,6 +866,8 @@ class ExtractRegistry extends Extract {
                                                     parentModuleName, sid));
                                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH,
                                                     parentModuleName, homeDir));
+                                            
+                                            newArtifacts.add(bbart);
                                         } else {
                                             //add attributes to existing artifact
                                             BlackboardAttribute bbattr = bbart.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_USER_NAME));
@@ -878,10 +880,10 @@ class ExtractRegistry extends Extract {
                                             if (bbattr == null) {
                                                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH,
                                                         parentModuleName, homeDir));
-                                            }
+                                            }                                          
                                         }
                                         bbart.addAttributes(bbattributes);
-                                        newArtifacts.add(bbart);
+                                       
                                     } catch (TskCoreException ex) {
                                         logger.log(Level.SEVERE, "Error adding account artifact to blackboard.", ex); //NON-NLS
                                     }

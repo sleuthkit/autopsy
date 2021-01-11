@@ -236,7 +236,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
      * @param attributeMap   The map of attributes that exist for the artifact.
      * @param dataSourceName The name of the datasource that caused the creation
      *                       of the artifact.
-     * @param sourceFileName The name of the file that caused the creation of
+     * @param sourceFilePath The path of the file that caused the creation of
      *                       the artifact.
      */
     @NbBundle.Messages({"GeneralPurposeArtifactViewer.dates.created=Created",

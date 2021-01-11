@@ -56,11 +56,6 @@ public class TaskRetryUtil {
          * Constructs an object that encapsulates the specification of a task
          * attempt for the attemptTask() utility. The attempt will have neither
          * a delay nor a time out.
-         *
-         * @param delay         The delay before the task should be attempted,
-         *                      may be zero or any positive integer.
-         * @param delayTimeUnit The time unit for the delay before the task
-         *                      should be attempted.
          */
         public TaskAttempt() {
             this.delay = 0L;
@@ -168,7 +163,7 @@ public class TaskRetryUtil {
      * each attempt and an optional timeout for each attempt. If an attempt
      * times out, that particular attempt task will be cancelled.
      *
-     * @param <T>        The return type of the task.
+     * @tparam T         The return type of the task.
      * @param task       The task.
      * @param attempts   The defining details for each attempt of the task.
      * @param executor   The scheduled task executor to be used to attempt the
