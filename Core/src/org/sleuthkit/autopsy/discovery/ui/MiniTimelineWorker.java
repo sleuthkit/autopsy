@@ -57,10 +57,10 @@ class MiniTimelineWorker extends SwingWorker<List<MiniTimelineResult>, Void> {
             DomainSearch domainSearch = new DomainSearch();
             try {
                 results.addAll(domainSearch.getAllArtifactsForDomain(Case.getCurrentCase().getSleuthkitCase(), domain));
-
             } catch (DiscoveryException ex) {
                 if (ex.getCause() instanceof InterruptedException) {
-                    logger.log(Level.INFO, "MiniTimeline search was cancelled or interrupted for domain: {0}", domain);
+                    this.cancel(true);
+                    //ignore the exception as it was cancelled while the cache was performing its get and we support cancellation
                 } else {
                     throw ex;
                 }

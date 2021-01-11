@@ -74,13 +74,30 @@ public class YaraRuleSetOptionPanel extends javax.swing.JPanel {
     void updatePanel() {
         ruleSetPanel.addSetList(RuleSetManager.getInstance().getRuleSetList());
     }
+    
+    @Messages({
+        "# {0} - rule set name",
+        "YaraRuleSetOptionPanel_RuleSet_Missing=The folder for the selected YARA rule set, {0}, no longer exists.",
+        "YaraRuleSetOptionPanel_RuleSet_Missing_title=Folder removed",
+    })
 
     /**
      * Handle the change in rule set selection. Update the detail panel with the
      * selected rule.
      */
     private void handleSelectionChange() {
-        ruleSetDetailsPanel.setRuleSet(ruleSetPanel.getSelectedRule());
+        RuleSet ruleSet = ruleSetPanel.getSelectedRule();
+
+        if(ruleSet != null && !ruleSet.getPath().toFile().exists()) {
+            ruleSetDetailsPanel.setRuleSet(null);
+            ruleSetPanel.removeRuleSet(ruleSet);
+            JOptionPane.showMessageDialog(this,
+                    Bundle.YaraRuleSetOptionPanel_RuleSet_Missing(ruleSet.getName()),
+                    Bundle.YaraRuleSetOptionPanel_RuleSet_Missing_title(),
+                    JOptionPane.ERROR_MESSAGE);
+        } else {
+            ruleSetDetailsPanel.setRuleSet(ruleSet);
+        }
     }
 
     @Messages({

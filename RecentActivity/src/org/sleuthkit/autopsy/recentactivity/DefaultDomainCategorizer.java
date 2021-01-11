@@ -45,7 +45,7 @@ import org.sleuthkit.autopsy.url.analytics.DomainCategory;
  * messaging:
  * https://www.raymond.cc/blog/list-of-web-messengers-for-your-convenience/
  *
- * NOTE: The @SuppressWarnings("try") on the class is to suppress warnings
+ * NOTE: The (at)SuppressWarnings("try") on the class is to suppress warnings
  * relating to the fact that the close method can throw an InterruptedException
  * since Exception can encompass the InterruptedException. See the following
  * github issue and bugs for more information:

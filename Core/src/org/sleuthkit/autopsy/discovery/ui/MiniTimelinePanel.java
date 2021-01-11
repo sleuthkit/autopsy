@@ -23,6 +23,7 @@ import java.util.logging.Level;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.contentviewers.artifactviewers.GeneralPurposeArtifactViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
@@ -32,7 +33,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 /**
  * Panel to display the entire mini timeline feature.
  */
-class MiniTimelinePanel extends javax.swing.JPanel {
+final class MiniTimelinePanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
 
@@ -44,6 +45,7 @@ class MiniTimelinePanel extends javax.swing.JPanel {
     private final ListSelectionListener artifactListener;
     private final ListSelectionListener dateListener;
 
+    @NbBundle.Messages({"MiniTimelinePanel.loadingPanel.details=the Timeline view"})
     /**
      * Creates new form MiniTimelinePanel.
      */
@@ -62,8 +64,8 @@ class MiniTimelinePanel extends javax.swing.JPanel {
                     } else {
                         rightPanel = new GeneralPurposeArtifactViewer();
                     }
-                    rightPanel.setArtifact(artifact);
                     mainSplitPane.setRightComponent(rightPanel.getComponent());
+                    rightPanel.setArtifact(artifact);
                     validate();
                     repaint();
                 }
@@ -88,6 +90,7 @@ class MiniTimelinePanel extends javax.swing.JPanel {
         leftSplitPane.setLeftComponent(dateListPanel);
         leftSplitPane.setRightComponent(artifactListPanel);
         mainSplitPane.setRightComponent(rightPanel.getComponent());
+        add(mainSplitPane);
     }
 
     /**
@@ -111,10 +114,16 @@ class MiniTimelinePanel extends javax.swing.JPanel {
         if (status == DomainArtifactsTabPanel.ArtifactRetrievalStatus.UNPOPULATED) {
             artifactListPanel.clearList();
             dateListPanel.clearList();
+            removeAll();
+            add(mainSplitPane);
             if (rightPanel != null) {
                 rightPanel.setArtifact(null);
             }
+        } else if (status == DomainArtifactsTabPanel.ArtifactRetrievalStatus.POPULATING) {
+            removeAll();
+            add(new LoadingPanel(Bundle.MiniTimelinePanel_loadingPanel_details()));
         }
+
     }
 
     /**
@@ -134,6 +143,8 @@ class MiniTimelinePanel extends javax.swing.JPanel {
             dateListPanel.addSelectionListener(dateListener);
             artifactListPanel.addSelectionListener(artifactListener);
             dateListPanel.selectFirst();
+            removeAll();
+            add(mainSplitPane);
             revalidate();
             repaint();
             try {
@@ -157,21 +168,18 @@ class MiniTimelinePanel extends javax.swing.JPanel {
         mainSplitPane = new javax.swing.JSplitPane();
         leftSplitPane = new javax.swing.JSplitPane();
 
-        setMinimumSize(new java.awt.Dimension(0, 0));
-        setPreferredSize(new java.awt.Dimension(0, 0));
-        setLayout(new java.awt.BorderLayout());
-
-        mainSplitPane.setResizeWeight(0.4);
+        mainSplitPane.setDividerLocation(400);
+        mainSplitPane.setResizeWeight(0.1);
         mainSplitPane.setToolTipText("");
         mainSplitPane.setMinimumSize(new java.awt.Dimension(0, 0));
-        mainSplitPane.setPreferredSize(new java.awt.Dimension(0, 0));
 
+        leftSplitPane.setDividerLocation(198);
         leftSplitPane.setResizeWeight(0.5);
         leftSplitPane.setMinimumSize(new java.awt.Dimension(0, 0));
-        leftSplitPane.setPreferredSize(new java.awt.Dimension(300, 0));
         mainSplitPane.setLeftComponent(leftSplitPane);
 
-        add(mainSplitPane, java.awt.BorderLayout.CENTER);
+        setMinimumSize(new java.awt.Dimension(0, 0));
+        setLayout(new java.awt.BorderLayout());
     }// </editor-fold>//GEN-END:initComponents
 
 
