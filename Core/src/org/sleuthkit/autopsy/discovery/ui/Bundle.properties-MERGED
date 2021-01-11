@@ -3,6 +3,7 @@ ArtifactMenuMouseAdapter_label=Extract Files
 ArtifactsListPanel.dateColumn.name=Date/Time
 ArtifactsListPanel.fileNameColumn.name=Name
 ArtifactsListPanel.mimeTypeColumn.name=MIME Type
+ArtifactsListPanel.noResultsFound.text=No results found
 ArtifactsListPanel.termColumn.name=Term
 ArtifactsListPanel.titleColumn.name=Title
 ArtifactsListPanel.urlColumn.name=URL
@@ -52,7 +53,7 @@ DocumentPanel.numberOfImages.noImages=No images
 # {0} - numberOfImages
 DocumentPanel.numberOfImages.text=1 of {0} images
 DocumentWrapper.previewInitialValue=Preview not generated yet.
-DomainDetailsPanel.miniTimelineTitle.text=Mini Timeline
+DomainDetailsPanel.miniTimelineTitle.text=Timeline
 # {0} - startDate
 # {1} - endDate
 DomainSummaryPanel.activity.text=Activity: {0} to {1}
@@ -68,12 +69,16 @@ ImageThumbnailPanel.isDeleted.text=All instances of file are deleted.
 # {0} - otherInstanceCount
 ImageThumbnailPanel.nameLabel.more.text=\ and {0} more
 InterestingItemsFilterPanel.error.text=At least one interesting file set name must be selected.
+LoadingPanel.loading.text=Loading, please wait.
+# {0} - resultInfo
+LoadingPanel.retrieving.text=Retrieving results for {0}.
 MiniTimelineArtifactListPanel.descriptionColumn.name=\ Description
 MiniTimelineArtifactListPanel.typeColumn.name=Result Type
 MiniTimelineArtifactListPanel.value.noValue=No value available.
 MiniTimelineDateListPanel.countColumn.name=Count
 MiniTimelineDateListPanel.dateColumn.name=Date
 MiniTimelineDateListPanel.value.noValue=No value available.
+MiniTimelinePanel.loadingPanel.details=the Timeline view
 MonthAbbreviation.aprilAbbrev=Apr
 MonthAbbreviation.augustAbbrev=Aug
 MonthAbbreviation.decemberAbbrev=Dec
@@ -165,6 +170,7 @@ CookieDetailsPanel.jLabel1.text=Artifact:
 CookieDetailsPanel.jLabel2.text=
 PreviouslyNotableFilterPanel.text_1=Include only previously notable domains
 KnownAccountTypeFilterPanel.text_1=Include only domains with a known account type
+LoadingPanel.detailsLabel.AccessibleContext.accessibleName=detailsLabel
 VideoThumbnailPanel.bytes.text=bytes
 VideoThumbnailPanel.deleted.text=All instances of file are deleted.
 VideoThumbnailPanel.gigaBytes.text=GB
