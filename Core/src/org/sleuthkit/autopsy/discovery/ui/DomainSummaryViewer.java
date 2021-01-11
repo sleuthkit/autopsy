@@ -64,6 +64,7 @@ public class DomainSummaryViewer extends javax.swing.JPanel {
         setLayout(new java.awt.BorderLayout());
 
         domainList.setModel(domainListModel);
+        domainList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         domainList.setCellRenderer(new DomainSummaryPanel());
         domainScrollPane.setViewportView(domainList);
 

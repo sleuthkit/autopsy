@@ -63,7 +63,7 @@ final class DomainDetailsPanel extends JPanel {
      *
      * @param tabName The name of the tab to select initially.
      */
-    @NbBundle.Messages({"DomainDetailsPanel.miniTimelineTitle.text=Mini Timeline"})
+    @NbBundle.Messages({"DomainDetailsPanel.miniTimelineTitle.text=Timeline"})
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     void configureArtifactTabs(String tabName) {
         selectedTabName = tabName;
@@ -102,6 +102,20 @@ final class DomainDetailsPanel extends JPanel {
                 return;
             }
         }
+    }
+
+    /**
+     * Get the status of the currently selected tab.
+     *
+     * @return The loading status of the currently selected tab.
+     */
+    DomainArtifactsTabPanel.ArtifactRetrievalStatus getCurrentTabStatus() {
+        if (jTabbedPane1.getSelectedComponent() instanceof MiniTimelinePanel) {
+            return ((MiniTimelinePanel) jTabbedPane1.getSelectedComponent()).getStatus();
+        } else if (jTabbedPane1.getSelectedComponent() instanceof DomainArtifactsTabPanel) {
+            return ((DomainArtifactsTabPanel) jTabbedPane1.getSelectedComponent()).getStatus();
+        }
+        return null;
     }
 
     /**
@@ -146,20 +160,19 @@ final class DomainDetailsPanel extends JPanel {
      */
     @Subscribe
     void handlePopulateDomainTabsEvent(DiscoveryEventUtils.PopulateDomainTabsEvent populateEvent) {
-        domain = populateEvent.getDomain();
         SwingUtilities.invokeLater(() -> {
-            resetTabsStatus();
-            selectTab();
-            Component selectedComponent = jTabbedPane1.getSelectedComponent();
-            if (selectedComponent instanceof DomainArtifactsTabPanel) {
-                runDomainWorker((DomainArtifactsTabPanel) selectedComponent);
-            } else if (selectedComponent instanceof MiniTimelinePanel) {
-                runMiniTimelineWorker((MiniTimelinePanel) selectedComponent);
-            }
-            if (StringUtils.isBlank(domain)) {
+            if (StringUtils.isBlank(populateEvent.getDomain())) {
+                resetTabsStatus();
                 //send fade out event
                 DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.DetailsVisibleEvent(false));
             } else {
+                domain = populateEvent.getDomain();
+                Component selectedComponent = jTabbedPane1.getSelectedComponent();
+                if (selectedComponent instanceof DomainArtifactsTabPanel) {
+                    runDomainWorker((DomainArtifactsTabPanel) selectedComponent);
+                } else if (selectedComponent instanceof MiniTimelinePanel) {
+                    runMiniTimelineWorker((MiniTimelinePanel) selectedComponent);
+                }
                 //send fade in event
                 DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.DetailsVisibleEvent(true));
             }
