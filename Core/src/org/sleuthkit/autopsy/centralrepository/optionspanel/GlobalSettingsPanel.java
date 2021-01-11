@@ -151,9 +151,9 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
      *                             as of most recent change.
      */
     @NbBundle.Messages({
-        "GlobalSettingsPanel.onMultiUserChange.enable.title=Use with Central Repository?",
-        "GlobalSettingsPanel.onMultiUserChange.enable.description=Do you want to update the Central Repository to use this PostgreSQL database?",
-        "GlobalSettingsPanel.onMultiUserChange.enable.description2=The Central Repository stores hash values and accounts from past cases."
+        "GlobalSettingsPanel.onMultiUserChange.enable.title=Central Repository",
+        "GlobalSettingsPanel.onMultiUserChange.enable.description=Do you want to update the Central Repository to use this PostgreSQL server?",
+        "GlobalSettingsPanel.onMultiUserChange.enable.description2=Any data in an existing SQLite Central Repository will not be transferred to the new database."
     })
     public static void onMultiUserChange(Component parent, boolean muPreviouslySelected, boolean muCurrentlySelected) {
         boolean crEnabled = CentralRepoDbUtil.allowUseOfCentralRepository();
