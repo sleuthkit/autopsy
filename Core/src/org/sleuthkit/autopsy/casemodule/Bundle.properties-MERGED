@@ -52,8 +52,8 @@ Case.exceptionMessage.failedToReadMetadata=Failed to read case metadata:\n{0}.
 Case.exceptionMessage.metadataUpdateError=Failed to update case metadata
 # {0} - exception message
 Case.exceptionMessage.unsupportedSchemaVersionMessage=Unsupported case database schema version:\n{0}.
-Case.lockingException.couldNotAcquireExclusiveLock=Failed to get a exclusive lock on the case.
-Case.lockingException.couldNotAcquireSharedLock=Failed to get an shared lock on the case.
+Case.lockingException.couldNotAcquireExclusiveLock=Failed to get an exclusive lock on the case.
+Case.lockingException.couldNotAcquireSharedLock=Failed to get a shared lock on the case.
 Case.open.exception.multiUserCaseNotEnabled=Cannot open a multi-user case if multi-user cases are not enabled. See Tools, Options, Multi-User.
 # {0} - image
 Case.openFileSystems.openingImage=Opening all filesystems for image: {0}...
