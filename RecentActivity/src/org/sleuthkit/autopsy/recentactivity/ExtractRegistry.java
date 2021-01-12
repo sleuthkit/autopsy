@@ -1503,7 +1503,7 @@ class ExtractRegistry extends Extract {
                     }
                     Collection<BlackboardAttribute> attributes = new ArrayList<>();
                     attributes.add(new BlackboardAttribute(TSK_PATH, getName(), fileName));
-                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, getName(), adobeUsedTime));
+                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED, getName(), adobeUsedTime));
                     attributes.add(new BlackboardAttribute(TSK_COMMENT, getName(), comment));
                     BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_RECENT_OBJECT, regFile, attributes);
                     if (bba != null) {
@@ -1744,7 +1744,7 @@ class ExtractRegistry extends Extract {
             String fileName = fileNameTokens[1];
             Collection<BlackboardAttribute> attributes = new ArrayList<>();
             attributes.add(new BlackboardAttribute(TSK_PATH, getName(), fileName));
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, getName(), docDate));
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED, getName(), docDate));
             attributes.add(new BlackboardAttribute(TSK_COMMENT, getName(), comment));
             BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_RECENT_OBJECT, regFile, attributes);
             if (bba != null) {
@@ -1807,7 +1807,7 @@ class ExtractRegistry extends Extract {
                 }
                 Collection<BlackboardAttribute> attributes = new ArrayList<>();
                 attributes.add(new BlackboardAttribute(TSK_PATH, getName(), fileName));
-                attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, getName(), usedTime));
+                attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED, getName(), usedTime));
                 attributes.add(new BlackboardAttribute(TSK_COMMENT, getName(), comment));
                 BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_RECENT_OBJECT, regFile, attributes);
                 if (bba != null) {
