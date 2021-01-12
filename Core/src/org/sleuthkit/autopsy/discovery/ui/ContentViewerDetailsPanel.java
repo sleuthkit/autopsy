@@ -59,7 +59,9 @@ final class ContentViewerDetailsPanel extends AbstractArtifactDetailsPanel {
     public void setArtifact(BlackboardArtifact artifact) {
         Node node = Node.EMPTY;
         if (artifact != null) {
-            node = new BlackboardArtifactNode(artifact);
+            boolean useAssociatedFile = artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID()
+                    || artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID();
+            node = new BlackboardArtifactNode(artifact, useAssociatedFile);
         }
         contentViewer.setNode(node);
     }

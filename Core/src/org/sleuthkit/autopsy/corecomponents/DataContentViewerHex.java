@@ -46,6 +46,7 @@ import static org.sleuthkit.autopsy.corecomponents.Bundle.*;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.datamodel.DataConversion;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -606,7 +607,7 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
             return false;
         }
         Content content = DataContentViewerUtility.getDefaultContent(node);
-        return content != null && content.getSize() > 0;
+        return content != null  && !(content instanceof BlackboardArtifact) && content.getSize() > 0;
     }
 
     @Override
