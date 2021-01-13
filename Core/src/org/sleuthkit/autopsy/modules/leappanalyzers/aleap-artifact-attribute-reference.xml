@@ -330,7 +330,7 @@
     </FileName>
     
     <FileName filename="installed apps vending.tsv" description="Installed Apps (Vending)">
-        <ArtifactName artifactname="TSK_INSTALLED_PROG" comment="Installed Apps (VEnding)">
+        <ArtifactName artifactname="TSK_INSTALLED_PROG" comment="Installed Apps (Vending)">
             <AttributeName attributename="TSK_DATETIME" columnName="First Download" required="yes" />
             <AttributeName attributename="TSK_PROG_NAME" columnName="Package Name" required="yes" />
             <AttributeName attributename="TSK_TITLE" columnName="Title" required="yes" />
