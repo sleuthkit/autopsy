@@ -532,9 +532,9 @@ public final class LeappFileProcessor {
             String comment = nnm.getNamedItem("comment").getNodeValue();
             String parentName = artifactNlist.item(k).getParentNode().getAttributes().getNamedItem("filename").getNodeValue();
 
-            BlackboardArtifact.ARTIFACT_TYPE foundArtifactType = null;
+            BlackboardArtifact.Type foundArtifactType = null;
             try {
-                Case.getCurrentCase().getSleuthkitCase().getArtifactType(artifactName);
+                foundArtifactType = Case.getCurrentCase().getSleuthkitCase().getArtifactType(artifactName);
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, String.format("There was an issue that arose while trying to fetch artifact type for %s.", artifactName), ex);
             }
