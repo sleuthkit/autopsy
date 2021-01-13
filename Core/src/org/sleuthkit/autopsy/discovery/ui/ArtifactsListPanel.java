@@ -25,6 +25,7 @@ import java.util.logging.Level;
 import javax.swing.JPopupMenu;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableCellRenderer;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 import org.openide.util.NbBundle;
@@ -32,6 +33,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import org.sleuthkit.autopsy.guiutils.SimpleTableCellRenderer;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TimeUtilities;
@@ -56,6 +58,11 @@ final class ArtifactsListPanel extends AbstractArtifactListPanel {
     ArtifactsListPanel(BlackboardArtifact.ARTIFACT_TYPE artifactType) {
         tableModel = new DomainArtifactTableModel(artifactType);
         initComponents();
+        // add the cell renderer to all columns
+        TableCellRenderer renderer = new SimpleTableCellRenderer();
+        for (int i = 0; i < tableModel.getColumnCount(); ++i) {
+            artifactsTable.getColumnModel().getColumn(i).setCellRenderer(renderer);
+        }
         artifactsTable.getRowSorter().toggleSortOrder(0);
         artifactsTable.getRowSorter().toggleSortOrder(0);
     }
@@ -391,7 +398,8 @@ final class ArtifactsListPanel extends AbstractArtifactListPanel {
         public Object getValueAt(int rowIndex, int columnIndex) {
             return Bundle.ArtifactsListPanel_noResultsFound_text();
         }
-         @Override
+
+        @Override
         public String getColumnName(int column) {
             switch (column) {
                 case 0:
