@@ -532,11 +532,13 @@ public final class LeappFileProcessor {
             String comment = nnm.getNamedItem("comment").getNodeValue();
             String parentName = artifactNlist.item(k).getParentNode().getAttributes().getNamedItem("filename").getNodeValue();
 
-            BlackboardArtifact.ARTIFACT_TYPE foundArtifactType = Stream.of(BlackboardArtifact.ARTIFACT_TYPE.values())
-                    .filter((art_type) -> art_type.name().equalsIgnoreCase(artifactName))
-                    .findFirst()
-                    .orElse(null);
-
+            BlackboardArtifact.ARTIFACT_TYPE foundArtifactType = null;
+            try {
+                Case.getCurrentCase().getSleuthkitCase().getArtifactType(artifactName);
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, String.format("There was an issue that arose while trying to fetch artifact type for %s.", artifactName), ex);
+            }
+            
             if (foundArtifactType == null) {
                 logger.log(Level.SEVERE, String.format("No known artifact mapping found for [artifact: %s, %s]",
                         artifactName, getXmlFileIdentifier(parentName)));
