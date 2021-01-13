@@ -638,7 +638,7 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
         return line
 		
 def cleanupEventDescription(description):
-    test = re.search("\D+:\d+", description)
+    test = re.search("^'\D+:\d+'$", description)
     if test is not None:
         return re.sub(":\d+", ":<artifact_id>", description)
     else:
