@@ -155,7 +155,7 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
             statusHelper.switchToDeterminate(iLeappFilesToProcess.size());
             processILeappFs(dataSource, currentCase, statusHelper, tempOutputPath.toString());
         } else {
-            iLeappFilesToProcess = findiLeappFilesToProcess(dataSource);
+            iLeappFilesToProcess = LeappFileProcessor.findLeappFilesToProcess(dataSource);
             statusHelper.switchToDeterminate(iLeappFilesToProcess.size());
 
             Integer filesProcessedCount = 0;
@@ -266,41 +266,6 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
             return;
         }
 
-    }
-
-    /**
-     * Find the files that will be processed by the iLeapp program
-     *
-     * @param dataSource
-     *
-     * @return List of abstract files to process.
-     */
-    private List<AbstractFile> findiLeappFilesToProcess(Content dataSource) {
-
-        List<AbstractFile> iLeappFiles = new ArrayList<>();
-
-        FileManager fileManager = getCurrentCase().getServices().getFileManager();
-
-        // findFiles use the SQL wildcard % in the file name
-        try {
-            iLeappFiles = fileManager.findFiles(dataSource, "%", "/"); //NON-NLS
-        } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "No files found to process"); //NON-NLS
-            return iLeappFiles;
-        }
-
-        List<AbstractFile> iLeappFilesToProcess = new ArrayList<>();
-        for (AbstractFile iLeappFile : iLeappFiles) {
-            if (((iLeappFile.getLocalAbsPath() != null)
-                    && (!iLeappFile.getNameExtension().isEmpty() && (!iLeappFile.isVirtual())))
-                    && ((iLeappFile.getName().toLowerCase().contains(".zip") || (iLeappFile.getName().toLowerCase().contains(".tar")))
-                    || iLeappFile.getName().toLowerCase().contains(".tgz"))) {
-                iLeappFilesToProcess.add(iLeappFile);
-
-            }
-        }
-
-        return iLeappFilesToProcess;
     }
 
     /**
