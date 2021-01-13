@@ -50,7 +50,7 @@ final class ContentViewerDetailsPanel extends AbstractArtifactDetailsPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        setPreferredSize(new java.awt.Dimension(500, 0));
+        setPreferredSize(new java.awt.Dimension(300, 0));
         setLayout(new java.awt.BorderLayout());
     }// </editor-fold>//GEN-END:initComponents
 
