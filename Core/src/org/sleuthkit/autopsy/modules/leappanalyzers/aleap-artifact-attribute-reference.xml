@@ -66,7 +66,7 @@
 
         <FileName filename="Browser cookies.tsv" description="Browser Cookies">
             <ArtifactName artifactname="TSK_WEB_COOKIE" comment="Browser Cookies">
-                <AttributeName attributename="TSK_DATETIME_ACCESS" columnName="Last Access Date" required="yes" />
+                <AttributeName attributename="TSK_DATETIME_ACCESSED" columnName="Last Access Date" required="yes" />
                 <AttributeName attributename="TSK_DOMAIN" columnName="Host" required="yes" />
                 <AttributeName attributename="TSK_NAME" columnName="Name" required="yes" />
                 <AttributeName attributename="TSK_VALUE" columnName="Value" required="yes" />
@@ -163,7 +163,7 @@
 
     <FileName filename="Chrome cookies.tsv" description="Chrome Cookies">
         <ArtifactName artifactname="TSK_WEB_COOKIE" comment="Chrome Cookies">
-            <AttributeName attributename="TSK_DATETIME_ACCESS" columnName="Last Access Date" required="yes" />
+            <AttributeName attributename="TSK_DATETIME_ACCESSED" columnName="Last Access Date" required="yes" />
             <AttributeName attributename="TSK_DOMAIN" columnName="Host" required="yes" />
             <AttributeName attributename="TSK_NAME" columnName="Name" required="yes" />
             <AttributeName attributename="TSK_VALUE" columnName="Value" required="yes" />
@@ -236,7 +236,7 @@
 
     <FileName filename="Edge cookies.tsv" description="Edge Cookies">
         <ArtifactName artifactname="TSK_WEB_COOKIE" comment="Edge Cookies">
-            <AttributeName attributename="TSK_DATETIME_ACCESS" columnName="Last Access Date" required="yes" />
+            <AttributeName attributename="TSK_DATETIME_ACCESSED" columnName="Last Access Date" required="yes" />
             <AttributeName attributename="TSK_DOMAIN" columnName="Host" required="yes" />
             <AttributeName attributename="TSK_NAME" columnName="Name" required="yes" />
             <AttributeName attributename="TSK_VALUE" columnName="Value" required="yes" />
