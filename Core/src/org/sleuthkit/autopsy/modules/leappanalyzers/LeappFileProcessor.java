@@ -577,10 +577,12 @@ public final class LeappFileProcessor {
                 String required = nnm.getNamedItem("required").getNodeValue();
                 String parentName = attributeNlist.item(k).getParentNode().getParentNode().getAttributes().getNamedItem("filename").getNodeValue();
 
-                BlackboardAttribute.ATTRIBUTE_TYPE foundAttrType = Stream.of(BlackboardAttribute.ATTRIBUTE_TYPE.values())
-                        .filter((attr_type) -> attr_type.name().compareToIgnoreCase(attributeName) == 0)
-                        .findFirst()
-                        .orElse(null);
+                BlackboardAttribute.Type foundAttrType = null;
+                try {
+                    foundAttrType = Case.getCurrentCase().getSleuthkitCase().getAttributeType(attributeName.toUpperCase());
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, String.format("There was an issue that arose while trying to fetch attribute type for %s.", attributeName), ex);
+                }
 
                 if (foundAttrType == null) {
                     logger.log(Level.SEVERE, String.format("No known attribute mapping found for [%s]", getXmlAttrIdentifier(parentName, attributeName)));
