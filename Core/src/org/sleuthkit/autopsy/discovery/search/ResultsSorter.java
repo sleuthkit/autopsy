@@ -257,60 +257,60 @@ public class ResultsSorter implements Comparator<Result> {
             return compareStrings(first.getDomain().toLowerCase(), second.getDomain().toLowerCase());
         };
     }
-    
+
     /**
      * Sorts domains by page view count.
-     * 
+     *
      * This comparator sorts results in descending order (largest -> smallest).
      */
     private static Comparator<Result> getPageViewComparator() {
         return (Result domain1, Result domain2) -> {
-            if (domain1.getType() != SearchData.Type.DOMAIN || 
-                    domain2.getType() != SearchData.Type.DOMAIN) {
+            if (domain1.getType() != SearchData.Type.DOMAIN
+                    || domain2.getType() != SearchData.Type.DOMAIN) {
                 return 0;
             }
 
             ResultDomain first = (ResultDomain) domain1;
             ResultDomain second = (ResultDomain) domain2;
-            
+
             long firstPageViews = first.getTotalPageViews();
             long secondPageViews = second.getTotalPageViews();
             return Long.compare(secondPageViews, firstPageViews);
         };
     }
-    
+
     /**
-     * Sorts result domains by last activity date time. The results will be in 
+     * Sorts result domains by last activity date time. The results will be in
      * descending order.
      */
     private static Comparator<Result> getLastActivityDateTimeComparator() {
         return (Result domain1, Result domain2) -> {
-            if (domain1.getType() != SearchData.Type.DOMAIN || 
-                    domain2.getType() != SearchData.Type.DOMAIN) {
+            if (domain1.getType() != SearchData.Type.DOMAIN
+                    || domain2.getType() != SearchData.Type.DOMAIN) {
                 return 0;
             }
             ResultDomain first = (ResultDomain) domain1;
             ResultDomain second = (ResultDomain) domain2;
-            
+
             long firstActivityEnd = first.getActivityEnd();
             long secondActivityEnd = second.getActivityEnd();
             return Long.compare(secondActivityEnd, firstActivityEnd);
         };
     }
-    
+
     /**
-     * Sorts result domains by most file downloads. The results will be in 
+     * Sorts result domains by most file downloads. The results will be in
      * descending order.
      */
     private static Comparator<Result> getWebDownloadsComparator() {
         return (Result domain1, Result domain2) -> {
-            if (domain1.getType() != SearchData.Type.DOMAIN || 
-                    domain2.getType() != SearchData.Type.DOMAIN) {
+            if (domain1.getType() != SearchData.Type.DOMAIN
+                    || domain2.getType() != SearchData.Type.DOMAIN) {
                 return 0;
             }
             ResultDomain first = (ResultDomain) domain1;
             ResultDomain second = (ResultDomain) domain2;
-            
+
             long firstFilesDownloaded = first.getFilesDownloaded();
             long secondFilesDownloaded = second.getFilesDownloaded();
             return Long.compare(secondFilesDownloaded, firstFilesDownloaded);
@@ -388,10 +388,10 @@ public class ResultsSorter implements Comparator<Result> {
                 Bundle.FileSorter_SortingMethod_keywordlist_displayName()), // Sort alphabetically by list of keyword list names found
         BY_FULL_PATH(new ArrayList<>(),
                 Bundle.FileSorter_SortingMethod_fullPath_displayName()), // Sort alphabetically by path
-        BY_DOMAIN_NAME(new ArrayList<>(),Bundle.FileSorter_SortingMethod_domain_displayName()),
-        BY_PAGE_VIEWS(new ArrayList<>(), Bundle.FileSorter_SortingMethod_pageViews_displayName()),
-        BY_DOWNLOADS(new ArrayList<>(), Bundle.FileSorter_SortingMethod_downloads_displayName()),
-        BY_LAST_ACTIVITY(new ArrayList<>(), Bundle.FileSorter_SortingMethod_activity_displayName());
+        BY_DOMAIN_NAME(Arrays.asList(new DiscoveryAttributes.DomainCategoryAttribute()), Bundle.FileSorter_SortingMethod_domain_displayName()),
+        BY_PAGE_VIEWS(Arrays.asList(new DiscoveryAttributes.DomainCategoryAttribute()), Bundle.FileSorter_SortingMethod_pageViews_displayName()),
+        BY_DOWNLOADS(Arrays.asList(new DiscoveryAttributes.DomainCategoryAttribute()), Bundle.FileSorter_SortingMethod_downloads_displayName()),
+        BY_LAST_ACTIVITY(Arrays.asList(new DiscoveryAttributes.DomainCategoryAttribute()), Bundle.FileSorter_SortingMethod_activity_displayName());
 
         private final String displayName;
         private final List<DiscoveryAttributes.AttributeType> requiredAttributes;
