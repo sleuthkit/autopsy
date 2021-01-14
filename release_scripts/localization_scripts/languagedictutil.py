@@ -8,8 +8,8 @@ from gitutil import get_text
 from propsutil import get_entry_dict
 
 
-def extract_translations(file_iter: Iterator[Tuple[str, Blob]], orig_filename: str, translated_filename: str) \
-        -> Dict[str, FoundValue]:
+def extract_translations(orig_file_iter: Iterator[Tuple[str, Blob]], translated_file_iter: Iterator[Tuple[str, Blob]],
+                         orig_filename: str, translated_filename: str) -> Dict[str, FoundValue]:
     """
     Creates a translations dictionary based on comparing the values of keys in an original bundles file and a translated
     bundles file in the same directory.  For instance, if /path/to/original.properties and
@@ -18,7 +18,9 @@ def extract_translations(file_iter: Iterator[Tuple[str, Blob]], orig_filename: s
     key.
 
     Args:
-        file_iter: An iterator of tuples containing the path and the content of the file.
+        orig_file_iter: An iterator of tuples containing the path and the content of the file for original content.
+        translated_file_iter: An iterator of tuples containing the path and the content of the file for translated
+        content.
         orig_filename: The original file name (i.e. 'bundle.properties-MERGED').
         translated_filename: The translated file name (i.e. 'Bundle_ja.properties').
 
@@ -27,15 +29,8 @@ def extract_translations(file_iter: Iterator[Tuple[str, Blob]], orig_filename: s
     """
 
     # Create a dictionary mapping parent path to the file content for both original and translated files
-    original_files: Dict[str, Tuple[str, Blob]] = dict()
-    translated_files: Dict[str, Tuple[str, Blob]] = dict()
-
-    for path, content in file_iter:
-        parent_dir, file_name = os.path.split(str(Path(path)))
-        if file_name.strip().lower() == orig_filename.strip().lower():
-            original_files[parent_dir.strip().lower()] = (path, content)
-        elif file_name.strip().lower() == translated_filename.strip().lower():
-            translated_files[parent_dir.strip().lower()] = (path, content)
+    original_files: Dict[str, Tuple[str, Blob]] = _find_file_entries(orig_file_iter, orig_filename)
+    translated_files: Dict[str, Tuple[str, Blob]] = _find_file_entries(translated_file_iter, translated_filename)
 
     # determine original and translated files with common parent folders and find common keys
     to_ret: Dict[str, FoundValue] = dict()
@@ -55,6 +50,26 @@ def extract_translations(file_iter: Iterator[Tuple[str, Blob]], orig_filename: s
                 translated_val=translated_value)
 
     return to_ret
+
+
+def _find_file_entries(file_iter: Iterator[Tuple[str, Blob]], searched_file_name: str) -> Dict[str, Tuple[str, Blob]]:
+    """
+    Finds file entries that match the file_name indicated.
+    Args:
+        file_iter: An iterator of a tuple containing the repo relative path of the file and the file contents as a blob.
+        searched_file_name: The file name to be found in the relative path.
+
+    Returns: A dictionary mapping the directory to a tuple of the full path (including the file name) and the file
+    contents.
+
+    """
+    files: Dict[str, Tuple[str, Blob]] = dict()
+    for path, content in file_iter:
+        parent_dir, file_name = os.path.split(str(Path(path)))
+        if searched_file_name.strip().lower() == file_name.strip().lower():
+            files[parent_dir.strip().lower()] = (path, content)
+
+    return files
 
 
 def sanitize_prop_dict_keys(dct: Dict[str, str]) -> Dict[str, str]:
