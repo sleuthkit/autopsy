@@ -172,6 +172,7 @@ public final class DiscoveryTopComponent extends TopComponent {
         DiscoveryEventUtils.getDiscoveryEventBus().unregister(resultsPanel);
         DiscoveryEventUtils.getDiscoveryEventBus().unregister(detailsPanel);
         if (detailsPanel instanceof DomainDetailsPanel) {
+            ((DomainDetailsPanel) detailsPanel).unregister();
             selectedDomainTabName = ((DomainDetailsPanel) detailsPanel).getSelectedTabName();
         }
         resetBottomComponent();

@@ -277,6 +277,7 @@ public final class DiscoveryEventUtils {
     public static final class MiniTimelineResultEvent {
 
         private final List<MiniTimelineResult> results = new ArrayList<>();
+        private final String domain;
 
         /**
          * Construct a new MiniTimelineResultEvent.
@@ -284,10 +285,11 @@ public final class DiscoveryEventUtils {
          * @param results The list of MiniTimelineResults contained in this
          *                event.
          */
-        public MiniTimelineResultEvent(List<MiniTimelineResult> results) {
+        public MiniTimelineResultEvent(List<MiniTimelineResult> results, String domain) {
             if (results != null) {
                 this.results.addAll(results);
             }
+            this.domain = domain;
         }
 
         /**
@@ -297,6 +299,15 @@ public final class DiscoveryEventUtils {
          */
         public List<MiniTimelineResult> getResultList() {
             return Collections.unmodifiableList(results);
+        }
+
+        /**
+         * Get the domain this list of results is for.
+         *
+         * @return The domain the list of results is for.
+         */
+        public String getDomain(){
+            return domain;
         }
     }
 

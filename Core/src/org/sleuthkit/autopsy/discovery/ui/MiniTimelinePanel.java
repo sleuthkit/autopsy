@@ -42,6 +42,7 @@ final class MiniTimelinePanel extends javax.swing.JPanel {
     private DomainArtifactsTabPanel.ArtifactRetrievalStatus status = DomainArtifactsTabPanel.ArtifactRetrievalStatus.UNPOPULATED;
     private AbstractArtifactDetailsPanel rightPanel = new GeneralPurposeArtifactViewer();
     private static final Logger logger = Logger.getLogger(MiniTimelinePanel.class.getName());
+    private String selectedDomain = null;
     private final ListSelectionListener artifactListener;
     private final ListSelectionListener dateListener;
 
@@ -109,8 +110,9 @@ final class MiniTimelinePanel extends javax.swing.JPanel {
      * @param status The ArtifactRetrievalStatus of the panel.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    void setStatus(DomainArtifactsTabPanel.ArtifactRetrievalStatus status) {
+    void setStatus(DomainArtifactsTabPanel.ArtifactRetrievalStatus status, String domain) {
         this.status = status;
+        this.selectedDomain = domain;
         if (status == DomainArtifactsTabPanel.ArtifactRetrievalStatus.UNPOPULATED) {
             artifactListPanel.clearList();
             dateListPanel.clearList();
@@ -123,7 +125,6 @@ final class MiniTimelinePanel extends javax.swing.JPanel {
             removeAll();
             add(new LoadingPanel(Bundle.MiniTimelinePanel_loadingPanel_details()));
         }
-
     }
 
     /**
@@ -135,23 +136,19 @@ final class MiniTimelinePanel extends javax.swing.JPanel {
     @Subscribe
     void handleMiniTimelineResultEvent(DiscoveryEventUtils.MiniTimelineResultEvent miniTimelineResultEvent) {
         SwingUtilities.invokeLater(() -> {
-            dateListPanel.removeListSelectionListener(dateListener);
-            artifactListPanel.removeSelectionListener(artifactListener);
-            dateListPanel.addArtifacts(miniTimelineResultEvent.getResultList());
-            status = DomainArtifactsTabPanel.ArtifactRetrievalStatus.POPULATED;
-            setEnabled(!dateListPanel.isEmpty());
-            dateListPanel.addSelectionListener(dateListener);
-            artifactListPanel.addSelectionListener(artifactListener);
-            dateListPanel.selectFirst();
-            removeAll();
-            add(mainSplitPane);
-            revalidate();
-            repaint();
-            try {
-                DiscoveryEventUtils.getDiscoveryEventBus().unregister(this);
-            } catch (IllegalArgumentException notRegistered) {
-                logger.log(Level.INFO, "Attempting to unregister mini timeline view which was not registered");
-                // attempting to remove a tab that was never registered
+            if (miniTimelineResultEvent.getDomain().equals(selectedDomain)) {
+                dateListPanel.removeListSelectionListener(dateListener);
+                artifactListPanel.removeSelectionListener(artifactListener);
+                dateListPanel.addArtifacts(miniTimelineResultEvent.getResultList());
+                status = DomainArtifactsTabPanel.ArtifactRetrievalStatus.POPULATED;
+                setEnabled(!dateListPanel.isEmpty());
+                dateListPanel.addSelectionListener(dateListener);
+                artifactListPanel.addSelectionListener(artifactListener);
+                dateListPanel.selectFirst();
+                removeAll();
+                add(mainSplitPane);
+                revalidate();
+                repaint();
             }
         });
     }
