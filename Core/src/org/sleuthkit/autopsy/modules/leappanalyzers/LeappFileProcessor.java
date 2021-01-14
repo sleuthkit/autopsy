@@ -387,13 +387,15 @@ public final class LeappFileProcessor {
             bbattributes.add(new BlackboardAttribute(attributeType, moduleName, columnValue));
         } else if (attrType.matches("INTEGER")) {
             try {
-                bbattributes.add(new BlackboardAttribute(attributeType, moduleName, Integer.valueOf(columnValue)));
+                // parse as double to handle values of format like '21.0' and then convert to int
+                bbattributes.add(new BlackboardAttribute(attributeType, moduleName, Double.valueOf(columnValue).intValue()));
             } catch (NumberFormatException ex) {
                 logger.log(Level.WARNING, String.format("Unable to format %s as an integer.", columnValue), ex);
             }
         } else if (attrType.matches("LONG")) {
             try {
-                bbattributes.add(new BlackboardAttribute(attributeType, moduleName, Long.valueOf(columnValue)));
+                // parse as double to handle values of format like '21.0' and then convert to long
+                bbattributes.add(new BlackboardAttribute(attributeType, moduleName, Double.valueOf(columnValue).longValue()));
             } catch (NumberFormatException ex) {
                 logger.log(Level.WARNING, String.format("Unable to format %s as an long.", columnValue), ex);
             }
