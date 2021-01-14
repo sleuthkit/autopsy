@@ -284,6 +284,7 @@ public final class DiscoveryEventUtils {
          *
          * @param results The list of MiniTimelineResults contained in this
          *                event.
+         * @param domain  The domain the results are for.
          */
         public MiniTimelineResultEvent(List<MiniTimelineResult> results, String domain) {
             if (results != null) {
@@ -306,7 +307,7 @@ public final class DiscoveryEventUtils {
          *
          * @return The domain the list of results is for.
          */
-        public String getDomain(){
+        public String getDomain() {
             return domain;
         }
     }

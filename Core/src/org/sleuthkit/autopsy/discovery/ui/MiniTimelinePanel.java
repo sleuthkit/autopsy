@@ -104,7 +104,8 @@ final class MiniTimelinePanel extends javax.swing.JPanel {
     /**
      * Manually set the status of the panel.
      *
-     * @param status The ArtifactRetrievalStatus of the panel.
+     * @param status The ArtifactRetrievalStatus of the panel
+     * @param domain  The domain the panel is currently reflecting.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     void setStatus(DomainArtifactsTabPanel.ArtifactRetrievalStatus status, String domain) {
