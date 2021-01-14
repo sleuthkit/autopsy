@@ -166,7 +166,7 @@ public final class LeappFileProcessor {
      * Process the Leapp files that were found that match the xml mapping file
      *
      * @param LeappFilesToProcess List of files to process
-     * @param LeappImageFile      Abstract file to create artifact for
+     * @param LeappImageFile Abstract file to create artifact for
      *
      * @throws FileNotFoundException
      * @throws IOException
@@ -201,7 +201,7 @@ public final class LeappFileProcessor {
      * Process the Leapp files that were found that match the xml mapping file
      *
      * @param LeappFilesToProcess List of files to process
-     * @param dataSource          The data source.
+     * @param dataSource The data source.
      *
      * @throws FileNotFoundException
      * @throws IOException
@@ -262,20 +262,22 @@ public final class LeappFileProcessor {
     /**
      * Process the line read and create the necessary attributes for it
      *
-     * @param line                  a tsv line to process that was read
+     * @param line a tsv line to process that was read
      * @param columnNumberToProcess Which columns to process in the tsv line
-     * @param fileName              name of file begin processed
+     * @param fileName name of file begin processed
      *
      * @return
      */
     private Collection<BlackboardAttribute> processReadLine(String line, Map<Integer, String> columnNumberToProcess, String fileName) throws IngestModuleException {
-         
+
         String[] columnValues;
-        
-        // Check to see if the 2 values are equal, they may not be equal if there is no corresponding data in the line.
+
+        // Check to see if the 2 values are equal, they may not be equal if there is no corresponding data in the line
+        // or if the size of the line to split  is not equal to the column numbers we are looking to process. This
+        // can happen when the last value of the tsv line has no data in it.
         // If this happens then adding an empty value(s) for each columnValue where data does not exist
         Integer maxColumnNumber = Collections.max(columnNumberToProcess.keySet());
-        if (maxColumnNumber > line.split("\\t").length) {
+        if ((maxColumnNumber > line.split("\\t").length) || (columnNumberToProcess.size() > line.split("\\t").length)) {
             columnValues = Arrays.copyOf(line.split("\\t"), maxColumnNumber + 1);
         } else {
             columnValues = line.split("\\t");
@@ -287,15 +289,17 @@ public final class LeappFileProcessor {
             Integer columnNumber = columnToProcess.getKey();
             String attributeName = columnToProcess.getValue();
 
-            try {
-                BlackboardAttribute.Type attributeType = Case.getCurrentCase().getSleuthkitCase().getAttributeType(attributeName.toUpperCase());
-                if (attributeType == null) {
-                    break;
+            if (columnValues[columnNumber] != null) {
+                try {
+                    BlackboardAttribute.Type attributeType = Case.getCurrentCase().getSleuthkitCase().getAttributeType(attributeName.toUpperCase());
+                    if (attributeType == null) {
+                        break;
+                    }
+                    String attrType = attributeType.getValueType().getLabel().toUpperCase();
+                    checkAttributeType(bbattributes, attrType, columnValues, columnNumber, attributeType, fileName);
+                } catch (TskCoreException ex) {
+                    throw new IngestModuleException(String.format("Error getting Attribute type for Attribute Name %s", attributeName), ex); //NON-NLS
                 }
-                String attrType = attributeType.getValueType().getLabel().toUpperCase();
-                checkAttributeType(bbattributes, attrType, columnValues, columnNumber, attributeType, fileName);
-            } catch (TskCoreException ex) {
-                throw new IngestModuleException(String.format("Error getting Attribute type for Attribute Name %s", attributeName), ex); //NON-NLS
             }
         }
 
@@ -347,11 +351,11 @@ public final class LeappFileProcessor {
      * headings to the columns in the XML mapping file so we know which columns
      * to process.
      *
-     * @param line     a tsv heading line of the columns in the file
+     * @param line a tsv heading line of the columns in the file
      * @param attrList the list of headings we want to process
      *
      * @return the numbered column(s) and attribute(s) we want to use for the
-     *         column(s)
+     * column(s)
      */
     private Map<Integer, String> findColumnsToProcess(String line, List<List<String>> attrList) {
         String[] columnNames = line.split("\\t");
@@ -470,13 +474,12 @@ public final class LeappFileProcessor {
     /**
      * Generic method for creating a blackboard artifact with attributes
      *
-     * @param type         is a blackboard.artifact_type enum to determine which
-     *                     type the artifact should be
+     * @param type is a blackboard.artifact_type enum to determine which type
+     * the artifact should be
      * @param abstractFile is the AbstractFile object that needs to have the
-     *                     artifact added for it
+     * artifact added for it
      * @param bbattributes is the collection of blackboard attributes that need
-     *                     to be added to the artifact after the artifact has
-     *                     been created
+     * to be added to the artifact after the artifact has been created
      *
      * @return The newly-created artifact, or null on error
      */
@@ -494,13 +497,12 @@ public final class LeappFileProcessor {
     /**
      * Generic method for creating a blackboard artifact with attributes
      *
-     * @param type         is a blackboard.artifact_type enum to determine which
-     *                     type the artifact should be
-     * @param dataSource   is the Content object that needs to have the artifact
-     *                     added for it
+     * @param type is a blackboard.artifact_type enum to determine which type
+     * the artifact should be
+     * @param dataSource is the Content object that needs to have the artifact
+     * added for it
      * @param bbattributes is the collection of blackboard attributes that need
-     *                     to be added to the artifact after the artifact has
-     *                     been created
+     * to be added to the artifact after the artifact has been created
      *
      * @return The newly-created artifact, or null on error
      */
@@ -519,7 +521,7 @@ public final class LeappFileProcessor {
      * Method to post a list of BlackboardArtifacts to the blackboard.
      *
      * @param artifacts A list of artifacts. IF list is empty or null, the
-     *                  function will return.
+     * function will return.
      */
     void postArtifacts(Collection<BlackboardArtifact> artifacts) {
         if (artifacts == null || artifacts.isEmpty()) {
