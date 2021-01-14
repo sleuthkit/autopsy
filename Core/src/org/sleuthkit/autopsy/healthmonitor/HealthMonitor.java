@@ -1281,7 +1281,7 @@ public final class HealthMonitor implements PropertyChangeListener {
     }
 
     /**
-     * Get an shared lock for the health monitor database. Acquire this before
+     * Get a shared lock for the health monitor database. Acquire this before
      * database reads or writes.
      *
      * @return The lock
