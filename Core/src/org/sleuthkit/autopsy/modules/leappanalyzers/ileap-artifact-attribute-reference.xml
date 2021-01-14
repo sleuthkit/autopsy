@@ -42,8 +42,8 @@
         <FileName filename="Application State.tsv" description="Application State">
             <ArtifactName artifactname="TSK_INSTALLED_PROG" comment="Application State">
                 <AttributeName attributename="TSK_PROG_NAME" columnName="Bundle ID" required="no" />
-                <AttributeName attributename="TSK_INSTALLED_PATH" columnName="Bundle Path" required="yes" />
-                <AttributeName attributename="TSK_INSTALLED_SOURCE" columnName="Sandbox Path" required="yes" />
+                <AttributeName attributename="TSK_LOCAL_PATH" columnName="Bundle Path" required="yes" />
+                <AttributeName attributename="TSK_PATH_SOURCE" columnName="Sandbox Path" required="yes" />
             </ArtifactName>
         </FileName>
 
@@ -113,7 +113,7 @@
                 <AttributeName attributename="null" columnName="Process Name" required="no" />
                 <AttributeName attributename="null" columnName="WIFI In" required="no" />
                 <AttributeName attributename="null" columnName="WIFI Out" required="no" />
-                <AttributeName attributename="TSK_BYTES_RCVD" columnName="WWAN IN" required="yes" />
+                <AttributeName attributename="TSK_BYTES_RECEIVED" columnName="WWAN IN" required="yes" />
                 <AttributeName attributename="TSK_BYTES_SENT" columnName="WWAN Out" required="yes" />
                 <AttributeName attributename="null" columnName="Table ID" required="no" />
             </ArtifactName>
@@ -143,13 +143,13 @@
                 <AttributeName attributename="null" columnName="Start" required="no" />
                 <AttributeName attributename="null" columnName="End" required="no" />
                 <AttributeName attributename="null" columnName="ZSTREAMNAME" required="no" />
-                <AttributeName attributename="TSK_PROG_NAME" columnName=" ZVALUESTRING" required="no" />
-                <AttributeName attributename="null" columnName=" Activity Type" required="no" />
-                <AttributeName attributename="null" columnName=" Title" required="no" />
-                <AttributeName attributename="null" columnName=" Expiration Date" required="no" />
-                <AttributeName attributename="null" columnName=" Content URL" required="no" />
-                <AttributeName attributename="null" columnName=" Calendar Date" required="no" />
-                <AttributeName attributename="null" columnName=" Calendar End Date" required="no" />
+                <AttributeName attributename="TSK_PROG_NAME" columnName="ZVALUESTRING" required="no" />
+                <AttributeName attributename="null" columnName="Activity Type" required="no" />
+                <AttributeName attributename="null" columnName="Title" required="no" />
+                <AttributeName attributename="null" columnName="Expiration Date" required="no" />
+                <AttributeName attributename="null" columnName="Content URL" required="no" />
+                <AttributeName attributename="null" columnName="Calendar Date" required="no" />
+                <AttributeName attributename="null" columnName="Calendar End Date" required="no" />
             </ArtifactName>
         </FileName>
 
@@ -160,7 +160,7 @@
                 <AttributeName attributename="null" columnName="Bundle ID" required="no" />
                 <AttributeName attributename="TSK_CALENDAR_ENTRY_TYPE" columnName="Activity Type" required="yes" />
                 <AttributeName attributename="TSK_DESCRIPTION" columnName="User Activity Required String" required="yes" />
-                <AttributeName attributename="null" columnName=" Title" required="no" />
+                <AttributeName attributename="null" columnName="Title" required="no" />
                 <AttributeName attributename="null" columnName="Calendar Date" required="no" />
                 <AttributeName attributename="null" columnName="Calendar End Date" required="no" />
                 <AttributeName attributename="TSK_LOCATION" columnName="Source ID" required="yes" />
@@ -209,7 +209,7 @@
             <ArtifactName artifactname="TSK_USER_DEVICE_EVENT" comment="Device Backlit">
                 <AttributeName attributename="TSK_DATETIME_START" columnName="Start" required="yes" />
                 <AttributeName attributename="TSK_DATETIME_END" columnName="End" required="yes" />
-                <AttributeName attributename="TSK_USER_DEVICE_EVENT_TYPE" columnName="Screen is Backlit" required="yes" />
+                <AttributeName attributename="null" columnName="Screen is Backlit" required="yes" />
                 <AttributeName attributename="null" columnName="Usage in Seconds" required="no" />
                 <AttributeName attributename="null" columnName="Usage in Minutes" required="no" />
                 <AttributeName attributename="null" columnName="Day of Week" required="no" />
@@ -226,12 +226,12 @@
             <ArtifactName artifactname="TSK_USER_DEVICE_EVENT" comment="Battery Level">
                 <AttributeName attributename="TSK_DATETIME_START" columnName="Start" required="yes" />
                 <AttributeName attributename="TSK_DATETIME_END" columnName="End" required="yes" />
-                <AttributeName attributename="TSK_USER_DEVICE_EVENT_TYPE" columnName="Battery Level" required="yes" />
+                <AttributeName attributename="null" columnName="Battery Level" required="yes" />
                 <AttributeName attributename="null" columnName="Usage in Seconds" required="no" />
                 <AttributeName attributename="null" columnName="Day of the Week" required="no" />
                 <AttributeName attributename="null" columnName="GMT Offset" required="no" />
                 <AttributeName attributename="null" columnName="Entry Creation" required="no" />
-                <AttributeName attributename="null" columnName=" ZOBJECT Table ID" required="no" />
+                <AttributeName attributename="null" columnName="ZOBJECT Table ID" required="no" />
             </ArtifactName>
         </FileName>
 
@@ -255,7 +255,7 @@
             <ArtifactName artifactname="TSK_DEVICE_INFO" comment="KnowledgeC Car Play Connections">
                 <AttributeName attributename="TSK_DATETIME" columnName="Start" required="yes" />
                 <AttributeName attributename="null" columnName="End" required="no" />
-                <AttributeName attributename="TSK_USER_DEVICE_EVENT_TYPE" columnName="Car Play Connected" required="yes" />
+                <AttributeName attributename="null" columnName="Car Play Connected" required="yes" />
                 <AttributeName attributename="null" columnName="Usage in Seconds" required="no" />
                 <AttributeName attributename="null" columnName="Usage in Minutes" required="no" />
                 <AttributeName attributename="null" columnName="Day of Week" required="no" />
@@ -271,7 +271,7 @@
                 <AttributeName attributename="TSK_DATETIME_START" columnName="Start" required="yes" />
                 <AttributeName attributename="TSK_DATETIME_END" columnName="End" required="yes" />
                 <AttributeName attributename="TSK_PROG_NAME" columnName="Bundle ID" required="yes" />
-                <AttributeName attributename="TSK_USER_DEVICE_EVENT_TYPE" columnName="Value String" required="yes" />
+                <AttributeName attributename="null" columnName="Value String" required="yes" />
                 <AttributeName attributename="null" columnName="Usage in Seconds" required="no" />
                 <AttributeName attributename="null" columnName="Usage in Minutes" required="no" />
                 <AttributeName attributename="null" columnName="Day of Week" required="no" />
@@ -286,7 +286,7 @@
             <ArtifactName artifactname="TSK_USER_DEVICE_EVENT" comment="Do Not Disturb">
                 <AttributeName attributename="TSK_DATETIME_START" columnName="Start" required="yes" />
                 <AttributeName attributename="TSK_DATETIME_END" columnName="End" required="yes" />
-                <AttributeName attributename="TSK_USER_DEVICE_EVENT_TYPE" columnName="Value" required="yes" />
+                <AttributeName attributename="null" columnName="Value" required="yes" />
                 <AttributeName attributename="null" columnName="Usage in Seconds" required="no" />
                 <AttributeName attributename="null" columnName="Usage in Minutes" required="no" />
                 <AttributeName attributename="null" columnName="Day of Week" required="no" />
@@ -301,7 +301,7 @@
             <ArtifactName artifactname="TSK_USER_DEVICE_EVENT" comment="Inferred Motion">
                 <AttributeName attributename="TSK_DATETIME_START" columnName="Start" required="yes" />
                 <AttributeName attributename="TSK_DATETIME_END" columnName="End" required="yes" />
-                <AttributeName attributename="TSK_USER_DEVICE_EVENT_TYPE" columnName="Value" required="yes" />
+                <AttributeName attributename="null" columnName="Value" required="yes" />
                 <AttributeName attributename="null" columnName="Usage in Seconds" required="no" />
                 <AttributeName attributename="null" columnName="Usage in Minutes" required="no" />
                 <AttributeName attributename="null" columnName="Day of Week" required="no" />
@@ -344,12 +344,12 @@
             <ArtifactName artifactname="TSK_USER_DEVICE_EVENT" comment="Device Locked">
                 <AttributeName attributename="TSK_DATETIME_START" columnName="Start" required="yes" />
                 <AttributeName attributename="TSK_DATETIME_END" columnName="End" required="yes" />
-                <AttributeName attributename="TSK_USER_DEVICE_EVENT_TYPE" columnName="Is Locked?" required="yes" />
+                <AttributeName attributename="null" columnName="Is Locked?" required="yes" />
                 <AttributeName attributename="null" columnName="Usage in Seconds" required="no" />
                 <AttributeName attributename="null" columnName="Day of the Week" required="no" />
                 <AttributeName attributename="null" columnName="GMT Offset" required="no" />
                 <AttributeName attributename="null" columnName="Entry Creation" required="no" />
-                <AttributeName attributename="null" columnName=" ZOBJECT Table ID" required="no" />
+                <AttributeName attributename="null" columnName="ZOBJECT Table ID" required="no" />
             </ArtifactName>
         </FileName>
 
@@ -362,7 +362,7 @@
                 <AttributeName attributename="null" columnName="Now Playing Artists" required="no" />
                 <AttributeName attributename="null" columnName="Playing Genre" required="no" />
                 <AttributeName attributename="TSK_NAME" columnName="Playing Title" required="yes" />
-                <AttributeName attributename="null" columnName=" Now Playing Duration" required="no" />
+                <AttributeName attributename="null" columnName="Now Playing Duration" required="no" />
                 <AttributeName attributename="null" columnName="Usage in Seconds" required="no" />
                 <AttributeName attributename="null" columnName="Usage in Minutes" required="no" />
                 <AttributeName attributename="null" columnName="Day of Week" required="no" />
@@ -388,7 +388,7 @@
                 <AttributeName attributename="null" columnName="GMT Offset" required="no" />
                 <AttributeName attributename="null" columnName="Entry Creation" required="no" />
                 <AttributeName attributename="null" columnName="Expiration Date" required="no" />
-                <AttributeName attributename="null" columnName=" UUID" required="no" />
+                <AttributeName attributename="null" columnName="UUID" required="no" />
                 <AttributeName attributename="null" columnName="ZOBJECT Table ID" required="no" />
             </ArtifactName>
         </FileName>
@@ -397,7 +397,7 @@
             <ArtifactName artifactname="TSK_USER_DEVICE_EVENT" comment="Screen Orientation">
                 <AttributeName attributename="TSK_DATETIME_START" columnName="Start" required="yes" />
                 <AttributeName attributename="TSK_DATETIME_END" columnName="End" required="yes" />
-                <AttributeName attributename="TSK_USER_DEVICE_EVENT_TYPE" columnName="Orientation" required="yes" />
+                <AttributeName attributename="null" columnName="Orientation" required="yes" />
                 <AttributeName attributename="null" columnName="Usage in Seconds" required="no" />
                 <AttributeName attributename="null" columnName="Usage in Minutes" required="no" />
                 <AttributeName attributename="null" columnName="Day of Week" required="no" />
@@ -412,14 +412,14 @@
             <ArtifactName artifactname="TSK_USER_DEVICE_EVENT" comment="Plugged In">
                 <AttributeName attributename="TSK_DATETIME_START" columnName="Start" required="yes" />
                 <AttributeName attributename="TSK_DATETIME_END" columnName="End" required="yes" />
-                <AttributeName attributename="TSK_USER_DEVICE_EVENT_TYPE" columnName="Is Plugged In?" required="yes" />
+                <AttributeName attributename="null" columnName="Is Plugged In?" required="yes" />
                 <AttributeName attributename="null" columnName="Usage in Seconds" required="no" />
                 <AttributeName attributename="null" columnName="Day of the Week" required="no" />
                 <AttributeName attributename="null" columnName="GMT Offset" required="no" />
                 <AttributeName attributename="null" columnName="Start" required="no" />
                 <AttributeName attributename="null" columnName="End" required="no" />
                 <AttributeName attributename="null" columnName="Entry Creation" required="no" />
-                <AttributeName attributename="null" columnName=" ZOBJECT Table ID" required="no" />
+                <AttributeName attributename="null" columnName="ZOBJECT Table ID" required="no" />
             </ArtifactName>
         </FileName>
 
@@ -528,8 +528,8 @@
                 <AttributeName attributename="null" columnName="Location Date" required="no" />
                 <AttributeName attributename="null" columnName="Coordinates" required="no" />
                 <AttributeName attributename="null" columnName="Vehicle Identifier" required="no" />
-                <AttributeName attributename="null" columnName=" Location Identifier" required="no" />
-                <AttributeName attributename="null" columnName=" Identifier" required="no" />
+                <AttributeName attributename="null" columnName="Location Identifier" required="no" />
+                <AttributeName attributename="null" columnName="Identifier" required="no" />
                 <AttributeName attributename="null" columnName="Location Quality" required="no" />
                 <AttributeName attributename="null" columnName="User Set Location" required="no" />
                 <AttributeName attributename="null" columnName="Usual Location" required="no" />
@@ -584,11 +584,11 @@
                 <AttributeName attributename="TSK_EMAIL_FROM" columnName="Address" required="yes" />
                 <AttributeName attributename="null" columnName="Comment" required="no" />
                 <AttributeName attributename="TSK_SUBJECT" columnName="Subject" required="yes" />
-                <AttributeName attributename="TSK_EMAIL_CONTENT_PLAIN" columnName=" Summary" required="yes" />
-                <AttributeName attributename="TSK_READ_STATUS" columnName=" Read?" required="yes" />
-                <AttributeName attributename="TSK_FLAG" columnName=" Flagged?" required="yes" />
-                <AttributeName attributename="TSK_ISDELETED" columnName=" Deleted" required="yes" />
-                <AttributeName attributename="null" columnName=" Mailbox" required="no" />
+                <AttributeName attributename="TSK_EMAIL_CONTENT_PLAIN" columnName="Summary" required="yes" />
+                <AttributeName attributename="TSK_READ_STATUS" columnName="Read?" required="yes" />
+                <AttributeName attributename="TSK_FLAG" columnName="Flagged?" required="yes" />
+                <AttributeName attributename="TSK_ISDELETED" columnName="Deleted" required="yes" />
+                <AttributeName attributename="null" columnName="Mailbox" required="no" />
             </ArtifactName>
         </FileName>
 -->
@@ -596,10 +596,10 @@
         <FileName filename="Notifications.tsv" description="iOS Notificatons">
             <ArtifactName artifactname="TSK_PROG_NOTIFICATIONS" comment="iOS Notificatons">
                 <AttributeName attributename="TSK_DATETIME" columnName="Creation Time" required="yes" />
-                <AttributeName attributename="TSK_PROG_NAME" columnName=" Bundle" required="yes" />
-                <AttributeName attributename="TSK_TITLE" columnName=" Title[Subtitle]" required="yes" />
-                <AttributeName attributename="TSK_VALUE" columnName=" Message" required="yes" />
-                <AttributeName attributename="null" columnName=" Other Details" required="no" />
+                <AttributeName attributename="TSK_PROG_NAME" columnName="Bundle" required="yes" />
+                <AttributeName attributename="TSK_TITLE" columnName="Title[Subtitle]" required="yes" />
+                <AttributeName attributename="TSK_VALUE" columnName="Message" required="yes" />
+                <AttributeName attributename="null" columnName="Other Details" required="no" />
             </ArtifactName>
         </FileName>
 
@@ -651,7 +651,7 @@
         <FileName filename="Powerlog Lightning Connector.tsv" description="Powerlog Lightning Connector Status">
             <ArtifactName artifactname="TSK_USER_DEVICE_EVENT" comment="Powerlog Lightning Connector Status">
                 <AttributeName attributename="TSK_DATETIME" columnName="Adjusted Timestamp" required="yes" />
-                <AttributeName attributename="TSK_USER_DEVICE_EVENT_TYPE" columnName="Accesory Power Mode" required="yes" />
+                <AttributeName attributename="null" columnName="Accesory Power Mode" required="yes" />
                 <AttributeName attributename="null" columnName="Original Lightnint Connector Timestamp" required="no" />
                 <AttributeName attributename="null" columnName="Offset Timestamp" required="no" />
                 <AttributeName attributename="null" columnName="Table ID" required="no" />
@@ -680,7 +680,7 @@
             <ArtifactName artifactname="TSK_USER_DEVICE_EVENT" comment="Powerlog Torch">
                 <AttributeName attributename="TSK_DATETIME" columnName="Adjusted Timestamp" required="yes" />
                 <AttributeName attributename="null" columnName="Bundle ID" required="no" />
-                <AttributeName attributename="TSK_USER_DEVICE_EVENT_TYPE" columnName="Status" required="yes" />
+                <AttributeName attributename="null" columnName="Status" required="yes" />
                 <AttributeName attributename="null" columnName="Original Torch Timestamp" required="no" />
                 <AttributeName attributename="null" columnName="Offset Timestamp" required="no" />
                 <AttributeName attributename="null" columnName="Time Offset" required="no" />
@@ -705,7 +705,7 @@
                 <AttributeName attributename="TSK_PROG_NAME" columnName="App Name" required="yes" />
                 <AttributeName attributename="null" columnName="App Executable Name" required="no" />
                 <AttributeName attributename="TSK_PATH" columnName="Bundle ID" required="yes" />
-                <AttributeName attributename="TSK_BUILD_VERSION" columnName="App Build Version" required="yes" />
+                <AttributeName attributename="null" columnName="App Build Version" required="yes" />
                 <AttributeName attributename="TSK_VERSION" columnName="App Bundle Version" required="yes" />
                 <AttributeName attributename="null" columnName="App TYpe" required="no" />
                 <AttributeName attributename="null" columnName="App Deleted Date" required="no" />
