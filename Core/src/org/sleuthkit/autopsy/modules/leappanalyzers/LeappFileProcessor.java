@@ -287,10 +287,10 @@ public final class LeappFileProcessor {
             TskCoreException {
 
         if (LeappFile == null || !LeappFile.exists() || fileName == null) {
-            logger.log(Level.SEVERE, String.format("Leap file: %s is null or does not exist", LeappFile == null ? LeappFile.toString() : "<null>"));
+            logger.log(Level.WARNING, String.format("Leap file: %s is null or does not exist", LeappFile == null ? LeappFile.toString() : "<null>"));
             return;
         } else if (attrList == null || artifactType == null || dataSource == null) {
-            logger.log(Level.SEVERE, String.format("attribute list, artifact type or dataSource not provided for %s", LeappFile == null ? LeappFile.toString() : "<null>"));
+            logger.log(Level.WARNING, String.format("attribute list, artifact type or dataSource not provided for %s", LeappFile == null ? LeappFile.toString() : "<null>"));
             return;
         }
 
@@ -330,7 +330,7 @@ public final class LeappFileProcessor {
         if (MapUtils.isEmpty(columnNumberToProcess)) {
             return Collections.emptyList();
         } else if (line == null) {
-            logger.log(Level.SEVERE, "Line is null.  Returning empty list for attributes.");
+            logger.log(Level.WARNING, "Line is null.  Returning empty list for attributes.");
             return Collections.emptyList();
         }
 
@@ -379,7 +379,7 @@ public final class LeappFileProcessor {
             String fileName) {
 
         if (columnValues == null || columnNumber < 0 || columnNumber > columnValues.length || columnValues[columnNumber] == null) {
-            logger.log(Level.SEVERE, String.format("Unable to determine column value at index %d in columnValues: %s",
+            logger.log(Level.WARNING, String.format("Unable to determine column value at index %d in columnValues: %s",
                     columnNumber,
                     columnValues == null ? "<null>" : "[" + String.join(", ", columnValues) + "]"));
             return;
@@ -471,7 +471,7 @@ public final class LeappFileProcessor {
                     .mapToObj((idx) -> String.format("'%s'", attrList.get(idx).getColumnName() == null ? "<null>" : attrList.get(idx).getColumnName()))
                     .collect(Collectors.joining(", "));
 
-            logger.log(Level.SEVERE, String.format("Columns size expected not found in file %s based on xml from %s. Column Keys Missing = [%s]; Header Line = '%s'.",
+            logger.log(Level.WARNING, String.format("Columns size expected not found in file %s based on xml from %s. Column Keys Missing = [%s]; Header Line = '%s'.",
                     this.xmlFile == null ? "<null>" : this.xmlFile,
                     fileName,
                     missingColumns,
@@ -542,7 +542,7 @@ public final class LeappFileProcessor {
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, String.format("There was an issue that arose while trying to fetch artifact type for %s.", artifactName), ex);
             }
-            
+
             if (foundArtifactType == null) {
                 logger.log(Level.SEVERE, String.format("No known artifact mapping found for [artifact: %s, %s]",
                         artifactName, getXmlFileIdentifier(parentName)));
