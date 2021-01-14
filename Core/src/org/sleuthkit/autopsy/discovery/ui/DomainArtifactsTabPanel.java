@@ -180,6 +180,7 @@ final class DomainArtifactsTabPanel extends JPanel {
         mainSplitPane.setDividerLocation(350);
         mainSplitPane.setResizeWeight(0.1);
 
+        setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
         setMinimumSize(new java.awt.Dimension(0, 0));
         setLayout(new java.awt.BorderLayout());
     }// </editor-fold>//GEN-END:initComponents

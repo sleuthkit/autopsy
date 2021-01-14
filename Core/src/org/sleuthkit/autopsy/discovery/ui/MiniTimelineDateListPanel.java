@@ -23,9 +23,11 @@ import java.util.List;
 import javax.swing.JPanel;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableCellRenderer;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.discovery.search.MiniTimelineResult;
+import org.sleuthkit.autopsy.guiutils.SimpleTableCellRenderer;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
@@ -42,6 +44,11 @@ class MiniTimelineDateListPanel extends JPanel {
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     MiniTimelineDateListPanel() {
         initComponents();
+        // add the cell renderer to all columns
+        TableCellRenderer renderer = new SimpleTableCellRenderer();
+        for (int i = 0; i < tableModel.getColumnCount(); ++i) {
+            jTable1.getColumnModel().getColumn(i).setCellRenderer(renderer);
+        }
         jTable1.getRowSorter().toggleSortOrder(0);
         jTable1.getRowSorter().toggleSortOrder(0);
     }
