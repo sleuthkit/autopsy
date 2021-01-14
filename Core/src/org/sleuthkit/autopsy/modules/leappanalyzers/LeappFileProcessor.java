@@ -337,9 +337,11 @@ public final class LeappFileProcessor {
         String[] columnValues;
 
         // Check to see if the 2 values are equal, they may not be equal if there is no corresponding data in the line.
+        // or if the size of the line to split  is not equal to the column numbers we are looking to process. This
+        // can happen when the last value of the tsv line has no data in it.
         // If this happens then adding an empty value(s) for each columnValue where data does not exist
         Integer maxColumnNumber = Collections.max(columnNumberToProcess.keySet());
-        if (maxColumnNumber > line.split("\\t").length) {
+        if ((maxColumnNumber > line.split("\\t").length) || (columnNumberToProcess.size() > line.split("\\t").length)) {
             columnValues = Arrays.copyOf(line.split("\\t"), maxColumnNumber + 1);
         } else {
             columnValues = line.split("\\t");
@@ -351,15 +353,17 @@ public final class LeappFileProcessor {
             Integer columnNumber = columnToProcess.getKey();
             String attributeName = columnToProcess.getValue();
 
-            try {
-                BlackboardAttribute.Type attributeType = Case.getCurrentCase().getSleuthkitCase().getAttributeType(attributeName.toUpperCase());
-                if (attributeType == null) {
-                    continue;
+            if (columnValues[columnNumber] != null) {
+                try {
+                    BlackboardAttribute.Type attributeType = Case.getCurrentCase().getSleuthkitCase().getAttributeType(attributeName.toUpperCase());
+                    if (attributeType == null) {
+                        continue;
+                    }
+                    String attrType = attributeType.getValueType().getLabel().toUpperCase();
+                    checkAttributeType(bbattributes, attrType, columnValues, columnNumber, attributeType, fileName);
+                } catch (TskCoreException ex) {
+                    throw new IngestModuleException(String.format("Error getting Attribute type for Attribute Name %s", attributeName), ex); //NON-NLS
                 }
-                String attrType = attributeType.getValueType().getLabel().toUpperCase();
-                checkAttributeType(bbattributes, attrType, columnValues, columnNumber, attributeType, fileName);
-            } catch (TskCoreException ex) {
-                throw new IngestModuleException(String.format("Error getting Attribute type for Attribute Name %s", attributeName), ex); //NON-NLS
             }
         }
 
