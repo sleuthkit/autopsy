@@ -19,13 +19,11 @@
 package org.sleuthkit.autopsy.discovery.ui;
 
 import com.google.common.eventbus.Subscribe;
-import java.util.logging.Level;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.contentviewers.artifactviewers.GeneralPurposeArtifactViewer;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -41,7 +39,6 @@ final class MiniTimelinePanel extends javax.swing.JPanel {
     private final MiniTimelineArtifactListPanel artifactListPanel = new MiniTimelineArtifactListPanel();
     private DomainArtifactsTabPanel.ArtifactRetrievalStatus status = DomainArtifactsTabPanel.ArtifactRetrievalStatus.UNPOPULATED;
     private AbstractArtifactDetailsPanel rightPanel = new GeneralPurposeArtifactViewer();
-    private static final Logger logger = Logger.getLogger(MiniTimelinePanel.class.getName());
     private String selectedDomain = null;
     private final ListSelectionListener artifactListener;
     private final ListSelectionListener dateListener;
