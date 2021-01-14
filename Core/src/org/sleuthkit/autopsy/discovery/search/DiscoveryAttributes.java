@@ -503,8 +503,9 @@ public class DiscoveryAttributes {
             final String values = createCSV(resultDomainTable.keySet());
             final String tableName = CentralRepoDbUtil.correlationTypeToInstanceTableName(attributeType);
             final String domainFrequencyQuery = " value AS domain_name, COUNT(value) AS frequency FROM"
-                    + "(SELECT DISTINCT case_id, value FROM " + tableName
-                    + "WHERE value IN ("
+                    + "(SELECT DISTINCT case_id, value FROM "
+                    + tableName
+                    + " WHERE value IN ("
                     + values
                     + ")) GROUP BY value";
 
