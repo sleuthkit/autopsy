@@ -628,9 +628,11 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
         if legacy_artifact_id != 'NULL' and legacy_artifact_id in artifact_table.keys():
             fields_list[6] = artifact_table[legacy_artifact_id]
 			
-        fields_list[1] = cleanupEventDescription(fields_list[1])
-        fields_list[2] = cleanupEventDescription(fields_list[2])
-        fields_list[3] = cleanupEventDescription(fields_list[3])
+		
+        if fields_list[1] == fields_list[2] and fields_list[1] == fields_list[3]:	
+            fields_list[1] = cleanupEventDescription(fields_list[1])
+            fields_list[2] = cleanupEventDescription(fields_list[2])
+            fields_list[3] = cleanupEventDescription(fields_list[3])
 			
         newLine = ('INSERT INTO "tsk_event_descriptions" VALUES(' + ','.join(fields_list[1:]) + ');') # remove report_id
         return newLine
