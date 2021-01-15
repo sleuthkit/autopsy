@@ -42,7 +42,7 @@
         <FileName filename="Application State.tsv" description="Application State">
             <ArtifactName artifactname="TSK_INSTALLED_PROG" comment="Application State">
                 <AttributeName attributename="TSK_PROG_NAME" columnName="Bundle ID" required="no" />
-                <AttributeName attributename="TSK_LOCAL_PATH" columnName="Bundle Path" required="yes" />
+                <AttributeName attributename="TSK_PATH" columnName="Bundle Path" required="yes" />
                 <AttributeName attributename="TSK_PATH_SOURCE" columnName="Sandbox Path" required="yes" />
             </ArtifactName>
         </FileName>
