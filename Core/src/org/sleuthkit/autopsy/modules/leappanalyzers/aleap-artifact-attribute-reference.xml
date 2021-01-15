@@ -39,7 +39,7 @@
         <FileName filename="authtokens 0.tsv" description="Authtokens">
             <ArtifactName artifactname="TSK_SERVICE_ACCOUNT" comment="Authtokens">
                 <AttributeName attributename="null" columnName="ID" required="no" />
-                <AttributeName attributename="TSK_USER_ID" columnName=" Name" required="yes" />
+                <AttributeName attributename="TSK_USER_ID" columnName="Name" required="yes" />
                 <AttributeName attributename="TSK_PROG_NAME" columnName="Account Type" required="yes" />
                 <AttributeName attributename="null" columnName="Authtoken Type" required="no" />
                 <AttributeName attributename="TSK_PASSWORD" columnName="Authtoken" required="yes" />
