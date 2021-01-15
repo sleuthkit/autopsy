@@ -84,7 +84,7 @@
                 <AttributeName attributename="TSK_DATETIME_END" columnName="End Date" required="yes" />
                 <AttributeName attributename="null" columnName="End Timezone" required="no" />
                 <AttributeName attributename="null" columnName="All Day?" required="no" />
-                <AttributeName attributename="TSK_CALENDAR_ENTRY" columnName="Summary" required="yes" />
+                <AttributeName attributename="TSK_CALENDAR_ENTRY_TYPE" columnName="Summary" required="yes" />
                 <AttributeName attributename="null" columnName="Calendar ID" required="no" />
                 <AttributeName attributename="null" columnName="Last Modified" required="no" />
             </ArtifactName>
