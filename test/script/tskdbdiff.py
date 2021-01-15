@@ -629,7 +629,7 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
             fields_list[6] = artifact_table[legacy_artifact_id]
 			
 		
-        if fields_list[1] == fields_list[2] and fields_list[1] == fields_list[3]	
+        if fields_list[1] == fields_list[2] and fields_list[1] == fields_list[3]:	
             fields_list[1] = cleanupEventDescription(fields_list[1])
             fields_list[2] = cleanupEventDescription(fields_list[2])
             fields_list[3] = cleanupEventDescription(fields_list[3])
