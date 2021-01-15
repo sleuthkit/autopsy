@@ -507,7 +507,7 @@ public class DiscoveryAttributes {
                     + tableName
                     + " WHERE value IN ("
                     + values
-                    + ")) GROUP BY value";
+                    + ")) AS foo GROUP BY value";
 
             final DomainFrequencyCallback frequencyCallback = new DomainFrequencyCallback(resultDomainTable);
             centralRepository.processSelectClause(domainFrequencyQuery, frequencyCallback);
