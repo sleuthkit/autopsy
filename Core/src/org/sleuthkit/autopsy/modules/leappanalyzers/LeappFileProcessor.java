@@ -288,7 +288,8 @@ public final class LeappFileProcessor {
 
             int lineNum = 1;
             while (iterator.hasNext()) {
-                Map<String, String> keyVals = iterator.next();
+                Map<String, String> keyVals = iterator.next().entrySet().stream()
+                        .collect(Collectors.toMap(e -> e.getKey().trim().toLowerCase(), e -> e.getValue()));
 
                 Collection<BlackboardAttribute> bbattributes = processReadLine(keyVals, attrList, fileName, lineNum++);
 
@@ -336,7 +337,7 @@ public final class LeappFileProcessor {
             }
 
             BlackboardAttribute attr = (value == null) ? null : getAttribute(colAttr.getAttributeType(), value, fileName);
-            if (value != null) {
+            if (attr != null) {
                 attrsToRet.add(attr);
             }
         }
@@ -552,7 +553,7 @@ public final class LeappFileProcessor {
 
                 TsvColumn thisCol = new TsvColumn(
                         foundAttrType,
-                        columnName.toLowerCase(),
+                        columnName.trim().toLowerCase(),
                         "yes".compareToIgnoreCase(required) == 0);
 
                 if (tsvFileAttributes.containsKey(parentName)) {
