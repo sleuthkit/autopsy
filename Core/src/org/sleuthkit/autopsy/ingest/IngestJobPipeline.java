@@ -1358,6 +1358,7 @@ final class IngestJobPipeline {
      * Write ingest module errors to the log.
      *
      * @param errors The errors.
+     * @param file AbstractFile that caused the errors.
      */
     private void logIngestModuleErrors(List<IngestModuleError> errors, AbstractFile file) {
         for (IngestModuleError error : errors) {
