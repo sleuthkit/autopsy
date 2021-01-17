@@ -1016,7 +1016,7 @@ final class IngestJobPipeline {
                     List<IngestModuleError> errors = new ArrayList<>();
                     errors.addAll(pipeline.process(task));
                     if (!errors.isEmpty()) {
-                        logIngestModuleErrors(errors);
+                        logIngestModuleErrors(errors, file);
                     }
 
                     if (this.doUI && !this.cancelled) {
@@ -1353,6 +1353,17 @@ final class IngestJobPipeline {
             logErrorMessage(Level.SEVERE, String.format("%s experienced an error during analysis", error.getModuleDisplayName()), error.getThrowable()); //NON-NLS
         }
     }
+    
+    /**
+     * Write ingest module errors to the log.
+     *
+     * @param errors The errors.
+     */
+    private void logIngestModuleErrors(List<IngestModuleError> errors, AbstractFile file) {
+        for (IngestModuleError error : errors) {
+            logErrorMessage(Level.SEVERE, String.format("%s experienced an error during analysis while processing file %s, object ID %d", error.getModuleDisplayName(), file.getName(), file.getId()), error.getThrowable()); //NON-NLS
+        }
+    }    
 
     /**
      * Gets a snapshot of this jobs state and performance.
