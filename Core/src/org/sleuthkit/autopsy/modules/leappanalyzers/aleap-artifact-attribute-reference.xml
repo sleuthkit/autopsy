@@ -66,7 +66,7 @@
 
         <FileName filename="Browser cookies.tsv" description="Browser Cookies">
             <ArtifactName artifactname="TSK_WEB_COOKIE" comment="Browser Cookies">
-                <AttributeName attributename="TSK_DATETIME_ACCESSED" columnName="Last Access Date" required="yes" />
+                <AttributeName attributename="TSK_DATETIME_START" columnName="Last Access Date" required="yes" />
                 <AttributeName attributename="TSK_DOMAIN" columnName="Host" required="yes" />
                 <AttributeName attributename="TSK_NAME" columnName="Name" required="yes" />
                 <AttributeName attributename="TSK_VALUE" columnName="Value" required="yes" />
@@ -78,7 +78,7 @@
 
         <FileName filename="Browser History.tsv" description="Browser History">
             <ArtifactName artifactname="TSK_WEB_HISTORY" comment="Browser History">
-                <AttributeName attributename="TSK_DATETIME_ACCESSED" columnName="Last Visit Time" required="yes"/>
+                <AttributeName attributename="TSK_DATETIME_START" columnName="Last Visit Time" required="yes"/>
                 <AttributeName attributename="TSK_URL" columnName="URL" required="yes"/>
                 <AttributeName attributename="TSK_TITLE" columnName="Title" required="yes"/>
                 <AttributeName attributename="null" columnName="Visit Count" required="no"/>
@@ -97,7 +97,7 @@
         <FileName filename="Browser login data.tsv" description="Browser Login Data">
             <ArtifactName artifactname="TSK_SERVICE_ACCOUNT" comment="Browser Login">
                 <AttributeName attributename="TSK_DATETIME_CREATED" columnName="Created Time" required="yes" />
-                <AttributeName attributename="TSK_USER_NAME" columnName="Username" required="yes" />
+                <AttributeName attributename="TSK_USER_ID" columnName="Username" required="yes" />
                 <AttributeName attributename="TSK_PASSWORD" columnName="Password" required="yes" />
                 <AttributeName attributename="TSK_URL" columnName="Origin URL" required="no" />
                 <AttributeName attributename="null" columnName="Blacklisted by User" required="no" />
@@ -167,7 +167,7 @@
             <AttributeName attributename="TSK_DOMAIN" columnName="Host" required="yes" />
             <AttributeName attributename="TSK_NAME" columnName="Name" required="yes" />
             <AttributeName attributename="TSK_VALUE" columnName="Value" required="yes" />
-            <AttributeName attributename="TSK_DATETIME_CREATED" columnName="Created Date" required="yes" />
+            <AttributeName attributename="TSK_DATETIME_START" columnName="Created Date" required="yes" />
             <AttributeName attributename="TSK_DATETIME_END" columnName="Expiration Date" required="yes" />
             <AttributeName attributename="TSK_PATH" columnName="Path" required="yes" />
         </ArtifactName>
@@ -186,7 +186,7 @@
     <FileName filename="Chrome login data.tsv" description="Chrome Login Data">
         <ArtifactName artifactname="TSK_SERVICE_ACCOUNT" comment="Chrome Login">
             <AttributeName attributename="TSK_DATETIME_CREATED" columnName="Created Time" required="yes" />
-            <AttributeName attributename="TSK_USER_NAME" columnName="Username" required="yes" />
+            <AttributeName attributename="TSK_USER_ID" columnName="Username" required="yes" />
             <AttributeName attributename="TSK_PASSWORD" columnName="Password" required="yes" />
             <AttributeName attributename="TSK_URL" columnName="Origin URL" required="no" />
             <AttributeName attributename="null" columnName="Blacklisted by User" required="no" />
@@ -248,7 +248,7 @@
 
     <FileName filename="Edge History.tsv" description="Edge History">
         <ArtifactName artifactname="TSK_WEB_HISTORY" comment="Edge History">
-            <AttributeName attributename="TSK_DATETIME_ACCESSED" columnName="Last Visit Time" required="yes"/>
+            <AttributeName attributename="TSK_DATETIME_START" columnName="Last Visit Time" required="yes"/>
             <AttributeName attributename="TSK_URL" columnName="URL" required="yes"/>
             <AttributeName attributename="TSK_TITLE" columnName="Title" required="yes"/>
             <AttributeName attributename="null" columnName="Visit Count" required="no"/>
@@ -259,7 +259,7 @@
     <FileName filename="Edge login data.tsv" description="Edge Login Data">
         <ArtifactName artifactname="TSK_SERVICE_ACCOUNT" comment="Edge Login">
             <AttributeName attributename="TSK_DATETIME_CREATED" columnName="Created Time" required="yes" />
-            <AttributeName attributename="TSK_USER_NAME" columnName="Username" required="yes" />
+            <AttributeName attributename="TSK_USER_ID" columnName="Username" required="yes" />
             <AttributeName attributename="TSK_PASSWORD" columnName="Password" required="yes" />
             <AttributeName attributename="TSK_URL" columnName="Origin URL" required="no" />
             <AttributeName attributename="null" columnName="Blacklisted by User" required="no" />
