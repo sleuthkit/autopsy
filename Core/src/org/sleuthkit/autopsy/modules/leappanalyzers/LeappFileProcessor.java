@@ -35,18 +35,24 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import static java.util.Locale.US;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import static org.sleuthkit.autopsy.casemodule.Case.getCurrentCase;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
@@ -69,6 +75,52 @@ import org.xml.sax.SAXException;
  */
 public final class LeappFileProcessor {
 
+    /**
+     * Represents metadata for a particular column in a tsv file.
+     */
+    private static class TsvColumn {
+
+        private final String attributeName;
+        private final String columnName;
+        private final boolean required;
+
+        /**
+         * Main constructor.
+         *
+         * @param attributeName The BlackboardAttribute name or null if not
+         * used.
+         * @param columnName The name of the column in the tsv file.
+         * @param required Whether or not this attribute is required to be
+         * present.
+         */
+        TsvColumn(String attributeName, String columnName, boolean required) {
+            this.attributeName = attributeName;
+            this.columnName = columnName;
+            this.required = required;
+        }
+
+        /**
+         * @return The BlackboardAttribute name or null if not used.
+         */
+        String getAttributeName() {
+            return attributeName;
+        }
+
+        /**
+         * @return The name of the column in the tsv file.
+         */
+        String getColumnName() {
+            return columnName;
+        }
+
+        /**
+         * @return Whether or not this attribute is required to be present.
+         */
+        boolean isRequired() {
+            return required;
+        }
+    }
+
     private static final Logger logger = Logger.getLogger(LeappFileProcessor.class.getName());
     private static final String MODULE_NAME = ILeappAnalyzerModuleFactory.getModuleName();
 
@@ -77,7 +129,7 @@ public final class LeappFileProcessor {
     private final Map<String, String> tsvFiles;
     private final Map<String, String> tsvFileArtifacts;
     private final Map<String, String> tsvFileArtifactComments;
-    private final Map<String, List<List<String>>> tsvFileAttributes;
+    private final Map<String, List<TsvColumn>> tsvFileAttributes;
 
     Blackboard blkBoard;
 
@@ -104,9 +156,7 @@ public final class LeappFileProcessor {
         "LeappFileProcessor.Leapp.cancelled=Leapp run was canceled",
         "LeappFileProcessor.completed=Leapp Processing Completed",
         "LeappFileProcessor.error.reading.Leapp.directory=Error reading Leapp Output Directory"})
-
     public ProcessResult processFiles(Content dataSource, Path moduleOutputPath, AbstractFile LeappFile) {
-
         try {
             List<String> LeappTsvOutputFiles = findTsvFiles(moduleOutputPath);
             processLeappFiles(LeappTsvOutputFiles, LeappFile);
@@ -123,7 +173,7 @@ public final class LeappFileProcessor {
         try {
             List<String> LeappTsvOutputFiles = findTsvFiles(moduleOutputPath);
             processLeappFiles(LeappTsvOutputFiles, dataSource);
-        } catch (IOException | IngestModuleException ex) {
+        } catch (IngestModuleException ex) {
             logger.log(Level.SEVERE, String.format("Error trying to process Leapp output files in directory %s. ", moduleOutputPath.toString()), ex); //NON-NLS
             return ProcessResult.ERROR;
         }
@@ -162,7 +212,7 @@ public final class LeappFileProcessor {
      * Process the Leapp files that were found that match the xml mapping file
      *
      * @param LeappFilesToProcess List of files to process
-     * @param LeappImageFile      Abstract file to create artifact for
+     * @param LeappImageFile Abstract file to create artifact for
      *
      * @throws FileNotFoundException
      * @throws IOException
@@ -174,7 +224,7 @@ public final class LeappFileProcessor {
             String fileName = FilenameUtils.getName(LeappFileName);
             File LeappFile = new File(LeappFileName);
             if (tsvFileAttributes.containsKey(fileName)) {
-                List<List<String>> attrList = tsvFileAttributes.get(fileName);
+                List<TsvColumn> attrList = tsvFileAttributes.get(fileName);
                 try {
                     BlackboardArtifact.Type artifactType = Case.getCurrentCase().getSleuthkitCase().getArtifactType(tsvFileArtifacts.get(fileName));
 
@@ -197,26 +247,34 @@ public final class LeappFileProcessor {
      * Process the Leapp files that were found that match the xml mapping file
      *
      * @param LeappFilesToProcess List of files to process
-     * @param dataSource          The data source.
+     * @param dataSource The data source.
      *
      * @throws FileNotFoundException
      * @throws IOException
      */
-    private void processLeappFiles(List<String> LeappFilesToProcess, Content dataSource) throws FileNotFoundException, IOException, IngestModuleException {
+    private void processLeappFiles(List<String> LeappFilesToProcess, Content dataSource) throws IngestModuleException {
         List<BlackboardArtifact> bbartifacts = new ArrayList<>();
 
         for (String LeappFileName : LeappFilesToProcess) {
             String fileName = FilenameUtils.getName(LeappFileName);
             File LeappFile = new File(LeappFileName);
             if (tsvFileAttributes.containsKey(fileName)) {
-                List<List<String>> attrList = tsvFileAttributes.get(fileName);
+                List<TsvColumn> attrList = tsvFileAttributes.get(fileName);
+                BlackboardArtifact.Type artifactType = null;
                 try {
-                    BlackboardArtifact.Type artifactType = Case.getCurrentCase().getSleuthkitCase().getArtifactType(tsvFileArtifacts.get(fileName));
-
-                    processFile(LeappFile, attrList, fileName, artifactType, bbartifacts, dataSource);
-
+                    artifactType = Case.getCurrentCase().getSleuthkitCase().getArtifactType(tsvFileArtifacts.get(fileName));
                 } catch (TskCoreException ex) {
-                    throw new IngestModuleException(String.format("Error getting Blackboard Artifact Type for %s", tsvFileArtifacts.get(fileName)), ex);
+                    logger.log(Level.SEVERE, String.format("Error getting Blackboard Artifact Type for %s", tsvFileArtifacts.get(fileName)), ex);
+                }
+
+                if (artifactType == null) {
+                    continue;
+                }
+
+                try {
+                    processFile(LeappFile, attrList, fileName, artifactType, bbartifacts, dataSource);
+                } catch (TskCoreException | IOException ex) {
+                    logger.log(Level.SEVERE, String.format("Error processing file at %s", LeappFile.toString()), ex);
                 }
             }
 
@@ -228,26 +286,34 @@ public final class LeappFileProcessor {
 
     }
 
-    private void processFile(File LeappFile, List<List<String>> attrList, String fileName, BlackboardArtifact.Type artifactType,
+    private void processFile(File LeappFile, List<TsvColumn> attrList, String fileName, BlackboardArtifact.Type artifactType,
             List<BlackboardArtifact> bbartifacts, Content dataSource) throws FileNotFoundException, IOException, IngestModuleException,
             TskCoreException {
+
+        if (LeappFile == null || !LeappFile.exists() || fileName == null) {
+            logger.log(Level.WARNING, String.format("Leap file: %s is null or does not exist", LeappFile == null ? LeappFile.toString() : "<null>"));
+            return;
+        } else if (attrList == null || artifactType == null || dataSource == null) {
+            logger.log(Level.WARNING, String.format("attribute list, artifact type or dataSource not provided for %s", LeappFile == null ? LeappFile.toString() : "<null>"));
+            return;
+        }
+
         try (BufferedReader reader = new BufferedReader(new FileReader(LeappFile))) {
-            String line = reader.readLine();
+            String header = reader.readLine();
             // Check first line, if it is null then no heading so nothing to match to, close and go to next file.
-            if (line != null) {
-                Map<Integer, String> columnNumberToProcess = findColumnsToProcess(line, attrList);
-                line = reader.readLine();
+            if (header != null) {
+                Map<Integer, String> columnNumberToProcess = findColumnsToProcess(fileName, header, attrList);
+                String line = reader.readLine();
                 while (line != null) {
                     Collection<BlackboardAttribute> bbattributes = processReadLine(line, columnNumberToProcess, fileName);
-                    if (artifactType == null) {
-                        logger.log(Level.SEVERE, "Error trying to process Leapp output files in directory . "); //NON-NLS
-                    }
+
                     if (!bbattributes.isEmpty() && !blkBoard.artifactExists(dataSource, BlackboardArtifact.ARTIFACT_TYPE.fromID(artifactType.getTypeID()), bbattributes)) {
                         BlackboardArtifact bbartifact = createArtifactWithAttributes(artifactType.getTypeID(), dataSource, bbattributes);
                         if (bbartifact != null) {
                             bbartifacts.add(bbartifact);
                         }
                     }
+
                     line = reader.readLine();
                 }
             }
@@ -258,20 +324,28 @@ public final class LeappFileProcessor {
     /**
      * Process the line read and create the necessary attributes for it
      *
-     * @param line                  a tsv line to process that was read
+     * @param line a tsv line to process that was read
      * @param columnNumberToProcess Which columns to process in the tsv line
-     * @param fileName              name of file begin processed
+     * @param fileName name of file begin processed
      *
      * @return
      */
     private Collection<BlackboardAttribute> processReadLine(String line, Map<Integer, String> columnNumberToProcess, String fileName) throws IngestModuleException {
-         
+        if (MapUtils.isEmpty(columnNumberToProcess)) {
+            return Collections.emptyList();
+        } else if (line == null) {
+            logger.log(Level.WARNING, "Line is null.  Returning empty list for attributes.");
+            return Collections.emptyList();
+        }
+
         String[] columnValues;
-        
+
         // Check to see if the 2 values are equal, they may not be equal if there is no corresponding data in the line.
+        // or if the size of the line to split  is not equal to the column numbers we are looking to process. This
+        // can happen when the last value of the tsv line has no data in it.
         // If this happens then adding an empty value(s) for each columnValue where data does not exist
         Integer maxColumnNumber = Collections.max(columnNumberToProcess.keySet());
-        if (maxColumnNumber > line.split("\\t").length) {
+        if ((maxColumnNumber > line.split("\\t").length) || (columnNumberToProcess.size() > line.split("\\t").length)) {
             columnValues = Arrays.copyOf(line.split("\\t"), maxColumnNumber + 1);
         } else {
             columnValues = line.split("\\t");
@@ -283,15 +357,17 @@ public final class LeappFileProcessor {
             Integer columnNumber = columnToProcess.getKey();
             String attributeName = columnToProcess.getValue();
 
-            try {
-                BlackboardAttribute.Type attributeType = Case.getCurrentCase().getSleuthkitCase().getAttributeType(attributeName.toUpperCase());
-                if (attributeType == null) {
-                    break;
+            if (columnValues[columnNumber] != null) {
+                try {
+                    BlackboardAttribute.Type attributeType = Case.getCurrentCase().getSleuthkitCase().getAttributeType(attributeName.toUpperCase());
+                    if (attributeType == null) {
+                        continue;
+                    }
+                    String attrType = attributeType.getValueType().getLabel().toUpperCase();
+                    checkAttributeType(bbattributes, attrType, columnValues, columnNumber, attributeType, fileName);
+                } catch (TskCoreException ex) {
+                    throw new IngestModuleException(String.format("Error getting Attribute type for Attribute Name %s", attributeName), ex); //NON-NLS
                 }
-                String attrType = attributeType.getValueType().getLabel().toUpperCase();
-                checkAttributeType(bbattributes, attrType, columnValues, columnNumber, attributeType, fileName);
-            } catch (TskCoreException ex) {
-                throw new IngestModuleException(String.format("Error getting Attribute type for Attribute Name %s", attributeName), ex); //NON-NLS
             }
         }
 
@@ -303,34 +379,60 @@ public final class LeappFileProcessor {
 
     }
 
-    private void checkAttributeType(Collection<BlackboardAttribute> bbattributes, String attrType, String[] columnValues, Integer columnNumber, BlackboardAttribute.Type attributeType,
+    private void checkAttributeType(Collection<BlackboardAttribute> bbattributes, String attrType, String[] columnValues, int columnNumber, BlackboardAttribute.Type attributeType,
             String fileName) {
+
+        if (columnValues == null || columnNumber < 0 || columnNumber > columnValues.length || columnValues[columnNumber] == null) {
+            logger.log(Level.WARNING, String.format("Unable to determine column value at index %d in columnValues: %s",
+                    columnNumber,
+                    columnValues == null ? "<null>" : "[" + String.join(", ", columnValues) + "]"));
+            return;
+        }
+
+        String columnValue = columnValues[columnNumber];
+
         if (attrType.matches("STRING")) {
-            bbattributes.add(new BlackboardAttribute(attributeType, MODULE_NAME, columnValues[columnNumber]));
+            bbattributes.add(new BlackboardAttribute(attributeType, MODULE_NAME, columnValue));
         } else if (attrType.matches("INTEGER")) {
-            bbattributes.add(new BlackboardAttribute(attributeType, MODULE_NAME, Integer.valueOf(columnValues[columnNumber])));
+            try {
+                bbattributes.add(new BlackboardAttribute(attributeType, MODULE_NAME, Integer.valueOf(columnValue)));
+            } catch (NumberFormatException ex) {
+                logger.log(Level.WARNING, String.format("Unable to format %s as an integer.", columnValue), ex);
+            }
         } else if (attrType.matches("LONG")) {
-            bbattributes.add(new BlackboardAttribute(attributeType, MODULE_NAME, Long.valueOf(columnValues[columnNumber])));
+            try {
+                bbattributes.add(new BlackboardAttribute(attributeType, MODULE_NAME, Long.valueOf(columnValue)));
+            } catch (NumberFormatException ex) {
+                logger.log(Level.WARNING, String.format("Unable to format %s as an long.", columnValue), ex);
+            }
         } else if (attrType.matches("DOUBLE")) {
-            bbattributes.add(new BlackboardAttribute(attributeType, MODULE_NAME, Double.valueOf(columnValues[columnNumber])));
+            try {
+                bbattributes.add(new BlackboardAttribute(attributeType, MODULE_NAME, Double.valueOf(columnValue)));
+            } catch (NumberFormatException ex) {
+                logger.log(Level.WARNING, String.format("Unable to format %s as an double.", columnValue), ex);
+            }
         } else if (attrType.matches("BYTE")) {
-            bbattributes.add(new BlackboardAttribute(attributeType, MODULE_NAME, Byte.valueOf(columnValues[columnNumber])));
+            try {
+                bbattributes.add(new BlackboardAttribute(attributeType, MODULE_NAME, Byte.valueOf(columnValue)));
+            } catch (NumberFormatException ex) {
+                logger.log(Level.WARNING, String.format("Unable to format %s as an byte.", columnValue), ex);
+            }
         } else if (attrType.matches("DATETIME")) {
             // format of data should be the same in all the data and the format is 2020-03-28 01:00:17
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-d HH:mm:ss", US);
             Long dateLong = Long.valueOf(0);
             try {
-                Date newDate = dateFormat.parse(columnValues[columnNumber]);
+                Date newDate = dateFormat.parse(columnValue);
                 dateLong = newDate.getTime() / 1000;
                 bbattributes.add(new BlackboardAttribute(attributeType, MODULE_NAME, dateLong));
             } catch (ParseException ex) {
                 // catching error and displaying date that could not be parsed
                 // we set the timestamp to 0 and continue on processing
-                logger.log(Level.WARNING, String.format("Failed to parse date/time %s for attribute type %s in file %s.", columnValues[columnNumber], attributeType.getDisplayName(), fileName)); //NON-NLS
+                logger.log(Level.WARNING, String.format("Failed to parse date/time %s for attribute type %s in file %s.", columnValue, attributeType.getDisplayName(), fileName)); //NON-NLS
             }
         } else if (attrType.matches("JSON")) {
 
-            bbattributes.add(new BlackboardAttribute(attributeType, MODULE_NAME, columnValues[columnNumber]));
+            bbattributes.add(new BlackboardAttribute(attributeType, MODULE_NAME, columnValue));
         } else {
             // Log this and continue on with processing
             logger.log(Level.WARNING, String.format("Attribute Type %s not defined.", attrType)); //NON-NLS                   
@@ -343,27 +445,41 @@ public final class LeappFileProcessor {
      * headings to the columns in the XML mapping file so we know which columns
      * to process.
      *
-     * @param line     a tsv heading line of the columns in the file
+     * @param fileName The name of the file in which these column headers exist.
+     * @param line a tsv heading line of the columns in the file
      * @param attrList the list of headings we want to process
      *
      * @return the numbered column(s) and attribute(s) we want to use for the
-     *         column(s)
+     * column(s)
      */
-    private Map<Integer, String> findColumnsToProcess(String line, List<List<String>> attrList) {
+    private Map<Integer, String> findColumnsToProcess(String fileName, String line, List<TsvColumn> attrList) {
         String[] columnNames = line.split("\\t");
         HashMap<Integer, String> columnsToProcess = new HashMap<>();
 
         Integer columnPosition = 0;
         for (String columnName : columnNames) {
             // for some reason the first column of the line has unprintable characters so removing them
-            String cleanColumnName = columnName.replaceAll("[^\\n\\r\\t\\p{Print}]", "");
-            for (List<String> atList : attrList) {
-                if (atList.contains(cleanColumnName.toLowerCase())) {
-                    columnsToProcess.put(columnPosition, atList.get(0));
+            String cleanColumnName = columnName.trim().replaceAll("[^\\n\\r\\t\\p{Print}]", "");
+            for (TsvColumn tsvColumn : attrList) {
+                if (cleanColumnName.equalsIgnoreCase(tsvColumn.getColumnName())) {
+                    columnsToProcess.put(columnPosition, tsvColumn.getAttributeName());
                     break;
                 }
             }
             columnPosition++;
+        }
+
+        if (columnsToProcess.size() != attrList.size()) {
+            String missingColumns = IntStream.range(0, attrList.size())
+                    .filter((idx) -> !columnsToProcess.containsKey(attrList.get(idx).getAttributeName()))
+                    .mapToObj((idx) -> String.format("'%s'", attrList.get(idx).getColumnName() == null ? "<null>" : attrList.get(idx).getColumnName()))
+                    .collect(Collectors.joining(", "));
+
+            logger.log(Level.WARNING, String.format("Columns size expected not found in file %s based on xml from %s. Column Keys Missing = [%s]; Header Line = '%s'.",
+                    this.xmlFile == null ? "<null>" : this.xmlFile,
+                    fileName,
+                    missingColumns,
+                    line));
         }
 
         return columnsToProcess;
@@ -424,6 +540,18 @@ public final class LeappFileProcessor {
             String comment = nnm.getNamedItem("comment").getNodeValue();
             String parentName = artifactNlist.item(k).getParentNode().getAttributes().getNamedItem("filename").getNodeValue();
 
+            BlackboardArtifact.Type foundArtifactType = null;
+            try {
+                foundArtifactType = Case.getCurrentCase().getSleuthkitCase().getArtifactType(artifactName);
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, String.format("There was an issue that arose while trying to fetch artifact type for %s.", artifactName), ex);
+            }
+
+            if (foundArtifactType == null) {
+                logger.log(Level.SEVERE, String.format("No known artifact mapping found for [artifact: %s, %s]",
+                        artifactName, getXmlFileIdentifier(parentName)));
+            }
+
             tsvFileArtifacts.put(parentName, artifactName);
 
             if (!comment.toLowerCase().matches("null")) {
@@ -433,29 +561,66 @@ public final class LeappFileProcessor {
 
     }
 
+    private String getXmlFileIdentifier(String fileName) {
+        return String.format("file: %s, filename: %s",
+                this.xmlFile == null ? "<null>" : this.xmlFile,
+                fileName == null ? "<null>" : fileName);
+    }
+
+    private String getXmlAttrIdentifier(String fileName, String attributeName) {
+        return String.format("attribute: %s %s",
+                attributeName == null ? "<null>" : attributeName,
+                getXmlFileIdentifier(fileName));
+    }
+
     private void getAttributeNodes(Document xmlinput) {
 
         NodeList attributeNlist = xmlinput.getElementsByTagName("AttributeName"); //NON-NLS
         for (int k = 0; k < attributeNlist.getLength(); k++) {
-            List<String> attributeList = new ArrayList<>();
             NamedNodeMap nnm = attributeNlist.item(k).getAttributes();
             String attributeName = nnm.getNamedItem("attributename").getNodeValue();
+
             if (!attributeName.toLowerCase().matches("null")) {
                 String columnName = nnm.getNamedItem("columnName").getNodeValue();
                 String required = nnm.getNamedItem("required").getNodeValue();
                 String parentName = attributeNlist.item(k).getParentNode().getParentNode().getAttributes().getNamedItem("filename").getNodeValue();
 
-                attributeList.add(attributeName.toLowerCase());
-                attributeList.add(columnName.toLowerCase());
-                attributeList.add(required.toLowerCase());
+                BlackboardAttribute.Type foundAttrType = null;
+                try {
+                    foundAttrType = Case.getCurrentCase().getSleuthkitCase().getAttributeType(attributeName.toUpperCase());
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, String.format("There was an issue that arose while trying to fetch attribute type for %s.", attributeName), ex);
+                }
+
+                if (foundAttrType == null) {
+                    logger.log(Level.SEVERE, String.format("No known attribute mapping found for [%s]", getXmlAttrIdentifier(parentName, attributeName)));
+                }
+
+                if (required != null && required.compareToIgnoreCase("yes") != 0 && required.compareToIgnoreCase("no") != 0) {
+                    logger.log(Level.SEVERE, String.format("Required value %s did not match 'yes' or 'no' for [%s]",
+                            required, getXmlAttrIdentifier(parentName, attributeName)));
+                }
+
+                if (columnName == null) {
+                    logger.log(Level.SEVERE, String.format("No column name provided for [%s]", getXmlAttrIdentifier(parentName, attributeName)));
+                } else if (columnName.trim().length() != columnName.length()) {
+                    logger.log(Level.SEVERE, String.format("Column name '%s' starts or ends with whitespace for [%s]", columnName, getXmlAttrIdentifier(parentName, attributeName)));
+                } else if (columnName.matches("[^ \\S]")) {
+                    logger.log(Level.SEVERE, String.format("Column name '%s' contains invalid characters [%s]", columnName, getXmlAttrIdentifier(parentName, attributeName)));
+                }
+
+                TsvColumn thisCol = new TsvColumn(
+                        attributeName.toLowerCase(),
+                        columnName.toLowerCase(),
+                        "yes".compareToIgnoreCase(required) == 0);
 
                 if (tsvFileAttributes.containsKey(parentName)) {
-                    List<List<String>> attrList = tsvFileAttributes.get(parentName);
-                    attrList.add(attributeList);
+                    List<TsvColumn> attrList = tsvFileAttributes.get(parentName);
+                    attrList.add(thisCol);
                     tsvFileAttributes.replace(parentName, attrList);
                 } else {
-                    List<List<String>> attrList = new ArrayList<>();
-                    attrList.add(attributeList);
+                    List<TsvColumn> attrList = new ArrayList<>();
+                    attrList.add(thisCol);
                     tsvFileAttributes.put(parentName, attrList);
                 }
             }
@@ -466,13 +631,12 @@ public final class LeappFileProcessor {
     /**
      * Generic method for creating a blackboard artifact with attributes
      *
-     * @param type         is a blackboard.artifact_type enum to determine which
-     *                     type the artifact should be
+     * @param type is a blackboard.artifact_type enum to determine which type
+     * the artifact should be
      * @param abstractFile is the AbstractFile object that needs to have the
-     *                     artifact added for it
+     * artifact added for it
      * @param bbattributes is the collection of blackboard attributes that need
-     *                     to be added to the artifact after the artifact has
-     *                     been created
+     * to be added to the artifact after the artifact has been created
      *
      * @return The newly-created artifact, or null on error
      */
@@ -490,13 +654,12 @@ public final class LeappFileProcessor {
     /**
      * Generic method for creating a blackboard artifact with attributes
      *
-     * @param type         is a blackboard.artifact_type enum to determine which
-     *                     type the artifact should be
-     * @param dataSource   is the Content object that needs to have the artifact
-     *                     added for it
+     * @param type is a blackboard.artifact_type enum to determine which type
+     * the artifact should be
+     * @param dataSource is the Content object that needs to have the artifact
+     * added for it
      * @param bbattributes is the collection of blackboard attributes that need
-     *                     to be added to the artifact after the artifact has
-     *                     been created
+     * to be added to the artifact after the artifact has been created
      *
      * @return The newly-created artifact, or null on error
      */
@@ -515,7 +678,7 @@ public final class LeappFileProcessor {
      * Method to post a list of BlackboardArtifacts to the blackboard.
      *
      * @param artifacts A list of artifacts. IF list is empty or null, the
-     *                  function will return.
+     * function will return.
      */
     void postArtifacts(Collection<BlackboardArtifact> artifacts) {
         if (artifacts == null || artifacts.isEmpty()) {
@@ -535,7 +698,44 @@ public final class LeappFileProcessor {
      * @throws org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException
      */
     private void configExtractor() throws IOException {
-        PlatformUtil.extractResourceToUserConfigDir(LeappFileProcessor.class, xmlFile, true);
+        PlatformUtil.extractResourceToUserConfigDir(LeappFileProcessor.class,
+                xmlFile, true);
     }
 
+    
+    private static final Set<String> ALLOWED_EXTENSIONS = new HashSet<>(Arrays.asList("zip", "tar", "tgz")); 
+        
+    /**
+     * Find the files that will be processed by the iLeapp program
+     *
+     * @param dataSource
+     *
+     * @return List of abstract files to process.
+     */
+    static List<AbstractFile> findLeappFilesToProcess(Content dataSource) {
+
+        List<AbstractFile> leappFiles = new ArrayList<>();
+
+        FileManager fileManager = getCurrentCase().getServices().getFileManager();
+
+        // findFiles use the SQL wildcard % in the file name
+        try {
+            leappFiles = fileManager.findFiles(dataSource, "%", "/"); //NON-NLS
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, "No files found to process"); //NON-NLS
+            return leappFiles;
+        }
+
+        List<AbstractFile> leappFilesToProcess = new ArrayList<>();
+        for (AbstractFile leappFile : leappFiles) {
+            if (((leappFile.getLocalAbsPath() != null)
+                    && !leappFile.isVirtual())
+                    && leappFile.getNameExtension() != null 
+                    && ALLOWED_EXTENSIONS.contains(leappFile.getNameExtension().toLowerCase())) {
+                leappFilesToProcess.add(leappFile);
+            }
+        }
+
+        return leappFilesToProcess;
+    }
 }

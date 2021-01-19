@@ -35,7 +35,7 @@ import org.sleuthkit.autopsy.discovery.search.DomainSearch;
 /**
  * SwingWorker to retrieve a list of artifacts for a specified type and domain.
  */
-class MiniTimelineWorker extends SwingWorker<List<MiniTimelineResult>, Void> {
+class MiniTimelineWorker extends SwingWorker<Void, Void> {
 
     private final static Logger logger = Logger.getLogger(MiniTimelineWorker.class.getName());
     private final String domain;
@@ -51,37 +51,35 @@ class MiniTimelineWorker extends SwingWorker<List<MiniTimelineResult>, Void> {
     }
 
     @Override
-    protected List<MiniTimelineResult> doInBackground() throws Exception {
+    protected Void doInBackground() throws Exception {
         List<MiniTimelineResult> results = new ArrayList<>();
         if (!StringUtils.isBlank(domain)) {
             DomainSearch domainSearch = new DomainSearch();
             try {
                 results.addAll(domainSearch.getAllArtifactsForDomain(Case.getCurrentCase().getSleuthkitCase(), domain));
-
+                DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.MiniTimelineResultEvent(results, domain));
             } catch (DiscoveryException ex) {
                 if (ex.getCause() instanceof InterruptedException) {
-                    logger.log(Level.INFO, "MiniTimeline search was cancelled or interrupted for domain: {0}", domain);
+                    this.cancel(true);
+                    //ignore the exception as it was cancelled while the cache was performing its get and we support cancellation
                 } else {
                     throw ex;
                 }
             }
         }
-        return results;
+        return null;
     }
 
     @Override
     protected void done() {
-        List<MiniTimelineResult> results = new ArrayList<>();
         if (!isCancelled()) {
             try {
-                results.addAll(get());
-                DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.MiniTimelineResultEvent(results));
+                get();
             } catch (InterruptedException | ExecutionException ex) {
                 logger.log(Level.SEVERE, "Exception while trying to get list of artifacts for Domain details for mini timeline view for domain: " + domain, ex);
             } catch (CancellationException ignored) {
                 //Worker was cancelled after previously finishing its background work, exception ignored to cut down on non-helpful logging
             }
         }
-
     }
 }

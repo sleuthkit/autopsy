@@ -200,6 +200,7 @@ class PersonaAccountFetcher extends SwingWorker<Map<String, Collection<Persona>>
             // Set up each matching account. We don't know what type of account we have, so check all the types to 
             // find any matches.
             try {
+                boolean showErrorMessage = true;
                 for (CentralRepoAccount.CentralRepoAccountType type : CentralRepository.getInstance().getAllAccountTypes()) {
                     try {
                         // Try to load any matching accounts of this type. Throws an InvalidAccountIDException if the account is the
@@ -207,15 +208,16 @@ class PersonaAccountFetcher extends SwingWorker<Map<String, Collection<Persona>>
                         CentralRepoAccount account = CentralRepository.getInstance().getAccount(type, personaSearcherData.getAccountIdentifer());
                         if (account != null) {
                             personaPanel.addAccount(account, Bundle.PersonaAccountFetcher_account_justification(), Persona.Confidence.HIGH);
+                            showErrorMessage = false;
                         }
                         
-                        if((personaSearcherData.getAccountIdentifer() != null &&
-                                !personaSearcherData.getAccountIdentifer().isEmpty()) && account == null) {
-                            dialog.setStartupPopupMessage(Bundle.PersonaAccountFetcher_not_account_in_cr(personaSearcherData.getAccountIdentifer()));
-                        }
                     } catch (InvalidAccountIDException ex2) {
                         // These are expected when the account identifier doesn't match the format of the account type.
                     }
+                }
+                if ((personaSearcherData.getAccountIdentifer() != null
+                        && !personaSearcherData.getAccountIdentifer().isEmpty()) && showErrorMessage) {
+                    dialog.setStartupPopupMessage(Bundle.PersonaAccountFetcher_not_account_in_cr(personaSearcherData.getAccountIdentifer()));
                 }
             } catch (CentralRepoException ex) {
                 logger.log(Level.SEVERE, "Error looking up account types in the central repository", ex);

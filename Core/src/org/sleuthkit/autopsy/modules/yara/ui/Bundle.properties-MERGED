@@ -10,6 +10,7 @@ RuleSetDetailsPanel.setDetailsLabel.text=Set Details
 RuleSetDetailsPanel.openFolderButton.text=Open Folder
 RuleSetPanel.descriptionField.text=This module allows you to find files the match Yara rules. Each set has a list of Yara rule files.  A file need only match one rule in the set to be found.
 RuleSetDetailsPanel.openLabel.text=Place rule files in the set's folder. They will be compiled before use.
+YARA_Global_Settings_Panel_Title=YARA Options
 YaraIngestSettingsPanel.border.title=Select YARA rule sets to enable during ingest:
 YaraIngestSettingsPanel.allFilesButton.text=All Files
 YaraIngestSettingsPanel.allFilesButton.toolTipText=
@@ -21,3 +22,8 @@ YaraRuleSetOptionPanel_badName_msg=Rule set name {0} already exists.\nRule set n
 YaraRuleSetOptionPanel_badName_title=Create Rule Set
 YaraRuleSetOptionPanel_new_rule_set_name_msg=Supply a new unique rule set name:
 YaraRuleSetOptionPanel_new_rule_set_name_title=Rule Set Name
+# {0} - rule set name
+YaraRuleSetOptionPanel_rule_set_delete=Unable to delete the selected YARA rule set {0}.\nRule set may have already been removed.
+# {0} - rule set name
+YaraRuleSetOptionPanel_RuleSet_Missing=The folder for the selected YARA rule set, {0}, no longer exists.
+YaraRuleSetOptionPanel_RuleSet_Missing_title=Folder removed

@@ -84,6 +84,7 @@ public final class UserPreferences {
     private static final boolean DISPLAY_TRANSLATED_NAMES_DEFAULT = true;
     public static final String EXTERNAL_HEX_EDITOR_PATH = "ExternalHexEditorPath";
     public static final String SOLR_MAX_JVM_SIZE = "SolrMaxJVMSize";
+    private static final int DEFAULT_SOLR_HEAP_SIZE_MB = 2048;
     public static final String RESULTS_TABLE_PAGE_SIZE = "ResultsTablePageSize";
     private static final String GEO_TILE_OPTION = "GeolocationTileOption";
     private static final String GEO_OSM_TILE_ZIP_PATH = "GeolocationOsmZipPath";
@@ -535,10 +536,10 @@ public final class UserPreferences {
     /**
      * Get the maximum JVM heap size (in MB) for the embedded Solr server.
      *
-     * @return Saved value or default (512)
+     * @return Saved value or default (2 GB)
      */
     public static int getMaxSolrVMSize() {
-        return preferences.getInt(SOLR_MAX_JVM_SIZE, 512);
+        return preferences.getInt(SOLR_MAX_JVM_SIZE, DEFAULT_SOLR_HEAP_SIZE_MB);
     }
 
     /**

@@ -22,7 +22,6 @@ import org.sleuthkit.autopsy.contentviewers.artifactviewers.GeneralPurposeArtifa
 import com.google.common.eventbus.Subscribe;
 import java.util.logging.Level;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -64,7 +63,8 @@ final class DomainArtifactsTabPanel extends JPanel {
         this.artifactType = type;
         listPanel = new ArtifactsListPanel(artifactType);
         listPanel.addMouseListener(new ArtifactMenuMouseAdapter(listPanel));
-        jSplitPane1.setLeftComponent(listPanel);
+        mainSplitPane.setLeftComponent(listPanel);
+        add(mainSplitPane);
         setRightComponent();
         listPanel.addSelectionListener(listener);
     }
@@ -91,7 +91,7 @@ final class DomainArtifactsTabPanel extends JPanel {
                 break;
         }
         if (rightPanel != null) {
-            jSplitPane1.setRightComponent(rightPanel.getComponent());
+            mainSplitPane.setRightComponent(rightPanel.getComponent());
         }
     }
 
@@ -115,10 +115,14 @@ final class DomainArtifactsTabPanel extends JPanel {
         this.status = status;
         if (status == ArtifactRetrievalStatus.UNPOPULATED) {
             listPanel.clearList();
-            if (rightPanel != null){
+            removeAll();
+            add(mainSplitPane);
+            if (rightPanel != null) {
                 rightPanel.setArtifact(null);
             }
-                
+        } else if (status == ArtifactRetrievalStatus.POPULATING) {
+            removeAll();
+            add(new LoadingPanel(artifactType.getDisplayName()));
         }
     }
 
@@ -130,7 +134,7 @@ final class DomainArtifactsTabPanel extends JPanel {
      */
     @Subscribe
     void handleArtifactSearchResultEvent(DiscoveryEventUtils.ArtifactSearchResultEvent artifactresultEvent) {
-        if (artifactType == artifactresultEvent.getArtifactType()) {
+        if (artifactType == artifactresultEvent.getArtifactType() && status == ArtifactRetrievalStatus.POPULATING) {
             SwingUtilities.invokeLater(() -> {
                 listPanel.removeSelectionListener(listener);
                 listPanel.addArtifacts(artifactresultEvent.getListOfArtifacts());
@@ -138,6 +142,8 @@ final class DomainArtifactsTabPanel extends JPanel {
                 setEnabled(!listPanel.isEmpty());
                 listPanel.addSelectionListener(listener);
                 listPanel.selectFirst();
+                removeAll();
+                add(mainSplitPane);
                 revalidate();
                 repaint();
                 try {
@@ -169,20 +175,19 @@ final class DomainArtifactsTabPanel extends JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jSplitPane1 = new javax.swing.JSplitPane();
+        mainSplitPane = new javax.swing.JSplitPane();
 
+        mainSplitPane.setDividerLocation(350);
+        mainSplitPane.setResizeWeight(0.1);
+
+        setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
         setMinimumSize(new java.awt.Dimension(0, 0));
-        setPreferredSize(new java.awt.Dimension(0, 0));
         setLayout(new java.awt.BorderLayout());
-
-        jSplitPane1.setMinimumSize(new java.awt.Dimension(0, 0));
-        jSplitPane1.setPreferredSize(new java.awt.Dimension(0, 0));
-        add(jSplitPane1, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JSplitPane jSplitPane1;
+    private javax.swing.JSplitPane mainSplitPane;
     // End of variables declaration//GEN-END:variables
 
     /**

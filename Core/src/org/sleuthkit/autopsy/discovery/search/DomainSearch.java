@@ -201,7 +201,7 @@ public class DomainSearch {
      * @throws DiscoveryException if unable to get the artifacts or the date
      *                            attributes from an artifact.
      */
-    public List<MiniTimelineResult> getAllArtifactsForDomain(SleuthkitCase sleuthkitCase, String domain) throws DiscoveryException, InterruptedException {
+    public List<MiniTimelineResult> getAllArtifactsForDomain(SleuthkitCase sleuthkitCase, String domain) throws DiscoveryException {
         List<BlackboardArtifact> artifacts = new ArrayList<>();
         Map<String, List<BlackboardArtifact>> dateMap = new HashMap<>();
         if (!StringUtils.isBlank(domain)) {

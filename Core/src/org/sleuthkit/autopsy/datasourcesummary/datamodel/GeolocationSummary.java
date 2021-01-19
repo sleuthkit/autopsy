@@ -309,7 +309,7 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
         Long mostRecent = null;
 
         for (MapWaypoint pt : dataSourcePoints) {
-            CityRecord city = closestCityMapper.findClosest(new CityRecord(null, null, pt.getX(), pt.getY()));
+            CityRecord city = closestCityMapper.findClosest(new CityRecord(null, null, null, pt.getX(), pt.getY()));
             Long curTime = pt.getTimestamp();
             if (curTime != null && (mostRecent == null || curTime > mostRecent)) {
                 mostRecent = curTime;

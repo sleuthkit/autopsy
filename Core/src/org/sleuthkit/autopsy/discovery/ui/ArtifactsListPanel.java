@@ -25,6 +25,7 @@ import java.util.logging.Level;
 import javax.swing.JPopupMenu;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableCellRenderer;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 import org.openide.util.NbBundle;
@@ -32,6 +33,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import org.sleuthkit.autopsy.guiutils.SimpleTableCellRenderer;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TimeUtilities;
@@ -56,6 +58,11 @@ final class ArtifactsListPanel extends AbstractArtifactListPanel {
     ArtifactsListPanel(BlackboardArtifact.ARTIFACT_TYPE artifactType) {
         tableModel = new DomainArtifactTableModel(artifactType);
         initComponents();
+        // add the cell renderer to all columns
+        TableCellRenderer renderer = new SimpleTableCellRenderer();
+        for (int i = 0; i < tableModel.getColumnCount(); ++i) {
+            artifactsTable.getColumnModel().getColumn(i).setCellRenderer(renderer);
+        }
         artifactsTable.getRowSorter().toggleSortOrder(0);
         artifactsTable.getRowSorter().toggleSortOrder(0);
     }
@@ -94,11 +101,15 @@ final class ArtifactsListPanel extends AbstractArtifactListPanel {
 
     @Override
     BlackboardArtifact getSelectedArtifact() {
-        int selectedIndex = artifactsTable.getSelectionModel().getLeadSelectionIndex();
-        if (selectedIndex < artifactsTable.getSelectionModel().getMinSelectionIndex() || artifactsTable.getSelectionModel().getMaxSelectionIndex() < 0 || selectedIndex > artifactsTable.getSelectionModel().getMaxSelectionIndex()) {
+        if (artifactsTable.getModel() instanceof DomainArtifactTableModel) {
+            int selectedIndex = artifactsTable.getSelectionModel().getLeadSelectionIndex();
+            if (selectedIndex < artifactsTable.getSelectionModel().getMinSelectionIndex() || artifactsTable.getSelectionModel().getMaxSelectionIndex() < 0 || selectedIndex > artifactsTable.getSelectionModel().getMaxSelectionIndex()) {
+                return null;
+            }
+            return tableModel.getArtifactByRow(artifactsTable.convertRowIndexToModel(selectedIndex));
+        } else {
             return null;
         }
-        return tableModel.getArtifactByRow(artifactsTable.convertRowIndexToModel(selectedIndex));
     }
 
     @Override
@@ -124,7 +135,12 @@ final class ArtifactsListPanel extends AbstractArtifactListPanel {
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     void addArtifacts(List<BlackboardArtifact> artifactList) {
-        tableModel.setContents(artifactList);
+        if (!artifactList.isEmpty()) {
+            artifactsTable.setModel(tableModel);
+            tableModel.setContents(artifactList);
+        } else {
+            artifactsTable.setModel(new EmptyTableModel());
+        }
         artifactsTable.validate();
         artifactsTable.repaint();
         tableModel.fireTableDataChanged();
@@ -152,10 +168,12 @@ final class ArtifactsListPanel extends AbstractArtifactListPanel {
         artifactsTable = new javax.swing.JTable();
 
         setOpaque(false);
-        setPreferredSize(new java.awt.Dimension(300, 0));
+        setPreferredSize(new java.awt.Dimension(350, 10));
 
         jScrollPane1.setBorder(null);
+        jScrollPane1.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         jScrollPane1.setMinimumSize(new java.awt.Dimension(0, 0));
+        jScrollPane1.setPreferredSize(new java.awt.Dimension(350, 10));
 
         artifactsTable.setAutoCreateRowSorter(true);
         artifactsTable.setModel(tableModel);
@@ -166,11 +184,11 @@ final class ArtifactsListPanel extends AbstractArtifactListPanel {
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 400, Short.MAX_VALUE)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 0, Short.MAX_VALUE)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -357,6 +375,46 @@ final class ArtifactsListPanel extends AbstractArtifactListPanel {
             }
         }
     }
+
+    /**
+     * Table model which displays only that no results were found.
+     */
+    private class EmptyTableModel extends AbstractTableModel {
+
+        private static final long serialVersionUID = 1L;
+
+        @Override
+        public int getRowCount() {
+            return 1;
+        }
+
+        @Override
+        public int getColumnCount() {
+            return 1;
+        }
+
+        @NbBundle.Messages({"ArtifactsListPanel.noResultsFound.text=No results found"})
+        @Override
+        public Object getValueAt(int rowIndex, int columnIndex) {
+            return Bundle.ArtifactsListPanel_noResultsFound_text();
+        }
+
+        @Override
+        public String getColumnName(int column) {
+            switch (column) {
+                case 0:
+                    return Bundle.ArtifactsListPanel_dateColumn_name();
+                case 1:
+                    return Bundle.ArtifactsListPanel_titleColumn_name();
+                case 2:
+                    return Bundle.ArtifactsListPanel_mimeTypeColumn_name();
+                default:
+                    return "";
+            }
+        }
+
+    }
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTable artifactsTable;
     // End of variables declaration//GEN-END:variables

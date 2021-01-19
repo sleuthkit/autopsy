@@ -140,9 +140,10 @@ public class DiscoveryAttributes {
             return new DiscoveryKeyUtils.FileTypeGroupKey(file);
         }
     }
-    
+
     /**
-     * Attribute for grouping/sorting by domain category (TSK_WEB_CATEGORY artifacts).
+     * Attribute for grouping/sorting by domain category (TSK_WEB_CATEGORY
+     * artifacts).
      */
     static class DomainCategoryAttribute extends AttributeType {
 
@@ -150,7 +151,7 @@ public class DiscoveryAttributes {
         public DiscoveryKeyUtils.GroupKey getGroupKey(Result result) {
             return new DiscoveryKeyUtils.DomainCategoryGroupKey(result);
         }
-        
+
         @Override
         public void addAttributeToResults(List<Result> results, SleuthkitCase caseDb,
                 CentralRepository centralRepoDb) throws DiscoveryException {
@@ -167,10 +168,11 @@ public class DiscoveryAttributes {
                 throw new DiscoveryException("Error fetching TSK_WEB_CATEGORY artifacts from the database", ex);
             }
         }
-        
+
         /**
-         * Loads all TSK_WEB_CATEGORY artifacts and maps the domain attribute to the category name attribute.
-         * Each ResultDomain is then parsed and matched against this map of values.
+         * Loads all TSK_WEB_CATEGORY artifacts and maps the domain attribute to
+         * the category name attribute. Each ResultDomain is then parsed and
+         * matched against this map of values.
          */
         private Map<String, String> getDomainsWithWebCategories(SleuthkitCase caseDb) throws TskCoreException, InterruptedException {
             Map<String, String> domainToCategory = new HashMap<>();
@@ -190,7 +192,7 @@ public class DiscoveryAttributes {
                 }
             }
 
-           return domainToCategory;
+            return domainToCategory;
         }
     }
 
@@ -269,36 +271,36 @@ public class DiscoveryAttributes {
             }
         }
     }
-    
+
     /**
-     * Organizes the domain instances by normalized domain value.
-     * This helps reduce the complexity of updating ResultDomain instances
-     * after the query has been executed.
-     * 
-     * Example: query for notable status of google.com. Result: notable
-     * With this map, all domain instances that represent google.com can
-     * be updated after one simple lookup.
+     * Organizes the domain instances by normalized domain value. This helps
+     * reduce the complexity of updating ResultDomain instances after the query
+     * has been executed.
+     *
+     * Example: query for notable status of google.com. Result: notable With
+     * this map, all domain instances that represent google.com can be updated
+     * after one simple lookup.
      */
     private static Map<String, List<ResultDomain>> organizeByValue(List<ResultDomain> domainsBatch, CorrelationAttributeInstance.Type attributeType) {
-            final Map<String, List<ResultDomain>> resultDomainTable = new HashMap<>();
-            for (ResultDomain domainInstance : domainsBatch) {
-                try {
-                    final String domainValue = domainInstance.getDomain();
-                    final String normalizedDomain = CorrelationAttributeNormalizer.normalize(attributeType, domainValue);
-                    final List<ResultDomain> bucket = resultDomainTable.getOrDefault(normalizedDomain, new ArrayList<>());
-                    bucket.add(domainInstance);
-                    resultDomainTable.put(normalizedDomain, bucket);
-                } catch (CorrelationAttributeNormalizationException ex) {
-                    logger.log(Level.INFO, String.format("Domain [%s] failed normalization, skipping...", domainInstance.getDomain()));
-                }
+        final Map<String, List<ResultDomain>> resultDomainTable = new HashMap<>();
+        for (ResultDomain domainInstance : domainsBatch) {
+            try {
+                final String domainValue = domainInstance.getDomain();
+                final String normalizedDomain = CorrelationAttributeNormalizer.normalize(attributeType, domainValue);
+                final List<ResultDomain> bucket = resultDomainTable.getOrDefault(normalizedDomain, new ArrayList<>());
+                bucket.add(domainInstance);
+                resultDomainTable.put(normalizedDomain, bucket);
+            } catch (CorrelationAttributeNormalizationException ex) {
+                logger.log(Level.INFO, String.format("Domain [%s] failed normalization, skipping...", domainInstance.getDomain()));
             }
-            return resultDomainTable;
+        }
+        return resultDomainTable;
     }
 
     /**
-     * Helper function to create a string of comma separated values.
-     * Each value is wrapped in `'`. This method is used to bundle up
-     * a collection of values for use in a SQL WHERE IN (...) clause.
+     * Helper function to create a string of comma separated values. Each value
+     * is wrapped in `'`. This method is used to bundle up a collection of
+     * values for use in a SQL WHERE IN (...) clause.
      */
     private static String createCSV(Set<String> values) {
         StringJoiner joiner = new StringJoiner(", ");
@@ -307,30 +309,30 @@ public class DiscoveryAttributes {
         }
         return joiner.toString();
     }
-    
+
     /**
      * Attribute for grouping/sorting by notability in the CR.
      */
     static class PreviouslyNotableAttribute extends AttributeType {
-        
+
         static final int DOMAIN_BATCH_SIZE = 500; // Number of domains to look up at one time
 
         @Override
         public DiscoveryKeyUtils.GroupKey getGroupKey(Result result) {
             return new DiscoveryKeyUtils.PreviouslyNotableGroupKey(result);
         }
-        
+
         @Override
         public void addAttributeToResults(List<Result> results, SleuthkitCase caseDb,
                 CentralRepository centralRepoDb) throws DiscoveryException {
-            
+
             if (centralRepoDb != null) {
                 processFilesWithCr(results, centralRepoDb);
-            }            
+            }
         }
-        
+
         private void processFilesWithCr(List<Result> results, CentralRepository centralRepo) throws DiscoveryException {
-            
+
             List<ResultDomain> domainsBatch = new ArrayList<>();
             for (Result result : results) {
                 if (result.getType() == SearchData.Type.DOMAIN) {
@@ -341,15 +343,15 @@ public class DiscoveryAttributes {
                     }
                 }
             }
-            
+
             queryPreviouslyNotable(domainsBatch, centralRepo);
         }
-        
+
         private void queryPreviouslyNotable(List<ResultDomain> domainsBatch, CentralRepository centralRepo) throws DiscoveryException {
             if (domainsBatch.isEmpty()) {
                 return;
             }
-            
+
             try {
                 final CorrelationAttributeInstance.Type attributeType = centralRepo.getCorrelationTypeById(CorrelationAttributeInstance.DOMAIN_TYPE_ID);
                 final Map<String, List<ResultDomain>> resultDomainTable = organizeByValue(domainsBatch, attributeType);
@@ -371,16 +373,16 @@ public class DiscoveryAttributes {
                 throw new DiscoveryException("Fatal exception encountered querying the CR.", ex);
             }
         }
-        
+
         private static class DomainPreviouslyNotableCallback implements InstanceTableCallback {
-            
+
             private final Map<String, List<ResultDomain>> domainLookup;
             private SQLException sqlCause;
 
             private DomainPreviouslyNotableCallback(Map<String, List<ResultDomain>> domainLookup) {
                 this.domainLookup = domainLookup;
             }
-            
+
             @Override
             public void process(ResultSet resultSet) {
                 try {
@@ -401,7 +403,7 @@ public class DiscoveryAttributes {
              */
             SQLException getCause() {
                 return this.sqlCause;
-            } 
+            }
         }
     }
 
@@ -499,12 +501,13 @@ public class DiscoveryAttributes {
             final CorrelationAttributeInstance.Type attributeType = centralRepository.getCorrelationTypeById(CorrelationAttributeInstance.DOMAIN_TYPE_ID);
             final Map<String, List<ResultDomain>> resultDomainTable = organizeByValue(domainsToQuery, attributeType);
             final String values = createCSV(resultDomainTable.keySet());
-
             final String tableName = CentralRepoDbUtil.correlationTypeToInstanceTableName(attributeType);
-            final String domainFrequencyQuery = " value AS domain_name, COUNT(*) AS frequency "
-                    + "FROM " + tableName + " "
-                    + "WHERE value IN (" + values + ") "
-                    + "GROUP BY value";
+            final String domainFrequencyQuery = " value AS domain_name, COUNT(value) AS frequency FROM"
+                    + "(SELECT DISTINCT case_id, value FROM "
+                    + tableName
+                    + " WHERE value IN ("
+                    + values
+                    + ")) AS foo GROUP BY value";
 
             final DomainFrequencyCallback frequencyCallback = new DomainFrequencyCallback(resultDomainTable);
             centralRepository.processSelectClause(domainFrequencyQuery, frequencyCallback);
@@ -784,8 +787,8 @@ public class DiscoveryAttributes {
     }
 
     /**
-     * Attribute for grouping/sorting domains by number of page views.
-     * Page views is defined at the number of TSK_WEB_HISTORY artifacts.
+     * Attribute for grouping/sorting domains by number of page views. Page
+     * views is defined at the number of TSK_WEB_HISTORY artifacts.
      */
     static class PageViewsAttribute extends AttributeType {
 
@@ -1074,4 +1077,4 @@ public class DiscoveryAttributes {
     private DiscoveryAttributes() {
         // Class should not be instantiated
     }
-    }
+}

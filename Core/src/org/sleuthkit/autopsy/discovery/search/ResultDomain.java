@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.discovery.search;
 
 import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
 /**

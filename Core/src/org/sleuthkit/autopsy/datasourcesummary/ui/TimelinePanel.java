@@ -103,6 +103,8 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
      * Creates new form PastCasesPanel
      */
     public TimelinePanel(TimelineSummary timelineData) {
+        super(timelineData);
+        
         // set up data acquisition methods
         dataFetchComponents = Arrays.asList(
                 new DataFetchWorker.DataFetchComponents<>(

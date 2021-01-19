@@ -22,7 +22,6 @@ import java.util.Arrays;
 import java.util.List;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.centralrepository.ingestmodule.CentralRepoIngestModuleFactory;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.PastCasesSummary;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.PastCasesSummary.PastCasesResult;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer.DefaultCellModel;
@@ -46,8 +45,6 @@ import org.sleuthkit.datamodel.DataSource;
 public class PastCasesPanel extends BaseDataSourceSummaryPanel {
 
     private static final long serialVersionUID = 1L;
-    private static final String CR_FACTORY = CentralRepoIngestModuleFactory.class.getName();
-    private static final String CR_NAME = CentralRepoIngestModuleFactory.getModuleName();
 
     private static final ColumnModel<Pair<String, Long>> CASE_COL = new ColumnModel<>(
             Bundle.PastCasesPanel_caseColumn_title(),
@@ -84,6 +81,8 @@ public class PastCasesPanel extends BaseDataSourceSummaryPanel {
      * Creates new form PastCasesPanel
      */
     public PastCasesPanel(PastCasesSummary pastCaseData) {
+        super(pastCaseData);
+
         // set up data acquisition methods
         dataFetchComponents = Arrays.asList(
                 new DataFetchWorker.DataFetchComponents<>(
@@ -101,8 +100,8 @@ public class PastCasesPanel extends BaseDataSourceSummaryPanel {
      * @param result The result.
      */
     private void handleResult(DataFetchResult<PastCasesResult> result) {
-        showResultWithModuleCheck(notableFileTable, DataFetchResult.getSubResult(result, (res) -> res.getTaggedNotable()), CR_FACTORY, CR_NAME);
-        showResultWithModuleCheck(sameIdTable, DataFetchResult.getSubResult(result, (res) -> res.getSameIdsResults()), CR_FACTORY, CR_NAME);
+        notableFileTable.showDataFetchResult(DataFetchResult.getSubResult(result, (res) -> res.getTaggedNotable()));
+        sameIdTable.showDataFetchResult(DataFetchResult.getSubResult(result, (res) -> res.getSameIdsResults()));
     }
 
     @Override

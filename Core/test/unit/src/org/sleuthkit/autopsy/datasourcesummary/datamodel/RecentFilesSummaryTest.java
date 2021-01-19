@@ -256,7 +256,7 @@ public class RecentFilesSummaryTest {
      */
     private BlackboardArtifact getRecentDocumentArtifact(DataSource ds, long artifactId, Long dateTime, String path) {
         return getArtifact(ds, artifactId, ARTIFACT_TYPE.TSK_RECENT_OBJECT, Arrays.asList(
-                Pair.of(ATTRIBUTE_TYPE.TSK_DATETIME, dateTime),
+                Pair.of(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED , dateTime),
                 Pair.of(ATTRIBUTE_TYPE.TSK_PATH, path)
         ));
     }

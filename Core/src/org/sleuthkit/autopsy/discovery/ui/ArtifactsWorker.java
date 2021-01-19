@@ -61,7 +61,8 @@ class ArtifactsWorker extends SwingWorker<List<BlackboardArtifact>, Void> {
                 return domainSearch.getArtifacts(new DomainSearchArtifactsRequest(Case.getCurrentCase().getSleuthkitCase(), domain, artifactType));
             } catch (DiscoveryException ex) {
                 if (ex.getCause() instanceof InterruptedException) {
-                    logger.log(Level.INFO, "MiniTimeline search was cancelled or interrupted for domain: {0}", domain);
+                      this.cancel(true);
+                    //ignore the exception as it was cancelled while the cache was performing its get and we support cancellation
                 } else {
                     throw ex;
                 }
@@ -84,6 +85,6 @@ class ArtifactsWorker extends SwingWorker<List<BlackboardArtifact>, Void> {
                 //Worker was cancelled after previously finishing its background work, exception ignored to cut down on non-helpful logging
             }
         }
-        
+
     }
 }

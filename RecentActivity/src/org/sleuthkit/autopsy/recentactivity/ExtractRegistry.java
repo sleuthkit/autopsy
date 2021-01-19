@@ -68,7 +68,6 @@ import java.util.Set;
 import java.util.HashSet;
 import static java.util.Locale.US;
 import static java.util.TimeZone.getTimeZone;
-import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -98,7 +97,6 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamException;
 import org.sleuthkit.datamodel.Report;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskDataException;
 
 /**
  * Extract windows registry data using regripper. Runs two versions of
@@ -539,7 +537,7 @@ class ExtractRegistry extends Extract {
                     //sometimes etime will be an empty string and therefore can not be parsed into a date
                     if (etime != null && !etime.isEmpty()) {
                         try {
-                            mtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(etime).getTime();
+                            mtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy", US).parse(etime).getTime();
                             String Tempdate = mtime.toString();
                             mtime = Long.valueOf(Tempdate) / MS_IN_SEC;
                         } catch (ParseException ex) {
@@ -604,7 +602,7 @@ class ExtractRegistry extends Extract {
                                     case "InstallDate": //NON-NLS
                                         if (value != null && !value.isEmpty()) {
                                             try {
-                                                installtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(value).getTime();
+                                                installtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy", US).parse(value).getTime();
                                                 String Tempdate = installtime.toString();
                                                 installtime = Long.valueOf(Tempdate) / MS_IN_SEC;
                                             } catch (ParseException e) {
@@ -783,7 +781,7 @@ class ExtractRegistry extends Extract {
                                         try {
                                             String mTimeAttr = artnode.getAttribute("mtime");
                                             if (mTimeAttr != null && !mTimeAttr.isEmpty()) {
-                                                itemMtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(mTimeAttr).getTime(); //NON-NLS
+                                                itemMtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy", US).parse(mTimeAttr).getTime(); //NON-NLS
                                                 itemMtime /= MS_IN_SEC;
                                             }
                                         } catch (ParseException ex) {
@@ -866,6 +864,8 @@ class ExtractRegistry extends Extract {
                                                     parentModuleName, sid));
                                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH,
                                                     parentModuleName, homeDir));
+                                            
+                                            newArtifacts.add(bbart);
                                         } else {
                                             //add attributes to existing artifact
                                             BlackboardAttribute bbattr = bbart.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_USER_NAME));
@@ -878,10 +878,10 @@ class ExtractRegistry extends Extract {
                                             if (bbattr == null) {
                                                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH,
                                                         parentModuleName, homeDir));
-                                            }
+                                            }                                          
                                         }
                                         bbart.addAttributes(bbattributes);
-                                        newArtifacts.add(bbart);
+                                       
                                     } catch (TskCoreException ex) {
                                         logger.log(Level.SEVERE, "Error adding account artifact to blackboard.", ex); //NON-NLS
                                     }
@@ -1163,7 +1163,7 @@ class ExtractRegistry extends Extract {
     Collection<BlackboardAttribute> getAttributesForAccount(Map<String, String> userInfo, List<String> groupList, boolean existingUser, AbstractFile regAbstractFile) throws ParseException {
         Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
 
-        SimpleDateFormat regRipperTimeFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy 'Z'");
+        SimpleDateFormat regRipperTimeFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy 'Z'", US);
         regRipperTimeFormat.setTimeZone(getTimeZone("GMT"));
 
         if (!existingUser) {
@@ -1501,7 +1501,7 @@ class ExtractRegistry extends Extract {
                     }
                     Collection<BlackboardAttribute> attributes = new ArrayList<>();
                     attributes.add(new BlackboardAttribute(TSK_PATH, getName(), fileName));
-                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, getName(), adobeUsedTime));
+                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED, getName(), adobeUsedTime));
                     attributes.add(new BlackboardAttribute(TSK_COMMENT, getName(), comment));
                     BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_RECENT_OBJECT, regFile, attributes);
                     if (bba != null) {
@@ -1742,7 +1742,7 @@ class ExtractRegistry extends Extract {
             String fileName = fileNameTokens[1];
             Collection<BlackboardAttribute> attributes = new ArrayList<>();
             attributes.add(new BlackboardAttribute(TSK_PATH, getName(), fileName));
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, getName(), docDate));
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED, getName(), docDate));
             attributes.add(new BlackboardAttribute(TSK_COMMENT, getName(), comment));
             BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_RECENT_OBJECT, regFile, attributes);
             if (bba != null) {
@@ -1805,7 +1805,7 @@ class ExtractRegistry extends Extract {
                 }
                 Collection<BlackboardAttribute> attributes = new ArrayList<>();
                 attributes.add(new BlackboardAttribute(TSK_PATH, getName(), fileName));
-                attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, getName(), usedTime));
+                attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED, getName(), usedTime));
                 attributes.add(new BlackboardAttribute(TSK_COMMENT, getName(), comment));
                 BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_RECENT_OBJECT, regFile, attributes);
                 if (bba != null) {
