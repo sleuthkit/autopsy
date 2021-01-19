@@ -32,7 +32,9 @@ import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.events.MessageServiceConnectionInfo;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import java.awt.Cursor;
+import java.beans.PropertyChangeEvent;
 import java.io.IOException;
+import java.util.EnumSet;
 import java.util.logging.Level;
 import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
@@ -161,6 +163,13 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         goodIcon = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/good.png", false));
         badIcon = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/bad.png", false));
         enableMultiUserComponents(textBoxes, cbEnableMultiUser.isSelected());
+        
+        Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), (PropertyChangeEvent evt) -> {
+            //disable when case is open, enable when case is closed
+            load();
+           
+            cbEnableMultiUser.setEnabled(evt.getNewValue() == null);
+        });
     }
 
     /**
