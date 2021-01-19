@@ -155,7 +155,7 @@ public class ALeappAnalyzerIngestModule implements DataSourceIngestModule {
             statusHelper.switchToDeterminate(aLeappFilesToProcess.size());
             processALeappFs(dataSource, currentCase, statusHelper, tempOutputPath.toString());
         } else {
-            aLeappFilesToProcess = findaLeappFilesToProcess(dataSource);
+            aLeappFilesToProcess = LeappFileProcessor.findLeappFilesToProcess(dataSource);
             statusHelper.switchToDeterminate(aLeappFilesToProcess.size());
 
             Integer filesProcessedCount = 0;
@@ -268,40 +268,7 @@ public class ALeappAnalyzerIngestModule implements DataSourceIngestModule {
 
     }
 
-    /**
-     * Find the files that will be processed by the aLeapp program
-     *
-     * @param dataSource
-     *
-     * @return List of abstract files to process.
-     */
-    private List<AbstractFile> findaLeappFilesToProcess(Content dataSource) {
 
-        List<AbstractFile> aLeappFiles = new ArrayList<>();
-
-        FileManager fileManager = getCurrentCase().getServices().getFileManager();
-
-        // findFiles use the SQL wildcard % in the file name
-        try {
-            aLeappFiles = fileManager.findFiles(dataSource, "%", "/"); //NON-NLS
-        } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "No files found to process"); //NON-NLS
-            return aLeappFiles;
-        }
-
-        List<AbstractFile> aLeappFilesToProcess = new ArrayList<>();
-        for (AbstractFile aLeappFile : aLeappFiles) {
-            if (((aLeappFile.getLocalAbsPath() != null)
-                    && (!aLeappFile.getNameExtension().isEmpty() && (!aLeappFile.isVirtual())))
-                    && ((aLeappFile.getName().toLowerCase().contains(".zip") || (aLeappFile.getName().toLowerCase().contains(".tar")))
-                    || aLeappFile.getName().toLowerCase().contains(".tgz"))) {
-                aLeappFilesToProcess.add(aLeappFile);
-
-            }
-        }
-
-        return aLeappFilesToProcess;
-    }
 
     /**
      * Build the aLeapp command to run
