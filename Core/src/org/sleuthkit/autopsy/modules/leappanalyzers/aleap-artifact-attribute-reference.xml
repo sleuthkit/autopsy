@@ -78,7 +78,7 @@
 
         <FileName filename="Browser History.tsv" description="Browser History">
             <ArtifactName artifactname="TSK_WEB_HISTORY" comment="Browser History">
-                <AttributeName attributename="TSK_DATETIME_START" columnName="Last Visit Time" required="yes"/>
+                <AttributeName attributename="TSK_DATETIME_ACCESSED" columnName="Last Visit Time" required="yes"/>
                 <AttributeName attributename="TSK_URL" columnName="URL" required="yes"/>
                 <AttributeName attributename="TSK_TITLE" columnName="Title" required="yes"/>
                 <AttributeName attributename="null" columnName="Visit Count" required="no"/>
@@ -167,7 +167,7 @@
             <AttributeName attributename="TSK_DOMAIN" columnName="Host" required="yes" />
             <AttributeName attributename="TSK_NAME" columnName="Name" required="yes" />
             <AttributeName attributename="TSK_VALUE" columnName="Value" required="yes" />
-            <AttributeName attributename="TSK_DATETIME_START" columnName="Created Date" required="yes" />
+            <AttributeName attributename="TSK_DATETIME_CREATED" columnName="Created Date" required="yes" />
             <AttributeName attributename="TSK_DATETIME_END" columnName="Expiration Date" required="yes" />
             <AttributeName attributename="TSK_PATH" columnName="Path" required="yes" />
         </ArtifactName>
@@ -248,7 +248,7 @@
 
     <FileName filename="Edge History.tsv" description="Edge History">
         <ArtifactName artifactname="TSK_WEB_HISTORY" comment="Edge History">
-            <AttributeName attributename="TSK_DATETIME_START" columnName="Last Visit Time" required="yes"/>
+            <AttributeName attributename="TSK_DATETIME_ACCESSED" columnName="Last Visit Time" required="yes"/>
             <AttributeName attributename="TSK_URL" columnName="URL" required="yes"/>
             <AttributeName attributename="TSK_TITLE" columnName="Title" required="yes"/>
             <AttributeName attributename="null" columnName="Visit Count" required="no"/>
