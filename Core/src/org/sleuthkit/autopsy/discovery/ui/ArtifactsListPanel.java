@@ -82,6 +82,14 @@ final class ArtifactsListPanel extends AbstractArtifactListPanel {
         artifactsTable.getSelectionModel().addListSelectionListener(listener);
     }
 
+    /**
+     * Assign the focus to this panel's list.
+     */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    void focusList() {
+        artifactsTable.grabFocus();
+    }
+
     @Override
     void removeSelectionListener(ListSelectionListener listener) {
         artifactsTable.getSelectionModel().removeListSelectionListener(listener);
