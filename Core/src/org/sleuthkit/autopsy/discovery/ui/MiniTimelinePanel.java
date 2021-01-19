@@ -102,10 +102,18 @@ final class MiniTimelinePanel extends javax.swing.JPanel {
     }
 
     /**
+     * Assign the focus to this panel's list.
+     */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    void focusList() {
+        dateListPanel.grabFocus();
+    }
+
+    /**
      * Manually set the status of the panel.
      *
      * @param status The ArtifactRetrievalStatus of the panel
-     * @param domain  The domain the panel is currently reflecting.
+     * @param domain The domain the panel is currently reflecting.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     void setStatus(DomainArtifactsTabPanel.ArtifactRetrievalStatus status, String domain) {
@@ -143,6 +151,9 @@ final class MiniTimelinePanel extends javax.swing.JPanel {
                 dateListPanel.addSelectionListener(dateListener);
                 artifactListPanel.addSelectionListener(artifactListener);
                 dateListPanel.selectFirst();
+                if (miniTimelineResultEvent.shouldGrabFocus()) {
+                    focusList();
+                }
                 removeAll();
                 add(mainSplitPane);
                 revalidate();
