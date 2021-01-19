@@ -35,8 +35,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import static java.util.Locale.US;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -48,7 +50,9 @@ import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import static org.sleuthkit.autopsy.casemodule.Case.getCurrentCase;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
@@ -698,4 +702,40 @@ public final class LeappFileProcessor {
                 xmlFile, true);
     }
 
+    
+    private static final Set<String> ALLOWED_EXTENSIONS = new HashSet<>(Arrays.asList("zip", "tar", "tgz")); 
+        
+    /**
+     * Find the files that will be processed by the iLeapp program
+     *
+     * @param dataSource
+     *
+     * @return List of abstract files to process.
+     */
+    static List<AbstractFile> findLeappFilesToProcess(Content dataSource) {
+
+        List<AbstractFile> leappFiles = new ArrayList<>();
+
+        FileManager fileManager = getCurrentCase().getServices().getFileManager();
+
+        // findFiles use the SQL wildcard % in the file name
+        try {
+            leappFiles = fileManager.findFiles(dataSource, "%", "/"); //NON-NLS
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, "No files found to process"); //NON-NLS
+            return leappFiles;
+        }
+
+        List<AbstractFile> leappFilesToProcess = new ArrayList<>();
+        for (AbstractFile leappFile : leappFiles) {
+            if (((leappFile.getLocalAbsPath() != null)
+                    && !leappFile.isVirtual())
+                    && leappFile.getNameExtension() != null 
+                    && ALLOWED_EXTENSIONS.contains(leappFile.getNameExtension().toLowerCase())) {
+                leappFilesToProcess.add(leappFile);
+            }
+        }
+
+        return leappFilesToProcess;
+    }
 }
