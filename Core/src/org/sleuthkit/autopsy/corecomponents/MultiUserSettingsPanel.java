@@ -864,6 +864,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         // When a case is open, prevent the user from changing
         // multi-user settings.
         cbEnableMultiUser.setEnabled(!Case.isCaseOpen());
+        enableMultiUserComponents(textBoxes, cbEnableMultiUser.isSelected() && !Case.isCaseOpen());
         
         this.valid(); // trigger validation to enable buttons based on current settings
     }
@@ -1149,12 +1150,12 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         boolean messageServicePopulated = messageServiceFieldsArePopulated();
 
         // PostgreSQL Database
-        bnTestDatabase.setEnabled(dbPopulated);
+        bnTestDatabase.setEnabled(dbPopulated && !Case.isCaseOpen());
 
         // Solr Indexing
-        bnTestSolr8.setEnabled(solr8Populated);
-        bnTestSolr4.setEnabled(solr4Populated);
-        bnTestZK.setEnabled(zkPopulated);
+        bnTestSolr8.setEnabled(solr8Populated && !Case.isCaseOpen());
+        bnTestSolr4.setEnabled(solr4Populated && !Case.isCaseOpen());
+        bnTestZK.setEnabled(zkPopulated && !Case.isCaseOpen());
 
         // ActiveMQ Messaging
         bnTestMessageService.setEnabled(messageServicePopulated);
