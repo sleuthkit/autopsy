@@ -38,6 +38,7 @@ import java.util.HashMap;
 import static java.util.Locale.US;
 import java.util.Map;
 import java.util.logging.Level;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.xml.parsers.DocumentBuilder;
@@ -45,6 +46,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -369,21 +371,26 @@ public final class LeappFileProcessor {
             return null;
         }
 
-        String trimmed = value.trim();
         switch (attrType.getValueType()) {
             case JSON:
             case STRING:
-                return parseAttrValue(trimmed, attrType, fileName, (v) -> new BlackboardAttribute(attrType, MODULE_NAME, v));
+                return parseAttrValue(value, attrType, fileName, false, false, 
+                        (v) -> new BlackboardAttribute(attrType, MODULE_NAME, v));
             case INTEGER:
-                return parseAttrValue(trimmed, attrType, fileName, (v) -> new BlackboardAttribute(attrType, MODULE_NAME, (int) Double.valueOf(v).intValue()));
+                return parseAttrValue(value.trim(), attrType, fileName, true, false, 
+                        (v) -> new BlackboardAttribute(attrType, MODULE_NAME, (int) Double.valueOf(v).intValue()));
             case LONG:
-                return parseAttrValue(trimmed, attrType, fileName, (v) -> new BlackboardAttribute(attrType, MODULE_NAME, (long) Double.valueOf(v).longValue()));
+                return parseAttrValue(value.trim(), attrType, fileName, true, false, 
+                        (v) -> new BlackboardAttribute(attrType, MODULE_NAME, (long) Double.valueOf(v).longValue()));
             case DOUBLE:
-                return parseAttrValue(trimmed, attrType, fileName, (v) -> new BlackboardAttribute(attrType, MODULE_NAME, (double) Double.valueOf(v)));
+                return parseAttrValue(value.trim(), attrType, fileName, true, false, 
+                        (v) -> new BlackboardAttribute(attrType, MODULE_NAME, (double) Double.valueOf(v)));
             case BYTE:
-                return parseAttrValue(trimmed, attrType, fileName, (v) -> new BlackboardAttribute(attrType, MODULE_NAME, new byte[]{Byte.valueOf(v)}));
+                return parseAttrValue(value.trim(), attrType, fileName, true, false, 
+                        (v) -> new BlackboardAttribute(attrType, MODULE_NAME, new byte[]{Byte.valueOf(v)}));
             case DATETIME:
-                return parseAttrValue(value, attrType, fileName, (v) -> new BlackboardAttribute(attrType, MODULE_NAME, TIMESTAMP_FORMAT.parse(v).getTime() / 1000));
+                return parseAttrValue(value.trim(), attrType, fileName, true, true, 
+                        (v) -> new BlackboardAttribute(attrType, MODULE_NAME, TIMESTAMP_FORMAT.parse(v).getTime() / 1000));
             default:
                 // Log this and continue on with processing
                 logger.log(Level.WARNING, String.format("Attribute Type %s for file %s not defined.", attrType, fileName)); //NON-NLS                   
@@ -414,11 +421,21 @@ public final class LeappFileProcessor {
      * @param value The string value.
      * @param attrType The blackboard attribute type.
      * @param fileName The name of the file from which the value comes.
+     * @param blankIsNull If string is blank return null attribute.
+     * @param zeroIsNull If string is some version of 0, return null attribute.
      * @param valueConverter The means of converting the string value to an
      * appropriate blackboard attribute.
      * @return The generated blackboard attribute or null if not determined.
      */
-    private BlackboardAttribute parseAttrValue(String value, BlackboardAttribute.Type attrType, String fileName, ParseExceptionFunction valueConverter) {
+    private BlackboardAttribute parseAttrValue(String value, BlackboardAttribute.Type attrType, String fileName, boolean blankIsNull, boolean zeroIsNull, ParseExceptionFunction valueConverter) {
+        if (blankIsNull && StringUtils.isBlank(value)) {
+            return null;
+        }
+        
+        if (zeroIsNull && value.matches("^\\s*[0\\.]*\\s*$")) {
+            return null;
+        }
+        
         try {
             return valueConverter.apply(value);
         } catch (NumberFormatException | ParseException ex) {
