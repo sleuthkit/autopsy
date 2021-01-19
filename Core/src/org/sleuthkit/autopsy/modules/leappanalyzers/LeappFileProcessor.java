@@ -408,7 +408,6 @@ public final class LeappFileProcessor {
         } else if (attrType.matches("LONG")) {
             try {
                 bbattributes.add(new BlackboardAttribute(attributeType, MODULE_NAME, (long)Double.parseDouble(columnValue)));
-//                bbattributes.add(new BlackboardAttribute(attributeType, MODULE_NAME, Long.valueOf(columnValue)));
             } catch (NumberFormatException ex) {
                 logger.log(Level.WARNING, String.format("Unable to format %s as an long.", columnValue), ex);
             }
@@ -744,5 +743,24 @@ public final class LeappFileProcessor {
         }
 
         return leappFilesToProcess;
+    }
+    
+     /**
+     * Create custom artifacts that are defined in the xLeapp xml file(s).
+     * 
+     */
+    private void createCustomArtifacts(Blackboard blkBoard) {
+        
+        for (Map.Entry<String, String> customArtifact : CUSTOM_ARTIFACT_MAP.entrySet()) {
+            String artifactName = customArtifact.getKey();
+            String artifactDescription = customArtifact.getValue();
+
+            try {
+                BlackboardArtifact.Type customArtifactType = blkBoard.getOrAddArtifactType(artifactName, artifactDescription);
+            } catch (Blackboard.BlackboardException ex) {
+                logger.log(Level.WARNING, String.format("Failed to create custom artifact type %s.", artifactName), ex);
+            }  
+ 
+        }
     }
 }
