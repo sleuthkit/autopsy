@@ -83,8 +83,6 @@ final class MiniTimelinePanel extends javax.swing.JPanel {
                 }
             }
         };
-        dateListPanel.setFocusCycleRoot(true);
-        dateListPanel.setFocusable(true);
         dateListPanel.addSelectionListener(dateListener);
         artifactListPanel.addSelectionListener(artifactListener);
         leftSplitPane.setLeftComponent(dateListPanel);
