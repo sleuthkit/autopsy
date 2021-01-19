@@ -62,8 +62,6 @@ final class DomainArtifactsTabPanel extends JPanel {
         initComponents();
         this.artifactType = type;
         listPanel = new ArtifactsListPanel(artifactType);
-        listPanel.setFocusCycleRoot(true);
-        listPanel.setFocusable(true);
         listPanel.addMouseListener(new ArtifactMenuMouseAdapter(listPanel));
         mainSplitPane.setLeftComponent(listPanel);
         add(mainSplitPane);
