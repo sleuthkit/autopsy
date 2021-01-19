@@ -39,6 +39,8 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.openide.util.ImageUtilities;
 import org.openide.util.Lookup;
+import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coordinationservice.utils.CoordinationServiceUtils;
 import org.sleuthkit.autopsy.core.UserPreferencesException;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
@@ -806,6 +808,10 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_bnTestZKActionPerformed
 
+    @Messages({
+       "MultiUserSettingsPanel_Close_Case_To_Modify=Close case to modfy settings" 
+    })
+    
     void load() {
         lbTestDatabase.setIcon(null);
         lbTestSolr8.setIcon(null);
@@ -845,6 +851,11 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         bnTestMessageService.setEnabled(false);
 
         cbEnableMultiUser.setSelected(UserPreferences.getIsMultiUserModeEnabled());
+        
+        // When a case is open, prevent the user from changing
+        // multi-user settings.
+        cbEnableMultiUser.setEnabled(!Case.isCaseOpen());
+        
         this.valid(); // trigger validation to enable buttons based on current settings
     }
 
@@ -1097,7 +1108,11 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
      * @return true if it's okay, false otherwise.
      */
     boolean valid() {
-        tbOops.setText("");
+        if(Case.isCaseOpen()) {
+            tbOops.setText(Bundle.MultiUserSettingsPanel_Close_Case_To_Modify());
+        } else {
+            tbOops.setText("");
+        }
 
         if (cbEnableMultiUser.isSelected()) {
             return checkFieldsAndEnableButtons()
