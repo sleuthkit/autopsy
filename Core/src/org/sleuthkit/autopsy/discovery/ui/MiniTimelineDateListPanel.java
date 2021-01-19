@@ -65,6 +65,14 @@ class MiniTimelineDateListPanel extends JPanel {
     }
 
     /**
+     * Assign the focus to this panel's list.
+     */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    void focusList() {
+        jTable1.grabFocus();
+    }
+
+    /**
      * Remove a listener from the table of dates.
      *
      * @param listener The listener to remove from the table of dates.
