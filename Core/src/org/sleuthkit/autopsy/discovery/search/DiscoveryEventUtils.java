@@ -135,6 +135,9 @@ public final class DiscoveryEventUtils {
 
         /**
          * Construct a new PopulateDomainTabsEvent.
+         *
+         * @param domain The domain this event is for, or empty if no domain is
+         *               selected.
          */
         public PopulateDomainTabsEvent(String domain) {
             this.domain = domain;
@@ -236,6 +239,7 @@ public final class DiscoveryEventUtils {
 
         private final List<BlackboardArtifact> listOfArtifacts = new ArrayList<>();
         private final BlackboardArtifact.ARTIFACT_TYPE artifactType;
+        private final boolean grabFocus;
 
         /**
          * Construct a new ArtifactSearchResultEvent with a list of specified
@@ -243,12 +247,15 @@ public final class DiscoveryEventUtils {
          *
          * @param artifactType    The type of results in the list.
          * @param listOfArtifacts The list of results retrieved.
+         * @param shouldGrabFocus True if the list of artifacts should have
+         *                        focus, false otherwise.
          */
-        public ArtifactSearchResultEvent(BlackboardArtifact.ARTIFACT_TYPE artifactType, List<BlackboardArtifact> listOfArtifacts) {
+        public ArtifactSearchResultEvent(BlackboardArtifact.ARTIFACT_TYPE artifactType, List<BlackboardArtifact> listOfArtifacts, boolean shouldGrabFocus) {
             if (listOfArtifacts != null) {
                 this.listOfArtifacts.addAll(listOfArtifacts);
             }
             this.artifactType = artifactType;
+            this.grabFocus = shouldGrabFocus;
         }
 
         /**
@@ -268,6 +275,17 @@ public final class DiscoveryEventUtils {
         public BlackboardArtifact.ARTIFACT_TYPE getArtifactType() {
             return artifactType;
         }
+
+        /**
+         * Get whether or not the artifacts list should grab focus.
+         *
+         * @return True if the list of artifacts should have focus, false
+         *         otherwise.
+         */
+        public boolean shouldGrabFocus() {
+            return grabFocus;
+        }
+
     }
 
     /**
@@ -278,18 +296,22 @@ public final class DiscoveryEventUtils {
 
         private final List<MiniTimelineResult> results = new ArrayList<>();
         private final String domain;
+        private final boolean grabFocus;
 
         /**
          * Construct a new MiniTimelineResultEvent.
          *
-         * @param results The list of MiniTimelineResults contained in this
-         *                event.
-         * @param domain  The domain the results are for.
+         * @param results         The list of MiniTimelineResults contained in
+         *                        this event.
+         * @param domain          The domain the results are for.
+         * @param shouldGrabFocus True if the list of dates should have focus,
+         *                        false otherwise.
          */
-        public MiniTimelineResultEvent(List<MiniTimelineResult> results, String domain) {
+        public MiniTimelineResultEvent(List<MiniTimelineResult> results, String domain, boolean shouldGrabFocus) {
             if (results != null) {
                 this.results.addAll(results);
             }
+            this.grabFocus = shouldGrabFocus;
             this.domain = domain;
         }
 
@@ -309,6 +331,15 @@ public final class DiscoveryEventUtils {
          */
         public String getDomain() {
             return domain;
+        }
+
+        /**
+         * Get whether or not the dates list should grab focus.
+         *
+         * @return True if the list of dates should have focus, false otherwise.
+         */
+        public boolean shouldGrabFocus() {
+            return grabFocus;
         }
     }
 
