@@ -69,6 +69,7 @@ genfiles.properties
 *~
 /netbeans-plat
 /docs/doxygen-user/user-docs
+/docs/doxygen-dev/build-docs
 /jdiff-javadocs/*
 /jdiff-logs/*
 /gen_version.txt
