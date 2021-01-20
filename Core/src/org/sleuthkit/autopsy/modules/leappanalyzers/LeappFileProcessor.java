@@ -20,6 +20,8 @@ package org.sleuthkit.autopsy.modules.leappanalyzers;
 
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
+import com.fasterxml.jackson.dataformat.csv.CsvParser;
+import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -46,6 +48,7 @@ import java.util.stream.Stream;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -288,16 +291,19 @@ public final class LeappFileProcessor {
             return;
         }
 
-        try (MappingIterator<String[]> iterator = new CsvMapper()
-                .readerFor(String[].class)
+        // based on https://stackoverflow.com/questions/56921465/jackson-csv-schema-for-array
+        try (MappingIterator<List<String>> iterator = new CsvMapper()
+                .enable(CsvParser.Feature.WRAP_AS_ARRAY)
+                .readerFor(List.class)
+                .with(CsvSchema.emptySchema().withColumnSeparator('\t'))
                 .readValues(LeappFile)) {
 
             if (iterator.hasNext()) {
-                String[] headerItems = iterator.next();
-                Map<String, Integer> columnIndexes = IntStream.range(0, headerItems.length)
+                List<String> headerItems = iterator.next();
+                Map<String, Integer> columnIndexes = IntStream.range(0, headerItems.size())
                         .mapToObj(idx -> idx)
                         .collect(Collectors.toMap(
-                                idx -> headerItems[idx] == null ? null : headerItems[idx].trim().toLowerCase(),
+                                idx -> headerItems.get(idx) == null ? null : headerItems.get(idx).trim().toLowerCase(),
                                 idx -> idx,
                                 (val1, val2) -> val1));
 
@@ -319,7 +325,7 @@ public final class LeappFileProcessor {
     /**
      * Process the line read and create the necessary attributes for it.
      *
-     * @param lineValues Array of column values.
+     * @param lineValues List of column values.
      * @param columnIndexes Mapping of column headers (trimmed; to lower case)
      * to column index.
      * @param attrList The list of attributes as specified for the schema of
@@ -330,12 +336,12 @@ public final class LeappFileProcessor {
      * from this line.
      * @throws IngestModuleException
      */
-    private Collection<BlackboardAttribute> processReadLine(String[] lineValues, Map<String, Integer> columnIndexes,
+    private Collection<BlackboardAttribute> processReadLine(List<String> lineValues, Map<String, Integer> columnIndexes,
             List<TsvColumn> attrList, String fileName, int lineNum) throws IngestModuleException {
 
         if (MapUtils.isEmpty(columnIndexes)) {
             return Collections.emptyList();
-        } else if (lineValues.length == 0 || lineValues == null) {
+        } else if (CollectionUtils.isEmpty(lineValues)) {
             logger.log(Level.WARNING, "Line is null.  Returning empty list for attributes.");
             return Collections.emptyList();
         }
@@ -347,7 +353,7 @@ public final class LeappFileProcessor {
             }
 
             Integer columnIdx = columnIndexes.get(colAttr.getColumnName());
-            String value = (columnIdx == null || columnIdx > lineValues.length || columnIdx < 0) ? null : lineValues[columnIdx];
+            String value = (columnIdx == null || columnIdx > lineValues.size() || columnIdx < 0) ? null : lineValues.get(columnIdx);
             if (value == null) {
                 logger.log(Level.WARNING, String.format("No value found for column %s at line %d in file %s.", colAttr.getColumnName(), lineNum, fileName));
                 continue;
