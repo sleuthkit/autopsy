@@ -81,9 +81,9 @@ final class DomainDetailsPanel extends JPanel {
                         selectedTabName = newTabTitle;
                         Component selectedComponent = jTabbedPane1.getSelectedComponent();
                         if (selectedComponent instanceof DomainArtifactsTabPanel) {
-                            runDomainWorker((DomainArtifactsTabPanel) selectedComponent);
+                            runDomainWorker((DomainArtifactsTabPanel) selectedComponent, true);
                         } else if (selectedComponent instanceof MiniTimelinePanel) {
-                            runMiniTimelineWorker((MiniTimelinePanel) selectedComponent);
+                            runMiniTimelineWorker((MiniTimelinePanel) selectedComponent, true);
                         }
                     }
                 }
@@ -122,17 +122,24 @@ final class DomainDetailsPanel extends JPanel {
     /**
      * Run the worker which retrieves the list of artifacts for the domain to
      * populate the details area.
+     *
+     * @param domainArtifactsTabPanel The DomainArtifactsTabPanel which has been
+     *                                selected.
+     * @param shouldGrabFocus         True if the list of artifacts should have
+     *                                focus, false otherwise.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    private void runDomainWorker(DomainArtifactsTabPanel domainArtifactsTabPanel) {
+    private void runDomainWorker(DomainArtifactsTabPanel domainArtifactsTabPanel, boolean shouldGrabFocus) {
         if (singleArtifactDomainWorker != null && !singleArtifactDomainWorker.isDone()) {
             singleArtifactDomainWorker.cancel(true);
         }
         if (domainArtifactsTabPanel.getStatus() == DomainArtifactsTabPanel.ArtifactRetrievalStatus.UNPOPULATED) {
             DiscoveryEventUtils.getDiscoveryEventBus().register(domainArtifactsTabPanel);
             domainArtifactsTabPanel.setStatus(DomainArtifactsTabPanel.ArtifactRetrievalStatus.POPULATING);
-            singleArtifactDomainWorker = new ArtifactsWorker(domainArtifactsTabPanel.getArtifactType(), domain);
+            singleArtifactDomainWorker = new ArtifactsWorker(domainArtifactsTabPanel.getArtifactType(), domain, shouldGrabFocus);
             singleArtifactDomainWorker.execute();
+        } else if (domainArtifactsTabPanel.getStatus() == DomainArtifactsTabPanel.ArtifactRetrievalStatus.POPULATED) {
+            domainArtifactsTabPanel.focusList();
         }
 
     }
@@ -140,11 +147,17 @@ final class DomainDetailsPanel extends JPanel {
     /**
      * Run the worker which retrieves the list of MiniTimelineResults for the
      * mini timeline view to populate.
+     *
+     * @param miniTimelinePanel The MiniTimelinePanel which has been selected.
+     * @param shouldGrabFocus   True if the list of dates should have focus,
+     *                          false otherwise.
      */
-    private void runMiniTimelineWorker(MiniTimelinePanel miniTimelinePanel) {
+    private void runMiniTimelineWorker(MiniTimelinePanel miniTimelinePanel, boolean shouldGrabFocus) {
         if (miniTimelinePanel.getStatus() == DomainArtifactsTabPanel.ArtifactRetrievalStatus.UNPOPULATED) {
             miniTimelinePanel.setStatus(DomainArtifactsTabPanel.ArtifactRetrievalStatus.POPULATING, domain);
-            new MiniTimelineWorker(domain).execute();
+            new MiniTimelineWorker(domain, shouldGrabFocus).execute();
+        } else if (miniTimelinePanel.getStatus() == DomainArtifactsTabPanel.ArtifactRetrievalStatus.POPULATED) {
+            miniTimelinePanel.focusList();
         }
     }
 
@@ -162,12 +175,13 @@ final class DomainDetailsPanel extends JPanel {
                 //send fade out event
                 DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.DetailsVisibleEvent(false));
             } else {
+                resetTabsStatus();
                 domain = populateEvent.getDomain();
                 Component selectedComponent = jTabbedPane1.getSelectedComponent();
                 if (selectedComponent instanceof DomainArtifactsTabPanel) {
-                    runDomainWorker((DomainArtifactsTabPanel) selectedComponent);
+                    runDomainWorker((DomainArtifactsTabPanel) selectedComponent, false);
                 } else if (selectedComponent instanceof MiniTimelinePanel) {
-                    runMiniTimelineWorker((MiniTimelinePanel) selectedComponent);
+                    runMiniTimelineWorker((MiniTimelinePanel) selectedComponent, false);
                 }
                 //send fade in event
                 DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.DetailsVisibleEvent(true));

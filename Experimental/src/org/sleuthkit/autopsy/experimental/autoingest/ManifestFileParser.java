@@ -28,6 +28,7 @@ import java.util.function.Predicate;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.tidy.Tidy;
@@ -74,7 +75,7 @@ public interface ManifestFileParser {
     static Path makeTidyManifestFile(Path filePath) throws IOException {
         File tempFile = null;
         try{
-            tempFile = File.createTempFile("mani", "tdy", filePath.getParent().toFile());
+            tempFile = File.createTempFile("mani", "tdy", new File(System.getProperty("java.io.tmpdir")));
 
             try (FileInputStream br = new FileInputStream(filePath.toFile()); FileOutputStream out = new FileOutputStream(tempFile);) {
                 Tidy tidy = new Tidy();

@@ -126,9 +126,8 @@ public final class LeappFileProcessor {
     }
 
     private static final Logger logger = Logger.getLogger(LeappFileProcessor.class.getName());
-    private static final String MODULE_NAME = ILeappAnalyzerModuleFactory.getModuleName();
-
     private final String xmlFile; //NON-NLS
+    private final String moduleName;
 
     private final Map<String, String> tsvFiles;
     private final Map<String, BlackboardArtifact.Type> tsvFileArtifacts;
@@ -137,12 +136,13 @@ public final class LeappFileProcessor {
 
     Blackboard blkBoard;
 
-    public LeappFileProcessor(String xmlFile) throws IOException, IngestModuleException, NoCurrentCaseException {
+    public LeappFileProcessor(String xmlFile, String moduleName) throws IOException, IngestModuleException, NoCurrentCaseException {
         this.tsvFiles = new HashMap<>();
         this.tsvFileArtifacts = new HashMap<>();
         this.tsvFileArtifactComments = new HashMap<>();
         this.tsvFileAttributes = new HashMap<>();
         this.xmlFile = xmlFile;
+        this.moduleName = moduleName;
 
         blkBoard = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard();
 
@@ -366,7 +366,7 @@ public final class LeappFileProcessor {
         }
 
         if (tsvFileArtifactComments.containsKey(fileName)) {
-            attrsToRet.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COMMENT, MODULE_NAME, tsvFileArtifactComments.get(fileName)));
+            attrsToRet.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COMMENT, moduleName, tsvFileArtifactComments.get(fileName)));
         }
 
         return attrsToRet;
@@ -400,22 +400,22 @@ public final class LeappFileProcessor {
             case JSON:
             case STRING:
                 return parseAttrValue(value, attrType, fileName, false, false,
-                        (v) -> new BlackboardAttribute(attrType, MODULE_NAME, v));
+                        (v) -> new BlackboardAttribute(attrType, moduleName, v));
             case INTEGER:
                 return parseAttrValue(value.trim(), attrType, fileName, true, false,
-                        (v) -> new BlackboardAttribute(attrType, MODULE_NAME, (int) Double.valueOf(v).intValue()));
+                        (v) -> new BlackboardAttribute(attrType, moduleName, (int) Double.valueOf(v).intValue()));
             case LONG:
                 return parseAttrValue(value.trim(), attrType, fileName, true, false,
-                        (v) -> new BlackboardAttribute(attrType, MODULE_NAME, (long) Double.valueOf(v).longValue()));
+                        (v) -> new BlackboardAttribute(attrType, moduleName, (long) Double.valueOf(v).longValue()));
             case DOUBLE:
                 return parseAttrValue(value.trim(), attrType, fileName, true, false,
-                        (v) -> new BlackboardAttribute(attrType, MODULE_NAME, (double) Double.valueOf(v)));
+                        (v) -> new BlackboardAttribute(attrType, moduleName, (double) Double.valueOf(v)));
             case BYTE:
                 return parseAttrValue(value.trim(), attrType, fileName, true, false,
-                        (v) -> new BlackboardAttribute(attrType, MODULE_NAME, new byte[]{Byte.valueOf(v)}));
+                        (v) -> new BlackboardAttribute(attrType, moduleName, new byte[]{Byte.valueOf(v)}));
             case DATETIME:
                 return parseAttrValue(value.trim(), attrType, fileName, true, true,
-                        (v) -> new BlackboardAttribute(attrType, MODULE_NAME, TIMESTAMP_FORMAT.parse(v).getTime() / 1000));
+                        (v) -> new BlackboardAttribute(attrType, moduleName, TIMESTAMP_FORMAT.parse(v).getTime() / 1000));
             default:
                 // Log this and continue on with processing
                 logger.log(Level.WARNING, String.format("Attribute Type %s for file %s not defined.", attrType, fileName)); //NON-NLS                   
@@ -647,7 +647,7 @@ public final class LeappFileProcessor {
         }
 
         try {
-            Case.getCurrentCase().getSleuthkitCase().getBlackboard().postArtifacts(artifacts, MODULE_NAME);
+            Case.getCurrentCase().getSleuthkitCase().getBlackboard().postArtifacts(artifacts, moduleName);
         } catch (Blackboard.BlackboardException ex) {
             logger.log(Level.SEVERE, Bundle.LeappFileProcessor_postartifacts_error(), ex); //NON-NLS
         }
