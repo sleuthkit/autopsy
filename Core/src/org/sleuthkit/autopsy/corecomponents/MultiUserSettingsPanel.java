@@ -166,9 +166,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         
         Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), (PropertyChangeEvent evt) -> {
             //disable when case is open, enable when case is closed
-            load();
-           
-            cbEnableMultiUser.setEnabled(evt.getNewValue() == null);
+            load(evt.getNewValue() != null);
         });
     }
 
@@ -821,7 +819,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
        "MultiUserSettingsPanel_Close_Case_To_Modify=Close case to modfy settings" 
     })
     
-    void load() {
+    void load(boolean caseOpen) {
         lbTestDatabase.setIcon(null);
         lbTestSolr8.setIcon(null);
         lbTestSolr4.setIcon(null);
@@ -863,10 +861,10 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         
         // When a case is open, prevent the user from changing
         // multi-user settings.
-        cbEnableMultiUser.setEnabled(!Case.isCaseOpen());
-        enableMultiUserComponents(textBoxes, cbEnableMultiUser.isSelected() && !Case.isCaseOpen());
-        
-        this.valid(); // trigger validation to enable buttons based on current settings
+        cbEnableMultiUser.setEnabled(!caseOpen);
+        enableMultiUserComponents(textBoxes, cbEnableMultiUser.isSelected() && !caseOpen);
+               
+        this.valid(caseOpen); // trigger validation to enable buttons based on current settings
     }
 
     private void populateSolrAndZkSettings() {
@@ -1117,15 +1115,15 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
      *
      * @return true if it's okay, false otherwise.
      */
-    boolean valid() {
-        if(Case.isCaseOpen()) {
+    boolean valid(boolean caseOpen) {
+        if(caseOpen) {
             tbOops.setText(Bundle.MultiUserSettingsPanel_Close_Case_To_Modify());
         } else {
             tbOops.setText("");
         }
-
+        
         if (cbEnableMultiUser.isSelected()) {
-            return checkFieldsAndEnableButtons()
+            return checkFieldsAndEnableButtons(caseOpen)
                     && databaseSettingsAreValid()
                     && indexingServerSettingsAreValid()
                     && messageServiceSettingsAreValid();
@@ -1140,7 +1138,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
      *
      * @return True or false.
      */
-    boolean checkFieldsAndEnableButtons() {
+    boolean checkFieldsAndEnableButtons(boolean caseOpen) {
         boolean result = true;
 
         boolean dbPopulated = databaseFieldsArePopulated();
@@ -1150,15 +1148,15 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         boolean messageServicePopulated = messageServiceFieldsArePopulated();
 
         // PostgreSQL Database
-        bnTestDatabase.setEnabled(dbPopulated && !Case.isCaseOpen());
+        bnTestDatabase.setEnabled(dbPopulated && !caseOpen);
 
         // Solr Indexing
-        bnTestSolr8.setEnabled(solr8Populated && !Case.isCaseOpen());
-        bnTestSolr4.setEnabled(solr4Populated && !Case.isCaseOpen());
-        bnTestZK.setEnabled(zkPopulated && !Case.isCaseOpen());
+        bnTestSolr8.setEnabled(solr8Populated && !caseOpen);
+        bnTestSolr4.setEnabled(solr4Populated && !caseOpen);
+        bnTestZK.setEnabled(zkPopulated && !caseOpen);
 
         // ActiveMQ Messaging
-        bnTestMessageService.setEnabled(messageServicePopulated);
+        bnTestMessageService.setEnabled(messageServicePopulated && !caseOpen);
 
         if (dbPopulated && messageServicePopulated && zkPopulated && (solr8Populated || solr4Populated)) {
             result = true;
