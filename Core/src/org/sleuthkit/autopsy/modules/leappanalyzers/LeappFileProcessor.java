@@ -347,7 +347,7 @@ public final class LeappFileProcessor {
             }
 
             Integer columnIdx = columnIndexes.get(colAttr.getColumnName());
-            String value = (columnIdx == null) ? null : lineValues[columnIdx];
+            String value = (columnIdx == null || columnIdx > lineValues.length || columnIdx < 0) ? null : lineValues[columnIdx];
             if (value == null) {
                 logger.log(Level.WARNING, String.format("No value found for column %s at line %d in file %s.", colAttr.getColumnName(), lineNum, fileName));
                 continue;
