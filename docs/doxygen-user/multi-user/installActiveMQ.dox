@@ -24,20 +24,27 @@ If you need the JRE, install it with the default settings.
 
 \subsection install_activemq_install_mq ActiveMQ Installation
 
-1. Extract the contents of the ActiveMQ archive folder to a location of your choice, bearing in mind that the files should be in a location that the running process will have write permissions to the folder. A typical folder choice would be similar to <i>C:\\Program Files\\apache-activemq-5.13.3</i>. Typically, it will ask for administrator permission to move the folder. Allow it if required. 
+<ol>
+<li>Extract the contents of the ActiveMQ archive to a location of your choice, bearing in mind that the files should be in a location where the running process has write permissions. A typical folder choice would be similar to <i>C:\\Program Files\\apache-activemq-5.13.3</i>. The system may ask for administrator permission to move the folder. Allow it if required. 
 
-2. Edit the <i>conf\\activemq.xml</i> in the extracted folder to add <i>"&amp;wireFormat.maxInactivityDuration=0"</i> to the URI for the _transportConnector_ named _openwire_. Add the text highlighted in yellow below:
+<li>Open the <i>conf\\activemq.xml</i> file in the extracted folder in a text editor and make the following changes:
+<ul>
+<li> Add <i>"schedulePeriodForDestinationPurge="10000""</i> to the _broker_ tag then add <i>"gcInactiveDestinations="true" inactiveTimoutBeforeGC="30000""</i> to the _policyEntry_ tag. This is highlighted in yellow below:
+
+\image html activeMQ_node_cleanup.png
+
+<li>Add <i>"&amp;wireFormat.maxInactivityDuration=0"</i> to the URI for the _transportConnector_ named _openwire_. This is highlighted in yellow below:
 <br><br>
 \image html maxinactivityduration.PNG
 <br><br>
+</ul>
 
+<li>Install ActiveMQ as a service by navigating to the folder <i>bin\\win64</i>, right-clicking _InstallService.bat_, clicking _Run as administrator_, then click _Yes_.
 
-3. Install ActiveMQ as a service by navigating to the folder <i>bin\\win64</i>, right-clicking _InstallService.bat_, clicking _Run as administrator_, then click _Yes_.
+<li>Start the ActiveMQ service by pressing _Start_, type _services.msc_, and press _Enter_. Find _ActiveMQ_ in the list and press the _Start the service_ link.
 
-4. Start the ActiveMQ service by pressing _Start_, type _services.msc_, and press _Enter_. Find _ActiveMQ_ in the list and press the _Start the service_ link.
-
-5. ActiveMQ should now be installed and configured using the default credentials. 
-
+<li>ActiveMQ should now be installed and configured using the default credentials. 
+</ol>
 
 \subsection install_activemq_test Testing
 
