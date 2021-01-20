@@ -82,6 +82,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
     private static final String CONFIG_FILE_EXTENSION = ".conf";
     private static final long ONE_BILLION = 1000000000L;  //used to roughly convert system memory from bytes to gigabytes
     private static final int MEGA_IN_GIGA = 1024; //used to convert memory settings saved as megabytes to gigabytes
+    private static final int DEFAULT_SOLR_HEAP_SIZE_MB = 2048;
     private static final int MIN_MEMORY_IN_GB = 2; //the enforced minimum memory in gigabytes
     private static final Logger logger = Logger.getLogger(AutopsyOptionsPanel.class.getName());
     private String initialMemValue = Long.toString(Runtime.getRuntime().maxMemory() / ONE_BILLION);
@@ -113,7 +114,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         // The cast to int in the following is to ensure that the correct SpinnerNumberModel
         // constructor is called.
         solrMaxHeapSpinner.setModel(new javax.swing.SpinnerNumberModel(UserPreferences.getMaxSolrVMSize(),
-                512, ((int) getSystemMemoryInGB()) * MEGA_IN_GIGA, 512));
+                DEFAULT_SOLR_HEAP_SIZE_MB, ((int) getSystemMemoryInGB()) * MEGA_IN_GIGA, DEFAULT_SOLR_HEAP_SIZE_MB));
 
         textFieldListener = new TextFieldListener();
         agencyLogoPathField.getDocument().addDocumentListener(textFieldListener);
