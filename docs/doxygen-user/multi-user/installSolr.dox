@@ -9,6 +9,8 @@ A new text index is created for each case. The index can be stored either on sha
 
 Solr's embedded ZooKeeper is also used as a coordination service for Autopsy.
 
+If you have already installed Solr 4 with a previous version of Autopsy, please see the \ref upgrade_solr_page page for information on how open older cases after the upgrade and migrate data.
+
 \section install_solr_prereq Prerequisites
 
 We have prepared a pre-packaged version of Solr which packages Solr as Windows service.
@@ -16,7 +18,7 @@ We have prepared a pre-packaged version of Solr which packages Solr as Windows s
 You will need:
 <ul>
 <li>A 64-bit version of the Java 8 Runtime Environment (JRE) from <a href="https://github.com/ojdkbuild/ojdkbuild">https://github.com/ojdkbuild/ojdkbuild</a>. (<a href="https://github.com/ojdkbuild/ojdkbuild/blob/master/README.md">Download links</a>)
-<li>Pre-packaged Autopsy version of Solr (TODO LINK TO SOURCEFORGE HERE)
+<li>Pre-packaged Autopsy version of Solr from https://sourceforge.net/projects/autopsy/files/CollaborativeServices/Solr/bitnami-solr-4.10.3-0-windows-installer.exe/download
 <li>A network-accessible machine to install Solr on. Note that the Solr process will need to write data out to the main shared storage drive, and needs adequate permissions to write to this location, which may be across a network.
 
 \section install_solr_install Installation
@@ -159,8 +161,6 @@ To create a Solr cluster, the following steps need to be taken:
 
 <li>Additional Solr nodes can be added to the SolrCloud by repeating the previous steps.
 </ol>
-
-
 
 \section install_solr_autopsy_zk Autopsy’s Use of ZooKeeper Service
 

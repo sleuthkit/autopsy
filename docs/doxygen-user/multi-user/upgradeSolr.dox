@@ -2,9 +2,9 @@
 
 [TOC]
 
-\section solr_upgrade_solr4 Upgrading to Solr 8 from Solr 4
+\section solr_upgrade_solr4 Upgrading from Solr 4 from Solr 8
 
-To upgrade from Solr 4 to Solr 8, first follow the instructions on the \ref install_solr_overview page. At the end of that process, all new cases will be created using Solr 8. If you need to open older cases that were created using Solr 4, please see the following sections which describe how to set up Solr 4 and Solr 8 in parallel and how to migrate Zookeeper data.
+To upgrade from Solr 4 to Solr 8, first follow the instructions on the \ref install_solr_page page. At the end of that process, all new cases will be created using Solr 8. If you need to open older cases that were created using Solr 4, please see the following sections which describe how to set up Solr 4 and Solr 8 in parallel and how to migrate Zookeeper data.
 
 \subsection install_solr_solr_4 Legacy (Solr 4) Autopsy Cases and Text Indexes
 
@@ -32,7 +32,7 @@ Once both the Solr 8 and Solr 4 multi-user server connection info is entered and
 
 If you intend to run Solr 4 and Solr 8 servers on the same machine at the same time, you need to change the port of the Solr 8 service using the setting <b>SOLR_PORT</b> in \c "C:\solr-8.6.3\bin\solr.in.cmd" file (assuming that the Solr package ZIP was extracted into \c "C:\solr-8.6.3\" directory). By default the Solr service starts on port 8983. 
 
-\section install_solr_zk_migration Migrating existing ZooKeeper data to Solr 8 server
+\subsection install_solr_zk_migration Migrating existing ZooKeeper data to Solr 8 server
 
 If you have an existing Solr 4 server that you have been using in Multi-User (MU) mode and you wish to migrate this data onto your new Solr 8 server, we have developed a migration utility that performs this task. Note that the utility is able to migrate ZooKeeper data from any one ZooKeeper server to another ZooKeeper server, and is not tied to migrating Solr 4 ZooKeeper data to a Sol 8 ZooKeeper server. 
 
