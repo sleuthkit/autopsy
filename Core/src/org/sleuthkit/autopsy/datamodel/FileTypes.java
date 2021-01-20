@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
@@ -34,6 +35,8 @@ import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.AnalysisResult;
+import org.sleuthkit.datamodel.AnalysisResultAdded;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
@@ -43,6 +46,7 @@ import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.LocalFile;
+import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitItemVisitor;
@@ -386,6 +390,11 @@ public final class FileTypes implements AutopsyVisitableItem {
         }
 
         @Override
+        public AnalysisResultAdded newAnalysisResult(BlackboardArtifact.Type artifactType, Score score, String conclusion, String configuration, String justification, Collection<BlackboardAttribute> attributesList) throws TskCoreException {
+            return content.newAnalysisResult(artifactType, score, conclusion, configuration, justification, attributesList);
+        }
+
+        @Override
         public BlackboardArtifact newArtifact(BlackboardArtifact.ARTIFACT_TYPE type) throws TskCoreException {
             return content.newArtifact(type);
         }
@@ -426,6 +435,15 @@ public final class FileTypes implements AutopsyVisitableItem {
         }
 
         @Override
+        public List<AnalysisResult> getAllAnalysisResults() throws TskCoreException {
+             return content.getAllAnalysisResults();
+        }
+        
+        public List<AnalysisResult> getAnalysisResults(BlackboardArtifact.Type artifactType) throws TskCoreException {
+            return content.getAnalysisResults(artifactType);
+        }
+        
+        @Override
         public Set<String> getHashSetNames() throws TskCoreException {
             return content.getHashSetNames();
         }
@@ -448,6 +466,11 @@ public final class FileTypes implements AutopsyVisitableItem {
         @Override
         public long getAllArtifactsCount() throws TskCoreException {
             return content.getAllArtifactsCount();
+        }
+
+        @Override
+        public Score getAggregateScore() throws TskCoreException {
+            return content.getAggregateScore();
         }
     }
 }
