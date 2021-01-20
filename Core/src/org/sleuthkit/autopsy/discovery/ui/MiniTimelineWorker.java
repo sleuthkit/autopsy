@@ -33,21 +33,26 @@ import org.sleuthkit.autopsy.discovery.search.DiscoveryException;
 import org.sleuthkit.autopsy.discovery.search.DomainSearch;
 
 /**
- * SwingWorker to retrieve a list of artifacts for a specified type and domain.
+ * SwingWorker to retrieve a list of artifacts organized by date for the
+ * miniTimelinePanel for a specific domain.
  */
 class MiniTimelineWorker extends SwingWorker<Void, Void> {
 
     private final static Logger logger = Logger.getLogger(MiniTimelineWorker.class.getName());
     private final String domain;
+    private final boolean grabFocus;
 
     /**
-     * Construct a new ArtifactsWorker.
+     * Construct a new MiniTimelineWorker.
      *
-     * @param artifactType The type of artifact being retrieved.
-     * @param domain       The domain the artifacts should have as an attribute.
+     * @param domain          The domain the artifacts should have as an
+     *                        attribute.
+     * @param shouldGrabFocus True if the list of artifacts should have focus,
+     *                        false otherwise.
      */
-    MiniTimelineWorker(String domain) {
+    MiniTimelineWorker(String domain, boolean shouldGrabFocus) {
         this.domain = domain;
+        this.grabFocus = shouldGrabFocus;
     }
 
     @Override
@@ -57,7 +62,7 @@ class MiniTimelineWorker extends SwingWorker<Void, Void> {
             DomainSearch domainSearch = new DomainSearch();
             try {
                 results.addAll(domainSearch.getAllArtifactsForDomain(Case.getCurrentCase().getSleuthkitCase(), domain));
-                DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.MiniTimelineResultEvent(results, domain));
+                DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.MiniTimelineResultEvent(results, domain, grabFocus));
             } catch (DiscoveryException ex) {
                 if (ex.getCause() instanceof InterruptedException) {
                     this.cancel(true);
