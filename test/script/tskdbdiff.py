@@ -271,6 +271,8 @@ class TskDbDiff(object):
                                 attr_value_as_string = getAssociatedArtifactType(attribute_cursor, attr_value_as_string, isMultiUser)                            
                             patrn = re.compile("[\n\0\a\b\r\f]")
                             attr_value_as_string = re.sub(patrn, ' ', attr_value_as_string)
+                            if attr["source"] == "Keyword Search" and attr["display_name"] == "Keyword Preview":
+                                attr_value_as_string = "<Keyword Preview placeholder>"
                             database_log.write('<attribute source="' + attr["source"] + '" type="' + attr["display_name"] + '" value="' + attr_value_as_string + '" />')
                         except IOError as e:
                             print("IO error")
