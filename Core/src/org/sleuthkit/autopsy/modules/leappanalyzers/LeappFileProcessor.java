@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.modules.leappanalyzers;
 
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
-import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -32,6 +31,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -40,8 +40,8 @@ import static java.util.Locale.US;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -62,6 +62,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
@@ -287,22 +288,28 @@ public final class LeappFileProcessor {
             return;
         }
 
-        try (MappingIterator<Map<String, String>> iterator = new CsvMapper()
-                .readerFor(Map.class)
-                .with(CsvSchema.emptySchema().withHeader().withColumnSeparator('\t'))
+        try (MappingIterator<String[]> iterator = new CsvMapper()
+                .readerFor(String[].class)
                 .readValues(LeappFile)) {
 
-            int lineNum = 1;
-            while (iterator.hasNext()) {
-                Map<String, String> keyVals = iterator.next().entrySet().stream()
-                        .collect(Collectors.toMap(e -> e.getKey().trim().toLowerCase(), e -> e.getValue()));
+            if (iterator.hasNext()) {
+                String[] headerItems = iterator.next();
+                Map<String, Integer> columnIndexes = IntStream.range(0, headerItems.length)
+                        .mapToObj(idx -> idx)
+                        .collect(Collectors.toMap(
+                                idx -> headerItems[idx] == null ? null : headerItems[idx].trim().toLowerCase(),
+                                idx -> idx,
+                                (val1, val2) -> val1));
 
-                Collection<BlackboardAttribute> bbattributes = processReadLine(keyVals, attrList, fileName, lineNum++);
+                int lineNum = 1;
+                while (iterator.hasNext()) {
+                    Collection<BlackboardAttribute> bbattributes = processReadLine(iterator.next(), columnIndexes, attrList, fileName, lineNum++);
 
-                if (!bbattributes.isEmpty() && !blkBoard.artifactExists(dataSource, BlackboardArtifact.ARTIFACT_TYPE.fromID(artifactType.getTypeID()), bbattributes)) {
-                    BlackboardArtifact bbartifact = createArtifactWithAttributes(artifactType.getTypeID(), dataSource, bbattributes);
-                    if (bbartifact != null) {
-                        bbartifacts.add(bbartifact);
+                    if (!bbattributes.isEmpty()) {
+                        BlackboardArtifact bbartifact = createArtifactWithAttributes(artifactType.getTypeID(), dataSource, bbattributes);
+                        if (bbartifact != null) {
+                            bbartifacts.add(bbartifact);
+                        }
                     }
                 }
             }
@@ -312,7 +319,9 @@ public final class LeappFileProcessor {
     /**
      * Process the line read and create the necessary attributes for it.
      *
-     * @param lineKeyValues A mapping of column names to values for the line.
+     * @param lineValues Array of column values.
+     * @param columnIndexes Mapping of column headers (trimmed; to lower case)
+     * to column index.
      * @param attrList The list of attributes as specified for the schema of
      * this file.
      * @param fileName The name of the file being processed.
@@ -321,10 +330,12 @@ public final class LeappFileProcessor {
      * from this line.
      * @throws IngestModuleException
      */
-    private Collection<BlackboardAttribute> processReadLine(Map<String, String> lineKeyValues, List<TsvColumn> attrList, String fileName, int lineNum) throws IngestModuleException {
-        if (MapUtils.isEmpty(lineKeyValues)) {
+    private Collection<BlackboardAttribute> processReadLine(String[] lineValues, Map<String, Integer> columnIndexes,
+            List<TsvColumn> attrList, String fileName, int lineNum) throws IngestModuleException {
+
+        if (MapUtils.isEmpty(columnIndexes)) {
             return Collections.emptyList();
-        } else if (lineKeyValues == null) {
+        } else if (lineValues.length == 0 || lineValues == null) {
             logger.log(Level.WARNING, "Line is null.  Returning empty list for attributes.");
             return Collections.emptyList();
         }
@@ -335,8 +346,8 @@ public final class LeappFileProcessor {
                 continue;
             }
 
-            // TODO error handling
-            String value = lineKeyValues.get(colAttr.getColumnName());
+            Integer columnIdx = columnIndexes.get(colAttr.getColumnName());
+            String value = (columnIdx == null) ? null : lineValues[columnIdx];
             if (value == null) {
                 logger.log(Level.WARNING, String.format("No value found for column %s at line %d in file %s.", colAttr.getColumnName(), lineNum, fileName));
                 continue;
@@ -346,6 +357,10 @@ public final class LeappFileProcessor {
             if (attr != null) {
                 attrsToRet.add(attr);
             }
+        }
+
+        if (tsvFileArtifactComments.containsKey(fileName)) {
+            attrsToRet.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COMMENT, MODULE_NAME, tsvFileArtifactComments.get(fileName)));
         }
 
         return attrsToRet;
@@ -378,22 +393,22 @@ public final class LeappFileProcessor {
         switch (attrType.getValueType()) {
             case JSON:
             case STRING:
-                return parseAttrValue(value, attrType, fileName, false, false, 
+                return parseAttrValue(value, attrType, fileName, false, false,
                         (v) -> new BlackboardAttribute(attrType, MODULE_NAME, v));
             case INTEGER:
-                return parseAttrValue(value.trim(), attrType, fileName, true, false, 
+                return parseAttrValue(value.trim(), attrType, fileName, true, false,
                         (v) -> new BlackboardAttribute(attrType, MODULE_NAME, (int) Double.valueOf(v).intValue()));
             case LONG:
-                return parseAttrValue(value.trim(), attrType, fileName, true, false, 
+                return parseAttrValue(value.trim(), attrType, fileName, true, false,
                         (v) -> new BlackboardAttribute(attrType, MODULE_NAME, (long) Double.valueOf(v).longValue()));
             case DOUBLE:
-                return parseAttrValue(value.trim(), attrType, fileName, true, false, 
+                return parseAttrValue(value.trim(), attrType, fileName, true, false,
                         (v) -> new BlackboardAttribute(attrType, MODULE_NAME, (double) Double.valueOf(v)));
             case BYTE:
-                return parseAttrValue(value.trim(), attrType, fileName, true, false, 
+                return parseAttrValue(value.trim(), attrType, fileName, true, false,
                         (v) -> new BlackboardAttribute(attrType, MODULE_NAME, new byte[]{Byte.valueOf(v)}));
             case DATETIME:
-                return parseAttrValue(value.trim(), attrType, fileName, true, true, 
+                return parseAttrValue(value.trim(), attrType, fileName, true, true,
                         (v) -> new BlackboardAttribute(attrType, MODULE_NAME, TIMESTAMP_FORMAT.parse(v).getTime() / 1000));
             default:
                 // Log this and continue on with processing
@@ -435,11 +450,11 @@ public final class LeappFileProcessor {
         if (blankIsNull && StringUtils.isBlank(value)) {
             return null;
         }
-        
+
         if (zeroIsNull && value.matches("^\\s*[0\\.]*\\s*$")) {
             return null;
         }
-        
+
         try {
             return valueConverter.apply(value);
         } catch (NumberFormatException | ParseException ex) {
@@ -596,29 +611,6 @@ public final class LeappFileProcessor {
      *
      * @param type is a blackboard.artifact_type enum to determine which type
      * the artifact should be
-     * @param abstractFile is the AbstractFile object that needs to have the
-     * artifact added for it
-     * @param bbattributes is the collection of blackboard attributes that need
-     * to be added to the artifact after the artifact has been created
-     *
-     * @return The newly-created artifact, or null on error
-     */
-    private BlackboardArtifact createArtifactWithAttributes(int type, AbstractFile abstractFile, Collection<BlackboardAttribute> bbattributes) {
-        try {
-            BlackboardArtifact bbart = abstractFile.newArtifact(type);
-            bbart.addAttributes(bbattributes);
-            return bbart;
-        } catch (TskException ex) {
-            logger.log(Level.WARNING, Bundle.LeappFileProcessor_error_creating_new_artifacts(), ex); //NON-NLS
-        }
-        return null;
-    }
-
-    /**
-     * Generic method for creating a blackboard artifact with attributes
-     *
-     * @param type is a blackboard.artifact_type enum to determine which type
-     * the artifact should be
      * @param dataSource is the Content object that needs to have the artifact
      * added for it
      * @param bbattributes is the collection of blackboard attributes that need
@@ -665,9 +657,8 @@ public final class LeappFileProcessor {
                 xmlFile, true);
     }
 
-    
-    private static final Set<String> ALLOWED_EXTENSIONS = new HashSet<>(Arrays.asList("zip", "tar", "tgz")); 
-        
+    private static final Set<String> ALLOWED_EXTENSIONS = new HashSet<>(Arrays.asList("zip", "tar", "tgz"));
+
     /**
      * Find the files that will be processed by the iLeapp program
      *
@@ -693,7 +684,7 @@ public final class LeappFileProcessor {
         for (AbstractFile leappFile : leappFiles) {
             if (((leappFile.getLocalAbsPath() != null)
                     && !leappFile.isVirtual())
-                    && leappFile.getNameExtension() != null 
+                    && leappFile.getNameExtension() != null
                     && ALLOWED_EXTENSIONS.contains(leappFile.getNameExtension().toLowerCase())) {
                 leappFilesToProcess.add(leappFile);
             }
