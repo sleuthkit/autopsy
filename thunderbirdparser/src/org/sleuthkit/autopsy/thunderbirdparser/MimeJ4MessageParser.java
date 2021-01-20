@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.logging.Level;
+import org.apache.james.mime4j.dom.BinaryBody;
 import org.apache.james.mime4j.dom.Body;
 import org.apache.james.mime4j.dom.Entity;
 import org.apache.james.mime4j.dom.Message;
@@ -164,7 +165,13 @@ class MimeJ4MessageParser implements AutoCloseable{
         if (msg.isMultipart()) {
             handleMultipart(email, (Multipart) msg.getBody(), sourceFileID);
         } else {
-            handleTextBody(email, (TextBody) msg.getBody(), msg.getMimeType(), msg.getHeader().getFields());
+            if(msg.getBody() instanceof TextBody) {
+                handleTextBody(email, (TextBody) msg.getBody(), msg.getMimeType(), msg.getHeader().getFields());
+            } else if(msg.getBody() instanceof BinaryBody) {
+               if(msg.getDispositionType().equals("attachment")) {
+                   handleAttachment(email, msg, sourceFileID, 1);
+               }
+            }
         }
 
         return email;
@@ -227,8 +234,8 @@ class MimeJ4MessageParser implements AutoCloseable{
                 handleAttachment(email, e, fileID, index);
             } else if ((e.getMimeType().equals(HTML_TYPE) && (email.getHtmlBody() == null || email.getHtmlBody().isEmpty()))
                     || (e.getMimeType().equals(ContentTypeField.TYPE_TEXT_PLAIN) && (email.getTextBody() == null || email.getTextBody().isEmpty()))) {
-                handleTextBody(email, (TextBody) e.getBody(), e.getMimeType(), e.getHeader().getFields());
-            } else {
+                    handleTextBody(email, (TextBody) e.getBody(), e.getMimeType(), e.getHeader().getFields());
+            } else {               
                 handleAttachment(email, e, fileID, index);
             } 
         }
