@@ -168,9 +168,7 @@ class MimeJ4MessageParser implements AutoCloseable{
             if(msg.getBody() instanceof TextBody) {
                 handleTextBody(email, (TextBody) msg.getBody(), msg.getMimeType(), msg.getHeader().getFields());
             } else if(msg.getBody() instanceof BinaryBody) {
-               if(msg.getDispositionType().equals("attachment")) {
-                   handleAttachment(email, msg, sourceFileID, 1);
-               }
+               handleAttachment(email, msg, sourceFileID, 1);
             }
         }
 
