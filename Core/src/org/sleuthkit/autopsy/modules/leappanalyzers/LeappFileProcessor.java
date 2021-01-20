@@ -123,9 +123,8 @@ public final class LeappFileProcessor {
     }
 
     private static final Logger logger = Logger.getLogger(LeappFileProcessor.class.getName());
-    private static final String MODULE_NAME = ILeappAnalyzerModuleFactory.getModuleName();
-
     private final String xmlFile; //NON-NLS
+    private final String moduleName;
 
     private final Map<String, String> tsvFiles;
     private final Map<String, String> tsvFileArtifacts;
@@ -138,12 +137,13 @@ public final class LeappFileProcessor {
 
     Blackboard blkBoard;
 
-    public LeappFileProcessor(String xmlFile) throws IOException, IngestModuleException, NoCurrentCaseException {
+    public LeappFileProcessor(String xmlFile, String moduleName) throws IOException, IngestModuleException, NoCurrentCaseException {
         this.tsvFiles = new HashMap<>();
         this.tsvFileArtifacts = new HashMap<>();
         this.tsvFileArtifactComments = new HashMap<>();
         this.tsvFileAttributes = new HashMap<>();
         this.xmlFile = xmlFile;
+        this.moduleName = moduleName;
 
         blkBoard = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard();
 
@@ -378,7 +378,7 @@ public final class LeappFileProcessor {
         }
 
         if (tsvFileArtifactComments.containsKey(fileName)) {
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COMMENT, MODULE_NAME, tsvFileArtifactComments.get(fileName)));
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COMMENT, moduleName, tsvFileArtifactComments.get(fileName)));
         }
 
         return bbattributes;
@@ -398,10 +398,11 @@ public final class LeappFileProcessor {
         String columnValue = columnValues[columnNumber];
 
         if (attrType.matches("STRING")) {
-            bbattributes.add(new BlackboardAttribute(attributeType, MODULE_NAME, columnValue));
+            bbattributes.add(new BlackboardAttribute(attributeType, moduleName, columnValue));
         } else if (attrType.matches("INTEGER")) {
             try {
-                bbattributes.add(new BlackboardAttribute(attributeType, MODULE_NAME, Integer.valueOf(columnValue)));
+                // parse as double to handle values of format like '21.0' and then convert to int
+                bbattributes.add(new BlackboardAttribute(attributeType, moduleName, Double.valueOf(columnValue).intValue()));
             } catch (NumberFormatException ex) {
                 logger.log(Level.WARNING, String.format("Unable to format %s as an integer.", columnValue), ex);
             }
@@ -414,13 +415,13 @@ public final class LeappFileProcessor {
             }
         } else if (attrType.matches("DOUBLE")) {
             try {
-                bbattributes.add(new BlackboardAttribute(attributeType, MODULE_NAME, Double.valueOf(columnValue)));
+                bbattributes.add(new BlackboardAttribute(attributeType, moduleName, Double.valueOf(columnValue)));
             } catch (NumberFormatException ex) {
                 logger.log(Level.WARNING, String.format("Unable to format %s as an double.", columnValue), ex);
             }
         } else if (attrType.matches("BYTE")) {
             try {
-                bbattributes.add(new BlackboardAttribute(attributeType, MODULE_NAME, Byte.valueOf(columnValue)));
+                bbattributes.add(new BlackboardAttribute(attributeType, moduleName, Byte.valueOf(columnValue)));
             } catch (NumberFormatException ex) {
                 logger.log(Level.WARNING, String.format("Unable to format %s as an byte.", columnValue), ex);
             }
@@ -431,7 +432,7 @@ public final class LeappFileProcessor {
             try {
                 Date newDate = dateFormat.parse(columnValue);
                 dateLong = newDate.getTime() / 1000;
-                bbattributes.add(new BlackboardAttribute(attributeType, MODULE_NAME, dateLong));
+                bbattributes.add(new BlackboardAttribute(attributeType, moduleName, dateLong));
             } catch (ParseException ex) {
                 // catching error and displaying date that could not be parsed
                 // we set the timestamp to 0 and continue on processing
@@ -439,7 +440,7 @@ public final class LeappFileProcessor {
             }
         } else if (attrType.matches("JSON")) {
 
-            bbattributes.add(new BlackboardAttribute(attributeType, MODULE_NAME, columnValue));
+            bbattributes.add(new BlackboardAttribute(attributeType, moduleName, columnValue));
         } else {
             // Log this and continue on with processing
             logger.log(Level.WARNING, String.format("Attribute Type %s not defined.", attrType)); //NON-NLS                   
@@ -693,7 +694,7 @@ public final class LeappFileProcessor {
         }
 
         try {
-            Case.getCurrentCase().getSleuthkitCase().getBlackboard().postArtifacts(artifacts, MODULE_NAME);
+            Case.getCurrentCase().getSleuthkitCase().getBlackboard().postArtifacts(artifacts, moduleName);
         } catch (Blackboard.BlackboardException ex) {
             logger.log(Level.SEVERE, Bundle.LeappFileProcessor_postartifacts_error(), ex); //NON-NLS
         }
