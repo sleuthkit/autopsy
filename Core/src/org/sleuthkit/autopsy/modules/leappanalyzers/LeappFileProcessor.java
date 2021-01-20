@@ -408,7 +408,7 @@ public final class LeappFileProcessor {
         } else if (attrType.matches("LONG")) {
             try {
                 // parse as double to handle values of format like '21.0' and then convert to long
-                bbattributes.add(new BlackboardAttribute(attributeType, MODULE_NAME, Double.valueOf(columnValue).longValue()));
+                bbattributes.add(new BlackboardAttribute(attributeType, moduleName, Double.valueOf(columnValue).longValue()));
             } catch (NumberFormatException ex) {
                 logger.log(Level.WARNING, String.format("Unable to format %s as an long.", columnValue), ex);
             }
