@@ -137,8 +137,8 @@ public final class LeappFileProcessor {
     private final Map<String, List<TsvColumn>> tsvFileAttributes;
 
     private static final Map<String, String> CUSTOM_ARTIFACT_MAP = ImmutableMap.<String, String>builder()
-        .put("TSK_IP_DHCP", "DHCP Information")
-        .build();
+            .put("TSK_IP_DHCP", "DHCP Information")
+            .build();
 
     Blackboard blkBoard;
 
@@ -314,9 +314,10 @@ public final class LeappFileProcessor {
                                 idx -> idx,
                                 (val1, val2) -> val1));
 
-                int lineNum = 1;
+                int lineNum = 2;
                 while (iterator.hasNext()) {
-                    Collection<BlackboardAttribute> bbattributes = processReadLine(iterator.next(), columnIndexes, attrList, fileName, lineNum++);
+                    List<String> columnItems = iterator.next();
+                    Collection<BlackboardAttribute> bbattributes = processReadLine(columnItems, columnIndexes, attrList, fileName, lineNum);
 
                     if (!bbattributes.isEmpty()) {
                         BlackboardArtifact bbartifact = createArtifactWithAttributes(artifactType.getTypeID(), dataSource, bbattributes);
@@ -324,6 +325,8 @@ public final class LeappFileProcessor {
                             bbartifacts.add(bbartifact);
                         }
                     }
+
+                    lineNum++;
                 }
             }
         }
@@ -334,7 +337,8 @@ public final class LeappFileProcessor {
      *
      * @param lineValues List of column values.
      * @param columnIndexes Mapping of column headers (trimmed; to lower case)
-     * to column index.
+     * to column index. All header columns and only all header columns should be
+     * present.
      * @param attrList The list of attributes as specified for the schema of
      * this file.
      * @param fileName The name of the file being processed.
@@ -349,25 +353,37 @@ public final class LeappFileProcessor {
         if (MapUtils.isEmpty(columnIndexes) || CollectionUtils.isEmpty(lineValues)
                 || (lineValues.size() == 1 && StringUtils.isEmpty(lineValues.get(0)))) {
             return Collections.emptyList();
+        } else if (lineValues.size() != columnIndexes.size()) {
+            logger.log(Level.WARNING, String.format(
+                    "Row at line number %d in file %s has %d columns when %d were expected based on the header row.",
+                    lineNum, fileName, lineValues.size(), columnIndexes.size()));
         }
 
         List<BlackboardAttribute> attrsToRet = new ArrayList<>();
         for (TsvColumn colAttr : attrList) {
             if (colAttr.getAttributeType() == null) {
+                // this handles coluns that are currently ignored.
                 continue;
             }
 
             Integer columnIdx = columnIndexes.get(colAttr.getColumnName());
-            String value = (columnIdx == null || columnIdx >= lineValues.size() || columnIdx < 0) ? null : lineValues.get(columnIdx);
-            if (value == null) {
-                logger.log(Level.WARNING, String.format("No value found for column %s at line %d in file %s.", colAttr.getColumnName(), lineNum, fileName));
+            if (columnIdx == null) {
+                logger.log(Level.WARNING, String.format("No column mapping found for %s in file %s.  Omitting column.", colAttr.getColumnName(), fileName));
                 continue;
             }
 
-            BlackboardAttribute attr = (value == null) ? null : getAttribute(colAttr.getAttributeType(), value, fileName);
-            if (attr != null) {
-                attrsToRet.add(attr);
+            String value = (columnIdx >= lineValues.size() || columnIdx < 0) ? null : lineValues.get(columnIdx);
+            if (value == null) {
+                logger.log(Level.WARNING, String.format("No value found for column %s at line %d in file %s.  Omitting row.", colAttr.getColumnName(), lineNum, fileName));
+                return Collections.emptyList();
             }
+
+            BlackboardAttribute attr = (value == null) ? null : getAttribute(colAttr.getAttributeType(), value, fileName);
+            if (attr == null) {
+                logger.log(Level.WARNING, String.format("Blackboard attribute could not be parsed column %s at line %d in file %s.  Omitting row.", colAttr.getColumnName(), lineNum, fileName));
+                return Collections.emptyList();
+            }
+            attrsToRet.add(attr);
         }
 
         if (tsvFileArtifactComments.containsKey(fileName)) {
@@ -707,13 +723,13 @@ public final class LeappFileProcessor {
 
         return leappFilesToProcess;
     }
-    
-     /**
+
+    /**
      * Create custom artifacts that are defined in the xLeapp xml file(s).
-     * 
+     *
      */
     private void createCustomArtifacts(Blackboard blkBoard) {
-        
+
         for (Map.Entry<String, String> customArtifact : CUSTOM_ARTIFACT_MAP.entrySet()) {
             String artifactName = customArtifact.getKey();
             String artifactDescription = customArtifact.getValue();
@@ -722,8 +738,8 @@ public final class LeappFileProcessor {
                 BlackboardArtifact.Type customArtifactType = blkBoard.getOrAddArtifactType(artifactName, artifactDescription);
             } catch (Blackboard.BlackboardException ex) {
                 logger.log(Level.WARNING, String.format("Failed to create custom artifact type %s.", artifactName), ex);
-            }  
- 
+            }
+
         }
     }
 }
