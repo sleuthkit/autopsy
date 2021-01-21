@@ -39,6 +39,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import java.util.Set;
@@ -78,6 +79,7 @@ import org.sleuthkit.datamodel.TskDataException;
 import org.sleuthkit.datamodel.VersionNumber;
 import org.sqlite.SQLiteJDBCLoader;
 import java.util.stream.Collectors;
+import org.sleuthkit.autopsy.casemodule.services.TagNameDefinition;
 import org.sleuthkit.datamodel.TagSet;
 
 /**
@@ -1345,21 +1347,14 @@ public final class DrawableDB {
      */
     public void updateFile(DrawableFile f) throws TskCoreException, SQLException {
         DrawableTransaction trans = null;
-        CaseDbTransaction caseDbTransaction = null;
+        //CaseDbTransaction caseDbTransaction = null;
         try {
             trans = beginTransaction();
-            caseDbTransaction = caseDb.beginTransaction();
-            updateFile(f, trans, caseDbTransaction);
-            caseDbTransaction.commit();
+            Set<GroupInfo> groupsToAdd = updateFile(f, trans);
+            addGroups(groupsToAdd);
             commitTransaction(trans, true);
         } catch (TskCoreException | SQLException ex) {
-            if (null != caseDbTransaction) {
-                try {
-                    caseDbTransaction.rollback();
-                } catch (TskCoreException ex2) {
-                    logger.log(Level.SEVERE, String.format("Failed to roll back case db transaction after error: %s", ex.getMessage()), ex2); //NON-NLS
-                }
-            }
+
             if (null != trans) {
                 try {
                     rollbackTransaction(trans);
@@ -1370,6 +1365,36 @@ public final class DrawableDB {
             throw ex;
         }
     }
+    
+    public void addGroups(Set<GroupInfo> groupsToAdd) throws TskCoreException {
+        // This is done separately so that it holds the CaseDbTransaction for the shortest time and
+        // does not access any synchronized AbstractFile methods while holding the case database lock.
+        System.out.println("### addGroups() - Adding " + groupsToAdd.size() + " groups:");
+        for (GroupInfo groupInfo:groupsToAdd) {
+            System.out.println("      " + groupInfo.value);
+        } 
+        CaseDbTransaction caseDbTransaction = null;
+        try {
+            caseDbTransaction = caseDb.beginTransaction();
+            for (GroupInfo groupInfo:groupsToAdd) {
+                if (groupInfo.groupBy == DrawableAttribute.PATH) {
+                    insertGroup(groupInfo.ds_obj_id, groupInfo.value, groupInfo.groupBy, caseDbTransaction);
+                } else {
+                    insertGroup(groupInfo.value, groupInfo.groupBy, caseDbTransaction);
+                }
+            }
+            caseDbTransaction.commit();
+        } catch (TskCoreException ex) {
+            if (caseDbTransaction != null) {
+                try {
+                    caseDbTransaction.rollback();
+                } catch (TskCoreException ex2) {
+                    logger.log(Level.SEVERE, String.format("Failed to roll back case db transaction after error: %s", ex.getMessage()), ex2); //NON-NLS
+                }
+            }
+            throw ex;
+        }        
+    }
 
     /**
      * Update an existing entry (or make a new one) into the DB that includes
@@ -1378,10 +1403,9 @@ public final class DrawableDB {
      *
      * @param f                 file to update
      * @param tr
-     * @param caseDbTransaction
      */
-    public void updateFile(DrawableFile f, DrawableTransaction tr, CaseDbTransaction caseDbTransaction) {
-        insertOrUpdateFile(f, tr, caseDbTransaction, true);
+    public Set<GroupInfo> updateFile(DrawableFile f, DrawableTransaction tr) {
+        return insertOrUpdateFile(f, tr, true);
     }
 
     /**
@@ -1519,12 +1543,12 @@ public final class DrawableDB {
      *
      * @param f                 The file to insert.
      * @param tr                a transaction to use, must not be null
-     * @param caseDbTransaction
      * @param addGroups         True if groups for file should be inserted into
      *                          db too
      */
-    private void insertOrUpdateFile(DrawableFile f, @Nonnull DrawableTransaction tr, @Nonnull CaseDbTransaction caseDbTransaction, boolean addGroups) {
+    private Set<GroupInfo> insertOrUpdateFile(DrawableFile f, @Nonnull DrawableTransaction tr, boolean addGroups) {
 
+        Set<GroupInfo> groupsToAdd = new HashSet<>();
         PreparedStatement stmt;
 
         if (tr.isCompleted()) {
@@ -1638,7 +1662,7 @@ public final class DrawableDB {
                         logger.log(Level.SEVERE, "failed to insert/update hash hits for file" + f.getContentPathSafe(), ex); //NON-NLS
                     }
                 }
-
+                
                 //and update all groups this file is in
                 for (DrawableAttribute<?> attr : DrawableAttribute.getGroupableAttrs()) {
                     // skip attributes that we do not have data for
@@ -1651,19 +1675,21 @@ public final class DrawableDB {
                     for (Comparable<?> val : vals) {
                         if ((null != val) && (val.toString().isEmpty() == false)) {
                             if (attr == DrawableAttribute.PATH) {
-                                insertGroup(f.getAbstractFile().getDataSource().getId(), val.toString(), attr, caseDbTransaction);
+                                groupsToAdd.add(new GroupInfo(f.getAbstractFile().getDataSource().getId(), val.toString(), attr));
+                                //insertGroup(f.getAbstractFile().getDataSource().getId(), val.toString(), attr, caseDbTransaction);
                             } else {
-                                insertGroup(val.toString(), attr, caseDbTransaction);
+                                groupsToAdd.add(new GroupInfo(val.toString(), attr));
+                                //insertGroup(val.toString(), attr, caseDbTransaction);
                             }
                         }
                     }
-                }
+                }                
             }
 
             // @@@ Consider storing more than ID so that we do not need to requery each file during commit
             tr.addUpdatedFile(f.getId());
 
-        } catch (SQLException | NullPointerException | TskCoreException ex) {
+        } catch (SQLException | TskCoreException | NullPointerException ex) {
             /*
              * This is one of the places where we get an error if the case is
              * closed during processing, which doesn't need to be reported here.
@@ -1675,8 +1701,56 @@ public final class DrawableDB {
         } finally {
             dbWriteUnlock();
         }
+        return groupsToAdd;
     }
 
+    public static class GroupInfo {
+        public final long ds_obj_id;
+        public final String value;
+        public final DrawableAttribute<?> groupBy;
+        
+        GroupInfo(String value, DrawableAttribute<?> groupBy) {
+            this.ds_obj_id = -1;
+            // Temporary to make equals() easier
+            if (value != null) {
+                this.value = value;
+            } else {
+                this.value = "";
+            }
+            this.groupBy = groupBy;
+        }
+        
+        GroupInfo(long ds_obj_id, String value, DrawableAttribute<?> groupBy) {
+            this.ds_obj_id = ds_obj_id;
+            if (value != null) {
+                this.value = value;
+            } else {
+                this.value = "";
+            }
+            this.groupBy = groupBy;
+        }
+        
+        @Override
+        public int hashCode() {
+            int hash = 7;
+            hash = 83 * hash + Objects.hashCode(this.ds_obj_id);
+            hash = 83 * hash + Objects.hashCode(this.value);
+            hash = 83 * hash + Objects.hashCode(this.groupBy.getDisplayName());
+            return hash;
+        }
+        
+        @Override
+        public boolean equals(Object obj) {
+            if (!(obj instanceof GroupInfo)) {
+                return false;
+            }
+            GroupInfo otherInfo = (GroupInfo) obj;
+            return (ds_obj_id == otherInfo.ds_obj_id
+                    && value.equals(otherInfo.value)
+                    && groupBy.displayName().equals(otherInfo.groupBy.displayName()));
+        }
+    }
+    
     /**
      * Gets all data source object ids from datasources table, and their
      * DrawableDbBuildStatusEnum

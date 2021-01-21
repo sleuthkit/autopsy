@@ -20,6 +20,8 @@ package org.sleuthkit.autopsy.imagegallery;
 
 import java.sql.SQLException;
 import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.logging.Level;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.NbBundle;
@@ -69,7 +71,7 @@ abstract class BulkDrawableFilesTask extends DrawableDbTask {
      */
     abstract void cleanup();
 
-    abstract void processFile(final AbstractFile f, DrawableDB.DrawableTransaction tr, SleuthkitCase.CaseDbTransaction caseDBTransaction) throws TskCoreException;
+    abstract Set<DrawableDB.GroupInfo> processFile(final AbstractFile f, DrawableDB.DrawableTransaction tr) throws TskCoreException;
 
     /**
      * Gets a list of files to process.
@@ -91,7 +93,6 @@ abstract class BulkDrawableFilesTask extends DrawableDbTask {
         progressHandle.start();
         updateMessage(Bundle.BulkDrawableFilesTask_populatingDb_status() + " (Data Source " + dataSourceObjId + ")");
         DrawableDB.DrawableTransaction drawableDbTransaction = null;
-        SleuthkitCase.CaseDbTransaction caseDbTransaction = null;
         boolean hasFilesWithNoMime = true;
         boolean endedEarly = false;
         try {
@@ -112,17 +113,16 @@ abstract class BulkDrawableFilesTask extends DrawableDbTask {
              * these bulk tasks are ongoing.
              */
             int caseDbCounter = 0;
+            Set<DrawableDB.GroupInfo> groupsToAdd = new HashSet<>();
             for (final AbstractFile f : files) {
-                if (caseDbTransaction == null) {
-                    caseDbTransaction = tskCase.beginTransaction();
-                }
                 if (isCancelled() || Thread.interrupted()) {
                     logger.log(Level.WARNING, "Task cancelled or interrupted: not all contents may be transfered to drawable database."); //NON-NLS
                     endedEarly = true;
                     progressHandle.finish();
                     break;
                 }
-                processFile(f, drawableDbTransaction, caseDbTransaction);
+                
+                groupsToAdd.addAll(processFile(f, drawableDbTransaction));
                 workDone++;
                 progressHandle.progress(f.getName(), workDone);
                 updateProgress(workDone - 1 / (double) files.size());
@@ -130,31 +130,34 @@ abstract class BulkDrawableFilesTask extends DrawableDbTask {
                 // Periodically, commit the transaction (which frees the lock) and sleep
                 // to allow other threads to get some work done in CaseDB
                 if ((++caseDbCounter % 200) == 0) {
-                    caseDbTransaction.commit();
-                    caseDbTransaction = null;
-                    Thread.sleep(500); // 1/2 second
+                    taskDB.addGroups(groupsToAdd);
+                    groupsToAdd.clear();
+                   // caseDbTransaction.commit();
+                    //caseDbTransaction = null;
+                    //Thread.sleep(500); // 1/2 second
                 }
             }
+            taskDB.addGroups(groupsToAdd);
             progressHandle.finish();
             progressHandle = ProgressHandle.createHandle(Bundle.BulkDrawableFilesTask_committingDb_status());
             updateMessage(Bundle.BulkDrawableFilesTask_committingDb_status() + " (Data Source " + dataSourceObjId + ")");
             updateProgress(1.0);
             progressHandle.start();
-            if (caseDbTransaction != null) {
-                caseDbTransaction.commit();
-                caseDbTransaction = null;
-            }
+            //if (caseDbTransaction != null) {
+            //    caseDbTransaction.commit();
+            //    caseDbTransaction = null;
+            //}
             // pass true so that groupmanager is notified of the changes
             taskDB.commitTransaction(drawableDbTransaction, true);
             drawableDbTransaction = null;
-        } catch (TskCoreException | SQLException | InterruptedException ex) {
-            if (null != caseDbTransaction) {
+        } catch (TskCoreException | SQLException ex) {
+            /*if (null != caseDbTransaction) {
                 try {
                     caseDbTransaction.rollback();
                 } catch (TskCoreException ex2) {
                     logger.log(Level.SEVERE, String.format("Failed to roll back case db transaction after error: %s", ex.getMessage()), ex2); //NON-NLS
                 }
-            }
+            }*/
             if (null != drawableDbTransaction) {
                 try {
                     taskDB.rollbackTransaction(drawableDbTransaction);

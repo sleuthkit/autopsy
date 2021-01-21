@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.imagegallery;
 
+import java.util.Set;
+import java.util.HashSet;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableDB;
@@ -52,7 +54,7 @@ class AddDrawableFilesTask extends BulkDrawableFilesTask {
     }
 
     @Override
-    void processFile(AbstractFile f, DrawableDB.DrawableTransaction tr, SleuthkitCase.CaseDbTransaction caseDbTransaction) throws TskCoreException {
+    Set<DrawableDB.GroupInfo> processFile(AbstractFile f, DrawableDB.DrawableTransaction tr) throws TskCoreException {
         final boolean known = f.getKnown() == TskData.FileKnown.KNOWN;
         if (known) {
             taskDB.removeFile(f.getId(), tr); //remove known files
@@ -60,12 +62,13 @@ class AddDrawableFilesTask extends BulkDrawableFilesTask {
             // NOTE: Files are being processed because they have the right MIME type,
             // so we do not need to worry about this calculating them
             if (FileTypeUtils.hasDrawableMIMEType(f)) {
-                taskDB.updateFile(DrawableFile.create(f, true, false), tr, caseDbTransaction);
+                return taskDB.updateFile(DrawableFile.create(f, true, false), tr);
             } //unsupported mimtype => analyzed but shouldn't include
             else {
                 taskDB.removeFile(f.getId(), tr);
             }
         }
+        return new HashSet<>();
     }
 
     @Override
