@@ -458,6 +458,10 @@ public final class LeappFileProcessor {
      * @return The generated blackboard attribute or null if not determined.
      */
     private BlackboardAttribute parseAttrValue(String value, BlackboardAttribute.Type attrType, String fileName, boolean blankIsNull, boolean zeroIsNull, ParseExceptionFunction valueConverter) {
+        // remove non-printable characters from tsv input
+        // https://stackoverflow.com/a/6199346
+        value = value.replaceAll("\\p{C}", "");
+
         if (blankIsNull && StringUtils.isBlank(value)) {
             return null;
         }
