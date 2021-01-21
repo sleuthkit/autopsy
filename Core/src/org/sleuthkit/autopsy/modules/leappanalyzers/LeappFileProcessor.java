@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.modules.leappanalyzers;
 
+import com.google.common.collect.ImmutableMap;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -130,6 +131,10 @@ public final class LeappFileProcessor {
     private final Map<String, String> tsvFileArtifactComments;
     private final Map<String, List<TsvColumn>> tsvFileAttributes;
 
+    private static final Map<String, String> CUSTOM_ARTIFACT_MAP = ImmutableMap.<String, String>builder()
+        .put("TSK_IP_DHCP", "DHCP Information")
+        .build();
+
     Blackboard blkBoard;
 
     public LeappFileProcessor(String xmlFile, String moduleName) throws IOException, IngestModuleException, NoCurrentCaseException {
@@ -142,6 +147,7 @@ public final class LeappFileProcessor {
 
         blkBoard = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard();
 
+        createCustomArtifacts(blkBoard);
         configExtractor();
         loadConfigFile();
 
@@ -307,7 +313,7 @@ public final class LeappFileProcessor {
                 while (line != null) {
                     Collection<BlackboardAttribute> bbattributes = processReadLine(line, columnNumberToProcess, fileName);
 
-                    if (!bbattributes.isEmpty() && !blkBoard.artifactExists(dataSource, BlackboardArtifact.ARTIFACT_TYPE.fromID(artifactType.getTypeID()), bbattributes)) {
+                    if (!bbattributes.isEmpty()) {
                         BlackboardArtifact bbartifact = createArtifactWithAttributes(artifactType.getTypeID(), dataSource, bbattributes);
                         if (bbartifact != null) {
                             bbartifacts.add(bbartifact);
@@ -739,5 +745,24 @@ public final class LeappFileProcessor {
         }
 
         return leappFilesToProcess;
+    }
+    
+     /**
+     * Create custom artifacts that are defined in the xLeapp xml file(s).
+     * 
+     */
+    private void createCustomArtifacts(Blackboard blkBoard) {
+        
+        for (Map.Entry<String, String> customArtifact : CUSTOM_ARTIFACT_MAP.entrySet()) {
+            String artifactName = customArtifact.getKey();
+            String artifactDescription = customArtifact.getValue();
+
+            try {
+                BlackboardArtifact.Type customArtifactType = blkBoard.getOrAddArtifactType(artifactName, artifactDescription);
+            } catch (Blackboard.BlackboardException ex) {
+                logger.log(Level.WARNING, String.format("Failed to create custom artifact type %s.", artifactName), ex);
+            }  
+ 
+        }
     }
 }
