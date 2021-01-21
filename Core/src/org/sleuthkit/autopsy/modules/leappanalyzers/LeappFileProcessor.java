@@ -22,6 +22,8 @@ import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvParser;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
+import com.google.common.collect.ImmutableMap;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -134,6 +136,10 @@ public final class LeappFileProcessor {
     private final Map<String, String> tsvFileArtifactComments;
     private final Map<String, List<TsvColumn>> tsvFileAttributes;
 
+    private static final Map<String, String> CUSTOM_ARTIFACT_MAP = ImmutableMap.<String, String>builder()
+        .put("TSK_IP_DHCP", "DHCP Information")
+        .build();
+
     Blackboard blkBoard;
 
     public LeappFileProcessor(String xmlFile, String moduleName) throws IOException, IngestModuleException, NoCurrentCaseException {
@@ -146,6 +152,7 @@ public final class LeappFileProcessor {
 
         blkBoard = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard();
 
+        createCustomArtifacts(blkBoard);
         configExtractor();
         loadConfigFile();
 
@@ -695,5 +702,24 @@ public final class LeappFileProcessor {
         }
 
         return leappFilesToProcess;
+    }
+    
+     /**
+     * Create custom artifacts that are defined in the xLeapp xml file(s).
+     * 
+     */
+    private void createCustomArtifacts(Blackboard blkBoard) {
+        
+        for (Map.Entry<String, String> customArtifact : CUSTOM_ARTIFACT_MAP.entrySet()) {
+            String artifactName = customArtifact.getKey();
+            String artifactDescription = customArtifact.getValue();
+
+            try {
+                BlackboardArtifact.Type customArtifactType = blkBoard.getOrAddArtifactType(artifactName, artifactDescription);
+            } catch (Blackboard.BlackboardException ex) {
+                logger.log(Level.WARNING, String.format("Failed to create custom artifact type %s.", artifactName), ex);
+            }  
+ 
+        }
     }
 }
