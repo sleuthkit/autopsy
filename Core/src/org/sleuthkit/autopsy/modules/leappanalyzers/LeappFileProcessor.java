@@ -401,10 +401,10 @@ public final class LeappFileProcessor {
                         (v) -> new BlackboardAttribute(attrType, moduleName, v));
             case INTEGER:
                 return parseAttrValue(value.trim(), attrType, fileName, true, false,
-                        (v) -> new BlackboardAttribute(attrType, moduleName, (int) Double.valueOf(v).intValue()));
+                        (v) -> new BlackboardAttribute(attrType, moduleName, Double.valueOf(v).intValue()));
             case LONG:
                 return parseAttrValue(value.trim(), attrType, fileName, true, false,
-                        (v) -> new BlackboardAttribute(attrType, moduleName, (long) Double.valueOf(v).longValue()));
+                        (v) -> new BlackboardAttribute(attrType, moduleName, Double.valueOf(v).longValue()));
             case DOUBLE:
                 return parseAttrValue(value.trim(), attrType, fileName, true, false,
                         (v) -> new BlackboardAttribute(attrType, moduleName, (double) Double.valueOf(v)));
