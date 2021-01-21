@@ -357,6 +357,7 @@ public final class LeappFileProcessor {
             logger.log(Level.WARNING, String.format(
                     "Row at line number %d in file %s has %d columns when %d were expected based on the header row.",
                     lineNum, fileName, lineValues.size(), columnIndexes.size()));
+            return Collections.emptyList();
         }
 
         List<BlackboardAttribute> attrsToRet = new ArrayList<>();
