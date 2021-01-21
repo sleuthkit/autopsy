@@ -363,7 +363,7 @@ public final class LeappFileProcessor {
         List<BlackboardAttribute> attrsToRet = new ArrayList<>();
         for (TsvColumn colAttr : attrList) {
             if (colAttr.getAttributeType() == null) {
-                // this handles coluns that are currently ignored.
+                // this handles columns that are currently ignored.
                 continue;
             }
 
