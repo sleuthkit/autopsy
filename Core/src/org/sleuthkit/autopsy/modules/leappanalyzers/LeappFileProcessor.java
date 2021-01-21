@@ -339,10 +339,8 @@ public final class LeappFileProcessor {
     private Collection<BlackboardAttribute> processReadLine(List<String> lineValues, Map<String, Integer> columnIndexes,
             List<TsvColumn> attrList, String fileName, int lineNum) throws IngestModuleException {
 
-        if (MapUtils.isEmpty(columnIndexes)) {
-            return Collections.emptyList();
-        } else if (CollectionUtils.isEmpty(lineValues)) {
-            logger.log(Level.WARNING, "Line is null.  Returning empty list for attributes.");
+        if (MapUtils.isEmpty(columnIndexes) || CollectionUtils.isEmpty(lineValues)
+                || (lineValues.size() == 1 && StringUtils.isEmpty(lineValues.get(0)))) {
             return Collections.emptyList();
         }
 
