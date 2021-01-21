@@ -1184,7 +1184,7 @@ public class Server {
     private boolean collectionExists(String collectionName) throws SolrServerException, IOException {
         CollectionAdminRequest.List req = new CollectionAdminRequest.List();
         CollectionAdminResponse response = req.process(remoteSolrServer);
-        List<String> existingCollections = (List<String>) response.getResponse().get("collections");
+        List<?> existingCollections = (List<?>) response.getResponse().get("collections");
         if (existingCollections == null) {
             existingCollections = new ArrayList<>();
         }
@@ -1515,7 +1515,7 @@ public class Server {
         }
     }
 
-    NamedList<Object> request(SolrRequest request) throws SolrServerException, RemoteSolrException, NoOpenCoreException {
+    NamedList<Object> request(SolrRequest<?> request) throws SolrServerException, RemoteSolrException, NoOpenCoreException {
         currentCoreLock.readLock().lock();
         try {
             if (null == currentCollection) {
@@ -1931,12 +1931,13 @@ public class Server {
                 return Collections.emptyList();
             }
 
-            NamedList error = (NamedList) statusResponse.getResponse().get("error");
+            NamedList<?> error = (NamedList) statusResponse.getResponse().get("error");
             if (error != null) {
                 return Collections.emptyList();
             }
 
-            NamedList cluster = (NamedList) statusResponse.getResponse().get("cluster");
+            NamedList<?> cluster = (NamedList) statusResponse.getResponse().get("cluster");
+            @SuppressWarnings("unchecked")
             ArrayList<String> liveNodes = (ArrayList) cluster.get("live_nodes");
             return liveNodes;
         } catch (Exception ex) {
@@ -2091,7 +2092,7 @@ public class Server {
             return queryClient.query(sq);
         }
 
-        private NamedList<Object> request(SolrRequest request) throws SolrServerException, RemoteSolrException {
+        private NamedList<Object> request(SolrRequest<?> request) throws SolrServerException, RemoteSolrException {
             try {
                 return queryClient.request(request);
             } catch (Exception e) {
