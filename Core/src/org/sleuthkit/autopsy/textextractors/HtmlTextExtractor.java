@@ -200,7 +200,9 @@ final class HtmlTextExtractor implements TextExtractor {
             renderer.setIncludeAlternateText(false);
             renderer.setMaxLineLength(0); // don't force wrapping
             return new StringReader(renderer.toString());
-        } catch (IOException ex) {
+        } catch (Throwable ex) {
+            // JIRA-3436: HtmlTextExtractor someties throws StackOverflowError, which is 
+            // not an "Exception" but "Error". The error is occurring in a call to renderer.toString().
             logger.log(Level.WARNING, "Error extracting HTML from content.", ex);
             throw new InitReaderException("Error extracting HTML from content.", ex);
         }

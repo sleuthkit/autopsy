@@ -96,6 +96,14 @@ final class DomainArtifactsTabPanel extends JPanel {
     }
 
     /**
+     * Assign the focus to this panel's list.
+     */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    void focusList() {
+        listPanel.focusList();
+    }
+
+    /**
      * Get the status of the panel which indicates if it is populated.
      *
      * @return The ArtifactRetrievalStatus of the panel.
@@ -144,6 +152,9 @@ final class DomainArtifactsTabPanel extends JPanel {
                 listPanel.selectFirst();
                 removeAll();
                 add(mainSplitPane);
+                if (artifactresultEvent.shouldGrabFocus()) {
+                    focusList();
+                }
                 revalidate();
                 repaint();
                 try {

@@ -160,7 +160,7 @@ class MboxParser extends MimeJ4MessageParser implements Iterator<EmailMessage> {
     }
     
     @Override
-    public void close() throws Exception {
+    public void close() throws IOException{
         if(mboxIterable != null) {
             mboxIterable.close();
         }

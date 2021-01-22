@@ -52,6 +52,7 @@ DataResultViewerThumbnail.sortLabel.textTemplate=Sorted by: {0}
 DataResultViewerThumbnail.thumbnailSizeComboBox.large=Large Thumbnails
 DataResultViewerThumbnail.thumbnailSizeComboBox.medium=Medium Thumbnails
 DataResultViewerThumbnail.thumbnailSizeComboBox.small=Small Thumbnails
+MultiUserSettingsPanel_Close_Case_To_Modify=Close case to modfy settings
 OptionsCategory_Name_General=Application
 OptionsCategory_Keywords_General=Autopsy Options
 HINT_DataContentTopComponent=This is a DataContent window
@@ -303,4 +304,3 @@ AutopsyOptionsPanel.agencyLogoPreview.text=<html><div style='text-align: center;
 AutopsyOptionsPanel.browseLogosButton.text=Browse
 AutopsyOptionsPanel.agencyLogoPathField.text=
 AutopsyOptionsPanel.logoPanel.border.title=Logo
-

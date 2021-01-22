@@ -41,16 +41,21 @@ class ArtifactsWorker extends SwingWorker<List<BlackboardArtifact>, Void> {
     private final BlackboardArtifact.ARTIFACT_TYPE artifactType;
     private final static Logger logger = Logger.getLogger(ArtifactsWorker.class.getName());
     private final String domain;
+    private final boolean grabFocus;
 
     /**
      * Construct a new ArtifactsWorker.
      *
-     * @param artifactType The type of artifact being retrieved.
-     * @param domain       The domain the artifacts should have as an attribute.
+     * @param artifactType    The type of artifact being retrieved.
+     * @param domain          The domain the artifacts should have as an
+     *                        attribute.
+     * @param shouldGrabFocus True if the list of artifacts should have focus,
+     *                        false otherwise.
      */
-    ArtifactsWorker(BlackboardArtifact.ARTIFACT_TYPE artifactType, String domain) {
+    ArtifactsWorker(BlackboardArtifact.ARTIFACT_TYPE artifactType, String domain, boolean shouldGrabFocus) {
         this.artifactType = artifactType;
         this.domain = domain;
+        this.grabFocus = shouldGrabFocus;
     }
 
     @Override
@@ -61,7 +66,7 @@ class ArtifactsWorker extends SwingWorker<List<BlackboardArtifact>, Void> {
                 return domainSearch.getArtifacts(new DomainSearchArtifactsRequest(Case.getCurrentCase().getSleuthkitCase(), domain, artifactType));
             } catch (DiscoveryException ex) {
                 if (ex.getCause() instanceof InterruptedException) {
-                      this.cancel(true);
+                    this.cancel(true);
                     //ignore the exception as it was cancelled while the cache was performing its get and we support cancellation
                 } else {
                     throw ex;
@@ -77,7 +82,7 @@ class ArtifactsWorker extends SwingWorker<List<BlackboardArtifact>, Void> {
         if (!isCancelled()) {
             try {
                 listOfArtifacts.addAll(get());
-                DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.ArtifactSearchResultEvent(artifactType, listOfArtifacts));
+                DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.ArtifactSearchResultEvent(artifactType, listOfArtifacts, grabFocus));
             } catch (InterruptedException | ExecutionException ex) {
                 logger.log(Level.SEVERE, "Exception while trying to get list of artifacts for Domain details for artifact type: "
                         + artifactType.getDisplayName() + " and domain: " + domain, ex);
