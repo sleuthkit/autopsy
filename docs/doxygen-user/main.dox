@@ -13,6 +13,8 @@ Help Topics
 The following topics are available here:
 
 - \subpage installation_page
+- Notable Upgrades
+ - \subpage upgrade_solr8_page 
 - Configuration
  - \subpage config_page
  - \subpage performance_page 
