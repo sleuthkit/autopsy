@@ -1,26 +1,36 @@
-/*! \page upgrade_solr_page Upgrading Solr
+/*! \page upgrade_solr8_page Upgrading to Autopsy 4.18.0 (with Solr 8)
 
 [TOC]
 
-\section solr_upgrade_solr4 Upgrading from Solr 4 from Solr 8
+Autopsy 4.18.0 and beyond will make new cases with Solr 8 instead of Solr 4.  Because Solr 8 is not backward compatable with Solr 4, this will have some impact on you. Notably:
 
-To upgrade from Solr 4 to Solr 8, first follow the instructions on the \ref install_solr_page page. At the end of that process, all new cases will be created using Solr 8. If you need to open older cases that were created using Solr 4, please see the following sections which describe how to set up Solr 4 and Solr 8 in parallel and how to migrate Zookeeper data.
+- Cases made with 4.17.0 and earlier will continue to use Solr 4 indexes and can be opened with Autopsy 4.18.0+
+- Cases made with 4.18.0 and later will use Solr 8 and cannot be opened by Autopsy 4.17.0 and earlier.
+The main take away is that you can open older cases, but new cases can't be opened by older software.
 
-\subsection install_solr_solr_4 Legacy (Solr 4) Autopsy Cases and Text Indexes
+If you are using single-user cases, there is nothing else for you to do. Autopsy ships with both Solr 4 and 8 embedded.
 
-Things to keep in mind regarding backwards compatibility with existing Solr 4 multi-user cases (cases created with Autopsy versions 4.17.0 and earlier):
+If you are using a multi-user cluster, then you'll need to install a new Solr 8 server and may choose to keep Solr 4 around too. 
 
-<ul>
-<li>New text indexes can only be created using Solr 8 (Autopsy version 4.18.0 and later). 
-<li>Autopsy is able to open and search existing Solr 4 single-user cases. This functionality comes "out of the box" and nothing needs to be configured or installed to achieve this.
-<li>Solr 8 multi-user server is unable to open existing legacy Solr 4 multi-user cases because Solr indexes are only backward compatible one major version back (i.e. Solr 8 is only able to open indexes created using Solr 8 or Solr 7).
-</ul>
 
-To overcome this limitation on older multi-user cases, there is an option of configuring Autopsy to be able to connect to both Solr 8 and Solr 4 multi-user servers. If a multi-user Solr 4 server is configured, you will be able to open and search existing Solr 4 cases, as well as add data sources to the existing Solr 4 cases, thus adding more data to the existing legacy Solr 4 text indexes. However, new text indexes can only be created using Solr 8. Note that a Solr 4 server is unable to open text indexes created using a Solr 8 server.
+\section solr8_upgrade_cluster Multi-User Cluster Options
 
-\subsection install_solr_parallel Running Solr 8 and Solr 4 Multi-user Servers in Parallel 
+There are two considerations when ugprading a multi-user cluster:
+- Which versions of Solr servers to run
+- Where to store ZooKeeper data
 
-It is possible to configure Autopsy to be able to connect to both Solr 8 and Solr 4 multi-user servers. Start Autopsy and open the multi-user settings panel from "Tools", "Options", "Multi-user". Note that in order to create or open Multi-user cases, "Enable Multi-user cases" must be checked and the settings below must be correct. 
+The following sections cover these topics in more detail.
+
+\subsection solr8_upgrade_cluster_solr Multiple Solr Servers
+
+You will most likely want to have both Solr 4 and 8 servers running so that you can open older cases. If so, then:
+- Get a new server and install Solr 8 on it using the \ref install_solr_page page instructions. 
+- Configure each Autopsy client to have the addresses for both servers (see below)
+
+If you want to have only Solr 8, then simply follow the instructions for Solr 8 and get rid of the Solr 4 server. You will not be able to open older cases. It is possible to upgrade Solr indexes, but we have not tested this. 
+
+
+To configure Autopsy to be able to connect to both Solr 8 and Solr 4 multi-user servers. Start Autopsy and open the multi-user settings panel from "Tools", "Options", "Multi-user". Note that in order to create or open Multi-user cases, "Enable Multi-user cases" must be checked and the settings below must be correct. 
 
 It is recommended that you run Solr 8 and Solr 4 servers on separate machines. In the example below, Solr 8 server is running on a machine with host name "Solr1" and Solr 4 server is running on a machine with host name "Solr6". 
 
@@ -32,9 +42,13 @@ Once both the Solr 8 and Solr 4 multi-user server connection info is entered and
 
 If you intend to run Solr 4 and Solr 8 servers on the same machine at the same time, you need to change the port of the Solr 8 service using the setting <b>SOLR_PORT</b> in \c "C:\solr-8.6.3\bin\solr.in.cmd" file (assuming that the Solr package ZIP was extracted into \c "C:\solr-8.6.3\" directory). By default the Solr service starts on port 8983. 
 
-\subsection install_solr_zk_migration Migrating existing ZooKeeper data to Solr 8 server
+\subsection install_solr_zk_migration Migrating Of ZooKeeper Data
 
-If you have an existing Solr 4 server that you have been using in Multi-User (MU) mode and you wish to migrate this data onto your new Solr 8 server, we have developed a migration utility that performs this task. Note that the utility is able to migrate ZooKeeper data from any one ZooKeeper server to another ZooKeeper server, and is not tied to migrating Solr 4 ZooKeeper data to a Sol 8 ZooKeeper server. 
+In addition to text indexing, the Solr service also stores "coordination" data using Apache ZooKeeper. You'll want to move this data if you get rid of your Solr 4 server.  This data allows you to:
+- Know what multi-user cases you can open
+- Know which disk images were already processed for auto-ingest
+
+You can continue to use your Solr 4 instance of ZooKeeper, but we also have a utility that allows you to migrate the data to a new server, such as the one running Solr 8 (or a stand-alone instance). 
 
 In our example we will be migrating ZooKeeper data from a ZooKeeper server running on a Solr 4 server (on machine "Solr6") to a brand new ZooKeeper server running on a Solr 8 server (on machine "Solr1"). 
 

@@ -4,7 +4,7 @@
 
 The cluster will need shared storage that can be accessed from:
 - Autopsy clients
-- Solr server
+- Solr server (depending on configuration)
 
 This shared storage will be used for both data sources and case outputs, so you will need lots of space. 
 

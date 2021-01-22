@@ -9,19 +9,21 @@ A new text index is created for each case. The index can be stored either on sha
 
 Solr's embedded ZooKeeper is also used as a coordination service for Autopsy.
 
-If you have already installed Solr 4 with a previous version of Autopsy, please see the \ref upgrade_solr_page page for information on how open older cases after the upgrade and migrate data.
+If you have already installed Solr 4 with a previous version of Autopsy, please see the \ref upgrade_solr8_page page for information on how open older cases after the upgrade and migrate data.
+
+NOTE: This document assumes you will be running Solr on Windows as a service. You can run it as a non-service or on another platform, but you'll need to understand the steps in this document to make that happen. 
 
 \section install_solr_prereq Prerequisites
 
-We have prepared a pre-packaged version of Solr which packages Solr as Windows service.
-
 You will need:
 <ul>
-<li>A 64-bit version of the Java 8 Runtime Environment (JRE) from <a href="https://github.com/ojdkbuild/ojdkbuild">https://github.com/ojdkbuild/ojdkbuild</a>. (<a href="https://github.com/ojdkbuild/ojdkbuild/blob/master/README.md">Download links</a>)
-<li>Pre-packaged Autopsy version of Solr from https://sourceforge.net/projects/autopsy/files/CollaborativeServices/Solr/bitnami-solr-4.10.3-0-windows-installer.exe/download
-<li>A network-accessible machine to install Solr on. Note that the Solr process will need to write data out to the main shared storage drive, and needs adequate permissions to write to this location, which may be across a network.
+  <li>A 64-bit version of the Java 8 Runtime Environment (JRE) from <a href="https://github.com/ojdkbuild/ojdkbuild">https://github.com/ojdkbuild/ojdkbuild</a>. (<a href="https://github.com/ojdkbuild/ojdkbuild/blob/master/README.md">Download links</a>)
+  <li>Pre-packaged Autopsy version of Solr from <a href="https://sourceforge.net/projects/autopsy/files/CollaborativeServices/Solr/SOLR_8.6.3_AutopsyService.zip/download">here</a>. This contains Solr, <a href="https://nssm.cc/">NSSM</a> to make it run as a service, and the needed schema config files. 
+  <li>A network-accessible machine to install Solr on. Note that the Solr process may need to write to a shared storage drive (if that is how you configure it) and will therefore need adequate permissions. 
+</ul>
 
-\section install_solr_install Installation
+
+\section install_solr_install Solr Installation
 
 \subsection install_solr_jre JRE Installation
 
@@ -70,9 +72,11 @@ Text index for an Autopsy case will follow a naming structure according to follo
 
 \image html solr_config_case.png
 
-\subsection install_solr_service Solr Service Installation
+\section install_solr_service Solr Windows Service Installation
 
-At this point Solr has been configured and ready to be installed as Windows service. Open a command line console as Administrator and navigate to the \c "C:\solr-8.6.3\bin" directory. From there, run the following command: \c "nssm install Solr_8.6.3".
+At this point Solr has been configured and ready to use.  The last step is to configure it as a Windows service so that it starts each time the computer starts. 
+
+Open a command line console as Administrator and navigate to the \c "C:\solr-8.6.3\bin" directory. From there, run the following command: \c "nssm install Solr_8.6.3".
 
 \image html solr_install_1.png
 
@@ -101,7 +105,7 @@ Click \c "Install Service". You should see the following UI window appear:
 
 \image html solr_user_2.png
 
-\section install_solr_start Start Solr Service
+\subsection install_solr_start Start Solr Service
 
 At this point the Solr service has been configured and installed. You can verify this by opening Windows "Services" window:
 
@@ -125,11 +129,11 @@ If the service is appropriately started but you are unable to see the screenshot
 <li><b>Shared Storage:</b> Log in to the Solr computer as the user you decided to run the Solr service as and attempt to access the shared storage paths. Ensure that you can access the UNC paths (or drive letters if you have hardware NAS). If everything is configured correctly you should be able to access the storage paths without having to provide credentials. If you are prompted for a password to access the shared storage, then either enter the password and choose to save the credentials or reconfigure the setup so that the same passwords are used. See the \ref multiuser_users_store section for steps on storing credentials. If you needed to store the credentials, then you should restart the service or reboot the computer (we have observed that a running service does not get the updated credentials).
 </ul>
 
-\section install_solr_autopsy Configuring Autopsy
+\section install_solr_autopsy Configuring Autopsy Clients
 
 Once the rest of the services are configured you will \ref install_multiuserclient_page "configure Autopsy to enable multi-user cases". For the Solr 8 server, configure the Solr 8 Service and the ZooKeeper service connection info. ZooKeeper connection info is required. The ZooKeeper port number is 1000 higher than Solr service port number. By default, Solr service port is 8983 making the embedded ZooKeeper port 9983. You may also use a \ref install_solr_standalone_zk "standalone ZooKeeper service".
 
-\section install_sorl_adding_nodes Adding More Solr Nodes
+\section install_sorl_adding_nodes Adding More Solr Nodes (SolrCloud)
 
 Solr 8 has ability for multiple Solr nodes to work together as a Solr cluster. In this mode (SolrCloud mode) each Solr collection/index is split across all of the available Solr nodes. This is called sharding. For example, if there are 4 Solr nodes in a SolrCloud cluster, then the text index will be split across the 4 Solr nodes, thus greatly reducing the load on each individual Solr server and improving Solr indexing and searching performance.
  
