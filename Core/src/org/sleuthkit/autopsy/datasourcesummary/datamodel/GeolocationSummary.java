@@ -420,8 +420,9 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
     public CityData getCityCounts(DataSource dataSource, int daysCount, int maxCount)
             throws SleuthkitCaseProviderException, GeoLocationDataException, InterruptedException, IOException {
 
+        ClosestCityMapper closestCityMapper = this.cityMapper.get();
         GeoResult geoResult = getGeoResult(dataSource);
-        List<Pair<CityRecord, Long>> dataSourcePoints = processGeoResult(geoResult, this.cityMapper.get())
+        List<Pair<CityRecord, Long>> dataSourcePoints = processGeoResult(geoResult, closestCityMapper)
                 .collect(Collectors.toList());
 
         Map<CityRecord, List<Long>> allCityPoints = new HashMap<>();
