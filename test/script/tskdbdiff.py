@@ -596,6 +596,7 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
         return newLine
     elif data_source_info_index:
         fields_list[1] = "{device id}"
+        fields_list[4] = "{dateTime}"
         newLine = ('INSERT INTO "data_source_info" VALUES(' + ','.join(fields_list) + ');')
         return newLine
     elif ingest_job_index:
