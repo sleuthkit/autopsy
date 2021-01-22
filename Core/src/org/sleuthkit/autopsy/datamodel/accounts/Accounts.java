@@ -404,15 +404,22 @@ final public class Accounts implements AutopsyVisitableItem {
         }
 
         @Override
-        protected Node[] createNodesForKey(String acountTypeName) {
+        protected Node[] createNodesForKey(String accountTypeName) {
 
-            if (Account.Type.CREDIT_CARD.getTypeName().equals(acountTypeName)) {
+            if (Account.Type.CREDIT_CARD.getTypeName().equals(accountTypeName)) {
                 return getNodeArr(new CreditCardNumberAccountTypeNode());
             } else {
 
                 try {
-                    Account.Type accountType = skCase.getCommunicationsManager().getAccountType(acountTypeName);
-                    return getNodeArr(new DefaultAccountTypeNode(accountType));
+                    Account.Type accountType = skCase.getCommunicationsManager().getAccountType(accountTypeName);
+                    if (accountType != null) {
+                        return getNodeArr(new DefaultAccountTypeNode(accountType));
+                    } else {
+                        // This can only happen if a TSK_ACCOUNT artifact was created not using CommunicationManager
+                        LOGGER.log(Level.SEVERE, "Unknown account type '" + accountTypeName + "' found - account will not be displayed.\n"
+                                + "Account type names must match an entry in the display_name column of the account_types table.\n"
+                                + "Accounts should be created using the CommunicationManager API.");
+                    }
                 } catch (TskCoreException ex) {
                     LOGGER.log(Level.SEVERE, "Error getting display name for account type. ", ex);
                 }
