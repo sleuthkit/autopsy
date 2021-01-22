@@ -31,7 +31,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.tuple.Pair;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultArtifactUpdateGovernor;
 import org.sleuthkit.autopsy.geolocation.AbstractWaypointFetcher;
@@ -47,6 +46,7 @@ import org.sleuthkit.datamodel.DataSource;
  * Gathers summary data about Geolocation information for a data source.
  */
 public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
+
     /**
      * A count of hits for a particular city.
      */
@@ -169,6 +169,53 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
         }
     }
 
+    /**
+     * Carries data retrieved from the Geolocation API to be processed for
+     * closest cities.
+     */
+    private static class GeoResult {
+
+        private final Set<MapWaypoint> mapWaypoints;
+        private final List<Set<MapWaypoint>> tracks;
+        private final List<Set<MapWaypoint>> areas;
+
+        /**
+         * Main constructor.
+         *
+         * @param mapWaypoints The way points found for the data source.
+         * @param tracks A list of sets where each set is a track in the data
+         * source.
+         * @param areas A list of areas where each set is an area in the data
+         * source.
+         */
+        private GeoResult(Set<MapWaypoint> mapWaypoints, List<Set<MapWaypoint>> tracks, List<Set<MapWaypoint>> areas) {
+            this.mapWaypoints = mapWaypoints;
+            this.tracks = tracks;
+            this.areas = areas;
+        }
+
+        /**
+         * @return The way points found for the data source.
+         */
+        private Set<MapWaypoint> getMapWaypoints() {
+            return mapWaypoints;
+        }
+
+        /**
+         * @return A list of sets where each set is a track in the data source.
+         */
+        private List<Set<MapWaypoint>> getTracks() {
+            return tracks;
+        }
+
+        /**
+         * @return A list of areas where each set is an area in the data source.
+         */
+        private List<Set<MapWaypoint>> getAreas() {
+            return areas;
+        }
+    }
+
     // taken from GeoFilterPanel: all of the GPS artifact types.
     @SuppressWarnings("deprecation")
     private static final List<ARTIFACT_TYPE> GPS_ARTIFACT_TYPES = Arrays.asList(
@@ -178,7 +225,8 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
             BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_SEARCH,
             BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACK,
             BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACKPOINT,
-            BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF
+            BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF,
+            BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_AREA
     );
 
     // all GPS types
@@ -186,8 +234,11 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
             .map(artifactType -> artifactType.getTypeID())
             .collect(Collectors.toSet());
 
+    private static final Pair<Integer, Integer> EMPTY_COUNT = Pair.of(0, 0);
+
+    private static final long DAY_SECS = 24 * 60 * 60;
+
     private final SleuthkitCaseProvider provider;
-    private final java.util.logging.Logger logger;
     private final SupplierWithException<ClosestCityMapper, IOException> cityMapper;
 
     /**
@@ -208,7 +259,7 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
      * Default constructor.
      */
     public GeolocationSummary() {
-        this(() -> ClosestCityMapper.getInstance(), SleuthkitCaseProvider.DEFAULT, Logger.getLogger(GeolocationSummary.class.getName()));
+        this(() -> ClosestCityMapper.getInstance(), SleuthkitCaseProvider.DEFAULT);
     }
 
     /**
@@ -217,12 +268,10 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
      * @param cityMapper A means of acquiring a ClosestCityMapper that can throw
      * an IOException.
      * @param provider A means of acquiring a SleuthkitCaseProvider.
-     * @param logger The logger.
      */
-    public GeolocationSummary(SupplierWithException<ClosestCityMapper, IOException> cityMapper, SleuthkitCaseProvider provider, java.util.logging.Logger logger) {
+    public GeolocationSummary(SupplierWithException<ClosestCityMapper, IOException> cityMapper, SleuthkitCaseProvider provider) {
         this.cityMapper = cityMapper;
         this.provider = provider;
-        this.logger = logger;
     }
 
     /**
@@ -256,8 +305,6 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
         }
     }
 
-    private static final Pair<Integer, Integer> EMPTY_COUNT = Pair.of(0, 0);
-
     /**
      * Based on a set of waypoints, determines the count of total waypoints and
      * a total of waypoints whose time stamp is greater than or equal to
@@ -268,31 +315,119 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
      * @return A pair where the left value is the total count of way points and
      * the right is the total list of way points that are >= minTime.
      */
-    private Pair<Integer, Integer> getCounts(List<MapWaypoint> points, Long minTime) {
-
+    private Pair<Integer, Integer> getCounts(List<Long> points, Long minTime) {
         if (points == null) {
             return EMPTY_COUNT;
         }
 
         return points.stream().reduce(
                 EMPTY_COUNT,
-                (total, w) -> Pair.of(total.getLeft() + 1, total.getRight() + (greaterThanOrEqual(minTime, w.getTimestamp()) ? 1 : 0)),
+                (total, time) -> Pair.of(total.getLeft() + 1, total.getRight() + (greaterThanOrEqual(minTime, time) ? 1 : 0)),
                 (pair1, pair2) -> Pair.of(pair1.getLeft() + pair2.getLeft(), pair1.getRight() + pair2.getRight()));
     }
-    
-    
-    private static final long DAY_SECS = 24 * 60 * 60;
+
+    /**
+     * Retrieves a tuple of the closest city (or null if a closest city cannot
+     * be determined) and the time stamp of the point in seconds from epoch. If
+     * the point is null, null is returned.
+     *
+     * @param cityMapper The means of mapping a point to the closest city.
+     * @param pt The geolocation point.
+     * @return A tuple of the closest city and timestamp in seconds from epoch.
+     */
+    private Pair<CityRecord, Long> getClosestWithTime(ClosestCityMapper cityMapper, MapWaypoint pt) {
+        if (pt == null) {
+            return null;
+        }
+
+        CityRecord city = cityMapper.findClosest(new CityRecord(null, null, null, pt.getX(), pt.getY()));
+
+        Long time = pt.getTimestamp();
+        return Pair.of(city, time);
+    }
+
+    /**
+     * Converts a set of waypoints representing a grouping (i.e. track, area)
+     * into a stream of the unique cities identified in this grouping and the
+     * latest time stamp for each grouping.
+     *
+     * @param points The points in the grouping.
+     * @param cityMapper The means of mapping a point to the closest city.
+     * @return A stream of tuples where each tuple will be a unique city (or
+     * null if a closest is not determined) and the latest timestamp for each.
+     */
+    private Stream<Pair<CityRecord, Long>> reduceGrouping(Set<MapWaypoint> points, ClosestCityMapper cityMapper) {
+        if (points == null) {
+            return Stream.empty();
+        }
+
+        Map<CityRecord, Long> timeMapping = new HashMap<>();
+        for (MapWaypoint pt : points) {
+            Pair<CityRecord, Long> pair = getClosestWithTime(cityMapper, pt);
+            if (pair == null) {
+                continue;
+            }
+            
+            CityRecord city = pair.getLeft();
+            Long prevTime = timeMapping.get(city);
+            Long curTime = pair.getRight();
+            if (prevTime == null || (curTime != null && curTime > prevTime)) {
+                timeMapping.put(city, curTime);
+            }
+        }
+        
+        return timeMapping.entrySet().stream()
+                .map(e -> Pair.of(e.getKey(), e.getValue()));
+    }
+
+    /**
+     * Convert a geo result taken from the Geolocation and convert to a stream
+     * of tuples where each tuple represents a point with the closest city and
+     * the time stamp in seconds from epoch.
+     *
+     * @param geoResult The result from the Geolocation API.
+     * @param cityMapper The means of mapping a point to the closest city.
+     * @return A list of tuples where each tuple represents a point to be
+     * counted with a combination of the closest city and the timestamp.
+     * @throws IOException
+     */
+    private Stream<Pair<CityRecord, Long>> processGeoResult(GeoResult geoResult, ClosestCityMapper cityMapper) {
+        if (geoResult == null) {
+            return Stream.empty();
+        }
+
+        List<Set<MapWaypoint>> areas = (geoResult.getAreas() == null) ? Collections.emptyList() : geoResult.getAreas();
+        List<Set<MapWaypoint>> tracks = (geoResult.getTracks() == null) ? Collections.emptyList() : geoResult.getTracks();
+        
+        Stream<Pair<CityRecord, Long>> reducedGroupings = Stream.of(areas, tracks)
+                .flatMap((groupingList) -> groupingList.stream())
+                .flatMap((grouping) -> reduceGrouping(grouping, cityMapper));
+
+        final Set<MapWaypoint> allTracksAndAreas = Stream.of(areas, tracks)
+                .flatMap((groupingList) -> groupingList.stream())
+                .flatMap((group) -> group.stream())
+                .collect(Collectors.toSet());
+        
+        Set<MapWaypoint> pointSet = geoResult.getMapWaypoints() == null ? Collections.emptySet() : geoResult.getMapWaypoints();
+        Stream<Pair<CityRecord, Long>> citiesForPoints = pointSet.stream()
+                // it appears that AbstractWaypointFetcher.handleFilteredWaypointSet returns all points 
+                // (including track and area points) in the set of MapWaypoints.  This filters those points out of the remaining.
+                .filter(pt -> !allTracksAndAreas.contains(pt))
+                .map(pt -> getClosestWithTime(cityMapper, pt));
+
+        return Stream.concat(reducedGroupings, citiesForPoints);
+    }
 
     /**
      * Get this list of hits per city where the list is sorted descending by
      * number of found hits (i.e. most hits is first index).
      *
      * @param dataSource The data source.
-     * @param daysCount  Number of days to go back.
-     * @param maxCount   Maximum number of results.
-     * 
+     * @param daysCount Number of days to go back.
+     * @param maxCount Maximum number of results.
+     *
      * @return The sorted list.
-     * 
+     *
      * @throws SleuthkitCaseProviderException
      * @throws GeoLocationDataException
      * @throws InterruptedException
@@ -300,31 +435,36 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
     public CityData getCityCounts(DataSource dataSource, int daysCount, int maxCount)
             throws SleuthkitCaseProviderException, GeoLocationDataException, InterruptedException, IOException {
 
-        ClosestCityMapper closestCityMapper = ClosestCityMapper.getInstance();
+        ClosestCityMapper closestCityMapper = this.cityMapper.get();
+        GeoResult geoResult = getGeoResult(dataSource);
+        List<Pair<CityRecord, Long>> dataSourcePoints = processGeoResult(geoResult, closestCityMapper)
+                .collect(Collectors.toList());
 
-        List<MapWaypoint> dataSourcePoints = getPoints(dataSource);
-
-        Map<CityRecord, List<MapWaypoint>> allCityPoints = new HashMap<>();
-        List<MapWaypoint> others = new ArrayList<>();
+        Map<CityRecord, List<Long>> allCityPoints = new HashMap<>();
+        List<Long> others = new ArrayList<>();
         Long mostRecent = null;
 
-        for (MapWaypoint pt : dataSourcePoints) {
-            CityRecord city = closestCityMapper.findClosest(new CityRecord(null, null, null, pt.getX(), pt.getY()));
-            Long curTime = pt.getTimestamp();
+        for (Pair<CityRecord, Long> pt : dataSourcePoints) {
+            if (pt == null) {
+                continue;
+            }
+
+            Long curTime = pt.getRight();
             if (curTime != null && (mostRecent == null || curTime > mostRecent)) {
                 mostRecent = curTime;
             }
 
+            CityRecord city = pt.getLeft();
             if (city == null) {
-                others.add(pt);
+                others.add(curTime);
             } else {
-                List<MapWaypoint> cityPoints = allCityPoints.get(city);
+                List<Long> cityPoints = allCityPoints.get(city);
                 if (cityPoints == null) {
                     cityPoints = new ArrayList<>();
                     allCityPoints.put(city, cityPoints);
                 }
 
-                cityPoints.add(pt);
+                cityPoints.add(curTime);
             }
         }
 
@@ -361,7 +501,7 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
      */
     private static class PointFetcher extends AbstractWaypointFetcher {
 
-        private final BlockingQueue<List<MapWaypoint>> asyncResult;
+        private final BlockingQueue<GeoResult> asyncResult;
 
         /**
          * Main constructor.
@@ -371,26 +511,16 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
          * BlockingQueue blocks until a result is received from geolocation.
          * @param filters The applicable filters for geolocation.
          */
-        public PointFetcher(BlockingQueue<List<MapWaypoint>> asyncResult, GeoFilter filters) {
+        public PointFetcher(BlockingQueue<GeoResult> asyncResult, GeoFilter filters) {
             super(filters);
             this.asyncResult = asyncResult;
         }
 
         @Override
         public void handleFilteredWaypointSet(Set<MapWaypoint> mapWaypoints, List<Set<MapWaypoint>> tracks, List<Set<MapWaypoint>> areas, boolean wasEntirelySuccessful) {
-            Stream<List<Set<MapWaypoint>>> stream = Stream.of(
-                    Arrays.asList(mapWaypoints),
-                    tracks == null ? Collections.emptyList() : tracks,
-                    areas == null ? Collections.emptyList() : areas);
-
-            List<MapWaypoint> wayPoints = stream
-                    .flatMap((List<Set<MapWaypoint>> list) -> list.stream())
-                    .flatMap((Set<MapWaypoint> set) -> set.stream())
-                    .collect(Collectors.toList());
-
             // push to blocking queue to continue
             try {
-                asyncResult.put(wayPoints);
+                asyncResult.put(new GeoResult(mapWaypoints, tracks, areas));
             } catch (InterruptedException ignored) {
                 // ignored cancellations
             }
@@ -406,10 +536,12 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
      * @throws GeoLocationDataException
      * @throws InterruptedException
      */
-    private List<MapWaypoint> getPoints(DataSource dataSource) throws SleuthkitCaseProviderException, GeoLocationDataException, InterruptedException {
+    private GeoResult getGeoResult(DataSource dataSource)
+            throws SleuthkitCaseProviderException, GeoLocationDataException, InterruptedException {
+
         // make asynchronous callback synchronous (the callback nature will be handled in a different level)
         // see the following: https://stackoverflow.com/questions/20659961/java-synchronous-callback
-        final BlockingQueue<List<MapWaypoint>> asyncResult = new ArrayBlockingQueue<>(1);
+        final BlockingQueue<GeoResult> asyncResult = new ArrayBlockingQueue<>(1);
 
         GeoFilter geoFilter = new GeoFilter(true, false, 0, Arrays.asList(dataSource), GPS_ARTIFACT_TYPES);
 
