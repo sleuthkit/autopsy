@@ -10,7 +10,7 @@ import sys
 import os
 
 from envutil import get_proj_dir
-from excelutil import excel_to_records
+from excelutil import excel_to_records, FOUND_SHEET_NAME, DELETED_SHEET_NAME, RESULTS_SHEET_NAME
 from fileutil import get_new_path, get_path_pieces
 from gitutil import get_git_root
 from langpropsutil import set_commit_for_language
@@ -318,15 +318,17 @@ def main():
                         required=False, help='The column index in the csv file providing the commit for which this '
                                              'update applies. The commit should be located in the header row.  ')
     parser.add_argument('-rs', '--results-sheet', dest='results_sheet', action='store', type=str,
-                        default='results', required=False, help='In an excel workbook, the sheet that indicates '
-                                                                'results items.  This is only used for xlsx files.')
+                        default=RESULTS_SHEET_NAME, required=False,
+                        help='In an excel workbook, the sheet that indicates results items.  This is only used for '
+                             'xlsx files.')
     parser.add_argument('-ds', '--deleted-sheet', dest='deleted_sheet', action='store', type=str,
-                        default='deleted', required=False, help='In an excel workbook, the sheet that indicates '
-                                                                'deleted items.  This is only used for xlsx files.')
+                        default=DELETED_SHEET_NAME, required=False,
+                        help='In an excel workbook, the sheet that indicates deleted items.  This is only used for '
+                             'xlsx files.')
     parser.add_argument('-fs', '--found-sheet', dest='found_sheet', action='store', type=str,
-                        default='found', required=False, help='In an excel workbook, the sheet that indicates '
-                                                              'items where the translation was found.  This is only '
-                                                              'used for xlsx files.')
+                        default=FOUND_SHEET_NAME, required=False,
+                        help='In an excel workbook, the sheet that indicates items where the translation was found.  '
+                             'This is only used for xlsx files.')
     parser.add_argument('-di', '--should-delete-idx', dest='should_delete_idx', action='store', type=int, default=-1,
                         required=False, help='The column index in the csv file providing whether or not the file '
                                              'should be deleted.  Any non-blank content will be treated as True.')
