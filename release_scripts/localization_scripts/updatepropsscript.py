@@ -127,8 +127,8 @@ def get_prop_entry(row: List[str],
     if path_converter is not None:
         path = path_converter(path)
 
-    key = row[key_idx] if idx_bounded(key_idx, len(row)) else None
-    value = row[value_idx] if idx_bounded(value_idx, len(row)) else None
+    key = str(row[key_idx]) if idx_bounded(key_idx, len(row)) else None
+    value = str(row[value_idx]) if idx_bounded(value_idx, len(row)) else None
     should_delete = False if should_delete_converter is None else should_delete_converter(row)
 
     # delete this key if no value provided
