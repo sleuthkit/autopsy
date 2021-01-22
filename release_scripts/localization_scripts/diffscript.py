@@ -1,6 +1,9 @@
 """This script determines the updated, added, and deleted properties from the '.properties-MERGED' files
-and generates a csv file containing the items changed.  : gitpython, jproperties, pyexcel-xlsx, xlsxwriter and pyexcel.
-As a consequence, it also requires git >= 1.7.0 and python >= 3.4.
+and generates a csv file containing the items changed.
+
+This script requires the python libraries: gitpython, jproperties, pyexcel-xlsx, xlsxwriter and pyexcel along with
+python >= 3.9.1 or the virtual environment can be used by activating venv/Scripts/activate.  As a
+consequence of gitpython, it also requires git >= 1.7.0.
 """
 import sys
 from envutil import get_proj_dir

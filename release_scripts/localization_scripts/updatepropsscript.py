@@ -1,6 +1,8 @@
 """This script finds all '.properties-MERGED' files and writes relative path, key, and value to a CSV file.
-This script requires the python libraries: jproperties, pyexcel-xlsx, xlsxwriter and pyexcel.
-It also requires Python 3.x.
+
+This script requires the python libraries: gitpython, jproperties, pyexcel-xlsx, xlsxwriter and pyexcel along with
+python >= 3.9.1 or the virtual environment can be used by activating venv/Scripts/activate.  As a
+consequence of gitpython, it also requires git >= 1.7.0.
 """
 
 from typing import List, Dict, Tuple, Callable, Iterator, Union
@@ -221,7 +223,8 @@ def get_csv_rows(input_path: str, has_header: bool) -> DataRows:
     return DataRows(header=header, results=all_items)
 
 
-def get_xlsx_rows(input_path: str, has_header: bool, results_sheet: str, deleted_sheet: str) -> DataRows:
+def get_xlsx_rows(input_path: str, has_header: bool, results_sheet: str,
+                  found_sheet: Union[str, None], deleted_sheet: Union[str, None]) -> DataRows:
     """
     Gets worksheets of an excel workbook in a DataRows format.
 
@@ -229,6 +232,7 @@ def get_xlsx_rows(input_path: str, has_header: bool, results_sheet: str, deleted
         input_path: The input path of the file.
         has_header: Whether or not is has a header.
         results_sheet: The name of the results sheet.
+        found_sheet: The name of the found sheet.
         deleted_sheet: The name of the sheet containing deleted items.
 
     Returns: An intermediate result DataRows object for further parsing.
@@ -240,6 +244,14 @@ def get_xlsx_rows(input_path: str, has_header: bool, results_sheet: str, deleted
     if has_header and len(results_items) > 0:
         header = results_items[0]
         results_items = results_items[1:len(results_items)]
+
+    found_items = workbook[found_sheet] if found_sheet and found_sheet in workbook else None
+    if has_header and found_items and len(found_items) > 0:
+        found_items = found_items[1:len(found_items)]
+
+    # add found items to result items to be inserted into properties
+    if found_items:
+        results_items = results_items + found_items
 
     deleted_items = workbook[deleted_sheet] if deleted_sheet and deleted_sheet in workbook else None
     if has_header and deleted_items and len(deleted_items) > 0:
@@ -311,6 +323,10 @@ def main():
     parser.add_argument('-ds', '--deleted-sheet', dest='deleted_sheet', action='store', type=str,
                         default='deleted', required=False, help='In an excel workbook, the sheet that indicates '
                                                                 'deleted items.  This is only used for xlsx files.')
+    parser.add_argument('-fs', '--found-sheet', dest='found_sheet', action='store', type=str,
+                        default='found', required=False, help='In an excel workbook, the sheet that indicates '
+                                                              'items where the translation was found.  This is only '
+                                                              'used for xlsx files.')
     parser.add_argument('-di', '--should-delete-idx', dest='should_delete_idx', action='store', type=int, default=-1,
                         required=False, help='The column index in the csv file providing whether or not the file '
                                              'should be deleted.  Any non-blank content will be treated as True.')
@@ -345,6 +361,7 @@ def main():
     overwrite = args.should_overwrite
     deleted_sheet = args.deleted_sheet
     results_sheet = args.results_sheet
+    found_sheet = args.found_sheet
 
     # means of determining if a key should be deleted from a file
     if args.should_delete_idx < 0:
@@ -366,7 +383,7 @@ def main():
     # retrieve records from file
     ext = get_path_pieces(input_path)[2]
     if ext == 'xlsx':
-        data_rows = get_xlsx_rows(input_path, has_header, results_sheet, deleted_sheet)
+        data_rows = get_xlsx_rows(input_path, has_header, results_sheet, found_sheet, deleted_sheet)
     elif ext == 'csv':
         data_rows = get_csv_rows(input_path, has_header)
     else:
