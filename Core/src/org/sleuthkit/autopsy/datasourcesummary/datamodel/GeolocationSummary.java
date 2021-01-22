@@ -361,21 +361,23 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
             return Stream.empty();
         }
 
-        Map<CityRecord, Long> timeMapping = points.stream()
-                .map((pt) -> getClosestWithTime(cityMapper, pt))
-                .filter((pr) -> pr != null)
-                .collect(Collectors.toMap(
-                        pair -> pair.getLeft(),
-                        pair -> pair.getRight(),
-                        (time1, time2)
-                        -> // get latest time for each unique city
-                        ((time1 != null && time2 == null) || (time1 != null && time2 != null && time1 > time2))
-                                ? time1
-                                : time2));
-
+        Map<CityRecord, Long> timeMapping = new HashMap<>();
+        for (MapWaypoint pt : points) {
+            Pair<CityRecord, Long> pair = getClosestWithTime(cityMapper, pt);
+            if (pair == null) {
+                continue;
+            }
+            
+            CityRecord city = pair.getLeft();
+            Long prevTime = timeMapping.get(city);
+            Long curTime = pair.getRight();
+            if (prevTime == null || (curTime != null && curTime > prevTime)) {
+                timeMapping.put(city, curTime);
+            }
+        }
+        
         return timeMapping.entrySet().stream()
                 .map(e -> Pair.of(e.getKey(), e.getValue()));
-
     }
 
     /**
