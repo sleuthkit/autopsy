@@ -31,7 +31,7 @@ The user account that Autopsy runs as will need access to the shared storage. Th
 
 Solr will run as a Windows service and may need access to shared storage if it does not have enough local storage.  Solr performs best when it has fast access to storage, so keeping the indexes on local SSD drives is best. But, some clusters will need to store the indexes on the same shared storage that are used for images and other case outputs. 
 
-NOTE: Autopsy 4.17.0 and prior required that indexes were stored on the shared storage drives.  Autopsy 4.18.0 and beyond (which now use Solr 8) can use either local storae or shared storage. 
+NOTE: Autopsy 4.17.0 and prior required that indexes were stored on the shared storage drives.  Autopsy 4.18.0 and beyond (which now use Solr 8) can use either local or shared storage. 
 
 If you are using local storage for Solr, then you can run the Solr service as "LocalService".  
 

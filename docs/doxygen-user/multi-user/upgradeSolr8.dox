@@ -25,7 +25,7 @@ The following sections cover these topics in more detail.
 
 You will most likely want to have both Solr 4 and 8 servers running so that you can open older cases. If so, then:
 - Get a new server and install Solr 8 on it using the \ref install_solr_page page instructions. 
-- Configure each Autopsy client to have the addresses for both servers (see below)
+- Configure each Autopsy client to have the addresses for both servers (see below).
 
 If you want to have only Solr 8, then simply follow the instructions for Solr 8 and get rid of the Solr 4 server. You will not be able to open older cases. It is possible to upgrade Solr indexes, but we have not tested this. 
 
@@ -42,7 +42,7 @@ Once both the Solr 8 and Solr 4 multi-user server connection info is entered and
 
 If you intend to run Solr 4 and Solr 8 servers on the same machine at the same time, you need to change the port of the Solr 8 service using the setting <b>SOLR_PORT</b> in \c "C:\solr-8.6.3\bin\solr.in.cmd" file (assuming that the Solr package ZIP was extracted into \c "C:\solr-8.6.3\" directory). By default the Solr service starts on port 8983. 
 
-\subsection install_solr_zk_migration Migrating Of ZooKeeper Data
+\subsection install_solr_zk_migration Migration Of ZooKeeper Data
 
 In addition to text indexing, the Solr service also stores "coordination" data using Apache ZooKeeper. You'll want to move this data if you get rid of your Solr 4 server.  This data allows you to:
 - Know what multi-user cases you can open
