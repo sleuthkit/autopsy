@@ -409,7 +409,7 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
         Set<MapWaypoint> pointSet = geoResult.getMapWaypoints() == null ? Collections.emptySet() : geoResult.getMapWaypoints();
         Stream<Pair<CityRecord, Long>> citiesForPoints = pointSet.stream()
                 // it appears that AbstractWaypointFetcher.handleFilteredWaypointSet returns all points 
-                // (including track and area points) in the set of MapWaypoint's.  This filters those points out of the remaing.
+                // (including track and area points) in the set of MapWaypoints.  This filters those points out of the remaining.
                 .filter(pt -> !allTracksAndAreas.contains(pt))
                 .map(pt -> getClosestWithTime(cityMapper, pt));
 
