@@ -30,7 +30,7 @@ You will most likely want to have both Solr 4 and 8 servers running so that you 
 If you want to have only Solr 8, then simply follow the instructions for Solr 8 and get rid of the Solr 4 server. You will not be able to open older cases. It is possible to upgrade Solr indexes, but we have not tested this. 
 
 
-To configure Autopsy to be able to connect to both Solr 8 and Solr 4 multi-user servers. Start Autopsy and open the multi-user settings panel from "Tools", "Options", "Multi-user". Note that in order to create or open Multi-user cases, "Enable Multi-user cases" must be checked and the settings below must be correct. 
+To configure Autopsy to be able to connect to both Solr 8 and Solr 4 multi-user servers, start Autopsy and open the multi-user settings panel from "Tools", "Options", "Multi-user". Note that in order to create or open Multi-user cases, "Enable Multi-user cases" must be checked and the settings below must be correct. 
 
 It is recommended that you run Solr 8 and Solr 4 servers on separate machines. In the example below, Solr 8 server is running on a machine with host name "Solr1" and Solr 4 server is running on a machine with host name "Solr6". 
 
