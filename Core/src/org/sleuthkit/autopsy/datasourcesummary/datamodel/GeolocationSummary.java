@@ -225,7 +225,8 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
             BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_SEARCH,
             BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACK,
             BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACKPOINT,
-            BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF
+            BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF,
+            BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_AREA
     );
 
     // all GPS types
@@ -393,12 +394,24 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
             return Stream.empty();
         }
 
-        Stream<Pair<CityRecord, Long>> reducedGroupings = Stream.of(geoResult.getAreas(), geoResult.getTracks())
+        List<Set<MapWaypoint>> areas = (geoResult.getAreas() == null) ? Collections.emptyList() : geoResult.getAreas();
+        List<Set<MapWaypoint>> tracks = (geoResult.getTracks() == null) ? Collections.emptyList() : geoResult.getTracks();
+        
+        Stream<Pair<CityRecord, Long>> reducedGroupings = Stream.of(areas, tracks)
                 .flatMap((groupingList) -> groupingList.stream())
                 .flatMap((grouping) -> reduceGrouping(grouping, cityMapper));
 
+        final Set<MapWaypoint> allTracksAndAreas = Stream.of(areas, tracks)
+                .flatMap((groupingList) -> groupingList.stream())
+                .flatMap((group) -> group.stream())
+                .collect(Collectors.toSet());
+        
         Set<MapWaypoint> pointSet = geoResult.getMapWaypoints() == null ? Collections.emptySet() : geoResult.getMapWaypoints();
-        Stream<Pair<CityRecord, Long>> citiesForPoints = pointSet.stream().map(pt -> getClosestWithTime(cityMapper, pt));
+        Stream<Pair<CityRecord, Long>> citiesForPoints = pointSet.stream()
+                // it appears that AbstractWaypointFetcher.handleFilteredWaypointSet returns all points 
+                // (including track and area points) in the set of MapWaypoint's.  This filters those points out of the remaing.
+                .filter(pt -> !allTracksAndAreas.contains(pt))
+                .map(pt -> getClosestWithTime(cityMapper, pt));
 
         return Stream.concat(reducedGroupings, citiesForPoints);
     }
