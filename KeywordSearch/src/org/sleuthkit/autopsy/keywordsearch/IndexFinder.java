@@ -60,10 +60,6 @@ class IndexFinder {
         String indexFolderName = "solr" + CURRENT_SOLR_VERSION + "_schema" + CURRENT_SOLR_SCHEMA_VERSION;
         // new index should be stored in "\ModuleOutput\keywordsearch\data\solrX_schemaY\index"
         File targetDirPath = Paths.get(theCase.getModuleDirectory(), KWS_OUTPUT_FOLDER_NAME, KWS_DATA_FOLDER_NAME, indexFolderName, INDEX_FOLDER_NAME).toFile(); //NON-NLS
-        if (!targetDirPath.mkdirs()) {
-            logger.log(Level.SEVERE, "Unable to create index directory: {0}", targetDirPath.toString());
-            throw new AutopsyService.AutopsyServiceException("Unable to create text index directory " + targetDirPath.getAbsolutePath());
-        }
         return new Index(targetDirPath.getAbsolutePath(), CURRENT_SOLR_VERSION, CURRENT_SOLR_SCHEMA_VERSION, "", theCase.getName());
     }
 
