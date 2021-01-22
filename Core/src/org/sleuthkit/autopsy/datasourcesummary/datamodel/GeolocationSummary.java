@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -301,13 +302,45 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
         return Pair.of(city, time);
     }
     
-    private 
+    private Stream<Pair<CityRecord, Long>> reduceGrouping(Set<MapWaypoint> points, ClosestCityMapper cityMapper) {
+        if (points == null) {
+            return Stream.empty();
+        }
+        
+        Map<CityRecord, Long> timeMapping = points.stream()
+                .map((pt) -> getClosestWithTime(cityMapper, pt))
+                .filter((pr) -> pr != null)
+                .collect(Collectors.toMap(
+                        pair -> pair.getLeft(), 
+                        pair -> pair.getRight(), 
+                        (time1, time2) -> 
+                                // get latest time
+                                ((time1 != null && time2 == null) || (time1 != null && time2 != null && time1 > time2)) ? 
+                                        time1 : 
+                                        time2));
+        
+        return timeMapping.entrySet().stream()
+                .map(e -> Pair.of(e.getKey(), e.getValue()));
+                
+                
+    }
     
     private List<Pair<CityRecord, Long>> processGeoResult(GeoResult geoResult) throws IOException {
+        if (geoResult == null) {
+            return Collections.emptyList();
+        }
+        
         ClosestCityMapper closestCityMapper = ClosestCityMapper.getInstance();
         
-        Stream<Pair<CityRecord, Long>>
+        Stream<Pair<CityRecord, Long>> reducedGroupings = Stream.of(geoResult.getAreas(), geoResult.getTracks())
+                .flatMap((groupingList) -> groupingList.stream())
+                .flatMap((grouping) -> reduceGrouping(grouping, closestCityMapper));
         
+        Set<MapWaypoint> pointSet = geoResult.getMapWaypoints() == null ? Collections.emptySet() : geoResult.getMapWaypoints();
+        Stream<Pair<CityRecord, Long>> citiesForPoints = pointSet.stream().map(pt -> getClosestWithTime(closestCityMapper, pt));
+        
+        return Stream.concat(reducedGroupings, citiesForPoints)
+                .collect(Collectors.toList());
     }
 
     /**
