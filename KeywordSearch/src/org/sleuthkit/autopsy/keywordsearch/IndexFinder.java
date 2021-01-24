@@ -37,6 +37,7 @@ class IndexFinder {
     private static final String KWS_DATA_FOLDER_NAME = "data";
     private static final String INDEX_FOLDER_NAME = "index";
     private static final String CURRENT_SOLR_VERSION = "8";
+    private static final int CURRENT_SOLR_VERSION_INT = 8;
     private static final String CURRENT_SOLR_SCHEMA_VERSION = "2.3";
 
     static String getCurrentSolrVersion() {
@@ -79,7 +80,11 @@ class IndexFinder {
         Index bestCandidateIndex = null;
         double solrVerFound = 0.0;
         double schemaVerFound = 0.0;
-        for (Index index : allIndexes) {
+        for (Index index : allIndexes) {            
+            if (NumberUtils.toDouble(index.getSolrVersion()) > CURRENT_SOLR_VERSION_INT) {
+                // "legacy" Solr server cannot open "future" versions of Solr indexes
+                continue;
+            }
             // higher Solr version takes priority because it may negate index upgrade
             if (NumberUtils.toDouble(index.getSolrVersion()) >= solrVerFound) {
                 // if same solr version, pick the one with highest schema version
@@ -92,4 +97,23 @@ class IndexFinder {
         }
         return bestCandidateIndex;
     }
+
+    /**
+     * Checks if a the list of indexes contains an index from a "future" version
+     * of Solr. This happens when a "legacy" version of Autopsy attempts to open
+     * a Solr index created by Autopsy that uses later version of Solr.
+     *
+     * @param allIndexes List of Index objects
+     *
+     * @return True if later version of index is present, false othewise
+     */
+    static boolean isFutureIndexPresent(List<Index> allIndexes) {
+        for (Index index : allIndexes) {
+            if (NumberUtils.toDouble(index.getSolrVersion()) > CURRENT_SOLR_VERSION_INT) {
+                // "legacy" Solr server cannot open "future" versions of Solr indexes
+                return true;
+            }
+        }
+        return false;
+    }  
 }

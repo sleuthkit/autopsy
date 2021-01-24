@@ -321,6 +321,9 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
                 Index indexToUse = IndexFinder.identifyIndexToUse(indexes);
                 if (indexToUse == null) {
                     // unable to find index that can be used
+                    if (IndexFinder.isFutureIndexPresent(indexes)) {
+                        throw new AutopsyServiceException("The text index is from a 'future' version of Solr");
+                    }
                     throw new AutopsyServiceException("Unable to find index that can be used for this case");
                 }
 
