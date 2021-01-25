@@ -271,6 +271,8 @@ class TskDbDiff(object):
                                 attr_value_as_string = getAssociatedArtifactType(attribute_cursor, attr_value_as_string, isMultiUser)                            
                             patrn = re.compile("[\n\0\a\b\r\f]")
                             attr_value_as_string = re.sub(patrn, ' ', attr_value_as_string)
+                            if attr["source"] == "Keyword Search" and attr["display_name"] == "Keyword Preview":
+                                attr_value_as_string = "<Keyword Preview placeholder>"
                             database_log.write('<attribute source="' + attr["source"] + '" type="' + attr["display_name"] + '" value="' + attr_value_as_string + '" />')
                         except IOError as e:
                             print("IO error")
@@ -594,6 +596,7 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
         return newLine
     elif data_source_info_index:
         fields_list[1] = "{device id}"
+        fields_list[4] = "{dateTime}"
         newLine = ('INSERT INTO "data_source_info" VALUES(' + ','.join(fields_list) + ');')
         return newLine
     elif ingest_job_index:
