@@ -101,11 +101,11 @@ class ContactsDbIngestModule(DataSourceIngestModule):
         self.context = context
 
     # Where the analysis is done.
-    # The 'dataSource' object being passed in is of type org.sleuthkit.datamodel.Content.
+    # The 'data_source' object being passed in is of type org.sleuthkit.datamodel.Content.
     # See: http://www.sleuthkit.org/sleuthkit/docs/jni-docs/latest/interfaceorg_1_1sleuthkit_1_1datamodel_1_1_content.html
-    # 'progressBar' is of type org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress
+    # 'progress_bar' is of type org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress
     # See: http://sleuthkit.org/autopsy/docs/api-docs/latest/classorg_1_1sleuthkit_1_1autopsy_1_1ingest_1_1_data_source_ingest_module_progress.html
-    def process(self, dataSource, progressBar):
+    def process(self, data_source, progress_bar):
 
         # we don't know how much work there is yet
         progress_bar.switchToIndeterminate()
