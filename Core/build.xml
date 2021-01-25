@@ -112,16 +112,12 @@
         </copy>
         <copy file="${thirdparty.dir}/jdom/jdom-2.0.5.jar" todir="${ext.dir}" />
         <copy file="${thirdparty.dir}/jdom/jdom-2.0.5-contrib.jar" todir="${ext.dir}" />
-<<<<<<< HEAD
-        <copy file="${thirdparty.dir}/DatCon/3.6.9/DatCon.jar" todir="${ext.dir}" />
-=======
 		<copy file="${thirdparty.dir}/DatCon/3.6.9/DatCon.jar" todir="${ext.dir}" />
         <!--Copy YARA to release-->
         <copy todir="${basedir}/release/yara" >
             <fileset dir="${thirdparty.dir}/yara/bin"/>
         </copy>
         <copy file="${thirdparty.dir}/yara/bin/YaraJNIWrapper.jar" todir="${ext.dir}" />
->>>>>>> 8b103706ef3fdfa789227735426afb4c6f828a57
     </target>
     
     
@@ -142,13 +138,8 @@
               tofile="${ext.dir}/sleuthkit-${TSK_VERSION}.jar"/>
         <copy file="${env.TSK_HOME}/bindings/java/lib/sqlite-jdbc-3.25.2.jar"
               tofile="${ext.dir}/sqlite-jdbc-3.25.2.jar"/>
-<<<<<<< HEAD
-        <copy file="${env.TSK_HOME}/bindings/java/lib/postgresql-9.4.1211.jre7.jar" 
-              tofile="${ext.dir}/postgresql-9.4.1211.jre7.jar"/>
-=======
 		<copy file="${env.TSK_HOME}/bindings/java/lib/postgresql-42.2.18.jar" 
               tofile="${ext.dir}/postgresql-42.2.18.jar"/>
->>>>>>> 8b103706ef3fdfa789227735426afb4c6f828a57
         <copy file="${env.TSK_HOME}/bindings/java/lib/mchange-commons-java-0.2.9.jar"
               tofile="${ext.dir}/mchange-commons-java-0.2.9.jar"/>
         <copy file="${env.TSK_HOME}/bindings/java/lib/c3p0-0.9.5.jar"
