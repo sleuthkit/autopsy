@@ -28,6 +28,8 @@
         <dependency conf="core->default" org="org.jsoup" name="jsoup" rev="1.10.3"/>
 		
         <dependency conf="core->default" org="com.fasterxml.jackson.core" name="jackson-databind" rev="2.9.7"/>
+        <dependency org="com.fasterxml.jackson.dataformat" name="jackson-dataformat-csv" rev="2.9.7"/>
+
         <dependency conf="core->default" org="com.drewnoakes" name="metadata-extractor" rev="2.11.0"/>
 
         <dependency conf="core->default" org="com.google.cloud" name="google-cloud-translate" rev="1.70.0"/>
