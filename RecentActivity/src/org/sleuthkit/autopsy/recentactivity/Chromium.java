@@ -32,11 +32,15 @@ import com.google.gson.JsonSyntaxException;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import java.util.logging.Level;
-import java.util.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.ArrayList;
 import org.apache.commons.io.FilenameUtils;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -268,7 +272,7 @@ class Chromium extends Extract {
             dbFile.delete();
         }
 
-        if (!bbartifacts.isEmpty()) {
+        if (!bbartifacts.isEmpty() && !context.dataSourceIngestIsCancelled()) {
             postArtifacts(bbartifacts);
         }
     }
@@ -410,7 +414,10 @@ class Chromium extends Extract {
                                     this.getName(), bookmarkFile.getName()));
                 }
             }
-            postArtifacts(bbartifacts);
+            
+            if(!context.dataSourceIngestIsCancelled()) {
+                postArtifacts(bbartifacts);
+            }
             bbartifacts.clear();
             dbFile.delete();
         }
@@ -506,7 +513,7 @@ class Chromium extends Extract {
             dbFile.delete();
         }
 
-        if (!bbartifacts.isEmpty()) {
+        if (!bbartifacts.isEmpty() && !context.dataSourceIngestIsCancelled()) {
             postArtifacts(bbartifacts);
         }
     }
@@ -628,7 +635,7 @@ class Chromium extends Extract {
             dbFile.delete();
         }
 
-        if (!bbartifacts.isEmpty()) {
+        if (!bbartifacts.isEmpty() && !context.dataSourceIngestIsCancelled()) {
             postArtifacts(bbartifacts);
         }
     }
@@ -729,7 +736,7 @@ class Chromium extends Extract {
             dbFile.delete();
         }
 
-        if (!bbartifacts.isEmpty()) {
+        if (!bbartifacts.isEmpty() && !context.dataSourceIngestIsCancelled()) {
             postArtifacts(bbartifacts);
         }
     }
@@ -807,7 +814,7 @@ class Chromium extends Extract {
             dbFile.delete();
         }
 
-        if (!bbartifacts.isEmpty()) {
+        if (!bbartifacts.isEmpty() && !context.dataSourceIngestIsCancelled()) {
             postArtifacts(bbartifacts);
         }
     }

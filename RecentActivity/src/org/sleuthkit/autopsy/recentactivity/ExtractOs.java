@@ -71,6 +71,10 @@ class ExtractOs extends Extract {
         try {
             progressBar.progress(Bundle.ExtractOS_progressMessage());
             for (OS_TYPE value : OS_TYPE.values()) {
+                if (context.dataSourceIngestIsCancelled()) {
+                    return;
+                }   
+
                 checkForOSFiles(value);
             }
         } catch (TskCoreException ex) {

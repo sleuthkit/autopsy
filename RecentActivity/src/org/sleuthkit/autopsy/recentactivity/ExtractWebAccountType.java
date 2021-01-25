@@ -272,6 +272,7 @@ class ExtractWebAccountType extends Extract {
             }
 
             try {
+                List<BlackboardArtifact> artifactList = new ArrayList<>();
                 for (RoleKey key : roles.keySet()) {
                     if (context.dataSourceIngestIsCancelled()) {
                         return;
@@ -297,7 +298,11 @@ class ExtractWebAccountType extends Extract {
                             NbBundle.getMessage(this.getClass(),
                                     "ExtractWebAccountType.parentModuleName"), role.getUrl()));
 
-                    postArtifact(createArtifactWithAttributes(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_ACCOUNT_TYPE, file, bbattributes));
+                    artifactList.add(createArtifactWithAttributes(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_ACCOUNT_TYPE, file, bbattributes));
+                }
+                
+                if (!context.dataSourceIngestIsCancelled()) {
+                    postArtifacts(artifactList);
                 }
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Error creating web accounts", ex);

@@ -66,17 +66,27 @@ class DataSourceUsageAnalyzer extends Extract {
         this.dataSource = dataSource;
         try {
             progressBar.progress(Bundle.Progress_Message_Analyze_Usage());
-            createDataSourceUsageArtifacts();
+            createDataSourceUsageArtifacts(context);
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Failed to check if datasource contained a volume with operating system specific files", ex);
         }
 
     }
 
-    private void createDataSourceUsageArtifacts() throws TskCoreException {
+    private void createDataSourceUsageArtifacts(IngestJobContext context) throws TskCoreException {
 
         createOSInfoDataSourceUsageArtifacts();
+        
+        if (context.dataSourceIngestIsCancelled()) {
+            return;
+        }
+        
         createAndroidMediaCardArtifacts();
+        
+        if (context.dataSourceIngestIsCancelled()) {
+            return;
+        }
+        
         createDJIDroneDATArtitifacts();
     }
 

@@ -46,7 +46,6 @@ import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestServices;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.recentactivity.BinaryCookieReader.Cookie;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -124,6 +123,10 @@ final class ExtractSafari extends Extract {
             this.addErrorMessage(Bundle.ExtractSafari_Error_Getting_History());
             LOG.log(Level.SEVERE, "Exception thrown while processing history file.", ex); //NON-NLS
         }
+        
+        if (context.dataSourceIngestIsCancelled()) {
+            return;
+        }
 
         progressBar.progress(Bundle.Progress_Message_Safari_Bookmarks());
         try {
@@ -133,12 +136,20 @@ final class ExtractSafari extends Extract {
             LOG.log(Level.SEVERE, "Exception thrown while parsing Safari Bookmarks file.", ex); //NON-NLS
         }
         
+        if (context.dataSourceIngestIsCancelled()) {
+            return;
+        }
+        
         progressBar.progress(Bundle.Progress_Message_Safari_Downloads());
         try {
             processDownloadsPList(dataSource, context);
         } catch (IOException | TskCoreException | SAXException | PropertyListFormatException | ParseException | ParserConfigurationException ex) {
             this.addErrorMessage(Bundle.ExtractSafari_Error_Parsing_Bookmark());
             LOG.log(Level.SEVERE, "Exception thrown while parsing Safari Download.plist file.", ex); //NON-NLS
+        }
+        
+        if (context.dataSourceIngestIsCancelled()) {
+            return;
         }
 
         progressBar.progress(Bundle.Progress_Message_Safari_Cookies());
@@ -292,7 +303,9 @@ final class ExtractSafari extends Extract {
         }
 
         try {
-            postArtifacts(getHistoryArtifacts(historyFile, tempHistoryFile.toPath(), context));
+            if(!context.dataSourceIngestIsCancelled()) {
+                postArtifacts(getHistoryArtifacts(historyFile, tempHistoryFile.toPath(), context));
+            }
         } finally {
             tempHistoryFile.delete();
         }
@@ -319,7 +332,9 @@ final class ExtractSafari extends Extract {
         File tempFile = createTemporaryFile(context, file);
 
         try {
-            postArtifacts(getBookmarkArtifacts(file, tempFile, context));
+            if(!context.dataSourceIngestIsCancelled()) {
+                postArtifacts(getBookmarkArtifacts(file, tempFile, context));
+            }
         } finally {
             tempFile.delete();
         }
@@ -347,8 +362,9 @@ final class ExtractSafari extends Extract {
         File tempFile = createTemporaryFile(context, file);
 
         try {
-            postArtifacts(getDownloadArtifacts(dataSource, file, tempFile));
-            
+            if(!context.dataSourceIngestIsCancelled()) {
+                postArtifacts(getDownloadArtifacts(dataSource, file, tempFile));
+            }
         } finally {
             if (tempFile != null) {
                 tempFile.delete();
@@ -376,7 +392,9 @@ final class ExtractSafari extends Extract {
         try {
             tempFile = createTemporaryFile(context, file);
 
-            postArtifacts(getCookieArtifacts(file, tempFile, context));
+            if(!context.dataSourceIngestIsCancelled()) {
+                postArtifacts(getCookieArtifacts(file, tempFile, context));
+            }
            
         } finally {
             if (tempFile != null) {

@@ -48,9 +48,9 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
     private static final Logger logger = Logger.getLogger(RAImageIngestModule.class.getName());
     private final List<Extract> extractors = new ArrayList<>();
     private final List<Extract> browserExtractors = new ArrayList<>();
-    private IngestServices services = IngestServices.getInstance();
+    private final IngestServices services = IngestServices.getInstance();
     private IngestJobContext context;
-    private StringBuilder subCompleted = new StringBuilder();
+    private final StringBuilder subCompleted = new StringBuilder();
 
     RAImageIngestModule() {
     }

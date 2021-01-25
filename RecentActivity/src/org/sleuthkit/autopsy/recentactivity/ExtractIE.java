@@ -97,9 +97,17 @@ class ExtractIE extends Extract {
 
         progressBar.progress(Bundle.Progress_Message_IE_Bookmarks());
         this.getBookmark();
+        
+        if (context.dataSourceIngestIsCancelled()) {
+            return;
+        }
 
         progressBar.progress(Bundle.Progress_Message_IE_Cookies());
         this.getCookie();
+        
+        if (context.dataSourceIngestIsCancelled()) {
+            return;
+        }
 
         progressBar.progress(Bundle.Progress_Message_IE_History());
         this.getHistory();
@@ -166,7 +174,9 @@ class ExtractIE extends Extract {
             }
         }
 
-        postArtifacts(bbartifacts);
+        if(!context.dataSourceIngestIsCancelled()) {
+            postArtifacts(bbartifacts);
+        }
     }
 
     private String getURLFromIEBookmarkFile(AbstractFile fav) {
@@ -276,7 +286,9 @@ class ExtractIE extends Extract {
             }
         }
 
-        postArtifacts(bbartifacts);
+        if(!context.dataSourceIngestIsCancelled()) {
+            postArtifacts(bbartifacts);
+        }
     }
 
     /**
@@ -376,7 +388,9 @@ class ExtractIE extends Extract {
             }
         }
 
-        postArtifacts(bbartifacts);
+        if(!context.dataSourceIngestIsCancelled()) {
+            postArtifacts(bbartifacts);
+        }
     }
 
     /**

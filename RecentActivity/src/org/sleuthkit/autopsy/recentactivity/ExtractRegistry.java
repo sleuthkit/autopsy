@@ -292,6 +292,10 @@ class ExtractRegistry extends Extract {
         }
 
         for (AbstractFile regFile : allRegistryFiles) {
+            if (context.dataSourceIngestIsCancelled()) {
+                return;
+            }
+            
             String regFileName = regFile.getName();
             long regFileId = regFile.getId();
             String regFileNameLocal = RAImageIngestModule.getRATempPath(currentCase, "reg") + File.separator + regFileName;
@@ -339,6 +343,10 @@ class ExtractRegistry extends Extract {
                         NbBundle.getMessage(this.getClass(), "ExtractRegistry.analyzeRegFiles.failedParsingResults",
                                 this.getName(), regFileName));
             }
+            
+            if (context.dataSourceIngestIsCancelled()) {
+                return;
+            }
 
             // create a report for the full output
             if (!regOutputFiles.fullPlugins.isEmpty()) {
@@ -360,6 +368,11 @@ class ExtractRegistry extends Extract {
                             NbBundle.getMessage(this.getClass(), "ExtractRegistry.analyzeRegFiles.failedParsingResults",
                                     this.getName(), regFileName));
                 }
+                
+                if (context.dataSourceIngestIsCancelled()) {
+                    return;
+                }
+                
                 try {
                     Report report = currentCase.addReport(regOutputFiles.fullPlugins,
                             NbBundle.getMessage(this.getClass(), "ExtractRegistry.parentModuleName.noSpace"),
@@ -948,8 +961,10 @@ class ExtractRegistry extends Extract {
                 }
             } catch (IOException ex) {
             }
-
-            postArtifacts(newArtifacts);
+            
+            if (!context.dataSourceIngestIsCancelled()) {
+                postArtifacts(newArtifacts);
+            }
         }
         return false;
     }
@@ -1031,7 +1046,8 @@ class ExtractRegistry extends Extract {
                 }
             }
         }
-        if (!bbartifacts.isEmpty()) {
+        
+        if (!bbartifacts.isEmpty() && !context.dataSourceIngestIsCancelled()) {
             postArtifacts(bbartifacts);
         }
     }
@@ -1144,7 +1160,9 @@ class ExtractRegistry extends Extract {
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Error updating TSK_OS_ACCOUNT artifacts to include newly parsed data.", ex); //NON-NLS
         } finally {
-            postArtifacts(newArtifacts);
+            if (!context.dataSourceIngestIsCancelled()) {
+                postArtifacts(newArtifacts);
+            }
         }
         return false;
     }
@@ -1448,8 +1466,8 @@ class ExtractRegistry extends Extract {
             }
             line = reader.readLine();
         }
-        if (!bbartifacts.isEmpty()) {
-            postArtifacts(bbartifacts);
+        if (!bbartifacts.isEmpty() && !context.dataSourceIngestIsCancelled()) {
+                postArtifacts(bbartifacts);
         }
     }
 
@@ -1517,7 +1535,7 @@ class ExtractRegistry extends Extract {
                 line = line.trim();
             }
         }
-        if (!bbartifacts.isEmpty()) {
+        if (!bbartifacts.isEmpty() && !context.dataSourceIngestIsCancelled()) {
             postArtifacts(bbartifacts);
         }
     }
@@ -1568,7 +1586,7 @@ class ExtractRegistry extends Extract {
                 line = line.trim();
             }
         }
-        if (!bbartifacts.isEmpty()) {
+        if (!bbartifacts.isEmpty()&& !context.dataSourceIngestIsCancelled()) {
             postArtifacts(bbartifacts);
         }
     }
@@ -1616,7 +1634,7 @@ class ExtractRegistry extends Extract {
                 line = line.trim();
             }
         }
-        if (!bbartifacts.isEmpty()) {
+        if (!bbartifacts.isEmpty() && !context.dataSourceIngestIsCancelled()) {
             postArtifacts(bbartifacts);
         }
     }
@@ -1665,7 +1683,7 @@ class ExtractRegistry extends Extract {
                 line = line.trim();
             }
         }
-        if (!bbartifacts.isEmpty()) {
+        if (!bbartifacts.isEmpty() && !context.dataSourceIngestIsCancelled()) {
             postArtifacts(bbartifacts);
         }
     }
@@ -1706,7 +1724,7 @@ class ExtractRegistry extends Extract {
                 line = line.trim();
             }
         }
-        if (!bbartifacts.isEmpty()) {
+        if (!bbartifacts.isEmpty() && !context.dataSourceIngestIsCancelled()) {
             postArtifacts(bbartifacts);
         }
     }
@@ -1755,7 +1773,7 @@ class ExtractRegistry extends Extract {
             line = reader.readLine();
             line = line.trim();
         }
-        if (!bbartifacts.isEmpty()) {
+        if (!bbartifacts.isEmpty() && !context.dataSourceIngestIsCancelled()) {
             postArtifacts(bbartifacts);
         }
     }
@@ -1818,7 +1836,7 @@ class ExtractRegistry extends Extract {
                 line = line.trim();
             }
         }
-        if (!bbartifacts.isEmpty()) {
+        if (!bbartifacts.isEmpty() && !context.dataSourceIngestIsCancelled()) {
             postArtifacts(bbartifacts);
         }
     }
@@ -1950,7 +1968,9 @@ class ExtractRegistry extends Extract {
                 artifacts.add(artifact);
             }
         } finally {
-            postArtifacts(artifacts);
+            if(!context.dataSourceIngestIsCancelled()) {
+                postArtifacts(artifacts);
+            }
         }
     }
 
