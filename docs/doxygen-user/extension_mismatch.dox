@@ -1,5 +1,8 @@
 /*! \page extension_mismatch_detector_page Extension Mismatch Detector Module
 
+[TOC]
+
+
 What Does It Do
 ========
 
@@ -13,6 +16,10 @@ One can add and remove MIME types in the "Tools", "Options", "File Extension Mis
 <br>
 \image html extension-mismatch-detected-configuration.PNG
 <br>
+
+If you'd like to contribute your changes back to the community, then you'll need to upload your updated %APPDATA%\\autopsy\\dev\\config\\mismatch_config.xml file by either:
+- Make a fork of the Github Autopsy repository, copy the new file into the src\\org\\sleuthkit\\autopsy\\fileextmismatch folder and submit a pull request
+- Attach the entire mismatch_config.xml file to a github issue.
 
 Using the Module
 ======

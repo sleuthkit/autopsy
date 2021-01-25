@@ -42,9 +42,9 @@ public final class AutopsyEventPublisher {
     private static final Logger logger = Logger.getLogger(AutopsyEventPublisher.class.getName());
     private static final int MAX_REMOTE_EVENT_PUBLISH_TRIES = 1;
     private final LocalEventPublisher localPublisher; // LocalEventPublisher is thread-safe
-    @GuardedBy("this)")
+    @GuardedBy("this")
     private RemoteEventPublisher remotePublisher;
-    @GuardedBy("this)")
+    @GuardedBy("this")
     private String currentChannelName;
 
     /**

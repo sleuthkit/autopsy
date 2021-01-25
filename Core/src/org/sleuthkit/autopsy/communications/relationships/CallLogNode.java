@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.communications.relationships;
 
 import java.util.logging.Level;
+import org.apache.commons.lang.StringUtils;
 import org.openide.nodes.Sheet;
 import org.sleuthkit.autopsy.communications.Utils;
 import static org.sleuthkit.autopsy.communications.relationships.RelationshipsNodeUtilities.getAttributeDisplayString;
@@ -67,11 +68,6 @@ final class CallLogNode extends BlackboardArtifactNode {
             return sheet;
         }
         
-        String phoneNumber = getAttributeDisplayString(artifact, TSK_PHONE_NUMBER_FROM);
-        if(phoneNumber == null || phoneNumber.isEmpty()) {
-            phoneNumber = getAttributeDisplayString(artifact, TSK_PHONE_NUMBER_TO);
-        }
-        
         long duration = -1;
         try{
             duration = getCallDuration(artifact);
@@ -81,7 +77,16 @@ final class CallLogNode extends BlackboardArtifactNode {
 
         sheetSet.put(createNode(TSK_DATETIME_START, artifact));
         sheetSet.put(createNode(TSK_DIRECTION, artifact));
-        sheetSet.put(new NodeProperty<>(TSK_PHONE_NUMBER.getLabel(), TSK_PHONE_NUMBER.getDisplayName(), "", phoneNumber));
+        
+        String phoneNumber = getPhoneNumber(artifact);
+        Account account = null;
+        try {
+            account = artifact.getSleuthkitCase().getCommunicationsManager().getAccount(Account.Type.PHONE, phoneNumber);
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Failed to get instance of communications manager", ex);
+        }
+        
+        sheetSet.put(new AccountNodeProperty<>(TSK_PHONE_NUMBER.getLabel(), TSK_PHONE_NUMBER.getDisplayName(), phoneNumber, account));
         if(duration != -1) {
             sheetSet.put(new NodeProperty<>("duration", "Duration", "", Long.toString(duration)));
         }
@@ -104,6 +109,59 @@ final class CallLogNode extends BlackboardArtifactNode {
         return endAttribute.getValueLong() - startAttribute.getValueLong();
     }
     
+    /**
+     * Returns the phone number to display in the To/From column. The number is
+     * picked from one of the 3 possible phone number attributes, based on the
+     * direction of the call.
+     *
+     * @param artifact Call log artifact.
+     *
+     * @return Phone number to display.
+     */
+    private String getPhoneNumber(BlackboardArtifact artifact) {
+        String direction = getAttributeDisplayString(artifact, TSK_DIRECTION);
+
+        String phoneNumberToReturn;
+        String fromPhoneNumber = getAttributeDisplayString(artifact, TSK_PHONE_NUMBER_FROM);
+        String toPhoneNumber = getAttributeDisplayString(artifact, TSK_PHONE_NUMBER_TO);
+        String phoneNumber = getAttributeDisplayString(artifact, TSK_PHONE_NUMBER);
+        switch (direction.toLowerCase()) {
+            case "incoming": // NON-NLS 
+                phoneNumberToReturn = getFirstNonBlank(fromPhoneNumber, phoneNumber, toPhoneNumber);
+                break;
+            case "outgoing": // NON-NLS
+                phoneNumberToReturn = getFirstNonBlank(toPhoneNumber, phoneNumber, fromPhoneNumber);
+                break;
+            default:
+                phoneNumberToReturn = getFirstNonBlank(toPhoneNumber, fromPhoneNumber, phoneNumber );
+                break;
+        }
+
+        return phoneNumberToReturn;
+    }
+    
+    /**
+     * Checks the given string arguments in order and returns the first non blank string.
+     * Returns a blank string if all the input strings are blank.
+     * 
+     * @param string1 First string to check
+     * @param string2 Second string to check
+     * @param string3 Third string to check
+     * 
+     * @retunr first non blank string if there is one, blank string otherwise.
+     * 
+     */
+    private String getFirstNonBlank(String string1, String string2, String string3 ) {
+
+        if (!StringUtils.isBlank(string1)) {
+            return string1;
+        } else if (!StringUtils.isBlank(string2)) {
+            return string2;
+        } else if (!StringUtils.isBlank(string3)) {
+            return string3;
+        }
+        return "";
+    }
      /**
      * Circumvent DataResultFilterNode's slightly odd delegation to
      * BlackboardArtifactNode.getSourceName().

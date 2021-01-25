@@ -16,14 +16,14 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Component id="jScrollPane" alignment="0" pref="555" max="32767" attributes="0"/>
+          <Component id="jScrollPane" alignment="0" pref="1250" max="32767" attributes="0"/>
       </Group>
     </DimensionLayout>
     <DimensionLayout dim="1">
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="jScrollPane" pref="537" max="32767" attributes="0"/>
+              <Component id="jScrollPane" pref="695" max="32767" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
       </Group>
@@ -47,11 +47,12 @@
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="tbOops" max="32767" attributes="0"/>
                           </Group>
-                          <Component id="pnSolrSettings" alignment="0" max="32767" attributes="0"/>
                           <Component id="pnDatabaseSettings" alignment="0" max="32767" attributes="0"/>
-                          <Component id="pnMessagingSettings" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="pnMessagingSettings" alignment="0" max="32767" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
+                      <Component id="pnSolrSettings" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace min="-2" pref="39" max="-2" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -63,12 +64,15 @@
                           <Component id="cbEnableMultiUser" alignment="2" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="pnDatabaseSettings" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Component id="pnSolrSettings" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Component id="pnMessagingSettings" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="39" max="32767" attributes="0"/>
+                      <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                          <Group type="102" attributes="0">
+                              <Component id="pnDatabaseSettings" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace type="separate" max="-2" attributes="0"/>
+                              <Component id="pnMessagingSettings" min="-2" max="-2" attributes="0"/>
+                          </Group>
+                          <Component id="pnSolrSettings" max="32767" attributes="0"/>
+                      </Group>
+                      <EmptySpace pref="234" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -92,7 +96,7 @@
                               <Component id="tbDbHostname" max="32767" attributes="0"/>
                               <Group type="102" attributes="0">
                                   <Component id="lbDatabaseSettings" min="-2" max="-2" attributes="0"/>
-                                  <EmptySpace max="32767" attributes="0"/>
+                                  <EmptySpace pref="231" max="32767" attributes="0"/>
                                   <Component id="bnTestDatabase" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace type="separate" max="-2" attributes="0"/>
                                   <Component id="lbTestDatabase" min="-2" pref="16" max="-2" attributes="0"/>
@@ -116,7 +120,7 @@
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Component id="bnTestDatabase" alignment="0" min="-2" max="-2" attributes="0"/>
                               <Component id="lbTestDatabase" alignment="0" min="-2" pref="23" max="-2" attributes="0"/>
-                              <Component id="lbDatabaseSettings" min="-2" max="-2" attributes="0"/>
+                              <Component id="lbDatabaseSettings" alignment="1" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace max="32767" attributes="0"/>
                           <Component id="tbDbHostname" min="-2" max="-2" attributes="0"/>
@@ -138,7 +142,7 @@
                   <Properties>
                     <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
                       <FontInfo relative="true">
-                        <Font bold="false" component="tbDbHostname" property="font" relativeSize="false" size="12"/>
+                        <Font component="tbDbHostname" property="font" relativeSize="true" size="1"/>
                       </FontInfo>
                     </Property>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
@@ -153,7 +157,7 @@
                   <Properties>
                     <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
                       <FontInfo relative="true">
-                        <Font bold="false" component="tbDbPort" property="font" relativeSize="false" size="12"/>
+                        <Font component="tbDbPort" property="font" relativeSize="true" size="1"/>
                       </FontInfo>
                     </Property>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
@@ -168,7 +172,7 @@
                   <Properties>
                     <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
                       <FontInfo relative="true">
-                        <Font bold="false" component="tbDbUsername" property="font" relativeSize="false" size="12"/>
+                        <Font component="tbDbUsername" property="font" relativeSize="true" size="1"/>
                       </FontInfo>
                     </Property>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
@@ -183,7 +187,7 @@
                   <Properties>
                     <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
                       <FontInfo relative="true">
-                        <Font bold="false" component="tbDbPassword" property="font" relativeSize="false" size="12"/>
+                        <Font component="tbDbPassword" property="font" relativeSize="true" size="1"/>
                       </FontInfo>
                     </Property>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
@@ -198,7 +202,7 @@
                   <Properties>
                     <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
                       <FontInfo relative="true">
-                        <Font bold="false" component="lbDatabaseSettings" property="font" relativeSize="false" size="12"/>
+                        <Font component="lbDatabaseSettings" property="font" relativeSize="true" size="1"/>
                       </FontInfo>
                     </Property>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
@@ -209,11 +213,6 @@
                 </Component>
                 <Component class="javax.swing.JButton" name="bnTestDatabase">
                   <Properties>
-                    <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-                      <FontInfo relative="true">
-                        <Font bold="false" component="bnTestDatabase" property="font" relativeSize="false" size="11"/>
-                      </FontInfo>
-                    </Property>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                       <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="MultiUserSettingsPanel.bnTestDatabase.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                     </Property>
@@ -257,17 +256,39 @@
                       <Group type="102" attributes="0">
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
-                              <Component id="tbSolrHostname" max="32767" attributes="0"/>
-                              <Group type="102" attributes="0">
-                                  <Component id="lbSolrSettings" min="-2" max="-2" attributes="0"/>
-                                  <EmptySpace max="32767" attributes="0"/>
-                                  <Component id="bnTestSolr" min="-2" max="-2" attributes="0"/>
-                                  <EmptySpace type="separate" max="-2" attributes="0"/>
-                                  <Component id="lbTestSolr" min="-2" pref="16" max="-2" attributes="0"/>
-                              </Group>
-                              <Component id="tbSolrPort" alignment="0" max="32767" attributes="0"/>
                               <Group type="102" alignment="0" attributes="0">
-                                  <Component id="lbTestSolrWarning" min="-2" max="-2" attributes="0"/>
+                                  <Component id="lbSolr4Settings" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace max="32767" attributes="0"/>
+                                  <Component id="bnTestSolr4" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace type="separate" max="-2" attributes="0"/>
+                                  <Component id="lbTestSolr4" min="-2" pref="16" max="-2" attributes="0"/>
+                              </Group>
+                              <Component id="tbSolr8Hostname" max="32767" attributes="0"/>
+                              <Component id="tbSolr8Port" alignment="0" max="32767" attributes="0"/>
+                              <Component id="tbSolr4Hostname" alignment="0" max="32767" attributes="0"/>
+                              <Component id="tbSolr4Port" alignment="0" max="32767" attributes="0"/>
+                              <Component id="tbZkHostname" alignment="0" max="32767" attributes="0"/>
+                              <Component id="tbZkPort" alignment="0" max="32767" attributes="0"/>
+                              <Group type="102" alignment="0" attributes="0">
+                                  <Component id="lbZkSettings" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace pref="164" max="32767" attributes="0"/>
+                                  <Component id="bnTestZK" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace type="separate" max="-2" attributes="0"/>
+                                  <Component id="lbTestZK" min="-2" pref="16" max="-2" attributes="0"/>
+                              </Group>
+                              <Group type="102" alignment="0" attributes="0">
+                                  <Component id="lbSolr8Settings" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace max="32767" attributes="0"/>
+                                  <Component id="bnTestSolr8" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace type="separate" max="-2" attributes="0"/>
+                                  <Component id="lbTestSolr8" min="-2" pref="16" max="-2" attributes="0"/>
+                              </Group>
+                              <Group type="102" attributes="0">
+                                  <Group type="103" groupAlignment="0" attributes="0">
+                                      <Component id="lbSolrNote1" alignment="0" min="-2" max="-2" attributes="0"/>
+                                      <Component id="lbSolrNote2" alignment="0" min="-2" max="-2" attributes="0"/>
+                                      <Component id="lbWarning" min="-2" max="-2" attributes="0"/>
+                                  </Group>
                                   <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                               </Group>
                           </Group>
@@ -278,93 +299,262 @@
                 <DimensionLayout dim="1">
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" alignment="0" attributes="0">
+                          <EmptySpace min="-2" pref="8" max="-2" attributes="0"/>
+                          <Component id="lbSolrNote1" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
-                          <Group type="103" groupAlignment="0" attributes="0">
-                              <Group type="103" groupAlignment="0" attributes="0">
-                                  <Component id="bnTestSolr" alignment="1" min="-2" max="-2" attributes="0"/>
-                                  <Component id="lbSolrSettings" min="-2" max="-2" attributes="0"/>
+                          <Group type="103" groupAlignment="1" attributes="0">
+                              <Group type="102" attributes="0">
+                                  <Component id="lbSolrNote2" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace min="-2" pref="28" max="-2" attributes="0"/>
+                                  <Component id="lbSolr8Settings" min="-2" max="-2" attributes="0"/>
                               </Group>
-                              <Component id="lbTestSolr" alignment="1" min="-2" pref="23" max="-2" attributes="0"/>
+                              <Group type="102" alignment="1" attributes="0">
+                                  <Component id="lbTestSolr8" min="-2" pref="23" max="-2" attributes="0"/>
+                                  <EmptySpace min="-2" pref="5" max="-2" attributes="0"/>
+                              </Group>
+                              <Component id="bnTestSolr8" alignment="1" min="-2" max="-2" attributes="0"/>
                           </Group>
+                          <EmptySpace min="-2" pref="6" max="-2" attributes="0"/>
+                          <Component id="tbSolr8Hostname" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
-                          <Component id="tbSolrHostname" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace max="32767" attributes="0"/>
-                          <Component id="tbSolrPort" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace max="-2" attributes="0"/>
-                          <Component id="lbTestSolrWarning" min="-2" pref="16" max="-2" attributes="0"/>
+                          <Component id="tbSolr8Port" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace type="separate" max="-2" attributes="0"/>
+                          <Group type="103" groupAlignment="0" attributes="0">
+                              <Group type="102" attributes="0">
+                                  <Group type="103" groupAlignment="3" attributes="0">
+                                      <Component id="lbSolr4Settings" alignment="3" min="-2" pref="21" max="-2" attributes="0"/>
+                                      <Component id="bnTestSolr4" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  </Group>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="tbSolr4Hostname" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="tbSolr4Port" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                                  <Group type="103" groupAlignment="0" attributes="0">
+                                      <Group type="103" groupAlignment="3" attributes="0">
+                                          <Component id="lbZkSettings" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          <Component id="bnTestZK" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      </Group>
+                                      <Component id="lbTestZK" alignment="1" min="-2" pref="23" max="-2" attributes="0"/>
+                                  </Group>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="tbZkHostname" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="tbZkPort" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace max="32767" attributes="0"/>
+                                  <Component id="lbWarning" min="-2" pref="16" max="-2" attributes="0"/>
+                              </Group>
+                              <Group type="102" attributes="0">
+                                  <Component id="lbTestSolr4" min="-2" pref="23" max="-2" attributes="0"/>
+                                  <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                              </Group>
+                          </Group>
                           <EmptySpace max="-2" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
               </Layout>
               <SubComponents>
-                <Component class="javax.swing.JLabel" name="lbSolrSettings">
+                <Component class="javax.swing.JLabel" name="lbSolr8Settings">
                   <Properties>
                     <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
                       <FontInfo relative="true">
-                        <Font bold="false" component="lbSolrSettings" property="font" relativeSize="false" size="12"/>
+                        <Font component="lbSolr8Settings" property="font" relativeSize="true" size="1"/>
                       </FontInfo>
                     </Property>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                      <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="MultiUserSettingsPanel.lbSolrSettings.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                      <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="MultiUserSettingsPanel.lbSolr8Settings.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                     </Property>
                   </Properties>
                 </Component>
-                <Component class="javax.swing.JTextField" name="tbSolrHostname">
+                <Component class="javax.swing.JTextField" name="tbSolr8Hostname">
                   <Properties>
                     <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
                       <FontInfo relative="true">
-                        <Font bold="false" component="tbSolrHostname" property="font" relativeSize="false" size="12"/>
+                        <Font component="tbSolr8Hostname" property="font" relativeSize="true" size="1"/>
                       </FontInfo>
                     </Property>
                     <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                      <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="MultiUserSettingsPanel.tbSolrHostname.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                      <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="MultiUserSettingsPanel.tbSolr8Hostname.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                     </Property>
                   </Properties>
                 </Component>
-                <Component class="javax.swing.JTextField" name="tbSolrPort">
+                <Component class="javax.swing.JTextField" name="tbSolr8Port">
                   <Properties>
                     <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
                       <FontInfo relative="true">
-                        <Font bold="false" component="tbSolrPort" property="font" relativeSize="false" size="12"/>
+                        <Font component="tbSolr8Port" property="font" relativeSize="true" size="1"/>
                       </FontInfo>
                     </Property>
                     <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                      <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="MultiUserSettingsPanel.tbSolrPort.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                      <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="MultiUserSettingsPanel.tbSolr8Port.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                     </Property>
                   </Properties>
                 </Component>
-                <Component class="javax.swing.JButton" name="bnTestSolr">
+                <Component class="javax.swing.JButton" name="bnTestSolr8">
                   <Properties>
-                    <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-                      <FontInfo relative="true">
-                        <Font bold="false" component="bnTestSolr" property="font" relativeSize="false" size="11"/>
-                      </FontInfo>
-                    </Property>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                      <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="MultiUserSettingsPanel.bnTestSolr.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                      <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="MultiUserSettingsPanel.bnTestSolr8.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                     </Property>
                   </Properties>
                   <Events>
-                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="bnTestSolrActionPerformed"/>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="bnTestSolr8ActionPerformed"/>
                   </Events>
                 </Component>
-                <Component class="javax.swing.JLabel" name="lbTestSolr">
+                <Component class="javax.swing.JLabel" name="lbTestSolr8">
                   <Properties>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                      <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="MultiUserSettingsPanel.lbTestSolr.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                      <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="MultiUserSettingsPanel.lbTestSolr8.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                     </Property>
                   </Properties>
                 </Component>
-                <Component class="javax.swing.JLabel" name="lbTestSolrWarning">
+                <Component class="javax.swing.JLabel" name="lbWarning">
                   <Properties>
                     <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
                       <Color blue="0" green="0" red="ff" type="rgb"/>
                     </Property>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                      <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="MultiUserSettingsPanel.lbTestSolrWarning.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                      <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="MultiUserSettingsPanel.lbWarning.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                     </Property>
                   </Properties>
+                </Component>
+                <Component class="javax.swing.JTextField" name="tbSolr4Hostname">
+                  <Properties>
+                    <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                      <FontInfo relative="true">
+                        <Font component="tbSolr4Hostname" property="font" relativeSize="true" size="1"/>
+                      </FontInfo>
+                    </Property>
+                    <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+                      <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="MultiUserSettingsPanel.tbSolr4Hostname.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                    </Property>
+                  </Properties>
+                </Component>
+                <Component class="javax.swing.JTextField" name="tbSolr4Port">
+                  <Properties>
+                    <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                      <FontInfo relative="true">
+                        <Font component="tbSolr4Port" property="font" relativeSize="true" size="1"/>
+                      </FontInfo>
+                    </Property>
+                    <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+                      <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="MultiUserSettingsPanel.tbSolr4Port.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                    </Property>
+                  </Properties>
+                  <AccessibilityProperties>
+                    <Property name="AccessibleContext.accessibleDescription" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+                      <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="MultiUserSettingsPanel.tbSolr4Port.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                    </Property>
+                  </AccessibilityProperties>
+                </Component>
+                <Component class="javax.swing.JLabel" name="lbSolr4Settings">
+                  <Properties>
+                    <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                      <FontInfo relative="true">
+                        <Font component="lbSolr4Settings" property="font" relativeSize="true" size="1"/>
+                      </FontInfo>
+                    </Property>
+                    <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+                      <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="MultiUserSettingsPanel.lbSolr4Settings.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                    </Property>
+                  </Properties>
+                </Component>
+                <Component class="javax.swing.JLabel" name="lbZkSettings">
+                  <Properties>
+                    <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                      <FontInfo relative="true">
+                        <Font component="lbZkSettings" property="font" relativeSize="true" size="1"/>
+                      </FontInfo>
+                    </Property>
+                    <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+                      <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="MultiUserSettingsPanel.lbZkSettings.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                    </Property>
+                  </Properties>
+                </Component>
+                <Component class="javax.swing.JTextField" name="tbZkHostname">
+                  <Properties>
+                    <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                      <FontInfo relative="true">
+                        <Font component="tbZkHostname" property="font" relativeSize="true" size="1"/>
+                      </FontInfo>
+                    </Property>
+                    <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+                      <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="MultiUserSettingsPanel.tbZkHostname.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                    </Property>
+                  </Properties>
+                </Component>
+                <Component class="javax.swing.JTextField" name="tbZkPort">
+                  <Properties>
+                    <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                      <FontInfo relative="true">
+                        <Font component="tbZkPort" property="font" relativeSize="true" size="1"/>
+                      </FontInfo>
+                    </Property>
+                    <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+                      <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="MultiUserSettingsPanel.tbZkPort.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                    </Property>
+                  </Properties>
+                </Component>
+                <Component class="javax.swing.JLabel" name="lbSolrNote1">
+                  <Properties>
+                    <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                      <FontInfo relative="true">
+                        <Font component="lbSolrNote1" property="font" relativeSize="true" size="1"/>
+                      </FontInfo>
+                    </Property>
+                    <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                      <Image iconType="3" name="/org/sleuthkit/autopsy/corecomponents/warning16.png"/>
+                    </Property>
+                    <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+                      <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="MultiUserSettingsPanel.lbSolrNote1.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                    </Property>
+                  </Properties>
+                </Component>
+                <Component class="javax.swing.JLabel" name="lbSolrNote2">
+                  <Properties>
+                    <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                      <FontInfo relative="true">
+                        <Font component="lbSolrNote2" property="font" relativeSize="true" size="1"/>
+                      </FontInfo>
+                    </Property>
+                    <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+                      <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="MultiUserSettingsPanel.lbSolrNote2.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                    </Property>
+                  </Properties>
+                </Component>
+                <Component class="javax.swing.JButton" name="bnTestSolr4">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+                      <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="MultiUserSettingsPanel.bnTestSolr4.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                    </Property>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="bnTestSolr4ActionPerformed"/>
+                  </Events>
+                </Component>
+                <Component class="javax.swing.JLabel" name="lbTestSolr4">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+                      <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="MultiUserSettingsPanel.lbTestSolr4.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                    </Property>
+                  </Properties>
+                </Component>
+                <Component class="javax.swing.JLabel" name="lbTestZK">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+                      <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="MultiUserSettingsPanel.lbTestZK.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                    </Property>
+                  </Properties>
+                </Component>
+                <Component class="javax.swing.JButton" name="bnTestZK">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+                      <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="MultiUserSettingsPanel.bnTestZK.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                    </Property>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="bnTestZKActionPerformed"/>
+                  </Events>
                 </Component>
               </SubComponents>
             </Container>
@@ -386,7 +576,7 @@
                               <Component id="tbMsgHostname" max="32767" attributes="0"/>
                               <Group type="102" attributes="0">
                                   <Component id="lbMessageServiceSettings" min="-2" max="-2" attributes="0"/>
-                                  <EmptySpace pref="229" max="32767" attributes="0"/>
+                                  <EmptySpace max="32767" attributes="0"/>
                                   <Component id="bnTestMessageService" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace type="separate" max="-2" attributes="0"/>
                                   <Component id="lbTestMessageService" min="-2" pref="16" max="-2" attributes="0"/>
@@ -408,9 +598,9 @@
                       <Group type="102" alignment="0" attributes="0">
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="1" attributes="0">
-                              <Group type="103" groupAlignment="0" attributes="0">
-                                  <Component id="bnTestMessageService" alignment="1" min="-2" max="-2" attributes="0"/>
-                                  <Component id="lbMessageServiceSettings" min="-2" max="-2" attributes="0"/>
+                              <Group type="103" alignment="1" groupAlignment="3" attributes="0">
+                                  <Component id="bnTestMessageService" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="lbMessageServiceSettings" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <Component id="lbTestMessageService" min="-2" pref="23" max="-2" attributes="0"/>
                           </Group>
@@ -434,7 +624,7 @@
                   <Properties>
                     <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
                       <FontInfo relative="true">
-                        <Font bold="false" component="lbMessageServiceSettings" property="font" relativeSize="false" size="12"/>
+                        <Font component="lbMessageServiceSettings" property="font" relativeSize="false" size="12"/>
                       </FontInfo>
                     </Property>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
@@ -446,7 +636,7 @@
                   <Properties>
                     <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
                       <FontInfo relative="true">
-                        <Font bold="false" component="tbMsgHostname" property="font" relativeSize="false" size="12"/>
+                        <Font component="tbMsgHostname" property="font" relativeSize="true" size="1"/>
                       </FontInfo>
                     </Property>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
@@ -461,7 +651,7 @@
                   <Properties>
                     <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
                       <FontInfo relative="true">
-                        <Font bold="false" component="tbMsgUsername" property="font" relativeSize="false" size="12"/>
+                        <Font component="tbMsgUsername" property="font" relativeSize="true" size="1"/>
                       </FontInfo>
                     </Property>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
@@ -476,7 +666,7 @@
                   <Properties>
                     <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
                       <FontInfo relative="true">
-                        <Font bold="false" component="tbMsgPort" property="font" relativeSize="false" size="12"/>
+                        <Font component="tbMsgPort" property="font" relativeSize="true" size="1"/>
                       </FontInfo>
                     </Property>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
@@ -491,7 +681,7 @@
                   <Properties>
                     <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
                       <FontInfo relative="true">
-                        <Font bold="false" component="tbMsgPassword" property="font" relativeSize="false" size="12"/>
+                        <Font component="tbMsgPassword" property="font" relativeSize="true" size="1"/>
                       </FontInfo>
                     </Property>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
@@ -504,11 +694,6 @@
                 </Component>
                 <Component class="javax.swing.JButton" name="bnTestMessageService">
                   <Properties>
-                    <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-                      <FontInfo relative="true">
-                        <Font bold="false" component="bnTestMessageService" property="font" relativeSize="false" size="11"/>
-                      </FontInfo>
-                    </Property>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                       <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="MultiUserSettingsPanel.bnTestMessageService.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                     </Property>
@@ -538,11 +723,6 @@
             </Container>
             <Component class="javax.swing.JCheckBox" name="cbEnableMultiUser">
               <Properties>
-                <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-                  <FontInfo relative="true">
-                    <Font bold="false" component="cbEnableMultiUser" property="font" relativeSize="false" size="11"/>
-                  </FontInfo>
-                </Property>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                   <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="MultiUserSettingsPanel.cbEnableMultiUser.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
@@ -556,7 +736,7 @@
                 <Property name="editable" type="boolean" value="false"/>
                 <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
                   <FontInfo relative="true">
-                    <Font bold="true" component="tbOops" property="font" relativeSize="false" size="12"/>
+                    <Font bold="true" component="tbOops" property="font" relativeSize="true" size="1"/>
                   </FontInfo>
                 </Property>
                 <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">

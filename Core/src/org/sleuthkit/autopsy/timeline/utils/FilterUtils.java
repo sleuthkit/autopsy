@@ -54,12 +54,10 @@ public final class FilterUtils {
         "FilterUtils.otherFilter.displayName=Other"})
     public static FileTypesFilter createDefaultFileTypesFilter() {
         FileTypesFilter fileTypesFilter = new FileTypesFilter();
-
         fileTypesFilter.addSubFilter(new FileTypeFilter(MEDIA.getDisplayName(), MEDIA.getMediaTypes()));
         fileTypesFilter.addSubFilter(new FileTypeFilter(DOCUMENTS.getDisplayName(), DOCUMENTS.getMediaTypes()));
         fileTypesFilter.addSubFilter(new FileTypeFilter(EXECUTABLE.getDisplayName(), EXECUTABLE.getMediaTypes()));
         fileTypesFilter.addSubFilter(new InverseFileTypeFilter(Bundle.FilterUtils_otherFilter_displayName(), NON_OTHER_MIME_TYPES));
-
         return fileTypesFilter;
     }
 }

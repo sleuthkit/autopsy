@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,6 +37,10 @@ public class ScalrWrapper {
         return Scalr.resize(input, size, Scalr.OP_ANTIALIAS);
     }
 
+    public static synchronized BufferedImage resize(BufferedImage bufferedImage, Method method, Scalr.Mode mode, int width, int height, BufferedImageOp ...ops) {
+        return Scalr.resize(bufferedImage, method, mode, width, height, ops);
+    }
+    
     public static synchronized BufferedImage resizeHighQuality(BufferedImage input, int width, int height) {
         return Scalr.resize(input, Method.QUALITY, width, height, Scalr.OP_ANTIALIAS);
     }
@@ -52,4 +56,6 @@ public class ScalrWrapper {
     public static synchronized BufferedImage cropImage(BufferedImage input, int width, int height) {
         return Scalr.crop(input, width, height, (BufferedImageOp) null);
     }
+
+
 }

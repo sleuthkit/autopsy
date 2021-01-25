@@ -686,13 +686,35 @@ final class EmailMessageThreader {
          * @return True if the given container is in the child tree of this
          *         container, false otherwise.
          */
-        boolean isChild(EmailContainer container) {
+        boolean isChild(EmailContainer container) {   
+            return isChild(container, new HashSet<>());
+        }   
+        
+        /**
+         * Search all of this containers children to make sure that the given
+         * container is not a related.
+         *
+         * @param container - the container object to search for
+         * @param processedContainers - every container seen while doing this isChild check (to prevent possible loop)
+         *
+         * @return True if the given container is in the child tree of this
+         *         container, false otherwise.
+         */
+        private boolean isChild(EmailContainer container, Set<EmailContainer> processedContainers) {
+            processedContainers.add(this);
             if (children == null || children.isEmpty()) {
                 return false;
             } else if (children.contains(container)) {
                 return true;
             } else {
-                return children.stream().anyMatch((child) -> (child.isChild(container)));
+                for (EmailContainer child : children) {
+                    // Prevent an infinite recursion by making sure we haven't already
+                    // run isChild() on this child
+                    if ((!processedContainers.contains(child)) && child.isChild(container, processedContainers)) {
+                        return true;
+                    }
+                }
+                return false;
             }
         }
     }

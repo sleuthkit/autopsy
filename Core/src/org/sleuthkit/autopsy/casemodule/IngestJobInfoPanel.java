@@ -31,7 +31,9 @@ import javax.swing.JOptionPane;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.table.AbstractTableModel;
 import org.openide.util.NbBundle.Messages;
+import static org.sleuthkit.autopsy.casemodule.Case.Events.CURRENT_CASE;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.IngestJobInfo;
 import org.sleuthkit.datamodel.IngestModuleInfo;
@@ -47,6 +49,8 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
 
     private static final Logger logger = Logger.getLogger(IngestJobInfoPanel.class.getName());
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.STARTED, IngestManager.IngestJobEvent.CANCELLED, IngestManager.IngestJobEvent.COMPLETED);
+    private static final Set<Case.Events> CASE_EVENTS_OF_INTEREST = EnumSet.of(Case.Events.CURRENT_CASE);
+
     private List<IngestJobInfo> ingestJobs;
     private final List<IngestJobInfo> ingestJobsForSelectedDataSource = new ArrayList<>();
     private IngestJobTableModel ingestJobTableModel = new IngestJobTableModel();
@@ -77,6 +81,23 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
                     || evt.getPropertyName().equals(IngestManager.IngestJobEvent.CANCELLED.toString())
                     || evt.getPropertyName().equals(IngestManager.IngestJobEvent.COMPLETED.toString())) {
                 refresh();
+            }
+        });
+        
+        Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, (PropertyChangeEvent evt) -> {
+            if (!(evt instanceof AutopsyEvent) || (((AutopsyEvent) evt).getSourceType() != AutopsyEvent.SourceType.LOCAL)) {
+                return;
+            }
+                    
+            // Check whether we have a case open or case close event.
+            if ((CURRENT_CASE == Case.Events.valueOf(evt.getPropertyName()))) {
+                if (evt.getNewValue() != null) {
+                    // Case open
+                    refresh();
+                } else {
+                    // Case close
+                    reset();
+                }
             }
         });
     }
@@ -110,13 +131,27 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
      */
     private void refresh() {
         try {
-            SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-            this.ingestJobs = skCase.getIngestJobs();
-            setDataSource(selectedDataSource);
+            if (Case.isCaseOpen()) { // Note - this will generally return true when handling a case close event
+                SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+                this.ingestJobs = skCase.getIngestJobs();
+                setDataSource(selectedDataSource);
+            } else {
+                this.ingestJobs = new ArrayList<>();
+                setDataSource(null);
+            }
+            
         } catch (TskCoreException | NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Failed to load ingest jobs.", ex);
             JOptionPane.showMessageDialog(this, Bundle.IngestJobInfoPanel_loadIngestJob_error_text(), Bundle.IngestJobInfoPanel_loadIngestJob_error_title(), JOptionPane.ERROR_MESSAGE);
         }
+    }
+    
+    /**
+     * Reset the panel.
+     */
+    private void reset() {
+        this.ingestJobs = new ArrayList<>();
+        setDataSource(null);
     }
 
     @Messages({"IngestJobInfoPanel.IngestJobTableModel.StartTime.header=Start Time",
@@ -221,65 +256,84 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
+        java.awt.GridBagConstraints gridBagConstraints;
 
-        jScrollPane1 = new javax.swing.JScrollPane();
+        javax.swing.JScrollPane mainScrollPane = new javax.swing.JScrollPane();
+        javax.swing.JPanel contentPanel = new javax.swing.JPanel();
+        javax.swing.JScrollPane ingestJobsScrollPane = new javax.swing.JScrollPane();
         ingestJobTable = new javax.swing.JTable();
-        jLabel1 = new javax.swing.JLabel();
-        jLabel2 = new javax.swing.JLabel();
-        jScrollPane2 = new javax.swing.JScrollPane();
+        javax.swing.JLabel jLabel1 = new javax.swing.JLabel();
+        javax.swing.JLabel jLabel2 = new javax.swing.JLabel();
+        javax.swing.JScrollPane ingestModulesScrollPane = new javax.swing.JScrollPane();
         ingestModuleTable = new javax.swing.JTable();
 
-        jScrollPane1.setBorder(null);
+        setMaximumSize(new java.awt.Dimension(32767, 32767));
+        setLayout(new java.awt.BorderLayout());
+
+        contentPanel.setMaximumSize(new java.awt.Dimension(32767, 32767));
+        contentPanel.setMinimumSize(new java.awt.Dimension(625, 150));
+        contentPanel.setPreferredSize(new java.awt.Dimension(625, 150));
+        contentPanel.setLayout(new java.awt.GridBagLayout());
+
+        ingestJobsScrollPane.setBorder(null);
+        ingestJobsScrollPane.setMinimumSize(new java.awt.Dimension(16, 16));
+        ingestJobsScrollPane.setPreferredSize(null);
 
         ingestJobTable.setModel(ingestJobTableModel);
         ingestJobTable.getTableHeader().setReorderingAllowed(false);
-        jScrollPane1.setViewportView(ingestJobTable);
+        ingestJobsScrollPane.setViewportView(ingestJobTable);
         ingestJobTable.getColumnModel().getSelectionModel().setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
 
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.weighty = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(2, 10, 10, 0);
+        contentPanel.add(ingestJobsScrollPane, gridBagConstraints);
+
         org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(IngestJobInfoPanel.class, "IngestJobInfoPanel.jLabel1.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(10, 10, 0, 0);
+        contentPanel.add(jLabel1, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(IngestJobInfoPanel.class, "IngestJobInfoPanel.jLabel2.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(10, 10, 0, 0);
+        contentPanel.add(jLabel2, gridBagConstraints);
+
+        ingestModulesScrollPane.setMaximumSize(new java.awt.Dimension(254, 32767));
+        ingestModulesScrollPane.setMinimumSize(new java.awt.Dimension(254, 16));
+        ingestModulesScrollPane.setPreferredSize(new java.awt.Dimension(254, 16));
 
         ingestModuleTable.setModel(ingestModuleTableModel);
-        jScrollPane2.setViewportView(ingestModuleTable);
+        ingestModulesScrollPane.setViewportView(ingestModuleTable);
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addGap(15, 15, 15)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel2)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 485, Short.MAX_VALUE))
-                .addGap(8, 8, 8)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 254, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel1))
-                .addContainerGap())
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addGap(8, 8, 8)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel1)
-                    .addComponent(jLabel2))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 162, Short.MAX_VALUE)
-                    .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
-                .addGap(10, 10, 10))
-        );
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.VERTICAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weighty = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(2, 8, 10, 10);
+        contentPanel.add(ingestModulesScrollPane, gridBagConstraints);
+
+        mainScrollPane.setViewportView(contentPanel);
+
+        add(mainScrollPane, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTable ingestJobTable;
     private javax.swing.JTable ingestModuleTable;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
-    private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JScrollPane jScrollPane2;
     // End of variables declaration//GEN-END:variables
 }

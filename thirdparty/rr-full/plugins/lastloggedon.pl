@@ -6,9 +6,10 @@
 #
 #
 # History:
+#  20180614 - Updated by Michael Godfrey
 #  20160531 - created
 #
-# copyright 2016 Quantum Analytics Research, LLC
+# copyright 2018 Quantum Analytics Research, LLC
 # Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package lastloggedon;
@@ -62,7 +63,12 @@ sub pluginmain {
 			my $lastsamuser = $key->get_value("LastLoggedOnSAMUser")->get_data();
 			::rptMsg("LastLoggedOnSAMUser = ".$lastsamuser);
 		};
-	}
+# Added by Michael Godfrey		
+		eval {
+			my $lastsamuserSID = $key->get_value("LastLoggedOnUserSID")->get_data();
+			::rptMsg("LastLoggedOnUserSID = ".$lastsamuserSID);
+		}
+	}	
 	else {
 		::rptMsg($key_path." not found.");
 	}

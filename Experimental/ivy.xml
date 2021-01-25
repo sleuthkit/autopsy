@@ -6,10 +6,10 @@
     </configurations>
     <dependencies>
         <dependency conf="experimental->default" org="com.github.lgooddatepicker" name="LGoodDatePicker" rev="10.3.1"/>
-        <dependency conf="experimental->default" org="org.apache.tika" name="tika-core" rev="1.20"/>
-        <dependency conf="experimental->default" org="org.postgresql" name="postgresql" rev="9.4-1201-jdbc41"/>
+        <dependency conf="experimental->default" org="org.postgresql" name="postgresql" rev="42.2.18"/>
         <dependency conf="experimental->default" org="com.mchange" name="c3p0" rev="0.9.5"/>
         <dependency conf="experimental->default" org="com.fasterxml.jackson.core" name="jackson-core" rev="2.7.0"/>
         <dependency conf="experimental->default" org="org.swinglabs.swingx" name="swingx-all" rev="1.6.4"/>
+        <dependency conf="experimental->default" org="net.sf.jtidy" name="jtidy" rev="r938"/>
     </dependencies>
 </ivy-module>

@@ -4,26 +4,18 @@ cache:
   - C:\Users\appveyor\.ant
   - C:\ProgramData\chocolatey\bin
   - C:\ProgramData\chocolatey\lib
-  - C:\libewf_64bit
-  - C:\libvhdi_64bit
-  - C:\libvmdk_64bit
-  - C:\zlib
   - '%APPVEYOR_BUILD_FOLDER%\Core\test\qa-functional\data'
-
 
 image: Visual Studio 2015
 platform: x64
 environment:
-    global:
-      TSK_HOME: "C:\\sleuthkit"
-      LIBVHDI_HOME: "C:\\libvhdi_64bit"
-      LIBVMDK_HOME: "C:\\libvmdk_64bit\\libvmdk"
-      LIBEWF_HOME: "C:\\libewf_64bit"
-      POSTGRESQL_HOME_64: "C:\\Program Files\\PostgreSQL\\9.5"
-      JDK_HOME: C:\Program Files\Java\jdk1.8.0
-      PYTHON: "C:\\Python36-x64"
+  global:
+    TSK_HOME: "C:\\sleuthkit"
+    JDK_HOME: C:\Program Files\Java\jdk1.8.0
+    PYTHON: "C:\\Python36-x64"
 
 install:
+  - ps: choco install nuget.commandline
   - ps: choco install ant --ignore-dependencies
   - git clone https://github.com/sleuthkit/sleuthkit
   - ps: $env:Path="C:\Program Files\Java\jdk1.8.0\bin;$($env:Path);C:\ProgramData\chocolatey\lib\ant"
@@ -37,16 +29,18 @@ services:
 
 build_script:
   - cd %TSK_HOME%
-  - python setupDevRepos.py
+  - nuget restore win32\libtsk -PackagesDirectory win32\packages
   - python win32\updateAndBuildAll.py -m
   - ps: pushd bindings/java
   - ps: ant -version
-  - cmd: ant dist-PostgreSQL
+  - cmd: ant dist
+  - ps: popd
+  - ps: pushd case-uco/java
+  - cmd: ant -q
   - ps: popd
   - cd %APPVEYOR_BUILD_FOLDER%
   - cmd: ant -q build
-  - cd Core
-  - cmd: ant -q test
-  - cd ..
 
-test: off
+test_script:
+  - cd %APPVEYOR_BUILD_FOLDER%
+  - cmd: ant -q test-no-regression

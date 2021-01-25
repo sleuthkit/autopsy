@@ -190,12 +190,12 @@ final class ShowInTimelineDialog extends Dialog<ViewInTimelineRequestedEvent> {
         typeColumn.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().getEventType()));
         typeColumn.setCellFactory(param -> new TypeTableCell<>());
 
-        dateTimeColumn.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().getStartMillis()));
+        dateTimeColumn.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().getEventTimeInMs()));
         dateTimeColumn.setCellFactory(param -> new DateTimeTableCell<>());
 
         //add events to table
         Set<TimelineEvent> events = new HashSet<>();
-        FilteredEventsModel eventsModel = controller.getEventsModel();
+        EventsModel eventsModel = controller.getEventsModel();
         for (Long eventID : eventIDS) {
             try {
                 events.add(eventsModel.getEventById(eventID));
@@ -307,7 +307,7 @@ final class ShowInTimelineDialog extends Dialog<ViewInTimelineRequestedEvent> {
      */
     private ViewInTimelineRequestedEvent makeEventInTimeRange(TimelineEvent selectedEvent) {
         Duration selectedDuration = unitComboBox.getSelectionModel().getSelectedItem().getBaseUnit().getDuration().multipliedBy(amountSpinner.getValue());
-        Interval range = IntervalUtils.getIntervalAround(Instant.ofEpochMilli(selectedEvent.getStartMillis()), selectedDuration);
+        Interval range = IntervalUtils.getIntervalAround(Instant.ofEpochMilli(selectedEvent.getEventTimeInMs()), selectedDuration);
         return new ViewInTimelineRequestedEvent(Collections.singleton(selectedEvent.getEventID()), range);
     }
 

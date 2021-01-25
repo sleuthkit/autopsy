@@ -23,10 +23,15 @@ import java.util.Iterator;
 import java.util.logging.Level;
 import org.netbeans.spi.sendopts.OptionProcessor;
 import org.openide.util.Lookup;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.commandlineingest.CommandLineIngestManager;
+import org.sleuthkit.autopsy.commandlineingest.CommandLineOpenCaseManager;
 import org.sleuthkit.autopsy.commandlineingest.CommandLineOptionProcessor;
 import org.sleuthkit.autopsy.commandlineingest.CommandLineStartupWindow;
+import org.sleuthkit.autopsy.core.RuntimeProperties;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 
 /**
  * Provides the start up window to rest of the application. It may return the
@@ -60,12 +65,23 @@ public class StartupWindowProvider implements StartupWindowInterface {
         if (startupWindowToUse == null) {
             // first check whether we are running from command line
             if (isRunningFromCommandLine()) {
-                // Autopsy is running from command line
-                logger.log(Level.INFO, "Running from command line"); //NON-NLS
-                startupWindowToUse = new CommandLineStartupWindow();
-                // kick off command line processing
-                new CommandLineIngestManager().start();
-                return;
+                
+                String defaultArg = getDefaultArgument();
+                if(defaultArg != null) {
+                   new CommandLineOpenCaseManager(defaultArg).start(); 
+                   return;
+                } else {
+                    // Autopsy is running from command line
+                    logger.log(Level.INFO, "Running from command line"); //NON-NLS
+                    startupWindowToUse = new CommandLineStartupWindow();
+                    // kick off command line processing
+                    new CommandLineIngestManager().start();
+                    return;
+                }
+            }
+
+            if (RuntimeProperties.runningWithGUI()) {
+                checkSolr();
             }
 
             //discover the registered windows
@@ -107,6 +123,21 @@ public class StartupWindowProvider implements StartupWindowInterface {
         }
     }
 
+    private void checkSolr() {
+
+        // if Multi-User settings are enabled and Solr8 server is not configured,
+        // display an error message and a dialog
+        if (UserPreferences.getIsMultiUserModeEnabled() && UserPreferences.getIndexingServerHost().isEmpty()) {
+            // Solr 8 host name is not configured. This could be the first time user 
+            // runs Autopsy with Solr 8. Display a message.
+            MessageNotifyUtil.Notify.error(NbBundle.getMessage(CueBannerPanel.class, "SolrNotConfiguredDialog.title"),
+                    NbBundle.getMessage(SolrNotConfiguredDialog.class, "SolrNotConfiguredDialog.EmptyKeywordSearchHostName"));
+
+            SolrNotConfiguredDialog dialog = new SolrNotConfiguredDialog();
+            dialog.setVisible(true);
+        }
+    }
+
     /**
      * Checks whether Autopsy is running from command line. There is an
      * OptionProcessor that is responsible for processing command line inputs.
@@ -116,19 +147,25 @@ public class StartupWindowProvider implements StartupWindowInterface {
      * @return True if running from command line, false otherwise
      */
     private boolean isRunningFromCommandLine() {
-
-        // first look up all OptionProcessors and see if running from command line option is set
-        Collection<? extends OptionProcessor> optionProcessors = Lookup.getDefault().lookupAll(OptionProcessor.class);
-        Iterator<? extends OptionProcessor> optionsIterator = optionProcessors.iterator();
-        while (optionsIterator.hasNext()) {
-            // find CommandLineOptionProcessor
-            OptionProcessor processor = optionsIterator.next();
-            if ((processor instanceof CommandLineOptionProcessor)) {
-                // check if we are running from command line            
-                return ((CommandLineOptionProcessor) processor).isRunFromCommandLine();
-            }
+        
+        CommandLineOptionProcessor processor = Lookup.getDefault().lookup(CommandLineOptionProcessor.class);
+         if(processor != null) {
+            return processor.isRunFromCommandLine();
         }
         return false;
+    }
+
+    /**
+     * Get the default argument from the CommandLineOptionProcessor.
+     * 
+     * @return If set, the default argument otherwise null. 
+     */
+    private String getDefaultArgument() {  
+        CommandLineOptionProcessor processor = Lookup.getDefault().lookup(CommandLineOptionProcessor.class);
+        if(processor != null) {
+            return processor.getDefaultArgument();
+        }
+        return null;
     }
 
     @Override
@@ -143,5 +180,14 @@ public class StartupWindowProvider implements StartupWindowInterface {
         if (startupWindowToUse != null) {
             startupWindowToUse.close();
         }
+    }
+
+    /**
+     * Get the chosen startup window.
+     *
+     * @return The startup window.
+     */
+    public StartupWindowInterface getStartupWindow() {
+        return startupWindowToUse;
     }
 }

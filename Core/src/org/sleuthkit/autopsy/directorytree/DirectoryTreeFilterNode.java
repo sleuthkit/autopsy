@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.directorytree;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.Action;
@@ -33,17 +32,12 @@ import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.AbstractContentNode;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
-import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.RunIngestModulesAction;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.Directory;
-import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
-import org.sleuthkit.datamodel.VirtualDirectory;
-import org.sleuthkit.datamodel.Volume;
 
 /**
  * A node filter (decorator) that sets the actions for a node in the tree view
@@ -137,11 +131,18 @@ class DirectoryTreeFilterNode extends FilterNode {
                         numVisibleChildren--;
                     }
                 } else if (child instanceof BlackboardArtifact) {
-                    BlackboardArtifact bba = (BlackboardArtifact) child;
-
-                    // Only message type artifacts are displayed in the tree
-                    if ((bba.getArtifactTypeID() != ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID())
-                            && (bba.getArtifactTypeID() != ARTIFACT_TYPE.TSK_MESSAGE.getTypeID())) {
+                    
+                    if (FilterNodeUtils.showMessagesInDatasourceTree()) {
+                        // In older versions of Autopsy,  attachments were children of email/message artifacts
+                        // and hence email/messages with attachments are shown in the directory tree.
+                        BlackboardArtifact bba = (BlackboardArtifact) child;
+                        // Only message type artifacts are displayed in the tree
+                        if ((bba.getArtifactTypeID() != ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID())
+                                && (bba.getArtifactTypeID() != ARTIFACT_TYPE.TSK_MESSAGE.getTypeID())) {
+                            numVisibleChildren--;
+                        }
+                    }
+                    else {
                         numVisibleChildren--;
                     }
                 }

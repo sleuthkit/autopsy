@@ -84,7 +84,7 @@ public class ObjectDetectectionFileIngestModule extends FileIngestModuleAdapter 
             throw new IngestModule.IngestModuleException(errorMsg);
         }
         
-        if(!OpenCvLoader.hasOpenCvLoaded()) {
+        if(!OpenCvLoader.openCvIsLoaded()) {
             String errorMsg = Bundle.ObjectDetectionFileIngestModule_openCVNotLoaded();
             logger.log(Level.SEVERE, errorMsg);
             throw new IngestModule.IngestModuleException(errorMsg);

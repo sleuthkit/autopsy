@@ -1,5 +1,8 @@
 /*! \page file_export_page File Export
 
+[TOC]
+
+
 \section file_export_overview Overview
 
 If enabled, the File Exporter will run after each \ref auto_ingest_page job and export any files from that data source that match the supplied rules. Most users will not need to use this feature - analysts can open the auto ingest cases in an examiner node and look through the data there.

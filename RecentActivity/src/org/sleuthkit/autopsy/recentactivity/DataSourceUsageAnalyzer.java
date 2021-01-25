@@ -46,21 +46,21 @@ import org.sleuthkit.datamodel.TskData;
 class DataSourceUsageAnalyzer extends Extract {
 
     private static final Logger logger = Logger.getLogger(DataSourceUsageAnalyzer.class.getName());
-    private static final int FAT_EXFAT_FLAGS =  TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT16.getValue() | 
-                                                TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT32.getValue() | 
-                                                TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_EXFAT.getValue();
-    private static final long HUNDRED_GB = 100*1024*1024*1024l;
-    
-    private static final String ANDROID_MEDIACARD_ROOT_FILENAMES[] =    // files expected in root folder of an Android media card
-                                {".android_secure", "android", "audio", 
-                                 "photos", "dcim", "music", "pictures", "videos"}; //NON-NLS
+    private static final int FAT_EXFAT_FLAGS = TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT16.getValue()
+            | TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT32.getValue()
+            | TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_EXFAT.getValue();
+    private static final long HUNDRED_GB = 100 * 1024 * 1024 * 1024l;
+
+    private static final String ANDROID_MEDIACARD_ROOT_FILENAMES[]
+            = // files expected in root folder of an Android media card
+            {".android_secure", "android", "audio",
+                "photos", "dcim", "music", "pictures", "videos"}; //NON-NLS
     private Content dataSource;
 
     @Messages({
         "# {0} - OS name",
         "DataSourceUsageAnalyzer.customVolume.label=OS Drive ({0})",
-        "Progress_Message_Analyze_Usage=Data Sources Usage Analysis",
-    })
+        "Progress_Message_Analyze_Usage=Data Sources Usage Analysis",})
     @Override
     void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
         this.dataSource = dataSource;
@@ -74,10 +74,12 @@ class DataSourceUsageAnalyzer extends Extract {
     }
 
     private void createDataSourceUsageArtifacts() throws TskCoreException {
-        
-         createOSInfoDataSourceUsageArtifacts();
-         createAndroidMediaCardArtifacts(); 
-     }
+
+        createOSInfoDataSourceUsageArtifacts();
+        createAndroidMediaCardArtifacts();
+        createDJIDroneDATArtitifacts();
+    }
+
     /**
      * Create TSK_DATA_SOURCE_USAGE artifacts based on OS_INFO artifacts
      * existing as well as other criteria such as specific paths existing.
@@ -137,7 +139,7 @@ class DataSourceUsageAnalyzer extends Extract {
                 Bundle.DataSourceUsageAnalyzer_parentModuleName(),
                 dataSourceUsageDescription)); //NON-NLS
         BlackboardArtifact bba = createArtifactWithAttributes(BlackboardArtifact.ARTIFACT_TYPE.TSK_DATA_SOURCE_USAGE, dataSource, bbattributes);
-        if(bba != null) {
+        if (bba != null) {
             postArtifact(bba);
         }
     }
@@ -162,54 +164,89 @@ class DataSourceUsageAnalyzer extends Extract {
             }
         }
     }
-    
+
     /**
-     * Checks to see if the data source might be an Android media card or a Flash drive.
-     * If so, creates TSK_DATA_SOURCE_USAGE artifact.
+     * Checks to see if the data source might be an Android media card or a
+     * Flash drive. If so, creates TSK_DATA_SOURCE_USAGE artifact.
      *
      * @return true if any specified files exist false if none exist
-     * 
+     *
      * @throws TskCoreException
      */
     @Messages({
         "DataSourceUsage_AndroidMedia=Android Media Card",
         "DataSourceUsage_FlashDrive=Flash Drive"
     })
-    private void createAndroidMediaCardArtifacts() throws TskCoreException {
-         
+    private void createAndroidMediaCardArtifacts() {
+
         if (dataSource instanceof Image) {
-           Image image = (Image) dataSource;
-           try {
-               if (image.getSize() > HUNDRED_GB) {
-                  return;  
-               }
-               
-               List<FileSystem> fileSystems = image.getFileSystems();
-               if (fileSystems.isEmpty() || fileSystems.size() > 1) {
-                   return;
-               }
+            Image image = (Image) dataSource;
+            try {
+                if (image.getSize() > HUNDRED_GB) {
+                    return;
+                }
 
-               FileSystem fileSystem = fileSystems.get(0);
-               if ( fileSystem == null || (fileSystem.getFsType().getValue() & FAT_EXFAT_FLAGS) == 0) {
-                   return ; 
-               }
+                List<FileSystem> fileSystems = image.getFileSystems();
+                if (fileSystems.isEmpty() || fileSystems.size() > 1) {
+                    return;
+                }
 
-               FileManager fileManager = currentCase.getServices().getFileManager();
-               for (String fileName : ANDROID_MEDIACARD_ROOT_FILENAMES ) {
-                    for (AbstractFile file : fileManager.findFiles(dataSource, fileName, "/")) { // NON-NLS
-                        if (file.getParentPath().equals("/") &&  file.getName().equalsIgnoreCase(fileName)) { // NON-NLS
-                            createDataSourceUsageArtifact(Bundle.DataSourceUsage_AndroidMedia());
-                            return;
-                        }
-                    }
-               }
-               
-               // If none of the Android paths is found but it meets other criteria, it might be just a flash drive
-               createDataSourceUsageArtifact(Bundle.DataSourceUsage_FlashDrive());    
-               
-           } catch (TskCoreException ex) {
-               logger.log(Level.SEVERE, "Exception while checking image: {0} for Andriod media card", image.getName() + ex.getMessage()); //NON-NLS
-           }
+                FileSystem fileSystem = fileSystems.get(0);
+                if (fileSystem == null || (fileSystem.getFsType().getValue() & FAT_EXFAT_FLAGS) == 0) {
+                    return;
+                }
+
+                if(hasAndroidMediaCardRootNames()) {
+                    return;
+                }
+
+                // If none of the Android paths is found but it meets other criteria, it might be just a flash drive
+                createDataSourceUsageArtifact(Bundle.DataSourceUsage_FlashDrive());
+
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Exception while checking image: {0} for Andriod media card", image.getName() + ex.getMessage()); //NON-NLS
+            }
+        }
+    }
+
+    /**
+     * Checks the data source for any android media card root files
+     * 
+     * @return True if root files were found
+     * 
+     * @throws TskCoreException 
+     */
+    private boolean hasAndroidMediaCardRootNames() throws TskCoreException{
+        FileManager fileManager = currentCase.getServices().getFileManager();
+        for (String fileName : ANDROID_MEDIACARD_ROOT_FILENAMES) {
+            for (AbstractFile file : fileManager.findFiles(dataSource, fileName, "/")) { // NON-NLS
+                if (file.getParentPath().equals("/") && file.getName().equalsIgnoreCase(fileName)) { // NON-NLS
+                    createDataSourceUsageArtifact(Bundle.DataSourceUsage_AndroidMedia());
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Checks to see if the data source might be a DJI internal drone storage
+     * card. If so, creates TSK_DATA_SOURCE_USAGE artifact.
+     *
+     * @return true if any specified files exist false if none exist
+     *
+     * @throws TskCoreException
+     */
+    @Messages({
+        "DataSourceUsage_DJU_Drone_DAT=DJI Internal SD Card"
+    })
+    private void createDJIDroneDATArtitifacts() throws TskCoreException {
+        FileManager fileManager = currentCase.getServices().getFileManager();
+        // The underscores are SQL wild cards.
+        List<AbstractFile> files = fileManager.findFiles(dataSource, "FLY___.DAT");
+        if (files != null && !files.isEmpty()) {
+            createDataSourceUsageArtifact(Bundle.DataSourceUsage_DJU_Drone_DAT());
         }
     }
 }

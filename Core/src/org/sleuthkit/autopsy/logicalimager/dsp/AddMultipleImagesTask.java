@@ -29,6 +29,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.DefaultAddDataSourceCallbacks;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitJNI;
@@ -60,6 +61,7 @@ class AddMultipleImagesTask implements Runnable {
     private List<String> errorMessages = new ArrayList<>();
     private DataSourceProcessorResult result;
     private List<Content> newDataSources = new ArrayList<>();
+    private Image currentImage = null;
 
     /*
      * The cancellation requested flag and SleuthKit add image process are
@@ -105,6 +107,8 @@ class AddMultipleImagesTask implements Runnable {
 
     @Messages({
         "AddMultipleImagesTask.cancelled=Cancellation: Add image process reverted",
+        "# {0} - image path",
+        "AddMultipleImagesTask.imageError=Error adding image {0} to the database"
     })
     @Override
     public void run() {
@@ -116,30 +120,35 @@ class AddMultipleImagesTask implements Runnable {
          * Try to add the input image files as images.
          */
         List<String> corruptedImageFilePaths = new ArrayList<>();
-        try {
-            currentCase.getSleuthkitCase().acquireSingleUserCaseWriteLock();
-            progressMonitor.setIndeterminate(true);
-            for (String imageFilePath : imageFilePaths) {
-                synchronized (tskAddImageProcessLock) {
-                    if (!tskAddImageProcessStopped) {
-                        addImageProcess = currentCase.getSleuthkitCase().makeAddImageProcess(timeZone, false, false, "");
-                    } else {
-                        return;
-                    }
-                }
-                run(imageFilePath, corruptedImageFilePaths, errorMessages);
-                commitOrRevertAddImageProcess(imageFilePath, errorMessages, newDataSources);
-                synchronized (tskAddImageProcessLock) {
-                    if (tskAddImageProcessStopped) {
-                        errorMessages.add(Bundle.AddMultipleImagesTask_cancelled());
-                        result = DataSourceProcessorResult.CRITICAL_ERRORS;
-                        newDataSources = emptyDataSources;
-                        return;
-                    }
+        progressMonitor.setIndeterminate(true);
+        for (String imageFilePath : imageFilePaths) {
+            try {
+                currentImage = SleuthkitJNI.addImageToDatabase(currentCase.getSleuthkitCase(), new String[]{imageFilePath}, 
+                    0, timeZone, "", "", "", deviceId);
+            } catch (TskCoreException ex) {
+                LOGGER.log(Level.SEVERE, "Error adding image " + imageFilePath + " to database", ex);
+                errorMessages.add(Bundle.AddMultipleImagesTask_imageError(imageFilePath));
+                result = DataSourceProcessorResult.CRITICAL_ERRORS;
+            }
+            
+            synchronized (tskAddImageProcessLock) {
+
+                if (!tskAddImageProcessStopped) {
+                    addImageProcess = currentCase.getSleuthkitCase().makeAddImageProcess(timeZone, false, false, "");
+                } else {
+                    return;
                 }
             }
-        } finally {
-            currentCase.getSleuthkitCase().releaseSingleUserCaseWriteLock();
+            run(imageFilePath, currentImage, corruptedImageFilePaths, errorMessages);
+            finishAddImageProcess(imageFilePath, errorMessages, newDataSources);
+            synchronized (tskAddImageProcessLock) {
+                if (tskAddImageProcessStopped) {
+                    errorMessages.add(Bundle.AddMultipleImagesTask_cancelled());
+                    result = DataSourceProcessorResult.CRITICAL_ERRORS;
+                    newDataSources = emptyDataSources;
+                    return;
+                }
+            }
         }
     
         /*
@@ -152,8 +161,6 @@ class AddMultipleImagesTask implements Runnable {
             caseDatabase = currentCase.getSleuthkitCase();
             try {
                 progressMonitor.setProgressText(Bundle.AddMultipleImagesTask_addingFileAsLogicalFile(corruptedImageFilePaths.toString()));
-
-                caseDatabase.acquireSingleUserCaseWriteLock();
 
                 Image dataSource = caseDatabase.addImageInfo(0, corruptedImageFilePaths, timeZone);
                 newDataSources.add(dataSource);
@@ -177,8 +184,6 @@ class AddMultipleImagesTask implements Runnable {
             } catch (TskCoreException ex) {
                 errorMessages.add(Bundle.AddMultipleImagesTask_errorAddingImgWithoutFileSystem(deviceId, ex.getLocalizedMessage()));
                 criticalErrorOccurred = true;
-            } finally {
-                caseDatabase.releaseSingleUserCaseWriteLock();
             }
         }
 
@@ -227,7 +232,8 @@ class AddMultipleImagesTask implements Runnable {
     /**
      * Attempts to add an input image to the case.
      *
-     * @param imageFilePath            The image file path.
+     * @param imageFilePath            Path to the image.
+     * @param image                    The image.
      * @param corruptedImageFilePaths  If the image cannot be added because
      *                                 Sleuth Kit cannot detect a filesystem,
      *                                 the image file path is added to this list
@@ -242,13 +248,13 @@ class AddMultipleImagesTask implements Runnable {
         "# {0} - imageFilePath", "# {1} - deviceId", "# {2} - exceptionMessage", "AddMultipleImagesTask.criticalErrorAdding=Critical error adding {0} for device {1}: {2}",
         "# {0} - imageFilePath", "# {1} - deviceId", "# {2} - exceptionMessage", "AddMultipleImagesTask.criticalErrorReverting=Critical error reverting add image process for {0} for device {1}: {2}",
         "# {0} - imageFilePath", "# {1} - deviceId", "# {2} - exceptionMessage", "AddMultipleImagesTask.nonCriticalErrorAdding=Non-critical error adding {0} for device {1}: {2}",})
-    private void run(String imageFilePath, List<String> corruptedImageFilePaths, List<String> errorMessages) {
+    private void run(String imageFilePath, Image image, List<String> corruptedImageFilePaths, List<String> errorMessages) {
         /*
          * Try to add the image to the case database as a data source.
          */
         progressMonitor.setProgressText(Bundle.AddMultipleImagesTask_adding(imageFilePath));
         try {
-            addImageProcess.run(deviceId, new String[]{imageFilePath});
+            addImageProcess.run(deviceId, image, 0, new DefaultAddDataSourceCallbacks());
         } catch (TskCoreException ex) {
             if (ex.getMessage().contains(TSK_FS_TYPE_UNKNOWN_ERR_MSG)) {
                 /*
@@ -268,9 +274,9 @@ class AddMultipleImagesTask implements Runnable {
     }
     
     /**
-     * Commits or reverts the results of the TSK add image process. If the
-     * process was stopped before it completed or there was a critical error the
-     * results are reverted, otherwise they are committed.
+     * Finishes TSK add image process. 
+     * The image will always be in the database regardless of whether the user
+     * canceled or a critical error occurred. 
      *
      * @param imageFilePath  The image file path.
      * @param errorMessages  Error messages, if any, are added to this list for
@@ -279,44 +285,26 @@ class AddMultipleImagesTask implements Runnable {
      *                       added to this list for eventual return via the
      *                       getter method.
      */
-    private void commitOrRevertAddImageProcess(String imageFilePath, List<String> errorMessages, List<Content> newDataSources) {
-        synchronized (tskAddImageProcessLock) {
-            if (tskAddImageProcessStopped || criticalErrorOccurred) {
-                try {
-                    addImageProcess.revert();
-                } catch (TskCoreException ex) {
-                    errorMessages.add(Bundle.AddMultipleImagesTask_criticalErrorReverting(imageFilePath, deviceId, ex.getLocalizedMessage()));
-                    criticalErrorOccurred = true;
-                }
+    private void finishAddImageProcess(String imageFilePath, List<String> errorMessages, List<Content> newDataSources) {
+        synchronized (tskAddImageProcessLock) {        
+            /*
+             * Add the new image to the list of new data
+             * sources to be returned via the getter method.
+             */
+            newDataSources.add(currentImage);
+
+            // Do no further processing if the user canceled
+            if (tskAddImageProcessStopped) {
                 return;
             }
-        
-            /*
-                * Try to commit the results of the add image process, retrieve the new
-                * image from the case database, and add it to the list of new data
-                * sources to be returned via the getter method.
-             */
-            try {
-                long imageId = addImageProcess.commit();
-                Image dataSource = currentCase.getSleuthkitCase().getImageById(imageId);
-                newDataSources.add(dataSource);
 
-                /*
-                     * Verify the size of the new image. Note that it may not be what is
-                     * expected, but at least part of it was added to the case.
-                 */
-                String verificationError = dataSource.verifyImageSize();
-                if (!verificationError.isEmpty()) {
-                    errorMessages.add(Bundle.AddMultipleImagesTask_nonCriticalErrorAdding(imageFilePath, deviceId, verificationError));
-                }
-            } catch (TskCoreException ex) {
-                /*
-                     * The add image process commit failed or querying the case database
-                     * for the newly added image failed. Either way, this is a critical
-                     * error.
-                 */
-                errorMessages.add(Bundle.AddMultipleImagesTask_criticalErrorAdding(imageFilePath, deviceId, ex.getLocalizedMessage()));
-                criticalErrorOccurred = true;
+            /*
+             * Verify the size of the new image. Note that it may not be what is
+             * expected, but at least part of it was added to the case.
+             */
+            String verificationError = currentImage.verifyImageSize();
+            if (!verificationError.isEmpty()) {
+                errorMessages.add(Bundle.AddMultipleImagesTask_nonCriticalErrorAdding(imageFilePath, deviceId, verificationError));
             }
         }
     }

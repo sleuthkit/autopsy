@@ -23,6 +23,7 @@
           <Group type="102" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
+                  <Component id="ingestWarningLabel" alignment="0" max="32767" attributes="0"/>
                   <Group type="102" attributes="0">
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Group type="102" alignment="0" attributes="0">
@@ -30,17 +31,23 @@
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="settingsSeparator" min="-2" pref="326" max="-2" attributes="0"/>
                           </Group>
-                          <Group type="102" alignment="0" attributes="0">
-                              <Component id="informationLabel" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace max="-2" attributes="0"/>
-                              <Component id="informationSeparator" min="-2" pref="309" max="-2" attributes="0"/>
-                          </Group>
                           <Group type="102" attributes="0">
                               <EmptySpace min="10" pref="10" max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Component id="skipNSRLCheckBox" min="-2" max="-2" attributes="0"/>
                                   <Component id="showSnippetsCB" alignment="0" min="-2" max="-2" attributes="0"/>
-                                  <Group type="102" attributes="0">
+                                  <Component id="ocrCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
+                              </Group>
+                          </Group>
+                          <Group type="102" alignment="0" attributes="0">
+                              <Component id="informationLabel" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="informationSeparator" min="-2" pref="309" max="-2" attributes="0"/>
+                          </Group>
+                          <Group type="102" alignment="0" attributes="0">
+                              <EmptySpace min="10" pref="10" max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <Group type="102" alignment="0" attributes="0">
                                       <Component id="filesIndexedLabel" linkSize="1" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace type="separate" max="-2" attributes="0"/>
                                       <Component id="filesIndexedValue" min="-2" max="-2" attributes="0"/>
@@ -66,7 +73,6 @@
                       </Group>
                       <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                   </Group>
-                  <Component id="ingestWarningLabel" alignment="0" max="32767" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
@@ -84,6 +90,8 @@
               <Component id="skipNSRLCheckBox" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="showSnippetsCB" min="-2" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
+              <Component id="ocrCheckBox" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="frequencyLabel" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
@@ -113,7 +121,7 @@
               </Group>
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
               <Component id="ingestWarningLabel" min="-2" max="-2" attributes="0"/>
-              <EmptySpace pref="66" max="32767" attributes="0"/>
+              <EmptySpace pref="43" max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -262,11 +270,6 @@
     </Component>
     <Component class="javax.swing.JLabel" name="ingestWarningLabel">
       <Properties>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-          <FontInfo relative="true">
-            <Font bold="false" component="ingestWarningLabel" property="font" relativeSize="false" size="11"/>
-          </FontInfo>
-        </Property>
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
           <Image iconType="3" name="/org/sleuthkit/autopsy/modules/hashdatabase/warning16.png"/>
         </Property>
@@ -274,6 +277,16 @@
           <ResourceString bundle="org/sleuthkit/autopsy/keywordsearch/Bundle.properties" key="KeywordSearchGlobalSearchSettingsPanel.ingestWarningLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
+    </Component>
+    <Component class="javax.swing.JCheckBox" name="ocrCheckBox">
+      <Properties>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/sleuthkit/autopsy/keywordsearch/Bundle.properties" key="KeywordSearchGlobalSearchSettingsPanel.ocrCheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+        </Property>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="ocrCheckBoxActionPerformed"/>
+      </Events>
     </Component>
   </SubComponents>
 </Form>

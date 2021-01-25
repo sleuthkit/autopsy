@@ -16,32 +16,30 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Group type="102" attributes="0">
+          <Group type="102" alignment="0" attributes="0">
+              <EmptySpace min="-2" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" alignment="0" attributes="0">
-                      <EmptySpace min="-2" max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="ingestSettingsLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                          <Group type="102" alignment="0" attributes="0">
-                              <Group type="103" groupAlignment="1" attributes="0">
-                                  <Component id="languagesLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                                  <Component id="langPanel" min="-2" max="-2" attributes="0"/>
-                              </Group>
-                              <EmptySpace type="unrelated" min="-2" max="-2" attributes="0"/>
-                              <Component id="ingestWarningLabel" pref="360" max="32767" attributes="0"/>
-                          </Group>
-                      </Group>
+                      <Component id="langPanel" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace type="unrelated" min="-2" max="-2" attributes="0"/>
+                      <Component id="ingestWarningLabel" pref="360" max="32767" attributes="0"/>
                   </Group>
-                  <Group type="102" alignment="0" attributes="0">
-                      <EmptySpace min="-2" pref="26" max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                          <Component id="enableUTF16Checkbox" min="-2" max="-2" attributes="0"/>
-                          <Component id="enableUTF8Checkbox" alignment="0" min="-2" max="-2" attributes="0"/>
-                          <Component id="enableOcrCheckbox" alignment="0" min="-2" max="-2" attributes="0"/>
+                  <Group type="102" attributes="0">
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Component id="languagesLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Group type="102" alignment="0" attributes="0">
+                              <EmptySpace min="-2" pref="16" max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                                  <Component id="enableUTF16Checkbox" min="-2" max="-2" attributes="0"/>
+                                  <Component id="enableUTF8Checkbox" alignment="0" min="-2" max="-2" attributes="0"/>
+                              </Group>
+                          </Group>
+                          <Component id="ingestSettingsLabel" alignment="0" min="-2" max="-2" attributes="0"/>
                       </Group>
+                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                   </Group>
               </Group>
-              <EmptySpace min="-2" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -50,18 +48,16 @@
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
               <Component id="ingestSettingsLabel" min="-2" max="-2" attributes="0"/>
-              <EmptySpace type="unrelated" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" attributes="0">
-                      <Component id="enableOcrCheckbox" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="-2" attributes="0"/>
                       <Component id="enableUTF16Checkbox" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="enableUTF8Checkbox" min="-2" max="-2" attributes="0"/>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Component id="languagesLabel" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Component id="langPanel" pref="380" max="32767" attributes="0"/>
+                      <EmptySpace min="-2" max="-2" attributes="0"/>
+                      <Component id="langPanel" pref="408" max="32767" attributes="0"/>
                   </Group>
                   <Group type="102" attributes="0">
                       <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
@@ -105,7 +101,7 @@
             </DimensionLayout>
             <DimensionLayout dim="1">
               <Group type="103" groupAlignment="0" attributes="0">
-                  <EmptySpace min="0" pref="378" max="32767" attributes="0"/>
+                  <EmptySpace min="0" pref="406" max="32767" attributes="0"/>
               </Group>
             </DimensionLayout>
           </Layout>
@@ -139,23 +135,8 @@
         </Property>
       </Properties>
     </Component>
-    <Component class="javax.swing.JCheckBox" name="enableOcrCheckbox">
-      <Properties>
-        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/keywordsearch/Bundle.properties" key="KeywordSearchGlobalLanguageSettingsPanel.enableOcrCheckbox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-        </Property>
-      </Properties>
-      <Events>
-        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="enableOcrCheckboxActionPerformed"/>
-      </Events>
-    </Component>
     <Component class="javax.swing.JLabel" name="ingestWarningLabel">
       <Properties>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-          <FontInfo relative="true">
-            <Font bold="false" component="ingestWarningLabel" property="font" relativeSize="false" size="11"/>
-          </FontInfo>
-        </Property>
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
           <Image iconType="3" name="/org/sleuthkit/autopsy/modules/hashdatabase/warning16.png"/>
         </Property>

@@ -1,5 +1,7 @@
 /*! \page android_analyzer_page Android Analyzer Module
 
+[TOC]
+
 What Does It Do
 ========
 
@@ -11,14 +13,29 @@ The module should be able to extract the following:
 - Text messages / SMS / MMS
 - Call Logs
 - Contacts
-- Tango Messages
-- Words with Friends Messages
 - GPS from the browser and Google Maps
 - GPS from cache.wifi and cache.cell files
 
+The module may also extract data from the following apps:
+- Facebook Messenger
+- IMO
+- Line
+- Opera Browser
+- Orux Maps
+- S-Browser
+- ShareIt
+- Skype
+- Tango
+- TextNow
+- Viber
+- WhatsApp
+- Words with Friends
+- Xender
+- Zapya
+
 NOTE: These database formats vary by version of OS and different vendors can place the databases in different places. Autopsy may not support all versions and vendors. 
 
-NOTE: This module is not exhaustive with its support for Android.  It was created as a starting point for others to contribute plug-ins for 3rd party apps.  See the <a href="http://sleuthkit.org/autopsy/docs/api-docs/4.1/mod_mobile_page.html">Developer docs</a>  for information on writing modules. 
+NOTE: This module is not exhaustive with its support for Android.  It was created as a starting point for others to contribute plug-ins for 3rd party apps.  See the <a href="http://sleuthkit.org/autopsy/docs/api-docs/latest/mod_mobile_page.html">Developer docs</a>  for information on writing modules. 
 
 
 Configuration
@@ -37,15 +54,10 @@ There are no runtime ingest settings required.
 
 Seeing Results
 ------
-The results show up in the tree under "Results", "Extracted Content".
+The results show up in the tree under "Results", "Extracted Content". The exact data extracted will vary but can include contacts, call logs, messages, and GPS entries.
 
 \image html android_analyzer_output.PNG
 
-Messages can also be seen by browsing to the source file in the Data Sources tree, which will display the messages in the Results Viewer to the right. Any messages with attachments will be shown under the source file in the tree, and the attachments can be seen in the Result Viewer.
-
-\image html messages_datasource_tree.png
-
-*/
 
 
 */

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2015 - 2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -151,6 +151,8 @@ public class SharedConfiguration {
     /**
      * Upload the current multi-user ingest settings to a shared folder.
      *
+     * @return
+     *
      * @throws SharedConfigurationException
      * @throws CoordinationServiceException
      * @throws InterruptedException
@@ -208,6 +210,7 @@ public class SharedConfiguration {
             uploadCentralRepositorySettings(remoteFolder);
             uploadObjectDetectionClassifiers(remoteFolder);
             uploadPythonModules(remoteFolder);
+            uploadYARASetting(remoteFolder);
 
             try {
                 Files.deleteIfExists(uploadInProgress.toPath());
@@ -221,6 +224,8 @@ public class SharedConfiguration {
 
     /**
      * Download the multi-user settings from a shared folder.
+     *
+     * @return
      *
      * @throws SharedConfigurationException
      * @throws InterruptedException
@@ -252,13 +257,16 @@ public class SharedConfiguration {
             }
 
             try {
-                /* Make sure all recent changes are saved to the preference file. 
-                 This also releases open file handles to the preference files. If this 
-                 is not done, then occasionally downloading of shared configuration 
-                 fails silently, likely because Java/OS is still holding the file handle.
-                 The problem manifests itself by some of the old/original configuration files 
-                 sticking around after shared configuration has seemingly been successfully 
-                 updated. */
+                /*
+                 * Make sure all recent changes are saved to the preference
+                 * file. This also releases open file handles to the preference
+                 * files. If this is not done, then occasionally downloading of
+                 * shared configuration fails silently, likely because Java/OS
+                 * is still holding the file handle. The problem manifests
+                 * itself by some of the old/original configuration files
+                 * sticking around after shared configuration has seemingly been
+                 * successfully updated.
+                 */
                 UserPreferences.saveToStorage();
             } catch (BackingStoreException ex) {
                 throw new SharedConfigurationException("Failed to save shared configuration settings", ex);
@@ -275,6 +283,7 @@ public class SharedConfiguration {
             downloadCentralRepositorySettings(remoteFolder);
             downloadObjectDetectionClassifiers(remoteFolder);
             downloadPythonModules(remoteFolder);
+            downloadYARASettings(remoteFolder);
 
             // Download general settings, then restore the current
             // values for the unshared fields
@@ -344,7 +353,7 @@ public class SharedConfiguration {
     private void saveNonSharedSettings() {
         sharedConfigMaster = AutoIngestUserPreferences.getSharedConfigMaster();
         sharedConfigFolder = AutoIngestUserPreferences.getSharedConfigFolder();
-	showToolsWarning = AutoIngestUserPreferences.getShowToolsWarning();
+        showToolsWarning = AutoIngestUserPreferences.getShowToolsWarning();
         displayLocalTime = UserPreferences.displayTimesInLocalTime();
         hideKnownFilesInDataSource = UserPreferences.hideKnownFilesInDataSourcesTree();
         hideKnownFilesInViews = UserPreferences.hideKnownFilesInViewsTree();
@@ -360,7 +369,7 @@ public class SharedConfiguration {
     private void restoreNonSharedSettings() {
         AutoIngestUserPreferences.setSharedConfigFolder(sharedConfigFolder);
         AutoIngestUserPreferences.setSharedConfigMaster(sharedConfigMaster);
-	AutoIngestUserPreferences.setShowToolsWarning(showToolsWarning);
+        AutoIngestUserPreferences.setShowToolsWarning(showToolsWarning);
         UserPreferences.setDisplayTimesInLocalTime(displayLocalTime);
         UserPreferences.setHideKnownFilesInDataSourcesTree(hideKnownFilesInDataSource);
         UserPreferences.setHideKnownFilesInViewsTree(hideKnownFilesInViews);
@@ -515,21 +524,23 @@ public class SharedConfiguration {
             throw new SharedConfigurationException(String.format("Failed to copy %s to %s", remoteFile.getAbsolutePath(), localSettingsFolder.getAbsolutePath()), ex);
         }
     }
-    
+
     /**
-     * Copy an entire local settings folder to the remote folder, deleting any existing files.
-     * 
+     * Copy an entire local settings folder to the remote folder, deleting any
+     * existing files.
+     *
      * @param localFolder      The local folder to copy
-     * @param remoteBaseFolder The remote folder that will hold a copy of the original folder
-     * 
-     * @throws SharedConfigurationException 
+     * @param remoteBaseFolder The remote folder that will hold a copy of the
+     *                         original folder
+     *
+     * @throws SharedConfigurationException
      */
     private void copyLocalFolderToRemoteFolder(File localFolder, File remoteBaseFolder) throws SharedConfigurationException {
         logger.log(Level.INFO, "Uploading {0} to {1}", new Object[]{localFolder.getAbsolutePath(), remoteBaseFolder.getAbsolutePath()});
-        
+
         File newRemoteFolder = new File(remoteBaseFolder, localFolder.getName());
-        
-        if(newRemoteFolder.exists()) {
+
+        if (newRemoteFolder.exists()) {
             try {
                 FileUtils.deleteDirectory(newRemoteFolder);
             } catch (IOException ex) {
@@ -537,29 +548,30 @@ public class SharedConfiguration {
                 throw new SharedConfigurationException(String.format("Failed to delete remote folder {0}", newRemoteFolder.getAbsolutePath()), ex);
             }
         }
-        
+
         try {
             FileUtils.copyDirectoryToDirectory(localFolder, remoteBaseFolder);
         } catch (IOException ex) {
             throw new SharedConfigurationException(String.format("Failed to copy %s to %s", localFolder, remoteBaseFolder.getAbsolutePath()), ex);
-        } 
+        }
     }
-    
+
     /**
-     * Copy an entire remote settings folder to the local folder, deleting any existing files.
-     * No error if the remote folder does not exist.
-     * 
+     * Copy an entire remote settings folder to the local folder, deleting any
+     * existing files. No error if the remote folder does not exist.
+     *
      * @param localFolder      The local folder that will be overwritten.
-     * @param remoteBaseFolder The remote folder holding the folder that will be copied
-     * 
-     * @throws SharedConfigurationException 
+     * @param remoteBaseFolder The remote folder holding the folder that will be
+     *                         copied
+     *
+     * @throws SharedConfigurationException
      */
     private void copyRemoteFolderToLocalFolder(File localFolder, File remoteBaseFolder) throws SharedConfigurationException {
         logger.log(Level.INFO, "Downloading {0} from {1}", new Object[]{localFolder.getAbsolutePath(), remoteBaseFolder.getAbsolutePath()});
-        
+
         // Clean out the local folder regardless of whether the remote version exists. leave the 
         // folder in place since Autopsy expects it to exist.
-        if(localFolder.exists()) {
+        if (localFolder.exists()) {
             try {
                 FileUtils.cleanDirectory(localFolder);
             } catch (IOException ex) {
@@ -567,19 +579,19 @@ public class SharedConfiguration {
                 throw new SharedConfigurationException(String.format("Failed to delete files from local folder {0}", localFolder.getAbsolutePath()), ex);
             }
         }
-        
+
         File remoteSubFolder = new File(remoteBaseFolder, localFolder.getName());
-        if(! remoteSubFolder.exists()) {
+        if (!remoteSubFolder.exists()) {
             logger.log(Level.INFO, "{0} does not exist", remoteSubFolder.getAbsolutePath());
             return;
         }
-        
+
         try {
             FileUtils.copyDirectory(remoteSubFolder, localFolder);
         } catch (IOException ex) {
             throw new SharedConfigurationException(String.format("Failed to copy %s from %s", localFolder, remoteBaseFolder.getAbsolutePath()), ex);
-        } 
-    }    
+        }
+    }
 
     /**
      * Upload the basic set of auto-ingest settings to the shared folder.
@@ -899,56 +911,56 @@ public class SharedConfiguration {
 
     /**
      * Upload the object detection classifiers.
-     * 
+     *
      * @param remoteFolder Shared settings folder
-     * 
-     * @throws SharedConfigurationException 
+     *
+     * @throws SharedConfigurationException
      */
     private void uploadObjectDetectionClassifiers(File remoteFolder) throws SharedConfigurationException {
         publishTask("Uploading object detection classfiers");
         File classifiersFolder = new File(PlatformUtil.getObjectDetectionClassifierPath());
         copyLocalFolderToRemoteFolder(classifiersFolder, remoteFolder);
     }
-    
+
     /**
      * Download the object detection classifiers.
-     * 
+     *
      * @param remoteFolder Shared settings folder
-     * 
-     * @throws SharedConfigurationException 
+     *
+     * @throws SharedConfigurationException
      */
     private void downloadObjectDetectionClassifiers(File remoteFolder) throws SharedConfigurationException {
         publishTask("Downloading object detection classfiers");
         File classifiersFolder = new File(PlatformUtil.getObjectDetectionClassifierPath());
         copyRemoteFolderToLocalFolder(classifiersFolder, remoteFolder);
     }
-    
-        /**
+
+    /**
      * Upload the Python modules.
-     * 
+     *
      * @param remoteFolder Shared settings folder
-     * 
-     * @throws SharedConfigurationException 
+     *
+     * @throws SharedConfigurationException
      */
     private void uploadPythonModules(File remoteFolder) throws SharedConfigurationException {
         publishTask("Uploading python modules");
         File classifiersFolder = new File(PlatformUtil.getUserPythonModulesPath());
         copyLocalFolderToRemoteFolder(classifiersFolder, remoteFolder);
     }
-    
+
     /**
      * Download the Python modules.
-     * 
+     *
      * @param remoteFolder Shared settings folder
-     * 
-     * @throws SharedConfigurationException 
+     *
+     * @throws SharedConfigurationException
      */
     private void downloadPythonModules(File remoteFolder) throws SharedConfigurationException {
         publishTask("Downloading python modules");
         File classifiersFolder = new File(PlatformUtil.getUserPythonModulesPath());
         copyRemoteFolderToLocalFolder(classifiersFolder, remoteFolder);
     }
-    
+
     /**
      * Upload settings and hash databases to the shared folder. The general
      * algorithm is: - Copy the general settings in hashsets.xml - For each hash
@@ -1093,12 +1105,10 @@ public class SharedConfiguration {
         Map<String, String> remoteVersions = readVersionsFromFile(remoteVersionFile);
 
         /*
-        Iterate through remote list
-            If local needs it, download
-
-        Download remote settings files to local
-        Download remote versions file to local
-        HashDbManager reload
+         * Iterate through remote list If local needs it, download
+         *
+         * Download remote settings files to local Download remote versions file
+         * to local HashDbManager reload
          */
         File localDb = new File("");
         File sharedDb = new File("");
@@ -1243,6 +1253,11 @@ public class SharedConfiguration {
             HashDbManager hashDbManager = HashDbManager.getInstance();
             hashDbManager.loadLastSavedConfiguration();
             for (HashDbManager.HashDb hashDb : hashDbManager.getAllHashSets()) {
+                // Central Repository hash sets have no path and don't need to be copied
+                if (hashDb.getIndexPath().isEmpty() && hashDb.getDatabasePath().isEmpty()) {
+                    continue;
+                }
+
                 if (hashDb.hasIndexOnly()) {
                     results.add(hashDb.getIndexPath());
                 } else {
@@ -1350,5 +1365,42 @@ public class SharedConfiguration {
         } catch (IOException ex) {
             throw new SharedConfigurationException(String.format("Failed to calculate CRC for %s", file.getAbsolutePath()), ex);
         }
+    }
+
+    /**
+     * Copy the YARA settings directory from the local directory to the remote
+     * directory.
+     *
+     * @param remoteFolder Shared settings folder
+     *
+     * @throws
+     * org.sleuthkit.autopsy.experimental.configuration.SharedConfiguration.SharedConfigurationException
+     */
+    private void uploadYARASetting(File remoteFolder) throws SharedConfigurationException {
+        publishTask("Uploading YARA module configuration");
+
+        File localYara = Paths.get(PlatformUtil.getUserDirectory().getAbsolutePath(), "yara").toFile();
+
+        if (!localYara.exists()) {
+            return;
+        }
+
+        copyLocalFolderToRemoteFolder(localYara, remoteFolder);
+    }
+
+    /**
+     * Downloads the YARA settings folder from the remote directory to the local
+     * one.
+     *
+     * @param remoteFolder Shared settings folder
+     *
+     * @throws
+     * org.sleuthkit.autopsy.experimental.configuration.SharedConfiguration.SharedConfigurationException
+     */
+    private void downloadYARASettings(File remoteFolder) throws SharedConfigurationException {
+        publishTask("Downloading YARA module configuration");
+        File localYara = Paths.get(PlatformUtil.getUserDirectory().getAbsolutePath(), "yara").toFile();
+
+        copyRemoteFolderToLocalFolder(localYara, remoteFolder);
     }
 }

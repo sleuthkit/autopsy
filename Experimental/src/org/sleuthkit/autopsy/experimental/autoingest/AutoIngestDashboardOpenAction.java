@@ -28,7 +28,7 @@ import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.experimental.autoingest.AutoIngestDashboardOpenAction")
-@ActionReference(path = "Menu/Tools", position = 103)
+@ActionReference(path = "Menu/Tools", position = 106)
 @ActionRegistration(displayName = "#CTL_AutoIngestDashboardOpenAction", lazy = false)
 @Messages({"CTL_AutoIngestDashboardOpenAction=Auto Ingest Dashboard"})
 public final class AutoIngestDashboardOpenAction extends CallableSystemAction {

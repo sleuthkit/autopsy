@@ -13,6 +13,56 @@ The ingest module has a basic flow of
 
 The BlackBoard has standard artifacts for the standard cell phone forensics data types, such as BlackboardArtifact.TSK_CALLLOG. 
 
+There are a couple of classes that can help streamline processing mobile databases. The org.sleuthkit.autopsy.coreutils.AppSQLiteDB class has methods for opening and querying SQLite databases. For example, to find and open a database named "transfer20.db" in the "com.dewmobile.kuaiya.play" package, you can simply use the following method (examples in Python):
+\verbatim
+transferDbs = AppSQLiteDB.findAppDatabases(dataSource, "transfer20.db", True, "com.dewmobile.kuaiya.play")
+\endverbatim
+
+Once you have your databases, you can run easily run queries on them:
+\code
+queryString = "SELECT device, name, direction, createtime, path, title FROM transfer"
+transfersResultSet = transferDb.runQuery(queryString)
+\endcode
+
+You can make Blackboard Artifacts using the org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper class. This gives you methods to make contacts, messages, and call log entries. The following is sample code in Python to set up the CommunicationArtifactsHelper and then use it to make artifacts.
+
+\code
+transferDbHelper = CommunicationArtifactsHelper(current_case.getSleuthkitCase(),
+					"Zapya Analyzer", transferDb.getDBFile(),
+					Account.Type.ZAPYA)
+\endcode
+
+\code
+direction = CommunicationDirection.UNKNOWN
+fromAddress = None
+toAddress = None
+
+if (transfersResultSet.getInt("direction") == 1):
+	direction = CommunicationDirection.OUTGOING
+	toAddress = Account.Address(transfersResultSet.getString("device"), transfersResultSet.getString("name") )
+else:
+	direction = CommunicationDirection.INCOMING
+	fromAddress = Account.Address(transfersResultSet.getString("device"), transfersResultSet.getString("name") )
+
+msgBody = ""    # there is no body.
+attachments = [transfersResultSet.getString("path")]
+msgBody = general.appendAttachmentList(msgBody, attachments)
+
+timeStamp = transfersResultSet.getLong("createtime") / 1000
+messageArtifact = transferDbHelper.addMessage( 
+						self._MESSAGE_TYPE,
+						direction,
+						fromAddress,
+						toAddress,
+						timeStamp,
+						MessageReadStatus.UNKNOWN,
+						None,   # subject
+						msgBody,
+						None )    # thread id
+\endcode
+
+Look in the <tt>autopsy\\InternalPythonModules\\android\\</tt> folder for additional examples.
+
 \section mod_mobile_std Android Module
 
 Autopsy comes with an Android module, as defined in various classes in the org.sleuthkit.autopsy.modules.android package.  You can use those classes as a reference example. 

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2019 Basis Technology Corp.
+ * Copyright 2015-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,6 +21,9 @@ package org.sleuthkit.autopsy.modules.embeddedfileextractor;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -37,12 +40,14 @@ import net.sf.sevenzipjbinding.ExtractAskMode;
 import net.sf.sevenzipjbinding.ExtractOperationResult;
 import net.sf.sevenzipjbinding.IArchiveExtractCallback;
 import net.sf.sevenzipjbinding.ICryptoGetTextPassword;
+import net.sf.sevenzipjbinding.IInArchive;
 import net.sf.sevenzipjbinding.ISequentialOutStream;
-import net.sf.sevenzipjbinding.ISevenZipInArchive;
 import net.sf.sevenzipjbinding.PropID;
 import net.sf.sevenzipjbinding.SevenZip;
 import net.sf.sevenzipjbinding.SevenZipException;
 import net.sf.sevenzipjbinding.SevenZipNativeInitializationException;
+import org.apache.tika.parser.txt.CharsetDetector;
+import org.apache.tika.parser.txt.CharsetMatch;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -57,6 +62,7 @@ import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMonitor;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
+import org.sleuthkit.autopsy.modules.embeddedfileextractor.FileTaskExecutor.FileTaskFailedException;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard;
@@ -73,9 +79,14 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
+/**
+ * An embedded file extractor that uses 7Zip via Java bindings to extract the
+ * contents of an archive file to a directory named for the archive file.
+ */
 class SevenZipExtractor {
 
     private static final Logger logger = Logger.getLogger(SevenZipExtractor.class.getName());
+
     private static final String MODULE_NAME = EmbeddedFileExtractorModuleFactory.getModuleName();
 
     //encryption type strings
@@ -93,6 +104,7 @@ class SevenZipExtractor {
     private IngestServices services = IngestServices.getInstance();
     private final IngestJobContext context;
     private final FileTypeDetector fileTypeDetector;
+    private final FileTaskExecutor fileTaskExecutor;
 
     private String moduleDirRelative;
     private String moduleDirAbsolute;
@@ -102,10 +114,6 @@ class SevenZipExtractor {
     private ProgressHandle progress;
     private int numItems;
     private String currentArchiveName;
-
-    private String getLocalRootAbsPath(String uniqueArchiveFileName) {
-        return moduleDirAbsolute + File.separator + uniqueArchiveFileName;
-    }
 
     /**
      * Enum of mimetypes which support archive extraction
@@ -134,14 +142,35 @@ class SevenZipExtractor {
         // TODO Expand to support more formats after upgrading Tika
     }
 
-    SevenZipExtractor(IngestJobContext context, FileTypeDetector fileTypeDetector, String moduleDirRelative, String moduleDirAbsolute) throws SevenZipNativeInitializationException {
-        if (!SevenZip.isInitializedSuccessfully() && (SevenZip.getLastInitializationException() == null)) {
-            SevenZip.initSevenZipFromPlatformJAR();
+    /**
+     * Contructs an embedded file extractor that uses 7Zip via Java bindings to
+     * extract the contents of an archive file to a directory named for the
+     * archive file.
+     *
+     * @param context            The ingest job context, if being used as part
+     *                           of an ingest job. Optional, may be null.
+     * @param fileTypeDetector   A file type detector.
+     * @param moduleDirRelative  The relative path to the output directory for
+     *                           the extracted files. Used in the case database
+     *                           for extracted (derived) file paths for the
+     *                           extracted files.
+     * @param moduleDirAbsolute  The absolute path to the output directory for
+     *                           the extracted files.
+     * @param fileIoTaskExecutor A file I/O task executor.
+     *
+     * @throws SevenZipNativeInitializationException If there was an error
+     *                                               initializing the 7Zip Java
+     *                                               bindings.
+     */
+    SevenZipExtractor(IngestJobContext context, FileTypeDetector fileTypeDetector, String moduleDirRelative, String moduleDirAbsolute, FileTaskExecutor fileTaskExecutor) throws SevenZipNativeInitializationException {
+        if (!SevenZip.isInitializedSuccessfully()) {
+            throw new SevenZipNativeInitializationException("SevenZip has not been previously initialized.");
         }
         this.context = context;
         this.fileTypeDetector = fileTypeDetector;
         this.moduleDirRelative = moduleDirRelative;
         this.moduleDirAbsolute = moduleDirAbsolute;
+        this.fileTaskExecutor = fileTaskExecutor;
     }
 
     /**
@@ -185,7 +214,7 @@ class SevenZipExtractor {
      *
      * @return true if potential zip bomb, false otherwise
      */
-    private boolean isZipBombArchiveItemCheck(AbstractFile archiveFile, ISevenZipInArchive inArchive, int inArchiveItemIndex, ConcurrentHashMap<Long, Archive> depthMap, String escapedFilePath) {
+    private boolean isZipBombArchiveItemCheck(AbstractFile archiveFile, IInArchive inArchive, int inArchiveItemIndex, ConcurrentHashMap<Long, Archive> depthMap, String escapedFilePath) {
         //If a file is corrupted as a result of reconstructing it from unallocated space, then
         //7zip does a poor job estimating the original uncompressed file size. 
         //As a result, many corrupted files have wonky compression ratios and could flood the UI
@@ -349,26 +378,36 @@ class SevenZipExtractor {
     }
 
     /**
-     * Query the database and get the list of files which exist for this archive
-     * which have already been added to the case database.
+     * Queries the case database to get any files already extracted from the
+     * given archive. The archive file path is used to find the files by parent
+     * path.
      *
-     * @param archiveFile     the archiveFile to get the files associated with
-     * @param archiveFilePath the archive file path that must be contained in
-     *                        the parent_path of files
+     * @param archiveFile     The archive.
+     * @param archiveFilePath The archive file path.
      *
-     * @return the list of files which already exist in the case database for
-     *         this archive
+     * @return A list of the files already extracted from the given archive.
      *
-     * @throws TskCoreException
-     * @throws NoCurrentCaseException
+     * @throws TskCoreException          If there is an error querying the case
+     *                                   database.
+     * @throws InterruptedException      If checking for the existence of the
+     *                                   extracted file directory is
+     *                                   interrupted.
+     * @throws FileIoTaskFailedException If there is an error checking for the
+     *                                   existence of the extracted file
+     *                                   directory.
      */
-    private List<AbstractFile> getAlreadyExtractedFiles(AbstractFile archiveFile, String archiveFilePath) throws TskCoreException, NoCurrentCaseException {
-        //check if already has derived files, skip
-        //check if local unpacked dir exists 
-        if (archiveFile.hasChildren() && new File(moduleDirAbsolute, EmbeddedFileExtractorIngestModule.getUniqueName(archiveFile)).exists()) {
-            return Case.getCurrentCaseThrows().getServices().getFileManager().findFilesByParentPath(getRootArchiveId(archiveFile), archiveFilePath);
+    private List<AbstractFile> getAlreadyExtractedFiles(AbstractFile archiveFile, String archiveFilePath) throws TskCoreException, InterruptedException, FileTaskExecutor.FileTaskFailedException {
+        /*
+         * TODO (Jira-7145): Is this logic correct?
+         */
+        List<AbstractFile> extractedFiles = new ArrayList<>();
+        File outputDirectory = new File(moduleDirAbsolute, EmbeddedFileExtractorIngestModule.getUniqueName(archiveFile));
+        if (archiveFile.hasChildren() && fileTaskExecutor.exists(outputDirectory)) {
+            Case currentCase = Case.getCurrentCase();
+            FileManager fileManager = currentCase.getServices().getFileManager();
+            extractedFiles.addAll(fileManager.findFilesByParentPath(getRootArchiveId(archiveFile), archiveFilePath));
         }
-        return new ArrayList<>();
+        return extractedFiles;
     }
 
     /**
@@ -383,34 +422,43 @@ class SevenZipExtractor {
     }
 
     /**
-     * Create the local directories if they do not exist for the archive
+     * Creates the root directory for files extracted from this archive. The
+     * directory name is a unique name derived from the archive file name and
+     * its object ID.
      *
-     * @param uniqueArchiveFileName the unique name which corresponds to the
-     *                              archive file in this datasource
+     * @param uniqueArchiveFileName The unique name of the archive file.
+     *
+     * @return True on success, false on failure.
      */
-    private void makeLocalDirectories(String uniqueArchiveFileName) {
-        final String localRootAbsPath = getLocalRootAbsPath(uniqueArchiveFileName);
-        final File localRoot = new File(localRootAbsPath);
-        if (!localRoot.exists()) {
-            localRoot.mkdirs();
+    private boolean makeExtractedFilesDirectory(String uniqueArchiveFileName) {
+        boolean success = true;
+        Path rootDirectoryPath = Paths.get(moduleDirAbsolute, uniqueArchiveFileName);
+        File rootDirectory = rootDirectoryPath.toFile();
+        try {
+            if (!fileTaskExecutor.exists(rootDirectory)) {
+                success = fileTaskExecutor.mkdirs(rootDirectory);
+            }
+        } catch (SecurityException | FileTaskFailedException | InterruptedException ex) {
+            logger.log(Level.SEVERE, String.format("Error creating root extracted files directory %s", rootDirectory), ex); //NON-NLS
+            success = false;
         }
+        return success;
     }
 
     /**
      * Get the path in the archive of the specified item
      *
-     * @param item        - the item to get the path for
-     * @param itemNumber  - the item number to help provide uniqueness to the
-     *                    path
-     * @param archiveFile - the archive file the item exists in
+     * @param archive            - the archive to get the path for
+     * @param inArchiveItemIndex - the item index to help provide uniqueness to
+     *                           the path
+     * @param archiveFile        - the archive file the item exists in
      *
      * @return a string representing the path to the item in the archive
      *
      * @throws SevenZipException
      */
-    private String getPathInArchive(ISevenZipInArchive archive, int inArchiveItemIndex, AbstractFile archiveFile) throws SevenZipException {
-        String pathInArchive = (String) archive.getProperty(
-                inArchiveItemIndex, PropID.PATH);
+    private String getPathInArchive(IInArchive archive, int inArchiveItemIndex, AbstractFile archiveFile) throws SevenZipException {
+        String pathInArchive = (String) archive.getProperty(inArchiveItemIndex, PropID.PATH);
 
         if (pathInArchive == null || pathInArchive.isEmpty()) {
             //some formats (.tar.gz) may not be handled correctly -- file in archive has no name/path
@@ -447,12 +495,12 @@ class SevenZipExtractor {
             } else {
                 pathInArchive = "/" + useName;
             }
-            String msg = NbBundle.getMessage(SevenZipExtractor.class,
-                    "EmbeddedFileExtractorIngestModule.ArchiveExtractor.unpack.unknownPath.msg",
-                    getArchiveFilePath(archiveFile), pathInArchive);
-            logger.log(Level.WARNING, msg);
         }
         return pathInArchive;
+    }
+
+    private byte[] getPathBytesInArchive(IInArchive archive, int inArchiveItemIndex, AbstractFile archiveFile) throws SevenZipException {
+        return (byte[]) archive.getProperty(inArchiveItemIndex, PropID.PATH_BYTES);
     }
 
     /*
@@ -505,7 +553,7 @@ class SevenZipExtractor {
         final String escapedArchiveFilePath = FileUtil.escapeFileName(archiveFilePath);
         HashMap<String, ZipFileStatusWrapper> statusMap = new HashMap<>();
         List<AbstractFile> unpackedFiles = Collections.<AbstractFile>emptyList();
-        ISevenZipInArchive inArchive = null;
+
         currentArchiveName = archiveFile.getName();
 
         SevenZipContentReadStream stream = null;
@@ -519,21 +567,18 @@ class SevenZipExtractor {
             unpackSuccessful = false;
             return unpackSuccessful;
         }
-        try {
 
+        try {
             List<AbstractFile> existingFiles = getAlreadyExtractedFiles(archiveFile, archiveFilePath);
             for (AbstractFile file : existingFiles) {
                 statusMap.put(getKeyAbstractFile(file), new ZipFileStatusWrapper(file, ZipFileStatus.EXISTS));
             }
-        } catch (TskCoreException e) {
-            logger.log(Level.INFO, "Error checking if file already has been processed, skipping: {0}", escapedArchiveFilePath); //NON-NLS
-            unpackSuccessful = false;
-            return unpackSuccessful;
-        } catch (NoCurrentCaseException ex) {
-            logger.log(Level.INFO, "No open case was found while trying to unpack the archive file {0}", escapedArchiveFilePath); //NON-NLS
+        } catch (TskCoreException | FileTaskFailedException | InterruptedException ex) {
+            logger.log(Level.SEVERE, String.format("Error checking if %s has already been processed, skipping", escapedArchiveFilePath), ex); //NON-NLS
             unpackSuccessful = false;
             return unpackSuccessful;
         }
+
         parentAr = depthMap.get(archiveFile.getId());
         if (parentAr == null) {
             parentAr = new Archive(0, archiveFile.getId(), archiveFile);
@@ -553,6 +598,7 @@ class SevenZipExtractor {
                 return unpackSuccessful;
             }
         }
+        IInArchive inArchive = null;
         try {
             stream = new SevenZipContentReadStream(new ReadContentInputStream(archiveFile));
             // for RAR files we need to open them explicitly as RAR. Otherwise, if there is a ZIP archive inside RAR archive
@@ -570,13 +616,8 @@ class SevenZipExtractor {
 
             //setup the archive local root folder
             final String uniqueArchiveFileName = FileUtil.escapeFileName(EmbeddedFileExtractorIngestModule.getUniqueName(archiveFile));
-            try {
-                makeLocalDirectories(uniqueArchiveFileName);
-            } catch (SecurityException e) {
-                logger.log(Level.SEVERE, "Error setting up output path for archive root: {0}", getLocalRootAbsPath(uniqueArchiveFileName)); //NON-NLS
-                //bail
-                unpackSuccessful = false;
-                return unpackSuccessful;
+            if (!makeExtractedFilesDirectory(uniqueArchiveFileName)) {
+                return false;
             }
 
             //initialize tree hierarchy to keep track of unpacked file structure
@@ -600,7 +641,8 @@ class SevenZipExtractor {
                 }
 
                 String pathInArchive = getPathInArchive(inArchive, inArchiveItemIndex, archiveFile);
-                UnpackedTree.UnpackedNode unpackedNode = unpackedTree.addNode(pathInArchive);
+                byte[] pathBytesInArchive = getPathBytesInArchive(inArchive, inArchiveItemIndex, archiveFile);
+                UnpackedTree.UnpackedNode unpackedNode = unpackedTree.addNode(pathInArchive, pathBytesInArchive);
 
                 final boolean isEncrypted = (Boolean) inArchive.getProperty(inArchiveItemIndex, PropID.ENCRYPTED);
 
@@ -644,31 +686,24 @@ class SevenZipExtractor {
                 final String localRelPath = moduleDirRelative + File.separator + uniqueExtractedName;
 
                 //create local dirs and empty files before extracted
-                File localFile = new java.io.File(localAbsPath);
                 //cannot rely on files in top-bottom order
-                if (!localFile.exists()) {
-                    try {
-                        if ((Boolean) inArchive.getProperty(
-                                inArchiveItemIndex, PropID.IS_FOLDER)) {
-                            localFile.mkdirs();
-                        } else {
-                            localFile.getParentFile().mkdirs();
-                            try {
-                                localFile.createNewFile();
-                            } catch (IOException e) {
-                                logger.log(Level.SEVERE, "Error creating extracted file: "//NON-NLS
-                                                         + localFile.getAbsolutePath(), e);
-                            }
-                        }
-                    } catch (SecurityException e) {
-                        logger.log(Level.SEVERE, "Error setting up output path for unpacked file: {0}", //NON-NLS
-                                pathInArchive); //NON-NLS
-                        //TODO consider bail out / msg to the user
+                File localFile = new File(localAbsPath);
+                boolean localFileExists;
+                try {
+                    if ((Boolean) inArchive.getProperty(inArchiveItemIndex, PropID.IS_FOLDER)) {
+                        localFileExists = findOrCreateDirectory(localFile);
+                    } else {
+                        localFileExists = findOrCreateEmptyFile(localFile);
                     }
+                } catch (FileTaskFailedException | InterruptedException ex) {
+                    localFileExists = false;
+                    logger.log(Level.SEVERE, String.format("Error fiding or creating %s", localFile.getAbsolutePath()), ex); //NON-NLS
                 }
+
                 // skip the rest of this loop if we couldn't create the file
                 //continue will skip details from being added to the map
-                if (localFile.exists() == false) {
+                if (!localFileExists) {
+                    logger.log(Level.SEVERE, String.format("Skipping %s because it could not be created", localFile.getAbsolutePath())); //NON-NLS
                     continue;
                 }
 
@@ -721,7 +756,7 @@ class SevenZipExtractor {
                 //TODO decide if anything to cleanup, for now bailing
             }
 
-        } catch (SevenZipException ex) {
+        } catch (SevenZipException | IllegalArgumentException ex) {
             logger.log(Level.WARNING, "Error unpacking file: " + archiveFile, ex); //NON-NLS
             //inbox message
 
@@ -798,7 +833,67 @@ class SevenZipExtractor {
                 context.addFilesToJob(unpackedFiles);
             }
         }
+
         return unpackSuccessful;
+    }
+
+    /**
+     * Finds or creates a given directory.
+     *
+     * @param directory The directory.
+     *
+     * @return True on success, false on failure.
+     */
+    private boolean findOrCreateDirectory(File directory) throws FileTaskFailedException, InterruptedException {
+        if (!fileTaskExecutor.exists(directory)) {
+            return fileTaskExecutor.mkdirs(directory);
+        } else {
+            return true;
+        }
+    }
+
+    /**
+     * Finds or creates a given file. If the file is created, it will be empty.
+     *
+     * @param file The file.
+     *
+     * @return True on success, false on failure.
+     */
+    private boolean findOrCreateEmptyFile(File file) throws FileTaskFailedException, InterruptedException {
+        if (!fileTaskExecutor.exists(file)) {
+            fileTaskExecutor.mkdirs(file.getParentFile());
+            return fileTaskExecutor.createNewFile(file);
+        } else {
+            return true;
+        }
+    }
+
+    private Charset detectFilenamesCharset(List<byte[]> byteDatas) {
+        Charset detectedCharset = null;
+        CharsetDetector charsetDetector = new CharsetDetector();
+        int byteSum = 0;
+        int fileNum = 0;
+        for (byte[] byteData : byteDatas) {
+            fileNum++;
+            byteSum += byteData.length;
+            // Only read ~1000 bytes of filenames in this directory
+            if (byteSum >= 1000) {
+                break;
+            }
+        }
+        byte[] allBytes = new byte[byteSum];
+        int start = 0;
+        for (int i = 0; i < fileNum; i++) {
+            byte[] byteData = byteDatas.get(i);
+            System.arraycopy(byteData, 0, allBytes, start, byteData.length);
+            start += byteData.length;
+        }
+        charsetDetector.setText(allBytes);
+        CharsetMatch cm = charsetDetector.detect();
+        if (cm.getConfidence() >= 90 && Charset.isSupported(cm.getName())) {
+            detectedCharset = Charset.forName(cm.getName());
+        }
+        return detectedCharset;
     }
 
     /**
@@ -814,6 +909,7 @@ class SevenZipExtractor {
         return Arrays.stream(wrappedExtractionIndices)
                 .mapToInt(Integer::intValue)
                 .toArray();
+
     }
 
     /**
@@ -906,7 +1002,7 @@ class SevenZipExtractor {
             implements IArchiveExtractCallback, ICryptoGetTextPassword {
 
         private final AbstractFile archiveFile;
-        private final ISevenZipInArchive inArchive;
+        private final IInArchive inArchive;
         private UnpackStream unpackStream = null;
         private final Map<Integer, InArchiveItemDetails> archiveDetailsMap;
         private final ProgressHandle progressHandle;
@@ -922,11 +1018,10 @@ class SevenZipExtractor {
 
         private boolean unpackSuccessful = true;
 
-        StandardIArchiveExtractCallback(ISevenZipInArchive inArchive,
-                                        AbstractFile archiveFile, ProgressHandle progressHandle,
-                                        Map<Integer, InArchiveItemDetails> archiveDetailsMap,
-                                        String password, long freeDiskSpace) {
-
+        StandardIArchiveExtractCallback(IInArchive inArchive,
+                AbstractFile archiveFile, ProgressHandle progressHandle,
+                Map<Integer, InArchiveItemDetails> archiveDetailsMap,
+                String password, long freeDiskSpace) {
             this.inArchive = inArchive;
             this.progressHandle = progressHandle;
             this.archiveFile = archiveFile;
@@ -950,7 +1045,7 @@ class SevenZipExtractor {
          */
         @Override
         public ISequentialOutStream getStream(int inArchiveItemIndex,
-                                              ExtractAskMode mode) throws SevenZipException {
+                ExtractAskMode mode) throws SevenZipException {
 
             this.inArchiveItemIndex = inArchiveItemIndex;
 
@@ -976,7 +1071,7 @@ class SevenZipExtractor {
                 }
             } catch (IOException ex) {
                 logger.log(Level.WARNING, String.format("Error opening or setting new stream " //NON-NLS
-                                                        + "for archive file at %s", localAbsPath), ex.getMessage()); //NON-NLS
+                        + "for archive file at %s", localAbsPath), ex.getMessage()); //NON-NLS
                 return null;
             }
 
@@ -998,7 +1093,7 @@ class SevenZipExtractor {
             final Date accessTime = (Date) inArchive.getProperty(
                     inArchiveItemIndex, PropID.LAST_ACCESS_TIME);
             final Date writeTime = (Date) inArchive.getProperty(
-                    inArchiveItemIndex, PropID.LAST_WRITE_TIME);
+                    inArchiveItemIndex, PropID.LAST_MODIFICATION_TIME);
 
             createTimeInSeconds = createTime == null ? 0L
                     : createTime.getTime() / 1000;
@@ -1008,7 +1103,7 @@ class SevenZipExtractor {
                     : accessTime.getTime() / 1000;
 
             progressHandle.progress(archiveFile.getName() + ": "
-                                    + (String) inArchive.getProperty(inArchiveItemIndex, PropID.PATH),
+                    + (String) inArchive.getProperty(inArchiveItemIndex, PropID.PATH),
                     inArchiveItemIndex);
 
         }
@@ -1039,8 +1134,13 @@ class SevenZipExtractor {
             final String localAbsPath = archiveDetailsMap.get(
                     inArchiveItemIndex).getLocalAbsPath();
             if (result != ExtractOperationResult.OK) {
-                logger.log(Level.WARNING, "Extraction of : {0} encountered error {1}", //NON-NLS
-                        new Object[]{localAbsPath, result});
+                if (archiveFile.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.UNALLOC)) {
+                    logger.log(Level.WARNING, "Extraction of : {0} encountered error {1} (file is unallocated and may be corrupt)", //NON-NLS
+                            new Object[]{localAbsPath, result});
+                } else {
+                    logger.log(Level.WARNING, "Extraction of : {0} encountered error {1}", //NON-NLS
+                            new Object[]{localAbsPath, result});
+                }
                 unpackSuccessful = false;
             }
 
@@ -1100,7 +1200,6 @@ class SevenZipExtractor {
          * @param localPathRoot Path in module output folder that files will be
          *                      saved to
          * @param archiveFile   Archive file being extracted
-         * @param fileManager
          */
         UnpackedTree(String localPathRoot, AbstractFile archiveFile) {
             this.rootNode = new UnpackedNode();
@@ -1118,7 +1217,7 @@ class SevenZipExtractor {
          *
          * @return child node for the last file token in the filePath
          */
-        UnpackedNode addNode(String filePath) {
+        UnpackedNode addNode(String filePath, byte[] filePathBytes) {
             String[] toks = filePath.split("[\\/\\\\]");
             List<String> tokens = new ArrayList<>();
             for (int i = 0; i < toks.length; ++i) {
@@ -1126,7 +1225,36 @@ class SevenZipExtractor {
                     tokens.add(toks[i]);
                 }
             }
-            return addNode(rootNode, tokens);
+
+            List<byte[]> byteTokens = null;
+            if (filePathBytes == null) {
+                return addNode(rootNode, tokens, null);
+            } else {
+                byteTokens = new ArrayList<>(tokens.size());
+                int last = 0;
+                for (int i = 0; i < filePathBytes.length; i++) {
+                    if (filePathBytes[i] == '/') {
+                        int len = i - last;
+                        byte[] arr = new byte[len];
+                        System.arraycopy(filePathBytes, last, arr, 0, len);
+                        byteTokens.add(arr);
+                        last = i + 1;
+                    }
+                }
+                int len = filePathBytes.length - last;
+                if (len > 0) {
+                    byte[] arr = new byte[len];
+                    System.arraycopy(filePathBytes, last, arr, 0, len);
+                    byteTokens.add(arr);
+                }
+
+                if (tokens.size() != byteTokens.size()) {
+                    logger.log(Level.WARNING, "Could not map path bytes to path string");
+                    return addNode(rootNode, tokens, null);
+                }
+            }
+
+            return addNode(rootNode, tokens, byteTokens);
         }
 
         /**
@@ -1134,10 +1262,12 @@ class SevenZipExtractor {
          *
          * @param parent
          * @param tokenPath
+         * @param tokenPathBytes
          *
          * @return
          */
-        private UnpackedNode addNode(UnpackedNode parent, List<String> tokenPath) {
+        private UnpackedNode addNode(UnpackedNode parent,
+                List<String> tokenPath, List<byte[]> tokenPathBytes) {
             // we found all of the tokens
             if (tokenPath.isEmpty()) {
                 return parent;
@@ -1145,15 +1275,20 @@ class SevenZipExtractor {
 
             // get the next name in the path and look it up
             String childName = tokenPath.remove(0);
+            byte[] childNameBytes = null;
+            if (tokenPathBytes != null) {
+                childNameBytes = tokenPathBytes.remove(0);
+            }
             UnpackedNode child = parent.getChild(childName);
             // create new node
             if (child == null) {
                 child = new UnpackedNode(childName, parent);
+                child.setFileNameBytes(childNameBytes);
                 parent.addChild(child);
             }
 
             // go down one more level
-            return addNode(child, tokenPath);
+            return addNode(child, tokenPath, tokenPathBytes);
         }
 
         /**
@@ -1254,6 +1389,32 @@ class SevenZipExtractor {
                         NbBundle.getMessage(SevenZipExtractor.class, "EmbeddedFileExtractorIngestModule.ArchiveExtractor.UnpackedTree.exception.msg",
                                 node.getFileName()), ex);
             }
+
+            // Determine encoding of children
+            if (node.getChildren().size() > 0) {
+                String names = "";
+                ArrayList<byte[]> byteDatas = new ArrayList<>();
+                for (UnpackedNode child : node.getChildren()) {
+                    byte[] childBytes = child.getFileNameBytes();
+                    if (childBytes != null) {
+                        byteDatas.add(childBytes);
+                    }
+                    names += child.getFileName();
+                }
+                Charset detectedCharset = detectFilenamesCharset(byteDatas);
+
+                // If a charset was detected, transcode filenames accordingly
+                if (detectedCharset != null && detectedCharset.canEncode()) {
+                    for (UnpackedNode child : node.getChildren()) {
+                        byte[] childBytes = child.getFileNameBytes();
+                        if (childBytes != null) {
+                            String decodedName = new String(childBytes, detectedCharset);
+                            child.setFileName(decodedName);
+                        }
+                    }
+                }
+            }
+
             //recurse adding the children if this file was incomplete the children presumably need to be added
             for (UnpackedNode child : node.getChildren()) {
                 updateOrAddFileToCaseRec(child, fileManager, statusMap, getKeyFromUnpackedNode(node, archiveFilePath));
@@ -1266,6 +1427,7 @@ class SevenZipExtractor {
         private class UnpackedNode {
 
             private String fileName;
+            private byte[] fileNameBytes;
             private AbstractFile file;
             private final List<UnpackedNode> children = new ArrayList<>();
             private String localRelPath = "";
@@ -1334,8 +1496,8 @@ class SevenZipExtractor {
             }
 
             void addDerivedInfo(long size,
-                                boolean isFile,
-                                long ctime, long crtime, long atime, long mtime, String relLocalPath) {
+                    boolean isFile,
+                    long ctime, long crtime, long atime, long mtime, String relLocalPath) {
                 this.size = size;
                 this.isFile = isFile;
                 this.ctime = ctime;
@@ -1395,6 +1557,19 @@ class SevenZipExtractor {
 
             boolean isIsFile() {
                 return isFile;
+            }
+
+            void setFileNameBytes(byte[] fileNameBytes) {
+                if (fileNameBytes != null) {
+                    this.fileNameBytes = Arrays.copyOf(fileNameBytes, fileNameBytes.length);
+                }
+            }
+
+            byte[] getFileNameBytes() {
+                if (fileNameBytes == null) {
+                    return null;
+                }
+                return Arrays.copyOf(fileNameBytes, fileNameBytes.length);
             }
         }
     }

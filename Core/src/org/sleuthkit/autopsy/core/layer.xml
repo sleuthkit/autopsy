@@ -150,16 +150,16 @@
                     <attr name="originalFile" stringvalue="Actions/Case/org-sleuthkit-autopsy-casemodule-RecentCases.instance"/>
                 </file>
             </folder>
+            <file name="org-sleuthkit-autopsy-casemodule-UnpackagePortableCaseAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Case/org-sleuthkit-autopsy-casemodule-UnpackagePortableCaseAction.instance"/>
+                <attr name="position" intvalue="103"/>
+            </file>
             <file name="org-sleuthkit-autopsy-casemodule-CaseCloseAct.shadow">
                 <attr name="originalFile" stringvalue="Actions/Case/org-sleuthkit-autopsy-casemodule-CaseCloseAction.instance"/>
-                <attr name="position" intvalue="103"/>
+                <attr name="position" intvalue="104"/>
             </file>
             <file name="org-sleuthkit-autopsy-casemodule-CaseDeleteAction.shadow">
                 <attr name="originalFile" stringvalue="Actions/Case/org-sleuthkit-autopsy-casemodule-CaseDeleteAction.instance"/>
-                <attr name="position" intvalue="104"/>
-            </file>
-            <file name="org-sleuthkit-autopsy-casemodule-UnpackagePortableCaseAction.shadow">
-                <attr name="originalFile" stringvalue="Actions/Case/org-sleuthkit-autopsy-casemodule-UnpackagePortableCaseAction.instance"/>
                 <attr name="position" intvalue="105"/>
             </file>
             <file name="org-sleuthkit-autopsy-casemodule-AddImage-separatorBefore.instance">
@@ -341,9 +341,9 @@
             <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.report.modules.stix.STIXReportModule.getDefault"/>
             <attr name="position" intvalue="910"/>
         </file>
-        <file name="org-sleuthkit-autopsy-report-modules-caseuco-CaseUcoReport.instance">
+        <file name="org-sleuthkit-autopsy-report-modules-caseuco-CaseUcoReportModule.instance">
             <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.report.GeneralReportModule"/>
-            <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.report.modules.caseuco.CaseUcoReport.getDefault"/>
+            <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.report.modules.caseuco.CaseUcoReportModule.getDefault"/>
             <attr name="position" intvalue="911"/>
         </file>       
         <!--<folder name="JavaHelp">
@@ -448,6 +448,9 @@
             <file name="floatingLeftBottom.wsmode" url="floatingLeftBottomWsmode.xml"/>
             <file name="timeline.wsmode" url="timelineWsmode.xml"/>
             <file name="cvt.wsmode" url="cvtWsmode.xml"/>
+            <file name="discovery.wsmode" url="discoveryWsmode.xml"/>
+            <file name="geolocation.wsmode" url="geolocationWsmode.xml"/>
+            <file name="personas.wsmode" url="personasWsmode.xml"/>
         </folder>
     </folder>
     

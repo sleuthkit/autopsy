@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2019 Basis Technology Corp.
+ * Copyright 2013-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -80,10 +80,10 @@ class TableReportGenerator {
         this.progressPanel = progressPanel;
         this.tableReport = tableReport;
         this.columnHeaderMap = new HashMap<>();
-        errorList = new ArrayList<>();        
+        errorList = new ArrayList<>();
         this.settings = settings;
     }
-    
+
     private void getAllExistingTags() throws NoCurrentCaseException, TskCoreException {
         List<String> tagNames = new ArrayList<>();
 
@@ -98,6 +98,7 @@ class TableReportGenerator {
         tagNamesFilter = new HashSet<>(tagNames);
     }
 
+    @SuppressWarnings("deprecation")
     private void getAllExistingArtiactTypes() throws NoCurrentCaseException, TskCoreException {
         // get all possible artifact types
         ArrayList<BlackboardArtifact.Type> doNotReport = new ArrayList<>();
@@ -107,6 +108,14 @@ class TableReportGenerator {
         doNotReport.add(new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_TOOL_OUTPUT.getTypeID(),
                 BlackboardArtifact.ARTIFACT_TYPE.TSK_TOOL_OUTPUT.getLabel(),
                 BlackboardArtifact.ARTIFACT_TYPE.TSK_TOOL_OUTPUT.getDisplayName())); // output is too unstructured for table review
+        doNotReport.add(new BlackboardArtifact.Type(
+                BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT.getTypeID(),
+                BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT.getLabel(),
+                BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT.getDisplayName()));
+        doNotReport.add(new BlackboardArtifact.Type(
+                BlackboardArtifact.ARTIFACT_TYPE.TSK_TL_EVENT.getTypeID(),
+                BlackboardArtifact.ARTIFACT_TYPE.TSK_TL_EVENT.getLabel(),
+                BlackboardArtifact.ARTIFACT_TYPE.TSK_TL_EVENT.getDisplayName()));
 
         Case.getCurrentCaseThrows().getSleuthkitCase().getArtifactTypes().forEach(artifactTypes::add);
         artifactTypes.removeAll(doNotReport);
@@ -116,7 +125,7 @@ class TableReportGenerator {
 
         progressPanel.start();
         progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportGenerator.progress.readingTagsArtifacts.text"));
-        
+
         if (settings.useStoredTagsAndArtifactsLists()) {
             // Get the artifact types selected by the user.
             artifactTypes = settings.getArtifactSelections();
@@ -130,7 +139,7 @@ class TableReportGenerator {
                 if (settings.getSelectedReportOption() == TableReportSettings.TableReportOption.ALL_TAGGED_RESULTS) {
                     getAllExistingTags();
                 }
-                
+
                 // get all possible artifact types
                 getAllExistingArtiactTypes();
             } catch (NoCurrentCaseException | TskCoreException ex) {
@@ -139,11 +148,11 @@ class TableReportGenerator {
                 return;
             }
         }
-        
+
         // Start the progress indicators for each active TableReportModule.
         progressPanel.setIndeterminate(false);
         progressPanel.setMaximumProgress(this.artifactTypes.size() + 2); // +2 for content and blackboard artifact tags
-        
+
         // report on the blackboard results
         if (progressPanel.getStatus() != ReportProgressPanel.ReportStatus.CANCELED) {
             makeBlackboardArtifactTables();
@@ -357,6 +366,16 @@ class TableReportGenerator {
 
         // Give the modules the rows for the content tags. 
         for (ContentTag tag : tags) {
+            try {
+                if(shouldFilterFromReport(tag.getContent())) {
+                    continue;
+                }
+            } catch (TskCoreException ex) {
+                errorList.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedGetContentTags"));
+                logger.log(Level.SEVERE, "Failed to access content data from the case database.", ex); //NON-NLS
+                return;
+            }
+            
             // skip tags that we are not reporting on 
             String notableString = tag.getName().getKnownStatus() == TskData.FileKnown.BAD ? TagsManager.getNotableTagLabel() : "";
             if (passesTagNamesFilter(tag.getName().getDisplayName() + notableString) == false) {
@@ -405,6 +424,9 @@ class TableReportGenerator {
      * Generate the tables for the tagged artifacts
      */
     @SuppressWarnings("deprecation")
+    @Messages({
+        "ReportGenerator.errList.failedGetBBArtifactTags=Failed to get result tags."
+    })
     private void makeBlackboardArtifactTagsTables() {
 
         List<BlackboardArtifactTag> tags;
@@ -437,6 +459,16 @@ class TableReportGenerator {
 
         // Give the modules the rows for the content tags. 
         for (BlackboardArtifactTag tag : tags) {
+            try {
+                if(shouldFilterFromReport(tag.getContent())) {
+                    continue;
+                }
+            }  catch (TskCoreException ex) {
+                errorList.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedGetBBArtifactTags"));
+                logger.log(Level.SEVERE, "Failed to access content data from the case database.", ex); //NON-NLS
+                return;
+            }
+            
             String notableString = tag.getName().getKnownStatus() == TskData.FileKnown.BAD ? TagsManager.getNotableTagLabel() : "";
             if (passesTagNamesFilter(tag.getName().getDisplayName() + notableString) == false) {
                 continue;
@@ -790,6 +822,9 @@ class TableReportGenerator {
                     AbstractFile f = openCase.getSleuthkitCase().getAbstractFileById(objId);
                     if (f != null) {
                         uniquePath = openCase.getSleuthkitCase().getAbstractFileById(objId).getUniquePath();
+                        if(shouldFilterFromReport(f)) {
+                            continue;
+                        }
                     }
                 } catch (TskCoreException ex) {
                     errorList.add(
@@ -947,6 +982,9 @@ class TableReportGenerator {
                     AbstractFile f = openCase.getSleuthkitCase().getAbstractFileById(objId);
                     if (f != null) {
                         uniquePath = openCase.getSleuthkitCase().getAbstractFileById(objId).getUniquePath();
+                        if(shouldFilterFromReport(f)) {
+                            continue;
+                        }
                     }
                 } catch (TskCoreException ex) {
                     errorList.add(
@@ -1189,6 +1227,10 @@ class TableReportGenerator {
         List<ArtifactData> artifacts = new ArrayList<>();
         try {
             for (BlackboardArtifact artifact : Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboardArtifacts(type.getTypeID())) {
+                if(shouldFilterFromReport(artifact)) {
+                    continue;
+                }
+                
                 List<BlackboardArtifactTag> tags = Case.getCurrentCaseThrows().getServices().getTagsManager().getBlackboardArtifactTagsByArtifact(artifact);
                 HashSet<String> uniqueTagNames = new HashSet<>();
                 for (BlackboardArtifactTag tag : tags) {
@@ -1233,6 +1275,7 @@ class TableReportGenerator {
      * @return List<String> row titles
      */
     @Messages({"ReportGenerator.artTableColHdr.comment=Comment"})
+    @SuppressWarnings("deprecation")
     private List<Column> getArtifactTableColumns(int artifactTypeId, Set<BlackboardAttribute.Type> attributeTypeSet) {
         ArrayList<Column> columns = new ArrayList<>();
 
@@ -1305,7 +1348,7 @@ class TableReportGenerator {
                     new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH)));
 
             columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateTime"),
-                    new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME)));
+                    new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED )));
 
             attributeTypeSet.remove(new Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID));
         } else if (BlackboardArtifact.ARTIFACT_TYPE.TSK_INSTALLED_PROG.getTypeID() == artifactTypeId) {
@@ -1750,6 +1793,7 @@ class TableReportGenerator {
                 || artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_BOOKMARK.getTypeID()
                 || artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_LAST_KNOWN_LOCATION.getTypeID()
                 || artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_SEARCH.getTypeID()
+                || artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_AREA.getTypeID()
                 || artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_SERVICE_ACCOUNT.getTypeID()
                 || artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED.getTypeID()
                 || artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_SUSPECTED.getTypeID()
@@ -1781,6 +1825,18 @@ class TableReportGenerator {
         }
         return "";
 
+    }
+    
+    /**
+     * Indicates if the content should be filtered from the report.
+     */
+    private boolean shouldFilterFromReport(Content content) throws TskCoreException {
+        if(this.settings.getSelectedDataSources() == null) {
+            return false;
+        }
+        
+        long dataSourceId = content.getDataSource().getId();
+        return !this.settings.getSelectedDataSources().contains(dataSourceId);
     }
 
     /**

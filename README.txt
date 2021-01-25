@@ -23,8 +23,6 @@ There is no need for manual installation of additional dependencies if the Windo
 
 If you want the Japanese localized version, you must have the Japanese language pack (http://support.microsoft.com/kb/972813) installed and the default locale set to JA. (http://windows.microsoft.com/en-us/windows/change-system-locale#1TC=windows-7).
 
-Refer to the KNOWN_ISSUES.txt file for known bugs that could cause investigation problems. 
-
 
 SUPPORT
 
@@ -48,9 +46,9 @@ JRE (Java Runtime Environment) 1.8
 - Web page: http://www.oracle.com/technetwork/java/index.html
 - License: http://www.oracle.com/technetwork/java/javase/terms/license/index.html
 
-Netbeans 8.0.2 RCP platform and .jar files bundled with the platform
-- Web page: http://netbeans.org/features/platform/
-- License: https://netbeans.org/downloads/jdk-bundle/8.0.2/nb802-LICENSE.txt
+Netbeans 11.3 RCP platform and .jar files bundled with the platform
+- Web page: https://netbeans.apache.org/
+- License: https://www.apache.org/licenses/LICENSE-2.0
 
 Sleuth Kit for analyzing disk images.
 - Web page: http://www.sleuthkit.org/sleuthkit/
@@ -72,11 +70,11 @@ GStreamer for viewing video files
 - Web page: http://gstreamer.freedesktop.org/
 - License: http://www.gnu.org/licenses/lgpl.html
 
-GStreamer-java for viewing video files
-- Web page: http://code.google.com/p/gstreamer-java/
-- License: http://www.gnu.org/licenses/lgpl.html
+GStreamer 1.x Java Core for viewing video files
+- Web page: https://github.com/gstreamer-java/gst1-java-core
+- License: https://github.com/gstreamer-java/gst1-java-core/blob/master/LICENSE.md
 
-Regripper for pulling recently activity
+Regripper for pulling recent activity
 (Including custom plugins)
 - Web page: http://regripper.wordpress.com/
 - License: http://www.gnu.org/licenses/gpl.html

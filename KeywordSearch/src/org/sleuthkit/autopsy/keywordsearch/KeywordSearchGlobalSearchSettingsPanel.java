@@ -23,8 +23,10 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.logging.Level;
 import org.netbeans.spi.options.OptionsPanelController;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearchIngestModule.UpdateFrequency;
 
@@ -47,9 +49,11 @@ class KeywordSearchGlobalSearchSettingsPanel extends javax.swing.JPanel implemen
     private void activateWidgets() {
         skipNSRLCheckBox.setSelected(KeywordSearchSettings.getSkipKnown());
         showSnippetsCB.setSelected(KeywordSearchSettings.getShowSnippets());
+        ocrCheckBox.setSelected(KeywordSearchSettings.getOcrOption());
         boolean ingestRunning = IngestManager.getInstance().isIngestRunning();
         ingestWarningLabel.setVisible(ingestRunning);
         skipNSRLCheckBox.setEnabled(!ingestRunning);
+        ocrCheckBox.setEnabled(!ingestRunning);
         setTimeSettingEnabled(!ingestRunning);
 
         final UpdateFrequency curFreq = KeywordSearchSettings.getUpdateFrequency();
@@ -104,6 +108,7 @@ class KeywordSearchGlobalSearchSettingsPanel extends javax.swing.JPanel implemen
         showSnippetsCB = new javax.swing.JCheckBox();
         timeRadioButton5 = new javax.swing.JRadioButton();
         ingestWarningLabel = new javax.swing.JLabel();
+        ocrCheckBox = new javax.swing.JCheckBox();
 
         skipNSRLCheckBox.setText(org.openide.util.NbBundle.getMessage(KeywordSearchGlobalSearchSettingsPanel.class, "KeywordSearchGlobalSearchSettingsPanel.skipNSRLCheckBox.text")); // NOI18N
         skipNSRLCheckBox.setToolTipText(org.openide.util.NbBundle.getMessage(KeywordSearchGlobalSearchSettingsPanel.class, "KeywordSearchGlobalSearchSettingsPanel.skipNSRLCheckBox.toolTipText")); // NOI18N
@@ -174,9 +179,15 @@ class KeywordSearchGlobalSearchSettingsPanel extends javax.swing.JPanel implemen
             }
         });
 
-        ingestWarningLabel.setFont(ingestWarningLabel.getFont().deriveFont(ingestWarningLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         ingestWarningLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/modules/hashdatabase/warning16.png"))); // NOI18N
         ingestWarningLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchGlobalSearchSettingsPanel.class, "KeywordSearchGlobalSearchSettingsPanel.ingestWarningLabel.text")); // NOI18N
+
+        ocrCheckBox.setText(org.openide.util.NbBundle.getMessage(KeywordSearchGlobalSearchSettingsPanel.class, "KeywordSearchGlobalSearchSettingsPanel.ocrCheckBox.text")); // NOI18N
+        ocrCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                ocrCheckBoxActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -185,6 +196,7 @@ class KeywordSearchGlobalSearchSettingsPanel extends javax.swing.JPanel implemen
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(ingestWarningLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createSequentialGroup()
@@ -192,14 +204,18 @@ class KeywordSearchGlobalSearchSettingsPanel extends javax.swing.JPanel implemen
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(settingsSeparator, javax.swing.GroupLayout.PREFERRED_SIZE, 326, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addGroup(layout.createSequentialGroup()
+                                .addGap(10, 10, 10)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(skipNSRLCheckBox)
+                                    .addComponent(showSnippetsCB)
+                                    .addComponent(ocrCheckBox)))
+                            .addGroup(layout.createSequentialGroup()
                                 .addComponent(informationLabel)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(informationSeparator, javax.swing.GroupLayout.PREFERRED_SIZE, 309, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addGroup(layout.createSequentialGroup()
                                 .addGap(10, 10, 10)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(skipNSRLCheckBox)
-                                    .addComponent(showSnippetsCB)
                                     .addGroup(layout.createSequentialGroup()
                                         .addComponent(filesIndexedLabel)
                                         .addGap(18, 18, 18)
@@ -217,8 +233,7 @@ class KeywordSearchGlobalSearchSettingsPanel extends javax.swing.JPanel implemen
                                         .addComponent(chunksLabel)
                                         .addGap(18, 18, 18)
                                         .addComponent(chunksValLabel)))))
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(ingestWarningLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
 
@@ -235,6 +250,8 @@ class KeywordSearchGlobalSearchSettingsPanel extends javax.swing.JPanel implemen
                 .addComponent(skipNSRLCheckBox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(showSnippetsCB)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(ocrCheckBox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(frequencyLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -261,7 +278,7 @@ class KeywordSearchGlobalSearchSettingsPanel extends javax.swing.JPanel implemen
                     .addComponent(chunksValLabel))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(ingestWarningLabel)
-                .addContainerGap(66, Short.MAX_VALUE))
+                .addContainerGap(43, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -293,6 +310,10 @@ class KeywordSearchGlobalSearchSettingsPanel extends javax.swing.JPanel implemen
         firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_timeRadioButton4ActionPerformed
 
+    private void ocrCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ocrCheckBoxActionPerformed
+        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+    }//GEN-LAST:event_ocrCheckBoxActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel chunksLabel;
     private javax.swing.JLabel chunksValLabel;
@@ -302,6 +323,7 @@ class KeywordSearchGlobalSearchSettingsPanel extends javax.swing.JPanel implemen
     private javax.swing.JLabel informationLabel;
     private javax.swing.JSeparator informationSeparator;
     private javax.swing.JLabel ingestWarningLabel;
+    private javax.swing.JCheckBox ocrCheckBox;
     private javax.swing.JLabel settingsLabel;
     private javax.swing.JSeparator settingsSeparator;
     private javax.swing.JCheckBox showSnippetsCB;
@@ -319,6 +341,7 @@ class KeywordSearchGlobalSearchSettingsPanel extends javax.swing.JPanel implemen
         KeywordSearchSettings.setSkipKnown(skipNSRLCheckBox.isSelected());
         KeywordSearchSettings.setUpdateFrequency(getSelectedTimeValue());
         KeywordSearchSettings.setShowSnippets(showSnippetsCB.isSelected());
+        KeywordSearchSettings.setOcrOption(ocrCheckBox.isSelected());
     }
 
     @Override
@@ -350,6 +373,7 @@ class KeywordSearchGlobalSearchSettingsPanel extends javax.swing.JPanel implemen
         return UpdateFrequency.DEFAULT;
     }
 
+    @NbBundle.Messages({"KeywordSearchGlobalSearchSettingsPanel.customizeComponents.windowsOCR=Enable Optical Character Recognition (OCR) (Requires Windows 64-bit)"})
     private void customizeComponents() {
 
         timeGroup.add(timeRadioButton1);
@@ -366,6 +390,12 @@ class KeywordSearchGlobalSearchSettingsPanel extends javax.swing.JPanel implemen
         } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
             logger.log(Level.WARNING, "Could not get number of indexed files/chunks"); //NON-NLS
         }
+        
+        if (!PlatformUtil.isWindowsOS() || !PlatformUtil.is64BitOS()) {
+            ocrCheckBox.setText(Bundle.KeywordSearchGlobalSearchSettingsPanel_customizeComponents_windowsOCR());
+            ocrCheckBox.setSelected(false);
+            ocrCheckBox.setEnabled(false);
+        }        
 
         KeywordSearch.addNumIndexedFilesChangeListener(
                 new PropertyChangeListener() {

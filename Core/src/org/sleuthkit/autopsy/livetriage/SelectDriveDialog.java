@@ -99,23 +99,23 @@ class SelectDriveDialog extends javax.swing.JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jScrollPane1 = new javax.swing.JScrollPane();
+        driveTableScrollPane = new javax.swing.JScrollPane();
         diskTable = new javax.swing.JTable();
-        jLabel1 = new javax.swing.JLabel();
+        selectDriveLabel = new javax.swing.JLabel();
         bnRefresh = new javax.swing.JButton();
         bnOk = new javax.swing.JButton();
         errorLabel = new javax.swing.JLabel();
         jSeparator1 = new javax.swing.JSeparator();
         bnCancel = new javax.swing.JButton();
-        jScrollPane2 = new javax.swing.JScrollPane();
-        jTextArea1 = new javax.swing.JTextArea();
+        descriptionScrollPane = new javax.swing.JScrollPane();
+        descriptionTextArea = new javax.swing.JTextArea();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
         diskTable.setModel(model);
-        jScrollPane1.setViewportView(diskTable);
+        driveTableScrollPane.setViewportView(diskTable);
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(SelectDriveDialog.class, "SelectDriveDialog.jLabel1.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(selectDriveLabel, org.openide.util.NbBundle.getMessage(SelectDriveDialog.class, "SelectDriveDialog.selectDriveLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(bnRefresh, org.openide.util.NbBundle.getMessage(SelectDriveDialog.class, "SelectDriveDialog.bnRefresh.text")); // NOI18N
         bnRefresh.addActionListener(new java.awt.event.ActionListener() {
@@ -140,15 +140,14 @@ class SelectDriveDialog extends javax.swing.JDialog {
             }
         });
 
-        jScrollPane2.setBorder(null);
+        descriptionScrollPane.setBorder(null);
 
-        jTextArea1.setBackground(new java.awt.Color(240, 240, 240));
-        jTextArea1.setColumns(20);
-        jTextArea1.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
-        jTextArea1.setRows(5);
-        jTextArea1.setText(org.openide.util.NbBundle.getMessage(SelectDriveDialog.class, "SelectDriveDialog.jTextArea1.text")); // NOI18N
-        jTextArea1.setBorder(null);
-        jScrollPane2.setViewportView(jTextArea1);
+        descriptionTextArea.setBackground(new java.awt.Color(240, 240, 240));
+        descriptionTextArea.setColumns(20);
+        descriptionTextArea.setRows(5);
+        descriptionTextArea.setText(org.openide.util.NbBundle.getMessage(SelectDriveDialog.class, "SelectDriveDialog.descriptionTextArea.text")); // NOI18N
+        descriptionTextArea.setBorder(null);
+        descriptionScrollPane.setViewportView(descriptionTextArea);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -163,24 +162,24 @@ class SelectDriveDialog extends javax.swing.JDialog {
                         .addComponent(bnOk, javax.swing.GroupLayout.PREFERRED_SIZE, 101, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(bnCancel, javax.swing.GroupLayout.PREFERRED_SIZE, 101, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                    .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(driveTableScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                    .addComponent(selectDriveLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jSeparator1)
                     .addComponent(errorLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jScrollPane2))
+                    .addComponent(descriptionScrollPane))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 107, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(descriptionScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 107, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jLabel1)
+                .addComponent(selectDriveLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 112, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(driveTableScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 112, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(bnRefresh)
@@ -217,13 +216,13 @@ class SelectDriveDialog extends javax.swing.JDialog {
     private javax.swing.JButton bnCancel;
     private javax.swing.JButton bnOk;
     private javax.swing.JButton bnRefresh;
+    private javax.swing.JScrollPane descriptionScrollPane;
+    private javax.swing.JTextArea descriptionTextArea;
     private javax.swing.JTable diskTable;
+    private javax.swing.JScrollPane driveTableScrollPane;
     private javax.swing.JLabel errorLabel;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JSeparator jSeparator1;
-    private javax.swing.JTextArea jTextArea1;
+    private javax.swing.JLabel selectDriveLabel;
     // End of variables declaration//GEN-END:variables
 
     /**

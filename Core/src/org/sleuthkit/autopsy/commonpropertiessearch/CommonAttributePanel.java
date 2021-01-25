@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -49,8 +49,7 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.centralrepository.ingestmodule.CentralRepoIngestModuleFactory;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
@@ -65,6 +64,7 @@ import org.sleuthkit.datamodel.IngestJobInfo;
 import org.sleuthkit.datamodel.IngestModuleInfo;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 
 /**
  * Panel used for common files search configuration and configuration business
@@ -162,13 +162,13 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
      */
     static boolean isEamDbAvailableForIntercaseSearch() {
         try {
-            return EamDb.isEnabled()
-                    && EamDb.getInstance() != null
-                    && EamDb.getInstance().getCases().size() > 1
+            return CentralRepository.isEnabled()
+                    && CentralRepository.getInstance() != null
+                    && CentralRepository.getInstance().getCases().size() > 1
                     && Case.isCaseOpen()
                     && Case.getCurrentCase() != null
-                    && EamDb.getInstance().getCase(Case.getCurrentCase()) != null;
-        } catch (EamDbException ex) {
+                    && CentralRepository.getInstance().getCase(Case.getCurrentCase()) != null;
+        } catch (CentralRepoException ex) {
             LOGGER.log(Level.SEVERE, "Unexpected exception while  checking for EamDB enabled.", ex);
         }
         return false;
@@ -188,11 +188,11 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
      */
     private static Long getNumberOfDataSourcesAvailable() {
         try {
-            if (EamDb.isEnabled()
-                    && EamDb.getInstance() != null) {
-                return EamDb.getInstance().getCountUniqueDataSources();
+            if (CentralRepository.isEnabled()
+                    && CentralRepository.getInstance() != null) {
+                return CentralRepository.getInstance().getCountUniqueDataSources();
             }
-        } catch (EamDbException ex) {
+        } catch (CentralRepoException ex) {
             LOGGER.log(Level.SEVERE, "Unexpected exception while  checking for EamDB enabled.", ex);
         }
         return 0L;
@@ -227,7 +227,7 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
             private ProgressHandle progress;
 
             @Override
-            protected CommonAttributeCountSearchResults doInBackground() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
+            protected CommonAttributeCountSearchResults doInBackground() throws TskCoreException, NoCurrentCaseException, SQLException, CentralRepoException {
                 progress = ProgressHandle.createHandle(Bundle.CommonAttributePanel_search_done_searchProgressGathering());
                 progress.start();
                 progress.switchToIndeterminate();
@@ -255,7 +255,7 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
                         filterByDocuments = interCasePanel.documentsCheckboxIsSelected();
                     }
                     if (corType == null) {
-                        corType = CorrelationAttributeInstance.getDefaultCorrelationTypes().get(0);
+                        corType = CentralRepository.getInstance().getDefinedCorrelationTypes().get(0);
                     }
                     if (caseId == InterCasePanel.NO_CASE_SELECTED) {
                         builder = new AllInterCaseCommonAttributeSearcher(filterByMedia, filterByDocuments, corType, percentageThreshold);
@@ -344,7 +344,7 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
             private ProgressHandle progress;
 
             @Override
-            protected CommonAttributeCaseSearchResults doInBackground() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
+            protected CommonAttributeCaseSearchResults doInBackground() throws TskCoreException, NoCurrentCaseException, SQLException, CentralRepoException {
                 progress = ProgressHandle.createHandle(Bundle.CommonAttributePanel_search_done_searchProgressGathering());
                 progress.start();
                 progress.switchToIndeterminate();
@@ -366,7 +366,7 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
                         filterByDocuments = interCasePanel.documentsCheckboxIsSelected();
                     }
                     if (corType == null) {
-                        corType = CorrelationAttributeInstance.getDefaultCorrelationTypes().get(0);
+                        corType = CentralRepository.getInstance().getDefinedCorrelationTypes().get(0);
                     }
                     if (caseId == InterCasePanel.NO_CASE_SELECTED) {
                         builder = new AllInterCaseCommonAttributeSearcher(filterByMedia, filterByDocuments, corType, percentageThreshold);
@@ -573,11 +573,11 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
              *
              * @return a map of Cases
              *
-             * @throws EamDbException
+             * @throws CentralRepoException
              */
-            private Map<Integer, String> mapCases(List<CorrelationCase> cases) throws EamDbException {
+            private Map<Integer, String> mapCases(List<CorrelationCase> cases) throws CentralRepoException {
                 Map<Integer, String> casemap = new HashMap<>();
-                CorrelationCase currentCorCase = EamDb.getInstance().getCase(Case.getCurrentCase());
+                CorrelationCase currentCorCase = CentralRepository.getInstance().getCase(Case.getCurrentCase());
                 for (CorrelationCase correlationCase : cases) {
                     if (currentCorCase.getID() != correlationCase.getID()) { // if not the current Case
                         casemap.put(correlationCase.getID(), correlationCase.getDisplayName());
@@ -587,9 +587,9 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
             }
 
             @Override
-            protected Map<Integer, String> doInBackground() throws EamDbException {
+            protected Map<Integer, String> doInBackground() throws CentralRepoException {
 
-                List<CorrelationCase> dataSources = EamDb.getInstance().getCases();
+                List<CorrelationCase> dataSources = CentralRepository.getInstance().getCases();
                 Map<Integer, String> caseMap = mapCases(dataSources);
 
                 return caseMap;
@@ -640,7 +640,8 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
         countResultsRadioButton = new javax.swing.JRadioButton();
         displayResultsLabel = new javax.swing.JLabel();
 
-        setMinimumSize(new java.awt.Dimension(450, 570));
+        setMaximumSize(new java.awt.Dimension(499, 646));
+        setMinimumSize(new java.awt.Dimension(499, 646));
         setResizable(false);
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosed(java.awt.event.WindowEvent evt) {
@@ -648,8 +649,9 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
             }
         });
 
-        jPanel1.setMaximumSize(null);
-        jPanel1.setPreferredSize(new java.awt.Dimension(450, 646));
+        jPanel1.setMaximumSize(new java.awt.Dimension(499, 646));
+        jPanel1.setMinimumSize(new java.awt.Dimension(499, 646));
+        jPanel1.setPreferredSize(new java.awt.Dimension(499, 646));
         jPanel1.setRequestFocusEnabled(false);
 
         org.openide.awt.Mnemonics.setLocalizedText(commonItemSearchDescription, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.commonItemSearchDescription.text")); // NOI18N
@@ -677,12 +679,13 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
 
         containerPanel.setBackground(new java.awt.Color(0, 0, 0));
         containerPanel.setOpaque(false);
+        containerPanel.setPreferredSize(new java.awt.Dimension(477, 326));
 
         javax.swing.GroupLayout containerPanelLayout = new javax.swing.GroupLayout(containerPanel);
         containerPanel.setLayout(containerPanelLayout);
         containerPanelLayout.setHorizontalGroup(
             containerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 430, Short.MAX_VALUE)
+            .addGap(0, 0, Short.MAX_VALUE)
         );
         containerPanelLayout.setVerticalGroup(
             containerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -703,6 +706,7 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
         percentageThresholdInputBox.setPreferredSize(new java.awt.Dimension(40, 24));
 
         org.openide.awt.Mnemonics.setLocalizedText(percentageThresholdTextTwo, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.percentageThresholdTextTwo.text_1")); // NOI18N
+        percentageThresholdTextTwo.setMaximumSize(new java.awt.Dimension(260, 16));
 
         org.openide.awt.Mnemonics.setLocalizedText(dataSourcesLabel, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.dataSourcesLabel.text")); // NOI18N
 
@@ -713,6 +717,9 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
         org.openide.awt.Mnemonics.setLocalizedText(searchButton, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.searchButton.text")); // NOI18N
         searchButton.setEnabled(false);
         searchButton.setHorizontalTextPosition(javax.swing.SwingConstants.LEADING);
+        searchButton.setMaximumSize(new java.awt.Dimension(100, 25));
+        searchButton.setMinimumSize(new java.awt.Dimension(100, 25));
+        searchButton.setPreferredSize(new java.awt.Dimension(100, 25));
         searchButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 searchButtonActionPerformed(evt);
@@ -746,42 +753,44 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                             .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addGap(0, 0, Short.MAX_VALUE)
-                                .addComponent(intraCaseRadio, javax.swing.GroupLayout.PREFERRED_SIZE, 383, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addGap(20, 20, 20)
+                                .addComponent(intraCaseRadio, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                             .addComponent(scopeLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                         .addGap(37, 37, 37))
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(percentageThresholdCheck)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(percentageThresholdCheck, javax.swing.GroupLayout.DEFAULT_SIZE, 184, Short.MAX_VALUE)
+                        .addGap(1, 1, 1)
                         .addComponent(percentageThresholdInputBox, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(percentageThresholdTextTwo, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(percentageThresholdTextTwo, javax.swing.GroupLayout.DEFAULT_SIZE, 247, Short.MAX_VALUE)
                         .addContainerGap())
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                        .addComponent(errorText, javax.swing.GroupLayout.PREFERRED_SIZE, 330, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(searchButton)
+                        .addComponent(errorText)
+                        .addGap(6, 6, 6)
+                        .addComponent(searchButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addContainerGap())
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(containerPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                                .addComponent(commonItemSearchDescription, javax.swing.GroupLayout.Alignment.LEADING)
-                                .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel1Layout.createSequentialGroup()
-                                    .addGap(20, 20, 20)
-                                    .addComponent(interCaseRadio, javax.swing.GroupLayout.PREFERRED_SIZE, 383, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(commonItemSearchDescription, javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel1Layout.createSequentialGroup()
+                                .addGap(20, 20, 20)
+                                .addComponent(interCaseRadio, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .addGap(84, 84, 84))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(containerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addContainerGap())))
             .addGroup(jPanel1Layout.createSequentialGroup()
+                .addGap(30, 30, 30)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(displayResultsLabel))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(30, 30, 30)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(caseResultsRadioButton, javax.swing.GroupLayout.PREFERRED_SIZE, 410, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(countResultsRadioButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                        .addComponent(caseResultsRadioButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGap(49, 49, 49))
+                    .addComponent(countResultsRadioButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addGap(10, 10, 10))
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(displayResultsLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 225, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -800,7 +809,7 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(percentageThresholdCheck)
                     .addComponent(percentageThresholdInputBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(percentageThresholdTextTwo))
+                    .addComponent(percentageThresholdTextTwo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(displayResultsLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -811,9 +820,9 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
                 .addComponent(dataSourcesLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(searchButton)
+                    .addComponent(searchButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(errorText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGap(14, 14, 14))
         );
 
         getContentPane().add(jPanel1, java.awt.BorderLayout.CENTER);
@@ -853,7 +862,7 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
     /**
      * If the settings reflect that a inter-case search is being performed,
      * checks that the data sources in the current case have been processed with
-     * Correlation Engine enabled and exist in the central repository. Prompting
+     * Central Repository enabled and exist in the central repository. Prompting
      * the user as to whether they still want to perform the search in the case
      * any data sources are unprocessed. If the settings reflect that a
      * intra-case search is being performed, it just performs the search.
@@ -861,7 +870,7 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
      * Notes: - Does not check that the data sources were processed into the
      * current central repository instead of another. - Does not check that the
      * appropriate modules to make all correlation types available were run. -
-     * Does not check if the correlation engine was run with any of the
+     * Does not check if the Central Repository was run with any of the
      * correlation properties properties disabled.
      */
     @Messages({"CommonAttributePanel.incompleteResults.introText=Results may be incomplete. Not all data sources in the current case were ingested into the current Central Repository. The following data sources have not been processed:",
@@ -874,14 +883,14 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
             @Override
             protected List<String> doInBackground() throws Exception {
                 List<String> unCorrelatedDataSources = new ArrayList<>();
-                if (!interCaseRadio.isSelected() || !EamDb.isEnabled() || EamDb.getInstance() == null) {
+                if (!interCaseRadio.isSelected() || !CentralRepository.isEnabled() || CentralRepository.getInstance() == null) {
                     return unCorrelatedDataSources;
                 }
                 //if the eamdb is enabled and an instance is able to be retrieved check if each data source has been processed into the cr 
                 HashMap<DataSource, CorrelatedStatus> dataSourceCorrelationMap = new HashMap<>(); //keep track of the status of all data sources that have been ingested
                 String correlationEngineModuleName = CentralRepoIngestModuleFactory.getModuleName();
                 SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-                List<CorrelationDataSource> correlatedDataSources = EamDb.getInstance().getDataSources();
+                List<CorrelationDataSource> correlatedDataSources = CentralRepository.getInstance().getDataSources();
                 List<IngestJobInfo> ingestJobs = skCase.getIngestJobs();
                 for (IngestJobInfo jobInfo : ingestJobs) {
                     //get the data source for each ingest job
@@ -893,14 +902,14 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
                         //if the datasource was previously processed we do not need to perform this check
                         for (CorrelationDataSource correlatedDataSource : correlatedDataSources) {
                             if (deviceID.equals(correlatedDataSource.getDeviceID())) {
-                                //if the datasource exists in the central repository it may of been processed with the correlation engine
+                                //if the datasource exists in the central repository it may of been processed with the Central Repository
                                 dataSourceCorrelationMap.put(dataSource, CorrelatedStatus.IN_CENTRAL_REPO);
                                 break;
                             }
                         }
                     }
                     if (dataSourceCorrelationMap.get(dataSource) == CorrelatedStatus.IN_CENTRAL_REPO) {
-                        //if the data source was in the central repository check if any of the modules run on it were the correlation engine
+                        //if the data source was in the central repository check if any of the modules run on it were the Central Repository
                         for (IngestModuleInfo ingestModuleInfo : jobInfo.getIngestModuleInfo()) {
                             if (correlationEngineModuleName.equals(ingestModuleInfo.getDisplayName())) {
                                 dataSourceCorrelationMap.put(dataSource, CorrelatedStatus.CORRELATED);

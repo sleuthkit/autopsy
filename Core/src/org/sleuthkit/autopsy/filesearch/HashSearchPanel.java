@@ -45,19 +45,19 @@ class HashSearchPanel extends javax.swing.JPanel {
 
     private void customizeComponents() {
 
-        searchTextField.setComponentPopupMenu(rightClickMenu);
+        md5TextField.setComponentPopupMenu(rightClickMenu);
         ActionListener actList = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 JMenuItem jmi = (JMenuItem) e.getSource();
                 if (jmi.equals(cutMenuItem)) {
-                    searchTextField.cut();
+                    md5TextField.cut();
                 } else if (jmi.equals(copyMenuItem)) {
-                    searchTextField.copy();
+                    md5TextField.copy();
                 } else if (jmi.equals(pasteMenuItem)) {
-                    searchTextField.paste();
+                    md5TextField.paste();
                 } else if (jmi.equals(selectAllMenuItem)) {
-                    searchTextField.selectAll();
+                    md5TextField.selectAll();
                 }
             }
         };
@@ -65,7 +65,24 @@ class HashSearchPanel extends javax.swing.JPanel {
         copyMenuItem.addActionListener(actList);
         pasteMenuItem.addActionListener(actList);
         selectAllMenuItem.addActionListener(actList);
-        this.searchTextField.getDocument().addDocumentListener(new DocumentListener() {
+        this.md5TextField.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
+            }
+        });
+        
+        this.sha256TextField.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
                 firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
@@ -84,17 +101,27 @@ class HashSearchPanel extends javax.swing.JPanel {
 
     }
 
-    JCheckBox getHashCheckBox() {
-        return hashCheckBox;
+    JCheckBox getMd5HashCheckBox() {
+        return md5CheckBox;
     }
 
-    JTextField getSearchTextField() {
-        return searchTextField;
+    JTextField getMd5TextField() {
+        return md5TextField;
+    }
+    
+    JCheckBox getSha256HashCheckBox() {
+        return sha256CheckBox;
+    }
+
+    JTextField getSha256TextField() {
+        return sha256TextField;
     }
 
     void setComponentsEnabled() {
-        boolean enabled = hashCheckBox.isSelected();
-        this.searchTextField.setEnabled(enabled);
+        boolean md5Enabled = md5CheckBox.isSelected();
+        this.md5TextField.setEnabled(md5Enabled);
+        boolean sha256Enabled = sha256CheckBox.isSelected();
+        this.sha256TextField.setEnabled(sha256Enabled);
     }
 
     /**
@@ -111,8 +138,10 @@ class HashSearchPanel extends javax.swing.JPanel {
         copyMenuItem = new javax.swing.JMenuItem();
         pasteMenuItem = new javax.swing.JMenuItem();
         selectAllMenuItem = new javax.swing.JMenuItem();
-        hashCheckBox = new javax.swing.JCheckBox();
-        searchTextField = new javax.swing.JTextField();
+        md5CheckBox = new javax.swing.JCheckBox();
+        md5TextField = new javax.swing.JTextField();
+        sha256CheckBox = new javax.swing.JCheckBox();
+        sha256TextField = new javax.swing.JTextField();
 
         cutMenuItem.setText(org.openide.util.NbBundle.getMessage(HashSearchPanel.class, "NameSearchPanel.cutMenuItem.text")); // NOI18N
         rightClickMenu.add(cutMenuItem);
@@ -126,15 +155,21 @@ class HashSearchPanel extends javax.swing.JPanel {
         selectAllMenuItem.setText(org.openide.util.NbBundle.getMessage(HashSearchPanel.class, "NameSearchPanel.selectAllMenuItem.text")); // NOI18N
         rightClickMenu.add(selectAllMenuItem);
 
-        hashCheckBox.setText(org.openide.util.NbBundle.getMessage(HashSearchPanel.class, "HashSearchPanel.md5CheckBox.text")); // NOI18N
-        hashCheckBox.setFont(hashCheckBox.getFont().deriveFont(hashCheckBox.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-        hashCheckBox.addActionListener(new java.awt.event.ActionListener() {
+        md5CheckBox.setText(org.openide.util.NbBundle.getMessage(HashSearchPanel.class, "HashSearchPanel.md5CheckBox.text")); // NOI18N
+        md5CheckBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                hashCheckBoxActionPerformed(evt);
+                md5CheckBoxActionPerformed(evt);
             }
         });
 
-        searchTextField.setFont(searchTextField.getFont().deriveFont(searchTextField.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+        sha256CheckBox.setText(org.openide.util.NbBundle.getMessage(HashSearchPanel.class, "HashSearchPanel.sha256CheckBox.text")); // NOI18N
+        sha256CheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                sha256CheckBoxActionPerformed(evt);
+            }
+        });
+
+        sha256TextField.setText(org.openide.util.NbBundle.getMessage(HashSearchPanel.class, "HashSearchPanel.sha256TextField.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -142,35 +177,53 @@ class HashSearchPanel extends javax.swing.JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGap(0, 0, 0)
-                .addComponent(hashCheckBox)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(searchTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 247, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, 0))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(sha256CheckBox)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(sha256TextField, javax.swing.GroupLayout.DEFAULT_SIZE, 254, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(md5CheckBox)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(md5TextField)))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                .addComponent(hashCheckBox)
-                .addComponent(searchTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addGroup(layout.createSequentialGroup()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(md5CheckBox)
+                    .addComponent(md5TextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(sha256CheckBox)
+                    .addComponent(sha256TextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void hashCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_hashCheckBoxActionPerformed
+    private void md5CheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_md5CheckBoxActionPerformed
         setComponentsEnabled();
         firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
-    }//GEN-LAST:event_hashCheckBoxActionPerformed
+    }//GEN-LAST:event_md5CheckBoxActionPerformed
+
+    private void sha256CheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sha256CheckBoxActionPerformed
+        setComponentsEnabled();
+        firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
+    }//GEN-LAST:event_sha256CheckBoxActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JMenuItem copyMenuItem;
     private javax.swing.JMenuItem cutMenuItem;
-    private javax.swing.JCheckBox hashCheckBox;
+    private javax.swing.JCheckBox md5CheckBox;
+    private javax.swing.JTextField md5TextField;
     private javax.swing.JMenuItem pasteMenuItem;
     private javax.swing.JPopupMenu rightClickMenu;
-    private javax.swing.JTextField searchTextField;
     private javax.swing.JMenuItem selectAllMenuItem;
+    private javax.swing.JCheckBox sha256CheckBox;
+    private javax.swing.JTextField sha256TextField;
     // End of variables declaration//GEN-END:variables
 
     void addActionListener(ActionListener l) {
-        searchTextField.addActionListener(l);
+        md5TextField.addActionListener(l);
     }
 }

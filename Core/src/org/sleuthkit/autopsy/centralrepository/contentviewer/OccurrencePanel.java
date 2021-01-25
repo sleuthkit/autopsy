@@ -30,10 +30,10 @@ import java.util.logging.Level;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 
 /**
  * Panel for displaying other occurrence details.
@@ -203,14 +203,14 @@ final class OccurrencePanel extends javax.swing.JPanel {
                 try {
                     OtherOccurrenceNodeInstanceData nodeData = ((OtherOccurrenceNodeInstanceData) occurrence);
                     if (nodeData.isCentralRepoNode()) {
-                        if (EamDb.isEnabled()) {
+                        if (CentralRepository.isEnabled()) {
                             CorrelationCase partialCase = nodeData.getCorrelationAttributeInstance().getCorrelationCase();
-                            caseDate = EamDb.getInstance().getCaseByUUID(partialCase.getCaseUUID()).getCreationDate();
+                            caseDate = CentralRepository.getInstance().getCaseByUUID(partialCase.getCaseUUID()).getCreationDate();
                         }
                     } else {
                         caseDate = Case.getCurrentCase().getCreatedDate();
                     }
-                } catch (EamDbException ex) {
+                } catch (CentralRepoException ex) {
                     LOGGER.log(Level.WARNING, "Error getting case created date for other occurrence content viewer", ex);
                 }
                 //Collect the data that is necessary for the other sections 

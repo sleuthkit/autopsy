@@ -70,7 +70,7 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
 
         Extract registry = new ExtractRegistry();
         Extract recentDocuments = new RecentDocumentsByLnk();
-        Extract chrome = new Chrome();
+        Extract chrome = new Chromium();
         Extract firefox = new Firefox();
         Extract SEUQA = new SearchEngineURLQueryAnalyzer();
         Extract osExtract = new ExtractOs();
@@ -78,6 +78,10 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
         Extract safari = new ExtractSafari();
         Extract zoneInfo = new ExtractZoneIdentifier();
         Extract recycleBin = new ExtractRecycleBin();
+        Extract sru = new ExtractSru();
+        Extract prefetch = new ExtractPrefetch();
+        Extract webAccountType = new ExtractWebAccountType();
+        Extract messageDomainType = new DomainCategoryRunner();
 
         extractors.add(chrome);
         extractors.add(firefox);
@@ -86,12 +90,16 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
         extractors.add(safari);
         extractors.add(recentDocuments);
         extractors.add(SEUQA); // this needs to run after the web browser modules
+        extractors.add(webAccountType); // this needs to run after the web browser modules
         extractors.add(registry); // this should run after quicker modules like the browser modules and needs to run before the DataSourceUsageAnalyzer
         extractors.add(osExtract); // this needs to run before the DataSourceUsageAnalyzer
         extractors.add(dataSourceAnalyzer); //this needs to run after ExtractRegistry and ExtractOs
         extractors.add(zoneInfo); // this needs to run after the web browser modules
         extractors.add(recycleBin); // this needs to run after ExtractRegistry and ExtractOS
-
+        extractors.add(sru); 
+        extractors.add(prefetch);
+        extractors.add(messageDomainType);
+        
         browserExtractors.add(chrome);
         browserExtractors.add(firefox);
         browserExtractors.add(iexplore);

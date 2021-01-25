@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<INTERESTING_FILE_SETS>
+ <INTERESTING_FILE_SET description="Identifies installed cloud storage applications" ignoreKnown="false" name="Cloud Storage" standardSet="true" versionNumber="2">
+  <NAME name="Adobe Creative Cloud" regex="false" typeFilter="file">creative cloud.exe</NAME>
+  <NAME name="Amazon Photo Backup" regex="false" typeFilter="file">amazonphotos.exe</NAME>
+  <NAME name="Box" regex="false" typeFilter="file">box.exe</NAME>
+  <NAME name="Carbonite" regex="false" typeFilter="file">carboniteUI.exe</NAME>
+  <NAME name="Carbonite Safe Server" regex="false" typeFilter="file">CloudScheduler.exe</NAME>
+  <NAME name="CloudMe" regex="false" typeFilter="file">CloudMe.exe</NAME>
+  <NAME name="DropBox Installer" regex="false" typeFilter="file">dropbox.exe</NAME>
+  <NAME name="DropBox Windows App" regex="false" typeFilter="file">DropboxUniversal.exe </NAME>
+  <NAME name="eFileCabinet" regex="false" typeFilter="file">efcClient.exe</NAME>
+  <NAME name="GigaTribe" regex="false" typeFilter="file">GigaTribe.exe</NAME>
+  <NAME name="GoodSync" regex="false" typeFilter="file">goodsync.exe</NAME>
+  <NAME name="Google Drive" regex="false" typeFilter="file">googledrivesync.exe</NAME>
+  <NAME name="Google Stream" regex="false" typeFilter="file">GoogleDriveFS.exe</NAME>
+  <NAME name="iCloud Drive" regex="false" typeFilter="file">iCloudDrive.exe</NAME>
+  <NAME name="MEGA Privacy Windows App" regex="false" typeFilter="file">MegaApp.exe</NAME>
+  <NAME name="MEGAsync" regex="false" typeFilter="file">MEGAsync.exe</NAME>
+  <NAME name="NextCloud" regex="false" typeFilter="file">nextcloud.exe</NAME>
+  <NAME name="OneDrive Windows App" regex="false" typeFilter="file">microsoft.microsoftskydrive.exe</NAME>
+  <NAME name="OwnCloud" regex="false" typeFilter="file">owncloud.exe</NAME>
+  <NAME name="pCloud" regex="false" typeFilter="file">pcloud.exe</NAME>
+  <NAME name="Resilio" regex="false" typeFilter="file">Resilio Sync.exe</NAME>
+  <NAME name="Seafile" regex="false" typeFilter="file">seafile-applet.exe</NAME>
+  <NAME name="Slack" regex="false" typeFilter="file">slack.exe</NAME>
+  <NAME name="SpiderOak One " regex="false" typeFilter="file">SpiderOakONE.exe</NAME>
+  <NAME name="SugarSync" regex="false" typeFilter="file">sugarsync.exe</NAME>
+  <NAME name="Sync" regex="false" typeFilter="file">sync-taskbar.exe</NAME>
+  <NAME name="Syncthing" regex="false" typeFilter="file">Syncthing.exe</NAME>
+  <NAME name="SyncTrazor" regex="false" typeFilter="file">SyncTrazor.exe</NAME>
+  <NAME name="Synqion" regex="false" typeFilter="file">synqion.exe</NAME>
+  <NAME name="Yandex Disk" regex="false" typeFilter="file">yandexdisk2.exe</NAME>
+  <NAME name="Zoho Docs" regex="false" typeFilter="file">zohodocs.exe</NAME>
+ </INTERESTING_FILE_SET>
+</INTERESTING_FILE_SETS>

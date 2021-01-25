@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2012-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.datamodel;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -28,7 +29,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.nodes.Sheet;
@@ -41,9 +41,8 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeUtil;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable.HasCommentStatus;
@@ -66,6 +65,8 @@ import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.autopsy.texttranslation.utils.FileNameTranslationUtil;
 
 /**
  * An abstract node that encapsulates AbstractFile data
@@ -95,7 +96,17 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
             }
         }
 
-        if (UserPreferences.displayTranslatedFileNames()) {
+        try {
+            //See JIRA-5971
+            //Attempt to cache file path during construction of this UI component.
+            this.content.getUniquePath();
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, String.format("Failed attempt to cache the "
+                    + "unique path of the abstract file instance. Name: %s (objID=%d)",
+                    this.content.getName(), this.content.getId()), ex);
+        }
+
+        if (TextTranslationService.getInstance().hasProvider() && UserPreferences.displayTranslatedFileNames()) {
             backgroundTasksPool.submit(new TranslationTask(
                     new WeakReference<>(this), weakPcl));
         }
@@ -267,6 +278,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         "AbstractAbstractFileNode.typeMetaColLbl=Type(Meta)",
         "AbstractAbstractFileNode.knownColLbl=Known",
         "AbstractAbstractFileNode.md5HashColLbl=MD5 Hash",
+        "AbstractAbstractFileNode.sha256HashColLbl=SHA-256 Hash",
         "AbstractAbstractFileNode.objectId=Object ID",
         "AbstractAbstractFileNode.mimeType=MIME Type",
         "AbstractAbstractFileNode.extensionColLbl=Extension"})
@@ -294,6 +306,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         TYPE_META(AbstractAbstractFileNode_typeMetaColLbl()),
         KNOWN(AbstractAbstractFileNode_knownColLbl()),
         MD5HASH(AbstractAbstractFileNode_md5HashColLbl()),
+        SHA256HASH(AbstractAbstractFileNode_sha256HashColLbl()),
         ObjectID(AbstractAbstractFileNode_objectId()),
         MIMETYPE(AbstractAbstractFileNode_mimeType()),
         EXTENSION(AbstractAbstractFileNode_extensionColLbl());
@@ -321,7 +334,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
          * background task that promises to update these values.
          */
 
-        if (UserPreferences.displayTranslatedFileNames()) {
+        if (TextTranslationService.getInstance().hasProvider() && UserPreferences.displayTranslatedFileNames()) {
             properties.add(new NodeProperty<>(ORIGINAL_NAME.toString(), ORIGINAL_NAME.toString(), NO_DESCR, ""));
         }
 
@@ -329,7 +342,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         if (!UserPreferences.getHideSCOColumns()) {
             properties.add(new NodeProperty<>(SCORE.toString(), SCORE.toString(), VALUE_LOADING, ""));
             properties.add(new NodeProperty<>(COMMENT.toString(), COMMENT.toString(), VALUE_LOADING, ""));
-            if (EamDb.isEnabled()) {
+            if (CentralRepository.isEnabled()) {
                 properties.add(new NodeProperty<>(OCCURRENCES.toString(), OCCURRENCES.toString(), VALUE_LOADING, ""));
             }
             // Get the SCO columns data in a background task
@@ -347,6 +360,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         properties.add(new NodeProperty<>(KNOWN.toString(), KNOWN.toString(), NO_DESCR, content.getKnown().getName()));
         properties.add(new NodeProperty<>(LOCATION.toString(), LOCATION.toString(), NO_DESCR, getContentPath(content)));
         properties.add(new NodeProperty<>(MD5HASH.toString(), MD5HASH.toString(), NO_DESCR, StringUtils.defaultString(content.getMd5Hash())));
+        properties.add(new NodeProperty<>(SHA256HASH.toString(), SHA256HASH.toString(), NO_DESCR, StringUtils.defaultString(content.getSha256Hash())));
         properties.add(new NodeProperty<>(MIMETYPE.toString(), MIMETYPE.toString(), NO_DESCR, StringUtils.defaultString(content.getMIMEType())));
         properties.add(new NodeProperty<>(EXTENSION.toString(), EXTENSION.toString(), NO_DESCR, content.getNameExtension()));
 
@@ -405,12 +419,12 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         try {
             //don't perform the query if there is no correlation value
             if (attributeType != null && StringUtils.isNotBlank(attributeValue)) {
-                count = EamDb.getInstance().getCountUniqueCaseDataSourceTuplesHavingTypeValue(attributeType, attributeValue);
+                count = CentralRepository.getInstance().getCountUniqueCaseDataSourceTuplesHavingTypeValue(attributeType, attributeValue);
                 description = Bundle.AbstractAbstractFileNode_createSheet_count_description(count);
             } else if (attributeType != null) {
                 description = Bundle.AbstractAbstractFileNode_createSheet_count_hashLookupNotRun_description();
             }
-        } catch (EamDbException ex) {
+        } catch (CentralRepoException ex) {
             logger.log(Level.WARNING, "Error getting count of datasources with correlation attribute", ex);
         } catch (CorrelationAttributeNormalizationException ex) {
             logger.log(Level.WARNING, "Unable to normalize data to get count of datasources with correlation attribute", ex);
@@ -480,39 +494,18 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
     }
 
     /**
-     * Translates this nodes content name. Doesn't attempt translation if the
-     * name is in english or if there is now translation service available.
+     * Translates the name of the file this node represents. An empty string
+     * will be returned if the translation fails for any reason.
+     *
+     * @return The translated file name or the empty string.
      */
     String getTranslatedFileName() {
-        //If already in complete English, don't translate.
-        if (content.getName().matches("^\\p{ASCII}+$")) {
+        try {
+            return FileNameTranslationUtil.translate(content.getName());
+        } catch (NoServiceProviderException | TranslationException ex) {
+            logger.log(Level.WARNING, MessageFormat.format("Error translating file name (objID={0}))", content.getId()), ex);
             return "";
         }
-        TextTranslationService tts = TextTranslationService.getInstance();
-        if (tts.hasProvider()) {
-            //Seperate out the base and ext from the contents file name.
-            String base = FilenameUtils.getBaseName(content.getName());
-            try {
-                String translation = tts.translate(base);
-                String ext = FilenameUtils.getExtension(content.getName());
-
-                //If we have no extension, then we shouldn't add the .
-                String extensionDelimiter = (ext.isEmpty()) ? "" : ".";
-
-                //Talk directly to this nodes pcl, fire an update when the translation
-                //is complete. 
-                if (!translation.isEmpty()) {
-                    return translation + extensionDelimiter + ext;
-                }
-            } catch (NoServiceProviderException noServiceEx) {
-                logger.log(Level.WARNING, "Translate unsuccessful because no TextTranslator "
-                        + "implementation was provided.", noServiceEx.getMessage());
-            } catch (TranslationException noTranslationEx) {
-                logger.log(Level.WARNING, "Could not successfully translate file name "
-                        + content.getName(), noTranslationEx.getMessage());
-            }
-        }
-        return "";
     }
 
     /**
@@ -538,8 +531,8 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
     @Override
     protected CorrelationAttributeInstance getCorrelationAttributeInstance() {
         CorrelationAttributeInstance attribute = null;
-        if (EamDb.isEnabled() && !UserPreferences.getHideSCOColumns()) {
-            attribute = EamArtifactUtil.getInstanceFromContent(content);
+        if (CentralRepository.isEnabled() && !UserPreferences.getHideSCOColumns()) {
+            attribute = CorrelationAttributeUtil.getCorrAttrForFile(content);
         }
         return attribute;
     }
@@ -587,6 +580,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         map.put(FLAGS_META.toString(), content.getMetaFlagsAsString());
         map.put(KNOWN.toString(), content.getKnown().getName());
         map.put(MD5HASH.toString(), StringUtils.defaultString(content.getMd5Hash()));
+        map.put(SHA256HASH.toString(), StringUtils.defaultString(content.getSha256Hash()));
         map.put(MIMETYPE.toString(), StringUtils.defaultString(content.getMIMEType()));
         map.put(EXTENSION.toString(), content.getNameExtension());
     }

@@ -1,0 +1,7 @@
+Manifest-Version: 1.0
+AutoUpdate-Show-In-Client: true
+OpenIDE-Module: org.sleuthkit.autopsy.Tika/1
+OpenIDE-Module-Implementation-Version: 1
+OpenIDE-Module-Localizing-Bundle: org/sleuthkit/autopsy/Tika/Bundle.properties
+OpenIDE-Module-Specification-Version: 23
+

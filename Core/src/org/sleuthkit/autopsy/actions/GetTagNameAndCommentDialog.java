@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2013-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,9 +41,10 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.tags.TagUtils;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.TagSet;
 
 /**
  * This dialog allows tag assignment with a comment attached.
@@ -52,8 +53,6 @@ import org.sleuthkit.datamodel.TskData;
 public class GetTagNameAndCommentDialog extends JDialog {
 
     private static final long serialVersionUID = 1L;
-    private final List<TagName> tagNamesList = new ArrayList<>();
-    private final List<TagName> standardTagNamesList = new ArrayList<>();
     private TagNameAndComment tagNameAndComment = null;
 
     public static class TagNameAndComment {
@@ -128,8 +127,7 @@ public class GetTagNameAndCommentDialog extends JDialog {
 
             @Override
             public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-                String status = ((TagName) value).getKnownStatus() == TskData.FileKnown.BAD ? TagsManager.getNotableTagLabel() : "";
-                String newValue = ((TagName) value).getDisplayName() + status;
+                String newValue = TagUtils.getDecoratedTagDisplayName((TagName) value);
                 return super.getListCellRendererComponent(list, newValue, index, isSelected, cellHasFocus);
             }
         });
@@ -150,34 +148,51 @@ public class GetTagNameAndCommentDialog extends JDialog {
         }
         );
 
-        // Populate the combo box with the available tag names and save the 
-        // tag name DTOs to be enable to return the one the user selects.
-        // Tag name DTOs may be null (user tag names that have not been used do
-        // not exist in the database).
-        try {
+        try { 
             TagsManager tagsManager = Case.getCurrentCaseThrows().getServices().getTagsManager();
             List<String> standardTagNames = TagsManager.getStandardTagNames();
             Map<String, TagName> tagNamesMap = new TreeMap<>(tagsManager.getDisplayNamesToTagNamesMap());
-
+            Map<String, List<TagName>> tagSetMap = new TreeMap<>(); 
+            List<TagName> tagNamesList = new ArrayList<>();
+            List<TagName> standardTagNamesList = new ArrayList<>();
+                        
             tagNamesMap.entrySet().stream().map((entry) -> entry.getValue()).forEachOrdered((tagName) -> {
-                if (standardTagNames.contains(tagName.getDisplayName())) {
+                TagSet tagSet = null;
+                try {
+                    tagSet = tagsManager.getTagSet(tagName);
+                } catch (TskCoreException ex) {
+                    Logger.getLogger(GetTagNameAndCommentDialog.class
+                    .getName()).log(Level.SEVERE, "Failed to get tag set", ex); //NON-NLS
+                }
+                if(tagSet != null) {
+                    if(tagSetMap.get(tagSet.getName()) == null) {
+                        tagSetMap.put(tagSet.getName(), tagSet.getTagNames());
+                    }
+                } else if (standardTagNames.contains(tagName.getDisplayName())) {
                     standardTagNamesList.add(tagName);
                 } else {
                     tagNamesList.add(tagName);
                 }
             });
+            
+            tagNamesList.forEach((tag) -> {
+                tagCombo.addItem(tag);
+            });
+
+            standardTagNamesList.forEach((tag) -> {
+                tagCombo.addItem(tag);
+            });
+            
+            tagSetMap.values().forEach((tagNameList)->{
+                tagNameList.forEach((tag)->{
+                    tagCombo.addItem(tag);
+                });
+            });
 
         } catch (TskCoreException | NoCurrentCaseException ex) {
             Logger.getLogger(GetTagNameAndCommentDialog.class
                     .getName()).log(Level.SEVERE, "Failed to get tag names", ex); //NON-NLS
-        }
-        tagNamesList.forEach((tag) -> {
-            tagCombo.addItem(tag);
-        });
-
-        standardTagNamesList.forEach((tag) -> {
-            tagCombo.addItem(tag);
-        });
+        }     
 
         // Center and show the dialog box. 
         this.setLocationRelativeTo(this.getOwner());
@@ -310,7 +325,6 @@ public class GetTagNameAndCommentDialog extends JDialog {
     private void newTagButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newTagButtonActionPerformed
         TagName newTagName = GetTagNameDialog.doDialog(this);
         if (newTagName != null) {
-            tagNamesList.add(newTagName);
             tagCombo.addItem(newTagName);
             tagCombo.setSelectedItem(newTagName);
         }

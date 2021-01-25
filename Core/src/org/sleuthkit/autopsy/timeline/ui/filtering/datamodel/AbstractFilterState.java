@@ -26,26 +26,41 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 
 /**
- * Abstract base class for FilterStates. Provides selected, disabled, and active
- * properties.
+ * An abstract base class for implementations of the FilterState interface.
+ * Filter state classes are wrappers that adapt a timeline data model filtering
+ * object for display by the timeline GUI by providing selected, disabled, and
+ * active properties for the wrapped filter.
+ *
+ * @param <FilterType> The type of the wrapped filter.
  */
-abstract class AbstractFilterState<F> implements FilterState<F> {
+abstract class AbstractFilterState<FilterType> implements FilterState<FilterType> {
 
     private final SimpleBooleanProperty selected = new SimpleBooleanProperty(false);
     private final SimpleBooleanProperty disabled = new SimpleBooleanProperty(false);
-    private final BooleanBinding activeProp = Bindings.and(selected, disabled.not());
-    private final F filter;
+    private final BooleanBinding active = Bindings.and(selected, disabled.not());
+    private final FilterType filter;
 
     @Override
-    public F getFilter() {
+    public FilterType getFilter() {
         return filter;
     }
 
-    AbstractFilterState(F filter, Boolean select) {
+    /**
+     * Constructs the base class part for implementations of the FilterState
+     * interface. Filter state classes are wrappers that adapt a timeline data
+     * model filtering object for display by the timeline GUI by providing
+     * selected, disabled, and active properties for the wrapped filter.
+     *
+     * @param filter   The filter to be wrapped.
+     * @param selected Whether or not the filter is selected. The filter is
+     *                 disabled by default and is therefore not active by
+     *                 default.
+     */
+    AbstractFilterState(FilterType filter, Boolean selected) {
         this.filter = filter;
-        selected.set(select);
-    }
-
+        this.selected.set(selected);
+    }    
+    
     @Override
     public BooleanProperty selectedProperty() {
         return selected;
@@ -83,11 +98,11 @@ abstract class AbstractFilterState<F> implements FilterState<F> {
 
     @Override
     public BooleanExpression activeProperty() {
-        return activeProp;
+        return active;
     }
 
     @Override
-    public F getActiveFilter() {
+    public FilterType getActiveFilter() {
         return isActive() ? getFilter() : null;
     }
 
@@ -120,4 +135,5 @@ abstract class AbstractFilterState<F> implements FilterState<F> {
         }
         return Objects.equals(this.isDisabled(), other.isDisabled());
     }
+
 }

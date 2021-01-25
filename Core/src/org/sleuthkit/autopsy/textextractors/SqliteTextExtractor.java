@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2018-2018 Basis Technology Corp.
+ * Copyright 2018-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -44,7 +44,7 @@ final class SqliteTextExtractor implements TextExtractor {
     private static final Logger logger = Logger.getLogger(SqliteTextExtractor.class.getName());
     private final AbstractFile file;
 
-    public SqliteTextExtractor(AbstractFile file) {
+    SqliteTextExtractor(AbstractFile file) {
         this.file = file;
     }
     /**
@@ -101,7 +101,7 @@ final class SqliteTextExtractor implements TextExtractor {
          *
          * @param file Sqlite file
          */
-        public SQLiteStreamReader(AbstractFile file) {
+        SQLiteStreamReader(AbstractFile file) {
             this.file = file;
             reader = new SQLiteTableReader.Builder(file)
                     .forAllColumnNames(getColumnNameStrategy())
@@ -140,7 +140,7 @@ final class SqliteTextExtractor implements TextExtractor {
                     }
 
                     fillBuffer(objectStr);
-                    columnIndex = columnIndex % totalColumns;
+                    columnIndex %= totalColumns;
                 }
             };
         }
@@ -171,7 +171,7 @@ final class SqliteTextExtractor implements TextExtractor {
                     fillBuffer(columnName + ((columnIndex == totalColumns) ? "\n" : " "));
 
                     //Reset the columnCount to 0 for next table read
-                    columnIndex = columnIndex % totalColumns;
+                    columnIndex %= totalColumns;
                 }
             };
         }
@@ -204,7 +204,7 @@ final class SqliteTextExtractor implements TextExtractor {
          */
         @Override
         public int read(char[] cbuf, int off, int len) throws IOException {
-            buf = cbuf;
+            buf = cbuf; //needs to be the same memory address and not a copy of the contents since we are filling it in
 
             bufIndex = off;
 
@@ -277,12 +277,12 @@ final class SqliteTextExtractor implements TextExtractor {
             private final String entity;
             private Integer pointer;
 
-            public ExcessBytes(String entity, Integer pointer) {
+            ExcessBytes(String entity, Integer pointer) {
                 this.entity = entity;
                 this.pointer = pointer;
             }
 
-            public boolean isFinished() {
+            boolean isFinished() {
                 return entity.length() == pointer;
             }
 
@@ -296,7 +296,7 @@ final class SqliteTextExtractor implements TextExtractor {
              *
              * @return number of characters read into the buffer
              */
-            public int read(char[] buf, int off, int len) {
+            int read(char[] buf, int off, int len) {
                 for (int i = off; i < len; i++) {
                     if (isFinished()) {
                         return i - off;

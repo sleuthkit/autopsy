@@ -7,18 +7,19 @@
         
         <!-- Solr server dependencies -->
         <conf name="solr-libs"/>
-        <conf name="solr-war"/>
-        <conf name="start-solr"/>
+		<conf name="solr-war"/>	<!-- for embedded Solr 4 -->
+        <conf name="start-solr"/> <!-- for embedded Solr 4 -->
         <conf name="jetty-libs"/>
         <conf name="slf4j-libs"/>
         <conf name="servlet"/>
     </configurations>
     <dependencies>
         <!-- Solr -->
-        <dependency conf="solr-war->default" org="org.apache.solr" name="solr" rev="4.9.1" transitive="false" /> <!-- the war file -->
+	<dependency conf="solr-war->default" org="org.apache.solr" name="solr" rev="4.9.1" transitive="false" /> <!-- the war file for embedded Solr 4 -->
+        <dependency name="solr-cell" rev="8.6.3" org="org.apache.solr" conf="solr-libs->default"/>
         
         <!-- Autopsy -->
-        <dependency conf="autopsy->*" org="org.apache.solr" name="solr-solrj" rev="4.9.1"/>
+        <dependency conf="autopsy->*" org="org.apache.solr" name="solr-solrj" rev="8.6.3"/>
         <dependency conf="autopsy->*" org="commons-lang" name="commons-lang" rev="2.4"/>
         <dependency conf="autopsy->*" org="commons-validator" name="commons-validator" rev="1.5.1"/>
         <dependency conf="autopsy->*" org="com.optimaize.languagedetector" name="language-detector" rev="0.6"/>
@@ -32,11 +33,11 @@
         <dependency conf="autopsy->*" org="org.cleartk" name="cleartk-ml" rev="2.0.0"/>
         
         <!-- icu4j for pdfbox bidirectional text support, needs to be defined explicitely (it is optional) -->
-        <dependency conf="autopsy->*" org="com.ibm.icu" name="icu4j" rev="3.8"/>
-        <dependency conf="autopsy->*" org="net.htmlparser.jericho" name="jericho-html" rev="3.3"/>
+        <dependency conf="autopsy->default" org="com.ibm.icu" name="icu4j" rev="3.8"/>
+        <dependency conf="autopsy->default" org="net.htmlparser.jericho" name="jericho-html" rev="3.3"/>
         
         <!-- Jetty -->
-        <dependency conf="start-solr->default" org="org.eclipse.jetty" name="jetty-start" rev="8.1.16.v20140903"/>
+		<dependency conf="start-solr->default" org="org.eclipse.jetty" name="jetty-start" rev="8.1.16.v20140903"/> <!-- for embedded Solr 4 -->
         <dependency conf="jetty-libs->default" org="org.eclipse.jetty" name="jetty-server" rev="8.1.16.v20140903"/>
         <dependency conf="jetty-libs->default" org="org.eclipse.jetty" name="jetty-deploy" rev="8.1.16.v20140903"/>
         <dependency conf="servlet->default" org="org.eclipse.jetty.orbit" name="javax.servlet" rev="3.0.0.v201112011016"/>
@@ -46,7 +47,11 @@
         <dependency conf="slf4j-libs->default" org="org.slf4j" name="jcl-over-slf4j" rev="1.7.10"/>
         <dependency conf="slf4j-libs->default" org="org.slf4j" name="jul-to-slf4j" rev="1.7.10"/>
         
+        <!-- Remnants of a past Tika dependency. These jars were being exported from Tika, which has since 
+             moved into it's own NBM. For sake of backwards compatibility, these are still provided. -->
+        <dependency conf="autopsy->default" org="org.apache.httpcomponents" name="httpclient" rev="4.5.6"/>
+        <dependency conf="autopsy->default" org="org.apache.httpcomponents" name="httpmime" rev="4.5.6"/>
+        
         <exclude org="*" ext="*" type="javadoc"/>
-        <override org="org.cleartk" module="cleartk-util" rev="2.0.0"/>
     </dependencies>
 </ivy-module>

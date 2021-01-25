@@ -1,8 +1,13 @@
 /*! \page object_detection_page Object Detection
 
+[TOC]
+
+
 \section object_overview Overview
 
 The Object Detection module uses OpenCV to try to detect objects in images.
+
+The \ref experimental_page must be enabled to run this module.
 
 \section object_setup Setup
 

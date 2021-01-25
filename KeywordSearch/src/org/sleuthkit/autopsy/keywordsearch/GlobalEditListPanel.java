@@ -36,6 +36,7 @@ import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.guiutils.SimpleTableCellRenderer;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
@@ -76,6 +77,7 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
         }
         keywordTable.setCellSelectionEnabled(false);
         keywordTable.setRowSelectionAllowed(true);
+        keywordTable.setDefaultRenderer(String.class, new SimpleTableCellRenderer());
 
         final ListSelectionModel lsm = keywordTable.getSelectionModel();
         lsm.addListSelectionListener(new ListSelectionListener() {
@@ -327,7 +329,6 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
             }
         });
 
-        ingestWarningLabel.setFont(ingestWarningLabel.getFont().deriveFont(ingestWarningLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         ingestWarningLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/modules/hashdatabase/warning16.png"))); // NOI18N
         ingestWarningLabel.setText(org.openide.util.NbBundle.getMessage(GlobalEditListPanel.class, "GlobalEditListPanel.ingestWarningLabel.text")); // NOI18N
 

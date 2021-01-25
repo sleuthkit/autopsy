@@ -4,11 +4,11 @@
 <!-- If you delete this file and reopen the project it will be recreated. -->
 <project name="Autopsy 4" default="build" basedir=".">
     <description>Builds the module suite Autopsy 4.</description>
-	
+
     <import file="nbproject/build-impl.xml"/>
     <import file="${basedir}/TSKVersion.xml"/>
     <!-- IMPORTANT: nbproject/platform.properties has a netbeans-plat-version property that MUST be kept in sync (manually) -->
-    <property name="netbeans-plat-version" value="8.2" />
+    <property name="netbeans-plat-version" value="11.3" />
     <property name="nbplatform.active.dir" value="${basedir}/netbeans-plat/${netbeans-plat-version}" />
     <!-- Supported java versions.-->
     <condition property="supported-java-versions">
@@ -24,7 +24,7 @@
     <!-- Verify that the java version running is . -->
     <fail message="Unsupported Java version: ${ant.java.version}. 
             Make sure that the Java version is 1.8.0_66 or higher."
-    unless="supported-java-versions"/>
+          unless="supported-java-versions"/>
 
     <!-- Determine platform and include specific file -->
     <condition property="os.family" value="unix">  
@@ -68,22 +68,54 @@
     </target>
 
     <target name="clean" depends="suite.clean">
-	<delete includeEmptyDirs="true" failonerror="false">
+        <delete includeEmptyDirs="true" failonerror="false">
             <fileset dir="docs\doxygen-user\user-docs" includes="**/*"/>
-	</delete>
+        </delete>
 
         <delete includeEmptyDirs="true" failonerror="false">
             <fileset dir="docs\doxygen\doxygen_docs\api-docs" includes="**/*"/>
-	</delete>
+        </delete>
         
         <delete includeemptydirs="true" failonerror="false">
             <fileset dir="${basedir}/docs/doxygen-dev/build-docs" includes="**/*"/>
         </delete>
     </target>
+    
+    <!-- This target is similar to the regular test target that calls test on all nbm's, 
+    but this target excludes the Testing nbm which runs the regression tests -->
+    <target name="test-no-regression" depends="build" description="Runs tests for all modules in the suite excluding the regression tests of the Testing NBM.">
+        <!--taken from https://stackoverflow.com/a/10859103; remove "Testing" from the modules and provide 'modulesNoTesting' as result. -->
+        <property name="modulesBeforeChange" value="${modules}"/>
+        <script language="javascript">
+            <![CDATA[ 
+                var before = project.getProperty("modulesBeforeChange");
+                var separator = ":";
+                var testingNbm = "Testing";
+                var beforeSplit = before.split(separator);
+                var items = [];
+                for (var i = 0; i < beforeSplit.length; i++) {
+                    if (beforeSplit[i].toUpperCase() !== testingNbm.toUpperCase()) {
+                        items.push(beforeSplit[i]);
+                    }
+                }
+                var itemsJoined = items.join(separator);
+                project.setNewProperty("modulesNoTesting", itemsJoined);
+            ]]>
+        </script>
+
+        <sortsuitemodules unsortedmodules="${modulesNoTesting}" sortedmodulesproperty="modules.test.sorted" sorttests="true"/>
+        <!-- continue on fail -->
+        <property name="continue.after.failing.tests" value="true"/>
+        <subant target="test" buildpath="${modules.test.sorted}" inheritrefs="false" inheritall="false">
+            <property name="cluster.path.evaluated" value="${cluster.path.evaluated}"/> <!-- Just for speed of pre-7.0 projects -->
+            <property name="harness.taskdefs.done" value="${harness.taskdefs.done}"/> <!-- optimization -->
+            <property name="continue.after.failing.tests" value="${continue.after.failing.tests}"/>
+        </subant>
+    </target>
 
     <!-- This target will create a custom ZIP file for us.  It first uses the general
-      ZIP target and then opens it up and adds in any files that we want.  This is where we customize the
-      version number. -->
+    ZIP target and then opens it up and adds in any files that we want.  This is where we customize the
+    version number. -->
     <target name="build-zip" depends="doxygen, suite.build-zip"> <!--,findJRE" -->
         
         <property name="release.dir" value="${nbdist.dir}/${app.name}"/>
@@ -106,8 +138,7 @@
         <copy file="${basedir}/NEWS.txt" tofile="${zip-tmp}/${app.name}/NEWS.txt"/>
         <copy file="${basedir}/Running_Linux_OSX.txt" tofile="${zip-tmp}/${app.name}/Running_Linux_OSX.txt"/>
         <copy file="${basedir}/unix_setup.sh" tofile="${zip-tmp}/${app.name}/unix_setup.sh"/>
-        <copy file="${basedir}/ManifestTool/ManifestTool.exe" todir="${zip-tmp}/${app.name}/bin"/>
-            
+        <copy file="${basedir}/Tools/ManifestTool/ManifestTool.exe" todir="${zip-tmp}/${app.name}/bin"/>        
         
         <copy file="${basedir}/icons/icon.ico" tofile="${zip-tmp}/${app.name}/icon.ico" overwrite="true"/>
         
@@ -115,21 +146,29 @@
         <copy flatten="true" todir="${zip-tmp}/${app.name}/docs">
             <fileset dir="${basedir}/docs/doxygen-user/user-docs"/>
         </copy>
+        
+        <!-- Copy the ZooKeeper migration tool, it's JAR files, and documentation -->
+        <copy flatten="false" todir="${zip-tmp}/${app.name}/autopsy/ZookeeperNodeMigration">
+            <fileset dir="${basedir}/Tools/ZookeeperNodeMigration/dist"/>
+        </copy>
+        <copy flatten="false" todir="${zip-tmp}/${app.name}/autopsy/ZookeeperNodeMigration" overwrite="true">
+            <fileset dir="${basedir}/Tools/ZookeeperNodeMigration/docs"/>
+        </copy>
 
         <property name="app.property.file" value="${zip-tmp}/${app.name}/etc/${app.name}.conf" />
-        <var name="jvm-value" value="--branding ${app.name} -J-Xms24m -J-Xmx4G -J-Xverify:none -J-XX:+UseG1GC -J-XX:+UseStringDeduplication"/>
+        <var name="jvm-value" value="--branding ${app.name} -J-Xms24m -J-Xmx4G -J-Xverify:none -J-XX:+UseG1GC -J-XX:+UseStringDeduplication -J-Dprism.order=sw"/>
         <!-- for Japanese localized version add option:  -Duser.language=ja -->
         
             
-            <if>
-                <equals arg1="${os.family}" arg2="mac"/>
-                <then>
-                    <property name="jvm.options" value="&quot;${jvm-value} -J-Xdock:name=${app.title}&quot;"/>
-                </then>
-                <else>
-                    <property name="jvm.options" value="&quot;${jvm-value}&quot;"/>
-                </else>
-            </if>
+        <if>
+            <equals arg1="${os.family}" arg2="mac"/>
+            <then>
+                <property name="jvm.options" value="&quot;${jvm-value} -J-Xdock:name=${app.title}&quot;"/>
+            </then>
+            <else>
+                <property name="jvm.options" value="&quot;${jvm-value}&quot;"/>
+            </else>
+        </if>
                 
         <propertyfile file="${app.property.file}">
             <!-- Note: can be higher on 64 bit systems, should be in sync with project.properties -->
@@ -139,9 +178,9 @@
         <replace file="${app.property.file}" token="@JVM_OPTIONS" value="${jvm.options}" />
         
         <!-- We want to remove the dlls in autopsy/modules/lib because they will
-             shadow the files in the autopsy/modules/lib/ARCHITECTURE folder in the JAR.
-             These files are legacy from when we used to copy the dlls to this location. 
-             This check should do away in the future. Added Sept '13-->
+        shadow the files in the autopsy/modules/lib/ARCHITECTURE folder in the JAR.
+        These files are legacy from when we used to copy the dlls to this location. 
+        This check should do away in the future. Added Sept '13-->
         <delete failonerror="false">
             <fileset dir="${zip-tmp}/${app.name}/autopsy/modules/lib">
                 <include name="libtsk_jni.dll" />
@@ -181,9 +220,9 @@
     
     <target name="input-build-type" unless="build.type">
         <input addProperty="build.type"
-            message="Enter the desired build type:"
-                validargs="DEVELOPMENT,RELEASE"
-                defaultvalue="DEVELOPMENT"/>
+               message="Enter the desired build type:"
+               validargs="DEVELOPMENT,RELEASE"
+               defaultvalue="DEVELOPMENT"/>
     </target>
     
     <target name="input-version" unless="app.version">
@@ -214,28 +253,28 @@
     </target>
     
     <!-- override build to add branding -->
-    <target name="build" depends="build-brand,suite.build" description="Compiles autopsy and produces a basic branded build that can run on a dev system" />
+    <target name="build" depends="build-brand,suite.build,chmod_executables" description="Compiles autopsy and produces a basic branded build that can run on a dev system" />
  
     <target name="build-brand" depends="-init">
         
         <echo>${app.name} branding</echo>
           
         <propertyfile
-        file="${branding.dir}/core/core.jar/org/netbeans/core/startup/Bundle.properties" 
-        comment="Updated by build script">
+            file="${branding.dir}/core/core.jar/org/netbeans/core/startup/Bundle.properties" 
+            comment="Updated by build script">
             <entry key="currentVersion" value="${app.title} ${app.version}" />
         </propertyfile>
  
         <propertyfile
-        file="${branding.dir}/modules/org-netbeans-core-windows.jar/org/netbeans/core/windows/view/ui/Bundle.properties"
-        comment="Updated by build script">
+            file="${branding.dir}/modules/org-netbeans-core-windows.jar/org/netbeans/core/windows/view/ui/Bundle.properties"
+            comment="Updated by build script">
             <entry key="CTL_MainWindow_Title" value="${app.title} ${app.version}" />
             <entry key="CTL_MainWindow_Title_No_Project" value="${app.title} ${app.version}" />
         </propertyfile>
         
         <propertyfile
-        file="${basedir}/Core/src/org/sleuthkit/autopsy/coreutils/Version.properties"
-        comment="Updated by build script">
+            file="${basedir}/Core/src/org/sleuthkit/autopsy/coreutils/Version.properties"
+            comment="Updated by build script">
             <entry key="app.name" value="${app.title}" />
             <entry key="app.version" value="${app.version}" />
             <entry key="build.type" value="${build.type}" />
@@ -320,5 +359,17 @@
         <delete dir="${nbdist.dir}/${app.name}-tmp-installer" quiet="true"/>
         
         <antcall target="build-installer-${os.family}" />
+    </target>
+    
+    <target name="chmod_executables" >
+        <chmod perm="a+x">
+            <fileset dir="${cluster}/markmckinnon" casesensitive="no" id="mm">
+                <include name="*_linux"/>
+                <include name="*_macos"/>
+            </fileset>
+	    <fileset dir="${cluster}/solr/bin" casesensitive="no" id="solr">
+		<include name="autopsy-solr"/>
+	    </fileset>
+        </chmod>
     </target>
 </project>

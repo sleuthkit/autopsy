@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012 Basis Technology Corp.
+ * Copyright 2012-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,6 +28,7 @@ import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
+import org.sleuthkit.autopsy.report.GeneralReportModule;
 
 class ReportWizardPanel1 implements WizardDescriptor.FinishablePanel<WizardDescriptor> {
 
@@ -36,9 +37,11 @@ class ReportWizardPanel1 implements WizardDescriptor.FinishablePanel<WizardDescr
     private final Map<String, ReportModuleConfig> moduleConfigs;
     private final JButton nextButton;
     private final JButton finishButton;
+    private final boolean displayCaseSpecificData;
 
-    ReportWizardPanel1(Map<String, ReportModuleConfig> moduleConfigs) {
+    ReportWizardPanel1(Map<String, ReportModuleConfig> moduleConfigs, boolean displayCaseSpecificData) {
         this.moduleConfigs = moduleConfigs;
+        this.displayCaseSpecificData = displayCaseSpecificData;
         nextButton = new JButton(NbBundle.getMessage(this.getClass(), "ReportWizardPanel1.nextButton.text"));
         finishButton = new JButton(NbBundle.getMessage(this.getClass(), "ReportWizardPanel1.finishButton.text"));
         finishButton.setEnabled(false);
@@ -62,7 +65,7 @@ class ReportWizardPanel1 implements WizardDescriptor.FinishablePanel<WizardDescr
     @Override
     public ReportVisualPanel1 getComponent() {
         if (component == null) {
-            component = new ReportVisualPanel1(this, moduleConfigs);
+            component = new ReportVisualPanel1(this, moduleConfigs, displayCaseSpecificData);
         }
         return component;
     }
@@ -110,12 +113,30 @@ class ReportWizardPanel1 implements WizardDescriptor.FinishablePanel<WizardDescr
     @Override
     public void storeSettings(WizardDescriptor wiz) {
         wiz.putProperty("moduleConfigs", getComponent().getUpdatedModuleConfigs()); //NON-NLS
+        wiz.putProperty("modules", getComponent().getReportModules()); //NON-NLS
 
         // Store preferences that WizardIterator will use to determine what 
         // panels need to be shown
         Preferences prefs = NbPreferences.forModule(ReportWizardPanel1.class);
-        prefs.putBoolean("tableModule", getComponent().getTableModule() != null); //NON-NLS
-        prefs.putBoolean("generalModule", getComponent().getGeneralModule() != null); //NON-NLS
+        TableReportModule tableModuleSelection = getComponent().getTableModule();
+        GeneralReportModule generalModuleSelection = getComponent().getGeneralModule();
+        FileReportModule fileModuleSelection = getComponent().getFileModule();
+        
+        prefs.putBoolean("tableModule", tableModuleSelection != null); //NON-NLS
+        prefs.putBoolean("generalModule", generalModuleSelection != null); //NON-NLS
         prefs.putBoolean("portableCaseModule", getComponent().getPortableCaseModule() != null); //NON-NLS
+        prefs.putBoolean("showDataSourceSelectionPanel", false);
+        
+        if(generalModuleSelection != null && generalModuleSelection.supportsDataSourceSelection()) {
+            prefs.putBoolean("showDataSourceSelectionPanel", true);
+        }
+        
+        if(tableModuleSelection != null) {
+            prefs.putBoolean("showDataSourceSelectionPanel", true);
+        }
+        
+        if(fileModuleSelection != null) {
+            prefs.putBoolean("showDataSourceSelectionPanel", true);
+        }
     }
 }

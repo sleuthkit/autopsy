@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,11 +29,14 @@ import java.nio.file.Paths;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.logging.Level;
 import org.openide.util.io.NbObjectInputStream;
 import org.openide.util.io.NbObjectOutputStream;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.report.GeneralReportSettings;
 
 /**
  * Utility class responsible for managing serialization and deserialization of
@@ -48,6 +51,7 @@ final class ReportingConfigLoader {
     private static final String REPORT_SETTINGS_FILE_EXTENSION = ".settings";
     private static final String TABLE_REPORT_CONFIG_FILE = "TableReportSettings.settings";
     private static final String FILE_REPORT_CONFIG_FILE = "FileReportSettings.settings";
+    private static final String GENERAL_REPORT_CONFIG_FILE = "GeneralReportSettings.settings";
     private static final String MODULE_CONFIG_FILE = "ModuleConfigs.settings";
 
     /**
@@ -55,11 +59,14 @@ final class ReportingConfigLoader {
      * an atomic, thread safe way.
      *
      * @param configName Name of the reporting configuration
+     *
      * @return ReportingConfig object if a persisted configuration exists, null
-     * otherwise
+     *         otherwise
+     *
      * @throws ReportConfigException if an error occurred while reading the
-     * configuration
+     *                               configuration
      */
+    @SuppressWarnings("unchecked")
     static synchronized ReportingConfig loadConfig(String configName) throws ReportConfigException {
 
         // construct the configuration directory path
@@ -68,7 +75,7 @@ final class ReportingConfigLoader {
 
         // Return null if a reporting configuration for the given name does not exist.
         if (!reportDirectory.exists()) {
-            return null;
+            throw new ReportConfigException("Unable to find report configuration folder for " + reportDirPath.toString() + ". Please configure in the application Options panel.");
         }
 
         if (!reportDirectory.isDirectory() || !reportDirectory.canRead()) {
@@ -77,7 +84,7 @@ final class ReportingConfigLoader {
 
         // read in the configuration
         ReportingConfig config = new ReportingConfig(configName);
-        
+
         // read table report settings
         String filePath = reportDirPath.toString() + File.separator + TABLE_REPORT_CONFIG_FILE;
         try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(filePath))) {
@@ -85,7 +92,7 @@ final class ReportingConfigLoader {
         } catch (IOException | ClassNotFoundException ex) {
             throw new ReportConfigException("Unable to read table report settings " + filePath, ex);
         }
-        
+
         // read file report settings
         filePath = reportDirPath.toString() + File.separator + FILE_REPORT_CONFIG_FILE;
         try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(filePath))) {
@@ -94,6 +101,13 @@ final class ReportingConfigLoader {
             throw new ReportConfigException("Unable to read file report settings " + filePath, ex);
         }
         
+        filePath = reportDirPath.resolve(GENERAL_REPORT_CONFIG_FILE).toString();
+        try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(filePath))) {
+            config.setGeneralReportSettings((GeneralReportSettings) in.readObject());
+        } catch (IOException | ClassNotFoundException ex) {
+            throw new ReportConfigException("Unable to read general report settings " + filePath, ex);
+        }
+
         // read map of module configuration objects
         Map<String, ReportModuleConfig> moduleConfigs = null;
         filePath = reportDirPath.toString() + File.separator + MODULE_CONFIG_FILE;
@@ -102,11 +116,11 @@ final class ReportingConfigLoader {
         } catch (IOException | ClassNotFoundException ex) {
             throw new ReportConfigException("Unable to read module configurations map " + filePath, ex);
         }
-        
+
         if (moduleConfigs == null || moduleConfigs.isEmpty()) {
             return config;
         }
-        
+
         // read each ReportModuleSettings object individually
         for (Iterator<Entry<String, ReportModuleConfig>> iterator = moduleConfigs.entrySet().iterator(); iterator.hasNext();) {
             ReportModuleConfig moduleConfig = iterator.next().getValue();
@@ -114,16 +128,19 @@ final class ReportingConfigLoader {
             try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(filePath))) {
                 moduleConfig.setModuleSettings((ReportModuleSettings) in.readObject());
             } catch (IOException | ClassNotFoundException ex) {
-                /* NOTE: we do not want to re-throw the exception because we do not 
-                want a single error while reading in a (3rd party) report module 
-                to prevent us from reading the entire reporting configuration.*/
+                /*
+                 * NOTE: we do not want to re-throw the exception because we do
+                 * not want a single error while reading in a (3rd party) report
+                 * module to prevent us from reading the entire reporting
+                 * configuration.
+                 */
                 logger.log(Level.SEVERE, "Unable to read module settings " + filePath, ex);
                 iterator.remove();
             }
         }
-        
+
         config.setModuleConfigs(moduleConfigs);
-        
+
         return config;
     }
 
@@ -132,15 +149,16 @@ final class ReportingConfigLoader {
      * an atomic, thread safe way.
      *
      * @param reportConfig ReportingConfig object to serialize to disk
+     *
      * @throws ReportConfigException if an error occurred while saving the
-     * configuration
+     *                               configuration
      */
     static synchronized void saveConfig(ReportingConfig reportConfig) throws ReportConfigException {
 
         if (reportConfig == null) {
             throw new ReportConfigException("Reporting configuration is NULL");
         }
-        
+
         // construct the configuration directory path
         Path pathToConfigDir = Paths.get(ReportingConfigLoader.REPORT_CONFIG_FOLDER_PATH, reportConfig.getName());
 
@@ -166,9 +184,16 @@ final class ReportingConfigLoader {
         } catch (IOException ex) {
             throw new ReportConfigException("Unable to save file report configuration " + filePath, ex);
         }
+        
+        filePath = pathToConfigDir.resolve(GENERAL_REPORT_CONFIG_FILE).toString();
+        try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(filePath))) {
+            out.writeObject(reportConfig.getGeneralReportSettings());
+        } catch (IOException ex) {
+            throw new ReportConfigException("Unable to save general report configuration " + filePath, ex);
+        }
 
         // save map of module configuration objects
-        filePath = pathToConfigDir.toString() + File.separator + MODULE_CONFIG_FILE;        
+        filePath = pathToConfigDir.toString() + File.separator + MODULE_CONFIG_FILE;
         try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(filePath))) {
             out.writeObject(reportConfig.getModuleConfigs());
         } catch (IOException ex) {
@@ -176,10 +201,13 @@ final class ReportingConfigLoader {
         }
 
         // save each ReportModuleSettings object individually
-        /* NOTE: This is done to protect us from errors in reading/writing 3rd 
-        party report module settings. If we were to serialize the entire ReportingConfig 
-        object, then a single error while reading in a 3rd party report module 
-        would prevent us from reading the entire reporting configuration.*/
+        /*
+         * NOTE: This is done to protect us from errors in reading/writing 3rd
+         * party report module settings. If we were to serialize the entire
+         * ReportingConfig object, then a single error while reading in a 3rd
+         * party report module would prevent us from reading the entire
+         * reporting configuration.
+         */
         if (reportConfig.getModuleConfigs() == null) {
             return;
         }
@@ -192,6 +220,45 @@ final class ReportingConfigLoader {
                 throw new ReportConfigException("Unable to save module settings " + filePath, ex);
             }
         }
+    }
+    
+    /**
+     * Return a list of the names of the report profiles in the
+     * REPORT_CONFIG_FOLDER_PATH.
+     *
+     * @return Naturally ordered list of report profile names. If none were found
+     *         the list will be empty.
+     */
+    static synchronized Set<String> getListOfReportConfigs() {
+        File reportDirPath = new File(ReportingConfigLoader.REPORT_CONFIG_FOLDER_PATH);
+        Set<String> reportNameList = new TreeSet<>();
+
+        if (!reportDirPath.exists()) {
+            return reportNameList;
+        }
+
+        for (File file : reportDirPath.listFiles()) {
+            reportNameList.add(file.getName());
+        }
+
+        return reportNameList;
+    }
+    
+    /**
+     * Returns whether or not a config with the given name exists. The config is
+     * assumed to exist if there is a folder in 
+     * ReportingConfigLoader.REPORT_CONFIG_FOLDER_PATH with the given name.
+     * 
+     * @param configName Name of the report config.
+     * 
+     * @return True if the report config exists.
+     */
+    static synchronized boolean configExists(String configName) {
+        // construct the configuration directory path
+        Path reportDirPath = Paths.get(ReportingConfigLoader.REPORT_CONFIG_FOLDER_PATH, configName);
+        File reportDirectory = reportDirPath.toFile();
+        
+        return reportDirectory.exists();
     }
 
 }

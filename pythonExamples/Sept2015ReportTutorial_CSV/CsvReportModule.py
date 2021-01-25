@@ -27,7 +27,7 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 
-# See http://sleuthkit.org/autopsy/docs/api-docs/4.6.0/index.html for documentation
+# See http://sleuthkit.org/autopsy/docs/api-docs/latest/index.html for documentation
 
 # Simple report module for Autopsy.
 # Used as part of Python tutorials from Basis Technology - September 2015
@@ -71,7 +71,7 @@ class CSVReportModule(GeneralReportModuleAdapter):
     # TODO: Update this method to make a report
     # The 'baseReportDir' object being passed in is a string with the directory that reports are being stored in.   Report should go into baseReportDir + getRelativeFilePath().
     # The 'progressBar' object is of type ReportProgressPanel.
-    #   See: http://sleuthkit.org/autopsy/docs/api-docs/4.6.0/classorg_1_1sleuthkit_1_1autopsy_1_1report_1_1_report_progress_panel.html
+    #   See: http://sleuthkit.org/autopsy/docs/api-docs/latest/classorg_1_1sleuthkit_1_1autopsy_1_1report_1_1_report_progress_panel.html
     def generateReport(self, baseReportDir, progressBar):
 
         # Open the output file.

@@ -24,15 +24,14 @@ import java.util.List;
 import java.util.logging.Level;
 
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * This class manages a sequence of file level ingest modules for a data source
- * ingest job. It starts the modules, runs files through them, and shuts them
+ * This class manages a sequence of file level ingest modules for an
+ * ingest job pipeline. It starts the modules, runs files through them, and shuts them
  * down when file level ingest is complete.
  * <p>
  * This class is thread-safe.
@@ -40,7 +39,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 final class FileIngestPipeline {
 
     private static final IngestManager ingestManager = IngestManager.getInstance();
-    private final DataSourceIngestJob job;
+    private final IngestJobPipeline ingestJobPipeline;
     private final List<PipelineModule> modules = new ArrayList<>();
     private Date startTime;
     private volatile boolean running;
@@ -50,12 +49,12 @@ final class FileIngestPipeline {
      * modules. It starts the modules, runs files through them, and shuts them
      * down when file level ingest is complete.
      *
-     * @param job             The data source ingest job that owns the pipeline.
+     * @param ingestJobPipeline  The ingestJobPipeline that owns the pipeline.
      * @param moduleTemplates The ingest module templates that define the
      *                        pipeline.
      */
-    FileIngestPipeline(DataSourceIngestJob job, List<IngestModuleTemplate> moduleTemplates) {
-        this.job = job;
+    FileIngestPipeline(IngestJobPipeline ingestJobPipeline, List<IngestModuleTemplate> moduleTemplates) {
+        this.ingestJobPipeline = ingestJobPipeline;
         for (IngestModuleTemplate template : moduleTemplates) {
             if (template.isFileIngestModuleTemplate()) {
                 PipelineModule module = new PipelineModule(template.createFileIngestModule(), template.getModuleName());
@@ -103,7 +102,7 @@ final class FileIngestPipeline {
         List<IngestModuleError> errors = new ArrayList<>();
         for (PipelineModule module : this.modules) {
             try {
-                module.startUp(new IngestJobContext(this.job));
+                module.startUp(new IngestJobContext(this.ingestJobPipeline));
             } catch (Throwable ex) { // Catch-all exception firewall
                 errors.add(new IngestModuleError(module.getDisplayName(), ex));
             }
@@ -120,28 +119,31 @@ final class FileIngestPipeline {
      */
     synchronized List<IngestModuleError> process(FileIngestTask task) {
         List<IngestModuleError> errors = new ArrayList<>();
-        if (!this.job.isCancelled()) {
-            AbstractFile file = task.getFile();
+        if (!this.ingestJobPipeline.isCancelled()) {
+            AbstractFile file;
+            try {
+                file = task.getFile();
+            } catch (TskCoreException ex) {
+                // In practice, this task would never have been enqueued since the file
+                // lookup would have failed there.
+                errors.add(new IngestModuleError("File Ingest Pipeline", ex)); // NON-NLS
+                FileIngestPipeline.ingestManager.setIngestTaskProgressCompleted(task);
+                return errors;
+            }
             for (PipelineModule module : this.modules) {
                 try {
                     FileIngestPipeline.ingestManager.setIngestTaskProgress(task, module.getDisplayName());
-                    this.job.setCurrentFileIngestModule(module.getDisplayName(), task.getFile().getName());
+                    this.ingestJobPipeline.setCurrentFileIngestModule(module.getDisplayName(), task.getFile().getName());
                     module.process(file);
                 } catch (Throwable ex) { // Catch-all exception firewall
                     errors.add(new IngestModuleError(module.getDisplayName(), ex));
-                    String msg = ex.getMessage();
-                    // Jython run-time errors don't seem to have a message, but have details in toString.
-                    if (msg == null) {
-                        msg = ex.toString();
-                    }
-                    MessageNotifyUtil.Notify.error(NbBundle.getMessage(this.getClass(), "FileIngestPipeline.moduleError.title.text", module.getDisplayName()), msg);
                 }
-                if (this.job.isCancelled()) {
+                if (this.ingestJobPipeline.isCancelled()) {
                     break;
                 }
             }
             
-            if (!this.job.isCancelled()) {
+            if (!this.ingestJobPipeline.isCancelled()) {
                 // Save any properties that have not already been saved to the database
                 try{
                     file.save();

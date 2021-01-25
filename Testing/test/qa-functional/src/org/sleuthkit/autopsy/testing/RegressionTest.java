@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,6 +25,9 @@ import junit.framework.Test;
 import junit.framework.TestCase;
 import org.netbeans.jemmy.Timeouts;
 import org.netbeans.junit.NbModuleSuite;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbChoice;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbManager;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 
 /**
  * This test expects the following system properties to be set: img_path: The
@@ -60,7 +63,9 @@ public class RegressionTest extends TestCase {
                 clusters(".*").
                 enableModules(".*");
         if (img_path.isFile()) {
-            conf = conf.addTest("testNewCaseWizardOpen",
+            conf = conf.addTest(
+                    "testConfigureCustomCR",
+                    "testNewCaseWizardOpen",
                     "testNewCaseWizard",
                     "testStartAddImageFileDataSource",
                     "testConfigureIngest1",
@@ -75,7 +80,9 @@ public class RegressionTest extends TestCase {
         }
 
         if (img_path.isDirectory()) {
-            conf = conf.addTest("testNewCaseWizardOpen",
+            conf = conf.addTest(
+                    "testConfigureCustomCR",
+                    "testNewCaseWizardOpen",
                     "testNewCaseWizard",
                     "testStartAddLogicalFilesDataSource",
                     "testConfigureIngest1",
@@ -100,6 +107,25 @@ public class RegressionTest extends TestCase {
     public void setUp() {
         logger.info("########  " + AutopsyTestCases.getEscapedPath(System.getProperty("img_path")) + "  #######");
         Timeouts.setDefault("ComponentOperator.WaitComponentTimeout", 1000000);
+    }
+    
+    public void testConfigureCustomCR() {
+        // Configure a custom CR before proceeding with the test (and creating
+        // a case).
+        try {
+            if (Boolean.parseBoolean(System.getProperty("isMultiUser"))) {
+                // Set up a custom postgres CR using the configuration passed
+                // to system properties.
+                CentralRepoDbManager manager = new CentralRepoDbManager();
+                manager.getDbSettingsPostgres().setHost(System.getProperty("crHost"));
+                manager.getDbSettingsPostgres().setPort(Integer.parseInt(System.getProperty("crPort")));
+                manager.getDbSettingsPostgres().setUserName(System.getProperty("crUserName"));
+                manager.getDbSettingsPostgres().setPassword(System.getProperty("crPassword"));
+                manager.setupPostgresDb(CentralRepoDbChoice.POSTGRESQL_CUSTOM);
+            }
+        } catch (CentralRepoException ex) {
+            throw new RuntimeException("Error setting up multi user CR", ex);
+        }
     }
 
     /**

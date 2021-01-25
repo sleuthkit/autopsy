@@ -19,8 +19,12 @@
  */
 package org.sleuthkit.autopsy.centralrepository.datamodel;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.validator.routines.DomainValidator;
 import org.apache.commons.validator.routines.EmailValidator;
 
@@ -38,7 +42,7 @@ final public class CorrelationAttributeNormalizer {
      * data is a valid string of the format expected given the attributeType.
      *
      * @param attributeType correlation type of data
-     * @param data          data to normalize
+     * @param data data to normalize
      *
      * @return normalized data
      */
@@ -76,10 +80,22 @@ final public class CorrelationAttributeNormalizer {
                 return normalizeIccid(trimmedData);
 
             default:
-                final String errorMessage = String.format(
-                        "Validator function not found for attribute type: %s",
-                        attributeType.getDisplayName());
-                throw new CorrelationAttributeNormalizationException(errorMessage);
+                try {
+                    // If the atttribute is not one of the above 
+                    // but is one of the other default correlation types, then let the data go as is
+                    List<CorrelationAttributeInstance.Type> defaultCorrelationTypes = CorrelationAttributeInstance.getDefaultCorrelationTypes();
+                    for (CorrelationAttributeInstance.Type defaultCorrelationType : defaultCorrelationTypes) {
+                        if (defaultCorrelationType.getId() == attributeType.getId()) {
+                            return trimmedData;
+                        }
+                    }
+                    final String errorMessage = String.format(
+                            "Validator function not found for attribute type: %s",
+                            attributeType.getDisplayName());
+                    throw new CorrelationAttributeNormalizationException(errorMessage);
+                } catch (CentralRepoException ex) {
+                    throw new CorrelationAttributeNormalizationException("Failed to get default correlation types.", ex);
+                }
         }
     }
 
@@ -88,7 +104,7 @@ final public class CorrelationAttributeNormalizer {
      * is a valid string of the format expected given the attributeType.
      *
      * @param attributeTypeId correlation type of data
-     * @param data            data to normalize
+     * @param data data to normalize
      *
      * @return normalized data
      */
@@ -103,7 +119,7 @@ final public class CorrelationAttributeNormalizer {
             } else {
                 throw new CorrelationAttributeNormalizationException(String.format("Given attributeTypeId did not correspond to any known Attribute: %s", attributeTypeId));
             }
-        } catch (EamDbException ex) {
+        } catch (CentralRepoException ex) {
             throw new CorrelationAttributeNormalizationException(ex);
         }
     }
@@ -140,27 +156,44 @@ final public class CorrelationAttributeNormalizer {
     }
 
     /**
-     * Verify that there is an '@' and no invalid characters. Should normalize
-     * to lower case.
+     * Verify and normalize email address.
+     *
+     * @param emailAddress Address to normalize.
+     * @return Normalized email address.
+     * @throws CorrelationAttributeNormalizationExceptions If the input is not a
+     * valid email address.
+     *
      */
-    private static String normalizeEmail(String data) throws CorrelationAttributeNormalizationException {
-        EmailValidator validator = EmailValidator.getInstance(true, true);
-        if (validator.isValid(data)) {
-            return data.toLowerCase();
+    static String normalizeEmail(String emailAddress) throws CorrelationAttributeNormalizationException {
+        if (isValidEmailAddress(emailAddress)) {
+            return emailAddress.toLowerCase().trim();
         } else {
-            throw new CorrelationAttributeNormalizationException(String.format("Data was expected to be a valid email address: %s", data));
+            throw new CorrelationAttributeNormalizationException(String.format("Data was expected to be a valid email address: %s", emailAddress));
         }
     }
 
     /**
-     * Verify it is only numbers and '+'. Strip spaces, dashes, and parentheses.
+     * Verify and normalize phone number.
+     *
+     * @param phoneNumber Phone number to normalize.
+     * @return Normalized phone number.
+     * @throws CorrelationAttributeNormalizationExceptions If the input is not a
+     * valid phone number.
+     *
      */
-    private static String normalizePhone(String data) throws CorrelationAttributeNormalizationException {
-        if (data.matches("\\+?[0-9()\\-\\s]+")) {
-            String phoneNumber = data.replaceAll("[^0-9\\+]", "");
-            return phoneNumber;
+    static String normalizePhone(String phoneNumber) throws CorrelationAttributeNormalizationException {
+        if (isValidPhoneNumber(phoneNumber)) {
+            String normalizedNumber = phoneNumber.replaceAll("\\s+", ""); // remove spaces.	
+            normalizedNumber = normalizedNumber.replaceAll("[\\-()]", ""); // remove parens & dashes.
+
+            // ensure a min length
+            if (normalizedNumber.length() < MIN_PHONENUMBER_LEN) {
+                throw new CorrelationAttributeNormalizationException(String.format("Phone number string %s is too short ", phoneNumber));
+            }
+            return normalizedNumber;
+
         } else {
-            throw new CorrelationAttributeNormalizationException(String.format("Data was expected to be a valid phone number: %s", data));
+            throw new CorrelationAttributeNormalizationException(String.format("Data was expected to be a valid phone number: %s", phoneNumber));
         }
     }
 
@@ -183,7 +216,7 @@ final public class CorrelationAttributeNormalizer {
      * @return the unmodified data if the data was a valid length to be an SSID
      *
      * @throws CorrelationAttributeNormalizationException if the data was not a
-     *                                                    valid SSID
+     * valid SSID
      */
     private static String verifySsid(String data) throws CorrelationAttributeNormalizationException {
         if (data.length() <= 32) {
@@ -210,10 +243,10 @@ final public class CorrelationAttributeNormalizer {
      * @param data The string to normalize and validate
      *
      * @return the data with common number seperators removed and lower cased if
-     *         the data was determined to be a possible ICCID
+     * the data was determined to be a possible ICCID
      *
      * @throws CorrelationAttributeNormalizationException if the data was not a
-     *                                                    valid ICCID
+     * valid ICCID
      */
     private static String normalizeIccid(String data) throws CorrelationAttributeNormalizationException {
         final String validIccidRegex = "^89[f0-9]{17,22}$";
@@ -237,10 +270,10 @@ final public class CorrelationAttributeNormalizer {
      * @param data The string to normalize and validate
      *
      * @return the data with common number seperators removed if the data was
-     *         determined to be a possible IMSI
+     * determined to be a possible IMSI
      *
      * @throws CorrelationAttributeNormalizationException if the data was not a
-     *                                                    valid IMSI
+     * valid IMSI
      */
     private static String normalizeImsi(String data) throws CorrelationAttributeNormalizationException {
         final String validImsiRegex = "^[0-9]{14,15}$";
@@ -261,10 +294,10 @@ final public class CorrelationAttributeNormalizer {
      * @param data The string to normalize and validate
      *
      * @return the data with common number seperators removed and lowercased if
-     *         the data was determined to be a possible MAC
+     * the data was determined to be a possible MAC
      *
      * @throws CorrelationAttributeNormalizationException if the data was not a
-     *                                                    valid MAC
+     * valid MAC
      */
     private static String normalizeMac(String data) throws CorrelationAttributeNormalizationException {
         final String validMacRegex = "^([a-f0-9]{12}|[a-f0-9]{16})$";
@@ -290,10 +323,10 @@ final public class CorrelationAttributeNormalizer {
      * @param data The string to normalize and validate
      *
      * @return the data with common number seperators removed if the data was
-     *         determined to be a possible IMEI
+     * determined to be a possible IMEI
      *
      * @throws CorrelationAttributeNormalizationException if the data was not a
-     *                                                    valid IMEI
+     * valid IMEI
      */
     private static String normalizeImei(String data) throws CorrelationAttributeNormalizationException {
         final String validImeiRegex = "^[0-9]{14,16}$";
@@ -303,6 +336,58 @@ final public class CorrelationAttributeNormalizer {
         } else {
             throw new CorrelationAttributeNormalizationException("Data provided was not a valid Imsi. : " + data);
         }
+    }
+
+    // These symbols are allowed in written form of phone numbers.
+    // A '+' is allowed only as a leading digit and hence not inlcuded here.
+    // While a dialed sequence may have additonal special characters, such as #, * or ',',
+    // CR attributes represent accounts and hence those chatracter are not allowed.
+    private static final Set<String> PHONENUMBER_CHARS = new HashSet<>(Arrays.asList(
+            "-", "(", ")"
+    ));
+
+    private static final int MIN_PHONENUMBER_LEN = 5;
+
+    /**
+     * Checks if the given string is a valid phone number.
+     *
+     * @param phoneNumber String to check.
+     *
+     * @return True if the given string is a valid phone number, false
+     * otherwise.
+     */
+    static boolean isValidPhoneNumber(String phoneNumber) {
+
+        // A phone number may have a leading '+', special telephony chars, or digits.
+        // Anything else implies an invalid phone number.
+        for (int i = 0; i < phoneNumber.length(); i++) {
+            if ( !((i == 0 && phoneNumber.charAt(i) == '+')
+                    || Character.isSpaceChar(phoneNumber.charAt(i))
+                    || Character.isDigit(phoneNumber.charAt(i))
+                    || PHONENUMBER_CHARS.contains(String.valueOf(phoneNumber.charAt(i))))) {
+                return false;
+            } 
+        }
+
+        // ensure a min length
+        return phoneNumber.length() >= MIN_PHONENUMBER_LEN;
+    }
+
+    /**
+     * Checks if the given string is a valid email address.
+     *
+     * @param emailAddress String to check.
+     *
+     * @return True if the given string is a valid email address, false
+     * otherwise.
+     */
+    static boolean isValidEmailAddress(String emailAddress) {
+        if (!StringUtils.isEmpty(emailAddress)) {
+            EmailValidator validator = EmailValidator.getInstance(true, true);
+            return validator.isValid(emailAddress);
+        }
+
+        return false;
     }
 
     /**

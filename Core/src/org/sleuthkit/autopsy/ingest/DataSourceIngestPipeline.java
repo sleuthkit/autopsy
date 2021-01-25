@@ -24,12 +24,11 @@ import java.util.List;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.datamodel.Content;
 
 /**
- * This class manages a sequence of data source level ingest modules for a data
- * source ingest job. It starts the modules, runs data sources through them, and
+ * This class manages a sequence of data source level ingest modules for an
+ *  ingestJobPipeline. It starts the modules, runs data sources through them, and
  * shuts them down when data source level ingest is complete.
  * <p>
  * This class is thread-safe.
@@ -38,7 +37,7 @@ final class DataSourceIngestPipeline {
 
     private static final IngestManager ingestManager = IngestManager.getInstance();
     private static final Logger logger = Logger.getLogger(DataSourceIngestPipeline.class.getName());
-    private final DataSourceIngestJob job;
+    private final IngestJobPipeline ingestJobPipeline;
     private final List<PipelineModule> modules = new ArrayList<>();
     private volatile PipelineModule currentModule;
 
@@ -47,13 +46,12 @@ final class DataSourceIngestPipeline {
      * modules. It starts the modules, runs data sources through them, and shuts
      * them down when data source level ingest is complete.
      *
-     * @param job             The data source ingest job that owns this
-     *                        pipeline.
+     * @param ingestJobPipeline  The ingestJobPipeline that owns this pipeline.
      * @param moduleTemplates Templates for the creating the ingest modules that
      *                        make up this pipeline.
      */
-    DataSourceIngestPipeline(DataSourceIngestJob job, List<IngestModuleTemplate> moduleTemplates) {
-        this.job = job;
+    DataSourceIngestPipeline(IngestJobPipeline ingestJobPipeline, List<IngestModuleTemplate> moduleTemplates) {
+        this.ingestJobPipeline = ingestJobPipeline;
         for (IngestModuleTemplate template : moduleTemplates) {
             if (template.isDataSourceIngestModuleTemplate()) {
                 PipelineModule module = new PipelineModule(template.createDataSourceIngestModule(), template.getModuleName());
@@ -80,7 +78,7 @@ final class DataSourceIngestPipeline {
         List<IngestModuleError> errors = new ArrayList<>();
         for (PipelineModule module : modules) {
             try {
-                module.startUp(new IngestJobContext(this.job));
+                module.startUp(new IngestJobContext(this.ingestJobPipeline));
             } catch (Throwable ex) { // Catch-all exception firewall
                 errors.add(new IngestModuleError(module.getDisplayName(), ex));
             }
@@ -98,7 +96,7 @@ final class DataSourceIngestPipeline {
      */
     synchronized List<IngestModuleError> process(DataSourceIngestTask task) {
         List<IngestModuleError> errors = new ArrayList<>();
-        if (!this.job.isCancelled()) {
+        if (!this.ingestJobPipeline.isCancelled()) {
             Content dataSource = task.getDataSource();
             for (PipelineModule module : modules) {
                 try {
@@ -106,25 +104,19 @@ final class DataSourceIngestPipeline {
                     String displayName = NbBundle.getMessage(this.getClass(),
                             "IngestJob.progress.dataSourceIngest.displayName",
                             module.getDisplayName(), dataSource.getName());
-                    this.job.updateDataSourceIngestProgressBarDisplayName(displayName);
-                    this.job.switchDataSourceIngestProgressBarToIndeterminate();
+                    this.ingestJobPipeline.updateDataSourceIngestProgressBarDisplayName(displayName);
+                    this.ingestJobPipeline.switchDataSourceIngestProgressBarToIndeterminate();
                     DataSourceIngestPipeline.ingestManager.setIngestTaskProgress(task, module.getDisplayName());
-                    logger.log(Level.INFO, "{0} analysis of {1} (jobId={2}) starting", new Object[]{module.getDisplayName(), this.job.getDataSource().getName(), this.job.getId()}); //NON-NLS
-                    module.process(dataSource, new DataSourceIngestModuleProgress(this.job));
-                    logger.log(Level.INFO, "{0} analysis of {1} (jobId={2}) finished", new Object[]{module.getDisplayName(), this.job.getDataSource().getName(), this.job.getId()}); //NON-NLS
+                    logger.log(Level.INFO, "{0} analysis of {1} (pipeline={2}) starting", new Object[]{module.getDisplayName(), ingestJobPipeline.getDataSource().getName(), ingestJobPipeline.getId()}); //NON-NLS
+                    module.process(dataSource, new DataSourceIngestModuleProgress(this.ingestJobPipeline));
+                    logger.log(Level.INFO, "{0} analysis of {1} (pipeline={2}) finished", new Object[]{module.getDisplayName(), ingestJobPipeline.getDataSource().getName(), ingestJobPipeline.getId()}); //NON-NLS
                 } catch (Throwable ex) { // Catch-all exception firewall
                     errors.add(new IngestModuleError(module.getDisplayName(), ex));
-                    String msg = ex.getMessage();
-                    // Jython run-time errors don't seem to have a message, but have details in toString.
-                    if (msg == null) {
-                        msg = ex.toString();
-                    }
-                    MessageNotifyUtil.Notify.error(NbBundle.getMessage(this.getClass(), "DataSourceIngestPipeline.moduleError.title.text", module.getDisplayName()), msg);
                 }
-                if (this.job.isCancelled()) {
+                if (this.ingestJobPipeline.isCancelled()) {
                     break;
-                } else if (this.job.currentDataSourceIngestModuleIsCancelled()) {
-                    this.job.currentDataSourceIngestModuleCancellationCompleted(currentModule.getDisplayName());
+                } else if (this.ingestJobPipeline.currentDataSourceIngestModuleIsCancelled()) {
+                    this.ingestJobPipeline.currentDataSourceIngestModuleCancellationCompleted(currentModule.getDisplayName());
                 }
             }
         }

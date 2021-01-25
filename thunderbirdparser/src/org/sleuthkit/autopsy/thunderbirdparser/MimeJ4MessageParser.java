@@ -31,6 +31,7 @@ import org.apache.james.mime4j.dom.Body;
 import org.apache.james.mime4j.dom.Entity;
 import org.apache.james.mime4j.dom.Message;
 import org.apache.james.mime4j.dom.Multipart;
+import org.apache.james.mime4j.dom.SingleBody;
 import org.apache.james.mime4j.dom.TextBody;
 import org.apache.james.mime4j.dom.address.AddressList;
 import org.apache.james.mime4j.dom.address.Mailbox;
@@ -50,7 +51,7 @@ import org.sleuthkit.datamodel.TskData;
 /**
  * Super class for email parsers that can use the james.mime4J.Message objects.
  */
-class MimeJ4MessageParser {
+class MimeJ4MessageParser implements AutoCloseable{
 
     private static final Logger logger = Logger.getLogger(MimeJ4MessageParser.class.getName());
 
@@ -164,7 +165,11 @@ class MimeJ4MessageParser {
         if (msg.isMultipart()) {
             handleMultipart(email, (Multipart) msg.getBody(), sourceFileID);
         } else {
-            handleTextBody(email, (TextBody) msg.getBody(), msg.getMimeType(), msg.getHeader().getFields());
+            if(msg.getBody() instanceof TextBody) {
+                handleTextBody(email, (TextBody) msg.getBody(), msg.getMimeType(), msg.getHeader().getFields());
+            } else  {
+               handleAttachment(email, msg, sourceFileID, 1);
+            }
         }
 
         return email;
@@ -225,15 +230,15 @@ class MimeJ4MessageParser {
             } else if (e.getDispositionType() != null
                     && e.getDispositionType().equals(ContentDispositionField.DISPOSITION_TYPE_ATTACHMENT)) {
                 handleAttachment(email, e, fileID, index);
-            } else if (e.getMimeType().equals(HTML_TYPE)
-                    || e.getMimeType().equals(ContentTypeField.TYPE_TEXT_PLAIN)) {
-                handleTextBody(email, (TextBody) e.getBody(), e.getMimeType(), e.getHeader().getFields());
-            } else {
-                // Ignore other types.
-            }
+            } else if ((e.getMimeType().equals(HTML_TYPE) && (email.getHtmlBody() == null || email.getHtmlBody().isEmpty()))
+                    || (e.getMimeType().equals(ContentTypeField.TYPE_TEXT_PLAIN) && (email.getTextBody() == null || email.getTextBody().isEmpty()))) {
+                    handleTextBody(email, (TextBody) e.getBody(), e.getMimeType(), e.getHeader().getFields());
+            } else {               
+                handleAttachment(email, e, fileID, index);
+            } 
         }
     }
-
+    
     /**
      * Extract text out of a body part of the message.
      *
@@ -298,7 +303,14 @@ class MimeJ4MessageParser {
             logger.log(Level.SEVERE, Bundle.MimeJ4MessageParser_handleAttch_noOpenCase_errMsg(), ex); //NON-NLS
             return;
         }
-        String filename = FileUtil.escapeFileName(e.getFilename());
+        String filename = e.getFilename();
+        
+        if (filename == null) {
+            filename = "attachment" + e.hashCode();
+            logger.log(Level.WARNING, String.format("Attachment has no file name using '%s'", filename));
+        }
+        
+        filename = FileUtil.escapeFileName(filename);
 
         // also had some crazy long names, so make random one if we get those.
         // also from Japanese image that had encoded name
@@ -308,40 +320,27 @@ class MimeJ4MessageParser {
 
         String uniqueFilename = fileID + "-" + index + "-" + email.getSentDate() + "-" + filename;
         String outPath = outputDirPath + uniqueFilename;
-        EncodedFileOutputStream fos;
-        BinaryBody bb;
-        try {
-            fos = new EncodedFileOutputStream(new FileOutputStream(outPath), TskData.EncodingType.XOR1);
-        } catch (IOException ex) {
-            logger.log(Level.WARNING, "Failed to create file output stream for: " + outPath, ex); //NON-NLS
-            return;
-        }
-
-        try {
-            Body b = e.getBody();
-            if (b instanceof BinaryBody) {
-                bb = (BinaryBody) b;
-                bb.writeTo(fos);
-            } else {
-                // This could potentially be other types. Only seen this once.
-            }
-        } catch (IOException ex) {
-            logger.log(Level.WARNING, "Failed to write mbox email attachment to disk.", ex); //NON-NLS
-            return;
-        } finally {
-            try {
-                fos.close();
+        
+        Body body = e.getBody();
+        if (body instanceof SingleBody) {
+            long fileLength;
+            try (EncodedFileOutputStream fos = new EncodedFileOutputStream(new FileOutputStream(outPath), TskData.EncodingType.XOR1)) {
+                ((SingleBody) body).writeTo(fos);
+                fileLength = fos.getBytesWritten();
             } catch (IOException ex) {
-                logger.log(Level.WARNING, "Failed to close file output stream", ex); //NON-NLS
+                logger.log(Level.WARNING, "Failed to create file output stream for: " + outPath, ex); //NON-NLS
+                return;
             }
-        }
-
-        EmailMessage.Attachment attach = new EmailMessage.Attachment();
-        attach.setName(filename);
-        attach.setLocalPath(relModuleOutputPath + uniqueFilename);
-        attach.setSize(new File(outPath).length());
-        attach.setEncodingType(TskData.EncodingType.XOR1);
-        email.addAttachment(attach);
+            
+            EmailMessage.Attachment attach = new EmailMessage.Attachment();
+            attach.setName(filename);
+            attach.setLocalPath(relModuleOutputPath + uniqueFilename);
+            attach.setSize(fileLength);
+            attach.setEncodingType(TskData.EncodingType.XOR1);
+            email.addAttachment(attach);
+        } 
+        
+        
     }
 
     /**
@@ -375,5 +374,10 @@ class MimeJ4MessageParser {
      */
     private static String getAddresses(AddressList addressList) {
         return (addressList == null) ? "" : getAddresses(addressList.flatten());
+    }
+
+    @Override
+    public void close() throws IOException{
+        
     }
 }

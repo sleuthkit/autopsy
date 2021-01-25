@@ -63,7 +63,7 @@ public final class ReportBranding implements ReportBrandingProviderI {
         //initialize with extracting of resource files if needed, ensure 1 writer at a time
         synchronized (ReportBranding.class) {
 
-            reportsBrandingDir = PlatformUtil.getUserConfigDirectory() + File.separator + ReportGenerator.REPORTS_DIR + File.separator
+            reportsBrandingDir = PlatformUtil.getUserConfigDirectory() + File.separator + ReportGenerator.getReportsDirectory() + File.separator
                     + "branding"; //NON-NLS
             File brandingDir = new File(reportsBrandingDir);
             if (!brandingDir.exists()) {

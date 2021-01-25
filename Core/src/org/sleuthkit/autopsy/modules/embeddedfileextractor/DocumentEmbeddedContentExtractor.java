@@ -22,6 +22,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -57,10 +60,12 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
+import static org.sleuthkit.autopsy.coreutils.FileUtil.escapeFileName;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
+import org.sleuthkit.autopsy.modules.embeddedfileextractor.FileTaskExecutor.FileTaskFailedException;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.EncodedFileOutputStream;
@@ -83,6 +88,7 @@ class DocumentEmbeddedContentExtractor {
     private String parentFileName;
     private final String UNKNOWN_IMAGE_NAME_PREFIX = "image_"; //NON-NLS
     private final FileTypeDetector fileTypeDetector;
+    private final FileTaskExecutor fileTaskExecutor;
 
     private String moduleDirRelative;
     private String moduleDirAbsolute;
@@ -117,7 +123,7 @@ class DocumentEmbeddedContentExtractor {
     }
     private SupportedExtractionFormats abstractFileExtractionFormat;
 
-    DocumentEmbeddedContentExtractor(IngestJobContext context, FileTypeDetector fileTypeDetector, String moduleDirRelative, String moduleDirAbsolute) throws NoCurrentCaseException {
+    DocumentEmbeddedContentExtractor(IngestJobContext context, FileTypeDetector fileTypeDetector, String moduleDirRelative, String moduleDirAbsolute, FileTaskExecutor fileTaskExecutor) throws NoCurrentCaseException {
 
         this.fileManager = Case.getCurrentCaseThrows().getServices().getFileManager();
         this.services = IngestServices.getInstance();
@@ -125,6 +131,7 @@ class DocumentEmbeddedContentExtractor {
         this.fileTypeDetector = fileTypeDetector;
         this.moduleDirRelative = moduleDirRelative;
         this.moduleDirAbsolute = moduleDirAbsolute;
+        this.fileTaskExecutor = fileTaskExecutor;
     }
 
     /**
@@ -159,19 +166,27 @@ class DocumentEmbeddedContentExtractor {
     void extractEmbeddedContent(AbstractFile abstractFile) {
         List<ExtractedFile> listOfExtractedImages = null;
         List<AbstractFile> listOfExtractedImageAbstractFiles = null;
-        this.parentFileName = EmbeddedFileExtractorIngestModule.getUniqueName(abstractFile);
+        //save the parent file name with out illegal windows characters
+        this.parentFileName = utf8SanitizeFileName(EmbeddedFileExtractorIngestModule.getUniqueName(abstractFile));
 
         // Skip files that already have been unpacked.
+        /*
+         * TODO (Jira-7145): Is the logic of this check correct? Also note that
+         * this suspect code used to have a bug in that makeOutputFolder() was
+         * called, so the directory was always created here if it did not exist,
+         * making this check only a call to AbstractFile.hasChildren() in
+         * practice.
+         */
         try {
             if (abstractFile.hasChildren()) {
                 //check if local unpacked dir exists
-                if (new File(getOutputFolderPath(parentFileName)).exists()) {
-                    LOGGER.log(Level.INFO, "File already has been processed as it has children and local unpacked file, skipping: {0}", abstractFile.getName()); //NON-NLS
+                File outputFolder = Paths.get(moduleDirAbsolute, parentFileName).toFile();
+                if (fileTaskExecutor.exists(outputFolder)) {
                     return;
                 }
             }
-        } catch (TskCoreException e) {
-            LOGGER.log(Level.SEVERE, String.format("Error checking if file already has been processed, skipping: %s", parentFileName), e); //NON-NLS
+        } catch (TskCoreException | FileTaskExecutor.FileTaskFailedException | InterruptedException e) {
+            LOGGER.log(Level.SEVERE, String.format("Error checking if %s (objID = %d) has already has been processed, skipping", abstractFile.getName(), abstractFile.getId()), e); //NON-NLS
             return;
         }
 
@@ -289,13 +304,12 @@ class DocumentEmbeddedContentExtractor {
             // These get thrown in certain images. The reason is unknown. It is
             // likely due to problems with the file formats that POI is poorly
             // handling.
-            
             //Any runtime exception escaping 
             LOGGER.log(Level.WARNING, "Word document container could not be initialized. Reason: {0}", ex.getMessage()); //NON-NLS
             return null;
         }
 
-        String outputFolderPath;
+        Path outputFolderPath;
         if (listOfAllPictures.isEmpty()) {
             return null;
         } else {
@@ -308,13 +322,13 @@ class DocumentEmbeddedContentExtractor {
         byte[] data = null;
         int pictureNumber = 0; //added to ensure uniqueness in cases where suggestFullFileName returns duplicates
         for (Picture picture : listOfAllPictures) {
-            String fileName =  UNKNOWN_IMAGE_NAME_PREFIX +pictureNumber +"."+ picture.suggestFileExtension();
+            String fileName = UNKNOWN_IMAGE_NAME_PREFIX + pictureNumber + "." + picture.suggestFileExtension();
             try {
                 data = picture.getContent();
             } catch (Exception ex) {
                 return null;
             }
-            writeExtractedImage(Paths.get(outputFolderPath, fileName).toString(), data);
+            writeExtractedImage(Paths.get(outputFolderPath.toString(), fileName).toString(), data);
             // TODO Extract more info from the Picture viz ctime, crtime, atime, mtime
             listOfExtractedImages.add(new ExtractedFile(fileName, getFileRelativePath(fileName), picture.getSize()));
             pictureNumber++;
@@ -355,7 +369,7 @@ class DocumentEmbeddedContentExtractor {
 
         // if no images are extracted from the PPT, return null, else initialize
         // the output folder for image extraction.
-        String outputFolderPath;
+        Path outputFolderPath;
         if (listOfAllPictures.isEmpty()) {
             return null;
         } else {
@@ -401,7 +415,7 @@ class DocumentEmbeddedContentExtractor {
             } catch (Exception ex) {
                 return null;
             }
-            writeExtractedImage(Paths.get(outputFolderPath, imageName).toString(), data);
+            writeExtractedImage(Paths.get(outputFolderPath.toString(), imageName).toString(), data);
             listOfExtractedImages.add(new ExtractedFile(imageName, getFileRelativePath(imageName), pictureData.getData().length));
             i++;
         }
@@ -447,7 +461,7 @@ class DocumentEmbeddedContentExtractor {
 
         // if no images are extracted from the PPT, return null, else initialize
         // the output folder for image extraction.
-        String outputFolderPath;
+        Path outputFolderPath;
         if (listOfAllPictures.isEmpty()) {
             return null;
         } else {
@@ -467,42 +481,47 @@ class DocumentEmbeddedContentExtractor {
             } catch (Exception ex) {
                 return null;
             }
-            writeExtractedImage(Paths.get(outputFolderPath, imageName).toString(), data);
+            writeExtractedImage(Paths.get(outputFolderPath.toString(), imageName).toString(), data);
             listOfExtractedImages.add(new ExtractedFile(imageName, getFileRelativePath(imageName), pictureData.getData().length));
             i++;
         }
         return listOfExtractedImages;
 
     }
-    
+
     /**
      * Extracts embedded attachments from PDF files.
-     * 
+     *
      * @param abstractFile Input PDF file
+     *
      * @return List of extracted files to be made into derived file instances.
      */
     private List<ExtractedFile> extractEmbeddedContentFromPDF(AbstractFile abstractFile) {
+        Path outputDirectory = getOutputFolderPath(parentFileName);
+        if (outputDirectory == null) {
+            return Collections.emptyList();
+        }
         PDFAttachmentExtractor pdfExtractor = new PDFAttachmentExtractor(parser);
         try {
-            Path outputDirectory = Paths.get(getOutputFolderPath(parentFileName));
             //Get map of attachment name -> location disk.
-            Map<String, Path> extractedAttachments = pdfExtractor.extract(
+            Map<String, PDFAttachmentExtractor.NewResourceData> extractedAttachments = pdfExtractor.extract(
                     new ReadContentInputStream(abstractFile), abstractFile.getId(),
                     outputDirectory);
-            
+
             //Convert output to hook into the existing logic for creating derived files
             List<ExtractedFile> extractedFiles = new ArrayList<>();
             extractedAttachments.entrySet().forEach((pathEntry) -> {
                 String fileName = pathEntry.getKey();
-                Path writeLocation = pathEntry.getValue();
+                Path writeLocation = pathEntry.getValue().getPath();
+                int fileSize = pathEntry.getValue().getLength();
                 extractedFiles.add(new ExtractedFile(fileName,
-                        getFileRelativePath(writeLocation.getFileName().toString()), 
-                        writeLocation.toFile().length()));
+                        getFileRelativePath(writeLocation.getFileName().toString()),
+                        fileSize));
             });
-            
+
             return extractedFiles;
-        } catch (IOException | SAXException | TikaException ex) {
-            LOGGER.log(Level.WARNING, "Error attempting to extract attachments from PDFs", ex); //NON-NLS
+        } catch (IOException | SAXException | TikaException | InvalidPathException ex) {
+            LOGGER.log(Level.WARNING, "Error attempting to extract attachments from PDFs for file Name: " + abstractFile.getName() + " ID: " + abstractFile.getId(), ex); //NON-NLS         
         }
         return Collections.emptyList();
     }
@@ -523,25 +542,29 @@ class DocumentEmbeddedContentExtractor {
     }
 
     /**
-     * Gets path to the output folder for file extraction. If the path does not
-     * exist, it is created.
+     * Gets the path to an output folder for extraction of embedded content from
+     * a file. The folder will have the same name as the file name passed in. If
+     * the folder does not exist, it is created.
      *
-     * @param parentFileName name of the abstract file being processed
+     * @param parentFileName The file name.
      *
-     * @return path to the file extraction folder for a given abstract file.
+     * @return The output folder path or null if the folder could not be found
+     *         or created.
      */
-    private String getOutputFolderPath(String parentFileName) {
-        String outputFolderPath = moduleDirAbsolute + File.separator + parentFileName;
-        File outputFilePath = new File(outputFolderPath);
-        if (!outputFilePath.exists()) {
-            try {
-                outputFilePath.mkdirs();
-            } catch (SecurityException ex) {
-                LOGGER.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.getOutputFolderPath.exception.msg", parentFileName), ex);
-                return null;
+    private Path getOutputFolderPath(String parentFileName) {
+        Path outputFolderPath = Paths.get(moduleDirAbsolute, parentFileName);
+        try {
+            File outputFolder = outputFolderPath.toFile();
+            if (!fileTaskExecutor.exists(outputFolder)) {
+                if (!fileTaskExecutor.mkdirs(outputFolder)) {
+                    outputFolderPath = null;
+                }
             }
+            return outputFolderPath;
+        } catch (SecurityException | FileTaskFailedException | InterruptedException ex) {
+            LOGGER.log(Level.SEVERE, String.format("Failed to find or create %s", outputFolderPath), ex);
+            return null;
         }
-        return outputFolderPath;
     }
 
     /**
@@ -555,6 +578,19 @@ class DocumentEmbeddedContentExtractor {
      */
     private String getFileRelativePath(String fileName) {
         return Paths.get(moduleDirRelative, this.parentFileName, fileName).toString();
+    }
+
+    /**
+     * UTF-8 sanitize and escape special characters in a file name or a file
+     * name component
+     *
+     * @param fileName to escape
+     *
+     * @return Sanitized string
+     */
+    private static String utf8SanitizeFileName(String fileName) {
+        Charset charset = StandardCharsets.UTF_8;
+        return charset.decode(charset.encode(escapeFileName(fileName))).toString();
     }
 
     /**
@@ -629,7 +665,7 @@ class DocumentEmbeddedContentExtractor {
         // plain old list after we upgrade to Tika 1.16 or above.
         private final Map<String, ExtractedFile> nameToExtractedFileMap = new HashMap<>();
 
-        public EmbeddedContentExtractor(ParseContext context) {
+        private EmbeddedContentExtractor(ParseContext context) {
             super(context);
         }
 
@@ -663,12 +699,15 @@ class DocumentEmbeddedContentExtractor {
             }
 
             if (name == null) {
-                name = UNKNOWN_IMAGE_NAME_PREFIX + fileCount++;
+                fileCount++;
+                name = UNKNOWN_IMAGE_NAME_PREFIX + fileCount;
             } else {
                 //make sure to select only the file name (not any directory paths
                 //that might be included in the name) and make sure
                 //to normalize the name
                 name = FilenameUtils.normalize(FilenameUtils.getName(name));
+                //remove any illegal characters from name
+                name = utf8SanitizeFileName(name);
             }
 
             // Get the suggested extension based on mime type.
@@ -680,10 +719,13 @@ class DocumentEmbeddedContentExtractor {
                 }
             }
 
-            File extractedFile = new File(Paths.get(getOutputFolderPath(parentFileName), name).toString());
-            byte[] fileData = IOUtils.toByteArray(stream);
-            writeExtractedImage(extractedFile.getAbsolutePath(), fileData);
-            nameToExtractedFileMap.put(name, new ExtractedFile(name, getFileRelativePath(name), fileData.length));
+            Path outputFolderPath = getOutputFolderPath(parentFileName);
+            if (outputFolderPath != null) {
+                File extractedFile = new File(Paths.get(outputFolderPath.toString(), name).toString());
+                byte[] fileData = IOUtils.toByteArray(stream);
+                writeExtractedImage(extractedFile.getAbsolutePath(), fileData);
+                nameToExtractedFileMap.put(name, new ExtractedFile(name, getFileRelativePath(name), fileData.length));
+            }
         }
 
         /**

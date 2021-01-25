@@ -26,9 +26,13 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
+import org.sleuthkit.autopsy.communications.relationships.RelationshipsNodeUtilities;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.AccountDeviceInstance;
+import org.sleuthkit.datamodel.BlackboardAttribute;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME;
 import org.sleuthkit.datamodel.CommunicationsFilter;
 import org.sleuthkit.datamodel.CommunicationsManager;
 
@@ -37,9 +41,13 @@ import org.sleuthkit.datamodel.CommunicationsManager;
  */
 final class AccountDeviceInstanceNode extends AbstractNode {
 
+    private static final Logger logger = Logger.getLogger(AccountDeviceInstanceNode.class.getName());
+
     private final AccountDeviceInstanceKey accountDeviceInstanceKey;
     private final CommunicationsManager commsManager;
     private final Account account;
+
+    private static final BlackboardAttribute.Type NAME_ATTRIBUTE = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.fromID(TSK_NAME.getTypeID()));
 
     AccountDeviceInstanceNode(AccountDeviceInstanceKey accountDeviceInstanceKey, CommunicationsManager commsManager) {
         super(Children.LEAF, Lookups.fixed(accountDeviceInstanceKey, commsManager));
@@ -48,7 +56,8 @@ final class AccountDeviceInstanceNode extends AbstractNode {
         this.account = accountDeviceInstanceKey.getAccountDeviceInstance().getAccount();
         setName(account.getTypeSpecificID());
         setDisplayName(getName());
-        setIconBaseWithExtension(Utils.getIconFilePath(account.getAccountType()));
+        String iconPath = Utils.getIconFilePath(account.getAccountType());
+        this.setIconBaseWithExtension(iconPath != null && iconPath.charAt(0) == '/' ? iconPath.substring(1) : iconPath);
     }
 
     AccountDeviceInstance getAccountDeviceInstance() {
@@ -101,5 +110,10 @@ final class AccountDeviceInstanceNode extends AbstractNode {
         actions.add(PinAccountsAction.getInstance());
         actions.add(ResetAndPinAccountsAction.getInstance());
         return actions.toArray(new Action[actions.size()]);
+    }
+
+    @Override
+    public String getShortDescription() {
+        return RelationshipsNodeUtilities.getAccoutToolTipText(getDisplayName(), account);
     }
 }

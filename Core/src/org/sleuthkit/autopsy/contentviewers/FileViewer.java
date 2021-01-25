@@ -50,7 +50,8 @@ public class FileViewer extends javax.swing.JPanel implements DataContentViewer 
         new PListViewer(),
         new MediaFileViewer(),
         new HtmlViewer(),
-        new WindowsRegistryViewer()
+        new WindowsRegistryViewer(),
+        new PDFViewer()
     };
 
     private FileTypeViewer lastViewer;

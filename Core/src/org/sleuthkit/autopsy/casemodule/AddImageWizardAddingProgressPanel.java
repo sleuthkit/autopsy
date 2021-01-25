@@ -302,7 +302,9 @@ class AddImageWizardAddingProgressPanel extends ShortcutWizardDescriptorPanel {
     private void startIngest() {
         if (!newContents.isEmpty() && readyToIngest && !ingested) {
             ingested = true;
-            IngestManager.getInstance().queueIngestJob(newContents, ingestJobSettings);
+            if (dsProcessor != null && ! dsProcessor.supportsIngestStream()) {
+                IngestManager.getInstance().queueIngestJob(newContents, ingestJobSettings);
+            }
             setStateFinished();
         }
     }
@@ -360,8 +362,12 @@ class AddImageWizardAddingProgressPanel extends ShortcutWizardDescriptorPanel {
 
             setStateStarted();
 
-            // Kick off the DSProcessor 
-            dsProcessor.run(getDSPProgressMonitorImpl(), cbObj);
+            // Kick off the DSProcessor
+            if (dsProcessor.supportsIngestStream()) {
+                dsProcessor.runWithIngestStream(ingestJobSettings, getDSPProgressMonitorImpl(), cbObj);
+            } else {
+                dsProcessor.run(getDSPProgressMonitorImpl(), cbObj);
+            }
         }
     }
 

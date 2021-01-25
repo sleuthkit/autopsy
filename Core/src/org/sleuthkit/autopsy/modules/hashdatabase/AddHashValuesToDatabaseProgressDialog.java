@@ -30,6 +30,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.SwingWorker;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 import org.sleuthkit.datamodel.HashEntry;
@@ -46,7 +47,14 @@ public class AddHashValuesToDatabaseProgressDialog extends javax.swing.JDialog {
     private final HashDb hashDb;
     private final List<HashEntry> hashes;
     private final List<String> invalidHashes;
-    private final Pattern md5Pattern;
+    
+    // Matches hash with optional comma separated comment.
+    private static final Pattern HASH_LINE_PATTERN = Pattern.compile("^([a-fA-F0-9]{32})(,(.*))?$");
+    // The regex group for the hash.
+    private static final int HASH_GROUP = 1;
+    // The regex group for the comment.
+    private static final int COMMENT_GROUP = 3;
+    
     private String errorTitle;
     private String errorMessage;
     private final String text;
@@ -64,7 +72,6 @@ public class AddHashValuesToDatabaseProgressDialog extends javax.swing.JDialog {
         display(parent);
         this.hashes = new ArrayList<>();
         this.invalidHashes = new ArrayList<>();
-        this.md5Pattern = Pattern.compile("^[a-fA-F0-9]{32}$"); // NON-NLS
         this.parentRef = parent;
         this.hashDb = hashDb;
         this.text = text;
@@ -161,10 +168,15 @@ public class AddHashValuesToDatabaseProgressDialog extends javax.swing.JDialog {
         // These entries may be of <MD5> or <MD5, comment> format
         for (String hashEntry : linesInTextArea) {
             hashEntry = hashEntry.trim();
-            Matcher m = md5Pattern.matcher(hashEntry);
-            if (m.find()) {
-                // more information can be added to the HashEntry - sha-1, sha-512, comment
-                hashes.add(new HashEntry(null, m.group(0), null, null, null));
+            Matcher m = HASH_LINE_PATTERN.matcher(hashEntry);
+            if (m.find()) {               
+                String hash = m.group(HASH_GROUP);
+                
+                // if there was a match and the match is not empty, assign to comment
+                String comment = StringUtils.isNotBlank(m.group(COMMENT_GROUP)) ? 
+                    m.group(COMMENT_GROUP).trim() : null;
+                
+                hashes.add(new HashEntry(null, hash, null, null, comment));
             } else {
                 if (!hashEntry.isEmpty()) {
                     invalidHashes.add(hashEntry);

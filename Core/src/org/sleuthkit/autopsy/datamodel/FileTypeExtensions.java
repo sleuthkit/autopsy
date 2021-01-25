@@ -27,7 +27,7 @@ import java.util.List;
  */
 public class FileTypeExtensions {
 
-    private final static List<String> IMAGE_EXTENSIONS = Arrays.asList(".jpg", ".jpeg", ".png", ".psd", ".nef", ".tiff", ".bmp", ".tec", ".tif"); //NON-NLS
+    private final static List<String> IMAGE_EXTENSIONS = Arrays.asList(".jpg", ".jpeg", ".png", ".psd", ".nef", ".tiff", ".bmp", ".tec", ".tif", ".webp"); //NON-NLS
     private final static List<String> VIDEO_EXTENSIONS = Arrays.asList(".aaf", ".3gp", ".asf", ".avi", ".m1v", ".m2v", //NON-NLS
             ".m4v", ".mp4", ".mov", ".mpeg", ".mpg", ".mpe", ".mp4", ".rm", ".wmv", ".mpv", ".flv", ".swf"); //NON-NLS
     private final static List<String> AUDIO_EXTENSIONS = Arrays.asList(".aiff", ".aif", ".flac", ".wav", ".m4a", ".ape", //NON-NLS

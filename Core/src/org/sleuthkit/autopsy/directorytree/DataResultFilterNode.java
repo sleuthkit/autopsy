@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2012-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,7 +41,6 @@ import org.sleuthkit.autopsy.actions.DeleteFileBlackboardArtifactTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode.AbstractFilePropertyType;
 import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.datamodel.DataModelActionsFactory;
@@ -136,11 +135,12 @@ public class DataResultFilterNode extends FilterNode {
     public Action[] getActions(boolean popup) {
 
         List<Action> actions = new ArrayList<>();
-
-        final DisplayableItemNode originalNode = (DisplayableItemNode) this.getOriginal();
-        List<Action> accept = originalNode.accept(getActionsDIV);
-        if (accept != null) {
-            actions.addAll(accept);
+        if (this.getOriginal() instanceof DisplayableItemNode) {
+            final DisplayableItemNode originalNode = (DisplayableItemNode) this.getOriginal();
+            List<Action> accept = originalNode.accept(getActionsDIV);
+            if (accept != null) {
+                actions.addAll(accept);
+            }
         }
 
         //actions.add(new IndexContentFilesAction(nodeContent, "Index"));
@@ -185,27 +185,6 @@ public class DataResultFilterNode extends FilterNode {
         }
 
         return propertySets;
-    }
-
-    /**
-     * Gets the display name for the wrapped node.
-     *
-     * OutlineView used in the DataResult table uses getDisplayName() to
-     * populate the first column, which is Source File.
-     *
-     * Hence this override to return the 'correct' displayName for the wrapped
-     * node.
-     *
-     * @return The display name for the node.
-     */
-    @Override
-    public String getDisplayName() {
-        final Node orig = getOriginal();
-        String name = orig.getDisplayName();
-        if ((orig instanceof BlackboardArtifactNode)) {
-            name = ((BlackboardArtifactNode) orig).getSourceName();
-        }
-        return name;
     }
 
     /**
@@ -258,15 +237,20 @@ public class DataResultFilterNode extends FilterNode {
 
         @Override
         protected Node[] createNodes(Node key) {
-            // filter out all non-message artifacts, if displaying the results from the Data Source tree
+            // if displaying the results from the Data Source tree
+            // filter out artifacts
+          
+            // In older versions of Autopsy,  attachments were children of email/message artifacts
+            // and hence email/messages with attachments are shown in the tree data source tree,
             BlackboardArtifact art = key.getLookup().lookup(BlackboardArtifact.class);
-            if (art != null
-                    && filterArtifacts
-                    && art.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()
-                    && art.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE.getTypeID()) {
+            if (art != null && filterArtifacts
+                    && ((FilterNodeUtils.showMessagesInDatasourceTree() == false)
+                         || (FilterNodeUtils.showMessagesInDatasourceTree()
+                                && art.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()
+                                && art.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE.getTypeID()))) {
                 return new Node[]{};
             }
-
+                
             return new Node[]{new DataResultFilterNode(key, sourceEm)};
         }
     }
@@ -291,6 +275,9 @@ public class DataResultFilterNode extends FilterNode {
             for (Action a : ban.getActions(true)) {
                 actionsList.add(a);
             }
+            
+            //Add seperator between the decorated actions and the actions from the node itself.
+            actionsList.add(null);
             BlackboardArtifact ba = ban.getLookup().lookup(BlackboardArtifact.class);
             final int artifactTypeID = ba.getArtifactTypeID();
 
@@ -567,7 +554,7 @@ public class DataResultFilterNode extends FilterNode {
             // is a DirectoryTreeFilterNode that wraps the dataModelNode. We need
             // to set that wrapped node as the selection and root context of the 
             // directory tree explorer manager (sourceEm)
-            if(sourceEm == null) {
+            if(sourceEm == null || sourceEm.getSelectedNodes().length == 0) {
                 return null;
             }
             final Node currentSelectionInDirectoryTree = sourceEm.getSelectedNodes()[0];

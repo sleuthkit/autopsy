@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,13 +35,17 @@ import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.GeneralFilter;
+import org.sleuthkit.autopsy.machinesettings.UserMachinePreferences;
+import org.sleuthkit.autopsy.machinesettings.UserMachinePreferencesException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
@@ -70,12 +75,14 @@ import org.sleuthkit.autopsy.report.ReportBranding;
 final class AutopsyOptionsPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
-    private final JFileChooser fileChooser;
+    private final JFileChooser logoFileChooser;
+    private final JFileChooser tempDirChooser;
     private final TextFieldListener textFieldListener;
     private static final String ETC_FOLDER_NAME = "etc";
     private static final String CONFIG_FILE_EXTENSION = ".conf";
     private static final long ONE_BILLION = 1000000000L;  //used to roughly convert system memory from bytes to gigabytes
     private static final int MEGA_IN_GIGA = 1024; //used to convert memory settings saved as megabytes to gigabytes
+    private static final int JVM_MEMORY_STEP_SIZE_MB = 512;
     private static final int MIN_MEMORY_IN_GB = 2; //the enforced minimum memory in gigabytes
     private static final Logger logger = Logger.getLogger(AutopsyOptionsPanel.class.getName());
     private String initialMemValue = Long.toString(Runtime.getRuntime().maxMemory() / ONE_BILLION);
@@ -85,11 +92,16 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
      */
     AutopsyOptionsPanel() {
         initComponents();
-        fileChooser = new JFileChooser();
-        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        fileChooser.setMultiSelectionEnabled(false);
-        fileChooser.setAcceptAllFileFilterUsed(false);
-        fileChooser.setFileFilter(new GeneralFilter(GeneralFilter.GRAPHIC_IMAGE_EXTS, GeneralFilter.GRAPHIC_IMG_DECR));
+        logoFileChooser = new JFileChooser();
+        logoFileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        logoFileChooser.setMultiSelectionEnabled(false);
+        logoFileChooser.setAcceptAllFileFilterUsed(false);
+        logoFileChooser.setFileFilter(new GeneralFilter(GeneralFilter.GRAPHIC_IMAGE_EXTS, GeneralFilter.GRAPHIC_IMG_DECR));
+
+        tempDirChooser = new JFileChooser();
+        tempDirChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        tempDirChooser.setMultiSelectionEnabled(false);
+
         if (!PlatformUtil.is64BitJVM() || Version.getBuildType() == Version.Type.DEVELOPMENT) {
             //32 bit JVM has a max heap size of 1.4 gb to 4 gb depending on OS
             //So disabling the setting of heap size when the JVM is not 64 bit 
@@ -102,10 +114,11 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         // The cast to int in the following is to ensure that the correct SpinnerNumberModel
         // constructor is called.
         solrMaxHeapSpinner.setModel(new javax.swing.SpinnerNumberModel(UserPreferences.getMaxSolrVMSize(),
-                512, ((int)getSystemMemoryInGB()) * MEGA_IN_GIGA, 512));
+                JVM_MEMORY_STEP_SIZE_MB, ((int) getSystemMemoryInGB()) * MEGA_IN_GIGA, JVM_MEMORY_STEP_SIZE_MB));
 
         textFieldListener = new TextFieldListener();
         agencyLogoPathField.getDocument().addDocumentListener(textFieldListener);
+        tempDirectoryField.getDocument().addDocumentListener(textFieldListener);
         logFileCount.setText(String.valueOf(UserPreferences.getLogFileCount()));
     }
 
@@ -296,8 +309,10 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         specifyLogoRB.setSelected(!useDefault);
         agencyLogoPathField.setEnabled(!useDefault);
         browseLogosButton.setEnabled(!useDefault);
+        tempDirectoryField.setText(UserMachinePreferences.getBaseTempDirectory());
         logFileCount.setText(String.valueOf(UserPreferences.getLogFileCount()));
         solrMaxHeapSpinner.setValue(UserPreferences.getMaxSolrVMSize());
+        tempDirectoryField.setText(UserMachinePreferences.getBaseTempDirectory());
         try {
             updateAgencyLogo(path);
         } catch (IOException ex) {
@@ -312,8 +327,15 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
             }
             memField.setText(initialMemValue);
         }
-        
+        setTempDirEnabled();
         valid(); //ensure the error messages are up to date
+    }
+
+    private void setTempDirEnabled() {
+        boolean enabled = !Case.isCaseOpen();
+        this.tempDirectoryBrowseButton.setEnabled(enabled);
+        this.tempDirectoryField.setEnabled(enabled);
+        this.tempDirectoryWarningLabel.setVisible(!enabled);
     }
 
     /**
@@ -342,11 +364,34 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         agencyLogoPreview.repaint();
     }
 
+    @Messages({
+        "AutopsyOptionsPanel_storeTempDir_onError_title=Error Saving Temporary Directory",
+        "# {0} - path",
+        "AutopsyOptionsPanel_storeTempDir_onError_description=There was an error creating the temporary directory on the filesystem at: {0}.",})
+    private void storeTempDir() {
+        String tempDirectoryPath = tempDirectoryField.getText();
+        if (!UserMachinePreferences.getBaseTempDirectory().equals(tempDirectoryPath)) {
+            try {
+                UserMachinePreferences.setBaseTempDirectory(tempDirectoryPath);
+            } catch (UserMachinePreferencesException ex) {
+                logger.log(Level.WARNING, "There was an error creating the temporary directory defined by the user: " + tempDirectoryPath, ex);
+                SwingUtilities.invokeLater(() -> {
+                    JOptionPane.showMessageDialog(this,
+                            String.format("<html>%s</html>", Bundle.AutopsyOptionsPanel_storeTempDir_onError_description(tempDirectoryPath)),
+                            Bundle.AutopsyOptionsPanel_storeTempDir_onError_title(),
+                            JOptionPane.ERROR_MESSAGE);
+                });
+            }
+        }
+    }
+
     /**
      * Store the current user preferences.
      */
     void store() {
         UserPreferences.setLogFileCount(Integer.parseInt(logFileCount.getText()));
+        storeTempDir();
+
         if (!agencyLogoPathField.getText().isEmpty()) {
             File file = new File(agencyLogoPathField.getText());
             if (file.exists()) {
@@ -355,7 +400,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         } else {
             ModuleSettings.setConfigSetting(ReportBranding.MODULE_NAME, ReportBranding.AGENCY_LOGO_PATH_PROP, "");
         }
-        UserPreferences.setMaxSolrVMSize((int)solrMaxHeapSpinner.getValue());
+        UserPreferences.setMaxSolrVMSize((int) solrMaxHeapSpinner.getValue());
         if (memField.isEnabled()) {  //if the field could of been changed we need to try and save it
             try {
                 writeEtcConfFile();
@@ -372,7 +417,6 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
      */
     boolean valid() {
         boolean valid = true;
-
         if (!isAgencyLogoPathValid()) {
             valid = false;
         }
@@ -425,7 +469,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
 
         return valid;
     }
-    
+
     /**
      * Checks that if the mem field is enabled it has a valid value.
      *
@@ -466,7 +510,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
 
     /**
      * Check if the logFileCount field is valid.
-     * 
+     *
      * @return true if the logFileCount is valid false if it is not
      */
     private boolean isLogNumFieldValid() {
@@ -482,8 +526,9 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
             logNumAlert.setText(Bundle.AutopsyOptionsPanel_logNumAlert_invalidInput_text());
             return false;
         }
-        return true;      
+        return true;
     }
+
     /**
      * Listens for registered text fields that have changed and fires a
      * PropertyChangeEvent accordingly.
@@ -513,12 +558,13 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
      */
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
+        java.awt.GridBagConstraints gridBagConstraints;
 
         fileSelectionButtonGroup = new javax.swing.ButtonGroup();
         displayTimesButtonGroup = new javax.swing.ButtonGroup();
         logoSourceButtonGroup = new javax.swing.ButtonGroup();
         jScrollPane1 = new javax.swing.JScrollPane();
-        jPanel1 = new javax.swing.JPanel();
+        javax.swing.JPanel mainPanel = new javax.swing.JPanel();
         logoPanel = new javax.swing.JPanel();
         agencyLogoPathField = new javax.swing.JTextField();
         browseLogosButton = new javax.swing.JButton();
@@ -542,16 +588,22 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         maxMemoryUnitsLabel2 = new javax.swing.JLabel();
         solrMaxHeapSpinner = new javax.swing.JSpinner();
         solrJVMHeapWarning = new javax.swing.JLabel();
-
-        setPreferredSize(new java.awt.Dimension(1022, 488));
+        tempDirectoryPanel = new javax.swing.JPanel();
+        tempDirectoryField = new javax.swing.JTextField();
+        tempDirectoryBrowseButton = new javax.swing.JButton();
+        tempDirectoryWarningLabel = new javax.swing.JLabel();
+        rdpPanel = new javax.swing.JPanel();
+        javax.swing.JScrollPane sizingScrollPane = new javax.swing.JScrollPane();
+        javax.swing.JTextPane sizingTextPane = new javax.swing.JTextPane();
+        javax.swing.Box.Filler filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 0));
+        javax.swing.Box.Filler filler2 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 32767));
 
         jScrollPane1.setBorder(null);
-        jScrollPane1.setPreferredSize(new java.awt.Dimension(1022, 407));
 
-        jPanel1.setPreferredSize(new java.awt.Dimension(1022, 407));
+        mainPanel.setMinimumSize(new java.awt.Dimension(648, 382));
+        mainPanel.setLayout(new java.awt.GridBagLayout());
 
         logoPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.logoPanel.border.title"))); // NOI18N
-        logoPanel.setPreferredSize(new java.awt.Dimension(533, 87));
 
         agencyLogoPathField.setText(org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.agencyLogoPathField.text")); // NOI18N
 
@@ -599,14 +651,14 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
                     .addComponent(defaultLogoRB))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(logoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(agencyLogoPathFieldValidationLabel)
                     .addGroup(logoPanelLayout.createSequentialGroup()
-                        .addComponent(agencyLogoPathField, javax.swing.GroupLayout.PREFERRED_SIZE, 259, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(agencyLogoPathField, javax.swing.GroupLayout.PREFERRED_SIZE, 270, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(browseLogosButton))
-                    .addComponent(agencyLogoPathFieldValidationLabel))
+                        .addComponent(browseLogosButton)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(agencyLogoPreview, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(456, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         logoPanelLayout.setVerticalGroup(
             logoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -624,6 +676,13 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
                 .addComponent(agencyLogoPreview, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 0, Short.MAX_VALUE))
         );
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        mainPanel.add(logoPanel, gridBagConstraints);
 
         runtimePanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.runtimePanel.border.title"))); // NOI18N
 
@@ -659,7 +718,6 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         });
 
         logNumAlert.setEditable(false);
-        logNumAlert.setFont(logNumAlert.getFont().deriveFont(logNumAlert.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         logNumAlert.setForeground(new java.awt.Color(255, 0, 0));
         logNumAlert.setText(org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.logNumAlert.text")); // NOI18N
         logNumAlert.setBorder(null);
@@ -704,14 +762,14 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
                             .addGroup(runtimePanelLayout.createSequentialGroup()
                                 .addGap(23, 23, 23)
                                 .addComponent(memFieldValidationLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 478, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addContainerGap(246, Short.MAX_VALUE))
+                                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                             .addGroup(runtimePanelLayout.createSequentialGroup()
                                 .addGap(18, 18, 18)
-                                .addComponent(solrJVMHeapWarning, javax.swing.GroupLayout.DEFAULT_SIZE, 717, Short.MAX_VALUE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(solrJVMHeapWarning, javax.swing.GroupLayout.PREFERRED_SIZE, 331, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(44, 44, 44)
                                 .addComponent(logNumAlert)
                                 .addContainerGap())))
-                    .addComponent(restartNecessaryWarning, javax.swing.GroupLayout.DEFAULT_SIZE, 994, Short.MAX_VALUE)))
+                    .addComponent(restartNecessaryWarning, javax.swing.GroupLayout.PREFERRED_SIZE, 615, javax.swing.GroupLayout.PREFERRED_SIZE)))
         );
 
         runtimePanelLayout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {maxLogFileCount, maxMemoryLabel, totalMemoryLabel});
@@ -747,45 +805,148 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
                     .addComponent(logFileCount, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(restartNecessaryWarning)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(runtimePanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(logoPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 1010, Short.MAX_VALUE))
                 .addContainerGap())
         );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        mainPanel.add(runtimePanel, gridBagConstraints);
+
+        tempDirectoryPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.tempDirectoryPanel.border.title"))); // NOI18N
+        tempDirectoryPanel.setName(org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.tempDirectoryPanel.name")); // NOI18N
+
+        tempDirectoryField.setText(org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.tempDirectoryField.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(tempDirectoryBrowseButton, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.tempDirectoryBrowseButton.text")); // NOI18N
+        tempDirectoryBrowseButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                tempDirectoryBrowseButtonActionPerformed(evt);
+            }
+        });
+
+        tempDirectoryWarningLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/warning16.png"))); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(tempDirectoryWarningLabel, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.tempDirectoryWarningLabel.text")); // NOI18N
+
+        javax.swing.GroupLayout tempDirectoryPanelLayout = new javax.swing.GroupLayout(tempDirectoryPanel);
+        tempDirectoryPanel.setLayout(tempDirectoryPanelLayout);
+        tempDirectoryPanelLayout.setHorizontalGroup(
+            tempDirectoryPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(tempDirectoryPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(runtimePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(logoPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(171, Short.MAX_VALUE))
+                .addGroup(tempDirectoryPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(tempDirectoryWarningLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 615, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(tempDirectoryPanelLayout.createSequentialGroup()
+                        .addComponent(tempDirectoryField, javax.swing.GroupLayout.PREFERRED_SIZE, 367, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(tempDirectoryBrowseButton)))
+                .addGap(0, 0, Short.MAX_VALUE))
+        );
+        tempDirectoryPanelLayout.setVerticalGroup(
+            tempDirectoryPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(tempDirectoryPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(tempDirectoryPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(tempDirectoryField)
+                    .addComponent(tempDirectoryBrowseButton))
+                .addGap(18, 18, 18)
+                .addComponent(tempDirectoryWarningLabel)
+                .addContainerGap())
         );
 
-        jScrollPane1.setViewportView(jPanel1);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        mainPanel.add(tempDirectoryPanel, gridBagConstraints);
+        tempDirectoryPanel.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.tempDirectoryPanel.AccessibleContext.accessibleName")); // NOI18N
+
+        rdpPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.rdpPanel.border.title"))); // NOI18N
+        rdpPanel.setMinimumSize(new java.awt.Dimension(33, 100));
+        rdpPanel.setPreferredSize(new java.awt.Dimension(100, 150));
+        rdpPanel.setLayout(new java.awt.GridBagLayout());
+
+        sizingScrollPane.setBorder(null);
+
+        sizingTextPane.setEditable(false);
+        sizingTextPane.setBorder(null);
+        sizingTextPane.setText(org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.sizingTextPane.text")); // NOI18N
+        sizingTextPane.setOpaque(false);
+        sizingScrollPane.setViewportView(sizingTextPane);
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.weighty = 1.0;
+        rdpPanel.add(sizingScrollPane, gridBagConstraints);
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridy = 3;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        mainPanel.add(rdpPanel, gridBagConstraints);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.weightx = 1.0;
+        mainPanel.add(filler1, gridBagConstraints);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 4;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.VERTICAL;
+        gridBagConstraints.weighty = 1.0;
+        mainPanel.add(filler2, gridBagConstraints);
+
+        jScrollPane1.setViewportView(mainPanel);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 648, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGap(0, 0, Short.MAX_VALUE))
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 382, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
+
+    @Messages({
+        "AutopsyOptionsPanel_tempDirectoryBrowseButtonActionPerformed_onInvalidPath_title=Path cannot be used",
+        "# {0} - path",
+        "AutopsyOptionsPanel_tempDirectoryBrowseButtonActionPerformed_onInvalidPath_description=Unable to create temporary directory within specified path: {0}",})
+    private void tempDirectoryBrowseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tempDirectoryBrowseButtonActionPerformed
+        int returnState = tempDirChooser.showOpenDialog(this);
+        if (returnState == JFileChooser.APPROVE_OPTION) {
+            String specifiedPath = tempDirChooser.getSelectedFile().getPath();
+            try {
+                File f = new File(specifiedPath);
+                if (!f.exists() && !f.mkdirs()) {
+                    throw new InvalidPathException(specifiedPath, "Unable to create parent directories leading to " + specifiedPath);
+                }
+                tempDirectoryField.setText(specifiedPath);
+                firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+            } catch (InvalidPathException ex) {
+                logger.log(Level.WARNING, "Unable to create temporary directory in " + specifiedPath, ex);
+                JOptionPane.showMessageDialog(this,
+                        Bundle.AutopsyOptionsPanel_tempDirectoryBrowseButtonActionPerformed_onInvalidPath_description(specifiedPath),
+                        Bundle.AutopsyOptionsPanel_tempDirectoryBrowseButtonActionPerformed_onInvalidPath_title(),
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }//GEN-LAST:event_tempDirectoryBrowseButtonActionPerformed
+
+    private void solrMaxHeapSpinnerStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_solrMaxHeapSpinnerStateChanged
+        int value = (int) solrMaxHeapSpinner.getValue();
+        if (value == UserPreferences.getMaxSolrVMSize()) {
+            // if the value hasn't changed there's nothing to do.
+            return;
+        }
+        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+    }//GEN-LAST:event_solrMaxHeapSpinnerStateChanged
 
     private void logFileCountKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_logFileCountKeyReleased
         String count = logFileCount.getText();
@@ -835,9 +996,9 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
 
     private void browseLogosButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_browseLogosButtonActionPerformed
         String oldLogoPath = agencyLogoPathField.getText();
-        int returnState = fileChooser.showOpenDialog(this);
+        int returnState = logoFileChooser.showOpenDialog(this);
         if (returnState == JFileChooser.APPROVE_OPTION) {
-            String path = fileChooser.getSelectedFile().getPath();
+            String path = logoFileChooser.getSelectedFile().getPath();
             try {
                 updateAgencyLogo(path);
                 firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
@@ -856,15 +1017,6 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_browseLogosButtonActionPerformed
 
-    private void solrMaxHeapSpinnerStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_solrMaxHeapSpinnerStateChanged
-        int value = (int)solrMaxHeapSpinner.getValue();
-        if (value == UserPreferences.getMaxSolrVMSize()) {
-            // if the value hasn't changed there's nothing to do.
-            return;
-        }
-        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
-    }//GEN-LAST:event_solrMaxHeapSpinnerStateChanged
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextField agencyLogoPathField;
     private javax.swing.JLabel agencyLogoPathFieldValidationLabel;
@@ -873,7 +1025,6 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
     private javax.swing.JRadioButton defaultLogoRB;
     private javax.swing.ButtonGroup displayTimesButtonGroup;
     private javax.swing.ButtonGroup fileSelectionButtonGroup;
-    private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTextField logFileCount;
     private javax.swing.JTextField logNumAlert;
@@ -887,12 +1038,17 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
     private javax.swing.JLabel maxSolrMemoryLabel;
     private javax.swing.JTextField memField;
     private javax.swing.JLabel memFieldValidationLabel;
+    private javax.swing.JPanel rdpPanel;
     private javax.swing.JLabel restartNecessaryWarning;
     private javax.swing.JPanel runtimePanel;
     private javax.swing.JLabel solrJVMHeapWarning;
     private javax.swing.JSpinner solrMaxHeapSpinner;
     private javax.swing.JRadioButton specifyLogoRB;
     private javax.swing.JLabel systemMemoryTotal;
+    private javax.swing.JButton tempDirectoryBrowseButton;
+    private javax.swing.JTextField tempDirectoryField;
+    private javax.swing.JPanel tempDirectoryPanel;
+    private javax.swing.JLabel tempDirectoryWarningLabel;
     private javax.swing.JLabel totalMemoryLabel;
     // End of variables declaration//GEN-END:variables
 

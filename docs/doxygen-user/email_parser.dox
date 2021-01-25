@@ -1,9 +1,12 @@
 /*! \page email_parser_page Email Parser Module
 
+[TOC]
+
+
 What Does It Do
 ========
 
-The Email Parser module identifies Thunderbird MBOX files and PST format files based on file signatures, extracting the e-mails from them, adding the results to the Blackboard. This module skips known files and creates a Blackboard artifact for each message. It adds email attachments as derived files.
+The Email Parser module identifies MBOX, EML and PST format files based on file signatures, extracting the e-mails from them, adding the results to the Blackboard. This module skips known files and creates a Blackboard artifact for each message. It adds email attachments as derived files.
 
 This allows the user to identify email-based communications from the system being analyzed.
 
@@ -23,12 +26,14 @@ There are no runtime ingest settings required.
 
 Seeing Results
 ------
-The results of this show up in the "Results", "E-Mail Messages" portion of the tree.
+The results of this show up in the "Results", "E-Mail Messages" portion of the \ref tree_viewer_page.
 
 \image html email_results.PNG
 
-The results can also be seen by browsing to the source file in the Data Sources tree, which will display the messages in the Results Viewer to the right. Any messages with attachments will be shown under the source file, and the attachments can be seen in the Result Viewer by selecting the message.
+If an e-email has an attachment, the "Attachments" tab in the \ref content_viewer_page will be active.
 
-\image html email_datasource_tree.png
+\image html email_attachments.png
+
+You can right click and select "View File in Directory" to navigate to the attached file. You can also switch to the "Thumbnails" tab to see a preview of any image attachments.
 
 */

@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.report.infrastructure;
 
-import org.sleuthkit.autopsy.report.infrastructure.TableReportSettings;
 import java.awt.Component;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
@@ -207,7 +206,14 @@ final class ReportVisualPanel2 extends JPanel {
             doNotReport.add(new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_TOOL_OUTPUT.getTypeID(),
                     BlackboardArtifact.ARTIFACT_TYPE.TSK_TOOL_OUTPUT.getLabel(),
                     BlackboardArtifact.ARTIFACT_TYPE.TSK_TOOL_OUTPUT.getDisplayName())); // output is too unstructured for table review
-
+            doNotReport.add(new BlackboardArtifact.Type(
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT.getTypeID(),
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT.getLabel(),
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT.getDisplayName()));
+            doNotReport.add(new BlackboardArtifact.Type(
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_TL_EVENT.getTypeID(),
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_TL_EVENT.getLabel(),
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_TL_EVENT.getDisplayName()));
             // get artifact types that exist in the current case
             artifacts = openCase.getSleuthkitCase().getArtifactTypesInUse();
 
@@ -315,7 +321,7 @@ final class ReportVisualPanel2 extends JPanel {
         advancedButton = new javax.swing.JButton();
         allTaggedResultsRadioButton = new javax.swing.JRadioButton();
 
-        setPreferredSize(new java.awt.Dimension(650, 250));
+        setPreferredSize(new java.awt.Dimension(650, 275));
 
         optionsButtonGroup.add(specificTaggedResultsRadioButton);
         org.openide.awt.Mnemonics.setLocalizedText(specificTaggedResultsRadioButton, org.openide.util.NbBundle.getMessage(ReportVisualPanel2.class, "ReportVisualPanel2.specificTaggedResultsRadioButton.text")); // NOI18N
@@ -375,7 +381,6 @@ final class ReportVisualPanel2 extends JPanel {
                         .addComponent(tagsScrollPane)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(advancedButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(deselectAllButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(selectAllButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                     .addGroup(layout.createSequentialGroup()
@@ -383,12 +388,13 @@ final class ReportVisualPanel2 extends JPanel {
                             .addComponent(allTaggedResultsRadioButton)
                             .addComponent(dataLabel)
                             .addComponent(allResultsRadioButton)
-                            .addComponent(specificTaggedResultsRadioButton))
-                        .addGap(0, 402, Short.MAX_VALUE)))
+                            .addComponent(specificTaggedResultsRadioButton)
+                            .addComponent(advancedButton))
+                        .addGap(0, 454, Short.MAX_VALUE)))
                 .addContainerGap())
         );
 
-        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {advancedButton, deselectAllButton, selectAllButton});
+        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {deselectAllButton, selectAllButton});
 
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -402,15 +408,17 @@ final class ReportVisualPanel2 extends JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(specificTaggedResultsRadioButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
                         .addComponent(selectAllButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(deselectAllButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(advancedButton))
-                    .addComponent(tagsScrollPane, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 161, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap())
+                        .addGap(136, 136, 136))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addComponent(tagsScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(5, 5, 5)
+                        .addComponent(advancedButton)
+                        .addContainerGap())))
         );
     }// </editor-fold>//GEN-END:initComponents
 

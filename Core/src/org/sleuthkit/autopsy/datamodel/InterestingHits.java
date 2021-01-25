@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2011-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -399,7 +399,12 @@ public class InterestingHits implements AutopsyVisitableItem {
             super(Children.create(new HitFactory(setName, typeName), true), Lookups.singleton(setName));
             this.typeName = typeName;
             this.setName = setName;
-            super.setName(typeName);
+            /**
+             * We use the combination of setName and typeName as the name of
+             * the node to ensure that nodes have a unique name. This comes into
+             * play when associating paging state with the node.
+             */
+            super.setName(setName + "_" + typeName);
             updateDisplayName();
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/interesting_item.png"); //NON-NLS
             interestingResults.addObserver(this);
@@ -456,7 +461,12 @@ public class InterestingHits implements AutopsyVisitableItem {
         private final Map<Long, BlackboardArtifact> artifactHits = new HashMap<>();
 
         private HitFactory(String setName, String typeName) {
-            super(typeName);
+            /**
+             * The node name passed to the parent constructor must be the
+             * same as the name set in the InterestingItemTypeNode constructor,
+             * i.e. setName underscore typeName
+             */
+            super(setName + "_" + typeName);
             this.setName = setName;
             this.typeName = typeName;
             interestingResults.addObserver(this);
@@ -470,6 +480,9 @@ public class InterestingHits implements AutopsyVisitableItem {
                     try {
                         if (!artifactHits.containsKey(id)) {
                             BlackboardArtifact art = skCase.getBlackboardArtifact(id);
+                            //Cache attributes while we are off the EDT.
+                            //See JIRA-5969
+                            art.getAttributes();
                             artifactHits.put(id, art);
                         }
                     } catch (TskCoreException ex) {

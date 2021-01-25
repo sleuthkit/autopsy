@@ -138,7 +138,7 @@ final class ExtractUnallocAction extends AbstractAction {
             try {
                 openCase = Case.getCurrentCaseThrows();
             } catch (NoCurrentCaseException ex) {
-                MessageNotifyUtil.Message.info(Bundle.ExtractAction_noOpenCase_errMsg());
+                MessageNotifyUtil.Message.info(Bundle.ExtractUnallocAction_noOpenCase_errMsg());
                 return;
             }
             List<OutputFileData> copyList = new ArrayList<OutputFileData>() {

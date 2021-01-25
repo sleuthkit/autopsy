@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2019 Basis Technology Corp.
+ * Copyright 2012-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -221,6 +221,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     case UserPreferences.HIDE_SCO_COLUMNS:
                     case UserPreferences.DISPLAY_TRANSLATED_NAMES:
                     case UserPreferences.KEEP_PREFERRED_VIEWER:
+                    case UserPreferences.TEXT_TRANSLATOR_NAME:
                         refreshContentTreeSafe();
                         break;
                     case UserPreferences.SHOW_ONLY_CURRENT_USER_TAGS:

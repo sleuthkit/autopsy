@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.contentviewers.textcontentviewer;
 import java.awt.Cursor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
@@ -32,6 +33,7 @@ import org.sleuthkit.autopsy.coreutils.StringExtract;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractResult;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
 import org.sleuthkit.autopsy.datamodel.StringContent;
+import org.sleuthkit.autopsy.guiutils.WrapLayout;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -78,6 +80,11 @@ public class StringsContentPanel extends javax.swing.JPanel {
             languageCombo.addItem(s);
         });
 
+        // use wrap layout for better component wrapping
+        WrapLayout layout = new WrapLayout(0,5);
+        layout.setOppositeAligned(Arrays.asList(panelScriptSelect));
+        controlPanel.setLayout(layout);
+        
     }
 
     final void resetDisplay() {
@@ -105,21 +112,33 @@ public class StringsContentPanel extends javax.swing.JPanel {
         rightClickMenu = new javax.swing.JPopupMenu();
         copyMenuItem = new javax.swing.JMenuItem();
         selectAllMenuItem = new javax.swing.JMenuItem();
+        controlPanel = new javax.swing.JPanel();
+        javax.swing.JPanel panelPageOfCount = new javax.swing.JPanel();
+        pageLabel = new javax.swing.JLabel();
+        javax.swing.JSeparator jSepMed1 = new javax.swing.JSeparator();
+        currentPageLabel = new javax.swing.JLabel();
+        javax.swing.JSeparator jSepMed2 = new javax.swing.JSeparator();
+        ofLabel = new javax.swing.JLabel();
+        javax.swing.JSeparator jSepMed3 = new javax.swing.JSeparator();
+        totalPageLabel = new javax.swing.JLabel();
+        javax.swing.JSeparator jSepMed4 = new javax.swing.JSeparator();
+        javax.swing.JPanel panelPageNextPrevButton = new javax.swing.JPanel();
+        pageLabel2 = new javax.swing.JLabel();
+        javax.swing.JSeparator jSepMed5 = new javax.swing.JSeparator();
+        prevPageButton = new javax.swing.JButton();
+        nextPageButton = new javax.swing.JButton();
+        javax.swing.JSeparator jSepMed6 = new javax.swing.JSeparator();
+        javax.swing.JPanel panelGoToPage = new javax.swing.JPanel();
+        goToPageLabel = new javax.swing.JLabel();
+        javax.swing.JSeparator jSepSm1 = new javax.swing.JSeparator();
+        goToPageTextField = new javax.swing.JTextField();
+        javax.swing.JSeparator jSepMed7 = new javax.swing.JSeparator();
+        panelScriptSelect = new javax.swing.JPanel();
+        languageLabel = new javax.swing.JLabel();
+        javax.swing.JSeparator jSepSm2 = new javax.swing.JSeparator();
+        languageCombo = new javax.swing.JComboBox<>();
         outputScrollPane = new javax.swing.JScrollPane();
         outputViewPane = new javax.swing.JTextPane();
-        controlScrollPane = new javax.swing.JScrollPane();
-        controlPanel = new javax.swing.JPanel();
-        totalPageLabel = new javax.swing.JLabel();
-        ofLabel = new javax.swing.JLabel();
-        currentPageLabel = new javax.swing.JLabel();
-        pageLabel = new javax.swing.JLabel();
-        nextPageButton = new javax.swing.JButton();
-        pageLabel2 = new javax.swing.JLabel();
-        prevPageButton = new javax.swing.JButton();
-        goToPageLabel = new javax.swing.JLabel();
-        goToPageTextField = new javax.swing.JTextField();
-        languageCombo = new javax.swing.JComboBox<>();
-        languageLabel = new javax.swing.JLabel();
 
         copyMenuItem.setText(org.openide.util.NbBundle.getMessage(StringsContentPanel.class, "StringsContentPanel.copyMenuItem.text")); // NOI18N
         rightClickMenu.add(copyMenuItem);
@@ -127,48 +146,62 @@ public class StringsContentPanel extends javax.swing.JPanel {
         selectAllMenuItem.setText(org.openide.util.NbBundle.getMessage(StringsContentPanel.class, "StringsContentPanel.selectAllMenuItem.text")); // NOI18N
         rightClickMenu.add(selectAllMenuItem);
 
-        setMinimumSize(new java.awt.Dimension(5, 5));
-        setPreferredSize(new java.awt.Dimension(100, 58));
+        setMinimumSize(new java.awt.Dimension(250, 5));
+        setPreferredSize(new java.awt.Dimension(250, 58));
+        setLayout(new java.awt.BorderLayout());
 
-        outputScrollPane.setPreferredSize(new java.awt.Dimension(640, 402));
+        controlPanel.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 5, 0));
 
-        outputViewPane.setEditable(false);
-        outputViewPane.setFont(new java.awt.Font("Courier New", 0, 11)); // NOI18N
-        outputViewPane.setPreferredSize(new java.awt.Dimension(100, 40));
-        outputScrollPane.setViewportView(outputViewPane);
-
-        controlScrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        controlScrollPane.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
-
-        totalPageLabel.setText(org.openide.util.NbBundle.getMessage(StringsContentPanel.class, "StringsContentPanel.totalPageLabel.text_1")); // NOI18N
-
-        ofLabel.setText(org.openide.util.NbBundle.getMessage(StringsContentPanel.class, "StringsContentPanel.ofLabel.text_1")); // NOI18N
-
-        currentPageLabel.setText(org.openide.util.NbBundle.getMessage(StringsContentPanel.class, "StringsContentPanel.currentPageLabel.text_1")); // NOI18N
-        currentPageLabel.setMaximumSize(new java.awt.Dimension(18, 14));
-        currentPageLabel.setPreferredSize(new java.awt.Dimension(18, 14));
+        panelPageOfCount.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.CENTER, 0, 0));
 
         pageLabel.setText(org.openide.util.NbBundle.getMessage(StringsContentPanel.class, "StringsContentPanel.pageLabel.text_1")); // NOI18N
-        pageLabel.setMaximumSize(new java.awt.Dimension(33, 14));
-        pageLabel.setMinimumSize(new java.awt.Dimension(33, 14));
+        pageLabel.setMaximumSize(new java.awt.Dimension(33, 25));
+        pageLabel.setMinimumSize(new java.awt.Dimension(33, 25));
+        pageLabel.setPreferredSize(new java.awt.Dimension(32, 25));
+        panelPageOfCount.add(pageLabel);
 
-        nextPageButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward.png"))); // NOI18N
-        nextPageButton.setText(org.openide.util.NbBundle.getMessage(StringsContentPanel.class, "StringsContentPanel.nextPageButton.text")); // NOI18N
-        nextPageButton.setBorderPainted(false);
-        nextPageButton.setContentAreaFilled(false);
-        nextPageButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward_disabled.png"))); // NOI18N
-        nextPageButton.setMargin(new java.awt.Insets(2, 0, 2, 0));
-        nextPageButton.setPreferredSize(new java.awt.Dimension(55, 23));
-        nextPageButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward_hover.png"))); // NOI18N
-        nextPageButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                nextPageButtonActionPerformed(evt);
-            }
-        });
+        jSepMed1.setPreferredSize(new java.awt.Dimension(5, 0));
+        panelPageOfCount.add(jSepMed1);
+
+        currentPageLabel.setText(org.openide.util.NbBundle.getMessage(StringsContentPanel.class, "StringsContentPanel.currentPageLabel.text_1")); // NOI18N
+        currentPageLabel.setMaximumSize(new java.awt.Dimension(18, 25));
+        currentPageLabel.setMinimumSize(new java.awt.Dimension(7, 25));
+        currentPageLabel.setPreferredSize(new java.awt.Dimension(18, 25));
+        panelPageOfCount.add(currentPageLabel);
+
+        jSepMed2.setPreferredSize(new java.awt.Dimension(5, 0));
+        panelPageOfCount.add(jSepMed2);
+
+        ofLabel.setText(org.openide.util.NbBundle.getMessage(StringsContentPanel.class, "StringsContentPanel.ofLabel.text_1")); // NOI18N
+        ofLabel.setMaximumSize(new java.awt.Dimension(11, 25));
+        ofLabel.setMinimumSize(new java.awt.Dimension(11, 25));
+        ofLabel.setPreferredSize(new java.awt.Dimension(11, 25));
+        panelPageOfCount.add(ofLabel);
+
+        jSepMed3.setPreferredSize(new java.awt.Dimension(5, 0));
+        panelPageOfCount.add(jSepMed3);
+
+        totalPageLabel.setText(org.openide.util.NbBundle.getMessage(StringsContentPanel.class, "StringsContentPanel.totalPageLabel.text_1")); // NOI18N
+        totalPageLabel.setMaximumSize(new java.awt.Dimension(21, 25));
+        totalPageLabel.setMinimumSize(new java.awt.Dimension(21, 25));
+        totalPageLabel.setPreferredSize(new java.awt.Dimension(21, 25));
+        panelPageOfCount.add(totalPageLabel);
+
+        jSepMed4.setPreferredSize(new java.awt.Dimension(5, 0));
+        panelPageOfCount.add(jSepMed4);
+
+        controlPanel.add(panelPageOfCount);
+
+        panelPageNextPrevButton.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
 
         pageLabel2.setText(org.openide.util.NbBundle.getMessage(StringsContentPanel.class, "StringsContentPanel.pageLabel2.text")); // NOI18N
-        pageLabel2.setMaximumSize(new java.awt.Dimension(29, 14));
-        pageLabel2.setMinimumSize(new java.awt.Dimension(29, 14));
+        pageLabel2.setMaximumSize(new java.awt.Dimension(29, 25));
+        pageLabel2.setMinimumSize(new java.awt.Dimension(29, 25));
+        pageLabel2.setPreferredSize(new java.awt.Dimension(29, 25));
+        panelPageNextPrevButton.add(pageLabel2);
+
+        jSepMed5.setPreferredSize(new java.awt.Dimension(5, 0));
+        panelPageNextPrevButton.add(jSepMed5);
 
         prevPageButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back.png"))); // NOI18N
         prevPageButton.setText(org.openide.util.NbBundle.getMessage(StringsContentPanel.class, "StringsContentPanel.prevPageButton.text")); // NOI18N
@@ -176,98 +209,90 @@ public class StringsContentPanel extends javax.swing.JPanel {
         prevPageButton.setContentAreaFilled(false);
         prevPageButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back_disabled.png"))); // NOI18N
         prevPageButton.setMargin(new java.awt.Insets(2, 0, 2, 0));
-        prevPageButton.setPreferredSize(new java.awt.Dimension(55, 23));
+        prevPageButton.setMaximumSize(new java.awt.Dimension(25, 25));
+        prevPageButton.setMinimumSize(new java.awt.Dimension(20, 25));
+        prevPageButton.setPreferredSize(new java.awt.Dimension(25, 25));
         prevPageButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back_hover.png"))); // NOI18N
         prevPageButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 prevPageButtonActionPerformed(evt);
             }
         });
+        panelPageNextPrevButton.add(prevPageButton);
+
+        nextPageButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward.png"))); // NOI18N
+        nextPageButton.setText(org.openide.util.NbBundle.getMessage(StringsContentPanel.class, "StringsContentPanel.nextPageButton.text")); // NOI18N
+        nextPageButton.setBorderPainted(false);
+        nextPageButton.setContentAreaFilled(false);
+        nextPageButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward_disabled.png"))); // NOI18N
+        nextPageButton.setMargin(new java.awt.Insets(2, 0, 2, 0));
+        nextPageButton.setMaximumSize(new java.awt.Dimension(25, 25));
+        nextPageButton.setMinimumSize(new java.awt.Dimension(20, 25));
+        nextPageButton.setPreferredSize(new java.awt.Dimension(25, 25));
+        nextPageButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward_hover.png"))); // NOI18N
+        nextPageButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                nextPageButtonActionPerformed(evt);
+            }
+        });
+        panelPageNextPrevButton.add(nextPageButton);
+
+        jSepMed6.setPreferredSize(new java.awt.Dimension(5, 0));
+        panelPageNextPrevButton.add(jSepMed6);
+
+        controlPanel.add(panelPageNextPrevButton);
+
+        panelGoToPage.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.CENTER, 0, 0));
 
         goToPageLabel.setText(org.openide.util.NbBundle.getMessage(StringsContentPanel.class, "StringsContentPanel.goToPageLabel.text")); // NOI18N
+        panelGoToPage.add(goToPageLabel);
+
+        jSepSm1.setPreferredSize(new java.awt.Dimension(2, 0));
+        panelGoToPage.add(jSepSm1);
 
         goToPageTextField.setText(org.openide.util.NbBundle.getMessage(StringsContentPanel.class, "StringsContentPanel.goToPageTextField.text")); // NOI18N
+        goToPageTextField.setMaximumSize(new java.awt.Dimension(2147483647, 25));
+        goToPageTextField.setMinimumSize(new java.awt.Dimension(50, 25));
+        goToPageTextField.setPreferredSize(new java.awt.Dimension(70, 25));
         goToPageTextField.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 goToPageTextFieldActionPerformed(evt);
             }
         });
+        panelGoToPage.add(goToPageTextField);
+
+        jSepMed7.setPreferredSize(new java.awt.Dimension(5, 0));
+        panelGoToPage.add(jSepMed7);
+
+        controlPanel.add(panelGoToPage);
+
+        panelScriptSelect.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.CENTER, 0, 0));
+
+        languageLabel.setText(org.openide.util.NbBundle.getMessage(StringsContentPanel.class, "StringsContentPanel.languageLabel.text")); // NOI18N
+        languageLabel.setToolTipText(org.openide.util.NbBundle.getMessage(StringsContentPanel.class, "StringsContentPanel.languageLabel.toolTipText")); // NOI18N
+        panelScriptSelect.add(languageLabel);
+
+        jSepSm2.setPreferredSize(new java.awt.Dimension(2, 0));
+        panelScriptSelect.add(jSepSm2);
 
         languageCombo.setToolTipText(org.openide.util.NbBundle.getMessage(StringsContentPanel.class, "StringsContentPanel.languageCombo.toolTipText")); // NOI18N
+        languageCombo.setMinimumSize(new java.awt.Dimension(150, 25));
+        languageCombo.setPreferredSize(new java.awt.Dimension(150, 25));
         languageCombo.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 languageComboActionPerformed(evt);
             }
         });
+        panelScriptSelect.add(languageCombo);
 
-        languageLabel.setText(org.openide.util.NbBundle.getMessage(StringsContentPanel.class, "StringsContentPanel.languageLabel.text")); // NOI18N
-        languageLabel.setToolTipText(org.openide.util.NbBundle.getMessage(StringsContentPanel.class, "StringsContentPanel.languageLabel.toolTipText")); // NOI18N
+        controlPanel.add(panelScriptSelect);
 
-        javax.swing.GroupLayout controlPanelLayout = new javax.swing.GroupLayout(controlPanel);
-        controlPanel.setLayout(controlPanelLayout);
-        controlPanelLayout.setHorizontalGroup(
-            controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(controlPanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(pageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addComponent(currentPageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(ofLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(totalPageLabel)
-                .addGap(50, 50, 50)
-                .addComponent(pageLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(prevPageButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, 0)
-                .addComponent(nextPageButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addComponent(goToPageLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(goToPageTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 79, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(languageLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(languageCombo, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
-        );
-        controlPanelLayout.setVerticalGroup(
-            controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(controlPanelLayout.createSequentialGroup()
-                .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(pageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(currentPageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(ofLabel)
-                        .addComponent(totalPageLabel))
-                    .addComponent(pageLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(nextPageButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(prevPageButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(goToPageLabel)
-                    .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(goToPageTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(languageCombo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(languageLabel)))
-                .addGap(0, 0, 0))
-        );
+        add(controlPanel, java.awt.BorderLayout.NORTH);
 
-        controlScrollPane.setViewportView(controlPanel);
+        outputViewPane.setEditable(false);
+        outputScrollPane.setViewportView(outputViewPane);
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(outputScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-            .addComponent(controlScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 100, Short.MAX_VALUE)
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(controlScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(7, 7, 7)
-                .addComponent(outputScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 26, Short.MAX_VALUE))
-        );
+        add(outputScrollPane, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
     private void languageComboActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_languageComboActionPerformed
@@ -319,7 +344,6 @@ public class StringsContentPanel extends javax.swing.JPanel {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel controlPanel;
-    private javax.swing.JScrollPane controlScrollPane;
     private javax.swing.JMenuItem copyMenuItem;
     private javax.swing.JLabel currentPageLabel;
     private javax.swing.JLabel goToPageLabel;
@@ -332,6 +356,7 @@ public class StringsContentPanel extends javax.swing.JPanel {
     private javax.swing.JTextPane outputViewPane;
     private javax.swing.JLabel pageLabel;
     private javax.swing.JLabel pageLabel2;
+    private javax.swing.JPanel panelScriptSelect;
     private javax.swing.JButton prevPageButton;
     private javax.swing.JPopupMenu rightClickMenu;
     private javax.swing.JMenuItem selectAllMenuItem;

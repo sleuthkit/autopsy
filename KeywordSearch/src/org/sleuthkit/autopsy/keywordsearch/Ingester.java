@@ -97,7 +97,7 @@ class Ingester {
      *                           file, but the Solr server is probably fine.
      */
     void indexMetaDataOnly(AbstractFile file) throws IngesterException {
-        indexChunk("", file.getName().toLowerCase(), new HashMap<>(getContentFields(file)));
+        indexChunk("", "", file.getName().toLowerCase(), new HashMap<>(getContentFields(file)));
     }
 
     /**
@@ -111,7 +111,7 @@ class Ingester {
      *                           artifact, but the Solr server is probably fine.
      */
     void indexMetaDataOnly(BlackboardArtifact artifact, String sourceName) throws IngesterException {
-        indexChunk("", sourceName, new HashMap<>(getContentFields(artifact)));
+        indexChunk("", "", sourceName, new HashMap<>(getContentFields(artifact)));
     }
 
     /**
@@ -125,7 +125,55 @@ class Ingester {
     private Map<String, String> getContentFields(SleuthkitVisitableItem item) {
         return item.accept(SOLR_FIELDS_VISITOR);
     }
-
+    
+    /**
+     * Read and chunk the source text for indexing in Solr. Also performs
+     * language detection on the input text.
+     *
+     * @param <A>     The type of the Appendix provider that provides additional
+     *                text to append to the final chunk.
+     * @param <T>     A subclass of SleuthkitVisibleItem.
+     * @param Reader  The reader containing extracted text.
+     * @param source  The source from which text will be extracted, chunked, and
+     *                indexed.
+     * @param context The ingest job context that can be used to cancel this
+     *                process.
+     *
+     * @return True if indexing was completed, false otherwise.
+     *
+     * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException
+     */
+    // TODO (JIRA-3118): Cancelled text indexing does not propagate cancellation to clients 
+    < T extends SleuthkitVisitableItem> boolean indexText(Reader sourceReader, long sourceID, String sourceName, T source, IngestJobContext context) throws Ingester.IngesterException {
+        boolean doLanguageDetection = true;
+        return indexText(sourceReader, sourceID, sourceName, source, context, doLanguageDetection);
+    }
+    
+    /**
+     * Read and chunk the source text for indexing in Solr. Does NOT perform
+     * language detection on the input strings. Per JIRA-7100, it was determined 
+     * that language detection on extracted strings can take a really long time.
+     *
+     * @param <A>     The type of the Appendix provider that provides additional
+     *                text to append to the final chunk.
+     * @param <T>     A subclass of SleuthkitVisibleItem.
+     * @param Reader  The reader containing extracted text.
+     * @param source  The source from which text will be extracted, chunked, and
+     *                indexed.
+     * @param context The ingest job context that can be used to cancel this
+     *                process.
+     *
+     * @return True if indexing was completed, false otherwise.
+     *
+     * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException
+     */
+    // TODO (JIRA-3118): Cancelled text indexing does not propagate cancellation to clients 
+    < T extends SleuthkitVisitableItem> boolean indexStrings(Reader sourceReader, long sourceID, String sourceName, T source, IngestJobContext context) throws Ingester.IngesterException {
+        // Per JIRA-7100, it was determined that language detection on extracted strings can take a really long time.
+        boolean doLanguageDetection = false;
+        return indexText(sourceReader, sourceID, sourceName, source, context, doLanguageDetection);
+    }
+    
     /**
      * Read and chunk the source text for indexing in Solr.
      *
@@ -138,13 +186,14 @@ class Ingester {
      *                  and indexed.
      * @param context   The ingest job context that can be used to cancel this
      *                  process.
+     * @param doLanguageDetection A flag whether to perform language detection on the input text/strings.
      *
      * @return True if indexing was completed, false otherwise.
      *
      * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException
      */
     // TODO (JIRA-3118): Cancelled text indexing does not propagate cancellation to clients 
-    < T extends SleuthkitVisitableItem> boolean indexText(Reader sourceReader, long sourceID, String sourceName, T source, IngestJobContext context) throws Ingester.IngesterException {
+    private < T extends SleuthkitVisitableItem> boolean indexText(Reader sourceReader, long sourceID, String sourceName, T source, IngestJobContext context, boolean doLanguageDetection) throws Ingester.IngesterException {
         int numChunks = 0; //unknown until chunking is done
         
         Map<String, String> contentFields = Collections.unmodifiableMap(getContentFields(source));
@@ -156,17 +205,20 @@ class Ingester {
                     logger.log(Level.INFO, "File ingest cancelled. Cancelling keyword search indexing of {0}", sourceName);
                     return false;
                 }
-
+                
                 Chunk chunk = chunker.next();
                 Map<String, Object> fields = new HashMap<>(contentFields);
                 String chunkId = Server.getChunkIdString(sourceID, numChunks + 1);
                 fields.put(Server.Schema.ID.toString(), chunkId);
                 fields.put(Server.Schema.CHUNK_SIZE.toString(), String.valueOf(chunk.getBaseChunkLength()));
-                Optional<Language> language = languageSpecificContentIndexingHelper.detectLanguageIfNeeded(chunk);
-                language.ifPresent(lang -> languageSpecificContentIndexingHelper.updateLanguageSpecificFields(fields, chunk, lang));
+                Optional<Language> language = Optional.empty();
+                if (doLanguageDetection) {
+                    language = languageSpecificContentIndexingHelper.detectLanguageIfNeeded(chunk);
+                    language.ifPresent(lang -> languageSpecificContentIndexingHelper.updateLanguageSpecificFields(fields, chunk, lang));
+                }
                 try {
                     //add the chunk text to Solr index
-                    indexChunk(chunk.toString(), sourceName, fields);
+                    indexChunk(chunk.toString(), chunk.geLowerCasedChunk(), sourceName, fields);
                     // add mini chunk when there's a language specific field
                     if (chunker.hasNext() && language.isPresent()) {
                         languageSpecificContentIndexingHelper.indexMiniChunk(chunk, sourceName, new HashMap<>(contentFields), chunkId, language.get());
@@ -197,7 +249,7 @@ class Ingester {
                 fields.put(Server.Schema.ID.toString(), Long.toString(sourceID));
                 //"parent" docs don't have chunk_size
                 fields.remove(Server.Schema.CHUNK_SIZE.toString());
-                indexChunk(null, sourceName, fields);
+                indexChunk(null, null, sourceName, fields);
             }
         }
         return true;
@@ -211,12 +263,13 @@ class Ingester {
      * 4.0.0), see if possible to stream with UpdateRequestHandler
      *
      * @param chunk  The chunk content as a string, or null for metadata only
+     * @param lowerCasedChunk The lower cased chunk content as a string, or null for metadata only
      * @param fields
      * @param size
      *
      * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException
      */
-    private void indexChunk(String chunk, String sourceName, Map<String, Object> fields) throws IngesterException {
+    private void indexChunk(String chunk, String lowerCasedChunk, String sourceName, Map<String, Object> fields) throws IngesterException {
         if (fields.get(Server.Schema.IMAGE_ID.toString()) == null) {
             //JMTODO: actually if the we couldn't get the image id it is set to -1,
             // but does this really mean we don't want to index it?
@@ -231,7 +284,11 @@ class Ingester {
         //Make a SolrInputDocument out of the field map
         SolrInputDocument updateDoc = new SolrInputDocument();
         for (String key : fields.keySet()) {
-            updateDoc.addField(key, fields.get(key));
+            if (fields.get(key).getClass() == String.class) {
+                updateDoc.addField(key, Chunker.sanitize((String)fields.get(key)).toString());
+            } else {
+                updateDoc.addField(key, fields.get(key));
+            }
         }
 
         try {
@@ -245,7 +302,7 @@ class Ingester {
             // insensitive substring/regular expression search.
             double indexSchemaVersion = NumberUtils.toDouble(solrServer.getIndexInfo().getSchemaVersion());
             if (indexSchemaVersion >= 2.1) {
-                updateDoc.addField(Server.Schema.CONTENT_STR.toString(), ((chunk == null) ? "" : chunk.toLowerCase()));
+                updateDoc.addField(Server.Schema.CONTENT_STR.toString(), ((chunk == null) ? "" : lowerCasedChunk));
             }
 
             TimingMetric metric = HealthMonitor.getTimingMetric("Solr: Index chunk");

@@ -1,30 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
-<Form version="1.5" maxVersion="1.7" type="org.netbeans.modules.form.forminfo.JPanelFormInfo">
-  <NonVisualComponents>
-    <Container class="javax.swing.JPopupMenu" name="rightClickMenu">
-
-      <Layout class="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout">
-        <Property name="useNullLayout" type="boolean" value="true"/>
-      </Layout>
-      <SubComponents>
-        <MenuItem class="javax.swing.JMenuItem" name="copyMenuItem">
-          <Properties>
-            <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="DataContentViewerArtifact.copyMenuItem.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-            </Property>
-          </Properties>
-        </MenuItem>
-        <MenuItem class="javax.swing.JMenuItem" name="selectAllMenuItem">
-          <Properties>
-            <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="DataContentViewerArtifact.selectAllMenuItem.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-            </Property>
-          </Properties>
-        </MenuItem>
-      </SubComponents>
-    </Container>
-  </NonVisualComponents>
+<Form version="1.9" maxVersion="1.9" type="org.netbeans.modules.form.forminfo.JPanelFormInfo">
   <Properties>
     <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
       <Dimension value="[100, 58]"/>
@@ -45,16 +21,16 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Component id="jScrollPane1" max="32767" attributes="0"/>
-          <Component id="resultsTableScrollPane" max="32767" attributes="0"/>
+          <Component id="jScrollPane1" pref="561" max="32767" attributes="0"/>
+          <Component id="artifactContentPanel" alignment="0" max="32767" attributes="0"/>
       </Group>
     </DimensionLayout>
     <DimensionLayout dim="1">
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" alignment="0" attributes="0">
               <Component id="jScrollPane1" min="-2" pref="24" max="-2" attributes="0"/>
-              <EmptySpace max="-2" attributes="0"/>
-              <Component id="resultsTableScrollPane" max="32767" attributes="0"/>
+              <EmptySpace min="-2" max="-2" attributes="0"/>
+              <Component id="artifactContentPanel" pref="397" max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -75,67 +51,25 @@
             </Property>
           </Properties>
 
-          <Layout>
-            <DimensionLayout dim="0">
-              <Group type="103" groupAlignment="0" attributes="0">
-                  <Group type="102" attributes="0">
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Component id="pageLabel" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Component id="currentPageLabel" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                      <Component id="ofLabel" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                      <Component id="totalPageLabel" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="-2" pref="41" max="-2" attributes="0"/>
-                      <Component id="pageLabel2" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="-2" max="-2" attributes="0"/>
-                      <Component id="prevPageButton" min="-2" pref="23" max="-2" attributes="0"/>
-                      <EmptySpace min="-2" pref="0" max="-2" attributes="0"/>
-                      <Component id="nextPageButton" min="-2" pref="23" max="-2" attributes="0"/>
-                      <EmptySpace pref="383" max="32767" attributes="0"/>
-                  </Group>
-                  <Group type="103" rootIndex="1" groupAlignment="0" attributes="0">
-                      <Group type="102" alignment="1" attributes="0">
-                          <EmptySpace pref="280" max="32767" attributes="0"/>
-                          <Component id="artifactLabel" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace pref="84" max="32767" attributes="0"/>
-                      </Group>
-                  </Group>
-              </Group>
-            </DimensionLayout>
-            <DimensionLayout dim="1">
-              <Group type="103" groupAlignment="0" attributes="0">
-                  <Group type="102" alignment="0" attributes="0">
-                      <Group type="103" groupAlignment="0" attributes="0">
-                          <Group type="103" alignment="0" groupAlignment="3" attributes="0">
-                              <Component id="pageLabel" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="currentPageLabel" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="ofLabel" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="totalPageLabel" alignment="3" min="-2" max="-2" attributes="0"/>
-                          </Group>
-                          <Component id="nextPageButton" alignment="0" min="-2" pref="23" max="-2" attributes="0"/>
-                          <Component id="prevPageButton" alignment="0" min="-2" pref="23" max="-2" attributes="0"/>
-                          <Component id="pageLabel2" min="-2" max="-2" attributes="0"/>
-                      </Group>
-                      <EmptySpace pref="35" max="32767" attributes="0"/>
-                  </Group>
-                  <Group type="103" rootIndex="1" groupAlignment="0" attributes="0">
-                      <Group type="102" alignment="0" attributes="0">
-                          <Component id="artifactLabel" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace min="0" pref="58" max="32767" attributes="0"/>
-                      </Group>
-                  </Group>
-              </Group>
-            </DimensionLayout>
-          </Layout>
+          <Layout class="org.netbeans.modules.form.compat2.layouts.DesignGridBagLayout"/>
           <SubComponents>
             <Component class="javax.swing.JLabel" name="totalPageLabel">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                   <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="DataContentViewerArtifact.totalPageLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
+                <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                  <Dimension value="[40, 16]"/>
+                </Property>
+                <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                  <Dimension value="[25, 16]"/>
+                </Property>
               </Properties>
+              <Constraints>
+                <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignGridBagLayout" value="org.netbeans.modules.form.compat2.layouts.DesignGridBagLayout$GridBagConstraintsDescription">
+                  <GridBagConstraints gridX="3" gridY="0" gridWidth="1" gridHeight="1" fill="2" ipadX="0" ipadY="0" insetsTop="3" insetsLeft="12" insetsBottom="0" insetsRight="0" anchor="18" weightX="0.0" weightY="0.0"/>
+                </Constraint>
+              </Constraints>
             </Component>
             <Component class="javax.swing.JLabel" name="ofLabel">
               <Properties>
@@ -143,6 +77,11 @@
                   <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="DataContentViewerArtifact.ofLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
+              <Constraints>
+                <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignGridBagLayout" value="org.netbeans.modules.form.compat2.layouts.DesignGridBagLayout$GridBagConstraintsDescription">
+                  <GridBagConstraints gridX="2" gridY="0" gridWidth="1" gridHeight="1" fill="2" ipadX="0" ipadY="0" insetsTop="3" insetsLeft="12" insetsBottom="0" insetsRight="0" anchor="18" weightX="0.0" weightY="0.0"/>
+                </Constraint>
+              </Constraints>
             </Component>
             <Component class="javax.swing.JLabel" name="currentPageLabel">
               <Properties>
@@ -150,15 +89,20 @@
                   <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="DataContentViewerArtifact.currentPageLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
                 <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-                  <Dimension value="[18, 14]"/>
+                  <Dimension value="[38, 14]"/>
                 </Property>
                 <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
                   <Dimension value="[18, 14]"/>
                 </Property>
                 <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-                  <Dimension value="[18, 14]"/>
+                  <Dimension value="[20, 14]"/>
                 </Property>
               </Properties>
+              <Constraints>
+                <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignGridBagLayout" value="org.netbeans.modules.form.compat2.layouts.DesignGridBagLayout$GridBagConstraintsDescription">
+                  <GridBagConstraints gridX="1" gridY="0" gridWidth="1" gridHeight="1" fill="2" ipadX="0" ipadY="0" insetsTop="4" insetsLeft="7" insetsBottom="0" insetsRight="0" anchor="18" weightX="0.0" weightY="0.0"/>
+                </Constraint>
+              </Constraints>
             </Component>
             <Component class="javax.swing.JLabel" name="pageLabel">
               <Properties>
@@ -166,6 +110,11 @@
                   <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="DataContentViewerArtifact.pageLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
+              <Constraints>
+                <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignGridBagLayout" value="org.netbeans.modules.form.compat2.layouts.DesignGridBagLayout$GridBagConstraintsDescription">
+                  <GridBagConstraints gridX="0" gridY="0" gridWidth="1" gridHeight="1" fill="2" ipadX="0" ipadY="0" insetsTop="3" insetsLeft="12" insetsBottom="0" insetsRight="0" anchor="18" weightX="0.0" weightY="0.0"/>
+                </Constraint>
+              </Constraints>
             </Component>
             <Component class="javax.swing.JButton" name="nextPageButton">
               <Properties>
@@ -193,6 +142,11 @@
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="nextPageButtonActionPerformed"/>
               </Events>
+              <Constraints>
+                <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignGridBagLayout" value="org.netbeans.modules.form.compat2.layouts.DesignGridBagLayout$GridBagConstraintsDescription">
+                  <GridBagConstraints gridX="6" gridY="0" gridWidth="1" gridHeight="1" fill="0" ipadX="0" ipadY="0" insetsTop="0" insetsLeft="0" insetsBottom="35" insetsRight="0" anchor="18" weightX="0.0" weightY="0.0"/>
+                </Constraint>
+              </Constraints>
             </Component>
             <Component class="javax.swing.JLabel" name="pageLabel2">
               <Properties>
@@ -206,6 +160,11 @@
                   <Dimension value="[29, 14]"/>
                 </Property>
               </Properties>
+              <Constraints>
+                <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignGridBagLayout" value="org.netbeans.modules.form.compat2.layouts.DesignGridBagLayout$GridBagConstraintsDescription">
+                  <GridBagConstraints gridX="4" gridY="0" gridWidth="1" gridHeight="1" fill="2" ipadX="0" ipadY="0" insetsTop="3" insetsLeft="41" insetsBottom="0" insetsRight="0" anchor="18" weightX="0.0" weightY="0.0"/>
+                </Constraint>
+              </Constraints>
             </Component>
             <Component class="javax.swing.JButton" name="prevPageButton">
               <Properties>
@@ -233,26 +192,66 @@
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="prevPageButtonActionPerformed"/>
               </Events>
+              <Constraints>
+                <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignGridBagLayout" value="org.netbeans.modules.form.compat2.layouts.DesignGridBagLayout$GridBagConstraintsDescription">
+                  <GridBagConstraints gridX="5" gridY="0" gridWidth="1" gridHeight="1" fill="0" ipadX="0" ipadY="0" insetsTop="0" insetsLeft="5" insetsBottom="35" insetsRight="0" anchor="18" weightX="0.0" weightY="0.0"/>
+                </Constraint>
+              </Constraints>
             </Component>
             <Component class="javax.swing.JLabel" name="artifactLabel">
+              <Constraints>
+                <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignGridBagLayout" value="org.netbeans.modules.form.compat2.layouts.DesignGridBagLayout$GridBagConstraintsDescription">
+                  <GridBagConstraints gridX="8" gridY="0" gridWidth="1" gridHeight="1" fill="2" ipadX="0" ipadY="0" insetsTop="3" insetsLeft="0" insetsBottom="0" insetsRight="8" anchor="12" weightX="0.0" weightY="0.0"/>
+                </Constraint>
+              </Constraints>
+            </Component>
+            <Component class="javax.swing.Box$Filler" name="filler1">
+              <Properties>
+                <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                  <Dimension value="[32767, 0]"/>
+                </Property>
+              </Properties>
+              <AuxValues>
+                <AuxValue name="classDetails" type="java.lang.String" value="Box.Filler.HorizontalGlue"/>
+              </AuxValues>
+              <Constraints>
+                <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignGridBagLayout" value="org.netbeans.modules.form.compat2.layouts.DesignGridBagLayout$GridBagConstraintsDescription">
+                  <GridBagConstraints gridX="7" gridY="0" gridWidth="1" gridHeight="1" fill="2" ipadX="0" ipadY="0" insetsTop="0" insetsLeft="0" insetsBottom="0" insetsRight="0" anchor="10" weightX="0.1" weightY="0.0"/>
+                </Constraint>
+              </Constraints>
             </Component>
           </SubComponents>
         </Container>
       </SubComponents>
     </Container>
-    <Container class="javax.swing.JScrollPane" name="resultsTableScrollPane">
-      <Properties>
-        <Property name="horizontalScrollBarPolicy" type="int" value="32"/>
-        <Property name="verticalScrollBarPolicy" type="int" value="22"/>
-        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-          <Dimension value="[620, 34]"/>
-        </Property>
-      </Properties>
-      <AuxValues>
-        <AuxValue name="autoScrollPane" type="java.lang.Boolean" value="true"/>
-      </AuxValues>
-
-      <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
+    <Container class="javax.swing.JPanel" name="artifactContentPanel">
+      <LayoutCode>
+        <CodeStatement>
+          <CodeExpression id="1_artifactContentPanel">
+            <CodeVariable name="artifactContentPanel" type="8194" declaredType="javax.swing.JPanel"/>
+            <ExpressionOrigin>
+              <ExpressionProvider type="ComponentRef">
+                <ComponentRef name="artifactContentPanel"/>
+              </ExpressionProvider>
+            </ExpressionOrigin>
+          </CodeExpression>
+          <StatementProvider type="CodeMethod">
+            <CodeMethod name="setLayout" class="java.awt.Container" parameterTypes="java.awt.LayoutManager"/>
+          </StatementProvider>
+          <Parameters>
+            <CodeExpression id="2">
+              <ExpressionOrigin>
+                <ExpressionProvider type="CodeConstructor">
+                  <CodeConstructor class="javax.swing.OverlayLayout" parameterTypes="java.awt.Container"/>
+                </ExpressionProvider>
+                <Parameters>
+                  <CodeExpression id="1_artifactContentPanel"/>
+                </Parameters>
+              </ExpressionOrigin>
+            </CodeExpression>
+          </Parameters>
+        </CodeStatement>
+      </LayoutCode>
     </Container>
   </SubComponents>
 </Form>

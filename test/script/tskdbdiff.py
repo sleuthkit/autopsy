@@ -208,10 +208,12 @@ class TskDbDiff(object):
             while (row != None):
 
                 # File Name and artifact type
+                # Remove parent object ID from Unalloc file name
+                normalizedName = re.sub('^Unalloc_[0-9]+_', 'Unalloc_', row["name"])
                 if(row["parent_path"] != None):
-                    database_log.write(row["parent_path"] + row["name"] + ' <artifact type="' + row["display_name"] + '" > ')
+                    database_log.write(row["parent_path"] + normalizedName + ' <artifact type="' + row["display_name"] + '" > ')
                 else:
-                    database_log.write(row["name"] + ' <artifact type="' + row["display_name"] + '" > ')
+                    database_log.write(normalizedName + ' <artifact type="' + row["display_name"] + '" > ')
 
                 if isMultiUser:
                     attribute_cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
@@ -269,6 +271,8 @@ class TskDbDiff(object):
                                 attr_value_as_string = getAssociatedArtifactType(attribute_cursor, attr_value_as_string, isMultiUser)                            
                             patrn = re.compile("[\n\0\a\b\r\f]")
                             attr_value_as_string = re.sub(patrn, ' ', attr_value_as_string)
+                            if attr["source"] == "Keyword Search" and attr["display_name"] == "Keyword Preview":
+                                attr_value_as_string = "<Keyword Preview placeholder>"
                             database_log.write('<attribute source="' + attr["source"] + '" type="' + attr["display_name"] + '" value="' + attr_value_as_string + '" />')
                         except IOError as e:
                             print("IO error")
@@ -427,6 +431,7 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
     files_index = line.find('INSERT INTO "tsk_files"') > -1 or line.find('INSERT INTO tsk_files ') > -1
     path_index = line.find('INSERT INTO "tsk_files_path"') > -1 or line.find('INSERT INTO tsk_files_path ') > -1
     object_index = line.find('INSERT INTO "tsk_objects"') > -1 or line.find('INSERT INTO tsk_objects ') > -1
+    vs_parts_index = line.find('INSERT INTO "tsk_vs_parts"') > -1 or line.find('INSERT INTO tsk_vs_parts ') > -1
     report_index = line.find('INSERT INTO "reports"') > -1 or line.find('INSERT INTO reports ') > -1
     layout_index = line.find('INSERT INTO "tsk_file_layout"') > -1 or line.find('INSERT INTO tsk_file_layout ') > -1
     data_source_info_index = line.find('INSERT INTO "data_source_info"') > -1 or line.find('INSERT INTO data_source_info ') > -1
@@ -461,7 +466,23 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
 
     # remove object ID
     if files_index:
+    
+        # Ignore TIFF size and hash if extracted from PDFs.
+        # See JIRA-6951 for more details.
+        # index -1 = last element in the list, which is extension
+        # index -3 = 3rd from the end, which is the parent path.
+        if fields_list[-1] == "'tif'" and fields_list[-3].endswith(".pdf/'"):
+            fields_list[15] = "'SIZE_IGNORED'"
+            fields_list[23] = "'MD5_IGNORED'"
+            fields_list[24] = "'SHA256_IGNORED'"
+            
         newLine = ('INSERT INTO "tsk_files" VALUES(' + ', '.join(fields_list[1:]) + ');') 
+        # Remove object ID from Unalloc file name
+        newLine = re.sub('Unalloc_[0-9]+_', 'Unalloc_', newLine)
+        return newLine
+    # remove object ID
+    elif vs_parts_index:
+        newLine = ('INSERT INTO "tsk_vs_parts" VALUES(' + ', '.join(fields_list[1:]) + ');') 
         return newLine
     # remove group ID
     elif ig_groups_index:
@@ -496,7 +517,9 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
     elif layout_index:
         obj_id = fields_list[0]
         path= files_table[int(obj_id)]
-        newLine = ('INSERT INTO "tsk_file_layout" VALUES(' + path + ', ' + ', '.join(fields_list[1:]) + ');') 
+        newLine = ('INSERT INTO "tsk_file_layout" VALUES(' + path + ', ' + ', '.join(fields_list[1:]) + ');')
+        # Remove object ID from Unalloc file name
+        newLine = re.sub('Unalloc_[0-9]+_', 'Unalloc_', newLine)
         return newLine
     # remove object ID
     elif object_index:
@@ -557,6 +580,11 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
                 parent_path = parent_path[parent_path.find('ModuleOutput'):]
 
         if path and parent_path:
+            # Remove object ID from Unalloc file names and regripper output
+            path = re.sub('Unalloc_[0-9]+_', 'Unalloc_', path)
+            path = re.sub('regripper\-[0-9]+\-full', 'regripper-full', path)
+            parent_path = re.sub('Unalloc_[0-9]+_', 'Unalloc_', parent_path)
+            parent_path = re.sub('regripper\-[0-9]+\-full', 'regripper-full', parent_path)
             return newLine + path + ', ' + parent_path + ', ' + ', '.join(fields_list[2:]) + ');'
         else:
             return line 
@@ -568,6 +596,7 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
         return newLine
     elif data_source_info_index:
         fields_list[1] = "{device id}"
+        fields_list[4] = "{dateTime}"
         newLine = ('INSERT INTO "data_source_info" VALUES(' + ','.join(fields_list) + ');')
         return newLine
     elif ingest_job_index:
@@ -601,10 +630,24 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
             fields_list[4] = files_table[object_id]
         if legacy_artifact_id != 'NULL' and legacy_artifact_id in artifact_table.keys():
             fields_list[6] = artifact_table[legacy_artifact_id]
+			
+		
+        if fields_list[1] == fields_list[2] and fields_list[1] == fields_list[3]:	
+            fields_list[1] = cleanupEventDescription(fields_list[1])
+            fields_list[2] = cleanupEventDescription(fields_list[2])
+            fields_list[3] = cleanupEventDescription(fields_list[3])
+			
         newLine = ('INSERT INTO "tsk_event_descriptions" VALUES(' + ','.join(fields_list[1:]) + ');') # remove report_id
         return newLine
     else:
         return line
+		
+def cleanupEventDescription(description):
+    test = re.search("^'\D+:\d+'$", description)
+    if test is not None:
+        return re.sub(":\d+", ":<artifact_id>", description)
+    else:
+        return description
 
 def getAssociatedArtifactType(cur, artifact_id, isMultiUser):
     if isMultiUser:

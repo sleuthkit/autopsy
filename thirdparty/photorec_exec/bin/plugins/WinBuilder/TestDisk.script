@@ -1,0 +1,70 @@
+[main]
+Title=TestDisk & PhotoRec 7.1
+Description=A powerful free data recovery software utility.
+Selected=True
+Level=5
+Version=1
+Author=Xtreme
+Contact=http://www.boot-land.net/forums/
+Credits=Christophe GRENIER (https://www.cgsecurity.org)
+Date=Friday, May 16,2008
+
+[Interface]
+pTextLabel1="         Thanks a lot for Galapo for his support and helping me learning WinBuilder Script.",1,1,19,25,463,54,8,Normal
+pBevel1=pBevel1,1,12,12,18,455,63
+
+[variables]
+%ProgramTitle%=TestDisk
+%ProgramEXE%=testdisk_win.exe
+%ProgramFolder%=TestDisk
+
+[process]
+StrFormat,path,%scriptdir%,%one_folder_up%
+StrFormat,CTrim,"%one_folder_up%","\",%one_folder_up%
+StrFormat,path,%one_folder_up%,%two_folders_up%
+StrFormat,CTrim,"%two_folders_up%","\",%two_folders_up%
+If,NotExistFile,"%two_folders_up%\testdisk_win.exe",Run,%ScriptFile%,Halt
+DirMake,"%Target_Prog%\%ProgramFolder%"
+DirMake,"%Target_Prog%\%ProgramFolder%\63"
+FileCopy,"%two_folders_up%\cyggcc_s-1.dll","%Target_Prog%%ProgramFolder%"
+FileCopy,"%two_folders_up%\cygiconv-2.dll","%Target_Prog%%ProgramFolder%"
+FileCopy,"%two_folders_up%\cygjpeg-8.dll","%Target_Prog%%ProgramFolder%"
+FileCopy,"%two_folders_up%\cygncursesw-10.dll","%Target_Prog%%ProgramFolder%"
+FileCopy,"%two_folders_up%\cygssp-0.dll","%Target_Prog%%ProgramFolder%"
+FileCopy,"%two_folders_up%\cygwin1.dll","%Target_Prog%%ProgramFolder%"
+FileCopy,"%two_folders_up%\cygz.dll","%Target_Prog%%ProgramFolder%"
+FileCopy,"%two_folders_up%\iconv.dll","%Target_Prog%%ProgramFolder%"
+FileCopy,"%two_folders_up%\libgcc_s_sjlj-1.dll","%Target_Prog%%ProgramFolder%"
+FileCopy,"%two_folders_up%\libjpeg-62.dll","%Target_Prog%%ProgramFolder%"
+FileCopy,"%two_folders_up%\libpng16-16.dll","%Target_Prog%%ProgramFolder%"
+FileCopy,"%two_folders_up%\libssp-0.dll","%Target_Prog%%ProgramFolder%"
+FileCopy,"%two_folders_up%\libstdc++-6.dll","%Target_Prog%%ProgramFolder%"
+FileCopy,"%two_folders_up%\libwinpthread-1.dll","%Target_Prog%%ProgramFolder%"
+FileCopy,"%two_folders_up%\QtCore4.dll","%Target_Prog%%ProgramFolder%"
+FileCopy,"%two_folders_up%\QtGui4.dll","%Target_Prog%%ProgramFolder%"
+FileCopy,"%two_folders_up%\zlib1.dll","%Target_Prog%%ProgramFolder%"
+FileCopy,"%two_folders_up%\fidentify_win.exe","%Target_Prog%\%ProgramFolder%"
+FileCopy,"%two_folders_up%\photorec_win.exe","%Target_Prog%\%ProgramFolder%"
+FileCopy,"%two_folders_up%\qphotorec_win.exe","%Target_Prog%\%ProgramFolder%"
+FileCopy,"%two_folders_up%\readme.txt","%Target_Prog%\%ProgramFolder%"
+FileCopy,"%two_folders_up%\testdisk_win.exe","%Target_Prog%\%ProgramFolder%"
+DirCopy,"%two_folders_up%\63\*.*","%Target_Prog%\%ProgramFolder%\63"
+::DirCopy,"%two_folders_up%\TestDisk\*.*","%Target_Prog%\%ProgramFolder%"
+Add_Shortcut,StartMenu,"%TestDisk & PhotoRec"
+Add_Shortcut,StartMenu,"TestDisk & PhotoRec","%PE_Programs%\%ProgramFolder%\photorec_win.exe","PhotoRec"
+Add_Shortcut,StartMenu,"TestDisk & PhotoRec","%PE_Programs%\%ProgramFolder%\qphotorec_win.exe","QPhotoRec"
+Add_Shortcut,StartMenu,"TestDisk & PhotoRec","%PE_Programs%\%ProgramFolder%\testdisk_win.exe","Testdisk"
+Add_Shortcut,StartMenu,"TestDisk & PhotoRec","%PE_Programs%\%ProgramFolder%\fidentify_win.exe","Files Identify"
+
+[Halt]
+Message,"testdisk_win.exe could not be located in the following folder: '%two_folders_up%'. Program will not be available in the PE.",Error
+Exit,""
+
+[EncodedFile-AuthorEncoded-testdisklogo-clear-100.gif]
+lines=0
+0=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
+
+[AuthorEncoded]
+testdisklogo-clear-100.gif=2Kb,2Kb
+Logo=testdisklogo-clear-100.gif
+

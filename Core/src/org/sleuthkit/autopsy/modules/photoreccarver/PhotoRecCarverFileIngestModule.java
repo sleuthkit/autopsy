@@ -29,6 +29,7 @@ import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -36,6 +37,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -79,15 +81,20 @@ import org.sleuthkit.datamodel.TskData;
 final class PhotoRecCarverFileIngestModule implements FileIngestModule {
 
     static final boolean DEFAULT_CONFIG_KEEP_CORRUPTED_FILES = false;
-    
+    static final PhotoRecCarverIngestJobSettings.ExtensionFilterOption DEFAULT_CONFIG_EXTENSION_FILTER
+            = PhotoRecCarverIngestJobSettings.ExtensionFilterOption.NO_FILTER;
+
+    static final boolean DEFAULT_CONFIG_INCLUDE_ELSE_EXCLUDE = false;
+
+    private static final String PHOTOREC_TEMP_SUBDIR = "PhotoRec Carver"; // NON-NLS Note that we need the space in this dir name (JIRA-6878)
     private static final String PHOTOREC_DIRECTORY = "photorec_exec"; //NON-NLS
+    private static final String PHOTOREC_SUBDIRECTORY = "bin"; //NON-NLS
     private static final String PHOTOREC_EXECUTABLE = "photorec_win.exe"; //NON-NLS
     private static final String PHOTOREC_LINUX_EXECUTABLE = "photorec";
     private static final String PHOTOREC_RESULTS_BASE = "results"; //NON-NLS
     private static final String PHOTOREC_RESULTS_EXTENDED = "results.1"; //NON-NLS
     private static final String PHOTOREC_REPORT = "report.xml"; //NON-NLS
     private static final String LOG_FILE = "run_log.txt"; //NON-NLS
-    private static final String TEMP_DIR_NAME = "temp"; // NON-NLS
     private static final String SEP = System.getProperty("line.separator");
     private static final Logger logger = Logger.getLogger(PhotoRecCarverFileIngestModule.class.getName());
     private static final HashMap<Long, IngestJobTotals> totalsForIngestJobs = new HashMap<>();
@@ -95,26 +102,74 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
     private static final Map<Long, WorkingPaths> pathsByJob = new ConcurrentHashMap<>();
     private IngestJobContext context;
     private Path rootOutputDirPath;
+    private Path rootTempDirPath;
     private File executableFile;
     private IngestServices services;
     private final UNCPathUtilities uncPathUtilities = new UNCPathUtilities();
+    private final PhotoRecCarverIngestJobSettings settings;
+    private String optionsString;
     private long jobId;
-    
-    private final boolean keepCorruptedFiles;
 
     private static class IngestJobTotals {
+
         private final AtomicLong totalItemsRecovered = new AtomicLong(0);
         private final AtomicLong totalItemsWithErrors = new AtomicLong(0);
         private final AtomicLong totalWritetime = new AtomicLong(0);
         private final AtomicLong totalParsetime = new AtomicLong(0);
     }
+
     /**
      * Create a PhotoRec Carver ingest module instance.
-     * 
+     *
      * @param settings Ingest job settings used to configure the module.
      */
     PhotoRecCarverFileIngestModule(PhotoRecCarverIngestJobSettings settings) {
-        keepCorruptedFiles = settings.isKeepCorruptedFiles();
+        this.settings = settings;
+    }
+
+    /**
+     * Creates a photorec command line options string based on the settings.
+     *
+     * @param settings The settings.
+     *
+     * @return The options string to be provided to Photorec on the command
+     *         line.
+     */
+    private String getPhotorecOptions(PhotoRecCarverIngestJobSettings settings) {
+        List<String> toRet = new ArrayList<String>();
+
+        if (settings.isKeepCorruptedFiles()) {
+            toRet.addAll(Arrays.asList("options", "keep_corrupted_file"));
+        }
+
+        if (settings.getExtensionFilterOption()
+                != PhotoRecCarverIngestJobSettings.ExtensionFilterOption.NO_FILTER) {
+
+            // add the file opt menu item
+            toRet.add("fileopt");
+
+            String enable = "enable";
+            String disable = "disable";
+
+            // if we are including file extensions, then we are excluding 
+            // everything else and vice-versa.
+            String everythingEnable = settings.getExtensionFilterOption()
+                    == PhotoRecCarverIngestJobSettings.ExtensionFilterOption.INCLUDE
+                            ? disable : enable;
+
+            toRet.addAll(Arrays.asList("everything", everythingEnable));
+
+            final String itemEnable = settings.getExtensionFilterOption()
+                    == PhotoRecCarverIngestJobSettings.ExtensionFilterOption.INCLUDE
+                            ? enable : disable;
+
+            settings.getExtensions().forEach((extension) -> {
+                toRet.addAll(Arrays.asList(extension, itemEnable));
+            });
+        }
+
+        toRet.add("search");
+        return String.join(",", toRet);
     }
 
     private static synchronized IngestJobTotals getTotalsForIngestJobs(long ingestJobId) {
@@ -135,7 +190,34 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
      * @inheritDoc
      */
     @Override
+    @NbBundle.Messages({
+        "# {0} - extensions",
+        "PhotoRecCarverFileIngestModule_startUp_invalidExtensions_description=The following extensions are invalid: {0}",
+        "PhotoRecCarverFileIngestModule_startUp_noExtensionsProvided_description=No extensions provided for PhotoRec to carve."
+    })
     public void startUp(IngestJobContext context) throws IngestModule.IngestModuleException {
+        // validate settings
+        if (this.settings.getExtensionFilterOption() != PhotoRecCarverIngestJobSettings.ExtensionFilterOption.NO_FILTER) {
+            if (this.settings.getExtensions().isEmpty()
+                    && this.settings.getExtensionFilterOption() == PhotoRecCarverIngestJobSettings.ExtensionFilterOption.INCLUDE) {
+
+                throw new IngestModule.IngestModuleException(
+                        Bundle.PhotoRecCarverFileIngestModule_startUp_noExtensionsProvided_description());
+            }
+
+            List<String> invalidExtensions = this.settings.getExtensions().stream()
+                    .filter((ext) -> !PhotoRecCarverFileOptExtensions.isValidExtension(ext))
+                    .collect(Collectors.toList());
+
+            if (!invalidExtensions.isEmpty()) {
+                throw new IngestModule.IngestModuleException(
+                        Bundle.PhotoRecCarverFileIngestModule_startUp_invalidExtensions_description(
+                                String.join(",", invalidExtensions)));
+            }
+        }
+
+        this.optionsString = getPhotorecOptions(this.settings);
+
         this.context = context;
         this.services = IngestServices.getInstance();
         this.jobId = this.context.getJobId();
@@ -149,9 +231,10 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
         }
 
         this.rootOutputDirPath = createModuleOutputDirectoryForCase();
+        this.rootTempDirPath = createTempOutputDirectoryForCase();
 
         //Set photorec executable directory based on operating system.
-            executableFile = locateExecutable();
+        executableFile = locateExecutable();
 
         if (PhotoRecCarverFileIngestModule.refCounter.incrementAndGet(this.jobId) == 1) {
             try {
@@ -163,7 +246,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
                 Files.createDirectories(outputDirPath);
 
                 // A temp subdirectory is also created as a location for writing unallocated space files to disk.
-                Path tempDirPath = Paths.get(outputDirPath.toString(), PhotoRecCarverFileIngestModule.TEMP_DIR_NAME);
+                Path tempDirPath = Paths.get(this.rootTempDirPath.toString(), folder);
                 Files.createDirectory(tempDirPath);
 
                 // Save the directories for the current job.
@@ -241,12 +324,9 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
                     outputDirPath.toAbsolutePath().toString() + File.separator + PHOTOREC_RESULTS_BASE,
                     "/cmd", // NON-NLS
                     tempFilePath.toFile().toString());
-            if (keepCorruptedFiles) {
-                processAndSettings.command().add("options,keep_corrupted_file,search"); // NON-NLS
-            } else {
-                processAndSettings.command().add("search"); // NON-NLS
-            }
-            
+
+            processAndSettings.command().add(this.optionsString);
+
             // Add environment variable to force PhotoRec to run with the same permissions Autopsy uses
             processAndSettings.environment().put("__COMPAT_LAYER", "RunAsInvoker"); //NON-NLS
             processAndSettings.redirectErrorStream(true);
@@ -324,7 +404,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             return IngestModule.ProcessResult.ERROR;
         } catch (IOException ex) {
             totals.totalItemsWithErrors.incrementAndGet();
-            logger.log(Level.SEVERE, String.format("Error writing file '%s' (id=%d) to '%s' with the PhotoRec carver.", file.getName(), file.getId(), tempFilePath), ex); // NON-NLS
+            logger.log(Level.SEVERE, String.format("Error writing or processing file '%s' (id=%d) to '%s' with the PhotoRec carver.", file.getName(), file.getId(), tempFilePath), ex); // NON-NLS
             MessageNotifyUtil.Notify.error(PhotoRecCarverIngestModuleFactory.getModuleName(), NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.error.msg", file.getName()));
             return IngestModule.ProcessResult.ERROR;
         } finally {
@@ -417,20 +497,51 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
     }
 
     /**
-     * Creates the output directory for this module for the current case, if it
-     * does not already exist.
+     * Creates the output directory for this module for the current case's temp
+     * directory, if it does not already exist.
+     *
+     * @return The absolute path of the output directory.
+     *
+     * @throws org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException
+     */
+    synchronized Path createTempOutputDirectoryForCase() throws IngestModule.IngestModuleException {
+        try {
+            Path path = Paths.get(Case.getCurrentCaseThrows().getTempDirectory(), PHOTOREC_TEMP_SUBDIR);
+            return createOutputDirectoryForCase(path);
+        } catch (NoCurrentCaseException ex) {
+            throw new IngestModule.IngestModuleException(Bundle.cannotCreateOutputDir_message(ex.getLocalizedMessage()), ex);
+        }
+    }
+
+    /**
+     * Creates the output directory for this module for the current case's
+     * module directory, if it does not already exist.
      *
      * @return The absolute path of the output directory.
      *
      * @throws org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException
      */
     synchronized Path createModuleOutputDirectoryForCase() throws IngestModule.IngestModuleException {
-        Path path;
         try {
-            path = Paths.get(Case.getCurrentCaseThrows().getModuleDirectory(), PhotoRecCarverIngestModuleFactory.getModuleName());
+            Path path = Paths.get(Case.getCurrentCaseThrows().getModuleDirectory(), PhotoRecCarverIngestModuleFactory.getModuleName());
+            return createOutputDirectoryForCase(path);
         } catch (NoCurrentCaseException ex) {
             throw new IngestModule.IngestModuleException(Bundle.cannotCreateOutputDir_message(ex.getLocalizedMessage()), ex);
         }
+    }
+
+    /**
+     * Creates the output directory for this module for the current case, if it
+     * does not already exist.
+     *
+     * @param providedPath The absolute path to be created.
+     *
+     * @return The absolute path of the output directory.
+     *
+     * @throws org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException
+     */
+    private synchronized Path createOutputDirectoryForCase(Path providedPath) throws IngestModule.IngestModuleException {
+        Path path = providedPath;
         try {
             Files.createDirectory(path);
             if (UNCPathUtilities.isUNC(path)) {
@@ -468,16 +579,16 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
         Path execName;
         String photorec_linux_directory = "/usr/bin";
         if (PlatformUtil.isWindowsOS()) {
-            execName = Paths.get(PHOTOREC_DIRECTORY, PHOTOREC_EXECUTABLE);
+            execName = Paths.get(PHOTOREC_DIRECTORY, PHOTOREC_SUBDIRECTORY, PHOTOREC_EXECUTABLE);
             exeFile = InstalledFileLocator.getDefault().locate(execName.toString(), PhotoRecCarverFileIngestModule.class.getPackage().getName(), false);
         } else {
             File usrBin = new File("/usr/bin/photorec");
             File usrLocalBin = new File("/usr/local/bin/photorec");
             if (usrBin.canExecute() && usrBin.exists() && !usrBin.isDirectory()) {
                 photorec_linux_directory = "/usr/bin";
-            }else if(usrLocalBin.canExecute() && usrLocalBin.exists() && !usrLocalBin.isDirectory()){
+            } else if (usrLocalBin.canExecute() && usrLocalBin.exists() && !usrLocalBin.isDirectory()) {
                 photorec_linux_directory = "/usr/local/bin";
-            }else{
+            } else {
                 throw new IngestModule.IngestModuleException("Photorec not found");
             }
             execName = Paths.get(photorec_linux_directory, PHOTOREC_LINUX_EXECUTABLE);
@@ -487,8 +598,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
         if (null == exeFile) {
             throw new IngestModule.IngestModuleException(Bundle.missingExecutable_message());
         }
-        
-        
+
         if (!exeFile.canExecute()) {
             throw new IngestModule.IngestModuleException(Bundle.cannotRunExecutable_message());
         }

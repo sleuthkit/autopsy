@@ -71,7 +71,7 @@
                       </Group>
                       <Group type="102" alignment="0" attributes="0">
                           <EmptySpace min="-2" pref="59" max="-2" attributes="0"/>
-                          <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
+                          <Component id="generalVolumeLabel" min="-2" max="-2" attributes="0"/>
                       </Group>
                   </Group>
                   <EmptySpace pref="58" max="32767" attributes="0"/>
@@ -82,7 +82,7 @@
           <Group type="103" groupAlignment="0" attributes="0">
               <Group type="102" alignment="0" attributes="0">
                   <EmptySpace max="-2" attributes="0"/>
-                  <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
+                  <Component id="generalVolumeLabel" min="-2" max="-2" attributes="0"/>
                   <EmptySpace min="-2" pref="11" max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="3" attributes="0">
                       <Component id="volumeIDLabel" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -121,11 +121,6 @@
       <SubComponents>
         <Component class="javax.swing.JLabel" name="flagsValue">
           <Properties>
-            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-              <FontInfo relative="true">
-                <Font bold="false" component="flagsValue" property="font" relativeSize="false" size="11"/>
-              </FontInfo>
-            </Property>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
               <ResourceString bundle="org/sleuthkit/autopsy/directorytree/Bundle.properties" key="VolumeDetailsPanel.flagsValue.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
@@ -133,11 +128,6 @@
         </Component>
         <Component class="javax.swing.JLabel" name="descValue">
           <Properties>
-            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-              <FontInfo relative="true">
-                <Font bold="false" component="descValue" property="font" relativeSize="false" size="11"/>
-              </FontInfo>
-            </Property>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
               <ResourceString bundle="org/sleuthkit/autopsy/directorytree/Bundle.properties" key="VolumeDetailsPanel.descValue.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
@@ -145,11 +135,6 @@
         </Component>
         <Component class="javax.swing.JLabel" name="lengthValue">
           <Properties>
-            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-              <FontInfo relative="true">
-                <Font bold="false" component="lengthValue" property="font" relativeSize="false" size="11"/>
-              </FontInfo>
-            </Property>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
               <ResourceString bundle="org/sleuthkit/autopsy/directorytree/Bundle.properties" key="VolumeDetailsPanel.lengthValue.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
@@ -157,11 +142,6 @@
         </Component>
         <Component class="javax.swing.JLabel" name="startValue">
           <Properties>
-            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-              <FontInfo relative="true">
-                <Font bold="false" component="startValue" property="font" relativeSize="false" size="11"/>
-              </FontInfo>
-            </Property>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
               <ResourceString bundle="org/sleuthkit/autopsy/directorytree/Bundle.properties" key="VolumeDetailsPanel.startValue.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
@@ -169,11 +149,6 @@
         </Component>
         <Component class="javax.swing.JLabel" name="startLabel">
           <Properties>
-            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-              <FontInfo relative="true">
-                <Font bold="false" component="startLabel" property="font" relativeSize="false" size="11"/>
-              </FontInfo>
-            </Property>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
               <ResourceString bundle="org/sleuthkit/autopsy/directorytree/Bundle.properties" key="VolumeDetailsPanel.startLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
@@ -181,35 +156,25 @@
         </Component>
         <Component class="javax.swing.JLabel" name="lengthLabel">
           <Properties>
-            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-              <FontInfo relative="true">
-                <Font bold="false" component="lengthLabel" property="font" relativeSize="false" size="11"/>
-              </FontInfo>
-            </Property>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
               <ResourceString bundle="org/sleuthkit/autopsy/directorytree/Bundle.properties" key="VolumeDetailsPanel.lengthLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
           </Properties>
         </Component>
-        <Component class="javax.swing.JLabel" name="jLabel1">
+        <Component class="javax.swing.JLabel" name="generalVolumeLabel">
           <Properties>
             <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
               <FontInfo relative="true">
-                <Font bold="true" component="jLabel1" property="font" relativeSize="false" size="18"/>
+                <Font bold="true" component="generalVolumeLabel" property="font" relativeSize="true" size="7"/>
               </FontInfo>
             </Property>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="org/sleuthkit/autopsy/directorytree/Bundle.properties" key="VolumeDetailsPanel.jLabel1.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+              <ResourceString bundle="org/sleuthkit/autopsy/directorytree/Bundle.properties" key="VolumeDetailsPanel.generalVolumeLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
           </Properties>
         </Component>
         <Component class="javax.swing.JLabel" name="volumeIDLabel">
           <Properties>
-            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-              <FontInfo relative="true">
-                <Font bold="false" component="volumeIDLabel" property="font" relativeSize="false" size="11"/>
-              </FontInfo>
-            </Property>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
               <ResourceString bundle="org/sleuthkit/autopsy/directorytree/Bundle.properties" key="VolumeDetailsPanel.volumeIDLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
@@ -220,11 +185,6 @@
         </Component>
         <Component class="javax.swing.JLabel" name="volumeIDValue">
           <Properties>
-            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-              <FontInfo relative="true">
-                <Font bold="false" component="volumeIDValue" property="font" relativeSize="false" size="11"/>
-              </FontInfo>
-            </Property>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
               <ResourceString bundle="org/sleuthkit/autopsy/directorytree/Bundle.properties" key="VolumeDetailsPanel.volumeIDValue.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
@@ -232,11 +192,6 @@
         </Component>
         <Component class="javax.swing.JLabel" name="descLabel">
           <Properties>
-            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-              <FontInfo relative="true">
-                <Font bold="false" component="descLabel" property="font" relativeSize="false" size="11"/>
-              </FontInfo>
-            </Property>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
               <ResourceString bundle="org/sleuthkit/autopsy/directorytree/Bundle.properties" key="VolumeDetailsPanel.descLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
@@ -244,11 +199,6 @@
         </Component>
         <Component class="javax.swing.JLabel" name="flagsLabel">
           <Properties>
-            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-              <FontInfo relative="true">
-                <Font bold="false" component="flagsLabel" property="font" relativeSize="false" size="11"/>
-              </FontInfo>
-            </Property>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
               <ResourceString bundle="org/sleuthkit/autopsy/directorytree/Bundle.properties" key="VolumeDetailsPanel.flagsLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
@@ -258,11 +208,6 @@
     </Container>
     <Component class="javax.swing.JButton" name="OKButton">
       <Properties>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-          <FontInfo relative="true">
-            <Font bold="false" component="OKButton" property="font" relativeSize="false" size="11"/>
-          </FontInfo>
-        </Property>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/directorytree/Bundle.properties" key="VolumeDetailsPanel.OKButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>

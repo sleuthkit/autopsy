@@ -93,7 +93,7 @@
       <Properties>
         <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
           <FontInfo relative="true">
-            <Font bold="true" component="imageInfoLabel" property="font" relativeSize="false" size="18"/>
+            <Font bold="true" component="imageInfoLabel" property="font" relativeSize="true" size="7"/>
           </FontInfo>
         </Property>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
@@ -103,11 +103,6 @@
     </Component>
     <Component class="javax.swing.JLabel" name="imgNameLabel">
       <Properties>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-          <FontInfo relative="true">
-            <Font bold="false" component="imgNameLabel" property="font" relativeSize="false" size="11"/>
-          </FontInfo>
-        </Property>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/directorytree/Bundle.properties" key="ImageDetailsPanel.imgNameLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
@@ -115,11 +110,6 @@
     </Component>
     <Component class="javax.swing.JLabel" name="imgTypeLabel">
       <Properties>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-          <FontInfo relative="true">
-            <Font bold="false" component="imgTypeLabel" property="font" relativeSize="false" size="11"/>
-          </FontInfo>
-        </Property>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/directorytree/Bundle.properties" key="ImageDetailsPanel.imgTypeLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
@@ -127,11 +117,6 @@
     </Component>
     <Component class="javax.swing.JLabel" name="imgSectorSizeLabel">
       <Properties>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-          <FontInfo relative="true">
-            <Font bold="false" component="imgSectorSizeLabel" property="font" relativeSize="false" size="11"/>
-          </FontInfo>
-        </Property>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/directorytree/Bundle.properties" key="ImageDetailsPanel.imgSectorSizeLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
@@ -139,11 +124,6 @@
     </Component>
     <Component class="javax.swing.JLabel" name="imgNameValue">
       <Properties>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-          <FontInfo relative="true">
-            <Font bold="false" component="imgNameValue" property="font" relativeSize="false" size="11"/>
-          </FontInfo>
-        </Property>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/directorytree/Bundle.properties" key="ImageDetailsPanel.imgNameValue.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
@@ -151,11 +131,6 @@
     </Component>
     <Component class="javax.swing.JLabel" name="imgTypeValue">
       <Properties>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-          <FontInfo relative="true">
-            <Font bold="false" component="imgTypeValue" property="font" relativeSize="false" size="11"/>
-          </FontInfo>
-        </Property>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/directorytree/Bundle.properties" key="ImageDetailsPanel.imgTypeValue.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
@@ -163,11 +138,6 @@
     </Component>
     <Component class="javax.swing.JLabel" name="imgSectorSizeValue">
       <Properties>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-          <FontInfo relative="true">
-            <Font bold="false" component="imgSectorSizeValue" property="font" relativeSize="false" size="11"/>
-          </FontInfo>
-        </Property>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/directorytree/Bundle.properties" key="ImageDetailsPanel.imgSectorSizeValue.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
@@ -175,11 +145,6 @@
     </Component>
     <Component class="javax.swing.JButton" name="OKButton">
       <Properties>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-          <FontInfo relative="true">
-            <Font bold="false" component="OKButton" property="font" relativeSize="false" size="11"/>
-          </FontInfo>
-        </Property>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/directorytree/Bundle.properties" key="ImageDetailsPanel.OKButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
@@ -187,11 +152,6 @@
     </Component>
     <Component class="javax.swing.JLabel" name="imgTotalSizeLabel">
       <Properties>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-          <FontInfo relative="true">
-            <Font bold="false" component="imgTotalSizeLabel" property="font" relativeSize="false" size="11"/>
-          </FontInfo>
-        </Property>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/directorytree/Bundle.properties" key="ImageDetailsPanel.imgTotalSizeLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
@@ -199,11 +159,6 @@
     </Component>
     <Component class="javax.swing.JLabel" name="imgTotalSizeValue">
       <Properties>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-          <FontInfo relative="true">
-            <Font bold="false" component="imgTotalSizeValue" property="font" relativeSize="false" size="11"/>
-          </FontInfo>
-        </Property>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/directorytree/Bundle.properties" key="ImageDetailsPanel.imgTotalSizeValue.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
@@ -211,11 +166,6 @@
     </Component>
     <Component class="javax.swing.JLabel" name="imgHashLabel">
       <Properties>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-          <FontInfo relative="true">
-            <Font bold="false" component="imgHashLabel" property="font" relativeSize="false" size="11"/>
-          </FontInfo>
-        </Property>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/directorytree/Bundle.properties" key="ImageDetailsPanel.imgHashLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
@@ -223,11 +173,6 @@
     </Component>
     <Component class="javax.swing.JLabel" name="imgHashValue">
       <Properties>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-          <FontInfo relative="true">
-            <Font bold="false" component="imgHashValue" property="font" relativeSize="false" size="11"/>
-          </FontInfo>
-        </Property>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/directorytree/Bundle.properties" key="ImageDetailsPanel.imgHashValue.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>

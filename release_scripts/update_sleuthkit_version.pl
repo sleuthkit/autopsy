@@ -131,8 +131,12 @@ sub update_core_project_properties {
 
     my $found = 0;
     while (<CONF_IN>) {
-        if (/^file\.reference\.sleuthkit\-postgresql-/) {
-            print CONF_OUT "file.reference.sleuthkit-postgresql-${VER}.jar=release/modules/ext/sleuthkit-postgresql-${VER}.jar\n";
+        if (/^file\.reference\.sleuthkit\-4/) {
+            print CONF_OUT "file.reference.sleuthkit-${VER}.jar=release/modules/ext/sleuthkit-${VER}.jar\n";
+            $found++;
+        }
+        elsif (/^file\.reference\.sleuthkit\-caseuco-4/) {
+            print CONF_OUT "file.reference.sleuthkit-caseuco-${VER}.jar=release/modules/ext/sleuthkit-caseuco-${VER}.jar\n";
             $found++;
         }
             
@@ -143,8 +147,8 @@ sub update_core_project_properties {
     close (CONF_IN);
     close (CONF_OUT);
 
-    if ($found != 1) {
-        die "$found (instead of 1) occurrences of version found in ${orig}";
+    if ($found != 2) {
+        die "$found (instead of 2) occurrences of version found in core ${orig}";
     }
 
     unlink ($orig) or die "Error deleting ${orig}";
@@ -167,12 +171,20 @@ sub update_core_project_xml {
 
     my $found = 0;
     while (<CONF_IN>) {
-        if (/<runtime-relative-path>ext\/sleuthkit-postgresql/) {
-            print CONF_OUT "                <runtime-relative-path>ext/sleuthkit-postgresql-${VER}.jar</runtime-relative-path>\n";
+        if (/<runtime-relative-path>ext\/sleuthkit-4/) {
+            print CONF_OUT "                <runtime-relative-path>ext/sleuthkit-${VER}.jar</runtime-relative-path>\n";
             $found++;
         }
-        elsif (/<binary-origin>release\/modules\/ext\/sleuthkit-postgresql/) {
-            print CONF_OUT "                <binary-origin>release/modules/ext/sleuthkit-postgresql-${VER}.jar</binary-origin>\n";
+        elsif (/<binary-origin>release\/modules\/ext\/sleuthkit-4/) {
+            print CONF_OUT "                <binary-origin>release/modules/ext/sleuthkit-${VER}.jar</binary-origin>\n";
+            $found++;
+        }    
+        elsif (/<runtime-relative-path>ext\/sleuthkit-caseuco-4/) {
+            print CONF_OUT "                <runtime-relative-path>ext/sleuthkit-caseuco-${VER}.jar</runtime-relative-path>\n";
+            $found++;
+        }
+        elsif (/<binary-origin>release\/modules\/ext\/sleuthkit-caseuco-4/) {
+            print CONF_OUT "                <binary-origin>release/modules/ext/sleuthkit-caseuco-${VER}.jar</binary-origin>\n";
             $found++;
         }    
         else {
@@ -182,8 +194,8 @@ sub update_core_project_xml {
     close (CONF_IN);
     close (CONF_OUT);
 
-    if ($found != 2) {
-        die "$found (instead of 2) occurrences of version found in ${orig}";
+    if ($found != 4) {
+        die "$found (instead of 4) occurrences of version found in case ${orig}";
     }
 
     unlink ($orig) or die "Error deleting ${orig}";

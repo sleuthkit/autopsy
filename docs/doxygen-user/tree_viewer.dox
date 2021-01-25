@@ -1,5 +1,8 @@
 /*! \page tree_viewer_page Tree Viewer
 
+[TOC]
+
+
 The tree on the left-hand side of the main window is where you can browse the files in the data sources in the case and find saved results from automated analyis (ingest). The tree has five main areas:
 - <b>Data Sources:</b> This shows the directory tree hierarchy of the data sources. You can navigate to a specific file or directory here. Each data source added to the case is represented as a distinct sub tree. If you add a data source multiple times, it shows up multiple times.
 - <b>Views:</b> Specific types of files from the data sources are shown here, aggregated by type or other properties. Files here can come from more than one data source.

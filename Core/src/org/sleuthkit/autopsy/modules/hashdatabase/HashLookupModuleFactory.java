@@ -47,7 +47,7 @@ public class HashLookupModuleFactory extends IngestModuleFactoryAdapter {
      *
      * @return The module name.
      */
-    static String getModuleName() {
+    public static String getModuleName() {
         return NbBundle.getMessage(HashLookupModuleFactory.class, "HashLookupModuleFactory.moduleName.text");
     }
 

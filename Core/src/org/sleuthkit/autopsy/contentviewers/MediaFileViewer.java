@@ -134,7 +134,7 @@ class MediaFileViewer extends javax.swing.JPanel implements FileTypeViewer {
                 mediaPlayerPanel.loadFile(file);
                 this.showVideoPanel();
             } else if (imagePanelInited && imagePanel.isSupported(file)) {
-                imagePanel.showImageFx(file);
+                imagePanel.loadFile(file);
                 this.showImagePanel();
             }
         } catch (Exception e) {
@@ -194,6 +194,6 @@ class MediaFileViewer extends javax.swing.JPanel implements FileTypeViewer {
 
     @Override
     public boolean isSupported(AbstractFile file){
-        return true;
+        return mediaPlayerPanel.isSupported(file) || imagePanel.isSupported(file);
     }
 }

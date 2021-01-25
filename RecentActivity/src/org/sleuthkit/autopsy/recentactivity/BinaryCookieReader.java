@@ -42,6 +42,7 @@ import org.sleuthkit.autopsy.recentactivity.BinaryCookieReader.Cookie;
  */
 final class BinaryCookieReader implements Iterable<Cookie> {
 
+    private static final Logger LOG = Logger.getLogger(BinaryCookieReader.class.getName());
     private static final int MAGIC_SIZE = 4;
     private static final int SIZEOF_INT_BYTES = 4;
     private static final int PAGE_HEADER_VALUE = 256;
@@ -53,8 +54,6 @@ final class BinaryCookieReader implements Iterable<Cookie> {
     private final int[] pageSizeArray;
     private final File cookieFile;
 
-    private static final Logger LOG = Logger.getLogger(BinaryCookieReader.class.getName());
-
     /**
      * The binary cookie reader encapsulates all the knowledge of how to read
      * the mac .binarycookie files into one class.
@@ -62,7 +61,7 @@ final class BinaryCookieReader implements Iterable<Cookie> {
      */
     private BinaryCookieReader(File cookieFile, int[] pageSizeArray) {
         this.cookieFile = cookieFile;
-        this.pageSizeArray = pageSizeArray;
+        this.pageSizeArray = pageSizeArray.clone();
     }
 
     /**
@@ -71,7 +70,9 @@ final class BinaryCookieReader implements Iterable<Cookie> {
      * open.
      *
      * @param cookieFile binarycookie file
+     *
      * @return An instance of the reader
+     *
      * @throws FileNotFoundException
      * @throws IOException
      */
@@ -88,7 +89,7 @@ final class BinaryCookieReader implements Iterable<Cookie> {
                 throw new IOException(cookieFile.getName() + " is not a cookie file"); //NON-NLS
             }
 
-            int[] sizeArray = null;
+            int[] sizeArray;
             int pageCount = dataStream.readInt();
             if (pageCount != 0) {
                 sizeArray = new int[pageCount];
@@ -96,8 +97,9 @@ final class BinaryCookieReader implements Iterable<Cookie> {
                 for (int cnt = 0; cnt < pageCount; cnt++) {
                     sizeArray[cnt] = dataStream.readInt();
                 }
-
+            } else {
                 LOG.log(Level.INFO, "No cookies found in {0}", cookieFile.getName()); //NON-NLS
+                sizeArray = new int[0];
             }
 
             reader = new BinaryCookieReader(cookieFile, sizeArray);
@@ -229,6 +231,7 @@ final class BinaryCookieReader implements Iterable<Cookie> {
          * correct format by checking for the header value of 0x0100.
          *
          * @param page byte array representing a cookie page
+         *
          * @throws IOException
          */
         CookiePage(byte[] page) throws IOException {
@@ -414,7 +417,8 @@ final class BinaryCookieReader implements Iterable<Cookie> {
          * offset ending at the first null terminator found.
          *
          * @param byteArray Array of bytes
-         * @param offset starting offset in the array
+         * @param offset    starting offset in the array
+         *
          * @return String with bytes converted to ascii
          */
         private String decodeString(byte[] byteArray, int offset) {

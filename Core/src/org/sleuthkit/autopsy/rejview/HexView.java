@@ -88,6 +88,8 @@ final class HexView extends JPanel {
         this.bytesPerLine = bytesPerLine;
 
         Font font = new Font("Monospaced", Font.PLAIN, 12);  //Non-NLS
+        //Font should be left alone as we want to ensure a monospaced font is used 
+        //when displaying Hex, instead of the default font.
 
         JTextComponent offsetView = new JTextArea();
         this.hexViewTextArea = new JTextArea();

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,14 +28,15 @@ import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoAccount;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.datamodel.Account;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 
 /**
  * ChildFactory for CorrelationCases. Finds the cases that reference the given
@@ -45,7 +46,6 @@ final class CorrelationCaseChildNodeFactory extends ChildFactory<CorrelationCase
 
     private static final Logger logger = Logger.getLogger(CorrelationCaseChildNodeFactory.class.getName());
 
-    private Map<Integer, CorrelationAttributeInstance.Type> correlationTypeMap;
     private final Set<Account> accounts;
 
     /**
@@ -59,14 +59,14 @@ final class CorrelationCaseChildNodeFactory extends ChildFactory<CorrelationCase
 
     @Override
     protected boolean createKeys(List<CorrelationCase> list) {
-        if (!EamDb.isEnabled()) {
+        if (!CentralRepository.isEnabled()) {
             return true;
         }
 
-        EamDb dbInstance;
+        CentralRepository dbInstance;
         try {
-            dbInstance = EamDb.getInstance();
-        } catch (EamDbException ex) {
+            dbInstance = CentralRepository.getInstance();
+        } catch (CentralRepoException ex) {
             logger.log(Level.SEVERE, "Unable to connect to the Central Repository database.", ex); //NON-NLS
             return false;
         }
@@ -83,7 +83,7 @@ final class CorrelationCaseChildNodeFactory extends ChildFactory<CorrelationCase
                         uniqueCaseMap.put(correlationCase.getCaseUUID(), correlationCase);
                     });
                 }
-            } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
+            } catch (CentralRepoException | CorrelationAttributeNormalizationException ex) {
                 logger.log(Level.WARNING, String.format("Unable to getArtifactInstance for accountID: %d", account.getAccountID()), ex); //NON-NLS
             }
         });
@@ -106,24 +106,17 @@ final class CorrelationCaseChildNodeFactory extends ChildFactory<CorrelationCase
      * @return CorrelationAttributeInstance.Type for given account or null if
      *         there is no match
      *
-     * @throws EamDbException
+     * @throws CentralRepoException
      */
-    private CorrelationAttributeInstance.Type getCorrelationType(Account.Type accountType) throws EamDbException {
-        if (correlationTypeMap == null) {
-            correlationTypeMap = new HashMap<>();
-            List<CorrelationAttributeInstance.Type> correcationTypeList = CorrelationAttributeInstance.getDefaultCorrelationTypes();
-            correcationTypeList.forEach((type) -> {
-                correlationTypeMap.put(type.getId(), type);
-            });
+    private CorrelationAttributeInstance.Type getCorrelationType(Account.Type accountType) throws CentralRepoException {        
+        String accountTypeStr = accountType.getTypeName();
+        if (Account.Type.DEVICE.getTypeName().equalsIgnoreCase(accountTypeStr) == false) {
+            CentralRepoAccount.CentralRepoAccountType crAccountType = CentralRepository.getInstance().getAccountTypeByName(accountTypeStr);
+            int corrTypeId = crAccountType.getCorrelationTypeId();
+            return CentralRepository.getInstance().getCorrelationTypeById(corrTypeId);
         }
-
-        if (Account.Type.EMAIL.equals(accountType)) {
-            return correlationTypeMap.get(CorrelationAttributeInstance.EMAIL_TYPE_ID);
-        } else if (Account.Type.PHONE.equals(accountType)) {
-            return correlationTypeMap.get(CorrelationAttributeInstance.PHONE_TYPE_ID);
-        } else {
-            return null;
-        }
+       
+        return null;
     }
 
     /**

@@ -1,7 +1,6 @@
 EncryptionDetectionDataSourceIngestModule.artifactComment.bitlocker=Bitlocker encryption detected.
 EncryptionDetectionDataSourceIngestModule.artifactComment.suspected=Suspected encryption due to high entropy (%f).
 EncryptionDetectionDataSourceIngestModule.processing.message=Checking image for encryption.
-EncryptionDetectionFileIngestModule.artifactComment.location=High entropy and known location/extension.
 EncryptionDetectionFileIngestModule.artifactComment.password=Password protection detected.
 EncryptionDetectionFileIngestModule.artifactComment.suspected=Suspected encryption due to high entropy (%f).
 EncryptionDetectionFileIngestModule.getDesc.text=Looks for files with the specified minimum entropy.

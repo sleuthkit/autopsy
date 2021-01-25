@@ -1,7 +1,7 @@
 """
 Autopsy Forensic Browser
 
-Copyright 2019 Basis Technology Corp.
+Copyright 2019-2020 Basis Technology Corp.
 Contact: carrier <at> sleuthkit <dot> org
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -43,6 +43,8 @@ from org.sleuthkit.datamodel import TskCoreException
 from org.sleuthkit.datamodel.Blackboard import BlackboardException
 from org.sleuthkit.datamodel import Account
 from org.sleuthkit.datamodel.blackboardutils import CommunicationArtifactsHelper
+from org.sleuthkit.datamodel.blackboardutils.attributes import MessageAttachments
+from org.sleuthkit.datamodel.blackboardutils.attributes.MessageAttachments import FileAttachment
 from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import MessageReadStatus
 from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import CommunicationDirection
 
@@ -54,6 +56,20 @@ Finds the SQLite DB for ShareIt, parses the DB for contacts & messages,
 and adds artifacts to the case.
 """
 class ShareItAnalyzer(general.AndroidComponentAnalyzer):
+
+    """
+        ShareIt is a file transfer utility app.
+        
+        This module finds the SQLite DB for Xender, parses the DB for contacts & messages,
+        and adds artifacts to the case.
+
+        ShareIt version 5.0.28 has the following database structure:
+            - history.db 
+                -- A history table, with records of file transfers 
+                -- An item table with details of the files transfered
+                    
+                
+    """
 
     def __init__(self):
         self._logger = Logger.getLogger(self.__class__.__name__)
@@ -71,38 +87,43 @@ class ShareItAnalyzer(general.AndroidComponentAnalyzer):
                                     self._MODULE_NAME, historyDb.getDBFile(),
                                     Account.Type.SHAREIT)
 
-                queryString = "SELECT history_type, device_id, device_name, description, timestamp, import_path FROM history"
+                queryString = """
+                                SELECT history_type, device_id, device_name, description, timestamp, file_path
+                                FROM history
+                                JOIN item where history.content_id = item.item_id
+                              """
                 historyResultSet = historyDb.runQuery(queryString)
                 if historyResultSet is not None:
                     while historyResultSet.next():
                         direction = ""
-                        fromAddress = None
-                        toAdddress = None
+                        fromId = None
+                        toId = None
+                        fileAttachments = ArrayList()
                         
                         if (historyResultSet.getInt("history_type") == 1):
-                            direction = CommunicationDirection.OUTGOING
-                            toAddress = Account.Address(historyResultSet.getString("device_id"), historyResultSet.getString("device_name") )
-                        else:
                             direction = CommunicationDirection.INCOMING
-                            fromAddress = Account.Address(historyResultSet.getString("device_id"), historyResultSet.getString("device_name") )
+                            fromId = historyResultSet.getString("device_id")
+                        else:
+                            direction = CommunicationDirection.OUTGOING
+                            toId = historyResultSet.getString("device_id")
                             
-                        msgBody = ""    # there is no body.
-                        attachments = [historyResultSet.getString("import_path")]
-                        msgBody = general.appendAttachmentList(msgBody, attachments)
-                        
                         timeStamp = historyResultSet.getLong("timestamp") / 1000
-                        messageArtifact = transferDbHelper.addMessage(
+                        messageArtifact = historyDbHelper.addMessage(
                                                             self._MESSAGE_TYPE,
                                                             direction,
-                                                            fromAddress,
-                                                            toAddress,
+                                                            fromId,
+                                                            toId,
                                                             timeStamp,
                                                             MessageReadStatus.UNKNOWN,
                                                             None,   # subject
-                                                            msgBody,
+                                                            None,   # message text
                                                             None )  # thread id
                                                                                                 
-                        # TBD: add the file as attachment ??
+                        # add the file as attachment
+                        fileAttachments.add(FileAttachment(current_case.getSleuthkitCase(), historyDb.getDBFile().getDataSource(), historyResultSet.getString("file_path")))
+                        messageAttachments = MessageAttachments(fileAttachments, [])
+                        historyDbHelper.addAttachments(messageArtifact, messageAttachments)
+                        
 
             except SQLException as ex:
                 self._logger.log(Level.WARNING, "Error processing query result for ShareIt history.", ex)

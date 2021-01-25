@@ -1,7 +1,7 @@
 """
 Autopsy Forensic Browser
 
-Copyright 2019 Basis Technology Corp.
+Copyright 2019-2020 Basis Technology Corp.
 Contact: carrier <at> sleuthkit <dot> org
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -42,6 +42,8 @@ from org.sleuthkit.datamodel import Content
 from org.sleuthkit.datamodel import TskCoreException
 from org.sleuthkit.datamodel.Blackboard import BlackboardException
 from org.sleuthkit.datamodel import Account
+from org.sleuthkit.datamodel.blackboardutils.attributes import MessageAttachments
+from org.sleuthkit.datamodel.blackboardutils.attributes.MessageAttachments import FileAttachment
 from org.sleuthkit.datamodel.blackboardutils import CommunicationArtifactsHelper
 from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import MessageReadStatus
 from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import CommunicationDirection
@@ -49,11 +51,20 @@ from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import
 import traceback
 import general
 
-"""
-Finds the SQLite DB for Zapya, parses the DB for contacts & messages,
-and adds artifacts to the case.
-"""
 class ZapyaAnalyzer(general.AndroidComponentAnalyzer):
+
+    """
+        Zapya is a file transfer utility app.
+        
+        This module finds the SQLite DB for Zapya, parses the DB for contacts & messages,
+        and adds artifacts to the case.
+
+        Zapya version 5.8.3 has the following database structure:
+            - transfer20.db 
+                -- A transfer table, with records of files exchanged with other users
+                    --- path - path of the file sent/received
+                
+    """
 
     def __init__(self):
         self._logger = Logger.getLogger(self.__class__.__name__)
@@ -77,36 +88,36 @@ class ZapyaAnalyzer(general.AndroidComponentAnalyzer):
                 if transfersResultSet is not None:
                     while transfersResultSet.next():
                         direction = CommunicationDirection.UNKNOWN
-                        fromAddress = None
-                        toAddress = None
+                        fromId = None
+                        toId = None
+                        fileAttachments = ArrayList()
                     
                         if (transfersResultSet.getInt("direction") == 1):
                             direction = CommunicationDirection.OUTGOING
-                            toAddress = Account.Address(transfersResultSet.getString("device"), transfersResultSet.getString("name") )
+                            toId = transfersResultSet.getString("device")
                         else:
                             direction = CommunicationDirection.INCOMING
-                            fromAddress = Account.Address(transfersResultSet.getString("device"), transfersResultSet.getString("name") )
-
-                        msgBody = ""    # there is no body.
-                        attachments = [transfersResultSet.getString("path")]
-                        msgBody = general.appendAttachmentList(msgBody, attachments)
+                            fromId = transfersResultSet.getString("device")
                         
                         timeStamp = transfersResultSet.getLong("createtime") / 1000
                         messageArtifact = transferDbHelper.addMessage( 
                                                             self._MESSAGE_TYPE,
                                                             direction,
-                                                            fromAddress,
-                                                            toAddress,
+                                                            fromId,
+                                                            toId,
                                                             timeStamp,
                                                             MessageReadStatus.UNKNOWN,
                                                             None,   # subject
-                                                            msgBody,
+                                                            None,   # message Text
                                                             None )    # thread id
                                                                                                 
-                        # TBD: add the file as attachment ??
+                        # add the file as attachment 
+                        fileAttachments.add(FileAttachment(current_case.getSleuthkitCase(), transferDb.getDBFile().getDataSource(), transfersResultSet.getString("path")))
+                        messageAttachments = MessageAttachments(fileAttachments, [])
+                        transferDbHelper.addAttachments(messageArtifact, messageAttachments)
 
             except SQLException as ex:
-                self._logger.log(Level.WARNING, "Error processing query result for transfer", ex)
+                self._logger.log(Level.WARNING, "Error processing query result for transfer.", ex)
                 self._logger.log(Level.WARNING, traceback.format_exc())
             except TskCoreException as ex:
                 self._logger.log(Level.SEVERE, "Failed to create Zapya message artifacts.", ex)

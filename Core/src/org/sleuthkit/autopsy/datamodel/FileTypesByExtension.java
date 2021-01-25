@@ -43,9 +43,12 @@ import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.FileTypes.FileTypesKey;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.autopsy.guiutils.RefreshThrottler;
 
 /**
  * Filters database results by file extension.
@@ -80,20 +83,26 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
      * Listens for case and ingest invest. Updates observers when events are
      * fired. FileType and FileTypes nodes are all listening to this.
      */
-    private class FileTypesByExtObservable extends Observable {
+    private class FileTypesByExtObservable extends Observable implements RefreshThrottler.Refresher {
 
         private final PropertyChangeListener pcl;
         private final Set<Case.Events> CASE_EVENTS_OF_INTEREST;
+        /**
+         * RefreshThrottler is used to limit the number of refreshes performed
+         * when CONTENT_CHANGED and DATA_ADDED ingest module events are
+         * received.
+         */
+        private final RefreshThrottler refreshThrottler = new RefreshThrottler(this);
 
         private FileTypesByExtObservable() {
             super();
             this.CASE_EVENTS_OF_INTEREST = EnumSet.of(Case.Events.DATA_SOURCE_ADDED, Case.Events.CURRENT_CASE);
             this.pcl = (PropertyChangeEvent evt) -> {
                 String eventType = evt.getPropertyName();
-                if (eventType.equals(IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString())
-                        || eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
+                if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
                         || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())
                         || eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
+
                     /**
                      * Checking for a current case is a stop gap measure until a
                      * different way of handling the closing of cases is worked
@@ -118,14 +127,14 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
             };
 
             IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, pcl);
-            IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, pcl);
+            refreshThrottler.registerForIngestModuleEvents();
             Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, pcl);
         }
 
         private void removeListeners() {
             deleteObservers();
             IngestManager.getInstance().removeIngestJobEventListener(pcl);
-            IngestManager.getInstance().removeIngestModuleEventListener(pcl);
+            refreshThrottler.unregisterEventListener();
             Case.removeEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, pcl);
         }
 
@@ -133,7 +142,52 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
             setChanged();
             notifyObservers();
         }
+
+        @Override
+        public void refresh() {
+            typesRoot.updateShowCounts();
+            update();
+        }
+
+        @Override
+        public boolean isRefreshRequired(PropertyChangeEvent evt) {
+            String eventType = evt.getPropertyName();
+            if (eventType.equals(IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString())) {
+
+                /**
+                 * Checking for a current case is a stop gap measure until a
+                 * different way of handling the closing of cases is worked out.
+                 * Currently, remote events may be received for a case that is
+                 * already closed.
+                 */
+                try {
+                    Case.getCurrentCaseThrows();
+                    /**
+                     * If a new file has been added but does not have an
+                     * extension there is nothing to do.
+                     */
+                    if ((evt.getOldValue() instanceof ModuleContentEvent) == false) {
+                        return false;
+                    }
+                    ModuleContentEvent moduleContentEvent = (ModuleContentEvent) evt.getOldValue();
+                    if ((moduleContentEvent.getSource() instanceof AbstractFile) == false) {
+                        return false;
+                    }
+                    AbstractFile abstractFile = (AbstractFile) moduleContentEvent.getSource();
+                    if (!abstractFile.getNameExtension().isEmpty()) {
+                        return true;
+                    }
+                } catch (NoCurrentCaseException ex) {
+                    /**
+                     * Case is closed, no refresh needed.
+                     */
+                    return false;
+                }
+            }
+            return false;
+        }
     }
+
     private static final String FNAME = NbBundle.getMessage(FileTypesByExtNode.class, "FileTypesByExtNode.fname.text");
 
     /**
@@ -415,7 +469,7 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
 
         @Override
         public void update(Observable o, Object arg) {
-            refresh(true);
+            refresh(false);
         }
 
         @Override

@@ -70,12 +70,6 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
 
         initScriptsCheckBoxes();
         reloadScriptsCheckBoxes();
-        
-        if (!PlatformUtil.isWindowsOS() || !PlatformUtil.is64BitOS()) {
-            enableOcrCheckbox.setText("Enable Optical Character Recognition (OCR) (Requires Windows 64-bit)");
-            enableOcrCheckbox.setSelected(false);
-            enableOcrCheckbox.setEnabled(false);
-        }
 
         //allow panel to toggle its enabled status while it is open based on ingest events
         IngestManager.getInstance().addIngestJobEventListener(new PropertyChangeListener() {
@@ -136,9 +130,6 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
                 = Boolean.parseBoolean(KeywordSearchSettings.getStringExtractOption(StringsExtractOptions.EXTRACT_UTF8.toString()));
         enableUTF8Checkbox.setSelected(utf8);
 
-        boolean ocr = KeywordSearchSettings.getOcrOption();
-        enableOcrCheckbox.setSelected(ocr);
-
         final List<SCRIPT> serviceScripts = KeywordSearchSettings.getStringExtractScripts();
         final int components = checkPanel.getComponentCount();
 
@@ -170,7 +161,6 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
         ingestWarningLabel.setVisible(ingestRunning);
         enableUTF16Checkbox.setEnabled(!ingestRunning);
         enableUTF8Checkbox.setEnabled(!ingestRunning);
-        enableOcrCheckbox.setEnabled(!ingestRunning);
     }
 
     /**
@@ -188,7 +178,6 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
         enableUTF8Checkbox = new javax.swing.JCheckBox();
         enableUTF16Checkbox = new javax.swing.JCheckBox();
         ingestSettingsLabel = new javax.swing.JLabel();
-        enableOcrCheckbox = new javax.swing.JCheckBox();
         ingestWarningLabel = new javax.swing.JLabel();
 
         org.openide.awt.Mnemonics.setLocalizedText(languagesLabel, org.openide.util.NbBundle.getMessage(KeywordSearchGlobalLanguageSettingsPanel.class, "KeywordSearchGlobalLanguageSettingsPanel.languagesLabel.text")); // NOI18N
@@ -205,7 +194,7 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
         );
         checkPanelLayout.setVerticalGroup(
             checkPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 378, Short.MAX_VALUE)
+            .addGap(0, 406, Short.MAX_VALUE)
         );
 
         langPanel.setViewportView(checkPanel);
@@ -226,14 +215,6 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
 
         org.openide.awt.Mnemonics.setLocalizedText(ingestSettingsLabel, org.openide.util.NbBundle.getMessage(KeywordSearchGlobalLanguageSettingsPanel.class, "KeywordSearchGlobalLanguageSettingsPanel.ingestSettingsLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(enableOcrCheckbox, org.openide.util.NbBundle.getMessage(KeywordSearchGlobalLanguageSettingsPanel.class, "KeywordSearchGlobalLanguageSettingsPanel.enableOcrCheckbox.text")); // NOI18N
-        enableOcrCheckbox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                enableOcrCheckboxActionPerformed(evt);
-            }
-        });
-
-        ingestWarningLabel.setFont(ingestWarningLabel.getFont().deriveFont(ingestWarningLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         ingestWarningLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/modules/hashdatabase/warning16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(ingestWarningLabel, org.openide.util.NbBundle.getMessage(KeywordSearchGlobalLanguageSettingsPanel.class, "KeywordSearchGlobalLanguageSettingsPanel.ingestWarningLabel.text")); // NOI18N
 
@@ -242,23 +223,22 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(ingestSettingsLabel)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                    .addComponent(languagesLabel, javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(langPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(ingestWarningLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 360, Short.MAX_VALUE))))
+                        .addComponent(langPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(ingestWarningLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 360, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(26, 26, 26)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(enableUTF16Checkbox)
-                            .addComponent(enableUTF8Checkbox)
-                            .addComponent(enableOcrCheckbox))))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(languagesLabel)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(16, 16, 16)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addComponent(enableUTF16Checkbox)
+                                    .addComponent(enableUTF8Checkbox)))
+                            .addComponent(ingestSettingsLabel))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -266,18 +246,16 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(ingestSettingsLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(enableOcrCheckbox)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(enableUTF16Checkbox)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(enableUTF8Checkbox)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(languagesLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(langPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 380, Short.MAX_VALUE))
+                        .addComponent(langPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 408, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(ingestWarningLabel)))
@@ -302,13 +280,8 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
         firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_enableUTF16CheckboxActionPerformed
 
-    private void enableOcrCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_enableOcrCheckboxActionPerformed
-        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
-    }//GEN-LAST:event_enableOcrCheckboxActionPerformed
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel checkPanel;
-    private javax.swing.JCheckBox enableOcrCheckbox;
     private javax.swing.JCheckBox enableUTF16Checkbox;
     private javax.swing.JCheckBox enableUTF8Checkbox;
     private javax.swing.JLabel ingestSettingsLabel;
@@ -323,7 +296,6 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
                 Boolean.toString(enableUTF8Checkbox.isSelected()));
         KeywordSearchSettings.setStringExtractOption(StringsExtractOptions.EXTRACT_UTF16.toString(),
                 Boolean.toString(enableUTF16Checkbox.isSelected()));
-        KeywordSearchSettings.setOcrOption(enableOcrCheckbox.isSelected());
 
         if (toUpdate != null) {
             KeywordSearchSettings.setStringExtractScripts(toUpdate);

@@ -45,33 +45,69 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
     private static final Charset UTF_8 = StandardCharsets.UTF_8;
 
     //Chunking algorithm paramaters-------------------------------------//
-    /** the maximum size of a chunk, including the window. */
+    /**
+     * the maximum size of a chunk, including the window.
+     */
     private static final int MAX_TOTAL_CHUNK_SIZE = 32760; //bytes
-    /** the minimum to read before we start the process of looking for
-     * whitespace to break at and creating an overlapping window. */
+    /**
+     * the minimum to read before we start the process of looking for whitespace
+     * to break at and creating an overlapping window.
+     */
     private static final int MINIMUM_BASE_CHUNK_SIZE = 30 * 1024; //bytes
-    /** The maximum size of the chunk, before the overlapping window, even if we
-     * couldn't find whitespace to break at. */
+    /**
+     * The maximum size of the chunk, before the overlapping window, even if we
+     * couldn't find whitespace to break at.
+     */
     private static final int MAXIMUM_BASE_CHUNK_SIZE = 31 * 1024; //bytes
-    /** The amount of text we will read through before we give up on finding
-     * whitespace to break the chunk/window at. */
+    /**
+     * The amount of text we will read through before we give up on finding
+     * whitespace to break the chunk/window at.
+     */
     private static final int WHITE_SPACE_BUFFER_SIZE = 512; //bytes
-    /** The number of characters to read in one go from the Reader. */
+    /**
+     * The number of characters to read in one go from the Reader.
+     */
     private static final int READ_CHARS_BUFFER_SIZE = 512; //chars
+    /**
+     * When toLowerCase() is called on a character, the lower cased output 
+     * can be different in size than the original input. I have seen a single
+     * input character turn into 3 characters (and 5 bytes) after lowercasing. 
+     * I could not find any info as to what is the upper limit of how much a 
+     * character can "increase in size" during lower casing. I'm guestimating
+     * and setting that limit at 10 bytes.
+     */
+    private static final int MAX_CHAR_SIZE_INCREASE_IN_BYTES = 10; //bytes
 
     ////chunker state--------------------------------------------///
-    /** The Reader that this chunk reads from, and divides into chunks. It must
-     * be a buffered reader to ensure that mark/reset are supported. */
+    /**
+     * The Reader that this chunk reads from, and divides into chunks. It must
+     * be a buffered reader to ensure that mark/reset are supported.
+     */
     private final PushbackReader reader;
-    /** The local buffer of characters read from the Reader. */
+    /**
+     * The local buffer of characters read from the Reader.
+     */
     private final char[] tempChunkBuf = new char[READ_CHARS_BUFFER_SIZE];
 
-    /** the size in bytes of the chunk (so far). */
+    /**
+     * the size in bytes of the chunk (so far).
+     */
     private int chunkSizeBytes = 0;
-    /** Has the chunker reached the end of the Reader? If so, there are no more
-     * chunks, and the current chunk does not need a window. */
+
+    /**
+     * the size in bytes of the lowercased chunk (so far). Note that lowercasing
+     * in Java can change the size of the string so we need to make sure the
+     * lowercased string also fits in MAX_TOTAL_CHUNK_SIZE.
+     */
+    private int lowerCasedChunkSizeBytes = 0;
+    /**
+     * Has the chunker reached the end of the Reader? If so, there are no more
+     * chunks, and the current chunk does not need a window.
+     */
     private boolean endOfReaderReached = false;
-    /** Store any exception encountered reading from the Reader. */
+    /**
+     * Store any exception encountered reading from the Reader.
+     */
     private Exception ex;
 
     /**
@@ -140,7 +176,7 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
      * @param s The string to cleanup.
      *
      * @return A StringBuilder with the same content as s but where all invalid
-     *         code     *         points have been replaced.
+     * code * points have been replaced.
      */
     private static StringBuilder replaceInvalidUTF16(String s) {
         /* encode the string to UTF-16 which does the replcement, see
@@ -148,10 +184,16 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
         return new StringBuilder(UTF_16.decode(UTF_16.encode(s)));
     }
 
-    private static StringBuilder sanitize(String s) {
+    /**
+     * Wrapper method that performs UTF-8 string sanitization.
+     *
+     * @param s String to be sanitized.
+     *
+     * @return Sanitized string.
+     */
+    static StringBuilder sanitize(String s) {
         String normStr = Normalizer.normalize(s, Normalizer.Form.NFKC);
         return sanitizeToUTF8(replaceInvalidUTF16(normStr));
-
     }
 
     @Override
@@ -162,16 +204,18 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
         //reset state for the next chunk
 
         chunkSizeBytes = 0;
+        lowerCasedChunkSizeBytes = 0;
         int baseChunkSizeChars = 0;
         StringBuilder currentChunk = new StringBuilder();
         StringBuilder currentWindow = new StringBuilder();
+        StringBuilder lowerCasedChunk = new StringBuilder();
 
         try {
-            currentChunk.append(readBaseChunk());
+            readBaseChunk(currentChunk, lowerCasedChunk);
             baseChunkSizeChars = currentChunk.length(); //save the base chunk length
-            currentWindow.append(readWindow());
-                //add the window text to the current chunk.
-        currentChunk.append(currentWindow);
+            readWindow(currentWindow, lowerCasedChunk);
+            //add the window text to the current chunk.
+            currentChunk.append(currentWindow);
             if (endOfReaderReached) {
                 /* if we have reached the end of the content,we won't make
                  * another overlapping chunk, so the length of the base chunk
@@ -186,9 +230,9 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
              * and break any chunking loop in client code. */
             ex = ioEx;
         }
-    
+
         //sanitize the text and return a Chunk object, that includes the base chunk length.
-        return new Chunk(currentChunk, baseChunkSizeChars, chunkSizeBytes);
+        return new Chunk(currentChunk, baseChunkSizeChars, lowerCasedChunk);
     }
 
     /**
@@ -196,14 +240,12 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
      *
      * @throws IOException if there is a problem reading from the reader.
      */
-    private StringBuilder readBaseChunk() throws IOException {
-        StringBuilder currentChunk = new StringBuilder();
+    private void readBaseChunk(StringBuilder currentChunk, StringBuilder lowerCasedChunk) throws IOException {
         //read the chunk until the minimum base chunk size
-        readHelper(MINIMUM_BASE_CHUNK_SIZE, currentChunk);
+        readHelper(MINIMUM_BASE_CHUNK_SIZE, currentChunk, lowerCasedChunk);
 
         //keep reading until the maximum base chunk size or white space is reached.
-        readToWhiteSpaceHelper(MAXIMUM_BASE_CHUNK_SIZE, currentChunk);
-        return currentChunk;
+        readToWhiteSpaceHelper(MAXIMUM_BASE_CHUNK_SIZE, currentChunk, lowerCasedChunk);
     }
 
     /**
@@ -211,14 +253,12 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
      *
      * @throws IOException if there is a problem reading from the reader.
      */
-    private StringBuilder readWindow() throws IOException {
-        StringBuilder currentWindow = new StringBuilder();
+    private void readWindow(StringBuilder currentChunk, StringBuilder lowerCasedChunk) throws IOException {
         //read the window, leaving some room to look for white space to break at.
-        readHelper(MAX_TOTAL_CHUNK_SIZE - WHITE_SPACE_BUFFER_SIZE, currentWindow);
+        readHelper(MAX_TOTAL_CHUNK_SIZE - WHITE_SPACE_BUFFER_SIZE, currentChunk, lowerCasedChunk);
 
         //keep reading until the max chunk size, or until whitespace is reached.
-        readToWhiteSpaceHelper(MAX_TOTAL_CHUNK_SIZE, currentWindow);
-        return currentWindow;
+        readToWhiteSpaceHelper(MAX_TOTAL_CHUNK_SIZE, currentChunk, lowerCasedChunk);
     }
 
     /**
@@ -229,10 +269,10 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
      *
      * @throws IOException
      */
-    private void readHelper(int maxBytes, StringBuilder currentSegment) throws IOException {
+    private void readHelper(int maxBytes, StringBuilder currentSegment, StringBuilder currentLowerCasedSegment) throws IOException {
         int charsRead = 0;
         //read chars up to maxBytes, or the end of the reader.
-        while ((chunkSizeBytes < maxBytes)
+        while ((chunkSizeBytes < maxBytes) && (lowerCasedChunkSizeBytes < maxBytes)
                 && (endOfReaderReached == false)) {
             charsRead = reader.read(tempChunkBuf, 0, READ_CHARS_BUFFER_SIZE);
             if (-1 == charsRead) {
@@ -253,11 +293,19 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
                 //get the length in utf8 bytes of the read chars
                 int segmentSize = chunkSegment.toString().getBytes(UTF_8).length;
 
+                // lower case the string and get it's size. NOTE: lower casing can 
+                // change the size of the string!
+                String lowerCasedSegment = chunkSegment.toString().toLowerCase();
+                int lowerCasedSegmentSize = lowerCasedSegment.getBytes(UTF_8).length;
+
                 //if it will not put us past maxBytes
-                if (chunkSizeBytes + segmentSize < maxBytes) {
+                if ((chunkSizeBytes + segmentSize < maxBytes) && (lowerCasedChunkSizeBytes + lowerCasedSegmentSize < maxBytes)) {
                     //add it to the chunk
                     currentSegment.append(chunkSegment);
                     chunkSizeBytes += segmentSize;
+
+                    currentLowerCasedSegment.append(lowerCasedSegment);
+                    lowerCasedChunkSizeBytes += lowerCasedSegmentSize;
                 } else {
                     //unread it, and break out of read loop.
                     reader.unread(tempChunkBuf, 0, charsRead);
@@ -275,11 +323,12 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
      *
      * @throws IOException
      */
-    private void readToWhiteSpaceHelper(int maxBytes, StringBuilder currentChunk) throws IOException {
+    private void readToWhiteSpaceHelper(int maxBytes, StringBuilder currentChunk, StringBuilder lowerCasedChunk) throws IOException {
         int charsRead = 0;
         boolean whitespaceFound = false;
         //read 1 char at a time up to maxBytes, whitespaceFound, or we reach the end of the reader.
-        while ((chunkSizeBytes < maxBytes)
+        while ((chunkSizeBytes < maxBytes - MAX_CHAR_SIZE_INCREASE_IN_BYTES) 
+                && (lowerCasedChunkSizeBytes < maxBytes - MAX_CHAR_SIZE_INCREASE_IN_BYTES)
                 && (whitespaceFound == false)
                 && (endOfReaderReached == false)) {
             charsRead = reader.read(tempChunkBuf, 0, 1);
@@ -293,8 +342,9 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
                 String chunkSegment;
                 if (Character.isHighSurrogate(ch)) {
                     //read another char into the buffer.
-                    charsRead = reader.read(tempChunkBuf, 1, 1);
-                    if (charsRead == -1) {
+                    int surrogateCharsRead = reader.read(tempChunkBuf, 1, 1);
+                    charsRead += surrogateCharsRead;
+                    if (surrogateCharsRead == -1) {
                         //this is the last chunk, so just drop the unpaired surrogate
                         endOfReaderReached = true;
                         return;
@@ -309,11 +359,32 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
 
                 //cleanup any invalid utf-16 sequences
                 StringBuilder sanitizedChunkSegment = sanitize(chunkSegment);
-                //check for whitespace.
-                whitespaceFound = Character.isWhitespace(sanitizedChunkSegment.codePointAt(0));
-                //add read chars to the chunk and update the length.
-                currentChunk.append(sanitizedChunkSegment);
-                chunkSizeBytes += sanitizedChunkSegment.toString().getBytes(UTF_8).length;
+                //get the length in utf8 bytes of the read chars
+                int segmentSize = chunkSegment.getBytes(UTF_8).length;
+                
+                // lower case the string and get it's size. NOTE: lower casing can 
+                // change the size of the string.
+                String lowerCasedSegment = sanitizedChunkSegment.toString().toLowerCase();
+                int lowerCasedSegmentSize = lowerCasedSegment.getBytes(UTF_8).length;
+                
+                //if it will not put us past maxBytes
+                if ((chunkSizeBytes + segmentSize < maxBytes - MAX_CHAR_SIZE_INCREASE_IN_BYTES)
+                        && (lowerCasedChunkSizeBytes + lowerCasedSegmentSize < maxBytes - MAX_CHAR_SIZE_INCREASE_IN_BYTES)) {
+
+                    //add read chars to the chunk and update the length.
+                    currentChunk.append(sanitizedChunkSegment);
+                    chunkSizeBytes += segmentSize;
+
+                    lowerCasedChunk.append(lowerCasedSegment);
+                    lowerCasedChunkSizeBytes += lowerCasedSegmentSize;
+                    
+                    //check for whitespace.
+                    whitespaceFound = Character.isWhitespace(sanitizedChunkSegment.codePointAt(0));
+                } else {
+                    //unread it, and break out of read loop.
+                    reader.unread(tempChunkBuf, 0, charsRead);
+                    return;
+                }
             }
         }
     }
@@ -326,16 +397,16 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
 
         private final StringBuilder sb;
         private final int baseChunkSizeChars;
-        private final int chunkSizeBytes;
+        private final StringBuilder lowerCasedChunk;
 
-        Chunk(StringBuilder sb, int baseChunkSizeChars, int chunkSizeBytes) {
+        Chunk(StringBuilder sb, int baseChunkSizeChars, StringBuilder lowerCasedChunk) {
             this.sb = sb;
             this.baseChunkSizeChars = baseChunkSizeChars;
-            this.chunkSizeBytes = chunkSizeBytes;
+            this.lowerCasedChunk = lowerCasedChunk;
         }
 
         /**
-         * Get the content of the chunk.
+         * Get the content of the original (non-lower cased) chunk.
          *
          * @return The content of the chunk.
          */
@@ -345,16 +416,16 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
         }
 
         /**
-         * Get the size in bytes of the utf-8 encoding of the entire chunk.
+         * Get the content of the lower cased chunk.
          *
-         * @return the size in bytes of the utf-8 encoding of the entire chunk
+         * @return The content of the chunk.
          */
-        public int getChunkSizeBytes() {
-            return chunkSizeBytes;
+        public String geLowerCasedChunk() {
+            return lowerCasedChunk.toString();
         }
 
         /**
-         * Get the length of the base chunk in java chars.
+         * Get the length of the original (non-lower cased) base chunk in java chars.
          *
          * @return the length of the base chunk in java chars.
          */

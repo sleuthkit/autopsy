@@ -1,7 +1,7 @@
 /*
  * Autopsy
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,17 +24,21 @@ import com.google.cloud.translate.Language;
 import com.google.cloud.translate.Translate;
 import com.google.cloud.translate.TranslateOptions;
 import com.google.cloud.translate.Translation;
+import java.awt.Desktop;
 import java.awt.event.ItemListener;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JFileChooser;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle.Messages;
@@ -59,6 +63,23 @@ public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
         targetLanguageCode = languageCode;
         credentialsPathField.setText(credentialsPath);
         populateTargetLanguageComboBox();
+        
+        instructionsTextArea.addHyperlinkListener(new HyperlinkListener() {
+            @Override
+            public void hyperlinkUpdate(HyperlinkEvent e) {
+                if(e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+                    // Try to display the URL in the user's browswer. 
+                    if(Desktop.isDesktopSupported()) {
+                        try {
+                            Desktop.getDesktop().browse(e.getURL().toURI());
+                        } catch (IOException | URISyntaxException ex) {
+                            logger.log(Level.WARNING, "Failed to display URL in external viewer", ex);
+                        }
+                    }
+
+                }
+            }
+        });
     }
 
     /**
@@ -184,12 +205,13 @@ public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
+        java.awt.GridBagConstraints gridBagConstraints;
 
-        credentialsLabel = new javax.swing.JLabel();
+        javax.swing.JLabel credentialsLabel = new javax.swing.JLabel();
         credentialsPathField = new javax.swing.JTextField();
         browseButton = new javax.swing.JButton();
         targetLanguageComboBox = new javax.swing.JComboBox<>();
-        targetLanguageLabel = new javax.swing.JLabel();
+        javax.swing.JLabel targetLanguageLabel = new javax.swing.JLabel();
         warningLabel = new javax.swing.JLabel();
         testResultValueLabel = new javax.swing.JLabel();
         resultLabel = new javax.swing.JLabel();
@@ -197,41 +219,122 @@ public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
         testUntranslatedTextField = new javax.swing.JTextField();
         testButton = new javax.swing.JButton();
         instructionsScrollPane = new javax.swing.JScrollPane();
-        instructionsTextArea = new javax.swing.JTextArea();
+        instructionsTextArea = new javax.swing.JTextPane();
+        javax.swing.Box.Filler filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 0));
+
+        setLayout(new java.awt.GridBagLayout());
 
         org.openide.awt.Mnemonics.setLocalizedText(credentialsLabel, org.openide.util.NbBundle.getMessage(GoogleTranslatorSettingsPanel.class, "GoogleTranslatorSettingsPanel.credentialsLabel.text")); // NOI18N
+        credentialsLabel.setMaximumSize(new java.awt.Dimension(200, 16));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.gridwidth = 3;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(17, 12, 0, 0);
+        add(credentialsLabel, gridBagConstraints);
 
         credentialsPathField.setEditable(false);
-        credentialsPathField.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                credentialsPathFieldActionPerformed(evt);
-            }
-        });
+        credentialsPathField.setMaximumSize(new java.awt.Dimension(700, 22));
+        credentialsPathField.setPreferredSize(new java.awt.Dimension(100, 22));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 3;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.gridwidth = 6;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(14, 7, 0, 0);
+        add(credentialsPathField, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(browseButton, org.openide.util.NbBundle.getMessage(GoogleTranslatorSettingsPanel.class, "GoogleTranslatorSettingsPanel.browseButton.text")); // NOI18N
+        browseButton.setMaximumSize(new java.awt.Dimension(100, 25));
         browseButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 browseButtonActionPerformed(evt);
             }
         });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 9;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(13, 7, 0, 0);
+        add(browseButton, gridBagConstraints);
 
         targetLanguageComboBox.setEnabled(false);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 3;
+        gridBagConstraints.gridy = 2;
+        gridBagConstraints.gridwidth = 4;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(13, 7, 0, 0);
+        add(targetLanguageComboBox, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(targetLanguageLabel, org.openide.util.NbBundle.getMessage(GoogleTranslatorSettingsPanel.class, "GoogleTranslatorSettingsPanel.targetLanguageLabel.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 2;
+        gridBagConstraints.gridwidth = 3;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(16, 12, 0, 0);
+        add(targetLanguageLabel, gridBagConstraints);
 
         warningLabel.setForeground(new java.awt.Color(255, 0, 0));
         org.openide.awt.Mnemonics.setLocalizedText(warningLabel, org.openide.util.NbBundle.getMessage(GoogleTranslatorSettingsPanel.class, "GoogleTranslatorSettingsPanel.warningLabel.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 4;
+        gridBagConstraints.gridwidth = 10;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(13, 12, 6, 0);
+        add(warningLabel, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(testResultValueLabel, org.openide.util.NbBundle.getMessage(GoogleTranslatorSettingsPanel.class, "GoogleTranslatorSettingsPanel.testResultValueLabel.text")); // NOI18N
+        testResultValueLabel.setMaximumSize(new java.awt.Dimension(600, 22));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 7;
+        gridBagConstraints.gridy = 3;
+        gridBagConstraints.gridwidth = 3;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(0, 7, 0, 0);
+        add(testResultValueLabel, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(resultLabel, org.openide.util.NbBundle.getMessage(GoogleTranslatorSettingsPanel.class, "GoogleTranslatorSettingsPanel.resultLabel.text")); // NOI18N
         resultLabel.setEnabled(false);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 6;
+        gridBagConstraints.gridy = 3;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(10, 5, 0, 0);
+        add(resultLabel, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(untranslatedLabel, org.openide.util.NbBundle.getMessage(GoogleTranslatorSettingsPanel.class, "GoogleTranslatorSettingsPanel.untranslatedLabel.text")); // NOI18N
         untranslatedLabel.setEnabled(false);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 3;
+        gridBagConstraints.gridy = 3;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(10, 7, 0, 0);
+        add(untranslatedLabel, gridBagConstraints);
 
         testUntranslatedTextField.setText(DEFUALT_TEST_STRING);
         testUntranslatedTextField.setEnabled(false);
+        testUntranslatedTextField.setMinimumSize(new java.awt.Dimension(160, 22));
+        testUntranslatedTextField.setPreferredSize(new java.awt.Dimension(160, 22));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 4;
+        gridBagConstraints.gridy = 3;
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(8, 5, 0, 0);
+        add(testUntranslatedTextField, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(testButton, org.openide.util.NbBundle.getMessage(GoogleTranslatorSettingsPanel.class, "GoogleTranslatorSettingsPanel.testButton.text")); // NOI18N
         testButton.setEnabled(false);
@@ -240,85 +343,42 @@ public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
                 testButtonActionPerformed(evt);
             }
         });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 3;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(6, 12, 0, 0);
+        add(testButton, gridBagConstraints);
 
         instructionsScrollPane.setBorder(javax.swing.BorderFactory.createEtchedBorder());
         instructionsScrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
         instructionsTextArea.setEditable(false);
         instructionsTextArea.setBackground(new java.awt.Color(240, 240, 240));
-        instructionsTextArea.setColumns(20);
-        instructionsTextArea.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
-        instructionsTextArea.setLineWrap(true);
-        instructionsTextArea.setRows(2);
+        instructionsTextArea.setContentType("text/html"); // NOI18N
         instructionsTextArea.setText(org.openide.util.NbBundle.getMessage(GoogleTranslatorSettingsPanel.class, "GoogleTranslatorSettingsPanel.instructionsTextArea.text")); // NOI18N
-        instructionsTextArea.setWrapStyleWord(true);
+        instructionsTextArea.setMaximumSize(new java.awt.Dimension(1000, 200));
+        instructionsTextArea.setPreferredSize(new java.awt.Dimension(164, 78));
         instructionsScrollPane.setViewportView(instructionsTextArea);
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(instructionsScrollPane)
-                        .addContainerGap())
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(warningLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 551, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                            .addComponent(testButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(credentialsLabel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(targetLanguageLabel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addGroup(layout.createSequentialGroup()
-                                        .addComponent(credentialsPathField)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(browseButton)
-                                        .addGap(14, 14, 14))
-                                    .addGroup(layout.createSequentialGroup()
-                                        .addComponent(targetLanguageComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 317, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addGap(0, 0, Short.MAX_VALUE))))
-                            .addGroup(layout.createSequentialGroup()
-                                .addGap(7, 7, 7)
-                                .addComponent(untranslatedLabel)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(testUntranslatedTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 140, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(resultLabel)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(testResultValueLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))))
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(instructionsScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(credentialsLabel)
-                    .addComponent(credentialsPathField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(browseButton))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(targetLanguageLabel)
-                    .addComponent(targetLanguageComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(testButton)
-                    .addComponent(testUntranslatedTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(untranslatedLabel)
-                    .addComponent(resultLabel)
-                    .addComponent(testResultValueLabel))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(warningLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 18, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.gridwidth = 10;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.weighty = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(13, 12, 0, 0);
+        add(instructionsScrollPane, gridBagConstraints);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 10;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.gridheight = 5;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.weightx = 0.6;
+        add(filler1, gridBagConstraints);
     }// </editor-fold>//GEN-END:initComponents
 
     @Messages({"GoogleTranslatorSettingsPanel.json.description=JSON Files",
@@ -337,6 +397,7 @@ public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
         if (dialogResult == JFileChooser.APPROVE_OPTION) {
             credentialsPathField.setText(fileChooser.getSelectedFile().getPath());
             populateTargetLanguageComboBox();
+            testResultValueLabel.setText("");
             firePropertyChange("SettingChanged", true, false);
         }
     }//GEN-LAST:event_browseButtonActionPerformed
@@ -357,19 +418,13 @@ public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_testButtonActionPerformed
 
-    private void credentialsPathFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_credentialsPathFieldActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_credentialsPathFieldActionPerformed
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton browseButton;
-    private javax.swing.JLabel credentialsLabel;
     private javax.swing.JTextField credentialsPathField;
     private javax.swing.JScrollPane instructionsScrollPane;
-    private javax.swing.JTextArea instructionsTextArea;
+    private javax.swing.JTextPane instructionsTextArea;
     private javax.swing.JLabel resultLabel;
     private javax.swing.JComboBox<org.sleuthkit.autopsy.texttranslation.translators.LanguageWrapper> targetLanguageComboBox;
-    private javax.swing.JLabel targetLanguageLabel;
     private javax.swing.JButton testButton;
     private javax.swing.JLabel testResultValueLabel;
     private javax.swing.JTextField testUntranslatedTextField;
@@ -378,26 +433,28 @@ public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
     // End of variables declaration//GEN-END:variables
 
     /**
-     * Get the currently selected target language code
+     * Get the currently selected target language code.
      *
-     * @return the target language code of the language selected in the combobox
+     * @return The target language code of the language selected in the combo
+     *         box.
      */
     String getTargetLanguageCode() {
         return targetLanguageCode;
     }
 
     /**
-     * Get the currently set path to the JSON credentials file
+     * Get the currently set path to the JSON credentials file.
      *
-     * @return the path to the credentials file specified in the textarea
+     * @return The path to the credentials file specified in the credentials
+     *         field.
      */
     String getCredentialsPath() {
         return credentialsPathField.getText();
     }
 
     /**
-     * Listener to identfy when a combo box item has been selected and update
-     * the combo box to reflect that
+     * Listener to identify when a combo box item has been selected and update
+     * the combo box to reflect that selection.
      */
     private class ComboBoxSelectionListener implements ItemListener {
 
@@ -407,6 +464,7 @@ public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
             if (!StringUtils.isBlank(selectedCode) && !selectedCode.equals(targetLanguageCode)) {
                 targetLanguageCode = selectedCode;
                 populateTargetLanguageComboBox();
+                testResultValueLabel.setText("");
                 firePropertyChange("SettingChanged", true, false);
             }
         }

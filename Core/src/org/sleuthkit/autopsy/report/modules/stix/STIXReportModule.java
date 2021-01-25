@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2013 - 2018 Basis Technology Corp.
+ * Copyright 2013 - 2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -55,6 +55,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.report.GeneralReportModule;
+import org.sleuthkit.autopsy.report.GeneralReportSettings;
 import org.sleuthkit.autopsy.report.NoReportModuleSettings;
 import org.sleuthkit.autopsy.report.ReportModuleSettings;
 import org.sleuthkit.autopsy.report.ReportProgressPanel;
@@ -92,15 +93,16 @@ public class STIXReportModule implements GeneralReportModule {
     }
 
     /**
-     * @param baseReportDir path to save the report
+     * @param settings      Report settings.
      * @param progressPanel panel to update the report's progress
      */
     @Override
     @Messages({"STIXReportModule.srcModuleName.text=STIX Report"})
-    public void generateReport(String baseReportDir, ReportProgressPanel progressPanel) {
+    public void generateReport(GeneralReportSettings settings, ReportProgressPanel progressPanel) {
         // Start the progress bar and setup the report
         progressPanel.setIndeterminate(false);
         progressPanel.start();
+        String baseReportDir = settings.getReportDirectoryPath();
         progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "STIXReportModule.progress.readSTIX"));        
         reportPath = baseReportDir + getRelativeFilePath();
         File reportFile = new File(reportPath);
@@ -115,17 +117,13 @@ public class STIXReportModule implements GeneralReportModule {
 
         if (stixFileName == null) {
             logger.log(Level.SEVERE, "STIXReportModuleConfigPanel.stixFile not initialized "); //NON-NLS
-            progressPanel.complete(ReportStatus.ERROR);
-            progressPanel.updateStatusLabel(
-                    NbBundle.getMessage(this.getClass(), "STIXReportModule.progress.noFildDirProvided"));
+            progressPanel.complete(ReportStatus.ERROR, NbBundle.getMessage(this.getClass(), "STIXReportModule.progress.noFildDirProvided"));
             new File(baseReportDir).delete();
             return;
         }
         if (stixFileName.isEmpty()) {
             logger.log(Level.SEVERE, "No STIX file/directory provided "); //NON-NLS
-            progressPanel.complete(ReportStatus.ERROR);
-            progressPanel.updateStatusLabel(
-                    NbBundle.getMessage(this.getClass(), "STIXReportModule.progress.noFildDirProvided"));
+            progressPanel.complete(ReportStatus.ERROR, NbBundle.getMessage(this.getClass(), "STIXReportModule.progress.noFildDirProvided"));
             new File(baseReportDir).delete();
             return;
         }
@@ -133,9 +131,7 @@ public class STIXReportModule implements GeneralReportModule {
 
         if (!stixFile.exists()) {
             logger.log(Level.SEVERE, String.format("Unable to open STIX file/directory %s", stixFileName)); //NON-NLS
-            progressPanel.complete(ReportStatus.ERROR);
-            progressPanel.updateStatusLabel(
-                    NbBundle.getMessage(this.getClass(), "STIXReportModule.progress.couldNotOpenFileDir", stixFileName));
+            progressPanel.complete(ReportStatus.ERROR, NbBundle.getMessage(this.getClass(), "STIXReportModule.progress.couldNotOpenFileDir", stixFileName));
             new File(baseReportDir).delete();
             return;
         }
@@ -177,17 +173,13 @@ public class STIXReportModule implements GeneralReportModule {
             // the "complete" message to indicate this.
             Case.getCurrentCaseThrows().addReport(reportPath, Bundle.STIXReportModule_srcModuleName_text(), "");
             if (hadErrors) {
-                progressPanel.complete(ReportStatus.ERROR);
-                progressPanel.updateStatusLabel(
-                        NbBundle.getMessage(this.getClass(), "STIXReportModule.progress.completedWithErrors"));
+                progressPanel.complete(ReportStatus.ERROR, NbBundle.getMessage(this.getClass(), "STIXReportModule.progress.completedWithErrors"));
             } else {
                 progressPanel.complete(ReportStatus.COMPLETE);
             }
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Unable to complete STIX report.", ex); //NON-NLS
-            progressPanel.complete(ReportStatus.ERROR);
-            progressPanel.updateStatusLabel(
-                    NbBundle.getMessage(this.getClass(), "STIXReportModule.progress.completedWithErrors"));
+            progressPanel.complete(ReportStatus.ERROR, NbBundle.getMessage(this.getClass(), "STIXReportModule.progress.completedWithErrors"));
         } catch (TskCoreException | NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Unable to add report to database.", ex);
         }
@@ -236,12 +228,19 @@ public class STIXReportModule implements GeneralReportModule {
      */
     private STIXPackage loadSTIXFile(String stixFileName) throws JAXBException {
         // Create STIXPackage object from xml.
-        File file = new File(stixFileName);
-        JAXBContext jaxbContext = JAXBContext.newInstance("org.mitre.stix.stix_1:org.mitre.stix.common_1:org.mitre.stix.indicator_2:" //NON-NLS
-                + "org.mitre.cybox.objects:org.mitre.cybox.cybox_2:org.mitre.cybox.common_2"); //NON-NLS
-        Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
-        STIXPackage stix = (STIXPackage) jaxbUnmarshaller.unmarshal(file);
-        return stix;
+        // See JIRA-6958 for details about class loading and jaxb.
+        ClassLoader original = Thread.currentThread().getContextClassLoader();
+        try {
+            Thread.currentThread().setContextClassLoader(STIXReportModule.class.getClassLoader());
+            File file = new File(stixFileName);
+            JAXBContext jaxbContext = JAXBContext.newInstance("org.mitre.stix.stix_1:org.mitre.stix.common_1:org.mitre.stix.indicator_2:" //NON-NLS
+                    + "org.mitre.cybox.objects:org.mitre.cybox.cybox_2:org.mitre.cybox.common_2"); //NON-NLS
+            Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
+            STIXPackage stix = (STIXPackage) jaxbUnmarshaller.unmarshal(file);
+            return stix;
+        } finally {
+            Thread.currentThread().setContextClassLoader(original);
+        }
     }
     
     /**

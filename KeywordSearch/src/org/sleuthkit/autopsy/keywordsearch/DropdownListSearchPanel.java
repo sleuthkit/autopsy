@@ -42,6 +42,7 @@ import javax.swing.table.TableColumn;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.SystemAction;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.guiutils.SimpleTableCellRenderer;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
@@ -94,6 +95,7 @@ class DropdownListSearchPanel extends AdHocSearchPanel {
                 column.setCellRenderer(new LeftCheckBoxRenderer());
             } else {
                 column.setPreferredWidth(((int) (leftWidth * 0.89)));
+                column.setCellRenderer(new SimpleTableCellRenderer());
             }
         }
         final int rightWidth = rightPane.getPreferredSize().width;
@@ -105,6 +107,7 @@ class DropdownListSearchPanel extends AdHocSearchPanel {
                 column.setPreferredWidth(((int) (rightWidth * 0.38)));
             }
         }
+        keywordsTable.setDefaultRenderer(String.class, new SimpleTableCellRenderer());
 
         loader = XmlKeywordSearchList.getCurrent();
         listsTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
@@ -210,16 +213,10 @@ class DropdownListSearchPanel extends AdHocSearchPanel {
         dataSourceList = new javax.swing.JList<>();
         jSaveSearchResults = new javax.swing.JCheckBox();
 
-        setFont(getFont().deriveFont(getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-
-        jSplitPane1.setFont(leftPane.getFont());
-
-        leftPane.setFont(leftPane.getFont().deriveFont(leftPane.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         leftPane.setMinimumSize(new java.awt.Dimension(150, 23));
         leftPane.setOpaque(false);
 
         listsTable.setBackground(new java.awt.Color(240, 240, 240));
-        listsTable.setFont(listsTable.getFont().deriveFont(listsTable.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         listsTable.setModel(listsTableModel);
         listsTable.setShowHorizontalLines(false);
         listsTable.setShowVerticalLines(false);
@@ -228,18 +225,15 @@ class DropdownListSearchPanel extends AdHocSearchPanel {
 
         jSplitPane1.setLeftComponent(leftPane);
 
-        rightPane.setFont(rightPane.getFont().deriveFont(rightPane.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         rightPane.setOpaque(false);
 
         keywordsTable.setBackground(new java.awt.Color(240, 240, 240));
-        keywordsTable.setFont(keywordsTable.getFont().deriveFont(keywordsTable.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         keywordsTable.setModel(keywordsTableModel);
         keywordsTable.setGridColor(new java.awt.Color(153, 153, 153));
         rightPane.setViewportView(keywordsTable);
 
         jSplitPane1.setRightComponent(rightPane);
 
-        manageListsButton.setFont(manageListsButton.getFont().deriveFont(manageListsButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         manageListsButton.setText(org.openide.util.NbBundle.getMessage(DropdownListSearchPanel.class, "KeywordSearchListsViewerPanel.manageListsButton.text")); // NOI18N
         manageListsButton.setToolTipText(org.openide.util.NbBundle.getMessage(DropdownListSearchPanel.class, "KeywordSearchListsViewerPanel.manageListsButton.toolTipText")); // NOI18N
         manageListsButton.addActionListener(new java.awt.event.ActionListener() {
@@ -248,7 +242,6 @@ class DropdownListSearchPanel extends AdHocSearchPanel {
             }
         });
 
-        searchAddButton.setFont(searchAddButton.getFont().deriveFont(searchAddButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         searchAddButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/search-icon.png"))); // NOI18N
         searchAddButton.setText(org.openide.util.NbBundle.getMessage(DropdownListSearchPanel.class, "KeywordSearchListsViewerPanel.searchAddButton.text")); // NOI18N
         searchAddButton.addActionListener(new java.awt.event.ActionListener() {
@@ -257,7 +250,7 @@ class DropdownListSearchPanel extends AdHocSearchPanel {
             }
         });
 
-        ingestIndexLabel.setFont(ingestIndexLabel.getFont().deriveFont(ingestIndexLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 10));
+        ingestIndexLabel.setFont(ingestIndexLabel.getFont().deriveFont(ingestIndexLabel.getFont().getSize()-1f));
         ingestIndexLabel.setText(org.openide.util.NbBundle.getMessage(DropdownListSearchPanel.class, "KeywordSearchListsViewerPanel.ingestIndexLabel.text")); // NOI18N
 
         dataSourceCheckBox.setText(org.openide.util.NbBundle.getMessage(DropdownListSearchPanel.class, "DropdownListSearchPanel.dataSourceCheckBox.text")); // NOI18N

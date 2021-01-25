@@ -22,7 +22,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
 
 /**
- * Ingest job settings panel for the Correlation Engine module.
+ * Ingest job settings panel for the Central Repository module.
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class IngestSettingsPanel extends IngestModuleIngestJobSettingsPanel {
@@ -65,7 +65,7 @@ final class IngestSettingsPanel extends IngestModuleIngestJobSettingsPanel {
         flagPreviouslySeenDevicesCheckbox = new javax.swing.JCheckBox();
         createCorrelationPropertiesCheckbox = new javax.swing.JCheckBox();
 
-        ingestSettingsLabel.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
+        ingestSettingsLabel.setFont(ingestSettingsLabel.getFont().deriveFont(ingestSettingsLabel.getFont().getStyle() | java.awt.Font.BOLD));
         org.openide.awt.Mnemonics.setLocalizedText(ingestSettingsLabel, org.openide.util.NbBundle.getMessage(IngestSettingsPanel.class, "IngestSettingsPanel.ingestSettingsLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(flagTaggedNotableItemsCheckbox, org.openide.util.NbBundle.getMessage(IngestSettingsPanel.class, "IngestSettingsPanel.flagTaggedNotableItemsCheckbox.text")); // NOI18N

@@ -1,7 +1,7 @@
 """
 Autopsy Forensic Browser
 
-Copyright 2019 Basis Technology Corp.
+Copyright 2019-2020 Basis Technology Corp.
 Contact: carrier <at> sleuthkit <dot> org
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -43,6 +43,8 @@ from org.sleuthkit.datamodel.Blackboard import BlackboardException
 from org.sleuthkit.autopsy.casemodule import NoCurrentCaseException
 from org.sleuthkit.datamodel import Account
 from org.sleuthkit.datamodel.blackboardutils import CommunicationArtifactsHelper
+from org.sleuthkit.datamodel.blackboardutils.attributes import MessageAttachments
+from org.sleuthkit.datamodel.blackboardutils.attributes.MessageAttachments import FileAttachment
 from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import MessageReadStatus
 from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import CommunicationDirection
 from TskMessagesParser import TskMessagesParser
@@ -99,7 +101,7 @@ class ViberAnalyzer(general.AndroidComponentAnalyzer):
                 helper = CommunicationArtifactsHelper(
                         current_case.getSleuthkitCase(), self._PARSER_NAME, 
                         message_db.getDBFile(), Account.Type.VIBER)
-                self.parse_messages(message_db, helper)
+                self.parse_messages(message_db, helper, current_case)
 
         except NoCurrentCaseException as ex:
             self._logger.log(Level.WARNING, "No case currently open.", ex)
@@ -115,14 +117,25 @@ class ViberAnalyzer(general.AndroidComponentAnalyzer):
         try:
             contacts_parser = ViberContactsParser(contacts_db)
             while contacts_parser.next():
-                helper.addContact( 
-                    contacts_parser.get_account_name(), 
-                    contacts_parser.get_contact_name(), 
-                    contacts_parser.get_phone(),
-                    contacts_parser.get_home_phone(),
-                    contacts_parser.get_mobile_phone(),
-                    contacts_parser.get_email()
-                )
+                if (not(not contacts_parser.get_phone() or contacts_parser.get_phone().isspace())):
+                    helper.addContact( 
+                        contacts_parser.get_contact_name(), 
+                        contacts_parser.get_phone(),
+                        contacts_parser.get_home_phone(),
+                        contacts_parser.get_mobile_phone(),
+                        contacts_parser.get_email()
+                    )
+                # Check if contact_name is blank and if it is not create a TSK_CONTACT otherwise ignore as not Contact Info
+                elif (not(not contacts_parser.get_contact_name() or contacts_parser.get_contact_name().isspace())):
+                    current_case = Case.getCurrentCase().getSleuthkitCase()
+                    attributes = ArrayList()
+                    artifact = contacts_db.getDBFile().newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT)
+                    attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), self._PARSER_NAME, contacts_parser.get_contact_name()))
+                    artifact.addAttributes(attributes)
+                    
+                    # Post the artifact to blackboard
+                    current_case.getBlackboard().postArtifact(artifact, self._PARSER_NAME)
+
             contacts_parser.close()
         except SQLException as ex:
             self._logger.log(Level.WARNING, "Error querying the viber database for contacts.", ex)
@@ -162,21 +175,26 @@ class ViberAnalyzer(general.AndroidComponentAnalyzer):
             self._logger.log(Level.WARNING, traceback.format_exc())
 
 
-    def parse_messages(self, messages_db, helper):
+    def parse_messages(self, messages_db, helper, current_case):
         try:
             messages_parser = ViberMessagesParser(messages_db)
             while messages_parser.next():
-                helper.addMessage(
-                    messages_parser.get_message_type(),
-                    messages_parser.get_message_direction(),
-                    messages_parser.get_phone_number_from(),
-                    messages_parser.get_phone_number_to(),
-                    messages_parser.get_message_date_time(),
-                    messages_parser.get_message_read_status(),
-                    messages_parser.get_message_subject(),
-                    messages_parser.get_message_text(),
-                    messages_parser.get_thread_id()
-                )
+                message_artifact = helper.addMessage(
+                                       messages_parser.get_message_type(),
+                                       messages_parser.get_message_direction(),
+                                       messages_parser.get_phone_number_from(),
+                                       messages_parser.get_phone_number_to(),
+                                       messages_parser.get_message_date_time(),
+                                       messages_parser.get_message_read_status(),
+                                       messages_parser.get_message_subject(),
+                                       messages_parser.get_message_text(),
+                                       messages_parser.get_thread_id()
+                                   )
+                if (messages_parser.get_file_attachment() is not None):
+                    file_attachments = ArrayList()
+                    file_attachments.add(FileAttachment(current_case.getSleuthkitCase(), messages_db.getDBFile().getDataSource(), messages_parser.get_file_attachment()))
+                    message_attachments = MessageAttachments(file_attachments, [])
+                    helper.addAttachments(message_artifact, message_attachments)
             messages_parser.close()
         except SQLException as ex:
             self._logger.log(Level.WARNING, "Error querying the viber database for messages.", ex)
@@ -218,16 +236,14 @@ class ViberCallLogsParser(TskCallLogsParser):
 
     def get_phone_number_from(self):
         if self.get_call_direction() == self.INCOMING_CALL:
-            return Account.Address(self.result_set.getString("number"),
-                        self.result_set.getString("number"))
+            return self.result_set.getString("number")
         #Give default value if the call is outgoing, 
         #the device's # is not stored in the database.
         return super(ViberCallLogsParser, self).get_phone_number_from()
 
     def get_phone_number_to(self):
         if self.get_call_direction() == self.OUTGOING_CALL:
-            return Account.Address(self.result_set.getString("number"),
-                        self.result_set.getString("number"))
+            return self.result_set.getString("number")
         #Give default value if the call is incoming, 
         #the device's # is not stored in the database.
         return super(ViberCallLogsParser, self).get_phone_number_to()
@@ -264,8 +280,8 @@ class ViberContactsParser(TskContactsParser):
     def __init__(self, contact_db):
         super(ViberContactsParser, self).__init__(contact_db.runQuery(
                  """
-                      SELECT C.display_name AS name, 
-                             D.data2        AS number 
+                      SELECT C.display_name AS name,                      
+                             coalesce(D.data2, D.data1, D.data3) AS number 
                       FROM   phonebookcontact AS C 
                              JOIN phonebookdata AS D 
                                ON C._id = D.contact_id
@@ -273,9 +289,6 @@ class ViberContactsParser(TskContactsParser):
              )
         )
     
-    def get_account_name(self):
-        return self.result_set.getString("number")
-        
     def get_contact_name(self):
         return self.result_set.getString("name")
 
@@ -310,7 +323,8 @@ class ViberMessagesParser(TskMessagesParser):
                             M.body                         AS msg_content, 
                             M.send_type                    AS direction, 
                             M.msg_date                     AS msg_date, 
-                            M.unread                       AS read_status 
+                            M.unread                       AS read_status,
+                            M.extra_uri                    AS file_attachment                            
                      FROM   (SELECT *, 
                                     group_concat(TO_RESULT.number) AS recipients 
                              FROM   (SELECT P._id     AS FROM_ID, 
@@ -342,8 +356,7 @@ class ViberMessagesParser(TskMessagesParser):
         return self._VIBER_MESSAGE_TYPE 
 
     def get_phone_number_from(self):
-        return Account.Address(self.result_set.getString("from_number"), 
-                self.result_set.getString("from_number"))
+        return self.result_set.getString("from_number") 
 
     def get_message_direction(self):  
         direction = self.result_set.getInt("direction")
@@ -352,10 +365,7 @@ class ViberMessagesParser(TskMessagesParser):
         return self.OUTGOING
     
     def get_phone_number_to(self):
-        recipients = []
-        for token in self.result_set.getString("recipients").split(","):
-            recipients.append(Account.Address(token, token))
-        return recipients
+        return self.result_set.getString("recipients").split(",")
 
     def get_message_date_time(self):
         #transform from ms to seconds
@@ -374,3 +384,11 @@ class ViberMessagesParser(TskMessagesParser):
 
     def get_thread_id(self):
         return str(self.result_set.getInt("thread_id")) 
+        
+    def get_file_attachment(self):
+        if (self.result_set.getString("file_attachment") is None):
+            return None
+        elif ("content:" in self.result_set.getString("file_attachment")):
+            return self.result_set.getString("msg_content").replace("file://", "")
+        else:
+            return self.result_set.getString("file_attachment").replace("file://", "")

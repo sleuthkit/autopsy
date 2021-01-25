@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<INTERESTING_FILE_SETS>
+ <INTERESTING_FILE_SET description="Finds Encryption Programs installed on the machine" ignoreKnown="false" name="Encryption Programs" standardSet="true" versionNumber="2">
+  <NAME name="aescrypt" regex="false" typeFilter="file">aescrypt.exe</NAME>
+  <NAME name="AxCrypt" regex="false" typeFilter="file">AxCrypt.exe</NAME>
+  <NAME name="certainsafe" regex="false" typeFilter="file">certainsafe.exe</NAME>
+  <NAME name="CryptoExpert 8" regex="false" typeFilter="file">cexpertcmd.exe</NAME>
+  <NAME name="CryptoExpert 8" regex="false" typeFilter="file"> cexpert_gui.exe</NAME>
+  <NAME name="Cryptomator" regex="false" typeFilter="file">Cryptomator.exe</NAME>
+  <NAME name="Ecrypt(Linux)" regex="true" typeFilter="all">ecryptfs</NAME>
+  <NAME name="EncFSMP" regex="false" typeFilter="file">EncFSMP.exe</NAME>
+  <NAME name="Encrypto" regex="false" typeFilter="file">Encrypto.exe</NAME>
+  <NAME name="Folder Lock" regex="false" typeFilter="file">Folder Lock.exe</NAME>
+  <NAME name="Gihosoft File Encryption" regex="false" typeFilter="file">GFileEncryption.exe</NAME>
+  <NAME name="GnuPG" regex="false" typeFilter="file"> gpg.exe</NAME>
+  <NAME name="Gpg4win" regex="false" typeFilter="file">gdbus.exe</NAME>
+  <NAME name="KeePass" regex="false" typeFilter="file">KeePass.exe</NAME>
+  <NAME name="LUKS(Linux)" regex="true" typeFilter="all">luks</NAME>
+  <NAME name="Proton Bridge" regex="false" typeFilter="file">Desktop-Bridge.exe</NAME>
+  <NAME name="Tor Browser" regex="false" typeFilter="all">Tor Browser</NAME>
+  <NAME name="Tutanota Desktop" regex="false" typeFilter="file">Tutanota Desktop.exe</NAME>
+  <NAME name="VeraCrypt" regex="false" typeFilter="file">VeraCrypt.exe</NAME>
+ </INTERESTING_FILE_SET>
+</INTERESTING_FILE_SETS>

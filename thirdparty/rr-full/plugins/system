@@ -1,13 +1,16 @@
-# 20161213 *ALL* Plugins that apply on SYSTEM hive, alphabetical order
+angelfire
 appcertdlls
 appcompatcache
-appcompatcache_tln
 auditfail
 backuprestore
+bam
+bam_tln
+btconfig
 bthport
 comfoo
 compname
 crashcontrol
+dafupnp
 ddm
 devclass
 diag_sr
@@ -22,10 +25,11 @@ ide
 imagedev
 kbdcrash
 legacy
-legacy_tln
 lsa_packages
+macaddr
 mountdev
 mountdev2
+netlogon
 netsvcs
 network
 nic
@@ -39,6 +43,7 @@ prefetch
 processor_architecture
 productpolicy
 producttype
+profiler
 rdpnla
 rdpport
 regin
@@ -49,15 +54,13 @@ securityproviders
 services
 shares
 shimcache
-shimcache_tln
 shutdown
 shutdowncount
+source_os
 stillimage
 svc
 svcdll
 svc_plus
-svc_tln
-systemindex
 termcert
 termserv
 timezone

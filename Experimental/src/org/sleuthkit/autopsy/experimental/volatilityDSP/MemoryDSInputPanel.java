@@ -407,7 +407,7 @@ final class MemoryDSInputPanel extends JPanel implements DocumentListener {
     })
     private void warnIfPathIsInvalid(String path) {
         try {
-            if (!PathValidator.isValidForMultiUserCase(path, Case.getCurrentCaseThrows().getCaseType())) {
+            if (!PathValidator.isValidForCaseType(path, Case.getCurrentCaseThrows().getCaseType())) {
                 errorLabel.setVisible(true);
                 errorLabel.setText(Bundle.MemoryDSInputPanel_errorMsg_dataSourcePathOnCdrive());
             }

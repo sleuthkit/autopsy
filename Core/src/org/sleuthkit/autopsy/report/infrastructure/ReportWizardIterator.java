@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012 Basis Technology Corp.
+ * Copyright 2012-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.report.infrastructure;
 
 import java.awt.Component;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -38,6 +39,7 @@ final class ReportWizardIterator implements WizardDescriptor.Iterator<WizardDesc
     private final ReportWizardPanel2 tableConfigPanel;
     private final ReportWizardFileOptionsPanel fileConfigPanel;
     private final ReportWizardPortableCaseOptionsPanel portableCaseConfigPanel;
+    private final ReportWizardDataSourceSelectionPanel dataSourceSelectionPanel;
 
     private List<WizardDescriptor.Panel<WizardDescriptor>> panels;
 
@@ -62,24 +64,34 @@ final class ReportWizardIterator implements WizardDescriptor.Iterator<WizardDesc
         
         ReportingConfig config = null;
         try {
-            config = ReportingConfigLoader.loadConfig(reportingConfigurationName);
+            if(ReportingConfigLoader.configExists(reportingConfigurationName)) {
+                config = ReportingConfigLoader.loadConfig(reportingConfigurationName);
+            }
         } catch (ReportConfigException ex) {
             logger.log(Level.SEVERE, "Unable to load reporting configuration " + reportingConfigurationName + ". Using default settings", ex);
         }
         
         if (config != null) {
-            firstPanel = new ReportWizardPanel1(config.getModuleConfigs());
+            firstPanel = new ReportWizardPanel1(config.getModuleConfigs(), useCaseSpecificData);
             tableConfigPanel = new ReportWizardPanel2(useCaseSpecificData, config.getTableReportSettings());
             fileConfigPanel = new ReportWizardFileOptionsPanel(config.getFileReportSettings());
             portableCaseConfigPanel = new ReportWizardPortableCaseOptionsPanel(config.getModuleConfigs(), useCaseSpecificData);
         } else {
-            firstPanel = new ReportWizardPanel1(null);
+            firstPanel = new ReportWizardPanel1(null, useCaseSpecificData);
             tableConfigPanel = new ReportWizardPanel2(useCaseSpecificData, null);
             fileConfigPanel = new ReportWizardFileOptionsPanel(null);
             portableCaseConfigPanel = new ReportWizardPortableCaseOptionsPanel(null, useCaseSpecificData);
         }
+        
+        if (useCaseSpecificData) {
+            dataSourceSelectionPanel = new ReportWizardDataSourceSelectionPanel();
+            allConfigPanels = new WizardDescriptor.Panel[]{firstPanel, dataSourceSelectionPanel, tableConfigPanel, fileConfigPanel, portableCaseConfigPanel};
+        }
+        else {
+            dataSourceSelectionPanel = null;
+            allConfigPanels = new WizardDescriptor.Panel[]{firstPanel, tableConfigPanel, fileConfigPanel, portableCaseConfigPanel};
+        }
 
-        allConfigPanels = new WizardDescriptor.Panel[]{firstPanel, tableConfigPanel, fileConfigPanel, portableCaseConfigPanel};
         tableConfigPanels = new WizardDescriptor.Panel[]{firstPanel, tableConfigPanel};
         fileConfigPanels = new WizardDescriptor.Panel[]{firstPanel, fileConfigPanel};
         portableCaseConfigPanels = new WizardDescriptor.Panel[]{firstPanel, portableCaseConfigPanel};
@@ -113,13 +125,20 @@ final class ReportWizardIterator implements WizardDescriptor.Iterator<WizardDesc
      * @param moreConfig  true if a GeneralReportModule was selected
      * @param tableConfig true if a TReportModule was selected
      */
-    private void enableConfigPanels(boolean generalModule, boolean tableModule, boolean portableCaseModule) {
+    private void enableConfigPanels(boolean generalModule, boolean tableModule, boolean portableCaseModule, boolean showDataSourceSelectionPanel) {
+        boolean includedDataSourceSelection = showDataSourceSelectionPanel && dataSourceSelectionPanel != null;
         if (generalModule) {
-            // General Module selected, no additional panels
+            if(includedDataSourceSelection) {
+                panels = Arrays.asList(firstPanel, dataSourceSelectionPanel);
+            }
         } else if (tableModule) {
             // Table Module selected, need Artifact Configuration Panel
             // (ReportWizardPanel2)
             panels = Arrays.asList(tableConfigPanels);
+            if(includedDataSourceSelection) {
+                panels = new ArrayList<>(panels);
+                panels.add(1, dataSourceSelectionPanel);
+            }
         } else if (portableCaseModule) {
             // Portable Case Module selected, need Portable Case Configuration Panel
             // (ReportWizardPortableCaseOptionsPanel)
@@ -128,6 +147,10 @@ final class ReportWizardIterator implements WizardDescriptor.Iterator<WizardDesc
             // File Module selected, need File Report Configuration Panel
             // (ReportWizardFileOptionsPanel)
             panels = Arrays.asList(fileConfigPanels);
+            if(includedDataSourceSelection) {
+                panels = new ArrayList<>(panels);
+                panels.add(1, dataSourceSelectionPanel);
+            }
         }
     }
 
@@ -164,7 +187,8 @@ final class ReportWizardIterator implements WizardDescriptor.Iterator<WizardDesc
             generalModule = NbPreferences.forModule(ReportWizardPanel1.class).getBoolean("generalModule", true); //NON-NLS
             tableModule = NbPreferences.forModule(ReportWizardPanel1.class).getBoolean("tableModule", true); //NON-NLS
             portableModule = NbPreferences.forModule(ReportWizardPanel1.class).getBoolean("portableCaseModule", true); //NON-NLS
-            enableConfigPanels(generalModule, tableModule, portableModule);
+            boolean showDataSourceSelectionPanel = NbPreferences.forModule(ReportWizardPanel1.class).getBoolean("showDataSourceSelectionPanel", false); // NON-NLS
+            enableConfigPanels(generalModule, tableModule, portableModule, showDataSourceSelectionPanel);
         }
 
         index++;

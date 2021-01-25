@@ -38,6 +38,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import static java.util.Objects.nonNull;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -46,6 +47,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javafx.concurrent.Task;
 import javafx.embed.swing.SwingFXUtils;
 import javax.annotation.Nonnull;
@@ -56,7 +59,6 @@ import javax.imageio.ImageReadParam;
 import javax.imageio.ImageReader;
 import javax.imageio.event.IIOReadProgressListener;
 import javax.imageio.stream.ImageInputStream;
-import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.openide.util.NbBundle;
@@ -121,7 +123,7 @@ public class ImageUtils {
         }
         DEFAULT_THUMBNAIL = tempImage;
         boolean tempFfmpegLoaded = false;
-        if (OpenCvLoader.hasOpenCvLoaded()) {
+        if (OpenCvLoader.openCvIsLoaded()) {
             try {
                 if (System.getProperty("os.arch").equals("amd64") || System.getProperty("os.arch").equals("x86_64")) { //NON-NLS
                     System.loadLibrary("opencv_ffmpeg248_64"); //NON-NLS
@@ -137,11 +139,25 @@ public class ImageUtils {
         }
         FFMPEG_LOADED = tempFfmpegLoaded;
 
-        SUPPORTED_IMAGE_EXTENSIONS.addAll(Arrays.asList(ImageIO.getReaderFileSuffixes()));
+        // remove any empty extension types provided by ImageIO.getReaderFileSuffixes()
+        // This prevents extensions added by SPI implementations from causing errors 
+        // (i.e. 'jai-imageio' utilized with IcePDF)
+        List<String> imageSuffixList = Arrays.stream(ImageIO.getReaderFileSuffixes())
+            .filter((extension) -> StringUtils.isNotBlank(extension))
+            .collect(Collectors.toList());
+        
+        SUPPORTED_IMAGE_EXTENSIONS.addAll(imageSuffixList);
         SUPPORTED_IMAGE_EXTENSIONS.add("tec"); // Add JFIF .tec files
         SUPPORTED_IMAGE_EXTENSIONS.removeIf("db"::equals); // remove db files
 
-        SUPPORTED_IMAGE_MIME_TYPES = new TreeSet<>(Arrays.asList(ImageIO.getReaderMIMETypes()));
+        List<String> mimeTypeList = Stream.of(ImageIO.getReaderMIMETypes())
+                // remove any empty mime types provided by ImageIO.getReaderMIMETypes()
+                // This prevents mime types added by SPI implementations from causing errors 
+                // (i.e. 'jai-imageio' utilized with IcePDF)
+                .filter((mimeType) -> StringUtils.isNotBlank(mimeType))
+                .collect(Collectors.toList());
+        
+        SUPPORTED_IMAGE_MIME_TYPES = new TreeSet<>(mimeTypeList);
         /*
          * special cases and variants that we support, but don't get registered
          * with ImageIO automatically
@@ -151,6 +167,7 @@ public class ImageUtils {
                 "image/x-ms-bmp", //NON-NLS
                 "image/x-portable-graymap", //NON-NLS
                 "image/x-portable-bitmap", //NON-NLS
+                "image/webp", //NON-NLS
                 "application/x-123")); //TODO: is this correct? -jm //NON-NLS
         SUPPORTED_IMAGE_MIME_TYPES.removeIf("application/octet-stream"::equals); //NON-NLS
 
@@ -945,7 +962,7 @@ public class ImageUtils {
                     LOGGER.log(Level.WARNING, IMAGEIO_COULD_NOT_READ_UNSUPPORTED_OR_CORRUPT, ImageUtils.getContentPathSafe(file));
                 } else if (fxImage.isError()) {
                     //if there was somekind of error, log it
-                    LOGGER.log(Level.WARNING, IMAGEIO_COULD_NOT_READ_UNSUPPORTED_OR_CORRUPT + ": " + ObjectUtils.toString(fxImage.getException()), ImageUtils.getContentPathSafe(file));
+                    LOGGER.log(Level.WARNING, IMAGEIO_COULD_NOT_READ_UNSUPPORTED_OR_CORRUPT + ": " + Objects.toString(fxImage.getException()), ImageUtils.getContentPathSafe(file));
                 }
             } catch (InterruptedException | ExecutionException ex) {
                 failed();
@@ -955,7 +972,7 @@ public class ImageUtils {
         @Override
         protected void failed() {
             super.failed();
-            LOGGER.log(Level.WARNING, IMAGEIO_COULD_NOT_READ_UNSUPPORTED_OR_CORRUPT + ": " + ObjectUtils.toString(getException()), ImageUtils.getContentPathSafe(file));
+            LOGGER.log(Level.WARNING, IMAGEIO_COULD_NOT_READ_UNSUPPORTED_OR_CORRUPT + ": " + Objects.toString(getException()), ImageUtils.getContentPathSafe(file));
         }
 
         @Override

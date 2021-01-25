@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2014-2018 Basis Technology Corp.
+ * Copyright 2014-2020 Basis Technology Corp.
  * contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,13 +21,10 @@ package org.sleuthkit.autopsy.report.modules.kml;
 
 import org.sleuthkit.autopsy.report.GeneralReportModule;
 import javax.swing.JPanel;
-
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.datamodel.*;
 import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.datamodel.BlackboardArtifact;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -36,7 +33,9 @@ import java.io.OutputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
+import java.util.List;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.Namespace;
@@ -44,15 +43,29 @@ import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
 import org.jdom2.CDATA;
 import org.openide.filesystems.FileUtil;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.geolocation.datamodel.GeoLocationDataException;
+import org.sleuthkit.autopsy.geolocation.datamodel.GeoLocationParseResult;
+import org.sleuthkit.autopsy.geolocation.datamodel.Waypoint;
+import org.sleuthkit.autopsy.geolocation.datamodel.Route;
+import org.sleuthkit.autopsy.geolocation.datamodel.Track;
+import org.sleuthkit.autopsy.geolocation.datamodel.Area;
+import org.sleuthkit.autopsy.geolocation.datamodel.WaypointBuilder;
+import org.sleuthkit.autopsy.report.GeneralReportSettings;
 import org.sleuthkit.autopsy.report.ReportBranding;
 import org.sleuthkit.autopsy.report.ReportProgressPanel;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamException;
+import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Generates a KML file based on geospatial information from the BlackBoard.
  */
-class KMLReport implements GeneralReportModule {
+public final class KMLReport implements GeneralReportModule {
 
     private static final Logger logger = Logger.getLogger(KMLReport.class.getName());
     private static final String KML_STYLE_FILE = "style.kml";
@@ -63,7 +76,20 @@ class KMLReport implements GeneralReportModule {
     private SleuthkitCase skCase;
     private final SimpleDateFormat kmlDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX");
     private Namespace ns;
-    private final String SEP = "<br>";
+    private final static String HTML_PROP_FORMAT = "<b>%s: </b>%s<br>";
+
+    private Element gpsExifMetadataFolder;
+    private Element gpsBookmarksFolder;
+    private Element gpsLastKnownLocationFolder;
+    private Element gpsRouteFolder;
+    private Element gpsSearchesFolder;
+    private Element gpsTrackpointsFolder;
+    private Element gpsTracksFolder;
+    private Element gpsAreasFolder;
+    
+    private GeneralReportSettings settings;
+
+    private List<Waypoint> waypointList = null;
 
     private enum FeatureColor {
         RED("style.kml#redFeature"),
@@ -100,25 +126,156 @@ class KMLReport implements GeneralReportModule {
      *
      * @param baseReportDir path to save the report
      * @param progressPanel panel to update the report's progress
+     * @param waypointList
      */
+    @Messages({
+        "KMLReport.failedToCompleteReport=Failed to complete report.",
+        "KMLReport.partialFailure=There was an error creating the report.  Some items were not exported.",
+        "KMLReport.unableToExtractPhotos=Could not extract photo information.",
+        "KMLReport.exifPhotoError=Could not extract photos with EXIF metadata.",
+        "KMLReport.bookmarkError=Could not extract Bookmark information.",
+        "KMLReport.gpsBookmarkError=Could not get GPS Bookmarks from database.",
+        "KMLReport.locationError=Could not extract Last Known Location information.",
+        "KMLReport.locationDatabaseError=Could not get GPS Last Known Location from database.",
+        "KMLReport.gpsRouteError=Could not extract GPS Route information.",
+        "KMLReport.gpsRouteDatabaseError=Could not get GPS Routes from database.",
+        "KMLReport.gpsSearchDatabaseError=Could not get GPS Searches from database.",
+        "KMLReport.trackpointError=Could not extract Trackpoint information.",
+        "KMLReport.trackpointDatabaseError=Could not get GPS Trackpoints from database.",
+        "KMLReport.stylesheetError=Error placing KML stylesheet. The .KML file will not function properly.",
+        "KMLReport.kmlFileWriteError=Could not write the KML file.",
+        "# {0} - filePath",
+        "KMLReport.errorGeneratingReport=Error adding {0} to case as a report.",
+        "KMLReport.unableToOpenCase=Exception while getting open case.",
+        "Waypoint_Bookmark_Display_String=GPS Bookmark",
+        "Waypoint_Last_Known_Display_String=GPS Last Known Location",
+        "Waypoint_EXIF_Display_String=EXIF Metadata With Location",
+        "Waypoint_Route_Point_Display_String=GPS Individual Route Point",
+        "Waypoint_Search_Display_String=GPS Search",
+        "Waypoint_Trackpoint_Display_String=GPS Trackpoint",
+        "Waypoint_Track_Display_String=GPS Track",
+        "Route_Details_Header=GPS Route",
+        "ReportBodyFile.ingestWarning.text=Ingest Warning message",
+        "Waypoint_Track_Point_Display_String=GPS Individual Track Point",
+        "Waypoint_Area_Point_Display_String=GPS Area Outline Point",
+    })
+
+    public void generateReport(String baseReportDir, ReportProgressPanel progressPanel, List<Waypoint> waypointList) {
+        this.waypointList = waypointList;
+        GeneralReportSettings reportSettings = new GeneralReportSettings();
+        reportSettings.setReportDirectoryPath(baseReportDir);
+        generateReport(reportSettings, progressPanel);
+    }
+    
     @Override
-    public void generateReport(String baseReportDir, ReportProgressPanel progressPanel) {
+    public boolean supportsDataSourceSelection() {
+        return true;
+    }
+    
+    @Override
+    public void generateReport(GeneralReportSettings settings, ReportProgressPanel progressPanel) {
         try {
             currentCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
             return;
         }
+        
+        if(settings.getSelectedDataSources() == null) {
+            // Process all data sources if the list is null.
+            try {
+                List<Long> selectedDataSources = currentCase.getDataSources()
+                        .stream()
+                        .map(Content::getId)
+                        .collect(Collectors.toList());
+                settings.setSelectedDataSources(selectedDataSources);
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Could not get the datasources from the case", ex);
+                return;
+            }
+        }
+        
+        String baseReportDir = settings.getReportDirectoryPath();
+        this.settings = settings;
         // Start the progress bar and setup the report
         progressPanel.setIndeterminate(true);
         progressPanel.start();
         progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportKML.progress.querying"));
         String kmlFileFullPath = baseReportDir + REPORT_KML; //NON-NLS
-        
+        String errorMessage = "";
+
         skCase = currentCase.getSleuthkitCase();
 
         progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportKML.progress.loading"));
 
+        Document kmlDocument = setupReportDocument();
+
+        ReportProgressPanel.ReportStatus result = ReportProgressPanel.ReportStatus.COMPLETE;
+
+        try {
+            makeRoutes(skCase);
+            boolean entirelySuccessful = makeTracks(skCase);
+            if (!entirelySuccessful) {
+                result = ReportProgressPanel.ReportStatus.ERROR;
+                errorMessage = Bundle.KMLReport_partialFailure();
+            }
+            entirelySuccessful = makeAreas(skCase);
+            if (!entirelySuccessful) {
+                result = ReportProgressPanel.ReportStatus.ERROR;
+                errorMessage = Bundle.KMLReport_partialFailure();
+            }
+            
+            addLocationsToReport(skCase, baseReportDir);
+        } catch (GeoLocationDataException | IOException | TskCoreException ex) {
+            errorMessage = Bundle.KMLReport_failedToCompleteReport();
+            logger.log(Level.SEVERE, errorMessage, ex); //NON-NLS
+            result = ReportProgressPanel.ReportStatus.ERROR;
+        }
+
+        // Copy the style sheet
+        try {
+            InputStream input = getClass().getResourceAsStream(STYLESHEETS_PATH + KML_STYLE_FILE); // Preserve slash direction
+            OutputStream output = new FileOutputStream(baseReportDir + KML_STYLE_FILE); // Preserve slash direction
+            FileUtil.copy(input, output);
+        } catch (IOException ex) {
+            errorMessage = Bundle.KMLReport_stylesheetError();
+            logger.log(Level.SEVERE, errorMessage, ex); //NON-NLS
+            result = ReportProgressPanel.ReportStatus.ERROR;
+        }
+
+        try (FileOutputStream writer = new FileOutputStream(kmlFileFullPath)) {
+            XMLOutputter outputter = new XMLOutputter(Format.getPrettyFormat());
+            outputter.output(kmlDocument, writer);
+            String prependedStatus = "";
+            if (result == ReportProgressPanel.ReportStatus.ERROR) {
+                prependedStatus = "Incomplete ";
+            }
+            Case.getCurrentCaseThrows().addReport(kmlFileFullPath,
+                    NbBundle.getMessage(this.getClass(), "ReportKML.genReport.srcModuleName.text"),
+                    prependedStatus + NbBundle.getMessage(this.getClass(), "ReportKML.genReport.reportName"));
+        } catch (IOException ex) {
+            errorMessage = Bundle.KMLReport_kmlFileWriteError();
+            logger.log(Level.SEVERE, errorMessage, ex); //NON-NLS
+            progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR, errorMessage);
+        } catch (TskCoreException ex) {
+            errorMessage = Bundle.KMLReport_errorGeneratingReport(kmlFileFullPath);
+            logger.log(Level.SEVERE, errorMessage, ex);
+            result = ReportProgressPanel.ReportStatus.ERROR;
+        } catch (NoCurrentCaseException ex) {
+            errorMessage = Bundle.KMLReport_unableToOpenCase();
+            logger.log(Level.SEVERE, errorMessage, ex);
+            result = ReportProgressPanel.ReportStatus.ERROR;
+        }
+
+        progressPanel.complete(result, errorMessage);
+    }
+
+    /**
+     * Do all of the setting up of elements needed for the report.
+     *
+     * @return The report document object.
+     */
+    private Document setupReportDocument() {
         ns = Namespace.getNamespace("", "http://www.opengis.net/kml/2.2"); //NON-NLS
 
         Element kml = new Element("kml", ns); //NON-NLS
@@ -143,35 +300,45 @@ class KMLReport implements GeneralReportModule {
         }
 
         // Create folder structure
-        Element gpsExifMetadataFolder = new Element("Folder", ns); //NON-NLS
+        gpsExifMetadataFolder = new Element("Folder", ns); //NON-NLS
         CDATA cdataExifMetadataFolder = new CDATA("https://raw.githubusercontent.com/sleuthkit/autopsy/develop/Core/src/org/sleuthkit/autopsy/images/camera-icon-16.png"); //NON-NLS
         Element hrefExifMetadata = new Element("href", ns).addContent(cdataExifMetadataFolder); //NON-NLS
         gpsExifMetadataFolder.addContent(new Element("Icon", ns).addContent(hrefExifMetadata)); //NON-NLS
 
-        Element gpsBookmarksFolder = new Element("Folder", ns); //NON-NLS
+        gpsBookmarksFolder = new Element("Folder", ns); //NON-NLS
         CDATA cdataBookmarks = new CDATA("https://raw.githubusercontent.com/sleuthkit/autopsy/develop/Core/src/org/sleuthkit/autopsy/images/gpsfav.png"); //NON-NLS
         Element hrefBookmarks = new Element("href", ns).addContent(cdataBookmarks); //NON-NLS
         gpsBookmarksFolder.addContent(new Element("Icon", ns).addContent(hrefBookmarks)); //NON-NLS
 
-        Element gpsLastKnownLocationFolder = new Element("Folder", ns); //NON-NLS
+        gpsLastKnownLocationFolder = new Element("Folder", ns); //NON-NLS
         CDATA cdataLastKnownLocation = new CDATA("https://raw.githubusercontent.com/sleuthkit/autopsy/develop/Core/src/org/sleuthkit/autopsy/images/gps-lastlocation.png"); //NON-NLS
         Element hrefLastKnownLocation = new Element("href", ns).addContent(cdataLastKnownLocation); //NON-NLS
         gpsLastKnownLocationFolder.addContent(new Element("Icon", ns).addContent(hrefLastKnownLocation)); //NON-NLS
 
-        Element gpsRouteFolder = new Element("Folder", ns); //NON-NLS
+        gpsRouteFolder = new Element("Folder", ns); //NON-NLS
         CDATA cdataRoute = new CDATA("https://raw.githubusercontent.com/sleuthkit/autopsy/develop/Core/src/org/sleuthkit/autopsy/images/gps-trackpoint.png"); //NON-NLS
         Element hrefRoute = new Element("href", ns).addContent(cdataRoute); //NON-NLS
         gpsRouteFolder.addContent(new Element("Icon", ns).addContent(hrefRoute)); //NON-NLS
 
-        Element gpsSearchesFolder = new Element("Folder", ns); //NON-NLS
+        gpsSearchesFolder = new Element("Folder", ns); //NON-NLS
         CDATA cdataSearches = new CDATA("https://raw.githubusercontent.com/sleuthkit/autopsy/develop/Core/src/org/sleuthkit/autopsy/images/gps-search.png"); //NON-NLS
         Element hrefSearches = new Element("href", ns).addContent(cdataSearches); //NON-NLS
         gpsSearchesFolder.addContent(new Element("Icon", ns).addContent(hrefSearches)); //NON-NLS
 
-        Element gpsTrackpointsFolder = new Element("Folder", ns); //NON-NLS
+        gpsTrackpointsFolder = new Element("Folder", ns); //NON-NLS
         CDATA cdataTrackpoints = new CDATA("https://raw.githubusercontent.com/sleuthkit/autopsy/develop/Core/src/org/sleuthkit/autopsy/images/gps-trackpoint.png"); //NON-NLS
         Element hrefTrackpoints = new Element("href", ns).addContent(cdataTrackpoints); //NON-NLS
         gpsTrackpointsFolder.addContent(new Element("Icon", ns).addContent(hrefTrackpoints)); //NON-NLS
+
+        gpsTracksFolder = new Element("Folder", ns); //NON-NLS
+        CDATA cdataTrack = new CDATA("https://raw.githubusercontent.com/sleuthkit/autopsy/develop/Core/src/org/sleuthkit/autopsy/images/gps-trackpoint.png"); //NON-NLS
+        Element hrefTrack = new Element("href", ns).addContent(cdataTrack); //NON-NLS
+        gpsTracksFolder.addContent(new Element("Icon", ns).addContent(hrefTrack)); //NON-NLS
+        
+        gpsAreasFolder = new Element("Folder", ns); //NON-NLS
+        CDATA cdataArea = new CDATA("https://raw.githubusercontent.com/sleuthkit/autopsy/develop/Core/src/org/sleuthkit/autopsy/images/gps-area.png"); //NON-NLS
+        Element hrefArea = new Element("href", ns).addContent(cdataArea); //NON-NLS
+        gpsAreasFolder.addContent(new Element("Icon", ns).addContent(hrefArea)); //NON-NLS
 
         gpsExifMetadataFolder.addContent(new Element("name", ns).addContent("EXIF Metadata")); //NON-NLS
         gpsBookmarksFolder.addContent(new Element("name", ns).addContent("GPS Bookmarks")); //NON-NLS
@@ -179,6 +346,8 @@ class KMLReport implements GeneralReportModule {
         gpsRouteFolder.addContent(new Element("name", ns).addContent("GPS Routes")); //NON-NLS
         gpsSearchesFolder.addContent(new Element("name", ns).addContent("GPS Searches")); //NON-NLS
         gpsTrackpointsFolder.addContent(new Element("name", ns).addContent("GPS Trackpoints")); //NON-NLS
+        gpsTracksFolder.addContent(new Element("name", ns).addContent("GPS Tracks")); //NON-NLS
+        gpsAreasFolder.addContent(new Element("name", ns).addContent("GPS Areas")); //NON-NLS
 
         document.addContent(gpsExifMetadataFolder);
         document.addContent(gpsBookmarksFolder);
@@ -186,470 +355,319 @@ class KMLReport implements GeneralReportModule {
         document.addContent(gpsRouteFolder);
         document.addContent(gpsSearchesFolder);
         document.addContent(gpsTrackpointsFolder);
+        document.addContent(gpsTracksFolder);
+        document.addContent(gpsAreasFolder);
 
-        ReportProgressPanel.ReportStatus result = ReportProgressPanel.ReportStatus.COMPLETE;
-
-        /**
-         * In the following code, nulls are okay, and are handled when we go to
-         * write out the KML feature. Nulls are expected to be returned from any
-         * method where the artifact is not found and is handled in the
-         * individual feature creation methods. This is done because we don't
-         * know beforehand which attributes will be included for which artifact,
-         * as anyone could write a module that adds additional attributes to an
-         * artifact.
-         *
-         * If there are any issues reading the database getting artifacts and
-         * attributes, or any exceptions thrown during this process, a severe
-         * error is logged, the report is marked as "Incomplete KML Report", and
-         * we use a best-effort method to generate KML information on everything
-         * we can successfully pull out of the database.
-         */
-        try {
-            for (BlackboardArtifact artifact : skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF)) {
-                String fileName = "";
-                long fileId = 0;
-                try {
-                    Long timestamp = getLong(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED);
-                    String desc = getDescriptionFromArtifact(artifact, "EXIF Metadata With Locations"); //NON-NLS
-                    Double lat = getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE);
-                    Double lon = getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE);
-                    Element point = makePoint(lat, lon, getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE));
-
-                    if (lat != null && lat != 0.0 && lon != null && lon != 0.0) {
-                        AbstractFile abstractFile = artifact.getSleuthkitCase().getAbstractFileById(artifact.getObjectID());
-                        fileName = abstractFile.getName();
-                        fileId = abstractFile.getId();
-                        Path path;
-                        copyFileUsingStream(abstractFile, Paths.get(baseReportDir, abstractFile.getName()).toFile());
-                        try {
-                            path = Paths.get(removeLeadingImgAndVol(abstractFile.getUniquePath()));
-                        } catch (TskCoreException ex) {
-                            path = Paths.get(abstractFile.getParentPath(), abstractFile.getName());
-                        }
-                        String formattedCoordinates = String.format("%.2f, %.2f", lat, lon);
-                        if (path == null) {
-                            path = Paths.get(abstractFile.getName());
-                        }
-                        gpsExifMetadataFolder.addContent(makePlacemarkWithPicture(abstractFile.getName(), FeatureColor.RED, desc, timestamp, point, path, formattedCoordinates));
-                    }
-                } catch (ReadContentInputStreamException ex) {
-                    logger.log(Level.WARNING, String.format("Error reading file '%s' (id=%d).", fileName, fileId), ex);
-                } catch (Exception ex) {
-                    logger.log(Level.SEVERE, "Could not extract photo information.", ex); //NON-NLS
-                    result = ReportProgressPanel.ReportStatus.ERROR;
-                }
-            }
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Could not extract photos with EXIF metadata.", ex); //NON-NLS
-            result = ReportProgressPanel.ReportStatus.ERROR;
-        }
-
-        try {
-            for (BlackboardArtifact artifact : skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_BOOKMARK)) {
-                try {
-                    Long timestamp = getLong(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME);
-                    String desc = getDescriptionFromArtifact(artifact, "GPS Bookmark"); //NON-NLS
-                    Double lat = getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE);
-                    Double lon = getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE);
-                    Element point = makePoint(lat, lon, getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE));
-                    String bookmarkName = getString(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME);
-                    String formattedCoordinates = String.format("%.2f, %.2f", lat, lon);
-                    gpsBookmarksFolder.addContent(makePlacemark(bookmarkName, FeatureColor.BLUE, desc, timestamp, point, formattedCoordinates));
-                } catch (Exception ex) {
-                    logger.log(Level.SEVERE, "Could not extract Bookmark information.", ex); //NON-NLS
-                    result = ReportProgressPanel.ReportStatus.ERROR;
-                }
-            }
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Could not get GPS Bookmarks from database.", ex); //NON-NLS
-            result = ReportProgressPanel.ReportStatus.ERROR;
-        }
-
-        try {
-            for (BlackboardArtifact artifact : skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_LAST_KNOWN_LOCATION)) {
-                try {
-                    Long timestamp = getLong(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME);
-                    String desc = getDescriptionFromArtifact(artifact, "GPS Last Known Location"); //NON-NLS
-                    Double lat = getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE);
-                    Double lon = getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE);
-                    Double alt = getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE);
-                    Element point = makePoint(lat, lon, alt);
-                    String formattedCoordinates = String.format("%.2f, %.2f", lat, lon);
-                    gpsLastKnownLocationFolder.addContent(makePlacemark("Last Known Location", FeatureColor.PURPLE, desc, timestamp, point, formattedCoordinates)); //NON-NLS
-                } catch (Exception ex) {
-                    logger.log(Level.SEVERE, "Could not extract Last Known Location information.", ex); //NON-NLS
-                    result = ReportProgressPanel.ReportStatus.ERROR;
-                }
-            }
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Could not get GPS Last Known Location from database.", ex); //NON-NLS
-            result = ReportProgressPanel.ReportStatus.ERROR;
-        }
-
-        try {
-            for (BlackboardArtifact artifact : skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_ROUTE)) {
-                try {
-                    Long timestamp = getLong(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME);
-                    String desc = getDescriptionFromArtifact(artifact, "GPS Route");
-                    Double latitudeStart = getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_START);
-                    Double longitudeStart = getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_START);
-                    Double latitudeEnd = getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_END);
-                    Double longitudeEnd = getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_END);
-                    Double altitude = getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE);
-
-                    Element route = makeLineString(latitudeStart, longitudeStart, altitude, latitudeEnd, longitudeEnd, altitude);
-                    Element startingPoint = makePoint(latitudeStart, longitudeStart, altitude);
-                    Element endingPoint = makePoint(latitudeEnd, longitudeEnd, altitude);
-
-                    String formattedCoordinates = String.format("%.2f, %.2f to %.2f, %.2f", latitudeStart, longitudeStart, latitudeEnd, longitudeEnd);
-                    gpsRouteFolder.addContent(makePlacemark("As-the-crow-flies Route", FeatureColor.GREEN, desc, timestamp, route, formattedCoordinates)); //NON-NLS
-
-                    formattedCoordinates = String.format("%.2f, %.2f", latitudeStart, longitudeStart);
-                    gpsRouteFolder.addContent(makePlacemark("Start", FeatureColor.GREEN, desc, timestamp, startingPoint, formattedCoordinates)); //NON-NLS
-
-                    formattedCoordinates = String.format("%.2f, %.2f", latitudeEnd, longitudeEnd);
-                    gpsRouteFolder.addContent(makePlacemark("End", FeatureColor.GREEN, desc, timestamp, endingPoint, formattedCoordinates)); //NON-NLS
-                } catch (Exception ex) {
-                    logger.log(Level.SEVERE, "Could not extract GPS Route information.", ex); //NON-NLS
-                    result = ReportProgressPanel.ReportStatus.ERROR;
-                }
-            }
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Could not get GPS Routes from database.", ex); //NON-NLS
-            result = ReportProgressPanel.ReportStatus.ERROR;
-        }
-
-        try {
-            for (BlackboardArtifact artifact : skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_SEARCH)) {
-                Long timestamp = getLong(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME);
-                String desc = getDescriptionFromArtifact(artifact, "GPS Search"); //NON-NLS
-                Double lat = getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE);
-                Double lon = getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE);
-                Double alt = getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE);
-                Element point = makePoint(lat, lon, alt);
-                String formattedCoordinates = String.format("%.2f, %.2f", lat, lon);
-                String searchName = getString(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME);
-                if (searchName == null || searchName.isEmpty()) {
-                    searchName = getString(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LOCATION);
-                }
-                if (searchName == null || searchName.isEmpty()) {
-                    searchName = "GPS Search";
-                }
-                gpsSearchesFolder.addContent(makePlacemark(searchName, FeatureColor.WHITE, desc, timestamp, point, formattedCoordinates)); //NON-NLS
-            }
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Could not get GPS Searches from database.", ex); //NON-NLS
-            result = ReportProgressPanel.ReportStatus.ERROR;
-        }
-
-        try {
-            for (BlackboardArtifact artifact : skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACKPOINT)) {
-                try {
-                    Long timestamp = getLong(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME);
-                    String desc = getDescriptionFromArtifact(artifact, "GPS Trackpoint"); //NON-NLS
-                    Double lat = getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE);
-                    Double lon = getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE);
-                    Double alt = getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE);
-                    Element point = makePoint(lat, lon, alt);
-                    String formattedCoordinates = String.format("%.2f, %.2f, %.2f", lat, lon, alt);
-                    String trackName = getString(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME);
-                    if (trackName == null || trackName.isEmpty()) {
-                        trackName = getString(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME);
-                    }
-                    if (trackName == null || trackName.isEmpty()) {
-                        trackName = getString(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FLAG);
-                    }
-                    if (trackName == null || trackName.isEmpty()) {
-                        trackName = "GPS Trackpoint";
-                    }
-                    gpsTrackpointsFolder.addContent(makePlacemark(trackName, FeatureColor.YELLOW, desc, timestamp, point, formattedCoordinates));
-                } catch (Exception ex) {
-                    logger.log(Level.SEVERE, "Could not extract Trackpoint information.", ex); //NON-NLS
-                    result = ReportProgressPanel.ReportStatus.ERROR;
-                }
-            }
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Could not get GPS Trackpoints from database.", ex); //NON-NLS
-            result = ReportProgressPanel.ReportStatus.ERROR;
-        }
-
-        // Copy the style sheet
-        try {
-            InputStream input = getClass().getResourceAsStream(STYLESHEETS_PATH + KML_STYLE_FILE); // Preserve slash direction
-            OutputStream output = new FileOutputStream(baseReportDir + KML_STYLE_FILE); // Preserve slash direction
-            FileUtil.copy(input, output);
-        } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Error placing KML stylesheet. The .KML file will not function properly.", ex); //NON-NLS
-            result = ReportProgressPanel.ReportStatus.ERROR;
-        }
-
-        try (FileOutputStream writer = new FileOutputStream(kmlFileFullPath)) {
-            XMLOutputter outputter = new XMLOutputter(Format.getPrettyFormat());
-            outputter.output(kmlDocument, writer);
-            String prependedStatus = "";
-            if (result == ReportProgressPanel.ReportStatus.ERROR) {
-                prependedStatus = "Incomplete ";
-            }
-            Case.getCurrentCaseThrows().addReport(kmlFileFullPath,
-                    NbBundle.getMessage(this.getClass(), "ReportKML.genReport.srcModuleName.text"),
-                    prependedStatus + NbBundle.getMessage(this.getClass(), "ReportKML.genReport.reportName"));
-        } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Could not write the KML file.", ex); //NON-NLS
-            progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR);
-        } catch (TskCoreException ex) {
-            String errorMessage = String.format("Error adding %s to case as a report", kmlFileFullPath); //NON-NLS
-            logger.log(Level.SEVERE, errorMessage, ex);
-            result = ReportProgressPanel.ReportStatus.ERROR;
-        } catch (NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "Exception while getting open case.", ex);
-            result = ReportProgressPanel.ReportStatus.ERROR;
-        }
-
-        progressPanel.complete(result);
+        return kmlDocument;
     }
 
     /**
-     * Get a Double from an artifact if it exists, return null otherwise.
+     * For the given point, create the data needed for the EXIF_METADATA
      *
-     * @param artifact The artifact to query
-     * @param type     The attribute type we're looking for
+     * @param location            The geolocation of the data
+     * @param baseReportDirectory The report directory where the image will be
+     *                            created.
      *
-     * @return The Double if it exists, or null if not
+     * @throws IOException
      */
-    private Double getDouble(BlackboardArtifact artifact, BlackboardAttribute.ATTRIBUTE_TYPE type) {
-        Double returnValue = null;
-        try {
-            BlackboardAttribute bba = artifact.getAttribute(new BlackboardAttribute.Type(type));
-            if (bba != null) {
-                Double value = bba.getValueDouble();
-                returnValue = value;
+    void addExifMetadataContent(List<Waypoint> points, String baseReportDirectory) throws IOException, TskCoreException {
+        for (Waypoint point : points) {
+            if(shouldFilterFromReport(point.getArtifact())) {
+                continue;
             }
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error getting Double value: " + type.toString(), ex); //NON-NLS
+            
+            Element mapPoint = makePoint(point);
+            if (mapPoint == null) {
+                return;
+            }
+
+            AbstractFile abstractFile = point.getImage();
+            String details = getFormattedDetails(point, Bundle.Waypoint_EXIF_Display_String());
+
+            Path path;
+            copyFileUsingStream(abstractFile, Paths.get(baseReportDirectory, abstractFile.getName()).toFile());
+            try {
+                path = Paths.get(removeLeadingImgAndVol(abstractFile.getUniquePath()));
+            } catch (TskCoreException ex) {
+                path = Paths.get(abstractFile.getParentPath(), abstractFile.getName());
+            }
+            if (path == null) {
+                path = Paths.get(abstractFile.getName());
+            }
+
+            gpsExifMetadataFolder.addContent(makePlacemarkWithPicture(abstractFile.getName(), FeatureColor.RED, details, point.getTimestamp(), mapPoint, path, formattedCoordinates(point.getLatitude(), point.getLongitude())));
         }
-        return returnValue;
     }
 
     /**
-     * Get a Long from an artifact if it exists, return null otherwise.
+     * Add the new location to the correct folder based on artifact type.
      *
-     * @param artifact The artifact to query
-     * @param type     The attribute type we're looking for
+     * @param skCase        Currently open case
+     * @param baseReportDir Output directory for the report.
      *
-     * @return The Long if it exists, or null if not
+     * @throws TskCoreException
+     * @throws IOException
      */
-    private Long getLong(BlackboardArtifact artifact, BlackboardAttribute.ATTRIBUTE_TYPE type) {
-        Long returnValue = null;
-        try {
-            BlackboardAttribute bba = artifact.getAttribute(new BlackboardAttribute.Type(type));
-            if (bba != null) {
-                Long value = bba.getValueLong();
-                returnValue = value;
-            }
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error getting Long value: " + type.toString(), ex); //NON-NLS
+    void addLocationsToReport(SleuthkitCase skCase, String baseReportDir) throws GeoLocationDataException, IOException, TskCoreException {
+        if (waypointList == null) {
+            addExifMetadataContent(WaypointBuilder.getEXIFWaypoints(skCase), baseReportDir);
+            addWaypoints(WaypointBuilder.getBookmarkWaypoints(skCase), gpsBookmarksFolder, FeatureColor.BLUE, Bundle.Waypoint_Bookmark_Display_String());
+            addWaypoints(WaypointBuilder.getLastKnownWaypoints(skCase), gpsLastKnownLocationFolder, FeatureColor.PURPLE, Bundle.Waypoint_Last_Known_Display_String());
+            addWaypoints(WaypointBuilder.getSearchWaypoints(skCase), gpsSearchesFolder, FeatureColor.WHITE, Bundle.Waypoint_Search_Display_String());
+            addWaypoints(WaypointBuilder.getTrackpointWaypoints(skCase), gpsTrackpointsFolder, FeatureColor.WHITE, Bundle.Waypoint_Trackpoint_Display_String());
+        } else {
+            addExifMetadataContent(WaypointBuilder.getEXIFWaypoints(waypointList), baseReportDir);
+            addWaypoints(WaypointBuilder.getBookmarkWaypoints(waypointList), gpsBookmarksFolder, FeatureColor.BLUE, Bundle.Waypoint_Bookmark_Display_String());
+            addWaypoints(WaypointBuilder.getLastKnownWaypoints(waypointList), gpsLastKnownLocationFolder, FeatureColor.PURPLE, Bundle.Waypoint_Last_Known_Display_String());
+            addWaypoints(WaypointBuilder.getSearchWaypoints(waypointList), gpsSearchesFolder, FeatureColor.WHITE, Bundle.Waypoint_Search_Display_String());
+            addWaypoints(WaypointBuilder.getTrackpointWaypoints(waypointList), gpsTrackpointsFolder, FeatureColor.WHITE, Bundle.Waypoint_Trackpoint_Display_String());
         }
-        return returnValue;
     }
 
     /**
-     * Get an Integer from an artifact if it exists, return null otherwise.
+     * For each point in the waypoint list an Element to represent the given
+     * waypoint is created and added it to the given Element folder.
      *
-     * @param artifact The artifact to query
-     * @param type     The attribute type we're looking for
-     *
-     * @return The Integer if it exists, or null if not
+     * @param points        List of waypoints to add to the report
+     * @param folder        The Element folder to add the points to
+     * @param waypointColor The color the waypoint should appear in the report
      */
-    private Integer getInteger(BlackboardArtifact artifact, BlackboardAttribute.ATTRIBUTE_TYPE type) {
-        Integer returnValue = null;
-        try {
-            BlackboardAttribute bba = artifact.getAttribute(new BlackboardAttribute.Type(type));
-            if (bba != null) {
-                Integer value = bba.getValueInt();
-                returnValue = value;
+    void addWaypoints(List<Waypoint> points, Element folder, FeatureColor waypointColor, String headerLabel) throws TskCoreException {
+        for (Waypoint point : points) {
+            if(shouldFilterFromReport(point.getArtifact())) {
+                continue;
             }
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error getting Integer value: " + type.toString(), ex); //NON-NLS
+            addContent(folder, point.getLabel(), waypointColor, getFormattedDetails(point, headerLabel), point.getTimestamp(), makePoint(point), point.getLatitude(), point.getLongitude());
         }
-        return returnValue;
     }
 
     /**
-     * Get a String from an artifact if it exists, return null otherwise.
+     * Adds the waypoint Element with details to the report in the given folder.
      *
-     * @param artifact The artifact to query
-     * @param type     The attribute type we're looking for
-     *
-     * @return The String if it exists, or null if not
+     * @param folder           Element folder to add the waypoint to
+     * @param waypointLabel    String waypoint Label
+     * @param waypointColor    FeatureColor for the waypoint
+     * @param formattedDetails String HTML formatted waypoint details
+     * @param timestamp        Long timestamp (unix\jave epoch seconds)
+     * @param point            Element point object
+     * @param latitude         Double latitude value
+     * @param longitude        Double longitude value
      */
-    private String getString(BlackboardArtifact artifact, BlackboardAttribute.ATTRIBUTE_TYPE type) {
-        String returnValue = null;
-        try {
-            BlackboardAttribute bba = artifact.getAttribute(new BlackboardAttribute.Type(type));
-            if (bba != null) {
-                String value = bba.getValueString();
-                if (value != null && !value.isEmpty()) {
-                    returnValue = value;
-                }
-            }
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error getting String value: " + type.toString(), ex); //NON-NLS
+    void addContent(Element folder, String waypointLabel, FeatureColor waypointColor, String formattedDetails, Long timestamp, Element point, Double latitude, Double longitude) {
+        if (folder != null && point != null) {
+            String formattedCords = formattedCoordinates(latitude, longitude);
+            folder.addContent(makePlacemark(waypointLabel, waypointColor, formattedDetails, timestamp, point, formattedCords));
         }
-        return returnValue;
     }
 
     /**
-     * This method creates a text description for a map feature using all the
-     * geospatial and time data we can for the Artifact. It queries the
-     * following attributes:
+     * Add the route to the route folder in the document.
      *
-     * TSK_GEO_LATITUDE 54; TSK_GEO_LONGITUDE 55; TSK_GEO_LATITUDE_START 98;
-     * TSK_GEO_LATITUDE_END 99; TSK_GEO_LONGITUDE_START 100;
-     * TSK_GEO_LONGITUDE_END 101; TSK_GEO_VELOCITY 56; TSK_GEO_ALTITUDE 57;
-     * TSK_GEO_BEARING 58; TSK_GEO_HPRECISION 59; TSK_GEO_VPRECISION 60;
-     * TSK_GEO_MAPDATUM 61; TSK_DATETIME_START 83; TSK_DATETIME_END 84;
-     * TSK_LOCATION 86; TSK_PATH_SOURCE 94;
+     * @param skCase Currently open case.
      *
-     * @param artifact    the artifact to query.
-     * @param featureType the type of Artifact we're working on.
-     *
-     * @return a String with the information we have available
+     * @throws TskCoreException
      */
-    private String getDescriptionFromArtifact(BlackboardArtifact artifact, String featureType) {
-        StringBuilder result = new StringBuilder("<h3>" + featureType + "</h3>"); //NON-NLS
+    void makeRoutes(SleuthkitCase skCase) throws GeoLocationDataException, TskCoreException {
+        List<Route> routes = null;
 
-        String name = getString(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME);
-        if (name != null && !name.isEmpty()) {
-            result.append("<b>Name:</b> ").append(name).append(SEP); //NON-NLS
+        if (waypointList == null) {
+            routes = Route.getRoutes(skCase);
+        } else {
+            routes = WaypointBuilder.getRoutes(waypointList);
         }
 
-        String location = getString(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LOCATION);
-        if (location != null && !location.isEmpty()) {
-            result.append("<b>Location:</b> ").append(location).append(SEP); //NON-NLS
+        for (Route route : routes) {
+            if(shouldFilterFromReport(route.getArtifact())) {
+                continue;
+            }
+            addRouteToReport(route);   
         }
-
-        Long timestamp = getLong(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME);
-        if (timestamp != null) {
-            result.append("<b>Timestamp:</b> ").append(getTimeStamp(timestamp)).append(SEP); //NON-NLS
-            result.append("<b>Unix timestamp:</b> ").append(timestamp).append(SEP); //NON-NLS
-        }
-
-        Long startingTimestamp = getLong(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START);
-        if (startingTimestamp != null) {
-            result.append("<b>Starting Timestamp:</b> ").append(getTimeStamp(startingTimestamp)).append(SEP); //NON-NLS
-            result.append("<b>Starting Unix timestamp:</b> ").append(startingTimestamp).append(SEP); //NON-NLS
-        }
-
-        Long endingTimestamp = getLong(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_END);
-        if (endingTimestamp != null) {
-            result.append("<b>Ending Timestamp:</b> ").append(getTimeStamp(endingTimestamp)).append(SEP); //NON-NLS
-            result.append("<b>Ending Unix timestamp:</b> ").append(endingTimestamp).append(SEP); //NON-NLS
-        }
-
-        Long createdTimestamp = getLong(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED);
-        if (createdTimestamp != null) {
-            result.append("<b>Created Timestamp:</b> ").append(getTimeStamp(createdTimestamp)).append(SEP); //NON-NLS
-            result.append("<b>Created Unix timestamp:</b> ").append(createdTimestamp).append(SEP); //NON-NLS
-        }
-
-        Double latitude = getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE);
-        if (latitude != null) {
-            result.append("<b>Latitude:</b> ").append(latitude).append(SEP); //NON-NLS
-        }
-
-        Double longitude = getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE);
-        if (longitude != null) {
-            result.append("<b>Longitude:</b> ").append(longitude).append(SEP); //NON-NLS
-        }
-
-        Double latitudeStart = getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_START);
-        if (latitudeStart != null) {
-            result.append("<b>Latitude Start:</b> ").append(latitudeStart).append(SEP); //NON-NLS
-        }
-
-        Double longitudeStart = getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_START);
-        if (longitudeStart != null) {
-            result.append("<b>Longitude Start:</b> ").append(longitudeStart).append(SEP); //NON-NLS
-        }
-
-        Double latitudeEnd = getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_END);
-        if (latitudeEnd != null) {
-            result.append("<b>Latitude End:</b> ").append(latitudeEnd).append(SEP); //NON-NLS
-        }
-
-        Double longitudeEnd = getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_END);
-        if (longitudeEnd != null) {
-            result.append("<b>Longitude End:</b> ").append(longitudeEnd).append(SEP); //NON-NLS
-        }
-
-        Double velocity = getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_VELOCITY);
-        if (velocity != null) {
-            result.append("<b>Velocity:</b> ").append(velocity).append(SEP); //NON-NLS
-        }
-
-        Double altitude = getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE);
-        if (altitude != null) {
-            result.append("<b>Altitude:</b> ").append(altitude).append(SEP); //NON-NLS
-        }
-
-        Double bearing = getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_BEARING);
-        if (bearing != null) {
-            result.append("<b>Bearing:</b> ").append(bearing).append(SEP); //NON-NLS
-        }
-
-        Integer hPrecision = getInteger(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_HPRECISION);
-        if (hPrecision != null) {
-            result.append("<b>Horizontal Precision Figure of Merit:</b> ").append(hPrecision).append(SEP); //NON-NLS
-        }
-
-        Integer vPrecision = getInteger(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_VPRECISION);
-        if (vPrecision != null) {
-            result.append("<b>Vertical Precision Figure of Merit:</b> ").append(vPrecision).append(SEP); //NON-NLS
-        }
-
-        String mapDatum = getString(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_MAPDATUM);
-        if (mapDatum != null && !mapDatum.isEmpty()) {
-            result.append("<b>Map Datum:</b> ").append(mapDatum).append(SEP); //NON-NLS
-        }
-
-        String programName = getString(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME);
-        if (programName != null && !programName.isEmpty()) {
-            result.append("<b>Reported by:</b> ").append(programName).append(SEP); //NON-NLS
-        }
-
-        String flag = getString(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FLAG);
-        if (flag != null && !flag.isEmpty()) {
-            result.append("<b>Flag:</b> ").append(flag).append(SEP); //NON-NLS
-        }
-
-        String pathSource = getString(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_SOURCE);
-        if (pathSource != null && !pathSource.isEmpty()) {
-            result.append("<b>Source:</b> ").append(pathSource).append(SEP); //NON-NLS
-        }
-
-        String deviceMake = getString(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_MAKE);
-        if (deviceMake != null && !deviceMake.isEmpty()) {
-            result.append("<b>Device Make:</b> ").append(deviceMake).append(SEP); //NON-NLS
-        }
-
-        String deviceModel = getString(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_MODEL);
-        if (deviceModel != null && !deviceModel.isEmpty()) {
-            result.append("<b>Device Model:</b> ").append(deviceModel).append(SEP); //NON-NLS
-        }
-
-        return result.toString();
     }
 
+    /**
+     * Add the given route to the KML report.
+     *
+     * @param route
+     */
+    private void addRouteToReport(Route route) {
+        List<Waypoint> routePoints = route.getRoute();
+        Waypoint start = null;
+        Waypoint end = null;
+        // This is hardcoded knowledge that there is only two points
+        // a start and end.  In the long run it would be nice to 
+        // support the idea of a route with multiple points.  The Route
+        // class supports that idea.  Would be nice to figure out how to support
+        // for report.
+        if (routePoints != null && routePoints.size() > 1) {
+            start = routePoints.get(0);
+            end = routePoints.get(1);
+        }
+
+        if (start == null || end == null) {
+            return;
+        }
+
+        Element reportRoute = makeLineString(start.getLatitude(), start.getLongitude(), end.getLatitude(), end.getLongitude());
+        Element startingPoint = makePoint(start.getLatitude(), start.getLongitude(), start.getAltitude());
+        Element endingPoint = makePoint(end.getLatitude(), end.getLongitude(), end.getAltitude());
+
+        String formattedEnd = formattedCoordinates(end.getLatitude(), end.getLongitude());
+        String formattedStart = formattedCoordinates(start.getLatitude(), start.getLongitude());
+
+        String formattedCoordinates = String.format("%s to %s", formattedStart, formattedEnd);
+
+        if (reportRoute != null) {
+            gpsRouteFolder.addContent(makePlacemark(route.getLabel(), FeatureColor.GREEN, getFormattedDetails(route), route.getTimestamp(), reportRoute, formattedCoordinates)); //NON-NLS
+        }
+
+        if (startingPoint != null) {
+            gpsRouteFolder.addContent(makePlacemark(start.getLabel(),
+                    FeatureColor.GREEN, getFormattedDetails(start, Bundle.Waypoint_Route_Point_Display_String()),
+                    start.getTimestamp(), startingPoint, formattedStart)); //NON-NLS
+        }
+
+        if (endingPoint != null) {
+            gpsRouteFolder.addContent(makePlacemark(end.getLabel(),
+                    FeatureColor.GREEN,
+                    getFormattedDetails(end, Bundle.Waypoint_Route_Point_Display_String()),
+                    end.getTimestamp(), endingPoint, formattedEnd)); //NON-NLS
+        }
+    }
+
+    /**
+     * Add the track to the track folder in the document.
+     *
+     * @param skCase Currently open case.
+     * @return The operation was entirely successful.
+     * 
+     * @throws TskCoreException
+     */
+    boolean makeTracks(SleuthkitCase skCase) throws GeoLocationDataException, TskCoreException {
+        List<Track> tracks = null;
+        boolean successful = true;
+        
+        if (waypointList == null) {
+            GeoLocationParseResult<Track> result = Track.getTracks(skCase, null);
+            tracks = result.getItems();
+            successful = result.isSuccessfullyParsed();
+        } else {
+            tracks = WaypointBuilder.getTracks(waypointList);
+        }
+
+        for (Track track : tracks) {
+            if(shouldFilterFromReport(track.getArtifact())) {
+                continue;
+            }
+            addTrackToReport(track);
+        }
+        
+        return successful;
+    }
+
+    /**
+     * Add a track to the KML report.
+     *
+     * @param track
+     */
+    private void addTrackToReport(Track track) {
+        List<Waypoint> trackPoints = track.getPath();
+
+        // Adding a folder with the track name so that all of the 
+        // tracks waypoints with be grouped together.
+        Element trackFolder = new Element("Folder", ns); //NON-NLS
+        trackFolder.addContent(new Element("name", ns).addContent(track.getLabel())); //NON-NLS
+        gpsTracksFolder.addContent(trackFolder);
+
+        for (Waypoint point : trackPoints) {
+            Element element = makePoint(point.getLatitude(), point.getLongitude(), point.getAltitude());
+            trackFolder.addContent(makePlacemark("",
+                    FeatureColor.GREEN, getFormattedDetails(point, Bundle.Waypoint_Track_Point_Display_String()),
+                    point.getTimestamp(), element, formattedCoordinates(point.getLatitude(), point.getLongitude()))); //NON-NLS
+        }
+    }
+    
+    /**
+     * Add the area to the area folder in the document.
+     *
+     * @param skCase Currently open case.
+     * @return The operation was entirely successful.
+     * 
+     * @throws TskCoreException
+     */
+    boolean makeAreas(SleuthkitCase skCase) throws GeoLocationDataException, TskCoreException {
+        List<Area> areas;
+        boolean successful = true;
+        
+        if (waypointList == null) {
+            GeoLocationParseResult<Area> result = Area.getAreas(skCase, null);
+            areas = result.getItems();
+            successful = result.isSuccessfullyParsed();
+        } else {
+            areas = WaypointBuilder.getAreas(waypointList);
+        }
+
+        for (Area area : areas) {
+            if(shouldFilterFromReport(area.getArtifact())) {
+                continue;
+            }
+            addAreaToReport(area);
+        }
+        
+        return successful;
+    }
+
+    /**
+     * Add a area to the KML report.
+     *
+     * @param area
+     */
+    private void addAreaToReport(Area area) {
+        List<Waypoint> areaPoints = area.getPath();
+
+        if (areaPoints.isEmpty()) {
+            return;
+        }
+        
+        // Adding a folder with the area name so that all of the 
+        // area border points will be grouped together.
+        Element areaFolder = new Element("Folder", ns); //NON-NLS
+        areaFolder.addContent(new Element("name", ns).addContent(area.getLabel())); //NON-NLS
+        gpsAreasFolder.addContent(areaFolder);
+
+        // Create a polygon using the waypoints
+        Element element = makePolygon(areaPoints);
+        Waypoint firstWp = areaPoints.get(0);
+        areaFolder.addContent(makePlacemark("",
+            FeatureColor.GREEN, getFormattedDetails(firstWp, Bundle.Waypoint_Area_Point_Display_String()),
+            firstWp.getTimestamp(), element, formattedCoordinates(firstWp.getLatitude(), firstWp.getLongitude()))); //NON-NLS
+    }    
+
+    /**
+     * Format a point time stamp (in seconds) to the report format.
+     *
+     * @param timeStamp The timestamp in epoch seconds.
+     *
+     * @return The formatted timestamp
+     */
     private String getTimeStamp(long timeStamp) {
         return kmlDateFormat.format(new java.util.Date(timeStamp * 1000));
     }
 
     /**
+     * Create the point for the given artifact.
+     *
+     * @param point Artifact point.
+     *
+     * @return point element.
+     */
+    private Element makePoint(Waypoint point) {
+        return makePoint(point.getLatitude(), point.getLongitude(), point.getAltitude());
+    }
+
+    /**
      * Create a Point for use in a Placemark. Note in this method altitude is
      * ignored, as Google Earth apparently has trouble using altitudes for
-     * LineStrings, though the parameters are still in the call. Also note that
-     * any null value passed in will be set to 0.0, under the idea that it is
-     * better to show some data with gaps, than to show nothing at all.
+     * LineStrings, though the parameters are still in the call.
      *
      * @param latitude  point latitude
      * @param longitude point longitude
@@ -658,21 +676,16 @@ class KMLReport implements GeneralReportModule {
      * @return the Point as an Element
      */
     private Element makePoint(Double latitude, Double longitude, Double altitude) {
-        if (latitude == null) {
-            latitude = 0.0;
+        if (latitude == null || longitude == null) {
+            return null;
         }
-        if (longitude == null) {
-            longitude = 0.0;
-        }
-        if (altitude == null) {
-            altitude = 0.0;
-        }
+
         Element point = new Element("Point", ns); //NON-NLS
 
-        // KML uses lon, lat. Deliberately reversed.
-        Element coordinates = new Element("coordinates", ns).addContent(longitude + "," + latitude + "," + altitude); //NON-NLS
+        // KML uses lon, lat. Deliberately reversed.1
+        Element coordinates = new Element("coordinates", ns).addContent(longitude + "," + latitude + "," + (altitude != null ? altitude : 0.0)); //NON-NLS
 
-        if (altitude != 0) {
+        if (altitude != null && altitude != 0) {
             /*
              * Though we are including a non-zero altitude, clamp it to the
              * ground because inaccuracies from the GPS data can cause the
@@ -686,43 +699,27 @@ class KMLReport implements GeneralReportModule {
         point.addContent(coordinates);
 
         return point;
-    }
+    }   
 
     /**
      * Create a LineString for use in a Placemark. Note in this method, start
      * and stop altitudes get ignored, as Google Earth apparently has trouble
      * using altitudes for LineStrings, though the parameters are still in the
-     * call. Also note that any null value passed in will be set to 0.0, under
-     * the idea that it is better to show some data with gaps, than to show
-     * nothing at all.
+     * call.
+     *
+     * If null values are pass for the latitudes or longitudes a line will not
+     * be drawn.
      *
      * @param startLatitude  Starting latitude
      * @param startLongitude Starting longitude
-     * @param startAltitude  Starting altitude. Currently ignored.
      * @param stopLatitude   Ending latitude
      * @param stopLongitude  Ending longitude
-     * @param stopAltitude   Ending altitude. Currently ignored.
      *
      * @return the Line as an Element
      */
-    private Element makeLineString(Double startLatitude, Double startLongitude, Double startAltitude, Double stopLatitude, Double stopLongitude, Double stopAltitude) {
-        if (startLatitude == null) {
-            startLatitude = 0.0;
-        }
-        if (startLongitude == null) {
-            startLongitude = 0.0;
-        }
-        if (startAltitude == null) {
-            startAltitude = 0.0;
-        }
-        if (stopLatitude == null) {
-            stopLatitude = 0.0;
-        }
-        if (stopLongitude == null) {
-            stopLongitude = 0.0;
-        }
-        if (stopAltitude == null) {
-            stopAltitude = 0.0;
+    private Element makeLineString(Double startLatitude, Double startLongitude, Double stopLatitude, Double stopLongitude) {
+        if (startLatitude == null || startLongitude == null || stopLatitude == null || stopLongitude == null) {
+            return null;
         }
 
         Element lineString = new Element("LineString", ns); //NON-NLS
@@ -736,6 +733,35 @@ class KMLReport implements GeneralReportModule {
         return lineString;
     }
 
+    /**
+     * Create a Polygon for use in a Placemark. 
+     *
+     * @param waypoints The waypoints making up the outline.
+     *
+     * @return the Polygon as an Element
+     */
+    private Element makePolygon(List<Waypoint> waypoints) {
+
+        Element polygon = new Element("Polygon", ns); //NON-NLS
+
+        Element altitudeMode = new Element("altitudeMode", ns).addContent("clampToGround"); //NON-NLS
+        polygon.addContent(altitudeMode);
+        
+        // KML uses lon, lat. Deliberately reversed.
+        Element coordinates = new Element("coordinates", ns);
+        for (Waypoint wp : waypoints) {
+            coordinates.addContent(wp.getLongitude() + "," + wp.getLatitude() + ",0 "); //NON-NLS
+        }
+        // Add the first one again
+        coordinates.addContent(waypoints.get(0).getLongitude() + "," + waypoints.get(0).getLatitude() + ",0 "); //NON-NLS
+
+        Element linearRing = new Element("LinearRing", ns).addContent(coordinates);
+        Element outerBoundary = new Element("outerBoundaryIs", ns).addContent(linearRing);
+        polygon.addContent(outerBoundary);
+
+        return polygon;
+    }    
+    
     /**
      * Make a Placemark for use in displaying features. Takes a
      * coordinate-bearing feature (Point, LineString, etc) and places it in the
@@ -891,5 +917,131 @@ class KMLReport implements GeneralReportModule {
             }
         }
         return strbuf.toString();
+    }
+
+    /**
+     * Get the nicely formatted details for the given waypoint.
+     *
+     * @param point  Waypoint object
+     * @param header String details header
+     *
+     * @return HTML formatted String of details for given waypoint
+     */
+    private String getFormattedDetails(Waypoint point, String header) {
+        StringBuilder result = new StringBuilder(); //NON-NLS
+        result.append(String.format("<h3>%s</h3>", header))
+                .append(formatAttribute("Name", point.getLabel()));
+
+        Long timestamp = point.getTimestamp();
+        if (timestamp != null) {
+            result.append(formatAttribute("Timestamp", getTimeStamp(timestamp)));
+        }
+
+        result.append(formatAttribute("Latitude", point.getLatitude().toString()))
+                .append(formatAttribute("Longitude", point.getLongitude().toString()));
+
+        if (point.getAltitude() != null) {
+            result.append(formatAttribute("Altitude", point.getAltitude().toString()));
+        }
+
+        List<Waypoint.Property> list = point.getOtherProperties();
+        for (Waypoint.Property prop : list) {
+            String value = prop.getValue();
+            if (value != null && !value.isEmpty()) {
+                result.append(formatAttribute(prop.getDisplayName(), value));
+            }
+        }
+
+        return result.toString();
+    }
+
+    /**
+     * Returns a HTML formatted string with the given title and value.
+     *
+     * @param title
+     * @param value
+     *
+     * @return HTML formatted string
+     */
+    private String formatAttribute(String title, String value) {
+        return String.format(HTML_PROP_FORMAT, title, value);
+    }
+
+    /**
+     * Returns an HTML formatted string of all the
+     *
+     * @param route
+     *
+     * @return A HTML formatted list of the Route attributes
+     */
+    private String getFormattedDetails(Route route) {
+        List<Waypoint> points = route.getRoute();
+        StringBuilder result = new StringBuilder(); //NON-NLS
+
+        result.append(String.format("<h3>%s</h3>", Bundle.Route_Details_Header()))
+                .append(formatAttribute("Name", route.getLabel()));
+
+        Long timestamp = route.getTimestamp();
+        if (timestamp != null) {
+            result.append(formatAttribute("Timestamp", getTimeStamp(timestamp)));
+        }
+
+        if (points.size() > 1) {
+            Waypoint start = points.get(0);
+            Waypoint end = points.get(1);
+
+            result.append(formatAttribute("Start Latitude", start.getLatitude().toString()))
+                    .append(formatAttribute("Start Longitude", start.getLongitude().toString()));
+
+            Double altitude = start.getAltitude();
+            if (altitude != null) {
+                result.append(formatAttribute("Start Altitude", altitude.toString()));
+            }
+
+            result.append(formatAttribute("End Latitude", end.getLatitude().toString()))
+                    .append(formatAttribute("End Longitude", end.getLongitude().toString()));
+
+            altitude = end.getAltitude();
+            if (altitude != null) {
+                result.append(formatAttribute("End Altitude", altitude.toString()));
+            }
+        }
+
+        List<Waypoint.Property> list = route.getOtherProperties();
+        for (Waypoint.Property prop : list) {
+            String value = prop.getValue();
+            if (value != null && !value.isEmpty()) {
+                result.append(formatAttribute(prop.getDisplayName(), value));
+            }
+        }
+
+        return result.toString();
+    }
+
+    /**
+     * Helper functions for consistently formatting longitude and latitude.
+     *
+     * @param latitude  Double latitude value
+     * @param longitude Double longitude value
+     *
+     * @return String Nicely formatted double values separated by a comma
+     */
+    private String formattedCoordinates(Double latitude, Double longitude) {
+        if (latitude == null || longitude == null) {
+            return "";
+        }
+
+        return String.format("%.2f, %.2f", latitude, longitude);
+    }
+    
+    /**
+     * Indicates if the content should be filtered from the report.
+     */
+    private boolean shouldFilterFromReport(Content content) throws TskCoreException {
+        if(this.settings.getSelectedDataSources() == null) {
+            return false;
+        }
+        long dataSourceId = content.getDataSource().getId();
+        return !this.settings.getSelectedDataSources().contains(dataSourceId);
     }
 }

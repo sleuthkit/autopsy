@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2017-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,8 +21,8 @@ package org.sleuthkit.autopsy.test;
 import java.util.ArrayList;
 import java.util.List;
 import javax.xml.bind.DatatypeConverter;
+import org.joda.time.DateTime;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -50,6 +50,8 @@ final class CustomArtifactType {
     private static final String BYTES_ATTR_DISPLAY_NAME = "Custom Bytes";
     private static final String STRING_ATTR_TYPE_NAME = "CUSTOM_STRING_ATTRIBUTE";
     private static final String STRING_ATTR_DISPLAY_NAME = "Custom String";
+    private static final String JSON_ATTR_TYPE_NAME = "CUSTOM_JSON_ATTRIBUTE";
+    private static final String JSON_ATTR_DISPLAY_NAME = "Custom Json";
     private static BlackboardArtifact.Type artifactType;
     private static BlackboardAttribute.Type intAttrType;
     private static BlackboardAttribute.Type doubleAttrType;
@@ -57,6 +59,7 @@ final class CustomArtifactType {
     private static BlackboardAttribute.Type dateTimeAttrType;
     private static BlackboardAttribute.Type bytesAttrType;
     private static BlackboardAttribute.Type stringAttrType;
+    private static BlackboardAttribute.Type jsonAttrType;
 
     /**
      * Adds the custom artifact type, with its associated custom attribute
@@ -64,8 +67,8 @@ final class CustomArtifactType {
      *
      * @throws BlackboardException If there is an error adding any of the types.
      */
-    static void addToCaseDatabase() throws Blackboard.BlackboardException, NoCurrentCaseException {
-        Blackboard blackboard = Case.getCurrentCaseThrows().getServices().getArtifactsBlackboard();
+    static void addToCaseDatabase() throws Blackboard.BlackboardException {
+        Blackboard blackboard = Case.getCurrentCase().getServices().getArtifactsBlackboard();
         artifactType = blackboard.getOrAddArtifactType(ARTIFACT_TYPE_NAME, ARTIFACT_DISPLAY_NAME);
         intAttrType = blackboard.getOrAddAttributeType(INT_ATTR_TYPE_NAME, BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.INTEGER, INT_ATTR_DISPLAY_NAME);
         doubleAttrType = blackboard.getOrAddAttributeType(DOUBLE_ATTR_TYPE_NAME, BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DOUBLE, DOUBLE_ATTR_DISPLAY_NAME);
@@ -73,26 +76,32 @@ final class CustomArtifactType {
         dateTimeAttrType = blackboard.getOrAddAttributeType(DATETIME_ATTR_TYPE_NAME, BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DATETIME, DATETIME_ATTR_DISPLAY_NAME);
         bytesAttrType = blackboard.getOrAddAttributeType(BYTES_ATTR_TYPE_NAME, BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.BYTE, BYTES_ATTR_DISPLAY_NAME);
         stringAttrType = blackboard.getOrAddAttributeType(STRING_ATTR_TYPE_NAME, BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, STRING_ATTR_DISPLAY_NAME);
+        jsonAttrType = blackboard.getOrAddAttributeType(JSON_ATTR_TYPE_NAME, BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.JSON, JSON_ATTR_DISPLAY_NAME);
     }
 
     /**
-     * Creates and instance of the custom artifact type.
+     * Creates an instance of the custom artifact type and posts it to the
+     * blackboard.
      *
      * @param source The artifact source content.
      *
      * @return A BlackboardArtifact object.
      *
-     * @throws TskCoreException If there is an error creating the artifact.
+     * @throws TskCoreException               If there is an error creating the
+     *                                        artifact.
+     * @throws Blackboard.BlackboardException If there is an error posting the
+     *                                        artifact to the blackboard.
      */
-    static BlackboardArtifact createInstance(Content source) throws TskCoreException {
+    static BlackboardArtifact createAndPostInstance(Content source) throws TskCoreException, Blackboard.BlackboardException {
         BlackboardArtifact artifact = source.newArtifact(artifactType.getTypeID());
         List<BlackboardAttribute> attributes = new ArrayList<>();
         attributes.add(new BlackboardAttribute(intAttrType, MODULE_NAME, 0));
         attributes.add(new BlackboardAttribute(doubleAttrType, MODULE_NAME, 0.0));
         attributes.add(new BlackboardAttribute(longAttributeType, MODULE_NAME, 0L));
-        attributes.add(new BlackboardAttribute(dateTimeAttrType, MODULE_NAME, 60L));
+        attributes.add(new BlackboardAttribute(dateTimeAttrType, MODULE_NAME, DateTime.now().getMillis()/1000));
         attributes.add(new BlackboardAttribute(bytesAttrType, MODULE_NAME, DatatypeConverter.parseHexBinary("ABCD")));
         attributes.add(new BlackboardAttribute(stringAttrType, MODULE_NAME, "Zero"));
+        attributes.add(new BlackboardAttribute(jsonAttrType, MODULE_NAME, "{\"fruit\": \"Apple\",\"size\": \"Large\",\"color\": \"Red\"}"));
         artifact.addAttributes(attributes);
 
         /*
@@ -103,6 +112,9 @@ final class CustomArtifactType {
             attr.addSource(ADDITIONAL_MODULE_NAME);
             attr.addSource(ADDITIONAL_MODULE_NAME);
         }
+
+        Blackboard blackboard = Case.getCurrentCase().getServices().getArtifactsBlackboard();
+        blackboard.postArtifact(artifact, MODULE_NAME);
 
         return artifact;
     }

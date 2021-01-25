@@ -40,6 +40,7 @@ import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.Pool;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.Volume;
@@ -73,12 +74,22 @@ public class VolumeNode extends AbstractContentNode<Volume> {
      */
     public VolumeNode(Volume vol) {
         super(vol);
-
+        
         // set name, display name, and icon
         String volName = nameForVolume(vol);
-
         long end = vol.getStart() + (vol.getLength() - 1);
         String tempVolName = volName + " (" + vol.getDescription() + ": " + vol.getStart() + "-" + end + ")";
+        
+        // If this is a pool volume use a custom display name
+        try {
+            if (vol.getParent() != null &&
+                    vol.getParent().getParent() instanceof Pool) {
+                // Pool volumes are not contiguous so printing a range of blocks is inaccurate
+                tempVolName = volName + " (" + vol.getDescription() + ": " + vol.getStart() + ")";
+            }
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, "Error looking up parent(s) of volume with obj ID = "+ vol.getId(), ex);
+        }
         this.setDisplayName(tempVolName);
 
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/vol-icon.png"); //NON-NLS

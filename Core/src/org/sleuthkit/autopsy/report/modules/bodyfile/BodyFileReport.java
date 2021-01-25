@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  * 
- * Copyright 2012-2018 Basis Technology Corp.
+ * Copyright 2012-2020 Basis Technology Corp.
  * 
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -28,6 +28,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import javax.swing.JPanel;
 
 import org.openide.util.NbBundle;
@@ -35,6 +36,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.report.GeneralReportSettings;
 import org.sleuthkit.autopsy.report.ReportProgressPanel;
 import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
 import org.sleuthkit.datamodel.*;
@@ -65,6 +67,11 @@ class BodyFileReport implements GeneralReportModule {
         }
         return instance;
     }
+    
+    @Override
+    public boolean supportsDataSourceSelection() {
+        return true;
+    }
 
     /**
      * Generates a body file format report for use with the MAC time tool.
@@ -73,8 +80,7 @@ class BodyFileReport implements GeneralReportModule {
      * @param progressPanel panel to update the report's progress
      */
     @Override
-    @SuppressWarnings("deprecation")
-    public void generateReport(String baseReportDir, ReportProgressPanel progressPanel) {
+    public void generateReport(GeneralReportSettings settings, ReportProgressPanel progressPanel) {
         // Start the progress bar and setup the report
         try {
             currentCase = Case.getCurrentCaseThrows();
@@ -85,7 +91,7 @@ class BodyFileReport implements GeneralReportModule {
         progressPanel.setIndeterminate(false);
         progressPanel.start();
         progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportBodyFile.progress.querying"));
-        reportPath = baseReportDir + getRelativeFilePath(); //NON-NLS
+        reportPath = settings.getReportDirectoryPath() + getRelativeFilePath(); //NON-NLS
         
         skCase = currentCase.getSleuthkitCase();
 
@@ -96,7 +102,17 @@ class BodyFileReport implements GeneralReportModule {
                     + " AND name != '.' AND name != '..'"; //NON-NLS
 
             progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportBodyFile.progress.loading"));
-            List<AbstractFile> fs = skCase.findAllFilesWhere(query);
+            // Filter the list to only include files that are contained within
+            // the set of data sources to process.
+            List<AbstractFile> fs = skCase.findAllFilesWhere(query).stream()
+                    .filter((file) -> {
+                        if(settings.getSelectedDataSources() == null) {
+                            // Assume all data sources if list is null.
+                            return true;
+                        }
+                        return settings.getSelectedDataSources().contains(file.getDataSourceObjectId());
+                    })
+                    .collect(Collectors.toList());
 
             // Check if ingest has finished
             String ingestwarning = "";

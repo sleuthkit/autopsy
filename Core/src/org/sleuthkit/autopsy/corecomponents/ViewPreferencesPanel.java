@@ -27,7 +27,6 @@ import javax.swing.JSpinner;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CasePreferences;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
@@ -180,12 +179,12 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         currentSessionSettingsPanel = new javax.swing.JPanel();
         hideRejectedResultsCheckbox = new javax.swing.JCheckBox();
 
-        setPreferredSize(new java.awt.Dimension(625, 465));
+        setPreferredSize(new java.awt.Dimension(727, 495));
 
         viewPreferencesScrollPane.setBorder(null);
-        viewPreferencesScrollPane.setPreferredSize(new java.awt.Dimension(625, 465));
+        viewPreferencesScrollPane.setPreferredSize(new java.awt.Dimension(727, 493));
 
-        viewPreferencesPanel.setPreferredSize(new java.awt.Dimension(625, 465));
+        viewPreferencesPanel.setPreferredSize(new java.awt.Dimension(727, 492));
 
         globalSettingsPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.globalSettingsPanel.border.title"))); // NOI18N
 
@@ -267,12 +266,14 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         org.openide.awt.Mnemonics.setLocalizedText(scoColumnsLabel, org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.scoColumnsLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(scoColumnsCheckbox, org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.scoColumnsCheckbox.text")); // NOI18N
-        scoColumnsCheckbox.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
         scoColumnsCheckbox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 scoColumnsCheckboxActionPerformed(evt);
             }
         });
+
+        jScrollPane1.setMaximumSize(new java.awt.Dimension(150, 130));
+        jScrollPane1.setPreferredSize(new java.awt.Dimension(150, 130));
 
         timeZoneList.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
             public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
@@ -310,53 +311,40 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
                 .addContainerGap()
                 .addGroup(globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(globalSettingsPanelLayout.createSequentialGroup()
-                        .addGap(10, 10, 10)
-                        .addComponent(hideOtherUsersTagsCheckbox))
-                    .addGroup(globalSettingsPanelLayout.createSequentialGroup()
-                        .addComponent(scoColumnsLabel)
-                        .addGap(135, 135, 135)
-                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 272, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(hideOtherUsersTagsLabel)
+                        .addComponent(maxResultsLabel)
+                        .addGap(13, 13, 13)
+                        .addComponent(maxResultsSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(globalSettingsPanelLayout.createSequentialGroup()
                         .addGroup(globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(hideKnownFilesLabel)
-                            .addGroup(globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                .addGroup(globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addGroup(globalSettingsPanelLayout.createSequentialGroup()
-                                        .addGap(10, 10, 10)
-                                        .addGroup(globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                            .addComponent(dataSourcesHideSlackCheckbox)
-                                            .addComponent(viewsHideSlackCheckbox)))
-                                    .addComponent(hideSlackFilesLabel))
-                                .addGroup(globalSettingsPanelLayout.createSequentialGroup()
-                                    .addGap(10, 10, 10)
-                                    .addGroup(globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                        .addComponent(dataSourcesHideKnownCheckbox)
-                                        .addComponent(viewsHideKnownCheckbox))))
                             .addGroup(globalSettingsPanelLayout.createSequentialGroup()
                                 .addGap(10, 10, 10)
-                                .addComponent(scoColumnsCheckbox))
-                            .addGroup(globalSettingsPanelLayout.createSequentialGroup()
-                                .addGap(32, 32, 32)
-                                .addComponent(scoColumnsWrapAroundText)))
-                        .addGap(18, 18, 18)
+                                .addGroup(globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addComponent(viewsHideKnownCheckbox)
+                                    .addComponent(dataSourcesHideKnownCheckbox, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(hideOtherUsersTagsCheckbox)
+                                    .addComponent(viewsHideSlackCheckbox)
+                                    .addComponent(hideOtherUsersTagsLabel)
+                                    .addComponent(scoColumnsLabel)
+                                    .addComponent(scoColumnsCheckbox)
+                                    .addComponent(dataSourcesHideSlackCheckbox, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(scoColumnsWrapAroundText)))
+                            .addComponent(hideSlackFilesLabel)
+                            .addComponent(hideKnownFilesLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 289, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(globalSettingsPanelLayout.createSequentialGroup()
+                                .addGap(10, 10, 10)
+                                .addGroup(globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(useLocalTimeRadioButton)
+                                    .addComponent(keepCurrentViewerRadioButton)
+                                    .addComponent(fileNameTranslationColumnCheckbox)
+                                    .addComponent(useAnotherTimeRadioButton)
+                                    .addComponent(useBestViewerRadioButton)
+                                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 246, javax.swing.GroupLayout.PREFERRED_SIZE)))
                             .addComponent(displayTimeLabel)
                             .addComponent(selectFileLabel)
-                            .addComponent(translateTextLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addGroup(globalSettingsPanelLayout.createSequentialGroup()
-                                .addGap(10, 10, 10)
-                                .addGroup(globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(fileNameTranslationColumnCheckbox)
-                                    .addComponent(keepCurrentViewerRadioButton)
-                                    .addComponent(useBestViewerRadioButton)
-                                    .addComponent(useLocalTimeRadioButton)
-                                    .addComponent(useAnotherTimeRadioButton)))))
-                    .addGroup(globalSettingsPanelLayout.createSequentialGroup()
-                        .addComponent(maxResultsLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(maxResultsSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, 74, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                            .addComponent(translateTextLabel))))
+                .addContainerGap(107, Short.MAX_VALUE))
         );
         globalSettingsPanelLayout.setVerticalGroup(
             globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -396,7 +384,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(useLocalTimeRadioButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(useAnotherTimeRadioButton)
+                        .addComponent(useAnotherTimeRadioButton, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 67, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -450,7 +438,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
             currentSessionSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(currentSessionSettingsPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(hideRejectedResultsCheckbox, javax.swing.GroupLayout.PREFERRED_SIZE, 259, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(hideRejectedResultsCheckbox)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         currentSessionSettingsPanelLayout.setVerticalGroup(
@@ -480,7 +468,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
                 .addComponent(currentCaseSettingsPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(currentSessionSettingsPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGap(0, 0, 0))
         );
 
         viewPreferencesScrollPane.setViewportView(viewPreferencesPanel);
@@ -512,6 +500,22 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
             firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
         }
     }//GEN-LAST:event_hideRejectedResultsCheckboxActionPerformed
+
+    private void maxResultsSpinnerStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_maxResultsSpinnerStateChanged
+        if (immediateUpdates) {
+            UserPreferences.setResultsTablePageSize((int)maxResultsSpinner.getValue());
+        } else {
+            firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+        }
+    }//GEN-LAST:event_maxResultsSpinnerStateChanged
+
+    private void fileNameTranslationColumnCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fileNameTranslationColumnCheckboxActionPerformed
+        if (immediateUpdates) {
+            UserPreferences.setDisplayTranslatedFileNames(fileNameTranslationColumnCheckbox.isSelected());
+        } else {
+            firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+        }
+    }//GEN-LAST:event_fileNameTranslationColumnCheckboxActionPerformed
 
     private void timeZoneListValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_timeZoneListValueChanged
         if (immediateUpdates && useAnotherTimeRadioButton.isSelected()) {
@@ -610,22 +614,6 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
             firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
         }
     }//GEN-LAST:event_useBestViewerRadioButtonActionPerformed
-
-    private void fileNameTranslationColumnCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fileNameTranslationColumnCheckboxActionPerformed
-        if (immediateUpdates) {
-            UserPreferences.setDisplayTranslatedFileNames(fileNameTranslationColumnCheckbox.isSelected());
-        } else {
-            firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
-        }
-    }//GEN-LAST:event_fileNameTranslationColumnCheckboxActionPerformed
-
-    private void maxResultsSpinnerStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_maxResultsSpinnerStateChanged
-        if (immediateUpdates) {
-            UserPreferences.setResultsTablePageSize((int)maxResultsSpinner.getValue());
-        } else {
-            firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
-        }
-    }//GEN-LAST:event_maxResultsSpinnerStateChanged
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

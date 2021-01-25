@@ -205,6 +205,10 @@ DeleteCaseTask.progress.parsingManifest=Parsing manifest file {0}...
 DeleteCaseTask.progress.releasingManifestLock=Releasing lock on the manifest file {0}...
 DeleteCaseTask.progress.startMessage=Starting deletion...
 DeleteOrphanCaseNodesAction.progressDisplayName=Cleanup Case Znodes
+# {0} - item count
+DeleteOrphanCaseNodesDialog.additionalInit.lblNodeCount.text=Znodes found: {0}
+# {0} - item count
+DeleteOrphanCaseNodesDialog.additionalInit.znodesTextArea.countMessage=ZNODES FOUND: {0}
 DeleteOrphanCaseNodesTask.progress.connectingToCoordSvc=Connecting to the coordination service
 # {0} - node path
 DeleteOrphanCaseNodesTask.progress.deletingOrphanedCaseNode=Deleting orphaned case znode {0}
@@ -456,3 +460,8 @@ CasesDashboardTopComponent.refreshButton.text=Refresh
 AutoIngestCasesDeletionDialog.jLabel1.text=Progress
 CasesDashboardTopComponent.deleteOrphanCaseNodesButton.text=Delete Orphan Case Znodes
 CasesDashboardTopComponent.deleteOrphanManifestNodesButton.text=Delete Orphan Manifest Znodes 
+DeleteOrphanCaseNodesDialog.descriptionText.text=The following cases have orphaned znodes.  Would you like to delete them?
+DeleteOrphanCaseNodesDialog.okButton.text=OK
+DeleteOrphanCaseNodesDialog.cancelButton.text=Cancel
+DeleteOrphanCaseNodesDialog.titleText.text=Delete The Following Znodes?
+DeleteOrphanCaseNodesDialog.lblNodeCount.text=

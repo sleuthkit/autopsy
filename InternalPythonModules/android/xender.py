@@ -1,7 +1,7 @@
 """
 Autopsy Forensic Browser
 
-Copyright 2019 Basis Technology Corp.
+Copyright 2019-2020 Basis Technology Corp.
 Contact: carrier <at> sleuthkit <dot> org
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -42,17 +42,30 @@ from org.sleuthkit.datamodel import Content
 from org.sleuthkit.datamodel import TskCoreException
 from org.sleuthkit.datamodel.Blackboard import BlackboardException
 from org.sleuthkit.datamodel import Account
+from org.sleuthkit.datamodel.blackboardutils.attributes import MessageAttachments
+from org.sleuthkit.datamodel.blackboardutils.attributes.MessageAttachments import FileAttachment
 from org.sleuthkit.datamodel.blackboardutils import CommunicationArtifactsHelper
 from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import MessageReadStatus
 from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import CommunicationDirection
 import traceback
 import general
 
-"""
-Finds the SQLite DB for Xender, parses the DB for contacts & messages,
-and adds artifacts to the case.
-"""
+
 class XenderAnalyzer(general.AndroidComponentAnalyzer):
+
+    """
+        Xender is a file transfer utility app.
+        
+        This module finds the SQLite DB for Xender, parses the DB for contacts & messages,
+        and adds artifacts to the case.
+
+        Xender version 4.6.5 has the following database structure:
+            - trans-history.db 
+                -- A profile table with the device_id/name of users interacted with
+                -- A new_history table, with records of files exchanged with other users
+                    --- f_path - path of the file sent/received
+                
+    """
    
     def __init__(self):
         self._logger = Logger.getLogger(self.__class__.__name__)
@@ -63,7 +76,7 @@ class XenderAnalyzer(general.AndroidComponentAnalyzer):
         
 
     def analyze(self, dataSource, fileManager, context):
-        selfAccountAddress = None
+        selfAccountId = None
         transactionDbs = AppSQLiteDB.findAppDatabases(dataSource, "trans-history-db", True, self._PACKAGE_NAME)
         for transactionDb in transactionDbs:
             try:
@@ -72,53 +85,58 @@ class XenderAnalyzer(general.AndroidComponentAnalyzer):
                 profilesResultSet = transactionDb.runQuery("SELECT device_id, nick_name FROM profile WHERE connect_times = 0")
                 if profilesResultSet:
                     while profilesResultSet.next():
-                        if not selfAccountAddress:
-                            selfAccountAddress = Account.Address(profilesResultSet.getString("device_id"), profilesResultSet.getString("nick_name"))
+                        if not selfAccountId:
+                            selfAccountId = profilesResultSet.getString("device_id")
                 # create artifacts helper
-                if selfAccountAddress is not None:
+                if selfAccountId is not None:
                     transactionDbHelper = CommunicationArtifactsHelper(current_case.getSleuthkitCase(),
                                             self._MODULE_NAME, transactionDb.getDBFile(),
-                                            Account.Type.XENDER, Account.Type.XENDER, selfAccountAddress )
+                                            Account.Type.XENDER, Account.Type.XENDER, selfAccountId )
                 else:
                     transactionDbHelper = CommunicationArtifactsHelper(current_case.getSleuthkitCase(),
                                             self._MODULE_NAME, transactionDb.getDBFile(),
                                             Account.Type.XENDER)
 
-                queryString = "SELECT f_path, f_display_name, f_size_str, f_create_time, c_direction, c_session_id, s_name, s_device_id, r_name, r_device_id FROM new_history "
+                queryString = """
+                                SELECT f_path, f_display_name, f_size_str, c_start_time, c_direction, c_session_id,
+                                    s_name, s_device_id, r_name, r_device_id
+                                FROM new_history
+                              """
                 messagesResultSet = transactionDb.runQuery(queryString)
                 if messagesResultSet is not None:
                     while messagesResultSet.next():
                         direction = CommunicationDirection.UNKNOWN
-                        fromAddress = None
-                        toAdddress = None
+                        fromId = None
+                        toId = None
+                    
+                        fileAttachments = ArrayList()
                     
                         if (messagesResultSet.getInt("c_direction") == 1):
                             direction = CommunicationDirection.OUTGOING
-                            toAddress = Account.Address(messagesResultSet.getString("r_device_id"), messagesResultSet.getString("r_name"))
+                            toId = messagesResultSet.getString("r_device_id")
                         else:
                             direction = CommunicationDirection.INCOMING
-                            fromAddress = Account.Address(messagesResultSet.getString("s_device_id"), messagesResultSet.getString("s_name"))                            
+                            fromId = messagesResultSet.getString("s_device_id")                          
 
-                        msgBody = ""    # there is no body.
-                        attachments = [messagesResultSet.getString("f_path")]
-                        msgBody = general.appendAttachmentList(msgBody, attachments)
-                        
-                        timeStamp = messagesResultSet.getLong("f_create_time") / 1000
+                        timeStamp = messagesResultSet.getLong("c_start_time") / 1000
                         messageArtifact = transactionDbHelper.addMessage( 
                                                             self._MESSAGE_TYPE,
                                                             direction,
-                                                            fromAddress,
-                                                            toAddress,
+                                                            fromId,
+                                                            toId,
                                                             timeStamp,
                                                             MessageReadStatus.UNKNOWN,
                                                             None,   # subject
-                                                            msgBody,
+                                                            None,   # message text
                                                             messagesResultSet.getString("c_session_id") )
                                                                                                 
-                        # TBD: add the file as attachment ??
+                        # add the file as attachment 
+                        fileAttachments.add(FileAttachment(current_case.getSleuthkitCase(), transactionDb.getDBFile().getDataSource(), messagesResultSet.getString("f_path")))
+                        messageAttachments = MessageAttachments(fileAttachments, [])
+                        transactionDbHelper.addAttachments(messageArtifact, messageAttachments)
 
             except SQLException as ex:
-                self._logger.log(Level.WARNING, "Error processing query result for profiles", ex)
+                self._logger.log(Level.WARNING, "Error processing query result for profiles.", ex)
                 self._logger.log(Level.WARNING, traceback.format_exc())
             except TskCoreException as ex:
                 self._logger.log(Level.SEVERE, "Failed to create Xender message artifacts.", ex)

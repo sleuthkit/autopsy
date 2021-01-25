@@ -23,6 +23,7 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -57,6 +58,7 @@ import org.sleuthkit.autopsy.ingest.IngestJobStartResult;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestModuleError;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
+import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
@@ -83,6 +85,7 @@ class MultiUserTestTool {
         "MultiUserTestTool.unableCreatFile=Unable to create a file in case output directory",
         "MultiUserTestTool.unableAddFileAsDataSource=Unable to add test file as data source to case",
         "MultiUserTestTool.unableToReadTestFileFromDatabase=Unable to read test file info from case database",
+        "MultiUserTestTool.unableToInitializeFilTypeDetector=Unable to initialize File Type Detector",
         "MultiUserTestTool.unableToUpdateKWSIndex=Unable to write to Keyword Search index",
         "MultiUserTestTool.unableToRunIngest=Unable to run ingest on test data source",
         "MultiUserTestTool.unexpectedError=Unexpected error while performing Multi User test",
@@ -150,17 +153,17 @@ class MultiUserTestTool {
                 return Bundle.MultiUserTestTool_unableToReadDatabase() + ". " + ex.getMessage();
             }
 
-            // Make a text file in Windows TEMP folder 
-            String tempFilePath = System.getProperty("java.io.tmpdir") + TEST_FILE_NAME + "_" + TimeStampUtils.createTimeStamp() + ".txt";
+            // Make a text file in TEMP folder
+            Path tempFilePath = Paths.get(System.getProperty("java.io.tmpdir"), TEST_FILE_NAME + "_" + TimeStampUtils.createTimeStamp() + ".txt");
             try {
-                FileUtils.writeStringToFile(new File(tempFilePath), "Test", Charset.forName("UTF-8"));
+                FileUtils.writeStringToFile(tempFilePath.toFile(), "Test", Charset.forName("UTF-8"));
             } catch (IOException ex) {
                 LOGGER.log(Level.SEVERE, Bundle.MultiUserTestTool_unableCreatFile(), ex);
                 return Bundle.MultiUserTestTool_unableCreatFile() + ". " + ex.getMessage();
             }
 
             //  Add it as a logical file set data source.
-            AutoIngestDataSource dataSource = new AutoIngestDataSource("", Paths.get(tempFilePath));
+            AutoIngestDataSource dataSource = new AutoIngestDataSource("", tempFilePath);
             try {
                 String error = runLogicalFilesDSP(caseForJob, dataSource);
                 if (!error.isEmpty()) {
@@ -176,7 +179,7 @@ class MultiUserTestTool {
             FileManager fileManager = caseForJob.getServices().getFileManager();
             List<AbstractFile> listOfFiles = null;
             try {
-                listOfFiles = fileManager.findFiles(new File(tempFilePath).getName());
+                listOfFiles = fileManager.findFiles(tempFilePath.toFile().getName());
                 if (listOfFiles == null || listOfFiles.isEmpty()) {
                     LOGGER.log(Level.SEVERE, Bundle.MultiUserTestTool_unableToReadTestFileFromDatabase());
                     return Bundle.MultiUserTestTool_unableToReadTestFileFromDatabase();
@@ -187,6 +190,16 @@ class MultiUserTestTool {
             }
 
             AbstractFile file = listOfFiles.get(0);
+            
+            // Set MIME type of the test file (required to test indexing)
+            FileTypeDetector fileTypeDetector = null;
+            try {
+                fileTypeDetector = new FileTypeDetector();
+            } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
+                return Bundle.MultiUserTestTool_unableToInitializeFilTypeDetector() + ". " + ex.getMessage();
+            }
+            String mimeType = fileTypeDetector.getMIMEType(file);
+            file.setMIMEType(mimeType);
 
             // write to KWS index
             KeywordSearchService kwsService = Lookup.getDefault().lookup(KeywordSearchService.class);

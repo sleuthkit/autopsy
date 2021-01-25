@@ -1,7 +1,7 @@
 """
 Autopsy Forensic Browser
 
-Copyright 2019 Basis Technology Corp.
+Copyright 2019-2020 Basis Technology Corp.
 Contact: carrier <at> sleuthkit <dot> org
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -43,6 +43,8 @@ from org.sleuthkit.datamodel.Blackboard import BlackboardException
 from org.sleuthkit.autopsy.casemodule import NoCurrentCaseException
 from org.sleuthkit.datamodel import Account
 from org.sleuthkit.datamodel.blackboardutils import CommunicationArtifactsHelper
+from org.sleuthkit.datamodel.blackboardutils.attributes import MessageAttachments
+from org.sleuthkit.datamodel.blackboardutils.attributes.MessageAttachments import FileAttachment
 from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import MessageReadStatus
 from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import CommunicationDirection
 from TskContactsParser import TskContactsParser
@@ -54,7 +56,48 @@ import general
 
 class LineAnalyzer(general.AndroidComponentAnalyzer):
     """
-        Parses the Line App databases for TSK contacts & message artifacts.
+        Parses the Line App databases for contacts, 
+        message and call log artifacts.
+
+        About Line parser for v9.15.1:
+
+            - Line Database Design Details:
+                Line has unique ids associated with their users and with their groups. These ids
+                are referred to as mid in the database. 
+
+                Databases:
+                    - naver_line: contains contact and msg artifacts
+                    - call_history: contains call artifacts
+
+                Tables:
+                    - naver_line/groups:        This table contains group ids paired with metadata
+                                                about the group (such as creator, group name, etc). 
+
+                    - naver_line/membership     This table maps user mids to group ids. Each record
+                                                contains 1 group id and 1 user mid.
+
+                    - naver_line/chat_history   This table contains all chat history for private
+                                                (1 to 1) and group conversations. It maps a user mid
+                                                or group id to the message details. The user mid and
+                                                group id are stored into the same column "chat_id".
+                                                If the message direction is incoming, the sender mid
+                                                is stored in the from_mid column.
+
+                    - naver_line/contacts       This table contains all Line contacts known to the 
+                                                device.
+
+                    - call_history/call_history This table contains all call history for private
+                                                and group calls. It maps a user mid or a group id
+                                                to the call details. The user mid and group id are
+                                                stored in the "caller_mid" column. 
+
+            - Implementation Details:
+                1)  Both group calls and single calls are extracted in one query. The general approach
+                    is to build one result table with both contact mids and group ids.
+                    This result is consistently labeled contact_list_with_groups queries below.
+                    This table is then joined once onto the messages table to produce all communication
+                    data.
+                2)  Both group chats and single chats are extracted in one query. 
     """
 
     def __init__(self):
@@ -76,7 +119,7 @@ class LineAnalyzer(general.AndroidComponentAnalyzer):
                             current_case.getSleuthkitCase(), self._PARSER_NAME, 
                             contact_and_message_db.getDBFile(), Account.Type.LINE) 
                 self.parse_contacts(contact_and_message_db, helper)
-                self.parse_messages(contact_and_message_db, helper)
+                self.parse_messages(contact_and_message_db, helper, current_case)
 
             for calllog_db in calllog_dbs:
                 current_case = Case.getCurrentCaseThrows()
@@ -98,15 +141,15 @@ class LineAnalyzer(general.AndroidComponentAnalyzer):
 
     def parse_contacts(self, contacts_db, helper):
         try:
-            contacts_parser = LineContactsParser(contacts_db)
+            contacts_parser = LineContactsParser(contacts_db, self._PARSER_NAME)
             while contacts_parser.next():
                 helper.addContact( 
-                    contacts_parser.get_account_name(), 
-                    contacts_parser.get_contact_name(), 
+                    contacts_parser.get_contact_name(),
                     contacts_parser.get_phone(),
                     contacts_parser.get_home_phone(),
                     contacts_parser.get_mobile_phone(),
-                    contacts_parser.get_email()
+                    contacts_parser.get_email(),
+                    contacts_parser.get_other_attributes()
                 )
             contacts_parser.close()
         except SQLException as ex:
@@ -154,22 +197,28 @@ class LineAnalyzer(general.AndroidComponentAnalyzer):
                     "Error posting Line calllog artifacts to blackboard.", ex)
             self._logger.log(Level.WARNING, traceback.format_exc())   
     
-    def parse_messages(self, messages_db, helper):
+    def parse_messages(self, messages_db, helper, current_case):
         try:
            
             messages_parser = LineMessagesParser(messages_db)
             while messages_parser.next():
-                helper.addMessage(
-                    messages_parser.get_message_type(),
-                    messages_parser.get_message_direction(),
-                    messages_parser.get_phone_number_from(),
-                    messages_parser.get_phone_number_to(),
-                    messages_parser.get_message_date_time(),
-                    messages_parser.get_message_read_status(),
-                    messages_parser.get_message_subject(),
-                    messages_parser.get_message_text(),
-                    messages_parser.get_thread_id() 
-                )
+                message_artifact = helper.addMessage(
+                                       messages_parser.get_message_type(),
+                                       messages_parser.get_message_direction(),
+                                       messages_parser.get_phone_number_from(),
+                                       messages_parser.get_phone_number_to(),
+                                       messages_parser.get_message_date_time(),
+                                       messages_parser.get_message_read_status(),
+                                       messages_parser.get_message_subject(),
+                                       messages_parser.get_message_text(),
+                                       messages_parser.get_thread_id() 
+                                   )
+                if (messages_parser.get_file_attachment() is not None):
+                    file_attachments = ArrayList()
+                    file_attachments.add(FileAttachment(current_case.getSleuthkitCase(), messages_db.getDBFile().getDataSource(), messages_parser.get_file_attachment()))
+                    message_attachments = MessageAttachments(file_attachments, [])
+                    helper.addAttachments(message_artifact, message_attachments)
+
             messages_parser.close()
         except SQLException as ex:
             self._logger.log(Level.WARNING, "Error parsing the Line App Database for messages.", ex)
@@ -195,22 +244,33 @@ class LineCallLogsParser(TskCallLogsParser):
     def __init__(self, calllog_db):
         super(LineCallLogsParser, self).__init__(calllog_db.runQuery(
                  """
-                     SELECT substr(CallH.call_type, -1) AS direction, 
-                            CallH.start_time            AS start_time, 
-                            CallH.end_time              AS end_time, 
-                            ConT.server_name            AS name, 
-                            CallH.voip_type             AS call_type, 
-                            ConT.m_id 
-                            FROM   call_history AS CallH 
-                                   JOIN naver.contacts AS ConT 
-                                     ON CallH.caller_mid = ConT.m_id
+                    SELECT Substr(calls.call_type, -1)   AS direction, 
+                           calls.start_time              AS start_time, 
+                           calls.end_time                AS end_time, 
+                           contact_book_w_groups.members AS group_members, 
+                           calls.caller_mid, 
+                           calls.voip_type               AS call_type, 
+                           calls.voip_gc_media_type      AS group_call_type 
+                    FROM   (SELECT id, 
+                                   Group_concat(M.m_id) AS members 
+                            FROM   membership AS M 
+                            GROUP  BY id 
+                            UNION 
+                            SELECT m_id, 
+                                   NULL 
+                            FROM   naver.contacts) AS contact_book_w_groups 
+                           JOIN call_history AS calls 
+                             ON calls.caller_mid = contact_book_w_groups.id
                  """
-             )
+              )
         )
         self._OUTGOING_CALL_TYPE = "O"
         self._INCOMING_CALL_TYPE = "I"
         self._VIDEO_CALL_TYPE = "V"
         self._AUDIO_CALL_TYPE = "A"
+        self._GROUP_CALL_TYPE = "G"
+        self._GROUP_VIDEO_CALL_TYPE = "VIDEO"
+        self._GROUP_AUDIO_CALL_TYPE = "AUDIO"
 
     def get_call_direction(self):
         direction = self.result_set.getString("direction")
@@ -232,21 +292,31 @@ class LineCallLogsParser(TskCallLogsParser):
     
     def get_phone_number_to(self):
         if self.get_call_direction() == self.OUTGOING_CALL:
-            return Account.Address(self.result_set.getString("m_id"), 
-                        self.result_set.getString("name"))
+            group_members = self.result_set.getString("group_members")
+            if group_members is not None:
+                group_members = group_members.split(",")
+                return group_members
+
+            return self.result_set.getString("caller_mid") 
         return super(LineCallLogsParser, self).get_phone_number_to()
 
     def get_phone_number_from(self):
         if self.get_call_direction() == self.INCOMING_CALL:
-            return Account.Address(self.result_set.getString("m_id"),
-                        self.result_set.getString("name"))
+            return self.result_set.getString("caller_mid")
         return super(LineCallLogsParser, self).get_phone_number_from()
 
     def get_call_type(self):
-        if self.result_set.getString("call_type") == self._VIDEO_CALL_TYPE:
+        call_type = self.result_set.getString("call_type")
+        if call_type == self._VIDEO_CALL_TYPE:
             return self.VIDEO_CALL
-        if self.result_set.getString("call_type") == self._AUDIO_CALL_TYPE:
+        if call_type == self._AUDIO_CALL_TYPE:
             return self.AUDIO_CALL
+        if call_type == self._GROUP_CALL_TYPE:
+            g_type = self.result_set.getString("group_call_type")
+            if g_type == self._GROUP_VIDEO_CALL_TYPE:
+                return self.VIDEO_CALL
+            if g_type == self._GROUP_AUDIO_CALL_TYPE:
+                return self.AUDIO_CALL
         return super(LineCallLogsParser, self).get_call_type()
 
 class LineContactsParser(TskContactsParser):
@@ -256,7 +326,7 @@ class LineContactsParser(TskContactsParser):
         a default value inherited from the super class. 
     """
 
-    def __init__(self, contact_db):
+    def __init__(self, contact_db, analyzer):
         super(LineContactsParser, self).__init__(contact_db.runQuery(
                  """
                      SELECT m_id,
@@ -265,11 +335,18 @@ class LineContactsParser(TskContactsParser):
                  """
               )
         )
-    def get_account_name(self):
-        return self.result_set.getString("m_id")
+
+        self._PARENT_ANALYZER = analyzer
 
     def get_contact_name(self):
         return self.result_set.getString("server_name")
+    
+    def get_other_attributes(self):
+        return [BlackboardAttribute(
+                    BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ID, 
+                    self._PARENT_ANALYZER, 
+                    self.result_set.getString("m_id"))]
+
 
 class LineMessagesParser(TskMessagesParser):
     """
@@ -281,43 +358,25 @@ class LineMessagesParser(TskMessagesParser):
     def __init__(self, message_db):
         super(LineMessagesParser, self).__init__(message_db.runQuery(
                 """
-                    SELECT contact_list_with_groups.name,
-                           contact_list_with_groups.id,
-                           contact_list_with_groups.members,
-                           contact_list_with_groups.member_names,
-                           CH.from_mid,
-                           C.server_name AS from_name,
-                           CH.content,
-                           CH.created_time,
-                           CH.attachement_type,
-                           CH.attachement_local_uri,
-                           CH.status
-                    FROM   (SELECT G.name,
-                                   group_members.id,
-                                   group_members.members,
-                                   group_members.member_names
-                            FROM   (SELECT id,
-                                           group_concat(M.m_id) AS members,
-                                           group_concat(replace(C.server_name, 
-                                                                ",", 
-                                                                "")) as member_names
-                                    FROM   membership AS M
-                                           JOIN contacts as C
-                                             ON M.m_id = C.m_id
-                                    GROUP  BY id) AS group_members
-                                   JOIN groups AS G
-                                     ON G.id = group_members.id
-                            UNION
-                            SELECT server_name,
-                                   m_id,
-                                   NULL,
-                                   NULL
-                            FROM   contacts) AS contact_list_with_groups
-                           JOIN chat_history AS CH
-                             ON CH.chat_id = contact_list_with_groups.id
-                           LEFT JOIN contacts as C
-                             ON C.m_id = CH.from_mid
-                    WHERE attachement_type != 6
+                    SELECT contact_book_w_groups.id, 
+                           contact_book_w_groups.members, 
+                           messages.from_mid, 
+                           messages.content, 
+                           messages.created_time, 
+                           messages.attachement_type, 
+                           messages.attachement_local_uri, 
+                           messages.status                           
+                    FROM   (SELECT id, 
+                                   Group_concat(M.m_id) AS members 
+                            FROM   membership AS M 
+                            GROUP  BY id 
+                            UNION 
+                            SELECT m_id, 
+                                   NULL 
+                            FROM   contacts) AS contact_book_w_groups 
+                           JOIN chat_history AS messages 
+                             ON messages.chat_id = contact_book_w_groups.id 
+                    WHERE  attachement_type != 6
                 """
              )
         )
@@ -340,11 +399,6 @@ class LineMessagesParser(TskMessagesParser):
 
     def get_message_text(self):
         content = self.result_set.getString("content") 
-        attachment_uri = self.result_set.getString("attachement_local_uri")
-        if attachment_uri is not None and content is not None:
-            return general.appendAttachmentList(content, [attachment_uri])
-        elif attachment_uri is not None and content is None:
-            return general.appendAttachmentList("", [attachment_uri])
         return content
 
     def get_message_direction(self):  
@@ -356,8 +410,7 @@ class LineMessagesParser(TskMessagesParser):
         if self.get_message_direction() == self.INCOMING:
             from_mid = self.result_set.getString("from_mid")
             if from_mid is not None:
-                return Account.Address(from_mid,
-                         self.result_set.getString("from_name"))
+                return from_mid
         return super(LineMessagesParser, self).get_phone_number_from()
 
     def get_phone_number_to(self):
@@ -365,17 +418,9 @@ class LineMessagesParser(TskMessagesParser):
             group = self.result_set.getString("members")
             if group is not None:
                 group = group.split(",")
-                names = self.result_set.getString("member_names").split(",")
-                
-                recipients = []
+                return group
 
-                for recipient_id, recipient_name in zip(group, names):
-                    recipients.append(Account.Address(recipient_id, recipient_name))
-
-                return recipients
-
-            return Account.Address(self.result_set.getString("id"), 
-                    self.result_set.getString("name"))
+            return self.result_set.getString("id") 
 
         return super(LineMessagesParser, self).get_phone_number_to()
 
@@ -384,3 +429,14 @@ class LineMessagesParser(TskMessagesParser):
         if members is not None:
             return self.result_set.getString("id")
         return super(LineMessagesParser, self).get_thread_id()
+
+    def get_file_attachment(self):
+        if (self.result_set.getString("attachement_local_uri") is None):
+            return None
+        # If "content:" in the beginning of the string we cannot determine at this point where a file resides. Ignoring for
+        # now unless data can be obtained to determine where the file may reside.
+        elif ("content:" in self.result_set.getString("attachement_local_uri")):
+            return None
+        else:
+            return self.result_set.getString("attachement_local_uri")
+    

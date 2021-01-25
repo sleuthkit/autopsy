@@ -46,13 +46,21 @@ from org.sleuthkit.datamodel.blackboardutils import ArtifactsHelper
 import traceback
 import general
 
-"""
-Finds the SQLite DB for Android installed applications, parses the DB,
-and adds artifacts to the case.
-"""
+
 class InstalledApplicationsAnalyzer(general.AndroidComponentAnalyzer):
-    
-    moduleName = "Android Installed Applications Analyzer"
+
+    """
+        Android has a database to track the applications that are
+        purchased and installed on the phone.
+        
+        This module finds the SQLite DB for insalled application, and creates artifacts.
+
+        
+        Android 5.1.1 has the following database structure istalled applications:
+            - library.db 
+                -- A ownership table that stores pplications purchased, with purchase date
+                            
+    """
     
     def __init__(self):
         self._logger = Logger.getLogger(self.__class__.__name__)
@@ -67,7 +75,7 @@ class InstalledApplicationsAnalyzer(general.AndroidComponentAnalyzer):
             try:
                 current_case = Case.getCurrentCaseThrows()
                 libraryDbHelper = ArtifactsHelper(current_case.getSleuthkitCase(),
-                                    self.moduleName, libraryDb.getDBFile())
+                                    self._MODULE_NAME, libraryDb.getDBFile())
                 queryString = "SELECT doc_id, purchase_time FROM ownership"
                 ownershipResultSet = libraryDb.runQuery(queryString)
                 if ownershipResultSet is not None:

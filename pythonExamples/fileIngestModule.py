@@ -29,7 +29,7 @@
 
 # Simple file-level ingest module for Autopsy.
 # Search for TODO for the things that you need to change
-# See http://sleuthkit.org/autopsy/docs/api-docs/4.6.0/index.html for documentation
+# See http://sleuthkit.org/autopsy/docs/api-docs/latest/index.html for documentation
 
 import jarray
 import inspect
@@ -94,7 +94,7 @@ class SampleJythonFileIngestModule(FileIngestModule):
 
     # Where any setup and configuration is done
     # 'context' is an instance of org.sleuthkit.autopsy.ingest.IngestJobContext.
-    # See: http://sleuthkit.org/autopsy/docs/api-docs/4.6.0/classorg_1_1sleuthkit_1_1autopsy_1_1ingest_1_1_ingest_job_context.html
+    # See: http://sleuthkit.org/autopsy/docs/api-docs/latest/classorg_1_1sleuthkit_1_1autopsy_1_1ingest_1_1_ingest_job_context.html
     # TODO: Add any setup code that you need here.
     def startUp(self, context):
         self.filesFound = 0
@@ -105,7 +105,7 @@ class SampleJythonFileIngestModule(FileIngestModule):
 
     # Where the analysis is done.  Each file will be passed into here.
     # The 'file' object being passed in is of type org.sleuthkit.datamodel.AbstractFile.
-    # See: http://www.sleuthkit.org/sleuthkit/docs/jni-docs/4.6.0/classorg_1_1sleuthkit_1_1datamodel_1_1_abstract_file.html
+    # See: http://www.sleuthkit.org/sleuthkit/docs/jni-docs/latest/classorg_1_1sleuthkit_1_1datamodel_1_1_abstract_file.html
     # TODO: Add your analysis code in here.
     def process(self, file):
         # Skip non-files

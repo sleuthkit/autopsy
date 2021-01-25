@@ -133,7 +133,7 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
         jScrollPane1.setPreferredSize(new java.awt.Dimension(32767, 32767));
 
         messageTable.setBackground(new java.awt.Color(221, 221, 235));
-        messageTable.setFont(messageTable.getFont().deriveFont(messageTable.getFont().getStyle() & ~java.awt.Font.BOLD, 12));
+        messageTable.setFont(messageTable.getFont().deriveFont(messageTable.getFont().getSize()+1f));
         messageTable.setModel(tableModel);
         messageTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
         messageTable.setAutoscrolls(false);
@@ -149,7 +149,6 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
 
         sortByLabel.setText(org.openide.util.NbBundle.getMessage(IngestMessagePanel.class, "IngestMessagePanel.sortByLabel.text")); // NOI18N
 
-        sortByComboBox.setFont(sortByComboBox.getFont().deriveFont(sortByComboBox.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         sortByComboBox.setToolTipText(org.openide.util.NbBundle.getMessage(IngestMessagePanel.class, "IngestMessagePanel.sortByComboBox.toolTipText")); // NOI18N
         sortByComboBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -157,16 +156,12 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
             }
         });
 
-        totalMessagesNameLabel.setFont(totalMessagesNameLabel.getFont().deriveFont(totalMessagesNameLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         totalMessagesNameLabel.setText(org.openide.util.NbBundle.getMessage(IngestMessagePanel.class, "IngestMessagePanel.totalMessagesNameLabel.text")); // NOI18N
 
-        totalMessagesNameVal.setFont(totalMessagesNameVal.getFont().deriveFont(totalMessagesNameVal.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         totalMessagesNameVal.setText(org.openide.util.NbBundle.getMessage(IngestMessagePanel.class, "IngestMessagePanel.totalMessagesNameVal.text")); // NOI18N
 
-        totalUniqueMessagesNameLabel.setFont(totalUniqueMessagesNameLabel.getFont().deriveFont(totalUniqueMessagesNameLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         totalUniqueMessagesNameLabel.setText(org.openide.util.NbBundle.getMessage(IngestMessagePanel.class, "IngestMessagePanel.totalUniqueMessagesNameLabel.text")); // NOI18N
 
-        totalUniqueMessagesNameVal.setFont(totalUniqueMessagesNameVal.getFont().deriveFont(totalUniqueMessagesNameVal.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         totalUniqueMessagesNameVal.setText(org.openide.util.NbBundle.getMessage(IngestMessagePanel.class, "IngestMessagePanel.totalUniqueMessagesNameVal.text")); // NOI18N
 
         javax.swing.GroupLayout controlPanelLayout = new javax.swing.GroupLayout(controlPanel);
@@ -869,7 +864,7 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
             cell.setHorizontalAlignment(SwingConstants.CENTER);
 
             // increase the font size
-            cell.setFont(cell.getFont().deriveFont(Font.PLAIN, 16));
+            cell.setFont(cell.getFont().deriveFont(Font.PLAIN, cell.getFont().getSize()+5));
 
             final IngestMessageGroup messageGroup = tableModel.getMessageGroup(row);
             if (messageGroup != null) {
@@ -902,8 +897,8 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
             Component cell = super.getTableCellRendererComponent(
                     table, value, false, false, row, column);
 
-            Font visitedFont = cell.getFont().deriveFont(Font.PLAIN, 12);
-            Font notVisitedFont = cell.getFont().deriveFont(Font.BOLD, 12);
+            Font visitedFont = cell.getFont().deriveFont(Font.PLAIN, cell.getFont().getSize()+1);
+            Font notVisitedFont = cell.getFont().deriveFont(Font.BOLD, cell.getFont().getSize()+1);
 
             if (column == 3) {
                 String subject = (String) value;
@@ -942,7 +937,7 @@ class IngestMessagePanel extends JPanel implements TableModelListener {
             Object aValue = value;
             if (value instanceof Date) {
                 Date date = (Date) value;
-                DateFormat df = new SimpleDateFormat("HH:mm:ss");
+                DateFormat df = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
                 aValue = df.format(date);
             } else {
                 throw new RuntimeException(NbBundle.getMessage(this.getClass(),

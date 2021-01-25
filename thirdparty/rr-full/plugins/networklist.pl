@@ -5,6 +5,7 @@
 #
 #
 # Change History:
+#    20190128 - Added Nla\Wireless data
 #    20150812 - updated to include Nla\Cache data
 #    20120917 - updated to include NameType value
 #    20090812 - updated code to parse DateCreated and DateLastConnected
@@ -24,7 +25,7 @@ my %config = (hive          => "Software",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              version       => 20150812);
+              version       => 20190128);
 
 sub getConfig{return %config}
 
@@ -125,7 +126,7 @@ sub pluginmain {
 			foreach my $n (keys %nl) {
 				my $str = sprintf "%-15s Gateway Mac: ".$nl{$n}{DefaultGatewayMac},$nl{$n}{ProfileName};
 				::rptMsg($nl{$n}{ProfileName});
-				::rptMsg("  Key LastWrite    : ".gmtime($nl{$n}{LastWrite})." Z");
+#				::rptMsg("  Key LastWrite    : ".gmtime($nl{$n}{LastWrite})." Z");
 				::rptMsg("  DateLastConnected: ".$nl{$n}{DateLastConnected});
 				::rptMsg("  DateCreated      : ".$nl{$n}{DateCreated});
 				::rptMsg("  DefaultGatewayMac: ".$nl{$n}{DefaultGatewayMac});
@@ -147,9 +148,30 @@ sub pluginmain {
   if ($key = $root_key->get_subkey($key_path)) { 
   	my @subkeys = $key->get_list_of_subkeys();
   	if (scalar(@subkeys) > 0) {
-  		::rptMsg(sprintf "%-26s  %-30s","Date","Domain/IP");
+#  		::rptMsg(sprintf "%-26s  %-30s","Date","Domain/IP");
+			::rptMsg(sprintf "%-30s","Domain/IP");
   		foreach my $s (@subkeys) {
-  			::rptMsg(sprintf "%-26s  %-30s",gmtime($s->get_timestamp())." Z",$s->get_name());
+#  			::rptMsg(sprintf "%-26s  %-30s",gmtime($s->get_timestamp())." Z",$s->get_name());
+				::rptMsg(sprintf "%-30s",$s->get_name());
+  		}
+  	}
+  }
+  ::rptMsg("");
+# Added 20190128 - Nla\Wireless data
+  $key_path = $base_path."\\Nla\\Wireless";
+  if ($key = $root_key->get_subkey($key_path)) { 
+  	my @subkeys = $key->get_list_of_subkeys();
+  	if (scalar(@subkeys) > 0) {
+  		::rptMsg("");
+  		::rptMsg("Nla\\Wireless");
+  		foreach my $s (@subkeys) {
+  			my $str = $s->get_value("")->get_data();
+  			
+  			my @list = unpack("(A2)*", $str);
+  			my @chars = map {chr hex} @list;
+  			my $new_str = join('',@chars);
+  			::rptMsg($new_str);
+
   		}
   	}
   }

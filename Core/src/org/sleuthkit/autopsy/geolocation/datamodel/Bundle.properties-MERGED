@@ -1,0 +1,13 @@
+# {0} - area name
+GEOArea_point_label_header=Area outline point for area: {0}
+# {0} - track name
+GEOTrack_point_label_header=Trackpoint for track: {0}
+LastKnownWaypoint_Label=Last Known Location
+Route_End_Label=End
+Route_Label=As-the-crow-flies Route
+Route_point_label=Waypoints for route
+Route_Start_Label=Start
+SearchWaypoint_DisplayLabel=GPS Search
+Track_distanceFromHome_displayName=Distance from home point
+Track_distanceTraveled_displayName=Distance traveled
+TrackpointWaypoint_DisplayLabel=GPS Trackpoint

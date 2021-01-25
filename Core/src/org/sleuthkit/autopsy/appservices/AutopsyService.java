@@ -50,7 +50,9 @@ public interface AutopsyService {
      * @param context The case context which includes things such as the case, a
      *                progress indicator for the operation, a cancellation
      *                request flag, etc.
-     * @throws org.sleuthkit.autopsy.framework.AutopsyService.AutopsyServiceException
+     *
+     * @throws
+     * org.sleuthkit.autopsy.framework.AutopsyService.AutopsyServiceException
      */
     default void openCaseResources(CaseContext context) throws AutopsyServiceException {
         /*
@@ -64,7 +66,9 @@ public interface AutopsyService {
      * @param context The case context which includes things such as the case, a
      *                progress indicator for the operation, a cancellation
      *                request flag, etc.
-     * @throws org.sleuthkit.autopsy.framework.AutopsyService.AutopsyServiceException
+     *
+     * @throws
+     * org.sleuthkit.autopsy.framework.AutopsyService.AutopsyServiceException
      */
     default void closeCaseResources(CaseContext context) throws AutopsyServiceException {
         /*
@@ -86,6 +90,7 @@ public interface AutopsyService {
         private final Case theCase;
         private final ProgressIndicator progressIndicator;
         private volatile boolean cancelRequested;
+        private final boolean isNewCase;
 
         /**
          * Constructs the context for the creation/opening/upgrading of
@@ -96,9 +101,23 @@ public interface AutopsyService {
          *                          case-level resources
          */
         public CaseContext(Case theCase, ProgressIndicator progressIndicator) {
+            this(theCase, progressIndicator, false);
+        }
+        
+        /**
+         * Constructs the context for the creation/opening/upgrading of
+         * case-level resources by a service.
+         *
+         * @param theCase           The case.
+         * @param progressIndicator A progress indicator for the opening of the
+         *                          case-level resources.
+         * @param  isNewCase        True if theCase is a new case.
+         */
+        public CaseContext(Case theCase, ProgressIndicator progressIndicator, boolean isNewCase) {
             this.theCase = theCase;
             this.progressIndicator = progressIndicator;
             this.cancelRequested = false;
+            this.isNewCase = isNewCase;
         }
 
         /**
@@ -113,7 +132,9 @@ public interface AutopsyService {
 
         /**
          * Gets the progress indicator for the creation/opening/upgrading of
-         * case-level resources by a service.
+         * case-level resources by a service. IMPORTANT: The service should only
+         * call progress() on the progress indicator. Calling start() and
+         * finish() are the responsibility of the case providing the context.
          *
          * @return The progress indicator.
          */
@@ -138,6 +159,16 @@ public interface AutopsyService {
          */
         public boolean cancelRequested() {
             return this.cancelRequested;
+        }
+        
+        /**
+         * Indicates whether or the case is a new case in the process of being
+         * created.
+         * 
+         * @return True if it is a new case.
+         */
+        public boolean isNewCase() {
+            return this.isNewCase;
         }
     }
 

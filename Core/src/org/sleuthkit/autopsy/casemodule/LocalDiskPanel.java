@@ -121,17 +121,13 @@ final class LocalDiskPanel extends JPanel {
         setMinimumSize(new java.awt.Dimension(0, 420));
         setPreferredSize(new java.awt.Dimension(485, 410));
 
-        timeZoneLabel.setFont(timeZoneLabel.getFont().deriveFont(timeZoneLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(timeZoneLabel, org.openide.util.NbBundle.getMessage(LocalDiskPanel.class, "LocalDiskPanel.timeZoneLabel.text")); // NOI18N
 
-        timeZoneComboBox.setFont(timeZoneComboBox.getFont().deriveFont(timeZoneComboBox.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         timeZoneComboBox.setMaximumRowCount(30);
 
-        noFatOrphansCheckbox.setFont(noFatOrphansCheckbox.getFont().deriveFont(noFatOrphansCheckbox.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(noFatOrphansCheckbox, org.openide.util.NbBundle.getMessage(LocalDiskPanel.class, "LocalDiskPanel.noFatOrphansCheckbox.text")); // NOI18N
         noFatOrphansCheckbox.setToolTipText(org.openide.util.NbBundle.getMessage(LocalDiskPanel.class, "LocalDiskPanel.noFatOrphansCheckbox.toolTipText")); // NOI18N
 
-        descLabel.setFont(descLabel.getFont().deriveFont(descLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(descLabel, org.openide.util.NbBundle.getMessage(LocalDiskPanel.class, "LocalDiskPanel.descLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(copyImageCheckbox, org.openide.util.NbBundle.getMessage(LocalDiskPanel.class, "LocalDiskPanel.copyImageCheckbox.text")); // NOI18N
@@ -157,7 +153,6 @@ final class LocalDiskPanel extends JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(LocalDiskPanel.class, "LocalDiskPanel.jLabel1.text")); // NOI18N
 
-        imageWriterErrorLabel.setFont(imageWriterErrorLabel.getFont().deriveFont(imageWriterErrorLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         imageWriterErrorLabel.setForeground(new java.awt.Color(255, 0, 0));
         org.openide.awt.Mnemonics.setLocalizedText(imageWriterErrorLabel, org.openide.util.NbBundle.getMessage(LocalDiskPanel.class, "LocalDiskPanel.imageWriterErrorLabel.text")); // NOI18N
 

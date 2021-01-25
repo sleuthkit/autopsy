@@ -1,5 +1,6 @@
 AddTaggedHashesToHashDb.error.noHashSetsSelected=No hash set selected for export.
 AddTaggedHashesToHashDb.error.noTagsSelected=No tags selected for export.
+AddTaggedHashesToHashDb.error.unableToOpenCase=Exception while getting open case.
 HashDbConfigDialog.okButton.text=OK
 HashDbConfigDialog.cancelButton.text=Cancel
 SaveTaggedHashesToHashDbConfigPanel.deselectAllButton.text=Deselect All

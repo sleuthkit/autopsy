@@ -156,10 +156,10 @@ public class CueBannerPanel extends javax.swing.JPanel {
             }
         });
 
-        newCaseLabel.setFont(newCaseLabel.getFont().deriveFont(newCaseLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 13));
+        newCaseLabel.setFont(newCaseLabel.getFont().deriveFont(newCaseLabel.getFont().getSize()+2f));
         newCaseLabel.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.newCaseLabel.text")); // NOI18N
 
-        openRecentCaseLabel.setFont(openRecentCaseLabel.getFont().deriveFont(openRecentCaseLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 13));
+        openRecentCaseLabel.setFont(openRecentCaseLabel.getFont().deriveFont(openRecentCaseLabel.getFont().getSize()+2f));
         openRecentCaseLabel.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.openRecentCaseLabel.text")); // NOI18N
 
         openCaseButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/casemodule/btn_icon_open_existing.png"))); // NOI18N
@@ -175,10 +175,9 @@ public class CueBannerPanel extends javax.swing.JPanel {
             }
         });
 
-        openCaseLabel.setFont(openCaseLabel.getFont().deriveFont(openCaseLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 13));
+        openCaseLabel.setFont(openCaseLabel.getFont().deriveFont(openCaseLabel.getFont().getSize()+2f));
         openCaseLabel.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.openCaseLabel.text")); // NOI18N
 
-        closeButton.setFont(closeButton.getFont().deriveFont(closeButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         closeButton.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.closeButton.text")); // NOI18N
 
         jSeparator1.setOrientation(javax.swing.SwingConstants.VERTICAL);
@@ -249,6 +248,8 @@ public class CueBannerPanel extends javax.swing.JPanel {
     private void openRecentCaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openRecentCaseButtonActionPerformed
         recentCasesWindow.setLocationRelativeTo(this);
         OpenRecentCasePanel.getInstance();  //refreshes the recent cases table
+        // Workaround to ensure that dialog is not hidden on macOS.
+        recentCasesWindow.setAlwaysOnTop(true);
         recentCasesWindow.setVisible(true);
     }//GEN-LAST:event_openRecentCaseButtonActionPerformed
 

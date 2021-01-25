@@ -35,7 +35,7 @@
 # don't need a configuration UI, start with the other sample module.
 #
 # Search for TODO for the things that you need to change
-# See http://sleuthkit.org/autopsy/docs/api-docs/4.6.0/index.html for documentation
+# See http://sleuthkit.org/autopsy/docs/api-docs/latest/index.html for documentation
 
 
 import jarray

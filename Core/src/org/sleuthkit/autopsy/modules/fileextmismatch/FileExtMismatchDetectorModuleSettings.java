@@ -61,7 +61,25 @@ final class FileExtMismatchDetectorModuleSettings implements IngestModuleIngestJ
             "application/exe",
             "application/x-dosexec",
             "application/x-exe",
-            "application/x-msdownload").collect(Collectors.toSet());
+            "application/x-msdownload",
+            "application/msword",
+            "application/pdf",
+            "application/rtf",
+            "application/vnd.ms-excel",
+            "application/vnd.ms-powerpoint",
+            "application/vnd.oasis.opendocument.presentation",
+            "application/vnd.oasis.opendocument.spreadsheet",
+            "application/vnd.oasis.opendocument.text",
+            "application/x-msoffice",
+            "application/x-ooxml",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.template",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.template",
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            "application/vnd.openxmlformats-officedocument.presentationml.template",
+            "application/vnd.openxmlformats-officedocument.presentationml.slideshow"
+    ).collect(Collectors.toSet());
 
     /**
      * Constructs an object with the ingest options for the file extension
@@ -176,5 +194,5 @@ final class FileExtMismatchDetectorModuleSettings implements IngestModuleIngestJ
             versionNumber = 2;
         }
     }
-    
+
 }

@@ -20,19 +20,20 @@ package org.sleuthkit.autopsy.casemodule.services;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedHashSet;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Level;
 import javax.annotation.concurrent.Immutable;
-import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.datamodel.TagName;
-import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -41,24 +42,39 @@ import org.sleuthkit.datamodel.TskData;
  * A tag name definition consisting of a display name, description and color.
  */
 @Immutable
-final class TagNameDefinition implements Comparable<TagNameDefinition> {
+final public class TagNameDefinition implements Comparable<TagNameDefinition> {
 
     private static final Logger LOGGER = Logger.getLogger(TagNameDefinition.class.getName());
-    @NbBundle.Messages({"TagNameDefinition.predefTagNames.bookmark.text=Bookmark",
+    @Messages({
+        "TagNameDefinition.predefTagNames.bookmark.text=Bookmark",
         "TagNameDefinition.predefTagNames.followUp.text=Follow Up",
-        "TagNameDefinition.predefTagNames.notableItem.text=Notable Item"})
-    private static final String TAGS_SETTINGS_NAME = "Tags"; //NON-NLS
-    private static final String TAG_NAMES_SETTING_KEY = "TagNames"; //NON-NLS    
+        "TagNameDefinition.predefTagNames.notableItem.text=Notable Item",})
 
-    private static final List<String> STANDARD_NOTABLE_TAG_DISPLAY_NAMES = Arrays.asList(Bundle.TagNameDefinition_predefTagNames_notableItem_text(), DhsImageCategory.ONE.getDisplayName(), DhsImageCategory.TWO.getDisplayName(), DhsImageCategory.THREE.getDisplayName());  // NON-NLS
-    private static final List<String> STANDARD_TAG_DISPLAY_NAMES = Arrays.asList(Bundle.TagNameDefinition_predefTagNames_bookmark_text(), Bundle.TagNameDefinition_predefTagNames_followUp_text(),
-            Bundle.TagNameDefinition_predefTagNames_notableItem_text(), DhsImageCategory.ONE.getDisplayName(),
-            DhsImageCategory.TWO.getDisplayName(), DhsImageCategory.THREE.getDisplayName(),
-            DhsImageCategory.FOUR.getDisplayName(), DhsImageCategory.FIVE.getDisplayName(), DhsImageCategory.ZERO.getDisplayName());
+    private static final String TAGS_SETTINGS_NAME = "Tags"; //NON-NLS
+    private static final String TAG_NAMES_SETTING_KEY = "TagNames"; //NON-NLS 
+    private static final String TAG_SETTING_VERSION_KEY = "CustomTagNameVersion";
+    private static final int TAG_SETTINGS_VERSION = 1;
+
     private final String displayName;
     private final String description;
     private final TagName.HTML_COLOR color;
     private final TskData.FileKnown knownStatus;
+
+    private static final List<TagNameDefinition> STANDARD_TAGS_DEFINITIONS = new ArrayList<>();
+    private static final List<String> OLD_CATEGORY_TAG_NAMES = new ArrayList<>();
+
+    static {
+        STANDARD_TAGS_DEFINITIONS.add(new TagNameDefinition(Bundle.TagNameDefinition_predefTagNames_bookmark_text(), "", TagName.HTML_COLOR.NONE, TskData.FileKnown.UNKNOWN));
+        STANDARD_TAGS_DEFINITIONS.add(new TagNameDefinition(Bundle.TagNameDefinition_predefTagNames_followUp_text(), "", TagName.HTML_COLOR.NONE, TskData.FileKnown.UNKNOWN));
+        STANDARD_TAGS_DEFINITIONS.add(new TagNameDefinition(Bundle.TagNameDefinition_predefTagNames_notableItem_text(), "", TagName.HTML_COLOR.NONE, TskData.FileKnown.BAD));
+
+        OLD_CATEGORY_TAG_NAMES.add("CAT-1: Child Exploitation (Illegal)");
+        OLD_CATEGORY_TAG_NAMES.add("CAT-2: Child Exploitation (Non-Illegal/Age Difficult)");
+        OLD_CATEGORY_TAG_NAMES.add("CAT-3: CGI/Animation (Child Exploitive)");
+        OLD_CATEGORY_TAG_NAMES.add("CAT-4: Exemplar/Comparison (Internal Use Only)");
+        OLD_CATEGORY_TAG_NAMES.add("CAT-5: Non-pertinent");
+        OLD_CATEGORY_TAG_NAMES.add("CAT-0: Uncategorized");
+    }
 
     /**
      * Constructs a tag name definition consisting of a display name,
@@ -69,15 +85,52 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
      * @param color       The color for the tag name.
      * @param status      The status denoted by the tag name.
      */
-    TagNameDefinition(String displayName, String description, TagName.HTML_COLOR color, TskData.FileKnown status) {
+    public TagNameDefinition(String displayName, String description, TagName.HTML_COLOR color, TskData.FileKnown status) {
         this.displayName = displayName;
         this.description = description;
         this.color = color;
         this.knownStatus = status;
     }
 
+    static Collection<TagNameDefinition> getStandardTagNameDefinitions() {
+        return Collections.unmodifiableCollection(STANDARD_TAGS_DEFINITIONS);
+    }
+
     static List<String> getStandardTagNames() {
-        return STANDARD_TAG_DISPLAY_NAMES;
+        List<String> strList = new ArrayList<>();
+
+        for (TagNameDefinition def : STANDARD_TAGS_DEFINITIONS) {
+            strList.add(def.getDisplayName());
+        }
+
+        return strList;
+    }
+
+    /**
+     * Returns the bookmark tag display string.
+     *
+     * @return
+     */
+    static String getBookmarkTagDisplayName() {
+        return Bundle.TagNameDefinition_predefTagNames_bookmark_text();
+    }
+
+    /**
+     * Returns the Follow Up tag display string.
+     *
+     * @return
+     */
+    static String getFollowUpTagDisplayName() {
+        return Bundle.TagNameDefinition_predefTagNames_followUp_text();
+    }
+
+    /**
+     * Returns the Notable tag display string.
+     *
+     * @return
+     */
+    static String getNotableTagDisplayName() {
+        return Bundle.TagNameDefinition_predefTagNames_notableItem_text();
     }
 
     /**
@@ -85,7 +138,7 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
      *
      * @return The display name.
      */
-    String getDisplayName() {
+    public String getDisplayName() {
         return displayName;
     }
 
@@ -94,7 +147,7 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
      *
      * @return The description.
      */
-    String getDescription() {
+    public String getDescription() {
         return description;
     }
 
@@ -103,7 +156,7 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
      *
      * @return The color.
      */
-    TagName.HTML_COLOR getColor() {
+    public TagName.HTML_COLOR getColor() {
         return color;
     }
 
@@ -112,7 +165,7 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
      *
      * @return a value of TskData.FileKnown which is associated with this tag
      */
-    TskData.FileKnown getKnownStatus() {
+    public TskData.FileKnown getKnownStatus() {
         return knownStatus;
     }
 
@@ -185,7 +238,7 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
         try {
             tagName = caseDb.addOrUpdateTagName(displayName, description, color, knownStatus);
         } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "Error updating non-file object ", ex);
+            LOGGER.log(Level.SEVERE, "Error saving tag name definition", ex);
         }
         return tagName;
     }
@@ -194,94 +247,41 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
      * Gets tag name definitions from the tag settings file as well as the
      * default tag name definitions.
      *
+     * The currently custom tags properties are stored in one string property
+     * value separated by ;. The properties of an individual tag are comma
+     * separated in the format of:
+     * tag_name,tag_description,tag_color,known_status
+     *
+     * In prior versions of autopsy the known_status was stored in the central
+     * repository, therefore the properties file only had three values.
+     *
      * @return A set of tag name definition objects.
      */
     static synchronized Set<TagNameDefinition> getTagNameDefinitions() {
-        Set<TagNameDefinition> tagNames = new LinkedHashSet<>();
-        //modifiable copy of default tags list for us to keep track of which default tags have already been created
-        Set<String> standardTags = new LinkedHashSet<>(STANDARD_TAG_DISPLAY_NAMES);
-        String setting = ModuleSettings.getConfigSetting(TAGS_SETTINGS_NAME, TAG_NAMES_SETTING_KEY);
-        if (null != setting && !setting.isEmpty()) {
-            List<String> tagNameTuples = Arrays.asList(setting.split(";"));
-            int numberOfAttributes = 0;
-            if (tagNameTuples.size() > 0) {
-                // Determine if Tags.properties file needs to be upgraded
-                numberOfAttributes = tagNameTuples.get(0).split(",").length;
-            }
-            if (numberOfAttributes == 3) {
-                // Upgrade Tags.Properties with the settings in Central Repository Settings if necessary
-                tagNames.addAll(upgradeTagPropertiesFile(tagNameTuples, standardTags));
-            } else if (numberOfAttributes == 4) {
-                // if the Tags.Properties file is up to date parse it
-                tagNames.addAll(readCurrentTagPropertiesFile(tagNameTuples, standardTags));
-            }
+        if (needsVersionUpdate()) {
+            updateTagDefinitions();
         }
-        //create standard tags which should always exist which were not already created for whatever reason, such as upgrade
-        for (String standardTagName : standardTags) {
-            if (STANDARD_NOTABLE_TAG_DISPLAY_NAMES.contains(standardTagName)) {
-                tagNames.add(new TagNameDefinition(standardTagName, "", TagName.HTML_COLOR.NONE, TskData.FileKnown.BAD));
-            } else {
-                tagNames.add(new TagNameDefinition(standardTagName, "", TagName.HTML_COLOR.NONE, TskData.FileKnown.UNKNOWN));
-            }
-        }
-        return tagNames;
 
-    }
+        String tagsProperty = ModuleSettings.getConfigSetting(TAGS_SETTINGS_NAME, TAG_NAMES_SETTING_KEY);
+        if (tagsProperty == null || tagsProperty.isEmpty()) {
+            return new HashSet<>();
+        }
 
-    /**
-     * Read the central repository properties file to get any knownStatus
-     * related tag settings that may exist in it.
-     *
-     * @param tagProperties           the list of comma seperated tags in the
-     *                                Tags.properties file
-     * @param standardTagsToBeCreated the list of standard tags which have yet
-     *                                to be created
-     *
-     * @return tagNames a list of TagNameDefinitions
-     */
-    private static Set<TagNameDefinition> upgradeTagPropertiesFile(List<String> tagProperties, Set<String> standardTagsToBeCreated) {
-        Set<TagNameDefinition> tagNames = new LinkedHashSet<>();
-        List<String> legacyNotableTags = new ArrayList<>();
-        String badTagsStr = ModuleSettings.getConfigSetting("CentralRepository", "db.badTags"); // NON-NLS
-        if (badTagsStr == null || badTagsStr.isEmpty()) {  //if there were no bad tags in the central repo properties file use the default list
-            legacyNotableTags.addAll(STANDARD_NOTABLE_TAG_DISPLAY_NAMES);
-        } else {  //otherwise use the list that was in the central repository properties file
-            legacyNotableTags.addAll(Arrays.asList(badTagsStr.split(",")));
-        }
-        for (String tagNameTuple : tagProperties) {
-            String[] tagNameAttributes = tagNameTuple.split(","); //get the attributes
-            standardTagsToBeCreated.remove(tagNameAttributes[0]); //remove the tag from the list of standard tags which have not been created
-            if (legacyNotableTags.contains(tagNameAttributes[0])) { //if tag should be notable mark create it as such
-                tagNames.add(new TagNameDefinition(tagNameAttributes[0], tagNameAttributes[1],
-                        TagName.HTML_COLOR.valueOf(tagNameAttributes[2]), TskData.FileKnown.BAD));
-            } else {  //otherwise create it as unknown
-                tagNames.add(new TagNameDefinition(tagNameAttributes[0], tagNameAttributes[1],
-                        TagName.HTML_COLOR.valueOf(tagNameAttributes[2]), TskData.FileKnown.UNKNOWN)); //add the default value for that tag 
-            }
-        }
-        return tagNames;
-    }
+        List<String> individualTags = Arrays.asList(tagsProperty.split(";"));
 
-    /**
-     * Read the Tags.properties file to get the TagNameDefinitions that are
-     * preserved accross cases.
-     *
-     * @param tagProperties           the list of comma seperated tags in the
-     *                                Tags.properties file
-     * @param standardTagsToBeCreated the list of standard tags which have yet
-     *                                to be created
-     *
-     * @return tagNames a list of TagNameDefinitions
-     */
-    private static Set<TagNameDefinition> readCurrentTagPropertiesFile(List<String> tagProperties, Set<String> standardTagsToBeCreated) {
-        Set<TagNameDefinition> tagNames = new LinkedHashSet<>();
-        for (String tagNameTuple : tagProperties) {
-            String[] tagNameAttributes = tagNameTuple.split(","); //get the attributes
-            standardTagsToBeCreated.remove(tagNameAttributes[0]);  //remove the tag from the list of standard tags which have not been created
-            tagNames.add(new TagNameDefinition(tagNameAttributes[0], tagNameAttributes[1],
-                    TagName.HTML_COLOR.valueOf(tagNameAttributes[2]), TskData.FileKnown.valueOf(tagNameAttributes[3])));
+        if (individualTags == null || individualTags.isEmpty()) {
+            return new HashSet<>();
         }
-        return tagNames;
+
+        Set<TagNameDefinition> definitions = new HashSet<>();
+        for (String tagProps : individualTags) {
+            String[] attributes = tagProps.split(",");
+
+            definitions.add(new TagNameDefinition(attributes[0], attributes[1],
+                    TagName.HTML_COLOR.valueOf(attributes[2]), TskData.FileKnown.valueOf(attributes[3])));
+        }
+
+        return definitions;
     }
 
     /**
@@ -303,7 +303,115 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
                 LOGGER.log(Level.SEVERE, "Exception while getting open case.", ex);
             }
         }
+
+        ModuleSettings.setConfigSetting(TAGS_SETTINGS_NAME, TAG_SETTING_VERSION_KEY, Integer.toString(TAG_SETTINGS_VERSION));
         ModuleSettings.setConfigSetting(TAGS_SETTINGS_NAME, TAG_NAMES_SETTING_KEY, setting.toString());
+    }
+
+    /**
+     * Updates the Tag Definition file to the current format.
+     */
+    private static void updateTagDefinitions() {
+        Integer version = getPropertyFileVersion();
+        List<TagNameDefinition> definitions = new ArrayList<>();
+
+        if (version == null) {
+            String tagsProperty = ModuleSettings.getConfigSetting(TAGS_SETTINGS_NAME, TAG_NAMES_SETTING_KEY);
+            if (tagsProperty == null || tagsProperty.isEmpty()) {
+                ModuleSettings.setConfigSetting(TAGS_SETTINGS_NAME, TAG_SETTING_VERSION_KEY, Integer.toString(TAG_SETTINGS_VERSION));
+                return;
+            }
+
+            List<String> individualTags = Arrays.asList(tagsProperty.split(";"));
+
+            if (individualTags == null || individualTags.isEmpty()) {
+                return;
+            }
+
+            List<String> notableTagList = null;
+            for (String tagProps : individualTags) {
+                String[] attributes = tagProps.split(",");
+                TskData.FileKnown fileKnown = TskData.FileKnown.UNKNOWN;
+                if (attributes.length == 3) {
+                    // If notableTagList is null load it from the CR.
+                    if (notableTagList == null) {
+                        notableTagList = getCRNotableList();
+                    } else {
+                        if (notableTagList.contains(attributes[0])) {
+                            fileKnown = TskData.FileKnown.BAD;
+                        }
+                    }
+                } else {
+                    fileKnown = TskData.FileKnown.valueOf(attributes[3]);
+                }
+
+                definitions.add(new TagNameDefinition(attributes[0], attributes[1],
+                        TagName.HTML_COLOR.valueOf(attributes[2]), fileKnown));
+            }
+        }
+
+        if (definitions.isEmpty()) {
+            return;
+        }
+
+        // Remove the standard and Project VIC tags from the list
+        List<String> tagStrings = new ArrayList<>();
+        List<String> standardTags = getStandardTagNames();
+        for (TagNameDefinition def : definitions) {
+            if (!standardTags.contains(def.getDisplayName())
+                    && !OLD_CATEGORY_TAG_NAMES.contains(def.getDisplayName())) {
+                tagStrings.add(def.toSettingsFormat());
+            }
+        }
+
+        // Write out the version and the new tag list.
+        ModuleSettings.setConfigSetting(TAGS_SETTINGS_NAME, TAG_SETTING_VERSION_KEY, Integer.toString(TAG_SETTINGS_VERSION));
+        ModuleSettings.setConfigSetting(TAGS_SETTINGS_NAME, TAG_NAMES_SETTING_KEY, String.join(";", tagStrings));
+    }
+
+    /**
+     * Returns a list notable tag names from the CR bagTag list.
+     *
+     * @return A list of tag names, or empty list if none were found.
+     */
+    private static List<String> getCRNotableList() {
+        String notableTagsProp = ModuleSettings.getConfigSetting("CentralRepository", "db.badTags"); // NON-NLS
+        if (notableTagsProp != null && !notableTagsProp.isEmpty()) {
+            return Arrays.asList(notableTagsProp.split(","));
+        }
+
+        return new ArrayList<>();
+    }
+
+    /**
+     * Based on the version in the Tags property file, returns whether or not
+     * the file needs updating.
+     *
+     * @return
+     */
+    private static boolean needsVersionUpdate() {
+        Integer version = getPropertyFileVersion();
+        return version == null || version < TAG_SETTINGS_VERSION;
+    }
+
+    /**
+     * Returns the Tags property file version.
+     *
+     * @return The current version of tags property file, or null if no version
+     *         was found.
+     */
+    private static Integer getPropertyFileVersion() {
+        String version = ModuleSettings.getConfigSetting(TAGS_SETTINGS_NAME, TAG_SETTING_VERSION_KEY);
+        if (version == null || version.isEmpty()) {
+            return null;
+        }
+
+        try {
+            return Integer.parseInt(version);
+        } catch (NumberFormatException ex) {
+            // The version is not an integer
+            return null;
+        }
     }
 
 }

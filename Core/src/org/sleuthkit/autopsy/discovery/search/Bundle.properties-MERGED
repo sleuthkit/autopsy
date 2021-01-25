@@ -1,0 +1,148 @@
+# {0} - month abbreviation
+# {1} - day of month
+# {2} - year
+DiscoveryAttributes.ActivityDateGroupKey.getDisplayNameTemplate=Week of {0} {1}, {2}
+DiscoveryAttributes.GroupingAttributeType.datasource.displayName=Data Source
+DiscoveryAttributes.GroupingAttributeType.fileType.displayName=File Type
+DiscoveryAttributes.GroupingAttributeType.firstDate.displayName=First Activity Date
+DiscoveryAttributes.GroupingAttributeType.frequency.displayName=Past Occurrences
+DiscoveryAttributes.GroupingAttributeType.hash.displayName=Hash Set
+DiscoveryAttributes.GroupingAttributeType.interestingItem.displayName=Interesting Item
+DiscoveryAttributes.GroupingAttributeType.keywordList.displayName=Keyword
+DiscoveryAttributes.GroupingAttributeType.lastDate.displayName=Last Activity Date
+DiscoveryAttributes.GroupingAttributeType.none.displayName=None
+DiscoveryAttributes.GroupingAttributeType.object.displayName=Object Detected
+DiscoveryAttributes.GroupingAttributeType.pageViews.displayName=Page Views
+DiscoveryAttributes.GroupingAttributeType.parent.displayName=Parent Folder
+DiscoveryAttributes.GroupingAttributeType.previouslyNotable.displayName=Previous Notability
+DiscoveryAttributes.GroupingAttributeType.size.displayName=File Size
+DiscoveryAttributes.GroupingAttributeType.tag.displayName=Tag
+DiscoveryAttributes.GroupingAttributeType.webCategory.displayName=Domain Category
+# {0} - Data source name
+# {1} - Data source ID
+DiscoveryKeyUtils.DataSourceGroupKey.datasourceAndID={0}(ID: {1})
+# {0} - Data source ID
+DiscoveryKeyUtils.DataSourceGroupKey.idOnly=Data source (ID: {0})
+DiscoveryKeyUtils.FileTagGroupKey.noSets=None
+DiscoveryKeyUtils.HashHitsGroupKey.noHashHits=None
+DiscoveryKeyUtils.InterestingItemGroupKey.noSets=None
+DiscoveryKeyUtils.KeywordListGroupKey.noKeywords=None
+DiscoveryKeyUtils.NoGroupingGroupKey.allFiles=All Files
+DiscoveryKeyUtils.ObjectDetectedGroupKey.noSets=None
+# {0} - domain
+# {1} - artifactType
+DomainSearchArtifactsRequest.toString.text=Domain: {0} ArtifactType: {1}
+FileGroup.groupSortingAlgorithm.groupName.text=Group Name
+FileGroup.groupSortingAlgorithm.groupSize.text=Group Size
+FileSearch.documentSummary.noBytes=No bytes read for document, unable to display preview.
+FileSearch.documentSummary.noPreview=No preview available.
+FileSearchFiltering.concatenateSetNamesForDisplay.comma=, 
+# {0} - filters
+FileSearchFiltering.HashSetFilter.desc=Hash set hits in set(s): {0}
+FileSearchFiltering.KnownFilter.desc=which are not known
+FileSearchFiltering.PreviouslyNotableFilter.desc=that were previously marked as notable
+# {0} - tag names
+FileSearchFiltering.TagsFilter.desc=Tagged {0}
+FileSearchFiltering.TagsFilter.or=, 
+FileSearchFiltering.UserCreatedFilter.desc=that contain EXIF data
+FileSorter.SortingMethod.activity.displayName=Last Activity Date
+FileSorter.SortingMethod.datasource.displayName=Data Source
+FileSorter.SortingMethod.domain.displayName=Domain Name
+FileSorter.SortingMethod.downloads.displayName=File Downloads
+FileSorter.SortingMethod.filename.displayName=File Name
+FileSorter.SortingMethod.filesize.displayName=File Size
+FileSorter.SortingMethod.filetype.displayName=File Type
+FileSorter.SortingMethod.frequency.displayName=Central Repo Frequency
+FileSorter.SortingMethod.fullPath.displayName=Full Path
+FileSorter.SortingMethod.keywordlist.displayName=Keyword List Names
+FileSorter.SortingMethod.pageViews.displayName=Page Views
+ResultDomain_getDefaultCategory=Uncategorized
+ResultFile.score.interestingResult.description=At least one instance of the file has an interesting result associated with it.
+ResultFile.score.notableFile.description=At least one instance of the file was recognized as notable.
+ResultFile.score.notableTaggedFile.description=At least one instance of the file is tagged with a notable tag.
+ResultFile.score.taggedFile.description=At least one instance of the file has been tagged.
+SearchData.AttributeType.Domain.displayName=Domain
+SearchData.FileSize.100kbto1mb=: 100KB-1MB
+SearchData.FileSize.100mbto1gb=: 100MB-1GB
+SearchData.FileSize.10PlusGb=: 10GB+
+SearchData.FileSize.16kbto100kb=: 16-100KB
+SearchData.FileSize.1gbto5gb=: 1-5GB
+SearchData.FileSize.1mbto50mb=: 1-50MB
+SearchData.FileSize.200PlusMb=: 200MB+
+SearchData.FileSize.500kbto100mb=: 500KB-100MB
+SearchData.FileSize.50mbto200mb=: 50-200MB
+SearchData.FileSize.5gbto10gb=: 5-10GB
+SearchData.FileSize.LARGE.displayName=Large
+SearchData.FileSize.MEDIUM.displayName=Medium
+SearchData.FileSize.SMALL.displayName=Small
+SearchData.FileSize.upTo16kb=: 0-16KB
+SearchData.FileSize.upTo500kb=: 0-500KB
+SearchData.FileSize.XLARGE.displayName=XLarge
+SearchData.FileSize.XSMALL.displayName=XSmall
+SearchData.FileSize.XXLARGE.displayName=XXLarge
+SearchData.FileType.Audio.displayName=Audio
+SearchData.FileType.Documents.displayName=Document
+SearchData.FileType.Executables.displayName=Executable
+SearchData.FileType.Image.displayName=Image
+SearchData.FileType.Other.displayName=Other/Unknown
+SearchData.FileType.Video.displayName=Video
+SearchData.Frequency.common.displayName=Common (11 - 100)
+SearchData.Frequency.known.displayName=Known (NSRL)
+SearchData.Frequency.rare.displayName=Rare (2-10)
+SearchData.Frequency.unique.displayName=Unique (1)
+SearchData.Frequency.unknown.displayName=Unknown
+SearchData.Frequency.verycommon.displayName=Very Common (100+)
+SearchData.notPrevNotable.displayName=Previously Not Notable
+SearchData.PageViews.over1000=1000+ page views
+# {0} - minValue
+# {1} - maxValue
+SearchData.PageViews.rangeTemplate={0}-{1} page views
+SearchData.prevNotable.displayName=Previously Notable
+SearchData.Score.interesting.displayName=Interesting
+SearchData.Score.notable.displayName=Notable
+SearchData.Score.unknown.displayName=Unknown
+# {0} - artifactTypes
+SearchFiltering.artifactTypeFilter.desc=Result type(s): {0}
+SearchFiltering.artifactTypeFilter.or=, 
+# {0} - Data source name
+# {1} - Data source ID
+SearchFiltering.DataSourceFilter.datasource={0}({1})
+# {0} - filters
+SearchFiltering.DataSourceFilter.desc=Data source(s): {0}
+SearchFiltering.DataSourceFilter.or=, 
+# {0} - startDate
+SearchFiltering.dateRangeFilter.after=after: {0}
+SearchFiltering.dateRangeFilter.and=\ and 
+# {0} - endDate
+SearchFiltering.dateRangeFilter.before=before: {0}
+SearchFiltering.dateRangeFilter.lable=Activity date 
+# {0} - filters
+SearchFiltering.FileTypeFilter.desc=Type: {0}
+SearchFiltering.FileTypeFilter.or=, 
+# {0} - filters
+SearchFiltering.FrequencyFilter.desc=Past occurrences: {0}
+SearchFiltering.FrequencyFilter.or=, 
+# {0} - filters
+SearchFiltering.InterestingItemSetFilter.desc=Interesting item hits in set(s): {0}
+# {0} - filters
+SearchFiltering.KeywordListFilter.desc=Keywords in list(s): {0}
+SearchFiltering.KnownAccountTypeFilter.desc=Only domains with known account type
+# {0} - filters
+SearchFiltering.ObjectDetectionFilter.desc=Objects detected in set(s): {0}
+# {0} - filters
+SearchFiltering.ParentFilter.desc=Paths matching: {0}
+SearchFiltering.ParentFilter.exact=(exact match)
+SearchFiltering.ParentFilter.excluded=(excluded)
+SearchFiltering.ParentFilter.included=(included)
+SearchFiltering.ParentFilter.or=, 
+SearchFiltering.ParentFilter.substring=(substring)
+SearchFiltering.ParentSearchTerm.excludeString=\ (exclude)
+SearchFiltering.ParentSearchTerm.fullString=\ (exact)
+SearchFiltering.ParentSearchTerm.includeString=\ (include)
+SearchFiltering.ParentSearchTerm.subString=\ (substring)
+SearchFiltering.PreviouslyNotableFilter.desc=Previously marked as notable in central repository
+# {0} - filters
+SearchFiltering.ScoreFilter.desc=Score(s) of : {0}
+# {0} - filters
+SearchFiltering.SizeFilter.desc=Size(s): {0}
+SearchFiltering.SizeFilter.or=, 

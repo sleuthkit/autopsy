@@ -56,44 +56,65 @@
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
-              <Component id="hashCheckBox" min="-2" max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="0" attributes="0">
+                  <Group type="102" attributes="0">
+                      <Component id="sha256CheckBox" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="sha256TextField" pref="254" max="32767" attributes="0"/>
+                  </Group>
+                  <Group type="102" attributes="0">
+                      <Component id="md5CheckBox" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="md5TextField" max="32767" attributes="0"/>
+                  </Group>
+              </Group>
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="searchTextField" min="-2" pref="247" max="-2" attributes="0"/>
-              <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
     <DimensionLayout dim="1">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Group type="103" groupAlignment="3" attributes="0">
-              <Component id="hashCheckBox" alignment="3" min="-2" max="-2" attributes="0"/>
-              <Component id="searchTextField" alignment="3" min="-2" max="-2" attributes="0"/>
+          <Group type="102" attributes="0">
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="md5CheckBox" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="md5TextField" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="sha256CheckBox" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="sha256TextField" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
           </Group>
       </Group>
     </DimensionLayout>
   </Layout>
   <SubComponents>
-    <Component class="javax.swing.JCheckBox" name="hashCheckBox">
+    <Component class="javax.swing.JCheckBox" name="md5CheckBox">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/filesearch/Bundle.properties" key="HashSearchPanel.md5CheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-          <FontInfo relative="true">
-            <Font bold="false" component="hashCheckBox" property="font" relativeSize="false" size="11"/>
-          </FontInfo>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="md5CheckBoxActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JTextField" name="md5TextField">
+    </Component>
+    <Component class="javax.swing.JCheckBox" name="sha256CheckBox">
+      <Properties>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/sleuthkit/autopsy/filesearch/Bundle.properties" key="HashSearchPanel.sha256CheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
       <Events>
-        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="hashCheckBoxActionPerformed"/>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="sha256CheckBoxActionPerformed"/>
       </Events>
     </Component>
-    <Component class="javax.swing.JTextField" name="searchTextField">
+    <Component class="javax.swing.JTextField" name="sha256TextField">
       <Properties>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-          <FontInfo relative="true">
-            <Font bold="false" component="searchTextField" property="font" relativeSize="false" size="11"/>
-          </FontInfo>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/sleuthkit/autopsy/filesearch/Bundle.properties" key="HashSearchPanel.sha256TextField.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
     </Component>

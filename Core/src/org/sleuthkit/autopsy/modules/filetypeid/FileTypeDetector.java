@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.modules.filetypeid;
 
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -29,6 +30,7 @@ import org.apache.tika.Tika;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.mime.MimeTypes;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.textutils.EncodingUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -248,6 +250,17 @@ public class FileTypeDetector {
                         tikaType = tika.detect(secondPassTikaStream, file.getName());
                         mimeType = tikaType.replace("tika-", ""); //NON-NLS
                         mimeType = removeOptionalParameter(mimeType);
+                    }
+                } else {
+                    /*
+                     * If the file was marked as an octet stream and the extension is .txt, try to detect a text
+                     * encoding 
+                     */
+                    if (file.getNameExtension().equals("txt")) {
+                        Charset detectedCharset = EncodingUtils.getEncoding(file);
+                        if (detectedCharset != EncodingUtils.UNKNOWN_CHARSET) {
+                            mimeType = MimeTypes.PLAIN_TEXT;
+                        }
                     }
                 }
 

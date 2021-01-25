@@ -32,13 +32,4 @@ public final class NoReportModuleSettings implements ReportModuleSettings {
         return serialVersionUID;
     }
 
-    /**
-     * Gets the string used as a report options placeholder for serialization
-     * purposes.
-     *
-     * @return The string "None"
-     */
-    String getSetting() {
-        return setting;
-    }
 }

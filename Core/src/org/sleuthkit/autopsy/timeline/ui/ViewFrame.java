@@ -77,7 +77,7 @@ import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
-import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.EventsModel;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.ViewMode;
 import org.sleuthkit.autopsy.timeline.actions.AddManualEvent;
@@ -236,7 +236,7 @@ final public class ViewFrame extends BorderPane {
     private final NotificationPane notificationPane = new NotificationPane();
 
     private final TimeLineController controller;
-    private final FilteredEventsModel filteredEvents;
+    private final EventsModel filteredEvents;
 
     /**
      * Listen to changes in the range slider selection and forward to the
@@ -426,7 +426,7 @@ final public class ViewFrame extends BorderPane {
         //listen for changes in the time range / zoom params
         TimeLineController.timeZoneProperty().addListener(timeZoneProp -> refreshTimeUI());
         filteredEvents.timeRangeProperty().addListener(timeRangeProp -> refreshTimeUI());
-        filteredEvents.zoomStateProperty().addListener(zoomListener);
+        filteredEvents.modelParamsProperty().addListener(zoomListener);
         refreshTimeUI(); //populate the view
 
         refreshHistorgram();
@@ -474,7 +474,7 @@ final public class ViewFrame extends BorderPane {
     @Subscribe
     @NbBundle.Messages({
         "ViewFrame.notification.cacheInvalidated=The event data has been updated, the visualization may be out of date."})
-    public void handleCacheInvalidated(FilteredEventsModel.CacheInvalidatedEvent event) {
+    public void handleCacheInvalidated(EventsModel.CacheInvalidatedEvent event) {
         Platform.runLater(() -> {
             if (hostedView.needsRefresh() == false) {
                 hostedView.setNeedsRefresh();

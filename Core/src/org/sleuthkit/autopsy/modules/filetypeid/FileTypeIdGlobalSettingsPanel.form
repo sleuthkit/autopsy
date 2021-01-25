@@ -51,7 +51,7 @@
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Component id="ingestRunningWarningLabel" alignment="0" max="32767" attributes="0"/>
-                      <Component id="jLabel3" alignment="1" max="32767" attributes="0"/>
+                      <Component id="descriptionLabel" alignment="1" max="32767" attributes="0"/>
                       <Component id="jScrollPane2" pref="728" max="32767" attributes="0"/>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
@@ -62,7 +62,7 @@
           <Group type="103" groupAlignment="0" attributes="0">
               <Group type="102" attributes="0">
                   <EmptySpace max="-2" attributes="0"/>
-                  <Component id="jLabel3" min="-2" max="-2" attributes="0"/>
+                  <Component id="descriptionLabel" min="-2" max="-2" attributes="0"/>
                   <EmptySpace min="-2" max="-2" attributes="0"/>
                   <Component id="jScrollPane2" pref="281" max="32767" attributes="0"/>
                   <EmptySpace min="-2" max="-2" attributes="0"/>
@@ -75,11 +75,6 @@
       <SubComponents>
         <Component class="javax.swing.JLabel" name="ingestRunningWarningLabel">
           <Properties>
-            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-              <FontInfo relative="true">
-                <Font bold="false" component="ingestRunningWarningLabel" property="font" relativeSize="false" size="11"/>
-              </FontInfo>
-            </Property>
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
               <Image iconType="3" name="/org/sleuthkit/autopsy/modules/filetypeid/warning16.png"/>
             </Property>
@@ -88,15 +83,10 @@
             </Property>
           </Properties>
         </Component>
-        <Component class="javax.swing.JLabel" name="jLabel3">
+        <Component class="javax.swing.JLabel" name="descriptionLabel">
           <Properties>
-            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-              <FontInfo relative="true">
-                <Font bold="false" component="jLabel3" property="font" relativeSize="false" size="11"/>
-              </FontInfo>
-            </Property>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="org/sleuthkit/autopsy/modules/filetypeid/Bundle.properties" key="FileTypeIdGlobalSettingsPanel.jLabel3.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+              <ResourceString bundle="org/sleuthkit/autopsy/modules/filetypeid/Bundle.properties" key="FileTypeIdGlobalSettingsPanel.descriptionLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
           </Properties>
         </Component>
@@ -150,7 +140,7 @@
                                       <EmptySpace max="-2" attributes="0"/>
                                       <Component id="deleteTypeButton" min="-2" max="-2" attributes="0"/>
                                   </Group>
-                                  <Component id="jLabel2" min="-2" max="-2" attributes="0"/>
+                                  <Component id="customTypesLabel" min="-2" max="-2" attributes="0"/>
                                   <Component id="typesScrollPane" alignment="0" max="32767" attributes="0"/>
                               </Group>
                               <EmptySpace min="31" pref="31" max="-2" attributes="0"/>
@@ -161,7 +151,7 @@
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Group type="102" attributes="0">
                               <EmptySpace min="-2" pref="12" max="-2" attributes="0"/>
-                              <Component id="jLabel2" min="-2" max="-2" attributes="0"/>
+                              <Component id="customTypesLabel" min="-2" max="-2" attributes="0"/>
                               <EmptySpace min="-2" max="-2" attributes="0"/>
                               <Component id="typesScrollPane" pref="203" max="32767" attributes="0"/>
                               <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
@@ -176,15 +166,10 @@
                     </DimensionLayout>
                   </Layout>
                   <SubComponents>
-                    <Component class="javax.swing.JLabel" name="jLabel2">
+                    <Component class="javax.swing.JLabel" name="customTypesLabel">
                       <Properties>
-                        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-                          <FontInfo relative="true">
-                            <Font bold="false" component="jLabel2" property="font" relativeSize="false" size="11"/>
-                          </FontInfo>
-                        </Property>
                         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                          <ResourceString bundle="org/sleuthkit/autopsy/modules/filetypeid/Bundle.properties" key="FileTypeIdGlobalSettingsPanel.jLabel2.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                          <ResourceString bundle="org/sleuthkit/autopsy/modules/filetypeid/Bundle.properties" key="FileTypeIdGlobalSettingsPanel.customTypesLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                         </Property>
                       </Properties>
                     </Component>
@@ -197,11 +182,6 @@
                       <SubComponents>
                         <Component class="javax.swing.JList" name="typesList">
                           <Properties>
-                            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-                              <FontInfo relative="true">
-                                <Font bold="false" component="typesList" property="font" relativeSize="false" size="11"/>
-                              </FontInfo>
-                            </Property>
                             <Property name="model" type="javax.swing.ListModel" editor="org.netbeans.modules.form.editors2.ListModelEditor">
                               <StringArray count="0"/>
                             </Property>
@@ -220,11 +200,6 @@
                     </Container>
                     <Component class="javax.swing.JButton" name="deleteTypeButton">
                       <Properties>
-                        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-                          <FontInfo relative="true">
-                            <Font bold="false" component="deleteTypeButton" property="font" relativeSize="false" size="11"/>
-                          </FontInfo>
-                        </Property>
                         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
                           <Image iconType="3" name="/org/sleuthkit/autopsy/images/delete16.png"/>
                         </Property>
@@ -238,11 +213,6 @@
                     </Component>
                     <Component class="javax.swing.JButton" name="newTypeButton">
                       <Properties>
-                        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-                          <FontInfo relative="true">
-                            <Font bold="false" component="newTypeButton" property="font" relativeSize="false" size="11"/>
-                          </FontInfo>
-                        </Property>
                         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
                           <Image iconType="3" name="/org/sleuthkit/autopsy/images/add16.png"/>
                         </Property>
@@ -288,7 +258,7 @@
                               <EmptySpace min="-2" pref="18" max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Group type="102" attributes="0">
-                                      <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
+                                      <Component id="signaturesLabel" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace min="-2" pref="100" max="-2" attributes="0"/>
                                   </Group>
                                   <Component id="jScrollPane1" pref="0" max="32767" attributes="0"/>
@@ -301,7 +271,7 @@
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Group type="102" alignment="0" attributes="0">
                               <EmptySpace min="-2" max="-2" attributes="0"/>
-                              <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
+                              <Component id="signaturesLabel" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="jScrollPane1" pref="235" max="32767" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
@@ -310,10 +280,10 @@
                     </DimensionLayout>
                   </Layout>
                   <SubComponents>
-                    <Component class="javax.swing.JLabel" name="jLabel1">
+                    <Component class="javax.swing.JLabel" name="signaturesLabel">
                       <Properties>
                         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                          <ResourceString bundle="org/sleuthkit/autopsy/modules/filetypeid/Bundle.properties" key="FileTypeIdGlobalSettingsPanel.jLabel1.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                          <ResourceString bundle="org/sleuthkit/autopsy/modules/filetypeid/Bundle.properties" key="FileTypeIdGlobalSettingsPanel.signaturesLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                         </Property>
                       </Properties>
                     </Component>
