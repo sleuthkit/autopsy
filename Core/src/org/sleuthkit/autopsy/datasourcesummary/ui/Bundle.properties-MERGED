@@ -1,8 +1,6 @@
 AnalysisPanel_countColumn_title=Count
 AnalysisPanel_keyColumn_title=Name
 AnalysisPanel_keywordSearchModuleName=Keyword Search
-# {0} - module name
-BaseDataSourceSummaryPanel_defaultNotIngestMessage=The {0} ingest module has not been run on this data source.
 BaseDataSourceSummaryPanel_goToArtifact=View Source Result
 BaseDataSourceSummaryPanel_goToFile=View Source File in Directory
 ContainerPanel_setFieldsForNonImageDataSource_na=N/A
