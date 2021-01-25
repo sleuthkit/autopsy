@@ -105,15 +105,15 @@ class IndexFinder {
      *
      * @param allIndexes List of Index objects
      *
-     * @return True if later version of index is present, false othewise
+     * @return Version number of "future" index if present, empty string otherwise
      */
-    static boolean isFutureIndexPresent(List<Index> allIndexes) {
+    static String isFutureIndexPresent(List<Index> allIndexes) {
         for (Index index : allIndexes) {
             if (NumberUtils.toDouble(index.getSolrVersion()) > CURRENT_SOLR_VERSION_INT) {
                 // "legacy" Solr server cannot open "future" versions of Solr indexes
-                return true;
+                return index.getSolrVersion();
             }
         }
-        return false;
+        return "";
     }  
 }

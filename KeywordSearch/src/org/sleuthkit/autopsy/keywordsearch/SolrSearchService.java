@@ -269,6 +269,9 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
         "SolrSearch.checkingForLatestIndex.msg=Looking for text index with latest Solr and schema version",
         "SolrSearch.indentifyingIndex.msg=Identifying text index to use",
         "SolrSearch.openCore.msg=Opening text index. For large cases this may take several minutes.",
+        "# {0} - futureVersion", "# {1} - currentVersion",
+        "SolrSearch.futureIndexVersion.msg=The text index for the case is for Solr {0}. This version of Autopsy is compatible with Solr {1}.",
+        "SolrSearch.unableToFindIndex.msg=Unable to find index that can be used for this case",
         "SolrSearch.complete.msg=Text index successfully opened"})
     public void openCaseResources(CaseContext context) throws AutopsyServiceException {
         if (context.cancelRequested()) {
@@ -320,11 +323,13 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
                 progress.progress(Bundle.SolrSearch_indentifyingIndex_msg(), progressUnitsCompleted);
                 Index indexToUse = IndexFinder.identifyIndexToUse(indexes);
                 if (indexToUse == null) {
-                    // unable to find index that can be used
-                    if (IndexFinder.isFutureIndexPresent(indexes)) {
-                        throw new AutopsyServiceException("The text index is from a 'future' version of Solr");
+                    // unable to find index that can be used. check if the available index is for a "future" version of Solr, 
+                    // i.e. the user is using an "old/legacy" version of Autopsy to open cases created by later versions of Autopsy.
+                    String futureIndexVersion = IndexFinder.isFutureIndexPresent(indexes);
+                    if (!futureIndexVersion.isEmpty()) {
+                        throw new AutopsyServiceException(Bundle.SolrSearch_futureIndexVersion_msg(futureIndexVersion, IndexFinder.getCurrentSolrVersion()));
                     }
-                    throw new AutopsyServiceException("Unable to find index that can be used for this case");
+                    throw new AutopsyServiceException(Bundle.SolrSearch_unableToFindIndex_msg());
                 }
 
                 if (context.cancelRequested()) {
