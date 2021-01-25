@@ -562,7 +562,9 @@ final class MessageAccountPanel extends JPanel {
         }
 
         @NbBundle.Messages({
-            "MessageAccountPanel.account.justification=Account found in Message artifact"
+            "MessageAccountPanel.account.justification=Account found in Message artifact",
+            "# {0} - accountIdentifer",
+            "MessageAccountPanel_id_not_found_in_cr=Unable to find an account with identifier {0} in the Central Repository."
         })
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -584,6 +586,7 @@ final class MessageAccountPanel extends JPanel {
                 // Set up each matching account. We don't know what type of account we have, so check all the types to 
                 // find any matches.
                 try {
+                    boolean showErrorMessage = true;
                     for (CentralRepoAccount.CentralRepoAccountType type : CentralRepository.getInstance().getAllAccountTypes()) {
                         try {
                             // Try to load any matching accounts of this type. Throws an InvalidAccountIDException if the account is the
@@ -591,10 +594,14 @@ final class MessageAccountPanel extends JPanel {
                             CentralRepoAccount account = CentralRepository.getInstance().getAccount(type, accountContainer.getAccount().getTypeSpecificID());
                             if (account != null) {
                                 personaPanel.addAccount(account, Bundle.MessageAccountPanel_account_justification(), Persona.Confidence.HIGH);
-                            }
+                                showErrorMessage = false;
+                            } 
                         } catch (InvalidAccountIDException ex2) {
                             // These are expected when the account identifier doesn't match the format of the account type.
                         }
+                    }
+                    if(showErrorMessage) {
+                         createPersonaDialog.setStartupPopupMessage(Bundle.MessageAccountPanel_id_not_found_in_cr(accountContainer.getAccount().getTypeSpecificID()));
                     }
                 } catch (CentralRepoException ex) {
                     logger.log(Level.SEVERE, "Error looking up account types in the central repository", ex);

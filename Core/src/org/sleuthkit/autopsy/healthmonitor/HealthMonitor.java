@@ -65,7 +65,7 @@ public final class HealthMonitor implements PropertyChangeListener {
     private final static Logger logger = Logger.getLogger(HealthMonitor.class.getName());
     private final static String DATABASE_NAME = "HealthMonitor";
     private final static long DATABASE_WRITE_INTERVAL = 60; // Minutes
-    private final static CaseDbSchemaVersionNumber CURRENT_DB_SCHEMA_VERSION = new CaseDbSchemaVersionNumber(1, 1);
+    private final static CaseDbSchemaVersionNumber CURRENT_DB_SCHEMA_VERSION = new CaseDbSchemaVersionNumber(1, 2);
 
     private final static AtomicBoolean isEnabled = new AtomicBoolean(false);
     private static HealthMonitor instance;
@@ -77,6 +77,7 @@ public final class HealthMonitor implements PropertyChangeListener {
     private BasicDataSource connectionPool = null;
     private CaseDbConnectionInfo connectionSettingsInUse = null;
     private String hostName;
+    private final String username;
 
     private HealthMonitor() throws HealthMonitorException {
 
@@ -96,6 +97,9 @@ public final class HealthMonitor implements PropertyChangeListener {
             hostName = UUID.randomUUID().toString();
             logger.log(Level.SEVERE, "Unable to look up host name - falling back to UUID " + hostName, ex);
         }
+        
+        // Get the user name
+        username = System.getProperty("user.name");
 
         // Read from the database to determine if the module is enabled
         updateFromGlobalEnabledStatus();
@@ -153,8 +157,8 @@ public final class HealthMonitor implements PropertyChangeListener {
             if (!databaseIsInitialized()) {
                 initializeDatabaseSchema();
             }
-
-            if (!CURRENT_DB_SCHEMA_VERSION.equals(getVersion())) {
+            
+            if (getVersion().compareTo(CURRENT_DB_SCHEMA_VERSION) < 0) {
                 upgradeDatabaseSchema();
             }
 
@@ -179,10 +183,15 @@ public final class HealthMonitor implements PropertyChangeListener {
         if (conn == null) {
             throw new HealthMonitorException("Error getting database connection");
         }
+        ResultSet resultSet = null;
 
         try (Statement statement = conn.createStatement()) {
             conn.setAutoCommit(false);
 
+            // NOTE: Due to a bug in the upgrade code, earlier versions of Autopsy will erroneously
+            // run the upgrade if the database is a higher version than it expects. Therefore all
+            // table changes must account for the possiblility of running multiple times.
+            
             // Upgrade from 1.0 to 1.1
             // Changes: user_data table added
             if (currentSchema.compareTo(new CaseDbSchemaVersionNumber(1, 1)) < 0) {
@@ -196,6 +205,19 @@ public final class HealthMonitor implements PropertyChangeListener {
                         + "is_examiner boolean NOT NULL,"
                         + "case_name text NOT NULL"
                         + ")");
+            }
+            
+            // Upgrade from 1.1 to 1.2
+            // Changes: username added to user_data table
+            if (currentSchema.compareTo(new CaseDbSchemaVersionNumber(1, 2)) < 0) {
+
+                resultSet = statement.executeQuery("SELECT column_name " +
+                        "FROM information_schema.columns " +
+                        "WHERE table_name='user_data' and column_name='username'");
+                if (! resultSet.next()) {
+                    // Add the user_data table
+                    statement.execute("ALTER TABLE user_data ADD COLUMN username text");
+                }
             }
 
             // Update the schema version
@@ -212,6 +234,13 @@ public final class HealthMonitor implements PropertyChangeListener {
             }
             throw new HealthMonitorException("Error upgrading database", ex);
         } finally {
+            if (resultSet != null) {
+                try {
+                    resultSet.close();
+                } catch (SQLException ex2) {
+                    logger.log(Level.SEVERE, "Error closing result set");
+                }   
+            }
             try {
                 conn.close();
             } catch (SQLException ex) {
@@ -499,7 +528,7 @@ public final class HealthMonitor implements PropertyChangeListener {
 
             // Add metrics to the database
             String addTimingInfoSql = "INSERT INTO timing_data (name, host, timestamp, count, average, max, min) VALUES (?, ?, ?, ?, ?, ?, ?)";
-            String addUserInfoSql = "INSERT INTO user_data (host, timestamp, event_type, is_examiner, case_name) VALUES (?, ?, ?, ?, ?)";
+            String addUserInfoSql = "INSERT INTO user_data (host, username, timestamp, event_type, is_examiner, case_name) VALUES (?, ?, ?, ?, ?, ?)";
             try (PreparedStatement timingStatement = conn.prepareStatement(addTimingInfoSql);
                     PreparedStatement userStatement = conn.prepareStatement(addUserInfoSql)) {
 
@@ -519,10 +548,11 @@ public final class HealthMonitor implements PropertyChangeListener {
 
                 for (UserData userInfo : userDataCopy) {
                     userStatement.setString(1, hostName);
-                    userStatement.setLong(2, userInfo.getTimestamp());
-                    userStatement.setInt(3, userInfo.getEventType().getEventValue());
-                    userStatement.setBoolean(4, userInfo.isExaminerNode());
-                    userStatement.setString(5, userInfo.getCaseName());
+                    userStatement.setString(2, username);
+                    userStatement.setLong(3, userInfo.getTimestamp());
+                    userStatement.setInt(4, userInfo.getEventType().getEventValue());
+                    userStatement.setBoolean(5, userInfo.isExaminerNode());
+                    userStatement.setString(6, userInfo.getCaseName());
                     userStatement.execute();
                 }
 
@@ -903,7 +933,8 @@ public final class HealthMonitor implements PropertyChangeListener {
                     + "timestamp bigint NOT NULL,"
                     + "event_type int NOT NULL,"
                     + "is_examiner BOOLEAN NOT NULL,"
-                    + "case_name text NOT NULL"
+                    + "case_name text NOT NULL,"
+                    + "username text"
                     + ")");
 
             statement.execute("INSERT INTO db_info (name, value) VALUES ('SCHEMA_VERSION', '" + CURRENT_DB_SCHEMA_VERSION.getMajor() + "')");
@@ -953,7 +984,7 @@ public final class HealthMonitor implements PropertyChangeListener {
                 getInstance().writeCurrentStateToDatabase();
             }
         } catch (HealthMonitorException ex) {
-            logger.log(Level.SEVERE, "Error performing periodic task", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Error recording health monitor metrics", ex); //NON-NLS
         }
     }
 
@@ -1250,7 +1281,7 @@ public final class HealthMonitor implements PropertyChangeListener {
     }
 
     /**
-     * Get an shared lock for the health monitor database. Acquire this before
+     * Get a shared lock for the health monitor database. Acquire this before
      * database reads or writes.
      *
      * @return The lock
@@ -1340,12 +1371,13 @@ public final class HealthMonitor implements PropertyChangeListener {
      * Class holding user metric data. Can be used for storing new events or
      * retrieving events out of the database.
      */
-    static class UserData {
+    static class UserData implements Comparable<UserData> {
 
         private final UserEvent eventType;
         private long timestamp;
         private final boolean isExaminer;
         private final String hostname;
+        private String username;
         private String caseName;
 
         /**
@@ -1359,6 +1391,7 @@ public final class HealthMonitor implements PropertyChangeListener {
             this.timestamp = System.currentTimeMillis();
             this.isExaminer = (UserPreferences.SelectedMode.STANDALONE == UserPreferences.getMode());
             this.hostname = "";
+            this.username = "";
 
             // If there's a case open, record the name
             try {
@@ -1383,6 +1416,10 @@ public final class HealthMonitor implements PropertyChangeListener {
             this.eventType = UserEvent.valueOf(resultSet.getInt("event_type"));
             this.isExaminer = resultSet.getBoolean("is_examiner");
             this.caseName = resultSet.getString("case_name");
+            this.username = resultSet.getString("username");
+            if (this.username == null) {
+                this.username = "";
+            }
         }
 
         /**
@@ -1442,6 +1479,20 @@ public final class HealthMonitor implements PropertyChangeListener {
          */
         String getCaseName() {
             return caseName;
+        }
+        
+        /**
+         * Get the user name for this metric
+         *
+         * @return the user name. Will be the empty string for older data.
+         */
+        String getUserName() {
+            return username;
+        }
+        
+        @Override
+        public int compareTo(UserData otherData) {
+            return Long.compare(getTimestamp(), otherData.getTimestamp());
         }
     }
 

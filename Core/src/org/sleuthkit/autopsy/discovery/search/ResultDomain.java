@@ -18,8 +18,8 @@
  */
 package org.sleuthkit.autopsy.discovery.search;
 
+import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
 /**
@@ -30,9 +30,11 @@ public class ResultDomain extends Result {
     private final String domain;
     private final Long activityStart;
     private final Long activityEnd;
-    private final Long totalVisits;
-    private final Long visitsInLast60;
+    private final Long totalPageViews;
+    private final Long pageViewsInLast60;
     private final Long filesDownloaded;
+    private final Long countOfKnownAccountTypes;
+    private String webCategory;
 
     private final Content dataSource;
     private final long dataSourceId;
@@ -42,16 +44,17 @@ public class ResultDomain extends Result {
      *
      * @param domain The domain the result is being created from.
      */
-    ResultDomain(String domain, Long activityStart, Long activityEnd, Long totalVisits,
-            Long visitsInLast60, Long filesDownloaded, Content dataSource) {
+    ResultDomain(String domain, Long activityStart, Long activityEnd, Long totalPageViews,
+            Long pageViewsInLast60, Long filesDownloaded, Long countOfKnownAccountTypes, Content dataSource) {
         this.domain = domain;
         this.dataSource = dataSource;
         this.dataSourceId = dataSource.getId();
         this.activityStart = activityStart;
         this.activityEnd = activityEnd;
-        this.totalVisits = totalVisits;
-        this.visitsInLast60 = visitsInLast60;
+        this.totalPageViews = totalPageViews;
+        this.pageViewsInLast60 = pageViewsInLast60;
         this.filesDownloaded = filesDownloaded;
+        this.countOfKnownAccountTypes = countOfKnownAccountTypes;
     }
 
     /**
@@ -82,22 +85,24 @@ public class ResultDomain extends Result {
     }
 
     /**
-     * Get the total number of visits that this domain has had.
+     * Get the total number of page views that this domain has had.
+     * Pages views is defined as the count of TSK_WEB_HISTORY artifacts.
      *
-     * @return The total number of visits that this domain has had.
+     * @return The total number of page views that this domain has had.
      */
-    public Long getTotalVisits() {
-        return totalVisits;
+    public Long getTotalPageViews() {
+        return totalPageViews;
     }
 
     /**
-     * Get the number of visits that this domain has had in the last 60 days.
+     * Get the number of page views that this domain has had in the last 60 days.
+     * Page views is defined as the count of TSK_WEB_HISTORY artifacts.
      *
-     * @return The number of visits that this domain has had in the last 60
+     * @return The number of page views that this domain has had in the last 60
      *         days.
      */
-    public Long getVisitsInLast60() {
-        return visitsInLast60;
+    public Long getPageViewsInLast60Days() {
+        return pageViewsInLast60;
     }
 
     /**
@@ -108,6 +113,36 @@ public class ResultDomain extends Result {
     public Long getFilesDownloaded() {
         return filesDownloaded;
     }
+    
+    /**
+     * Get the web category (TSK_WEB_CATEGORY) type for this domain.
+     */
+    @NbBundle.Messages({
+        "ResultDomain_getDefaultCategory=Uncategorized"
+    })
+    public String getWebCategory() {
+        if (webCategory == null) {
+            return Bundle.ResultDomain_getDefaultCategory();
+        } else {
+            return webCategory;
+        }
+    }
+    
+    /**
+     * Set the web category for this domain (derived from TSK_WEB_CATEGORY) artifacts.
+     */
+    public void setWebCategory(String webCategory) {
+        this.webCategory = webCategory;
+    }
+    
+    /**
+     * Determines if the domain has been associated with a known account type
+     * (TSK_WEB_ACCOUNT_TYPE).
+     */
+    public boolean hasKnownAccountType() {
+        return countOfKnownAccountTypes != null 
+                && countOfKnownAccountTypes > 0;
+    }
 
     @Override
     public long getDataSourceObjectId() {
@@ -115,7 +150,7 @@ public class ResultDomain extends Result {
     }
 
     @Override
-    public Content getDataSource() throws TskCoreException {
+    public Content getDataSource() {
         return this.dataSource;
     }
 
@@ -132,8 +167,8 @@ public class ResultDomain extends Result {
     @Override
     public String toString() {
         return "[domain=" + this.domain + ", data_source=" + this.dataSourceId + ", start="
-                + this.activityStart + ", end=" + this.activityEnd + ", totalVisits=" + this.totalVisits + ", visitsLast60="
-                + this.visitsInLast60 + ", downloads=" + this.filesDownloaded + ", frequency="
+                + this.activityStart + ", end=" + this.activityEnd + ", totalVisits=" + this.totalPageViews + ", visitsLast60="
+                + this.pageViewsInLast60 + ", downloads=" + this.filesDownloaded + ", frequency="
                 + this.getFrequency() + "]";
     }
 }

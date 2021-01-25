@@ -50,6 +50,7 @@ final class ContentViewerDetailsPanel extends AbstractArtifactDetailsPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        setPreferredSize(new java.awt.Dimension(300, 0));
         setLayout(new java.awt.BorderLayout());
     }// </editor-fold>//GEN-END:initComponents
 
@@ -58,7 +59,9 @@ final class ContentViewerDetailsPanel extends AbstractArtifactDetailsPanel {
     public void setArtifact(BlackboardArtifact artifact) {
         Node node = Node.EMPTY;
         if (artifact != null) {
-            node = new BlackboardArtifactNode(artifact);
+            boolean useAssociatedFile = artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID()
+                    || artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID();
+            node = new BlackboardArtifactNode(artifact, useAssociatedFile);
         }
         contentViewer.setNode(node);
     }

@@ -77,7 +77,16 @@ final class CallLogNode extends BlackboardArtifactNode {
 
         sheetSet.put(createNode(TSK_DATETIME_START, artifact));
         sheetSet.put(createNode(TSK_DIRECTION, artifact));
-        sheetSet.put(new NodeProperty<>(TSK_PHONE_NUMBER.getLabel(), TSK_PHONE_NUMBER.getDisplayName(), "", getPhoneNumber(artifact)));
+        
+        String phoneNumber = getPhoneNumber(artifact);
+        Account account = null;
+        try {
+            account = artifact.getSleuthkitCase().getCommunicationsManager().getAccount(Account.Type.PHONE, phoneNumber);
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Failed to get instance of communications manager", ex);
+        }
+        
+        sheetSet.put(new AccountNodeProperty<>(TSK_PHONE_NUMBER.getLabel(), TSK_PHONE_NUMBER.getDisplayName(), phoneNumber, account));
         if(duration != -1) {
             sheetSet.put(new NodeProperty<>("duration", "Duration", "", Long.toString(duration)));
         }

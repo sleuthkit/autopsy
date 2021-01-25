@@ -53,6 +53,7 @@ public class BarChartPanel extends AbstractLoadableComponent<List<BarChartPanel.
         /**
          * Main constructor.
          *
+         * @param key   The key.
          * @param color The color for this series.
          * @param items The bars to be displayed for this series.
          */
@@ -95,8 +96,7 @@ public class BarChartPanel extends AbstractLoadableComponent<List<BarChartPanel.
         /**
          * Main constructor.
          *
-         * @param label The key for this bar. Also serves as the label using
-         * toString().
+         * @param key   The key.
          * @param value The value for this item.
          */
         public BarChartItem(Comparable<?> key, double value) {
@@ -304,4 +304,5 @@ public class BarChartPanel extends AbstractLoadableComponent<List<BarChartPanel.
             }
         }
     }
+
 }

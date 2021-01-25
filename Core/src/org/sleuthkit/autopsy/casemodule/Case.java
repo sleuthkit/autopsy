@@ -720,8 +720,8 @@ public class Case {
             try {
                 eventPublisher.publishLocally(new AutopsyEvent(Events.CURRENT_CASE.toString(), closedCase, null));
                 logger.log(Level.INFO, "Closing current case {0} ({1}) in {2}", new Object[]{closedCase.getDisplayName(), closedCase.getName(), closedCase.getCaseDirectory()}); //NON-NLS
-                currentCase = null;
                 closedCase.doCloseCaseAction();
+                currentCase = null;
                 logger.log(Level.INFO, "Closed current case {0} ({1}) in {2}", new Object[]{closedCase.getDisplayName(), closedCase.getName(), closedCase.getCaseDirectory()}); //NON-NLS
             } catch (CaseActionException ex) {
                 logger.log(Level.SEVERE, String.format("Error closing current case %s (%s) in %s", closedCase.getDisplayName(), closedCase.getName(), closedCase.getCaseDirectory()), ex); //NON-NLS                
@@ -2828,8 +2828,8 @@ public class Case {
      * @throws CaseActionException If the lock cannot be acquired.
      */
     @Messages({
-        "Case.lockingException.couldNotAcquireSharedLock=Failed to get an shared lock on the case.",
-        "Case.lockingException.couldNotAcquireExclusiveLock=Failed to get a exclusive lock on the case."
+        "Case.lockingException.couldNotAcquireSharedLock=Failed to get a shared lock on the case.",
+        "Case.lockingException.couldNotAcquireExclusiveLock=Failed to get an exclusive lock on the case."
     })
     private void acquireCaseLock(CaseLockType lockType) throws CaseActionException {
         String caseDir = metadata.getCaseDirectory();

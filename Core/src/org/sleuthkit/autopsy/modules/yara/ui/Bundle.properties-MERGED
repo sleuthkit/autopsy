@@ -1,0 +1,29 @@
+OptionCategory_Name_YaraRuleSetOption=Yara Rule Sets
+OptionCategory_Keywords_YaraRuleSetOption=YaraRuleSets
+RuleSetDetailsPanel_failed_to_open_folder_msg=Failed to open new window for rule set file.
+RuleSetDetailsPanel_failed_to_open_folder_title=Open Error
+RuleSetPanel.newButton.text=New Set
+RuleSetPanel.deleteButton.text=Delete Set
+RuleSetPanel.ruleSetListLabel.text=Rule Sets:
+RuleSetDetailsPanel.ruleSetListLabel.text=The folder currently contains the following rule files:
+RuleSetDetailsPanel.setDetailsLabel.text=Set Details
+RuleSetDetailsPanel.openFolderButton.text=Open Folder
+RuleSetPanel.descriptionField.text=This module allows you to find files the match Yara rules. Each set has a list of Yara rule files.  A file need only match one rule in the set to be found.
+RuleSetDetailsPanel.openLabel.text=Place rule files in the set's folder. They will be compiled before use.
+YARA_Global_Settings_Panel_Title=YARA Options
+YaraIngestSettingsPanel.border.title=Select YARA rule sets to enable during ingest:
+YaraIngestSettingsPanel.allFilesButton.text=All Files
+YaraIngestSettingsPanel.allFilesButton.toolTipText=
+YaraIngestSettingsPanel.executableFilesButton.text=Only Executable Files
+RuleSetDetailsPanel.refreshButton.text=Refresh File List
+YaraRuleSetOptionPanel_badName2_msg=Rule set is invalid.\nRule set names must be non-empty string and unique.
+# {0} - rule set name
+YaraRuleSetOptionPanel_badName_msg=Rule set name {0} already exists.\nRule set names must be unique.
+YaraRuleSetOptionPanel_badName_title=Create Rule Set
+YaraRuleSetOptionPanel_new_rule_set_name_msg=Supply a new unique rule set name:
+YaraRuleSetOptionPanel_new_rule_set_name_title=Rule Set Name
+# {0} - rule set name
+YaraRuleSetOptionPanel_rule_set_delete=Unable to delete the selected YARA rule set {0}.\nRule set may have already been removed.
+# {0} - rule set name
+YaraRuleSetOptionPanel_RuleSet_Missing=The folder for the selected YARA rule set, {0}, no longer exists.
+YaraRuleSetOptionPanel_RuleSet_Missing_title=Folder removed

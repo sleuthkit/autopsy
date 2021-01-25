@@ -20,10 +20,13 @@ package org.sleuthkit.autopsy.datasourcesummary.ui;
 
 import java.awt.CardLayout;
 import java.awt.Component;
+import java.beans.PropertyChangeListener;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.function.Consumer;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.IngestJobInfoPanel;
 import org.sleuthkit.datamodel.DataSource;
 
@@ -39,6 +42,7 @@ import org.sleuthkit.datamodel.DataSource;
     "DataSourceSummaryTabbedPane_recentFileTab_title=Recent Files",
     "DataSourceSummaryTabbedPane_pastCasesTab_title=Past Cases",
     "DataSourceSummaryTabbedPane_analysisTab_title=Analysis",
+    "DataSourceSummaryTabbedPane_geolocationTab_title=Geolocation",
     "DataSourceSummaryTabbedPane_timelineTab_title=Timeline"
 })
 public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
@@ -47,7 +51,7 @@ public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
      * Records of tab information (i.e. title, component, function to call on
      * new data source).
      */
-    private static class DataSourceTab {
+    private class DataSourceTab {
 
         private final String tabTitle;
         private final Component component;
@@ -74,8 +78,12 @@ public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
          *
          * @param tabTitle The title of the tab.
          * @param panel The component to be displayed in the tab.
+         * @param notifyParentClose Notifies parent to trigger a close.
          */
         DataSourceTab(String tabTitle, BaseDataSourceSummaryPanel panel) {
+
+            panel.setParentCloseListener(() -> notifyParentClose());
+
             this.tabTitle = tabTitle;
             this.component = panel;
             this.onDataSource = panel::setDataSource;
@@ -116,6 +124,7 @@ public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
     private static final String TABBED_PANE = "tabbedPane";
     private static final String NO_DATASOURCE_PANE = "noDataSourcePane";
 
+    private Runnable notifyParentClose = null;
     private final IngestJobInfoPanel ingestHistoryPanel = new IngestJobInfoPanel();
 
     private final List<DataSourceTab> tabs = Arrays.asList(
@@ -124,6 +133,7 @@ public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
             new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_analysisTab_title(), new AnalysisPanel()),
             new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_recentFileTab_title(), new RecentFilesPanel()),
             new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_pastCasesTab_title(), new PastCasesPanel()),
+            new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_geolocationTab_title(), new GeolocationPanel()),
             new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_timelineTab_title(), new TimelinePanel()),
             // do nothing on closing 
             new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_ingestHistoryTab_title(), ingestHistoryPanel, ingestHistoryPanel::setDataSource, () -> {
@@ -135,11 +145,39 @@ public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
     private CardLayout cardLayout;
 
     /**
+     * On case close, clear the currently held data source summary node.
+     */
+    private final PropertyChangeListener caseEventsListener = (evt) -> {
+        if (evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString()) && evt.getNewValue() == null) {
+            setDataSource(null);
+        }
+    };
+
+    /**
      * Creates new form TabPane
      */
     public DataSourceSummaryTabbedPane() {
         initComponents();
         postInit();
+        Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), caseEventsListener);
+    }
+
+    /**
+     * Sends event that parent should close.
+     */
+    private void notifyParentClose() {
+        if (notifyParentClose != null) {
+            notifyParentClose.run();
+        }
+    }
+
+    /**
+     * Sets the listener for parent close events.
+     *
+     * @param parentCloseAction The observer.
+     */
+    void setParentCloseListener(Runnable parentCloseAction) {
+        notifyParentClose = parentCloseAction;
     }
 
     /**
@@ -174,12 +212,14 @@ public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
      */
     public void setDataSource(DataSource dataSource) {
         this.dataSource = dataSource;
+        
+        for (DataSourceTab tab : tabs) {
+            tab.getOnDataSource().accept(dataSource);
+        }
+                    
         if (this.dataSource == null) {
             cardLayout.show(this, NO_DATASOURCE_PANE);
         } else {
-            for (DataSourceTab tab : tabs) {
-                tab.getOnDataSource().accept(dataSource);
-            }
             cardLayout.show(this, TABBED_PANE);
         }
     }
@@ -191,6 +231,8 @@ public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
         for (DataSourceTab tab : tabs) {
             tab.getOnClose().run();
         }
+
+        Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), caseEventsListener);
     }
 
     /**

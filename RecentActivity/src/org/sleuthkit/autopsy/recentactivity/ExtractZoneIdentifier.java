@@ -116,7 +116,7 @@ final class ExtractZoneIdentifier extends Extract {
     /**
      * Process a single Zone Identifier file.
      *
-     * @param context IngetJobContext
+     * @param context IngestJobContext
      * @param dataSource Content
      * @param zoneFile Zone Indentifier file
      * @param associatedObjectArtifacts List for TSK_ASSOCIATED_OBJECT artifacts
@@ -149,7 +149,7 @@ final class ExtractZoneIdentifier extends Extract {
             if (!knownPathIDs.contains(downloadFile.getDataSourceObjectId())) {
                 // The zone identifier file is the parent of this artifact 
                 // because it is the file we parsed to get the data
-                BlackboardArtifact downloadBba = createDownloadArtifact(zoneFile, zoneInfo);
+                BlackboardArtifact downloadBba = createDownloadArtifact(zoneFile, zoneInfo, downloadFile);
                 if (downloadBba != null) {
                     downloadArtifacts.add(downloadBba);
                     // create a TSK_ASSOCIATED_OBJECT for the downloaded file, associating it with the TSK_WEB_DOWNLOAD artifact.
@@ -227,16 +227,24 @@ final class ExtractZoneIdentifier extends Extract {
      *
      * @param zoneFile Zone identifier file
      * @param zoneInfo ZoneIdentifierInfo file wrapper object
+     * @param downloadFile The file associated with the zone identifier
      *
      * @return BlackboardArifact for the given parameters
      */
-    private BlackboardArtifact createDownloadArtifact(AbstractFile zoneFile, ZoneIdentifierInfo zoneInfo) {
+    private BlackboardArtifact createDownloadArtifact(AbstractFile zoneFile, ZoneIdentifierInfo zoneInfo, AbstractFile downloadFile) {
 
+        String downloadFilePath = downloadFile.getParentPath() + downloadFile.getName();
+        
         Collection<BlackboardAttribute> bbattributes = createDownloadAttributes(
-                null, null,
+                downloadFilePath, null,
                 zoneInfo.getURL(), null,
                 (zoneInfo.getURL() != null ? NetworkUtils.extractDomain(zoneInfo.getURL()) : ""),
                 null);
+        if (zoneInfo.getZoneIdAsString() != null) {
+            bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT,
+                        RecentActivityExtracterModuleFactory.getModuleName(),
+                        zoneInfo.getZoneIdAsString()));
+        }
         return createArtifactWithAttributes(TSK_WEB_DOWNLOAD, zoneFile, bbattributes);
     }
 
@@ -286,6 +294,7 @@ final class ExtractZoneIdentifier extends Extract {
         private static final String REFERRER_URL = "ReferrerUrl"; //NON-NLS
         private static final String HOST_URL = "HostUrl"; //NON-NLS
         private static final String FAMILY_NAME = "LastWriterPackageFamilyName"; //NON-NLS
+        private static String fileName;
 
         private final Properties properties = new Properties(null);
 
@@ -299,6 +308,7 @@ final class ExtractZoneIdentifier extends Extract {
          * @throws IOException
          */
         ZoneIdentifierInfo(AbstractFile zoneFile) throws IOException {
+            fileName = zoneFile.getName();
             properties.load(new ReadContentInputStream(zoneFile));
         }
 
@@ -310,8 +320,13 @@ final class ExtractZoneIdentifier extends Extract {
         private int getZoneId() {
             int zoneValue = -1;
             String value = properties.getProperty(ZONE_ID);
-            if (value != null) {
-                zoneValue = Integer.parseInt(value);
+            try {
+                if (value != null) {
+                    zoneValue = Integer.parseInt(value);
+                }
+            } catch (NumberFormatException ex) {
+               String message = String.format("Unable to parse Zone Id for File %s", fileName); //NON-NLS
+               LOG.log(Level.WARNING, message); 
             }
 
             return zoneValue;

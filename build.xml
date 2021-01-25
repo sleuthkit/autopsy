@@ -156,7 +156,7 @@
         </copy>
 
         <property name="app.property.file" value="${zip-tmp}/${app.name}/etc/${app.name}.conf" />
-        <var name="jvm-value" value="--branding ${app.name} -J-Xms24m -J-Xmx4G -J-Xverify:none -J-XX:+UseG1GC -J-XX:+UseStringDeduplication"/>
+        <var name="jvm-value" value="--branding ${app.name} -J-Xms24m -J-Xmx4G -J-Xverify:none -J-XX:+UseG1GC -J-XX:+UseStringDeduplication -J-Dprism.order=sw"/>
         <!-- for Japanese localized version add option:  -Duser.language=ja -->
         
             
@@ -367,6 +367,9 @@
                 <include name="*_linux"/>
                 <include name="*_macos"/>
             </fileset>
+	    <fileset dir="${cluster}/solr/bin" casesensitive="no" id="solr">
+		<include name="autopsy-solr"/>
+	    </fileset>
         </chmod>
     </target>
 </project>

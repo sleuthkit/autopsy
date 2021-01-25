@@ -77,6 +77,7 @@ import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.recentactivity.ShellBagParser.ShellBag;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Account;
+import org.sleuthkit.datamodel.Blackboard.BlackboardException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_OS_ACCOUNT;
@@ -96,7 +97,6 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamException;
 import org.sleuthkit.datamodel.Report;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskDataException;
 
 /**
  * Extract windows registry data using regripper. Runs two versions of
@@ -537,7 +537,7 @@ class ExtractRegistry extends Extract {
                     //sometimes etime will be an empty string and therefore can not be parsed into a date
                     if (etime != null && !etime.isEmpty()) {
                         try {
-                            mtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(etime).getTime();
+                            mtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy", US).parse(etime).getTime();
                             String Tempdate = mtime.toString();
                             mtime = Long.valueOf(Tempdate) / MS_IN_SEC;
                         } catch (ParseException ex) {
@@ -602,7 +602,7 @@ class ExtractRegistry extends Extract {
                                     case "InstallDate": //NON-NLS
                                         if (value != null && !value.isEmpty()) {
                                             try {
-                                                installtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(value).getTime();
+                                                installtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy", US).parse(value).getTime();
                                                 String Tempdate = installtime.toString();
                                                 installtime = Long.valueOf(Tempdate) / MS_IN_SEC;
                                             } catch (ParseException e) {
@@ -781,7 +781,7 @@ class ExtractRegistry extends Extract {
                                         try {
                                             String mTimeAttr = artnode.getAttribute("mtime");
                                             if (mTimeAttr != null && !mTimeAttr.isEmpty()) {
-                                                itemMtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(mTimeAttr).getTime(); //NON-NLS
+                                                itemMtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy", US).parse(mTimeAttr).getTime(); //NON-NLS
                                                 itemMtime /= MS_IN_SEC;
                                             }
                                         } catch (ParseException ex) {
@@ -864,6 +864,8 @@ class ExtractRegistry extends Extract {
                                                     parentModuleName, sid));
                                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH,
                                                     parentModuleName, homeDir));
+                                            
+                                            newArtifacts.add(bbart);
                                         } else {
                                             //add attributes to existing artifact
                                             BlackboardAttribute bbattr = bbart.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_USER_NAME));
@@ -876,10 +878,10 @@ class ExtractRegistry extends Extract {
                                             if (bbattr == null) {
                                                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH,
                                                         parentModuleName, homeDir));
-                                            }
+                                            }                                          
                                         }
                                         bbart.addAttributes(bbattributes);
-                                        newArtifacts.add(bbart);
+                                       
                                     } catch (TskCoreException ex) {
                                         logger.log(Level.SEVERE, "Error adding account artifact to blackboard.", ex); //NON-NLS
                                     }
@@ -1161,7 +1163,7 @@ class ExtractRegistry extends Extract {
     Collection<BlackboardAttribute> getAttributesForAccount(Map<String, String> userInfo, List<String> groupList, boolean existingUser, AbstractFile regAbstractFile) throws ParseException {
         Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
 
-        SimpleDateFormat regRipperTimeFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy 'Z'");
+        SimpleDateFormat regRipperTimeFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy 'Z'", US);
         regRipperTimeFormat.setTimeZone(getTimeZone("GMT"));
 
         if (!existingUser) {
@@ -1499,7 +1501,7 @@ class ExtractRegistry extends Extract {
                     }
                     Collection<BlackboardAttribute> attributes = new ArrayList<>();
                     attributes.add(new BlackboardAttribute(TSK_PATH, getName(), fileName));
-                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, getName(), adobeUsedTime));
+                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED, getName(), adobeUsedTime));
                     attributes.add(new BlackboardAttribute(TSK_COMMENT, getName(), comment));
                     BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_RECENT_OBJECT, regFile, attributes);
                     if (bba != null) {
@@ -1740,7 +1742,7 @@ class ExtractRegistry extends Extract {
             String fileName = fileNameTokens[1];
             Collection<BlackboardAttribute> attributes = new ArrayList<>();
             attributes.add(new BlackboardAttribute(TSK_PATH, getName(), fileName));
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, getName(), docDate));
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED, getName(), docDate));
             attributes.add(new BlackboardAttribute(TSK_COMMENT, getName(), comment));
             BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_RECENT_OBJECT, regFile, attributes);
             if (bba != null) {
@@ -1782,7 +1784,8 @@ class ExtractRegistry extends Extract {
             line = line.trim();
             usedTime = Long.valueOf(0);
             if (!line.contains("**") && !line.contains("----------") && !line.contains("LastWrite")
-                    && !line.contains(SECTION_DIVIDER) && !line.isEmpty() && !line.contains("TrustRecords")) {
+                    && !line.contains(SECTION_DIVIDER) && !line.isEmpty() && !line.contains("TrustRecords")
+                    && !line.contains("VBAWarnings =")) {
                 // Columns are
                 // Date : <File Name>/<Website>
                 // Split line on " : " which is the record delimiter between position and file
@@ -1802,7 +1805,7 @@ class ExtractRegistry extends Extract {
                 }
                 Collection<BlackboardAttribute> attributes = new ArrayList<>();
                 attributes.add(new BlackboardAttribute(TSK_PATH, getName(), fileName));
-                attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, getName(), usedTime));
+                attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED, getName(), usedTime));
                 attributes.add(new BlackboardAttribute(TSK_COMMENT, getName(), comment));
                 BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_RECENT_OBJECT, regFile, attributes);
                 if (bba != null) {
@@ -1961,18 +1964,11 @@ class ExtractRegistry extends Extract {
      */
     private BlackboardArtifact.Type getShellBagArtifact() throws TskCoreException {
         if (shellBagArtifactType == null) {
-            shellBagArtifactType = tskCase.getArtifactType(SHELLBAG_ARTIFACT_NAME);
-
-            if (shellBagArtifactType == null) {
-                try {
-                    tskCase.addBlackboardArtifactType(SHELLBAG_ARTIFACT_NAME, Bundle.Shellbag_Artifact_Display_Name()); //NON-NLS
-                } catch (TskDataException ex) {
-                    // Artifact already exists
-                    logger.log(Level.INFO, String.format("%s may have already been defined for this case", SHELLBAG_ARTIFACT_NAME));
-                }
-
-                shellBagArtifactType = tskCase.getArtifactType(SHELLBAG_ARTIFACT_NAME);
-            }
+            try {
+                shellBagArtifactType = tskCase.getBlackboard().getOrAddArtifactType(SHELLBAG_ARTIFACT_NAME, Bundle.Shellbag_Artifact_Display_Name());
+            } catch (BlackboardException ex) {
+                throw new TskCoreException(String.format("Failed to get shell bag artifact type", SHELLBAG_ARTIFACT_NAME), ex);
+            }  
         }
 
         return shellBagArtifactType;
@@ -1989,12 +1985,12 @@ class ExtractRegistry extends Extract {
     private BlackboardAttribute.Type getLastWriteAttribute() throws TskCoreException {
         if (shellBagLastWriteAttributeType == null) {
             try {
-                shellBagLastWriteAttributeType = tskCase.addArtifactAttributeType(SHELLBAG_ATTRIBUTE_LAST_WRITE,
+                shellBagLastWriteAttributeType = tskCase.getBlackboard().getOrAddAttributeType(SHELLBAG_ATTRIBUTE_LAST_WRITE,
                         BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DATETIME,
                         Bundle.Shellbag_Last_Write_Attribute_Display_Name());
-            } catch (TskDataException ex) {
+            } catch (BlackboardException ex) {
                 // Attribute already exists get it from the case
-                shellBagLastWriteAttributeType = tskCase.getAttributeType(SHELLBAG_ATTRIBUTE_LAST_WRITE);
+                throw new TskCoreException(String.format("Failed to get custom attribute %s", SHELLBAG_ATTRIBUTE_LAST_WRITE), ex);
             }
         }
         return shellBagLastWriteAttributeType;
@@ -2011,12 +2007,11 @@ class ExtractRegistry extends Extract {
     private BlackboardAttribute.Type getKeyAttribute() throws TskCoreException {
         if (shellBagKeyAttributeType == null) {
             try {
-                shellBagKeyAttributeType = tskCase.addArtifactAttributeType(SHELLBAG_ATTRIBUTE_KEY,
+                shellBagKeyAttributeType = tskCase.getBlackboard().getOrAddAttributeType(SHELLBAG_ATTRIBUTE_KEY,
                         BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING,
                         Bundle.Shellbag_Key_Attribute_Display_Name());
-            } catch (TskDataException ex) {
-                // The attribute already exists get it from the case
-                shellBagKeyAttributeType = tskCase.getAttributeType(SHELLBAG_ATTRIBUTE_KEY);
+            } catch (BlackboardException ex) {
+                throw new TskCoreException(String.format("Failed to get key attribute %s", SHELLBAG_ATTRIBUTE_KEY), ex);
             }
         }
         return shellBagKeyAttributeType;

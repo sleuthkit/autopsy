@@ -51,6 +51,8 @@ The following topics are available here:
  - \subpage drone_page
  - \subpage gpx_page
  - \subpage ileapp_page
+ - \subpage aleapp_page
+ - \subpage yara_page
 
 - Reviewing the Results
  - \subpage uilayout_page

@@ -182,12 +182,12 @@ final class ResultsPanel extends javax.swing.JPanel {
      */
     @Subscribe
     void handlePageRetrievedEvent(DiscoveryEventUtils.PageRetrievedEvent pageRetrievedEvent) {
+        //send populateMesage
+        if (pageRetrievedEvent.getType() != DOMAIN) {
+            DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.PopulateInstancesListEvent(getInstancesForSelected()));
+        }
+        currentPage = pageRetrievedEvent.getPageNumber();
         SwingUtilities.invokeLater(() -> {
-            //send populateMesage
-            if (pageRetrievedEvent.getType() != DOMAIN) {
-                DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.PopulateInstancesListEvent(getInstancesForSelected()));
-            }
-            currentPage = pageRetrievedEvent.getPageNumber();
             updateControls();
             resetResultViewer();
             if (null != pageRetrievedEvent.getType()) {
@@ -214,20 +214,17 @@ final class ResultsPanel extends javax.swing.JPanel {
             }
             resultsViewerPanel.revalidate();
             resultsViewerPanel.repaint();
-        }
-        );
+        });
     }
 
     @Subscribe
     void handleCancelBackgroundTasksEvent(DiscoveryEventUtils.CancelBackgroundTasksEvent cancelEvent) {
-        SwingUtilities.invokeLater(() -> {
-            for (SwingWorker<Void, Void> thumbWorker : resultContentWorkers) {
-                if (!thumbWorker.isDone()) {
-                    thumbWorker.cancel(true);
-                }
+        for (SwingWorker<Void, Void> thumbWorker : resultContentWorkers) {
+            if (!thumbWorker.isDone()) {
+                thumbWorker.cancel(true);
             }
-            resultContentWorkers.clear();
-        });
+        }
+        resultContentWorkers.clear();
     }
 
     /**
@@ -336,14 +333,14 @@ final class ResultsPanel extends javax.swing.JPanel {
      */
     @Subscribe
     void handleGroupSelectedEvent(DiscoveryEventUtils.GroupSelectedEvent groupSelectedEvent) {
+        searchFilters = groupSelectedEvent.getFilters();
+        groupingAttribute = groupSelectedEvent.getGroupingAttr();
+        groupSort = groupSelectedEvent.getGroupSort();
+        fileSortMethod = groupSelectedEvent.getResultSort();
+        selectedGroupKey = groupSelectedEvent.getGroupKey();
+        resultType = groupSelectedEvent.getResultType();
+        groupSize = groupSelectedEvent.getGroupSize();
         SwingUtilities.invokeLater(() -> {
-            searchFilters = groupSelectedEvent.getFilters();
-            groupingAttribute = groupSelectedEvent.getGroupingAttr();
-            groupSort = groupSelectedEvent.getGroupSort();
-            fileSortMethod = groupSelectedEvent.getResultSort();
-            selectedGroupKey = groupSelectedEvent.getGroupKey();
-            resultType = groupSelectedEvent.getResultType();
-            groupSize = groupSelectedEvent.getGroupSize();
             resetResultViewer();
             setPage(0);
         });
@@ -357,9 +354,9 @@ final class ResultsPanel extends javax.swing.JPanel {
      */
     @Subscribe
     void handleNoResultsEvent(DiscoveryEventUtils.NoResultsEvent noResultsEvent) {
+        groupSize = 0;
+        currentPage = 0;
         SwingUtilities.invokeLater(() -> {
-            groupSize = 0;
-            currentPage = 0;
             updateControls();
             videoThumbnailViewer.clearViewer();
             imageThumbnailViewer.clearViewer();
@@ -863,7 +860,7 @@ final class ResultsPanel extends javax.swing.JPanel {
             DomainSearchThumbnailRequest request = new DomainSearchThumbnailRequest(
                     caseDb,
                     domainWrapper.getResultDomain().getDomain(),
-                    ImageUtils.ICON_SIZE_LARGE
+                    ImageUtils.ICON_SIZE_MEDIUM
             );
 
             Image thumbnail = domainSearch.getThumbnail(request);

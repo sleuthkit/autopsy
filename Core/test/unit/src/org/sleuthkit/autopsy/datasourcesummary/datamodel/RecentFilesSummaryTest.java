@@ -71,8 +71,8 @@ public class RecentFilesSummaryTest {
          * Means of acquiring data from a method in RecentFilesSummary.
          *
          * @param recentFilesSummary The RecentFilesSummary object.
-         * @param dataSource         The datasource.
-         * @param count              The number of items to retrieve.
+         * @param dataSource The datasource.
+         * @param count The number of items to retrieve.
          *
          * @return The method's return data.
          *
@@ -95,7 +95,7 @@ public class RecentFilesSummaryTest {
     /**
      * If -1 count passed to method, should throw IllegalArgumentException.
      *
-     * @param method     The method to call.
+     * @param method The method to call.
      * @param methodName The name of the metho
      *
      * @throws TskCoreException
@@ -137,7 +137,7 @@ public class RecentFilesSummaryTest {
      * SleuthkitCase isn't called.
      *
      * @param recentFilesMethod The method to call.
-     * @param methodName        The name of the method
+     * @param methodName The name of the method
      *
      * @throws SleuthkitCaseProviderException
      * @throws TskCoreException
@@ -175,7 +175,7 @@ public class RecentFilesSummaryTest {
      * If SleuthkitCase returns no results, an empty list is returned.
      *
      * @param recentFilesMethod The method to call.
-     * @param methodName        The name of the method.
+     * @param methodName The name of the method.
      *
      * @throws SleuthkitCaseProviderException
      * @throws TskCoreException
@@ -220,11 +220,11 @@ public class RecentFilesSummaryTest {
     /**
      * Gets a mock BlackboardArtifact.
      *
-     * @param ds            The data source to which the artifact belongs.
-     * @param artifactId    The artifact id.
-     * @param artType       The artifact type.
+     * @param ds The data source to which the artifact belongs.
+     * @param artifactId The artifact id.
+     * @param artType The artifact type.
      * @param attributeArgs The mapping of attribute type to value for each
-     *                      attribute in the artifact.
+     * attribute in the artifact.
      *
      * @return The mock artifact.
      */
@@ -247,16 +247,16 @@ public class RecentFilesSummaryTest {
     /**
      * Returns a mock artifact for getRecentlyOpenedDocuments.
      *
-     * @param ds         The datasource for the artifact.
+     * @param ds The datasource for the artifact.
      * @param artifactId The artifact id.
-     * @param dateTime   The time in seconds from epoch.
-     * @param path       The path for the document.
+     * @param dateTime The time in seconds from epoch.
+     * @param path The path for the document.
      *
      * @return The mock artifact with pertinent attributes.
      */
     private BlackboardArtifact getRecentDocumentArtifact(DataSource ds, long artifactId, Long dateTime, String path) {
         return getArtifact(ds, artifactId, ARTIFACT_TYPE.TSK_RECENT_OBJECT, Arrays.asList(
-                Pair.of(ATTRIBUTE_TYPE.TSK_DATETIME, dateTime),
+                Pair.of(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED , dateTime),
                 Pair.of(ATTRIBUTE_TYPE.TSK_PATH, path)
         ));
     }
@@ -293,12 +293,32 @@ public class RecentFilesSummaryTest {
     }
 
     @Test
+    public void getRecentlyOpenedDocuments_uniquePaths() throws SleuthkitCaseProviderException, TskCoreException {
+        DataSource dataSource = TskMockUtils.getDataSource(1);
+
+        BlackboardArtifact item1 = getRecentDocumentArtifact(dataSource, 1001, DAY_SECONDS, "/a/path");
+        BlackboardArtifact item2 = getRecentDocumentArtifact(dataSource, 1002, DAY_SECONDS + 1, "/a/path");
+        BlackboardArtifact item3 = getRecentDocumentArtifact(dataSource, 1003, DAY_SECONDS + 2, "/a/path");
+        List<BlackboardArtifact> artifacts = Arrays.asList(item2, item3, item1);
+
+        Pair<SleuthkitCase, Blackboard> casePair = DataSourceSummaryMockUtils.getArtifactsTSKMock(RandomizationUtils.getMixedUp(artifacts));
+        RecentFilesSummary summary = new RecentFilesSummary(() -> casePair.getLeft());
+        List<RecentFileDetails> results = summary.getRecentlyOpenedDocuments(dataSource, 10);
+
+        // verify results (only successItem)
+        Assert.assertNotNull(results);
+        Assert.assertEquals(1, results.size());
+        Assert.assertEquals((Long) (DAY_SECONDS + 2), results.get(0).getDateAsLong());
+        Assert.assertTrue("/a/path".equalsIgnoreCase(results.get(0).getPath()));
+    }
+
+    @Test
     public void getRecentlyOpenedDocuments_filtersMissingData() throws SleuthkitCaseProviderException, TskCoreException {
         DataSource dataSource = TskMockUtils.getDataSource(1);
 
         BlackboardArtifact successItem = getRecentDocumentArtifact(dataSource, 1001, DAY_SECONDS, "/a/path");
         BlackboardArtifact nullTime = getRecentDocumentArtifact(dataSource, 1002, null, "/a/path2");
-        BlackboardArtifact zeroTime = getRecentDocumentArtifact(dataSource, 10021, 0L, "/a/path2a");      
+        BlackboardArtifact zeroTime = getRecentDocumentArtifact(dataSource, 10021, 0L, "/a/path2a");
         List<BlackboardArtifact> artifacts = Arrays.asList(nullTime, zeroTime, successItem);
 
         Pair<SleuthkitCase, Blackboard> casePair = DataSourceSummaryMockUtils.getArtifactsTSKMock(RandomizationUtils.getMixedUp(artifacts));
@@ -315,11 +335,11 @@ public class RecentFilesSummaryTest {
     /**
      * Creates a mock blackboard artifact for getRecentDownloads.
      *
-     * @param ds         The datasource.
+     * @param ds The datasource.
      * @param artifactId The artifact id.
-     * @param dateTime   The time in seconds from epoch.
-     * @param domain     The domain.
-     * @param path       The path for the download.
+     * @param dateTime The time in seconds from epoch.
+     * @param domain The domain.
+     * @param path The path for the download.
      *
      * @return The mock artifact.
      */
@@ -369,6 +389,30 @@ public class RecentFilesSummaryTest {
     }
 
     @Test
+    public void getRecentDownloads_uniquePaths() throws SleuthkitCaseProviderException, TskCoreException {
+        DataSource dataSource = TskMockUtils.getDataSource(1);
+
+        BlackboardArtifact item1 = getRecentDownloadArtifact(dataSource, 1001, DAY_SECONDS, "domain1.com", "/a/path1");
+        BlackboardArtifact item1a = getRecentDownloadArtifact(dataSource, 10011, DAY_SECONDS + 1, "domain1.com", "/a/path1");
+        BlackboardArtifact item2 = getRecentDownloadArtifact(dataSource, 1002, DAY_SECONDS + 2, "domain2.com", "/a/path1");
+        BlackboardArtifact item3 = getRecentDownloadArtifact(dataSource, 1003, DAY_SECONDS + 3, "domain2a.com", "/a/path1");
+        List<BlackboardArtifact> artifacts = Arrays.asList(item2, item3, item1);
+
+        Pair<SleuthkitCase, Blackboard> casePair = DataSourceSummaryMockUtils.getArtifactsTSKMock(RandomizationUtils.getMixedUp(artifacts));
+        RecentFilesSummary summary = new RecentFilesSummary(() -> casePair.getLeft());
+
+        // call method
+        List<RecentDownloadDetails> results = summary.getRecentDownloads(dataSource, 10);
+
+        // verify results
+        Assert.assertNotNull(results);
+        Assert.assertEquals(1, results.size());
+        Assert.assertEquals((Long) (DAY_SECONDS + 3), results.get(0).getDateAsLong());
+        Assert.assertTrue("/a/path1".equalsIgnoreCase(results.get(0).getPath()));
+        Assert.assertTrue("domain2a.com".equalsIgnoreCase(results.get(0).getWebDomain()));
+    }
+
+    @Test
     public void getRecentDownloads_filtersMissingData() throws SleuthkitCaseProviderException, TskCoreException {
         DataSource dataSource = TskMockUtils.getDataSource(1);
 
@@ -409,19 +453,17 @@ public class RecentFilesSummaryTest {
          * Constructor with all parameters.
          *
          * @param messageArtifactTypeId The type id for the artifact or null if
-         *                              no message artifact to be created.
-         * @param emailFrom             Who the message is from or null not to
-         *                              include attribute.
-         * @param messageTime           Time in seconds from epoch or null not
-         *                              to include attribute.
-         * @param fileParentPath        The parent AbstractFile's path value.
-         * @param fileName              The parent AbstractFile's filename
-         *                              value.
-         * @param associatedAttrFormed  If false, the TSK_ASSOCIATED_OBJECT
-         *                              artifact has no attribute (even though
-         *                              it is required).
-         * @param hasParent             Whether or not the artifact has a parent
-         *                              AbstractFile.
+         * no message artifact to be created.
+         * @param emailFrom Who the message is from or null not to include
+         * attribute.
+         * @param messageTime Time in seconds from epoch or null not to include
+         * attribute.
+         * @param fileParentPath The parent AbstractFile's path value.
+         * @param fileName The parent AbstractFile's filename value.
+         * @param associatedAttrFormed If false, the TSK_ASSOCIATED_OBJECT
+         * artifact has no attribute (even though it is required).
+         * @param hasParent Whether or not the artifact has a parent
+         * AbstractFile.
          */
         AttachmentArtifactItem(Integer messageArtifactTypeId, String emailFrom, Long messageTime,
                 String fileParentPath, String fileName,
@@ -441,14 +483,13 @@ public class RecentFilesSummaryTest {
          * SleuthkitCase assumed.
          *
          * @param messageArtifactTypeId The type id for the artifact or null if
-         *                              no message artifact to be created.
-         * @param emailFrom             Who the message is from or null not to
-         *                              include attribute.
-         * @param messageTime           Time in seconds from epoch or null not
-         *                              to include attribute.
-         * @param fileParentPath        The parent AbstractFile's path value.
-         * @param fileName              The parent AbstractFile's filename
-         *                              value.
+         * no message artifact to be created.
+         * @param emailFrom Who the message is from or null not to include
+         * attribute.
+         * @param messageTime Time in seconds from epoch or null not to include
+         * attribute.
+         * @param fileParentPath The parent AbstractFile's path value.
+         * @param fileName The parent AbstractFile's filename value.
          */
         AttachmentArtifactItem(Integer messageArtifactTypeId, String emailFrom, Long messageTime, String fileParentPath, String fileName) {
             this(messageArtifactTypeId, emailFrom, messageTime, fileParentPath, fileName, true, true);
@@ -486,11 +527,11 @@ public class RecentFilesSummaryTest {
     /**
      * Sets up the associated artifact message for the TSK_ASSOCIATED_OBJECT.
      *
-     * @param artifacts    The mapping of artifact id to artifact.
-     * @param item         The record to setup.
-     * @param dataSource   The datasource.
+     * @param artifacts The mapping of artifact id to artifact.
+     * @param item The record to setup.
+     * @param dataSource The datasource.
      * @param associatedId The associated attribute id.
-     * @param artifactId   The artifact id.
+     * @param artifactId The artifact id.
      *
      * @return The associated Artifact blackboard attribute.
      *
@@ -504,7 +545,7 @@ public class RecentFilesSummaryTest {
         if (item.getMessageArtifactTypeId() == null) {
             return associatedAttr;
         }
-        
+
         // find the artifact type or null if not found
         ARTIFACT_TYPE messageType = Stream.of(ARTIFACT_TYPE.values())
                 .filter((artType) -> artType.getTypeID() == item.getMessageArtifactTypeId())
@@ -534,7 +575,7 @@ public class RecentFilesSummaryTest {
      * to return pertinent data.
      *
      * @param items Each attachment item where each item could represent a
-     *              return result if fully formed.
+     * return result if fully formed.
      *
      * @return The mock SleuthkitCase and Blackboard.
      */
@@ -677,5 +718,35 @@ public class RecentFilesSummaryTest {
         Assert.assertTrue(Paths.get(successItem2.getFileParentPath(), successItem2.getFileName())
                 .toString().equalsIgnoreCase(successItem2Details.getPath()));
         Assert.assertTrue(successItem2.getEmailFrom().equalsIgnoreCase(successItem2Details.getSender()));
+    }
+
+    @Test
+    public void getRecentAttachments_uniquePath() throws SleuthkitCaseProviderException, TskCoreException {
+        // setup data
+        DataSource dataSource = TskMockUtils.getDataSource(1);
+
+        AttachmentArtifactItem item1 = new AttachmentArtifactItem(ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID(),
+                "person@sleuthkit.com", DAY_SECONDS, "/parent/path", "msg.pdf");
+        AttachmentArtifactItem item2 = new AttachmentArtifactItem(ARTIFACT_TYPE.TSK_MESSAGE.getTypeID(),
+                "person_on_skype", DAY_SECONDS + 1, "/parent/path", "msg.pdf");
+        AttachmentArtifactItem item3 = new AttachmentArtifactItem(ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID(),
+                "person2@sleuthkit.com", DAY_SECONDS + 2, "/parent/path", "msg.pdf");
+
+        List<AttachmentArtifactItem> items = Arrays.asList(item1, item2, item3);
+
+        Pair<SleuthkitCase, Blackboard> casePair = getRecentAttachmentArtifactCase(items);
+        RecentFilesSummary summary = new RecentFilesSummary(() -> casePair.getLeft());
+
+        // get data
+        List<RecentAttachmentDetails> results = summary.getRecentAttachments(dataSource, 10);
+
+        // verify results
+        Assert.assertNotNull(results);
+        Assert.assertEquals(1, results.size());
+
+        Assert.assertEquals(results.get(0).getDateAsLong(), (Long) (DAY_SECONDS + 2));
+        Assert.assertTrue(Paths.get(item3.getFileParentPath(), item3.getFileName())
+                .toString().equalsIgnoreCase(results.get(0).getPath()));
+        Assert.assertTrue(results.get(0).getSender().equalsIgnoreCase(item3.getEmailFrom()));
     }
 }

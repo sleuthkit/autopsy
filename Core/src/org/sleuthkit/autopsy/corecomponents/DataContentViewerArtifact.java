@@ -41,7 +41,7 @@ import org.sleuthkit.datamodel.TskException;
 import java.util.Collections;
 import java.util.HashSet;
 import org.sleuthkit.autopsy.contentviewers.artifactviewers.ArtifactContentViewer;
-import org.sleuthkit.autopsy.contentviewers.artifactviewers.DefaultArtifactContentViewer;
+import org.sleuthkit.autopsy.contentviewers.artifactviewers.DefaultTableArtifactContentViewer;
 
 /**
  * Instances of this class display the BlackboardArtifacts associated with the
@@ -372,7 +372,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
                 return viewer;
             }
         }
-        return new DefaultArtifactContentViewer();
+        return new DefaultTableArtifactContentViewer();
     }
 
     /**
