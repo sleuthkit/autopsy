@@ -28,16 +28,16 @@
     -->
     <iLeap_Files_To_Process>
 
-        <FileName filename="Account Data.tsv" description="Account Data">
+        <!-- <FileName filename="Account Data.tsv" description="Account Data">
             <ArtifactName artifactname="TSK_ACCOUNT" comment="Account Data">
                 <AttributeName attributename="TSK_DATETIME" columnName="Timestamp" required="yes" />
-                <AttributeName attributename="TSK_PROG_NAME" columnName="Account Desc." required="yes" />
-                <AttributeName attributename="TSK_USER_NAME" columnName="Username" required="yes" />
+                <AttributeName attributename="TSK_ACCOUNT_TYPE" columnName="Account Desc." required="yes" />
+                <AttributeName attributename="TSK_ID" columnName="Username" required="yes" />
                 <AttributeName attributename="null" columnName="Description" required="no" />
                 <AttributeName attributename="TSK_PATH" columnName="Identifier" required="yes" />
                 <AttributeName attributename="null" columnName="Bundle ID" required="no" />
             </ArtifactName>
-        </FileName>
+        </FileName> -->
 
         <FileName filename="Application State.tsv" description="Application State">
             <ArtifactName artifactname="TSK_INSTALLED_PROG" comment="Application State">
@@ -68,7 +68,7 @@
         <FileName filename="Bluetooth paired.tsv" description="Bluetooth Paired">
             <ArtifactName artifactname="TSK_BLUETOOTH_PAIRING" comment="Bluetooth Paired">
                 <AttributeName attributename="TSK_DEVICE_ID" columnName="UUID" required="yes" />
-                <AttributeName attributename="TSK_NAME" columnName="Name" required="yes" />
+                <AttributeName attributename="TSK_DEVICE_NAME" columnName="Name" required="yes" />
                 <AttributeName attributename="null" columnName="Name Origin" required="no" />
                 <AttributeName attributename="null" columnName="Address" required="no" />
                 <AttributeName attributename="null" columnName="Resolved Address" required="no" />			
@@ -143,7 +143,7 @@
                 <AttributeName attributename="null" columnName="Start" required="no" />
                 <AttributeName attributename="null" columnName="End" required="no" />
                 <AttributeName attributename="null" columnName="ZSTREAMNAME" required="no" />
-                <AttributeName attributename="TSK_PROG_NAME" columnName="ZVALUESTRING" required="no" />
+                <AttributeName attributename="TSK_PROG_NAME" columnName="Value String" required="no" />
                 <AttributeName attributename="null" columnName="Activity Type" required="no" />
                 <AttributeName attributename="null" columnName="Title" required="no" />
                 <AttributeName attributename="null" columnName="Expiration Date" required="no" />

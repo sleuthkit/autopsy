@@ -205,7 +205,7 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
 
     @Messages({
         "SummaryViewer_Fetching_References=<Fetching File References>",
-        "SummaryViewer_Persona_Message=<Enable Central Repository to view Personas>"
+        "SummaryViewer_Persona_CR_Message=<Enable Central Repository to view Personas>"
     })
     private void updateOtherAccountInfo(final Account account) {
         SummaryPanelWorker worker = new SummaryPanelWorker(account) {
@@ -228,7 +228,7 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
                     if (CentralRepository.isEnabled()) {
                         ((SummaryPersonaPane) personaPanel).updatePersonaList(account, results.getCRAccount(), personaList);
                     } else {
-                        ((SummaryPersonaPane) personaPanel).setMessage("Bundle.SummaryViewer_Persona_Message()");
+                        ((SummaryPersonaPane) personaPanel).setMessage(Bundle.SummaryViewer_Persona_CR_Message());
                         ((SummaryPersonaPane) personaPanel).showMessagePanel();
                     }
 

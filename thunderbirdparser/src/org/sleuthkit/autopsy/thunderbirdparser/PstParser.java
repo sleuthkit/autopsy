@@ -123,7 +123,7 @@ class PstParser  implements AutoCloseable{
     }
     
     @Override
-    public void close() throws Exception{
+    public void close() throws IOException{
         if(pstFile != null) {
             RandomAccessFile file = pstFile.getFileHandle();
             if(file != null) {
