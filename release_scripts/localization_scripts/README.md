@@ -9,7 +9,7 @@ All of these scripts provide more details on usage by calling the script with `-
 
 ## Dependencies
 
-These scripts require the python libraries: gitpython, jproperties, pyexcel-xlsx, xlsxwriter and pyexcel along with python >= 3.9.1.  The virtual environment to set up dependencies can be activated with venv/Scripts/activate.  As a consequence of gitpython, this project also requires git >= 1.7.0.
+This script requires the python libraries: gitpython, jproperties, pyexcel-xlsx, xlsxwriter and pyexcel along with python >= 3.9.1 or the requirements.txt file found in this directory can be used (more information on that can be found [here](https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/#using-requirements-files)).  As a consequence of gitpython, this project also requires git >= 1.7.0.
 
 ## Basic Localization Update Workflow
 

@@ -1,8 +1,9 @@
 """This script finds all '.properties-MERGED' files and writes relative path, key, and value to a CSV file.
 
 This script requires the python libraries: gitpython, jproperties, pyexcel-xlsx, xlsxwriter and pyexcel along with
-python >= 3.9.1 or the virtual environment can be used by activating venv/Scripts/activate.  As a
-consequence of gitpython, it also requires git >= 1.7.0.
+python >= 3.9.1 or the requirements.txt file found in this directory can be used
+(https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/#using-requirements-files).  As a
+consequence of gitpython, this project also requires git >= 1.7.0.
 """
 
 from typing import List, Dict, Tuple, Callable, Iterator, Union
