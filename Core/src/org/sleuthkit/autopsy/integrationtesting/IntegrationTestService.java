@@ -313,9 +313,9 @@ public class IntegrationTestService {
         }
 
         // retrieve values
-        String username = connectionInfo.getUserName();
         String host = connectionInfo.getHostName();
-        String password = connectionInfo.getPassword();
+        String username = connectionInfo.getUserName() == null ? "" : connectionInfo.getUserName();
+        String password = connectionInfo.getPassword() == null ? "" : connectionInfo.getPassword();
         int port = connectionInfo.getPort() == null ? DEFAULT_ACTIVEMQ_PORT : connectionInfo.getPort();
 
         // ensure all necessary values are present.

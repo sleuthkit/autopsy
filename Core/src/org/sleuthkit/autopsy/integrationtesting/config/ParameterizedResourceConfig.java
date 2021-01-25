@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.integrationtesting.config;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationContext;
@@ -39,6 +40,7 @@ import java.util.Map;
 /**
  * A resource that potentially has parameters as well.
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 @JsonDeserialize(using = ParameterizedResourceConfig.ParameterizedResourceConfigDeserializer.class)
 public class ParameterizedResourceConfig {
 

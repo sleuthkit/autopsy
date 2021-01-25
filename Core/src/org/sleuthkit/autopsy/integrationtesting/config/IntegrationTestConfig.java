@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.integrationtesting.config;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Collections;
 import java.util.List;
@@ -27,6 +28,7 @@ import java.util.List;
  * Configuration for running Integration Tests including things like ingest
  * parameters, datasource locations, cases to create, tests to run, etc.
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class IntegrationTestConfig {
 
     private final List<TestSuiteConfig> testSuites;

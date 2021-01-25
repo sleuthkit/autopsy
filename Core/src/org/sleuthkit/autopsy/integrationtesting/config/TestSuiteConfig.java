@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.integrationtesting.config;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Collections;
 import java.util.List;
@@ -26,6 +27,7 @@ import java.util.List;
 /**
  * Configuration per test suite.
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class TestSuiteConfig {
 
     private final String name;

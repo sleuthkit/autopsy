@@ -19,11 +19,13 @@
 package org.sleuthkit.autopsy.integrationtesting.config;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * Defines integration testing environment settings.
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class EnvConfig {
 
     private final String rootCaseOutputPath;

@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.integrationtesting.config;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Collections;
 import java.util.HashMap;
@@ -33,6 +34,7 @@ import org.apache.commons.collections4.MapUtils;
 /**
  * Configuration for which integration test suites to run.
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class TestingConfig {
 
     private final Map<String, ParameterizedResourceConfig> excludeAllExcept;
