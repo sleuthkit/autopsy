@@ -40,6 +40,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleTemplate;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashLookupModuleFactory;
 import org.sleuthkit.autopsy.testutils.IngestUtils;
 import static org.sleuthkit.autopsy.testutils.IngestUtils.getIngestModuleTemplate;
+import org.sleuthkit.autopsy.testutils.TestUtilsException;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -81,7 +82,7 @@ public class IngestedWithNoFileTypesIntraCaseTest extends NbTestCase {
 
         try {
             IngestUtils.runIngestJob(Case.getCurrentCaseThrows().getDataSources(), ingestJobSettings);
-        } catch (NoCurrentCaseException | TskCoreException ex) {
+        } catch (NoCurrentCaseException | TskCoreException | TestUtilsException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
         }

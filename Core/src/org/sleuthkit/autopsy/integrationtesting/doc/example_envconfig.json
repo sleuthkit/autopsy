@@ -1,0 +1,30 @@
+{
+    "$schema": "../jsonschema/envconfig.schema.json",
+    "diffOutputPath": ".\\diff.txt",
+    "rootCaseOutputPath": ".\\case",
+    "rootGoldPath": ".\\gold",
+    "rootTestOutputPath": ".\\out",
+    "rootTestSuitesPath": ".\\test_suites",
+    "workingDirectory": "C:\\path\\to\\working\\dir",
+    "dbConnection": {
+        "userName": "db_username",
+        "password": "password54321",
+        "hostName": "127.0.0.1"
+    },
+    "mqConnection": {
+        "userName": "mq_username",
+        "password": "password54321",
+        "hostName": "127.0.0.1"
+    },
+    "solrConnection": {
+        "hostName": "127.0.0.1"
+    },
+    "zkConnection": {
+        "hostName": "127.0.0.1"
+    },
+    "crConnection": {
+        "hostName": "127.0.0.1",
+        "userName": "cr_username",
+        "password": "password54321"
+    }
+}

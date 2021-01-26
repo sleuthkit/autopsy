@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "Test Suite Schema",
+  "type": "object",
+  "properties": {
+    "caseTypes": {
+      "title": "Case Types",
+      "description": "The type of case(s) to create for this test suite.  The values are `multiUser`, `singleUser`, or `both`.",
+      "type": "string",
+      "enum": ["multiUser", "singleUser", "both"],
+      "required": true
+    },
+    "configurationModules": {
+      "type": "array",
+      "title": "Configuration Modules",
+      "description": "A list of any configuration modules to be run to properly setup the autopsy environment and create the correct ingest settings.",
+      "items": {
+        "$ref": "parameterizedresource.schema.json"
+      }
+    },
+    "dataSources": {
+      "title": "Data Sources",
+      "description": "A list of data source paths to be ingested for case(s) in the test suite.  If a relative path is used, the path must be relative to the working directory specified as a part of the `EnvConfig`.",
+      "type": "array",
+      "items": { "type": "string" },
+      "required": true
+    },
+    "description": {
+      "title": "Description",
+      "description": "Provide an overview of what this test suite tests.",
+      "type": "string"
+    },
+    "integrationTests": {
+      "$ref": "integrationtest.schema.json"
+    },
+    "name": {
+      "title": "Name",
+      "description": "The name of this test suite.  The name is used along with the case type to determine the file name of the outputted yaml.",
+      "type": "string",
+      "required": true
+    }
+  }
+}

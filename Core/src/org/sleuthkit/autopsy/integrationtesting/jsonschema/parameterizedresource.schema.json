@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+
+  "title": "Parameterized Resource Configuration",
+  "description": "The canonical path of a resource (i.e. org.sleuthkit.autopsy.datasourcesummary.UserActivitySummaryTests) and optionally, any parameters to be provided to the resource.",
+  "anyOf": [
+    {
+      "type": "string",
+      "title": "Canonical Path",
+      "description": "The canonical path of a resource (i.e. org.sleuthkit.autopsy.datasourcesummary.UserActivitySummaryTests)."
+    },
+    {
+      "type": "object",
+      "properties": {
+        "parameters": {
+          "type": "object",
+          "title": "Parameters",
+          "description": "Parameters to be provided to the resource.  These parameters are deserialized into an object using jackson and provided as a single java parameter."
+        },
+        "resource": {
+          "required": true,
+          "type": "string",
+          "title": "Canonical Path",
+          "description": "The canonical path of a resource (i.e. org.sleuthkit.autopsy.datasourcesummary.UserActivitySummaryTests)."
+        }
+      }
+    }
+  ]
+}

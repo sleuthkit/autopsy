@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "Integration Tests",
+  "description": "Configured which `IntegrationTestGroup` classes should be run.",
+  "type": "object",
+  "required": true,
+  "properties": {
+    "excludeAllExcept": {
+      "title": "Exclude All Except",
+      "description": "The canonical paths of `IntegrationTestGroup` outputting tests that should be run.  Parameters can be provided optionally.",
+      "type": "array",
+      "items": {
+        "$ref": "parameterizedresource.schema.json"
+      }
+    },
+    "includeAllExcept": {
+      "title": "Include All Except",
+      "description": "The canonical paths of `IntegrationTestGroup` implementations to be specifically excluded.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

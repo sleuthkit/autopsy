@@ -10,6 +10,16 @@
      
      
     <property name="thirdparty.dir" value="${basedir}/../thirdparty" />
+    
+    <!-- import ant-contrib tools -->
+    <property name="ant-contrib.dir" value="${thirdparty.dir}/ant-contrib/1.0b3" />
+    <property name="ant.contrib.jar" value="${ant-contrib.dir}/ant-contrib.jar" />
+    <taskdef resource="net/sf/antcontrib/antlib.xml">
+        <classpath>
+            <pathelement location="${ant.contrib.jar}"/>
+        </classpath>
+    </taskdef>
+
     <property name="modules.dir" value="${basedir}/release/modules/" />
     <property name="ext.dir" value="${modules.dir}/ext" />
     <property name="test-input" location="test/qa-functional/data"/>
@@ -135,7 +145,7 @@
         <copy file="${env.TSK_HOME}/bindings/java/lib/c3p0-0.9.5.jar"
               tofile="${ext.dir}/c3p0-0.9.5.jar"/>
         <copy file="${env.TSK_HOME}/bindings/java/lib/SparseBitSet-1.1.jar"
-                      tofile="${ext.dir}/SparseBitSet-1.1.jar"/>	
+              tofile="${ext.dir}/SparseBitSet-1.1.jar"/>	
         <copy file="${env.TSK_HOME}/case-uco/java/dist/sleuthkit-caseuco-${TSK_VERSION}.jar" 
               tofile="${ext.dir}/sleuthkit-caseuco-${TSK_VERSION}.jar"/>  
     </target>
@@ -149,7 +159,7 @@
 
     <target name="getTestDataFiles">
         <mkdir dir="${basedir}/test/qa-functional/data"/>
-	<get src="https://drive.google.com/uc?id=1gyKzqJHtaBjFBqeB29N5vSpf1oH9N0bV" dest="${test-input}/EmbeddedIM_img1_v2.vhd" skipexisting="true"/>
+        <get src="https://drive.google.com/uc?id=1gyKzqJHtaBjFBqeB29N5vSpf1oH9N0bV" dest="${test-input}/EmbeddedIM_img1_v2.vhd" skipexisting="true"/>
         <get src="https://drive.google.com/uc?id=1gvvV797dKczkwpWII4hIryBXCc0w5zL-" dest="${test-input}/BitlockerDetection_img1_v1.vhd" skipexisting="true"/>
         <get src="https://drive.google.com/uc?id=1lYzd--9YUB7yDccM7NPOo8PC1xxuOiKs" dest="${test-input}/SqlCipherDetection_img1_v1.vhd" skipexisting="true"/>
         <get src="https://drive.google.com/uc?id=1QRNKs824kksiJLZ4qcs59Nytw0fJKEjb" dest="${test-input}/IngestFilters_img1_v1.img" skipexisting="true"/>  
@@ -183,6 +193,8 @@
 
     <target name="init" depends="get-deps,harness.init"/>
   
+
+  
     <target name="clean" depends="projectized-common.clean">
         <!--Override clean to delete jars, etc downloaded with Ivy, 
         or copied in from thirdparty folder.  This way we don't end up with 
@@ -193,7 +205,7 @@
     <target name="compile" depends="projectized-common.compile">
         <antcall target="copy-bundle" />
     </target>
-
+    
     <target name="copy-bundle">
         <!-- the externalized strings in 'src' are in both the java files as annotations and in the Bundle.property files.
         The strings get merged during compilation.  This target copies that merged file into src so that it can be checked
@@ -206,9 +218,40 @@
         </copy>
     </target>
 
-    <!--sets up integration test system properties, calls underlying test-init and then sets up the pathing jar-->
-    <target name="test-init" depends="projectized-common.test-init,getTestDataFiles,qa-functional-pathing-jar,unit-test-path-simplification" />
+    <!--sets up integration test system properties, calls underlying test-init, 
+    get test data files if they have not been retrieved, and then sets up the pathing jar and unit test simplification -->
+    <target name="test-init" depends="setup-integration-props,projectized-common.test-init,getTestDataFiles,qa-functional-pathing-jar,unit-test-path-simplification" />
+        
+    
+    <target name="test-qa-functional">
+        <!--We don't want integration testing to run from standard qa functional-->
+        <property name="test.excludes" value="**/org/sleuthkit/autopsy/integrationtesting/TestRunner.class"/>
+        <antcall target="projectized-common.test-qa-functional" />
+    </target>   
+    
+     
+    <!--map from integration-test variables to test-qa-functional-sys-prop so they will be used as system properties-->
+    <target name="setup-integration-props" depends="init">   
+        <propertyselector 
+            property="integration-test-sys-props" 
+            match="^integration-test\.(.*)" 
+            select="\1" 
+            delimiter="," 
+            casesensitive="true" 
+            distinct="true"
+        />
 
+        <for list="${integration-test-sys-props}" param="integration-test-sys-prop">
+            <sequential>
+                <property 
+                    name="test-qa-functional-sys-prop.integration-test.@{integration-test-sys-prop}" 
+                    value="${integration-test.@{integration-test-sys-prop}}" 
+                />
+            </sequential>
+        </for>
+    </target>
+
+        
     <!--    
         The paths specified in 'module.run.classpath' are incorporated into the manifest of a jar and then the path to the 
         jar is used as part of the classpath for '-do-junit' instead of 'module.run.classpath'.  This was done to prevent 
@@ -246,6 +289,18 @@
                 <pathelement path="${test.qa-functional.cp.extra}"/>
                 <pathelement path="${test.extra.nb.javac.deps}"/>
             </path>
+        </sequential>
+    </target>
+
+    <target name="integration-test">
+        <!--We want only integration testing to run from this-->
+        <sequential>
+            <property name="test.includes" value="**/org/sleuthkit/autopsy/integrationtesting/TestRunner.class"/>   
+            <!-- This overrides the value in common.xml:test-init that sets each test lasting 10 minutes maximum.
+            More information on the timeout can be found here: http://bits.netbeans.org/dev/javadoc/org-netbeans-modules-nbjunit/org/netbeans/junit/NbTestCase.html 
+            under timeout() or in the harness README. Current value is 4 hours (4 * 60 * 60 * 1000) -->
+            <property name="test.timeout" value="14400000"/>     
+            <antcall target="projectized-common.test-qa-functional" />
         </sequential>
     </target>    
     

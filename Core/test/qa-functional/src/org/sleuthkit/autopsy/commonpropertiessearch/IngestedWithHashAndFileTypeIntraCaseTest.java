@@ -31,10 +31,6 @@ import junit.framework.Assert;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
-import org.sleuthkit.autopsy.commonpropertiessearch.AbstractCommonAttributeSearcher;
-import org.sleuthkit.autopsy.commonpropertiessearch.AllIntraCaseCommonAttributeSearcher;
-import org.sleuthkit.autopsy.commonpropertiessearch.CommonAttributeCountSearchResults;
-import org.sleuthkit.autopsy.commonpropertiessearch.SingleIntraCaseCommonAttributeSearcher;
 import static org.sleuthkit.autopsy.commonpropertiessearch.IntraCaseTestUtils.*;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings.IngestType;
@@ -42,6 +38,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleTemplate;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeIdModuleFactory;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashLookupModuleFactory;
 import org.sleuthkit.autopsy.testutils.IngestUtils;
+import org.sleuthkit.autopsy.testutils.TestUtilsException;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -80,7 +77,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTest extends NbTestCase {
 
         try {
             IngestUtils.runIngestJob(Case.getCurrentCaseThrows().getDataSources(), ingestJobSettings);
-        } catch (NoCurrentCaseException | TskCoreException ex) {
+        } catch (NoCurrentCaseException | TskCoreException | TestUtilsException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
         }
