@@ -48,6 +48,7 @@ import org.sleuthkit.autopsy.ingest.IngestModule.ProcessResult;
 import org.sleuthkit.autopsy.ingest.IngestMonitor;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
+import org.sleuthkit.autopsy.thunderbirdparser.EmailMessage.AttachedEmailMessage;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.AccountFileInstance;
@@ -450,12 +451,15 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
             List<AbstractFile> derivedFiles = new ArrayList<>();
 
             AccountFileInstanceCache accountFileInstanceCache = new AccountFileInstanceCache(abstractFile, currentCase);
-            BlackboardArtifact msgArtifact = addEmailArtifact(message, abstractFile, accountFileInstanceCache);
+//            BlackboardArtifact msgArtifact = addEmailArtifact(message, abstractFile, accountFileInstanceCache);
+            
+            createEmailArtifact(message, abstractFile, accountFileInstanceCache, derivedFiles);
+
             accountFileInstanceCache.clear();
 
-            if ((msgArtifact != null) && (message.hasAttachment())) {
-                derivedFiles.addAll(handleAttachments(message.getAttachments(), abstractFile, msgArtifact));
-            }
+//            if ((msgArtifact != null) && (message.hasAttachment())) {
+//                derivedFiles.addAll(handleAttachments(message.getAttachments(), abstractFile, msgArtifact));
+//            }
 
             if (derivedFiles.isEmpty() == false) {
                 for (AbstractFile derived : derivedFiles) {
@@ -564,11 +568,13 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
                 }
             }
             
-            BlackboardArtifact msgArtifact = addEmailArtifact(current, abstractFile, accountFileInstanceCache);
-            
-            if ((msgArtifact != null) && (current.hasAttachment()))  {
-                derivedFiles.addAll(handleAttachments(current.getAttachments(), abstractFile, msgArtifact ));
-            }
+//            BlackboardArtifact msgArtifact = addEmailArtifact(current, abstractFile, accountFileInstanceCache);
+//            
+//            if ((msgArtifact != null) && (current.hasAttachment()))  {
+//                derivedFiles.addAll(handleAttachments(current.getAttachments(), abstractFile, msgArtifact ));
+//            }
+
+            createEmailArtifact(current, abstractFile, accountFileInstanceCache, derivedFiles);
         }
 
         if (derivedFiles.isEmpty() == false) {
@@ -581,6 +587,21 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         }
         context.addFilesToJob(derivedFiles);
     }
+    
+    void createEmailArtifact(EmailMessage email, AbstractFile abstractFile, AccountFileInstanceCache accountFileInstanceCache, List<AbstractFile> derivedFiles) {
+        BlackboardArtifact msgArtifact = addEmailArtifact(email, abstractFile, accountFileInstanceCache);
+            
+        if ((msgArtifact != null) && (email.hasAttachment()))  {
+            derivedFiles.addAll(handleAttachments(email.getAttachments(), abstractFile, msgArtifact ));
+            
+            for (EmailMessage.Attachment attach : email.getAttachments()) {
+                if(attach instanceof AttachedEmailMessage) {
+                    createEmailArtifact(((AttachedEmailMessage) attach).getEmailMessage(), abstractFile, accountFileInstanceCache, derivedFiles);
+                }
+            }
+        }
+    }
+    
     /**
      * Add the given attachments as derived files and reschedule them for
      * ingest.
