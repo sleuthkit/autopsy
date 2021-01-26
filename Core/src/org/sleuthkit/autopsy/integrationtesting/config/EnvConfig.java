@@ -33,9 +33,12 @@ public class EnvConfig {
     private final String rootTestSuitesPath;
     private final String rootGoldPath;
     private final String diffOutputPath;
+
     private final ConnectionConfig dbConnection;
     private final ConnectionConfig mqConnection;
-    private final ConnectionConfig solrConnection;    
+    private final ConnectionConfig solrConnection;
+    private final ConnectionConfig zkConnection;
+    private final ConnectionConfig crConnection;
 
     private String workingDirectory;
     private Boolean useRelativeOutput;
@@ -49,28 +52,12 @@ public class EnvConfig {
      * file(s).
      * @param rootTestOutputPath The location where output results should be
      * created.
-     * @param connectionInfo The connection info for postgres.
-     * @param workingDirectory The working directory (if not specified, the
-     * parent directory of the EnvConfig file is used.
-     * @param useRelativeOutput If true, results will be outputted maintaining
-     * the same relative path structure as the file (i.e. if file was found at
-     * /rootTestSuitesPath/folderX/fileY.json then it will now be outputted in
-     * /rootTestOutputPath/folderX/fileY/)
-     * @param rootGoldPath The path to the gold data for diff comparison.
-     * @param diffOutputPath The file location for diff output.
-     */
-    
-    /**
-     * Main constructor.
-     *
-     * @param rootCaseOutputPath The location where cases will be created.
-     * @param rootTestSuitesPath The location of test suite configuration
-     * file(s).
-     * @param rootTestOutputPath The location where output results should be
-     * created.
-     * @param dbConnection The connection information for the database (postgres).
+     * @param dbConnection The connection information for the database
+     * (postgres).
      * @param mqConnection The active mq connection information.
      * @param solrConnection The solr connection information.
+     * @param zkConnection The zookeeper connection information.
+     * @param crConnection The central repo connection information.
      * @param workingDirectory The working directory (if not specified, the
      * parent directory of the EnvConfig file is used.
      * @param useRelativeOutput If true, results will be outputted maintaining
@@ -88,6 +75,8 @@ public class EnvConfig {
             @JsonProperty("dbConnection") ConnectionConfig dbConnection,
             @JsonProperty("mqConnection") ConnectionConfig mqConnection,
             @JsonProperty("solrConnection") ConnectionConfig solrConnection,
+            @JsonProperty("zkConnection") ConnectionConfig zkConnection,
+            @JsonProperty("crConnection") ConnectionConfig crConnection,
             @JsonProperty("workingDirectory") String workingDirectory,
             @JsonProperty("useRelativeOutput") Boolean useRelativeOutput,
             @JsonProperty("rootGoldPath") String rootGoldPath,
@@ -100,10 +89,12 @@ public class EnvConfig {
         this.diffOutputPath = diffOutputPath;
         this.workingDirectory = workingDirectory;
         this.useRelativeOutput = useRelativeOutput;
-        
+
         this.dbConnection = dbConnection;
         this.mqConnection = mqConnection;
         this.solrConnection = solrConnection;
+        this.zkConnection = zkConnection;
+        this.crConnection = crConnection;
     }
 
     /**
@@ -139,7 +130,6 @@ public class EnvConfig {
     public void setWorkingDirectory(String workingDirectory) {
         this.workingDirectory = workingDirectory;
     }
-
 
     /**
      * @return The root test suites path that will be searched or the path to a
@@ -191,8 +181,20 @@ public class EnvConfig {
     public ConnectionConfig getSolrConnection() {
         return solrConnection;
     }
-    
-    
+
+    /**
+     * @return The zookeeper connection.
+     */
+    public ConnectionConfig getZkConnection() {
+        return zkConnection;
+    }
+
+    /**
+     * @return The central repo connection.
+     */
+    public ConnectionConfig getCrConnection() {
+        return crConnection;
+    }
 
     /**
      * @return The path to the gold data for diff comparison.
@@ -207,6 +209,5 @@ public class EnvConfig {
     public String getDiffOutputPath() {
         return diffOutputPath;
     }
-    
-    
+
 }

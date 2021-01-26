@@ -26,6 +26,8 @@ The integration testing requires a configuration for the environment with the fo
 |**dbConnection**|`connectionconfig`|Database connection parameters.|No|
 |**mqConnection**|`connectionconfig`|Active Mq connection parameters.|No|
 |**solrConnection**|`connectionconfig`|Solr connection parameters.|No|
+|**zkConnection**|`connectionconfig`|ZooKeeper connection parameters.|No|
+|**crConnection**|`connectionconfig`|Central Repository connection parameters to be used with multi-user testing.|No|
 
 For the `dbConnection`, `mqConnection`, and `solrConnection`, the `connectionconfig` includes the following fields:
 
@@ -61,6 +63,14 @@ An example of that config file would look like this:
     },
     "solrConnection": {
         "hostName": "127.0.0.1"
+    },
+    "zkConnection": {
+        "hostName": "127.0.0.1"
+    },
+    "crConnection": {
+        "hostName": "127.0.0.1",
+        "userName": "cr_username",
+        "password": "password54321"
     }
 }
 ```
@@ -107,6 +117,12 @@ integration-test.mqConnection.password=mq_username
 integration-test.mqConnection.hostName=127.0.0.1
 
 integration-test.solrConnection.hostName=127.0.0.1
+
+integration-test.zkConnection.hostName=127.0.0.1
+
+integration-test.crConnection.hostName=127.0.0.1
+integration-test.crConnection.userName=cr_username
+integration-test.crConnection.password=password54321
 ```
 
 However these properties are defined, the integration tests can be run by running the `integration-test` ant target or by right-clicking on `org.sleuthkit.autopsy.integrationtesting.TestRunner` and selecting `Test File` or `Debug Test File`.
@@ -136,7 +152,13 @@ ant -f "C:\\path\\to\\autopsy\\Core" integration-test \
     -Dintegration-test.mqConnection.userName="mq_username" \
     -Dintegration-test.mqConnection.password="mq_username" \
     -Dintegration-test.mqConnection.hostName="127.0.0.1" \
-    -Dintegration-test.solrConnection.hostName=127.0.0.1
+    -Dintegration-test.solrConnection.hostName="127.0.0.1" \
+    -Dintegration-test.zkConnection.hostName="127.0.0.1" \
+    -Dintegration-test.crConnection.hostName="127.0.0.1" \
+    -Dintegration-test.crConnection.hostName="127.0.0.1" \
+    -Dintegration-test.crConnection.hostName="127.0.0.1" \
+    -Dintegration-test.crConnection.userName="cr_username" \
+    -Dintegration-test.crConnection.password="password54321"
 ```
 
 ## Components

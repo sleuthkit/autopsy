@@ -58,6 +58,18 @@
       "description": "Configuration for the Solr connection.  This should be specified for multi user case testing.",
       "$ref": "connectionconfig.schema.json",
       "required": false
+    },
+    "zkConnection": {
+      "title": "ZooKeeper Connection",
+      "description": "Configuration for the Zookeeper connection.  This should be specified for multi user case testing.",
+      "$ref": "connectionconfig.schema.json",
+      "required": false
+    },
+    "crConnection": {
+      "title": "Central Repository Connection",
+      "description": "Configuration for the Central Repository connection.  This should be specified when using central repo in a multi user case for testing.",
+      "$ref": "connectionconfig.schema.json",
+      "required": false
     }
   }
 }

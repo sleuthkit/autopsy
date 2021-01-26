@@ -23,7 +23,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * Configuration information for a postgres connection.
+ * Configuration information for a connection.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ConnectionConfig {

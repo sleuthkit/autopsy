@@ -18,5 +18,13 @@
     },
     "solrConnection": {
         "hostName": "127.0.0.1"
+    },
+    "zkConnection": {
+        "hostName": "127.0.0.1"
+    },
+    "crConnection": {
+        "hostName": "127.0.0.1",
+        "userName": "cr_username",
+        "password": "password54321"
     }
 }

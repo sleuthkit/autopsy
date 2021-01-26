@@ -35,6 +35,7 @@ import java.util.stream.Stream;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.collections.CollectionUtils;
+import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.Pair;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -42,6 +43,10 @@ import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.casemodule.CaseDetails;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbChoice;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbManager;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.PostgresCentralRepoSettings;
 import org.sleuthkit.autopsy.centralrepository.datamodel.PostgresConnectionSettings;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.core.UserPreferencesException;
@@ -120,12 +125,16 @@ public class IntegrationTestService {
     private static final int DEFAULT_ACTIVEMQ_PORT = 61616;
     private static final int DEFAULT_SOLR_PORT = 8983;
 
+    // default port for zookeeper cloud
+    private static final int DEFAULT_ZOOKEEPER_PORT = 9983;
+
     private static final Logger logger = Logger.getLogger(IntegrationTestService.class.getName());
 
     private static final ConfigDeserializer configDeserializer = new ConfigDeserializer();
     private static final DiffService diffService = new DiffService();
     private static final ConfigurationModuleManager configurationModuleManager = new ConfigurationModuleManager();
-
+  
+    
     /**
      * Main entry point for running all integration tests.
      */
@@ -140,9 +149,16 @@ public class IntegrationTestService {
         EnvConfig envConfig = config.getEnvConfig();
         // setup external connections preserving old settings for reverting later.
         AllConnectionInfo oldSettings = null;
+        boolean hasCrSettings = false;
+        CentralRepoDbChoice oldCrChoice = null;
         try {
-            oldSettings = pushNewMultiUserSettings(new AllConnectionInfo(envConfig.getDbConnection(), envConfig.getMqConnection(), envConfig.getSolrConnection()));
-        } catch (UserPreferencesException ex) {
+            oldSettings = pushNewMultiUserSettings(new AllConnectionInfo(envConfig.getDbConnection(),
+                    envConfig.getMqConnection(), envConfig.getSolrConnection(), 
+                    envConfig.getZkConnection(), envConfig.getCrConnection()));
+            
+            hasCrSettings = oldSettings.getCrConnection() != null;
+            oldCrChoice = hasCrSettings ? getCurrentChoice() : null;
+        } catch (UserPreferencesException | CentralRepoException ex) {
             logger.log(Level.SEVERE, "There was an error while trying to set up multi user connection information.", ex);
         }
 
@@ -153,6 +169,14 @@ public class IntegrationTestService {
             } else {
                 for (TestSuiteConfig testSuiteConfig : config.getTestSuites()) {
                     for (CaseType caseType : IntegrationCaseType.getCaseTypes(testSuiteConfig.getCaseTypes())) {
+                        if (hasCrSettings) {
+                            try {
+                                setCurrentChoice(caseType);
+                            } catch (CentralRepoException ex) {
+                                logger.log(Level.SEVERE, String.format("Unable to set cr settings to %s for test suite %s.", caseType.name(), testSuiteConfig.getName()));
+                            }
+                        }
+                        
                         try {
                             runIntegrationTestSuite(envConfig, caseType, testSuiteConfig);
                         } catch (CaseActionException | IllegalStateException | NoCurrentCaseException | IllegalArgumentException ex) {
@@ -186,6 +210,14 @@ public class IntegrationTestService {
                     logger.log(Level.WARNING, "There was an error reverting database settings", ex);
                 }
             }
+            
+            if (oldCrChoice != null) {
+                try {
+                    pushCurrentCrChoice(oldCrChoice);
+                } catch (CentralRepoException ex) {
+                    logger.log(Level.WARNING, "There was an error reverting cr settings", ex);
+                }
+            }
         }
     }
 
@@ -197,6 +229,8 @@ public class IntegrationTestService {
         private final ConnectionConfig dbConnection;
         private final ConnectionConfig mqConnection;
         private final ConnectionConfig solrConnection;
+        private final ConnectionConfig zkConnection;
+        private final ConnectionConfig crConnection;
 
         /**
          * Main constructor.
@@ -204,32 +238,88 @@ public class IntegrationTestService {
          * @param dbConnection A postgres database connection configuration.
          * @param mqConnection An active mq connection configuration.
          * @param solrConnection A solr connection configuration.
+         * @param zkConnection The zookeeper connection information.
+         * @param crConnection The central repo connection information.
          */
-        public AllConnectionInfo(ConnectionConfig dbConnection, ConnectionConfig mqConnection, ConnectionConfig solrConnection) {
+        AllConnectionInfo(ConnectionConfig dbConnection,
+                ConnectionConfig mqConnection, ConnectionConfig solrConnection,
+                ConnectionConfig zkConnection, ConnectionConfig crConnection) {
             this.dbConnection = dbConnection;
             this.mqConnection = mqConnection;
             this.solrConnection = solrConnection;
+            this.zkConnection = zkConnection;
+            this.crConnection = crConnection;
         }
 
         /**
          * @return The postgres database connection configuration.
          */
-        public ConnectionConfig getDbConnection() {
+        ConnectionConfig getDbConnection() {
             return dbConnection;
         }
 
         /**
          * @return The active mq database connection configuration.
          */
-        public ConnectionConfig getMqConnection() {
+        ConnectionConfig getMqConnection() {
             return mqConnection;
         }
 
         /**
          * @return The solr connection configuration.
          */
-        public ConnectionConfig getSolrConnection() {
+        ConnectionConfig getSolrConnection() {
             return solrConnection;
+        }
+
+        /**
+         * @return The zookeeper connection configuration.
+         */
+        ConnectionConfig getZkConnection() {
+            return zkConnection;
+        }
+
+        /**
+         * @return The central repo connection configuration.
+         */
+        ConnectionConfig getCrConnection() {
+            return crConnection;
+        }
+    }
+    
+    
+    /**
+     * @return The currently selected CentralRepoDbChoice (i.e. Postgres, sqlite, etc.).
+     */
+    private CentralRepoDbChoice getCurrentChoice() {
+        CentralRepoDbManager manager = new CentralRepoDbManager();
+        return manager.getSelectedDbChoice();
+    }
+    
+    
+    /**
+     * Sets the current CentralRepoDbChoice and returns the old value.
+     * @param curChoice The current choice to be selected.
+     * @return The old value for the central repo db choice.
+     * @throws CentralRepoException 
+     */
+    private CentralRepoDbChoice pushCurrentCrChoice(CentralRepoDbChoice curChoice) throws CentralRepoException {
+        CentralRepoDbManager manager = new CentralRepoDbManager();
+        CentralRepoDbChoice oldChoice = manager.getSelectedDbChoice();
+        manager.setSelctedDbChoice(curChoice);
+        manager.saveNewCentralRepo();
+        return oldChoice;
+    }
+    
+    private void setCurrentChoice(CaseType caseType) throws CentralRepoException {
+        switch (caseType) {
+            case MULTI_USER_CASE: 
+                pushCurrentCrChoice(CentralRepoDbChoice.POSTGRESQL_CUSTOM);
+                break;
+            case SINGLE_USER_CASE:
+                pushCurrentCrChoice(CentralRepoDbChoice.SQLITE);
+                break;
+            default: throw new IllegalArgumentException("No known case type: " + caseType);
         }
     }
 
@@ -242,7 +332,7 @@ public class IntegrationTestService {
      * @return The old settings (used for reverting).
      * @throws UserPreferencesException
      */
-    private AllConnectionInfo pushNewMultiUserSettings(AllConnectionInfo connectionInfo) throws UserPreferencesException {
+    private AllConnectionInfo pushNewMultiUserSettings(AllConnectionInfo connectionInfo) throws UserPreferencesException, CentralRepoException {
         // take no action if no settings
         if (connectionInfo == null) {
             return null;
@@ -252,9 +342,11 @@ public class IntegrationTestService {
         ConnectionConfig oldPostgresSettings = pushPostgresSettings(connectionInfo.getDbConnection());
         ConnectionConfig oldActiveMqSettings = pushActiveMqSettings(connectionInfo.getMqConnection());
         ConnectionConfig oldSolrSettings = pushSolrSettings(connectionInfo.getSolrConnection());
+        ConnectionConfig oldZkSettings = pushZookeeperSettings(connectionInfo.getZkConnection());
+        ConnectionConfig oldCrSettings = pushCentralRepoSettings(connectionInfo.getCrConnection());
 
         // return old settings
-        return new AllConnectionInfo(oldPostgresSettings, oldActiveMqSettings, oldSolrSettings);
+        return new AllConnectionInfo(oldPostgresSettings, oldActiveMqSettings, oldSolrSettings, oldZkSettings, oldCrSettings);
     }
 
     /**
@@ -366,6 +458,87 @@ public class IntegrationTestService {
         return new ConnectionConfig(oldHost, parseIntOrDefault(oldPortStr, DEFAULT_SOLR_PORT), null, null);
     }
 
+    /**
+     * Sets up the zookeeper connection information.
+     *
+     * @param connectionInfo The connection information for zookeeper.
+     * @return The previous settings.
+     */
+    private ConnectionConfig pushZookeeperSettings(ConnectionConfig connectionInfo) {
+        if (connectionInfo == null) {
+            return null;
+        }
+
+        String host = connectionInfo.getHostName();
+
+        if (StringUtils.isBlank(host)) {
+            return null;
+        }
+
+        int port = connectionInfo.getPort() == null ? DEFAULT_ZOOKEEPER_PORT : connectionInfo.getPort();
+
+        ConnectionConfig oldInfo = new ConnectionConfig(
+                UserPreferences.getZkServerHost(),
+                parseIntOrDefault(UserPreferences.getZkServerPort(), DEFAULT_ZOOKEEPER_PORT),
+                null,
+                null);
+
+        UserPreferences.setZkServerHost(host);
+        UserPreferences.setZkServerPort(Integer.toString(port));
+        return oldInfo;
+    }
+
+    /**
+     * Sets up the central repo connection information.
+     *
+     * @param connectionInfo The connection information for central repository.
+     * @return The previous settings or null if not set.
+     */
+    private ConnectionConfig pushCentralRepoSettings(ConnectionConfig connectionInfo) throws CentralRepoException {
+        // take no action if no database settings.
+        if (connectionInfo == null) {
+            return null;
+        }
+
+        // retrieve values
+        String username = connectionInfo.getUserName();
+        String host = connectionInfo.getHostName();
+        String password = connectionInfo.getPassword();
+        int port = connectionInfo.getPort() == null ? PostgresConnectionSettings.DEFAULT_PORT : connectionInfo.getPort();
+
+        // ensure all necessary values are present.
+        if (StringUtils.isBlank(username) || StringUtils.isBlank(password) || StringUtils.isBlank(host)) {
+            logger.log(Level.WARNING, "Username, password, or host are not present.  Not setting central repo connection info.");
+            return null;
+        }
+
+        // capture old information.
+        CentralRepoDbManager manager = new CentralRepoDbManager();
+        PostgresCentralRepoSettings pgCr = manager.getDbSettingsPostgres();
+
+        ConnectionConfig oldConnectionInfo = new ConnectionConfig(
+                pgCr.getHost(),
+                pgCr.getPort(),
+                pgCr.getUserName(),
+                pgCr.getPassword());
+
+        pgCr.setHost(host);
+        pgCr.setUserName(username);
+        pgCr.setPort(port);
+        pgCr.setPassword(password);
+        pgCr.saveSettings();
+
+        return oldConnectionInfo;
+    }
+
+    /**
+     * Parses a string to an integer or uses the default value.
+     *
+     * @param toBeParsed The string to be parsed to an integer.
+     * @param defaultVal The default value to be used if no integer can be
+     * parsed.
+     * @return The determined value.
+     */
     private int parseIntOrDefault(String toBeParsed, int defaultVal) {
         if (toBeParsed == null) {
             return defaultVal;
