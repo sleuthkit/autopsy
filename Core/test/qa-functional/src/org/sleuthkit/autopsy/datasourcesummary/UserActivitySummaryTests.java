@@ -22,6 +22,7 @@ package org.sleuthkit.autopsy.datasourcesummary;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
@@ -48,15 +49,23 @@ public class UserActivitySummaryTests implements IntegrationTestGroup {
      *         results of that method.
      */
     @IntegrationTest
-    public Map<String, List<TopDomainsResult>> getRecentDomainsTest()
+    public Map<String, List<Map<String, Object>>> getRecentDomainsTest()
             throws NoCurrentCaseException, TskCoreException, SleuthkitCaseProviderException {
 
         UserActivitySummary userActivitySummary = new UserActivitySummary();
-        Map<String, List<TopDomainsResult>> toRet = new HashMap<>();
+        Map<String, List<Map<String, Object>>> toRet = new HashMap<>();
         for (Content c : Case.getCurrentCaseThrows().getDataSources()) {
             if (c instanceof DataSource) {
                 DataSource ds = (DataSource) c;
-                List<TopDomainsResult> thisResult = userActivitySummary.getRecentDomains(ds, 10);
+                List<Map<String, Object>> thisResult = userActivitySummary.getRecentDomains(ds, 10).stream()
+                        .map((TopDomainsResult tdr) -> {
+                            return new HashMap<String, Object>() {{
+                                put("lastAccessed", tdr.getLastAccessed());
+                                put("visitTimes", tdr.getVisitTimes());
+                                put("domain", tdr.getDomain());
+                            }}; 
+                        })
+                        .collect(Collectors.toList());
                 toRet.put(ds.getName(), thisResult);
             }
         }
