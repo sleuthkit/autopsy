@@ -26,10 +26,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.logging.Level;
-import org.apache.james.mime4j.dom.BinaryBody;
 import org.apache.james.mime4j.dom.Body;
 import org.apache.james.mime4j.dom.Entity;
 import org.apache.james.mime4j.dom.Message;
+import org.apache.james.mime4j.dom.MessageWriter;
 import org.apache.james.mime4j.dom.Multipart;
 import org.apache.james.mime4j.dom.SingleBody;
 import org.apache.james.mime4j.dom.TextBody;
@@ -39,6 +39,7 @@ import org.apache.james.mime4j.dom.address.MailboxList;
 import org.apache.james.mime4j.dom.field.ContentDispositionField;
 import org.apache.james.mime4j.dom.field.ContentTypeField;
 import org.apache.james.mime4j.message.DefaultMessageBuilder;
+import org.apache.james.mime4j.message.DefaultMessageWriter;
 import org.apache.james.mime4j.stream.Field;
 import org.apache.james.mime4j.stream.MimeConfig;
 import org.openide.util.NbBundle;
@@ -293,7 +294,7 @@ class MimeJ4MessageParser implements AutoCloseable{
      * @param e
      */
     @NbBundle.Messages({"MimeJ4MessageParser.handleAttch.noOpenCase.errMsg=Exception while getting open case."})
-    private static void handleAttachment(EmailMessage email, Entity e, long fileID, int index) {
+    private void handleAttachment(EmailMessage email, Entity e, long fileID, int index) {
         String outputDirPath;
         String relModuleOutputPath;
         try {
@@ -322,22 +323,30 @@ class MimeJ4MessageParser implements AutoCloseable{
         String outPath = outputDirPath + uniqueFilename;
         
         Body body = e.getBody();
-        if (body instanceof SingleBody) {
+        if (body != null) {
             long fileLength;
             try (EncodedFileOutputStream fos = new EncodedFileOutputStream(new FileOutputStream(outPath), TskData.EncodingType.XOR1)) {
-                ((SingleBody) body).writeTo(fos);
+                
+                EmailMessage.Attachment attach;
+                MessageWriter msgWriter = new DefaultMessageWriter();
+                
+                if(body instanceof Message) {
+                    msgWriter.writeMessage((Message)body, fos);
+                    attach = new EmailMessage.AttachedEmailMessage(extractEmail((Message)body, email.getLocalPath(), fileID));
+                } else {
+                    msgWriter.writeBody(body, fos);
+                    attach = new EmailMessage.Attachment();
+                }
                 fileLength = fos.getBytesWritten();
+                attach.setName(filename);
+                attach.setLocalPath(relModuleOutputPath + uniqueFilename);
+                attach.setSize(fileLength);
+                attach.setEncodingType(TskData.EncodingType.XOR1);
+                email.addAttachment(attach);
+
             } catch (IOException ex) {
                 logger.log(Level.WARNING, "Failed to create file output stream for: " + outPath, ex); //NON-NLS
-                return;
             }
-            
-            EmailMessage.Attachment attach = new EmailMessage.Attachment();
-            attach.setName(filename);
-            attach.setLocalPath(relModuleOutputPath + uniqueFilename);
-            attach.setSize(fileLength);
-            attach.setEncodingType(TskData.EncodingType.XOR1);
-            email.addAttachment(attach);
         } 
         
         
