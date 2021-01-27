@@ -40,6 +40,7 @@ def convert_to_output(items: Iterator[PropEntry], commit_id: Union[str, None] = 
                       show_translated_col: bool = True, value_regex: Union[str, None] = None) -> OutputResult:
     """
     Converts PropEntry objects to an output result to be written to a tabular datasource.
+
     Args:
         items: The PropEntry items.
         commit_id: The commit id to be shown in the header or None.
