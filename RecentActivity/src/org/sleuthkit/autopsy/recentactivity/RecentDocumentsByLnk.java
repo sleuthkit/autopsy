@@ -41,9 +41,12 @@ import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.*;
+import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.ReadContentInputStream;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * Recent documents class that will extract recent documents in the form of .lnk
@@ -79,7 +82,7 @@ class RecentDocumentsByLnk extends Extract {
                             this.getName()));
             return;
         }
-
+        
         if (recentFiles.isEmpty()) {
             logger.log(Level.INFO, "Didn't find any recent files."); //NON-NLS
             return;
@@ -132,8 +135,10 @@ class RecentDocumentsByLnk extends Extract {
                 }
             }
         }
-         
-        postArtifacts(bbartifacts);
+        
+        if (!context.dataSourceIngestIsCancelled()) {
+            postArtifacts(bbartifacts);
+        }
     }
 
     /**

@@ -147,6 +147,10 @@ final class ExtractEdge extends Extract {
             this.addErrorMessage(Bundle.ExtractEdge_process_errMsg_errGettingWebCacheFiles());
             LOG.log(Level.SEVERE, "Error fetching 'WebCacheV01.dat' files for Microsoft Edge", ex); //NON-NLS
         }
+        
+        if (context.dataSourceIngestIsCancelled()) {
+            return;
+        }
 
         try {
             spartanFiles = fetchSpartanDBFiles(); // For later use with bookmarks
@@ -164,6 +168,10 @@ final class ExtractEdge extends Extract {
 
         if (!PlatformUtil.isWindowsOS()) {
             LOG.log(Level.WARNING, "Microsoft Edge files found, unable to parse on Non-Windows system"); //NON-NLS
+            return;
+        }
+        
+        if (context.dataSourceIngestIsCancelled()) {
             return;
         }
 
@@ -353,7 +361,7 @@ final class ExtractEdge extends Extract {
                 fileScanner.close();
             }
 
-            if (!bbartifacts.isEmpty()) {
+            if (!bbartifacts.isEmpty() && !context.dataSourceIngestIsCancelled()) {
                 postArtifacts(bbartifacts);
             }
         }
@@ -399,7 +407,7 @@ final class ExtractEdge extends Extract {
             fileScanner.close();
         }
 
-        if (!bbartifacts.isEmpty()) {
+        if (!bbartifacts.isEmpty() && !context.dataSourceIngestIsCancelled()) {
             postArtifacts(bbartifacts);
         }
     }
@@ -455,7 +463,7 @@ final class ExtractEdge extends Extract {
                 fileScanner.close();
             }
 
-            if (!bbartifacts.isEmpty()) {
+            if (!bbartifacts.isEmpty() && !context.dataSourceIngestIsCancelled()) {
                 postArtifacts(bbartifacts);
             }
         }
@@ -517,7 +525,9 @@ final class ExtractEdge extends Extract {
                 fileScanner.close();
             }
 
-            postArtifacts(bbartifacts);
+            if(!context.dataSourceIngestIsCancelled()) {
+                postArtifacts(bbartifacts);
+            }
         }
     }
 

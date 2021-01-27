@@ -386,10 +386,8 @@ final class ExtractSru extends Extract {
             logger.log(Level.SEVERE, "Error while trying to read into a sqlite db.", ex);//NON-NLS
         }
 
-        try {
-            blackboard.postArtifacts(bba, MODULE_NAME);
-        } catch (Blackboard.BlackboardException ex) {
-            logger.log(Level.SEVERE, "Error Posting Artifact.", ex);//NON-NLS
+        if(!context.dataSourceIngestIsCancelled()) {
+            postArtifacts(bba);
         }
     }
 
@@ -445,11 +443,10 @@ final class ExtractSru extends Extract {
             logger.log(Level.SEVERE, "Error while trying to read into a sqlite db.", ex);//NON-NLS
         }
 
-        try {
-            blackboard.postArtifacts(bba, MODULE_NAME);
-        } catch (Blackboard.BlackboardException ex) {
-            logger.log(Level.SEVERE, "Error Posting Artifact.", ex);//NON-NLS
+        if(!context.dataSourceIngestIsCancelled()) {
+            postArtifacts(bba);
         }
+        
     }
 
     /**

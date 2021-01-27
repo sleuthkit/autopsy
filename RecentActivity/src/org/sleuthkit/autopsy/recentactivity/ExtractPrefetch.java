@@ -36,7 +36,6 @@ import java.util.logging.Level;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -306,12 +305,8 @@ final class ExtractPrefetch extends Extract {
             logger.log(Level.SEVERE, "Error while trying to read into a sqlite db.", ex);//NON-NLS
         }
 
-        if (!blkBrdArtList.isEmpty()) {
-            try {
-                blackboard.postArtifacts(blkBrdArtList, MODULE_NAME);
-            } catch (Blackboard.BlackboardException ex) {
-                logger.log(Level.SEVERE, "Error Posting Artifact.", ex);//NON-NLS
-            }
+        if (!blkBrdArtList.isEmpty() && !context.dataSourceIngestIsCancelled()) {
+            postArtifacts(blkBrdArtList);
         }
     }
 

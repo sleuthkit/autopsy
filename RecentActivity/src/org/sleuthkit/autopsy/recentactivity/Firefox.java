@@ -112,17 +112,37 @@ class Firefox extends Extract {
         progressBar.progress(Bundle.Progress_Message_Firefox_History());
         this.getHistory();
         
+        if (context.dataSourceIngestIsCancelled()) {
+            return;
+        }
+        
         progressBar.progress(Bundle.Progress_Message_Firefox_Bookmarks());
         this.getBookmark();
+        
+        if (context.dataSourceIngestIsCancelled()) {
+            return;
+        }
         
         progressBar.progress(Bundle.Progress_Message_Firefox_Downloads());
         this.getDownload();
         
+        if (context.dataSourceIngestIsCancelled()) {
+            return;
+        }
+        
         progressBar.progress(Bundle.Progress_Message_Firefox_Cookies());
         this.getCookie();
         
+        if (context.dataSourceIngestIsCancelled()) {
+            return;
+        }
+        
         progressBar.progress(Bundle.Progress_Message_Firefox_FormHistory());
         this.getFormsHistory();
+        
+        if (context.dataSourceIngestIsCancelled()) {
+            return;
+        }
         
         progressBar.progress(Bundle.Progress_Message_Firefox_AutoFill());
         this.getAutofillProfiles();
@@ -225,7 +245,9 @@ class Firefox extends Extract {
             dbFile.delete();
         }
 
-        postArtifacts(bbartifacts);
+        if(!context.dataSourceIngestIsCancelled()) {
+            postArtifacts(bbartifacts);
+        }
     }
 
     /**
@@ -319,7 +341,9 @@ class Firefox extends Extract {
             dbFile.delete();
         }
 
-        postArtifacts(bbartifacts);
+        if(!context.dataSourceIngestIsCancelled()) {
+            postArtifacts(bbartifacts);
+        }
     }
 
     /**
@@ -346,6 +370,10 @@ class Firefox extends Extract {
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         int j = 0;
         for (AbstractFile cookiesFile : cookiesFiles) {
+            if (context.dataSourceIngestIsCancelled()) {
+                return;
+            }
+            
             if (cookiesFile.getSize() == 0) {
                 continue;
             }
@@ -429,7 +457,9 @@ class Firefox extends Extract {
             dbFile.delete();
         }
 
-        postArtifacts(bbartifacts);
+        if (!context.dataSourceIngestIsCancelled()) {
+            postArtifacts(bbartifacts);
+        }
     }
 
     /**
@@ -576,7 +606,9 @@ class Firefox extends Extract {
             break;
         }
 
-        postArtifacts(bbartifacts);
+        if(!context.dataSourceIngestIsCancelled()) {
+            postArtifacts(bbartifacts);
+        }
     }
 
     /**
@@ -714,7 +746,9 @@ class Firefox extends Extract {
             break;
         }
 
-        postArtifacts(bbartifacts);
+        if(!context.dataSourceIngestIsCancelled()) {
+            postArtifacts(bbartifacts);
+        }
     }
     
     /**
@@ -832,7 +866,9 @@ class Firefox extends Extract {
             dbFile.delete();
         }
 
-        postArtifacts(bbartifacts);
+        if(!context.dataSourceIngestIsCancelled()) {
+            postArtifacts(bbartifacts);
+        }
     }
      
      

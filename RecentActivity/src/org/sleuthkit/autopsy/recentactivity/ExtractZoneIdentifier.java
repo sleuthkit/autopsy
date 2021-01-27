@@ -108,9 +108,11 @@ final class ExtractZoneIdentifier extends Extract {
                 LOG.log(Level.WARNING, message, ex);
             }
         }
-
-        postArtifacts(associatedObjectArtifacts);
-        postArtifacts(downloadArtifacts);
+        
+        if (!context.dataSourceIngestIsCancelled()) {
+            postArtifacts(associatedObjectArtifacts);
+            postArtifacts(downloadArtifacts);
+        }
     }
 
     /**
