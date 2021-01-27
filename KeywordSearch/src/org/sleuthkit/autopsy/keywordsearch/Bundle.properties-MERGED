@@ -5,10 +5,12 @@ AccountsText.nextPage.exception.msg=No next page.
 AccountsText.previousItem.exception.msg=No previous item.
 AccountsText.previousPage.exception.msg=No previous page.
 CannotRunFileTypeDetection=Unable to run file type detection.
+CTL_ExtractAllTermsAction=Extract Unique Words
 DropdownListSearchPanel.selected=Ad Hoc Search data source filter is selected
 DropdownSingleTermSearchPanel.selected=Ad Hoc Search data source filter is selected
 DropdownSingleTermSearchPanel.warning.text=Boundary characters ^ and $ do not match word boundaries. Consider\nreplacing with an explicit list of boundary characters, such as [ \\.,]
 DropdownSingleTermSearchPanel.warning.title=Warning
+ExtractAllTermsAction.getName.text=Extract Unique Words
 ExtractedContentPanel.setMarkup.panelTxt=<span style='font-style:italic'>Loading text... Please wait</span>
 # {0} - Content name
 ExtractedContentPanel.SetMarkup.progress.loading=Loading text for {0}
