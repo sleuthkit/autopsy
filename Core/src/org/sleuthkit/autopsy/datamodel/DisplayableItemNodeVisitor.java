@@ -193,7 +193,7 @@ public interface DisplayableItemNodeVisitor<T> {
      */
     T visit(AttachmentNode node);
 
-    T visit(AutopsyTreeChildFactory.OwnerNode aThis);
+    T visit(AutopsyTreeChildFactory.PersonNode aThis);
 
     T visit(AutopsyTreeChildFactory.HostNode aThis);
 
@@ -550,7 +550,7 @@ public interface DisplayableItemNodeVisitor<T> {
         }
 
         @Override
-        public T visit(AutopsyTreeChildFactory.OwnerNode node) {
+        public T visit(AutopsyTreeChildFactory.PersonNode node) {
             return defaultVisit(node);
         }
     }

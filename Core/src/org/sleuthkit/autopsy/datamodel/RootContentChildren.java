@@ -186,8 +186,8 @@ public class RootContentChildren extends Children.Keys<Object> {
         }
 
         @Override
-        public AbstractNode visit(AutopsyTreeChildFactory.OwnerNodeData data) {
-            return new AutopsyTreeChildFactory.OwnerNode(data);
+        public AbstractNode visit(AutopsyTreeChildFactory.PersonNodeData data) {
+            return new AutopsyTreeChildFactory.PersonNode(data);
         }
     }
 }

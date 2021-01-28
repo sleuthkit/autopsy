@@ -77,7 +77,7 @@ public interface AutopsyItemVisitor<T> {
 
     T visit(AutopsyTreeChildFactory.HostNodeData aThis);
 
-    T visit(AutopsyTreeChildFactory.OwnerNodeData aThis);
+    T visit(AutopsyTreeChildFactory.PersonNodeData aThis);
 
 
     static abstract public class Default<T> implements AutopsyItemVisitor<T> {
@@ -206,7 +206,7 @@ public interface AutopsyItemVisitor<T> {
         }
         
         @Override
-        public T visit(AutopsyTreeChildFactory.OwnerNodeData ownerItem) {
+        public T visit(AutopsyTreeChildFactory.PersonNodeData ownerItem) {
             return defaultVisit(ownerItem);
         };
 
