@@ -179,5 +179,15 @@ public class RootContentChildren extends Children.Keys<Object> {
         public AbstractNode visit(FileTypesByMimeType ftByMimeTypeItem) {
             return ftByMimeTypeItem.new ByMimeTypeNode();
         }
+
+        @Override
+        public AbstractNode visit(AutopsyTreeChildFactory.HostNodeData data) {
+            return new AutopsyTreeChildFactory.HostNode(data);
+        }
+
+        @Override
+        public AbstractNode visit(AutopsyTreeChildFactory.OwnerNodeData data) {
+            return new AutopsyTreeChildFactory.OwnerNode(data);
+        }
     }
 }

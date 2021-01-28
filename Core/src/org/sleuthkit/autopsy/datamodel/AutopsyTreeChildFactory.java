@@ -77,11 +77,9 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
         super.removeNotify();
         Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED), pcl);
     }
-    
-    
-    
-    private DataSource getDs(List<DataSource> dataSources, int idx) {
-        return dataSources.get(idx % dataSources.size());
+
+    private DataSourceGrouping getDs(List<DataSource> dataSources, int idx) {
+        return new DataSourceGrouping(dataSources.get(idx % dataSources.size()));
     }
 
     private OwnerHostTree getTree(SleuthkitCase tskCase) throws TskCoreException {
@@ -89,63 +87,60 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
         if (CollectionUtils.isEmpty(dataSources)) {
             return new OwnerHostTree(Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
         }
-        
+
         return new OwnerHostTree(
                 Arrays.asList(
-                        new Owner("Owner1", Arrays.asList(
-                                new Host("Host1.1", Arrays.asList(getDs(dataSources, 0), getDs(dataSources, 1))),
-                                new Host("Host1.2", Collections.emptyList())),
-                                Arrays.asList(getDs(dataSources,2))
+                        new OwnerNodeData("Owner1", Arrays.asList(
+                                new HostNodeData("Host1.1", Arrays.asList(getDs(dataSources, 0), getDs(dataSources, 1))),
+                                new HostNodeData("Host1.2", Collections.emptyList())),
+                                Arrays.asList(getDs(dataSources, 2))
                         ),
-                        new Owner("Owner1", Arrays.asList(
-                                new Host("Host1.1", Arrays.asList(getDs(dataSources, 0), getDs(dataSources, 1))),
-                                new Host("Host2.3", Collections.emptyList())),
-                                Arrays.asList(getDs(dataSources,3))
+                        new OwnerNodeData("Owner1", Arrays.asList(
+                                new HostNodeData("Host1.1", Arrays.asList(getDs(dataSources, 0), getDs(dataSources, 1))),
+                                new HostNodeData("Host2.3", Collections.emptyList())),
+                                Arrays.asList(getDs(dataSources, 3))
                         )
                 ),
                 Arrays.asList(
-                        new Host("Host0.1", Arrays.asList(getDs(dataSources, 4))),
-                        new Host("Host0.2", Arrays.asList(getDs(dataSources, 5)))
+                        new HostNodeData("Host0.1", Arrays.asList(getDs(dataSources, 4))),
+                        new HostNodeData("Host0.2", Arrays.asList(getDs(dataSources, 5)))
                 ),
                 Arrays.asList(getDs(dataSources, 6), getDs(dataSources, 7))
         );
     }
 
-    private List<Object> getNodes(OwnerHostTree tree) {
-        List<Owner> owners = (tree == null) ? null : tree.getOwners();
-        List<Host> hosts = (tree == null) ? null : tree.getHosts();
-        List<DataSource> dataSources = (tree == null) ? null : tree.getDataSources();
+    private List<AutopsyVisitableItem> getNodes(OwnerHostTree tree) {
+        List<OwnerNodeData> owners = (tree == null) ? null : tree.getOwners();
+        List<HostNodeData> hosts = (tree == null) ? null : tree.getHosts();
+        List<DataSourceGrouping> dataSources = (tree == null) ? null : tree.getDataSources();
 
         if (CollectionUtils.isNotEmpty(owners)) {
-            List<Object> toReturn = owners.stream()
+            List<AutopsyVisitableItem> toReturn = owners.stream()
                     .filter(o -> o != null)
-                    .sorted((a, b) -> StringUtils.compareIgnoreCase(a.getName(), b.getName()))
-                    .map(o -> new OwnerNode(o))
+                    .sorted((a, b) -> compareIgnoreCase(a.getName(), b.getName()))
                     .collect(Collectors.toList());
 
             if (CollectionUtils.isNotEmpty(hosts) || CollectionUtils.isNotEmpty(dataSources)) {
-                toReturn.add(OwnerNode.getUnknownOwner(hosts, dataSources));
+                toReturn.add(OwnerNodeData.getUnknown(hosts, dataSources));
             }
 
             return toReturn;
         } else if (CollectionUtils.isNotEmpty(hosts)) {
-            List<Object> toReturn = hosts.stream()
+            List<AutopsyVisitableItem> toReturn = hosts.stream()
                     .filter(h -> h != null)
-                    .sorted((a, b) -> StringUtils.compareIgnoreCase(a.getName(), b.getName()))
-                    .map(h -> new HostNode(h))
+                    .sorted((a, b) -> compareIgnoreCase(a.getName(), b.getName()))
                     .collect(Collectors.toList());
 
             if (CollectionUtils.isNotEmpty(dataSources)) {
-                toReturn.add(HostNode.getUnknownHost(dataSources));
+                toReturn.add(HostNodeData.getUnknown(dataSources));
             }
 
             return toReturn;
         } else {
-            Stream<DataSource> dataSourceSafe = dataSources == null ? Stream.empty() : dataSources.stream();
+            Stream<DataSourceGrouping> dataSourceSafe = dataSources == null ? Stream.empty() : dataSources.stream();
             return dataSourceSafe
-                    .filter(d -> d != null)
-                    .sorted((a, b) -> StringUtils.compareIgnoreCase(a.getName(), b.getName()))
-                    .map(d -> new DataSourceGroupingNode(d))
+                    .filter(d -> d != null && d.getDataSource() != null)
+                    .sorted((a, b) -> compareIgnoreCase(a.getDataSource().getName(), b.getDataSource().getName()))
                     .collect(Collectors.toList());
         }
     }
@@ -196,7 +191,7 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
             return ((SleuthkitVisitableItem) key).accept(new CreateSleuthkitNodeVisitor());
         } else if (key instanceof AutopsyVisitableItem) {
             return ((AutopsyVisitableItem) key).accept(new RootContentChildren.CreateAutopsyNodeVisitor());
-        } else {
+        }  else {
             logger.log(Level.SEVERE, "Unknown key type ", key.getClass().getName());
             return null;
         }
@@ -210,13 +205,26 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
 
     }
 
-    public static class Owner {
+    private static int compareIgnoreCase(String s1, String s2) {
+        return (s1 == null ? "" : s1).compareToIgnoreCase(s2 == null ? "" : s2);
+    }
+
+    public static class OwnerNodeData implements AutopsyVisitableItem {
+        public static OwnerNodeData getUnknown(List<HostNodeData> hosts, List<DataSourceGrouping> dataSources) {
+            return new OwnerNodeData(true, null, hosts, dataSources);
+        }
 
         private final String name;
-        private final List<Host> hosts;
-        private final List<DataSource> dataSources;
+        private final List<HostNodeData> hosts;
+        private final List<DataSourceGrouping> dataSources;
+        private final boolean unknown;
 
-        public Owner(String name, List<Host> hosts, List<DataSource> dataSources) {
+        public OwnerNodeData(String name, List<HostNodeData> hosts, List<DataSourceGrouping> dataSources) {
+            this(name == null, name, hosts, dataSources);
+        }
+
+        private OwnerNodeData(boolean isUnknown, String name, List<HostNodeData> hosts, List<DataSourceGrouping> dataSources) {
+            this.unknown = isUnknown;
             this.name = name;
             this.hosts = hosts;
             this.dataSources = dataSources;
@@ -225,33 +233,69 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
         public String getName() {
             return name;
         }
+        
+        public Object getData() {
+            // TODO
+            return name;
+        }
 
-        public List<Host> getHosts() {
+        public List<HostNodeData> getHosts() {
             return hosts;
         }
 
-        public List<DataSource> getDataSources() {
+        public List<DataSourceGrouping> getDataSources() {
             return dataSources;
         }
 
-    }
-
-    public static class Host {
-        private final String name;
-        private final List<DataSource> dataSources;
-        
-        public Host(String name, List<DataSource> dataSources) {
-
-            this.name = name;
-            this.dataSources = (dataSources == null) ? Collections.emptyList() : Collections.unmodifiableList(new ArrayList<DataSource>(dataSources));
+        public boolean isUnknown() {
+            return unknown;
         }
 
-        public List<DataSource> getDataSources() {
+        @Override
+        public <T> T accept(AutopsyItemVisitor<T> visitor) {
+            return visitor.visit(this);
+        }
+    }
+
+    public static class HostNodeData implements AutopsyVisitableItem {
+        public static HostNodeData getUnknown(List<DataSourceGrouping> dataSources) {
+            return new HostNodeData(true, null, dataSources);
+        }
+
+        private final String name;
+        private final List<DataSourceGrouping> dataSources;
+        private final boolean unknown;
+
+        public HostNodeData(String name, List<DataSourceGrouping> dataSources) {
+            this(name == null, name, dataSources);
+        }
+
+        private HostNodeData(boolean isUnknown, String name, List<DataSourceGrouping> dataSources) {
+            this.unknown = isUnknown;
+            this.name = name;
+            this.dataSources = (dataSources == null) ? Collections.emptyList() : Collections.unmodifiableList(new ArrayList<DataSourceGrouping>(dataSources));
+        }
+
+        public List<DataSourceGrouping> getDataSources() {
             return this.dataSources;
         }
 
         public String getName() {
             return name;
+        }
+        
+        public Object getData() {
+            // TODO
+            return name;
+        }
+
+        public boolean isUnknown() {
+            return unknown;
+        }
+
+        @Override
+        public <T> T accept(AutopsyItemVisitor<T> visitor) {
+            return visitor.visit(this);
         }
     }
 
@@ -259,33 +303,25 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
         "HostNode_unknownHostNode_title=Unknown Host"
     })
     static class HostNode extends DisplayableItemNode {
-
-        public static HostNode getUnknownHost(List<DataSource> dataSources) {
-            return new HostNode(null, dataSources);
-        }
-
-
-        
-        private static RootContentChildren getChildren(List<DataSource> dataSources) {
-            Stream<DataSourceGroupingNode> dsNodes = (dataSources == null)
+        private static RootContentChildren getChildren(List<DataSourceGrouping> dataSources) {
+            Stream<DataSourceGrouping> dsNodes = (dataSources == null)
                     ? Stream.empty()
                     : dataSources.stream()
-                            .filter(ds -> ds != null)
-                            .sorted((a, b) -> StringUtils.compareIgnoreCase(a.getName(), b.getName()))
-                            .map(d -> new DataSourceGroupingNode(d));
-
+                            .filter(ds -> ds != null && ds.getDataSource() != null)
+                            .sorted((a, b) -> compareIgnoreCase(a.getDataSource().getName(), b.getDataSource().getName()));
+                            
             return new RootContentChildren(dsNodes.collect(Collectors.toList()));
         }
 
-        private HostNode(Host host, List<DataSource> dataSources) {
+        private HostNode(HostNodeData host, List<DataSourceGrouping> dataSources) {
             super(getChildren(dataSources), host == null ? null : Lookups.singleton(host));
-            String safeName = (host == null || host.getName() == null) ? Bundle.HostNode_getUnknownHostNode_title() : host.getName();
+            String safeName = (host == null || host.getName() == null || host.isUnknown()) ? Bundle.HostNode_unknownHostNode_title() : host.getName();
             super.setName(safeName);
             super.setDisplayName(safeName);
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/image.png");
         }
 
-        HostNode(Host host) {
+        HostNode(HostNodeData host) {
             this(host, host == null ? null : host.getDataSources());
         }
 
@@ -307,25 +343,25 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
 
     private static class OwnerHostTree {
 
-        private final List<Owner> owners;
-        private final List<Host> hosts;
-        private final List<DataSource> dataSources;
+        private final List<OwnerNodeData> owners;
+        private final List<HostNodeData> hosts;
+        private final List<DataSourceGrouping> dataSources;
 
-        public OwnerHostTree(List<Owner> owners, List<Host> hosts, List<DataSource> dataSources) {
+        public OwnerHostTree(List<OwnerNodeData> owners, List<HostNodeData> hosts, List<DataSourceGrouping> dataSources) {
             this.owners = owners;
             this.hosts = hosts;
             this.dataSources = dataSources;
         }
 
-        public List<Owner> getOwners() {
+        public List<OwnerNodeData> getOwners() {
             return owners;
         }
 
-        public List<Host> getHosts() {
+        public List<HostNodeData> getHosts() {
             return hosts;
         }
 
-        public List<DataSource> getDataSources() {
+        public List<DataSourceGrouping> getDataSources() {
             return dataSources;
         }
 
@@ -335,34 +371,28 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
         "OwnerNode_unknownHostNode_title=Unknown Owner"
     })
     static class OwnerNode extends DisplayableItemNode {
-
-        public static OwnerNode getUnknownOwner(List<Host> hosts, List<DataSource> dataSources) {
-            return new OwnerNode(null, hosts, dataSources);
-        }
-
-        private static RootContentChildren getChildren(List<Host> hosts, List<DataSource> dataSources) {
-            List<HostNode> childNodes = (hosts == null)
+        private static RootContentChildren getChildren(List<HostNodeData> hosts, List<DataSourceGrouping> dataSources) {
+            List<HostNodeData> childNodes = (hosts == null)
                     ? Collections.emptyList()
                     : hosts.stream()
                             .filter(h -> h != null)
-                            .sorted((a, b) -> StringUtils.compareIgnoreCase(a.getName(), b.getName()))
-                            .map(h -> new HostNode(h))
+                            .sorted((a, b) -> compareIgnoreCase(a.getName(), b.getName()))
                             .collect(Collectors.toList());
 
             if (CollectionUtils.isNotEmpty(hosts)) {
-                childNodes.add(HostNode.getUnknownHost(dataSources));
+                childNodes.add(HostNodeData.getUnknown(dataSources));
             }
 
             return new RootContentChildren(childNodes);
         }
 
-        OwnerNode(Owner owner) {
+        OwnerNode(OwnerNodeData owner) {
             this(owner, (owner != null) ? owner.getHosts() : null, (owner != null) ? owner.getDataSources() : null);
         }
 
-        OwnerNode(Owner owner, List<Host> hosts, List<DataSource> dataSources) {
-            super(getChildren(hosts, dataSources), Lookups.singleton(owner));
-            String safeName = (owner == null || owner.getName() == null) ? Bundle.OwnerNode_unknownHostNode_title() : owner.getName();
+        OwnerNode(OwnerNodeData owner, List<HostNodeData> hosts, List<DataSourceGrouping> dataSources) {
+            super(getChildren(hosts, dataSources), owner == null ? null : Lookups.singleton(owner));
+            String safeName = (owner == null || owner.getName() == null || owner.isUnknown()) ? Bundle.OwnerNode_unknownHostNode_title() : owner.getName();
             super.setName(safeName);
             super.setDisplayName(safeName);
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/image.png");

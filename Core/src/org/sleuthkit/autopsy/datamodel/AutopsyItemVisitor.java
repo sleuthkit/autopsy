@@ -75,9 +75,13 @@ public interface AutopsyItemVisitor<T> {
 
     T visit(FileTypesByMimeType aThis);
 
+    T visit(AutopsyTreeChildFactory.HostNodeData aThis);
+
+    T visit(AutopsyTreeChildFactory.OwnerNodeData aThis);
+
 
     static abstract public class Default<T> implements AutopsyItemVisitor<T> {
-
+        
         protected abstract T defaultVisit(AutopsyVisitableItem ec);
 
         @Override
@@ -200,5 +204,16 @@ public interface AutopsyItemVisitor<T> {
         public T visit(Accounts accountsItem) {
             return defaultVisit(accountsItem);
         }
+        
+        @Override
+        public T visit(AutopsyTreeChildFactory.OwnerNodeData ownerItem) {
+            return defaultVisit(ownerItem);
+        };
+
+        @Override
+        public T visit(AutopsyTreeChildFactory.HostNodeData hostItem) {
+            return defaultVisit(hostItem);
+        }
+
     }
 }
