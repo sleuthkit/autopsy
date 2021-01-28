@@ -59,7 +59,7 @@ public interface DisplayableItemNodeVisitor<T> {
     T visit(ImageNode in);
 
     T visit(VolumeNode vn);
-    
+
     T visit(PoolNode pn);
 
     T visit(SlackFileNode sfn);
@@ -192,7 +192,11 @@ public interface DisplayableItemNodeVisitor<T> {
      * Attachments
      */
     T visit(AttachmentNode node);
-    
+
+    T visit(AutopsyTreeChildFactory.OwnerNode aThis);
+
+    T visit(AutopsyTreeChildFactory.HostNode aThis);
+
     /**
      * Visitor with an implementable default behavior for all types. Override
      * specific visit types to not use the default behavior.
@@ -264,7 +268,7 @@ public interface DisplayableItemNodeVisitor<T> {
         public T visit(ImageNode in) {
             return defaultVisit(in);
         }
-        
+
         @Override
         public T visit(PoolNode pn) {
             return defaultVisit(pn);
@@ -534,11 +538,20 @@ public interface DisplayableItemNodeVisitor<T> {
         public T visit(Accounts.DefaultAccountTypeNode node) {
             return defaultVisit(node);
         }
-        
+
         @Override
         public T visit(AttachmentNode node) {
             return defaultVisit(node);
         }
-        
+
+        @Override
+        public T visit(AutopsyTreeChildFactory.HostNode node) {
+            return defaultVisit(node);
+        }
+
+        @Override
+        public T visit(AutopsyTreeChildFactory.OwnerNode node) {
+            return defaultVisit(node);
+        }
     }
 }
