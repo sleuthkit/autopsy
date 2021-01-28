@@ -65,8 +65,10 @@ import org.apache.solr.client.solrj.response.CollectionAdminResponse;
 import org.apache.solr.client.solrj.request.CoreAdminRequest;
 import org.apache.solr.client.solrj.response.CoreAdminResponse;
 import org.apache.solr.client.solrj.impl.BaseHttpSolrClient.RemoteSolrException;
+import org.apache.solr.client.solrj.request.QueryRequest;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.response.TermsResponse;
+import org.apache.solr.client.solrj.response.TermsResponse.Term;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.SolrException;
@@ -1766,6 +1768,25 @@ public class Server {
             currentCoreLock.writeLock().unlock();
         }
     }
+        
+    /**
+     * Extract all unique terms/words for a given data source.
+     *
+     * @param dataSourceId to process
+     *
+     * @throws NoOpenCoreException
+     */
+    void extractAllTermsForDataSource(Long dataSourceId) throws IOException, KeywordSearchModuleException, NoOpenCoreException, SolrServerException {
+        try {
+            currentCoreLock.writeLock().lock();
+            if (null == currentCollection) {
+                throw new NoOpenCoreException();
+            }
+            currentCollection.extractAllTermsForDataSource(dataSourceId);
+        } finally {
+            currentCoreLock.writeLock().unlock();
+        }
+    }    
 
     /**
      * Get the text contents of the given file as stored in SOLR.
@@ -2143,6 +2164,33 @@ public class Server {
             String deleteQuery = "image_id:" + dataSourceId;
 
             queryClient.deleteByQuery(deleteQuery);
+        }
+        
+        private void extractAllTermsForDataSource(Long dsObjId) throws IOException, SolrServerException {
+            String dataSourceId = Long.toString(dsObjId);
+
+            SolrQuery query = new SolrQuery();
+            query.setRequestHandler("/terms");
+            query.setTerms(true);
+            query.setTermsLimit(20);
+            //query.setTermsLower("s");
+            //query.setTermsPrefix("s");
+            query.addTermsField("text");
+            query.setTermsMinCount(1);
+            
+            query.addFilterQuery("image_id:" + dataSourceId);
+
+            QueryRequest request = new QueryRequest(query);
+            List<Term> terms = request.process(queryClient).getTermsResponse().getTerms("text");
+
+            if (terms == null || terms.isEmpty()) {
+                logger.log(Level.WARNING, "No unique terms/words returned for data source ID: " + dataSourceId); //NON-NLS
+                return;
+            }
+
+            Term term = terms.get(0);
+            String word = term.getTerm();
+            long frequency = term.getFrequency();
         }
 
         /**
