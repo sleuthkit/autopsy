@@ -23,13 +23,13 @@ If you are experiencing an error, we encourage you to post on the forum (https:/
 Make the following changes if the application is hard to navigate in High DPI systems:
 
 <ol>
-<li>Right click on the application icon on your Desktop, Start Menu, etc.
-<li>Choose Properties
-<li>Go to Compatibility tab
-<li>Click "Change high DPI settings" button
-<li>Select "Override high DPI scaling behavior" 
-<li>Change the "Scaling performed by:" drop down box to "System"
-<li>Restart Autopsy
+<li>Right-click on the application icon on your Desktop, Start Menu, etc.
+<li>Choose Properties.
+<li>Go to Compatibility tab.
+<li>Click "Change high DPI settings" button.
+<li>Select "Override high DPI scaling behavior".
+<li>Change the "Scaling performed by:" drop down box to "System".
+<li>Restart Autopsy.
 </ol>
 
 \section troubleshooting_general General Troubleshooting
