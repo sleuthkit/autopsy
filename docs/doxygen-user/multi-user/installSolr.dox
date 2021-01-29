@@ -66,7 +66,7 @@ Optional Solr Configuration Parameters:
 
 \subsubsection install_sorl_index_file_loc Solr Text Index File Location
 
-<b>Important note:</b> previous versions of Autopsy (Autopsy 4.17.0 and earlier) stored the Solr text indexes in the case output directory. As a result, the Solr indexes would get deleted if a user deleted the case output directory. Solr 8 (i.e. Autpsy 4.18.0 and later) no longer stores the Solr text index files in the case output directory but instead stores them in location defined by the <b>SOLR_DATA_HOME</b> parameter. As a consequence, if a user choses to manually delete case output directories (for example, to free up disk space), the Solr index directories located in <b>SOLR_DATA_HOME</b> need to be manually deleted as well.
+<b>Important note:</b> previous versions of Autopsy (Autopsy 4.17.0 and earlier) stored the Solr text indexes in the case output directory. As a result, the Solr indexes would get deleted if a user deleted the case output directory. Solr 8 (i.e. Autopsy 4.18.0 and later) no longer stores the Solr text index files in the case output directory but instead stores them in location defined by the <b>SOLR_DATA_HOME</b> parameter. As a consequence, if a user choses to manually delete case output directories (for example, to free up disk space), the Solr index directories located in <b>SOLR_DATA_HOME</b> need to be manually deleted as well.
 
 Text index for an Autopsy case will follow a naming structure according to following rules: \c "[Autopsy case name] [Case creation time stamp] [Text index creation time stamp] [shardX_replica_nY]". For example, the text index for an Autopsy case "Test Case" will be located in the following directory inside <b>SOLR_DATA_HOME</b>:
 
