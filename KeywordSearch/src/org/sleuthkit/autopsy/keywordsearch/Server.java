@@ -35,14 +35,17 @@ import java.net.ServerSocket;
 import java.net.SocketException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.nio.file.OpenOption;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -51,11 +54,13 @@ import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import org.apache.commons.io.FileUtils;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 import static java.util.stream.Collectors.toList;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.SolrClient;
+import org.apache.solr.client.solrj.SolrQuery.SortClause;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.apache.solr.client.solrj.impl.CloudSolrClient;
 import org.apache.solr.client.solrj.impl.ConcurrentUpdateSolrClient;
@@ -81,6 +86,7 @@ import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -1776,7 +1782,7 @@ public class Server {
      *
      * @throws NoOpenCoreException
      */
-    void extractAllTermsForDataSource(Long dataSourceId) throws IOException, KeywordSearchModuleException, NoOpenCoreException, SolrServerException {
+    void extractAllTermsForDataSource(Long dataSourceId) throws IOException, KeywordSearchModuleException, NoOpenCoreException, SolrServerException, NoCurrentCaseException {
         try {
             currentCoreLock.writeLock().lock();
             if (null == currentCollection) {
@@ -2166,31 +2172,134 @@ public class Server {
             queryClient.deleteByQuery(deleteQuery);
         }
         
-        private void extractAllTermsForDataSource(Long dsObjId) throws IOException, SolrServerException {
+        private void extractAllTermsForDataSource(Long dsObjId) throws IOException, SolrServerException, NoCurrentCaseException, KeywordSearchModuleException {
             String dataSourceId = Long.toString(dsObjId);
+            
+            int numTerms = 400000;
+            int termStep = 1000;
 
             SolrQuery query = new SolrQuery();
             query.setRequestHandler("/terms");
             query.setTerms(true);
-            query.setTermsLimit(20);
+            query.setTermsLimit(numTerms);
+            query.setTermsSortString("index");
+            //query.setSort(SortClause.asc("id"));
             //query.setTermsLower("s");
             //query.setTermsPrefix("s");
             query.addTermsField("text");
-            query.setTermsMinCount(1);
+            query.setTermsMinCount(0);
             
             query.addFilterQuery("image_id:" + dataSourceId);
+            
+            // degbug
+            String sort1 = query.getFacetSortString();
+            String sort2 = query.getSortField();
+            List<SortClause> sort3 = query.getSorts();
+            String sort4 = query.getTermsSortString();
 
             QueryRequest request = new QueryRequest(query);
-            List<Term> terms = request.process(queryClient).getTermsResponse().getTerms("text");
+            TermsResponse response = request.process(queryClient).getTermsResponse();
+            List<Term> terms = response.getTerms("text");
 
             if (terms == null || terms.isEmpty()) {
                 logger.log(Level.WARNING, "No unique terms/words returned for data source ID: " + dataSourceId); //NON-NLS
                 return;
             }
 
-            Term term = terms.get(0);
-            String word = term.getTerm();
-            long frequency = term.getFrequency();
+            //Term term = terms.get(0);
+            //String word = term.getTerm();
+            //long frequency = term.getFrequency();            
+            
+            // Write the server data to a file
+            Case currentCase = Case.getCurrentCaseThrows();
+            File caseDirectoryPath = new File(currentCase.getOutputDirectory());
+            Path serverFile = Paths.get(caseDirectoryPath.toString(), "terms_"+numTerms+"_whole.txt"); //NON-NLS
+            Files.deleteIfExists(serverFile);
+            
+            List<String> listTerms = terms.stream().map(Term::getTerm).collect(Collectors.toList());
+
+            OpenOption[] options = new OpenOption[] { java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.APPEND };
+            Files.write(serverFile, listTerms, options);
+            /*for (Term term : terms) {
+                try {
+                    Files.write(serverFile, term.getTerm().getBytes(), options);
+                    Files.write(serverFile, "\n".getBytes(), options);
+                } catch (IOException ex) {
+                    throw new KeywordSearchModuleException(serverFile.toString() + " could not be written", ex); //NON-NLS
+                }
+            }*/
+            
+            // repeat the same thing but stepping through the terms
+            String firstTerm = "";
+            Path serverFileIterated = Paths.get(caseDirectoryPath.toString(), "terms_"+numTerms+"_iterated.txt"); //NON-NLS
+            Files.deleteIfExists(serverFileIterated);
+            Map<String, Integer> termsMap = new HashMap<>();
+            for (int step = 0; step < numTerms; step += termStep) {
+                query = new SolrQuery();
+                query.setRequestHandler("/terms");
+                query.setTerms(true);
+                query.setTermsLimit(termStep);
+                query.setTermsLower(firstTerm);
+                query.setTermsLowerInclusive(false);
+                query.setTermsSortString("index");
+                //query.setSort(SortClause.desc("index"));
+                //query.setTermsPrefix(firstTerm);
+                query.addTermsField("text");
+                query.setTermsMinCount(0);
+
+                query.addFilterQuery("image_id:" + dataSourceId);
+
+                request = new QueryRequest(query);
+                response = request.process(queryClient).getTermsResponse();
+                terms = response.getTerms("text");
+
+                if (terms == null || terms.isEmpty()) {
+                    logger.log(Level.WARNING, "No unique terms/words returned for data source ID: " + dataSourceId); //NON-NLS
+                    break;
+                }
+                
+                // set the first term for the next query
+                firstTerm = terms.get(terms.size()-1).getTerm();
+
+                //Term term = terms.get(0);
+                //String word = term.getTerm();
+                //long frequency = term.getFrequency();            
+                // Write the server data to a file
+                serverFile = Paths.get(caseDirectoryPath.toString(), "terms_step" + step + "_iterated.txt"); //NON-NLS
+                Files.deleteIfExists(serverFile);
+                listTerms = terms.stream().map(Term::getTerm).collect(Collectors.toList());
+                Files.write(serverFile, listTerms, options);
+                Files.write(serverFileIterated, listTerms, options);
+                
+                for (Term term : terms) {
+                    Integer oldValue = termsMap.get(term.getTerm());
+                    if (oldValue == null) {
+                        termsMap.put(term.getTerm(), 1);
+                    } else {
+                        termsMap.put(term.getTerm(), oldValue + 1);
+                    }
+                    //termsMap.put(term.getTerm(), 1);
+                    /*try {
+                        Files.write(serverFile, term.getTerm().getBytes(), options);
+                        Files.write(serverFile, "\n".getBytes(), options);
+                        
+                        Files.write(serverFileIterated, term.getTerm().getBytes(), options);
+                        Files.write(serverFileIterated, "\n".getBytes(), options);
+                    } catch (IOException ex) {
+                        throw new KeywordSearchModuleException(serverFile.toString() + " could not be written", ex); //NON-NLS
+                    }*/
+                }
+            }
+            
+            // print the hash map
+            serverFile = Paths.get(caseDirectoryPath.toString(), "terms_step_hashMap.txt"); //NON-NLS
+            for (String key : termsMap.keySet()) {
+                Integer value = termsMap.get(key);
+                Files.write(serverFile, key.getBytes(), options);
+                //Files.write(serverFile, " ".getBytes(), options);
+                //Files.write(serverFile, value, options);
+                Files.write(serverFile, "\n".getBytes(), options);
+            }
         }
 
         /**

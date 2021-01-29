@@ -57,13 +57,7 @@ public class ExtractAllTermsAction extends CallableSystemAction {
         Long dsID = Long.valueOf(4);
         try {
             server.extractAllTermsForDataSource(dsID);
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-        } catch (KeywordSearchModuleException ex) {
-            Exceptions.printStackTrace(ex);
-        } catch (NoOpenCoreException ex) {
-            Exceptions.printStackTrace(ex);
-        } catch (SolrServerException ex) {
+        } catch (Exception ex) {
             Exceptions.printStackTrace(ex);
         }
     }
