@@ -24,21 +24,24 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import org.apache.commons.collections.CollectionUtils;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Node;
-import org.openide.util.NbBundle.Messages;
-import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CasePreferences;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.PersonGrouping.Person;
 import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.Host;
+import org.sleuthkit.datamodel.HostManager;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitVisitableItem;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -75,73 +78,6 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
     protected void removeNotify() {
         super.removeNotify();
         Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED), pcl);
-    }
-
-    private DataSourceGrouping getDs(List<DataSource> dataSources, int idx) {
-        return new DataSourceGrouping(dataSources.get(idx % dataSources.size()));
-    }
-
-    private OwnerHostTree getTree(SleuthkitCase tskCase) throws TskCoreException {
-        List<DataSource> dataSources = tskCase.getDataSources();
-        if (CollectionUtils.isEmpty(dataSources)) {
-            return new OwnerHostTree(Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
-        }
-
-        return new OwnerHostTree(
-                Arrays.asList(
-                        new PersonNodeData("Person1", Arrays.asList(
-                                new HostNodeData("Host1.1", Arrays.asList(getDs(dataSources, 0), getDs(dataSources, 1))),
-                                new HostNodeData("Host1.2", Collections.emptyList())),
-                                null
-                        ),
-                        new PersonNodeData("Person2", Arrays.asList(
-                                new HostNodeData("Host1.1", Arrays.asList(getDs(dataSources, 0), getDs(dataSources, 1))),
-                                new HostNodeData("Host2.3", Collections.emptyList())),
-                                null
-                        )
-                ),
-                Arrays.asList(
-                        new HostNodeData("Host0.1", Arrays.asList(getDs(dataSources, 4))),
-                        new HostNodeData("Host0.2", Arrays.asList(getDs(dataSources, 5)))
-                ),
-                null
-        );
-    }
-
-    private List<AutopsyVisitableItem> getNodes(OwnerHostTree tree) {
-        List<PersonNodeData> persons = (tree == null) ? null : tree.getOwners();
-        List<HostNodeData> hosts = (tree == null) ? null : tree.getHosts();
-        List<DataSourceGrouping> dataSources = (tree == null) ? null : tree.getDataSources();
-
-        if (CollectionUtils.isNotEmpty(persons)) {
-            List<AutopsyVisitableItem> toReturn = persons.stream()
-                    .filter(p -> p != null)
-                    .sorted((a, b) -> compareIgnoreCase(a.getName(), b.getName()))
-                    .collect(Collectors.toList());
-
-            if (CollectionUtils.isNotEmpty(hosts) || CollectionUtils.isNotEmpty(dataSources)) {
-                toReturn.add(PersonNodeData.getUnknown(hosts, dataSources));
-            }
-
-            return toReturn;
-        } else if (CollectionUtils.isNotEmpty(hosts)) {
-            List<AutopsyVisitableItem> toReturn = hosts.stream()
-                    .filter(h -> h != null)
-                    .sorted((a, b) -> compareIgnoreCase(a.getName(), b.getName()))
-                    .collect(Collectors.toList());
-
-            if (CollectionUtils.isNotEmpty(dataSources)) {
-                toReturn.add(HostNodeData.getUnknown(dataSources));
-            }
-
-            return toReturn;
-        } else {
-            Stream<DataSourceGrouping> dataSourceSafe = dataSources == null ? Stream.empty() : dataSources.stream();
-            return dataSourceSafe
-                    .filter(d -> d != null && d.getDataSource() != null)
-                    .sorted((a, b) -> compareIgnoreCase(a.getDataSource().getName(), b.getDataSource().getName()))
-                    .collect(Collectors.toList());
-        }
     }
 
     /**
@@ -204,225 +140,133 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
 
     }
 
-    private static int compareIgnoreCase(String s1, String s2) {
-        return (s1 == null ? "" : s1).compareToIgnoreCase(s2 == null ? "" : s2);
+    /**
+     * Creates a set of DataSourceGrouping objects from a set of data sources.
+     *
+     * @param dataSources The data sources to convert to a list.
+     * @return The data source groupings determined from the data sources.
+     */
+    private Set<DataSourceGrouping> getDataSources(final Set<DataSource> dataSources) {
+        if (dataSources == null) {
+            return Collections.emptySet();
+        }
+
+        return dataSources.stream()
+                .map(d -> new DataSourceGrouping(d))
+                .collect(Collectors.toSet());
     }
 
+    /**
+     * Creates a set of HostGrouping objects from a set of hosts.
+     *
+     * @param hosts The hosts.
+     * @param hostDataSources The mapping of hosts to data sources that belong
+     * to those hosts.
+     * @return The generated host groupings.
+     */
+    private Set<HostGrouping> getHostGroupings(final Set<Host> hosts, final Map<Host, Set<DataSource>> hostDataSources) {
+        if (hosts == null) {
+            return Collections.emptySet();
+        }
+
+        final Map<Host, Set<DataSource>> dataSources = hostDataSources == null ? Collections.emptyMap() : hostDataSources;
+
+        return hosts.stream()
+                .map(h -> new HostGrouping(h, getDataSources(dataSources.get(h))))
+                .collect(Collectors.toSet());
+    }
+
+    /**
+     * Creates the nodes to display in the tree.
+     *
+     * @param tree The tree of model items (TSK Persons, Hosts and DataSources).
+     * @return The nodes to be displayed in the tree.
+     */
+    private List<? extends AutopsyVisitableItem> getNodes(OwnerHostTree tree) {
+        if (tree == null) {
+            return Collections.emptyList();
+        }
+
+        final Map<Person, Set<Host>> persons = tree.getPersons() == null ? Collections.emptyMap() : tree.getPersons();
+        final Map<Host, Set<DataSource>> hosts = tree.getHosts() == null ? Collections.emptyMap() : tree.getHosts();
+
+        // if no person nodes except unknown, then show host levels
+        if (persons.isEmpty() || (persons.size() == 1 && persons.containsKey(null))) {
+            return getHostGroupings(hosts.keySet(), hosts).stream()
+                    .sorted()
+                    .collect(Collectors.toList());
+        } else {
+            return persons.entrySet().stream()
+                    .map((personKeyVal) -> new PersonGrouping(personKeyVal.getKey(), getHostGroupings(personKeyVal.getValue(), hosts)))
+                    .sorted()
+                    .collect(Collectors.toList());
+        }
+    }
+
+    /**
+     * A mapping of persons (or null key for unknown) to a set of hosts along
+     * with a mapping of hosts (or null host if unknown) mapped to a set of
+     * datasources. A null key will signify unknown.
+     */
     private static class OwnerHostTree {
 
-        private final List<PersonNodeData> owners;
-        private final List<HostNodeData> hosts;
-        private final List<DataSourceGrouping> dataSources;
+        final Map<Person, Set<Host>> persons;
+        final Map<Host, Set<DataSource>> hosts;
 
-        public OwnerHostTree(List<PersonNodeData> owners, List<HostNodeData> hosts, List<DataSourceGrouping> dataSources) {
-            this.owners = owners;
-            this.hosts = hosts;
-            this.dataSources = dataSources;
+        /**
+         * Main constructor.
+         *
+         * @param persons The mapping of persons to their hosts (or null key for
+         * unknown person).
+         * @param hosts The mapping of hosts to their data sources (or null key
+         * for unknown hosts).
+         */
+        OwnerHostTree(Map<Person, Set<Host>> persons, Map<Host, Set<DataSource>> hosts) {
+            this.persons = Collections.unmodifiableMap(new HashMap<>(persons));
+            this.hosts = Collections.unmodifiableMap(new HashMap<>(hosts));
         }
 
-        public List<PersonNodeData> getOwners() {
-            return owners;
+        /**
+         * @return The mapping of persons to their hosts (or null key for
+         * unknown person).
+         */
+        Map<Person, Set<Host>> getPersons() {
+            return persons;
         }
 
-        public List<HostNodeData> getHosts() {
+        /**
+         * @return The mapping of hosts to their data sources (or null key for
+         * unknown hosts).
+         */
+        Map<Host, Set<DataSource>> getHosts() {
             return hosts;
         }
-
-        public List<DataSourceGrouping> getDataSources() {
-            return dataSources;
-        }
-
     }
 
-    public static class PersonNodeData implements AutopsyVisitableItem {
+    /**
+     * Creates a tree including a mapping of persons to hosts (if present) and a
+     * mapping of hosts to data sources.
+     *
+     * @param tskCase The relevant SleuthkitCase object.
+     * @return The generated tree.
+     * @throws TskCoreException
+     */
+    private OwnerHostTree getTree(SleuthkitCase tskCase) throws TskCoreException {
+        Map<Person, Set<Host>> personsMap = new HashMap<>();
+        Map<Host, Set<DataSource>> hostsMap = new HashMap<>();
 
-        public static PersonNodeData getUnknown(List<HostNodeData> hosts, List<DataSourceGrouping> dataSources) {
-            return new PersonNodeData(true, null, hosts, dataSources);
+        HostManager hostManager = tskCase.getHostManager();
+        for (Host host : hostManager.getHosts()) {
+            hostsMap.put(host, new HashSet<>());
         }
 
-        private final String name;
-        private final List<HostNodeData> hosts;
-        private final List<DataSourceGrouping> dataSources;
-        private final boolean unknown;
-
-        public PersonNodeData(String name, List<HostNodeData> hosts, List<DataSourceGrouping> dataSources) {
-            this(name == null, name, hosts, dataSources);
+        List<DataSource> dataSources = tskCase.getDataSources();
+        for (DataSource dataSource : dataSources) {
+            Set<DataSource> hostList = hostsMap.computeIfAbsent(dataSource.getHost(), (host) -> new HashSet<>());
+            hostList.add(dataSource);
         }
 
-        private PersonNodeData(boolean isUnknown, String name, List<HostNodeData> hosts, List<DataSourceGrouping> dataSources) {
-            this.unknown = isUnknown;
-            this.name = name;
-            this.hosts = hosts;
-            this.dataSources = dataSources;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public Object getData() {
-            // TODO
-            return name;
-        }
-
-        public List<HostNodeData> getHosts() {
-            return hosts;
-        }
-
-        public List<DataSourceGrouping> getDataSources() {
-            return dataSources;
-        }
-
-        public boolean isUnknown() {
-            return unknown;
-        }
-
-        @Override
-        public <T> T accept(AutopsyItemVisitor<T> visitor) {
-            return visitor.visit(this);
-        }
-    }
-
-    public static class HostNodeData implements AutopsyVisitableItem {
-
-        public static HostNodeData getUnknown(List<DataSourceGrouping> dataSources) {
-            return new HostNodeData(true, null, dataSources);
-        }
-
-        private final String name;
-        private final List<DataSourceGrouping> dataSources;
-        private final boolean unknown;
-
-        public HostNodeData(String name, List<DataSourceGrouping> dataSources) {
-            this(name == null, name, dataSources);
-        }
-
-        private HostNodeData(boolean isUnknown, String name, List<DataSourceGrouping> dataSources) {
-            this.unknown = isUnknown;
-            this.name = name;
-            this.dataSources = (dataSources == null) ? Collections.emptyList() : Collections.unmodifiableList(new ArrayList<DataSourceGrouping>(dataSources));
-        }
-
-        public List<DataSourceGrouping> getDataSources() {
-            return this.dataSources;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public Object getData() {
-            // TODO
-            return name;
-        }
-
-        public boolean isUnknown() {
-            return unknown;
-        }
-
-        @Override
-        public <T> T accept(AutopsyItemVisitor<T> visitor) {
-            return visitor.visit(this);
-        }
-    }
-
-    @Messages({
-        "HostNode_unknownHostNode_title=Unknown Host"
-    })
-    static class HostNode extends DisplayableItemNode {
-
-        private static List<DataSourceGrouping> getChildren(List<DataSourceGrouping> dataSources) {
-            return (dataSources == null)
-                    ? Collections.emptyList()
-                    : dataSources.stream()
-                            .filter(ds -> ds != null && ds.getDataSource() != null)
-                            .sorted((a, b) -> compareIgnoreCase(a.getDataSource().getName(), b.getDataSource().getName()))
-                            .collect(Collectors.toList());
-        }
-        
-        private final boolean isLeaf;
-
-        HostNode(HostNodeData host) {
-            this(host, getChildren(host == null ? null : host.getDataSources()));
-        }
-
-        private HostNode(HostNodeData host, List<DataSourceGrouping> dataSources) {
-            super(new RootContentChildren(dataSources), host == null ? null : Lookups.singleton(host));
-            String safeName = (host == null || host.getName() == null || host.isUnknown()) ? Bundle.HostNode_unknownHostNode_title() : host.getName();
-            super.setName(safeName);
-            super.setDisplayName(safeName);
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/host.png");
-            this.isLeaf = CollectionUtils.isEmpty(dataSources);
-        }
-
-        @Override
-        public boolean isLeafTypeNode() {
-            return isLeaf;
-        }
-
-        @Override
-        public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
-            return visitor.visit(this);
-        }
-
-        @Override
-        public String getItemType() {
-            return getClass().getName();
-        }
-    }
-
-    @Messages({
-        "PersonNode_unknownHostNode_title=Unknown Persons"
-    })
-    static class PersonNode extends DisplayableItemNode {
-
-        private static List<HostNodeData> getChildren(List<HostNodeData> hosts, List<DataSourceGrouping> dataSources) {
-            List<HostNodeData> childNodes = (hosts == null)
-                    ? Collections.emptyList()
-                    : hosts.stream()
-                            .filter(h -> h != null)
-                            .sorted((a, b) -> compareIgnoreCase(a.getName(), b.getName()))
-                            .collect(Collectors.toList());
-
-            if (CollectionUtils.isNotEmpty(dataSources)) {
-                childNodes.add(HostNodeData.getUnknown(dataSources));
-            }
-
-            return childNodes;
-        }
-
-        private final boolean isLeaf;
-
-        PersonNode(PersonNodeData owner) {
-            this(owner, (owner != null) ? owner.getHosts() : null, (owner != null) ? owner.getDataSources() : null);
-        }
-
-        PersonNode(PersonNodeData person, List<HostNodeData> hosts, List<DataSourceGrouping> dataSources) {
-            this(person, getChildren(hosts, dataSources));
-        }
-
-        private PersonNode(PersonNodeData person, List<HostNodeData> nodeChildren) {
-            super(new RootContentChildren(nodeChildren), person == null ? null : Lookups.singleton(person));
-            String safeName = (person == null || person.getName() == null || person.isUnknown()) ? Bundle.PersonNode_unknownHostNode_title() : person.getName();
-            super.setName(safeName);
-            super.setDisplayName(safeName);
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/person.png");
-            this.isLeaf = CollectionUtils.isEmpty(nodeChildren);
-        }
-
-        @Override
-        public boolean isLeafTypeNode() {
-            return isLeaf;
-        }
-
-        @Override
-        public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
-            return visitor.visit(this);
-        }
-
-        @Override
-        public String getItemType() {
-            return getClass().getName();
-        }
+        // TODO calculate persons for hosts
+        return new OwnerHostTree(personsMap, hostsMap);
     }
 }

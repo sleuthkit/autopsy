@@ -181,13 +181,13 @@ public class RootContentChildren extends Children.Keys<Object> {
         }
 
         @Override
-        public AbstractNode visit(AutopsyTreeChildFactory.HostNodeData data) {
-            return new AutopsyTreeChildFactory.HostNode(data);
+        public AbstractNode visit(HostGrouping data) {
+            return new HostGroupingNode(data);
         }
 
         @Override
-        public AbstractNode visit(AutopsyTreeChildFactory.PersonNodeData data) {
-            return new AutopsyTreeChildFactory.PersonNode(data);
+        public AbstractNode visit(PersonGrouping data) {
+            return new PersonGroupingNode(data);
         }
     }
 }
