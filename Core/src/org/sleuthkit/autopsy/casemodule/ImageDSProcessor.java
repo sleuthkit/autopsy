@@ -39,6 +39,7 @@ import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestStream;
+import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitJNI;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -81,6 +82,7 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
     private String md5;
     private String sha1;
     private String sha256;
+    private Host host = null;
     private boolean setDataSourceOptionsCalled;
 
     static {
@@ -224,7 +226,7 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
         // Set up the data source before creating the ingest stream
         try {
             image = SleuthkitJNI.addImageToDatabase(Case.getCurrentCase().getSleuthkitCase(),
-                new String[]{imagePath}, sectorSize, timeZone, md5, sha1, sha256, deviceId);
+                new String[]{imagePath}, sectorSize, timeZone, md5, sha1, sha256, deviceId, host);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error adding data source with path " + imagePath + " to database", ex);
             final List<String> errors = new ArrayList<>();
@@ -270,6 +272,14 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
             sha256 = configPanel.getSha256();
             if (sha256.isEmpty()) {
                 sha256 = null;
+            }
+            
+            // HOSTTODO - this will come from the config panel
+            try {
+                host = Case.getCurrentCase().getSleuthkitCase().getHostManager().getOrCreateHost("ImageDSProcessor Host");
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Error creating/loading host", ex);
+                host = null;
             }
         }
     }
@@ -370,7 +380,7 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
         return;
 	}
 
-	AddImageTask.ImageDetails imageDetails = new AddImageTask.ImageDetails(deviceId, image, sectorSize, timeZone, ignoreFatOrphanFiles, md5, sha1, sha256, null);
+	AddImageTask.ImageDetails imageDetails = new AddImageTask.ImageDetails(deviceId, image, sectorSize, timeZone, ignoreFatOrphanFiles, md5, sha1, sha256, host, null);
 	addImageTask = new AddImageTask(imageDetails, 
                 progressMonitor, 
                 new StreamingAddDataSourceCallbacks(ingestStream), 
@@ -405,6 +415,7 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
         imagePath = null;
         timeZone = null;
         ignoreFatOrphanFiles = false;
+        host = null;
         configPanel.reset();
         setDataSourceOptionsCalled = false;
     }
@@ -428,7 +439,6 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
 
         try {
             // verify that the image has a file system that TSK can process
-            Case currentCase = Case.getCurrentCaseThrows();
             if (!DataSourceUtils.imageHasFileSystem(dataSourcePath)) {
                 // image does not have a file system that TSK can process
                 return 0;
@@ -521,6 +531,7 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
         this.sectorSize = 0;
         this.timeZone = Calendar.getInstance().getTimeZone().getID();
         this.ignoreFatOrphanFiles = ignoreFatOrphanFiles;
+        this.host = null;
         setDataSourceOptionsCalled = true;
     }
 

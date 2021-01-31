@@ -42,6 +42,8 @@ import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
+import org.sleuthkit.datamodel.Host;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * A local/logical files/logical evidence file(.lo1)/or directories data source
@@ -153,7 +155,17 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
      */
     @Override
     public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+        Host host = null;
         if (!setDataSourceOptionsCalled) {
+            
+            // HOSTTODO - set to value from config panel
+            try {
+                host = Case.getCurrentCase().getSleuthkitCase().getHostManager().getOrCreateHost("LocalFilesDSProcessor Host");
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Error creating/loading host", ex);
+                host = null;
+            }
+            
             localFilePaths = configPanel.getContentPaths();
             if (configPanel.subTypeIsLogicalEvidencePanel()) {
                 try {
@@ -171,7 +183,7 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
                 }
             }
         }
-        run(UUID.randomUUID().toString(), configPanel.getFileSetName(), localFilePaths, progressMonitor, callback);
+        run(UUID.randomUUID().toString(), configPanel.getFileSetName(), localFilePaths, host, progressMonitor, callback);
     }
 
     /**
@@ -284,6 +296,34 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
 
         return executablePath;
     }
+    
+    /**
+     * Adds a data source to the case database using a background task in a
+     * separate thread and the given settings instead of those provided by the
+     * selection and configuration panel. Returns as soon as the background task
+     * is started and uses the callback object to signal task completion and
+     * return results.
+     *
+     * @param deviceId                 An ASCII-printable identifier for the
+     *                                 device associated with the data source
+     *                                 that is intended to be unique across
+     *                                 multiple cases (e.g., a UUID).
+     * @param rootVirtualDirectoryName The name to give to the virtual directory
+     *                                 that will serve as the root for the
+     *                                 local/logical files and/or directories
+     *                                 that compose the data source. Pass the
+     *                                 empty string to get a default name of the
+     *                                 form: LogicalFileSet[N]
+     * @param localFilePaths           A list of local/logical file and/or
+     *                                 directory localFilePaths.
+     * @param host                     The host for this data source.
+     * @param progressMonitor          Progress monitor for reporting progress
+     *                                 during processing.
+     * @param callback                 Callback to call when processing is done.
+     */
+    void run(String deviceId, String rootVirtualDirectoryName, List<String> localFilePaths, Host host, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+        new Thread(new AddLocalFilesTask(deviceId, rootVirtualDirectoryName, localFilePaths, host, progressMonitor, callback)).start();
+    }
 
     /**
      * Adds a data source to the case database using a background task in a
@@ -309,7 +349,7 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
      * @param callback                 Callback to call when processing is done.
      */
     public void run(String deviceId, String rootVirtualDirectoryName, List<String> localFilePaths, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
-        new Thread(new AddLocalFilesTask(deviceId, rootVirtualDirectoryName, localFilePaths, progressMonitor, callback)).start();
+        run(deviceId, rootVirtualDirectoryName, localFilePaths, null, progressMonitor, callback);
     }
 
     /**

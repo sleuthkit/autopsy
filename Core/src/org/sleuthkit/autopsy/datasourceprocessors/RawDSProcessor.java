@@ -29,10 +29,13 @@ import javax.swing.filechooser.FileFilter;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.GeneralFilter;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
+import org.sleuthkit.datamodel.Host;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * A Raw data source processor that implements the DataSourceProcessor service
@@ -136,7 +139,17 @@ public class RawDSProcessor implements DataSourceProcessor, AutoIngestDataSource
     @Override
     public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         configPanel.storeSettings();
-        run(UUID.randomUUID().toString(), configPanel.getImageFilePath(), configPanel.getTimeZone(), configPanel.getChunkSize(), progressMonitor, callback);
+        
+        // HOSTTODO - replace with a call to configPanel().getHost()
+        Host host;
+        try {
+            host = Case.getCurrentCase().getSleuthkitCase().getHostManager().getOrCreateHost("RawDSProcessor Host");
+        } catch (TskCoreException ex) {
+            // It's not worth adding a logger for temporary code
+            //logger.log(Level.SEVERE, "Error creating/loading host", ex);
+            host = null;
+        }
+        run(UUID.randomUUID().toString(), configPanel.getImageFilePath(), configPanel.getTimeZone(), configPanel.getChunkSize(), host, progressMonitor, callback);
     }
 
     /**
@@ -157,12 +170,13 @@ public class RawDSProcessor implements DataSourceProcessor, AutoIngestDataSource
      * @param chunkSize            The maximum size of each chunk of the raw
      *                             data source as it is divided up into virtual
      *                             unallocated space files.
+     * @param host                 The host for this data source.
      * @param progressMonitor      Progress monitor for reporting progress
      *                             during processing.
      * @param callback             Callback to call when processing is done.
      */
-    private void run(String deviceId, String imageFilePath, String timeZone, long chunkSize, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
-        AddRawImageTask addImageTask = new AddRawImageTask(deviceId, imageFilePath, timeZone, chunkSize, progressMonitor, callback);
+    private void run(String deviceId, String imageFilePath, String timeZone, long chunkSize, Host host, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+        AddRawImageTask addImageTask = new AddRawImageTask(deviceId, imageFilePath, timeZone, chunkSize, host, progressMonitor, callback);
         new Thread(addImageTask).start();
     }
 
@@ -206,7 +220,7 @@ public class RawDSProcessor implements DataSourceProcessor, AutoIngestDataSource
 
     @Override
     public void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) {
-        run(deviceId, dataSourcePath.toString(), Calendar.getInstance().getTimeZone().getID(), DEFAULT_CHUNK_SIZE, progressMonitor, callBack);
+        run(deviceId, dataSourcePath.toString(), Calendar.getInstance().getTimeZone().getID(), DEFAULT_CHUNK_SIZE, null, progressMonitor, callBack);
     }
 
 }

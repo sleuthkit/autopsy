@@ -38,6 +38,8 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.coreutils.TimeStampUtils;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.Host;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * A Logical Imager data source processor that implements the
@@ -140,6 +142,16 @@ public final class LogicalImagerDSProcessor implements DataSourceProcessor {
     public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         configPanel.storeSettings();
 
+        // HOSTTODO - set to value from config panel
+        Host host;
+        try {
+            host = Case.getCurrentCase().getSleuthkitCase().getHostManager().getOrCreateHost("LogicalImagerDSProcessor Host");
+        } catch (TskCoreException ex) {
+            // It's not worth adding a logger for temporary code
+            //logger.log(Level.SEVERE, "Error creating/loading host", ex);
+            host = null;
+        }
+        
         Path imageDirPath = configPanel.getImageDirPath();
         List<String> errorList = new ArrayList<>();
         List<Content> emptyDataSources = new ArrayList<>();
@@ -187,7 +199,7 @@ public final class LogicalImagerDSProcessor implements DataSourceProcessor {
         try {
             String deviceId = UUID.randomUUID().toString();
             String timeZone = Calendar.getInstance().getTimeZone().getID();
-            run(deviceId, timeZone, src, dest,
+            run(deviceId, timeZone, src, dest, host,
                     progressMonitor, callback);
         } catch (NoCurrentCaseException ex) {
             String msg = Bundle.LogicalImagerDSProcessor_noCurrentCase();
@@ -211,15 +223,16 @@ public final class LogicalImagerDSProcessor implements DataSourceProcessor {
      *                        java.util.TimeZone.getID.
      * @param src             The source directory of image.
      * @param dest            The destination directory to copy the source.
+     * @param host            The host for this data source.
      * @param progressMonitor Progress monitor for reporting progress during
      *                        processing.
      * @param callback        Callback to call when processing is done.
      */
     private void run(String deviceId, String timeZone,
-            File src, File dest,
+            File src, File dest, Host host,
             DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback
     ) throws NoCurrentCaseException {
-        addLogicalImageTask = new AddLogicalImageTask(deviceId, timeZone, src, dest,
+        addLogicalImageTask = new AddLogicalImageTask(deviceId, timeZone, src, dest, host,
                 progressMonitor, callback);
         Thread thread = new Thread(addLogicalImageTask);
         thread.start();

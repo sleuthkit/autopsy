@@ -23,9 +23,12 @@ import java.util.List;
 import javax.swing.JPanel;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
+import org.sleuthkit.datamodel.Host;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * A memory image data source processor that implements the DataSourceProcessor
@@ -117,7 +120,17 @@ public class MemoryDSProcessor implements DataSourceProcessor {
     @Override
     public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         configPanel.storeSettings();
-        run(UUID.randomUUID().toString(), configPanel.getImageFilePath(), configPanel.getProfile(), configPanel.getPluginsToRun(), configPanel.getTimeZone(), progressMonitor, callback);
+        
+        // HOSTTODO - replace with a call to configPanel().getHost()
+        Host host;
+        try {
+            host = Case.getCurrentCase().getSleuthkitCase().getHostManager().getOrCreateHost("MemoryDSProcessor Host");
+        } catch (TskCoreException ex) {
+            // It's not worth adding a logger for temporary code
+            //logger.log(Level.SEVERE, "Error creating/loading host", ex);
+            host = null;
+        }
+        run(UUID.randomUUID().toString(), configPanel.getImageFilePath(), configPanel.getProfile(), configPanel.getPluginsToRun(), configPanel.getTimeZone(), host, progressMonitor, callback);
     }
 
     /**
@@ -136,12 +149,13 @@ public class MemoryDSProcessor implements DataSourceProcessor {
      * @param timeZone        The time zone to use when processing dates and
      *                        times for the image, obtained from
      *                        java.util.TimeZone.getID.
+     * @param host            The host for this data source (may be null)
      * @param progressMonitor Progress monitor for reporting progress during
      *                        processing.
      * @param callback        Callback to call when processing is done.
      */
-    private void run(String deviceId, String memoryImagePath, String profile, List<String> pluginsToRun, String timeZone, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
-        addImageTask = new AddMemoryImageTask(deviceId, memoryImagePath, profile, pluginsToRun, timeZone, progressMonitor, callback);
+    private void run(String deviceId, String memoryImagePath, String profile, List<String> pluginsToRun, String timeZone, Host host, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+        addImageTask = new AddMemoryImageTask(deviceId, memoryImagePath, profile, pluginsToRun, timeZone, host, progressMonitor, callback);
         new Thread(addImageTask).start();
     }
 

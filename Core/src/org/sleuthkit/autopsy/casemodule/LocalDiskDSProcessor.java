@@ -31,6 +31,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgress
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagewriter.ImageWriterSettings;
+import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitJNI;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -56,6 +57,7 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
     private String drivePath;
     private int sectorSize;
     private String timeZone;
+    private Host host;
     private ImageWriterSettings imageWriterSettings;
     private boolean ignoreFatOrphanFiles;
     private boolean setDataSourceOptionsCalled;
@@ -146,13 +148,21 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
             } else {
                 imageWriterSettings = null;
             }
+            
+            // HOSTTODO - set to value from config panel
+            try {
+                host = Case.getCurrentCase().getSleuthkitCase().getHostManager().getOrCreateHost("LocalDiskDSProcessor Host");
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Error creating/loading host", ex);
+                host = null;
+            }
         }
 
         Image image;
         try {
             image = SleuthkitJNI.addImageToDatabase(Case.getCurrentCase().getSleuthkitCase(),
                 new String[]{drivePath}, sectorSize,
-                timeZone, null, null, null, deviceId);
+                timeZone, null, null, null, deviceId, host);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error adding local disk with path " + drivePath + " to database", ex);
             final List<String> errors = new ArrayList<>();
@@ -162,7 +172,7 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
         }   
 
         addDiskTask = new AddImageTask(
-                new AddImageTask.ImageDetails(deviceId, image, sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, imageWriterSettings), 
+                new AddImageTask.ImageDetails(deviceId, image, sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, host, imageWriterSettings), 
                 progressMonitor,
                 new StreamingAddDataSourceCallbacks(new DefaultIngestStream()), 
                 new StreamingAddImageTaskCallback(new DefaultIngestStream(), callback));
@@ -230,7 +240,7 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
             return;
         } 
         
-	    addDiskTask = new AddImageTask(new AddImageTask.ImageDetails(deviceId, image, sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, imageWriterSettings), 
+	    addDiskTask = new AddImageTask(new AddImageTask.ImageDetails(deviceId, image, sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, null, imageWriterSettings), 
                 progressMonitor, 
                 new StreamingAddDataSourceCallbacks(new DefaultIngestStream()), 
                 new StreamingAddImageTaskCallback(new DefaultIngestStream(), callback));
