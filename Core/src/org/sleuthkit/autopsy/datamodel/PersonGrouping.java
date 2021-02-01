@@ -19,27 +19,32 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
-import org.apache.commons.lang3.StringUtils;
 
 /**
  * The data for a person and hosts grouped in this person.
  */
-public class PersonGrouping implements AutopsyVisitableItem, Comparator<PersonGrouping> {
+public class PersonGrouping implements AutopsyVisitableItem, Comparable<PersonGrouping> {
 
     // stub class until this goes into TSK datamodel.
     static class Person {
 
         private final String name;
+        private final long id;
 
-        public Person(String name) {
+        public Person(long id, String name) {
+            this.id = id;
             this.name = name;
         }
 
         public String getName() {
             return name;
+        }
+        
+        public long getId() {
+            return id;
         }
     }
 
@@ -77,19 +82,47 @@ public class PersonGrouping implements AutopsyVisitableItem, Comparator<PersonGr
     }
 
     @Override
-    public int compare(PersonGrouping a, PersonGrouping b) {
-        String personA = a == null || a.getPerson() == null ? null : a.getPerson().getName();
-        String personB = b == null || b.getPerson() == null ? null : b.getPerson().getName();
+    public int compareTo(PersonGrouping o) {
+        String thisPerson = this.getPerson() == null ? null : this.getPerson().getName();
+        String otherPerson = o == null || o.getPerson() == null ? null : o.getPerson().getName();
 
         // push unknown host to bottom
-        if (personA == null && personB == null) {
+        if (thisPerson == null && otherPerson == null) {
             return 0;
-        } else if (personA == null) {
+        } else if (thisPerson == null) {
             return 1;
-        } else if (personB == null) {
+        } else if (otherPerson == null) {
             return -1;
         }
 
-        return personA.compareToIgnoreCase(personB);
+        return thisPerson.compareToIgnoreCase(otherPerson);
+    }
+    
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        Long thisId = this.person == null ? null : this.person.getId();
+        hash = 97 * hash + Objects.hashCode(thisId);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final PersonGrouping other = (PersonGrouping) obj;
+        Long thisId = this.person == null ? null : this.person.getId();
+        Long otherId = other.person == null ? null : other.person.getId();
+        if (!Objects.equals(thisId, otherId)) {
+            return false;
+        }
+        return true;
     }
 }

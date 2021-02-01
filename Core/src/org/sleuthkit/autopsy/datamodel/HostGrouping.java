@@ -19,16 +19,15 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
-import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.datamodel.Host;
 
 /**
  * The data for a host and data sources grouped in this host.
  */
-public class HostGrouping implements AutopsyVisitableItem, Comparator<HostGrouping> {
+public class HostGrouping implements AutopsyVisitableItem, Comparable<HostGrouping> {
 
     private final Host host;
     private final Set<DataSourceGrouping> dataSources;
@@ -67,20 +66,47 @@ public class HostGrouping implements AutopsyVisitableItem, Comparator<HostGroupi
      * the person.
      */
     @Override
-    public int compare(HostGrouping a, HostGrouping b) {
-        String hostA = a == null || a.getHost() == null ? null : a.getHost().getName();
-        String hostB = b == null || b.getHost() == null ? null : b.getHost().getName();
+    public int compareTo(HostGrouping o) {
+        String thisHost = this.getHost() == null ? null : this.getHost().getName();
+        String otherHost = o == null || o.getHost() == null ? null : o.getHost().getName();
 
         // push unknown host to bottom
-        if (hostA == null && hostB == null) {
+        if (thisHost == null && otherHost == null) {
             return 0;
-        } else if (hostA == null) {
+        } else if (thisHost == null) {
             return 1;
-        } else if (hostB == null) {
+        } else if (otherHost == null) {
             return -1;
         }
 
-        return hostA.compareToIgnoreCase(hostB);
+        return thisHost.compareToIgnoreCase(otherHost);
     }
 
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        Long thisId = this.host == null ? null : this.host.getId();
+        hash = 97 * hash + Objects.hashCode(thisId);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final HostGrouping other = (HostGrouping) obj;
+        Long thisId = this.host == null ? null : this.host.getId();
+        Long otherId = other.host == null ? null : other.host.getId();
+        if (!Objects.equals(thisId, otherId)) {
+            return false;
+        }
+        return true;
+    }
 }
