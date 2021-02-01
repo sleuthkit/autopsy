@@ -273,19 +273,23 @@ class TestRunner(object):
 
         # Compare output with gold and display results
         TestResultsDiffer.run_diff(test_data)
-        print("Html report passed: ", test_data.html_report_passed)
+        # print("Html report passed: ", test_data.html_report_passed)
         print("Errors diff passed: ", test_data.errors_diff_passed)
         print("DB diff passed: ", test_data.db_diff_passed)
 
         # run time test only for the specific jenkins test
         if test_data.main_config.timing:
             print("Run time test passed: ", test_data.run_time_passed)
-            test_data.overall_passed = (test_data.html_report_passed and
-            test_data.errors_diff_passed and test_data.db_diff_passed)
+            # NOTE: commented out html version items
+            #test_data.overall_passed = (test_data.html_report_passed and
+            #test_data.errors_diff_passed and test_data.db_diff_passed)
+            test_data.overall_passed = (test_data.errors_diff_passed and test_data.db_diff_passed)
         # otherwise, do the usual
         else:
-            test_data.overall_passed = (test_data.html_report_passed and
-            test_data.errors_diff_passed and test_data.db_diff_passed)
+            # NOTE: commented out html version items
+            #test_data.overall_passed = (test_data.html_report_passed and
+            #test_data.errors_diff_passed and test_data.db_diff_passed)
+            test_data.overall_passed = (test_data.errors_diff_passed and test_data.db_diff_passed)
 
         Reports.generate_reports(test_data)
         if(not test_data.overall_passed):
@@ -1009,10 +1013,10 @@ class TestResultsDiffer(object):
             test_data.errors_diff_passed = passed
 
             # Compare html output
-            gold_report_path = test_data.get_html_report_path(DBType.GOLD)
-            output_report_path = test_data.get_html_report_path(DBType.OUTPUT)
-            passed = TestResultsDiffer._html_report_diff(test_data)
-            test_data.html_report_passed = passed
+            # gold_report_path = test_data.get_html_report_path(DBType.GOLD)
+            # output_report_path = test_data.get_html_report_path(DBType.OUTPUT)
+            # passed = TestResultsDiffer._html_report_diff(test_data)
+            # test_data.html_report_passed = passed
 
             # Compare time outputs
             if test_data.main_config.timing:
@@ -1070,51 +1074,51 @@ class TestResultsDiffer(object):
         else:
             return True
 
-    def _html_report_diff(test_data):
-        """Compare the output and gold html reports. Diff util is used for this purpose.
-        Diff -r -N -x <non-textual files> --ignore-matching-lines <regex> <folder-location-1> <folder-location-2>
-        is executed.
-        Diff is recursively used to scan through the HTML report directories. Modify the <regex> to suit the needs.
-        Currently, the regex is set to match certain lines found on index.html and summary.html, and skip (read ignore)
-        them.
-        Diff returns 0 when there is no difference, 1 when there is difference, and 2 when there is trouble (trouble not
-        defined in the official documentation).
-
-        Args:
-            test_data TestData object which contains initialized report_paths.
-
-        Returns:
-            true, if the reports match, false otherwise.
-        """
-        gold_report_path = test_data.get_html_report_path(DBType.GOLD)
-        output_report_path = test_data.get_html_report_path(DBType.OUTPUT)
-        try:
-            # Ensure gold is passed before output 
-            (subprocess.check_output(["diff", '-r', '-N', '-x', '*.png', '-x', '*.ico', '--ignore-matching-lines',
-                                      'HTML Report Generated on \|Autopsy Report for case \|Case:\|Case Number:'
-                                      '\|Examiner:\|Unalloc_', gold_report_path, output_report_path]))
-            print_report("", "REPORT COMPARISON", "The test html reports matched the gold reports")
-            return True
-        except subprocess.CalledProcessError as e:
-            if e.returncode == 1:
-                Errors.print_error("Error Code: 1\nThe HTML reports did not match.")
-                diff_file = codecs.open(test_data.output_path + "\HTML-Report-Diff.txt", "wb", "utf_8")
-                diff_file.write(str(e.output.decode("utf-8")))
-                return False
-            if e.returncode == 2:
-                Errors.print_error("Error Code: 2\nTrouble executing the Diff Utility.")
-                diff_file = codecs.open(test_data.output_path + "\HTML-Report-Diff.txt", "wb", "utf_8")
-                diff_file.write(str(e.output.decode("utf-8")))
-                return False
-        except OSError as e:
-            Errors.print_error("Error: OSError while performing html report diff")
-            Errors.print_error(str(e) + "\n")
-            return False
-        except Exception as e:
-            Errors.print_error("Error: Unknown fatal error comparing reports.")
-            Errors.print_error(str(e) + "\n")
-            logging.critical(traceback.format_exc())
-            return False
+    # def _html_report_diff(test_data):
+    #     """Compare the output and gold html reports. Diff util is used for this purpose.
+    #     Diff -r -N -x <non-textual files> --ignore-matching-lines <regex> <folder-location-1> <folder-location-2>
+    #     is executed.
+    #     Diff is recursively used to scan through the HTML report directories. Modify the <regex> to suit the needs.
+    #     Currently, the regex is set to match certain lines found on index.html and summary.html, and skip (read ignore)
+    #     them.
+    #     Diff returns 0 when there is no difference, 1 when there is difference, and 2 when there is trouble (trouble not
+    #     defined in the official documentation).
+    #
+    #     Args:
+    #         test_data TestData object which contains initialized report_paths.
+    #
+    #     Returns:
+    #         true, if the reports match, false otherwise.
+    #     """
+    #     gold_report_path = test_data.get_html_report_path(DBType.GOLD)
+    #     output_report_path = test_data.get_html_report_path(DBType.OUTPUT)
+    #     try:
+    #         # Ensure gold is passed before output
+    #         (subprocess.check_output(["diff", '-r', '-N', '-x', '*.png', '-x', '*.ico', '--ignore-matching-lines',
+    #                                   'HTML Report Generated on \|Autopsy Report for case \|Case:\|Case Number:'
+    #                                   '\|Examiner:\|Unalloc_', gold_report_path, output_report_path]))
+    #         print_report("", "REPORT COMPARISON", "The test html reports matched the gold reports")
+    #         return True
+    #     except subprocess.CalledProcessError as e:
+    #         if e.returncode == 1:
+    #             Errors.print_error("Error Code: 1\nThe HTML reports did not match.")
+    #             diff_file = codecs.open(test_data.output_path + "\HTML-Report-Diff.txt", "wb", "utf_8")
+    #             diff_file.write(str(e.output.decode("utf-8")))
+    #             return False
+    #         if e.returncode == 2:
+    #             Errors.print_error("Error Code: 2\nTrouble executing the Diff Utility.")
+    #             diff_file = codecs.open(test_data.output_path + "\HTML-Report-Diff.txt", "wb", "utf_8")
+    #             diff_file.write(str(e.output.decode("utf-8")))
+    #             return False
+    #     except OSError as e:
+    #         Errors.print_error("Error: OSError while performing html report diff")
+    #         Errors.print_error(str(e) + "\n")
+    #         return False
+    #     except Exception as e:
+    #         Errors.print_error("Error: Unknown fatal error comparing reports.")
+    #         Errors.print_error(str(e) + "\n")
+    #         logging.critical(traceback.format_exc())
+    #         return False
 
     def _run_time_diff(test_data, old_time_path):
         """ Compare run times for this run, and the run previous.
@@ -1371,7 +1375,7 @@ class Reports(object):
             vars.append( str(len(search_log_set("autopsy", "Stopping ingest due to low disk space on disk", test_data))) )
             vars.append( make_local_path("gold", test_data.image_name, DB_FILENAME) )
             vars.append( make_local_path("gold", test_data.image_name, "standard.html") )
-            vars.append( str(test_data.html_report_passed) )
+            # vars.append( str(test_data.html_report_passed) )
             vars.append( test_data.ant_to_string() )
             # Join it together with a ", "
             output = "|".join(vars)
