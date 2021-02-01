@@ -273,6 +273,7 @@ class TestRunner(object):
 
         # Compare output with gold and display results
         TestResultsDiffer.run_diff(test_data)
+        # NOTE: commented out html version items
         # print("Html report passed: ", test_data.html_report_passed)
         print("Errors diff passed: ", test_data.errors_diff_passed)
         print("DB diff passed: ", test_data.db_diff_passed)
@@ -1013,6 +1014,7 @@ class TestResultsDiffer(object):
             test_data.errors_diff_passed = passed
 
             # Compare html output
+            # NOTE: commented out html version items
             # gold_report_path = test_data.get_html_report_path(DBType.GOLD)
             # output_report_path = test_data.get_html_report_path(DBType.OUTPUT)
             # passed = TestResultsDiffer._html_report_diff(test_data)
@@ -1074,6 +1076,7 @@ class TestResultsDiffer(object):
         else:
             return True
 
+    # NOTE: commented out html version items
     # def _html_report_diff(test_data):
     #     """Compare the output and gold html reports. Diff util is used for this purpose.
     #     Diff -r -N -x <non-textual files> --ignore-matching-lines <regex> <folder-location-1> <folder-location-2>
@@ -1375,6 +1378,7 @@ class Reports(object):
             vars.append( str(len(search_log_set("autopsy", "Stopping ingest due to low disk space on disk", test_data))) )
             vars.append( make_local_path("gold", test_data.image_name, DB_FILENAME) )
             vars.append( make_local_path("gold", test_data.image_name, "standard.html") )
+            # NOTE: commented out html version items
             # vars.append( str(test_data.html_report_passed) )
             vars.append( test_data.ant_to_string() )
             # Join it together with a ", "
