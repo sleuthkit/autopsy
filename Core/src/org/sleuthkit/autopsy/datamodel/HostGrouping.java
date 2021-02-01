@@ -30,24 +30,14 @@ import org.sleuthkit.datamodel.Host;
 public class HostGrouping implements AutopsyVisitableItem, Comparable<HostGrouping> {
 
     private final Host host;
-    private final Set<DataSourceGrouping> dataSources;
 
     /**
      * Main constructor.
      *
      * @param host The host.
-     * @param dataSources The data sources to be displayed under this host.
      */
-    HostGrouping(Host host, Set<DataSourceGrouping> dataSources) {
+    HostGrouping(Host host) {
         this.host = host;
-        this.dataSources = (dataSources == null) ? Collections.emptySet() : Collections.unmodifiableSet(new HashSet<DataSourceGrouping>(dataSources));
-    }
-
-    /**
-     * @return The data sources to be displayed under this host.
-     */
-    Set<DataSourceGrouping> getDataSources() {
-        return this.dataSources;
     }
 
     /**

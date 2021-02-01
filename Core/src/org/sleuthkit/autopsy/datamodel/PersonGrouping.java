@@ -18,10 +18,7 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Objects;
-import java.util.Set;
 
 /**
  * The data for a person and hosts grouped in this person.
@@ -49,17 +46,14 @@ public class PersonGrouping implements AutopsyVisitableItem, Comparable<PersonGr
     }
 
     private final Person person;
-    private final Set<HostGrouping> hosts;
 
     /**
      * Main constructor.
      *
      * @param person The person object.
-     * @param hosts The hosts to display under this host.
      */
-    PersonGrouping(Person person, Set<HostGrouping> hosts) {
+    PersonGrouping(Person person) {
         this.person = person;
-        this.hosts = Collections.unmodifiableSet(new HashSet<>(hosts));
     }
 
     /**
@@ -67,13 +61,6 @@ public class PersonGrouping implements AutopsyVisitableItem, Comparable<PersonGr
      */
     Person getPerson() {
         return person;
-    }
-
-    /**
-     * @return The hosts to be displayed as children under this person.
-     */
-    Set<HostGrouping> getHosts() {
-        return hosts;
     }
 
     @Override

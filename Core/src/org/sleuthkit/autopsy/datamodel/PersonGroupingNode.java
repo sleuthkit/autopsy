@@ -33,6 +33,7 @@ import org.openide.util.lookup.Lookups;
  */
 @NbBundle.Messages(value = {"PersonNode_unknownHostNode_title=Unknown Persons"})
 class PersonGroupingNode extends DisplayableItemNode {
+    
 
     private static final String ICON_PATH = "org/sleuthkit/autopsy/images/person.png";
 
@@ -57,12 +58,9 @@ class PersonGroupingNode extends DisplayableItemNode {
      * Main constructor.
      *
      * @param personGroup The data for the person to be displayed.
+     * @param nodeChildren The starting children for this person grouping.
      */
-    PersonGroupingNode(PersonGrouping personGroup) {
-        this(personGroup, (personGroup != null) ? personGroup.getHosts() : null);
-    }
-
-    private PersonGroupingNode(PersonGrouping personGroup, Set<HostGrouping> nodeChildren) {
+    PersonGroupingNode(PersonGrouping personGroup, Set<HostGrouping> nodeChildren) {
         super(new RootContentChildren(getSortedFiltered(nodeChildren)), personGroup == null ? null : Lookups.singleton(personGroup));
 
         String safeName = (personGroup == null || personGroup.getPerson() == null || personGroup.getPerson().getName() == null)

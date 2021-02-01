@@ -18,12 +18,13 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
+import org.openide.nodes.ChildFactory;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 
@@ -33,7 +34,29 @@ import org.openide.util.lookup.Lookups;
  */
 @NbBundle.Messages(value = {"HostNode_unknownHostNode_title=Unknown Host"})
 class HostGroupingNode extends DisplayableItemNode {
+    private static class UpdatableChildren extends ChildFactory<DataSourceGrouping> {
+        private List<DataSourceGrouping> dataSources;
 
+        UpdatableChildren(List<DataSourceGrouping> dataSources) {
+            this.dataSources = new ArrayList<>(dataSources);
+        }
+        
+        void setDataSources(List<DataSourceGrouping> dataSources) {
+            this.dataSources = new ArrayList<>(dataSources);
+        }
+        
+        @Override
+        protected boolean createKeys(List<DataSourceGrouping> toPopulate) {
+            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        }
+
+        @Override
+        protected DataSourceGroupingNode createNodeForKey(DataSourceGrouping key) {
+            return key == null ? null : new DataSourceGroupingNode(key.getDataSource());
+        }
+    }
+    
+    
     private static final String ICON_PATH = "org/sleuthkit/autopsy/images/host.png";
 
     /**
@@ -42,29 +65,21 @@ class HostGroupingNode extends DisplayableItemNode {
      * @param dataSources The data source grouping data.
      * @return The data source groupings to be displayed.
      */
-    private static List<DataSourceGrouping> getSortedFiltered(Collection<DataSourceGrouping> dataSources) {
-        return (dataSources == null) ? Collections.emptyList()
-                : dataSources.stream()
-                        .filter(ds -> ds != null && ds.getDataSource() != null)
-                        .sorted((a, b) -> {
-                            String aStr = a.getDataSource().getName() == null ? "" : a.getDataSource().getName();
-                            String bStr = b.getDataSource().getName() == null ? "" : b.getDataSource().getName();
-                            return aStr.compareToIgnoreCase(bStr);
-                        })
-                        .collect(Collectors.toList());
-    }
+//    private static List<DataSourceGrouping> getSortedFiltered(Collection<DataSourceGrouping> dataSources) {
+//        return (dataSources == null) ? Collections.emptyList()
+//                : dataSources.stream()
+//                        .filter(ds -> ds != null && ds.getDataSource() != null)
+//                        .sorted((a, b) -> {
+//                            String aStr = a.getDataSource().getName() == null ? "" : a.getDataSource().getName();
+//                            String bStr = b.getDataSource().getName() == null ? "" : b.getDataSource().getName();
+//                            return aStr.compareToIgnoreCase(bStr);
+//                        })
+//                        .collect(Collectors.toList());
+//    }
 
     private final boolean isLeaf;
 
-    /**
-     * Main constructor.
-     *
-     * @param host The host grouping data.
-     */
-    HostGroupingNode(HostGrouping host) {
-        this(host, getSortedFiltered(host == null ? null : host.getDataSources()));
-    }
-
+    
     private HostGroupingNode(HostGrouping hostGroup, List<DataSourceGrouping> dataSources) {
         super(new RootContentChildren(dataSources), hostGroup == null ? null : Lookups.singleton(hostGroup));
 
