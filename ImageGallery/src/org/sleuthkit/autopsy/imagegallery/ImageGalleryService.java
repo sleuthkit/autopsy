@@ -44,20 +44,32 @@ import org.sleuthkit.datamodel.TskData;
 })
 public class ImageGalleryService implements AutopsyService {
 
-    private static final String CATEGORY_ONE_NAME = "Child Exploitation (Illegal)";
-    private static final String CATEGORY_TWO_NAME = "Child Exploitation (Non-Illegal/Age Difficult)";
-    private static final String CATEGORY_THREE_NAME = "CGI/Animation (Child Exploitive)";
-    private static final String CATEGORY_FOUR_NAME = "Exemplar/Comparison (Internal Use Only)";
-    private static final String CATEGORY_FIVE_NAME = "Non-pertinent";
-
-    private static final List<TagNameDefinition> DEFAULT_CATEGORY_DEFINITION = new ArrayList<>();
+    /* Image Gallery has its own definition of Project VIC tag names because 
+     * these will be used if the Project Vic module is not installed. These will
+     * get added when a case is opened if the tag set is not already defined. 
+     * 
+     * The following list of names must be kept in sync with the CountryManager
+     * code in the ProjectVic module.
+     * 
+     * Autopsy Core Tag code and TSK DataModel upgrade code also have a 
+     * references to the "Projet VIC" set name. Be careful changing any of these names.
+     */
+    static String PROJECT_VIC_TAG_SET_NAME = "Project VIC";
+    private static final String PV_US_CAT0 = "Non-Pertinent";
+    private static final String PV_US_CAT1 = "Child Abuse Material - (CAM)";
+    private static final String PV_US_CAT2 = "Child Exploitive (Non-CAM) Age Difficult";
+    private static final String PV_US_CAT3 = "CGI/Animation - Child Exploitive";
+    private static final String PV_US_CAT4 = "Comparison Images";
+    
+    private static final List<TagNameDefinition> PROJECT_VIC_US_CATEGORIES = new ArrayList<>();
 
     static {
-        DEFAULT_CATEGORY_DEFINITION.add(new TagNameDefinition(CATEGORY_ONE_NAME, "", TagName.HTML_COLOR.RED, TskData.FileKnown.BAD));
-        DEFAULT_CATEGORY_DEFINITION.add(new TagNameDefinition(CATEGORY_TWO_NAME, "", TagName.HTML_COLOR.LIME, TskData.FileKnown.BAD));
-        DEFAULT_CATEGORY_DEFINITION.add(new TagNameDefinition(CATEGORY_THREE_NAME, "", TagName.HTML_COLOR.YELLOW, TskData.FileKnown.BAD));
-        DEFAULT_CATEGORY_DEFINITION.add(new TagNameDefinition(CATEGORY_FOUR_NAME, "", TagName.HTML_COLOR.PURPLE, TskData.FileKnown.UNKNOWN));
-        DEFAULT_CATEGORY_DEFINITION.add(new TagNameDefinition(CATEGORY_FIVE_NAME, "", TagName.HTML_COLOR.FUCHSIA, TskData.FileKnown.UNKNOWN));
+        // NOTE: The colors here are what will be shown in the border
+        PROJECT_VIC_US_CATEGORIES.add(new TagNameDefinition(PV_US_CAT0, "", TagName.HTML_COLOR.GREEN, TskData.FileKnown.UNKNOWN));
+        PROJECT_VIC_US_CATEGORIES.add(new TagNameDefinition(PV_US_CAT1, "", TagName.HTML_COLOR.RED, TskData.FileKnown.BAD));
+        PROJECT_VIC_US_CATEGORIES.add(new TagNameDefinition(PV_US_CAT2, "", TagName.HTML_COLOR.YELLOW, TskData.FileKnown.BAD));
+        PROJECT_VIC_US_CATEGORIES.add(new TagNameDefinition(PV_US_CAT3, "", TagName.HTML_COLOR.FUCHSIA, TskData.FileKnown.BAD));
+        PROJECT_VIC_US_CATEGORIES.add(new TagNameDefinition(PV_US_CAT4, "", TagName.HTML_COLOR.BLUE, TskData.FileKnown.UNKNOWN));
     }
 
     @Override
@@ -91,17 +103,17 @@ public class ImageGalleryService implements AutopsyService {
 
             // Check to see if the Project VIC tag set exists, if not create a 
             // tag set using the default tags.
-            boolean addDefaultTagSet = true;
+            boolean addProjVicTagSet = true;
             List<TagSet> tagSets = context.getCase().getServices().getTagsManager().getAllTagSets();
             for (TagSet set : tagSets) {
-                if (set.getName().equals(ImageGalleryController.getCategoryTagSetName())) {
-                    addDefaultTagSet = false;
+                if (set.getName().equals(PROJECT_VIC_TAG_SET_NAME)) {
+                    addProjVicTagSet = false;
                     break;
                 }
             }
 
-            if (addDefaultTagSet) {
-                addDefaultTagSet(context.getCase());
+            if (addProjVicTagSet) {
+                addProjetVicTagSet(context.getCase());
             }
 
             ImageGalleryController.createController(context.getCase());
@@ -134,13 +146,11 @@ public class ImageGalleryService implements AutopsyService {
      *
      * @throws TskCoreException
      */
-    private void addDefaultTagSet(Case currentCase) throws TskCoreException {
+    private void addProjetVicTagSet(Case currentCase) throws TskCoreException {
         List<TagName> tagNames = new ArrayList<>();
-        for (TagNameDefinition def : DEFAULT_CATEGORY_DEFINITION) {
+        for (TagNameDefinition def : PROJECT_VIC_US_CATEGORIES) {
             tagNames.add(currentCase.getSleuthkitCase().addOrUpdateTagName(def.getDisplayName(), def.getDescription(), def.getColor(), def.getKnownStatus()));
         }
-
-        currentCase.getServices().getTagsManager().addTagSet(ImageGalleryController.getCategoryTagSetName(), tagNames);
+        currentCase.getServices().getTagsManager().addTagSet(PROJECT_VIC_TAG_SET_NAME, tagNames);
     }
-
 }
