@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2019-2020 Basis Technology Corp.
+ * Copyright 2019-2021 Basis Technology Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -649,7 +649,7 @@ final class ExtractEdge extends Extract {
         String url = flipDomain(domain);
 
         BlackboardArtifact bbart = origFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE);
-        bbart.addAttributes(createCookieAttributes(url, ftime, name, value, this.getName(), NetworkUtils.extractDomain(url)));
+        bbart.addAttributes(createCookieAttributes(url, null, ftime, null, name, value, this.getName(), NetworkUtils.extractDomain(url)));
         return bbart;
     }
 
