@@ -31,6 +31,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.ConnectException;
+import java.net.DatagramSocket;
 import java.net.ServerSocket;
 import java.net.SocketException;
 import java.nio.charset.Charset;
@@ -767,6 +768,23 @@ public class Server {
      * @param port the port to check for availability
      */
     static boolean isPortAvailable(int port) {
+        final String osName = PlatformUtil.getOSName().toLowerCase();
+        if (osName != null && osName.toLowerCase().startsWith("mac")) {
+            return isPortAvailableOSX(port);
+        } else {
+            return isPortAvailableDefault(port);
+        }
+    }
+
+    /**
+     * Checks to see if a specific port is available.
+     *
+     * NOTE: This is used on non-OS X systems as of right now but could be
+     * replaced with the OS X version.
+     *
+     * @param port the port to check for availability
+     */
+    static boolean isPortAvailableDefault(int port) {
         ServerSocket ss = null;
         try {
 
@@ -791,6 +809,48 @@ public class Server {
         }
         return false;
     }
+
+    /**
+     * Checks to see if a specific port is available.
+     *
+     * NOTE: This is only used on OSX for now, but could replace default 
+     * implementation in the future.
+     * 
+     * @param port The port to check for availability.
+     * @throws IllegalArgumentException If port is outside range of possible ports.
+     */
+    static boolean isPortAvailableOSX(int port) {
+        // implementation taken from https://stackoverflow.com/a/435579
+        if (port < 1 || port > 65535) {
+            throw new IllegalArgumentException("Invalid start port: " + port);
+        }
+
+        ServerSocket ss = null;
+        DatagramSocket ds = null;
+        try {
+            ss = new ServerSocket(port);
+            ss.setReuseAddress(true);
+            ds = new DatagramSocket(port);
+            ds.setReuseAddress(true);
+            return true;
+        } catch (IOException e) {
+        } finally {
+            if (ds != null) {
+                ds.close();
+            }
+
+            if (ss != null) {
+                try {
+                    ss.close();
+                } catch (IOException e) {
+                    /* should not be thrown */
+                }
+            }
+        }
+
+        return false;
+    }
+
 
     /**
      * Changes the current solr server port. Only call this after available.
