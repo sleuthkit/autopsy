@@ -239,11 +239,12 @@ public class XRYDataSourceProcessor implements DataSourceProcessor, AutoIngestDa
      * 
      * @param deviceId
      * @param dataSourcePath
+     * @param host
      * @param progressMonitor
      * @param callBack
      */
     @Override
-    public void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) {
+    public void process(String deviceId, Path dataSourcePath, Host host, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) {
         progressMonitor.setIndeterminate(true);
 
         try {
@@ -251,7 +252,7 @@ public class XRYDataSourceProcessor implements DataSourceProcessor, AutoIngestDa
             Case currentCase = Case.getCurrentCaseThrows();
             //Move heavy lifting to a background task.
             swingWorker = new XRYReportProcessorSwingWorker(xryFolder, progressMonitor,
-                    callBack, currentCase, deviceId, null);
+                    callBack, currentCase, deviceId, host);
             swingWorker.execute();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.WARNING, "[XRY DSP] No case is currently open.", ex);
