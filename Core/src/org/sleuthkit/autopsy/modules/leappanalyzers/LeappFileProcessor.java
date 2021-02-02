@@ -59,8 +59,10 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import static org.sleuthkit.autopsy.casemodule.Case.getCurrentCase;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
 import org.sleuthkit.autopsy.ingest.IngestModule.ProcessResult;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -372,6 +374,11 @@ public final class LeappFileProcessor {
                 logger.log(Level.WARNING, String.format("No column mapping found for %s in file %s.  Omitting column.", colAttr.getColumnName(), fileName));
                 continue;
             }
+            
+            if (colAttr.getAttributeType().getTypeName().equals("TSK_DOMAIN")) {
+                    logger.log(Level.INFO, "Domain Attribute");
+            }
+            //formatValueBasedOnAttr(value)
 
             String value = (columnIdx >= lineValues.size() || columnIdx < 0) ? null : lineValues.get(columnIdx);
             if (value == null) {
@@ -379,7 +386,9 @@ public final class LeappFileProcessor {
                 return Collections.emptyList();
             }
 
-            BlackboardAttribute attr = (value == null) ? null : getAttribute(colAttr.getAttributeType(), value, fileName);
+            String formattedValue = formatValueBasedOnAttrType(colAttr, value);
+            
+            BlackboardAttribute attr = (value == null) ? null : getAttribute(colAttr.getAttributeType(), formattedValue, fileName);
             if (attr == null) {
                 logger.log(Level.WARNING, String.format("Blackboard attribute could not be parsed column %s at line %d in file %s.  Omitting row.", colAttr.getColumnName(), lineNum, fileName));
                 return Collections.emptyList();
@@ -392,6 +401,21 @@ public final class LeappFileProcessor {
         }
 
         return attrsToRet;
+    }
+    
+    /**
+     * Check type of attribute and possibly format string based on it.
+     * 
+     * @param colAttr Column Attribute information
+     * @param value string to be formatted
+     * @return formatted string based on attribute type if no attribute type found then return original string 
+     */
+    private String formatValueBasedOnAttrType(TsvColumn colAttr, String value) {
+        if (colAttr.getAttributeType().getTypeName().equals("TSK_DOMAIN")) {
+            return NetworkUtils.extractDomain(value);
+        }
+        
+        return value;
     }
 
     /**
