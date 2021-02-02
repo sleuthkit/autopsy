@@ -25,6 +25,7 @@ import java.beans.PropertyChangeListener;
 import java.util.Map;
 import java.util.logging.Level;
 import javafx.application.Platform;
+import javafx.concurrent.Task;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckBox;
@@ -62,8 +63,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.imagegallery.OpenAction")
 @ActionReferences(value = {
-    @ActionReference(path = "Menu/Tools", position = 101)
-    ,
+    @ActionReference(path = "Menu/Tools", position = 101),
     @ActionReference(path = "Toolbars/Case", position = 101)})
 @ActionRegistration(displayName = "#CTL_OpenAction", lazy = false)
 @Messages({"CTL_OpenAction=Images/Videos",
@@ -143,61 +143,24 @@ public final class OpenAction extends CallableSystemAction {
         + "If your computer is analyzing a data source, then you will get real-time Image Gallery updates as files are analyzed (hashed, EXIF, etc.). This is the same behavior as a single-user case.\n\n"
         + "If another computer in your multi-user cluster is analyzing a data source, you will get updates about files on that data source only when you launch Image Gallery, which will cause the local database to be rebuilt based on results from other nodes.",
         "OpenAction.multiUserDialog.checkBox.text=Don't show this message again.",
-        "OpenAction.noControllerDialog.header=Cannot open Image Gallery",        
+        "OpenAction.noControllerDialog.header=Cannot open Image Gallery",
         "OpenAction.noControllerDialog.text=An initialization error ocurred.\nPlease see the log for details.",
+        "OpenAction.checking.dialog.txt=Checking Image Gallery database status...",
+        "OpenAction.checking.dialog.title=Checking"
     })
     public void performAction() {
-        //check case
-        final Case currentCase;
-        try {
-            currentCase = Case.getCurrentCaseThrows();
-        } catch (NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "No current case", ex);
-            return;
-        }
         Platform.runLater(() -> {
-            ImageGalleryController controller;
-            controller = ImageGalleryController.getController(currentCase);
-            if (controller == null) {
-                Alert errorDIalog = new Alert(Alert.AlertType.ERROR);
-                errorDIalog.initModality(Modality.APPLICATION_MODAL);
-                errorDIalog.setResizable(true);
-                errorDIalog.setTitle(Bundle.OpenAction_dialogTitle());
-                errorDIalog.setHeaderText(Bundle.OpenAction_noControllerDialog_header());
-                Label errorLabel = new Label(Bundle.OpenAction_noControllerDialog_text());
-                errorLabel.setMaxWidth(450);
-                errorLabel.setWrapText(true);
-                errorDIalog.getDialogPane().setContent(new VBox(10, errorLabel));
-                GuiUtils.setDialogIcons(errorDIalog);
-                errorDIalog.showAndWait();
-                logger.log(Level.SEVERE, "No Image Gallery controller for the current case");  
-                return;
-            }
+            Alert checkingDialog = new Alert(Alert.AlertType.INFORMATION);
+            checkingDialog.initModality(Modality.APPLICATION_MODAL);
+            checkingDialog.setResizable(true);
+            checkingDialog.setTitle(Bundle.OpenAction_checking_dialog_title());
+            checkingDialog.setHeaderText(Bundle.OpenAction_checking_dialog_txt());
+            checkingDialog.show();
 
-            if (currentCase.getCaseType() == Case.CaseType.MULTI_USER_CASE
-                    && ImageGalleryPreferences.isMultiUserCaseInfoDialogDisabled() == false) {
-                Alert dialog = new Alert(Alert.AlertType.INFORMATION);
-                dialog.initModality(Modality.APPLICATION_MODAL);
-                dialog.setResizable(true);
-                dialog.setTitle(Bundle.OpenAction_dialogTitle());
-                dialog.setHeaderText(Bundle.OpenAction_multiUserDialog_Header());
-
-                Label label = new Label(Bundle.OpenAction_multiUserDialog_ContentText());
-                label.setMaxWidth(450);
-                label.setWrapText(true);
-                CheckBox dontShowAgainCheckBox = new CheckBox(Bundle.OpenAction_multiUserDialog_checkBox_text());
-                dialog.getDialogPane().setContent(new VBox(10, label, dontShowAgainCheckBox));
-                GuiUtils.setDialogIcons(dialog);
-
-                dialog.showAndWait();
-
-                if (dialog.getResult() == ButtonType.OK && dontShowAgainCheckBox.isSelected()) {
-                    ImageGalleryPreferences.setMultiUserCaseInfoDialogDisabled(true);
-                }
-            }
-
-            checkDBStale(controller);
+            Thread thread = new Thread(new OpenTask(checkingDialog));
+            thread.start();
         });
+
     }
 
     private void checkDBStale(ImageGalleryController controller) {
@@ -295,7 +258,7 @@ public final class OpenAction extends CallableSystemAction {
     }
 
     @Messages({"OpenAction.openTopComponent.error.message=An error occurred while attempting to open Image Gallery.",
-               "OpenAction.openTopComponent.error.title=Failed to open Image Gallery"})
+        "OpenAction.openTopComponent.error.title=Failed to open Image Gallery"})
     private void openTopComponent() {
         SwingUtilities.invokeLater(() -> {
             try {
@@ -320,5 +283,71 @@ public final class OpenAction extends CallableSystemAction {
     @Override
     public boolean asynchronous() {
         return true; // run off edt
+    }
+
+    private final class OpenTask extends Task<Void> {
+        private final Alert checkingDialog;
+
+        OpenTask(Alert dialog) {
+            checkingDialog = dialog;
+        }
+
+        @Override
+        protected Void call() throws Exception {
+            final Case currentCase;
+            try {
+                currentCase = Case.getCurrentCaseThrows();
+            } catch (NoCurrentCaseException ex) {
+                logger.log(Level.SEVERE, "No current case", ex);
+                return null;
+            }
+
+            final ImageGalleryController controller;
+            controller = ImageGalleryController.getController(currentCase);
+
+            Platform.runLater(() -> {
+                checkingDialog.close();
+                if (controller == null) {
+                    Alert errorDIalog = new Alert(Alert.AlertType.ERROR);
+                    errorDIalog.initModality(Modality.APPLICATION_MODAL);
+                    errorDIalog.setResizable(true);
+                    errorDIalog.setTitle(Bundle.OpenAction_dialogTitle());
+                    errorDIalog.setHeaderText(Bundle.OpenAction_noControllerDialog_header());
+                    Label errorLabel = new Label(Bundle.OpenAction_noControllerDialog_text());
+                    errorLabel.setMaxWidth(450);
+                    errorLabel.setWrapText(true);
+                    errorDIalog.getDialogPane().setContent(new VBox(10, errorLabel));
+                    GuiUtils.setDialogIcons(errorDIalog);
+                    errorDIalog.showAndWait();
+                    logger.log(Level.SEVERE, "No Image Gallery controller for the current case");
+                    return;
+                }
+
+                if (currentCase.getCaseType() == Case.CaseType.MULTI_USER_CASE
+                        && ImageGalleryPreferences.isMultiUserCaseInfoDialogDisabled() == false) {
+                    Alert dialog = new Alert(Alert.AlertType.INFORMATION);
+                    dialog.initModality(Modality.APPLICATION_MODAL);
+                    dialog.setResizable(true);
+                    dialog.setTitle(Bundle.OpenAction_dialogTitle());
+                    dialog.setHeaderText(Bundle.OpenAction_multiUserDialog_Header());
+
+                    Label label = new Label(Bundle.OpenAction_multiUserDialog_ContentText());
+                    label.setMaxWidth(450);
+                    label.setWrapText(true);
+                    CheckBox dontShowAgainCheckBox = new CheckBox(Bundle.OpenAction_multiUserDialog_checkBox_text());
+                    dialog.getDialogPane().setContent(new VBox(10, label, dontShowAgainCheckBox));
+                    GuiUtils.setDialogIcons(dialog);
+
+                    dialog.showAndWait();
+
+                    if (dialog.getResult() == ButtonType.OK && dontShowAgainCheckBox.isSelected()) {
+                        ImageGalleryPreferences.setMultiUserCaseInfoDialogDisabled(true);
+                    }
+                }
+
+                checkDBStale(controller);
+            });
+            return null;
+        }
     }
 }
