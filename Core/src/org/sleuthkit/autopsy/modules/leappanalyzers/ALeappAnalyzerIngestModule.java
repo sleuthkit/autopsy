@@ -65,6 +65,7 @@ public class ALeappAnalyzerIngestModule implements DataSourceIngestModule {
 
     private static final Logger logger = Logger.getLogger(ALeappAnalyzerIngestModule.class.getName());
     private static final String MODULE_NAME = ALeappAnalyzerModuleFactory.getModuleName();
+    private final IngestServices services = IngestServices.getInstance();
 
     private static final String ALEAPP = "aLeapp"; //NON-NLS
     private static final String ALEAPP_FS = "fs_"; //NON-NLS
@@ -122,6 +123,15 @@ public class ALeappAnalyzerIngestModule implements DataSourceIngestModule {
         "ALeappAnalyzerIngestModule.report.name=aLeapp Html Report"})
     @Override
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress statusHelper) {
+
+        if (false == PlatformUtil.is64BitOS()) {
+            IngestMessage ingestMessage = IngestMessage.createErrorMessage(ALeappAnalyzerModuleFactory.getModuleName(), 
+                                          NbBundle.getMessage(this.getClass(), "AleappAnalyzerIngestModule.not.64.bit.os"),
+                                          NbBundle.getMessage(this.getClass(), "AleappAnalyzerIngestModule.not.64.bit.os"));
+            services.postMessage(ingestMessage);
+            logger.log(Level.INFO, "aLeapp will not run on 32bit operating system");
+            return ProcessResult.OK;
+        }
 
         Case currentCase = Case.getCurrentCase();
         Path tempOutputPath = Paths.get(currentCase.getTempDirectory(), ALEAPP, ALEAPP_FS + dataSource.getId());
