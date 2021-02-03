@@ -839,8 +839,11 @@ public final class ImageGalleryController {
                             Content newDataSource = (Content) event.getNewValue();
                             if (isListeningEnabled()) {
                                 try {
-                                    drawableDB.insertOrUpdateDataSource(newDataSource.getId(), DrawableDB.DrawableDbBuildStatusEnum.UNKNOWN);
-                                } catch (SQLException ex) {
+                                    // status of UNKNOWN from getDataSourceDbBuildStatus means that the data source is not known
+                                    if(drawableDB.getDataSourceDbBuildStatus(newDataSource.getId()) == DrawableDB.DrawableDbBuildStatusEnum.UNKNOWN) {
+                                        drawableDB.insertOrUpdateDataSource(newDataSource.getId(), DrawableDB.DrawableDbBuildStatusEnum.UNKNOWN);
+                                    }
+                                } catch (SQLException | TskCoreException ex) {
                                     logger.log(Level.SEVERE, String.format("Error updating datasources table (data source object ID = %d, status = %s)", newDataSource.getId(), DrawableDB.DrawableDbBuildStatusEnum.UNKNOWN.toString()), ex); //NON-NLS
                                 }
                             }
