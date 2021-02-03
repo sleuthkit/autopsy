@@ -18,10 +18,12 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import com.google.common.eventbus.EventBus;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -38,7 +40,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CasePreferences;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.PersonGrouping.Person;
+import org.sleuthkit.autopsy.datamodel.PersonGroupingNode.Person;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.HostManager;
@@ -53,6 +55,11 @@ import org.sleuthkit.datamodel.TskCoreException;
 public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Object> {
 
     private static final Logger logger = Logger.getLogger(AutopsyTreeChildFactory.class.getName());
+
+    private EventBus personUpdates = null;
+    private EventBus hostUpdates = null;
+    private Map<Long, Set<DataSource>> hostChildren = null;
+    private Map<Long, Set<Host>> personChildren = null;
 
     /**
      * Listener for handling DATA_SOURCE_ADDED events.
@@ -72,12 +79,20 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
     protected void addNotify() {
         super.addNotify();
         Case.addEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED), pcl);
+        personUpdates = new EventBus();
+        hostUpdates = new EventBus();
+        hostChildren = null;
+        personChildren = null;
     }
 
     @Override
     protected void removeNotify() {
         super.removeNotify();
         Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED), pcl);
+        personUpdates = null;
+        hostUpdates = null;
+        hostChildren = null;
+        personChildren = null;
     }
 
     /**
@@ -90,9 +105,27 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
     protected boolean createKeys(List<Object> list) {
         try {
             SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-
             if (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) {
-                list.addAll(getNodes(getTree(tskCase)));
+                OwnerHostTree ownerHosts = getTree(tskCase);
+                hostChildren = ownerHosts.getHosts().entrySet().stream()
+                        .collect(Collectors.toMap(
+                                kv -> kv.getKey() == null ? null : kv.getKey().getId(),
+                                kv -> kv.getValue(),
+                                (kv1, kv2) -> {
+                                    kv1.addAll(kv2);
+                                    return kv1;
+                                }));
+
+                personChildren = ownerHosts.getPersons().entrySet().stream()
+                        .collect(Collectors.toMap(
+                                kv -> kv.getKey() == null ? null : kv.getKey().getId(),
+                                kv -> kv.getValue(),
+                                (kv1, kv2) -> {
+                                    kv1.addAll(kv2);
+                                    return kv1;
+                                }));
+                
+                list.addAll(getNodes(ownerHosts));
                 list.add(new Reports());
             } else {
                 List<AutopsyVisitableItem> keys = new ArrayList<>(Arrays.asList(
@@ -126,6 +159,22 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
             return ((SleuthkitVisitableItem) key).accept(new CreateSleuthkitNodeVisitor());
         } else if (key instanceof AutopsyVisitableItem) {
             return ((AutopsyVisitableItem) key).accept(new RootContentChildren.CreateAutopsyNodeVisitor());
+        } else if (key instanceof Host) {
+            HostGroupingNode host = new HostGroupingNode((Host) key);
+
+            if (hostUpdates != null) {
+                hostUpdates.register(host);
+            }
+
+            return host;
+        } else if (key instanceof Person) {
+            PersonGroupingNode person = new PersonGroupingNode((Person) key);
+
+            if (personUpdates != null) {
+                personUpdates.register(person);
+            }
+
+            return person;
         } else {
             logger.log(Level.SEVERE, "Unknown key type ", key.getClass().getName());
             return null;
@@ -137,43 +186,13 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
      */
     public void refreshChildren() {
         refresh(true);
-
-    }
-
-    /**
-     * Creates a set of DataSourceGrouping objects from a set of data sources.
-     *
-     * @param dataSources The data sources to convert to a list.
-     * @return The data source groupings determined from the data sources.
-     */
-    private Set<DataSourceGrouping> getDataSources(final Set<DataSource> dataSources) {
-        if (dataSources == null) {
-            return Collections.emptySet();
+        if (hostChildren != null && hostUpdates != null) {
+            hostUpdates.post(hostChildren);
         }
-
-        return dataSources.stream()
-                .map(d -> new DataSourceGrouping(d))
-                .collect(Collectors.toSet());
-    }
-
-    /**
-     * Creates a set of HostGrouping objects from a set of hosts.
-     *
-     * @param hosts The hosts.
-     * @param hostDataSources The mapping of hosts to data sources that belong
-     * to those hosts.
-     * @return The generated host groupings.
-     */
-    private Set<HostGrouping> getHostGroupings(final Set<Host> hosts, final Map<Host, Set<DataSource>> hostDataSources) {
-        if (hosts == null) {
-            return Collections.emptySet();
+        
+        if (personUpdates != null && personChildren != null) {
+            personUpdates.post(personChildren);
         }
-
-        final Map<Host, Set<DataSource>> dataSources = hostDataSources == null ? Collections.emptyMap() : hostDataSources;
-
-        return hosts.stream()
-                .map(h -> new HostGrouping(h, getDataSources(dataSources.get(h))))
-                .collect(Collectors.toSet());
     }
 
     /**
@@ -182,7 +201,7 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
      * @param tree The tree of model items (TSK Persons, Hosts and DataSources).
      * @return The nodes to be displayed in the tree.
      */
-    private List<? extends AutopsyVisitableItem> getNodes(OwnerHostTree tree) {
+    private Collection<? extends Object> getNodes(OwnerHostTree tree) {
         if (tree == null) {
             return Collections.emptyList();
         }
@@ -192,14 +211,9 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
 
         // if no person nodes except unknown, then show host levels
         if (persons.isEmpty() || (persons.size() == 1 && persons.containsKey(null))) {
-            return getHostGroupings(hosts.keySet(), hosts).stream()
-                    .sorted()
-                    .collect(Collectors.toList());
+            return hosts.keySet();
         } else {
-            return persons.entrySet().stream()
-                    .map((personKeyVal) -> new PersonGrouping(personKeyVal.getKey(), getHostGroupings(personKeyVal.getValue(), hosts)))
-                    .sorted()
-                    .collect(Collectors.toList());
+            return persons.keySet();
         }
     }
 

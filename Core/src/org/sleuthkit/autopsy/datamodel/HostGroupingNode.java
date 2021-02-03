@@ -18,15 +18,18 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
+import com.google.common.eventbus.Subscribe;
+import java.util.HashSet;
 import java.util.List;
-import java.util.stream.Collectors;
-import org.apache.commons.collections.CollectionUtils;
+import java.util.Map;
+import java.util.Set;
+
 import org.openide.nodes.ChildFactory;
+import org.openide.nodes.Children;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
+import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.Host;
 
 /**
  * A node to be displayed in the UI tree for a host and data sources grouped in
@@ -34,31 +37,36 @@ import org.openide.util.lookup.Lookups;
  */
 @NbBundle.Messages(value = {"HostNode_unknownHostNode_title=Unknown Host"})
 class HostGroupingNode extends DisplayableItemNode {
-    private static class UpdatableChildren extends ChildFactory<DataSourceGrouping> {
-        private List<DataSourceGrouping> dataSources;
 
-        UpdatableChildren(List<DataSourceGrouping> dataSources) {
-            this.dataSources = new ArrayList<>(dataSources);
-        }
-        
-        void setDataSources(List<DataSourceGrouping> dataSources) {
-            this.dataSources = new ArrayList<>(dataSources);
-        }
-        
+    private static class HostChildren extends ChildFactory<DataSource> {
+
+        private final Set<DataSource> dataSources = new HashSet<>();
+
         @Override
-        protected boolean createKeys(List<DataSourceGrouping> toPopulate) {
-            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        protected boolean createKeys(List<DataSource> toPopulate) {
+            toPopulate.addAll(dataSources);
+            return true;
         }
 
         @Override
-        protected DataSourceGroupingNode createNodeForKey(DataSourceGrouping key) {
-            return key == null ? null : new DataSourceGroupingNode(key.getDataSource());
+        protected DataSourceGroupingNode createNodeForKey(DataSource key) {
+            return key == null ? null : new DataSourceGroupingNode(key);
+        }
+
+        private void refresh(Set<DataSource> newDataSources) {
+            dataSources.clear();
+            if (newDataSources != null) {
+                dataSources.addAll(newDataSources);
+            }
+            super.refresh(true);
         }
     }
-    
-    
+
     private static final String ICON_PATH = "org/sleuthkit/autopsy/images/host.png";
 
+    private final Host host;
+    private final HostChildren hostChildren;
+    
     /**
      * Filters and sorts data source groupings to be displayed in the tree.
      *
@@ -76,31 +84,34 @@ class HostGroupingNode extends DisplayableItemNode {
 //                        })
 //                        .collect(Collectors.toList());
 //    }
-
-    private final boolean isLeaf;
-
+    HostGroupingNode(Host host) {
+        this(host, new HostChildren());
+    }
     
-    private HostGroupingNode(HostGrouping hostGroup, List<DataSourceGrouping> dataSources) {
-        super(new RootContentChildren(dataSources), hostGroup == null ? null : Lookups.singleton(hostGroup));
+    private HostGroupingNode(Host host, HostChildren hostChildren) {
+        super(Children.create(hostChildren, false), host == null ? null : Lookups.singleton(host));
 
-        String safeName = (hostGroup == null || hostGroup.getHost() == null || hostGroup.getHost().getName() == null)
+        String safeName = (host == null || host.getName() == null)
                 ? Bundle.HostNode_unknownHostNode_title()
-                : hostGroup.getHost().getName();
+                : host.getName();
 
         super.setName(safeName);
         super.setDisplayName(safeName);
         this.setIconBaseWithExtension(ICON_PATH);
-        this.isLeaf = CollectionUtils.isEmpty(dataSources);
+        this.host = host;
+        this.hostChildren = hostChildren;
+    }
+    
+    @Subscribe
+    void update(Map<Long, Set<DataSource>> hostDataSourceMapping) {
+        Long id = this.host == null ? null : host.getId();
+        Set<DataSource> dataSources = hostDataSourceMapping == null ? null : hostDataSourceMapping.get(id);
+        this.hostChildren.refresh(dataSources);
     }
 
     @Override
     public boolean isLeafTypeNode() {
-        return isLeaf;
-    }
-
-    @Override
-    public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
-        return visitor.visit(this);
+        return false;
     }
 
     @Override
@@ -108,4 +119,8 @@ class HostGroupingNode extends DisplayableItemNode {
         return getClass().getName();
     }
 
+    @Override
+    public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
+        return visitor.visit(this);
+    }
 }

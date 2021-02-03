@@ -75,13 +75,9 @@ public interface AutopsyItemVisitor<T> {
 
     T visit(FileTypesByMimeType aThis);
 
-    T visit(HostGrouping aThis);
-
-    T visit(PersonGrouping aThis);
-
 
     static abstract public class Default<T> implements AutopsyItemVisitor<T> {
-        
+
         protected abstract T defaultVisit(AutopsyVisitableItem ec);
 
         @Override
@@ -204,16 +200,5 @@ public interface AutopsyItemVisitor<T> {
         public T visit(Accounts accountsItem) {
             return defaultVisit(accountsItem);
         }
-        
-        @Override
-        public T visit(PersonGrouping ownerItem) {
-            return defaultVisit(ownerItem);
-        };
-
-        @Override
-        public T visit(HostGrouping hostItem) {
-            return defaultVisit(hostItem);
-        }
-
     }
 }

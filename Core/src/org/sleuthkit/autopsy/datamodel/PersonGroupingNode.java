@@ -18,14 +18,16 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import java.util.Collection;
-import java.util.Collections;
+import com.google.common.eventbus.Subscribe;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
-import org.apache.commons.collections.CollectionUtils;
+import org.openide.nodes.ChildFactory;
+import org.openide.nodes.Children;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
+import org.sleuthkit.datamodel.Host;
 
 /**
  * A node to be displayed in the UI tree for a person and persons grouped in
@@ -34,53 +36,99 @@ import org.openide.util.lookup.Lookups;
 @NbBundle.Messages(value = {"PersonNode_unknownHostNode_title=Unknown Persons"})
 class PersonGroupingNode extends DisplayableItemNode {
     
+    // stub class until this goes into TSK datamodel.
+    static class Person {
+
+        private final String name;
+        private final long id;
+
+        public Person(long id, String name) {
+            this.id = id;
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
+        }
+        
+        public long getId() {
+            return id;
+        }
+    }
+    
+    
+    private static class PersonChildren extends ChildFactory<Host> {
+
+        private final Set<Host> hosts = new HashSet<>();
+
+        @Override
+        protected boolean createKeys(List<Host> toPopulate) {
+            toPopulate.addAll(hosts);
+            return true;
+        }
+
+        @Override
+        protected HostGroupingNode createNodeForKey(Host key) {
+            return key == null ? null : new HostGroupingNode(key);
+        }
+
+        private void refresh(Set<Host> newHosts) {
+            hosts.clear();
+            if (newHosts != null) {
+                hosts.addAll(newHosts);
+            }
+            super.refresh(true);
+        }
+    }
 
     private static final String ICON_PATH = "org/sleuthkit/autopsy/images/person.png";
 
+    private final Person person;
+    private final PersonChildren personChildren;
+    
     /**
-     * Get the host groups filtered and sorted to display in the UI as children
-     * under a person.
+     * Filters and sorts data source groupings to be displayed in the tree.
      *
-     * @param hosts The hosts.
-     * @return The sorted filtered list.
+     * @param dataSources The data source grouping data.
+     * @return The data source groupings to be displayed.
      */
-    private static List<HostGrouping> getSortedFiltered(Collection<HostGrouping> hosts) {
-        return (hosts == null) ? Collections.emptyList()
-                : hosts.stream()
-                        .filter(p -> p != null)
-                        .sorted()
-                        .collect(Collectors.toList());
+//    private static List<HostGrouping> getSortedFiltered(Collection<HostGrouping> hosts) {
+//        return (hosts == null) ? Collections.emptyList()
+//                : hosts.stream()
+//                        .filter(p -> p != null)
+//                        .sorted()
+//                        .collect(Collectors.toList());
+//    }
+    
+    
+    PersonGroupingNode(Person person) {
+        this(person, new PersonChildren());
     }
+    
+    private PersonGroupingNode(Person person, PersonChildren personChildren) {
+        super(Children.create(personChildren, false), person == null ? null : Lookups.singleton(person));
 
-    private final boolean isLeaf;
-
-    /**
-     * Main constructor.
-     *
-     * @param personGroup The data for the person to be displayed.
-     * @param nodeChildren The starting children for this person grouping.
-     */
-    PersonGroupingNode(PersonGrouping personGroup, Set<HostGrouping> nodeChildren) {
-        super(new RootContentChildren(getSortedFiltered(nodeChildren)), personGroup == null ? null : Lookups.singleton(personGroup));
-
-        String safeName = (personGroup == null || personGroup.getPerson() == null || personGroup.getPerson().getName() == null)
-                ? Bundle.PersonNode_unknownHostNode_title()
-                : personGroup.getPerson().getName();
+        String safeName = (person == null || person.getName() == null)
+                ? Bundle.HostNode_unknownHostNode_title()
+                : person.getName();
 
         super.setName(safeName);
         super.setDisplayName(safeName);
         this.setIconBaseWithExtension(ICON_PATH);
-        this.isLeaf = CollectionUtils.isEmpty(nodeChildren);
+        this.person = person;
+        this.personChildren = personChildren;
+    }
+    
+    @Subscribe
+    void update(Map<Long, Set<Host>> personHostMapping) {
+        Long id = this.person == null ? null : person.getId();
+        Set<Host> hosts = personHostMapping == null ? null : personHostMapping.get(id);
+        this.personChildren.refresh(hosts);
     }
 
     @Override
     public boolean isLeafTypeNode() {
-        return isLeaf;
-    }
-
-    @Override
-    public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
-        return visitor.visit(this);
+        return false;
     }
 
     @Override
@@ -88,4 +136,8 @@ class PersonGroupingNode extends DisplayableItemNode {
         return getClass().getName();
     }
 
+    @Override
+    public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
+        return visitor.visit(this);
+    }
 }

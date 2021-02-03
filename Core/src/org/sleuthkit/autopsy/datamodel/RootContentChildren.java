@@ -179,15 +179,5 @@ public class RootContentChildren extends Children.Keys<Object> {
         public AbstractNode visit(FileTypesByMimeType ftByMimeTypeItem) {
             return ftByMimeTypeItem.new ByMimeTypeNode();
         }
-
-        @Override
-        public AbstractNode visit(HostGrouping data) {
-            return new HostGroupingNode(data);
-        }
-
-        @Override
-        public AbstractNode visit(PersonGrouping data) {
-            return new PersonGroupingNode(data);
-        }
     }
 }
