@@ -664,11 +664,13 @@ public class Server {
      */
     @NbBundle.Messages({
         "Server.status.failed.msg=Local Solr server did not respond to status request. This may be because the server failed to start or is taking too long to initialize.",})
-    void startLocalSolr(SOLR_VERSION version) throws KeywordSearchModuleException, SolrServerNoPortException, SolrServerException {
+    synchronized void startLocalSolr(SOLR_VERSION version) throws KeywordSearchModuleException, SolrServerNoPortException, SolrServerException {
         
+        logger.log(Level.INFO, "Starting local Solr " + version + " server"); //NON-NLS
         if (isLocalSolrRunning()) {
             if (localServerVersion.equals(version)) {
                 // this version of local server is already running
+                logger.log(Level.INFO, "Local Solr " + version + " server is already running"); //NON-NLS
                 return;
             } else {
                 // wrong version of local server is running, stop it
