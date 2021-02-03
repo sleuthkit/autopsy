@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import com.google.common.eventbus.EventBus;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
@@ -35,6 +34,7 @@ import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.apache.commons.collections.CollectionUtils;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -57,13 +57,6 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
 
     private static final Logger logger = Logger.getLogger(AutopsyTreeChildFactory.class.getName());
 
-    private EventBus personUpdates = null;
-    private EventBus hostUpdates = null;
-
-    private PersonHostMapping personHostMapping = null;
-    private Map<Long, Set<DataSource>> hostChildren = null;
-    private Map<Long, Set<Host>> personChildren = null;
-
     /**
      * Listener for handling DATA_SOURCE_ADDED events.
      */
@@ -82,22 +75,12 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
     protected void addNotify() {
         super.addNotify();
         Case.addEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED), pcl);
-        personUpdates = new EventBus();
-        hostUpdates = new EventBus();
-        personHostMapping = null;
-        hostChildren = null;
-        personChildren = null;
     }
 
     @Override
     protected void removeNotify() {
         super.removeNotify();
         Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED), pcl);
-        personUpdates = null;
-        hostUpdates = null;
-        hostChildren = null;
-        personChildren = null;
-        personHostMapping = null;
     }
 
     /**
@@ -108,15 +91,22 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
      */
     @Override
     protected boolean createKeys(List<Object> list) {
-        if (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) {
-            // this will update previously existing host nodes and group nodes; 
-            // newly generated items will be updated manually.
-            updatePersonHosts();
-            getNodes(personHostMapping).forEach(list::add);
-            list.add(new Reports());
-        } else {
-            try {
-                SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+        try {
+            SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+            if (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) {
+                Set<Person> persons = null;
+                // TODO use below in future
+                //Set<Person> persons = tskCase.getPersonManager().getPersons();
+                if (!CollectionUtils.isEmpty(persons)) {
+                    persons.stream().sorted((a, b) -> compare(Person::getName, a, b)).forEach(list::add);
+                    return true;
+                } else {
+                    Set<Host> hosts = tskCase.getHostManager().getHosts();
+                    hosts.stream().sorted((a, b) -> compare(Host::getName, a, b)).forEach(list::add);
+                    return true;
+                }
+            } else {
+
                 List<AutopsyVisitableItem> keys = new ArrayList<>(Arrays.asList(
                         new DataSources(),
                         new Views(tskCase),
@@ -125,11 +115,11 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
                         new Reports()));
 
                 list.addAll(keys);
-            } catch (NoCurrentCaseException ex) {
-                logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
-            }
-        }
 
+            }
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
+        }
         return true;
     }
 
@@ -147,90 +137,43 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
         } else if (key instanceof AutopsyVisitableItem) {
             return ((AutopsyVisitableItem) key).accept(new RootContentChildren.CreateAutopsyNodeVisitor());
         } else if (key instanceof Host) {
-            HostGroupingNode host = new HostGroupingNode((Host) key);
-            host.update(hostChildren);
-            if (hostUpdates != null) {
-                hostUpdates.register(host);
-            }
-
-            return host;
+            return getHostGroupingNode((Host) key);
         } else if (key instanceof Person) {
-            PersonGroupingNode person = new PersonGroupingNode((Person) key);
-            person.update(personChildren);
-            if (personUpdates != null) {
-                personUpdates.register(person);
-            }
-
-            return person;
+            return null;
+            // TODO when person management in place, use code below
+            //return getPersonGroupingNode((Person) key);
         } else {
             logger.log(Level.SEVERE, "Unknown key type ", key.getClass().getName());
             return null;
         }
     }
 
+    private HostGroupingNode getHostGroupingNode(Host host) {
+        try {
+            SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+            return new HostGroupingNode(tskCase.getHostManager(), host);
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            String hostName = host == null || host.getName() == null ? "<unknown>" : host.getName();
+            logger.log(Level.SEVERE, String.format("Exception while getting host data for %s.", hostName), ex); //NON-NLS
+            return null;
+        }
+    }
+
+//    private PersonGroupingNode getPersonGroupingNode(Person person) {
+//        try {
+//            SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+//            return new HostGroupingNode(tskCase.getPersonManager(), tskCase.getHostManager(), person);
+//        } catch (NoCurrentCaseException | TskCoreException ex) {
+//            String personName = person == null || person.getName() == null ? "<unknown>" : person.getName();
+//            logger.log(Level.SEVERE, String.format("Exception while getting person data for %s.", personName), ex); //NON-NLS
+//            return null;
+//        }
+//    }
     /**
      * Refresh the children
      */
     public void refreshChildren() {
         refresh(true);
-    }
-
-    private void updatePersonHosts() {
-        try {
-            SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-            personHostMapping = getMapping(tskCase);
-            hostChildren = getIdMapping(personHostMapping.getHosts(), Host::getId); 
-            personChildren = getIdMapping(personHostMapping.getPersons(), Person::getId);
-        } catch (TskCoreException tskCoreException) {
-            logger.log(Level.SEVERE, "Error getting datas sources list from the database.", tskCoreException);
-        } catch (NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
-        }
-
-        if (hostChildren != null && hostUpdates != null) {
-            hostUpdates.post(hostChildren);
-        }
-
-        if (personUpdates != null && personChildren != null) {
-            personUpdates.post(personChildren);
-        }
-    }
-
-    private <K, V> Map<Long, Set<V>> getIdMapping(Map<K, Set<V>> itemMapping, Function<K, Long> idFunction) {
-        return itemMapping.entrySet().stream()
-                .collect(Collectors.toMap(
-                        entry -> entry.getKey() == null ? null : idFunction.apply(entry.getKey()),
-                        entry -> entry.getValue(),
-                        (kv1, kv2) -> {
-                            // we shouldn't have a situation where there are two of a distinct key with the same 
-                            // id, but if it happens, combine the values.
-                            kv1.addAll(kv2);
-                            return kv1;
-                        }));
-    }
-
-    /**
-     * Creates the nodes to display in the tree.
-     *
-     * @param tree The tree of model items (TSK Persons, Hosts and DataSources).
-     * @return The nodes to be displayed in the tree.
-     */
-    private Stream<? extends Object> getNodes(PersonHostMapping tree) {
-        if (tree == null) {
-            return Stream.empty();
-        }
-
-        final Map<Person, Set<Host>> persons = tree.getPersons() == null ? Collections.emptyMap() : tree.getPersons();
-        final Map<Host, Set<DataSource>> hosts = tree.getHosts() == null ? Collections.emptyMap() : tree.getHosts();
-
-        // if no person nodes except unknown, then show host levels
-        if (persons.isEmpty() || (persons.size() == 1 && persons.containsKey(null))) {
-            return hosts.keySet().stream()
-                    .sorted((a, b) -> compare(Host::getName, a, b));
-        } else {
-            return persons.keySet().stream()
-                    .sorted((a, b) -> compare(Person::getName, a, b));
-        }
     }
 
     private <T> int compare(Function<T, String> keyFunction, T objA, T objB) {
@@ -247,72 +190,5 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
         }
 
         return thisKey.compareToIgnoreCase(otherKey);
-    }
-
-    /**
-     * A mapping of persons (or null key for unknown) to a set of hosts along
-     * with a mapping of hosts (or null host if unknown) mapped to a set of
-     * datasources. A null key will signify unknown.
-     */
-    private static class PersonHostMapping {
-
-        final Map<Person, Set<Host>> persons;
-        final Map<Host, Set<DataSource>> hosts;
-
-        /**
-         * Main constructor.
-         *
-         * @param persons The mapping of persons to their hosts (or null key for
-         * unknown person).
-         * @param hosts The mapping of hosts to their data sources (or null key
-         * for unknown hosts).
-         */
-        PersonHostMapping(Map<Person, Set<Host>> persons, Map<Host, Set<DataSource>> hosts) {
-            this.persons = Collections.unmodifiableMap(new HashMap<>(persons));
-            this.hosts = Collections.unmodifiableMap(new HashMap<>(hosts));
-        }
-
-        /**
-         * @return The mapping of persons to their hosts (or null key for
-         * unknown person).
-         */
-        Map<Person, Set<Host>> getPersons() {
-            return persons;
-        }
-
-        /**
-         * @return The mapping of hosts to their data sources (or null key for
-         * unknown hosts).
-         */
-        Map<Host, Set<DataSource>> getHosts() {
-            return hosts;
-        }
-    }
-
-    /**
-     * Creates a tree including a mapping of persons to hosts (if present) and a
-     * mapping of hosts to data sources.
-     *
-     * @param tskCase The relevant SleuthkitCase object.
-     * @return The generated tree.
-     * @throws TskCoreException
-     */
-    private PersonHostMapping getMapping(SleuthkitCase tskCase) throws TskCoreException {
-        Map<Person, Set<Host>> personsMap = new HashMap<>();
-        Map<Host, Set<DataSource>> hostsMap = new HashMap<>();
-
-        HostManager hostManager = tskCase.getHostManager();
-        for (Host host : hostManager.getHosts()) {
-            hostsMap.put(host, new HashSet<>());
-        }
-
-        List<DataSource> dataSources = tskCase.getDataSources();
-        for (DataSource dataSource : dataSources) {
-            Set<DataSource> hostList = hostsMap.computeIfAbsent(dataSource.getHost(), (host) -> new HashSet<>());
-            hostList.add(dataSource);
-        }
-
-        // TODO calculate persons for hosts
-        return new PersonHostMapping(personsMap, hostsMap);
     }
 }

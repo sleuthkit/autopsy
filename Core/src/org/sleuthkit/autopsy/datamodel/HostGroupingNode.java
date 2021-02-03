@@ -18,28 +18,23 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import com.google.common.eventbus.EventBus;
-import com.google.common.eventbus.Subscribe;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.Collection;
 import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Stream;
-import org.apache.cxf.common.util.CollectionUtils;
+import java.util.logging.Level;
 
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.CasePreferences;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Host;
+import org.sleuthkit.datamodel.HostManager;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * A node to be displayed in the UI tree for a host and data sources grouped in
@@ -49,8 +44,18 @@ import org.sleuthkit.datamodel.Host;
 class HostGroupingNode extends DisplayableItemNode {
 
     private static class HostChildren extends ChildFactory.Detachable<DataSource> {
-
+        private static final Logger logger = Logger.getLogger(HostChildren.class.getName());
+        
+        private final Host host;
+        private final HostManager hostManager;
+        
         private boolean hasChildren = false;
+
+        HostChildren(HostManager hostManager, Host host) {
+            this.host = host;
+            this.hostManager = hostManager;
+        }
+        
         
         /**
          * Listener for handling DATA_SOURCE_ADDED events.
@@ -86,6 +91,14 @@ class HostGroupingNode extends DisplayableItemNode {
 
         @Override
         protected boolean createKeys(List<DataSource> toPopulate) {
+            Set<DataSource> dataSources = null;
+            try {
+                dataSources = this.hostManager.getDataSourcesForHost(host);
+            } catch (TskCoreException ex) {
+                String hostName = host == null || host.getName() == null ? "<unknown>" : host.getName();
+                logger.log(Level.WARNING, String.format("Unable to get data sources for host: %s", hostName), ex);
+            }
+            
             if (dataSources != null) {
                 toPopulate.addAll(dataSources);
             }
@@ -97,28 +110,17 @@ class HostGroupingNode extends DisplayableItemNode {
         protected DataSourceGroupingNode createNodeForKey(DataSource key) {
             return key == null ? null : new DataSourceGroupingNode(key);
         }
-
-        private void refresh(Set<DataSource> newDataSources) {
-            dataSources.clear();
-            if (newDataSources != null) {
-                dataSources.addAll(newDataSources);
-            }
-            super.refresh(true);
-        }
-
     }
 
     private static final String ICON_PATH = "org/sleuthkit/autopsy/images/host.png";
 
-    private final Host host;
     private final HostChildren hostChildren;
-    private final HostManager hostManager;
 
     HostGroupingNode(HostManager hostManager, Host host) {
-        this(hostManager, host, new HostChildren());
+        this(host, new HostChildren(hostManager, host));
     }
 
-    private HostGroupingNode(HostManager hostManager, Host host, HostChildren hostChildren) {
+    private HostGroupingNode(Host host, HostChildren hostChildren) {
         super(Children.create(hostChildren, false), host == null ? null : Lookups.singleton(host));
 
         String safeName = (host == null || host.getName() == null)
@@ -128,15 +130,7 @@ class HostGroupingNode extends DisplayableItemNode {
         super.setName(safeName);
         super.setDisplayName(safeName);
         this.setIconBaseWithExtension(ICON_PATH);
-        this.host = host;
         this.hostChildren = hostChildren;
-    }
-
-    @Subscribe
-    private void update(Map<Long, Set<DataSource>> hostDataSourceMapping) {
-        Long id = this.host == null ? null : host.getId();
-        Set<DataSource> dataSources = hostDataSourceMapping == null ? null : hostDataSourceMapping.get(id);
-        this.hostChildren.refresh(dataSources);
     }
 
     @Override
