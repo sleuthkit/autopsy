@@ -119,6 +119,8 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
             }
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Exception while getting data from case.", ex); //NON-NLS
         }
         return true;
     }

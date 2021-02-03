@@ -25,6 +25,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
+import org.apache.commons.collections.CollectionUtils;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.util.NbBundle;
@@ -42,11 +43,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 @NbBundle.Messages(value = {"PersonNode_unknownHostNode_title=Unknown Persons"})
 class PersonGroupingNode extends DisplayableItemNode {
     // stub class until this goes into TSK datamodel.
-    static class PersonManager {
-        Set<Host> getHostsForPerson(Person person) throws TskCoreException {
-            return Collections.emptySet();
-        }
-        
+    static class PersonManager {       
         Set<Person> getPersons() throws TskCoreException {
             return Collections.emptySet();
         }
@@ -82,8 +79,6 @@ class PersonGroupingNode extends DisplayableItemNode {
         private final PersonManager personManager;
         private final HostManager hostManager;
         
-        private boolean hasChildren = false;
-
         PersonChildren(PersonManager personManager, HostManager hostManager, Person person) {
             this.person = person;
             this.personManager = personManager;
@@ -118,10 +113,6 @@ class PersonGroupingNode extends DisplayableItemNode {
             Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_DELETED), pcl);
         }
 
-        protected boolean hasChildren() {
-            return hasChildren;
-        }
-
         @Override
         protected boolean createKeys(List<Host> toPopulate) {
             Set<Host> hosts = null;
@@ -145,14 +136,9 @@ class PersonGroupingNode extends DisplayableItemNode {
         }
     }
 
-    private final PersonChildren personChildren;
 
     PersonGroupingNode(PersonManager personManager, HostManager hostManager, Person person) {
-        this(person, new PersonChildren(personManager, hostManager, person));
-    }
-
-    private PersonGroupingNode(Person person, PersonChildren personChildren) {
-        super(Children.create(personChildren, false), person == null ? null : Lookups.singleton(person));
+        super(Children.create(new PersonChildren(personManager, hostManager, person), false), person == null ? null : Lookups.singleton(person));
 
         String safeName = (person == null || person.getName() == null)
                 ? Bundle.HostNode_unknownHostNode_title()
@@ -161,12 +147,11 @@ class PersonGroupingNode extends DisplayableItemNode {
         super.setName(safeName);
         super.setDisplayName(safeName);
         this.setIconBaseWithExtension(ICON_PATH);
-        this.personChildren = personChildren;
     }
 
     @Override
     public boolean isLeafTypeNode() {
-        return !this.personChildren.hasChildren();
+        return false;
     }
 
     @Override

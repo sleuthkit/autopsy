@@ -24,6 +24,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
+import org.apache.commons.collections.CollectionUtils;
 
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
@@ -44,19 +45,17 @@ import org.sleuthkit.datamodel.TskCoreException;
 class HostGroupingNode extends DisplayableItemNode {
 
     private static class HostChildren extends ChildFactory.Detachable<DataSource> {
+
         private static final Logger logger = Logger.getLogger(HostChildren.class.getName());
-        
+
         private final Host host;
         private final HostManager hostManager;
-        
-        private boolean hasChildren = false;
 
         HostChildren(HostManager hostManager, Host host) {
             this.host = host;
             this.hostManager = hostManager;
         }
-        
-        
+
         /**
          * Listener for handling DATA_SOURCE_ADDED events.
          */
@@ -85,10 +84,6 @@ class HostGroupingNode extends DisplayableItemNode {
             Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_DELETED), pcl);
         }
 
-        protected boolean hasChildren() {
-            return hasChildren;
-        }
-
         @Override
         protected boolean createKeys(List<DataSource> toPopulate) {
             Set<DataSource> dataSources = null;
@@ -98,7 +93,7 @@ class HostGroupingNode extends DisplayableItemNode {
                 String hostName = host == null || host.getName() == null ? "<unknown>" : host.getName();
                 logger.log(Level.WARNING, String.format("Unable to get data sources for host: %s", hostName), ex);
             }
-            
+
             if (dataSources != null) {
                 toPopulate.addAll(dataSources);
             }
@@ -114,14 +109,8 @@ class HostGroupingNode extends DisplayableItemNode {
 
     private static final String ICON_PATH = "org/sleuthkit/autopsy/images/host.png";
 
-    private final HostChildren hostChildren;
-
     HostGroupingNode(HostManager hostManager, Host host) {
-        this(host, new HostChildren(hostManager, host));
-    }
-
-    private HostGroupingNode(Host host, HostChildren hostChildren) {
-        super(Children.create(hostChildren, false), host == null ? null : Lookups.singleton(host));
+        super(Children.create(new HostChildren(hostManager, host), false), host == null ? null : Lookups.singleton(host));
 
         String safeName = (host == null || host.getName() == null)
                 ? Bundle.HostNode_unknownHostNode_title()
@@ -130,12 +119,11 @@ class HostGroupingNode extends DisplayableItemNode {
         super.setName(safeName);
         super.setDisplayName(safeName);
         this.setIconBaseWithExtension(ICON_PATH);
-        this.hostChildren = hostChildren;
     }
 
     @Override
     public boolean isLeafTypeNode() {
-        return !this.hostChildren.hasChildren();
+        return false;
     }
 
     @Override
