@@ -19,6 +19,9 @@ DELETED_SHEET_NAME = 'deleted'
 # The name for the sheet of omitted items
 OMITTED_SHEET_NAME = 'omitted'
 
+# The name for the sheet of found items
+FOUND_SHEET_NAME = 'found'
+
 
 def excel_to_records(input_path: str) -> Workbook:
     """Reads rows to a excel file at the specified path.
@@ -55,6 +58,8 @@ def write_results_to_xlsx(results: OutputResult, output_path: str):
         workbook[OMITTED_SHEET_NAME] = results.omitted
     if results.deleted:
         workbook[DELETED_SHEET_NAME] = results.deleted
+    if results.found:
+        workbook[FOUND_SHEET_NAME] = results.found
 
     wb_file = xlsxwriter.Workbook(output_path)
     styles = []

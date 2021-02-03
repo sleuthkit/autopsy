@@ -102,3 +102,4 @@ hs_err_pid*.log
 /thirdparty/yara/YaraJNIWrapper/nbproject/private/
 /thirdparty/yara/yarabridge/.vs/
 
+*/path_list.txt
