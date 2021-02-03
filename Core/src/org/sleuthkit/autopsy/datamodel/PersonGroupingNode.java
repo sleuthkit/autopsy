@@ -19,10 +19,13 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import com.google.common.eventbus.Subscribe;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Stream;
+import org.apache.cxf.common.util.CollectionUtils;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.util.NbBundle;
@@ -35,7 +38,7 @@ import org.sleuthkit.datamodel.Host;
  */
 @NbBundle.Messages(value = {"PersonNode_unknownHostNode_title=Unknown Persons"})
 class PersonGroupingNode extends DisplayableItemNode {
-    
+
     // stub class until this goes into TSK datamodel.
     static class Person {
 
@@ -50,26 +53,48 @@ class PersonGroupingNode extends DisplayableItemNode {
         public String getName() {
             return name;
         }
-        
+
         public long getId() {
             return id;
         }
     }
-    
-    
+
     private static class PersonChildren extends ChildFactory<Host> {
+
+        private static Stream<Host> getSortedFiltered(Collection<Host> hosts) {
+            return (hosts == null) ? Stream.empty() : hosts.stream()
+                    .sorted((a, b) -> {
+                        String thisHost = a == null ? null : a.getName();
+                        String otherHost = b == null ? null : b.getName();
+
+                        // push unknown host to bottom
+                        if (thisHost == null && otherHost == null) {
+                            return 0;
+                        } else if (thisHost == null) {
+                            return 1;
+                        } else if (otherHost == null) {
+                            return -1;
+                        }
+
+                        return thisHost.compareToIgnoreCase(otherHost);
+                    });
+        }
 
         private final Set<Host> hosts = new HashSet<>();
 
         @Override
         protected boolean createKeys(List<Host> toPopulate) {
-            toPopulate.addAll(hosts);
+            getSortedFiltered(hosts).forEach(toPopulate::add);
             return true;
         }
 
         @Override
         protected HostGroupingNode createNodeForKey(Host key) {
             return key == null ? null : new HostGroupingNode(key);
+        }
+
+        protected boolean hasChildren() {
+            return !CollectionUtils.isEmpty(hosts);
         }
 
         private void refresh(Set<Host> newHosts) {
@@ -85,26 +110,11 @@ class PersonGroupingNode extends DisplayableItemNode {
 
     private final Person person;
     private final PersonChildren personChildren;
-    
-    /**
-     * Filters and sorts data source groupings to be displayed in the tree.
-     *
-     * @param dataSources The data source grouping data.
-     * @return The data source groupings to be displayed.
-     */
-//    private static List<HostGrouping> getSortedFiltered(Collection<HostGrouping> hosts) {
-//        return (hosts == null) ? Collections.emptyList()
-//                : hosts.stream()
-//                        .filter(p -> p != null)
-//                        .sorted()
-//                        .collect(Collectors.toList());
-//    }
-    
-    
+
     PersonGroupingNode(Person person) {
         this(person, new PersonChildren());
     }
-    
+
     private PersonGroupingNode(Person person, PersonChildren personChildren) {
         super(Children.create(personChildren, false), person == null ? null : Lookups.singleton(person));
 
@@ -118,7 +128,7 @@ class PersonGroupingNode extends DisplayableItemNode {
         this.person = person;
         this.personChildren = personChildren;
     }
-    
+
     @Subscribe
     void update(Map<Long, Set<Host>> personHostMapping) {
         Long id = this.person == null ? null : person.getId();
@@ -128,7 +138,7 @@ class PersonGroupingNode extends DisplayableItemNode {
 
     @Override
     public boolean isLeafTypeNode() {
-        return false;
+        return !this.personChildren.hasChildren();
     }
 
     @Override

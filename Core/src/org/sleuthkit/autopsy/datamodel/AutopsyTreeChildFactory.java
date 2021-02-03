@@ -23,7 +23,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -32,8 +31,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -58,6 +59,8 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
 
     private EventBus personUpdates = null;
     private EventBus hostUpdates = null;
+
+    private PersonHostMapping personHostMapping = null;
     private Map<Long, Set<DataSource>> hostChildren = null;
     private Map<Long, Set<Host>> personChildren = null;
 
@@ -81,6 +84,7 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
         Case.addEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED), pcl);
         personUpdates = new EventBus();
         hostUpdates = new EventBus();
+        personHostMapping = null;
         hostChildren = null;
         personChildren = null;
     }
@@ -93,6 +97,7 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
         hostUpdates = null;
         hostChildren = null;
         personChildren = null;
+        personHostMapping = null;
     }
 
     /**
@@ -103,31 +108,15 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
      */
     @Override
     protected boolean createKeys(List<Object> list) {
-        try {
-            SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-            if (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) {
-                OwnerHostTree ownerHosts = getTree(tskCase);
-                hostChildren = ownerHosts.getHosts().entrySet().stream()
-                        .collect(Collectors.toMap(
-                                kv -> kv.getKey() == null ? null : kv.getKey().getId(),
-                                kv -> kv.getValue(),
-                                (kv1, kv2) -> {
-                                    kv1.addAll(kv2);
-                                    return kv1;
-                                }));
-
-                personChildren = ownerHosts.getPersons().entrySet().stream()
-                        .collect(Collectors.toMap(
-                                kv -> kv.getKey() == null ? null : kv.getKey().getId(),
-                                kv -> kv.getValue(),
-                                (kv1, kv2) -> {
-                                    kv1.addAll(kv2);
-                                    return kv1;
-                                }));
-                
-                list.addAll(getNodes(ownerHosts));
-                list.add(new Reports());
-            } else {
+        if (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) {
+            // this will update previously existing host nodes and group nodes; 
+            // newly generated items will be updated manually.
+            updatePersonHosts();
+            getNodes(personHostMapping).forEach(list::add);
+            list.add(new Reports());
+        } else {
+            try {
+                SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
                 List<AutopsyVisitableItem> keys = new ArrayList<>(Arrays.asList(
                         new DataSources(),
                         new Views(tskCase),
@@ -136,12 +125,11 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
                         new Reports()));
 
                 list.addAll(keys);
+            } catch (NoCurrentCaseException ex) {
+                logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
             }
-        } catch (TskCoreException tskCoreException) {
-            logger.log(Level.SEVERE, "Error getting datas sources list from the database.", tskCoreException);
-        } catch (NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
         }
+
         return true;
     }
 
@@ -154,14 +142,13 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
      */
     @Override
     protected Node createNodeForKey(Object key) {
-
         if (key instanceof SleuthkitVisitableItem) {
             return ((SleuthkitVisitableItem) key).accept(new CreateSleuthkitNodeVisitor());
         } else if (key instanceof AutopsyVisitableItem) {
             return ((AutopsyVisitableItem) key).accept(new RootContentChildren.CreateAutopsyNodeVisitor());
         } else if (key instanceof Host) {
             HostGroupingNode host = new HostGroupingNode((Host) key);
-
+            host.update(hostChildren);
             if (hostUpdates != null) {
                 hostUpdates.register(host);
             }
@@ -169,7 +156,7 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
             return host;
         } else if (key instanceof Person) {
             PersonGroupingNode person = new PersonGroupingNode((Person) key);
-
+            person.update(personChildren);
             if (personUpdates != null) {
                 personUpdates.register(person);
             }
@@ -186,13 +173,40 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
      */
     public void refreshChildren() {
         refresh(true);
+    }
+
+    private void updatePersonHosts() {
+        try {
+            SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+            personHostMapping = getMapping(tskCase);
+            hostChildren = getIdMapping(personHostMapping.getHosts(), Host::getId); 
+            personChildren = getIdMapping(personHostMapping.getPersons(), Person::getId);
+        } catch (TskCoreException tskCoreException) {
+            logger.log(Level.SEVERE, "Error getting datas sources list from the database.", tskCoreException);
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
+        }
+
         if (hostChildren != null && hostUpdates != null) {
             hostUpdates.post(hostChildren);
         }
-        
+
         if (personUpdates != null && personChildren != null) {
             personUpdates.post(personChildren);
         }
+    }
+
+    private <K, V> Map<Long, Set<V>> getIdMapping(Map<K, Set<V>> itemMapping, Function<K, Long> idFunction) {
+        return itemMapping.entrySet().stream()
+                .collect(Collectors.toMap(
+                        entry -> entry.getKey() == null ? null : idFunction.apply(entry.getKey()),
+                        entry -> entry.getValue(),
+                        (kv1, kv2) -> {
+                            // we shouldn't have a situation where there are two of a distinct key with the same 
+                            // id, but if it happens, combine the values.
+                            kv1.addAll(kv2);
+                            return kv1;
+                        }));
     }
 
     /**
@@ -201,9 +215,9 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
      * @param tree The tree of model items (TSK Persons, Hosts and DataSources).
      * @return The nodes to be displayed in the tree.
      */
-    private Collection<? extends Object> getNodes(OwnerHostTree tree) {
+    private Stream<? extends Object> getNodes(PersonHostMapping tree) {
         if (tree == null) {
-            return Collections.emptyList();
+            return Stream.empty();
         }
 
         final Map<Person, Set<Host>> persons = tree.getPersons() == null ? Collections.emptyMap() : tree.getPersons();
@@ -211,10 +225,28 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
 
         // if no person nodes except unknown, then show host levels
         if (persons.isEmpty() || (persons.size() == 1 && persons.containsKey(null))) {
-            return hosts.keySet();
+            return hosts.keySet().stream()
+                    .sorted((a, b) -> compare(Host::getName, a, b));
         } else {
-            return persons.keySet();
+            return persons.keySet().stream()
+                    .sorted((a, b) -> compare(Person::getName, a, b));
         }
+    }
+
+    private <T> int compare(Function<T, String> keyFunction, T objA, T objB) {
+        String thisKey = objA == null ? null : keyFunction.apply(objA);
+        String otherKey = objB == null ? null : keyFunction.apply(objB);
+
+        // push unknown host to bottom
+        if (thisKey == null && otherKey == null) {
+            return 0;
+        } else if (thisKey == null) {
+            return 1;
+        } else if (otherKey == null) {
+            return -1;
+        }
+
+        return thisKey.compareToIgnoreCase(otherKey);
     }
 
     /**
@@ -222,7 +254,7 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
      * with a mapping of hosts (or null host if unknown) mapped to a set of
      * datasources. A null key will signify unknown.
      */
-    private static class OwnerHostTree {
+    private static class PersonHostMapping {
 
         final Map<Person, Set<Host>> persons;
         final Map<Host, Set<DataSource>> hosts;
@@ -235,7 +267,7 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
          * @param hosts The mapping of hosts to their data sources (or null key
          * for unknown hosts).
          */
-        OwnerHostTree(Map<Person, Set<Host>> persons, Map<Host, Set<DataSource>> hosts) {
+        PersonHostMapping(Map<Person, Set<Host>> persons, Map<Host, Set<DataSource>> hosts) {
             this.persons = Collections.unmodifiableMap(new HashMap<>(persons));
             this.hosts = Collections.unmodifiableMap(new HashMap<>(hosts));
         }
@@ -265,7 +297,7 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
      * @return The generated tree.
      * @throws TskCoreException
      */
-    private OwnerHostTree getTree(SleuthkitCase tskCase) throws TskCoreException {
+    private PersonHostMapping getMapping(SleuthkitCase tskCase) throws TskCoreException {
         Map<Person, Set<Host>> personsMap = new HashMap<>();
         Map<Host, Set<DataSource>> hostsMap = new HashMap<>();
 
@@ -281,6 +313,6 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
         }
 
         // TODO calculate persons for hosts
-        return new OwnerHostTree(personsMap, hostsMap);
+        return new PersonHostMapping(personsMap, hostsMap);
     }
 }

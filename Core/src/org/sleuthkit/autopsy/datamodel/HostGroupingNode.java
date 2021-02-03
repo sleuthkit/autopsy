@@ -19,10 +19,13 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import com.google.common.eventbus.Subscribe;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Stream;
+import org.apache.cxf.common.util.CollectionUtils;
 
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
@@ -42,9 +45,16 @@ class HostGroupingNode extends DisplayableItemNode {
 
         private final Set<DataSource> dataSources = new HashSet<>();
 
+        protected boolean hasChildren() {
+            return !CollectionUtils.isEmpty(dataSources);
+        }
+
         @Override
         protected boolean createKeys(List<DataSource> toPopulate) {
-            toPopulate.addAll(dataSources);
+            if (dataSources != null) {
+                toPopulate.addAll(dataSources);
+            }
+
             return true;
         }
 
@@ -66,28 +76,11 @@ class HostGroupingNode extends DisplayableItemNode {
 
     private final Host host;
     private final HostChildren hostChildren;
-    
-    /**
-     * Filters and sorts data source groupings to be displayed in the tree.
-     *
-     * @param dataSources The data source grouping data.
-     * @return The data source groupings to be displayed.
-     */
-//    private static List<DataSourceGrouping> getSortedFiltered(Collection<DataSourceGrouping> dataSources) {
-//        return (dataSources == null) ? Collections.emptyList()
-//                : dataSources.stream()
-//                        .filter(ds -> ds != null && ds.getDataSource() != null)
-//                        .sorted((a, b) -> {
-//                            String aStr = a.getDataSource().getName() == null ? "" : a.getDataSource().getName();
-//                            String bStr = b.getDataSource().getName() == null ? "" : b.getDataSource().getName();
-//                            return aStr.compareToIgnoreCase(bStr);
-//                        })
-//                        .collect(Collectors.toList());
-//    }
+
     HostGroupingNode(Host host) {
         this(host, new HostChildren());
     }
-    
+
     private HostGroupingNode(Host host, HostChildren hostChildren) {
         super(Children.create(hostChildren, false), host == null ? null : Lookups.singleton(host));
 
@@ -101,7 +94,7 @@ class HostGroupingNode extends DisplayableItemNode {
         this.host = host;
         this.hostChildren = hostChildren;
     }
-    
+
     @Subscribe
     void update(Map<Long, Set<DataSource>> hostDataSourceMapping) {
         Long id = this.host == null ? null : host.getId();
@@ -111,7 +104,7 @@ class HostGroupingNode extends DisplayableItemNode {
 
     @Override
     public boolean isLeafTypeNode() {
-        return false;
+        return !this.hostChildren.hasChildren();
     }
 
     @Override
