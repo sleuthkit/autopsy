@@ -839,7 +839,7 @@ public final class ImageGalleryController {
                             Content newDataSource = (Content) event.getNewValue();
                             if (isListeningEnabled()) {
                                 try {
-                                    // status of UNKNOWN from getDataSourceDbBuildStatus means that the data source is not known
+                                    // Only add the data source if is not in the database
                                     if(drawableDB.getDataSourceDbBuildStatus(newDataSource.getId()) == DrawableDB.DrawableDbBuildStatusEnum.UNKNOWN) {
                                         drawableDB.insertOrUpdateDataSource(newDataSource.getId(), DrawableDB.DrawableDbBuildStatusEnum.UNKNOWN);
                                     }
