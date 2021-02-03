@@ -18,11 +18,16 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Stream;
 import org.apache.cxf.common.util.CollectionUtils;
@@ -31,6 +36,8 @@ import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.CasePreferences;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Host;
 
@@ -41,12 +48,40 @@ import org.sleuthkit.datamodel.Host;
 @NbBundle.Messages(value = {"HostNode_unknownHostNode_title=Unknown Host"})
 class HostGroupingNode extends DisplayableItemNode {
 
-    private static class HostChildren extends ChildFactory<DataSource> {
+    private static class HostChildren extends ChildFactory.Detachable<DataSource> {
 
-        private final Set<DataSource> dataSources = new HashSet<>();
+        private boolean hasChildren = false;
+        
+        /**
+         * Listener for handling DATA_SOURCE_ADDED events.
+         */
+        private final PropertyChangeListener pcl = new PropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                String eventType = evt.getPropertyName();
+                if (eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())
+                        || eventType.equals(Case.Events.DATA_SOURCE_DELETED.toString())) {
+                    refresh(true);
+                }
+            }
+        };
+
+        @Override
+        protected void addNotify() {
+            super.addNotify();
+            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED), pcl);
+            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_DELETED), pcl);
+        }
+
+        @Override
+        protected void removeNotify() {
+            super.removeNotify();
+            Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED), pcl);
+            Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_DELETED), pcl);
+        }
 
         protected boolean hasChildren() {
-            return !CollectionUtils.isEmpty(dataSources);
+            return hasChildren;
         }
 
         @Override
@@ -70,18 +105,20 @@ class HostGroupingNode extends DisplayableItemNode {
             }
             super.refresh(true);
         }
+
     }
 
     private static final String ICON_PATH = "org/sleuthkit/autopsy/images/host.png";
 
     private final Host host;
     private final HostChildren hostChildren;
+    private final HostManager hostManager;
 
-    HostGroupingNode(Host host) {
-        this(host, new HostChildren());
+    HostGroupingNode(HostManager hostManager, Host host) {
+        this(hostManager, host, new HostChildren());
     }
 
-    private HostGroupingNode(Host host, HostChildren hostChildren) {
+    private HostGroupingNode(HostManager hostManager, Host host, HostChildren hostChildren) {
         super(Children.create(hostChildren, false), host == null ? null : Lookups.singleton(host));
 
         String safeName = (host == null || host.getName() == null)
@@ -96,7 +133,7 @@ class HostGroupingNode extends DisplayableItemNode {
     }
 
     @Subscribe
-    void update(Map<Long, Set<DataSource>> hostDataSourceMapping) {
+    private void update(Map<Long, Set<DataSource>> hostDataSourceMapping) {
         Long id = this.host == null ? null : host.getId();
         Set<DataSource> dataSources = hostDataSourceMapping == null ? null : hostDataSourceMapping.get(id);
         this.hostChildren.refresh(dataSources);
