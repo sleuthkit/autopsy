@@ -34,7 +34,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
  * Action for accessing the Search Other Cases dialog.
  */
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.keywordsearch.ExtractAllTermsAction")
-@ActionRegistration(displayName = "#CTL_OtherCasesSearchAction=Search All Cases", lazy = false)
+@ActionRegistration(displayName = "#CTL_OtherExtractAllTermsAction=Extract Unique Words", lazy = false)
 @ActionReference(path = "Menu/Tools", position = 202)
 @NbBundle.Messages({"CTL_ExtractAllTermsAction=Extract Unique Words"})
 public class ExtractAllTermsAction extends CallableSystemAction {

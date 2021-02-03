@@ -2183,19 +2183,10 @@ public class Server {
             query.setTerms(true);
             query.setTermsLimit(numTerms);
             query.setTermsSortString("index");
-            //query.setSort(SortClause.asc("id"));
-            //query.setTermsLower("s");
-            //query.setTermsPrefix("s");
             query.addTermsField("text");
             query.setTermsMinCount(0);
             
-            query.addFilterQuery("image_id:" + dataSourceId);
-            
-            // degbug
-            String sort1 = query.getFacetSortString();
-            String sort2 = query.getSortField();
-            List<SortClause> sort3 = query.getSorts();
-            String sort4 = query.getTermsSortString();
+            // ELTODO query.addFilterQuery("image_id:" + dataSourceId);
 
             QueryRequest request = new QueryRequest(query);
             TermsResponse response = request.process(queryClient).getTermsResponse();
@@ -2233,7 +2224,6 @@ public class Server {
             String firstTerm = "";
             Path serverFileIterated = Paths.get(caseDirectoryPath.toString(), "terms_"+numTerms+"_iterated.txt"); //NON-NLS
             Files.deleteIfExists(serverFileIterated);
-            Map<String, Integer> termsMap = new HashMap<>();
             for (int step = 0; step < numTerms; step += termStep) {
                 query = new SolrQuery();
                 query.setRequestHandler("/terms");
@@ -2242,12 +2232,10 @@ public class Server {
                 query.setTermsLower(firstTerm);
                 query.setTermsLowerInclusive(false);
                 query.setTermsSortString("index");
-                //query.setSort(SortClause.desc("index"));
-                //query.setTermsPrefix(firstTerm);
                 query.addTermsField("text");
                 query.setTermsMinCount(0);
 
-                query.addFilterQuery("image_id:" + dataSourceId);
+                // ELTODO query.addFilterQuery("image_id:" + dataSourceId);
 
                 request = new QueryRequest(query);
                 response = request.process(queryClient).getTermsResponse();
@@ -2261,44 +2249,8 @@ public class Server {
                 // set the first term for the next query
                 firstTerm = terms.get(terms.size()-1).getTerm();
 
-                //Term term = terms.get(0);
-                //String word = term.getTerm();
-                //long frequency = term.getFrequency();            
-                // Write the server data to a file
-                serverFile = Paths.get(caseDirectoryPath.toString(), "terms_step" + step + "_iterated.txt"); //NON-NLS
-                Files.deleteIfExists(serverFile);
                 listTerms = terms.stream().map(Term::getTerm).collect(Collectors.toList());
-                Files.write(serverFile, listTerms, options);
                 Files.write(serverFileIterated, listTerms, options);
-                
-                for (Term term : terms) {
-                    Integer oldValue = termsMap.get(term.getTerm());
-                    if (oldValue == null) {
-                        termsMap.put(term.getTerm(), 1);
-                    } else {
-                        termsMap.put(term.getTerm(), oldValue + 1);
-                    }
-                    //termsMap.put(term.getTerm(), 1);
-                    /*try {
-                        Files.write(serverFile, term.getTerm().getBytes(), options);
-                        Files.write(serverFile, "\n".getBytes(), options);
-                        
-                        Files.write(serverFileIterated, term.getTerm().getBytes(), options);
-                        Files.write(serverFileIterated, "\n".getBytes(), options);
-                    } catch (IOException ex) {
-                        throw new KeywordSearchModuleException(serverFile.toString() + " could not be written", ex); //NON-NLS
-                    }*/
-                }
-            }
-            
-            // print the hash map
-            serverFile = Paths.get(caseDirectoryPath.toString(), "terms_step_hashMap.txt"); //NON-NLS
-            for (String key : termsMap.keySet()) {
-                Integer value = termsMap.get(key);
-                Files.write(serverFile, key.getBytes(), options);
-                //Files.write(serverFile, " ".getBytes(), options);
-                //Files.write(serverFile, value, options);
-                Files.write(serverFile, "\n".getBytes(), options);
             }
         }
 
