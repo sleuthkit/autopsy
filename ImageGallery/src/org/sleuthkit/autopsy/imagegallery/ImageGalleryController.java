@@ -839,7 +839,7 @@ public final class ImageGalleryController {
                             Content newDataSource = (Content) event.getNewValue();
                             if (isListeningEnabled()) {
                                 try {
-                                    // Only add the data source if is not in the database
+                                    // If the data source already exists and has a status other than UNKNOWN, don’t overwrite it. 
                                     if(drawableDB.getDataSourceDbBuildStatus(newDataSource.getId()) == DrawableDB.DrawableDbBuildStatusEnum.UNKNOWN) {
                                         drawableDB.insertOrUpdateDataSource(newDataSource.getId(), DrawableDB.DrawableDbBuildStatusEnum.UNKNOWN);
                                     }
