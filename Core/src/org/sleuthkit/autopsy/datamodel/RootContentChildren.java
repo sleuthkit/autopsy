@@ -68,12 +68,12 @@ public class RootContentChildren extends Children.Keys<Object> {
     @Override
     protected Node[] createNodes(Object key) {
         if (key instanceof AutopsyVisitableItem) {
-            return new Node[] {((AutopsyVisitableItem)key).accept(createAutopsyNodeVisitor)};
+            return new Node[]{((AutopsyVisitableItem) key).accept(createAutopsyNodeVisitor)};
         } else {
-            return new Node[] {((SleuthkitVisitableItem)key).accept(createSleuthkitNodeVisitor)};
+            return new Node[]{((SleuthkitVisitableItem) key).accept(createSleuthkitNodeVisitor)};
         }
     }
-    
+
     /**
      * Gets a DisplayableItemNode for use as a subtree root node for the Autopsy
      * tree view from each type of AutopsyVisitableItem visited. There are
@@ -85,12 +85,12 @@ public class RootContentChildren extends Children.Keys<Object> {
 
         @Override
         public AbstractNode visit(PersonGrouping personGrouping) {
-            return new PersonGroupingNode(personGrouping.getPersonManager(), personGrouping.getHostManager(), personGrouping.getPerson());
+            return new PersonGroupingNode(personGrouping.getPerson());
         }
 
         @Override
         public AbstractNode visit(HostGrouping hostGrouping) {
-            return new HostGroupingNode(hostGrouping.getHostManager(), hostGrouping.getHost());
+            return new HostGroupingNode(hostGrouping.getHost());
         }
 
         @Override
@@ -152,7 +152,7 @@ public class RootContentChildren extends Children.Keys<Object> {
         public AbstractNode visit(DataSourceGrouping datasourceGrouping) {
             return new DataSourceGroupingNode(datasourceGrouping.getDataSource());
         }
-        
+
         @Override
         public AbstractNode visit(Views v) {
             return new ViewsNode(v.getSleuthkitCase(), v.filteringDataSourceObjId());
@@ -160,7 +160,7 @@ public class RootContentChildren extends Children.Keys<Object> {
 
         @Override
         public AbstractNode visit(Results results) {
-            return new ResultsNode(results.getSleuthkitCase(), results.filteringDataSourceObjId() );
+            return new ResultsNode(results.getSleuthkitCase(), results.filteringDataSourceObjId());
         }
 
         @Override
