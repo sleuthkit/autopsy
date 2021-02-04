@@ -27,6 +27,7 @@ import java.util.Set;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.validator.routines.DomainValidator;
 import org.apache.commons.validator.routines.EmailValidator;
+import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 
 /**
  * Provides functions for normalizing data by attribute type before insertion or
@@ -144,11 +145,11 @@ final public class CorrelationAttributeNormalizer {
     private static String normalizeDomain(String data) throws CorrelationAttributeNormalizationException {
         DomainValidator validator = DomainValidator.getInstance(true);
         if (validator.isValid(data)) {
-            return data.toLowerCase();
+            return NetworkUtils.extractDomain(data.toLowerCase());
         } else {
             final String validIpAddressRegex = "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$";
             if (data.matches(validIpAddressRegex)) {
-                return data;
+                return NetworkUtils.extractDomain(data);
             } else {
                 throw new CorrelationAttributeNormalizationException(String.format("Data was expected to be a valid domain: %s", data));
             }
