@@ -90,20 +90,19 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
             if (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) {
                 // TODO replace with sleuthkit call when PersonManager created
                 PersonManager personManager = new PersonManager();
-                HostManager hostManager = tskCase.getHostManager();
                 
                 Set<Person> persons = personManager.getPersons();
                 if (!CollectionUtils.isEmpty(persons)) {
                     persons.stream()
-                            .sorted((a, b) -> compare(Person::getName, a, b))
-                            .map(p -> new PersonGrouping(personManager, hostManager, p))
+                            .map(PersonGrouping::new)
+                            .sorted()
                             .forEach(list::add);
                     return true;
                 } else {
                     Set<Host> hosts = tskCase.getHostManager().getHosts();
                     hosts.stream()
-                            .sorted((a, b) -> compare(Host::getName, a, b))
-                            .map(h -> new HostGrouping(hostManager, h))
+                            .map(HostGrouping::new)
+                            .sorted()
                             .forEach(list::add);
                     return true;
                 }
@@ -149,21 +148,5 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
      */
     public void refreshChildren() {
         refresh(true);
-    }
-
-    private <T> int compare(Function<T, String> keyFunction, T objA, T objB) {
-        String thisKey = objA == null ? null : keyFunction.apply(objA);
-        String otherKey = objB == null ? null : keyFunction.apply(objB);
-
-        // push unknown host to bottom
-        if (thisKey == null && otherKey == null) {
-            return 0;
-        } else if (thisKey == null) {
-            return 1;
-        } else if (otherKey == null) {
-            return -1;
-        }
-
-        return thisKey.compareToIgnoreCase(otherKey);
     }
 }

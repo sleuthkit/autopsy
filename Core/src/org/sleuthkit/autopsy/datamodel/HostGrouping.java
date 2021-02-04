@@ -20,33 +20,21 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.util.Objects;
 import org.sleuthkit.datamodel.Host;
-import org.sleuthkit.datamodel.HostManager;
 
 /**
  * A top level UI grouping of data sources under a host.
  */
-public class HostGrouping implements AutopsyVisitableItem {
+public class HostGrouping implements AutopsyVisitableItem, Comparable<HostGrouping> {
 
     private final Host host;
-    private final HostManager hostManager;
 
     /**
      * Main constructor.
      *
-     * @param hostManager The host manager from which to gather information
-     * about the host.
      * @param host The host record.
      */
-    HostGrouping(HostManager hostManager, Host host) {
+    HostGrouping(Host host) {
         this.host = host;
-        this.hostManager = hostManager;
-    }
-
-    /**
-     * @return The host manager from which to gather information about the host.
-     */
-    HostManager getHostManager() {
-        return hostManager;
     }
 
     /**
@@ -81,6 +69,27 @@ public class HostGrouping implements AutopsyVisitableItem {
         long thisId = (this.getHost() == null) ? 0 : this.getHost().getId();
         long otherId = (other.getHost() == null) ? 0 : other.getHost().getId();
         return thisId == otherId;
+    }
+
+    /* 
+     * Compares two host groupings to be displayed in a list of children under
+     * the person.
+     */
+    @Override
+    public int compareTo(HostGrouping o) {
+        String thisHost = this.getHost() == null ? null : this.getHost().getName();
+        String otherHost = o == null || o.getHost() == null ? null : o.getHost().getName();
+
+        // push unknown host to bottom
+        if (thisHost == null && otherHost == null) {
+            return 0;
+        } else if (thisHost == null) {
+            return 1;
+        } else if (otherHost == null) {
+            return -1;
+        }
+
+        return thisHost.compareToIgnoreCase(otherHost);
     }
 
 }

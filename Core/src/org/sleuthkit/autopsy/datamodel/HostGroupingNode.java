@@ -24,16 +24,17 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
-
+import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.ChildFactory;
+
 import org.openide.nodes.Children;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Host;
-import org.sleuthkit.datamodel.HostManager;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -46,23 +47,19 @@ class HostGroupingNode extends DisplayableItemNode {
     /**
      * Provides the data source children for this host.
      */
-    private static class HostChildren extends ChildFactory.Detachable<DataSource> {
+    private static class HostChildren extends ChildFactory.Detachable<DataSourceGrouping> {
 
         private static final Logger logger = Logger.getLogger(HostChildren.class.getName());
 
         private final Host host;
-        private final HostManager hostManager;
 
         /**
          * Main constructor.
          *
-         * @param hostManager The host manager to use to fetch data concerning
-         * the host.
          * @param host The host.
          */
-        HostChildren(HostManager hostManager, Host host) {
+        HostChildren(Host host) {
             this.host = host;
-            this.hostManager = hostManager;
         }
 
         /**
@@ -73,8 +70,7 @@ class HostGroupingNode extends DisplayableItemNode {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 String eventType = evt.getPropertyName();
-                if (eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())
-                        || eventType.equals(Case.Events.DATA_SOURCE_DELETED.toString())) {
+                if (eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
                     refresh(true);
                 }
             }
@@ -82,36 +78,38 @@ class HostGroupingNode extends DisplayableItemNode {
 
         @Override
         protected void addNotify() {
-            super.addNotify();
-            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED, Case.Events.DATA_SOURCE_DELETED), pcl);
+            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED), pcl);
         }
 
         @Override
         protected void removeNotify() {
-            super.removeNotify();
-            Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED, Case.Events.DATA_SOURCE_DELETED), pcl);
+            Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED), pcl);
         }
 
         @Override
-        protected boolean createKeys(List<DataSource> toPopulate) {
+        protected DataSourceGroupingNode createNodeForKey(DataSourceGrouping key) {
+            return (key == null || key.getDataSource() == null) ? null : new DataSourceGroupingNode(key.getDataSource());
+        }
+
+        @Override
+        protected boolean createKeys(List<DataSourceGrouping> toPopulate) {
             Set<DataSource> dataSources = null;
             try {
-                dataSources = this.hostManager.getDataSourcesForHost(host);
-            } catch (TskCoreException ex) {
+                dataSources = Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().getDataSourcesForHost(host);
+            } catch (NoCurrentCaseException | TskCoreException ex) {
                 String hostName = host == null || host.getName() == null ? "<unknown>" : host.getName();
                 logger.log(Level.WARNING, String.format("Unable to get data sources for host: %s", hostName), ex);
             }
 
             if (dataSources != null) {
-                toPopulate.addAll(dataSources);
+                dataSources.stream()
+                        .filter(ds -> ds != null)
+                        .map(DataSourceGrouping::new)
+                        .sorted((a, b) -> StringUtils.compareIgnoreCase(a.getDataSource().getName(), b.getDataSource().getName()))
+                        .forEach(toPopulate::add);
             }
 
             return true;
-        }
-
-        @Override
-        protected DataSourceGroupingNode createNodeForKey(DataSource key) {
-            return key == null ? null : new DataSourceGroupingNode(key);
         }
     }
 
@@ -120,12 +118,10 @@ class HostGroupingNode extends DisplayableItemNode {
     /**
      * Main constructor.
      *
-     * @param hostManager The pertinent host manager to retrieve more
-     * information about the host.
      * @param host The host.
      */
-    HostGroupingNode(HostManager hostManager, Host host) {
-        super(Children.create(new HostChildren(hostManager, host), false), host == null ? null : Lookups.singleton(host));
+    HostGroupingNode(Host host) {
+        super(Children.create(new HostChildren(host), false), host == null ? null : Lookups.singleton(host));
 
         String safeName = (host == null || host.getName() == null)
                 ? Bundle.HostNode_unknownHostNode_title()

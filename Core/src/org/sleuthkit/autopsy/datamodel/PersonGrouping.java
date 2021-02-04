@@ -20,42 +20,22 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.util.Objects;
 import org.sleuthkit.autopsy.datamodel.PersonGroupingNode.Person;
-import org.sleuthkit.autopsy.datamodel.PersonGroupingNode.PersonManager;
-import org.sleuthkit.datamodel.HostManager;
 
 /**
  * A top level UI grouping of hosts under a person.
  */
-public class PersonGrouping implements AutopsyVisitableItem {
+public class PersonGrouping implements AutopsyVisitableItem, Comparable<PersonGrouping> {
 
-    private final PersonManager personManager;
-    private final HostManager hostManager;
     private final Person person;
 
     /**
      * Main constructor.
-     * @param personManager The person manager for the case.
-     * @param hostManager The host manager for the case.
+     *
      * @param person The person to be represented.
      */
-    PersonGrouping(PersonManager personManager, HostManager hostManager, Person person) {
-        this.personManager = personManager;
-        this.hostManager = hostManager;
+    PersonGrouping(Person person) {
+
         this.person = person;
-    }
-    
-    /**
-     * @return The person manager for the case.
-     */
-    PersonManager getPersonManager() {
-        return personManager;
-    }
-    
-    /**
-     * @return The host manager for the case.
-     */
-    HostManager getHostManager() {
-        return hostManager;
     }
 
     /**
@@ -90,6 +70,27 @@ public class PersonGrouping implements AutopsyVisitableItem {
         long thisId = (this.getPerson() == null) ? 0 : this.getPerson().getId();
         long otherId = (other.getPerson() == null) ? 0 : other.getPerson().getId();
         return thisId == otherId;
+    }
+
+    /* 
+     * Compares two person groupings to be displayed in a list of children under
+     * the root of the tree.
+     */
+    @Override
+    public int compareTo(PersonGrouping o) {
+        String thisPerson = this.getPerson() == null ? null : this.getPerson().getName();
+        String otherPerson = o == null || o.getPerson() == null ? null : o.getPerson().getName();
+
+        // push unknown host to bottom
+        if (thisPerson == null && otherPerson == null) {
+            return 0;
+        } else if (thisPerson == null) {
+            return 1;
+        } else if (otherPerson == null) {
+            return -1;
+        }
+
+        return thisPerson.compareToIgnoreCase(otherPerson);
     }
 
 }

@@ -32,17 +32,18 @@ import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Host;
-import org.sleuthkit.datamodel.HostManager;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * A node to be displayed in the UI tree for a person and persons grouped in
  * this host.
  */
-@NbBundle.Messages(value = {"PersonNode_unknownHostNode_title=Unknown Persons"})
+@NbBundle.Messages(value = {"PersonNode_unknownPersonNode_title=Unknown Persons"})
 class PersonGroupingNode extends DisplayableItemNode {
+
     // stub class until this goes into TSK datamodel.
-    static class PersonManager {       
+    static class PersonManager {
+
         Set<Person> getPersons() throws TskCoreException {
             return Collections.emptySet();
         }
@@ -51,7 +52,7 @@ class PersonGroupingNode extends DisplayableItemNode {
             return Collections.emptySet();
         }
     }
-    
+
     // stub class until this goes into TSK datamodel.
     static class Person {
 
@@ -77,28 +78,24 @@ class PersonGroupingNode extends DisplayableItemNode {
     /**
      * Responsible for creating the host children of this person.
      */
-    private static class PersonChildren extends ChildFactory.Detachable<Host> {
+    private static class PersonChildren extends ChildFactory.Detachable<HostGrouping> {
 
         private static final Logger logger = Logger.getLogger(PersonChildren.class.getName());
 
         private final Person person;
-        private final PersonManager personManager;
-        private final HostManager hostManager;
-        
+
         /**
          * Main constructor.
-         * @param personManager The person manager for the case.
-         * @param hostManager The host manager for the case.
+         *
          * @param person The person record.
          */
-        PersonChildren(PersonManager personManager, HostManager hostManager, Person person) {
+        PersonChildren(Person person) {
             this.person = person;
-            this.personManager = personManager;
-            this.hostManager = hostManager;
         }
 
         /**
-         * Listener for handling DATA_SOURCE_ADDED and DATA_SOURCE_DELETED events.
+         * Listener for handling DATA_SOURCE_ADDED and DATA_SOURCE_DELETED
+         * events.
          */
         private final PropertyChangeListener pcl = new PropertyChangeListener() {
             @Override
@@ -113,51 +110,52 @@ class PersonGroupingNode extends DisplayableItemNode {
 
         @Override
         protected void addNotify() {
-            super.addNotify();
-            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED, Case.Events.DATA_SOURCE_DELETED), pcl);
+            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED), pcl);
         }
 
         @Override
         protected void removeNotify() {
-            super.removeNotify();
-            Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED, Case.Events.DATA_SOURCE_DELETED), pcl);
+            Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED), pcl);
         }
 
         @Override
-        protected boolean createKeys(List<Host> toPopulate) {
+        protected HostGroupingNode createNodeForKey(HostGrouping key) {
+            return key == null ? null : new HostGroupingNode(key.getHost());
+        }
+
+        @Override
+        protected boolean createKeys(List<HostGrouping> toPopulate) {
             Set<Host> hosts = null;
             try {
-                hosts = this.personManager.getHostsForPerson(person);
+                hosts = new PersonManager().getHostsForPerson(person);
+                // NOTE: This code will be used when person manager exists
+                // hosts = Case.getCurrentCaseThrows().getSleuthkitCase().getPersonManager().getHostsForPerson(person);
             } catch (TskCoreException ex) {
                 String personName = person == null || person.getName() == null ? "<unknown>" : person.getName();
                 logger.log(Level.WARNING, String.format("Unable to get data sources for host: %s", personName), ex);
             }
 
             if (hosts != null) {
-                toPopulate.addAll(hosts);
+                hosts.stream()
+                        .map(HostGrouping::new)
+                        .sorted()
+                        .forEach(toPopulate::add);
             }
 
             return true;
         }
-
-        @Override
-        protected HostGroupingNode createNodeForKey(Host key) {
-            return key == null ? null : new HostGroupingNode(hostManager, key);
-        }
     }
-
 
     /**
      * Main constructor.
-     * @param personManager The person manager for the case.
-     * @param hostManager The host manager for the case.
+     *
      * @param person The person record to be represented.
      */
-    PersonGroupingNode(PersonManager personManager, HostManager hostManager, Person person) {
-        super(Children.create(new PersonChildren(personManager, hostManager, person), false), person == null ? null : Lookups.singleton(person));
+    PersonGroupingNode(Person person) {
+        super(Children.create(new PersonChildren(person), false), person == null ? null : Lookups.singleton(person));
 
         String safeName = (person == null || person.getName() == null)
-                ? Bundle.HostNode_unknownHostNode_title()
+                ? Bundle.PersonNode_unknownPersonNode_title()
                 : person.getName();
 
         super.setName(safeName);
