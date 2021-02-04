@@ -105,11 +105,17 @@ class HostGroupingNode extends DisplayableItemNode {
                 dataSources.stream()
                         .filter(ds -> ds != null)
                         .map(DataSourceGrouping::new)
-                        .sorted((a, b) -> StringUtils.compareIgnoreCase(a.getDataSource().getName(), b.getDataSource().getName()))
+                        .sorted((a, b) -> getNameOrEmpty(a).compareToIgnoreCase(getNameOrEmpty(b)))
                         .forEach(toPopulate::add);
             }
 
             return true;
+        }
+
+        private String getNameOrEmpty(DataSourceGrouping dsGroup) {
+            return (dsGroup == null || dsGroup.getDataSource() == null || dsGroup.getDataSource().getName() == null)
+                    ? ""
+                    : dsGroup.getDataSource().getName();
         }
     }
 
