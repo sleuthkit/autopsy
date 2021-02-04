@@ -58,6 +58,8 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableDB.DrawableDbBuildSt
 import org.sleuthkit.autopsy.imagegallery.gui.GuiUtils;
 import org.sleuthkit.autopsy.imagegallery.utils.TaskUtils;
 import static org.sleuthkit.autopsy.imagegallery.utils.TaskUtils.addFXCallback;
+import org.sleuthkit.autopsy.progress.ModalDialogProgressIndicator;
+import org.sleuthkit.autopsy.progress.ProgressIndicator;
 import org.sleuthkit.datamodel.TskCoreException;
 
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.imagegallery.OpenAction")
@@ -200,8 +202,23 @@ public final class OpenAction extends CallableSystemAction {
         });
     }
 
+    @NbBundle.Messages({
+        "OpenAction_checking_status_msg=Checking Image Gallery database status...",
+        "OpenAction_checking_status_title=Image Gallery"
+    })
     private void checkDBStale(ImageGalleryController controller) {
 
+        final ProgressIndicator progressIndicator = new ModalDialogProgressIndicator(
+                        WindowManager.getDefault().getMainWindow(),
+                        Bundle.OpenAction_checking_status_title());
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                progressIndicator.start(Bundle.OpenAction_checking_status_msg());
+            } 
+        });
+        
+        
         ListenableFuture<Map<Long, DrawableDB.DrawableDbBuildStatusEnum>> dataSourceStatusMapFuture = TaskUtils.getExecutorForClass(OpenAction.class)
                 .submit(controller::getAllDataSourcesDrawableDBStatus);
 
@@ -273,6 +290,14 @@ public final class OpenAction extends CallableSystemAction {
                                 controller.rebuildDrawablesDb();
                             }
                         }
+                        
+                        SwingUtilities.invokeLater(new Runnable() {
+                            @Override
+                            public void run() {
+                                progressIndicator.finish();
+                            } 
+                        });
+                        
                         openTopComponent();
                         return;
                     }
