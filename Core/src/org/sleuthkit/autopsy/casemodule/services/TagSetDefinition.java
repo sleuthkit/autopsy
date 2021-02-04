@@ -88,7 +88,7 @@ final public class TagSetDefinition {
     }
 
     /**
-     * Returns a list of the defined TagSet objects.
+     * Returns a list of configured TagSets (from the user's config folder)
      *
      * @return A list of TagSetDefinition objects or empty list if none were
      *         found.
