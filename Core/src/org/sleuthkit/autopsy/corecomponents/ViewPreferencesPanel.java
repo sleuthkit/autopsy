@@ -96,11 +96,11 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         radioGroupByDataType.setEnabled(caseIsOpen);
         radioGroupByPersonHost.setEnabled(caseIsOpen);
 
-        if (caseIsOpen) {
-            boolean groupByDataType = Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true);
-            radioGroupByDataType.setSelected(groupByDataType);
-            radioGroupByPersonHost.setSelected(!groupByDataType);
-        } else {
+        boolean groupByHostPersonTypes = Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true);
+        radioGroupByDataType.setSelected(!groupByHostPersonTypes);
+        radioGroupByPersonHost.setSelected(groupByHostPersonTypes);
+            
+        if (!caseIsOpen) {
             radioGroupByDataType.setEnabled(false);
             radioGroupByPersonHost.setEnabled(false);
         }
@@ -131,7 +131,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
     }
 
     /**
-     * Store the 'radioGroupByDataType' value.
+     * Store the 'radioGroupByPersonHost' value.
      *
      * Note: The value will not be stored if the value hasn't previously been
      * stored and the radio button isn't selected. This is so
@@ -140,8 +140,8 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
      */
     private void storeGroupItemsInTreeByDataSource() {
 
-        if (Case.isCaseOpen() && (CasePreferences.getGroupItemsInTreeByDataSource() != null || radioGroupByDataType.isSelected())) {
-            CasePreferences.setGroupItemsInTreeByDataSource(radioGroupByDataType.isSelected());
+        if (Case.isCaseOpen() && (CasePreferences.getGroupItemsInTreeByDataSource() != null || radioGroupByPersonHost.isSelected())) {
+            CasePreferences.setGroupItemsInTreeByDataSource(radioGroupByPersonHost.isSelected());
         }
     }
 

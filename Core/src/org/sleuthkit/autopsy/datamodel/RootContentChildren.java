@@ -84,6 +84,16 @@ public class RootContentChildren extends Children.Keys<Object> {
     static class CreateAutopsyNodeVisitor extends AutopsyItemVisitor.Default<AbstractNode> {
 
         @Override
+        public AbstractNode visit(PersonGrouping personGrouping) {
+            return new PersonGroupingNode(personGrouping.getPersonManager(), personGrouping.getHostManager(), personGrouping.getPerson());
+        }
+
+        @Override
+        public AbstractNode visit(HostGrouping hostGrouping) {
+            return new HostGroupingNode(hostGrouping.getHostManager(), hostGrouping.getHost());
+        }
+
+        @Override
         public ExtractedContent.RootNode visit(ExtractedContent ec) {
             return ec.new RootNode(ec.getSleuthkitCase());
         }

@@ -43,6 +43,9 @@ import org.sleuthkit.datamodel.TskCoreException;
 @NbBundle.Messages(value = {"HostNode_unknownHostNode_title=Unknown Host"})
 class HostGroupingNode extends DisplayableItemNode {
 
+    /**
+     * Provides the data source children for this host.
+     */
     private static class HostChildren extends ChildFactory.Detachable<DataSource> {
 
         private static final Logger logger = Logger.getLogger(HostChildren.class.getName());
@@ -50,13 +53,21 @@ class HostGroupingNode extends DisplayableItemNode {
         private final Host host;
         private final HostManager hostManager;
 
+        /**
+         * Main constructor.
+         *
+         * @param hostManager The host manager to use to fetch data concerning
+         * the host.
+         * @param host The host.
+         */
         HostChildren(HostManager hostManager, Host host) {
             this.host = host;
             this.hostManager = hostManager;
         }
 
         /**
-         * Listener for handling DATA_SOURCE_ADDED events.
+         * Listener for handling DATA_SOURCE_ADDED and DATA_SOURCE_DELETED
+         * events.
          */
         private final PropertyChangeListener pcl = new PropertyChangeListener() {
             @Override
@@ -72,15 +83,13 @@ class HostGroupingNode extends DisplayableItemNode {
         @Override
         protected void addNotify() {
             super.addNotify();
-            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED), pcl);
-            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_DELETED), pcl);
+            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED, Case.Events.DATA_SOURCE_DELETED), pcl);
         }
 
         @Override
         protected void removeNotify() {
             super.removeNotify();
-            Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED), pcl);
-            Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_DELETED), pcl);
+            Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED, Case.Events.DATA_SOURCE_DELETED), pcl);
         }
 
         @Override
@@ -108,6 +117,13 @@ class HostGroupingNode extends DisplayableItemNode {
 
     private static final String ICON_PATH = "org/sleuthkit/autopsy/images/host.png";
 
+    /**
+     * Main constructor.
+     *
+     * @param hostManager The pertinent host manager to retrieve more
+     * information about the host.
+     * @param host The host.
+     */
     HostGroupingNode(HostManager hostManager, Host host) {
         super(Children.create(new HostChildren(hostManager, host), false), host == null ? null : Lookups.singleton(host));
 

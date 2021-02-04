@@ -74,6 +74,9 @@ class PersonGroupingNode extends DisplayableItemNode {
 
     private static final String ICON_PATH = "org/sleuthkit/autopsy/images/person.png";
 
+    /**
+     * Responsible for creating the host children of this person.
+     */
     private static class PersonChildren extends ChildFactory.Detachable<Host> {
 
         private static final Logger logger = Logger.getLogger(PersonChildren.class.getName());
@@ -82,6 +85,12 @@ class PersonGroupingNode extends DisplayableItemNode {
         private final PersonManager personManager;
         private final HostManager hostManager;
         
+        /**
+         * Main constructor.
+         * @param personManager The person manager for the case.
+         * @param hostManager The host manager for the case.
+         * @param person The person record.
+         */
         PersonChildren(PersonManager personManager, HostManager hostManager, Person person) {
             this.person = person;
             this.personManager = personManager;
@@ -89,7 +98,7 @@ class PersonGroupingNode extends DisplayableItemNode {
         }
 
         /**
-         * Listener for handling DATA_SOURCE_ADDED events.
+         * Listener for handling DATA_SOURCE_ADDED and DATA_SOURCE_DELETED events.
          */
         private final PropertyChangeListener pcl = new PropertyChangeListener() {
             @Override
@@ -105,15 +114,13 @@ class PersonGroupingNode extends DisplayableItemNode {
         @Override
         protected void addNotify() {
             super.addNotify();
-            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED), pcl);
-            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_DELETED), pcl);
+            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED, Case.Events.DATA_SOURCE_DELETED), pcl);
         }
 
         @Override
         protected void removeNotify() {
             super.removeNotify();
-            Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED), pcl);
-            Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_DELETED), pcl);
+            Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED, Case.Events.DATA_SOURCE_DELETED), pcl);
         }
 
         @Override
@@ -140,6 +147,12 @@ class PersonGroupingNode extends DisplayableItemNode {
     }
 
 
+    /**
+     * Main constructor.
+     * @param personManager The person manager for the case.
+     * @param hostManager The host manager for the case.
+     * @param person The person record to be represented.
+     */
     PersonGroupingNode(PersonManager personManager, HostManager hostManager, Person person) {
         super(Children.create(new PersonChildren(personManager, hostManager, person), false), person == null ? null : Lookups.singleton(person));
 

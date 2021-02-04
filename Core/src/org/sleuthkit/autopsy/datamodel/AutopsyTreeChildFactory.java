@@ -36,7 +36,9 @@ import org.sleuthkit.autopsy.casemodule.CasePreferences;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.PersonGroupingNode.Person;
+import org.sleuthkit.autopsy.datamodel.PersonGroupingNode.PersonManager;
 import org.sleuthkit.datamodel.Host;
+import org.sleuthkit.datamodel.HostManager;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitVisitableItem;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -86,6 +88,26 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
         try {
             SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
             if (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) {
+                // TODO replace with sleuthkit call when PersonManager created
+                PersonManager personManager = new PersonManager();
+                HostManager hostManager = tskCase.getHostManager();
+                
+                Set<Person> persons = personManager.getPersons();
+                if (!CollectionUtils.isEmpty(persons)) {
+                    persons.stream()
+                            .sorted((a, b) -> compare(Person::getName, a, b))
+                            .map(p -> new PersonGrouping(personManager, hostManager, p))
+                            .forEach(list::add);
+                    return true;
+                } else {
+                    Set<Host> hosts = tskCase.getHostManager().getHosts();
+                    hosts.stream()
+                            .sorted((a, b) -> compare(Host::getName, a, b))
+                            .map(h -> new HostGrouping(hostManager, h))
+                            .forEach(list::add);
+                    return true;
+                }
+            } else {
                 List<AutopsyVisitableItem> keys = new ArrayList<>(Arrays.asList(
                         new DataSources(),
                         new Views(tskCase),
@@ -94,18 +116,6 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
                         new Reports()));
 
                 list.addAll(keys);
-            } else {
-                Set<Person> persons = null;
-                // TODO use below in future
-                //Set<Person> persons = tskCase.getPersonManager().getPersons();
-                if (!CollectionUtils.isEmpty(persons)) {
-                    persons.stream().sorted((a, b) -> compare(Person::getName, a, b)).forEach(list::add);
-                    return true;
-                } else {
-                    Set<Host> hosts = tskCase.getHostManager().getHosts();
-                    hosts.stream().sorted((a, b) -> compare(Host::getName, a, b)).forEach(list::add);
-                    return true;
-                }
             }
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
@@ -128,39 +138,12 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
             return ((SleuthkitVisitableItem) key).accept(new CreateSleuthkitNodeVisitor());
         } else if (key instanceof AutopsyVisitableItem) {
             return ((AutopsyVisitableItem) key).accept(new RootContentChildren.CreateAutopsyNodeVisitor());
-        } else if (key instanceof Host) {
-            return getHostGroupingNode((Host) key);
-        } else if (key instanceof Person) {
-            return null;
-            // TODO when person management in place, use code below
-            //return getPersonGroupingNode((Person) key);
         } else {
             logger.log(Level.SEVERE, "Unknown key type ", key.getClass().getName());
             return null;
         }
     }
 
-    private HostGroupingNode getHostGroupingNode(Host host) {
-        try {
-            SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-            return new HostGroupingNode(tskCase.getHostManager(), host);
-        } catch (NoCurrentCaseException | TskCoreException ex) {
-            String hostName = host == null || host.getName() == null ? "<unknown>" : host.getName();
-            logger.log(Level.SEVERE, String.format("Exception while getting host data for %s.", hostName), ex); //NON-NLS
-            return null;
-        }
-    }
-
-//    private PersonGroupingNode getPersonGroupingNode(Person person) {
-//        try {
-//            SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-//            return new HostGroupingNode(tskCase.getPersonManager(), tskCase.getHostManager(), person);
-//        } catch (NoCurrentCaseException | TskCoreException ex) {
-//            String personName = person == null || person.getName() == null ? "<unknown>" : person.getName();
-//            logger.log(Level.SEVERE, String.format("Exception while getting person data for %s.", personName), ex); //NON-NLS
-//            return null;
-//        }
-//    }
     /**
      * Refresh the children
      */
