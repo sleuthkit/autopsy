@@ -22,18 +22,12 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.apache.commons.collections.CollectionUtils;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Node;
@@ -42,9 +36,7 @@ import org.sleuthkit.autopsy.casemodule.CasePreferences;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.PersonGroupingNode.Person;
-import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Host;
-import org.sleuthkit.datamodel.HostManager;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitVisitableItem;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -94,6 +86,15 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
         try {
             SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
             if (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) {
+                List<AutopsyVisitableItem> keys = new ArrayList<>(Arrays.asList(
+                        new DataSources(),
+                        new Views(tskCase),
+                        new Results(tskCase),
+                        new Tags(),
+                        new Reports()));
+
+                list.addAll(keys);
+            } else {
                 Set<Person> persons = null;
                 // TODO use below in future
                 //Set<Person> persons = tskCase.getPersonManager().getPersons();
@@ -105,17 +106,6 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
                     hosts.stream().sorted((a, b) -> compare(Host::getName, a, b)).forEach(list::add);
                     return true;
                 }
-            } else {
-
-                List<AutopsyVisitableItem> keys = new ArrayList<>(Arrays.asList(
-                        new DataSources(),
-                        new Views(tskCase),
-                        new Results(tskCase),
-                        new Tags(),
-                        new Reports()));
-
-                list.addAll(keys);
-
             }
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS

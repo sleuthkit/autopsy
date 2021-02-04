@@ -24,7 +24,6 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
-import org.apache.commons.collections.CollectionUtils;
 
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;

@@ -25,7 +25,6 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
-import org.apache.commons.collections.CollectionUtils;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.util.NbBundle;
@@ -45,6 +44,10 @@ class PersonGroupingNode extends DisplayableItemNode {
     // stub class until this goes into TSK datamodel.
     static class PersonManager {       
         Set<Person> getPersons() throws TskCoreException {
+            return Collections.emptySet();
+        }
+
+        private Set<Host> getHostsForPerson(Person person) throws TskCoreException {
             return Collections.emptySet();
         }
     }

@@ -182,7 +182,6 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         maxResultsLabel = new javax.swing.JLabel();
         maxResultsSpinner = new javax.swing.JSpinner();
         currentCaseSettingsPanel = new javax.swing.JPanel();
-        groupByDataSourceCheckbox = new javax.swing.JCheckBox();
         radioGroupByPersonHost = new javax.swing.JRadioButton();
         radioGroupByDataType = new javax.swing.JRadioButton();
         currentSessionSettingsPanel = new javax.swing.JPanel();
@@ -409,18 +408,21 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
 
         currentCaseSettingsPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.currentCaseSettingsPanel.border.title"))); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(groupByDataSourceCheckbox, org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.groupByDataSourceCheckbox.text")); // NOI18N
-        groupByDataSourceCheckbox.addActionListener(new java.awt.event.ActionListener() {
+        curCaseRadioGroup.add(radioGroupByPersonHost);
+        org.openide.awt.Mnemonics.setLocalizedText(radioGroupByPersonHost, org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.radioGroupByPersonHost.text")); // NOI18N
+        radioGroupByPersonHost.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                groupByDataSourceCheckboxActionPerformed(evt);
+                radioGroupByPersonHostActionPerformed(evt);
             }
         });
 
-        curCaseRadioGroup.add(radioGroupByPersonHost);
-        org.openide.awt.Mnemonics.setLocalizedText(radioGroupByPersonHost, org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.radioGroupByPersonHost.text")); // NOI18N
-
         curCaseRadioGroup.add(radioGroupByDataType);
         org.openide.awt.Mnemonics.setLocalizedText(radioGroupByDataType, org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.radioGroupByDataType.text")); // NOI18N
+        radioGroupByDataType.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                radioGroupByDataTypeActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout currentCaseSettingsPanelLayout = new javax.swing.GroupLayout(currentCaseSettingsPanel);
         currentCaseSettingsPanel.setLayout(currentCaseSettingsPanelLayout);
@@ -431,8 +433,6 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
                 .addGroup(currentCaseSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(radioGroupByPersonHost)
                     .addComponent(radioGroupByDataType))
-                .addGap(44, 44, 44)
-                .addComponent(groupByDataSourceCheckbox)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         currentCaseSettingsPanelLayout.setVerticalGroup(
@@ -442,10 +442,6 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(radioGroupByPersonHost)
                 .addGap(0, 6, Short.MAX_VALUE))
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, currentCaseSettingsPanelLayout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(groupByDataSourceCheckbox)
-                .addGap(15, 15, 15))
         );
 
         currentSessionSettingsPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.currentSessionSettingsPanel.border.title"))); // NOI18N
@@ -509,14 +505,6 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
             .addComponent(viewPreferencesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
-
-    private void groupByDataSourceCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_groupByDataSourceCheckboxActionPerformed
-        if (immediateUpdates) {
-            storeGroupItemsInTreeByDataSource();
-        } else {
-            firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
-        }
-    }//GEN-LAST:event_groupByDataSourceCheckboxActionPerformed
 
     private void hideRejectedResultsCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_hideRejectedResultsCheckboxActionPerformed
         if (immediateUpdates) {
@@ -640,6 +628,22 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         }
     }//GEN-LAST:event_useBestViewerRadioButtonActionPerformed
 
+    private void radioGroupByDataTypeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_radioGroupByDataTypeActionPerformed
+        if (immediateUpdates) {
+            storeGroupItemsInTreeByDataSource();
+        } else {
+            firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+        }
+    }//GEN-LAST:event_radioGroupByDataTypeActionPerformed
+
+    private void radioGroupByPersonHostActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_radioGroupByPersonHostActionPerformed
+        if (immediateUpdates) {
+            storeGroupItemsInTreeByDataSource();
+        } else {
+            firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+        }
+    }//GEN-LAST:event_radioGroupByPersonHostActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup curCaseRadioGroup;
@@ -650,7 +654,6 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
     private javax.swing.JLabel displayTimeLabel;
     private javax.swing.JCheckBox fileNameTranslationColumnCheckbox;
     private javax.swing.JPanel globalSettingsPanel;
-    private javax.swing.JCheckBox groupByDataSourceCheckbox;
     private javax.swing.JLabel hideKnownFilesLabel;
     private javax.swing.JCheckBox hideOtherUsersTagsCheckbox;
     private javax.swing.JLabel hideOtherUsersTagsLabel;
