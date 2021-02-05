@@ -329,7 +329,6 @@ class AddImageWizardAddingProgressPanel extends ShortcutWizardDescriptorPanel {
             final UUID dataSourceId = UUID.randomUUID();
             newContents.clear();
             cleanupTask = null;
-            readyToIngest = false;
             dsProcessor = dsp;
 
             // Add a cleanup task to interrupt the background process if the
@@ -364,6 +363,8 @@ class AddImageWizardAddingProgressPanel extends ShortcutWizardDescriptorPanel {
 
             // Kick off the DSProcessor
             if (dsProcessor.supportsIngestStream()) {
+                // Set readyToIngest to false to prevent the wizard from starting ingest a second time.
+                readyToIngest = false;
                 dsProcessor.runWithIngestStream(ingestJobSettings, getDSPProgressMonitorImpl(), cbObj);
             } else {
                 dsProcessor.run(getDSPProgressMonitorImpl(), cbObj);
