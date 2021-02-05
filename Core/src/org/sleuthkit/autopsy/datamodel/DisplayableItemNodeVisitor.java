@@ -193,9 +193,11 @@ public interface DisplayableItemNodeVisitor<T> {
      */
     T visit(AttachmentNode node);
 
-    T visit(PersonGroupingNode aThis);
+    T visit(PersonGroupingNode node);
 
-    T visit(HostGroupingNode aThis);
+    T visit(HostNode node);
+
+    T visit(DataSourcesByTypeNode node);
 
     /**
      * Visitor with an implementable default behavior for all types. Override
@@ -545,7 +547,12 @@ public interface DisplayableItemNodeVisitor<T> {
         }
 
         @Override
-        public T visit(HostGroupingNode node) {
+        public T visit(HostNode node) {
+            return defaultVisit(node);
+        }
+
+        @Override
+        public T visit(DataSourcesByTypeNode node) {
             return defaultVisit(node);
         }
 

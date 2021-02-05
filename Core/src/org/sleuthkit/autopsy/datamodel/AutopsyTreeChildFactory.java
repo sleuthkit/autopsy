@@ -106,7 +106,7 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
                 }
             } else {
                 List<AutopsyVisitableItem> keys = new ArrayList<>(Arrays.asList(
-                        new DataSources(),
+                        new DataSourcesByType(),
                         new Views(tskCase),
                         new Results(tskCase),
                         new Tags(),

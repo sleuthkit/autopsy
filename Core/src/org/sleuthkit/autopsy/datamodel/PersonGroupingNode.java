@@ -39,7 +39,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * this host.
  */
 @NbBundle.Messages(value = {"PersonNode_unknownPersonNode_title=Unknown Persons"})
-class PersonGroupingNode extends DisplayableItemNode {
+public class PersonGroupingNode extends DisplayableItemNode {
 
     // stub class until this goes into TSK datamodel.
     static class PersonManager {
@@ -119,8 +119,8 @@ class PersonGroupingNode extends DisplayableItemNode {
         }
 
         @Override
-        protected HostGroupingNode createNodeForKey(HostGrouping key) {
-            return key == null ? null : new HostGroupingNode(key.getHost());
+        protected HostNode createNodeForKey(HostGrouping key) {
+            return key == null ? null : new HostNode(key);
         }
 
         @Override

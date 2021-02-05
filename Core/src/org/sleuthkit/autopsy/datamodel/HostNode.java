@@ -23,11 +23,12 @@ import java.beans.PropertyChangeListener;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.logging.Level;
-import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.ChildFactory;
 
 import org.openide.nodes.Children;
+import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -35,31 +36,35 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Host;
+import org.sleuthkit.datamodel.SleuthkitVisitableItem;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * A node to be displayed in the UI tree for a host and data sources grouped in
  * this host.
  */
-@NbBundle.Messages(value = {"HostNode_unknownHostNode_title=Unknown Host"})
-class HostGroupingNode extends DisplayableItemNode {
+@NbBundle.Messages(value = {"HostGroupingNode_unknownHostNode_title=Unknown Host"})
+public class HostNode extends DisplayableItemNode {
 
     /**
      * Provides the data source children for this host.
      */
-    private static class HostChildren extends ChildFactory.Detachable<DataSourceGrouping> {
+    private static class HostGroupingChildren extends ChildFactory.Detachable<DataSourceGrouping> {
 
-        private static final Logger logger = Logger.getLogger(HostChildren.class.getName());
+        private static final Logger logger = Logger.getLogger(HostGroupingChildren.class.getName());
 
         private final Host host;
+        private final Function<DataSourceGrouping, Node> dataSourceToNode;
 
         /**
          * Main constructor.
          *
+         * @param dataSourceToItem Converts a data source to a node.
          * @param host The host.
          */
-        HostChildren(Host host) {
+        HostGroupingChildren(Function<DataSourceGrouping, Node> dataSourceToNode, Host host) {
             this.host = host;
+            this.dataSourceToNode = dataSourceToNode;
         }
 
         /**
@@ -87,8 +92,8 @@ class HostGroupingNode extends DisplayableItemNode {
         }
 
         @Override
-        protected DataSourceGroupingNode createNodeForKey(DataSourceGrouping key) {
-            return (key == null || key.getDataSource() == null) ? null : new DataSourceGroupingNode(key.getDataSource());
+        protected Node createNodeForKey(DataSourceGrouping key) {
+            return this.dataSourceToNode.apply(key);
         }
 
         @Override
@@ -112,6 +117,13 @@ class HostGroupingNode extends DisplayableItemNode {
             return true;
         }
 
+        /**
+         * Get name for data source in data source grouping node or empty
+         * string.
+         *
+         * @param dsGroup The data source grouping.
+         * @return The name or empty if none exists.
+         */
         private String getNameOrEmpty(DataSourceGrouping dsGroup) {
             return (dsGroup == null || dsGroup.getDataSource() == null || dsGroup.getDataSource().getName() == null)
                     ? ""
@@ -120,17 +132,42 @@ class HostGroupingNode extends DisplayableItemNode {
     }
 
     private static final String ICON_PATH = "org/sleuthkit/autopsy/images/host.png";
+    private static final CreateSleuthkitNodeVisitor CREATE_TSK_NODE_VISITOR = new CreateSleuthkitNodeVisitor();
+    
+    private static final Function<DataSourceGrouping, Node> HOSTS_CONVERTER = key -> {
+        if (key.getDataSource() instanceof SleuthkitVisitableItem) {
+            return ((SleuthkitVisitableItem) key.getDataSource()).accept(CREATE_TSK_NODE_VISITOR);
+        } else {
+            return null;
+        }
+    };
+
+    private static final Function<DataSourceGrouping, Node> HOST_GROUPING_CONVERTER = key -> {
+        if (key == null || key.getDataSource() == null) {
+            return null;
+        }
+
+        return new DataSourceGroupingNode(key.getDataSource());
+    };
+
+    HostNode(HostDataSources hosts) {
+        this(Children.create(new HostGroupingChildren(HOSTS_CONVERTER, hosts.getHost()), false), hosts.getHost());
+    }
+
+    HostNode(HostGrouping hostGrouping) {
+        this(Children.create(new HostGroupingChildren(HOST_GROUPING_CONVERTER, hostGrouping.getHost()), false), hostGrouping.getHost());
+    }
 
     /**
      * Main constructor.
      *
      * @param host The host.
      */
-    HostGroupingNode(Host host) {
-        super(Children.create(new HostChildren(host), false), host == null ? null : Lookups.singleton(host));
+    private HostNode(Children children, Host host) {
+        super(children, host == null ? null : Lookups.singleton(host));
 
         String safeName = (host == null || host.getName() == null)
-                ? Bundle.HostNode_unknownHostNode_title()
+                ? Bundle.HostGroupingNode_unknownHostNode_title()
                 : host.getName();
 
         super.setName(safeName);
