@@ -33,6 +33,7 @@ import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.Host.HostStatus;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -42,20 +43,6 @@ import org.sleuthkit.datamodel.TskCoreException;
     "DataSourcesHostsNode_name=Data Sources"
 })
 public class DataSourcesByTypeNode extends DisplayableItemNode {
-
-    public static final String NAME = Bundle.DataSourcesHostsNode_name();
-
-    public DataSourcesByTypeNode() {
-        super(Children.create(new DataSourcesByTypeChildren(), false), Lookups.singleton(NAME));
-        setName(NAME);
-        setDisplayName(NAME);
-        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/image.png");
-    }
-
-    @Override
-    public String getItemType() {
-        return getClass().getName();
-    }
 
     /*
      * Custom Keys implementation that listens for new data sources being added.
@@ -87,7 +74,7 @@ public class DataSourcesByTypeNode extends DisplayableItemNode {
         @Override
         protected boolean createKeys(List<HostDataSources> toPopulate) {
             try {
-                Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().getHosts().stream()
+                Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().getHostsByStatus(HostStatus.ACTIVE).stream()
                         .map(HostDataSources::new)
                         .sorted()
                         .forEach(toPopulate::add);
@@ -104,6 +91,23 @@ public class DataSourcesByTypeNode extends DisplayableItemNode {
             return new HostNode(key);
         }
 
+    }
+    
+    private static final String NAME = Bundle.DataSourcesHostsNode_name();
+
+    /**
+     * Main constructor.
+     */
+    DataSourcesByTypeNode() {
+        super(Children.create(new DataSourcesByTypeChildren(), false), Lookups.singleton(NAME));
+        setName(NAME);
+        setDisplayName(NAME);
+        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/image.png");
+    }
+
+    @Override
+    public String getItemType() {
+        return getClass().getName();
     }
 
     @Override

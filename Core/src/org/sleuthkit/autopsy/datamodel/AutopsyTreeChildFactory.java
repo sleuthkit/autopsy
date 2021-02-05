@@ -37,6 +37,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.PersonGroupingNode.Person;
 import org.sleuthkit.autopsy.datamodel.PersonGroupingNode.PersonManager;
 import org.sleuthkit.datamodel.Host;
+import org.sleuthkit.datamodel.Host.HostStatus;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitVisitableItem;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -90,6 +91,7 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
                 PersonManager personManager = new PersonManager();
                 
                 Set<Person> persons = personManager.getPersons();
+                // show persons level if there are persons to be shown
                 if (!CollectionUtils.isEmpty(persons)) {
                     persons.stream()
                             .map(PersonGrouping::new)
@@ -97,7 +99,8 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
                             .forEach(list::add);
                     return true;
                 } else {
-                    Set<Host> hosts = tskCase.getHostManager().getHosts();
+                    // otherwise, just show host level
+                    Set<Host> hosts = tskCase.getHostManager().getHostsByStatus(HostStatus.ACTIVE);
                     hosts.stream()
                             .map(HostGrouping::new)
                             .sorted()
@@ -105,6 +108,7 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
                     return true;
                 }
             } else {
+                // data source by type view
                 List<AutopsyVisitableItem> keys = new ArrayList<>(Arrays.asList(
                         new DataSourcesByType(),
                         new Views(tskCase),

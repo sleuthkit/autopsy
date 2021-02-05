@@ -68,8 +68,7 @@ public class HostNode extends DisplayableItemNode {
         }
 
         /**
-         * Listener for handling DATA_SOURCE_ADDED and DATA_SOURCE_DELETED
-         * events.
+         * Listener for handling DATA_SOURCE_ADDED events.
          */
         private final PropertyChangeListener pcl = new PropertyChangeListener() {
             @Override
@@ -133,8 +132,12 @@ public class HostNode extends DisplayableItemNode {
 
     private static final String ICON_PATH = "org/sleuthkit/autopsy/images/host.png";
     private static final CreateSleuthkitNodeVisitor CREATE_TSK_NODE_VISITOR = new CreateSleuthkitNodeVisitor();
-    
-    private static final Function<DataSourceGrouping, Node> HOSTS_CONVERTER = key -> {
+
+    /**
+     * Means of creating just data source nodes underneath the host (i.e. no
+     * results, reports, etc.)
+     */
+    private static final Function<DataSourceGrouping, Node> HOST_DATA_SOURCES = key -> {
         if (key.getDataSource() instanceof SleuthkitVisitableItem) {
             return ((SleuthkitVisitableItem) key.getDataSource()).accept(CREATE_TSK_NODE_VISITOR);
         } else {
@@ -142,6 +145,9 @@ public class HostNode extends DisplayableItemNode {
         }
     };
 
+    /**
+     * Shows data sources with results, reports, etc.
+     */
     private static final Function<DataSourceGrouping, Node> HOST_GROUPING_CONVERTER = key -> {
         if (key == null || key.getDataSource() == null) {
             return null;
@@ -150,17 +156,30 @@ public class HostNode extends DisplayableItemNode {
         return new DataSourceGroupingNode(key.getDataSource());
     };
 
+    /**
+     * Main constructor for HostDataSources key where data source children
+     * should be displayed without additional results, reports, etc.
+     *
+     * @param hosts The HostDataSources key.
+     */
     HostNode(HostDataSources hosts) {
-        this(Children.create(new HostGroupingChildren(HOSTS_CONVERTER, hosts.getHost()), false), hosts.getHost());
+        this(Children.create(new HostGroupingChildren(HOST_DATA_SOURCES, hosts.getHost()), false), hosts.getHost());
     }
 
+    /**
+     * Main constructor for HostGrouping key where data sources should be
+     * displayed with results, reports, etc.
+     *
+     * @param hostGrouping The HostGrouping key.
+     */
     HostNode(HostGrouping hostGrouping) {
         this(Children.create(new HostGroupingChildren(HOST_GROUPING_CONVERTER, hostGrouping.getHost()), false), hostGrouping.getHost());
     }
 
     /**
-     * Main constructor.
+     * Constructor.
      *
+     * @param children The children for this host node.
      * @param host The host.
      */
     private HostNode(Children children, Host host) {
