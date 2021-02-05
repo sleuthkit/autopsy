@@ -29,7 +29,9 @@ import org.openide.nodes.ChildFactory;
 
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
+import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -155,6 +157,9 @@ public class HostNode extends DisplayableItemNode {
 
         return new DataSourceGroupingNode(key.getDataSource());
     };
+    
+    
+    private final Host host;
 
     /**
      * Main constructor for HostDataSources key where data source children
@@ -192,7 +197,9 @@ public class HostNode extends DisplayableItemNode {
         super.setName(safeName);
         super.setDisplayName(safeName);
         this.setIconBaseWithExtension(ICON_PATH);
+        this.host = host;
     }
+    
 
     @Override
     public boolean isLeafTypeNode() {
@@ -207,5 +214,27 @@ public class HostNode extends DisplayableItemNode {
     @Override
     public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
         return visitor.visit(this);
+    }
+    
+    @Messages({
+        "HostNode_createSheet_nameProperty=Name",
+        "HostNode_createSheet_addressProperty=Address",
+    })
+     @Override
+    protected Sheet createSheet() {
+        Sheet sheet = Sheet.createDefault();
+        Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
+        if (sheetSet == null) {
+            sheetSet = Sheet.createPropertiesSet();
+            sheet.put(sheetSet);
+        }
+
+        sheetSet.put(new NodeProperty<>("Name", Bundle.HostNode_createSheet_nameProperty(), "", getDisplayName())); //NON-NLS
+        
+        // TODO change to correct host address when API becomes available.
+        String hostAddress = "address";
+        sheetSet.put(new NodeProperty<>("Address", Bundle.HostNode_createSheet_addressProperty(), "", hostAddress)); //NON-NLS
+
+        return sheet;
     }
 }
