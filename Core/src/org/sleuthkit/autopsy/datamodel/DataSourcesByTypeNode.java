@@ -74,7 +74,7 @@ public class DataSourcesByTypeNode extends DisplayableItemNode {
         @Override
         protected boolean createKeys(List<HostDataSources> toPopulate) {
             try {
-                Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().getHostsByStatus(HostStatus.ACTIVE).stream()
+                Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().getHosts().stream()
                         .map(HostDataSources::new)
                         .sorted()
                         .forEach(toPopulate::add);
