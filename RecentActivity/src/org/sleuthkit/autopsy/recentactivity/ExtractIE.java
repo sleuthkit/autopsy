@@ -267,7 +267,7 @@ class ExtractIE extends Extract {
             Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
                     RecentActivityExtracterModuleFactory.getModuleName(), url));
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME,
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
                     RecentActivityExtracterModuleFactory.getModuleName(), datetime));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME,
                     RecentActivityExtracterModuleFactory.getModuleName(), (name != null) ? name : ""));
