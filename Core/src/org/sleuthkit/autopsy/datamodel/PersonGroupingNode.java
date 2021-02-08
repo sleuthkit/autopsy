@@ -191,7 +191,6 @@ public class PersonGroupingNode extends DisplayableItemNode {
             sheet.put(sheetSet);
         }
 
-        // TODO additional properties when API / keys become available.
         sheetSet.put(new NodeProperty<>("Name", Bundle.PersonGroupingNode_createSheet_nameProperty(), "", getDisplayName())); //NON-NLS
         
         return sheet;

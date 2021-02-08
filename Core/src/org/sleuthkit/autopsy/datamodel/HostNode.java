@@ -216,49 +216,8 @@ public class HostNode extends DisplayableItemNode {
         return visitor.visit(this);
     }
 
-    // TODO this is a stub class that will need to be changed to TSK when API completed.
-    private static class HostAddress {
-
-        static enum Type {
-            DNS, IPv4, IPv6, WifiMAC, BlueToothMAC, EthernetMAC
-        }
-
-        private final Type type;
-        private final String address;
-
-        HostAddress(Type type, String address) {
-            this.type = type;
-            this.address = address;
-        }
-
-        Type getType() {
-            return type;
-        }
-
-        String getAddress() {
-            return address;
-        }
-    }
-
-    // fake data
-    private static final List<List<HostAddress>> FAKE_ADDRESSES = Arrays.asList(
-            Arrays.asList(new HostAddress(HostAddress.Type.DNS, "DNS 1"), new HostAddress(HostAddress.Type.WifiMAC, "WiFi 1")),
-            Arrays.asList(new HostAddress(HostAddress.Type.IPv4, "IPv4 2")),
-            Arrays.asList(new HostAddress(HostAddress.Type.BlueToothMAC, "Bluetooth 3"))
-    );
-
-    // TODO change to correct host address when API becomes available.    
-    private List<HostAddress> getAddresses(long id) {
-        if (id <= 0) {
-            return Collections.emptyList();
-        }
-
-        return FAKE_ADDRESSES.get((int)(id % ((long)FAKE_ADDRESSES.size())));
-    }
-
     @Messages({
-        "HostNode_createSheet_nameProperty=Name",
-        "HostNode_createSheet_addressProperty=Address",})
+        "HostNode_createSheet_nameProperty=Name",})
     @Override
     protected Sheet createSheet() {
         Sheet sheet = Sheet.createDefault();
@@ -269,15 +228,6 @@ public class HostNode extends DisplayableItemNode {
         }
 
         sheetSet.put(new NodeProperty<>("Name", Bundle.HostNode_createSheet_nameProperty(), "", getDisplayName())); //NON-NLS
-
-        if (host != null) {
-            List<HostAddress> addresses = getAddresses(host.getId());
-            for (int i = 0; i < addresses.size(); i++) {
-                HostAddress address = addresses.get(i);
-                sheetSet.put(new NodeProperty<>("Address" + i, Bundle.HostNode_createSheet_addressProperty(), 
-                        "", String.format("%s (%s)", address.getAddress(), address.getType().name()))); //NON-NLS
-            }
-        }
 
         return sheet;
     }
