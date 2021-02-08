@@ -100,8 +100,7 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
                     return true;
                 } else {
                     // otherwise, just show host level
-                    Set<Host> hosts = tskCase.getHostManager().getHostsByStatus(HostStatus.ACTIVE);
-                    hosts.stream()
+                    tskCase.getHostManager().getHosts().stream()
                             .map(HostGrouping::new)
                             .sorted()
                             .forEach(list::add);
