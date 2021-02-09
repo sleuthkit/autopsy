@@ -7,7 +7,7 @@
         <Property name="dividerLocation" type="int" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
           <Connection code="dividerLocation" type="code"/>
         </Property>
-        <Property name="resizeWeight" type="double" value="0.1"/>
+        <Property name="resizeWeight" type="double" value="0.2"/>
         <Property name="lastDividerLocation" type="int" value="250"/>
       </Properties>
 

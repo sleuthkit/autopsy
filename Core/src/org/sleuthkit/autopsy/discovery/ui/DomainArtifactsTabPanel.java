@@ -219,7 +219,7 @@ final class DomainArtifactsTabPanel extends JPanel {
         mainSplitPane = new javax.swing.JSplitPane();
 
         mainSplitPane.setDividerLocation(dividerLocation);
-        mainSplitPane.setResizeWeight(0.1);
+        mainSplitPane.setResizeWeight(0.2);
         mainSplitPane.setLastDividerLocation(250);
 
         setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));

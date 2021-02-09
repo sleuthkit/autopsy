@@ -223,7 +223,7 @@ final class MiniTimelinePanel extends javax.swing.JPanel {
         leftSplitPane = new javax.swing.JSplitPane();
 
         mainSplitPane.setDividerLocation(mainSplitPaneDividerLocation);
-        mainSplitPane.setResizeWeight(0.1);
+        mainSplitPane.setResizeWeight(0.2);
         mainSplitPane.setToolTipText("");
         mainSplitPane.setMinimumSize(new java.awt.Dimension(0, 0));
 
