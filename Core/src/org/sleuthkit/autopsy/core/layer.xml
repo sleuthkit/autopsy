@@ -49,6 +49,7 @@
             </file>
             <file name="org-sleuthkit-autopsy-casemodule-CaseDetailsAction.instance"/>
             <file name="org-sleuthkit-autopsy-casemodule-datasourcesummary-DataSourceSummaryAction.instance"/>
+            <file name="org-sleuthkit-autopsy-datamodel-hosts-OpenHostsAction.instance"/>
             <file name="org-sleuthkit-autopsy-casemodule-CaseDeleteAction.instance"/>
             <file name="org-sleuthkit-autopsy-casemodule-UnpackagePortableCaseAction.instance"/>
             <file name="org-sleuthkit-autopsy-casemodule-CaseSaveAction.instance">
