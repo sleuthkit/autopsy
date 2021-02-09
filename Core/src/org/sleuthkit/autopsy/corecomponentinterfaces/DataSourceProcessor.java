@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.corecomponentinterfaces;
 
 import javax.swing.JPanel;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
+import org.sleuthkit.datamodel.Host;
 
 /**
  * Interface implemented by classes that add data sources of a particular type
@@ -140,6 +141,16 @@ public interface DataSourceProcessor {
     default boolean supportsIngestStream() {
         return false;
     }
+    
+    /**
+     * Set the host for this DSP.
+     * 
+     * @param host 
+     */
+    void setHost(Host host);
+//    default void setHost(Host host) {
+        // If not implemented, the host will be left as null.
+//    }
 
     /**
      * Requests cancellation of the background task that adds a data source to

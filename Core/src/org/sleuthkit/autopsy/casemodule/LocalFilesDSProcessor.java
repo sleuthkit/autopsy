@@ -73,6 +73,7 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
     private static final List<String> LOGICAL_EVIDENCE_EXTENSIONS = Arrays.asList(".l01");
     private static final String LOGICAL_EVIDENCE_DESC = Bundle.LocalFilesDSProcessor_logicalEvidenceFilter_desc();
     private static final GeneralFilter LOGICAL_EVIDENCE_FILTER = new GeneralFilter(LOGICAL_EVIDENCE_EXTENSIONS, LOGICAL_EVIDENCE_DESC);
+    private Host host = null;
     /*
      * TODO: Remove the setDataSourceOptionsCalled flag and the settings fields
      * when the deprecated method setDataSourceOptions is removed.
@@ -112,6 +113,16 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
     public String getDataSourceType() {
         return DATA_SOURCE_TYPE;
     }
+    
+    /**
+     * Set the host for this DSP.
+     * 
+     * @param host 
+     */
+    @Override
+    public void setHost(Host host) {
+        this.host = host;
+    }    
 
     /**
      * Gets the panel that allows a user to select a data source and do any
@@ -155,10 +166,10 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
      */
     @Override
     public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
-        Host host = null;
+
         if (!setDataSourceOptionsCalled) {
             
-            // HOSTTODO - set to value from config panel
+            // HOSTTODO - use whatever is in host
             try {
                 host = Case.getCurrentCase().getSleuthkitCase().getHostManager().getOrCreateHost("LocalFilesDSProcessor Host");
             } catch (TskCoreException ex) {

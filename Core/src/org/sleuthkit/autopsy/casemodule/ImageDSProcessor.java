@@ -106,6 +106,16 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
     public ImageDSProcessor() {
         configPanel = ImageFilePanel.createInstance(ImageDSProcessor.class.getName(), filtersList);
     }
+    
+    /**
+     * Set the host for this DSP.
+     * 
+     * @param host 
+     */
+    @Override
+    public void setHost(Host host) {
+        this.host = host;
+    }
 
     /**
      * Get the list of file filters supported by this DSP.
@@ -274,7 +284,7 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
                 sha256 = null;
             }
             
-            // HOSTTODO - this will come from the config panel
+            // HOSTTODO - remove this
             try {
                 host = Case.getCurrentCase().getSleuthkitCase().getHostManager().getOrCreateHost("ImageDSProcessor Host");
             } catch (TskCoreException ex) {

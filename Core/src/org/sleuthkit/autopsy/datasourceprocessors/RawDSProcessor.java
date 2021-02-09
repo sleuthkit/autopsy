@@ -57,6 +57,7 @@ public class RawDSProcessor implements DataSourceProcessor, AutoIngestDataSource
         filtersList.add(rawFilter);
         filtersList.add(encaseFilter);
     }
+    private Host host = null;
     
     // By default, split image into 2GB unallocated space chunks
     private static final long DEFAULT_CHUNK_SIZE = 2000000000L; // 2 GB
@@ -94,7 +95,17 @@ public class RawDSProcessor implements DataSourceProcessor, AutoIngestDataSource
     public String getDataSourceType() {
         return Bundle.RawDSProcessor_dataSourceType();
     }
-
+    
+    /**
+     * Set the host for this DSP.
+     * 
+     * @param host 
+     */
+    @Override
+    public void setHost(Host host) {
+        this.host = host;
+    }
+    
     /**
      * Gets the panel that allows a user to select a data source and do any
      * configuration required by the data source. The panel is less than 544
@@ -140,8 +151,7 @@ public class RawDSProcessor implements DataSourceProcessor, AutoIngestDataSource
     public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         configPanel.storeSettings();
         
-        // HOSTTODO - replace with a call to configPanel().getHost()
-        Host host;
+        // HOSTTODO - remove this and use whatever is in host
         try {
             host = Case.getCurrentCase().getSleuthkitCase().getHostManager().getOrCreateHost("RawDSProcessor Host");
         } catch (TskCoreException ex) {

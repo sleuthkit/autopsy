@@ -55,6 +55,7 @@ public final class LogicalImagerDSProcessor implements DataSourceProcessor {
     private static final String LOGICAL_IMAGER_DIR = "LogicalImager"; //NON-NLS
     private final LogicalImagerPanel configPanel;
     private AddLogicalImageTask addLogicalImageTask;
+    private Host host = null;
 
     /*
      * Constructs a Logical Imager data source processor that implements the
@@ -89,7 +90,17 @@ public final class LogicalImagerDSProcessor implements DataSourceProcessor {
     public String getDataSourceType() {
         return Bundle.LogicalImagerDSProcessor_dataSourceType();
     }
-
+    
+    /**
+     * Set the host for this DSP.
+     * 
+     * @param host 
+     */
+    @Override
+    public void setHost(Host host) {
+        this.host = host;
+    } 
+    
     /**
      * Gets the panel that allows a user to select a data source and do any
      * configuration required by the data source. The panel is less than 544
@@ -142,8 +153,7 @@ public final class LogicalImagerDSProcessor implements DataSourceProcessor {
     public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         configPanel.storeSettings();
 
-        // HOSTTODO - set to value from config panel
-        Host host;
+        // HOSTTODO - remove this and use whatever is in host
         try {
             host = Case.getCurrentCase().getSleuthkitCase().getHostManager().getOrCreateHost("LogicalImagerDSProcessor Host");
         } catch (TskCoreException ex) {

@@ -64,6 +64,7 @@ import org.sleuthkit.datamodel.TskDataException;
 public class XRYDataSourceProcessor implements DataSourceProcessor, AutoIngestDataSourceProcessor {
 
     private final XRYDataSourceProcessorConfigPanel configPanel;
+    private Host host = null;
 
     private static final int XRY_FILES_DEPTH = 1;
 
@@ -76,7 +77,17 @@ public class XRYDataSourceProcessor implements DataSourceProcessor, AutoIngestDa
     public XRYDataSourceProcessor() {
         configPanel = XRYDataSourceProcessorConfigPanel.getInstance();
     }
-
+    
+    /**
+     * Set the host for this DSP.
+     * 
+     * @param host 
+     */
+    @Override
+    public void setHost(Host host) {
+        this.host = host;
+    }    
+    
     @Override
     @NbBundle.Messages({
         "XRYDataSourceProcessor.dataSourceType=XRY Text Export"
@@ -200,8 +211,7 @@ public class XRYDataSourceProcessor implements DataSourceProcessor, AutoIngestDa
     public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         progressMonitor.setIndeterminate(true);
 
-        // HOSTTODO - replace with a call to configPanel().getHost()
-        Host host;
+        // HOSTTODO - remove this and use whatever is in host
         try {
             host = Case.getCurrentCase().getSleuthkitCase().getHostManager().getOrCreateHost("XRYDSProcessor Host");
         } catch (TskCoreException ex) {

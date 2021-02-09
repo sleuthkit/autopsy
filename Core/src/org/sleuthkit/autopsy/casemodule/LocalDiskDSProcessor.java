@@ -57,7 +57,7 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
     private String drivePath;
     private int sectorSize;
     private String timeZone;
-    private Host host;
+    private Host host = null;
     private ImageWriterSettings imageWriterSettings;
     private boolean ignoreFatOrphanFiles;
     private boolean setDataSourceOptionsCalled;
@@ -94,6 +94,16 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
     public String getDataSourceType() {
         return DATA_SOURCE_TYPE;
     }
+    
+    /**
+     * Set the host for this DSP.
+     * 
+     * @param host 
+     */
+    @Override
+    public void setHost(Host host) {
+        this.host = host;
+    }    
 
     /**
      * Gets the panel that allows a user to select a data source and do any
@@ -149,7 +159,7 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
                 imageWriterSettings = null;
             }
             
-            // HOSTTODO - set to value from config panel
+            // HOSTTODO - remove this and use whatever is in host
             try {
                 host = Case.getCurrentCase().getSleuthkitCase().getHostManager().getOrCreateHost("LocalDiskDSProcessor Host");
             } catch (TskCoreException ex) {

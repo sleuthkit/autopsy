@@ -41,6 +41,7 @@ public class MemoryDSProcessor implements DataSourceProcessor {
 
     private final MemoryDSInputPanel configPanel;
     private AddMemoryImageTask addImageTask;
+    private Host host;
 
     /*
      * Constructs a memory data source processor that implements the
@@ -75,7 +76,17 @@ public class MemoryDSProcessor implements DataSourceProcessor {
     public String getDataSourceType() {
         return Bundle.MemoryDSProcessor_dataSourceType();
     }
-
+    
+    /**
+     * Set the host for this DSP.
+     * 
+     * @param host 
+     */
+    @Override
+    public void setHost(Host host) {
+        this.host = host;
+    } 
+    
     /**
      * Gets the panel that allows a user to select a data source and do any
      * configuration required by the data source. The panel is less than 544
@@ -121,8 +132,7 @@ public class MemoryDSProcessor implements DataSourceProcessor {
     public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         configPanel.storeSettings();
         
-        // HOSTTODO - replace with a call to configPanel().getHost()
-        Host host;
+        // HOSTTODO - remove this and use whatever is in host
         try {
             host = Case.getCurrentCase().getSleuthkitCase().getHostManager().getOrCreateHost("MemoryDSProcessor Host");
         } catch (TskCoreException ex) {
