@@ -277,16 +277,30 @@ class PstParser  implements AutoCloseable{
      */
     private EmailMessage extractEmailMessage(PSTMessage msg, String localPath, long fileID) {
         EmailMessage email = new EmailMessage();
-        email.setRecipients(msg.getDisplayTo());
-        email.setCc(msg.getDisplayCC());
-        email.setBcc(msg.getDisplayBCC());
-        email.setSender(getSender(msg.getSenderName(), msg.getSenderEmailAddress()));
+        String toAddress = msg.getDisplayTo();
+        String ccAddress = msg.getDisplayCC();
+        String bccAddress = msg.getDisplayBCC();
+        String receivedByName = msg.getReceivedByName();
+        String receivedBySMTPAddress = msg.getReceivedBySMTPAddress();
+        
+        if (toAddress.contains(receivedByName)) {
+            toAddress = toAddress.replace(receivedByName, receivedBySMTPAddress);
+        }
+        if (ccAddress.contains(receivedByName)) {
+            ccAddress = ccAddress.replace(receivedByName, receivedBySMTPAddress);
+        }
+        if (bccAddress.contains(receivedByName)) {
+            bccAddress = bccAddress.replace(receivedByName, receivedBySMTPAddress);
+        }
+        email.setRecipients(toAddress);
+        email.setCc(ccAddress);
+        email.setBcc(bccAddress);
+        email.setSender(getSender(msg.getSenderName(), msg.getSentRepresentingSMTPAddress()));
         email.setSentDate(msg.getMessageDeliveryTime());
         email.setTextBody(msg.getBody());
         if (false == msg.getTransportMessageHeaders().isEmpty()) {
             email.setHeaders("\n-----HEADERS-----\n\n" + msg.getTransportMessageHeaders() + "\n\n---END HEADERS--\n\n");
         }
-
         email.setHtmlBody(msg.getBodyHTML());
         String rtf = "";
         try {
