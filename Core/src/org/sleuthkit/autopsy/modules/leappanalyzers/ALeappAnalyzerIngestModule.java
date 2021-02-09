@@ -92,6 +92,10 @@ public class ALeappAnalyzerIngestModule implements DataSourceIngestModule {
     public void startUp(IngestJobContext context) throws IngestModuleException {
         this.context = context;
 
+        if (false == PlatformUtil.is64BitOS()) {
+            throw new IngestModuleException(NbBundle.getMessage(this.getClass(), "AleappAnalyzerIngestModule.not.64.bit.os"));
+        }
+
         if (false == PlatformUtil.isWindowsOS()) {
             throw new IngestModuleException(Bundle.ALeappAnalyzerIngestModule_requires_windows());
         }

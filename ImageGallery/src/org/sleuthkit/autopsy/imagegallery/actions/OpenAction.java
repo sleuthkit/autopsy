@@ -157,7 +157,10 @@ public final class OpenAction extends CallableSystemAction {
         }
         Platform.runLater(() -> {
             ImageGalleryController controller;
+            // @@@ This call gets a lock. We shouldn't do this in the UI....
             controller = ImageGalleryController.getController(currentCase);
+
+            // Display an error if we could not get the controller and return
             if (controller == null) {
                 Alert errorDIalog = new Alert(Alert.AlertType.ERROR);
                 errorDIalog.initModality(Modality.APPLICATION_MODAL);
@@ -174,6 +177,7 @@ public final class OpenAction extends CallableSystemAction {
                 return;
             }
 
+            // Make sure the user is aware of Single vs Multi-user behaviors
             if (currentCase.getCaseType() == Case.CaseType.MULTI_USER_CASE
                     && ImageGalleryPreferences.isMultiUserCaseInfoDialogDisabled() == false) {
                 Alert dialog = new Alert(Alert.AlertType.INFORMATION);

@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2021 Basis Technology Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -566,7 +566,7 @@ final class ExtractSafari extends Extract {
                 Cookie cookie = iter.next();
 
                 BlackboardArtifact bbart = origFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE);
-                bbart.addAttributes(createCookieAttributes(cookie.getURL(), cookie.getCreationDate(), cookie.getName(), cookie.getValue(), this.getName(), NetworkUtils.extractDomain(cookie.getURL())));
+                bbart.addAttributes(createCookieAttributes(cookie.getURL(), cookie.getCreationDate(), null, cookie.getExpirationDate(), cookie.getName(), cookie.getValue(), this.getName(), NetworkUtils.extractDomain(cookie.getURL())));
                 bbartifacts.add(bbart);
             }
         }
