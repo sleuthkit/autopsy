@@ -147,10 +147,9 @@ public interface DataSourceProcessor {
      * 
      * @param host 
      */
-    void setHost(Host host);
-//    default void setHost(Host host) {
+    default void setHost(Host host) {
         // If not implemented, the host will be left as null.
-//    }
+    }
 
     /**
      * Requests cancellation of the background task that adds a data source to
