@@ -20,8 +20,12 @@ package org.sleuthkit.autopsy.discovery.ui;
 
 import org.sleuthkit.autopsy.contentviewers.artifactviewers.GeneralPurposeArtifactViewer;
 import com.google.common.eventbus.Subscribe;
+import java.awt.Dimension;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.logging.Level;
 import javax.swing.JPanel;
+import javax.swing.JSplitPane;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -41,13 +45,18 @@ final class DomainArtifactsTabPanel extends JPanel {
     private final ArtifactsListPanel listPanel;
     private final BlackboardArtifact.ARTIFACT_TYPE artifactType;
     private AbstractArtifactDetailsPanel rightPanel = null;
+    private int dividerLocation = 300;
+    private final PropertyChangeListener dividerListener;
 
     private ArtifactRetrievalStatus status = ArtifactRetrievalStatus.UNPOPULATED;
     private final ListSelectionListener listener = new ListSelectionListener() {
         @Override
         public void valueChanged(ListSelectionEvent event) {
             if (!event.getValueIsAdjusting()) {
+                mainSplitPane.removePropertyChangeListener(dividerListener);
                 rightPanel.setArtifact(listPanel.getSelectedArtifact());
+                mainSplitPane.setDividerLocation(dividerLocation);
+                mainSplitPane.addPropertyChangeListener(JSplitPane.DIVIDER_LOCATION_PROPERTY, dividerListener);
             }
         }
     };
@@ -60,12 +69,27 @@ final class DomainArtifactsTabPanel extends JPanel {
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     DomainArtifactsTabPanel(BlackboardArtifact.ARTIFACT_TYPE type) {
         initComponents();
+        dividerListener = new PropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                if (evt.getPropertyName().equalsIgnoreCase(JSplitPane.DIVIDER_LOCATION_PROPERTY)
+                        && evt.getNewValue() instanceof Integer
+                        && evt.getOldValue() instanceof Integer
+                        && (JSplitPane.UNDEFINED_CONDITION != (int) evt.getNewValue())) {
+                    dividerLocation = (int) evt.getNewValue();
+                }
+            }
+        };
         this.artifactType = type;
         listPanel = new ArtifactsListPanel(artifactType);
+        listPanel.setPreferredSize(new Dimension(100, 20));
         listPanel.addMouseListener(new ArtifactMenuMouseAdapter(listPanel));
+
         mainSplitPane.setLeftComponent(listPanel);
         add(mainSplitPane);
         setRightComponent();
+        mainSplitPane.addPropertyChangeListener(JSplitPane.DIVIDER_LOCATION_PROPERTY, dividerListener);
+        dividerLocation = mainSplitPane.getDividerLocation();
         listPanel.addSelectionListener(listener);
     }
 
@@ -121,6 +145,7 @@ final class DomainArtifactsTabPanel extends JPanel {
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     void setStatus(ArtifactRetrievalStatus status) {
         this.status = status;
+        mainSplitPane.removePropertyChangeListener(dividerListener);
         if (status == ArtifactRetrievalStatus.UNPOPULATED) {
             listPanel.clearList();
             removeAll();
@@ -132,6 +157,8 @@ final class DomainArtifactsTabPanel extends JPanel {
             removeAll();
             add(new LoadingPanel(artifactType.getDisplayName()));
         }
+        mainSplitPane.setDividerLocation(dividerLocation);
+        mainSplitPane.addPropertyChangeListener(JSplitPane.DIVIDER_LOCATION_PROPERTY, dividerListener);
     }
 
     /**
@@ -144,6 +171,7 @@ final class DomainArtifactsTabPanel extends JPanel {
     void handleArtifactSearchResultEvent(DiscoveryEventUtils.ArtifactSearchResultEvent artifactresultEvent) {
         if (artifactType == artifactresultEvent.getArtifactType() && status == ArtifactRetrievalStatus.POPULATING) {
             SwingUtilities.invokeLater(() -> {
+                mainSplitPane.removePropertyChangeListener(dividerListener);
                 listPanel.removeSelectionListener(listener);
                 listPanel.addArtifacts(artifactresultEvent.getListOfArtifacts());
                 status = ArtifactRetrievalStatus.POPULATED;
@@ -152,6 +180,8 @@ final class DomainArtifactsTabPanel extends JPanel {
                 listPanel.selectFirst();
                 removeAll();
                 add(mainSplitPane);
+                mainSplitPane.setDividerLocation(dividerLocation);
+                mainSplitPane.addPropertyChangeListener(JSplitPane.DIVIDER_LOCATION_PROPERTY, dividerListener);
                 if (artifactresultEvent.shouldGrabFocus()) {
                     focusList();
                 }
@@ -188,8 +218,9 @@ final class DomainArtifactsTabPanel extends JPanel {
 
         mainSplitPane = new javax.swing.JSplitPane();
 
-        mainSplitPane.setDividerLocation(350);
+        mainSplitPane.setDividerLocation(dividerLocation);
         mainSplitPane.setResizeWeight(0.1);
+        mainSplitPane.setLastDividerLocation(250);
 
         setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
         setMinimumSize(new java.awt.Dimension(0, 0));
