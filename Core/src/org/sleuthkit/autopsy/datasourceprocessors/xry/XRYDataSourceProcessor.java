@@ -261,7 +261,7 @@ public class XRYDataSourceProcessor implements DataSourceProcessor, AutoIngestDa
             Case currentCase = Case.getCurrentCaseThrows();
             //Move heavy lifting to a background task.
             swingWorker = new XRYReportProcessorSwingWorker(xryFolder, progressMonitor,
-                    callBack, currentCase, deviceId, null);
+                    callBack, currentCase, deviceId, host);
             swingWorker.execute();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.WARNING, "[XRY DSP] No case is currently open.", ex);

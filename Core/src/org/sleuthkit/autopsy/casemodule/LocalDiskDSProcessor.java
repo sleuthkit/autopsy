@@ -159,7 +159,7 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
                 imageWriterSettings = null;
             }
             
-            // HOSTTODO - remove this and use whatever is in host
+            // HOSTTODO - remove this
             try {
                 host = Case.getCurrentCase().getSleuthkitCase().getHostManager().getOrCreateHost("LocalDiskDSProcessor Host");
             } catch (TskCoreException ex) {
@@ -241,7 +241,7 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
         try {
             image = SleuthkitJNI.addImageToDatabase(Case.getCurrentCase().getSleuthkitCase(),
                 new String[]{drivePath}, sectorSize,
-                timeZone, null, null, null, deviceId);
+                timeZone, null, null, null, deviceId, host);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error adding local disk with path " + drivePath + " to database", ex);
             final List<String> errors = new ArrayList<>();
@@ -250,7 +250,7 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
             return;
         } 
         
-	    addDiskTask = new AddImageTask(new AddImageTask.ImageDetails(deviceId, image, sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, null, imageWriterSettings), 
+	    addDiskTask = new AddImageTask(new AddImageTask.ImageDetails(deviceId, image, sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, host, imageWriterSettings), 
                 progressMonitor, 
                 new StreamingAddDataSourceCallbacks(new DefaultIngestStream()), 
                 new StreamingAddImageTaskCallback(new DefaultIngestStream(), callback));

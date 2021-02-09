@@ -159,7 +159,7 @@ public class RawDSProcessor implements DataSourceProcessor, AutoIngestDataSource
             //logger.log(Level.SEVERE, "Error creating/loading host", ex);
             host = null;
         }
-        run(UUID.randomUUID().toString(), configPanel.getImageFilePath(), configPanel.getTimeZone(), configPanel.getChunkSize(), host, progressMonitor, callback);
+        run(UUID.randomUUID().toString(), configPanel.getImageFilePath(), configPanel.getTimeZone(), configPanel.getChunkSize(), progressMonitor, callback);
     }
 
     /**
@@ -180,12 +180,11 @@ public class RawDSProcessor implements DataSourceProcessor, AutoIngestDataSource
      * @param chunkSize            The maximum size of each chunk of the raw
      *                             data source as it is divided up into virtual
      *                             unallocated space files.
-     * @param host                 The host for this data source.
      * @param progressMonitor      Progress monitor for reporting progress
      *                             during processing.
      * @param callback             Callback to call when processing is done.
      */
-    private void run(String deviceId, String imageFilePath, String timeZone, long chunkSize, Host host, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+    private void run(String deviceId, String imageFilePath, String timeZone, long chunkSize, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         AddRawImageTask addImageTask = new AddRawImageTask(deviceId, imageFilePath, timeZone, chunkSize, host, progressMonitor, callback);
         new Thread(addImageTask).start();
     }
@@ -230,7 +229,7 @@ public class RawDSProcessor implements DataSourceProcessor, AutoIngestDataSource
 
     @Override
     public void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) {
-        run(deviceId, dataSourcePath.toString(), Calendar.getInstance().getTimeZone().getID(), DEFAULT_CHUNK_SIZE, null, progressMonitor, callBack);
+        run(deviceId, dataSourcePath.toString(), Calendar.getInstance().getTimeZone().getID(), DEFAULT_CHUNK_SIZE, progressMonitor, callBack);
     }
 
 }

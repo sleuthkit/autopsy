@@ -209,7 +209,7 @@ public final class LogicalImagerDSProcessor implements DataSourceProcessor {
         try {
             String deviceId = UUID.randomUUID().toString();
             String timeZone = Calendar.getInstance().getTimeZone().getID();
-            run(deviceId, timeZone, src, dest, host,
+            run(deviceId, timeZone, src, dest,
                     progressMonitor, callback);
         } catch (NoCurrentCaseException ex) {
             String msg = Bundle.LogicalImagerDSProcessor_noCurrentCase();
@@ -233,13 +233,12 @@ public final class LogicalImagerDSProcessor implements DataSourceProcessor {
      *                        java.util.TimeZone.getID.
      * @param src             The source directory of image.
      * @param dest            The destination directory to copy the source.
-     * @param host            The host for this data source.
      * @param progressMonitor Progress monitor for reporting progress during
      *                        processing.
      * @param callback        Callback to call when processing is done.
      */
     private void run(String deviceId, String timeZone,
-            File src, File dest, Host host,
+            File src, File dest,
             DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback
     ) throws NoCurrentCaseException {
         addLogicalImageTask = new AddLogicalImageTask(deviceId, timeZone, src, dest, host,
