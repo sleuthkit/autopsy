@@ -331,7 +331,7 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
      *                                 during processing.
      * @param callback                 Callback to call when processing is done.
      */
-    void run(String deviceId, String rootVirtualDirectoryName, List<String> localFilePaths, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+    public void run(String deviceId, String rootVirtualDirectoryName, List<String> localFilePaths, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         new Thread(new AddLocalFilesTask(deviceId, rootVirtualDirectoryName, localFilePaths, host, progressMonitor, callback)).start();
     }
 
