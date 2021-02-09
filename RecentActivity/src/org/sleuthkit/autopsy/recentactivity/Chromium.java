@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2020 Basis Technology Corp.
+ * Copyright 2012-2021 Basis Technology Corp.
  *
  * Copyright 2012 42six Solutions.
  *
@@ -487,7 +487,7 @@ class Chromium extends Extract {
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
                         RecentActivityExtracterModuleFactory.getModuleName(),
                         ((result.get("host_key").toString() != null) ? result.get("host_key").toString() : ""))); //NON-NLS
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME,
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
                         RecentActivityExtracterModuleFactory.getModuleName(),
                         (Long.valueOf(result.get("last_access_utc").toString()) / 1000000) - Long.valueOf("11644473600"))); //NON-NLS
 

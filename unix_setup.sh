@@ -76,6 +76,9 @@ fi
 chmod u+x autopsy/markmckinnon/Export*
 chmod u+x autopsy/markmckinnon/parse*
 
+# allow solr dependencies to execute
+chmod -R u+x autopsy/solr/bin
+
 # make sure it is executable
 chmod u+x bin/autopsy
 

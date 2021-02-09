@@ -390,11 +390,6 @@ public final class FileTypes implements AutopsyVisitableItem {
         }
 
         @Override
-        public AnalysisResultAdded newAnalysisResult(BlackboardArtifact.Type artifactType, Score score, String conclusion, String configuration, String justification, Collection<BlackboardAttribute> attributesList) throws TskCoreException {
-            return content.newAnalysisResult(artifactType, score, conclusion, configuration, justification, attributesList);
-        }
-
-        @Override
         public BlackboardArtifact newArtifact(BlackboardArtifact.ARTIFACT_TYPE type) throws TskCoreException {
             return content.newArtifact(type);
         }
@@ -435,15 +430,6 @@ public final class FileTypes implements AutopsyVisitableItem {
         }
 
         @Override
-        public List<AnalysisResult> getAllAnalysisResults() throws TskCoreException {
-             return content.getAllAnalysisResults();
-        }
-        
-        public List<AnalysisResult> getAnalysisResults(BlackboardArtifact.Type artifactType) throws TskCoreException {
-            return content.getAnalysisResults(artifactType);
-        }
-        
-        @Override
         public Set<String> getHashSetNames() throws TskCoreException {
             return content.getHashSetNames();
         }
@@ -469,8 +455,23 @@ public final class FileTypes implements AutopsyVisitableItem {
         }
 
         @Override
+        public AnalysisResultAdded newAnalysisResult(BlackboardArtifact.Type type, Score score, String string, String string1, String string2, Collection<BlackboardAttribute> clctn) throws TskCoreException {
+            return content.newAnalysisResult(type, score, string, string1, string2, clctn);
+        }
+
+        @Override
         public Score getAggregateScore() throws TskCoreException {
             return content.getAggregateScore();
+        }
+
+        @Override
+        public List<AnalysisResult> getAnalysisResults(BlackboardArtifact.Type type) throws TskCoreException {
+            return content.getAnalysisResults(type);
+        }
+
+        @Override
+        public List<AnalysisResult> getAllAnalysisResults() throws TskCoreException {
+            return content.getAllAnalysisResults();
         }
     }
 }
