@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  * 
- * Copyright 2012-2019 Basis Technology Corp.
+ * Copyright 2012-2021 Basis Technology Corp.
  * 
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -325,16 +325,26 @@ abstract class Extract {
      * @return List of BlackboarAttributes for the passed in attributes
      */
     protected Collection<BlackboardAttribute> createCookieAttributes(String url,
-            Long creationTime, String name, String value, String programName, String domain) {
+            Long creationTime, Long accessTime, Long endTime, String name, String value, String programName, String domain) {
 
         Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
         bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL,
                 RecentActivityExtracterModuleFactory.getModuleName(),
                 (url != null) ? url : "")); //NON-NLS
 
-        if (creationTime != null) {
-            bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME,
+        if (creationTime != null && creationTime != 0) {
+            bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
                     RecentActivityExtracterModuleFactory.getModuleName(), creationTime));
+        }
+        
+        if (accessTime != null && accessTime != 0) {
+            bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
+                    RecentActivityExtracterModuleFactory.getModuleName(), accessTime));
+        }
+        
+        if(endTime != null && endTime != 0) {
+            bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_END,
+                    RecentActivityExtracterModuleFactory.getModuleName(), endTime));
         }
 
         bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME,

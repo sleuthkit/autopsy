@@ -55,7 +55,9 @@ public class TagsManager implements Closeable {
     private static final Logger LOGGER = Logger.getLogger(TagsManager.class.getName());
     private final SleuthkitCase caseDb;
 
-    private static String DEFAULT_TAG_SET_NAME = "Project VIC";
+    // NOTE: This name is also hard coded in Image Gallery and Projet Vic module. 
+    // They need to stay in sync
+    private static String PROJECT_VIC_TAG_SET_NAME = "Project VIC";
 
     private static final Object lock = new Object();
 
@@ -196,7 +198,7 @@ public class TagsManager implements Closeable {
         try {
             List<TagSet> tagSetList = Case.getCurrentCaseThrows().getSleuthkitCase().getTaggingManager().getTagSets();
             for (TagSet tagSet : tagSetList) {
-                if (tagSet.getName().equals(DEFAULT_TAG_SET_NAME)) {
+                if (tagSet.getName().equals(PROJECT_VIC_TAG_SET_NAME)) {
                     for (TagName tagName : tagSet.getTagNames()) {
                         tagList.add(tagName.getDisplayName());
                     }
@@ -237,7 +239,7 @@ public class TagsManager implements Closeable {
     }
 
     /**
-     * Creates a new TagSetDefinition file.
+     * Creates a new TagSetDefinition file that will be used for future cases
      *
      * @param tagSetDef The tag set definition.
      *
@@ -258,23 +260,26 @@ public class TagsManager implements Closeable {
     TagsManager(SleuthkitCase caseDb) {
         this.caseDb = caseDb;
 
-        // Add standard tags and  the Project VIC default tag set and tags.
+        // Add standard tags and any configured tag sets.
         TaggingManager taggingMgr = caseDb.getTaggingManager();
         try {
-            List<TagSet> setList = taggingMgr.getTagSets();
-            if (setList.isEmpty()) {
+            List<TagSet> tagSetsInCase = taggingMgr.getTagSets();
+            if (tagSetsInCase.isEmpty()) {
+                
+                // add the standard tag names
                 for (TagNameDefinition def : TagNameDefinition.getStandardTagNameDefinitions()) {
                     caseDb.addOrUpdateTagName(def.getDisplayName(), def.getDescription(), def.getColor(), def.getKnownStatus());
                 }
-                //Assume new case and add tag sets
+                
+                //Assume new case and add all tag sets
                 for (TagSetDefinition setDef : TagSetDefinition.readTagSetDefinitions()) {
-                    List<TagName> tagNameList = new ArrayList<>();
+                    List<TagName> tagNamesInSet = new ArrayList<>();
                     for (TagNameDefinition tagNameDef : setDef.getTagNameDefinitions()) {
-                        tagNameList.add(caseDb.addOrUpdateTagName(tagNameDef.getDisplayName(), tagNameDef.getDescription(), tagNameDef.getColor(), tagNameDef.getKnownStatus()));
+                        tagNamesInSet.add(caseDb.addOrUpdateTagName(tagNameDef.getDisplayName(), tagNameDef.getDescription(), tagNameDef.getColor(), tagNameDef.getKnownStatus()));
                     }
 
-                    if (!tagNameList.isEmpty()) {
-                        taggingMgr.addTagSet(setDef.getName(), tagNameList);
+                    if (!tagNamesInSet.isEmpty()) {
+                        taggingMgr.addTagSet(setDef.getName(), tagNamesInSet);
                     }
                 }
             }
