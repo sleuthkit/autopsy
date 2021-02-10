@@ -143,7 +143,7 @@ class SevenZipExtractor {
     }
 
     /**
-     * Contructs an embedded file extractor that uses 7Zip via Java bindings to
+     * Constructs an embedded file extractor that uses 7Zip via Java bindings to
      * extract the contents of an archive file to a directory named for the
      * archive file.
      *
