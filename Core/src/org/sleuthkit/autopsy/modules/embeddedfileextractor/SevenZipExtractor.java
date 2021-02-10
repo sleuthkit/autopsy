@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015-2020 Basis Technology Corp.
+ * Copyright 2015-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -207,7 +207,7 @@ class SevenZipExtractor {
     private boolean checkForIngestCancellation(AbstractFile file) {
         if (fileTaskExecutor != null && context != null && context.fileIngestIsCancelled()) {
             fileTaskExecutor.shutDown();
-            logger.log(Level.INFO, "Ingest was cancelled. Results extracted from the following file may be incomplete. Name: {0}Object ID: {1}", new Object[]{file.getName(), file.getId()});
+            logger.log(Level.INFO, "Ingest was cancelled. Results extracted from the following archive file may be incomplete. Name: {0}Object ID: {1}", new Object[]{file.getName(), file.getId()});
             return true;
         }
         return false;
