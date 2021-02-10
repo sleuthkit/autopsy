@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.discovery.ui;
 
+import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JPanel;
@@ -33,7 +34,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 /**
  * Panel to display list of dates and counts.
  */
-class MiniTimelineDateListPanel extends JPanel {
+final class MiniTimelineDateListPanel extends JPanel {
 
     private static final long serialVersionUID = 1L;
     private final DateCountTableModel tableModel = new DateCountTableModel();
@@ -49,6 +50,7 @@ class MiniTimelineDateListPanel extends JPanel {
         for (int i = 0; i < tableModel.getColumnCount(); ++i) {
             jTable1.getColumnModel().getColumn(i).setCellRenderer(renderer);
         }
+        setMinimumSize(new Dimension(125, 20));
         jTable1.getRowSorter().toggleSortOrder(0);
         jTable1.getRowSorter().toggleSortOrder(0);
     }

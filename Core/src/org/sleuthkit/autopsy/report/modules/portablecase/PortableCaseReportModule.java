@@ -71,6 +71,7 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.FileSystem;
+import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.LocalFilesDataSource;
 import org.sleuthkit.datamodel.Pool;
@@ -1079,12 +1080,20 @@ public class PortableCaseReportModule implements ReportModule {
             BlackboardArtifact artifactToCopy = (BlackboardArtifact) content;
             newContent = copyArtifact(parentId, artifactToCopy);
         } else {
+            
+            // Get or create the host (if needed) before beginning transaction.
+            Host newHost = null;
+            if (content instanceof DataSource) {
+                Host oldHost = ((DataSource)content).getHost();
+                newHost = portableSkCase.getHostManager().getOrCreateHost(oldHost.getName());
+            }
+            
             CaseDbTransaction trans = portableSkCase.beginTransaction();
             try {
                 if (content instanceof Image) {
                     Image image = (Image) content;
                     newContent = portableSkCase.addImage(image.getType(), image.getSsize(), image.getSize(), image.getName(),
-                            new ArrayList<>(), image.getTimeZone(), image.getMd5(), image.getSha1(), image.getSha256(), image.getDeviceId(), trans);
+                            new ArrayList<>(), image.getTimeZone(), image.getMd5(), image.getSha1(), image.getSha256(), image.getDeviceId(), newHost, trans);
                 } else if (content instanceof VolumeSystem) {
                     VolumeSystem vs = (VolumeSystem) content;
                     newContent = portableSkCase.addVolumeSystem(parentId, vs.getType(), vs.getOffset(), vs.getBlockSize(), trans);
@@ -1108,7 +1117,7 @@ public class PortableCaseReportModule implements ReportModule {
 
                     if (abstractFile instanceof LocalFilesDataSource) {
                         LocalFilesDataSource localFilesDS = (LocalFilesDataSource) abstractFile;
-                        newContent = portableSkCase.addLocalFilesDataSource(localFilesDS.getDeviceId(), localFilesDS.getName(), localFilesDS.getTimeZone(), trans);
+                        newContent = portableSkCase.addLocalFilesDataSource(localFilesDS.getDeviceId(), localFilesDS.getName(), localFilesDS.getTimeZone(), newHost, trans);
                     } else {
                         if (abstractFile.isDir()) {
                             newContent = portableSkCase.addLocalDirectory(parentId, abstractFile.getName(), trans);
