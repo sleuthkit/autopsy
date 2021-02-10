@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.datamodel.hosts;
 
+import java.awt.Color;
 import org.sleuthkit.datamodel.Host;
 import java.util.Collection;
 import java.util.Set;
@@ -94,7 +95,8 @@ class AddEditHostDialog extends javax.swing.JDialog {
     }
 
     /**
-     * @return The current string value for the name in the input field.
+     * @return The string value for the name in the input field if Ok pressed or
+     * null if not.
      */
     String getValue() {
         return inputTextField.getText();
@@ -137,7 +139,7 @@ class AddEditHostDialog extends javax.swing.JDialog {
     @Messages({
         "AddEditHostDialog_getValidationMessage_onEmpty=Please provide some text for the host name.",
         "AddEditHostDialog_getValidationMessage_sameAsOriginal=Please provide a new name for this host.",
-        "AddEditHostDialog_getValidationMessage_onDuplicate=Another host already has the same name.  Please choose a different name for this host.",})
+        "AddEditHostDialog_getValidationMessage_onDuplicate=Another host already has the same name.  Please choose a different name.",})
     private String getValidationMessage(String name) {
         if (name == null || name.isEmpty()) {
             return Bundle.AddEditHostDialog_getValidationMessage_onEmpty();
@@ -171,7 +173,7 @@ class AddEditHostDialog extends javax.swing.JDialog {
 
         nameLabel.setText(org.openide.util.NbBundle.getMessage(AddEditHostDialog.class, "AddEditHostDialog.nameLabel.text")); // NOI18N
 
-        validationLabel.setForeground(new java.awt.Color(204, 0, 51));
+        validationLabel.setForeground(Color.RED);
         validationLabel.setVerticalAlignment(javax.swing.SwingConstants.TOP);
 
         okButton.setText(org.openide.util.NbBundle.getMessage(AddEditHostDialog.class, "AddEditHostDialog.okButton.text")); // NOI18N
@@ -201,7 +203,7 @@ class AddEditHostDialog extends javax.swing.JDialog {
                         .addComponent(nameLabel)
                         .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 222, Short.MAX_VALUE)
+                        .addGap(0, 282, Short.MAX_VALUE)
                         .addComponent(cancelButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(okButton)))
@@ -214,9 +216,9 @@ class AddEditHostDialog extends javax.swing.JDialog {
                 .addComponent(nameLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(inputTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(validationLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(validationLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 18, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(okButton)
                     .addComponent(cancelButton))

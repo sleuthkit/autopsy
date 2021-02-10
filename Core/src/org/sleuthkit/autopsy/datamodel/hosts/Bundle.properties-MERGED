@@ -1,6 +1,6 @@
 AddEditHostDialog_addHost_title=Add Host
 AddEditHostDialog_editHost_title=Edit Host
-AddEditHostDialog_getValidationMessage_onDuplicate=Another host already has the same name.  Please choose a different name for this host.
+AddEditHostDialog_getValidationMessage_onDuplicate=Another host already has the same name.  Please choose a different name.
 AddEditHostDialog_getValidationMessage_onEmpty=Please provide some text for the host name.
 AddEditHostDialog_getValidationMessage_sameAsOriginal=Please provide a new name for this host.
 CTL_OpenHosts=Hosts

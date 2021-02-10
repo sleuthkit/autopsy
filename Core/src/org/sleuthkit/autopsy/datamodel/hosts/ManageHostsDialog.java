@@ -20,6 +20,8 @@ package org.sleuthkit.autopsy.datamodel.hosts;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.Vector;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.swing.JFrame;
@@ -38,19 +40,62 @@ import org.sleuthkit.datamodel.TskCoreException;
     "ManageHostsDialog_title_text=Manage Hosts"
 })
 public class ManageHostsDialog extends javax.swing.JDialog {
+    private static class HostListItem {
+        private final Host host;
 
+        HostListItem(Host host) {
+            this.host = host;
+        }
+
+        Host getHost() {
+            return host;
+        }
+
+        @Override
+        public String toString() {
+            return host == null ? "" : host.getName();
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 5;
+            hash = 89 * hash + Objects.hashCode(this.host == null ? 0 : this.host.getId());
+            return hash;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            final HostListItem other = (HostListItem) obj;
+            if (this.host == null || other.getHost() == null) {
+                return this.host == null && other.getHost() == null;
+            }
+            
+            return this.host.getId() == other.getHost().getId();
+        }
+        
+        
+    }
+    
     private static final Logger logger = Logger.getLogger(ManageHostsDialog.class.getName());
     private static final long serialVersionUID = 1L;
     
     private List<Host> hostListData = Collections.emptyList();
 
     /**
-     * 
-     * @param parent
-     * @param modal 
+     * Main constructor.
+     * @param parent The parent frame.
      */
-    public ManageHostsDialog(java.awt.Frame parent, boolean modal) {
-        super(parent, modal);
+    public ManageHostsDialog(java.awt.Frame parent) {
+        super(parent, Bundle.ManageHostsDialog_title_text(), true);
         initComponents();
         refresh();
 
@@ -63,7 +108,7 @@ public class ManageHostsDialog extends javax.swing.JDialog {
      * selected.
      */
     Host getSelectedHost() {
-        return this.hostList.getSelectedValue();
+        return (hostList.getSelectedValue() == null) ? null : hostList.getSelectedValue().getHost();
     }
 
     /**
@@ -77,7 +122,6 @@ public class ManageHostsDialog extends javax.swing.JDialog {
             } catch (NoCurrentCaseException | TskCoreException e) {
                 logger.log(Level.WARNING, String.format("Unable to add new host '%s' at this time.", newHostName), e);
             }
-            System.out.println(String.format("Should create a host of name %s", newHostName));
             refresh();
         }
     }
@@ -105,7 +149,7 @@ public class ManageHostsDialog extends javax.swing.JDialog {
             if (newHostName != null) {
                 //TODO
                 logger.log(Level.SEVERE, String.format("This needs to edit host %d to change to %s.", selectedHost.getId(), newHostName));
-                //Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().updateHost(selectedHost.getId(), newHostName);
+                //Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().updateHostName(selectedHost.getId(), newHostName);
                 refresh();
             }
         }
@@ -124,8 +168,13 @@ public class ManageHostsDialog extends javax.swing.JDialog {
                 : null;
 
         AddEditHostDialog addEditDialog = new AddEditHostDialog(parent, hostListData, origValue);
+        addEditDialog.setResizable(false);
+        addEditDialog.setLocationRelativeTo(parent);
+        addEditDialog.setVisible(true);
+        addEditDialog.toFront();
+        
         if (addEditDialog.isChanged()) {
-            String newHostName = addEditDialog.getName();
+            String newHostName = addEditDialog.getValue();
             return newHostName;
         }
 
@@ -145,13 +194,18 @@ public class ManageHostsDialog extends javax.swing.JDialog {
      * hosts.
      */
     private void refreshData() {
-        Host selectedHost = hostList.getSelectedValue();
-        Long selectedId = selectedHost == null ? null : selectedHost.getId();
+        HostListItem selectedItem = hostList.getSelectedValue();
+        Long selectedId = selectedItem == null || selectedItem.getHost() == null ? null : selectedItem.getHost().getId();
         hostListData = getHostListData();
-        hostList.setListData(hostListData.toArray(new Host[0]));
+        
+        Vector<HostListItem> jlistData = hostListData.stream()
+                .map(HostListItem::new)
+                .collect(Collectors.toCollection(Vector::new));
+        
+        hostList.setListData(jlistData);
 
         if (selectedId != null) {
-            ListModel<Host> model = hostList.getModel();
+            ListModel<HostListItem> model = hostList.getModel();
 
             for (int i = 0; i < model.getSize(); i++) {
                 Object o = model.getElementAt(i);
@@ -199,7 +253,7 @@ public class ManageHostsDialog extends javax.swing.JDialog {
      * Refreshes component's enabled state and displayed host data.
      */
     private void refreshComponents() {
-        Host selectedHost = this.hostList.getSelectedValue();
+        Host selectedHost = getSelectedHost();        
         boolean itemSelected = selectedHost != null;
         this.editButton.setEnabled(itemSelected);
         this.deleteButton.setEnabled(itemSelected);
@@ -365,7 +419,7 @@ public class ManageHostsDialog extends javax.swing.JDialog {
                 .addContainerGap())
         );
 
-        java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("com/mycompany/hostsmanagement/Bundle"); // NOI18N
+        java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("org/sleuthkit/autopsy/datamodel/hosts/Bundle"); // NOI18N
         newButton.getAccessibleContext().setAccessibleName(bundle.getString("ManageHostsDialog.newButton.text")); // NOI18N
         deleteButton.getAccessibleContext().setAccessibleName(bundle.getString("ManageHostsDialog.deleteButton.text")); // NOI18N
         closeButton.getAccessibleContext().setAccessibleName(bundle.getString("ManageHostsDialog.closeButton.text")); // NOI18N
@@ -399,9 +453,9 @@ public class ManageHostsDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_newButtonActionPerformed
 
     private void deleteButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteButtonActionPerformed
-        Host host = this.hostList.getSelectedValue();
-        if (host != null) {
-            deleteHost(host);
+        HostListItem listItem = this.hostList.getSelectedValue();
+        if (listItem != null && listItem.getHost() != null) {
+            deleteHost(listItem.getHost());
         }
     }//GEN-LAST:event_deleteButtonActionPerformed
 
@@ -410,9 +464,9 @@ public class ManageHostsDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_closeButtonActionPerformed
 
     private void editButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_editButtonActionPerformed
-        Host host = this.hostList.getSelectedValue();
-        if (host != null) {
-            editHost(host);
+        HostListItem listItem = this.hostList.getSelectedValue();
+        if (listItem != null && listItem.getHost() != null) {
+            editHost(listItem.getHost());
         }
     }//GEN-LAST:event_editButtonActionPerformed
 
@@ -421,7 +475,7 @@ public class ManageHostsDialog extends javax.swing.JDialog {
     private javax.swing.JButton deleteButton;
     private javax.swing.JButton editButton;
     private javax.swing.JTextArea hostDescriptionTextArea;
-    private javax.swing.JList<org.sleuthkit.datamodel.Host> hostList;
+    private javax.swing.JList<org.sleuthkit.autopsy.datamodel.hosts.ManageHostsDialog.HostListItem> hostList;
     private javax.swing.JTextField hostNameTextField;
     private javax.swing.JButton newButton;
     // End of variables declaration//GEN-END:variables
