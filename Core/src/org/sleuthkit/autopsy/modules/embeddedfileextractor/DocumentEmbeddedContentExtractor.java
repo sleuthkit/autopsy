@@ -171,7 +171,6 @@ class DocumentEmbeddedContentExtractor {
      */
     private boolean checkForIngestCancellation(AbstractFile file) {
         if (fileTaskExecutor != null && context != null && context.fileIngestIsCancelled()) {
-            fileTaskExecutor.shutDown();
             LOGGER.log(Level.INFO, "Ingest was cancelled. Results extracted from the following document file may be incomplete. Name: {0}Object ID: {1}", new Object[]{file.getName(), file.getId()});
             return true;
         }
