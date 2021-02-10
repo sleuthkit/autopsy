@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.discovery.ui;
 
+import java.awt.Dimension;
 import java.awt.Point;
 import java.util.ArrayList;
 import java.util.List;
@@ -63,6 +64,7 @@ final class ArtifactsListPanel extends AbstractArtifactListPanel {
         for (int i = 0; i < tableModel.getColumnCount(); ++i) {
             artifactsTable.getColumnModel().getColumn(i).setCellRenderer(renderer);
         }
+        setMinimumSize(new Dimension(125, 20));
         artifactsTable.getRowSorter().toggleSortOrder(0);
         artifactsTable.getRowSorter().toggleSortOrder(0);
     }
