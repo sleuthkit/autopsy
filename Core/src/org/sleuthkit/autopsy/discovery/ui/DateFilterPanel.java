@@ -345,17 +345,17 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
                     startDate = startDatePicker.getDate();
                 }
                 if (endCheckBox.isSelected() && endDatePicker.getDate() != null) {
-                    endDate = endDatePicker.getDate();
+                    endDate = endDatePicker.getDate().plus(Period.ofDays(1)); //add a day to keep end date inclusive
                 }
             } else if (dateFilterCheckBox.isSelected() && mostRecentRadioButton.isSelected()) {
                 try {
-                    startDate = LocalDate.ofEpochDay(Case.getCurrentCase().getSleuthkitCase().getTimelineManager().getMaxEventTime()).minus(Period.ofDays((Integer) daysSpinner.getValue()));
+                    startDate = LocalDate.ofEpochDay(Case.getCurrentCase().getSleuthkitCase().getTimelineManager().getMaxEventTime() / SECS_PER_DAY).minus(Period.ofDays((Integer) daysSpinner.getValue()));
                 } catch (TskCoreException ex) {
                     startDate = LocalDate.now().minus(Period.ofDays((Integer) daysSpinner.getValue()));
                     logger.log(Level.WARNING, "Unable to get most recent event time from database, using current date instead.");
                 }
             }
-            return new SearchFiltering.ArtifactDateRangeFilter(startDate.atStartOfDay(zone).toEpochSecond(), endDate.atStartOfDay(zone).toEpochSecond() + SECS_PER_DAY);//to insure end date is inclusive
+            return new SearchFiltering.ArtifactDateRangeFilter(startDate.atStartOfDay(zone).toEpochSecond(), endDate.atStartOfDay(zone).toEpochSecond());
         }
         return null;
     }
