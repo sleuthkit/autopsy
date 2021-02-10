@@ -1,7 +1,7 @@
 /*
  * Autopsy
  *
- * Copyright 2020 Basis Technology Corp.
+ * Copyright 2020-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,6 +25,7 @@ import java.awt.event.ActionListener;
 import java.time.LocalDate;
 import java.time.Period;
 import java.time.ZoneId;
+import java.util.logging.Level;
 import org.sleuthkit.autopsy.discovery.search.AbstractFilter;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
@@ -32,9 +33,13 @@ import javax.swing.JList;
 import javax.swing.JSpinner;
 import javax.swing.event.ListSelectionListener;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.communications.Utils;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.discovery.search.SearchFiltering;
+import org.sleuthkit.datamodel.TimelineManager;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Filter panel for allowing the user to filter on date.
@@ -43,6 +48,7 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
 
     private static final long serialVersionUID = 1L;
     private static final long SECS_PER_DAY = 86400;
+    private static final Logger logger = Logger.getLogger(DateFilterPanel.class.getName());
 
     /**
      * Creates new form DateFilterPanel.
@@ -342,8 +348,12 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
                     endDate = endDatePicker.getDate();
                 }
             } else if (dateFilterCheckBox.isSelected() && mostRecentRadioButton.isSelected()) {
-                endDate = LocalDate.now();
-                startDate = LocalDate.now().minus(Period.ofDays((Integer) daysSpinner.getValue()));
+                try {
+                    startDate = LocalDate.ofEpochDay(Case.getCurrentCase().getSleuthkitCase().getTimelineManager().getMaxEventTime()).minus(Period.ofDays((Integer) daysSpinner.getValue()));
+                } catch (TskCoreException ex) {
+                    startDate = LocalDate.now().minus(Period.ofDays((Integer) daysSpinner.getValue()));
+                    logger.log(Level.WARNING, "Unable to get most recent event time from database, using current date instead.");
+                }
             }
             return new SearchFiltering.ArtifactDateRangeFilter(startDate.atStartOfDay(zone).toEpochSecond(), endDate.atStartOfDay(zone).toEpochSecond() + SECS_PER_DAY);//to insure end date is inclusive
         }
