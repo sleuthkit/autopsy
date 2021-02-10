@@ -139,7 +139,7 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
         return configPanel.validatePanel();
     }
 
-    /**
+   /**
      * Adds a data source to the case database using a background task in a
      * separate thread and the settings provided by the selection and
      * configuration panel. Returns as soon as the background task is started.
@@ -155,10 +155,29 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
      */
     @Override
     public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
-        Host host = null;
+        run(null, progressMonitor, callback);
+    }    
+    
+    /**
+     * Adds a data source to the case database using a background task in a
+     * separate thread and the settings provided by the selection and
+     * configuration panel. Returns as soon as the background task is started.
+     * The background task uses a callback object to signal task completion and
+     * return results.
+     *
+     * This method should not be called unless isPanelValid returns true.
+     *
+     * @param host            Host for this data source.
+     * @param progressMonitor Progress monitor that will be used by the
+     *                        background task to report progress.
+     * @param callback        Callback that will be used by the background task
+     *                        to return results.
+     */
+    @Override
+    public void run(Host host, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         if (!setDataSourceOptionsCalled) {
             
-            // HOSTTODO - set to value from config panel
+            // HOSTTODO - use passed in value
             try {
                 host = Case.getCurrentCase().getSleuthkitCase().getHostManager().getOrCreateHost("LocalFilesDSProcessor Host");
             } catch (TskCoreException ex) {
