@@ -28,6 +28,7 @@ import org.openide.util.NbPreferences;
 import org.python.icu.util.TimeZone;
 import org.sleuthkit.autopsy.machinesettings.UserMachinePreferences;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.TextConverterException;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
@@ -84,7 +85,8 @@ public final class UserPreferences {
     private static final boolean DISPLAY_TRANSLATED_NAMES_DEFAULT = true;
     public static final String EXTERNAL_HEX_EDITOR_PATH = "ExternalHexEditorPath";
     public static final String SOLR_MAX_JVM_SIZE = "SolrMaxJVMSize";
-    private static final int DEFAULT_SOLR_HEAP_SIZE_MB = 2048;
+    private static final int DEFAULT_SOLR_HEAP_SIZE_MB_64BIT_PLATFORM = 2048;
+    private static final int DEFAULT_SOLR_HEAP_SIZE_MB_32BIT_PLATFORM = 512;
     public static final String RESULTS_TABLE_PAGE_SIZE = "ResultsTablePageSize";
     private static final String GEO_TILE_OPTION = "GeolocationTileOption";
     private static final String GEO_OSM_TILE_ZIP_PATH = "GeolocationOsmZipPath";
@@ -534,12 +536,17 @@ public final class UserPreferences {
     }
 
     /**
-     * Get the maximum JVM heap size (in MB) for the embedded Solr server.
+     * Get the maximum JVM heap size (in MB) for the embedded Solr server. The returned value
+     * depends on the platform (64bit vs 32bit).
      *
-     * @return Saved value or default (2 GB)
+     * @return Saved value or default (2 GB for 64bit platforms, 512MB for 32bit)
      */
     public static int getMaxSolrVMSize() {
-        return preferences.getInt(SOLR_MAX_JVM_SIZE, DEFAULT_SOLR_HEAP_SIZE_MB);
+        if (PlatformUtil.is64BitJVM()) {
+            return preferences.getInt(SOLR_MAX_JVM_SIZE, DEFAULT_SOLR_HEAP_SIZE_MB_64BIT_PLATFORM);
+        } else {
+            return preferences.getInt(SOLR_MAX_JVM_SIZE, DEFAULT_SOLR_HEAP_SIZE_MB_32BIT_PLATFORM);
+        }
     }
 
     /**

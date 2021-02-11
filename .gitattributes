@@ -13,3 +13,9 @@ Doxyfile                text
 
 *.py                  text diff=python
 *.pl			text
+
+# ensure solr scripts that are bash scripts not ending with.sh are lf instead of crlf
+/KeywordSearch/solr/bin/autopsy-solr  eol=lf
+/KeywordSearch/solr/bin/init.d/solr  eol=lf
+/KeywordSearch/solr/bin/post  eol=lf
+/KeywordSearch/solr/bin/solr  eol=lf
