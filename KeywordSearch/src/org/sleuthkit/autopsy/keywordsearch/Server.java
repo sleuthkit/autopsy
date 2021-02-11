@@ -31,6 +31,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.ConnectException;
+import java.net.DatagramSocket;
 import java.net.ServerSocket;
 import java.net.SocketException;
 import java.nio.charset.Charset;
@@ -239,6 +240,8 @@ public class Server {
     private static final String CORE_PROPERTIES = "core.properties";
     private static final boolean DEBUG = false;//(Version.getBuildType() == Version.Type.DEVELOPMENT);
     private static final int NUM_COLLECTION_CREATION_RETRIES = 5;
+    private static final int NUM_EMBEDDED_SERVER_RETRIES = 12;  // attempt to connect to embedded Solr server for 1 minute
+    private static final int EMBEDDED_SERVER_RETRY_WAIT_SEC = 5;
 
     public enum CORE_EVT_STATES {
 
@@ -269,6 +272,8 @@ public class Server {
      */
     Server() {
         initSettings();
+        
+        localSolrServer = getSolrClient("http://localhost:" + localSolrServerPort + "/solr");
 
         serverAction = new ServerAction();
         File solr8Folder = InstalledFileLocator.getDefault().locate("solr", Server.class.getPackage().getName(), false); //NON-NLS
@@ -664,11 +669,13 @@ public class Server {
      */
     @NbBundle.Messages({
         "Server.status.failed.msg=Local Solr server did not respond to status request. This may be because the server failed to start or is taking too long to initialize.",})
-    void startLocalSolr(SOLR_VERSION version) throws KeywordSearchModuleException, SolrServerNoPortException, SolrServerException {
+    synchronized void startLocalSolr(SOLR_VERSION version) throws KeywordSearchModuleException, SolrServerNoPortException, SolrServerException {
         
+        logger.log(Level.INFO, "Starting local Solr " + version + " server"); //NON-NLS
         if (isLocalSolrRunning()) {
             if (localServerVersion.equals(version)) {
                 // this version of local server is already running
+                logger.log(Level.INFO, "Local Solr " + version + " server is already running"); //NON-NLS
                 return;
             } else {
                 // wrong version of local server is running, stop it
@@ -712,7 +719,7 @@ public class Server {
                     logger.log(Level.INFO, "Starting Solr 8 server"); //NON-NLS
                     localSolrFolder = InstalledFileLocator.getDefault().locate("solr", Server.class.getPackage().getName(), false); //NON-NLS
                     curSolrProcess = runLocalSolr8ControlCommand(new ArrayList<>(Arrays.asList("start", "-p", //NON-NLS
-                    Integer.toString(localSolrServerPort)))); //NON-NLS
+                        Integer.toString(localSolrServerPort)))); //NON-NLS
                 } else {
                     // solr4
                     localSolrFolder = InstalledFileLocator.getDefault().locate("solr4", Server.class.getPackage().getName(), false); //NON-NLS
@@ -721,11 +728,10 @@ public class Server {
                         Arrays.asList("-Dbootstrap_confdir=../solr/configsets/AutopsyConfig/conf", //NON-NLS
                                 "-Dcollection.configName=AutopsyConfig"))); //NON-NLS
                 }
-
+               
                 // Wait for the Solr server to start and respond to a statusRequest request.
-                for (int numRetries = 0; numRetries < 6; numRetries++) {
+                for (int numRetries = 0; numRetries < NUM_EMBEDDED_SERVER_RETRIES; numRetries++) {
                     if (isLocalSolrRunning()) {
-                        localSolrServer = getSolrClient("http://localhost:" + localSolrServerPort + "/solr");
                         final List<Long> pids = this.getSolrPIDs();
                         logger.log(Level.INFO, "New Solr process PID: {0}", pids); //NON-NLS
                         return;
@@ -734,7 +740,7 @@ public class Server {
                     // Local Solr server did not respond so we sleep for
                     // 5 seconds before trying again.
                     try {
-                        TimeUnit.SECONDS.sleep(5);
+                        TimeUnit.SECONDS.sleep(EMBEDDED_SERVER_RETRY_WAIT_SEC);
                     } catch (InterruptedException ex) {
                         logger.log(Level.WARNING, "Timer interrupted"); //NON-NLS
                     }
@@ -767,6 +773,23 @@ public class Server {
      * @param port the port to check for availability
      */
     static boolean isPortAvailable(int port) {
+        final String osName = PlatformUtil.getOSName().toLowerCase();
+        if (osName != null && osName.toLowerCase().startsWith("mac")) {
+            return isPortAvailableOSX(port);
+        } else {
+            return isPortAvailableDefault(port);
+        }
+    }
+
+    /**
+     * Checks to see if a specific port is available.
+     *
+     * NOTE: This is used on non-OS X systems as of right now but could be
+     * replaced with the OS X version.
+     *
+     * @param port the port to check for availability
+     */
+    static boolean isPortAvailableDefault(int port) {
         ServerSocket ss = null;
         try {
 
@@ -791,6 +814,48 @@ public class Server {
         }
         return false;
     }
+
+    /**
+     * Checks to see if a specific port is available.
+     *
+     * NOTE: This is only used on OSX for now, but could replace default 
+     * implementation in the future.
+     * 
+     * @param port The port to check for availability.
+     * @throws IllegalArgumentException If port is outside range of possible ports.
+     */
+    static boolean isPortAvailableOSX(int port) {
+        // implementation taken from https://stackoverflow.com/a/435579
+        if (port < 1 || port > 65535) {
+            throw new IllegalArgumentException("Invalid start port: " + port);
+        }
+
+        ServerSocket ss = null;
+        DatagramSocket ds = null;
+        try {
+            ss = new ServerSocket(port);
+            ss.setReuseAddress(true);
+            ds = new DatagramSocket(port);
+            ds.setReuseAddress(true);
+            return true;
+        } catch (IOException e) {
+        } finally {
+            if (ds != null) {
+                ds.close();
+            }
+
+            if (ss != null) {
+                try {
+                    ss.close();
+                } catch (IOException e) {
+                    /* should not be thrown */
+                }
+            }
+        }
+
+        return false;
+    }
+
 
     /**
      * Changes the current solr server port. Only call this after available.
@@ -1875,13 +1940,22 @@ public class Server {
      * @throws IOException
      */
     private void connectToEmbeddedSolrServer() throws SolrServerException, IOException {
-        HttpSolrClient solrServer = getSolrClient("http://localhost:" + localSolrServerPort + "/solr");
         TimingMetric metric = HealthMonitor.getTimingMetric("Solr: Connectivity check");
-        CoreAdminRequest.getStatus(null, solrServer);
+        CoreAdminRequest.getStatus(null, localSolrServer);
         HealthMonitor.submitTimingMetric(metric);
     }
     
-    
+    /**
+     * Attempts to connect to the given Solr server, which is running in
+     * SoulrCloud mode. This API does not work for the local Solr which is NOT
+     * running in SolrCloud mode.
+     *
+     * @param host Host name of the remote Solr server
+     * @param port Port of the remote Solr server
+     *
+     * @throws SolrServerException
+     * @throws IOException
+     */
     void connectToSolrServer(String host, String port) throws SolrServerException, IOException {
         try (HttpSolrClient solrServer = getSolrClient("http://" + host + ":" + port + "/solr")) {
             connectToSolrServer(solrServer);
@@ -1945,47 +2019,7 @@ public class Server {
             throw new KeywordSearchModuleException(
                     NbBundle.getMessage(this.getClass(), "Server.serverList.exception.msg", solrServer.getBaseURL()));
         }
-    }
-    
-    /* ELTODO leaving this for reference, will delete later
-    private boolean clusterStatusWithCollection(String collectionName) throws IOException, SolrServerException {
-        ModifiableSolrParams params = new ModifiableSolrParams();
-        params.set("action", CollectionParams.CollectionAction.CLUSTERSTATUS.toString());
-        params.set("collection", collectionName);
-        SolrRequest request = new QueryRequest(params);
-        request.setPath("/admin/collections");
-
-        NamedList<Object> statusResponse;
-        try {
-            statusResponse = currentSolrServer.request(request);
-        } catch (RemoteSolrException ex) {
-            // collection doesn't exist
-            return false;
-        }
-        
-        if (statusResponse == null) {
-            logger.log(Level.SEVERE, "Collections response should not be null"); //NON-NLS
-            return false;
-        }
-        
-        NamedList<Object> cluster = (NamedList<Object>) statusResponse.get("cluster");
-        if (cluster == null) {
-            logger.log(Level.SEVERE, "Cluster should not be null"); //NON-NLS
-            return false;
-        }
-        NamedList<Object> collections = (NamedList<Object>) cluster.get("collections");
-        if (cluster == null) {
-            logger.log(Level.SEVERE, "Collections should not be null in cluster state"); //NON-NLS
-            return false;
-        }
-        if (collections.size() == 0) {
-            logger.log(Level.SEVERE, "Collections should not be empty in cluster state"); //NON-NLS
-            return false;
-        } 
-
-        Object collection = collections.get(collectionName);
-        return (collection != null);
-    }*/        
+    }       
 
     class Collection {
 

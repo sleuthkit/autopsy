@@ -137,6 +137,26 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
      */
     @Override
     public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+        run(null, progressMonitor, callback);
+    }
+    
+    /**
+     * Adds a data source to the case database using a background task in a
+     * separate thread and the settings provided by the selection and
+     * configuration panel. Returns as soon as the background task is started.
+     * The background task uses a callback object to signal task completion and
+     * return results.
+     *
+     * This method should not be called unless isPanelValid returns true.
+     *
+     * @param host            Host for this data source.
+     * @param progressMonitor Progress monitor that will be used by the
+     *                        background task to report progress.
+     * @param callback        Callback that will be used by the background task
+     *                        to return results.
+     */
+    @Override
+    public void run(Host host, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         if (!setDataSourceOptionsCalled) {
             deviceId = UUID.randomUUID().toString();
             drivePath = configPanel.getContentPath();
@@ -148,21 +168,22 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
             } else {
                 imageWriterSettings = null;
             }
-            
-            // HOSTTODO - set to value from config panel
-            try {
-                host = Case.getCurrentCase().getSleuthkitCase().getHostManager().getOrCreateHost("LocalDiskDSProcessor Host");
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Error creating/loading host", ex);
-                host = null;
-            }
+        }
+        
+        this.host = host;
+        // HOSTTODO - set to value from config panel
+        try {
+            this.host = Case.getCurrentCase().getSleuthkitCase().getHostManager().getOrCreateHost("LocalDiskDSProcessor Host");
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error creating/loading host", ex);
+            this.host = null;
         }
 
         Image image;
         try {
             image = SleuthkitJNI.addImageToDatabase(Case.getCurrentCase().getSleuthkitCase(),
                 new String[]{drivePath}, sectorSize,
-                timeZone, null, null, null, deviceId, host);
+                timeZone, null, null, null, deviceId, this.host);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error adding local disk with path " + drivePath + " to database", ex);
             final List<String> errors = new ArrayList<>();
@@ -172,7 +193,7 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
         }   
 
         addDiskTask = new AddImageTask(
-                new AddImageTask.ImageDetails(deviceId, image, sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, host, imageWriterSettings), 
+                new AddImageTask.ImageDetails(deviceId, image, sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, this.host, imageWriterSettings), 
                 progressMonitor,
                 new StreamingAddDataSourceCallbacks(new DefaultIngestStream()), 
                 new StreamingAddImageTaskCallback(new DefaultIngestStream(), callback));

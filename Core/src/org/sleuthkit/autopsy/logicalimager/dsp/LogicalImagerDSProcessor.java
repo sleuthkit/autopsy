@@ -130,6 +130,26 @@ public final class LogicalImagerDSProcessor implements DataSourceProcessor {
      * @param callback        Callback that will be used by the background task
      *                        to return results.
      */
+    @Override
+    public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {  
+        run(null, progressMonitor, callback);
+    }  
+    
+    /**
+     * Adds a data source to the case database using a background task in a
+     * separate thread and the settings provided by the selection and
+     * configuration panel. Returns as soon as the background task is started.
+     * The background task uses a callback object to signal task completion and
+     * return results.
+     *
+     * This method should not be called unless isPanelValid returns true.
+     *
+     * @param host            Host for the data source.
+     * @param progressMonitor Progress monitor that will be used by the
+     *                        background task to report progress.
+     * @param callback        Callback that will be used by the background task
+     *                        to return results.
+     */
     @Messages({
         "# {0} - imageDirPath", "LogicalImagerDSProcessor.imageDirPathNotFound={0} not found.\nUSB drive has been ejected.",
         "# {0} - directory", "LogicalImagerDSProcessor.failToCreateDirectory=Failed to create directory {0}",
@@ -139,11 +159,10 @@ public final class LogicalImagerDSProcessor implements DataSourceProcessor {
         "LogicalImagerDSProcessor.noCurrentCase=No current case",
     })
     @Override
-    public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+    public void run(Host host, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         configPanel.storeSettings();
 
         // HOSTTODO - set to value from config panel
-        Host host;
         try {
             host = Case.getCurrentCase().getSleuthkitCase().getHostManager().getOrCreateHost("LogicalImagerDSProcessor Host");
         } catch (TskCoreException ex) {

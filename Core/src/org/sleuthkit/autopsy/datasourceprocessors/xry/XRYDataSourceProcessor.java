@@ -194,14 +194,33 @@ public class XRYDataSourceProcessor implements DataSourceProcessor, AutoIngestDa
      * in isPanelValid().
      */
     @Override
+    public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+        run(null, progressMonitor, callback);
+    }    
+    
+    /**
+     * Processes the XRY folder that the examiner selected. The heavy lifting is
+     * done off of the EDT, so this function will return while the 
+     * path is still being processed.
+     * 
+     * This function assumes the calling thread has sufficient privileges to
+     * read the folder and its child content, which should have been validated 
+     * in isPanelValid().
+     * 
+     * @param host            Host for the data source.
+     * @param progressMonitor Progress monitor that will be used by the
+     *                        background task to report progress.
+     * @param callback        Callback that will be used by the background task
+     *                        to return results.
+     */
+    @Override
     @NbBundle.Messages({
         "XRYDataSourceProcessor.noCurrentCase=No case is open."
     })
-    public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+    public void run(Host host, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         progressMonitor.setIndeterminate(true);
 
-        // HOSTTODO - replace with a call to configPanel().getHost()
-        Host host;
+        // HOSTTODO - use passed in value
         try {
             host = Case.getCurrentCase().getSleuthkitCase().getHostManager().getOrCreateHost("XRYDSProcessor Host");
         } catch (TskCoreException ex) {
