@@ -67,11 +67,9 @@ public interface AutoIngestDataSourceProcessor extends DataSourceProcessor {
      * @param callBack        Callback that will be used by the background task
      *                        to return results.
      */
-    default void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) {
-        process(deviceId, dataSourcePath, null, progressMonitor, callBack);
-    }
+    void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack);
 
-        /**
+    /**
      * Adds a data source to the case database using a background task in a
      * separate thread by calling DataSourceProcessor.run() method. Returns as
      * soon as the background task is started. The background task uses a
@@ -89,7 +87,9 @@ public interface AutoIngestDataSourceProcessor extends DataSourceProcessor {
      * @param callBack        Callback that will be used by the background task
      *                        to return results.
      */
-    void process(String deviceId, Path dataSourcePath, Host host, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack);
+    default void process(String deviceId, Path dataSourcePath, Host host, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) {
+        process(deviceId, dataSourcePath, progressMonitor, callBack);
+    }
     
     /**
      * Adds a data source to the case database using a background task in a
@@ -137,7 +137,7 @@ public interface AutoIngestDataSourceProcessor extends DataSourceProcessor {
      * @return The new ingest stream or null if an error occurred. Errors will be handled by the callback.
      */
     default IngestStream processWithIngestStream(String deviceId, Path dataSourcePath, Host host, IngestJobSettings settings, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) {
-        throw new UnsupportedOperationException("Streaming ingest not supported for this data source processor");
+        return processWithIngestStream(deviceId, dataSourcePath, settings, progressMonitor, callBack);
     }    
     
     /**

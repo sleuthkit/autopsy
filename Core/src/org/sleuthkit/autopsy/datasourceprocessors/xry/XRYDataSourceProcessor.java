@@ -248,6 +248,11 @@ public class XRYDataSourceProcessor implements DataSourceProcessor, AutoIngestDa
         }
     }
 
+    @Override
+    public void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) {
+        process(deviceId, dataSourcePath, null, progressMonitor, callBack);
+    }
+    
     /**
      * Processes the XRY Folder encountered in an auto-ingest context. The heavy
      * lifting is done off of the EDT, so this function will return while the 
