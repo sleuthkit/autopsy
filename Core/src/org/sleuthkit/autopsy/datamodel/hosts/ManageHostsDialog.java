@@ -18,19 +18,25 @@
  */
 package org.sleuthkit.autopsy.datamodel.hosts;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.swing.JFrame;
 import javax.swing.ListModel;
+import org.apache.commons.collections4.CollectionUtils;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Host;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -40,15 +46,37 @@ import org.sleuthkit.datamodel.TskCoreException;
     "ManageHostsDialog_title_text=Manage Hosts"
 })
 public class ManageHostsDialog extends javax.swing.JDialog {
-    private static class HostListItem {
-        private final Host host;
 
-        HostListItem(Host host) {
+    /**
+     * List item to be used with jlist.
+     */
+    private static class HostListItem {
+
+        private final Host host;
+        private final List<DataSource> dataSources;
+
+        /**
+         * Main constructor.
+         * @param host The host.
+         * @param dataSources The data sources that are children of this host.
+         */
+        HostListItem(Host host, List<DataSource> dataSources) {
             this.host = host;
+            this.dataSources = dataSources;
         }
 
+        /**
+         * @return The host.
+         */
         Host getHost() {
             return host;
+        }
+        
+        /**
+         * @return The data sources associated with this host.
+         */
+        List<DataSource> getDataSources() {
+            return dataSources;
         }
 
         @Override
@@ -78,20 +106,20 @@ public class ManageHostsDialog extends javax.swing.JDialog {
             if (this.host == null || other.getHost() == null) {
                 return this.host == null && other.getHost() == null;
             }
-            
+
             return this.host.getId() == other.getHost().getId();
         }
-        
-        
+
     }
-    
+
     private static final Logger logger = Logger.getLogger(ManageHostsDialog.class.getName());
     private static final long serialVersionUID = 1L;
-    
-    private List<Host> hostListData = Collections.emptyList();
+
+    private Map<Host, List<DataSource>> hostChildrenMap = Collections.emptyMap();
 
     /**
      * Main constructor.
+     *
      * @param parent The parent frame.
      */
     public ManageHostsDialog(java.awt.Frame parent) {
@@ -132,8 +160,12 @@ public class ManageHostsDialog extends javax.swing.JDialog {
      * @param selectedHost
      */
     private void deleteHost(Host selectedHost) {
-        if (selectedHost != null) {
-            System.out.println("Deleting: " + selectedHost);
+        if (selectedHost != null && selectedHost.getName() != null) {
+            try {
+                Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().deleteHost(selectedHost.getName());
+            } catch (NoCurrentCaseException | TskCoreException e) {
+                logger.log(Level.WARNING, String.format("Unable to delete host '%s' at this time.", selectedHost.getName()), e);
+            }
             refresh();
         }
     }
@@ -147,9 +179,12 @@ public class ManageHostsDialog extends javax.swing.JDialog {
         if (selectedHost != null) {
             String newHostName = getAddEditDialogName(selectedHost);
             if (newHostName != null) {
-                //TODO
-                logger.log(Level.SEVERE, String.format("This needs to edit host %d to change to %s.", selectedHost.getId(), newHostName));
-                //Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().updateHostName(selectedHost.getId(), newHostName);
+                selectedHost.setName(newHostName);
+                try {
+                    Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().updateHost(selectedHost);
+                } catch (NoCurrentCaseException | TskCoreException e) {
+                    logger.log(Level.WARNING, String.format("Unable to update host '%s' with id: %d at this time.", selectedHost.getName(), selectedHost.getId()), e);
+                }
                 refresh();
             }
         }
@@ -167,12 +202,12 @@ public class ManageHostsDialog extends javax.swing.JDialog {
                 ? (JFrame) this.getRootPane().getParent()
                 : null;
 
-        AddEditHostDialog addEditDialog = new AddEditHostDialog(parent, hostListData, origValue);
+        AddEditHostDialog addEditDialog = new AddEditHostDialog(parent, hostChildrenMap.keySet(), origValue);
         addEditDialog.setResizable(false);
         addEditDialog.setLocationRelativeTo(parent);
         addEditDialog.setVisible(true);
         addEditDialog.toFront();
-        
+
         if (addEditDialog.isChanged()) {
             String newHostName = addEditDialog.getValue();
             return newHostName;
@@ -196,12 +231,13 @@ public class ManageHostsDialog extends javax.swing.JDialog {
     private void refreshData() {
         HostListItem selectedItem = hostList.getSelectedValue();
         Long selectedId = selectedItem == null || selectedItem.getHost() == null ? null : selectedItem.getHost().getId();
-        hostListData = getHostListData();
-        
-        Vector<HostListItem> jlistData = hostListData.stream()
-                .map(HostListItem::new)
+        hostChildrenMap = getHostListData();
+
+        Vector<HostListItem> jlistData = hostChildrenMap.entrySet().stream()
+                .sorted((a, b) -> getNameOrEmpty(a.getKey()).compareTo(getNameOrEmpty(b.getKey())))
+                .map(entry -> new HostListItem(entry.getKey(), entry.getValue()))
                 .collect(Collectors.toCollection(Vector::new));
-        
+
         hostList.setListData(jlistData);
 
         if (selectedId != null) {
@@ -218,27 +254,6 @@ public class ManageHostsDialog extends javax.swing.JDialog {
     }
 
     /**
-     * Retrieves the current list of hosts for the case.
-     *
-     * @return The list of hosts to be displayed in the list (sorted
-     * alphabetically).
-     */
-    private List<Host> getHostListData() {
-        List<Host> toRet = null;
-        try {
-            toRet = Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().getHosts();
-        } catch (TskCoreException | NoCurrentCaseException ex) {
-            logger.log(Level.WARNING, "There was an error while fetching hosts for current case.", ex);
-        }
-        return (toRet == null)
-                ? Collections.emptyList()
-                : toRet.stream()
-                        .filter(h -> h != null)
-                        .sorted((a, b) -> getNameOrEmpty(a).compareToIgnoreCase(getNameOrEmpty(b)))
-                        .collect(Collectors.toList());
-    }
-
-    /**
      * Returns the name of the host or an empty string if the host or name of
      * host is null.
      *
@@ -250,13 +265,48 @@ public class ManageHostsDialog extends javax.swing.JDialog {
     }
 
     /**
+     * Retrieves the current list of hosts for the case.
+     *
+     * @return The list of hosts to be displayed in the list (sorted
+     * alphabetically).
+     */
+    private Map<Host, List<DataSource>> getHostListData() {
+        Map<Host, List<DataSource>> hostMapping = new HashMap<>();
+        try {
+            SleuthkitCase curCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+            List<Host> hosts = curCase.getHostManager().getHosts();
+            List<DataSource> dataSources = curCase.getDataSources();
+
+            if (dataSources != null) {
+                for (DataSource ds : dataSources) {
+                    List<DataSource> hostDataSources = hostMapping.computeIfAbsent(ds.getHost(), (d) -> new ArrayList<>());
+                    hostDataSources.add(ds);
+                }
+
+            }
+
+            if (hosts != null) {
+                for (Host host : hosts) {
+                    hostMapping.putIfAbsent(host, Collections.emptyList());
+                }
+            }
+
+        } catch (TskCoreException | NoCurrentCaseException ex) {
+            logger.log(Level.WARNING, "There was an error while fetching hosts for current case.", ex);
+        }
+
+        return hostMapping;
+    }
+
+    /**
      * Refreshes component's enabled state and displayed host data.
      */
     private void refreshComponents() {
-        Host selectedHost = getSelectedHost();        
-        boolean itemSelected = selectedHost != null;
-        this.editButton.setEnabled(itemSelected);
-        this.deleteButton.setEnabled(itemSelected);
+        HostListItem selectedItem = hostList.getSelectedValue();
+        Host selectedHost = selectedItem == null ? null : selectedItem.getHost();
+        List<DataSource> dataSources = selectedItem == null ? null : selectedItem.getDataSources();
+        this.editButton.setEnabled(selectedHost != null);
+        this.deleteButton.setEnabled(selectedHost != null && CollectionUtils.isEmpty(dataSources));
         String nameTextFieldStr = selectedHost != null && selectedHost.getName() != null ? selectedHost.getName() : "";
         this.hostNameTextField.setText(nameTextFieldStr);
 

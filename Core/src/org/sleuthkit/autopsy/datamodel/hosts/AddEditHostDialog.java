@@ -41,6 +41,11 @@ class AddEditHostDialog extends javax.swing.JDialog {
     private final Set<String> hostNamesUpper;
     private final Host initialHost;
 
+    /**
+     * Main constructor.
+     * @param parent The parent frame for this dialog.
+     * @param currentHosts The current set of hosts in the case.
+     */
     AddEditHostDialog(java.awt.Frame parent, Collection<Host> currentHosts) {
         this(parent, currentHosts, null);
     }
