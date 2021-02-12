@@ -19,12 +19,9 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.awt.event.ActionEvent;
-import java.io.IOException;
-import org.apache.solr.client.solrj.SolrServerException;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionRegistration;
-import org.openide.util.Exceptions;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
@@ -51,15 +48,8 @@ public class ExtractAllTermsAction extends CallableSystemAction {
 
     @Override
     public void performAction() {
-        // ELTODO AllCasesSearchDialog dialog = new AllCasesSearchDialog();
-        // ELTODO dialog.display();
-        final Server server = KeywordSearch.getServer();
-        Long dsID = Long.valueOf(4);
-        try {
-            server.extractAllTermsForDataSource(dsID);
-        } catch (Exception ex) {
-            Exceptions.printStackTrace(ex);
-        }
+        TermsExtractionDialog listsPanel = TermsExtractionDialog.getDefault();
+        listsPanel.display();
     }
 
     @NbBundle.Messages({
