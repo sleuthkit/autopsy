@@ -57,6 +57,7 @@ public class ManageHostsDialog extends javax.swing.JDialog {
 
         /**
          * Main constructor.
+         *
          * @param host The host.
          * @param dataSources The data sources that are children of this host.
          */
@@ -71,7 +72,7 @@ public class ManageHostsDialog extends javax.swing.JDialog {
         Host getHost() {
             return host;
         }
-        
+
         /**
          * @return The data sources associated with this host.
          */

@@ -37,7 +37,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 @ActionID(category = "Case", id = "org.sleuthkit.autopsy.datamodel.hosts.OpenHostsAction")
 @ActionRegistration(displayName = "#CTL_OpenHosts", lazy = false)
 @Messages({
-    "CTL_OpenHosts=Hosts",})
+    "CTL_OpenHosts=Manage Hosts",})
 public final class OpenHostsAction extends CallableSystemAction {
 
     private static final long serialVersionUID = 1L;
