@@ -51,12 +51,14 @@ import org.sleuthkit.datamodel.TskCoreException;
  * options area.
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
+@NbBundle.Messages({
+    "TermsExtractionDialog.dialogErrorHeader=Error Extracting Unique Words"})
 class TermsExtractionDialog extends javax.swing.JDialog {
 
     private static final Logger logger = Logger.getLogger(TermsExtractionDialog.class.getName());
     
     // ELTODO
-    private final String keywordSearchErrorDialogHeader = org.openide.util.NbBundle.getMessage(this.getClass(), "AbstractKeywordSearchPerformer.search.dialogErrorHeader");
+    private final String errorDialogHeader = Bundle.TermsExtractionDialog_dialogErrorHeader();
     private static TermsExtractionDialog instance;
     private ActionListener searchAddListener;
     private boolean ingestRunning;
@@ -73,7 +75,7 @@ class TermsExtractionDialog extends javax.swing.JDialog {
         dataSourceList.setModel(getDataSourceListModel());
 
         dataSourceList.addListSelectionListener((ListSelectionEvent evt) -> {
-            firePropertyChange(Bundle.DropdownSingleTermSearchPanel_selected(), null, null); // ELTODO
+            firePropertyChange(Bundle.TermsExtractionPanel_selected(), null, null); // ELTODO
         });
     }
 
@@ -126,21 +128,16 @@ class TermsExtractionDialog extends javax.swing.JDialog {
         extractTermsButton.addActionListener(searchAddListener);
     }
 
+    @NbBundle.Messages({
+        "TermsExtractionDialog.unableToGetDataSources.error=Unable to populate list of data sources"})
     private void updateComponents() {
+        statusLabel.setText("");
         ingestRunning = IngestManager.getInstance().isIngestRunning();
-        if (ingestRunning) { // ELTODO
-            extractTermsButton.setText(NbBundle.getMessage(this.getClass(), "KeywordSearchListsViewerPanel.initIngest.addIngestTitle"));
-            extractTermsButton.setToolTipText(NbBundle.getMessage(this.getClass(), "KeywordSearchListsViewerPanel.initIngest.addIngestMsg"));
-
-        } else {
-            extractTermsButton.setText(NbBundle.getMessage(this.getClass(), "KeywordSearchListsViewerPanel.initIngest.searchIngestTitle"));
-            extractTermsButton.setToolTipText(NbBundle.getMessage(this.getClass(), "KeywordSearchListsViewerPanel.initIngest.addIdxSearchMsg"));
-        }
         
         try {
             updateDataSourceListModel();
-        } catch (Exception ex) {
-            // ELTODO
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            statusLabel.setText(Bundle.TermsExtractionDialog_unableToGetDataSources_error());
             logger.log(Level.SEVERE, "Unable to populate list of data sources", ex); //NON-NLS
         }
     }
@@ -201,6 +198,7 @@ class TermsExtractionDialog extends javax.swing.JDialog {
         jScrollPane1 = new javax.swing.JScrollPane();
         dataSourceList = new javax.swing.JList<>();
         selectDataSourceLabel = new javax.swing.JLabel();
+        statusLabel = new javax.swing.JLabel();
 
         setSize(new java.awt.Dimension(500, 200));
 
@@ -218,17 +216,23 @@ class TermsExtractionDialog extends javax.swing.JDialog {
         selectDataSourceLabel.setFont(selectDataSourceLabel.getFont().deriveFont(selectDataSourceLabel.getFont().getSize()-1f));
         selectDataSourceLabel.setText(org.openide.util.NbBundle.getMessage(TermsExtractionDialog.class, "TermsExtractionDialog.selectDataSourceLabel.text")); // NOI18N
 
+        statusLabel.setFont(statusLabel.getFont().deriveFont(statusLabel.getFont().getSize()-1f));
+        statusLabel.setText(org.openide.util.NbBundle.getMessage(TermsExtractionDialog.class, "TermsExtractionDialog.statusLabel.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(extractTermsButton)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(extractTermsButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(statusLabel))
                     .addComponent(selectDataSourceLabel))
                 .addGap(0, 0, Short.MAX_VALUE))
             .addGroup(layout.createSequentialGroup()
-                .addComponent(jScrollPane1)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 358, Short.MAX_VALUE)
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -239,7 +243,9 @@ class TermsExtractionDialog extends javax.swing.JDialog {
                 .addGap(18, 18, 18)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(extractTermsButton)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(extractTermsButton)
+                    .addComponent(statusLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 13, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(20, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -252,6 +258,7 @@ class TermsExtractionDialog extends javax.swing.JDialog {
     private javax.swing.JButton extractTermsButton;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel selectDataSourceLabel;
+    private javax.swing.JLabel statusLabel;
     // End of variables declaration//GEN-END:variables
 
     private void searchAction(ActionEvent e) {
@@ -270,6 +277,15 @@ class TermsExtractionDialog extends javax.swing.JDialog {
      *
      * @param saveResults Flag whether to save search results as KWS artifacts.
      */
+    @NbBundle.Messages({
+        "TermsExtractionDialog.search.noFilesInIdxMsg=<html>No files are in index yet. <br />Try again later. Index is updated every {0} minutes.</html>",
+        "TermsExtractionDialog.search.noFilesInIdxMsg2=<html>No files are in index yet. <br />Try again later</html>",
+        "TermsExtractionDialog.search.searchIngestInProgressTitle=Keyword Search Ingest in Progress",
+        "TermsExtractionDialog.search.ingestInProgressBody=<html>Keyword Search Ingest is currently running.<br />Not all files have been indexed and this search might yield incomplete results.<br />Do you want to proceed with this search anyway?</html>",
+        "TermsExtractionDialog.startExport=Starting Unique Word Export",
+        "TermsExtractionDialog.export.error=Error During Unique Word Export",
+        "TermsExtractionDialog.exportComplete=Unique Word Export Complete"
+    })
     void search() {
         boolean isIngestRunning = IngestManager.getInstance().isIngestRunning();
 
@@ -280,34 +296,34 @@ class TermsExtractionDialog extends javax.swing.JDialog {
             }
 
         if (filesIndexed == 0) {
-            // ELTODO
             if (isIngestRunning) {
-                KeywordSearchUtil.displayDialog(keywordSearchErrorDialogHeader, NbBundle.getMessage(this.getClass(),
-                        "AbstractKeywordSearchPerformer.search.noFilesInIdxMsg",
-                        KeywordSearchSettings.getUpdateFrequency().getTime()), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
+                KeywordSearchUtil.displayDialog(errorDialogHeader, 
+                        Bundle.TermsExtractionDialog_search_noFilesInIdxMsg(KeywordSearchSettings.getUpdateFrequency().getTime()), 
+                        KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
             } else {
-                KeywordSearchUtil.displayDialog(keywordSearchErrorDialogHeader, NbBundle.getMessage(this.getClass(),
-                        "AbstractKeywordSearchPerformer.search.noFilesIdxdMsg"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
+                KeywordSearchUtil.displayDialog(errorDialogHeader, Bundle.TermsExtractionDialog_search_noFilesInIdxMsg2(), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
             }
             return;
         }
 
         //check if keyword search module  ingest is running (indexing, etc)
         if (isIngestRunning) {
-            if (KeywordSearchUtil.displayConfirmDialog(org.openide.util.NbBundle.getMessage(this.getClass(), "AbstractKeywordSearchPerformer.search.searchIngestInProgressTitle"),
-                    NbBundle.getMessage(this.getClass(), "AbstractKeywordSearchPerformer.search.ingestInProgressBody"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN) == false) {
+            if (KeywordSearchUtil.displayConfirmDialog(Bundle.TermsExtractionDialog_search_searchIngestInProgressTitle(),
+                    Bundle.TermsExtractionDialog_search_ingestInProgressBody(), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN) == false) {
                 return;
             }
         }
 
         final Server server = KeywordSearch.getServer();
-        Long dsID = Long.valueOf(4);
         Set<Long> selectedDs = getDataSourcesSelected();
         try {
+            statusLabel.setText(Bundle.TermsExtractionDialog_startExport());
             server.extractAllTermsForDataSource(selectedDs.iterator().next()); //ELTODO check if not empty
         } catch (Exception ex) {
+            statusLabel.setText(Bundle.TermsExtractionDialog_export_error());
             Exceptions.printStackTrace(ex);
         }
+        statusLabel.setText(Bundle.TermsExtractionDialog_exportComplete());
     }
 
     void addSearchButtonActionListener(ActionListener al) {
@@ -334,7 +350,7 @@ class TermsExtractionDialog extends javax.swing.JDialog {
     /**
      * Update the dataSourceListModel
      */
-    @NbBundle.Messages({"TermsExtractionPanel.selected=Ad Hoc Search data source filter is selected"})
+    @NbBundle.Messages({"TermsExtractionPanel.selected=Data source filter is selected"})
     void updateDataSourceListModel() throws NoCurrentCaseException, TskCoreException {
         dataSources = getDataSourceList();
         getDataSourceListModel().removeAllElements();
