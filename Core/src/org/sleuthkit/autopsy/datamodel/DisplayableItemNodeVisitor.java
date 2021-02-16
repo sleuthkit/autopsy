@@ -193,6 +193,10 @@ public interface DisplayableItemNodeVisitor<T> {
      */
     T visit(AttachmentNode node);
     
+    T visit(OsAccounts.OsAccountNode node);
+    
+    T visit(OsAccounts.OsAccountListNode node);
+    
     /**
      * Visitor with an implementable default behavior for all types. Override
      * specific visit types to not use the default behavior.
@@ -540,5 +544,14 @@ public interface DisplayableItemNodeVisitor<T> {
             return defaultVisit(node);
         }
         
+        @Override
+        public T visit(OsAccounts.OsAccountNode node) {
+            return defaultVisit(node);
+        }
+        
+        @Override
+        public T visit(OsAccounts.OsAccountListNode node) {
+            return defaultVisit(node);
+        }
     }
 }

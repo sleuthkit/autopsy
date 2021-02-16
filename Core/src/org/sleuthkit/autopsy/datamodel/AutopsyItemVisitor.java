@@ -74,6 +74,8 @@ public interface AutopsyItemVisitor<T> {
     T visit(FileTypes fileTypesItem);
 
     T visit(FileTypesByMimeType aThis);
+    
+    T visit(OsAccounts osAccoutItem);
 
 
     static abstract public class Default<T> implements AutopsyItemVisitor<T> {
@@ -199,6 +201,11 @@ public interface AutopsyItemVisitor<T> {
         @Override
         public T visit(Accounts accountsItem) {
             return defaultVisit(accountsItem);
+        }
+        
+        @Override
+        public T visit(OsAccounts osAccountItem) {
+            return defaultVisit(osAccountItem);
         }
     }
 }
