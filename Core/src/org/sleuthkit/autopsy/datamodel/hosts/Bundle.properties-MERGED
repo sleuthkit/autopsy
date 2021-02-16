@@ -21,3 +21,7 @@ AddEditHostDialog.cancelButton.text=Cancel
 AddEditHostDialog.inputTextField.text=jTextField1
 ManageHostsDialog_title_text=Manage Hosts
 OpenHostsAction_displayName=Hosts
+SelectHostPanel.title=Host
+SelectHostPanel.lbHostNameLabel.text=Host to which this data source belongs:
+SelectHostPanel.bnManageHosts.text=Manage Hosts
+SelectHostPanel_HostCbItem_defaultHost=Default

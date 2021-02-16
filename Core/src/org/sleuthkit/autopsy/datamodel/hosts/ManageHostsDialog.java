@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.datamodel.hosts;
 
+import java.awt.Dialog;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -125,6 +126,23 @@ public class ManageHostsDialog extends javax.swing.JDialog {
      */
     public ManageHostsDialog(java.awt.Frame parent) {
         super(parent, Bundle.ManageHostsDialog_title_text(), true);
+        init();
+    }
+
+    /**
+     * Main constructor.
+     *
+     * @param parent The parent dialog.
+     */
+    public ManageHostsDialog(Dialog parent) {
+        super(parent, Bundle.ManageHostsDialog_title_text(), true);
+        init();
+    }
+
+    /**
+     * Initializes components, loads host data, and sets up list listener.
+     */
+    private void init() {
         initComponents();
         refresh();
 

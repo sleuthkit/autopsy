@@ -33,6 +33,7 @@ import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.hosts.SelectHostPanel;
 
 /**
  * visual component for the first panel of add image wizard. Allows the user to
@@ -46,6 +47,7 @@ final class AddImageWizardDataSourceSettingsVisual extends JPanel {
     private final AddImageWizardDataSourceSettingsPanel wizPanel;
 
     private JPanel currentPanel;
+    private final SelectHostPanel selectHostPanel = new SelectHostPanel();
 
     private final Map<String, DataSourceProcessor> datasourceProcessorsMap = new HashMap<>();
 
@@ -101,6 +103,7 @@ final class AddImageWizardDataSourceSettingsVisual extends JPanel {
         currentPanel = panel;
         typePanel.removeAll();
         typePanel.add(currentPanel, BorderLayout.CENTER);
+        typePanel.add(selectHostPanel, BorderLayout.SOUTH);
         typePanel.validate();
         typePanel.repaint();
         currentPanel.addPropertyChangeListener(new PropertyChangeListener() {
@@ -156,17 +159,7 @@ final class AddImageWizardDataSourceSettingsVisual extends JPanel {
 
         typePanel.setMinimumSize(new java.awt.Dimension(0, 65));
         typePanel.setPreferredSize(new java.awt.Dimension(521, 65));
-
-        javax.swing.GroupLayout typePanelLayout = new javax.swing.GroupLayout(typePanel);
-        typePanel.setLayout(typePanelLayout);
-        typePanelLayout.setHorizontalGroup(
-            typePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 588, Short.MAX_VALUE)
-        );
-        typePanelLayout.setVerticalGroup(
-            typePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 328, Short.MAX_VALUE)
-        );
+        typePanel.setLayout(new java.awt.BorderLayout(0, 20));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
