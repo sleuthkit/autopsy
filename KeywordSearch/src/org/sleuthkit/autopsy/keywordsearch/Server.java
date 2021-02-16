@@ -2209,7 +2209,7 @@ public class Server {
         private void extractAllTermsForDataSource(Long dsObjId) throws IOException, SolrServerException, NoCurrentCaseException, KeywordSearchModuleException {
             String dataSourceId = Long.toString(dsObjId);
             
-            int numTerms = 400000;
+            /* ELTODO int numTerms = 400000;
             int termStep = 1000;
 
             SolrQuery query = new SolrQuery();
@@ -2220,7 +2220,7 @@ public class Server {
             query.addTermsField("text");
             query.setTermsMinCount(0);
             
-            // ELTODO query.addFilterQuery("image_id:" + dataSourceId);
+            query.addFilterQuery("image_id:" + dataSourceId);
 
             QueryRequest request = new QueryRequest(query);
             TermsResponse response = request.process(queryClient).getTermsResponse();
@@ -2244,46 +2244,48 @@ public class Server {
             List<String> listTerms = terms.stream().map(Term::getTerm).collect(Collectors.toList());
 
             OpenOption[] options = new OpenOption[] { java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.APPEND };
-            Files.write(serverFile, listTerms, options);
-            /*for (Term term : terms) {
-                try {
-                    Files.write(serverFile, term.getTerm().getBytes(), options);
-                    Files.write(serverFile, "\n".getBytes(), options);
-                } catch (IOException ex) {
-                    throw new KeywordSearchModuleException(serverFile.toString() + " could not be written", ex); //NON-NLS
-                }
-            }*/
+            Files.write(serverFile, listTerms, options);*/
             
-            // repeat the same thing but stepping through the terms
-            String firstTerm = "";
-            Path serverFileIterated = Paths.get(caseDirectoryPath.toString(), "terms_"+numTerms+"_iterated.txt"); //NON-NLS
+            // step through the terms
+            Case currentCase = Case.getCurrentCaseThrows();
+            File caseDirectoryPath = new File(currentCase.getOutputDirectory());
+            Path serverFileIterated = Paths.get(caseDirectoryPath.toString(), "Unique Words from Data Source " + dataSourceId + ".txt"); //NON-NLS
             Files.deleteIfExists(serverFileIterated);
-            for (int step = 0; step < numTerms; step += termStep) {
-                query = new SolrQuery();
+            OpenOption[] options = new OpenOption[] { java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.APPEND };
+            
+            int termStep = 1000;
+            String firstTerm = "";
+            while (true) {
+                SolrQuery query = new SolrQuery();
                 query.setRequestHandler("/terms");
                 query.setTerms(true);
                 query.setTermsLimit(termStep);
                 query.setTermsLower(firstTerm);
                 query.setTermsLowerInclusive(false);
+                
+                // returned terms sorted by "index" order, which is the fastest way. Per Solr documentation:
+                // " Retrieving terms in index order is very fast since the implementation directly uses Lucene’s TermEnum to iterate over the term dictionary."
+                // All other sort criteria return very inconsistent and overlapping resuts.
                 query.setTermsSortString("index");
-                query.addTermsField("text");
+                
+                // "text" field is the schema field that we populate with (lowercased) terms
+                query.addTermsField(Server.Schema.TEXT.toString());
                 query.setTermsMinCount(0);
 
-                // ELTODO query.addFilterQuery("image_id:" + dataSourceId);
+                query.addFilterQuery(Server.Schema.IMAGE_ID.toString() + ":" + dataSourceId);
 
-                request = new QueryRequest(query);
-                response = request.process(queryClient).getTermsResponse();
-                terms = response.getTerms("text");
+                QueryRequest request = new QueryRequest(query);
+                TermsResponse response = request.process(queryClient).getTermsResponse();
+                List<Term> terms = response.getTerms(Server.Schema.TEXT.toString());
 
                 if (terms == null || terms.isEmpty()) {
-                    logger.log(Level.WARNING, "No unique terms/words returned for data source ID: " + dataSourceId); //NON-NLS
                     break;
                 }
                 
                 // set the first term for the next query
                 firstTerm = terms.get(terms.size()-1).getTerm();
 
-                listTerms = terms.stream().map(Term::getTerm).collect(Collectors.toList());
+                List<String> listTerms = terms.stream().map(Term::getTerm).collect(Collectors.toList());
                 Files.write(serverFileIterated, listTerms, options);
             }
         }
