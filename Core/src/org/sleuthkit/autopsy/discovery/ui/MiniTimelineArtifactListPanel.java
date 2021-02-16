@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.discovery.ui;
 
+import java.awt.Dimension;
 import java.awt.Point;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,7 +40,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Panel to display list of artifacts types and descriptions.
  */
-class MiniTimelineArtifactListPanel extends AbstractArtifactListPanel {
+final class MiniTimelineArtifactListPanel extends AbstractArtifactListPanel {
 
     private static final long serialVersionUID = 1L;
     private final TypeDescriptionTableModel tableModel;
@@ -61,6 +62,7 @@ class MiniTimelineArtifactListPanel extends AbstractArtifactListPanel {
         for (int i = 0; i < tableModel.getColumnCount(); ++i) {
             artifactsTable.getColumnModel().getColumn(i).setCellRenderer(renderer);
         }
+        setMinimumSize(new Dimension(125, 20));
         artifactsTable.getRowSorter().toggleSortOrder(0);
         artifactsTable.getRowSorter().toggleSortOrder(0);
     }
