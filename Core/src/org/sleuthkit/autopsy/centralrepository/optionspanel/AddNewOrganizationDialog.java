@@ -52,8 +52,8 @@ class AddNewOrganizationDialog extends javax.swing.JDialog {
      * Creates new form AddNewOrganizationDialog
      */
     @Messages({"AddNewOrganizationDialog.addNewOrg.msg=Add New Organization"})
-    AddNewOrganizationDialog() {
-        super((JFrame) WindowManager.getDefault().getMainWindow(),
+    AddNewOrganizationDialog(javax.swing.JDialog parent) {
+        super(parent,
                 Bundle.AddNewOrganizationDialog_addNewOrg_msg(),
                 true); // NON-NLS
         textBoxes = new ArrayList<>();
@@ -67,8 +67,8 @@ class AddNewOrganizationDialog extends javax.swing.JDialog {
     }
 
     // populates the dialog with existing case information to edit
-    public AddNewOrganizationDialog(CentralRepoOrganization orgToEdit) {
-        super((JFrame) WindowManager.getDefault().getMainWindow(),
+    public AddNewOrganizationDialog(javax.swing.JDialog parent, CentralRepoOrganization orgToEdit) {
+        super(parent,
                 Bundle.AddNewOrganizationDialog_addNewOrg_msg(),
                 true); // NON-NLS
         organizationToEdit = orgToEdit;
