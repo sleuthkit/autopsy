@@ -91,7 +91,7 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
                 // TODO replace with sleuthkit call when PersonManager created
                 PersonManager personManager = new PersonManager();
                 
-                Set<Person> persons = new HashSet<>(Arrays.asList(new Person(1, "Person 1"))); //personManager.getPersons();
+                Set<Person> persons = new HashSet<>(); //personManager.getPersons();
                 // show persons level if there are persons to be shown
                 if (!CollectionUtils.isEmpty(persons)) {
                     persons.stream()
