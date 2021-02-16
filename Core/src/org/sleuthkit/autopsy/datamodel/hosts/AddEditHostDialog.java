@@ -1,5 +1,5 @@
 /*
- * Central Repository
+ * Autopsy Forensic Browser
  *
  * Copyright 2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org

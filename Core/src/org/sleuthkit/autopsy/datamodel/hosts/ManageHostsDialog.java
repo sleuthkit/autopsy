@@ -1,5 +1,5 @@
 /*
- * Central Repository
+ * Autopsy Forensic Browser
  *
  * Copyright 2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
@@ -164,12 +164,15 @@ public class ManageHostsDialog extends javax.swing.JDialog {
     private void addHost() {
         String newHostName = getAddEditDialogName(null);
         if (newHostName != null) {
+            Long selectedId = null;
             try {
-                Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().createHost(newHostName);
+                Host newHost = Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().createHost(newHostName);
+                selectedId = newHost == null ? null : newHost.getId();
             } catch (NoCurrentCaseException | TskCoreException e) {
                 logger.log(Level.WARNING, String.format("Unable to add new host '%s' at this time.", newHostName), e);
             }
             refresh();
+            setSelectedHostById(selectedId);
         }
     }
 
@@ -190,11 +193,35 @@ public class ManageHostsDialog extends javax.swing.JDialog {
     }
 
     /**
+     * Selects the host with the given id. If no matching id found in list.
+     *
+     * @param selectedId The id of the host to select.
+     */
+    private void setSelectedHostById(Long selectedId) {
+        ListModel<HostListItem> model = hostList.getModel();
+
+        if (selectedId == null) {
+            hostList.clearSelection();
+        }
+        
+        for (int i = 0; i < model.getSize(); i++) {
+            Object o = model.getElementAt(i);
+            if (o instanceof Host && ((Host) o).getId() == selectedId) {
+                hostList.setSelectedIndex(i);
+                return;
+            }
+        }
+
+        hostList.clearSelection();
+    }
+
+    /**
      * Shows add/edit dialog, and if a value is returned, creates a new Host.
      *
      * @param selectedHost The selected host.
      */
     private void editHost(Host selectedHost) {
+
         if (selectedHost != null) {
             String newHostName = getAddEditDialogName(selectedHost);
             if (newHostName != null) {
@@ -204,7 +231,13 @@ public class ManageHostsDialog extends javax.swing.JDialog {
                 } catch (NoCurrentCaseException | TskCoreException e) {
                     logger.log(Level.WARNING, String.format("Unable to update host '%s' with id: %d at this time.", selectedHost.getName(), selectedHost.getId()), e);
                 }
+
+                HostListItem selectedItem = hostList.getSelectedValue();
+                Long selectedId = selectedItem == null || selectedItem.getHost() == null ? null : selectedItem.getHost().getId();
+
                 refresh();
+
+                setSelectedHostById(selectedId);
             }
         }
     }
@@ -248,8 +281,7 @@ public class ManageHostsDialog extends javax.swing.JDialog {
      * hosts.
      */
     private void refreshData() {
-        HostListItem selectedItem = hostList.getSelectedValue();
-        Long selectedId = selectedItem == null || selectedItem.getHost() == null ? null : selectedItem.getHost().getId();
+
         hostChildrenMap = getHostListData();
 
         Vector<HostListItem> jlistData = hostChildrenMap.entrySet().stream()
@@ -258,18 +290,6 @@ public class ManageHostsDialog extends javax.swing.JDialog {
                 .collect(Collectors.toCollection(Vector::new));
 
         hostList.setListData(jlistData);
-
-        if (selectedId != null) {
-            ListModel<HostListItem> model = hostList.getModel();
-
-            for (int i = 0; i < model.getSize(); i++) {
-                Object o = model.getElementAt(i);
-                if (o instanceof Host && ((Host) o).getId() == selectedId) {
-                    hostList.setSelectedIndex(i);
-                    break;
-                }
-            }
-        }
     }
 
     /**
