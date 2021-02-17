@@ -28,7 +28,7 @@ import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
 public interface AutopsyItemVisitor<T> {
 
     T visit(DataSources i);
-    
+
     T visit(DataSourceGrouping datasourceGrouping);
 
     T visit(Views v);
@@ -75,6 +75,13 @@ public interface AutopsyItemVisitor<T> {
 
     T visit(FileTypesByMimeType aThis);
 
+    T visit(HostGrouping aThis);
+
+    T visit(PersonGrouping aThis);
+
+    T visit(HostDataSources aThis);
+
+    T visit(DataSourcesByType aThis);
 
     static abstract public class Default<T> implements AutopsyItemVisitor<T> {
 
@@ -104,12 +111,12 @@ public interface AutopsyItemVisitor<T> {
         public T visit(FileTypesByExtension.ExecutableFilter ef) {
             return defaultVisit(ef);
         }
-        
+
         @Override
         public T visit(FileTypesByMimeType ftByMimeType) {
             return defaultVisit(ftByMimeType);
         }
-        
+
         @Override
         public T visit(DeletedContent dc) {
             return defaultVisit(dc);
@@ -179,18 +186,27 @@ public interface AutopsyItemVisitor<T> {
         public T visit(DataSourceGrouping datasourceGrouping) {
             return defaultVisit(datasourceGrouping);
         }
-        
+
+        @Override
+        public T visit(HostGrouping hostGrouping) {
+            return defaultVisit(hostGrouping);
+        }
+
+        @Override
+        public T visit(PersonGrouping personGrouping) {
+            return defaultVisit(personGrouping);
+        }
+
         @Override
         public T visit(Results r) {
             return defaultVisit(r);
         }
 
-        
         @Override
         public T visit(FileTypes ft) {
             return defaultVisit(ft);
         }
-        
+
         @Override
         public T visit(Reports reportsItem) {
             return defaultVisit(reportsItem);
@@ -199,6 +215,16 @@ public interface AutopsyItemVisitor<T> {
         @Override
         public T visit(Accounts accountsItem) {
             return defaultVisit(accountsItem);
+        }
+
+        @Override
+        public T visit(HostDataSources hostDataSources) {
+            return defaultVisit(hostDataSources);
+        }
+        
+        @Override
+        public T visit(DataSourcesByType dataSourceHosts) {
+            return defaultVisit(dataSourceHosts);
         }
     }
 }
