@@ -95,7 +95,10 @@ public class SelectHostPanel extends javax.swing.JPanel {
                 return false;
             }
             final HostCbItem other = (HostCbItem) obj;
-            if (!Objects.equals(this.host.getId(), other.host == null ? 0 : other.host.getId())) {
+            if (!Objects.equals(
+                    this.host == null ? 0 : this.host.getId(),
+                    other.host == null ? 0 : other.host.getId())) {
+
                 return false;
             }
             return true;
@@ -216,6 +219,12 @@ public class SelectHostPanel extends javax.swing.JPanel {
 
     private void bnManageHostsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnManageHostsActionPerformed
         ManageHostsDialog dialog = new ManageHostsDialog((Dialog) SwingUtilities.getWindowAncestor(this));
+        dialog.setResizable(false);
+        if (this.getParent() != null) {
+            dialog.setLocationRelativeTo(this.getParent());
+        }
+        dialog.setVisible(true);
+        dialog.toFront();
         loadHostData();
         if (dialog.getSelectedHost() != null) {
             setSelectedHostById(dialog.getSelectedHost().getId());

@@ -371,7 +371,7 @@ class AddImageWizardAddingProgressPanel extends ShortcutWizardDescriptorPanel {
             if (dsProcessor.supportsIngestStream()) {
                 // Set readyToIngest to false to prevent the wizard from starting ingest a second time.
                 readyToIngest = false;
-                dsProcessor.runWithIngestStream(ingestJobSettings, getDSPProgressMonitorImpl(), cbObj);
+                dsProcessor.runWithIngestStream(selectedHost, ingestJobSettings, getDSPProgressMonitorImpl(), cbObj);
             } else {
                 dsProcessor.run(selectedHost, getDSPProgressMonitorImpl(), cbObj);
             }

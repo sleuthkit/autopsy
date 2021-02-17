@@ -203,10 +203,19 @@ public class ManageHostsDialog extends javax.swing.JDialog {
         if (selectedId == null) {
             hostList.clearSelection();
         }
-        
+
         for (int i = 0; i < model.getSize(); i++) {
             Object o = model.getElementAt(i);
-            if (o instanceof Host && ((Host) o).getId() == selectedId) {
+            if (!(o instanceof HostListItem)) {
+                continue;
+            }
+
+            Host host = ((HostListItem) o).getHost();
+            if (host == null) {
+                continue;
+            }
+
+            if (host.getId() == selectedId) {
                 hostList.setSelectedIndex(i);
                 return;
             }
