@@ -34,6 +34,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.hosts.SelectHostPanel;
+import org.sleuthkit.datamodel.Host;
 
 /**
  * visual component for the first panel of add image wizard. Allows the user to
@@ -132,6 +133,14 @@ final class AddImageWizardDataSourceSettingsVisual extends JPanel {
         DataSourceProcessor dsProcessor = datasourceProcessorsMap.get(currentDsp);
         return dsProcessor;
 
+    }
+    
+    /**
+     * Returns the currently selected host or null if 'default' is selected.
+     * @return The currently selected host.
+     */
+    Host getSelectedHost() {
+        return selectHostPanel.getSelectedHost();
     }
 
     /**

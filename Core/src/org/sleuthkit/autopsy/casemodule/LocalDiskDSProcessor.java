@@ -171,13 +171,6 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
         }
         
         this.host = host;
-        // HOSTTODO - set to value from config panel
-        try {
-            this.host = Case.getCurrentCase().getSleuthkitCase().getHostManager().getOrCreateHost("LocalDiskDSProcessor Host");
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error creating/loading host", ex);
-            this.host = null;
-        }
 
         Image image;
         try {

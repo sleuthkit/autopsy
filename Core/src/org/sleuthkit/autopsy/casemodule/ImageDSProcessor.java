@@ -268,14 +268,6 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
         // Read the settings from the wizard 
         readConfigSettings();
         this.host = host;
-        
-        // HOSTTODO - remove once passing in a host
-        try {
-            this.host = Case.getCurrentCase().getSleuthkitCase().getHostManager().getOrCreateHost("ImageDSProcessor Host");
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error creating/loading host", ex);
-            this.host = null;
-        }
 	
         // Set up the data source before creating the ingest stream
         try {

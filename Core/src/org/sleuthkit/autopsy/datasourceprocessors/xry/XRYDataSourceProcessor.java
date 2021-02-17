@@ -218,16 +218,7 @@ public class XRYDataSourceProcessor implements DataSourceProcessor, AutoIngestDa
         "XRYDataSourceProcessor.noCurrentCase=No case is open."
     })
     public void run(Host host, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
-        progressMonitor.setIndeterminate(true);
-
-        // HOSTTODO - use passed in value
-        try {
-            host = Case.getCurrentCase().getSleuthkitCase().getHostManager().getOrCreateHost("XRYDSProcessor Host");
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error creating/loading host", ex);
-            host = null;
-        }
-        
+        progressMonitor.setIndeterminate(true);      
         String selectedFilePath = configPanel.getSelectedFilePath();
         File selectedFile = new File(selectedFilePath);
         Path selectedPath = selectedFile.toPath();

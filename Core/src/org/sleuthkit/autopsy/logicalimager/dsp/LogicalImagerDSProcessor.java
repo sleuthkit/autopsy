@@ -160,17 +160,7 @@ public final class LogicalImagerDSProcessor implements DataSourceProcessor {
     })
     @Override
     public void run(Host host, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
-        configPanel.storeSettings();
-
-        // HOSTTODO - set to value from config panel
-        try {
-            host = Case.getCurrentCase().getSleuthkitCase().getHostManager().getOrCreateHost("LogicalImagerDSProcessor Host");
-        } catch (TskCoreException ex) {
-            // It's not worth adding a logger for temporary code
-            //logger.log(Level.SEVERE, "Error creating/loading host", ex);
-            host = null;
-        }
-        
+        configPanel.storeSettings();       
         Path imageDirPath = configPanel.getImageDirPath();
         List<String> errorList = new ArrayList<>();
         List<Content> emptyDataSources = new ArrayList<>();

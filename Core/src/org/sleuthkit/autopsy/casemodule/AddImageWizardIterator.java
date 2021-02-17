@@ -180,8 +180,9 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
         // so it gets going in the background while the user is still picking the Ingest modules    
         // This will occur when the next button is clicked on the panel where you have chosen your data to process
         if (index == ingestPanelIndex) {
-            ((AddImageWizardAddingProgressPanel) panels.get(progressPanelIndex)).
-                    startDataSourceProcessing(((AddImageWizardDataSourceSettingsPanel) panels.get(dsPanelIndex)).getComponent().getCurrentDSProcessor());
+            AddImageWizardAddingProgressPanel addingProgressPanel = (AddImageWizardAddingProgressPanel) panels.get(progressPanelIndex);
+            AddImageWizardDataSourceSettingsVisual dspSettingsPanel = ((AddImageWizardDataSourceSettingsPanel) panels.get(dsPanelIndex)).getComponent();
+            addingProgressPanel.startDataSourceProcessing(dspSettingsPanel.getCurrentDSProcessor(), dspSettingsPanel.getSelectedHost());
         }
         boolean panelEnablesSkipping = current().panelEnablesSkipping();
         boolean skipNextPanel = current().skipNextPanel();

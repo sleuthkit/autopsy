@@ -31,6 +31,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Host;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Panel to be displayed as a part of the add datasource wizard. Provides the
@@ -128,7 +129,7 @@ public class SelectHostPanel extends javax.swing.JPanel {
     private void loadHostData() {
         Stream<HostCbItem> itemsStream;
         try {
-            itemsStream = Case.getCurrentCaseThrows().getHostManager().getHosts().stream()
+            itemsStream = Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().getHosts().stream()
                     .filter(h -> h != null)
                     .sorted((a, b) -> getNameOrEmpty(a).compareToIgnoreCase(getNameOrEmpty(b)))
                     .map((h) -> new HostCbItem(h));
@@ -137,10 +138,9 @@ public class SelectHostPanel extends javax.swing.JPanel {
                     .collect(Collectors.toCollection(Vector::new));
 
             comboBoxHostName.setModel(new DefaultComboBoxModel<>(hosts));
-        } catch (NoCurrentCaseException ex) {
+        } catch (NoCurrentCaseException | TskCoreException ex) {
             logger.log(Level.WARNING, "Unable to display host items with no current case.", ex);
         }
-
     }
 
     /**
@@ -189,51 +189,27 @@ public class SelectHostPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        javax.swing.JLabel lbHostNameLabel = new javax.swing.JLabel();
         comboBoxHostName = new javax.swing.JComboBox<>();
         javax.swing.JButton bnManageHosts = new javax.swing.JButton();
 
-        setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(SelectHostPanel.class, "SelectHostPanel.title"))); // NOI18N
+        setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEADING));
 
-        org.openide.awt.Mnemonics.setLocalizedText(lbHostNameLabel, org.openide.util.NbBundle.getMessage(SelectHostPanel.class, "SelectHostPanel.lbHostNameLabel.text")); // NOI18N
-        lbHostNameLabel.setMaximumSize(new java.awt.Dimension(300, 14));
-        lbHostNameLabel.setMinimumSize(new java.awt.Dimension(189, 14));
-        lbHostNameLabel.setPreferredSize(new java.awt.Dimension(220, 14));
+        comboBoxHostName.setMaximumSize(new java.awt.Dimension(32767, 22));
+        comboBoxHostName.setMinimumSize(new java.awt.Dimension(200, 22));
+        comboBoxHostName.setPreferredSize(new java.awt.Dimension(200, 22));
+        add(comboBoxHostName);
 
         org.openide.awt.Mnemonics.setLocalizedText(bnManageHosts, org.openide.util.NbBundle.getMessage(SelectHostPanel.class, "SelectHostPanel.bnManageHosts.text")); // NOI18N
         bnManageHosts.setMargin(new java.awt.Insets(2, 6, 2, 6));
-        bnManageHosts.setMaximumSize(new java.awt.Dimension(160, 23));
-        bnManageHosts.setMinimumSize(new java.awt.Dimension(123, 23));
+        bnManageHosts.setMaximumSize(new java.awt.Dimension(140, 23));
+        bnManageHosts.setMinimumSize(new java.awt.Dimension(140, 23));
         bnManageHosts.setPreferredSize(new java.awt.Dimension(140, 23));
         bnManageHosts.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 bnManageHostsActionPerformed(evt);
             }
         });
-
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(lbHostNameLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addComponent(comboBoxHostName, 0, 180, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(bnManageHosts, javax.swing.GroupLayout.PREFERRED_SIZE, 123, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(comboBoxHostName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(bnManageHosts, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(lbHostNameLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
+        add(bnManageHosts);
 
         getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(SelectHostPanel.class, "SelectHostPanel.title")); // NOI18N
     }// </editor-fold>//GEN-END:initComponents
