@@ -188,7 +188,6 @@ DataResultPanel.numberOfChildNodesLabel.text=0
 DataResultPanel.descriptionLabel.text=directoryPath
 ViewOptionsController.moduleErr=Error processing value changes.
 ViewOptionsController.moduleErr.msg=Value change processing failed.
-ViewPreferencesPanel.groupByDataSourceCheckbox.text=Group by data source
 ViewPreferencesPanel.currentCaseSettingsPanel.border.title=Current Case Settings
 OptionsCategory_Name_View=View
 OptionsCategory_Keywords_View=View
@@ -304,3 +303,5 @@ AutopsyOptionsPanel.agencyLogoPreview.text=<html><div style='text-align: center;
 AutopsyOptionsPanel.browseLogosButton.text=Browse
 AutopsyOptionsPanel.agencyLogoPathField.text=
 AutopsyOptionsPanel.logoPanel.border.title=Logo
+ViewPreferencesPanel.radioGroupByPersonHost.text=Group by Person/Host
+ViewPreferencesPanel.radioGroupByDataType.text=Group by Data Type
