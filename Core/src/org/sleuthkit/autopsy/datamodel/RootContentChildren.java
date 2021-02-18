@@ -167,6 +167,11 @@ public class RootContentChildren extends Children.Keys<Object> {
         public AbstractNode visit(Accounts accountsItem) {
             return accountsItem.new AccountsRootNode();
         }
+        
+        @Override
+        public AbstractNode visit(OsAccounts osAccountsItem) {
+            return osAccountsItem.new OsAccountListNode();
+        }
 
         @Override
         protected AbstractNode defaultVisit(AutopsyVisitableItem di) {

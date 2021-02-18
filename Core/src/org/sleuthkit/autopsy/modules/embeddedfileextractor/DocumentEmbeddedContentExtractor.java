@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2015-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,6 +32,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.logging.Level;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
@@ -146,10 +147,32 @@ class DocumentEmbeddedContentExtractor {
     boolean isContentExtractionSupported(AbstractFile abstractFile) {
         String abstractFileMimeType = fileTypeDetector.getMIMEType(abstractFile);
         for (SupportedExtractionFormats s : SupportedExtractionFormats.values()) {
+            if (checkForIngestCancellation(abstractFile)) {
+                break;
+            }
             if (s.toString().equals(abstractFileMimeType)) {
                 abstractFileExtractionFormat = s;
                 return true;
             }
+        }
+        return false;
+    }
+
+    /**
+     * Private helper method to standardize the cancellation check that is
+     * performed when running ingest. Will return false if the
+     * DocumentEmbeddedContentExtractor is being used without an
+     * IngestJobContext.
+     *
+     * @param file The file being extracted, this is only used for logging
+     *             purposes.
+     *
+     * @return True if ingest has been cancelled, false otherwise. FFFF
+     */
+    private boolean checkForIngestCancellation(AbstractFile file) {
+        if (fileTaskExecutor != null && context != null && context.fileIngestIsCancelled()) {
+            LOGGER.log(Level.INFO, "Ingest was cancelled. Results extracted from the following document file may be incomplete. Name: {0}Object ID: {1}", new Object[]{file.getName(), file.getId()});
+            return true;
         }
         return false;
     }
@@ -189,7 +212,9 @@ class DocumentEmbeddedContentExtractor {
             LOGGER.log(Level.SEVERE, String.format("Error checking if %s (objID = %d) has already has been processed, skipping", abstractFile.getName(), abstractFile.getId()), e); //NON-NLS
             return;
         }
-
+        if (checkForIngestCancellation(abstractFile)) {
+            return;
+        }
         // Call the appropriate extraction method based on mime type
         switch (abstractFileExtractionFormat) {
             case DOCX:
@@ -219,6 +244,9 @@ class DocumentEmbeddedContentExtractor {
         // the common task of adding abstractFile to derivedfiles is performed.
         listOfExtractedImageAbstractFiles = new ArrayList<>();
         for (ExtractedFile extractedImage : listOfExtractedImages) {
+            if (checkForIngestCancellation(abstractFile)) {
+                return;
+            }
             try {
                 listOfExtractedImageAbstractFiles.add(fileManager.addDerivedFile(extractedImage.getFileName(), extractedImage.getLocalPath(), extractedImage.getSize(),
                         extractedImage.getCtime(), extractedImage.getCrtime(), extractedImage.getAtime(), extractedImage.getAtime(),
@@ -258,11 +286,12 @@ class DocumentEmbeddedContentExtractor {
         officeParserConfig.setUseSAXPptxExtractor(true);
         officeParserConfig.setUseSAXDocxExtractor(true);
         parseContext.set(OfficeParserConfig.class, officeParserConfig);
-
         EmbeddedDocumentExtractor extractor = new EmbeddedContentExtractor(parseContext);
         parseContext.set(EmbeddedDocumentExtractor.class, extractor);
         ReadContentInputStream stream = new ReadContentInputStream(abstractFile);
-
+        if (checkForIngestCancellation(abstractFile)) {
+            return null; //null will cause the calling method to return.
+        }
         try {
             parser.parse(stream, contentHandler, metadata, parseContext);
         } catch (IOException | SAXException | TikaException ex) {
@@ -322,6 +351,9 @@ class DocumentEmbeddedContentExtractor {
         byte[] data = null;
         int pictureNumber = 0; //added to ensure uniqueness in cases where suggestFullFileName returns duplicates
         for (Picture picture : listOfAllPictures) {
+            if (checkForIngestCancellation(af)) {
+                return null; //null will cause the calling method to return.
+            }
             String fileName = UNKNOWN_IMAGE_NAME_PREFIX + pictureNumber + "." + picture.suggestFileExtension();
             try {
                 data = picture.getContent();
@@ -385,7 +417,9 @@ class DocumentEmbeddedContentExtractor {
         List<ExtractedFile> listOfExtractedImages = new ArrayList<>();
         byte[] data = null;
         for (HSLFPictureData pictureData : listOfAllPictures) {
-
+            if (checkForIngestCancellation(af)) {
+                return null; //null will cause the calling method to return.
+            }
             // Get image extension, generate image name, write image to the module
             // output folder, add it to the listOfExtractedImageAbstractFiles
             PictureType type = pictureData.getType();
@@ -475,6 +509,9 @@ class DocumentEmbeddedContentExtractor {
         List<ExtractedFile> listOfExtractedImages = new ArrayList<>();
         byte[] data = null;
         for (org.apache.poi.ss.usermodel.PictureData pictureData : listOfAllPictures) {
+            if (checkForIngestCancellation(af)) {
+                return null; //null will cause the calling method to return.
+            }
             String imageName = UNKNOWN_IMAGE_NAME_PREFIX + i + "." + pictureData.suggestFileExtension(); //NON-NLS
             try {
                 data = pictureData.getData();
@@ -510,15 +547,17 @@ class DocumentEmbeddedContentExtractor {
 
             //Convert output to hook into the existing logic for creating derived files
             List<ExtractedFile> extractedFiles = new ArrayList<>();
-            extractedAttachments.entrySet().forEach((pathEntry) -> {
+            for (Entry<String, PDFAttachmentExtractor.NewResourceData> pathEntry : extractedAttachments.entrySet()) {
+                if (checkForIngestCancellation(abstractFile)) {
+                    return null; //null will cause the calling method to return.
+                }
                 String fileName = pathEntry.getKey();
                 Path writeLocation = pathEntry.getValue().getPath();
                 int fileSize = pathEntry.getValue().getLength();
                 extractedFiles.add(new ExtractedFile(fileName,
                         getFileRelativePath(writeLocation.getFileName().toString()),
                         fileSize));
-            });
-
+            }
             return extractedFiles;
         } catch (IOException | SAXException | TikaException | InvalidPathException ex) {
             LOGGER.log(Level.WARNING, "Error attempting to extract attachments from PDFs for file Name: " + abstractFile.getName() + " ID: " + abstractFile.getId(), ex); //NON-NLS         
