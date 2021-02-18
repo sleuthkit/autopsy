@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015-2018 Basis Technology Corp.
+ * Copyright 2015-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,24 +18,21 @@
  */
 package org.sleuthkit.autopsy.casemodule.events;
 
-import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.datamodel.Report;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Event published when a report is added to a case.
  */
-public final class ReportAddedEvent extends AutopsyEvent implements Serializable {
+public final class ReportAddedEvent extends TskDataModelChangeEvent<Report> {
 
     private static final long serialVersionUID = 1L;
-    private static final Logger logger = Logger.getLogger(DataSourceAddedEvent.class.getName());
-    private transient Report report;
 
     /**
      * Constructs an event published when a report is added to a case.
@@ -43,45 +40,21 @@ public final class ReportAddedEvent extends AutopsyEvent implements Serializable
      * @param report The data source that was added.
      */
     public ReportAddedEvent(Report report) {
-        /**
-         * Putting the object id of the report into newValue to allow for lazy
-         * loading of the Report object.
-         */
-        super(Case.Events.REPORT_ADDED.toString(), null, report.getId());
-        this.report = report;
+        super(Case.Events.REPORT_ADDED.toString(), Stream.of(report.getId()).collect(Collectors.toList()), Stream.of(report).collect(Collectors.toList()));
     }
 
-    /**
-     * Gets the data source that was added.
-     *
-     * @return The data source.
-     */
+    public Report getReport() {
+        List<Report> reports = getNewValue();
+        return reports.get(0);
+    }
+    
     @Override
-    public Object getNewValue() {
-        /**
-         * The report field is set in the constructor, but it is transient so it
-         * will become null when the event is serialized for publication over a
-         * network. Doing a lazy load of the Report object may save database
-         * round trips from other nodes since subscribers to this event are
-         * often not interested in the event data.
-         */
-        if (null != report) {
-            return report;
-        }
-        try {
-            long id = (Long) super.getNewValue();
-            List<Report> reports = Case.getCurrentCaseThrows().getSleuthkitCase().getAllReports();
-            for (Report thisReport : reports) {
-                if (thisReport.getId() == id) {
-                    report = thisReport;
-                    break;
-                }
-            }
-            return report;
-        } catch (NoCurrentCaseException | TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error doing lazy load for remote event", ex); //NON-NLS
-            return null;
-        }
+    protected List<Report> getDataModelObjects(SleuthkitCase caseD, List<Long> ids) throws TskCoreException {
+        Long id = ids.get(0);
+        Report report = caseD.getReportById(id);
+        List<Report> reports = new ArrayList<>();
+        reports.add(report);
+        return reports;
     }
-
+    
 }
