@@ -128,7 +128,6 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
         } else {
             sqlSpecificAccountAggregator = "GROUP_CONCAT(DISTINCT(value_text))"; //sqlite string aggregator (uses comma separation by default)
         }
-        final String accountsWhereClause = "(attribute_type_id = " + TSK_TEXT.getTypeID() + " AND value_text <> '' AND (artifact_type_id = " + TSK_WEB_ACCOUNT_TYPE.getTypeID() + "))"; 
         /*
          * As part of getting the known account types for a domain additional
          * attribute values are necessary from the blackboard_attributes table
@@ -139,7 +138,9 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
                 = "SELECT " + sqlSpecificAccountAggregator + " as value_text," //naming field value_text the same as the field it is aggregating to re-use aggregator
                 + "artifact_id AS account_artifact_id "
                 + "FROM blackboard_attributes "
-                + "WHERE " + accountsWhereClause + " "
+                + "WHERE (attribute_type_id = " + TSK_TEXT.getTypeID() 
+                + "   AND value_text <> '' "
+                + "   AND (artifact_type_id = " + TSK_WEB_ACCOUNT_TYPE.getTypeID() + ")) "
                 + "GROUP BY artifact_id ";
 
         // Needed to populate the visitsInLast60 data.
