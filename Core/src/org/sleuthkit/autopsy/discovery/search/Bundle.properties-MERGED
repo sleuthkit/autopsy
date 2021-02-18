@@ -57,6 +57,7 @@ FileSorter.SortingMethod.fullPath.displayName=Full Path
 FileSorter.SortingMethod.keywordlist.displayName=Keyword List Names
 FileSorter.SortingMethod.pageViews.displayName=Page Views
 ResultDomain_getDefaultCategory=Uncategorized
+ResultDomain_noAccountTypes=Unknown
 ResultFile.score.interestingResult.description=At least one instance of the file has an interesting result associated with it.
 ResultFile.score.notableFile.description=At least one instance of the file was recognized as notable.
 ResultFile.score.notableTaggedFile.description=At least one instance of the file is tagged with a notable tag.
