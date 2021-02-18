@@ -67,7 +67,9 @@ import java.util.Scanner;
 import java.util.Set;
 import java.util.HashSet;
 import static java.util.Locale.US;
+import java.util.Optional;
 import static java.util.TimeZone.getTimeZone;
+import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -93,10 +95,19 @@ import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAM
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_USER_ID;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_USER_NAME;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_HOME_DIR;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.Host;
+import org.sleuthkit.datamodel.HostManager;
+import org.sleuthkit.datamodel.OsAccount;
+import org.sleuthkit.datamodel.OsAccountAttribute;
+import org.sleuthkit.datamodel.OsAccountManager;
+import org.sleuthkit.datamodel.OsAccountRealm;
 import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamException;
 import org.sleuthkit.datamodel.Report;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskDataException;
 
 /**
  * Extract windows registry data using regripper. Runs two versions of
@@ -172,10 +183,16 @@ class ExtractRegistry extends Extract {
     private static final String SHELLBAG_ARTIFACT_NAME = "RA_SHELL_BAG"; //NON-NLS
     private static final String SHELLBAG_ATTRIBUTE_LAST_WRITE = "RA_SHELL_BAG_LAST_WRITE"; //NON-NLS
     private static final String SHELLBAG_ATTRIBUTE_KEY = "RA_SHELL_BAG_KEY"; //NON-NLS
-
+    
+    private static final SimpleDateFormat REG_RIPPER_TIME_FORMAT = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy 'Z'", US);
+        
     BlackboardArtifact.Type shellBagArtifactType = null;
     BlackboardAttribute.Type shellBagKeyAttributeType = null;
     BlackboardAttribute.Type shellBagLastWriteAttributeType = null;
+    
+    static {
+        REG_RIPPER_TIME_FORMAT.setTimeZone(getTimeZone("GMT"));
+    }
 
     ExtractRegistry() throws IngestModuleException {
         moduleName = NbBundle.getMessage(ExtractIE.class, "ExtractRegistry.moduleName.text");
@@ -849,56 +866,66 @@ class ExtractRegistry extends Extract {
 
                                     case "ProfileList": //NON-NLS
                                         try {
-                                        String homeDir = value;
-                                        String sid = artnode.getAttribute("sid"); //NON-NLS
-                                        String username = artnode.getAttribute("username"); //NON-NLS
-                                        BlackboardArtifact bbart = null;
-                                        try {
-                                            //check if any of the existing artifacts match this username
-                                            ArrayList<BlackboardArtifact> existingArtifacts = currentCase.getSleuthkitCase().getBlackboardArtifacts(ARTIFACT_TYPE.TSK_OS_ACCOUNT);
-                                            for (BlackboardArtifact artifact : existingArtifacts) {
-                                                if (artifact.getDataSource().getId() == regFile.getDataSourceObjectId()) {
-                                                    BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_USER_ID));
-                                                    if (attribute != null && attribute.getValueString().equals(sid)) {
-                                                        bbart = artifact;
-                                                        break;
+                                            String homeDir = value;
+                                            String sid = artnode.getAttribute("sid"); //NON-NLS
+                                            String username = artnode.getAttribute("username"); //NON-NLS
+                                            
+                                            // For now both an OsAccount and the 
+                                            // TSK_OS_ACCOUNT artifact will be created.
+                                            try{
+                                                updateOsAccount(regFile, sid, username, homeDir);
+                                                
+                                            } catch(TskCoreException | TskDataException ex) {
+                                                logger.log(Level.SEVERE, String.format("Failed to create OsAccount for file: %s, sid: %s", regFile.getId(), sid));
+                                            }
+                                            
+                                            BlackboardArtifact bbart = null;
+                                            try {
+                                                //check if any of the existing artifacts match this username
+                                                ArrayList<BlackboardArtifact> existingArtifacts = currentCase.getSleuthkitCase().getBlackboardArtifacts(ARTIFACT_TYPE.TSK_OS_ACCOUNT);
+                                                for (BlackboardArtifact artifact : existingArtifacts) {
+                                                    if (artifact.getDataSource().getId() == regFile.getDataSourceObjectId()) {
+                                                        BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_USER_ID));
+                                                        if (attribute != null && attribute.getValueString().equals(sid)) {
+                                                            bbart = artifact;
+                                                            break;
+                                                        }
                                                     }
                                                 }
+                                            } catch (TskCoreException ex) {
+                                                logger.log(Level.SEVERE, "Error getting existing os account artifact", ex);
                                             }
-                                        } catch (TskCoreException ex) {
-                                            logger.log(Level.SEVERE, "Error getting existing os account artifact", ex);
-                                        }
-                                        if (bbart == null) {
-                                            //create new artifact
-                                            bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_OS_ACCOUNT);
-                                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME,
-                                                    parentModuleName, username));
-                                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_ID,
-                                                    parentModuleName, sid));
-                                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH,
-                                                    parentModuleName, homeDir));
-                                            
-                                            newArtifacts.add(bbart);
-                                        } else {
-                                            //add attributes to existing artifact
-                                            BlackboardAttribute bbattr = bbart.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_USER_NAME));
-
-                                            if (bbattr == null) {
+                                            if (bbart == null) {
+                                                //create new artifact
+                                                bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_OS_ACCOUNT);
                                                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME,
                                                         parentModuleName, username));
-                                            }
-                                            bbattr = bbart.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PATH));
-                                            if (bbattr == null) {
+                                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_ID,
+                                                        parentModuleName, sid));
                                                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH,
                                                         parentModuleName, homeDir));
-                                            }                                          
-                                        }
-                                        bbart.addAttributes(bbattributes);
+
+                                                newArtifacts.add(bbart);
+                                            } else {
+                                                //add attributes to existing artifact
+                                                BlackboardAttribute bbattr = bbart.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_USER_NAME));
+
+                                                if (bbattr == null) {
+                                                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME,
+                                                            parentModuleName, username));
+                                                }
+                                                bbattr = bbart.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PATH));
+                                                if (bbattr == null) {
+                                                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH,
+                                                            parentModuleName, homeDir));
+                                                }                                          
+                                            }
+                                            bbart.addAttributes(bbattributes);
                                        
-                                    } catch (TskCoreException ex) {
-                                        logger.log(Level.SEVERE, "Error adding account artifact to blackboard.", ex); //NON-NLS
-                                    }
-                                    break;
+                                        } catch (TskCoreException ex) {
+                                            logger.log(Level.SEVERE, "Error adding account artifact to blackboard.", ex); //NON-NLS
+                                        }
+                                        break;
 
                                     case "NtuserNetwork": // NON-NLS
                                         try {
@@ -1166,7 +1193,7 @@ class ExtractRegistry extends Extract {
         }
         return false;
     }
-
+    
     /**
      * Creates the attribute list for the given user information and group list.
      *
@@ -2137,5 +2164,279 @@ class ExtractRegistry extends Extract {
 
         public String autopsyPlugins = "";
         public String fullPlugins = "";
+    }
+    
+    /**
+     * Updates an existing or creates a new OsAccount with the given attributes. 
+     * 
+     * @param file Registry file
+     * @param sid  Account sid
+     * @param userName Login name
+     * @param homeDir Account home Directory
+     * @throws TskCoreException
+     * @throws TskDataException 
+     */
+    private void updateOsAccount(AbstractFile file, String sid, String userName, String homeDir) throws TskCoreException, TskDataException {
+        SleuthkitCase skCase = currentCase.getSleuthkitCase();
+        
+        OsAccountManager accountMgr = skCase.getOsAccountManager();
+        HostManager hostMrg = skCase.getHostManager();
+        Host host = hostMrg.getHost(skCase.getDataSource(file.getDataSourceObjectId()));
+        
+        Optional<OsAccount> optional = accountMgr.getWindowsAccount(sid, null, null, host);
+        OsAccount osAccount;
+        if(!optional.isPresent()) {          
+            osAccount = accountMgr.createWindowsAccount(sid, userName != null && userName.isEmpty() ? null : userName, null, host, OsAccountRealm.RealmScope.UNKNOWN);
+        } else {
+             osAccount = optional.get();
+             if(userName != null && !userName.isEmpty()) {
+                osAccount.setLoginName(userName);
+             }
+        }
+        
+        if(homeDir != null && !homeDir.isEmpty()) {
+            Set<OsAccountAttribute> attSet = new HashSet<>();
+            attSet.add(createOsAccountAttribute(TSK_HOME_DIR, homeDir, osAccount, host, file));
+            osAccount.addAttributes(attSet);
+        }
+        
+        osAccount.update();    
+    }
+    
+    /**
+     * Create an account for the found email address.
+     * 
+     * @param regFile File the account was found in
+     * @param emailAddress The emailAddress
+     */
+    private void addEmailAccount(AbstractFile regFile, String emailAddress) {
+        try {
+            currentCase.getSleuthkitCase()
+                    .getCommunicationsManager()
+                    .createAccountFileInstance(Account.Type.EMAIL,
+                            emailAddress, getRAModuleName(), regFile);
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE,
+                    String.format("Error adding email account with value "
+                            + "%s, to the case database for file %s [objId=%d]",
+                            emailAddress, regFile.getName(), regFile.getId()), ex);
+        }
+    }
+    
+    /**
+     * Parse the data time string found in the SAM file.
+     * 
+     * @param value Date time string in the REG_RIPPER_TIME_FORMAT
+     * 
+     * @return  Java epoch time in seconds or null if the value could not be
+     *          parsed.
+     */
+    private Long parseRegRipTime(String value) {
+        try {
+            return REG_RIPPER_TIME_FORMAT.parse(value).getTime() / MS_IN_SEC;
+        } catch (ParseException ex) {
+            logger.log(Level.SEVERE, String.format("Failed to parse reg rip time: %s", value));
+        }
+        return null;
+    }
+    
+    /**
+     * Parse the data from the userInfo map created by parsing the SAM file.
+     * 
+     * @param osAccount
+     * @param userInfo
+     * @param groupList
+     * @param regFile
+     * @throws TskDataException
+     * @throws TskCoreException 
+     */
+    private void updateOsAccount(OsAccount osAccount, Map<String, String> userInfo, List<String> groupList, AbstractFile regFile) throws TskDataException, TskCoreException {
+        SleuthkitCase skCase = currentCase.getSleuthkitCase();
+        
+        OsAccountManager accountMgr = skCase.getOsAccountManager();
+        HostManager hostMrg = skCase.getHostManager();
+        Host host = hostMrg.getHost(skCase.getDataSource(regFile.getDataSourceObjectId()));
+        
+        SimpleDateFormat regRipperTimeFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy 'Z'", US);
+        regRipperTimeFormat.setTimeZone(getTimeZone("GMT"));
+        
+        Set<OsAccountAttribute> attributeSet = new HashSet<>();
+        
+        String value = userInfo.get(ACCOUNT_CREATED_KEY);
+        if (value != null && !value.isEmpty() && !value.equals(NEVER_DATE)) {
+            Long time = parseRegRipTime(value);
+            if(time != null) {
+                osAccount.setCreationTime(time);
+            }
+        }
+        
+        value = userInfo.get(LAST_LOGIN_KEY);
+        if (value != null && !value.isEmpty() && !value.equals(NEVER_DATE)) {
+            Long time = parseRegRipTime(value);
+            if(time != null) {
+                attributeSet.add(createOsAccountAttribute(TSK_DATETIME_ACCESSED, 
+                        parseRegRipTime(value), 
+                        osAccount, host, regFile));
+            }
+        }
+        
+        value = userInfo.get(LOGIN_COUNT_KEY);
+        if (value != null && !value.isEmpty()) {
+            attributeSet.add(createOsAccountAttribute(ATTRIBUTE_TYPE.TSK_COUNT, 
+                    Integer.parseInt(value), 
+                    osAccount, host, regFile));
+        }
+
+        value = userInfo.get(ACCOUNT_TYPE_KEY);
+        if (value != null && !value.isEmpty()) {
+            // Need to figure out what the account type value could be and
+            // how it translates to OsAccountType
+        } else {
+            osAccount.setOsAccountType(OsAccount.OsAccountType.UNKNOWN);
+        }
+
+        value = userInfo.get(USER_COMMENT_KEY);
+        if (value != null && !value.isEmpty()) {
+            attributeSet.add(createOsAccountAttribute(ATTRIBUTE_TYPE.TSK_DESCRIPTION, 
+                    value, osAccount, host, regFile));
+        }
+
+        value = userInfo.get(INTERNET_NAME_KEY);
+        if (value != null && !value.isEmpty()) {
+            addEmailAccount(regFile, value);
+
+            attributeSet.add(createOsAccountAttribute(ATTRIBUTE_TYPE.TSK_EMAIL, 
+                    value, osAccount, host, regFile));
+        }
+
+        value = userInfo.get(FULL_NAME_KEY);
+        if (value != null && !value.isEmpty()) {
+            osAccount.setFullName(value);
+        } else {
+            value = userInfo.get(NAME_KEY);
+            if (value != null && !value.isEmpty()) {
+                osAccount.setFullName(value);
+            }
+        }
+
+        value = userInfo.get(PWD_RESET_KEY);
+        if (value != null && !value.isEmpty() && !value.equals(NEVER_DATE)) {
+            Long time = parseRegRipTime(value);
+            if(time != null) {
+                attributeSet.add(createOsAccountAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_PASSWORD_RESET, 
+                        time, osAccount, host, regFile));
+            }
+        }
+
+        value = userInfo.get(PASSWORD_HINT);
+        if (value != null && !value.isEmpty()) {
+            attributeSet.add(createOsAccountAttribute(ATTRIBUTE_TYPE.TSK_PASSWORD_HINT, 
+                    value, osAccount, host, regFile));
+        }
+
+        value = userInfo.get(PWD_FAILE_KEY);
+        if (value != null && !value.isEmpty() && !value.equals(NEVER_DATE)) {
+            Long time = parseRegRipTime(value);
+            if(time != null) {
+                attributeSet.add(createOsAccountAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_PASSWORD_FAIL, 
+                        time, osAccount, host, regFile));
+            }
+        }
+
+        String settingString = "";
+        for (String setting : PASSWORD_SETTINGS_FLAGS) {
+            if (userInfo.containsKey(setting)) {
+                settingString += setting + ", ";
+            }
+        }
+
+        if (!settingString.isEmpty()) {           
+            attributeSet.add(createOsAccountAttribute(ATTRIBUTE_TYPE.TSK_PASSWORD_SETTINGS, 
+                    settingString, osAccount, host, regFile));
+        }
+
+        settingString = "";
+        for (String setting : ACCOUNT_SETTINGS_FLAGS) {
+            if (userInfo.containsKey(setting)) {
+                settingString += setting + ", ";
+            }
+        }
+
+        if (!settingString.isEmpty()) {
+            settingString = settingString.substring(0, settingString.length() - 2);
+            attributeSet.add(createOsAccountAttribute(ATTRIBUTE_TYPE.TSK_ACCOUNT_SETTINGS, 
+                    settingString, osAccount, host, regFile));
+        }
+
+        settingString = "";
+        for (String setting : ACCOUNT_TYPE_FLAGS) {
+            if (userInfo.containsKey(setting)) {
+                settingString += setting + ", ";
+            }
+        }
+
+        if (!settingString.isEmpty()) {
+            settingString = settingString.substring(0, settingString.length() - 2);
+            attributeSet.add(createOsAccountAttribute(ATTRIBUTE_TYPE.TSK_FLAG, 
+                    settingString, osAccount, host, regFile));
+        }
+
+        if (groupList != null && groupList.isEmpty()) {
+            String groups = "";
+            for (String group : groupList) {
+                groups += group + ", ";
+            }
+            
+            attributeSet.add(createOsAccountAttribute(ATTRIBUTE_TYPE.TSK_FLAG, 
+                    groups.substring(0, groups.length() - 2), osAccount, host, regFile));
+        }
+        
+        osAccount.addAttributes(attributeSet);
+        osAccount.update();
+    }
+    
+    /**
+     * Helper for constructing a new OsAccountAttribute
+     * 
+     * @param type      Attribute type
+     * @param value     The value to store
+     * @param osAccount The OsAccount this attribute belongs to
+     * @param host      The Host related to the OsAccount
+     * @param file      The source where the attribute was found.
+     * 
+     * @return          Newly created OsACcountAttribute
+     */
+    private OsAccountAttribute createOsAccountAttribute(BlackboardAttribute.ATTRIBUTE_TYPE type, String value, OsAccount osAccount, Host host, AbstractFile file) {
+        return new OsAccountAttribute(new BlackboardAttribute.Type(type), value, osAccount, host, file);
+    }
+    
+    /**
+     * Helper for constructing a new OsAccountAttribute
+     * 
+     * @param type      Attribute type
+     * @param value     The value to store
+     * @param osAccount The OsAccount this attribute belongs to
+     * @param host      The Host related to the OsAccount
+     * @param file      The source where the attribute was found.
+     * 
+     * @return          Newly created OsACcountAttribute
+     */
+    private OsAccountAttribute createOsAccountAttribute(BlackboardAttribute.ATTRIBUTE_TYPE type, Long value, OsAccount osAccount, Host host, AbstractFile file) {
+        return new OsAccountAttribute(new BlackboardAttribute.Type(type), value, osAccount, host, file);
+    }
+    
+    /**
+     * Helper for constructing a new OsAccountAttribute
+     * 
+     * @param type      Attribute type
+     * @param value     The value to store
+     * @param osAccount The OsAccount this attribute belongs to
+     * @param host      The Host related to the OsAccount
+     * @param file      The source where the attribute was found.
+     * 
+     * @return          Newly created OsACcountAttribute
+     */
+    private OsAccountAttribute createOsAccountAttribute(BlackboardAttribute.ATTRIBUTE_TYPE type, Integer value, OsAccount osAccount, Host host, AbstractFile file) {
+        return new OsAccountAttribute(new BlackboardAttribute.Type(type), value, osAccount, host, file);
     }
 }
