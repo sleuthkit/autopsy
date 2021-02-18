@@ -32,7 +32,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * An application event generic used as a superclass for events published when
  * something changes in the Sleuth Kit Data Model for a case.
  *
- * @param <T> A TSK Data Model object type.
+ * @param <T> A Sleuth Kit Data Model object type.
  */
 public abstract class TskDataModelChangeEvent<T> extends AutopsyEvent {
 
