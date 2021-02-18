@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -47,7 +47,8 @@ package org.sleuthkit.autopsy.ingest;
 public interface IngestModule {
 
     /**
-     * A return code for derived class process() methods.
+     * A return code for derived class process() methods that return a result
+     * code instead of throwing exceptions.
      */
     public enum ProcessResult {
 
@@ -90,9 +91,4 @@ public interface IngestModule {
      */
     void startUp(IngestJobContext context) throws IngestModuleException;
 
-    /**
-     * TODO: The next time an API change is legal, add a cancel() method and
-     * remove the "ingest job is canceled" queries from the IngestJobContext
-     * class.
-     */
 }

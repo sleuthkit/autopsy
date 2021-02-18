@@ -75,7 +75,7 @@ public abstract class TskDataModelChangeEvent<T> extends AutopsyEvent {
      *
      * @return The unique IDs.
      */
-    public final List<T> getdataModelObjectIds() {
+    public final List<T> getDataModelObjectIds() {
         return Collections.unmodifiableList(dataModelObjects);
     }
 
