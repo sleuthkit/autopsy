@@ -57,7 +57,7 @@ public abstract class TskDataModelChangeEvent<T> extends AutopsyEvent {
     }
 
     /**
-     * Gets the unique, numeric IDs (TSK object IDs, case database row IDs,
+     * Gets the unique numeric IDs (TSK object IDs, case database row IDs,
      * etc.) of the Sleuth Kit Data Model objects associated with this
      * application event.
      *
