@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2020 Basis Technology Corp.
+ * Copyright 2020-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -43,7 +43,6 @@ import org.sleuthkit.autopsy.discovery.search.SearchFiltering.DataSourceFilter;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_ACCOUNT_TYPE;
-import org.sleuthkit.datamodel.BlackboardAttribute;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT;
 import org.sleuthkit.datamodel.CaseDbAccessManager;
@@ -197,7 +196,6 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
                 + // Add the data source where clause here if present.
                 ((dataSourceWhereClause != null) ? "WHERE " + dataSourceWhereClause + " " : "")
                 + "GROUP BY " + groupByClause;
-        System.out.println("Query: " + domainsQuery);
         final CaseDbAccessManager dbManager = caseDb.getCaseDbAccessManager();
         final DomainCallback domainCallback = new DomainCallback(caseDb);
         dbManager.select(domainsQuery, domainCallback);
@@ -242,7 +240,7 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
             if (filter instanceof ArtifactTypeFilter) {
                 // Replace with user defined types.
                 artifactTypeFilter = ((ArtifactTypeFilter) filter);
-            } else if (!(filter instanceof DataSourceFilter) && !filter.useAlternateFilter()) {
+            } else if (filter != null && !(filter instanceof DataSourceFilter) && !filter.useAlternateFilter()) {
                 if (filter instanceof ArtifactDateRangeFilter) {
                     hasDateTimeFilter = true;
                 }
