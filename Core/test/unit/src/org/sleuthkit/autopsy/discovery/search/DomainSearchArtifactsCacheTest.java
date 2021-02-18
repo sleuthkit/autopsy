@@ -65,7 +65,7 @@ public class DomainSearchArtifactsCacheTest {
         } catch (DiscoveryException ex) {
             // Clear the interrupt flag on success (or failure).
             Thread.interrupted();
-            Assert.assertEquals(InterruptedException.class, ex.getCause().getCause().getClass());
+            Assert.assertEquals(InterruptedException.class, ex.getCause().getClass());
         }
     }
     

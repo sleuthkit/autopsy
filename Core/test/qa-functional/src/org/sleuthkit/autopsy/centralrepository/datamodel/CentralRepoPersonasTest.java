@@ -147,7 +147,7 @@ public class CentralRepoPersonasTest  extends TestCase {
         SqliteCentralRepoSettings sqliteSettings = new SqliteCentralRepoSettings();
         sqliteSettings.setDbName(CR_DB_NAME);
         sqliteSettings.setDbDirectory(testDirectory.toString());
-
+        CentralRepository.getInstance().updateSettings();
         if (!sqliteSettings.dbDirectoryExists() && !sqliteSettings.createDbDirectory()) {
             Assert.fail("Failed to create central repo directory.");
         }
