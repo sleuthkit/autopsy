@@ -41,6 +41,18 @@ public abstract class TskDataModelChangeEvent<T> extends AutopsyEvent {
     private final List<Long> dataModelObjectIds;
     private transient List<T> dataModelObjects;
 
+    /**
+     * Constructs an application event generic used as a superclass for events
+     * published when something changes in the Sleuth Kit Data Model for a case.
+     *
+     * @param eventName          The event name.
+     * @param dataModelObjectIds The unique numeric IDs (TSK object IDs, case
+     *                           database row IDs, etc.) of the Sleuth Kit Data
+     *                           Model objects associated with this application
+     *                           event.
+     * @param dataModelObjects   The Sleuth Kit Data Model objects associated
+     *                           with this application event
+     */
     protected TskDataModelChangeEvent(String eventName, List<Long> dataModelObjectIds, List<T> dataModelObjects) {
         super(eventName, null, null);
         this.dataModelObjectIds = dataModelObjectIds;
@@ -57,9 +69,9 @@ public abstract class TskDataModelChangeEvent<T> extends AutopsyEvent {
     }
 
     /**
-     * Gets the unique numeric IDs (TSK object IDs, case database row IDs,
-     * etc.) of the Sleuth Kit Data Model objects associated with this
-     * application event.
+     * Gets the unique numeric IDs (TSK object IDs, case database row IDs, etc.)
+     * of the Sleuth Kit Data Model objects associated with this application
+     * event.
      *
      * @return
      */
