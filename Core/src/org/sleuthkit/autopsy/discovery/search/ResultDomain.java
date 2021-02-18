@@ -148,9 +148,12 @@ public class ResultDomain extends Result {
                 && countOfKnownAccountTypes > 0;
     }
 
-    /** 
-     * Get the account types in 
-     * @return 
+    /**
+     * Get the account types which are associated with this domain.
+     *
+     * @return A comma seperated list of account types which are associated with
+     *         this domain, or "Unknown" if no account types were associated
+     *         with it.
      */
     @NbBundle.Messages({
         "ResultDomain_noAccountTypes=Unknown"
