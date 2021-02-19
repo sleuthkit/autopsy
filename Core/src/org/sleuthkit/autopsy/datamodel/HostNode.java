@@ -22,7 +22,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.logging.Level;
 import org.openide.nodes.ChildFactory;
@@ -97,7 +96,7 @@ public class HostNode extends DisplayableItemNode {
 
         @Override
         protected boolean createKeys(List<DataSourceGrouping> toPopulate) {
-            Set<DataSource> dataSources = null;
+            List<DataSource> dataSources = null;
             try {
                 dataSources = Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().getDataSourcesForHost(host);
             } catch (NoCurrentCaseException | TskCoreException ex) {
