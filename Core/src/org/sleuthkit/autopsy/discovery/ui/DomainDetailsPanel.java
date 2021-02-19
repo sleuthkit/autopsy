@@ -80,9 +80,9 @@ final class DomainDetailsPanel extends JPanel {
                     if (selectedTabName == null || !selectedTabName.equals(newTabTitle)) {
                         selectedTabName = newTabTitle;
                         Component selectedComponent = jTabbedPane1.getSelectedComponent();
-                        if (selectedComponent instanceof DomainArtifactsTabPanel) {
+                        if (!StringUtils.isBlank(domain) && selectedComponent instanceof DomainArtifactsTabPanel) {
                             runDomainWorker((DomainArtifactsTabPanel) selectedComponent, true);
-                        } else if (selectedComponent instanceof MiniTimelinePanel) {
+                        } else if (!StringUtils.isBlank(domain) && selectedComponent instanceof MiniTimelinePanel) {
                             runMiniTimelineWorker((MiniTimelinePanel) selectedComponent, true);
                         }
                     }
