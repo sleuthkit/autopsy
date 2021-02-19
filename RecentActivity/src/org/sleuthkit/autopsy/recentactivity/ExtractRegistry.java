@@ -96,6 +96,7 @@ import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_USE
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_USER_NAME;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_HOME_DIR;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.HostManager;
 import org.sleuthkit.datamodel.OsAccount;
@@ -104,7 +105,6 @@ import org.sleuthkit.datamodel.OsAccountManager;
 import org.sleuthkit.datamodel.OsAccountRealm;
 import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamException;
 import org.sleuthkit.datamodel.Report;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskDataException;
 
@@ -1158,14 +1158,14 @@ class ExtractRegistry extends Extract {
                 String sid = optional.get();
                 Map<String, String> userInfo = userInfoMap.remove(sid); 
                 if(userInfo != null) {
-                    updateOsAccount(osAccount, userInfo, groupMap.get(sid), regAbstractFile);
+                    createOrUpdateOsAccount(osAccount, userInfo, groupMap.get(sid), regAbstractFile);
                 }
             }
             
             //add remaining userinfos as accounts;
             for (Map<String, String> userInfo : userInfoMap.values()) {
                 OsAccount osAccount = accountMgr.createWindowsAccount(userInfo.get(SID_KEY), null, null, host, OsAccountRealm.RealmScope.UNKNOWN);
-                updateOsAccount(osAccount, userInfo, groupMap.get(userInfo.get(SID_KEY)), regAbstractFile);
+                createOrUpdateOsAccount(osAccount, userInfo, groupMap.get(userInfo.get(SID_KEY)), regAbstractFile);
             }
             
             // Existing TSK_OS_ACCOUNT code.
@@ -2207,7 +2207,7 @@ class ExtractRegistry extends Extract {
     private void updateOsAccount(AbstractFile file, String sid, String userName, String homeDir) throws TskCoreException, TskDataException {
         OsAccountManager accountMgr = tskCase.getOsAccountManager();
         HostManager hostMrg = tskCase.getHostManager();
-        Host host = hostMrg.getHost(tskCase.getDataSource(file.getDataSourceObjectId()));
+        Host host = hostMrg.getHost((DataSource)dataSource);
 
         Optional<OsAccount> optional = accountMgr.getWindowsAccount(sid, null, null, host);
         OsAccount osAccount;
@@ -2226,7 +2226,7 @@ class ExtractRegistry extends Extract {
             osAccount.addAttributes(attSet);
         }
 
-        osAccount.update();
+        accountMgr.updateAccount(osAccount);
     }
 
     /**
@@ -2277,9 +2277,8 @@ class ExtractRegistry extends Extract {
      * @throws TskDataException
      * @throws TskCoreException
      */
-    private void updateOsAccount(OsAccount osAccount, Map<String, String> userInfo, List<String> groupList, AbstractFile regFile) throws TskDataException, TskCoreException {
-        HostManager hostMrg = tskCase.getHostManager();
-        Host host = hostMrg.getHost(tskCase.getDataSource(regFile.getDataSourceObjectId()));
+    private void createOrUpdateOsAccount(OsAccount osAccount, Map<String, String> userInfo, List<String> groupList, AbstractFile regFile) throws TskDataException, TskCoreException {
+        Host host = ((DataSource)dataSource).getHost();        
 
         SimpleDateFormat regRipperTimeFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy 'Z'", US);
         regRipperTimeFormat.setTimeZone(getTimeZone("GMT"));
@@ -2418,7 +2417,7 @@ class ExtractRegistry extends Extract {
         }
 
         osAccount.addAttributes(attributeSet);
-        osAccount.update();
+        tskCase.getOsAccountManager().updateAccount(osAccount);
     }
 
     /**
