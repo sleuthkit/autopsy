@@ -441,6 +441,7 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
     examiners_index = line.find('INSERT INTO "tsk_examiners"') > -1 or line.find('INSERT INTO tsk_examiners ') > -1
     ig_groups_index = line.find('INSERT INTO "image_gallery_groups"') > -1 or line.find('INSERT INTO image_gallery_groups ') > -1
     ig_groups_seen_index = line.find('INSERT INTO "image_gallery_groups_seen"') > -1 or line.find('INSERT INTO image_gallery_groups_seen ') > -1
+    os_account_index = line.find('INSERT INTO "tsk_os_accounts"') > > -1 or line.find('INSERT INTO tsk_os_accounts') > -1
     
     parens = line[line.find('(') + 1 : line.rfind(')')]
     no_space_parens = parens.replace(" ", "")
@@ -475,8 +476,7 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
             fields_list[15] = "'SIZE_IGNORED'"
             fields_list[23] = "'MD5_IGNORED'"
             fields_list[24] = "'SHA256_IGNORED'"
-            
-        newLine = ('INSERT INTO "tsk_files" VALUES(' + ', '.join(fields_list[1:]) + ');') 
+        newLine = ('INSERT INTO "tsk_files" VALUES(' + ', '.join(fields_list[1:-1]) + ');') #leave off first (object id) and last (os_account_id) field 
         # Remove object ID from Unalloc file name
         newLine = re.sub('Unalloc_[0-9]+_', 'Unalloc_', newLine)
         return newLine
@@ -548,7 +548,6 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
             path = fs_info_table[obj_id]
         elif obj_id in reports_table.keys():
             path = reports_table[obj_id]
-        
         # remove host name (for multi-user) and dates/times from path for reports
         if path is not None:
             if 'ModuleOutput' in path:
@@ -587,7 +586,7 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
             parent_path = re.sub('regripper\-[0-9]+\-full', 'regripper-full', parent_path)
             return newLine + path + ', ' + parent_path + ', ' + ', '.join(fields_list[2:]) + ');'
         else:
-            return line 
+            return newLine + '"OBJECT IDS OMITTED"'+ ', ' + ', '.join(fields_list[2:]) + ');'  #omit parent object id and object id when we cant annonymize them
     # remove time-based information, ie Test_6/11/14 -> Test    
     elif report_index:
         fields_list[1] = "AutopsyTestCase"
@@ -630,18 +629,18 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
             fields_list[4] = files_table[object_id]
         if legacy_artifact_id != 'NULL' and legacy_artifact_id in artifact_table.keys():
             fields_list[6] = artifact_table[legacy_artifact_id]
-			
-		
         if fields_list[1] == fields_list[2] and fields_list[1] == fields_list[3]:	
             fields_list[1] = cleanupEventDescription(fields_list[1])
             fields_list[2] = cleanupEventDescription(fields_list[2])
             fields_list[3] = cleanupEventDescription(fields_list[3])
-			
         newLine = ('INSERT INTO "tsk_event_descriptions" VALUES(' + ','.join(fields_list[1:]) + ');') # remove report_id
+        return newLine
+    elif event_description_index:
+        newLine = ('INSERT INTO "tsk_os_accounts" VALUES(' + ','.join(fields_list[1:]) + ');') # remove id
         return newLine
     else:
         return line
-		
+        
 def cleanupEventDescription(description):
     test = re.search("^'\D+:\d+'$", description)
     if test is not None:
