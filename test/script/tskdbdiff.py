@@ -586,7 +586,7 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
             parent_path = re.sub('regripper\-[0-9]+\-full', 'regripper-full', parent_path)
             return newLine + path + ', ' + parent_path + ', ' + ', '.join(fields_list[2:]) + ');'
         else:
-            return newLine + '"OBJECT IDS OMITTED" , ' + ', '.join(fields_list[2:]) + ');'  #omit parent object id and object id when we cant annonymize them
+            return newLine + '"OBJECT IDS OMITTED", ' + ', '.join(fields_list[2:]) + ');'  #omit parent object id and object id when we cant annonymize them
     # remove time-based information, ie Test_6/11/14 -> Test    
     elif report_index:
         fields_list[1] = "AutopsyTestCase"
