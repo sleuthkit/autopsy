@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.events;
 
 import java.beans.PropertyChangeEvent;
 import java.io.Serializable;
-import javax.annotation.concurrent.Immutable;
 
 /**
  * A base class for events to be published to registered subscribers on both
@@ -30,7 +29,6 @@ import javax.annotation.concurrent.Immutable;
  * system, and implements Serializable to allow it to be published over a
  * network in serialized form.
  */
-@Immutable
 public class AutopsyEvent extends PropertyChangeEvent implements Serializable {
 
     private static final long serialVersionUID = 1L;
