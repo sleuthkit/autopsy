@@ -441,7 +441,7 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
     examiners_index = line.find('INSERT INTO "tsk_examiners"') > -1 or line.find('INSERT INTO tsk_examiners ') > -1
     ig_groups_index = line.find('INSERT INTO "image_gallery_groups"') > -1 or line.find('INSERT INTO image_gallery_groups ') > -1
     ig_groups_seen_index = line.find('INSERT INTO "image_gallery_groups_seen"') > -1 or line.find('INSERT INTO image_gallery_groups_seen ') > -1
-    os_account_index = line.find('INSERT INTO "tsk_os_accounts"') > > -1 or line.find('INSERT INTO tsk_os_accounts') > -1
+    os_account_index = line.find('INSERT INTO "tsk_os_accounts"') > -1 or line.find('INSERT INTO tsk_os_accounts') > -1
     
     parens = line[line.find('(') + 1 : line.rfind(')')]
     no_space_parens = parens.replace(" ", "")
@@ -586,7 +586,7 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
             parent_path = re.sub('regripper\-[0-9]+\-full', 'regripper-full', parent_path)
             return newLine + path + ', ' + parent_path + ', ' + ', '.join(fields_list[2:]) + ');'
         else:
-            return newLine + '"OBJECT IDS OMITTED"'+ ', ' + ', '.join(fields_list[2:]) + ');'  #omit parent object id and object id when we cant annonymize them
+            return newLine + '"OBJECT IDS OMITTED", ' + ', '.join(fields_list[2:]) + ');'  #omit parent object id and object id when we cant annonymize them
     # remove time-based information, ie Test_6/11/14 -> Test    
     elif report_index:
         fields_list[1] = "AutopsyTestCase"
@@ -635,7 +635,7 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
             fields_list[3] = cleanupEventDescription(fields_list[3])
         newLine = ('INSERT INTO "tsk_event_descriptions" VALUES(' + ','.join(fields_list[1:]) + ');') # remove report_id
         return newLine
-    elif event_description_index:
+    elif os_account_index:
         newLine = ('INSERT INTO "tsk_os_accounts" VALUES(' + ','.join(fields_list[1:]) + ');') # remove id
         return newLine
     else:
