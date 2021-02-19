@@ -170,7 +170,7 @@ class DomainSummaryPanel extends javax.swing.JPanel implements ListCellRenderer<
         "DomainSummaryPanel.totalPages.text=Total page views: ",
         "DomainSummaryPanel.downloads.text=Files downloaded: ",
         "DomainSummaryPanel.notability.text=Previously tagged as notable: ",
-        "DomainSummaryPanel.userRole.text=User role: ",
+        "DomainSummaryPanel.userRole.text=Account type: ",
         "DomainSummaryPanel.category.text=Category: ",
         "DomainSummaryPanel.loadingImages.text=Loading thumbnail...",
         "DomainSummaryPanel.no.text=No",
