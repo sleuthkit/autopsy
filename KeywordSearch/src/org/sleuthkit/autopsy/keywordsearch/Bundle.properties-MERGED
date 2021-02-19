@@ -5,12 +5,20 @@ AccountsText.nextPage.exception.msg=No next page.
 AccountsText.previousItem.exception.msg=No previous item.
 AccountsText.previousPage.exception.msg=No previous page.
 CannotRunFileTypeDetection=Unable to run file type detection.
-CTL_ExtractAllTermsAction=Extract Unique Words
 DropdownListSearchPanel.selected=Ad Hoc Search data source filter is selected
 DropdownSingleTermSearchPanel.selected=Ad Hoc Search data source filter is selected
 DropdownSingleTermSearchPanel.warning.text=Boundary characters ^ and $ do not match word boundaries. Consider\nreplacing with an explicit list of boundary characters, such as [ \\.,]
 DropdownSingleTermSearchPanel.warning.title=Warning
-ExtractAllTermsAction.getName.text=Extract Unique Words
+ExtractAllTermsReport.error.unableToOpenCase=Exception while getting open case.
+ExtractAllTermsReport.export.error=Error During Unique Word Export
+ExtractAllTermsReport.exportComplete=Unique Word Export Complete
+ExtractAllTermsReport.getName.text=Extract Unique Words
+ExtractAllTermsReport.numberExtractedTerms=Extracted {0} terms...
+ExtractAllTermsReport.search.ingestInProgressBody=<html>Keyword Search Ingest is currently running.<br />Not all files have been indexed and this search might yield incomplete results.<br />Do you want to proceed with this search anyway?</html>
+ExtractAllTermsReport.search.noFilesInIdxMsg=<html>No files are in index yet. <br />Try again later. Index is updated every {0} minutes.</html>
+ExtractAllTermsReport.search.noFilesInIdxMsg2=<html>No files are in index yet. <br />Try again later</html>
+ExtractAllTermsReport.search.searchIngestInProgressTitle=Keyword Search Ingest in Progress
+ExtractAllTermsReport.startExport=Starting Unique Word Export
 ExtractedContentPanel.setMarkup.panelTxt=<span style='font-style:italic'>Loading text... Please wait</span>
 # {0} - Content name
 ExtractedContentPanel.SetMarkup.progress.loading=Loading text for {0}

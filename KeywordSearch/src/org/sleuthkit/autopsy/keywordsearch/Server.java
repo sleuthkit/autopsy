@@ -43,10 +43,8 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -61,7 +59,6 @@ import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.SolrClient;
-import org.apache.solr.client.solrj.SolrQuery.SortClause;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.apache.solr.client.solrj.impl.CloudSolrClient;
 import org.apache.solr.client.solrj.impl.ConcurrentUpdateSolrClient;
@@ -98,6 +95,8 @@ import org.sleuthkit.autopsy.coreutils.ThreadUtils;
 import org.sleuthkit.autopsy.healthmonitor.HealthMonitor;
 import org.sleuthkit.autopsy.healthmonitor.TimingMetric;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
+import org.sleuthkit.autopsy.report.GeneralReportSettings;
+import org.sleuthkit.autopsy.report.ReportProgressPanel;
 import org.sleuthkit.datamodel.Content;
 
 /**
@@ -1843,17 +1842,18 @@ public class Server {
     /**
      * Extract all unique terms/words for a given data source.
      *
-     * @param dataSourceId to process
+     * @param settings GeneralReportSettings to use
+     * @param progressPanel ReportProgressPanel to update
      *
      * @throws NoOpenCoreException
      */
-    void extractAllTermsForDataSource(Long dataSourceId) throws IOException, KeywordSearchModuleException, NoOpenCoreException, SolrServerException, NoCurrentCaseException {
+    void extractAllTermsForDataSource(GeneralReportSettings settings, ReportProgressPanel progressPanel) throws IOException, KeywordSearchModuleException, NoOpenCoreException, SolrServerException, NoCurrentCaseException {
         try {
             currentCoreLock.writeLock().lock();
             if (null == currentCollection) {
                 throw new NoOpenCoreException();
             }
-            currentCollection.extractAllTermsForDataSource(dataSourceId);
+            currentCollection.extractAllTermsForDataSource(settings, progressPanel);
         } finally {
             currentCoreLock.writeLock().unlock();
         }
@@ -2206,54 +2206,18 @@ public class Server {
             queryClient.deleteByQuery(deleteQuery);
         }
         
-        private void extractAllTermsForDataSource(Long dsObjId) throws IOException, SolrServerException, NoCurrentCaseException, KeywordSearchModuleException {
-            String dataSourceId = Long.toString(dsObjId);
+        @NbBundle.Messages({
+            "ExtractAllTermsReport.numberExtractedTerms=Extracted {0} terms..."
+        })
+        private void extractAllTermsForDataSource(GeneralReportSettings settings, ReportProgressPanel progressPanel) throws IOException, SolrServerException, NoCurrentCaseException, KeywordSearchModuleException {
             
-            /* ELTODO int numTerms = 400000;
-            int termStep = 1000;
-
-            SolrQuery query = new SolrQuery();
-            query.setRequestHandler("/terms");
-            query.setTerms(true);
-            query.setTermsLimit(numTerms);
-            query.setTermsSortString("index");
-            query.addTermsField("text");
-            query.setTermsMinCount(0);
-            
-            query.addFilterQuery("image_id:" + dataSourceId);
-
-            QueryRequest request = new QueryRequest(query);
-            TermsResponse response = request.process(queryClient).getTermsResponse();
-            List<Term> terms = response.getTerms("text");
-
-            if (terms == null || terms.isEmpty()) {
-                logger.log(Level.WARNING, "No unique terms/words returned for data source ID: " + dataSourceId); //NON-NLS
-                return;
-            }
-
-            //Term term = terms.get(0);
-            //String word = term.getTerm();
-            //long frequency = term.getFrequency();            
-            
-            // Write the server data to a file
-            Case currentCase = Case.getCurrentCaseThrows();
-            File caseDirectoryPath = new File(currentCase.getOutputDirectory());
-            Path serverFile = Paths.get(caseDirectoryPath.toString(), "terms_"+numTerms+"_whole.txt"); //NON-NLS
-            Files.deleteIfExists(serverFile);
-            
-            List<String> listTerms = terms.stream().map(Term::getTerm).collect(Collectors.toList());
-
-            OpenOption[] options = new OpenOption[] { java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.APPEND };
-            Files.write(serverFile, listTerms, options);*/
-            
-            // step through the terms
-            Case currentCase = Case.getCurrentCaseThrows();
-            File caseDirectoryPath = new File(currentCase.getOutputDirectory());
-            Path serverFileIterated = Paths.get(caseDirectoryPath.toString(), "Unique Words from Data Source " + dataSourceId + ".txt"); //NON-NLS
+            // step through the terms 
+            Path serverFileIterated = Paths.get(settings.getReportDirectoryPath(), "Unique Words.txt"); //NON-NLS
             Files.deleteIfExists(serverFileIterated);
             OpenOption[] options = new OpenOption[] { java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.APPEND };
             
             int termStep = 1000;
+            long numExtractedTerms = 0;
             String firstTerm = "";
             while (true) {
                 SolrQuery query = new SolrQuery();
@@ -2263,8 +2227,8 @@ public class Server {
                 query.setTermsLower(firstTerm);
                 query.setTermsLowerInclusive(false);
                 
-                // returned terms sorted by "index" order, which is the fastest way. Per Solr documentation:
-                // " Retrieving terms in index order is very fast since the implementation directly uses Lucene’s TermEnum to iterate over the term dictionary."
+                // Returned terms sorted by "index" order, which is the fastest way. Per Solr documentation:
+                // "Retrieving terms in index order is very fast since the implementation directly uses Lucene’s TermEnum to iterate over the term dictionary."
                 // All other sort criteria return very inconsistent and overlapping resuts.
                 query.setTermsSortString("index");
                 
@@ -2272,13 +2236,16 @@ public class Server {
                 query.addTermsField(Server.Schema.TEXT.toString());
                 query.setTermsMinCount(0);
 
-                query.addFilterQuery(Server.Schema.IMAGE_ID.toString() + ":" + dataSourceId);
+                // Unfortunatelly Solr "terms queries" do not support any filtering so we can't filter by data source this way.
+                // query.addFilterQuery(Server.Schema.IMAGE_ID.toString() + ":" + dataSourceId);
 
                 QueryRequest request = new QueryRequest(query);
                 TermsResponse response = request.process(queryClient).getTermsResponse();
                 List<Term> terms = response.getTerms(Server.Schema.TEXT.toString());
 
                 if (terms == null || terms.isEmpty()) {
+                    numExtractedTerms += terms.size();
+                    progressPanel.updateStatusLabel(Bundle.ExtractAllTermsReport_numberExtractedTerms(numExtractedTerms));
                     break;
                 }
                 
@@ -2287,6 +2254,9 @@ public class Server {
 
                 List<String> listTerms = terms.stream().map(Term::getTerm).collect(Collectors.toList());
                 Files.write(serverFileIterated, listTerms, options);
+                
+                numExtractedTerms += termStep;
+                progressPanel.updateStatusLabel(Bundle.ExtractAllTermsReport_numberExtractedTerms(numExtractedTerms));
             }
         }
 
@@ -2325,7 +2295,6 @@ public class Server {
          *
          * @throws KeywordSearchModuleException
          */
-        // ELTODO DECIDE ON SYNCHRONIZATION
         private void sendBufferedDocs(List<SolrInputDocument> docBuffer) throws KeywordSearchModuleException {
             
             if (docBuffer.isEmpty()) {

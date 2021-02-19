@@ -7,6 +7,10 @@
          ====================================================== -->
     <folder name="Actions">
         <folder name="Tools">
+            <file name="org-sleuthkit-autopsy-keywordsearch-ExtractAllTermsAction.instance_hidden"/>
+            <file name="org-sleuthkit-autopsy-keywordsearch-ExtractAllTermsReport.instance">
+                <attr name="displayName" stringvalue="#CTL_OtherExtractAllTermsAction=Extract Unique Words"/>
+            </file>
             <file name="org-sleuthkit-autopsy-keywordsearch-KeywordSearchConfigurationAction.instance"/>
             <file name="org-sleuthkit-autopsy-keywordsearch-KeywordSearchAction.instance">
                 <attr name="delegate" newvalue="org.sleuthkit.autopsy.keywordsearch.KeywordSearchAction"/>
