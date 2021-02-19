@@ -57,10 +57,10 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
     private List<ShortcutWizardDescriptorPanel> getPanels() {
         if (panels == null) {
             panels = new ArrayList<>();
-            AddImageWizardSelectDspPanel dspSelection = new AddImageWizardSelectDspPanel();
-            panels.add(dspSelection);
             hostPanel = new AddImageWizardSelectHostPanel();
             panels.add(hostPanel);
+            AddImageWizardSelectDspPanel dspSelection = new AddImageWizardSelectDspPanel();
+            panels.add(dspSelection);
             AddImageWizardAddingProgressPanel progressPanel = new AddImageWizardAddingProgressPanel(action);
             AddImageWizardDataSourceSettingsPanel dsPanel = new AddImageWizardDataSourceSettingsPanel();
             AddImageWizardIngestConfigPanel ingestConfigPanel = new AddImageWizardIngestConfigPanel(progressPanel);

@@ -132,7 +132,7 @@ class AddImageWizardSelectHostVisual extends javax.swing.JPanel {
         });
 
         existingHostList.addListSelectionListener((evt) -> refresh());
-        
+
         loadHostData();
         refresh();
     }
@@ -221,7 +221,8 @@ class AddImageWizardSelectHostVisual extends javax.swing.JPanel {
 
     @Messages({
         "AddImageWizardSelectHostVisual_getValidationMessage_isEmpty=Please provide a name for the host.",
-        "AddImageWizardSelectHostVisual_getValidationMessage_isDuplicate=Host '{0}' already exists.  Please provide a unique name.",
+        "# {0} - hostName",
+        "AddImageWizardSelectHostVisual_getValidationMessage_isDuplicate=Host: {0} already exists.  Please provide a unique name.",
         "AddImageWizardSelectHostVisual_getValidationMessage_noHostSelected=Please select an existing host.",})
     private String getValidationMessage() {
         if (specifyNewHostRadio.isSelected()) {
@@ -354,8 +355,6 @@ class AddImageWizardSelectHostVisual extends javax.swing.JPanel {
                 .addComponent(validationMessage)
                 .addContainerGap(22, Short.MAX_VALUE))
         );
-
-        getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(AddImageWizardSelectHostVisual.class, "SelectHostPanel.title")); // NOI18N
     }// </editor-fold>//GEN-END:initComponents
 
     private void generateNewRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_generateNewRadioActionPerformed
