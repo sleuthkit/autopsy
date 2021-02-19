@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,9 +23,9 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
+import org.openide.util.ChangeSupport;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.datamodel.hosts.SelectHostPanel;
 import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.ShortcutWizardDescriptorPanel;
 
@@ -37,8 +37,13 @@ import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.ShortcutWizardDescript
 @Messages("AddImageWizardSelectHostPanel_title=Select Host To Add The Data Source To")
 final class AddImageWizardSelectHostPanel extends ShortcutWizardDescriptorPanel implements PropertyChangeListener {
 
-    private final SelectHostPanel component = new SelectHostPanel();
-
+    private final AddImageWizardSelectHostVisual component = new AddImageWizardSelectHostVisual();
+    private final ChangeSupport changeSupport = new ChangeSupport(this);
+    
+    AddImageWizardSelectHostPanel() {
+        component.addListener(this);
+    }
+    
     @Override
     public Component getComponent() {
         return component;
@@ -69,19 +74,22 @@ final class AddImageWizardSelectHostPanel extends ShortcutWizardDescriptorPanel 
 
     @Override
     public boolean isValid() {
-        return true;
+        return component.hasValidData();
     }
 
     @Override
     public void addChangeListener(ChangeListener cl) {
+        changeSupport.addChangeListener(cl);
     }
 
     @Override
     public void removeChangeListener(ChangeListener cl) {
+        changeSupport.removeChangeListener(cl);
     }
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
+        changeSupport.fireChange();
     }
     
     

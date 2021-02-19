@@ -16,21 +16,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datamodel.hosts;
+package org.sleuthkit.autopsy.casemodule;
 
-import java.awt.Dialog;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.util.Objects;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import javax.swing.DefaultComboBoxModel;
-import javax.swing.DefaultListModel;
-import javax.swing.SwingUtilities;
+import java.util.stream.IntStream;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import org.apache.commons.lang.StringUtils;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -40,16 +38,13 @@ import org.sleuthkit.datamodel.TskCoreException;
  * ability to select current host.
  */
 @Messages({
-    "SelectHostPanel_title=Select Host to Add the Data Source to"
+    "AddImageWizardSelectHostVisual_title=Select Host"
 })
-public class SelectHostPanel extends javax.swing.JPanel {
+class AddImageWizardSelectHostVisual extends javax.swing.JPanel {
 
     /**
      * A combo box item for a host (or null for default).
      */
-    @Messages({
-        "SelectHostPanel_HostCbItem_defaultHost=Default"
-    })
     private static class HostListItem {
 
         private final Host host;
@@ -72,9 +67,7 @@ public class SelectHostPanel extends javax.swing.JPanel {
 
         @Override
         public String toString() {
-            if (host == null) {
-                return Bundle.SelectHostPanel_HostCbItem_defaultHost();
-            } else if (host.getName() == null) {
+            if (host == null || host.getName() == null) {
                 return "";
             } else {
                 return host.getName();
@@ -111,22 +104,62 @@ public class SelectHostPanel extends javax.swing.JPanel {
 
     }
 
-    private static final Logger logger = Logger.getLogger(SelectHostPanel.class.getName());
+    private static final Logger logger = Logger.getLogger(AddImageWizardSelectHostVisual.class.getName());
+
+    private final PropertyChangeSupport changeSupport = new PropertyChangeSupport(this);
 
     /**
      * Creates new form SelectHostPanel
      */
-    public SelectHostPanel() {
+    AddImageWizardSelectHostVisual() {
         initComponents();
+
+        specifyNewHostTextField.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                refresh();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                refresh();
+            }
+
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                refresh();
+            }
+        });
+
+        existingHostList.addListSelectionListener((evt) -> refresh());
+        
         loadHostData();
         refresh();
+    }
+
+    /**
+     * Add listener for validation change events.
+     *
+     * @param pcl The property change listener.
+     */
+    void addListener(PropertyChangeListener pcl) {
+        changeSupport.addPropertyChangeListener(pcl);
+    }
+
+    /**
+     * Remove listener from validation change events.
+     *
+     * @param pcl The property change listener.
+     */
+    void removeListener(PropertyChangeListener pcl) {
+        changeSupport.removePropertyChangeListener(pcl);
     }
 
     /**
      * @return The currently selected host or null if no selection. This will
      * generate a new host if 'Specify New Host Name'
      */
-    public Host getSelectedHost() {
+    Host getSelectedHost() {
         if (specifyNewHostRadio.isSelected() && StringUtils.isNotEmpty(specifyNewHostTextField.getText())) {
             String newHostName = specifyNewHostTextField.getText();
             try {
@@ -176,11 +209,56 @@ public class SelectHostPanel extends javax.swing.JPanel {
     private void refresh() {
         specifyNewHostTextField.setEnabled(specifyNewHostRadio.isSelected());
         existingHostList.setEnabled(useExistingHostRadio.isSelected());
+
+        String prevValidationMessage = validationMessage.getText();
+        String newValidationMessage = getValidationMessage();
+        validationMessage.setText(newValidationMessage);
+        // if validation message changed (empty to non-empty or vice-versa) fire validation update
+        if (StringUtils.isBlank(prevValidationMessage) != StringUtils.isBlank(newValidationMessage)) {
+            changeSupport.firePropertyChange("validation", prevValidationMessage, newValidationMessage);
+        }
+    }
+
+    @Messages({
+        "AddImageWizardSelectHostVisual_getValidationMessage_isEmpty=Please provide a name for the host.",
+        "AddImageWizardSelectHostVisual_getValidationMessage_isDuplicate=Host '{0}' already exists.  Please provide a unique name.",
+        "AddImageWizardSelectHostVisual_getValidationMessage_noHostSelected=Please select an existing host.",})
+    private String getValidationMessage() {
+        if (specifyNewHostRadio.isSelected()) {
+            // if specify new host and host name is empty
+            final String newHostName = specifyNewHostTextField.getText();
+            if (StringUtils.isBlank(newHostName)) {
+                return Bundle.AddImageWizardSelectHostVisual_getValidationMessage_isEmpty();
+            }
+
+            // or specify new host and the host already exists
+            boolean hasHostName = IntStream.range(0, existingHostList.getModel().getSize())
+                    .mapToObj(idx -> existingHostList.getModel().getElementAt(idx))
+                    .filter(hItem -> hItem != null && hItem.getHost() != null && hItem.getHost().getName() != null)
+                    .map(hItem -> hItem.getHost().getName())
+                    .anyMatch(hName -> newHostName.trim().equalsIgnoreCase(hName.trim()));
+
+            if (hasHostName) {
+                return Bundle.AddImageWizardSelectHostVisual_getValidationMessage_isDuplicate(newHostName.trim());
+            }
+
+            // or use existing host and no host is selected
+        } else if (useExistingHostRadio.isSelected()
+                && (existingHostList.getSelectedValue() == null
+                || existingHostList.getSelectedValue().getHost() == null)) {
+            return Bundle.AddImageWizardSelectHostVisual_getValidationMessage_noHostSelected();
+        }
+
+        return "";
     }
 
     @Override
     public String getName() {
-        return Bundle.SelectHostPanel_title();
+        return Bundle.AddImageWizardSelectHostVisual_title();
+    }
+
+    boolean hasValidData() {
+        return StringUtils.isBlank(validationMessage.getText());
     }
 
     /**
@@ -200,10 +278,11 @@ public class SelectHostPanel extends javax.swing.JPanel {
         javax.swing.JScrollPane jScrollPane1 = new javax.swing.JScrollPane();
         existingHostList = new javax.swing.JList<>();
         hostDescription = new javax.swing.JLabel();
+        validationMessage = new javax.swing.JLabel();
 
         radioButtonGroup.add(generateNewRadio);
         generateNewRadio.setSelected(true);
-        org.openide.awt.Mnemonics.setLocalizedText(generateNewRadio, org.openide.util.NbBundle.getMessage(SelectHostPanel.class, "SelectHostPanel.generateNewRadio.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(generateNewRadio, org.openide.util.NbBundle.getMessage(AddImageWizardSelectHostVisual.class, "AddImageWizardSelectHostVisual.generateNewRadio.text")); // NOI18N
         generateNewRadio.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 generateNewRadioActionPerformed(evt);
@@ -211,17 +290,17 @@ public class SelectHostPanel extends javax.swing.JPanel {
         });
 
         radioButtonGroup.add(specifyNewHostRadio);
-        org.openide.awt.Mnemonics.setLocalizedText(specifyNewHostRadio, org.openide.util.NbBundle.getMessage(SelectHostPanel.class, "SelectHostPanel.specifyNewHostRadio.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(specifyNewHostRadio, org.openide.util.NbBundle.getMessage(AddImageWizardSelectHostVisual.class, "AddImageWizardSelectHostVisual.specifyNewHostRadio.text")); // NOI18N
         specifyNewHostRadio.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 specifyNewHostRadioActionPerformed(evt);
             }
         });
 
-        specifyNewHostTextField.setText(org.openide.util.NbBundle.getMessage(SelectHostPanel.class, "SelectHostPanel.specifyNewHostTextField.text")); // NOI18N
+        specifyNewHostTextField.setText(org.openide.util.NbBundle.getMessage(AddImageWizardSelectHostVisual.class, "AddImageWizardSelectHostVisual.specifyNewHostTextField.text")); // NOI18N
 
         radioButtonGroup.add(useExistingHostRadio);
-        org.openide.awt.Mnemonics.setLocalizedText(useExistingHostRadio, org.openide.util.NbBundle.getMessage(SelectHostPanel.class, "SelectHostPanel.useExistingHostRadio.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(useExistingHostRadio, org.openide.util.NbBundle.getMessage(AddImageWizardSelectHostVisual.class, "AddImageWizardSelectHostVisual.useExistingHostRadio.text")); // NOI18N
         useExistingHostRadio.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 useExistingHostRadioActionPerformed(evt);
@@ -231,7 +310,10 @@ public class SelectHostPanel extends javax.swing.JPanel {
         existingHostList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         jScrollPane1.setViewportView(existingHostList);
 
-        org.openide.awt.Mnemonics.setLocalizedText(hostDescription, org.openide.util.NbBundle.getMessage(SelectHostPanel.class, "SelectHostPanel.hostDescription.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(hostDescription, org.openide.util.NbBundle.getMessage(AddImageWizardSelectHostVisual.class, "AddImageWizardSelectHostVisual.hostDescription.text")); // NOI18N
+
+        validationMessage.setForeground(java.awt.Color.RED);
+        org.openide.awt.Mnemonics.setLocalizedText(validationMessage, org.openide.util.NbBundle.getMessage(AddImageWizardSelectHostVisual.class, "AddImageWizardSelectHostVisual.validationMessage.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -239,15 +321,18 @@ public class SelectHostPanel extends javax.swing.JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(generateNewRadio)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(specifyNewHostRadio)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(specifyNewHostTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 210, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(useExistingHostRadio)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 272, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(hostDescription))
+                    .addComponent(hostDescription)
+                    .addComponent(validationMessage, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(21, 21, 21)
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 272, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap(33, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -263,12 +348,14 @@ public class SelectHostPanel extends javax.swing.JPanel {
                 .addComponent(useExistingHostRadio)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(hostDescription)
-                .addContainerGap(44, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(validationMessage)
+                .addContainerGap(22, Short.MAX_VALUE))
         );
 
-        getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(SelectHostPanel.class, "SelectHostPanel.title")); // NOI18N
+        getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(AddImageWizardSelectHostVisual.class, "SelectHostPanel.title")); // NOI18N
     }// </editor-fold>//GEN-END:initComponents
 
     private void generateNewRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_generateNewRadioActionPerformed
@@ -291,5 +378,6 @@ public class SelectHostPanel extends javax.swing.JPanel {
     private javax.swing.JRadioButton specifyNewHostRadio;
     private javax.swing.JTextField specifyNewHostTextField;
     private javax.swing.JRadioButton useExistingHostRadio;
+    private javax.swing.JLabel validationMessage;
     // End of variables declaration//GEN-END:variables
 }
