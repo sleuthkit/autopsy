@@ -1,5 +1,6 @@
 AddImageWizardIngestConfigPanel.name.text=Configure Ingest Modules
 AddImageWizardSelectDspVisual.multiUserWarning.text=This type of Data Source Processor is not available in multi-user mode
+AddImageWizardSelectHostPanel_title=Select Host To Add The Data Source To
 # {0} - exception message
 Case.closeException.couldNotCloseCase=Error closing case: {0}
 Case.creationException.couldNotAcquireResourcesLock=Failed to get lock on case resources

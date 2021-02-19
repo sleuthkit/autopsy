@@ -29,6 +29,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.ingest.IngestProfiles;
 import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.IngestProfileSelectionWizardPanel;
 import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.ShortcutWizardDescriptorPanel;
+import org.sleuthkit.datamodel.Host;
 
 /**
  * The iterator class for the "Add Image" wizard panel. This class is used to
@@ -43,6 +44,7 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
     private int dsPanelIndex;
     private int ingestPanelIndex;
     private final static String PROP_LASTPROFILE_NAME = "AIW_LASTPROFILE_NAME"; //NON-NLS
+    private AddImageWizardSelectHostPanel hostPanel = null;
 
     AddImageWizardIterator(AddImageAction action) {
         this.action = action;
@@ -57,8 +59,9 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
             panels = new ArrayList<>();
             AddImageWizardSelectDspPanel dspSelection = new AddImageWizardSelectDspPanel();
             panels.add(dspSelection);
+            hostPanel = new AddImageWizardSelectHostPanel();
+            panels.add(hostPanel);
             AddImageWizardAddingProgressPanel progressPanel = new AddImageWizardAddingProgressPanel(action);
-
             AddImageWizardDataSourceSettingsPanel dsPanel = new AddImageWizardDataSourceSettingsPanel();
             AddImageWizardIngestConfigPanel ingestConfigPanel = new AddImageWizardIngestConfigPanel(progressPanel);
             panels.add(dsPanel);
@@ -182,7 +185,8 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
         if (index == ingestPanelIndex) {
             AddImageWizardAddingProgressPanel addingProgressPanel = (AddImageWizardAddingProgressPanel) panels.get(progressPanelIndex);
             AddImageWizardDataSourceSettingsVisual dspSettingsPanel = ((AddImageWizardDataSourceSettingsPanel) panels.get(dsPanelIndex)).getComponent();
-            addingProgressPanel.startDataSourceProcessing(dspSettingsPanel.getCurrentDSProcessor(), dspSettingsPanel.getSelectedHost());
+            Host host = (hostPanel == null) ? null : hostPanel.getSelectedHost();
+            addingProgressPanel.startDataSourceProcessing(dspSettingsPanel.getCurrentDSProcessor(), host);
         }
         boolean panelEnablesSkipping = current().panelEnablesSkipping();
         boolean skipNextPanel = current().skipNextPanel();

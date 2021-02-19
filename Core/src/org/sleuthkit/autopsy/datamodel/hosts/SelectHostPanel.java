@@ -25,7 +25,9 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.DefaultListModel;
 import javax.swing.SwingUtilities;
+import org.apache.commons.lang.StringUtils;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -37,6 +39,9 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Panel to be displayed as a part of the add datasource wizard. Provides the
  * ability to select current host.
  */
+@Messages({
+    "SelectHostPanel_title=Select Host to Add the Data Source to"
+})
 public class SelectHostPanel extends javax.swing.JPanel {
 
     /**
@@ -45,7 +50,7 @@ public class SelectHostPanel extends javax.swing.JPanel {
     @Messages({
         "SelectHostPanel_HostCbItem_defaultHost=Default"
     })
-    private static class HostCbItem {
+    private static class HostListItem {
 
         private final Host host;
 
@@ -54,7 +59,7 @@ public class SelectHostPanel extends javax.swing.JPanel {
          *
          * @param host The host.
          */
-        HostCbItem(Host host) {
+        HostListItem(Host host) {
             this.host = host;
         }
 
@@ -94,7 +99,7 @@ public class SelectHostPanel extends javax.swing.JPanel {
             if (getClass() != obj.getClass()) {
                 return false;
             }
-            final HostCbItem other = (HostCbItem) obj;
+            final HostListItem other = (HostListItem) obj;
             if (!Objects.equals(
                     this.host == null ? 0 : this.host.getId(),
                     other.host == null ? 0 : other.host.getId())) {
@@ -114,33 +119,44 @@ public class SelectHostPanel extends javax.swing.JPanel {
     public SelectHostPanel() {
         initComponents();
         loadHostData();
-        this.comboBoxHostName.addItem(new HostCbItem(null));
+        refresh();
     }
 
     /**
-     * @return The currently selected host or null if no selection.
+     * @return The currently selected host or null if no selection. This will
+     * generate a new host if 'Specify New Host Name'
      */
     public Host getSelectedHost() {
-        return comboBoxHostName.getSelectedItem() instanceof HostCbItem
-                ? ((HostCbItem) comboBoxHostName.getSelectedItem()).getHost()
-                : null;
+        if (specifyNewHostRadio.isSelected() && StringUtils.isNotEmpty(specifyNewHostTextField.getText())) {
+            String newHostName = specifyNewHostTextField.getText();
+            try {
+                return Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().createHost(newHostName);
+            } catch (NoCurrentCaseException | TskCoreException ex) {
+                logger.log(Level.WARNING, String.format("Unable to create host '%s'.", newHostName), ex);
+                return null;
+            }
+        } else if (useExistingHostRadio.isSelected()
+                && existingHostList.getSelectedValue() != null
+                && existingHostList.getSelectedValue().getHost() != null) {
+
+            return existingHostList.getSelectedValue().getHost();
+        } else {
+            return null;
+        }
     }
 
     /**
      * Loads hosts from database and displays in combo box.
      */
     private void loadHostData() {
-        Stream<HostCbItem> itemsStream;
         try {
-            itemsStream = Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().getHosts().stream()
+            Vector<HostListItem> hosts = Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().getHosts().stream()
                     .filter(h -> h != null)
                     .sorted((a, b) -> getNameOrEmpty(a).compareToIgnoreCase(getNameOrEmpty(b)))
-                    .map((h) -> new HostCbItem(h));
-
-            Vector<HostCbItem> hosts = Stream.concat(Stream.of(new HostCbItem(null)), itemsStream)
+                    .map((h) -> new HostListItem(h))
                     .collect(Collectors.toCollection(Vector::new));
 
-            comboBoxHostName.setModel(new DefaultComboBoxModel<>(hosts));
+            existingHostList.setListData(hosts);
         } catch (NoCurrentCaseException | TskCoreException ex) {
             logger.log(Level.WARNING, "Unable to display host items with no current case.", ex);
         }
@@ -157,30 +173,14 @@ public class SelectHostPanel extends javax.swing.JPanel {
         return host == null || host.getName() == null ? "" : host.getName();
     }
 
-    /**
-     * Sets the selected host in the combo box with the specified host id. If
-     * host id is null or host id is not found in list, 'default' will be
-     * selected.
-     *
-     * @param hostId The host id.
-     */
-    private void setSelectedHostById(Long hostId) {
-        int itemCount = comboBoxHostName.getItemCount();
-        for (int i = 0; i < itemCount; i++) {
-            HostCbItem curItem = comboBoxHostName.getItemAt(i);
-            if (curItem == null) {
-                continue;
-            }
+    private void refresh() {
+        specifyNewHostTextField.setEnabled(specifyNewHostRadio.isSelected());
+        existingHostList.setEnabled(useExistingHostRadio.isSelected());
+    }
 
-            Long curId = curItem.getHost() == null ? null : curItem.getHost().getId();
-            if (curId == hostId) {
-                comboBoxHostName.setSelectedIndex(i);
-                return;
-            }
-        }
-
-        // set to first item which should be 'Default'
-        comboBoxHostName.setSelectedIndex(0);
+    @Override
+    public String getName() {
+        return Bundle.SelectHostPanel_title();
     }
 
     /**
@@ -199,25 +199,39 @@ public class SelectHostPanel extends javax.swing.JPanel {
         useExistingHostRadio = new javax.swing.JRadioButton();
         javax.swing.JScrollPane jScrollPane1 = new javax.swing.JScrollPane();
         existingHostList = new javax.swing.JList<>();
+        hostDescription = new javax.swing.JLabel();
 
         radioButtonGroup.add(generateNewRadio);
         generateNewRadio.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(generateNewRadio, org.openide.util.NbBundle.getMessage(SelectHostPanel.class, "SelectHostPanel.generateNewRadio.text")); // NOI18N
+        generateNewRadio.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                generateNewRadioActionPerformed(evt);
+            }
+        });
 
         radioButtonGroup.add(specifyNewHostRadio);
         org.openide.awt.Mnemonics.setLocalizedText(specifyNewHostRadio, org.openide.util.NbBundle.getMessage(SelectHostPanel.class, "SelectHostPanel.specifyNewHostRadio.text")); // NOI18N
+        specifyNewHostRadio.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                specifyNewHostRadioActionPerformed(evt);
+            }
+        });
 
         specifyNewHostTextField.setText(org.openide.util.NbBundle.getMessage(SelectHostPanel.class, "SelectHostPanel.specifyNewHostTextField.text")); // NOI18N
 
         radioButtonGroup.add(useExistingHostRadio);
         org.openide.awt.Mnemonics.setLocalizedText(useExistingHostRadio, org.openide.util.NbBundle.getMessage(SelectHostPanel.class, "SelectHostPanel.useExistingHostRadio.text")); // NOI18N
-
-        existingHostList.setModel(new javax.swing.AbstractListModel<HostCbItem>() {
-            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
-            public int getSize() { return strings.length; }
-            public Object getElementAt(int i) { return strings[i]; }
+        useExistingHostRadio.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                useExistingHostRadioActionPerformed(evt);
+            }
         });
+
+        existingHostList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         jScrollPane1.setViewportView(existingHostList);
+
+        org.openide.awt.Mnemonics.setLocalizedText(hostDescription, org.openide.util.NbBundle.getMessage(SelectHostPanel.class, "SelectHostPanel.hostDescription.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -232,7 +246,8 @@ public class SelectHostPanel extends javax.swing.JPanel {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(specifyNewHostTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 210, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(useExistingHostRadio)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 272, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 272, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(hostDescription))
                 .addContainerGap(33, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -248,16 +263,31 @@ public class SelectHostPanel extends javax.swing.JPanel {
                 .addComponent(useExistingHostRadio)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(56, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(hostDescription)
+                .addContainerGap(44, Short.MAX_VALUE))
         );
 
         getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(SelectHostPanel.class, "SelectHostPanel.title")); // NOI18N
     }// </editor-fold>//GEN-END:initComponents
 
+    private void generateNewRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_generateNewRadioActionPerformed
+        refresh();
+    }//GEN-LAST:event_generateNewRadioActionPerformed
+
+    private void specifyNewHostRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_specifyNewHostRadioActionPerformed
+        refresh();
+    }//GEN-LAST:event_specifyNewHostRadioActionPerformed
+
+    private void useExistingHostRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_useExistingHostRadioActionPerformed
+        refresh();
+    }//GEN-LAST:event_useExistingHostRadioActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JList<HostCbItem> existingHostList;
+    private javax.swing.JList<HostListItem> existingHostList;
     private javax.swing.JRadioButton generateNewRadio;
+    private javax.swing.JLabel hostDescription;
     private javax.swing.JRadioButton specifyNewHostRadio;
     private javax.swing.JTextField specifyNewHostTextField;
     private javax.swing.JRadioButton useExistingHostRadio;
