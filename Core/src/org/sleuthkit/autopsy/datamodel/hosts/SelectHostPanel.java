@@ -192,47 +192,74 @@ public class SelectHostPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        comboBoxHostName = new javax.swing.JComboBox<>();
-        javax.swing.JButton bnManageHosts = new javax.swing.JButton();
+        javax.swing.ButtonGroup radioButtonGroup = new javax.swing.ButtonGroup();
+        generateNewRadio = new javax.swing.JRadioButton();
+        specifyNewHostRadio = new javax.swing.JRadioButton();
+        specifyNewHostTextField = new javax.swing.JTextField();
+        useExistingHostRadio = new javax.swing.JRadioButton();
+        javax.swing.JScrollPane jScrollPane1 = new javax.swing.JScrollPane();
+        existingHostList = new javax.swing.JList<>();
 
-        setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEADING));
+        radioButtonGroup.add(generateNewRadio);
+        generateNewRadio.setSelected(true);
+        org.openide.awt.Mnemonics.setLocalizedText(generateNewRadio, org.openide.util.NbBundle.getMessage(SelectHostPanel.class, "SelectHostPanel.generateNewRadio.text")); // NOI18N
 
-        comboBoxHostName.setMaximumSize(new java.awt.Dimension(32767, 22));
-        comboBoxHostName.setMinimumSize(new java.awt.Dimension(200, 22));
-        comboBoxHostName.setPreferredSize(new java.awt.Dimension(200, 22));
-        add(comboBoxHostName);
+        radioButtonGroup.add(specifyNewHostRadio);
+        org.openide.awt.Mnemonics.setLocalizedText(specifyNewHostRadio, org.openide.util.NbBundle.getMessage(SelectHostPanel.class, "SelectHostPanel.specifyNewHostRadio.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(bnManageHosts, org.openide.util.NbBundle.getMessage(SelectHostPanel.class, "SelectHostPanel.bnManageHosts.text")); // NOI18N
-        bnManageHosts.setMargin(new java.awt.Insets(2, 6, 2, 6));
-        bnManageHosts.setMaximumSize(new java.awt.Dimension(140, 23));
-        bnManageHosts.setMinimumSize(new java.awt.Dimension(140, 23));
-        bnManageHosts.setPreferredSize(new java.awt.Dimension(140, 23));
-        bnManageHosts.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                bnManageHostsActionPerformed(evt);
-            }
+        specifyNewHostTextField.setText(org.openide.util.NbBundle.getMessage(SelectHostPanel.class, "SelectHostPanel.specifyNewHostTextField.text")); // NOI18N
+
+        radioButtonGroup.add(useExistingHostRadio);
+        org.openide.awt.Mnemonics.setLocalizedText(useExistingHostRadio, org.openide.util.NbBundle.getMessage(SelectHostPanel.class, "SelectHostPanel.useExistingHostRadio.text")); // NOI18N
+
+        existingHostList.setModel(new javax.swing.AbstractListModel<String>() {
+            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
+            public int getSize() { return strings.length; }
+            public String getElementAt(int i) { return strings[i]; }
         });
-        add(bnManageHosts);
+        jScrollPane1.setViewportView(existingHostList);
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
+        this.setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(generateNewRadio)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(specifyNewHostRadio)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(specifyNewHostTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 210, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(useExistingHostRadio)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 272, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(33, Short.MAX_VALUE))
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(generateNewRadio)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(specifyNewHostRadio)
+                    .addComponent(specifyNewHostTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(useExistingHostRadio)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(56, Short.MAX_VALUE))
+        );
 
         getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(SelectHostPanel.class, "SelectHostPanel.title")); // NOI18N
     }// </editor-fold>//GEN-END:initComponents
 
-    private void bnManageHostsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnManageHostsActionPerformed
-        ManageHostsDialog dialog = new ManageHostsDialog((Dialog) SwingUtilities.getWindowAncestor(this));
-        dialog.setResizable(false);
-        if (this.getParent() != null) {
-            dialog.setLocationRelativeTo(this.getParent());
-        }
-        dialog.setVisible(true);
-        dialog.toFront();
-        loadHostData();
-        if (dialog.getSelectedHost() != null) {
-            setSelectedHostById(dialog.getSelectedHost().getId());
-        }
-    }//GEN-LAST:event_bnManageHostsActionPerformed
-
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JComboBox<HostCbItem> comboBoxHostName;
+    private javax.swing.JList<String> existingHostList;
+    private javax.swing.JRadioButton generateNewRadio;
+    private javax.swing.JRadioButton specifyNewHostRadio;
+    private javax.swing.JTextField specifyNewHostTextField;
+    private javax.swing.JRadioButton useExistingHostRadio;
     // End of variables declaration//GEN-END:variables
 }
