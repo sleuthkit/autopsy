@@ -212,10 +212,10 @@ public class SelectHostPanel extends javax.swing.JPanel {
         radioButtonGroup.add(useExistingHostRadio);
         org.openide.awt.Mnemonics.setLocalizedText(useExistingHostRadio, org.openide.util.NbBundle.getMessage(SelectHostPanel.class, "SelectHostPanel.useExistingHostRadio.text")); // NOI18N
 
-        existingHostList.setModel(new javax.swing.AbstractListModel<String>() {
+        existingHostList.setModel(new javax.swing.AbstractListModel<HostCbItem>() {
             String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
             public int getSize() { return strings.length; }
-            public String getElementAt(int i) { return strings[i]; }
+            public Object getElementAt(int i) { return strings[i]; }
         });
         jScrollPane1.setViewportView(existingHostList);
 
@@ -256,7 +256,7 @@ public class SelectHostPanel extends javax.swing.JPanel {
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JList<String> existingHostList;
+    private javax.swing.JList<HostCbItem> existingHostList;
     private javax.swing.JRadioButton generateNewRadio;
     private javax.swing.JRadioButton specifyNewHostRadio;
     private javax.swing.JTextField specifyNewHostTextField;
