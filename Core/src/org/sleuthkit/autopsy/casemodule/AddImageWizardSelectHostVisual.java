@@ -20,16 +20,18 @@ package org.sleuthkit.autopsy.casemodule;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.util.Collection;
 import java.util.Objects;
+import java.util.Set;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import org.apache.commons.lang.StringUtils;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.hosts.HostNameValidator;
 import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -107,7 +109,8 @@ class AddImageWizardSelectHostVisual extends javax.swing.JPanel {
     private static final Logger logger = Logger.getLogger(AddImageWizardSelectHostVisual.class.getName());
 
     private final PropertyChangeSupport changeSupport = new PropertyChangeSupport(this);
-
+    private Set<String> sanitizedHostSet = null;
+    
     /**
      * Creates new form SelectHostPanel
      */
@@ -183,13 +186,16 @@ class AddImageWizardSelectHostVisual extends javax.swing.JPanel {
      */
     private void loadHostData() {
         try {
-            Vector<HostListItem> hosts = Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().getHosts().stream()
+            Collection<Host> hosts = Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().getHosts();
+            sanitizedHostSet = HostNameValidator.getSanitizedHostNames(hosts);
+            
+            Vector<HostListItem> hostListItems = hosts.stream()
                     .filter(h -> h != null)
                     .sorted((a, b) -> getNameOrEmpty(a).compareToIgnoreCase(getNameOrEmpty(b)))
                     .map((h) -> new HostListItem(h))
                     .collect(Collectors.toCollection(Vector::new));
 
-            existingHostList.setListData(hosts);
+            existingHostList.setListData(hostListItems);
         } catch (NoCurrentCaseException | TskCoreException ex) {
             logger.log(Level.WARNING, "Unable to display host items with no current case.", ex);
         }
@@ -220,29 +226,12 @@ class AddImageWizardSelectHostVisual extends javax.swing.JPanel {
     }
 
     @Messages({
-        "AddImageWizardSelectHostVisual_getValidationMessage_isEmpty=Please provide a name for the host.",
-        "# {0} - hostName",
-        "AddImageWizardSelectHostVisual_getValidationMessage_isDuplicate=Host: {0} already exists.  Please provide a unique name.",
         "AddImageWizardSelectHostVisual_getValidationMessage_noHostSelected=Please select an existing host.",})
     private String getValidationMessage() {
         if (specifyNewHostRadio.isSelected()) {
-            // if specify new host and host name is empty
-            final String newHostName = specifyNewHostTextField.getText();
-            if (StringUtils.isBlank(newHostName)) {
-                return Bundle.AddImageWizardSelectHostVisual_getValidationMessage_isEmpty();
-            }
-
-            // or specify new host and the host already exists
-            boolean hasHostName = IntStream.range(0, existingHostList.getModel().getSize())
-                    .mapToObj(idx -> existingHostList.getModel().getElementAt(idx))
-                    .filter(hItem -> hItem != null && hItem.getHost() != null && hItem.getHost().getName() != null)
-                    .map(hItem -> hItem.getHost().getName())
-                    .anyMatch(hName -> newHostName.trim().equalsIgnoreCase(hName.trim()));
-
-            if (hasHostName) {
-                return Bundle.AddImageWizardSelectHostVisual_getValidationMessage_isDuplicate(newHostName.trim());
-            }
-
+            // if problematic new name for host
+            return HostNameValidator.getValidationMessage(specifyNewHostTextField.getText(), null, sanitizedHostSet);
+            
             // or use existing host and no host is selected
         } else if (useExistingHostRadio.isSelected()
                 && (existingHostList.getSelectedValue() == null
@@ -250,7 +239,7 @@ class AddImageWizardSelectHostVisual extends javax.swing.JPanel {
             return Bundle.AddImageWizardSelectHostVisual_getValidationMessage_noHostSelected();
         }
 
-        return "";
+        return null;
     }
 
     @Override
@@ -322,24 +311,29 @@ class AddImageWizardSelectHostVisual extends javax.swing.JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(generateNewRadio)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(specifyNewHostRadio)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(specifyNewHostTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 210, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(useExistingHostRadio)
-                    .addComponent(hostDescription)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(validationMessage, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(21, 21, 21)
-                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 272, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(33, Short.MAX_VALUE))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(generateNewRadio)
+                            .addComponent(useExistingHostRadio)
+                            .addComponent(hostDescription)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(21, 21, 21)
+                                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 270, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(specifyNewHostRadio)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(specifyNewHostTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 270, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addGap(0, 13, Short.MAX_VALUE)))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
+                .addComponent(hostDescription)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(generateNewRadio)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -349,11 +343,9 @@ class AddImageWizardSelectHostVisual extends javax.swing.JPanel {
                 .addComponent(useExistingHostRadio)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(hostDescription)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGap(10, 10, 10)
                 .addComponent(validationMessage)
-                .addContainerGap(22, Short.MAX_VALUE))
+                .addContainerGap(18, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 

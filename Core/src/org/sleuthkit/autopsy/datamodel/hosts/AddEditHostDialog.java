@@ -38,11 +38,13 @@ class AddEditHostDialog extends javax.swing.JDialog {
 
     private boolean changed = false;
 
-    private final Set<String> hostNamesUpper;
+    // host names to upper and trimmed
+    private final Set<String> hostNamesSanitized;
     private final Host initialHost;
 
     /**
      * Main constructor.
+     *
      * @param parent The parent frame for this dialog.
      * @param currentHosts The current set of hosts in the case.
      */
@@ -68,11 +70,7 @@ class AddEditHostDialog extends javax.swing.JDialog {
         this.initialHost = initialHost;
         setTitle(initialHost == null ? Bundle.AddEditHostDialog_addHost_title() : Bundle.AddEditHostDialog_editHost_title());
 
-        Stream<Host> curHostStream = (currentHosts == null) ? Stream.empty() : currentHosts.stream();
-        hostNamesUpper = curHostStream
-                .filter(h -> h != null && h.getName() != null)
-                .map(h -> h.getName().toUpperCase())
-                .collect(Collectors.toSet());
+        hostNamesSanitized = HostNameValidator.getSanitizedHostNames(currentHosts);
 
         initComponents();
         onNameUpdate(initialHost == null ? null : initialHost.getName());
@@ -129,32 +127,11 @@ class AddEditHostDialog extends javax.swing.JDialog {
 
         // validate text input against invariants setting validation 
         // message and whether or not okay button is enabled accordingly.
-        String validationMessage = getValidationMessage(newNameValue);
+        String validationMessage = HostNameValidator.getValidationMessage(
+                newNameValue, initialHost == null ? null : initialHost.getName(), hostNamesSanitized);
+        
         okButton.setEnabled(validationMessage == null);
         validationLabel.setText(validationMessage == null ? "" : validationMessage);
-    }
-
-    /**
-     * Gets the validation message based on the current text checked against the
-     * host names.
-     *
-     * @param name The current name in the text field.
-     * @return The validation message if the name is not valid or null.
-     */
-    @Messages({
-        "AddEditHostDialog_getValidationMessage_onEmpty=Please provide some text for the host name.",
-        "AddEditHostDialog_getValidationMessage_sameAsOriginal=Please provide a new name for this host.",
-        "AddEditHostDialog_getValidationMessage_onDuplicate=Another host already has the same name.  Please choose a different name.",})
-    private String getValidationMessage(String name) {
-        if (name == null || name.isEmpty()) {
-            return Bundle.AddEditHostDialog_getValidationMessage_onEmpty();
-        } else if (initialHost != null && name.equalsIgnoreCase(initialHost.getName())) {
-            return Bundle.AddEditHostDialog_getValidationMessage_sameAsOriginal();
-        } else if (hostNamesUpper.contains(name.toUpperCase())) {
-            return Bundle.AddEditHostDialog_getValidationMessage_onDuplicate();
-        } else {
-            return null;
-        }
     }
 
     /**

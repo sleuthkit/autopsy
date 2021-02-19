@@ -42,6 +42,7 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
     private final AddImageAction action;
     private int progressPanelIndex;
     private int dsPanelIndex;
+    private int hostPanelIndex;
     private int ingestPanelIndex;
     private final static String PROP_LASTPROFILE_NAME = "AIW_LASTPROFILE_NAME"; //NON-NLS
     private AddImageWizardSelectHostPanel hostPanel = null;
@@ -59,6 +60,7 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
             panels = new ArrayList<>();
             hostPanel = new AddImageWizardSelectHostPanel();
             panels.add(hostPanel);
+            hostPanelIndex = panels.indexOf(hostPanel);
             AddImageWizardSelectDspPanel dspSelection = new AddImageWizardSelectDspPanel();
             panels.add(dspSelection);
             AddImageWizardAddingProgressPanel progressPanel = new AddImageWizardAddingProgressPanel(action);
@@ -167,7 +169,7 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
     @Override
     // disable the previous button on all panels except the data source panel
     public boolean hasPrevious() {
-        return (index == dsPanelIndex); //Users should be able to back up to select a different DSP
+        return (index <= dsPanelIndex && index > 0); //Users should be able to back up to select a different DSP
     }
 
     /**

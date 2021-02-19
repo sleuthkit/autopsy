@@ -1,9 +1,9 @@
 AddEditHostDialog_addHost_title=Add Host
 AddEditHostDialog_editHost_title=Edit Host
-AddEditHostDialog_getValidationMessage_onDuplicate=Another host already has the same name.  Please choose a different name.
-AddEditHostDialog_getValidationMessage_onEmpty=Please provide some text for the host name.
-AddEditHostDialog_getValidationMessage_sameAsOriginal=Please provide a new name for this host.
 CTL_OpenHosts=Manage Hosts
+HostNameValidator_getValidationMessage_onDuplicate=Another host already has the same name.  Please choose a different name.
+HostNameValidator_getValidationMessage_onEmpty=Please provide some text for the host name.
+HostNameValidator_getValidationMessage_sameAsOriginal=Please provide a new name for this host.
 # To change this license header, choose License Headers in Project Properties.
 # To change this template file, choose Tools | Templates
 # and open the template in the editor.
