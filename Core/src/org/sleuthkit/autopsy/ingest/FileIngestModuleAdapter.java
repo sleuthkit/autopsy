@@ -23,7 +23,12 @@ import org.sleuthkit.datamodel.AbstractFile;
 /**
  * An adapter that provides no-op implementations of the startUp() and
  * shutDown() methods for file ingest modules.
+ *
+ * @deprecated As of Java 8, interfaces can have default methods.
+ * FileIngestModule now provides default no-op versions of startUp() and
+ * shutDown().
  */
+@Deprecated
 public abstract class FileIngestModuleAdapter implements FileIngestModule {
 
     @Override

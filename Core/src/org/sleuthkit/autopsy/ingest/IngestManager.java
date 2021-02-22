@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2019 Basis Technology Corp.
+ * Copyright 2012-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -804,7 +804,7 @@ public class IngestManager implements IngestProgressSnapshotProvider {
      *
      * @param task The file level ingest job task that was completed.
      */
-    void setIngestTaskProgressCompleted(FileIngestTask task) {
+    void setIngestTaskProgressCompleted(IngestTask task) {
         IngestThreadActivitySnapshot prevSnap = ingestThreadActivitySnapshots.get(task.getThreadId());
         IngestThreadActivitySnapshot newSnap = new IngestThreadActivitySnapshot(task.getThreadId());
         ingestThreadActivitySnapshots.put(task.getThreadId(), newSnap);

@@ -416,7 +416,7 @@ public final class IngestJob {
                 Snapshot snapshot = pipeline.getSnapshot(getIngestTasksSnapshot);
                 dataSourceProcessingSnapshots.add(new DataSourceProcessingSnapshot(snapshot));
                 if (null == dataSourceModule) {
-                    DataSourceIngestPipeline.PipelineModule module = snapshot.getDataSourceLevelIngestModule();
+                    DataSourceIngestPipeline.DataSourcePipelineModule module = snapshot.getDataSourceLevelIngestModule();
                     if (null != module) {
                         dataSourceModule = new DataSourceIngestModuleHandle(ingestJobPipelines.get(snapshot.getJobId()), module);
                     }
@@ -500,7 +500,7 @@ public final class IngestJob {
     public static class DataSourceIngestModuleHandle {
 
         private final IngestJobPipeline ingestJobPipeline;
-        private final DataSourceIngestPipeline.PipelineModule module;
+        private final DataSourceIngestPipeline.DataSourcePipelineModule module;
         private final boolean cancelled;
 
         /**
@@ -511,7 +511,7 @@ public final class IngestJob {
          * @param ingestJobPipeline    The ingestJobPipeline that owns the data source level ingest module.
          * @param module The data source level ingest module.
          */
-        private DataSourceIngestModuleHandle(IngestJobPipeline ingestJobPipeline, DataSourceIngestPipeline.PipelineModule module) {
+        private DataSourceIngestModuleHandle(IngestJobPipeline ingestJobPipeline, DataSourceIngestPipeline.DataSourcePipelineModule module) {
             this.ingestJobPipeline = ingestJobPipeline;
             this.module = module;
             this.cancelled = ingestJobPipeline.currentDataSourceIngestModuleIsCancelled();
