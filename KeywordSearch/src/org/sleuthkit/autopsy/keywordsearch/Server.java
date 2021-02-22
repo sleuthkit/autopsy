@@ -770,61 +770,10 @@ public class Server {
     /**
      * Checks to see if a specific port is available.
      *
-     * @param port the port to check for availability
+     * @param port The port to check for availability.
+     * @return True if the port is available and false if not.
      */
     static boolean isPortAvailable(int port) {
-        final String osName = PlatformUtil.getOSName().toLowerCase();
-        if (osName != null && osName.toLowerCase().startsWith("mac")) {
-            return isPortAvailableOSX(port);
-        } else {
-            return isPortAvailableDefault(port);
-        }
-    }
-
-    /**
-     * Checks to see if a specific port is available.
-     *
-     * NOTE: This is used on non-OS X systems as of right now but could be
-     * replaced with the OS X version.
-     *
-     * @param port the port to check for availability
-     */
-    static boolean isPortAvailableDefault(int port) {
-        ServerSocket ss = null;
-        try {
-
-            ss = new ServerSocket(port, 0, java.net.Inet4Address.getByName("localhost")); //NON-NLS
-            if (ss.isBound()) {
-                ss.setReuseAddress(true);
-                ss.close();
-                return true;
-            }
-
-        } catch (IOException e) {
-        } finally {
-            if (ss != null) {
-                try {
-                    ss.close();
-                } catch (IOException e) {
-                    /*
-                     * should not be thrown
-                     */
-                }
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Checks to see if a specific port is available.
-     *
-     * NOTE: This is only used on OSX for now, but could replace default 
-     * implementation in the future.
-     * 
-     * @param port The port to check for availability.
-     * @throws IllegalArgumentException If port is outside range of possible ports.
-     */
-    static boolean isPortAvailableOSX(int port) {
         // implementation taken from https://stackoverflow.com/a/435579
         if (port < 1 || port > 65535) {
             throw new IllegalArgumentException("Invalid start port: " + port);
