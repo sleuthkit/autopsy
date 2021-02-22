@@ -451,10 +451,10 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
                     // - the data source name is different
                     // - the data source device ID is different
                     // - the file path is different
-                    if (!artifactInstance.getCorrelationCase().getCaseUUID().equals(caseUUID)
-                            || !artifactInstance.getCorrelationDataSource().getName().equals(dataSourceName)
-                            || !artifactInstance.getCorrelationDataSource().getDeviceID().equals(deviceId)
-                            || file != null && artifactInstance.getFilePath().equalsIgnoreCase(file.getParentPath() + file.getName())) {
+                    if (artifactInstance.getCorrelationCase().getCaseUUID().equals(caseUUID)
+                            || artifactInstance.getCorrelationDataSource().getName().equals(dataSourceName)
+                            || artifactInstance.getCorrelationDataSource().getDeviceID().equals(deviceId)
+                            || (file != null && artifactInstance.getFilePath().equalsIgnoreCase(file.getParentPath() + file.getName()))) {
                         continue;
                     }
                     OtherOccurrenceNodeInstanceData newNode = new OtherOccurrenceNodeInstanceData(artifactInstance, corAttr.getCorrelationType(), corAttr.getCorrelationValue());
