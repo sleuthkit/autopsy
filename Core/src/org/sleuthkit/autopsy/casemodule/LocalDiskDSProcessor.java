@@ -193,7 +193,7 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
         }   
 
         addDiskTask = new AddImageTask(
-                new AddImageTask.ImageDetails(deviceId, image, sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, this.host, imageWriterSettings), 
+                new AddImageTask.ImageDetails(deviceId, image, sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, imageWriterSettings), 
                 progressMonitor,
                 new StreamingAddDataSourceCallbacks(new DefaultIngestStream()), 
                 new StreamingAddImageTaskCallback(new DefaultIngestStream(), callback));
@@ -261,7 +261,7 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
             return;
         } 
         
-	    addDiskTask = new AddImageTask(new AddImageTask.ImageDetails(deviceId, image, sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, null, imageWriterSettings), 
+	    addDiskTask = new AddImageTask(new AddImageTask.ImageDetails(deviceId, image, sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, imageWriterSettings), 
                 progressMonitor, 
                 new StreamingAddDataSourceCallbacks(new DefaultIngestStream()), 
                 new StreamingAddImageTaskCallback(new DefaultIngestStream(), callback));

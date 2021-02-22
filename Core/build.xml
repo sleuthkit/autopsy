@@ -164,7 +164,6 @@
         <get src="https://drive.google.com/uc?id=1lYzd--9YUB7yDccM7NPOo8PC1xxuOiKs" dest="${test-input}/SqlCipherDetection_img1_v1.vhd" skipexisting="true"/>
         <get src="https://drive.google.com/uc?id=1QRNKs824kksiJLZ4qcs59Nytw0fJKEjb" dest="${test-input}/IngestFilters_img1_v1.img" skipexisting="true"/>  
         <get src="https://drive.google.com/uc?id=1OMTB5gD4_VuaFkLWu2I33FN8VAHoRQbW" dest="${test-input}/IngestFilters_local1_v1.zip" skipexisting="true"/>
-        <get src="https://drive.google.com/uc?id=1WGMkivlDi_I_vB1aYY6puAPktbmlNSL-" dest="${test-input}/PasswordDetection_img1_v1.img" skipexisting="true"/>
         <get src="https://drive.google.com/uc?id=1X2DzJOJ1SjUkAtZXJ3oQHXkjF0NX_jOz" dest="${test-input}/VeracryptDetection_img1_v1.vhd" skipexisting="true"/>
         <get src="https://drive.google.com/uc?id=19gRepVVvLsDHtBwIkX2VVjsBWIub7aIV" dest="${test-input}/CommonFiles_img1_v1.vhd" skipexisting="true"/>
         <get src="https://drive.google.com/uc?id=1chUMtA0CNyPBZ0yuTl9F_O103R21Ox0p" dest="${test-input}/CommonFiles_img2_v1.vhd" skipexisting="true"/>
