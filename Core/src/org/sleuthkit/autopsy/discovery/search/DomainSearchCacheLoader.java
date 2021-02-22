@@ -121,10 +121,10 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
                 + "WHERE  " + whereClause + " "
                 + "GROUP BY artifact_id "
                 + "HAVING " + havingClause;
-
+        final SleuthkitCase caseDb = key.getSleuthkitCase();
         // Needed to populate the visitsInLast60 data.
-        final Instant currentTime = Instant.now();
-        final Instant sixtyDaysAgo = currentTime.minus(60, ChronoUnit.DAYS);
+        final Instant mostRecentActivityDate = Instant.ofEpochSecond(caseDb.getTimelineManager().getMaxEventTime());
+        final Instant sixtyDaysAgo = mostRecentActivityDate.minus(60, ChronoUnit.DAYS);
 
         // Check the group attribute, if by data source then the GROUP BY clause
         // should group by data source id before grouping by domain.
@@ -159,7 +159,7 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
                 + "               END) AS totalPageViews,"
                 + "           SUM(CASE "
                 + "                 WHEN artifact_type_id = " + TSK_WEB_HISTORY.getTypeID() + " AND"
-                + "                      date BETWEEN " + sixtyDaysAgo.getEpochSecond() + " AND " + currentTime.getEpochSecond() + " THEN 1 "
+                + "                      date BETWEEN " + sixtyDaysAgo.getEpochSecond() + " AND " + mostRecentActivityDate.getEpochSecond() + " THEN 1 "
                 + "                 ELSE 0 "
                 + "               END) AS pageViewsInLast60,"
                 + "           SUM(CASE "
@@ -174,7 +174,6 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
                 ((dataSourceWhereClause != null) ? "WHERE " + dataSourceWhereClause + " " : "")
                 + "GROUP BY " + groupByClause;
 
-        final SleuthkitCase caseDb = key.getSleuthkitCase();
         final CaseDbAccessManager dbManager = caseDb.getCaseDbAccessManager();
 
         final DomainCallback domainCallback = new DomainCallback(caseDb);
