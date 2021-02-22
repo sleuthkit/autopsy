@@ -35,10 +35,8 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CasePreferences;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.PersonGroupingNode.Person;
-import org.sleuthkit.autopsy.datamodel.PersonGroupingNode.PersonManager;
-import org.sleuthkit.datamodel.Host;
-import org.sleuthkit.datamodel.Host.HostStatus;
+import org.sleuthkit.datamodel.Person;
+import org.sleuthkit.datamodel.PersonManager;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitVisitableItem;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -88,10 +86,7 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
         try {
             SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
             if (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) {
-                // TODO replace with sleuthkit call when PersonManager created
-                PersonManager personManager = new PersonManager();
-                
-                Set<Person> persons = new HashSet<>(); //personManager.getPersons();
+                List<Person> persons = tskCase.getPersonManager().getPersons();
                 // show persons level if there are persons to be shown
                 if (!CollectionUtils.isEmpty(persons)) {
                     persons.stream()

@@ -20,12 +20,14 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.function.Function;
 import java.util.logging.Level;
+import javax.swing.Action;
+import static org.jdom2.filter.Filters.content;
 import org.openide.nodes.ChildFactory;
 
 import org.openide.nodes.Children;
@@ -35,8 +37,15 @@ import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.DeleteDataSourceAction;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datasourcesummary.ui.ViewSummaryInformationAction;
+import org.sleuthkit.autopsy.directorytree.ExplorerNodeActionVisitor;
+import org.sleuthkit.autopsy.directorytree.FileSearchAction;
+import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
+import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.RunIngestModulesAction;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.SleuthkitVisitableItem;
@@ -229,5 +238,32 @@ public class HostNode extends DisplayableItemNode {
         sheetSet.put(new NodeProperty<>("Name", Bundle.HostNode_createSheet_nameProperty(), "", getDisplayName())); //NON-NLS
 
         return sheet;
+    }
+
+    /**
+     * Right click action for this node
+     *
+     * @param context
+     *
+     * @return
+     */
+    @Override
+    @Messages({"HostNode_actions_associateWithExisting=Associate with existing person...",
+        "HostNode_actions_associateWithNew=Associate with new person...",
+        "# {0} - hostName",
+        "HostNode_actions_removeFromPerson=Remove from person ({0})"})
+    public Action[] getActions(boolean context) {
+
+//        List<Action> actionsList = new ArrayList<>();
+//        for (Action a : super.getActions(true)) {
+//            actionsList.add(a);
+//        }
+//        actionsList.addAll(ExplorerNodeActionVisitor.getActions(content));
+//        actionsList.add(new FileSearchAction(Bundle.ImageNode_getActions_openFileSearchByAttr_text()));
+//        actionsList.add(new ViewSummaryInformationAction(content.getId()));
+//        actionsList.add(new RunIngestModulesAction(Collections.<Content>singletonList(content)));
+//        actionsList.add(new NewWindowViewAction(NbBundle.getMessage(this.getClass(), "ImageNode.getActions.viewInNewWin.text"), this));
+//        actionsList.add(new DeleteDataSourceAction(content.getId()));
+//        return actionsList.toArray(new Action[0]);
     }
 }

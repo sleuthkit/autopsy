@@ -23,7 +23,6 @@ import java.beans.PropertyChangeListener;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Set;
 import java.util.logging.Level;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
@@ -33,6 +32,7 @@ import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Host;
+import org.sleuthkit.datamodel.Person;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -41,38 +41,6 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 @NbBundle.Messages(value = {"PersonNode_unknownPersonNode_title=Unknown Persons"})
 public class PersonGroupingNode extends DisplayableItemNode {
-
-    // stub class until this goes into TSK datamodel.
-    static class PersonManager {
-
-        Set<Person> getPersons() throws TskCoreException {
-            return Collections.emptySet();
-        }
-
-        private Set<Host> getHostsForPerson(Person person) throws TskCoreException {
-            return Collections.emptySet();
-        }
-    }
-
-    // stub class until this goes into TSK datamodel.
-    static class Person {
-
-        private final String name;
-        private final long id;
-
-        public Person(long id, String name) {
-            this.id = id;
-            this.name = name;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public long getId() {
-            return id;
-        }
-    }
 
     private static final String ICON_PATH = "org/sleuthkit/autopsy/images/person.png";
 
@@ -126,22 +94,20 @@ public class PersonGroupingNode extends DisplayableItemNode {
 
         @Override
         protected boolean createKeys(List<HostGrouping> toPopulate) {
-            Set<Host> hosts = null;
-            try {
-                hosts = new PersonManager().getHostsForPerson(person);
-                // NOTE: This code will be used when person manager exists
-                // hosts = Case.getCurrentCaseThrows().getSleuthkitCase().getPersonManager().getHostsForPerson(person);
-            } catch (TskCoreException ex) {
-                String personName = person == null || person.getName() == null ? "<unknown>" : person.getName();
-                logger.log(Level.WARNING, String.format("Unable to get data sources for host: %s", personName), ex);
+            List<Host> hosts = Collections.emptyList();
+            if (this.person != null) {
+                try {
+                    hosts = Case.getCurrentCaseThrows().getSleuthkitCase().getPersonManager().getHostsForPerson(this.person);
+                } catch (TskCoreException ex) {
+                    String personName = person == null || person.getName() == null ? "<unknown>" : person.getName();
+                    logger.log(Level.WARNING, String.format("Unable to get data sources for host: %s", personName), ex);
+                }
             }
 
-            if (hosts != null) {
-                hosts.stream()
-                        .map(HostGrouping::new)
-                        .sorted()
-                        .forEach(toPopulate::add);
-            }
+            hosts.stream()
+                    .map(HostGrouping::new)
+                    .sorted()
+                    .forEach(toPopulate::add);
 
             return true;
         }
@@ -178,11 +144,10 @@ public class PersonGroupingNode extends DisplayableItemNode {
     public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
         return visitor.visit(this);
     }
-    
+
     @NbBundle.Messages({
-        "PersonGroupingNode_createSheet_nameProperty=Name",
-    })
-     @Override
+        "PersonGroupingNode_createSheet_nameProperty=Name",})
+    @Override
     protected Sheet createSheet() {
         Sheet sheet = Sheet.createDefault();
         Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
@@ -192,7 +157,7 @@ public class PersonGroupingNode extends DisplayableItemNode {
         }
 
         sheetSet.put(new NodeProperty<>("Name", Bundle.PersonGroupingNode_createSheet_nameProperty(), "", getDisplayName())); //NON-NLS
-        
+
         return sheet;
     }
 }
