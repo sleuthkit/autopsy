@@ -1,0 +1,4 @@
+AddEditPersonDialog.cancelButton.text=Cancel
+AddEditPersonDialog.okButton.text=OK
+AddEditPersonDialog.nameLabel.text=Name:
+AddEditPersonDialog.inputTextField.text=jTextField1
