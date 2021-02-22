@@ -20,14 +20,12 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.logging.Level;
 import javax.swing.Action;
-import static org.jdom2.filter.Filters.content;
 import org.openide.nodes.ChildFactory;
 
 import org.openide.nodes.Children;
@@ -37,17 +35,11 @@ import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.DeleteDataSourceAction;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datasourcesummary.ui.ViewSummaryInformationAction;
-import org.sleuthkit.autopsy.directorytree.ExplorerNodeActionVisitor;
-import org.sleuthkit.autopsy.directorytree.FileSearchAction;
-import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
-import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.RunIngestModulesAction;
-import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Host;
+import org.sleuthkit.datamodel.Person;
 import org.sleuthkit.datamodel.SleuthkitVisitableItem;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -142,6 +134,7 @@ public class HostNode extends DisplayableItemNode {
         }
     }
 
+    private static final Logger logger = Logger.getLogger(HostNode.class.getName());
     private static final String ICON_PATH = "org/sleuthkit/autopsy/images/host.png";
     private static final CreateSleuthkitNodeVisitor CREATE_TSK_NODE_VISITOR = new CreateSleuthkitNodeVisitor();
 
@@ -240,13 +233,6 @@ public class HostNode extends DisplayableItemNode {
         return sheet;
     }
 
-    /**
-     * Right click action for this node
-     *
-     * @param context
-     *
-     * @return
-     */
     @Override
     @Messages({"HostNode_actions_associateWithExisting=Associate with existing person...",
         "HostNode_actions_associateWithNew=Associate with new person...",
@@ -254,16 +240,24 @@ public class HostNode extends DisplayableItemNode {
         "HostNode_actions_removeFromPerson=Remove from person ({0})"})
     public Action[] getActions(boolean context) {
 
-//        List<Action> actionsList = new ArrayList<>();
-//        for (Action a : super.getActions(true)) {
-//            actionsList.add(a);
-//        }
-//        actionsList.addAll(ExplorerNodeActionVisitor.getActions(content));
-//        actionsList.add(new FileSearchAction(Bundle.ImageNode_getActions_openFileSearchByAttr_text()));
-//        actionsList.add(new ViewSummaryInformationAction(content.getId()));
-//        actionsList.add(new RunIngestModulesAction(Collections.<Content>singletonList(content)));
-//        actionsList.add(new NewWindowViewAction(NbBundle.getMessage(this.getClass(), "ImageNode.getActions.viewInNewWin.text"), this));
-//        actionsList.add(new DeleteDataSourceAction(content.getId()));
-//        return actionsList.toArray(new Action[0]);
+        Optional<Person> parent = Optional.empty();
+
+        if (this.host != null) {
+            try {
+                Case.getCurrentCaseThrows().getSleuthkitCase().getPersonManager().getPerson(this.host);
+            } catch (NoCurrentCaseException | TskCoreException ex) {
+                logger.log(Level.WARNING, String.format("Error fetching parent person of host: %s", this.host.getName() == null ? "<null>" : this.host.getName()), ex);
+                return new Action[0];
+            }
+        }
+
+        if (parent.isPresent()) {
+            return new Action[]{new RemoveParentPersonAction(this.host, parent.get())};
+        } else {
+            return new Action[]{
+                new AssociatePersonAction(this.host),
+                new AssociateNewPersonAction(this.host)
+            };
+        }
     }
 }

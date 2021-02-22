@@ -23,13 +23,17 @@ import java.beans.PropertyChangeListener;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.logging.Level;
+import javax.swing.Action;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.Person;
@@ -112,6 +116,8 @@ public class PersonGroupingNode extends DisplayableItemNode {
             return true;
         }
     }
+    
+    private final Person person;
 
     /**
      * Main constructor.
@@ -128,6 +134,7 @@ public class PersonGroupingNode extends DisplayableItemNode {
         super.setName(safeName);
         super.setDisplayName(safeName);
         this.setIconBaseWithExtension(ICON_PATH);
+        this.person = person;
     }
 
     @Override
@@ -159,5 +166,19 @@ public class PersonGroupingNode extends DisplayableItemNode {
         sheetSet.put(new NodeProperty<>("Name", Bundle.PersonGroupingNode_createSheet_nameProperty(), "", getDisplayName())); //NON-NLS
 
         return sheet;
+    }
+
+    @Override
+    @Messages({"PersonGroupingNode_actions_rename=Rename Person...",
+        "PersonGroupingNode_actions_delete=Delete Person"})
+    public Action[] getActions(boolean context) {
+        if (this.person == null) {
+            return new Action[0];
+        } else {
+            return new Action[]{
+                new RenamePersonAction(this.person),
+                new DeletePersonAction(this.person)
+            };
+        }
     }
 }
