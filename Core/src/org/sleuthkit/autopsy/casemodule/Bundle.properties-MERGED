@@ -483,5 +483,5 @@ AddImageWizardSelectHostVisual.hostDescription.text=Hosts are used to organize d
 AddImageWizardSelectHostVisual.useExistingHostRadio.text=Use existing host
 AddImageWizardSelectHostVisual.specifyNewHostTextField.text=
 AddImageWizardSelectHostVisual.specifyNewHostRadio.text=Specify new host name
-AddImageWizardSelectHostVisual.generateNewRadio.text=Generate new based on based on data source name
+AddImageWizardSelectHostVisual.generateNewRadio.text=Generate new host name...
 AddImageWizardSelectHostVisual.validationMessage.text=\ 
