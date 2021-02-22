@@ -872,7 +872,7 @@ class ExtractRegistry extends Extract {
                                             // For now both an OsAccount and the 
                                             // TSK_OS_ACCOUNT artifact will be created.
                                             try{
-                                                updateOsAccount(regFile, sid, username, homeDir);
+                                                createOrUpdateOsAccount(regFile, sid, username, homeDir);
                                                 
                                             } catch(TskCoreException | TskDataException ex) {
                                                 logger.log(Level.SEVERE, String.format("Failed to create OsAccount for file: %s, sid: %s", regFile.getId(), sid));
@@ -1158,14 +1158,14 @@ class ExtractRegistry extends Extract {
                 String sid = optional.get();
                 Map<String, String> userInfo = userInfoMap.remove(sid); 
                 if(userInfo != null) {
-                    createOrUpdateOsAccount(osAccount, userInfo, groupMap.get(sid), regAbstractFile);
+                    updateOsAccount(osAccount, userInfo, groupMap.get(sid), regAbstractFile);
                 }
             }
             
             //add remaining userinfos as accounts;
             for (Map<String, String> userInfo : userInfoMap.values()) {
                 OsAccount osAccount = accountMgr.createWindowsAccount(userInfo.get(SID_KEY), null, null, host, OsAccountRealm.RealmScope.UNKNOWN);
-                createOrUpdateOsAccount(osAccount, userInfo, groupMap.get(userInfo.get(SID_KEY)), regAbstractFile);
+                updateOsAccount(osAccount, userInfo, groupMap.get(userInfo.get(SID_KEY)), regAbstractFile);
             }
             
             // Existing TSK_OS_ACCOUNT code.
@@ -2204,7 +2204,7 @@ class ExtractRegistry extends Extract {
      * @throws TskCoreException
      * @throws TskDataException
      */
-    private void updateOsAccount(AbstractFile file, String sid, String userName, String homeDir) throws TskCoreException, TskDataException {
+    private void createOrUpdateOsAccount(AbstractFile file, String sid, String userName, String homeDir) throws TskCoreException, TskDataException {
         OsAccountManager accountMgr = tskCase.getOsAccountManager();
         HostManager hostMrg = tskCase.getHostManager();
         Host host = hostMrg.getHost((DataSource)dataSource);
@@ -2277,7 +2277,7 @@ class ExtractRegistry extends Extract {
      * @throws TskDataException
      * @throws TskCoreException
      */
-    private void createOrUpdateOsAccount(OsAccount osAccount, Map<String, String> userInfo, List<String> groupList, AbstractFile regFile) throws TskDataException, TskCoreException {
+    private void updateOsAccount(OsAccount osAccount, Map<String, String> userInfo, List<String> groupList, AbstractFile regFile) throws TskDataException, TskCoreException {
         Host host = ((DataSource)dataSource).getHost();        
 
         SimpleDateFormat regRipperTimeFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy 'Z'", US);
