@@ -1,5 +1,8 @@
-AddImageWizardIngestConfigPanel.name.text=Configure Ingest Modules
+AddImageWizardIngestConfigPanel.name.text=Configure Ingest
 AddImageWizardSelectDspVisual.multiUserWarning.text=This type of Data Source Processor is not available in multi-user mode
+AddImageWizardSelectHostPanel_title=Select Host To Add The Data Source To
+AddImageWizardSelectHostVisual_getValidationMessage_noHostSelected=Please select an existing host.
+AddImageWizardSelectHostVisual_title=Select Host
 # {0} - exception message
 Case.closeException.couldNotCloseCase=Error closing case: {0}
 Case.creationException.couldNotAcquireResourcesLock=Failed to get lock on case resources
@@ -242,7 +245,7 @@ AddImageWizardChooseDataSourcePanel.moveFocusNext=Next >
 AddImageWizardChooseDataSourceVisual.getName.text=Select Data Source
 AddImageWizardIngestConfigPanel.dsProcDone.noErrs.text=*Data Source added.
 AddImageWizardIngestConfigPanel.dsProcDone.errs.text=*Errors encountered in adding Data Source.
-AddImageWizardIngestConfigVisual.getName.text=Configure Ingest Modules
+AddImageWizardIngestConfigVisual.getName.text=Configure Ingest
 AddImageWizardIterator.stepXofN=Step {0} of {1}
 AddLocalFilesTask.localFileAdd.progress.text=Adding: {0}/{1}
 Case.getCurCase.exception.noneOpen=Cannot get the current case; there is no case open\!
@@ -341,7 +344,7 @@ RecentCases.exception.caseIdxOutOfRange.msg=Recent case index {0} is out of rang
 RecentCases.getName.text=Clear Recent Cases
 # {0} - case name
 RecentItems.openRecentCase.msgDlg.text=Case {0} no longer exists.
-SelectDataSourceProcessorPanel.name.text=Select Type of Data Source To Add
+SelectDataSourceProcessorPanel.name.text=Select Data Source Type
 StartupWindow.title.text=Welcome
 UnpackagePortableCaseDialog.title.text=Unpackage Portable Case
 UnpackagePortableCaseDialog.UnpackagePortableCaseDialog.extensions=Portable case package (.zip, .zip.001)
@@ -476,3 +479,9 @@ SolrNotConfiguredDialog.okButton.text=OK
 SolrNotConfiguredDialog.title=Solr 8 Server Not Configured
 SolrNotConfiguredDialog.EmptyKeywordSearchHostName=Solr 8 connection parameters are not configured. Please go to Tools->Options->Multi User.
 SolrNotConfiguredDialog.messageLabel.text=<html>Multi-User cases are enabled but Solr 8 server has not been configured.<br>\nNew cases can only be created with Solr 8. Please go to Tools->Options->Multi User.\n</html>
+AddImageWizardSelectHostVisual.hostDescription.text=Hosts are used to organize data sources and other data.
+AddImageWizardSelectHostVisual.useExistingHostRadio.text=Use existing host
+AddImageWizardSelectHostVisual.specifyNewHostTextField.text=
+AddImageWizardSelectHostVisual.specifyNewHostRadio.text=Specify new host name
+AddImageWizardSelectHostVisual.generateNewRadio.text=Generate new based on based on data source name
+AddImageWizardSelectHostVisual.validationMessage.text=\ 

@@ -140,15 +140,6 @@ public class MemoryDSProcessor implements DataSourceProcessor {
     @Override
     public void run(Host host, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         configPanel.storeSettings();
-        
-        // HOSTTODO - replace with a call to configPanel().getHost()
-        try {
-            host = Case.getCurrentCase().getSleuthkitCase().getHostManager().getOrCreateHost("MemoryDSProcessor Host");
-        } catch (TskCoreException ex) {
-            // It's not worth adding a logger for temporary code
-            //logger.log(Level.SEVERE, "Error creating/loading host", ex);
-            host = null;
-        }
         run(UUID.randomUUID().toString(), configPanel.getImageFilePath(), configPanel.getProfile(), configPanel.getPluginsToRun(), configPanel.getTimeZone(), host, progressMonitor, callback);
     }
 
