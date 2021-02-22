@@ -20,16 +20,19 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.logging.Level;
 import org.openide.nodes.ChildFactory;
 
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
+import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -97,7 +100,7 @@ public class HostNode extends DisplayableItemNode {
 
         @Override
         protected boolean createKeys(List<DataSourceGrouping> toPopulate) {
-            Set<DataSource> dataSources = null;
+            List<DataSource> dataSources = null;
             try {
                 dataSources = Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().getDataSourcesForHost(host);
             } catch (NoCurrentCaseException | TskCoreException ex) {
@@ -156,6 +159,8 @@ public class HostNode extends DisplayableItemNode {
         return new DataSourceGroupingNode(key.getDataSource());
     };
 
+    private final Host host;
+
     /**
      * Main constructor for HostDataSources key where data source children
      * should be displayed without additional results, reports, etc.
@@ -192,6 +197,7 @@ public class HostNode extends DisplayableItemNode {
         super.setName(safeName);
         super.setDisplayName(safeName);
         this.setIconBaseWithExtension(ICON_PATH);
+        this.host = host;
     }
 
     @Override
@@ -207,5 +213,21 @@ public class HostNode extends DisplayableItemNode {
     @Override
     public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
         return visitor.visit(this);
+    }
+
+    @Messages({
+        "HostNode_createSheet_nameProperty=Name",})
+    @Override
+    protected Sheet createSheet() {
+        Sheet sheet = Sheet.createDefault();
+        Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
+        if (sheetSet == null) {
+            sheetSet = Sheet.createPropertiesSet();
+            sheet.put(sheetSet);
+        }
+
+        sheetSet.put(new NodeProperty<>("Name", Bundle.HostNode_createSheet_nameProperty(), "", getDisplayName())); //NON-NLS
+
+        return sheet;
     }
 }
