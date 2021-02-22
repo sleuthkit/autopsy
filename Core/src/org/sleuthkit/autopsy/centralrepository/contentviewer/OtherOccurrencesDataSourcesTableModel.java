@@ -151,7 +151,7 @@ final class OtherOccurrencesDataSourcesTableModel extends AbstractTableModel {
                 //place holder value will be used since correlation attribute was unavailble
             } catch (NoCurrentCaseException ex) {
                 logger.log(Level.WARNING, "Unable to get current case", ex);
-                caseUUID = DataContentViewerOtherCases.getPlaceholderUUID();
+                caseUUID = OtherOccurrencesPanel.getPlaceholderUUID();
             }
         }
         dataSourceSet.add(new DataSourceColumnItem(nodeData.getCaseName(), nodeData.getDeviceID(), nodeData.getDataSourceName(), caseUUID));
