@@ -426,7 +426,7 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
         return;
 	}
 
-	AddImageTask.ImageDetails imageDetails = new AddImageTask.ImageDetails(deviceId, image, sectorSize, timeZone, ignoreFatOrphanFiles, md5, sha1, sha256, host, null);
+	AddImageTask.ImageDetails imageDetails = new AddImageTask.ImageDetails(deviceId, image, sectorSize, timeZone, ignoreFatOrphanFiles, md5, sha1, sha256, null);
 	addImageTask = new AddImageTask(imageDetails, 
                 progressMonitor, 
                 new StreamingAddDataSourceCallbacks(ingestStream), 
