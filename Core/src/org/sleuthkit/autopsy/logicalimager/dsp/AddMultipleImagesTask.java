@@ -138,7 +138,7 @@ class AddMultipleImagesTask implements Runnable {
             synchronized (tskAddImageProcessLock) {
 
                 if (!tskAddImageProcessStopped) {
-                    addImageProcess = currentCase.getSleuthkitCase().makeAddImageProcess(timeZone, false, false, host, "");
+                    addImageProcess = currentCase.getSleuthkitCase().makeAddImageProcess(timeZone, false, false, "");
                 } else {
                     return;
                 }

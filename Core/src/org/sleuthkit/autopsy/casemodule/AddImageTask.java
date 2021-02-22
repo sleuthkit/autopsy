@@ -107,7 +107,7 @@ class AddImageTask implements Runnable {
         try {
             synchronized (tskAddImageProcessLock) {
                 if (!tskAddImageProcessStopped) {
-                    tskAddImageProcess = currentCase.getSleuthkitCase().makeAddImageProcess(imageDetails.timeZone, true, imageDetails.ignoreFatOrphanFiles, imageDetails.host, imageWriterPath);
+                    tskAddImageProcess = currentCase.getSleuthkitCase().makeAddImageProcess(imageDetails.timeZone, true, imageDetails.ignoreFatOrphanFiles, imageWriterPath);
                 } else {
                     return;
                 }
@@ -317,11 +317,10 @@ class AddImageTask implements Runnable {
         boolean ignoreFatOrphanFiles;
         String md5;
         String sha1; 
-        String sha256; 
-        Host host;
+        String sha256;
         ImageWriterSettings imageWriterSettings;
         
-        ImageDetails(String deviceId, Image image, int sectorSize, String timeZone, boolean ignoreFatOrphanFiles, String md5, String sha1, String sha256, Host host, ImageWriterSettings imageWriterSettings) {
+        ImageDetails(String deviceId, Image image, int sectorSize, String timeZone, boolean ignoreFatOrphanFiles, String md5, String sha1, String sha256, ImageWriterSettings imageWriterSettings) {
             this.deviceId = deviceId;
             this.image = image;
             this.sectorSize = sectorSize;
@@ -330,7 +329,6 @@ class AddImageTask implements Runnable {
             this.md5 = md5;
             this.sha1 = sha1; 
             this.sha256 = sha256; 
-            this.host = host;
             this.imageWriterSettings = imageWriterSettings;
         }
 	
