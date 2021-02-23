@@ -36,8 +36,6 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Associate a host with a particular (existing) person.
  */
 @Messages({
-    "# {0} - personName",
-    "AssociatePersonAction_menuTitle=Associate with {0}",
     "AssociatePersonAction_unknownPerson=Unknown Person",
     "AssociatePersonAction_onError_title=Error Associating Host with Person",
     "# {0} - hostName",
@@ -57,9 +55,10 @@ public class AssociatePersonAction extends AbstractAction {
      * @param person The person to be removed as a parent from the host.
      */
     public AssociatePersonAction(Host host, Person person) {
-        super(Bundle.RemoveParentPersonAction_menuTitle(
-                person == null || person.getName() == null
-                ? Bundle.RemoveParentPersonAction_unknownPerson() : person.getName()));
+        super(person == null || person.getName() == null ? 
+                Bundle.RemoveParentPersonAction_unknownPerson() : 
+                person.getName());
+        
         this.host = host;
         this.person = person;
     }

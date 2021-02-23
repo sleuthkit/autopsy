@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.logging.Level;
-import java.util.stream.Stream;
 import javax.swing.Action;
 import org.openide.nodes.ChildFactory;
 
@@ -40,7 +39,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.hosts.AssociateNewPersonAction;
-import org.sleuthkit.autopsy.datamodel.hosts.AssociatePersonAction;
+import org.sleuthkit.autopsy.datamodel.hosts.AssociatePersonsMenuAction;
 import org.sleuthkit.autopsy.datamodel.hosts.RemoveParentPersonAction;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Host;
@@ -256,7 +255,10 @@ public class HostNode extends DisplayableItemNode {
             }
 
             if (parent.isPresent()) {
-                return new Action[]{new RemoveParentPersonAction(this.host, parent.get())};
+                return new Action[]{
+                    new RemoveParentPersonAction(this.host, parent.get()),
+                    null
+                };
             } else {
                 List<Person> existingPersons = Collections.emptyList();
                 try {
@@ -265,12 +267,18 @@ public class HostNode extends DisplayableItemNode {
                     logger.log(Level.WARNING, "Error getting persons for case.", ex);
                 }
 
-                Stream<Action> personActionsStream = existingPersons.stream()
-                        .map((p) -> new AssociatePersonAction(this.host, p));
-            
-                return Stream.concat(
-                        Stream.of(new AssociateNewPersonAction(this.host), null), personActionsStream)
-                        .toArray(Action[]::new);
+                if (existingPersons.size() > 0) {
+                    return new Action[]{
+                        new AssociateNewPersonAction(this.host),
+                        new AssociatePersonsMenuAction(existingPersons, this.host),
+                        null
+                    };
+                } else {
+                    return new Action[]{
+                        new AssociateNewPersonAction(this.host),
+                        null
+                    };
+                }
             }
         }
         return new Action[0];

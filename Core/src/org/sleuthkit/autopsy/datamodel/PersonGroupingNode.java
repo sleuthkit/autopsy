@@ -35,7 +35,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.persons.DeletePersonAction;
-import org.sleuthkit.autopsy.datamodel.persons.RenamePersonAction;
+import org.sleuthkit.autopsy.datamodel.persons.EditPersonAction;
 import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.Person;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -100,13 +100,11 @@ public class PersonGroupingNode extends DisplayableItemNode {
         @Override
         protected boolean createKeys(List<HostGrouping> toPopulate) {
             List<Host> hosts = Collections.emptyList();
-            if (this.person != null) {
-                try {
-                    hosts = Case.getCurrentCaseThrows().getSleuthkitCase().getPersonManager().getHostsForPerson(this.person);
-                } catch (NoCurrentCaseException | TskCoreException ex) {
-                    String personName = person == null || person.getName() == null ? "<unknown>" : person.getName();
-                    logger.log(Level.WARNING, String.format("Unable to get data sources for host: %s", personName), ex);
-                }
+            try {
+                hosts = Case.getCurrentCaseThrows().getSleuthkitCase().getPersonManager().getHostsForPerson(this.person);
+            } catch (NoCurrentCaseException | TskCoreException ex) {
+                String personName = person == null || person.getName() == null ? "<unknown>" : person.getName();
+                logger.log(Level.WARNING, String.format("Unable to get data sources for host: %s", personName), ex);
             }
 
             hosts.stream()
@@ -117,7 +115,7 @@ public class PersonGroupingNode extends DisplayableItemNode {
             return true;
         }
     }
-    
+
     private final Person person;
 
     /**
@@ -177,8 +175,9 @@ public class PersonGroupingNode extends DisplayableItemNode {
             return new Action[0];
         } else {
             return new Action[]{
-                new RenamePersonAction(this.person),
-                new DeletePersonAction(this.person)
+                new EditPersonAction(this.person),
+                new DeletePersonAction(this.person),
+                null
             };
         }
     }

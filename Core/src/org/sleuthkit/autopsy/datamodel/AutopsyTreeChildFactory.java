@@ -86,13 +86,19 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
         try {
             SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
             if (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) {
-                List<Person> persons = tskCase.getPersonManager().getPersons();
+                PersonManager personManager = tskCase.getPersonManager();
+                List<Person> persons = personManager.getPersons();
                 // show persons level if there are persons to be shown
                 if (!CollectionUtils.isEmpty(persons)) {
                     persons.stream()
                             .map(PersonGrouping::new)
                             .sorted()
                             .forEach(list::add);
+                    
+                    if (CollectionUtils.isNotEmpty(personManager.getHostsForPerson(null))) {
+                        list.add(new PersonGrouping(null));
+                    }
+                    
                     return true;
                 } else {
                     // otherwise, just show host level

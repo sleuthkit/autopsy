@@ -32,26 +32,26 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Person;
 
 /**
- * Rename the specified person.
+ * Action to edit the specified person.
  */
 @Messages({
-    "RenamePersonAction_menuTitle=Rename Person...",
-    "RenamePersonAction_onError_title=Error Renaming Person",
+    "EditPersonAction_menuTitle=Edit Person...",
+    "EditPersonAction_onError_title=Error Editing Person",
     "# {0} - personName",
-    "RenamePersonAction_onError_description=There was an error renaming person: {0}.",})
-public class RenamePersonAction extends AbstractAction {
+    "EditPersonAction_onError_description=There was an error editing person: {0}.",})
+public class EditPersonAction extends AbstractAction {
 
-    private static final Logger logger = Logger.getLogger(RenamePersonAction.class.getName());
+    private static final Logger logger = Logger.getLogger(EditPersonAction.class.getName());
 
     private final Person person;
 
     /**
      * Main constructor.
      *
-     * @param person The person to be renamed.
+     * @param person The person to be edited.
      */
-    public RenamePersonAction(Person person) {
-        super(Bundle.RenamePersonAction_menuTitle());
+    public EditPersonAction(Person person) {
+        super(Bundle.EditPersonAction_menuTitle());
         this.person = person;
     }
 
@@ -70,8 +70,8 @@ public class RenamePersonAction extends AbstractAction {
 
             JOptionPane.showMessageDialog(
                     WindowManager.getDefault().getMainWindow(),
-                    Bundle.RenamePersonAction_onError_description(personName),
-                    Bundle.RenamePersonAction_onError_title(),
+                    Bundle.EditPersonAction_onError_description(personName),
+                    Bundle.EditPersonAction_onError_title(),
                     JOptionPane.WARNING_MESSAGE);
         }
     }

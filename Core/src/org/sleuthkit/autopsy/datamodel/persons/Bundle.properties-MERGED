@@ -15,10 +15,10 @@ DeletePersonAction_menuTitle=Delete Person
 # {0} - personName
 DeletePersonAction_onError_description=There was an error removing person: {0}.
 DeletePersonAction_onError_title=Error Delete Host from Person
+EditPersonAction_menuTitle=Edit Person...
+# {0} - personName
+EditPersonAction_onError_description=There was an error editing person: {0}.
+EditPersonAction_onError_title=Error Editing Person
 PersonNameValidator_getValidationMessage_onDuplicate=Another person already has the same name.  Please choose a different name.
 PersonNameValidator_getValidationMessage_onEmpty=Please provide some text for the person name.
 PersonNameValidator_getValidationMessage_sameAsOriginal=Please provide a new name for this person.
-RenamePersonAction_menuTitle=Rename Person...
-# {0} - personName
-RenamePersonAction_onError_description=There was an error renaming person: {0}.
-RenamePersonAction_onError_title=Error Renaming Person
