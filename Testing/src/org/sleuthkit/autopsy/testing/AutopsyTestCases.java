@@ -205,7 +205,6 @@ public class AutopsyTestCases {
             while (!wo.btFinish().isEnabled()) {
                 new Timeout("pausing", 1000).sleep(); // give it a second (or five) to process
             }
-
             logger.log(Level.INFO, "Add image took {0}ms", (System.currentTimeMillis() - start));
             wo.btFinish().clickMouse();
         } catch (TimeoutExpiredException ex) {
@@ -227,7 +226,6 @@ public class AutopsyTestCases {
             while (!wo.btNext().isEnabled()) {
                 new Timeout("pausing", 1000).sleep(); // give it a second till the Add Data Source dialog enabled
             }
-
             JTableOperator jto = new JTableOperator(wo, 0);
             int row = jto.findCellRow("Hash Lookup", 2, 0);
             jto.clickOnCell(row, 1);
@@ -287,7 +285,6 @@ public class AutopsyTestCases {
             while (!wo.btNext().isEnabled()) {
                 new Timeout("pausing", 1000).sleep(); // give it a second till the Add Data Source dialog enabled
             }
-
             JTableOperator jto = new JTableOperator(wo, 0);
             int row = jto.findCellRow("Keyword Search", 2, 0);
             jto.clickOnCell(row, 1);
