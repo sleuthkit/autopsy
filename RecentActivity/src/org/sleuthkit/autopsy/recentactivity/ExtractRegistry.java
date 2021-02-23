@@ -69,6 +69,7 @@ import java.util.HashSet;
 import static java.util.Locale.US;
 import java.util.Optional;
 import static java.util.TimeZone.getTimeZone;
+import java.util.stream.Collectors;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -1146,7 +1147,7 @@ class ExtractRegistry extends Extract {
             // New OsAccount Code 
             OsAccountManager accountMgr = tskCase.getOsAccountManager();
             HostManager hostMrg = tskCase.getHostManager();
-            Host host = hostMrg.getHost(tskCase.getDataSource(regAbstractFile.getDataSourceObjectId()));
+            Host host = hostMrg.getHost((DataSource)dataSource);
 
             Set<OsAccount> existingAccounts = accountMgr.getAccounts(host);
             for(OsAccount osAccount: existingAccounts) {
@@ -2367,57 +2368,62 @@ class ExtractRegistry extends Extract {
             }
         }
 
-        String settingString = "";
-        for (String setting : PASSWORD_SETTINGS_FLAGS) {
-            if (userInfo.containsKey(setting)) {
-                settingString += setting + ", ";
-            }
-        }
-
+        String settingString = getSettingsFromMap(ACCOUNT_SETTINGS_FLAGS, userInfo);
         if (!settingString.isEmpty()) {
             settingString = settingString.substring(0, settingString.length() - 2);
             attributeSet.add(createOsAccountAttribute(ATTRIBUTE_TYPE.TSK_PASSWORD_SETTINGS,
                     settingString, osAccount, host, regFile));
         }
 
-        settingString = "";
-        for (String setting : ACCOUNT_SETTINGS_FLAGS) {
-            if (userInfo.containsKey(setting)) {
-                settingString += setting + ", ";
-            }
-        }
-
+        settingString = getSettingsFromMap(ACCOUNT_SETTINGS_FLAGS, userInfo);
         if (!settingString.isEmpty()) {
             settingString = settingString.substring(0, settingString.length() - 2);
             attributeSet.add(createOsAccountAttribute(ATTRIBUTE_TYPE.TSK_ACCOUNT_SETTINGS,
                     settingString, osAccount, host, regFile));
         }
 
-        settingString = "";
-        for (String setting : ACCOUNT_TYPE_FLAGS) {
-            if (userInfo.containsKey(setting)) {
-                settingString += setting + ", ";
-            }
-        }
-
+        settingString = getSettingsFromMap(ACCOUNT_TYPE_FLAGS, userInfo);
         if (!settingString.isEmpty()) {
-            settingString = settingString.substring(0, settingString.length() - 2);
             attributeSet.add(createOsAccountAttribute(ATTRIBUTE_TYPE.TSK_FLAG,
                     settingString, osAccount, host, regFile));
         }
 
         if (groupList != null && groupList.isEmpty()) {
-            String groups = "";
-            for (String group : groupList) {
-                groups += group + ", ";
-            }
+            String groups = groupList.stream()
+                    .map(String::valueOf)
+                    .collect(Collectors.joining(", "));
 
             attributeSet.add(createOsAccountAttribute(ATTRIBUTE_TYPE.TSK_GROUPS,
-                    groups.substring(0, groups.length() - 2), osAccount, host, regFile));
+                    groups, osAccount, host, regFile));
         }
 
         osAccount.addAttributes(attributeSet);
         tskCase.getOsAccountManager().updateAccount(osAccount);
+    }
+    
+    /**
+     * Create comma separated list from the set values for the given keys.
+     * 
+     * @param keys List of map keys.
+     * @param map  Data map.
+     * 
+     * @return Comma separated String of values.
+     */
+    private String getSettingsFromMap(String[] keys, Map<String, String> map) {
+        List<String> settingsList = new ArrayList<>();
+        for (String setting : keys) {
+            if (map.containsKey(setting)) {
+                settingsList.add(setting);
+            }
+        }
+
+        if (!settingsList.isEmpty()) {
+            return settingsList.stream()
+                    .map(String::valueOf)
+                    .collect(Collectors.joining(", "));
+        }
+
+        return "";
     }
 
     /**
