@@ -48,6 +48,7 @@ import static javax.swing.JOptionPane.PLAIN_MESSAGE;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
+import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDateTime;
 import org.openide.util.NbBundle;
@@ -65,7 +66,9 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
-
+/**
+ * Panel for displaying other occurrences results.
+ */
 @NbBundle.Messages({
     "OtherOccurrencesPanel.table.noArtifacts=Item has no attributes with which to search.",
     "OtherOccurrencesPanel.table.noResultsFound=No results found."})
@@ -96,15 +99,6 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
         occurrencePanel = new OccurrencePanel();
         initComponents();
         customizeComponents();
-        detailsPanelScrollPane.addComponentListener(new ComponentAdapter() {
-            @Override
-            public void componentResized(ComponentEvent componentEvent) {
-                //when its resized make sure the width of the panel resizes to match the scroll pane width to avoid a horizontal scroll bar
-                occurrencePanel.setPreferredSize(new java.awt.Dimension(detailsPanelScrollPane.getPreferredSize().width, occurrencePanel.getPreferredSize().height));
-                detailsPanelScrollPane.setViewportView(occurrencePanel);
-            }
-        });
-        reset();
     }
 
     /**
@@ -140,6 +134,12 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
         // Configure column sorting.
         TableRowSorter<TableModel> sorter = new TableRowSorter<>(filesTable.getModel());
         filesTable.setRowSorter(sorter);
+
+        //sort tables alphabetically initially
+        casesTable.getRowSorter().toggleSortOrder(0);
+        dataSourcesTable.getRowSorter().toggleSortOrder(0);
+        filesTable.getRowSorter().toggleSortOrder(0);
+        reset();
         casesTable.getSelectionModel().addListSelectionListener((e) -> {
             if (Case.isCaseOpen()) {
                 updateOnCaseSelection();
@@ -158,10 +158,15 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
                 updateOnFileSelection();
             }
         });
-        //sort tables alphabetically initially
-        casesTable.getRowSorter().toggleSortOrder(0);
-        dataSourcesTable.getRowSorter().toggleSortOrder(0);
-        filesTable.getRowSorter().toggleSortOrder(0);
+        detailsPanelScrollPane.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent componentEvent) {
+                //when its resized make sure the width of the panel resizes to match the scroll pane width to avoid a horizontal scroll bar
+                occurrencePanel.setPreferredSize(new java.awt.Dimension(detailsPanelScrollPane.getPreferredSize().width, occurrencePanel.getPreferredSize().height));
+                detailsPanelScrollPane.setViewportView(occurrencePanel);
+            }
+        });
+
     }
 
     @NbBundle.Messages({"OtherOccurrencesPanel.correlatedArtifacts.isEmpty=There are no files or artifacts to correlate.",
@@ -301,7 +306,7 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
             for (CorrelationAttributeInstance corAttr : correlationAttributes) {
                 Map<UniquePathKey, OtherOccurrenceNodeInstanceData> correlatedNodeDataMap = new HashMap<>(0);
                 // get correlation and reference set instances from DB
-                correlatedNodeDataMap.putAll(getCorrelatedInstances(corAttr, dataSourceName, deviceId));
+                correlatedNodeDataMap.putAll(getCorrelatedInstances(corAttr));
                 for (OtherOccurrenceNodeInstanceData nodeData : correlatedNodeDataMap.values()) {
                     writer.write(nodeData.toCsvString());
                 }
@@ -348,7 +353,7 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
     /**
      * Reset the UI and clear cached data.
      */
-    void reset() {
+    public void reset() {
         // start with empty table
         casesTableModel.clearTable();
         dataSourcesTableModel.clearTable();
@@ -363,10 +368,92 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
     }
 
     /**
+     * Populate the other occurrences table for one Correlation Attribute type
+     * and value.
+     *
+     * @param aType The correlation attribute type to display other occurrences
+     *              for.
+     * @param value The value being correlated on.
+     */
+    public void populateTableForOneType(CorrelationAttributeInstance.Type aType, String value) {
+        Map<String, CorrelationCase> caseNames = new HashMap<>();
+        int totalCount = 0;
+        Set<String> dataSources = new HashSet<>();
+        if (CentralRepository.isEnabled()) {
+
+            try {
+                List<CorrelationAttributeInstance> instances;
+                instances = CentralRepository.getInstance().getArtifactInstancesByTypeValue(aType, value);
+                HashMap<UniquePathKey, OtherOccurrenceNodeInstanceData> nodeDataMap = new HashMap<>();
+                String caseUUID = Case.getCurrentCase().getName();
+                for (CorrelationAttributeInstance artifactInstance : instances) {
+
+                    // Only add the attribute if it isn't the object the user selected.
+                    // We consider it to be a different object if at least one of the following is true:
+                    // - the case UUID is different
+                    // - the data source name is different
+                    // - the data source device ID is different
+                    // - the file path is different
+                    if (artifactInstance.getCorrelationCase().getCaseUUID().equals(caseUUID)
+                            || (!StringUtils.isBlank(dataSourceName) && artifactInstance.getCorrelationDataSource().getName().equals(dataSourceName))
+                            || (!StringUtils.isBlank(deviceId) && artifactInstance.getCorrelationDataSource().getDeviceID().equals(deviceId))
+                            || (file != null && artifactInstance.getFilePath().equalsIgnoreCase(file.getParentPath() + file.getName()))) {
+                        correlationAttributes.add(artifactInstance);
+                        continue;
+                    }
+                    OtherOccurrenceNodeInstanceData newNode = new OtherOccurrenceNodeInstanceData(artifactInstance, aType, value);
+                    UniquePathKey uniquePathKey = new UniquePathKey(newNode);
+                    nodeDataMap.put(uniquePathKey, newNode);
+                }
+                for (OtherOccurrenceNodeInstanceData nodeData : nodeDataMap.values()) {
+                    if (nodeData.isCentralRepoNode()) {
+                        try {
+                            dataSources.add(makeDataSourceString(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID(), nodeData.getDeviceID(), nodeData.getDataSourceName()));
+                            caseNames.put(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID(), nodeData.getCorrelationAttributeInstance().getCorrelationCase());
+                        } catch (CentralRepoException ex) {
+                            logger.log(Level.WARNING, "Unable to get correlation case for displaying other occurrence for case: " + nodeData.getCaseName(), ex);
+                        }
+                    } else {
+                        try {
+                            dataSources.add(makeDataSourceString(Case.getCurrentCaseThrows().getName(), nodeData.getDeviceID(), nodeData.getDataSourceName()));
+                            caseNames.put(Case.getCurrentCaseThrows().getName(), new CorrelationCase(Case.getCurrentCaseThrows().getName(), Case.getCurrentCaseThrows().getDisplayName()));
+                        } catch (NoCurrentCaseException ex) {
+                            logger.log(Level.WARNING, "No current case open for other occurrences", ex);
+                        }
+                    }
+                    totalCount++;
+                }
+            } catch (CorrelationAttributeNormalizationException | CentralRepoException ex) {
+                logger.log(Level.WARNING, "Error retrieving other occurrences for " + aType.getDisplayName() + ": " + value, ex);
+            }
+        }
+        for (CorrelationCase corCase : caseNames.values()) {
+            casesTableModel.addCorrelationCase(new CorrelationCaseWrapper(corCase));
+        }
+        int caseCount = casesTableModel.getRowCount();
+        if (correlationAttributes.isEmpty()) {
+            casesTableModel.addCorrelationCase(NO_ARTIFACTS_CASE);
+        } else if (caseCount == 0) {
+            casesTableModel.addCorrelationCase(NO_RESULTS_CASE);
+        }
+        setEarliestCaseDate();
+        foundInLabel.setText(String.format(Bundle.OtherOccurrencesPanel_foundIn_text(), totalCount, caseCount, dataSources.size()));
+        if (caseCount > 0) {
+            casesTable.setRowSelectionInterval(0, 0);
+        }
+    }
+
+    /**
      * Load the correlatable data into the table model. If there is no data
      * available display the message on the status panel.
      *
-     * @param node The node being viewed.
+     * @param correlationAttrs The correlationAttributes to correlate on.
+     * @param dataSourceName   The name of the dataSource to ignore results
+     *                         from.
+     * @param deviceId         The deviceId of the device to ignore results
+     *                         from.
+     * @param abstractFile     The abstract file to ignore files with the same
+     *                         location as.
      */
     @NbBundle.Messages({
         "OtherOccurrencesPanel.foundIn.text=Found %d instances in %d cases and %d data sources."
@@ -382,11 +469,7 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
         int totalCount = 0;
         Set<String> dataSources = new HashSet<>();
         for (CorrelationAttributeInstance corAttr : correlationAttributes) {
-            Map<UniquePathKey, OtherOccurrenceNodeInstanceData> correlatedNodeDataMap = new HashMap<>(0);
-
-            // get correlation and reference set instances from DB
-            correlatedNodeDataMap.putAll(getCorrelatedInstances(corAttr, dataSourceName, deviceId));
-            for (OtherOccurrenceNodeInstanceData nodeData : correlatedNodeDataMap.values()) {
+            for (OtherOccurrenceNodeInstanceData nodeData : getCorrelatedInstances(corAttr).values()) {
                 if (nodeData.isCentralRepoNode()) {
                     try {
                         dataSources.add(makeDataSourceString(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID(), nodeData.getDeviceID(), nodeData.getDataSourceName()));
@@ -433,7 +516,7 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
      *
      * @return A collection of correlated artifact instances
      */
-    private Map<UniquePathKey, OtherOccurrenceNodeInstanceData> getCorrelatedInstances(CorrelationAttributeInstance corAttr, String dataSourceName, String deviceId) {
+    private Map<UniquePathKey, OtherOccurrenceNodeInstanceData> getCorrelatedInstances(CorrelationAttributeInstance corAttr) {
         // @@@ Check exception
         try {
             final Case openCase = Case.getCurrentCaseThrows();
@@ -452,8 +535,8 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
                     // - the data source device ID is different
                     // - the file path is different
                     if (artifactInstance.getCorrelationCase().getCaseUUID().equals(caseUUID)
-                            || artifactInstance.getCorrelationDataSource().getName().equals(dataSourceName)
-                            || artifactInstance.getCorrelationDataSource().getDeviceID().equals(deviceId)
+                            || (!StringUtils.isBlank(dataSourceName) && artifactInstance.getCorrelationDataSource().getName().equals(dataSourceName))
+                            || (!StringUtils.isBlank(deviceId) && artifactInstance.getCorrelationDataSource().getDeviceID().equals(deviceId))
                             || (file != null && artifactInstance.getFilePath().equalsIgnoreCase(file.getParentPath() + file.getName()))) {
                         continue;
                     }
@@ -592,7 +675,7 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
                 Map<UniquePathKey, OtherOccurrenceNodeInstanceData> correlatedNodeDataMap = new HashMap<>(0);
 
                 // get correlation and reference set instances from DB
-                correlatedNodeDataMap.putAll(getCorrelatedInstances(corAttr, dataSourceName, deviceId));
+                correlatedNodeDataMap.putAll(getCorrelatedInstances(corAttr));
                 for (OtherOccurrenceNodeInstanceData nodeData : correlatedNodeDataMap.values()) {
                     for (int selectedRow : selectedCaseIndexes) {
                         try {
@@ -627,7 +710,7 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
             Map<UniquePathKey, OtherOccurrenceNodeInstanceData> correlatedNodeDataMap = new HashMap<>(0);
 
             // get correlation and reference set instances from DB
-            correlatedNodeDataMap.putAll(getCorrelatedInstances(corAttr, dataSourceName, deviceId));
+            correlatedNodeDataMap.putAll(getCorrelatedInstances(corAttr));
             for (OtherOccurrenceNodeInstanceData nodeData : correlatedNodeDataMap.values()) {
                 for (int selectedDataSourceRow : selectedDataSources) {
                     try {
