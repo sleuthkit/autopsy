@@ -1791,22 +1791,30 @@ public class Server {
     /**
      * Extract all unique terms/words for a given data source.
      *
-     * @param settings GeneralReportSettings to use
+     * @param outputFile Absolute path to where the store the output
      * @param progressPanel ReportProgressPanel to update
      *
      * @throws NoOpenCoreException
      */
-    void extractAllTermsForDataSource(GeneralReportSettings settings, ReportProgressPanel progressPanel) throws IOException, KeywordSearchModuleException, NoOpenCoreException, SolrServerException, NoCurrentCaseException {
+    @NbBundle.Messages({
+        "Server.getAllTerms.error=Extraction of all unique Solr terms failed:"})
+    void extractAllTermsForDataSource(Path outputFile, ReportProgressPanel progressPanel) throws KeywordSearchModuleException, NoOpenCoreException {
         try {
             currentCoreLock.writeLock().lock();
             if (null == currentCollection) {
                 throw new NoOpenCoreException();
             }
-            currentCollection.extractAllTermsForDataSource(settings, progressPanel);
+            try {
+                currentCollection.extractAllTermsForDataSource(outputFile, progressPanel);
+            } catch (Exception ex) {
+                // intentional "catch all" as Solr is known to throw all kinds of Runtime exceptions
+                logger.log(Level.SEVERE, "Extraction of all unique Solr terms failed: ", ex); //NON-NLS
+                throw new KeywordSearchModuleException(Bundle.Server_getAllTerms_error(), ex);
+            }
         } finally {
             currentCoreLock.writeLock().unlock();
         }
-    }    
+    }  
 
     /**
      * Get the text contents of the given file as stored in SOLR.
@@ -2158,11 +2166,10 @@ public class Server {
         @NbBundle.Messages({
             "ExtractAllTermsReport.numberExtractedTerms=Extracted {0} terms..."
         })
-        private void extractAllTermsForDataSource(GeneralReportSettings settings, ReportProgressPanel progressPanel) throws IOException, SolrServerException, NoCurrentCaseException, KeywordSearchModuleException {
+        private void extractAllTermsForDataSource(Path outputFile, ReportProgressPanel progressPanel) throws IOException, SolrServerException, NoCurrentCaseException, KeywordSearchModuleException {
             
             // step through the terms 
-            Path serverFileIterated = Paths.get(settings.getReportDirectoryPath(), "Unique Words.txt"); //NON-NLS
-            Files.deleteIfExists(serverFileIterated);
+            Files.deleteIfExists(outputFile);
             OpenOption[] options = new OpenOption[] { java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.APPEND };
             
             int termStep = 1000;
@@ -2202,7 +2209,7 @@ public class Server {
                 firstTerm = terms.get(terms.size()-1).getTerm();
 
                 List<String> listTerms = terms.stream().map(Term::getTerm).collect(Collectors.toList());
-                Files.write(serverFileIterated, listTerms, options);
+                Files.write(outputFile, listTerms, options);
                 
                 numExtractedTerms += termStep;
                 progressPanel.updateStatusLabel(Bundle.ExtractAllTermsReport_numberExtractedTerms(numExtractedTerms));

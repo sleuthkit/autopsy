@@ -18,12 +18,12 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.logging.Level;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.report.GeneralReportModule;
@@ -38,6 +38,7 @@ import org.sleuthkit.autopsy.report.ReportProgressPanel;
 public class ExtractAllTermsReport implements GeneralReportModule {
     
     private static final Logger logger = Logger.getLogger(ExtractAllTermsReport.class.getName());
+    private static final String OUTPUT_FILE_NAME = "Unique Words.txt";
 
     @NbBundle.Messages({
         "ExtractAllTermsReport.getName.text=Extract Unique Words"})
@@ -45,9 +46,9 @@ public class ExtractAllTermsReport implements GeneralReportModule {
     public String getName() {
         return Bundle.ExtractAllTermsReport_getName_text();
     }
-
+    
     @NbBundle.Messages({
-        "ExtractAllTermsReport.error.unableToOpenCase=Exception while getting open case.",
+        "ExtractAllTermsReport.error.noOpenCase=No currently open case.",
         "ExtractAllTermsReport.search.noFilesInIdxMsg=<html>No files are in index yet. <br />Try again later. Index is updated every {0} minutes.</html>",
         "ExtractAllTermsReport.search.noFilesInIdxMsg2=<html>No files are in index yet. <br />Try again later</html>",
         "ExtractAllTermsReport.search.searchIngestInProgressTitle=Keyword Search Ingest in Progress",
@@ -58,14 +59,13 @@ public class ExtractAllTermsReport implements GeneralReportModule {
     })
     @Override
     public void generateReport(GeneralReportSettings settings, ReportProgressPanel progressPanel) {
-        Case openCase;
-        try {
-            openCase = Case.getCurrentCaseThrows();
-        } catch (NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
-            progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR, Bundle.ExtractAllTermsReport_error_unableToOpenCase());
+        
+        if (!Case.isCaseOpen()) {
+            logger.log(Level.SEVERE, "No open case when attempting to run {0} report", Bundle.ExtractAllTermsReport_getName_text()); //NON-NLS
+            progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR, Bundle.ExtractAllTermsReport_error_noOpenCase());
             return;
         }
+        
         progressPanel.setIndeterminate(true);
         progressPanel.start();
         progressPanel.updateStatusLabel("Extracting unique words...");
@@ -93,6 +93,8 @@ public class ExtractAllTermsReport implements GeneralReportModule {
         if (isIngestRunning) {
             if (KeywordSearchUtil.displayConfirmDialog(Bundle.ExtractAllTermsReport_search_searchIngestInProgressTitle(),
                     Bundle.ExtractAllTermsReport_search_ingestInProgressBody(), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN) == false) {
+                progressPanel.setIndeterminate(false);
+                progressPanel.complete(ReportProgressPanel.ReportStatus.CANCELED);
                 return;
             }
         }
@@ -100,10 +102,14 @@ public class ExtractAllTermsReport implements GeneralReportModule {
         final Server server = KeywordSearch.getServer();
         try {
             progressPanel.updateStatusLabel(Bundle.ExtractAllTermsReport_startExport());
-            server.extractAllTermsForDataSource(settings, progressPanel);
-        } catch (Exception ex) {
+            Path outputFile = Paths.get(settings.getReportDirectoryPath(), getRelativeFilePath());
+            server.extractAllTermsForDataSource(outputFile, progressPanel);
+        } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
+            logger.log(Level.SEVERE, "Exception while extracting all terms", ex); //NON-NLS
             progressPanel.updateStatusLabel(Bundle.ExtractAllTermsReport_export_error());
-            Exceptions.printStackTrace(ex); // ELTODO
+            progressPanel.setIndeterminate(false);
+            progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR);
+            return;
         }
         progressPanel.updateStatusLabel(Bundle.ExtractAllTermsReport_exportComplete());
 
@@ -123,7 +129,7 @@ public class ExtractAllTermsReport implements GeneralReportModule {
 
     @Override
     public String getRelativeFilePath() {
-        return "Unique Words.txt"; // ELTODO
+        return OUTPUT_FILE_NAME;
     }
 
 }
