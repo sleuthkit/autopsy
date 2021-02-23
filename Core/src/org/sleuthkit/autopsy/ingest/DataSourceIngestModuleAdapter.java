@@ -24,11 +24,11 @@ import org.sleuthkit.datamodel.Content;
  * An adapter that provides a no-op implementation of the startUp() method for
  * data source ingest modules.
  *
- * @deprecated As of Java 8, interfaces can have default methods.
- * DataSourceIngestModule now provides default no-op versions of startUp()
- * and shutDown().
+ * NOTE: As of Java 8, interfaces can have default methods.
+ * DataSourceIngestModule now provides default no-op versions of startUp() and
+ * shutDown(). This class is no longer needed and can be deprecated when
+ * convenient.
  */
-@Deprecated
 public abstract class DataSourceIngestModuleAdapter implements DataSourceIngestModule {
 
     @Override
