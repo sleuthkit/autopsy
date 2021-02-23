@@ -16,80 +16,74 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datamodel.hosts;
+package org.sleuthkit.autopsy.datamodel.persons;
 
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.JOptionPane;
-import org.apache.commons.lang.StringUtils;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.persons.AddEditPersonDialog;
-import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.Person;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Allows someone to associate a new person with a parentless host.
+ * Rename the specified person.
  */
 @Messages({
-    "AssociateNewPersonAction_menuTitle=New...",
-    "AssociateNewPersonAction_onError_title=Error While Associating New Person",
-    "# {0} - hostName",
-    "# {1} - personName",
-    "AssociateNewPersonAction_onError_description=There was an error while associating host {0} with new person {1}."})
-public class AssociateNewPersonAction extends AbstractAction {
+    "RenamePersonAction_menuTitle=Rename Person...",
+    "RenamePersonAction_onError_title=Error Renaming Person",
+    "# {0} - personName",
+    "RenamePersonAction_onError_description=There was an error renaming person: {0}.",})
+public class RenamePersonAction extends AbstractAction {
 
-    private static final Logger logger = Logger.getLogger(AssociateNewPersonAction.class.getName());
+    private static final Logger logger = Logger.getLogger(RenamePersonAction.class.getName());
 
-    private final Host host;
+    private final Person person;
 
     /**
      * Main constructor.
      *
-     * @param host The host to be associated with new person.
+     * @param person The person to be renamed.
      */
-    public AssociateNewPersonAction(Host host) {
-        super(Bundle.AssociateNewPersonAction_menuTitle());
-        this.host = host;
+    public RenamePersonAction(Person person) {
+        super(Bundle.RenamePersonAction_menuTitle());
+        this.person = person;
     }
+
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        String newPersonName = "";
         try {
-             newPersonName = getAddDialogName();
-            if (StringUtils.isNotBlank(newPersonName)) {
-                Person person = Case.getCurrentCaseThrows().getSleuthkitCase().getPersonManager().createPerson(newPersonName);
-                Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().setPerson(host, person);
+            String newPersonName = getEditedPersonName(person);
+            if (newPersonName != null) {
+                person.setName(newPersonName);
             }
+            Case.getCurrentCaseThrows().getSleuthkitCase().getPersonManager().updatePerson(person);
         } catch (NoCurrentCaseException | TskCoreException ex) {
-            String hostName = this.host == null || this.host.getName() == null ? "" : this.host.getName();
-            logger.log(Level.WARNING, String.format("Unable to remove parent from host: %s", hostName), ex);
+            String personName = this.person == null || this.person.getName() == null ? "" : this.person.getName();
+            logger.log(Level.WARNING, String.format("Unable to update person: %s", personName), ex);
 
             JOptionPane.showMessageDialog(
                     WindowManager.getDefault().getMainWindow(),
-                    Bundle.AssociateNewPersonAction_onError_description(hostName, newPersonName),
-                    Bundle.AssociateNewPersonAction_onError_title(),
+                    Bundle.RenamePersonAction_onError_description(personName),
+                    Bundle.RenamePersonAction_onError_title(),
                     JOptionPane.WARNING_MESSAGE);
         }
-
     }
 
-    private String getAddDialogName() throws NoCurrentCaseException, TskCoreException {
+    private String getEditedPersonName(Person person) throws NoCurrentCaseException, TskCoreException {
         Frame parent = WindowManager.getDefault().getMainWindow();
 
         AddEditPersonDialog addEditDialog
                 = new AddEditPersonDialog(
                         parent,
                         Case.getCurrentCaseThrows().getSleuthkitCase().getPersonManager().getPersons(),
-                        null);
+                        person);
 
         addEditDialog.setResizable(false);
         addEditDialog.setLocationRelativeTo(parent);

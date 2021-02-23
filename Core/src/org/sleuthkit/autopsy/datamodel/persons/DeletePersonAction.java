@@ -26,7 +26,7 @@ import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.casemodule.TskCoreException;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.Person;
@@ -35,11 +35,10 @@ import org.sleuthkit.datamodel.Person;
  * Removes person from case.
  */
 @Messages({
-    "# {0} - personName",
     "DeletePersonAction_menuTitle=Delete Person",
-    "DeletePersonAction_onError_title=Error Removing Host from Person",
-    "# {0} - hostName",
-    "RemoveParentPersonAction_onError_description=There was an error removing person from host: {0}.",})
+    "DeletePersonAction_onError_title=Error Delete Host from Person",
+    "# {0} - personName",
+    "DeletePersonAction_onError_description=There was an error removing person: {0}.",})
 public class DeletePersonAction extends AbstractAction {
 
     private static final Logger logger = Logger.getLogger(DeletePersonAction.class.getName());
@@ -49,7 +48,7 @@ public class DeletePersonAction extends AbstractAction {
     /**
      * Main constructor.
      *
-     * @param person The person to be removed.
+     * @param person The person to be deleted.
      */
     public DeletePersonAction(Person person) {
         super(Bundle.DeletePersonAction_menuTitle());
@@ -62,13 +61,13 @@ public class DeletePersonAction extends AbstractAction {
             try {
                 Case.getCurrentCaseThrows().getSleuthkitCase().getPersonManager().deletePerson(person.getName());
             } catch (NoCurrentCaseException | TskCoreException ex) {
-                String hostName = this.host == null || this.host.getName() == null ? "" : this.host.getName();
-                logger.log(Level.WARNING, String.format("Unable to remove parent from host: %s", hostName), ex);
+                String personName = this.person == null || this.person.getName() == null ? "" : this.person.getName();
+                logger.log(Level.WARNING, String.format("Unable to remove parent from host: %s", personName), ex);
 
                 JOptionPane.showMessageDialog(
                         WindowManager.getDefault().getMainWindow(),
-                        Bundle.RemoveParentPersonAction_onError_description(hostName),
-                        Bundle.RemoveParentPersonAction_onError_title(),
+                        Bundle.DeletePersonAction_onError_description(personName),
+                        Bundle.DeletePersonAction_onError_title(),
                         JOptionPane.WARNING_MESSAGE);
             }
         }

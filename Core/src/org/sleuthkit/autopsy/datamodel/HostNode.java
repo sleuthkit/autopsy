@@ -20,11 +20,13 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.logging.Level;
+import java.util.stream.Stream;
 import javax.swing.Action;
 import org.openide.nodes.ChildFactory;
 
@@ -252,15 +254,25 @@ public class HostNode extends DisplayableItemNode {
                 logger.log(Level.WARNING, String.format("Error fetching parent person of host: %s", this.host.getName() == null ? "<null>" : this.host.getName()), ex);
                 return new Action[0];
             }
-        }
 
-        if (parent.isPresent()) {
-            return new Action[]{new RemoveParentPersonAction(this.host, parent.get())};
-        } else {
-            return new Action[]{
-                new AssociatePersonAction(this.host),
-                new AssociateNewPersonAction(this.host)
-            };
+            if (parent.isPresent()) {
+                return new Action[]{new RemoveParentPersonAction(this.host, parent.get())};
+            } else {
+                List<Person> existingPersons = Collections.emptyList();
+                try {
+                    existingPersons = Case.getCurrentCaseThrows().getSleuthkitCase().getPersonManager().getPersons();
+                } catch (NoCurrentCaseException | TskCoreException ex) {
+                    logger.log(Level.WARNING, "Error getting persons for case.", ex);
+                }
+
+                Stream<Action> personActionsStream = existingPersons.stream()
+                        .map((p) -> new AssociatePersonAction(this.host, p));
+            
+                return Stream.concat(
+                        Stream.of(new AssociateNewPersonAction(this.host), null), personActionsStream)
+                        .toArray(Action[]::new);
+            }
         }
+        return new Action[0];
     }
 }

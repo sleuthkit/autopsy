@@ -26,26 +26,29 @@ import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.casemodule.TskCoreException;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.Person;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Removes the parent person from the specified host.
+ * Associate a host with a particular (existing) person.
  */
 @Messages({
     "# {0} - personName",
-    "RemoveParentPersonAction_menuTitle=Remove from Person ({0})",
-    "RemoveParentPersonAction_unknownPerson=Unknown Person",
-    "RemoveParentPersonAction_onError_title=Error Removing Host from Person",
+    "AssociatePersonAction_menuTitle=Associate with {0}",
+    "AssociatePersonAction_unknownPerson=Unknown Person",
+    "AssociatePersonAction_onError_title=Error Associating Host with Person",
     "# {0} - hostName",
-    "RemoveParentPersonAction_onError_description=There was an error removing person from host: {0}.",})
+    "# {1} - personName",
+    "AssociatePersonAction_onError_description=There was an error associating host {0} with person {1}.",})
 public class AssociatePersonAction extends AbstractAction {
 
     private static final Logger logger = Logger.getLogger(AssociatePersonAction.class.getName());
 
     private final Host host;
+    private final Person person;
 
     /**
      * Main constructor.
@@ -53,29 +56,27 @@ public class AssociatePersonAction extends AbstractAction {
      * @param host The host that will become parentless.
      * @param person The person to be removed as a parent from the host.
      */
-    public AssociatePersonAction(Host host) {
+    public AssociatePersonAction(Host host, Person person) {
         super(Bundle.RemoveParentPersonAction_menuTitle(
                 person == null || person.getName() == null
                 ? Bundle.RemoveParentPersonAction_unknownPerson() : person.getName()));
         this.host = host;
-    }
-
-    public AssociatePersonAction(Host host) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        this.person = person;
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
         try {
-            Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().setPerson(host, null);
+            Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().setPerson(host, person);
         } catch (NoCurrentCaseException | TskCoreException ex) {
             String hostName = this.host == null || this.host.getName() == null ? "" : this.host.getName();
-            logger.log(Level.WARNING, String.format("Unable to remove parent from host: %s", hostName), ex);
+            String personName = this.person == null || this.person.getName() == null ? "" : this.person.getName();
+            logger.log(Level.WARNING, String.format("Unable to remove parent from host: %s with person: %s", hostName, personName), ex);
 
             JOptionPane.showMessageDialog(
                     WindowManager.getDefault().getMainWindow(),
-                    Bundle.RemoveParentPersonAction_onError_description(hostName),
-                    Bundle.RemoveParentPersonAction_onError_title(),
+                    Bundle.AssociatePersonAction_onError_description(hostName, personName),
+                    Bundle.AssociatePersonAction_onError_title(),
                     JOptionPane.WARNING_MESSAGE);
         }
     }

@@ -22,8 +22,6 @@ import java.awt.Color;
 import org.sleuthkit.datamodel.Person;
 import java.util.Collection;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import org.openide.util.NbBundle.Messages;
@@ -32,21 +30,23 @@ import org.openide.util.NbBundle.Messages;
  *
  * Dialog for adding or editing a person.
  */
-class AddEditPersonDialog extends javax.swing.JDialog {
+public class AddEditPersonDialog extends javax.swing.JDialog {
 
     private static final long serialVersionUID = 1L;
 
     private boolean changed = false;
 
-    private final Set<String> personNamesUpper;
+    // person names to upper and trimmed
+    private final Set<String> personNamesSanitized;
     private final Person initialPerson;
 
     /**
      * Main constructor.
+     *
      * @param parent The parent frame for this dialog.
      * @param currentPersons The current set of persons in the case.
      */
-    AddEditPersonDialog(java.awt.Frame parent, Collection<Person> currentPersons) {
+    public AddEditPersonDialog(java.awt.Frame parent, Collection<Person> currentPersons) {
         this(parent, currentPersons, null);
     }
 
@@ -63,16 +63,12 @@ class AddEditPersonDialog extends javax.swing.JDialog {
         "AddEditPersonDialog_addPerson_title=Add Person",
         "AddEditPersonDialog_editPerson_title=Edit Person"
     })
-    AddEditPersonDialog(java.awt.Frame parent, Collection<Person> currentPersons, Person initialPerson) {
+    public AddEditPersonDialog(java.awt.Frame parent, Collection<Person> currentPersons, Person initialPerson) {
         super(parent, true);
         this.initialPerson = initialPerson;
         setTitle(initialPerson == null ? Bundle.AddEditPersonDialog_addPerson_title() : Bundle.AddEditPersonDialog_editPerson_title());
 
-        Stream<Person> curPersonStream = (currentPersons == null) ? Stream.empty() : currentPersons.stream();
-        personNamesUpper = curPersonStream
-                .filter(h -> h != null && h.getName() != null)
-                .map(h -> h.getName().toUpperCase())
-                .collect(Collectors.toSet());
+        personNamesSanitized = PersonNameValidator.getSanitizedPersonNames(currentPersons);
 
         initComponents();
         onNameUpdate(initialPerson == null ? null : initialPerson.getName());
@@ -103,7 +99,7 @@ class AddEditPersonDialog extends javax.swing.JDialog {
      * @return The string value for the name in the input field if Ok pressed or
      * null if not.
      */
-    String getValue() {
+    public String getValue() {
         return inputTextField.getText();
     }
 
@@ -111,7 +107,7 @@ class AddEditPersonDialog extends javax.swing.JDialog {
      * @return Whether or not the value has been changed and the user pressed
      * okay to save the new value.
      */
-    boolean isChanged() {
+    public boolean isChanged() {
         return changed;
     }
 
@@ -129,32 +125,11 @@ class AddEditPersonDialog extends javax.swing.JDialog {
 
         // validate text input against invariants setting validation 
         // message and whether or not okay button is enabled accordingly.
-        String validationMessage = getValidationMessage(newNameValue);
+        String validationMessage = PersonNameValidator.getValidationMessage(
+                newNameValue, initialPerson == null ? null : initialPerson.getName(), personNamesSanitized);
+        
         okButton.setEnabled(validationMessage == null);
         validationLabel.setText(validationMessage == null ? "" : validationMessage);
-    }
-
-    /**
-     * Gets the validation message based on the current text checked against the
-     * person names.
-     *
-     * @param name The current name in the text field.
-     * @return The validation message if the name is not valid or null.
-     */
-    @Messages({
-        "AddEditPersonDialog_getValidationMessage_onEmpty=Please provide some text for the person name.",
-        "AddEditPersonDialog_getValidationMessage_sameAsOriginal=Please provide a new name for this person.",
-        "AddEditPersonDialog_getValidationMessage_onDuplicate=Another person already has the same name.  Please choose a different name.",})
-    private String getValidationMessage(String name) {
-        if (name == null || name.isEmpty()) {
-            return Bundle.AddEditPersonDialog_getValidationMessage_onEmpty();
-        } else if (initialPerson != null && name.equalsIgnoreCase(initialPerson.getName())) {
-            return Bundle.AddEditPersonDialog_getValidationMessage_sameAsOriginal();
-        } else if (personNamesUpper.contains(name.toUpperCase())) {
-            return Bundle.AddEditPersonDialog_getValidationMessage_onDuplicate();
-        } else {
-            return null;
-        }
     }
 
     /**
@@ -174,21 +149,21 @@ class AddEditPersonDialog extends javax.swing.JDialog {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
-        inputTextField.setText(org.openide.util.NbBundle.getMessage(AddEditPersonDialog.class, "AddEditPersonDialog.inputTextField.text")); // NOI18N
+        inputTextField.setText(org.openide.util.NbBundle.getMessage(AddEditPersonDialog.class, "AddEditPersonDialog.inputTextField.text_1")); // NOI18N
 
-        nameLabel.setText(org.openide.util.NbBundle.getMessage(AddEditPersonDialog.class, "AddEditPersonDialog.nameLabel.text")); // NOI18N
+        nameLabel.setText(org.openide.util.NbBundle.getMessage(AddEditPersonDialog.class, "AddEditPersonDialog.nameLabel.text_1")); // NOI18N
 
         validationLabel.setForeground(Color.RED);
         validationLabel.setVerticalAlignment(javax.swing.SwingConstants.TOP);
 
-        okButton.setText(org.openide.util.NbBundle.getMessage(AddEditPersonDialog.class, "AddEditPersonDialog.okButton.text")); // NOI18N
+        okButton.setText(org.openide.util.NbBundle.getMessage(AddEditPersonDialog.class, "AddEditPersonDialog.okButton.text_1")); // NOI18N
         okButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 okButtonActionPerformed(evt);
             }
         });
 
-        cancelButton.setText(org.openide.util.NbBundle.getMessage(AddEditPersonDialog.class, "AddEditPersonDialog.cancelButton.text")); // NOI18N
+        cancelButton.setText(org.openide.util.NbBundle.getMessage(AddEditPersonDialog.class, "AddEditPersonDialog.cancelButton.text_1")); // NOI18N
         cancelButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cancelButtonActionPerformed(evt);

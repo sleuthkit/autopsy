@@ -26,10 +26,11 @@ import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.casemodule.TskCoreException;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.Person;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Removes the parent person from the specified host.
