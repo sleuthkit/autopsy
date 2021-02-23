@@ -1,6 +1,6 @@
 AddEditHostDialog_addHost_title=Add Host
 AddEditHostDialog_editHost_title=Edit Host
-AssociateNewPersonAction_menuTitle=New...
+AssociateNewPersonAction_menuTitle=Associate with New Person...
 # {0} - hostName
 # {1} - personName
 AssociateNewPersonAction_onError_description=There was an error while associating host {0} with new person {1}.

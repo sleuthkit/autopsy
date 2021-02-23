@@ -19,9 +19,11 @@
 package org.sleuthkit.autopsy.datamodel.persons;
 
 import java.awt.event.ActionEvent;
+import java.util.List;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.JOptionPane;
+import org.apache.commons.collections.CollectionUtils;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -53,6 +55,24 @@ public class DeletePersonAction extends AbstractAction {
     public DeletePersonAction(Person person) {
         super(Bundle.DeletePersonAction_menuTitle());
         this.person = person;
+        setEnabled();
+    }
+
+    private void setEnabled() {
+        if (person == null) {
+            this.setEnabled(false);
+        } else {
+            try {
+                List<Host> hosts = Case.getCurrentCaseThrows().getSleuthkitCase().getPersonManager().getHostsForPerson(person);
+                if (CollectionUtils.isNotEmpty(hosts)) {
+                    this.setEnabled(false);
+                    return;
+                }
+            } catch (NoCurrentCaseException | TskCoreException ex) {
+                logger.log(Level.WARNING, String.format("Unable to fetch hosts belonging to person: %s", person.getName() == null ? "<null>" : person.getName(), ex));
+            }
+            this.setEnabled(true);
+        }
     }
 
     @Override

@@ -249,7 +249,7 @@ public class HostNode extends DisplayableItemNode {
 
         if (this.host != null) {
             try {
-                Case.getCurrentCaseThrows().getSleuthkitCase().getPersonManager().getPerson(this.host);
+                parent = Case.getCurrentCaseThrows().getSleuthkitCase().getPersonManager().getPerson(this.host);
             } catch (NoCurrentCaseException | TskCoreException ex) {
                 logger.log(Level.WARNING, String.format("Error fetching parent person of host: %s", this.host.getName() == null ? "<null>" : this.host.getName()), ex);
                 return new Action[0];

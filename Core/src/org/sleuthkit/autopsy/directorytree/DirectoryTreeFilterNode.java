@@ -164,10 +164,10 @@ class DirectoryTreeFilterNode extends FilterNode {
     public Action[] getActions(boolean context) {
         List<Action> actions = new ArrayList<>();
         
-        final Content content = this.getLookup().lookup(Content.class);
-        if (content != null) {
+        //final Content content = this.getLookup().lookup(Content.class);
+        //if (content != null) {
             actions.addAll(Arrays.asList(super.getActions(true)));
-        }
+        //}
         actions.add(collapseAllAction);
         return actions.toArray(new Action[actions.size()]);
     }
