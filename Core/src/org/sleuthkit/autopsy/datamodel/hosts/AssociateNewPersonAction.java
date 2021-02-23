@@ -28,7 +28,6 @@ import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.persons.AddEditPersonDialog;
 import org.sleuthkit.datamodel.Host;
@@ -64,7 +63,7 @@ public class AssociateNewPersonAction extends AbstractAction {
     public void actionPerformed(ActionEvent e) {
         String newPersonName = "";
         try {
-             newPersonName = getAddDialogName();
+            newPersonName = getAddDialogName();
             if (StringUtils.isNotBlank(newPersonName)) {
                 Person person = Case.getCurrentCaseThrows().getSleuthkitCase().getPersonManager().createPerson(newPersonName);
                 Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().setPerson(host, person);
@@ -82,6 +81,13 @@ public class AssociateNewPersonAction extends AbstractAction {
 
     }
 
+    /**
+     * Get dialog to add new person name.
+     *
+     * @return The name for the new person or null to cancel.
+     * @throws NoCurrentCaseException
+     * @throws TskCoreException
+     */
     private String getAddDialogName() throws NoCurrentCaseException, TskCoreException {
         Frame parent = WindowManager.getDefault().getMainWindow();
 

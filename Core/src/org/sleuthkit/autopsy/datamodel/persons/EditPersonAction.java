@@ -76,6 +76,13 @@ public class EditPersonAction extends AbstractAction {
         }
     }
 
+    /**
+     * Presents a dialog that will allow the user to edit the person's name.
+     * @param person The person.
+     * @return The edited person's name or null if cancelled..
+     * @throws NoCurrentCaseException
+     * @throws TskCoreException 
+     */
     private String getEditedPersonName(Person person) throws NoCurrentCaseException, TskCoreException {
         Frame parent = WindowManager.getDefault().getMainWindow();
 

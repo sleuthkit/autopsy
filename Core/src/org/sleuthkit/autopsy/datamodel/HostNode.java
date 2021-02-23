@@ -246,20 +246,23 @@ public class HostNode extends DisplayableItemNode {
 
         Optional<Person> parent = Optional.empty();
 
+        // if there is a host, then provide actions
         if (this.host != null) {
             try {
-                parent = Case.getCurrentCaseThrows().getSleuthkitCase().getPersonManager().getPerson(this.host);
+                parent = Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().getPerson(this.host);
             } catch (NoCurrentCaseException | TskCoreException ex) {
                 logger.log(Level.WARNING, String.format("Error fetching parent person of host: %s", this.host.getName() == null ? "<null>" : this.host.getName()), ex);
                 return new Action[0];
             }
 
+            // if there is a parent, only give option to remove parent person.
             if (parent.isPresent()) {
                 return new Action[]{
                     new RemoveParentPersonAction(this.host, parent.get()),
                     null
                 };
             } else {
+                // otherwise provide options to associate with new person or existing persons
                 List<Person> existingPersons = Collections.emptyList();
                 try {
                     existingPersons = Case.getCurrentCaseThrows().getSleuthkitCase().getPersonManager().getPersons();

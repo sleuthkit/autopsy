@@ -30,16 +30,22 @@ import org.sleuthkit.datamodel.Person;
 
 /**
  *
- * JMenu item to show menu to associate given host with an existing person.
+ * JMenu item to show a menu giving options to associate the given host with an
+ * existing person.
  */
 @Messages({
-    "AssociatePersonsMenuAction_menuTitle=Associate with Existing Person",
-})
+    "AssociatePersonsMenuAction_menuTitle=Associate with Existing Person",})
 public class AssociatePersonsMenuAction extends AbstractAction implements Presenter.Popup {
 
     private final List<Person> persons;
     private final Host host;
 
+    /**
+     * Main constructor.
+     *
+     * @param persons The persons that this host can be associated with.
+     * @param host The host.
+     */
     public AssociatePersonsMenuAction(List<Person> persons, Host host) {
         super("");
         this.persons = persons;
@@ -63,6 +69,5 @@ public class AssociatePersonsMenuAction extends AbstractAction implements Presen
 
         return menu;
     }
-    
-    
+
 }

@@ -58,6 +58,9 @@ public class DeletePersonAction extends AbstractAction {
         setEnabled();
     }
 
+    /**
+     * Sets the action enabled only if no child hosts.
+     */
     private void setEnabled() {
         if (person == null) {
             this.setEnabled(false);

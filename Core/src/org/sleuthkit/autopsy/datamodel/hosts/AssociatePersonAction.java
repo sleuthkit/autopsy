@@ -26,7 +26,6 @@ import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.Person;
@@ -51,14 +50,14 @@ public class AssociatePersonAction extends AbstractAction {
     /**
      * Main constructor.
      *
-     * @param host The host that will become parentless.
-     * @param person The person to be removed as a parent from the host.
+     * @param host The host that will get associated with the person.
+     * @param person The person to be the parent of the host.
      */
     public AssociatePersonAction(Host host, Person person) {
-        super(person == null || person.getName() == null ? 
-                Bundle.RemoveParentPersonAction_unknownPerson() : 
-                person.getName());
-        
+        super(person == null || person.getName() == null
+                ? Bundle.RemoveParentPersonAction_unknownPerson()
+                : person.getName());
+
         this.host = host;
         this.person = person;
     }
