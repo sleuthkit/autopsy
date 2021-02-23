@@ -81,6 +81,8 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceNameChangedEvent;
+import org.sleuthkit.autopsy.casemodule.events.OsAccountAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.OsAccountChangedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ReportAddedEvent;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData.CaseNodeDataException;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CoordinationServiceUtils;
@@ -128,6 +130,10 @@ import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.OsAccount;
+import org.sleuthkit.datamodel.OsAccountManager;
+import org.sleuthkit.datamodel.OsAccountManager.OsAccountsAddedEvent;
+import org.sleuthkit.datamodel.OsAccountManager.OsAccountsChangedEvent;
 import org.sleuthkit.datamodel.Report;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TimelineManager;
@@ -409,7 +415,17 @@ public class Case {
          * An item in the central repository has had its comment modified. The
          * old value is null, the new value is string for current comment.
          */
-        CR_COMMENT_CHANGED;
+        CR_COMMENT_CHANGED,
+        /**
+         * OSAccount associated with the current case added. Call getOsAccount
+         * to get the added account;
+         */
+        OS_ACCOUNT_ADDED,
+        /**
+         * OSAccount associated with the current case has changed. 
+         * Call getOsAccount to get the changed account;
+         */
+        OS_ACCOUNT_CHANGED;
 
     };
 
@@ -441,6 +457,20 @@ public class Case {
                         event.getModuleName(),
                         artifactType,
                         event.getArtifacts(artifactType)));
+            }
+        }
+        
+        @Subscribe 
+        public void publishOsAccountAddedEvent(OsAccountManager.OsAccountsAddedEvent event) {
+            for(OsAccount account: event.getOsAcounts()) {
+                eventPublisher.publish(new OsAccountAddedEvent(account));
+            }
+        }
+        
+        @Subscribe 
+        public void publishOsAccountAddedEvent(OsAccountManager.OsAccountsChangedEvent event) {
+            for(OsAccount account: event.getOsAcounts()) {
+                eventPublisher.publish(new OsAccountChangedEvent(account));
             }
         }
     }
@@ -1639,7 +1669,15 @@ public class Case {
     public void notifyBlackBoardArtifactTagDeleted(BlackboardArtifactTag deletedTag) {
         eventPublisher.publish(new BlackBoardArtifactTagDeletedEvent(deletedTag));
     }
+    
+    public void notifyOsAccountAdded(OsAccount account) {
+        eventPublisher.publish(new OsAccountAddedEvent(account));
+    }
 
+    public void notifyOsAccountChanged(OsAccount account) {
+        eventPublisher.publish(new OsAccountChangedEvent(account));
+    }
+ 
     /**
      * Adds a report to the case.
      *
