@@ -177,14 +177,6 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
     public void run(Host host, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         if (!setDataSourceOptionsCalled) {
             
-            // HOSTTODO - use passed in value
-            try {
-                host = Case.getCurrentCase().getSleuthkitCase().getHostManager().getOrCreateHost("LocalFilesDSProcessor Host");
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Error creating/loading host", ex);
-                host = null;
-            }
-            
             localFilePaths = configPanel.getContentPaths();
             if (configPanel.subTypeIsLogicalEvidencePanel()) {
                 try {
