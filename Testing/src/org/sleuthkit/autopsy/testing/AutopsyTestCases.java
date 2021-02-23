@@ -143,6 +143,10 @@ public class AutopsyTestCases {
             while (!wo.btNext().isEnabled()) {
                 new Timeout("pausing", 1000).sleep(); // give it a second till the Add Data Source dialog enabled
             }
+
+            // pass by host menu with auto-generate host (which should already be selected)
+            wo.btNext().clickMouse();
+
             //select the toggle button for Disk Image or VM File it will be the first button created and proceed to next panel
             JToggleButtonOperator jtbo = new JToggleButtonOperator(wo, 0);
             jtbo.clickMouse();
@@ -173,6 +177,10 @@ public class AutopsyTestCases {
             while (!wo.btNext().isEnabled()) {
                 new Timeout("pausing", 1000).sleep(); // give it a second till the Add Data Source dialog enabled
             }
+
+            // pass by host menu with auto-generate host (which should already be selected)
+            wo.btNext().clickMouse();
+
             //select the toggle button for Logical Files it will be the third button created and proceed to next panel
             JToggleButtonOperator jtbo = new JToggleButtonOperator(wo, 2);
             jtbo.clickMouse();

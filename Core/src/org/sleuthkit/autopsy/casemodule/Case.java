@@ -104,6 +104,7 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.ThreadUtils;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.autopsy.coreutils.Version;
+import org.sleuthkit.autopsy.datamodel.hosts.OpenHostsAction;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.events.AutopsyEventException;
 import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
@@ -1111,6 +1112,7 @@ public class Case {
                  * Enable the case-specific actions.
                  */
                 CallableSystemAction.get(AddImageAction.class).setEnabled(FeatureAccessUtils.canAddDataSources());
+                CallableSystemAction.get(OpenHostsAction.class).setEnabled(true);
                 CallableSystemAction.get(CaseCloseAction.class).setEnabled(true);
                 CallableSystemAction.get(CaseDetailsAction.class).setEnabled(true);
                 CallableSystemAction.get(DataSourceSummaryAction.class).setEnabled(true);
@@ -1166,6 +1168,7 @@ public class Case {
                  * Disable the case-specific menu items.
                  */
                 CallableSystemAction.get(AddImageAction.class).setEnabled(false);
+                CallableSystemAction.get(OpenHostsAction.class).setEnabled(false);
                 CallableSystemAction.get(CaseCloseAction.class).setEnabled(false);
                 CallableSystemAction.get(CaseDetailsAction.class).setEnabled(false);
                 CallableSystemAction.get(DataSourceSummaryAction.class).setEnabled(false);
