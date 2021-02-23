@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
@@ -38,7 +37,6 @@ import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.hosts.AssociateNewPersonAction;
 import org.sleuthkit.autopsy.datamodel.hosts.AssociatePersonsMenuAction;
 import org.sleuthkit.autopsy.datamodel.hosts.RemoveParentPersonAction;
 import org.sleuthkit.datamodel.DataSource;
@@ -262,26 +260,10 @@ public class HostNode extends DisplayableItemNode {
                     null
                 };
             } else {
-                // otherwise provide options to associate with new person or existing persons
-                List<Person> existingPersons = Collections.emptyList();
-                try {
-                    existingPersons = Case.getCurrentCaseThrows().getSleuthkitCase().getPersonManager().getPersons();
-                } catch (NoCurrentCaseException | TskCoreException ex) {
-                    logger.log(Level.WARNING, "Error getting persons for case.", ex);
-                }
-
-                if (existingPersons.size() > 0) {
-                    return new Action[]{
-                        new AssociateNewPersonAction(this.host),
-                        new AssociatePersonsMenuAction(existingPersons, this.host),
-                        null
-                    };
-                } else {
-                    return new Action[]{
-                        new AssociateNewPersonAction(this.host),
-                        null
-                    };
-                }
+                return new Action[]{
+                    new AssociatePersonsMenuAction(this.host),
+                    null
+                };
             }
         }
         return new Action[0];

@@ -38,7 +38,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Allows someone to associate a new person with a parentless host.
  */
 @Messages({
-    "AssociateNewPersonAction_menuTitle=Associate with New Person...",
+    "AssociateNewPersonAction_menuTitle=New Person...",
     "AssociateNewPersonAction_onError_title=Error While Associating New Person",
     "# {0} - hostName",
     "# {1} - personName",

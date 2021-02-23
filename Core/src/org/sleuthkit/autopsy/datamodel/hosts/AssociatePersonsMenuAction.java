@@ -19,14 +19,21 @@
 package org.sleuthkit.autopsy.datamodel.hosts;
 
 import java.awt.event.ActionEvent;
+import java.util.Collections;
 import java.util.List;
+import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
+import javax.swing.JSeparator;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.actions.Presenter;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.Person;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  *
@@ -34,21 +41,20 @@ import org.sleuthkit.datamodel.Person;
  * existing person.
  */
 @Messages({
-    "AssociatePersonsMenuAction_menuTitle=Associate with Existing Person",})
+    "AssociatePersonsMenuAction_menuTitle=Associate with Person",})
 public class AssociatePersonsMenuAction extends AbstractAction implements Presenter.Popup {
 
-    private final List<Person> persons;
+    private static final Logger logger = Logger.getLogger(AssociatePersonsMenuAction.class.getName());
+
     private final Host host;
 
     /**
      * Main constructor.
      *
-     * @param persons The persons that this host can be associated with.
      * @param host The host.
      */
-    public AssociatePersonsMenuAction(List<Person> persons, Host host) {
+    public AssociatePersonsMenuAction(Host host) {
         super("");
-        this.persons = persons;
         this.host = host;
     }
 
@@ -61,12 +67,24 @@ public class AssociatePersonsMenuAction extends AbstractAction implements Presen
     public JMenuItem getPopupPresenter() {
         JMenu menu = new JMenu(Bundle.AssociatePersonsMenuAction_menuTitle());
 
-        persons.stream()
+        List<Person> existingPersons = Collections.emptyList();
+        try {
+            existingPersons = Case.getCurrentCaseThrows().getSleuthkitCase().getPersonManager().getPersons();
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            logger.log(Level.WARNING, "Error getting persons for case.", ex);
+        }
+
+        existingPersons.stream()
                 .filter(p -> p != null && p.getName() != null)
                 .sorted((a, b) -> a.getName().compareToIgnoreCase(b.getName()))
                 .map(p -> new JMenuItem(new AssociatePersonAction(this.host, p)))
                 .forEach(menu::add);
 
+        if (menu.getItemCount() > 0) {
+            menu.add(new JSeparator());
+        }
+
+        menu.add(new JMenuItem(new AssociateNewPersonAction(this.host)));
         return menu;
     }
 
