@@ -28,9 +28,9 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 /**
  * An abstract superclass for pipelines of ingest modules for a given ingest
  * task type. Some examples of ingest task types: data source level ingest
- * tasks, file ingest tasks, data artifacts ingest tasks, etc. Subclasses need
- * to implement a specialization of the inner PipelineModule decorator abstartc
- * superclass for they type of ingest modules that make up the pipeline.
+ * tasks, file ingest tasks, data artifact ingest tasks, etc. Subclasses need to
+ * implement a specialization of the inner PipelineModule abstract superclass
+ * for the type of ingest modules that make up the pipeline.
  *
  * @param <T> The ingest task type.
  */
@@ -47,10 +47,10 @@ abstract class IngestTaskPipeline<T extends IngestTask> {
     /**
      * Constructs an instance of an abstract superclass for pipelines of ingest
      * modules for a given ingest task type. Some examples of ingest task types:
-     * data source level ingest tasks, file ingest tasks, data artifacts ingest
+     * data source level ingest tasks, file ingest tasks, data artifact ingest
      * tasks, etc. Subclasses need to implement a specialization of the inner
-     * PipelineModule decorator abstartc superclass for they type of ingest
-     * modules that make up the pipeline.
+     * PipelineModule abstract superclass for the type of ingest modules that
+     * make up the pipeline.
      *
      * @param ingestJobPipeline The ingest job pipeline that owns this pipeline.
      * @param moduleTemplates   The ingest module templates that define this
@@ -115,7 +115,7 @@ abstract class IngestTaskPipeline<T extends IngestTask> {
      *                             ignored, as appropriate to the pipeline type.
      *
      * @return An Optional that is either empty or contains a newly created and
-     *         decorated ingest module.
+     *         wrapped ingest module.
      */
     abstract Optional<PipelineModule<T>> acceptModuleTemplate(IngestModuleTemplate ingestModuleTemplate);
 
@@ -152,7 +152,7 @@ abstract class IngestTaskPipeline<T extends IngestTask> {
     }
 
     /**
-     * Does any preparation required before performing the a task.
+     * Does any preparation required before performing a task.
      *
      * @param task The task.
      *
@@ -195,7 +195,6 @@ abstract class IngestTaskPipeline<T extends IngestTask> {
         } catch (IngestTaskPipelineException ex) {
             errors.add(new IngestModuleError("Ingest Task Pipeline", ex)); //NON-NLS
         }
-        ingestManager.setIngestTaskProgressCompleted(task);
         currentModule = null;
         return errors;
     }
@@ -210,9 +209,9 @@ abstract class IngestTaskPipeline<T extends IngestTask> {
     }
 
     /**
-     * Does any clean up required after performing the current task.
+     * Does any clean up required after performing a task.
      *
-     * @param task The current task.
+     * @param task The task.
      *
      * @throws IngestTaskPipelineException Thrown if there is an error cleaning
      *                                     up after performing the task.
@@ -224,7 +223,7 @@ abstract class IngestTaskPipeline<T extends IngestTask> {
      *
      * @return A list of shut down errors, possibly empty.
      */
-    synchronized List<IngestModuleError> shutDown() {
+    List<IngestModuleError> shutDown() {
         List<IngestModuleError> errors = new ArrayList<>();
         if (running == true) {
             for (PipelineModule<T> module : modules) {
@@ -236,7 +235,8 @@ abstract class IngestTaskPipeline<T extends IngestTask> {
                     if (msg == null) {
                         /*
                          * Jython run-time errors don't seem to have a message,
-                         * but have details in toString().
+                         * but have details in the string returned by
+                         * toString().
                          */
                         msg = ex.toString();
                     }
@@ -256,18 +256,13 @@ abstract class IngestTaskPipeline<T extends IngestTask> {
 
         private final IngestModule module;
         private final String displayName;
-
-        /*
-         * This field is intended to be written to in an ingest thread and read
-         * from in an ingest snaphot thread.
-         */
         private volatile Date processingStartTime;
 
         /**
          * Constructs an instance of an abstract superclass for a wrapper that
          * adds ingest infrastructure operations to an ingest module.
          *
-         * @param module      The ingest module to be decorated.
+         * @param module      The ingest module to be wrapped.
          * @param displayName The display name for the module.
          */
         PipelineModule(IngestModule module, String displayName) {
@@ -303,15 +298,12 @@ abstract class IngestTaskPipeline<T extends IngestTask> {
         }
 
         /**
-         * Gets the the processing start time for the wrapped module, as set by
+         * Gets the the processing start time for the wrapped module.
          *
          * @return The start time, will be null if the module has not started
          *         processing the data source yet.
          */
         Date getProcessingStartTime() {
-            if (processingStartTime == null) {
-                throw new IllegalStateException("setProcessingStartTime() was not called"); //NON-NLS
-            }
             return new Date(processingStartTime.getTime());
         }
 
@@ -321,7 +313,7 @@ abstract class IngestTaskPipeline<T extends IngestTask> {
         }
 
         /**
-         * Processes an ingest task.
+         * Performs an ingest task.
          *
          * @param ingestJobPipeline The ingest job pipeline that owns the ingest
          *                          module pipeline this module belongs to.

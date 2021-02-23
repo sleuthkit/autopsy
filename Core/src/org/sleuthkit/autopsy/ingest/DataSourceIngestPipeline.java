@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2021 Basis Technology Corp.
+ * Copyright 2014-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -90,11 +90,14 @@ final class DataSourceIngestPipeline extends IngestTaskPipeline<DataSourceIngest
             ingestJobPipeline.switchDataSourceIngestProgressBarToIndeterminate();
             ingestManager.setIngestTaskProgress(task, getDisplayName());
             logger.log(Level.INFO, "{0} analysis of {1} starting", new Object[]{getDisplayName(), dataSource.getName()}); //NON-NLS
-            module.process(dataSource, new DataSourceIngestModuleProgress(ingestJobPipeline));
+            ProcessResult result = module.process(dataSource, new DataSourceIngestModuleProgress(ingestJobPipeline));
             logger.log(Level.INFO, "{0} analysis of {1} finished", new Object[]{getDisplayName(), dataSource.getName()}); //NON-NLS            
-            if (ingestJobPipeline.currentDataSourceIngestModuleIsCancelled()) {
+            if (!ingestJobPipeline.isCancelled() && ingestJobPipeline.currentDataSourceIngestModuleIsCancelled()) {
                 ingestJobPipeline.currentDataSourceIngestModuleCancellationCompleted(getDisplayName());
             }
+            if (result == ProcessResult.ERROR) {
+                throw new IngestModuleException(String.format("%s experienced an error analyzing %s (data source objId = %d)", getDisplayName(), dataSource.getName(), dataSource.getId())); //NON-NLS
+            }            
         }
 
     }

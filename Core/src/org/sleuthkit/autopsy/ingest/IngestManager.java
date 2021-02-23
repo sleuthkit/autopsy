@@ -804,7 +804,7 @@ public class IngestManager implements IngestProgressSnapshotProvider {
      *
      * @param task The file level ingest job task that was completed.
      */
-    void setIngestTaskProgressCompleted(IngestTask task) {
+    void setIngestTaskProgressCompleted(FileIngestTask task) {
         IngestThreadActivitySnapshot prevSnap = ingestThreadActivitySnapshots.get(task.getThreadId());
         IngestThreadActivitySnapshot newSnap = new IngestThreadActivitySnapshot(task.getThreadId());
         ingestThreadActivitySnapshots.put(task.getThreadId(), newSnap);
