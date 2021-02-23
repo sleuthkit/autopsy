@@ -132,6 +132,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             dbSettingsSqlite.saveSettings();
             CentralRepoDbUtil.setUseCentralRepo(true);
             CentralRepoDbManager.saveDbChoice(CentralRepoDbChoice.SQLITE);
+            CentralRepository.getInstance().updateSettings();
         } catch (CentralRepoException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());

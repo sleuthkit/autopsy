@@ -39,7 +39,7 @@ import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.ShortcutWizardDescript
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class AddImageWizardSelectDspPanel extends ShortcutWizardDescriptorPanel implements PropertyChangeListener {
 
-    @NbBundle.Messages("SelectDataSourceProcessorPanel.name.text=Select Type of Data Source To Add")
+    @NbBundle.Messages("SelectDataSourceProcessorPanel.name.text=Select Data Source Type")
     private AddImageWizardSelectDspVisual component;
     private static final String LAST_DSP_PROPERTIES_FILE = "LastDspUsed"; //NON-NLS
     private static final String LAST_DSP_USED_KEY = "Last_Dsp_Used"; //NON-NLS

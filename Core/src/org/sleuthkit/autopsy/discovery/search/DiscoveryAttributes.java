@@ -920,7 +920,7 @@ public class DiscoveryAttributes {
         "DiscoveryAttributes.GroupingAttributeType.interestingItem.displayName=Interesting Item",
         "DiscoveryAttributes.GroupingAttributeType.tag.displayName=Tag",
         "DiscoveryAttributes.GroupingAttributeType.object.displayName=Object Detected",
-        "DiscoveryAttributes.GroupingAttributeType.lastDate.displayName=Last Activity Date",
+        "DiscoveryAttributes.GroupingAttributeType.lastDate.displayName=Final Activity Date",
         "DiscoveryAttributes.GroupingAttributeType.firstDate.displayName=First Activity Date",
         "DiscoveryAttributes.GroupingAttributeType.pageViews.displayName=Page Views",
         "DiscoveryAttributes.GroupingAttributeType.none.displayName=None",

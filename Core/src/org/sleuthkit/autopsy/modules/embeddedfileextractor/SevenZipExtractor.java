@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015-2020 Basis Technology Corp.
+ * Copyright 2015-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -143,7 +143,7 @@ class SevenZipExtractor {
     }
 
     /**
-     * Contructs an embedded file extractor that uses 7Zip via Java bindings to
+     * Constructs an embedded file extractor that uses 7Zip via Java bindings to
      * extract the contents of an archive file to a directory named for the
      * archive file.
      *
@@ -184,9 +184,30 @@ class SevenZipExtractor {
     boolean isSevenZipExtractionSupported(AbstractFile file) {
         String fileMimeType = fileTypeDetector.getMIMEType(file);
         for (SupportedArchiveExtractionFormats mimeType : SupportedArchiveExtractionFormats.values()) {
+            if (checkForIngestCancellation(file)) {
+                break;
+            }
             if (mimeType.toString().equals(fileMimeType)) {
                 return true;
             }
+        }
+        return false;
+    }
+
+    /**
+     * Private helper method to standardize the cancellation check that is
+     * performed when running ingest. Will return false if the SevenZipExtractor
+     * is being used without an IngestJobContext.
+     *
+     * @param file The file being extracted, this is only used for logging
+     *             purposes.
+     *
+     * @return True if ingest has been cancelled, false otherwise.
+     */
+    private boolean checkForIngestCancellation(AbstractFile file) {
+        if (fileTaskExecutor != null && context != null && context.fileIngestIsCancelled()) {
+            logger.log(Level.INFO, "Ingest was cancelled. Results extracted from the following archive file may be incomplete. Name: {0}Object ID: {1}", new Object[]{file.getName(), file.getId()});
+            return true;
         }
         return false;
     }
@@ -567,7 +588,9 @@ class SevenZipExtractor {
             unpackSuccessful = false;
             return unpackSuccessful;
         }
-
+        if (checkForIngestCancellation(archiveFile)) {
+            return false;
+        }
         try {
             List<AbstractFile> existingFiles = getAlreadyExtractedFiles(archiveFile, archiveFilePath);
             for (AbstractFile file : existingFiles) {
@@ -578,7 +601,9 @@ class SevenZipExtractor {
             unpackSuccessful = false;
             return unpackSuccessful;
         }
-
+        if (checkForIngestCancellation(archiveFile)) {
+            return false;
+        }
         parentAr = depthMap.get(archiveFile.getId());
         if (parentAr == null) {
             parentAr = new Archive(0, archiveFile.getId(), archiveFile);
@@ -598,6 +623,9 @@ class SevenZipExtractor {
                 return unpackSuccessful;
             }
         }
+        if (checkForIngestCancellation(archiveFile)) {
+            return false;
+        }
         IInArchive inArchive = null;
         try {
             stream = new SevenZipContentReadStream(new ReadContentInputStream(archiveFile));
@@ -605,6 +633,9 @@ class SevenZipExtractor {
             // it will be opened incorrectly when using 7zip's built-in auto-detect functionality.
             // All other archive formats are still opened using 7zip built-in auto-detect functionality.
             ArchiveFormat options = get7ZipOptions(archiveFile);
+            if (checkForIngestCancellation(archiveFile)) {
+                return false;
+            }
             if (password == null) {
                 inArchive = SevenZip.openInArchive(options, stream);
             } else {
@@ -613,7 +644,9 @@ class SevenZipExtractor {
             numItems = inArchive.getNumberOfItems();
             progress.start(numItems);
             progressStarted = true;
-
+            if (checkForIngestCancellation(archiveFile)) {
+                return false;
+            }
             //setup the archive local root folder
             final String uniqueArchiveFileName = FileUtil.escapeFileName(EmbeddedFileExtractorIngestModule.getUniqueName(archiveFile));
             if (!makeExtractedFilesDirectory(uniqueArchiveFileName)) {
@@ -634,6 +667,9 @@ class SevenZipExtractor {
 
             Map<Integer, InArchiveItemDetails> archiveDetailsMap = new HashMap<>();
             for (int inArchiveItemIndex = 0; inArchiveItemIndex < numItems; inArchiveItemIndex++) {
+                if (checkForIngestCancellation(archiveFile)) {
+                    return false;
+                }
                 progress.progress(String.format("%s: Analyzing archive metadata and creating local files (%d of %d)", currentArchiveName, inArchiveItemIndex + 1, numItems), 0);
                 if (isZipBombArchiveItemCheck(archiveFile, inArchive, inArchiveItemIndex, depthMap, escapedArchiveFilePath)) {
                     unpackSuccessful = false;
@@ -643,7 +679,9 @@ class SevenZipExtractor {
                 String pathInArchive = getPathInArchive(inArchive, inArchiveItemIndex, archiveFile);
                 byte[] pathBytesInArchive = getPathBytesInArchive(inArchive, inArchiveItemIndex, archiveFile);
                 UnpackedTree.UnpackedNode unpackedNode = unpackedTree.addNode(pathInArchive, pathBytesInArchive);
-
+                if (checkForIngestCancellation(archiveFile)) {
+                    return false;
+                }
                 final boolean isEncrypted = (Boolean) inArchive.getProperty(inArchiveItemIndex, PropID.ENCRYPTED);
 
                 if (isEncrypted && password == null) {
@@ -681,6 +719,9 @@ class SevenZipExtractor {
                         freeDiskSpace = newDiskSpace;
                     }
                 }
+                if (checkForIngestCancellation(archiveFile)) {
+                    return false;
+                }
                 final String uniqueExtractedName = FileUtil.escapeFileName(uniqueArchiveFileName + File.separator + (inArchiveItemIndex / 1000) + File.separator + inArchiveItemIndex + "_" + new File(pathInArchive).getName());
                 final String localAbsPath = moduleDirAbsolute + File.separator + uniqueExtractedName;
                 final String localRelPath = moduleDirRelative + File.separator + uniqueExtractedName;
@@ -699,7 +740,9 @@ class SevenZipExtractor {
                     localFileExists = false;
                     logger.log(Level.SEVERE, String.format("Error fiding or creating %s", localFile.getAbsolutePath()), ex); //NON-NLS
                 }
-
+                if (checkForIngestCancellation(archiveFile)) {
+                    return false;
+                }
                 // skip the rest of this loop if we couldn't create the file
                 //continue will skip details from being added to the map
                 if (!localFileExists) {
@@ -716,7 +759,9 @@ class SevenZipExtractor {
             }
 
             int[] extractionIndices = getExtractableFilesFromDetailsMap(archiveDetailsMap);
-
+            if (checkForIngestCancellation(archiveFile)) {
+                return false;
+            }
             StandardIArchiveExtractCallback archiveCallBack
                     = new StandardIArchiveExtractCallback(
                             inArchive, archiveFile, progress,
@@ -726,7 +771,9 @@ class SevenZipExtractor {
             //for efficiency. Hence, the HashMap and linear processing of 
             //inArchiveItemIndex. False indicates non-test mode
             inArchive.extract(extractionIndices, false, archiveCallBack);
-
+            if (checkForIngestCancellation(archiveFile)) {
+                return false;
+            }
             unpackSuccessful &= archiveCallBack.wasSuccessful();
 
             archiveDetailsMap = null;
@@ -735,9 +782,15 @@ class SevenZipExtractor {
             // intermediate nodes since the order is not guaranteed
             try {
                 unpackedTree.updateOrAddFileToCaseRec(statusMap, archiveFilePath);
+                if (checkForIngestCancellation(archiveFile)) {
+                    return false;
+                }
                 unpackedFiles = unpackedTree.getAllFileObjects();
                 //check if children are archives, update archive depth tracking
                 for (int i = 0; i < unpackedFiles.size(); i++) {
+                    if (checkForIngestCancellation(archiveFile)) {
+                        return false;
+                    }
                     progress.progress(String.format("%s: Searching for nested archives (%d of %d)", currentArchiveName, i + 1, unpackedFiles.size()));
                     AbstractFile unpackedFile = unpackedFiles.get(i);
                     if (unpackedFile == null) {
@@ -792,7 +845,9 @@ class SevenZipExtractor {
                 progress.finish();
             }
         }
-
+        if (checkForIngestCancellation(archiveFile)) {
+            return false;
+        }
         //create artifact and send user message
         if (hasEncrypted) {
             String encryptionType = fullEncryption ? ENCRYPTION_FULL : ENCRYPTION_FILE_LEVEL;

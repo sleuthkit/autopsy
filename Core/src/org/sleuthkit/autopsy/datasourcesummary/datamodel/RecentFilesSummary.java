@@ -51,7 +51,6 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
     private final static BlackboardAttribute.Type DATETIME_ACCESSED_ATT = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED);
     private final static BlackboardAttribute.Type DOMAIN_ATT = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN);
     private final static BlackboardAttribute.Type PATH_ATT = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH);
-    private final static BlackboardAttribute.Type DATETIME_ATT = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME);
     private final static BlackboardAttribute.Type ASSOCATED_ATT = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT);
     private final static BlackboardAttribute.Type EMAIL_FROM_ATT = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_FROM);
     private final static BlackboardAttribute.Type MSG_DATEIME_SENT_ATT = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_SENT);
@@ -125,7 +124,7 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
      */
     private RecentFileDetails getRecentlyOpenedDocument(BlackboardArtifact artifact) {
         String path = DataSourceInfoUtilities.getStringOrNull(artifact, PATH_ATT);
-        Long lastOpened = DataSourceInfoUtilities.getLongOrNull(artifact, DATETIME_ATT);
+        Long lastOpened = DataSourceInfoUtilities.getLongOrNull(artifact, DATETIME_ACCESSED_ATT);
 
         if (StringUtils.isBlank(path) || lastOpened == null || lastOpened == 0) {
             return null;

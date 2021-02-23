@@ -268,14 +268,6 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
         // Read the settings from the wizard 
         readConfigSettings();
         this.host = host;
-        
-        // HOSTTODO - remove once passing in a host
-        try {
-            this.host = Case.getCurrentCase().getSleuthkitCase().getHostManager().getOrCreateHost("ImageDSProcessor Host");
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error creating/loading host", ex);
-            this.host = null;
-        }
 	
         // Set up the data source before creating the ingest stream
         try {
@@ -426,7 +418,7 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
         return;
 	}
 
-	AddImageTask.ImageDetails imageDetails = new AddImageTask.ImageDetails(deviceId, image, sectorSize, timeZone, ignoreFatOrphanFiles, md5, sha1, sha256, host, null);
+	AddImageTask.ImageDetails imageDetails = new AddImageTask.ImageDetails(deviceId, image, sectorSize, timeZone, ignoreFatOrphanFiles, md5, sha1, sha256, null);
 	addImageTask = new AddImageTask(imageDetails, 
                 progressMonitor, 
                 new StreamingAddDataSourceCallbacks(ingestStream), 
@@ -496,20 +488,26 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
         // able to process the data source
         return 100;
     }
-
+      
     @Override
     public void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) {
+        process(deviceId, dataSourcePath, null, progressMonitor, callBack);
+    }
+    
+    @Override
+    public void process(String deviceId, Path dataSourcePath, Host host, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) {
         this.deviceId = deviceId;
         this.imagePath = dataSourcePath.toString();
         this.sectorSize = 0;
         this.timeZone = Calendar.getInstance().getTimeZone().getID();
+        this.host = host;
         this.ignoreFatOrphanFiles = false;
         setDataSourceOptionsCalled = true;
         
         ingestStream = new DefaultIngestStream();
         try {
             image = SleuthkitJNI.addImageToDatabase(Case.getCurrentCase().getSleuthkitCase(),
-                new String[]{imagePath}, sectorSize, timeZone, "", "", "", deviceId);
+                new String[]{imagePath}, sectorSize, timeZone, "", "", "", deviceId, host);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error adding data source with path " + imagePath + " to database", ex);
             final List<String> errors = new ArrayList<>();
@@ -523,17 +521,23 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
     
     @Override
     public IngestStream processWithIngestStream(String deviceId, Path dataSourcePath, IngestJobSettings settings, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) {
+        return processWithIngestStream(deviceId, dataSourcePath, null, settings, progressMonitor, callBack);
+    }
+    
+    @Override
+    public IngestStream processWithIngestStream(String deviceId, Path dataSourcePath, Host host, IngestJobSettings settings, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) {
         this.deviceId = deviceId;
         this.imagePath = dataSourcePath.toString();
         this.sectorSize = 0;
         this.timeZone = Calendar.getInstance().getTimeZone().getID();
+        this.host = host;
         this.ignoreFatOrphanFiles = false;
         setDataSourceOptionsCalled = true;
     
         // Set up the data source before creating the ingest stream
         try {
             image = SleuthkitJNI.addImageToDatabase(Case.getCurrentCase().getSleuthkitCase(),
-                new String[]{imagePath}, sectorSize, timeZone, md5, sha1, sha256, deviceId);
+                new String[]{imagePath}, sectorSize, timeZone, md5, sha1, sha256, deviceId, host);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error adding data source with path " + imagePath + " to database", ex);
             final List<String> errors = new ArrayList<>();
