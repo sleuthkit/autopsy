@@ -1149,7 +1149,7 @@ class ExtractRegistry extends Extract {
             HostManager hostMrg = tskCase.getHostManager();
             Host host = hostMrg.getHost((DataSource)dataSource);
 
-            Set<OsAccount> existingAccounts = accountMgr.getAccounts(host);
+            List<OsAccount> existingAccounts = accountMgr.getAccounts(host);
             for(OsAccount osAccount: existingAccounts) {
                 Optional<String> optional = osAccount.getUniqueIdWithinRealm();
                 if(!optional.isPresent()) {
@@ -2222,9 +2222,9 @@ class ExtractRegistry extends Extract {
         }
 
         if (homeDir != null && !homeDir.isEmpty()) {
-            Set<OsAccountAttribute> attSet = new HashSet<>();
-            attSet.add(createOsAccountAttribute(TSK_HOME_DIR, homeDir, osAccount, host, file));
-            osAccount.addAttributes(attSet);
+            List<OsAccountAttribute> attributes = new ArrayList<>();
+            attributes.add(createOsAccountAttribute(TSK_HOME_DIR, homeDir, osAccount, host, file));
+            osAccount.addAttributes(attributes);
         }
 
         accountMgr.updateAccount(osAccount);
@@ -2284,7 +2284,7 @@ class ExtractRegistry extends Extract {
         SimpleDateFormat regRipperTimeFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy 'Z'", US);
         regRipperTimeFormat.setTimeZone(getTimeZone("GMT"));
 
-        Set<OsAccountAttribute> attributeSet = new HashSet<>();
+        List<OsAccountAttribute> attributes = new ArrayList<>();
 
         String value = userInfo.get(ACCOUNT_CREATED_KEY);
         if (value != null && !value.isEmpty() && !value.equals(NEVER_DATE)) {
@@ -2298,7 +2298,7 @@ class ExtractRegistry extends Extract {
         if (value != null && !value.isEmpty() && !value.equals(NEVER_DATE)) {
             Long time = parseRegRipTime(value);
             if (time != null) {
-                attributeSet.add(createOsAccountAttribute(TSK_DATETIME_ACCESSED,
+                attributes.add(createOsAccountAttribute(TSK_DATETIME_ACCESSED,
                         parseRegRipTime(value),
                         osAccount, host, regFile));
             }
@@ -2306,7 +2306,7 @@ class ExtractRegistry extends Extract {
 
         value = userInfo.get(LOGIN_COUNT_KEY);
         if (value != null && !value.isEmpty()) {
-            attributeSet.add(createOsAccountAttribute(ATTRIBUTE_TYPE.TSK_COUNT,
+            attributes.add(createOsAccountAttribute(ATTRIBUTE_TYPE.TSK_COUNT,
                     Integer.parseInt(value),
                     osAccount, host, regFile));
         }
@@ -2321,7 +2321,7 @@ class ExtractRegistry extends Extract {
 
         value = userInfo.get(USER_COMMENT_KEY);
         if (value != null && !value.isEmpty()) {
-            attributeSet.add(createOsAccountAttribute(ATTRIBUTE_TYPE.TSK_DESCRIPTION,
+            attributes.add(createOsAccountAttribute(ATTRIBUTE_TYPE.TSK_DESCRIPTION,
                     value, osAccount, host, regFile));
         }
 
@@ -2329,7 +2329,7 @@ class ExtractRegistry extends Extract {
         if (value != null && !value.isEmpty()) {
             addEmailAccount(regFile, value);
 
-            attributeSet.add(createOsAccountAttribute(ATTRIBUTE_TYPE.TSK_EMAIL,
+            attributes.add(createOsAccountAttribute(ATTRIBUTE_TYPE.TSK_EMAIL,
                     value, osAccount, host, regFile));
         }
 
@@ -2348,14 +2348,14 @@ class ExtractRegistry extends Extract {
         if (value != null && !value.isEmpty() && !value.equals(NEVER_DATE)) {
             Long time = parseRegRipTime(value);
             if (time != null) {
-                attributeSet.add(createOsAccountAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_PASSWORD_RESET,
+                attributes.add(createOsAccountAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_PASSWORD_RESET,
                         time, osAccount, host, regFile));
             }
         }
 
         value = userInfo.get(PASSWORD_HINT);
         if (value != null && !value.isEmpty()) {
-            attributeSet.add(createOsAccountAttribute(ATTRIBUTE_TYPE.TSK_PASSWORD_HINT,
+            attributes.add(createOsAccountAttribute(ATTRIBUTE_TYPE.TSK_PASSWORD_HINT,
                     value, osAccount, host, regFile));
         }
 
@@ -2363,7 +2363,7 @@ class ExtractRegistry extends Extract {
         if (value != null && !value.isEmpty() && !value.equals(NEVER_DATE)) {
             Long time = parseRegRipTime(value);
             if (time != null) {
-                attributeSet.add(createOsAccountAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_PASSWORD_FAIL,
+                attributes.add(createOsAccountAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_PASSWORD_FAIL,
                         time, osAccount, host, regFile));
             }
         }
@@ -2371,20 +2371,20 @@ class ExtractRegistry extends Extract {
         String settingString = getSettingsFromMap(ACCOUNT_SETTINGS_FLAGS, userInfo);
         if (!settingString.isEmpty()) {
             settingString = settingString.substring(0, settingString.length() - 2);
-            attributeSet.add(createOsAccountAttribute(ATTRIBUTE_TYPE.TSK_PASSWORD_SETTINGS,
+            attributes.add(createOsAccountAttribute(ATTRIBUTE_TYPE.TSK_PASSWORD_SETTINGS,
                     settingString, osAccount, host, regFile));
         }
 
         settingString = getSettingsFromMap(ACCOUNT_SETTINGS_FLAGS, userInfo);
         if (!settingString.isEmpty()) {
             settingString = settingString.substring(0, settingString.length() - 2);
-            attributeSet.add(createOsAccountAttribute(ATTRIBUTE_TYPE.TSK_ACCOUNT_SETTINGS,
+            attributes.add(createOsAccountAttribute(ATTRIBUTE_TYPE.TSK_ACCOUNT_SETTINGS,
                     settingString, osAccount, host, regFile));
         }
 
         settingString = getSettingsFromMap(ACCOUNT_TYPE_FLAGS, userInfo);
         if (!settingString.isEmpty()) {
-            attributeSet.add(createOsAccountAttribute(ATTRIBUTE_TYPE.TSK_FLAG,
+            attributes.add(createOsAccountAttribute(ATTRIBUTE_TYPE.TSK_FLAG,
                     settingString, osAccount, host, regFile));
         }
 
@@ -2393,11 +2393,11 @@ class ExtractRegistry extends Extract {
                     .map(String::valueOf)
                     .collect(Collectors.joining(", "));
 
-            attributeSet.add(createOsAccountAttribute(ATTRIBUTE_TYPE.TSK_GROUPS,
+            attributes.add(createOsAccountAttribute(ATTRIBUTE_TYPE.TSK_GROUPS,
                     groups, osAccount, host, regFile));
         }
 
-        osAccount.addAttributes(attributeSet);
+        osAccount.addAttributes(attributes);
         tskCase.getOsAccountManager().updateAccount(osAccount);
     }
     
