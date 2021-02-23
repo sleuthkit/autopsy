@@ -348,9 +348,10 @@ class TestRunner(object):
         mu_su_str = "multi" if test_data.isMultiUser else "single"
 
         for file in glob.glob(test_data.output_path + "/*-Diff.txt"):
+            newPath = test_data.main_config.args.diff_files_output_folder + "/" + test_data.image + "-" + mu_su_str + "-" + os.path.basename(file)
             # Eg. copies HTML-Report-Diff.txt to <Image-name>-HTML-Report-Diff.txt
-            shutil.copy(file, test_data.main_config.args.diff_files_output_folder +
-                        "/" + test_data.image + "-" + mus_su_str + "-" + os.path.basename(file))
+            print('copying ' + str(file) + ' to ' + newPath)
+            shutil.copy(file, newPath)
             copied = True
         if not copied:
             print_report([], "NO DIFF FILES COPIED FROM " + test_data.output_path, "")
