@@ -18,9 +18,12 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.beans.PropertyChangeEvent;
 import java.text.SimpleDateFormat;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.logging.Level;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
@@ -28,6 +31,8 @@ import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.Lookups;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.OsAccount;
@@ -101,6 +106,25 @@ public final class OsAccounts implements AutopsyVisitableItem {
      */
     private final class OsAccountNodeFactory extends ChildFactory<OsAccount> {
 
+        private final Set<Case.Events> CASE_EVENTS_OF_INTEREST = EnumSet.of(Case.Events.OS_ACCOUNT_ADDED, Case.Events.OS_ACCOUNT_CHANGED);
+        
+        OsAccountNodeFactory() {
+            Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, (PropertyChangeEvent evt) -> {
+                String eventType = evt.getPropertyName();
+                if (eventType.equals(Case.Events.OS_ACCOUNT_ADDED.toString()) || eventType.equals(Case.Events.OS_ACCOUNT_CHANGED.toString())) {
+                    
+                    try {
+                        Case.getCurrentCaseThrows();
+                        OsAccounts.OsAccountNodeFactory.this.refresh(true);
+                    } catch (NoCurrentCaseException notUsed) {
+                        /**
+                         * Case is closed, do nothing.
+                         */
+                    }
+                }
+            });
+        }
+        
         @Override
         protected boolean createKeys(List<OsAccount> list) {
             try {
