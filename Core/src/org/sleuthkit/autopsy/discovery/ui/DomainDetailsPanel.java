@@ -20,12 +20,19 @@ package org.sleuthkit.autopsy.discovery.ui;
 
 import com.google.common.eventbus.Subscribe;
 import java.awt.Component;
+import java.util.logging.Level;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.apache.commons.lang.StringUtils;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.centralrepository.contentviewer.OtherOccurrencesPanel;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -38,6 +45,7 @@ import org.sleuthkit.autopsy.discovery.search.SearchData;
 final class DomainDetailsPanel extends JPanel {
 
     private static final long serialVersionUID = 1L;
+    private static final Logger logger = Logger.getLogger(DomainDetailsPanel.class.getName());
     private ArtifactsWorker singleArtifactDomainWorker;
     private String domain;
     private String selectedTabName = null;
@@ -47,6 +55,7 @@ final class DomainDetailsPanel extends JPanel {
      *
      * @param selectedTabName The name of the tab to select initially.
      */
+    @NbBundle.Messages({"DomainDetailsPanel.otherOccurrencesTab.title=Other Occurrences"})
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     DomainDetailsPanel() {
         initComponents();
@@ -55,6 +64,9 @@ final class DomainDetailsPanel extends JPanel {
         jTabbedPane1.add(Bundle.DomainDetailsPanel_miniTimelineTitle_text(), timelinePanel);
         for (BlackboardArtifact.ARTIFACT_TYPE type : SearchData.Type.DOMAIN.getArtifactTypes()) {
             jTabbedPane1.add(type.getDisplayName(), new DomainArtifactsTabPanel(type));
+        }
+        if (CentralRepository.isEnabled()) {
+            jTabbedPane1.add(Bundle.DomainDetailsPanel_otherOccurrencesTab_title(), new OtherOccurrencesPanel());
         }
     }
 
@@ -182,6 +194,17 @@ final class DomainDetailsPanel extends JPanel {
                     runDomainWorker((DomainArtifactsTabPanel) selectedComponent, false);
                 } else if (selectedComponent instanceof MiniTimelinePanel) {
                     runMiniTimelineWorker((MiniTimelinePanel) selectedComponent, false);
+                } else if (selectedComponent instanceof OtherOccurrencesPanel) {
+                    if (CentralRepository.isEnabled()) {
+                        try {
+                            ((OtherOccurrencesPanel) selectedComponent).populateTableForOneType(CentralRepository.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.DOMAIN_TYPE_ID), domain);
+                        } catch (CentralRepoException ex) {
+                            logger.log(Level.INFO, "Central repository exception while trying to get instances by type and value for domain: " + domain, ex);
+                            ((OtherOccurrencesPanel) selectedComponent).reset();
+                        }
+                    } else {
+                        ((OtherOccurrencesPanel) selectedComponent).reset();
+                    }
                 }
                 //send fade in event
                 DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.DetailsVisibleEvent(true));
@@ -200,6 +223,8 @@ final class DomainDetailsPanel extends JPanel {
                 ((DomainArtifactsTabPanel) comp).setStatus(DomainArtifactsTabPanel.ArtifactRetrievalStatus.UNPOPULATED);
             } else if (comp instanceof MiniTimelinePanel) {
                 ((MiniTimelinePanel) comp).setStatus(DomainArtifactsTabPanel.ArtifactRetrievalStatus.UNPOPULATED, domain);
+            } else if (comp instanceof OtherOccurrencesPanel) {
+                ((OtherOccurrencesPanel) comp).reset();
             }
         }
     }
