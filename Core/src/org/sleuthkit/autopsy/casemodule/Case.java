@@ -133,8 +133,8 @@ import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.OsAccount;
 import org.sleuthkit.datamodel.OsAccountManager;
-import org.sleuthkit.datamodel.OsAccountManager.OsAccountsAddedEvent;
-import org.sleuthkit.datamodel.OsAccountManager.OsAccountsChangedEvent;
+import org.sleuthkit.datamodel.OsAccountManager.OsAccountsCreationEvent;
+import org.sleuthkit.datamodel.OsAccountManager.OsAccountsUpdateEvent;
 import org.sleuthkit.datamodel.Report;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TimelineManager;
@@ -462,14 +462,14 @@ public class Case {
         }
         
         @Subscribe 
-        public void publishOsAccountAddedEvent(OsAccountManager.OsAccountsAddedEvent event) {
+        public void publishOsAccountAddedEvent(OsAccountsCreationEvent event) {
             for(OsAccount account: event.getOsAcounts()) {
                 eventPublisher.publish(new OsAccountAddedEvent(account));
             }
         }
         
         @Subscribe 
-        public void publishOsAccountChangedEvent(OsAccountManager.OsAccountsChangedEvent event) {
+        public void publishOsAccountChangedEvent(OsAccountsCreationEvent event) {
             for(OsAccount account: event.getOsAcounts()) {
                 eventPublisher.publish(new OsAccountChangedEvent(account));
             }
