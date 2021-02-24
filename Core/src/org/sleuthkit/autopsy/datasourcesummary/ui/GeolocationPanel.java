@@ -38,13 +38,14 @@ import org.sleuthkit.autopsy.datasourcesummary.datamodel.GeolocationSummary.City
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.GeolocationSummary.CityData;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.GeolocationSummary.CityRecordCount;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.CityRecord;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer.DefaultCellModel;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.ColumnModel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultCellModel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.IngestRunningLabel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel.ColumnModel;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.TableTemplate;
 import org.sleuthkit.autopsy.geolocation.GeoFilter;
 import org.sleuthkit.autopsy.geolocation.GeoLocationUIException;
 import org.sleuthkit.autopsy.geolocation.GeolocationTopComponent;
@@ -59,7 +60,9 @@ import org.sleuthkit.datamodel.DataSource;
     "GeolocationPanel_cityColumn_title=Closest City",
     "GeolocationPanel_countColumn_title=Count",
     "GeolocationPanel_onNoCrIngest_message=No results will be shown because the GPX Parser was not run.",
-    "GeolocationPanel_unknownRow_title=Unknown",})
+    "GeolocationPanel_unknownRow_title=Unknown",
+    "GeolocationPanel_mostCommon_tabName=Most Common Cities",
+    "GeolocationPanel_mostRecent_tabName=Most Recent Cities",})
 public class GeolocationPanel extends BaseDataSourceSummaryPanel {
 
     private static final long serialVersionUID = 1L;
@@ -67,24 +70,34 @@ public class GeolocationPanel extends BaseDataSourceSummaryPanel {
     private static final int MAX_COUNT = 10;
 
     // The column indicating the city
-    private static final ColumnModel<Pair<String, Integer>> CITY_COL = new ColumnModel<>(
+    private static final ColumnModel<Pair<String, Integer>, DefaultCellModel<?>> CITY_COL = new ColumnModel<>(
             Bundle.GeolocationPanel_cityColumn_title(),
             (pair) -> new DefaultCellModel(pair.getLeft()),
             300
     );
 
     // The column indicating the count of points seen close to that city
-    private static final ColumnModel<Pair<String, Integer>> COUNT_COL = new ColumnModel<>(
+    private static final ColumnModel<Pair<String, Integer>, DefaultCellModel<?>> COUNT_COL = new ColumnModel<>(
             Bundle.GeolocationPanel_countColumn_title(),
-            (pair) -> new DefaultCellModel(Integer.toString(pair.getRight())),
+            (pair) -> new DefaultCellModel(pair.getRight()),
             100
     );
 
+    private static TableTemplate<Pair<String, Integer>, DefaultCellModel<?>> MOST_COMMON_TEMPLATE = new TableTemplate<>(
+            Arrays.asList(CITY_COL, COUNT_COL),
+            Bundle.GeolocationPanel_mostCommon_tabName()
+    );
+
+    private static TableTemplate<Pair<String, Integer>, DefaultCellModel<?>> MOST_RECENT_TEMPLATE = new TableTemplate<>(
+            Arrays.asList(CITY_COL, COUNT_COL),
+            Bundle.GeolocationPanel_mostRecent_tabName()
+    );
+
     // tables displaying city and number of hits for that city
-    private final JTablePanel<Pair<String, Integer>> mostCommonTable = JTablePanel.getJTablePanel(Arrays.asList(CITY_COL, COUNT_COL))
+    private final JTablePanel<Pair<String, Integer>> mostCommonTable = JTablePanel.getJTablePanel(MOST_COMMON_TEMPLATE)
             .setKeyFunction((pair) -> pair.getLeft());
 
-    private final JTablePanel<Pair<String, Integer>> mostRecentTable = JTablePanel.getJTablePanel(Arrays.asList(CITY_COL, COUNT_COL))
+    private final JTablePanel<Pair<String, Integer>> mostRecentTable = JTablePanel.getJTablePanel(MOST_RECENT_TEMPLATE)
             .setKeyFunction((pair) -> pair.getLeft());
 
     // loadable components on this tab
@@ -156,7 +169,7 @@ public class GeolocationPanel extends BaseDataSourceSummaryPanel {
         } else if (cityIdentifiers.size() >= 3) {
             return String.format("%s, %s; %s", cityIdentifiers.get(0), cityIdentifiers.get(1), cityIdentifiers.get(2));
         }
-        
+
         return null;
     }
 

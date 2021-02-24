@@ -24,13 +24,14 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.PastCasesSummary;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.PastCasesSummary.PastCasesResult;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer.DefaultCellModel;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.ColumnModel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultCellModel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.IngestRunningLabel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel.ColumnModel;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.TableTemplate;
 import org.sleuthkit.datamodel.DataSource;
 
 /**
@@ -40,29 +41,39 @@ import org.sleuthkit.datamodel.DataSource;
 @Messages({
     "PastCasesPanel_caseColumn_title=Case",
     "PastCasesPanel_countColumn_title=Count",
-    "PastCasesPanel_onNoCrIngest_message=No results will be shown because the Central Repository module was not run."
+    "PastCasesPanel_onNoCrIngest_message=No results will be shown because the Central Repository module was not run.",
+    "PastCasesPanel_notableFileTable_tabName=Cases with Common Notable",
+    "PastCasesPanel_sameIdsTable_tabName=Past Cases with the Same Devices",
 })
 public class PastCasesPanel extends BaseDataSourceSummaryPanel {
 
     private static final long serialVersionUID = 1L;
 
-    private static final ColumnModel<Pair<String, Long>> CASE_COL = new ColumnModel<>(
+    private static final ColumnModel<Pair<String, Long>, DefaultCellModel<?>> CASE_COL = new ColumnModel<>(
             Bundle.PastCasesPanel_caseColumn_title(),
             (pair) -> new DefaultCellModel(pair.getKey()),
             300
     );
 
-    private static final ColumnModel<Pair<String, Long>> COUNT_COL = new ColumnModel<>(
+    private static final ColumnModel<Pair<String, Long>, DefaultCellModel<?>> COUNT_COL = new ColumnModel<>(
             Bundle.PastCasesPanel_countColumn_title(),
-            (pair) -> new DefaultCellModel(String.valueOf(pair.getValue())),
+            (pair) -> new DefaultCellModel(pair.getValue()),
             100
     );
 
-    private static final List<ColumnModel<Pair<String, Long>>> DEFAULT_COLUMNS = Arrays.asList(CASE_COL, COUNT_COL);
+        private static TableTemplate<Pair<String, Long>, DefaultCellModel<?>> NOTABLE_FILE_TEMPLATE = new TableTemplate<>(
+            Arrays.asList(CASE_COL, COUNT_COL),
+            Bundle.PastCasesPanel_notableFileTable_tabName()
+    );
 
-    private final JTablePanel<Pair<String, Long>> notableFileTable = JTablePanel.getJTablePanel(DEFAULT_COLUMNS);
+    private static TableTemplate<Pair<String, Long>, DefaultCellModel<?>> SAME_ID_TEMPLATE = new TableTemplate<>(
+            Arrays.asList(CASE_COL, COUNT_COL),
+            Bundle.PastCasesPanel_sameIdsTable_tabName()
+    );
+    
+    private final JTablePanel<Pair<String, Long>> notableFileTable = JTablePanel.getJTablePanel(NOTABLE_FILE_TEMPLATE);
 
-    private final JTablePanel<Pair<String, Long>> sameIdTable = JTablePanel.getJTablePanel(DEFAULT_COLUMNS);
+    private final JTablePanel<Pair<String, Long>> sameIdTable = JTablePanel.getJTablePanel(SAME_ID_TEMPLATE);
 
     private final List<JTablePanel<?>> tables = Arrays.asList(
             notableFileTable,

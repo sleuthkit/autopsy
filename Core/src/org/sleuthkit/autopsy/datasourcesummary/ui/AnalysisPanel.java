@@ -24,11 +24,12 @@ import java.util.function.Function;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.AnalysisSummary;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer.DefaultCellModel;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.ColumnModel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultCellModel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.IngestRunningLabel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel.ColumnModel;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.TableTemplate;
 import org.sleuthkit.datamodel.DataSource;
 
 /**
@@ -38,8 +39,10 @@ import org.sleuthkit.datamodel.DataSource;
 @Messages({
     "AnalysisPanel_keyColumn_title=Name",
     "AnalysisPanel_countColumn_title=Count",
-    "AnalysisPanel_keywordSearchModuleName=Keyword Search"
-})
+    "AnalysisPanel_keywordSearchModuleName=Keyword Search",
+    "AnalysisPanel_hashsetHits_tabName=Hashset Hits",
+    "AnalysisPanel_keywordHits_tabName=Keyword Hits",
+    "AnalysisPanel_interestingItemHits_tabName=Interesting Item Hits",})
 public class AnalysisPanel extends BaseDataSourceSummaryPanel {
 
     private static final long serialVersionUID = 1L;
@@ -47,7 +50,7 @@ public class AnalysisPanel extends BaseDataSourceSummaryPanel {
     /**
      * Default Column definitions for each table
      */
-    private static final List<ColumnModel<Pair<String, Long>>> DEFAULT_COLUMNS = Arrays.asList(
+    private static final List<ColumnModel<Pair<String, Long>, DefaultCellModel<?>>> DEFAULT_COLUMNS = Arrays.asList(
             new ColumnModel<>(
                     Bundle.AnalysisPanel_keyColumn_title(),
                     (pair) -> new DefaultCellModel(pair.getKey()),
@@ -55,23 +58,32 @@ public class AnalysisPanel extends BaseDataSourceSummaryPanel {
             ),
             new ColumnModel<>(
                     Bundle.AnalysisPanel_countColumn_title(),
-                    (pair) -> new DefaultCellModel(String.valueOf(pair.getValue())),
+                    (pair) -> new DefaultCellModel(pair.getValue()),
                     100
             )
     );
 
     private static final Function<Pair<String, Long>, String> DEFAULT_KEY_PROVIDER = (pair) -> pair.getKey();
 
+    private static final TableTemplate<Pair<String, Long>, DefaultCellModel<?>> HASHSET_HITS_TEMPATE
+            = new TableTemplate<>(DEFAULT_COLUMNS, Bundle.AnalysisPanel_hashsetHits_tabName());
+
+    private static final TableTemplate<Pair<String, Long>, DefaultCellModel<?>> KEYWORD_HITS_TEMPATE
+            = new TableTemplate<>(DEFAULT_COLUMNS, Bundle.AnalysisPanel_keywordHits_tabName());
+
+    private static final TableTemplate<Pair<String, Long>, DefaultCellModel<?>> INTERESTING_ITEM_HITS_TEMPATE
+            = new TableTemplate<>(DEFAULT_COLUMNS, Bundle.AnalysisPanel_interestingItemHits_tabName());
+
     private final JTablePanel<Pair<String, Long>> hashsetHitsTable
-            = JTablePanel.getJTablePanel(DEFAULT_COLUMNS)
+            = JTablePanel.getJTablePanel(HASHSET_HITS_TEMPATE)
                     .setKeyFunction(DEFAULT_KEY_PROVIDER);
 
     private final JTablePanel<Pair<String, Long>> keywordHitsTable
-            = JTablePanel.getJTablePanel(DEFAULT_COLUMNS)
+            = JTablePanel.getJTablePanel(KEYWORD_HITS_TEMPATE)
                     .setKeyFunction(DEFAULT_KEY_PROVIDER);
 
     private final JTablePanel<Pair<String, Long>> interestingItemsTable
-            = JTablePanel.getJTablePanel(DEFAULT_COLUMNS)
+            = JTablePanel.getJTablePanel(INTERESTING_ITEM_HITS_TEMPATE)
                     .setKeyFunction(DEFAULT_KEY_PROVIDER);
 
     private final List<JTablePanel<?>> tables = Arrays.asList(

@@ -38,11 +38,12 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.EventUpdateHandler;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.GuiCellModel.DefaultMenuItem;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.GuiCellModel.MenuItem;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.LoadableComponent;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.SwingWorkerSequentialExecutor;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.UpdateGovernor;
@@ -244,12 +245,12 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
      * @param artifact The artifact.
      * @return The menu item for a go to artifact menu item.
      */
-    protected CellModelTableCellRenderer.MenuItem getArtifactNavigateItem(BlackboardArtifact artifact) {
+    protected MenuItem getArtifactNavigateItem(BlackboardArtifact artifact) {
         if (artifact == null) {
             return null;
         }
 
-        return new CellModelTableCellRenderer.DefaultMenuItem(
+        return new DefaultMenuItem(
                 Bundle.BaseDataSourceSummaryPanel_goToArtifact(),
                 () -> {
                     final DirectoryTreeTopComponent dtc = DirectoryTreeTopComponent.findInstance();
@@ -292,7 +293,7 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
      * @param path The path to the file.
      * @return The menu item or null if file cannot be found in data source.
      */
-    protected CellModelTableCellRenderer.MenuItem getFileNavigateItem(String path) {
+    protected MenuItem getFileNavigateItem(String path) {
         if (StringUtils.isNotBlank(path)) {
             Path p = Paths.get(path);
             String fileName = normalizePath(p.getFileName().toString());
@@ -320,12 +321,12 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
      * @param file The file.
      * @return The menu item list for a go to artifact menu item.
      */
-    protected CellModelTableCellRenderer.MenuItem getFileNavigateItem(AbstractFile file) {
+    protected MenuItem getFileNavigateItem(AbstractFile file) {
         if (file == null) {
             return null;
         }
 
-        return new CellModelTableCellRenderer.DefaultMenuItem(
+        return new DefaultMenuItem(
                 Bundle.BaseDataSourceSummaryPanel_goToFile(),
                 () -> {
                     new ViewContextAction(Bundle.BaseDataSourceSummaryPanel_goToFile(), file)
