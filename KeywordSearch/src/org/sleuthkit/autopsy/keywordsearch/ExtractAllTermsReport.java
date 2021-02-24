@@ -49,8 +49,9 @@ public class ExtractAllTermsReport implements GeneralReportModule {
     
     @NbBundle.Messages({
         "ExtractAllTermsReport.error.noOpenCase=No currently open case.",
-        "ExtractAllTermsReport.search.noFilesInIdxMsg=<html>No files are in index yet. <br />Try again later. Index is updated every {0} minutes.</html>",
-        "ExtractAllTermsReport.search.noFilesInIdxMsg2=<html>No files are in index yet. <br />Try again later</html>",
+        "# {0} - Keyword search commit frequency",
+        "ExtractAllTermsReport.search.noFilesInIdxMsg=No files are in index yet. Try again later. Index is updated every {0} minutes.",
+        "ExtractAllTermsReport.search.noFilesInIdxMsg2=No files are in index yet. Try again later",
         "ExtractAllTermsReport.search.searchIngestInProgressTitle=Keyword Search Ingest in Progress",
         "ExtractAllTermsReport.search.ingestInProgressBody=<html>Keyword Search Ingest is currently running.<br />Not all files have been indexed and this search might yield incomplete results.<br />Do you want to proceed with this search anyway?</html>",
         "ExtractAllTermsReport.startExport=Starting Unique Word Export",
@@ -85,7 +86,6 @@ public class ExtractAllTermsReport implements GeneralReportModule {
                 progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR, Bundle.ExtractAllTermsReport_search_noFilesInIdxMsg2());
             }
             progressPanel.setIndeterminate(false);
-            progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR);
             return;
         }
 
@@ -105,16 +105,14 @@ public class ExtractAllTermsReport implements GeneralReportModule {
             Path outputFile = Paths.get(settings.getReportDirectoryPath(), getRelativeFilePath());
             server.extractAllTermsForDataSource(outputFile, progressPanel);
         } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
-            logger.log(Level.SEVERE, "Exception while extracting all terms", ex); //NON-NLS
-            progressPanel.updateStatusLabel(Bundle.ExtractAllTermsReport_export_error());
+            logger.log(Level.SEVERE, "Exception while extracting unique terms", ex); //NON-NLS
             progressPanel.setIndeterminate(false);
-            progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR);
+            progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR, Bundle.ExtractAllTermsReport_export_error());
             return;
         }
-        progressPanel.updateStatusLabel(Bundle.ExtractAllTermsReport_exportComplete());
 
         progressPanel.setIndeterminate(false);
-        progressPanel.complete(ReportProgressPanel.ReportStatus.COMPLETE);
+        progressPanel.complete(ReportProgressPanel.ReportStatus.COMPLETE, Bundle.ExtractAllTermsReport_exportComplete());
     }
 
     @Override
