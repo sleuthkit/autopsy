@@ -469,7 +469,7 @@ public class Case {
         }
         
         @Subscribe 
-        public void publishOsAccountChangedEvent(OsAccountsCreationEvent event) {
+        public void publishOsAccountChangedEvent(OsAccountsUpdateEvent event) {
             for(OsAccount account: event.getOsAcounts()) {
                 eventPublisher.publish(new OsAccountChangedEvent(account));
             }
