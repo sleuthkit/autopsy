@@ -93,7 +93,7 @@ public class DataSourcesByTypeNode extends DisplayableItemNode {
 
     }
     
-    private static final String NAME = Bundle.DataSourcesHostsNode_name();
+    public static final String NAME = Bundle.DataSourcesHostsNode_name();
 
     /**
      * Main constructor.

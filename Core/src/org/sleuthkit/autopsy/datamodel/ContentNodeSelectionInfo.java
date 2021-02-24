@@ -50,7 +50,7 @@ public class ContentNodeSelectionInfo implements NodeSelectionInfo {
     @Override
     public boolean matches(Node candidateNode) {
         Content content = candidateNode.getLookup().lookup(Content.class);
-        return content.getId() == contentId;
+        return (content != null && content.getId() == contentId);
     }
 
 }
