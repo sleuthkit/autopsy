@@ -20,8 +20,6 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.function.Function;
@@ -159,6 +157,18 @@ public class HostNode extends DisplayableItemNode {
         return new DataSourceGroupingNode(key.getDataSource());
     };
 
+    /**
+     * Get the host name or 'unknown host' if null.
+     *
+     * @param host The host.
+     * @return The display name.
+     */
+    private static String getHostName(Host host) {
+        return (host == null || host.getName() == null)
+                ? Bundle.HostGroupingNode_unknownHostNode_title()
+                : host.getName();
+    }
+
     private final Host host;
 
     /**
@@ -188,14 +198,21 @@ public class HostNode extends DisplayableItemNode {
      * @param host The host.
      */
     private HostNode(Children children, Host host) {
-        super(children, host == null ? null : Lookups.singleton(host));
+        this(children, host, getHostName(host));
+    }
 
-        String safeName = (host == null || host.getName() == null)
-                ? Bundle.HostGroupingNode_unknownHostNode_title()
-                : host.getName();
-
-        super.setName(safeName);
-        super.setDisplayName(safeName);
+    /**
+     * Constructor.
+     *
+     * @param children The children for this host node.
+     * @param host The host.
+     * @param displayName The displayName.
+     */
+    private HostNode(Children children, Host host, String displayName) {
+        super(children,
+                host == null ? Lookups.fixed(displayName) : Lookups.fixed(host, displayName));
+        super.setName(displayName);
+        super.setDisplayName(displayName);
         this.setIconBaseWithExtension(ICON_PATH);
         this.host = host;
     }

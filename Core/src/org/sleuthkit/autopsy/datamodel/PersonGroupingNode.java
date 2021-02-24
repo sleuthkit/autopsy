@@ -148,19 +148,37 @@ public class PersonGroupingNode extends DisplayableItemNode {
     }
 
     /**
+     * Gets the display name for this person or "Unknown Persons".
+     *
+     * @param person The person.
+     * @return The non-empty string for the display name.
+     */
+    private static String getDisplayName(Person person) {
+        return (person == null || person.getName() == null)
+                ? Bundle.PersonNode_unknownPersonNode_title()
+                : person.getName();
+    }
+
+    /**
      * Main constructor.
      *
      * @param person The person record to be represented.
      */
     PersonGroupingNode(Person person) {
-        super(Children.create(new PersonChildren(person), false), person == null ? null : Lookups.singleton(person));
+        this(person, getDisplayName(person));
+    }
 
-        String safeName = (person == null || person.getName() == null)
-                ? Bundle.PersonNode_unknownPersonNode_title()
-                : person.getName();
-
-        super.setName(safeName);
-        super.setDisplayName(safeName);
+    /**
+     * Constructor.
+     *
+     * @param person The person.
+     * @param displayName The display name for the person.
+     */
+    private PersonGroupingNode(Person person, String displayName) {
+        super(Children.create(new PersonChildren(person), false),
+                person == null ? Lookups.fixed(displayName) : Lookups.fixed(person, displayName));
+        super.setName(displayName);
+        super.setDisplayName(displayName);
         this.setIconBaseWithExtension(ICON_PATH);
     }
 
@@ -178,11 +196,10 @@ public class PersonGroupingNode extends DisplayableItemNode {
     public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
         return visitor.visit(this);
     }
-    
+
     @NbBundle.Messages({
-        "PersonGroupingNode_createSheet_nameProperty=Name",
-    })
-     @Override
+        "PersonGroupingNode_createSheet_nameProperty=Name",})
+    @Override
     protected Sheet createSheet() {
         Sheet sheet = Sheet.createDefault();
         Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
@@ -192,7 +209,7 @@ public class PersonGroupingNode extends DisplayableItemNode {
         }
 
         sheetSet.put(new NodeProperty<>("Name", Bundle.PersonGroupingNode_createSheet_nameProperty(), "", getDisplayName())); //NON-NLS
-        
+
         return sheet;
     }
 }
