@@ -211,7 +211,7 @@ public class ViewContextAction extends AbstractAction {
                             }
 
                             // for this data source, get the "Data Sources" child node
-                            Node datasourceGroupingNode = treeNode.getChildren().findChild(DataSourcesNode.NAME);
+                            Node datasourceGroupingNode = treeNode.getChildren().findChild(DataSourcesNode.getNameIdentifier());
 
                             // check whether this is the data source we are looking for
                             parentTreeViewNode = findParentNodeInTree(parentContent, datasourceGroupingNode);
@@ -227,7 +227,7 @@ public class ViewContextAction extends AbstractAction {
                         Node datasourceGroupingNode = rootChildren.findChild(dsname);
                         if (!Objects.isNull(datasourceGroupingNode)) {
                             Children dsChildren = datasourceGroupingNode.getChildren();
-                            parentTreeViewNode = dsChildren.findChild(DataSourcesNode.NAME);
+                            parentTreeViewNode = dsChildren.findChild(DataSourcesNode.getNameIdentifier());
                         }
                     }
 
@@ -244,7 +244,7 @@ public class ViewContextAction extends AbstractAction {
             } else {  // Classic view 
                 // Start the search at the DataSourcesNode
                 Children rootChildren = treeViewExplorerMgr.getRootContext().getChildren();
-                Node rootDsNode = rootChildren == null ? null : rootChildren.findChild(DataSourcesByTypeNode.NAME);
+                Node rootDsNode = rootChildren == null ? null : rootChildren.findChild(DataSourcesByTypeNode.getNameIdentifier());
                 if (rootDsNode != null) {
                     for (Node dataSourceLevelNode : getDataSourceLevelNodes(rootDsNode)) {
                         DataSource dataSource = dataSourceLevelNode.getLookup().lookup(DataSource.class);
@@ -313,7 +313,7 @@ public class ViewContextAction extends AbstractAction {
             return Collections.emptyList();
         } else if (node.getLookup().lookup(Host.class) != null || 
                 node.getLookup().lookup(Person.class) != null || 
-                DataSourcesByTypeNode.NAME.equals(node.getLookup().lookup(String.class))) {
+                DataSourcesByTypeNode.getNameIdentifier().equals(node.getLookup().lookup(String.class))) {
             Children children = node.getChildren();
             Node[] childNodes = children == null ? null : children.getNodes();
             if (childNodes == null) {

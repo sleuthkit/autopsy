@@ -93,8 +93,15 @@ public class DataSourcesByTypeNode extends DisplayableItemNode {
 
     }
     
-    public static final String NAME = Bundle.DataSourcesHostsNode_name();
+    private static final String NAME = Bundle.DataSourcesHostsNode_name();
 
+    /**
+     * @return The name used to identify the node of this type with a lookup.
+     */
+    public static String getNameIdentifier() {
+        return NAME;
+    }
+    
     /**
      * Main constructor.
      */
