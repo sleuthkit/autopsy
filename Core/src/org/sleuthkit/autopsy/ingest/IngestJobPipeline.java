@@ -52,6 +52,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSet;
 import org.sleuthkit.autopsy.python.FactoryClassNameNormalizer;
+import org.sleuthkit.datamodel.DataArtifact;
 
 /**
  * Encapsulates a data source and the ingest module pipelines used to process
@@ -90,7 +91,7 @@ final class IngestJobPipeline {
          */
         INITIALIZATION,
         /**
-         * Running only file ingest modules (used only for streaming ingest)
+         * Running only file ingest modules (used only for streaming ingest).
          */
         FIRST_STAGE_FILES_ONLY,
         /**
@@ -1093,6 +1094,15 @@ final class IngestJobPipeline {
          * bit of defensive programming.
          */
         this.checkForStageCompleted();
+    }
+
+    /**
+     * RJCTODO
+     *
+     * @param artifacts
+     */
+    void addDataArtifacts(List<DataArtifact> artifacts) {
+        // RJCTODO
     }
 
     /**

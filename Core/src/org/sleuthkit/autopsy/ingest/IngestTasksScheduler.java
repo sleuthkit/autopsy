@@ -302,10 +302,11 @@ final class IngestTasksScheduler {
         long jobId = ingestJobPipeline.getId();
 
         return !(this.dataSourceIngestThreadQueue.hasTasksForJob(jobId)
-                || hasTasksForJob(this.rootFileTaskQueue, jobId)
-                || hasTasksForJob(this.pendingFileTaskQueue, jobId)
-                || hasTasksForJob(this.streamedTasksQueue, jobId)
-                || this.fileIngestThreadsQueue.hasTasksForJob(jobId));
+                || hasTasksForJob(rootFileTaskQueue, jobId)
+                || hasTasksForJob(pendingFileTaskQueue, jobId)
+                || hasTasksForJob(streamedTasksQueue, jobId)
+                || fileIngestThreadsQueue.hasTasksForJob(jobId)
+                || dataArtifactIngestThreadQueue.hasTasksForJob(jobId));
     }
 
     /**
@@ -690,6 +691,7 @@ final class IngestTasksScheduler {
                 this.fileIngestThreadsQueue.countQueuedTasksForJob(jobId),
                 this.dataSourceIngestThreadQueue.countRunningTasksForJob(jobId) + this.fileIngestThreadsQueue.countRunningTasksForJob(jobId),
                 countTasksForJob(this.streamedTasksQueue, jobId));
+        // RJCTODO
     }
 
     /**
