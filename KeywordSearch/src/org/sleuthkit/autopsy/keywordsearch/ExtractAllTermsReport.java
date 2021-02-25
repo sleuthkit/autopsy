@@ -74,7 +74,7 @@ public class ExtractAllTermsReport implements GeneralReportModule {
         boolean isIngestRunning = IngestManager.getInstance().isIngestRunning();
 
         int filesIndexed = 0;
-            try { // see if another node added any indexed files
+            try { // see if there are any indexed files
                 filesIndexed = KeywordSearch.getServer().queryNumIndexedFiles();
             } catch (KeywordSearchModuleException | NoOpenCoreException ignored) {
             }
@@ -89,7 +89,7 @@ public class ExtractAllTermsReport implements GeneralReportModule {
             return;
         }
 
-        //check if keyword search module  ingest is running (indexing, etc)
+        // check if keyword search module ingest is running (indexing, etc)
         if (isIngestRunning) {
             if (KeywordSearchUtil.displayConfirmDialog(Bundle.ExtractAllTermsReport_search_searchIngestInProgressTitle(),
                     Bundle.ExtractAllTermsReport_search_ingestInProgressBody(), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN) == false) {
