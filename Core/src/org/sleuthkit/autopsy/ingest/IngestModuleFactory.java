@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2014-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -98,7 +98,9 @@ public interface IngestModuleFactory {
      *
      * @return True if the factory provides a global settings panel.
      */
-    boolean hasGlobalSettingsPanel();
+    default boolean hasGlobalSettingsPanel() {
+        return false;
+    }
 
     /**
      * Gets a user interface panel that allows a user to change settings that
@@ -113,7 +115,9 @@ public interface IngestModuleFactory {
      *
      * @return A global settings panel.
      */
-    IngestModuleGlobalSettingsPanel getGlobalSettingsPanel();
+    default IngestModuleGlobalSettingsPanel getGlobalSettingsPanel() {
+        throw new UnsupportedOperationException();
+    }
 
     /**
      * Gets the default per ingest job settings for instances of the family of
@@ -127,7 +131,9 @@ public interface IngestModuleFactory {
      *
      * @return The default ingest job settings.
      */
-    IngestModuleIngestJobSettings getDefaultIngestJobSettings();
+    default IngestModuleIngestJobSettings getDefaultIngestJobSettings() {
+        return new NoIngestModuleIngestJobSettings();
+    }
 
     /**
      * Queries the factory to determine if it provides user a interface panel to
@@ -141,7 +147,9 @@ public interface IngestModuleFactory {
      *
      * @return True if the factory provides ingest job settings panels.
      */
-    boolean hasIngestJobSettingsPanel();
+    default boolean hasIngestJobSettingsPanel() {
+        return false;
+    }
 
     /**
      * Gets a user interface panel that can be used to set per ingest job
@@ -157,7 +165,9 @@ public interface IngestModuleFactory {
      *
      * @return An ingest job settings panel.
      */
-    IngestModuleIngestJobSettingsPanel getIngestJobSettingsPanel(IngestModuleIngestJobSettings settings);
+    default IngestModuleIngestJobSettingsPanel getIngestJobSettingsPanel(IngestModuleIngestJobSettings settings) {
+        throw new UnsupportedOperationException();
+    }
 
     /**
      * Queries the factory to determine if it is capable of creating data source
@@ -167,7 +177,9 @@ public interface IngestModuleFactory {
      *
      * @return True if the factory can create data source ingest modules.
      */
-    boolean isDataSourceIngestModuleFactory();
+    default boolean isDataSourceIngestModuleFactory() {
+        return false;
+    }
 
     /**
      * Creates a data source ingest module instance.
@@ -198,7 +210,9 @@ public interface IngestModuleFactory {
      *
      * @return A data source ingest module instance.
      */
-    DataSourceIngestModule createDataSourceIngestModule(IngestModuleIngestJobSettings settings);
+    default DataSourceIngestModule createDataSourceIngestModule(IngestModuleIngestJobSettings ingestOptions) {
+        throw new UnsupportedOperationException();
+    }
 
     /**
      * Queries the factory to determine if it is capable of creating file ingest
@@ -208,7 +222,9 @@ public interface IngestModuleFactory {
      *
      * @return True if the factory can create file ingest modules.
      */
-    boolean isFileIngestModuleFactory();
+    default boolean isFileIngestModuleFactory() {
+        return false;
+    }
 
     /**
      * Creates a file ingest module instance.
@@ -238,6 +254,59 @@ public interface IngestModuleFactory {
      * @param settings The settings for the ingest job.
      *
      * @return A file ingest module instance.
+     * RJCTODO: Remove refs to adapters
      */
-    FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings settings);
+    default FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings ingestOptions) {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * RJCTODO
+     *
+     * Queries the factory to determine if it is capable of creating file ingest
+     * modules. If the module family does not include file ingest modules, the
+     * factory may extend IngestModuleFactoryAdapter to get an implementation of
+     * this method that returns false.
+     *
+     * @return True if the factory can create file ingest modules.
+     */
+    default boolean isDataArtifactIngestModuleFactory() {
+        return false;
+    }
+
+    /**
+     * RJCTODO
+     *
+     * Creates a file ingest module instance.
+     * <p>
+     * Autopsy will generally use the factory to several instances of each type
+     * of module for each ingest job it performs. Completing an ingest job
+     * entails processing a single data source (e.g., a disk image) and all of
+     * the files from the data source, including files extracted from archives
+     * and any unallocated space (made to look like a series of files). The data
+     * source is passed through one or more pipelines of data source ingest
+     * modules. The files are passed through one or more pipelines of file
+     * ingest modules.
+     * <p>
+     * The ingest framework may use multiple threads to complete an ingest job,
+     * but it is guaranteed that there will be no more than one module instance
+     * per thread. However, if the module instances must share resources, the
+     * modules are responsible for synchronizing access to the shared resources
+     * and doing reference counting as required to release those resources
+     * correctly. Also, more than one ingest job may be in progress at any given
+     * time. This must also be taken into consideration when sharing resources
+     * between module instances. modules.
+     * <p>
+     * If the module family does not include file ingest modules, the factory
+     * may extend IngestModuleFactoryAdapter to get an implementation of this
+     * method that throws an UnsupportedOperationException.
+     *
+     * @param settings The settings for the ingest job.
+     *
+     * @return A file ingest module instance.
+     */
+    default DataArtifactIngestModule createDataArtifactIngestModule(IngestModuleIngestJobSettings settings) {
+        throw new UnsupportedOperationException();
+    }
+
 }

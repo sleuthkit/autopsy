@@ -67,7 +67,7 @@ public interface IngestModule {
      */
     default void startUp(IngestJobContext context) throws IngestModuleException {
     }
-
+    
     /**
      * Invoked by Autopsy when an ingest job is completed (either because the
      * data has been analyzed or because the job was cancelled), before the

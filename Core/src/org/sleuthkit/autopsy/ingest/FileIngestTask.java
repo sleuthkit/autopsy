@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
- * Copyright 2012-2015 Basis Technology Corp.
+ *
+ * Copyright 2014-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,14 +24,22 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Represents a single file analysis task, which is defined by a file to analyze
- * and the InjestJob/Pipeline to run it on.
+ * A file ingest task that will be executed by an ingest thread using a given
+ * ingest job pipeline.
  */
 final class FileIngestTask extends IngestTask {
-    
+
     private final long fileId;
     private AbstractFile file = null;
 
+    /**
+     * Constructs a file ingest task that will be executed by an ingest thread
+     * using a given ingest job pipeline.
+     *
+     * @param ingestJobPipeline The ingest job pipeline to use to complete the
+     *                          task.
+     * @param file              The file to be processed.
+     */
     FileIngestTask(IngestJobPipeline ingestJobPipeline, AbstractFile file) {
         super(ingestJobPipeline);
         this.file = file;
@@ -43,10 +51,23 @@ final class FileIngestTask extends IngestTask {
         this.fileId = fileId;
     }
 
+    /**
+     * Gets the object ID of the file for this task.
+     *
+     * @return The object ID.
+     */
     long getFileId() {
         return fileId;
     }
 
+    /**
+     * Gets the file for this task.
+     *
+     * @return The file.
+     *
+     * @throws TskCoreException The exception is thrown if there is an error
+     *                          retieving the file from the case database.
+     */
     synchronized AbstractFile getFile() throws TskCoreException {
         if (file == null) {
             file = Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(fileId);
@@ -54,10 +75,18 @@ final class FileIngestTask extends IngestTask {
         return file;
     }
 
+    /**
+     * Executes this task by passing it to the given ingest job pipeline.
+     *
+     * @param ingestJobPipeline The ingest job pipeline.
+     *
+     * @throws InterruptedException This exception is thrown if the thread
+     *                              executing the task is interrupted while
+     *                              blocked.
+     */
     @Override
-    void execute(long threadId) throws InterruptedException {
-        super.setThreadId(threadId);
-        getIngestJobPipeline().process(this);
+    void execute(IngestJobPipeline ingestJobPipeline) throws InterruptedException {
+        ingestJobPipeline.process(this);
     }
 
     @Override
@@ -84,4 +113,5 @@ final class FileIngestTask extends IngestTask {
         hash = 47 * hash + Objects.hashCode(this.fileId);
         return hash;
     }
+
 }

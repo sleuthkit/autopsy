@@ -125,8 +125,9 @@ public class IngestManager implements IngestProgressSnapshotProvider {
     private final ExecutorService startIngestJobsExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("IM-start-ingest-jobs-%d").build()); //NON-NLS;
     private final Map<Long, Future<Void>> startIngestJobFutures = new ConcurrentHashMap<>();
     private final Map<Long, IngestJob> ingestJobsById = new HashMap<>();
-    private final ExecutorService dataSourceLevelIngestJobTasksExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("IM-data-source-ingest-%d").build()); //NON-NLS;
+    private final ExecutorService dataSourceLevelIngestJobTasksExecutor;
     private final ExecutorService fileLevelIngestJobTasksExecutor;
+    private final ExecutorService dataArtifactIngestTasksExecutor;
     private final ExecutorService eventPublishingExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("IM-ingest-events-%d").build()); //NON-NLS;
     private final IngestMonitor ingestMonitor = new IngestMonitor();
     private final ServicesMonitor servicesMonitor = ServicesMonitor.getInstance();
@@ -164,6 +165,7 @@ public class IngestManager implements IngestProgressSnapshotProvider {
          * source level ingest job tasks to the data source level ingest job
          * tasks executor.
          */
+        dataSourceLevelIngestJobTasksExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("IM-data-source-ingest-%d").build()); //NON-NLS;        
         long threadId = nextIngestManagerTaskId.incrementAndGet();
         dataSourceLevelIngestJobTasksExecutor.submit(new ExecuteIngestJobTasksTask(threadId, IngestTasksScheduler.getInstance().getDataSourceIngestTaskQueue()));
         ingestThreadActivitySnapshots.put(threadId, new IngestThreadActivitySnapshot(threadId));
@@ -180,6 +182,13 @@ public class IngestManager implements IngestProgressSnapshotProvider {
             fileLevelIngestJobTasksExecutor.submit(new ExecuteIngestJobTasksTask(threadId, IngestTasksScheduler.getInstance().getFileIngestTaskQueue()));
             ingestThreadActivitySnapshots.put(threadId, new IngestThreadActivitySnapshot(threadId));
         }
+        
+        dataArtifactIngestTasksExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("IM-data-artifact-ingest-%d").build()); //NON-NLS;        
+        threadId = nextIngestManagerTaskId.incrementAndGet();
+        // RJCTODO
+        // dataSourceLevelIngestJobTasksExecutor.submit(new ExecuteIngestJobTasksTask(threadId, IngestTasksScheduler.getInstance().getDataSourceIngestTaskQueue()));
+        // ingestThreadActivitySnapshots.put(threadId, new IngestThreadActivitySnapshot(threadId));
+        // RJCTODO: Where is the shut down code?
     }
 
     /**

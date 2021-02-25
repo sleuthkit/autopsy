@@ -45,6 +45,13 @@ final class FileIngestPipeline extends IngestTaskPipeline<FileIngestTask> {
         this.ingestJobPipeline = ingestJobPipeline;
     }
 
+    /**
+     * RJCTODO
+     *
+     * @param template
+     *
+     * @return
+     */
     @Override
     Optional<IngestTaskPipeline.PipelineModule<FileIngestTask>> acceptModuleTemplate(IngestModuleTemplate template) {
         Optional<IngestTaskPipeline.PipelineModule<FileIngestTask>> module = Optional.empty();
@@ -55,10 +62,26 @@ final class FileIngestPipeline extends IngestTaskPipeline<FileIngestTask> {
         return module;
     }
 
+    /**
+     * RJCTODO
+     *
+     * @param task
+     *
+     * @throws
+     * org.sleuthkit.autopsy.ingest.IngestTaskPipeline.IngestTaskPipelineException
+     */
     @Override
     void prepareTask(FileIngestTask task) throws IngestTaskPipelineException {
     }
 
+    /**
+     * RJCTODO
+     *
+     * @param task
+     *
+     * @throws
+     * org.sleuthkit.autopsy.ingest.IngestTaskPipeline.IngestTaskPipelineException
+     */
     @Override
     void completeTask(FileIngestTask task) throws IngestTaskPipelineException {
         AbstractFile file = null;
@@ -107,6 +130,15 @@ final class FileIngestPipeline extends IngestTaskPipeline<FileIngestTask> {
             this.module = module;
         }
 
+        /**
+         * RJCTODO
+         *
+         * @param ingestJobPipeline
+         * @param task
+         *
+         * @throws
+         * org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException
+         */
         @Override
         void performTask(IngestJobPipeline ingestJobPipeline, FileIngestTask task) throws IngestModuleException {
             AbstractFile file = null;
