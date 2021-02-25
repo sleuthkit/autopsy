@@ -53,7 +53,7 @@ public class ExtractAllTermsReport implements GeneralReportModule {
         "ExtractAllTermsReport.search.noFilesInIdxMsg=No files are in index yet. Try again later. Index is updated every {0} minutes.",
         "ExtractAllTermsReport.search.noFilesInIdxMsg2=No files are in index yet. Try again later",
         "ExtractAllTermsReport.search.searchIngestInProgressTitle=Keyword Search Ingest in Progress",
-        "ExtractAllTermsReport.search.ingestInProgressBody=<html>Keyword Search Ingest is currently running.<br />Not all files have been indexed and this search might yield incomplete results.<br />Do you want to proceed with this search anyway?</html>",
+        "ExtractAllTermsReport.search.ingestInProgressBody=<html>Keyword Search Ingest is currently running.<br />Not all files have been indexed and unique word extraction might yield incomplete results.<br />Do you want to proceed with unique word extraction anyway?</html>",
         "ExtractAllTermsReport.startExport=Starting Unique Word Export",
         "ExtractAllTermsReport.export.error=Error During Unique Word Export",
         "ExtractAllTermsReport.exportComplete=Unique Word Export Complete"
@@ -93,8 +93,7 @@ public class ExtractAllTermsReport implements GeneralReportModule {
         if (isIngestRunning) {
             if (KeywordSearchUtil.displayConfirmDialog(Bundle.ExtractAllTermsReport_search_searchIngestInProgressTitle(),
                     Bundle.ExtractAllTermsReport_search_ingestInProgressBody(), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN) == false) {
-                progressPanel.setIndeterminate(false);
-                progressPanel.complete(ReportProgressPanel.ReportStatus.CANCELED);
+                progressPanel.cancel();
                 return;
             }
         }
