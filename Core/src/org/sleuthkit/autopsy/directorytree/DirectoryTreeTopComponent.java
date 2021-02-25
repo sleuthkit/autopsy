@@ -35,6 +35,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.prefs.PreferenceChangeEvent;
 import java.util.prefs.PreferenceChangeListener;
+import java.util.stream.Stream;
 import javax.swing.Action;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
@@ -81,6 +82,8 @@ import org.sleuthkit.autopsy.datamodel.InterestingHits;
 import org.sleuthkit.autopsy.datamodel.KeywordHits;
 import org.sleuthkit.autopsy.datamodel.ResultsNode;
 import org.sleuthkit.autopsy.datamodel.AutopsyTreeChildFactory;
+import org.sleuthkit.autopsy.datamodel.DataSourceGrouping;
+import org.sleuthkit.autopsy.datamodel.DataSourcesByTypeNode;
 import org.sleuthkit.autopsy.datamodel.Tags;
 import org.sleuthkit.autopsy.datamodel.ViewsNode;
 import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
@@ -89,6 +92,9 @@ import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.Host;
+import org.sleuthkit.datamodel.Person;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -193,7 +199,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     private void preExpandNodes(Children rootChildren) {
         BeanTreeView tree = getTree();
 
-        Node results = rootChildren.findChild(ResultsNode.NAME);
+        Node results = rootChildren.findChild(ResultsNode.getNameIdentifier());
         if (!Objects.isNull(results)) {
             tree.expandNode(results);
             Children resultsChildren = results.getChildren();
@@ -265,7 +271,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      * Setter to determine if rejected results should be shown or not.
      *
      * @param showRejectedResults True if showing rejected results; otherwise
-     *                            false.
+     * false.
      */
     public void setShowRejectedResults(boolean showRejectedResults) {
         this.showRejectedResults = showRejectedResults;
@@ -797,7 +803,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             } // change in node selection
             else if (changed.equals(ExplorerManager.PROP_SELECTED_NODES)) {
                 respondSelection((Node[]) event.getOldValue(), (Node[]) event.getNewValue());
-            } 
+            }
         }
     }
 
@@ -1012,8 +1018,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      * Set the selected node using a path to a previously selected node.
      *
      * @param previouslySelectedNodePath Path to a previously selected node.
-     * @param rootNodeName               Name of the root node to match, may be
-     *                                   null.
+     * @param rootNodeName Name of the root node to match, may be null.
      */
     private void setSelectedNode(final String[] previouslySelectedNodePath, final String rootNodeName) {
         if (previouslySelectedNodePath == null) {
@@ -1070,12 +1075,85 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         return false;
     }
 
+    /**
+     * Does dfs search of node while nodes are Host, Person, or
+     * DataSourcesByType looking for the Results Node.
+     *
+     * @param node The node.
+     * @return The child nodes that are at the data source level.
+     */
+    private Node getResultsNodeSearch(Node node, long dataSourceId) {
+        if (node == null) {
+            return null;
+        } else if (node.getLookup().lookup(Host.class) != null
+                || node.getLookup().lookup(Person.class) != null) {
+            Children children = node.getChildren();
+            Node[] childNodes = children == null ? null : children.getNodes();
+            if (childNodes != null) {
+                for (Node child : childNodes) {
+                    Node foundExtracted = getResultsNodeSearch(child, dataSourceId);
+                    if (foundExtracted != null) {
+                        return foundExtracted;
+                    }
+                }
+            }
+        } else {
+            DataSource dataSource = node.getLookup().lookup(DataSource.class);
+            if (dataSource != null && dataSource.getId() == dataSourceId) {
+                Children dsChildren = node.getChildren();
+                if (dsChildren != null) {
+                    return dsChildren.findChild(ResultsNode.getNameIdentifier());
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Finds the results node for the specific artifact.
+     *
+     * @param art The artifact to find the relevant Results Node.
+     * @return THe Results Node or null.
+     */
+    private Node getResultsNode(final BlackboardArtifact art) {
+        Children rootChilds = em.getRootContext().getChildren();
+
+        Node resultsNode = rootChilds.findChild(ResultsNode.getNameIdentifier());
+        if (resultsNode != null) {
+            return resultsNode;
+        }
+
+        long dataSourceId;
+        try {
+            dataSourceId = art.getDataSource().getId();
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.WARNING, "There was an error fetching the data source id for artifact.", ex);
+            return null;
+        }
+
+        Node[] rootNodes = rootChilds.getNodes();
+        if (rootNodes != null) {
+            for (Node rootNode : rootNodes) {
+                resultsNode = getResultsNodeSearch(rootNode, dataSourceId);
+                if (resultsNode != null) {
+                    return resultsNode;
+                }
+            }
+        }
+
+        return null;
+    }
+
     public void viewArtifact(final BlackboardArtifact art) {
         int typeID = art.getArtifactTypeID();
         String typeName = art.getArtifactTypeName();
-        Children rootChilds = em.getRootContext().getChildren();
         Node treeNode = null;
-        Node resultsNode = rootChilds.findChild(ResultsNode.NAME);
+
+        Node resultsNode = getResultsNode(art);
+        if (resultsNode == null) {
+            return;
+        }
+
         Children resultsChilds = resultsNode.getChildren();
         if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()) {
             Node hashsetRootNode = resultsChilds.findChild(typeName);
