@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-2021 Basis Technology Corp.
+ * Copyright 2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,24 +16,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.ingest;
+package org.sleuthkit.autopsy.casemodule.events;
 
-import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.datamodel.OsAccount;
 
 /**
- * Interface that must be implemented by all file ingest modules. See
- * description of IngestModule for more details on interface behavior.
+ *  Event published when an OsAccount is added to a case.
  */
-public interface FileIngestModule extends IngestModule {
+public final class OsAccountAddedEvent extends OsAccountEvent {
 
-    /**
-     * Processes a file. Called between calls to startUp() and shutDown(). Will
-     * be called for each file in a data source.
-     *
-     * @param file The file to analyze.
-     *
-     * @return A result code indicating success or failure of the processing.
-     */
-    ProcessResult process(AbstractFile file);
+    private static final long serialVersionUID = 1L;
+    
+    public OsAccountAddedEvent(OsAccount account) {
+        super(Case.Events.OS_ACCOUNT_ADDED.toString(), account);
+    }
 
 }
