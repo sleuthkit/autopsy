@@ -672,6 +672,13 @@ public class Server {
     synchronized void startLocalSolr(SOLR_VERSION version) throws KeywordSearchModuleException, SolrServerNoPortException, SolrServerException {
         
         logger.log(Level.INFO, "Starting local Solr " + version + " server"); //NON-NLS
+        if (version == SOLR_VERSION.SOLR8) {
+            localSolrFolder = InstalledFileLocator.getDefault().locate("solr", Server.class.getPackage().getName(), false); //NON-NLS
+        } else {
+            // solr4
+            localSolrFolder = InstalledFileLocator.getDefault().locate("solr4", Server.class.getPackage().getName(), false); //NON-NLS
+        }
+
         if (isLocalSolrRunning()) {
             if (localServerVersion.equals(version)) {
                 // this version of local server is already running
@@ -717,12 +724,10 @@ public class Server {
             try {
                 if (version == SOLR_VERSION.SOLR8) {
                     logger.log(Level.INFO, "Starting Solr 8 server"); //NON-NLS
-                    localSolrFolder = InstalledFileLocator.getDefault().locate("solr", Server.class.getPackage().getName(), false); //NON-NLS
                     curSolrProcess = runLocalSolr8ControlCommand(new ArrayList<>(Arrays.asList("start", "-p", //NON-NLS
                         Integer.toString(localSolrServerPort)))); //NON-NLS
                 } else {
                     // solr4
-                    localSolrFolder = InstalledFileLocator.getDefault().locate("solr4", Server.class.getPackage().getName(), false); //NON-NLS
                     logger.log(Level.INFO, "Starting Solr 4 server"); //NON-NLS
                     curSolrProcess = runLocalSolr4ControlCommand(new ArrayList<>(
                         Arrays.asList("-Dbootstrap_confdir=../solr/configsets/AutopsyConfig/conf", //NON-NLS
