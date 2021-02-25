@@ -1789,9 +1789,9 @@ public class Server {
     }
         
     /**
-     * Extract all unique terms/words for a given data source.
+     * Extract all unique terms/words from current index.
      *
-     * @param outputFile Absolute path to where the store the output
+     * @param outputFile Absolute path to the output file
      * @param progressPanel ReportProgressPanel to update
      *
      * @throws NoOpenCoreException
@@ -2163,15 +2163,27 @@ public class Server {
             queryClient.deleteByQuery(deleteQuery);
         }
         
+        /**
+         * Extract all unique terms/words from current index. Gets 1,000 terms at a time and
+         * writes them to output file. Updates ReportProgressPanel status.
+         * 
+         * @param outputFile Absolute path to the output file
+         * @param progressPanel ReportProgressPanel to update
+         * @throws IOException 
+         * @throws SolrServerException
+         * @throws NoCurrentCaseException
+         * @throws KeywordSearchModuleException 
+         */
         @NbBundle.Messages({
+            "# {0} - Number of extracted terms",
             "ExtractAllTermsReport.numberExtractedTerms=Extracted {0} terms..."
         })
         private void extractAllTermsForDataSource(Path outputFile, ReportProgressPanel progressPanel) throws IOException, SolrServerException, NoCurrentCaseException, KeywordSearchModuleException {
             
-            // step through the terms 
             Files.deleteIfExists(outputFile);
             OpenOption[] options = new OpenOption[] { java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.APPEND };
             
+            // step through the terms 
             int termStep = 1000;
             long numExtractedTerms = 0;
             String firstTerm = "";

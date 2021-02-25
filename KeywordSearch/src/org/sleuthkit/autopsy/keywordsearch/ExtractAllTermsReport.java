@@ -54,9 +54,9 @@ public class ExtractAllTermsReport implements GeneralReportModule {
         "ExtractAllTermsReport.search.noFilesInIdxMsg2=No files are in index yet. Try again later",
         "ExtractAllTermsReport.search.searchIngestInProgressTitle=Keyword Search Ingest in Progress",
         "ExtractAllTermsReport.search.ingestInProgressBody=<html>Keyword Search Ingest is currently running.<br />Not all files have been indexed and unique word extraction might yield incomplete results.<br />Do you want to proceed with unique word extraction anyway?</html>",
-        "ExtractAllTermsReport.startExport=Starting Unique Word Export",
-        "ExtractAllTermsReport.export.error=Error During Unique Word Export",
-        "ExtractAllTermsReport.exportComplete=Unique Word Export Complete"
+        "ExtractAllTermsReport.startExport=Starting Unique Word Extraction",
+        "ExtractAllTermsReport.export.error=Error During Unique Word Extraction",
+        "ExtractAllTermsReport.exportComplete=Unique Word Extraction Complete"
     })
     @Override
     public void generateReport(GeneralReportSettings settings, ReportProgressPanel progressPanel) {
@@ -119,9 +119,11 @@ public class ExtractAllTermsReport implements GeneralReportModule {
         return false;
     }
 
+    @NbBundle.Messages({
+        "ExtractAllTermsReport.description.text=Extracts all unique words out of the current case. NOTE: The extracted words are lower-cased."})
     @Override
     public String getDescription() {
-        return "Extracts all unique words out of the current case. NOTE: The extracted words are lower-cased.";
+        return Bundle.ExtractAllTermsReport_description_text();
     }
 
     @Override
