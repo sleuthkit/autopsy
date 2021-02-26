@@ -151,12 +151,12 @@ public class OsAccountDataPanel extends JPanel {
         data.addData(Bundle.OsAccountDataPanel_basic_type(), account.getOsAccountType().getName());
         
         Optional<Long> crTime = account.getCreationTime();
-        Date date = null;
         if(crTime.isPresent()) {
-            date = new Date(crTime.get());
+            data.addData(Bundle.OsAccountDataPanel_basic_creationDate(), DATE_FORMAT.format(new Date(crTime.get() * 1000)));
         }
-        
-        data.addData(Bundle.OsAccountDataPanel_basic_creationDate(), data != null ? DATE_FORMAT.format(date) : "");
+        else {
+            data.addData(Bundle.OsAccountDataPanel_basic_creationDate(), "");
+        }
 
         return data;
     }
@@ -264,7 +264,7 @@ public class OsAccountDataPanel extends JPanel {
         constraints.gridwidth = 1; // The title goes across the other columns
         constraints.gridheight = 1;
         constraints.anchor = GridBagConstraints.WEST;
-        constraints.insets = new Insets(0, 8, 5, 5);
+        constraints.insets = new Insets(0, 13, 5, 5);
 
         return constraints;
     }
