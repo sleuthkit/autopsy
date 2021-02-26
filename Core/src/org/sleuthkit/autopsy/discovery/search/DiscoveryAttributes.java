@@ -45,6 +45,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import java.util.StringJoiner;
+import org.apache.commons.lang.StringUtils;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizer;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CATEGORIZATION;
 
@@ -186,8 +187,14 @@ public class DiscoveryAttributes {
                 BlackboardAttribute domain = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN));
 
                 if (webCategory != null && domain != null) {
-                    String webCatDisplayName = webCategory.getValueString();
                     String domainDisplayName = domain.getValueString().trim().toLowerCase();
+
+                    String webCatDisplayName = webCategory.getValueString();
+                    //since a domain may have been categorized as more than one category
+                    String existingCategories = domainToCategory.get(domainDisplayName);
+                    if (!StringUtils.isBlank(existingCategories)) {
+                        webCatDisplayName = webCatDisplayName + ", " + existingCategories;
+                    }
                     domainToCategory.put(domainDisplayName, webCatDisplayName);
                 }
             }
