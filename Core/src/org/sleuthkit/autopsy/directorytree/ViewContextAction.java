@@ -147,6 +147,12 @@ public class ViewContextAction extends AbstractAction {
      * branch of the tree view to the level of the parent of the content,
      * selecting the parent in the tree view, then selecting the content in the
      * results view.
+     * 
+     * NOTE: This code will likely need updating in the event that the structure
+     * of the nodes is changed (i.e. adding parent levels). Places to look when
+     * changing node structure include:
+     *
+     * DirectoryTreeTopComponent.viewArtifact, ViewContextAction
      *
      * @param event The action event.
      */

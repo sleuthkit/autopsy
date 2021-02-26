@@ -1144,6 +1144,17 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         return null;
     }
 
+    /**
+     * Navigates to artifact and shows in view.
+     *
+     * NOTE: This code will likely need updating in the event that the structure
+     * of the nodes is changed (i.e. adding parent levels). Places to look when
+     * changing node structure include:
+     *
+     * DirectoryTreeTopComponent.viewArtifact, ViewContextAction
+     *
+     * @param art The artifact.
+     */
     public void viewArtifact(final BlackboardArtifact art) {
         int typeID = art.getArtifactTypeID();
         String typeName = art.getArtifactTypeName();
@@ -1238,16 +1249,16 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 if (setNode == null) {
                     return;
                 }
-                
+
                 Children fileArtifactChildren = setNode.getChildren();
                 Node[] fileArtifactNodes = fileArtifactChildren == null ? null : fileArtifactChildren.getNodes();
                 if (fileArtifactNodes == null || fileArtifactNodes.length != 2) {
                     return;
                 }
-                
-                treeNode = (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID()) ?
-                        fileArtifactNodes[0] :
-                        fileArtifactNodes[1];
+
+                treeNode = (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID())
+                        ? fileArtifactNodes[0]
+                        : fileArtifactNodes[1];
             } catch (TskCoreException ex) {
                 LOGGER.log(Level.WARNING, "Error retrieving attributes", ex); //NON-NLS
             }
