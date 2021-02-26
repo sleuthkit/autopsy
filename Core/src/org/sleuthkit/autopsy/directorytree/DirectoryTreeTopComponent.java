@@ -1238,11 +1238,16 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 if (setNode == null) {
                     return;
                 }
-                Children interestingChildren = setNode.getChildren();
-                if (interestingChildren == null) {
+                
+                Children fileArtifactChildren = setNode.getChildren();
+                Node[] fileArtifactNodes = fileArtifactChildren == null ? null : fileArtifactChildren.getNodes();
+                if (fileArtifactNodes == null || fileArtifactNodes.length != 2) {
                     return;
                 }
-                treeNode = interestingChildren.findChild(art.getDisplayName());
+                
+                treeNode = (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID()) ?
+                        fileArtifactNodes[0] :
+                        fileArtifactNodes[1];
             } catch (TskCoreException ex) {
                 LOGGER.log(Level.WARNING, "Error retrieving attributes", ex); //NON-NLS
             }
