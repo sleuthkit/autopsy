@@ -210,7 +210,7 @@ public final class IngestJob {
          */
         List<IngestModuleError> errors = new ArrayList<>();
         for (IngestJobPipeline ingestJobPipeline : this.ingestJobPipelines.values()) {
-            errors.addAll(ingestJobPipeline.start());
+            errors.addAll(ingestJobPipeline.startUp());
             if (errors.isEmpty() == false) {
                 break;
             }

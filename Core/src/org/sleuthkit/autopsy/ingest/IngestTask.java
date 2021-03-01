@@ -22,23 +22,23 @@ import org.sleuthkit.datamodel.Content;
 
 /**
  * An ingest task that will be executed by an ingest thread using a given ingest
- * job pipeline. The task is one unit of analysis work for an ingest job for a
- * data source. Some examples of concrete types of ingest tasks include the
- * analysis of files and the analysis of data artifacts.
+ * job pipeline. Three examples of concrete types of ingest tasks are tasks to
+ * analyze a data source, tasks to analyze the files in a data source, and tasks
+ * that analyze data artifacts.
  */
 abstract class IngestTask {
-
+    
     private final static long NOT_SET = Long.MIN_VALUE;
     private final IngestJobPipeline ingestJobPipeline;
     private long threadId;
 
     /**
      * Constructs an ingest task that will be executed by an ingest thread using
-     * a given ingest job pipeline. The task is one unit of analysis work for an
-     * ingest job for a data source. Some examples of concrete types of ingest
-     * tasks include the analysis of files and the analysis of data artifacts.
+     * a given ingest job pipeline. Three examples of concrete types of ingest
+     * tasks are tasks to analyze a data source, tasks to analyze the files in a
+     * data source, and tasks that analyze data artifacts.
      *
-     * @param ingestJobPipeline The ingest job pipeline to use to complete the
+     * @param ingestJobPipeline The ingest job pipeline to use to execute the
      *                          task.
      */
     IngestTask(IngestJobPipeline ingestJobPipeline) {
@@ -85,19 +85,7 @@ abstract class IngestTask {
      */
     void execute(long threadId) throws InterruptedException { // RJCTODO: Why does htis block?
         this.threadId = threadId;
-        execute(ingestJobPipeline);
+        ingestJobPipeline.execute(this);
     }
-
-    /**
-     * Executes this task using the ingest job pipeline specified when the task
-     * was created.
-     *
-     * @param ingestJobPipeline The ingest job pipeline.
-     *
-     * @throws InterruptedException This exception is thrown if the thread
-     *                              executing the task is interrupted while
-     *                              blocked.
-     */
-    abstract void execute(IngestJobPipeline IngestJobPipeline) throws InterruptedException;
-
+    
 }

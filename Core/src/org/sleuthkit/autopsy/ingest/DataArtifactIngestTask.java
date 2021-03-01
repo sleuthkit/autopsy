@@ -32,7 +32,7 @@ final class DataArtifactIngestTask extends IngestTask {
      * Constructs a data artifact ingest task that will be executed by an ingest
      * thread using a given ingest job pipeline.
      *
-     * @param ingestJobPipeline The ingest job pipeline to use to complete the
+     * @param ingestJobPipeline The ingest job pipeline to use to execute the
      *                          task.
      * @param artifact          The data artifact to be processed.
      */
@@ -48,21 +48,6 @@ final class DataArtifactIngestTask extends IngestTask {
      */
     DataArtifact getDataArtifact() {
         return artifact;
-    }
-
-    /**
-     * Executes this task by passing it to the given ingest job pipeline.
-     *
-     * @param ingestJobPipeline The ingest job pipeline.
-     *
-     * @throws InterruptedException This exception is thrown if the thread
-     *                              executing the task is interrupted while
-     *                              blocked.
-     */    
-    @Override
-    void execute(IngestJobPipeline ingestJobPipeline) throws InterruptedException {
-        // RJCTODO: Need overload for data artifacts
-        // ingestJobPipeline.process(this);        
     }
 
 }

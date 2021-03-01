@@ -28,25 +28,11 @@ final class DataSourceIngestTask extends IngestTask {
      * Constructs a data source level ingest task that will be executed by an
      * ingest thread using a given ingest job pipeline.
      *
-     * @param ingestJobPipeline The ingest job pipeline to use to complete the
+     * @param ingestJobPipeline The ingest job pipeline to use to execute the
      *                          task.
      */
     DataSourceIngestTask(IngestJobPipeline ingestJobPipeline) {
         super(ingestJobPipeline);
-    }
-
-    /**
-     * Executes this task by passing it to the given ingest job pipeline.
-     *
-     * @param ingestJobPipeline The ingest job pipeline.
-     *
-     * @throws InterruptedException This exception is thrown if the thread
-     *                              executing the task is interrupted while
-     *                              blocked.
-     */
-    @Override
-    void execute(IngestJobPipeline ingestJobPipeline) throws InterruptedException {
-        ingestJobPipeline.process(this);
     }
 
 }

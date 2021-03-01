@@ -52,56 +52,50 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSet;
 import org.sleuthkit.autopsy.python.FactoryClassNameNormalizer;
+import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.DataArtifact;
 
 /**
- * Encapsulates a data source and the ingest module pipelines used to process
- * it.
+ * A set of ingest module pipelines for an ingest job.
  */
 final class IngestJobPipeline {
 
     private static String AUTOPSY_MODULE_PREFIX = "org.sleuthkit.autopsy";
-
-    private static final Logger logger = Logger.getLogger(IngestJobPipeline.class.getName());
-
     // to match something like: "org.python.proxies.GPX_Parser_Module$GPXParserFileIngestModuleFactory$14"
     private static final Pattern JYTHON_REGEX = Pattern.compile("org\\.python\\.proxies\\.(.+?)\\$(.+?)(\\$[0-9]*)?$");
+    private static final Logger logger = Logger.getLogger(IngestJobPipeline.class.getName());
 
-    /**
-     * These fields define a data source ingest job: the parent ingest job, an
-     * ID, the user's ingest job settings, and the data source to be analyzed.
-     * Optionally, there is a set of files to be analyzed instead of analyzing
-     * all of the files in the data source.
-     */
-    private final IngestJob parentJob;
-    private static final AtomicLong nextJobId = new AtomicLong(0L);
-    private final long id;
+    private final IngestJob job;
+    private static final AtomicLong nextPipelineId = new AtomicLong(0L);
+    private final long pipelineId;
     private final IngestJobSettings settings;
-    private Content dataSource = null;
+    private Content dataSource;
     private final IngestJob.Mode ingestMode;
     private final List<AbstractFile> files = new ArrayList<>();
+    private final long createTime;
 
-    /**
-     * A data source ingest job runs in stages.
+    /*
+     * An ingest job pipeline runs in stages.
      */
     private static enum Stages {
 
-        /**
+        /*
          * Setting up for processing.
          */
         INITIALIZATION,
-        /**
-         * Running only file ingest modules (used only for streaming ingest).
+        /*
+         * Running only file and data artifact ingest modules (used only for
+         * streaming ingest).
          */
         FIRST_STAGE_FILES_ONLY,
-        /**
-         * Running high priority data source level ingest modules and file level
-         * ingest modules.
+        /*
+         * Running high priority data source level ingest modules, file ingest
+         * modules and data artifact ingest modules.
          */
         FIRST_STAGE_FILES_AND_DATASOURCE,
         /**
          * Running lower priority, usually long-running, data source level
-         * ingest modules.
+         * ingest modules and data artifact ingest modules.
          */
         SECOND_STAGE,
         /**
@@ -113,7 +107,7 @@ final class IngestJobPipeline {
     private final Object stageCompletionCheckLock = new Object();
 
     /**
-     * A data source ingest job has separate data source level ingest module
+     * An ingest job pipeline has separate data source level ingest task
      * pipelines for the first and second processing stages. Longer running,
      * lower priority modules belong in the second stage pipeline, although this
      * cannot be enforced. Note that the pipelines for both stages are created
@@ -126,25 +120,29 @@ final class IngestJobPipeline {
     private DataSourceIngestPipeline currentDataSourceIngestPipeline;
 
     /**
-     * A data source ingest job has a collection of identical file level ingest
-     * module pipelines, one for each file level ingest thread in the ingest
-     * manager. A blocking queue is used to dole out the pipelines to the
-     * threads and an ordinary list is used when the ingest job needs to access
-     * the pipelines to query their status.
+     * An ingest job pipeline has a collection of identical file ingest task
+     * pipelines, one for each file ingest thread in the ingest manager. The
+     * ingest threads take and return task pipelines using a blocking queue. A
+     * fixed list of all of the task pipelines is used to allow the job pipeline
+     * to cycle through the individual task pipelines to check their status and
+     * their progress on their current tasks.
      */
     private final LinkedBlockingQueue<FileIngestPipeline> fileIngestPipelinesQueue = new LinkedBlockingQueue<>();
     private final List<FileIngestPipeline> fileIngestPipelines = new ArrayList<>();
 
+    /*
+     * An ingest job pipeline has a single data aritfact task pipeline.
+     */
+    private DataArtifactIngestPipeline artifactIngestPipeline;
+
     /**
-     * A data source ingest job supports cancellation of either the currently
+     * An ingest job pipeline supports cancellation of either the currently
      * running data source level ingest module or the entire ingest job.
-     *
-     * TODO: The currentDataSourceIngestModuleCancelled field and all of the
-     * code concerned with it is a hack to avoid an API change. The next time an
-     * API change is legal, a cancel() method needs to be added to the
-     * IngestModule interface and this field should be removed. The "ingest job
-     * is canceled" queries should also be removed from the IngestJobContext
-     * class.
+     * Cancellation works by setting flags that are checked by the ingest task
+     * pipelines every time they transition from from one module to another.
+     * Modules are also expected to check these flags and stop processing if
+     * they are set. This means that there can be a variable length delay
+     * between a cancellation request and its fulfillment.
      */
     private volatile boolean currentDataSourceIngestModuleCancelled;
     private final List<String> cancelledDataSourceIngestModules = new CopyOnWriteArrayList<>();
@@ -152,28 +150,24 @@ final class IngestJobPipeline {
     private volatile IngestJob.CancellationReason cancellationReason = IngestJob.CancellationReason.NOT_CANCELLED;
 
     /**
-     * A data source ingest job uses the task scheduler singleton to create and
-     * queue the ingest tasks that make up the job.
+     * An ingest job pipeline interacts with the ingest task scheduler to
+     * determine whether or not there are ingest tasks still to be executed for
+     * an ingest job and to schedule additional tasks submitted by ingest
+     * modules. For example, a file carving module can add carved files to an
+     * ingest job and many modules will add data artifacts to an ingest job.
      */
     private static final IngestTasksScheduler taskScheduler = IngestTasksScheduler.getInstance();
 
     /**
-     * A data source ingest job can run interactively using NetBeans progress
-     * handles.
+     * If running in a GUI, an ingest job pipeline report progress and allows a
+     * user to cancel a data source level ingest module or the entire ingest job
+     * using progress bars in the lower right hand corner of the main
+     * application window. This is one of a handful of things that currently
+     * couples the ingest code to the presentation layer.
      */
     private final boolean doUI;
-
-    /**
-     * A data source ingest job uses these fields to report data source level
-     * ingest progress.
-     */
     private final Object dataSourceIngestProgressLock = new Object();
     private ProgressHandle dataSourceIngestProgress;
-
-    /**
-     * A data source ingest job uses these fields to report file level ingest
-     * progress.
-     */
     private final Object fileIngestProgressLock = new Object();
     private final List<String> filesInProgress = new ArrayList<>();
     private long estimatedFilesToProcess;
@@ -185,87 +179,77 @@ final class IngestJobPipeline {
     private volatile IngestJobInfo ingestJob;
 
     /**
-     * A data source ingest job uses this field to report its creation time.
-     */
-    private final long createTime;
-
-    /**
-     * Constructs an object that encapsulates a data source and the ingest
-     * module pipelines used to analyze it.
+     * Constructs a set of ingest module pipelines for an ingest job.
      *
-     * @param parentJob  The ingest job of which this data source ingest job is
-     *                   a part.
-     * @param dataSource The data source to be ingested.
-     * @param settings   The settings for the ingest job.
+     * @param job        The ingest job.
+     * @param dataSource The data source for the ingest job.
+     * @param settings   The ingest settings for the ingest job.
      */
-    IngestJobPipeline(IngestJob parentJob, Content dataSource, IngestJobSettings settings) {
-        this(parentJob, dataSource, Collections.emptyList(), settings);
+    IngestJobPipeline(IngestJob job, Content dataSource, IngestJobSettings settings) {
+        this(job, dataSource, Collections.emptyList(), settings);
     }
 
     /**
-     * Constructs an object that encapsulates a data source and the ingest
-     * module pipelines used to analyze it. Either all of the files in the data
-     * source or a given subset of the files will be analyzed.
+     * Constructs a set of ingest module pipelines for an ingest job that
+     * process a subset of the files in the job's data source.
      *
-     * @param parentJob  The ingest job of which this data source ingest job is
-     *                   a part.
-     * @param dataSource The data source to be ingested.
-     * @param files      A subset of the files for the data source.
-     * @param settings   The settings for the ingest job.
+     * @param job        The ingest job.
+     * @param dataSource The data source for the ingest job.
+     * @param files      The subset of the files for the data source. If the
+     *                   list is empty, all of the files in the data source are
+     *                   processed.
+     * @param settings   The ingest settings for the ingest job.
      */
-    IngestJobPipeline(IngestJob parentJob, Content dataSource, List<AbstractFile> files, IngestJobSettings settings) {
-        this.parentJob = parentJob;
-        this.id = IngestJobPipeline.nextJobId.getAndIncrement();
+    IngestJobPipeline(IngestJob job, Content dataSource, List<AbstractFile> files, IngestJobSettings settings) {
+        this.job = job;
         this.dataSource = dataSource;
-        this.files.addAll(files);
-        this.ingestMode = parentJob.getIngestMode();
         this.settings = settings;
-        this.doUI = RuntimeProperties.runningWithGUI();
-        this.createTime = new Date().getTime();
-        this.stage = Stages.INITIALIZATION;
-        this.createIngestPipelines();
+        this.files.addAll(files);
+        pipelineId = IngestJobPipeline.nextPipelineId.getAndIncrement();
+        ingestMode = job.getIngestMode();
+        doUI = RuntimeProperties.runningWithGUI();
+        createTime = new Date().getTime();
+        stage = Stages.INITIALIZATION;
+        currentFileIngestModule = "";
+        currentFileIngestTask = "";
+        createIngestTaskPipelines();
     }
 
     /**
-     * Adds ingest modules to a list with autopsy modules first and third party
-     * modules next.
+     * Adds ingest module templates to an output list with core Autopsy modules
+     * first and third party modules next.
      *
-     * @param dest      The destination for the modules to be added.
-     * @param src       A map of fully qualified class name mapped to the
-     *                  IngestModuleTemplate.
-     * @param jythonSrc A map of fully qualified class name mapped to the
-     *                  IngestModuleTemplate for jython modules.
+     * @param orderedModules The list to populate.
+     * @param javaModules    The input ingest module templates for modules
+     *                       implemented using Java.
+     * @param jythonModules  The input ingest module templates for modules
+     *                       implemented using Jython.
      */
-    private static void addOrdered(final List<IngestModuleTemplate> dest,
-            final Map<String, IngestModuleTemplate> src, final Map<String, IngestModuleTemplate> jythonSrc) {
-
+    private static void addOrdered(final List<IngestModuleTemplate> orderedModules, final Map<String, IngestModuleTemplate> javaModules, final Map<String, IngestModuleTemplate> jythonModules) {
         final List<IngestModuleTemplate> autopsyModules = new ArrayList<>();
         final List<IngestModuleTemplate> thirdPartyModules = new ArrayList<>();
-
-        Stream.concat(src.entrySet().stream(), jythonSrc.entrySet().stream()).forEach((templateEntry) -> {
+        Stream.concat(javaModules.entrySet().stream(), jythonModules.entrySet().stream()).forEach((templateEntry) -> {
             if (templateEntry.getKey().startsWith(AUTOPSY_MODULE_PREFIX)) {
                 autopsyModules.add(templateEntry.getValue());
             } else {
                 thirdPartyModules.add(templateEntry.getValue());
             }
         });
-
-        dest.addAll(autopsyModules);
-        dest.addAll(thirdPartyModules);
+        orderedModules.addAll(autopsyModules);
+        orderedModules.addAll(thirdPartyModules);
     }
 
     /**
-     * Takes a classname like
+     * Takes a Jython proxy class name like
      * "org.python.proxies.GPX_Parser_Module$GPXParserFileIngestModuleFactory$14"
-     * and provides "GPX_Parser_Module.GPXParserFileIngestModuleFactory" or null
-     * if not in jython package.
+     * and returns "GPX_Parser_Module.GPXParserFileIngestModuleFactory."
      *
-     * @param canonicalName The canonical name.
+     * @param className The class name.
      *
      * @return The jython name or null if not in jython package.
      */
-    private static String getJythonName(String canonicalName) {
-        Matcher m = JYTHON_REGEX.matcher(canonicalName);
+    private static String getModuleNameFromJythonClassName(String className) {
+        Matcher m = JYTHON_REGEX.matcher(className);
         if (m.find()) {
             return String.format("%s.%s", m.group(1), m.group(2));
         } else {
@@ -274,19 +258,18 @@ final class IngestJobPipeline {
     }
 
     /**
-     * Adds a template to the appropriate map. If the class is a jython class,
-     * then it is added to the jython map. Otherwise, it is added to the
-     * mapping.
+     * Adds an ingest module template to one of two mappings of ingest module
+     * factory class names to module templates. One mapping is for ingest
+     * modules imnplemented using Java and the other is for ingest modules
+     * implemented using Jython.
      *
-     * @param mapping       Mapping for non-jython objects.
-     * @param jythonMapping Mapping for jython objects.
-     * @param template      The template to add.
+     * @param mapping       Mapping for Java ingest module templates.
+     * @param jythonMapping Mapping for Jython ingest module templates.
+     * @param template      The ingest module template.
      */
-    private static void addModule(Map<String, IngestModuleTemplate> mapping,
-            Map<String, IngestModuleTemplate> jythonMapping, IngestModuleTemplate template) {
-
+    private static void addModule(Map<String, IngestModuleTemplate> mapping, Map<String, IngestModuleTemplate> jythonMapping, IngestModuleTemplate template) {
         String className = template.getModuleFactory().getClass().getCanonicalName();
-        String jythonName = getJythonName(className);
+        String jythonName = getModuleNameFromJythonClassName(className);
         if (jythonName != null) {
             jythonMapping.put(jythonName, template);
         } else {
@@ -295,61 +278,71 @@ final class IngestJobPipeline {
     }
 
     /**
-     * Creates the file and data source ingest pipelines.
+     * Creates the ingest task pipelines for this ingest job pipeline.
      */
-    private void createIngestPipelines() {
-        List<IngestModuleTemplate> ingestModuleTemplates = this.settings.getEnabledIngestModuleTemplates();
+    private void createIngestTaskPipelines() {
+        /*
+         * Get the complete set of ingest module templates from the ingest job
+         * settings. An ingest module template combines an ingest module factory
+         * with job level ingest module settings to support the creation of any
+         * number of fully configured instances of a given ingest module.
+         */
+        List<IngestModuleTemplate> enabledIngestModuleTemplates = this.settings.getEnabledIngestModuleTemplates();
 
         /**
-         * Make mappings of ingest module factory class names to templates.
+         * Make one mapping of ingest module factory class names to ingest
+         * module templates for each type of ingest task pipeline to be created.
+         * These mappings are used to go from an ingest module factory class
+         * name in the pipeline configuration file to the corresponding ingest
+         * module template.
          */
-        Map<String, IngestModuleTemplate> dataSourceModuleTemplates = new LinkedHashMap<>();
-        Map<String, IngestModuleTemplate> fileModuleTemplates = new LinkedHashMap<>();
-
-        // mappings for jython modules.  These mappings are only used to determine modules in the pipelineconfig.xml.
-        Map<String, IngestModuleTemplate> jythonDataSourceModuleTemplates = new LinkedHashMap<>();
-        Map<String, IngestModuleTemplate> jythonFileModuleTemplates = new LinkedHashMap<>();
-
-        for (IngestModuleTemplate template : ingestModuleTemplates) {
+        Map<String, IngestModuleTemplate> unorderedDataSourceModuleTemplates = new LinkedHashMap<>();
+        Map<String, IngestModuleTemplate> unorderedJythonDataSourceModuleTemplates = new LinkedHashMap<>();
+        Map<String, IngestModuleTemplate> unorderedFileModuleTemplates = new LinkedHashMap<>();
+        Map<String, IngestModuleTemplate> unorderedJythonFileModuleTemplates = new LinkedHashMap<>();
+        Map<String, IngestModuleTemplate> unorderedArtifactModuleTemplates = new LinkedHashMap<>();
+        Map<String, IngestModuleTemplate> unorderedJythonArtifactModuleTemplates = new LinkedHashMap<>();
+        for (IngestModuleTemplate template : enabledIngestModuleTemplates) {
             if (template.isDataSourceIngestModuleTemplate()) {
-                addModule(dataSourceModuleTemplates, jythonDataSourceModuleTemplates, template);
+                addModule(unorderedDataSourceModuleTemplates, unorderedJythonDataSourceModuleTemplates, template);
+                continue;
             }
             if (template.isFileIngestModuleTemplate()) {
-                addModule(fileModuleTemplates, jythonFileModuleTemplates, template);
+                addModule(unorderedFileModuleTemplates, unorderedJythonFileModuleTemplates, template);
+                continue;
+            }
+            if (template.isDataArtifactIngestModuleTemplate()) {
+                addModule(unorderedArtifactModuleTemplates, unorderedJythonArtifactModuleTemplates, template);
             }
         }
 
         /**
-         * Use the mappings and the ingest pipelines configuration to create
-         * ordered lists of ingest module templates for each ingest pipeline.
+         * Use the mappings and the entries read from the ingest pipelines
+         * configuration file to create ordered lists of ingest module template
+         * for each ingest task pipeline.
          */
         IngestPipelinesConfiguration pipelineConfigs = IngestPipelinesConfiguration.getInstance();
-        List<IngestModuleTemplate> firstStageDataSourceModuleTemplates = IngestJobPipeline.getConfiguredIngestModuleTemplates(
-                dataSourceModuleTemplates, jythonDataSourceModuleTemplates, pipelineConfigs.getStageOneDataSourceIngestPipelineConfig());
-
-        List<IngestModuleTemplate> fileIngestModuleTemplates = IngestJobPipeline.getConfiguredIngestModuleTemplates(
-                fileModuleTemplates, jythonFileModuleTemplates, pipelineConfigs.getFileIngestPipelineConfig());
-
-        List<IngestModuleTemplate> secondStageDataSourceModuleTemplates = IngestJobPipeline.getConfiguredIngestModuleTemplates(
-                dataSourceModuleTemplates, null, pipelineConfigs.getStageTwoDataSourceIngestPipelineConfig());
+        List<IngestModuleTemplate> firstStageDataSourceModuleTemplates = IngestJobPipeline.getConfiguredIngestModuleTemplates(unorderedDataSourceModuleTemplates, unorderedJythonDataSourceModuleTemplates, pipelineConfigs.getStageOneDataSourceIngestPipelineConfig());
+        List<IngestModuleTemplate> fileIngestModuleTemplates = IngestJobPipeline.getConfiguredIngestModuleTemplates(unorderedFileModuleTemplates, unorderedJythonFileModuleTemplates, pipelineConfigs.getFileIngestPipelineConfig());
+        List<IngestModuleTemplate> secondStageDataSourceModuleTemplates = IngestJobPipeline.getConfiguredIngestModuleTemplates(unorderedDataSourceModuleTemplates, null, pipelineConfigs.getStageTwoDataSourceIngestPipelineConfig());
 
         /**
-         * Add any module templates that were not specified in the pipelines
-         * configuration to an appropriate pipeline - either the first stage
-         * data source ingest pipeline or the file ingest pipeline.
+         * Add any module templates that were not specified in the pipeline
+         * configuration file to the appropriate list. Note that no data
+         * artifact ingest modules are currently specified in the file and that
+         * core Autopsy modules are added first and third party modules are
+         * added last.
          */
-        addOrdered(firstStageDataSourceModuleTemplates, dataSourceModuleTemplates, jythonDataSourceModuleTemplates);
-        addOrdered(fileIngestModuleTemplates, fileModuleTemplates, jythonFileModuleTemplates);
+        addOrdered(firstStageDataSourceModuleTemplates, unorderedDataSourceModuleTemplates, unorderedJythonDataSourceModuleTemplates);
+        addOrdered(fileIngestModuleTemplates, unorderedFileModuleTemplates, unorderedJythonFileModuleTemplates);
+        addOrdered(fileIngestModuleTemplates, unorderedFileModuleTemplates, unorderedJythonFileModuleTemplates);
+        List<IngestModuleTemplate> artifactModuleTemplates = IngestJobPipeline.getConfiguredIngestModuleTemplates(unorderedDataSourceModuleTemplates, null, pipelineConfigs.getStageTwoDataSourceIngestPipelineConfig());
 
         /**
-         * Construct the data source ingest pipelines.
+         * Construct the ingest task pipelines from the ordered lists.
          */
-        this.firstStageDataSourceIngestPipeline = new DataSourceIngestPipeline(this, firstStageDataSourceModuleTemplates);
-        this.secondStageDataSourceIngestPipeline = new DataSourceIngestPipeline(this, secondStageDataSourceModuleTemplates);
-
-        /**
-         * Construct the file ingest pipelines, one per file ingest thread.
-         */
+        firstStageDataSourceIngestPipeline = new DataSourceIngestPipeline(this, firstStageDataSourceModuleTemplates);
+        secondStageDataSourceIngestPipeline = new DataSourceIngestPipeline(this, secondStageDataSourceModuleTemplates);
         try {
             int numberOfFileIngestThreads = IngestManager.getInstance().getNumberOfFileIngestThreads();
             for (int i = 0; i < numberOfFileIngestThreads; ++i) {
@@ -365,16 +358,33 @@ final class IngestJobPipeline {
              */
             Thread.currentThread().interrupt();
         }
+        artifactIngestPipeline = new DataArtifactIngestPipeline(this, artifactModuleTemplates);
+
+        /*
+         * Add the ingest module templates to the "master list" and record the
+         * final composition of the ingest task pipelines in the case database.
+         */
         try {
             SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-            this.addIngestModules(firstStageDataSourceModuleTemplates, IngestModuleType.DATA_SOURCE_LEVEL, skCase);
-            this.addIngestModules(fileIngestModuleTemplates, IngestModuleType.FILE_LEVEL, skCase);
-            this.addIngestModules(secondStageDataSourceModuleTemplates, IngestModuleType.DATA_SOURCE_LEVEL, skCase);
+            addIngestModules(firstStageDataSourceModuleTemplates, IngestModuleType.DATA_SOURCE_LEVEL, skCase);
+            addIngestModules(fileIngestModuleTemplates, IngestModuleType.FILE_LEVEL, skCase);
+            addIngestModules(secondStageDataSourceModuleTemplates, IngestModuleType.DATA_SOURCE_LEVEL, skCase);
         } catch (TskCoreException | NoCurrentCaseException ex) {
             logErrorMessage(Level.WARNING, "Failed to add ingest modules listing to case database", ex);
         }
     }
 
+    /**
+     * Adds a list of ingest module templates for an ingest task pipeline to the
+     * "master list" and records the final composition of the pipeline in the
+     * case database.
+     *
+     * @param templates A list of ingest module templates.
+     * @param type      The type of the ingest module templates.
+     * @param skCase    The case database.
+     *
+     * @throws TskCoreException
+     */
     private void addIngestModules(List<IngestModuleTemplate> templates, IngestModuleType type, SleuthkitCase skCase) throws TskCoreException {
         for (IngestModuleTemplate module : templates) {
             ingestModules.add(skCase.addIngestModule(module.getModuleName(), FactoryClassNameNormalizer.normalize(module.getModuleFactory().getClass().getCanonicalName()), type, module.getModuleFactory().getModuleVersionNumber()));
@@ -385,28 +395,28 @@ final class IngestJobPipeline {
      * Uses an input collection of ingest module templates and a pipeline
      * configuration, i.e., an ordered list of ingest module factory class
      * names, to create an ordered output list of ingest module templates for an
-     * ingest pipeline. The ingest module templates are removed from the input
-     * collection as they are added to the output collection.
+     * ingest task pipeline. The ingest module templates are removed from the
+     * input collection as they are added to the output collection.
      *
-     * @param ingestModuleTemplates       A mapping of ingest module factory
-     *                                    class names to ingest module
+     * @param javaIngestModuleTemplates   A mapping of Java ingest module
+     *                                    factory class names to ingest module
      *                                    templates.
-     * @param jythonIngestModuleTemplates A mapping of jython processed class
-     *                                    names to jython ingest module
-     *                                    templates.
+     * @param jythonIngestModuleTemplates A mapping of Jython ingest module
+     *                                    factory proxy class names to ingest
+     *                                    module templates.
      * @param pipelineConfig              An ordered list of ingest module
      *                                    factory class names representing an
-     *                                    ingest pipeline.
+     *                                    ingest pipeline, read form the
+     *                                    pipeline configuration file.
      *
      * @return An ordered list of ingest module templates, i.e., an
      *         uninstantiated pipeline.
      */
-    private static List<IngestModuleTemplate> getConfiguredIngestModuleTemplates(
-            Map<String, IngestModuleTemplate> ingestModuleTemplates, Map<String, IngestModuleTemplate> jythonIngestModuleTemplates, List<String> pipelineConfig) {
+    private static List<IngestModuleTemplate> getConfiguredIngestModuleTemplates(Map<String, IngestModuleTemplate> javaIngestModuleTemplates, Map<String, IngestModuleTemplate> jythonIngestModuleTemplates, List<String> pipelineConfig) {
         List<IngestModuleTemplate> templates = new ArrayList<>();
         for (String moduleClassName : pipelineConfig) {
-            if (ingestModuleTemplates != null && ingestModuleTemplates.containsKey(moduleClassName)) {
-                templates.add(ingestModuleTemplates.remove(moduleClassName));
+            if (javaIngestModuleTemplates != null && javaIngestModuleTemplates.containsKey(moduleClassName)) {
+                templates.add(javaIngestModuleTemplates.remove(moduleClassName));
             } else if (jythonIngestModuleTemplates != null && jythonIngestModuleTemplates.containsKey(moduleClassName)) {
                 templates.add(jythonIngestModuleTemplates.remove(moduleClassName));
             }
@@ -415,25 +425,25 @@ final class IngestJobPipeline {
     }
 
     /**
-     * Gets the identifier of this job.
+     * Gets the ID of this ingest job pipeline.
      *
-     * @return The job identifier.
+     * @return The job ID.
      */
     long getId() {
-        return this.id;
+        return this.pipelineId;
     }
 
     /**
-     * Get the ingest execution context identifier.
+     * Gets the ingest execution context name.
      *
-     * @return The context string.
+     * @return The context name.
      */
     String getExecutionContext() {
         return this.settings.getExecutionContext();
     }
 
     /**
-     * Gets the data source to be ingested by this job.
+     * Getss the data source to be ingested by this ingest job pipeline.
      *
      * @return A Content object representing the data source.
      */
@@ -442,8 +452,8 @@ final class IngestJobPipeline {
     }
 
     /**
-     * Queries whether or not unallocated space should be processed as part of
-     * this job.
+     * Queries whether or not unallocated space should be processed by this
+     * ingest job pipeline.
      *
      * @return True or false.
      */
@@ -452,28 +462,31 @@ final class IngestJobPipeline {
     }
 
     /**
-     * Gets the selected file ingest filter from settings.
+     * Gets the file ingest filter for this ingest job pipeline from the ingest
+     * job settings.
      *
-     * @return True or false.
+     * @return The filter.
      */
     FilesSet getFileIngestFilter() {
         return this.settings.getFileFilter();
     }
 
     /**
-     * Checks to see if this job has at least one ingest pipeline.
+     * Checks to see if this ingest job pipeline has at least one ingest task
+     * pipeline.
      *
      * @return True or false.
      */
     boolean hasIngestPipeline() {
-        return this.hasFirstStageDataSourceIngestPipeline()
-                || this.hasFileIngestPipeline()
-                || this.hasSecondStageDataSourceIngestPipeline();
+        return hasFirstStageDataSourceIngestPipeline()
+                || hasFileIngestPipeline()
+                || hasSecondStageDataSourceIngestPipeline()
+                || hasDataArtifactPipeline();
     }
 
     /**
-     * Checks to see if this job has a first stage data source level ingest
-     * pipeline.
+     * Checks to see if this ingest job pipeline has a first stage data source
+     * level ingest pipeline.
      *
      * @return True or false.
      */
@@ -482,8 +495,8 @@ final class IngestJobPipeline {
     }
 
     /**
-     * Checks to see if this job has a second stage data source level ingest
-     * pipeline.
+     * Checks to see if this ingest job pipeline has a second stage data source
+     * level ingest task pipeline.
      *
      * @return True or false.
      */
@@ -492,7 +505,8 @@ final class IngestJobPipeline {
     }
 
     /**
-     * Checks to see if this job has a file level ingest pipeline.
+     * Checks to see if this ingest job pipeline has a file level ingest task
+     * pipeline.
      *
      * @return True or false.
      */
@@ -504,92 +518,121 @@ final class IngestJobPipeline {
     }
 
     /**
-     * Starts up the ingest pipelines for this job.
+     * Checks to see if this ingest job pipeline has a data artifact ingest task
+     * pipeline.
+     *
+     * @return True or false.
+     */
+    private boolean hasDataArtifactPipeline() {
+        return (artifactIngestPipeline.isEmpty() == false);
+    }
+
+    /**
+     * Starts up this ingest job pipeline.
      *
      * @return A collection of ingest module startup errors, empty on success.
      */
-    List<IngestModuleError> start() {
+    List<IngestModuleError> startUp() {
         if (dataSource == null) {
-            // TODO - Remove once data source is always present during initialization
             throw new IllegalStateException("Ingest started before setting data source");
         }
-        List<IngestModuleError> errors = startUpIngestPipelines();
+        List<IngestModuleError> errors = startUpIngestTaskPipelines();
         if (errors.isEmpty()) {
             try {
-                this.ingestJob = Case.getCurrentCaseThrows().getSleuthkitCase().addIngestJob(dataSource, NetworkUtils.getLocalHostName(), ingestModules, new Date(this.createTime), new Date(0), IngestJobStatusType.STARTED, "");
+                ingestJob = Case.getCurrentCaseThrows().getSleuthkitCase().addIngestJob(dataSource, NetworkUtils.getLocalHostName(), ingestModules, new Date(this.createTime), new Date(0), IngestJobStatusType.STARTED, "");
             } catch (TskCoreException | NoCurrentCaseException ex) {
                 logErrorMessage(Level.WARNING, "Failed to add ingest job info to case database", ex); //NON-NLS
             }
 
-            if (this.hasFirstStageDataSourceIngestPipeline() || this.hasFileIngestPipeline()) {
+            startArtifactProcessing();
+            if (hasFirstStageDataSourceIngestPipeline() || hasFileIngestPipeline()) {
                 if (ingestMode == IngestJob.Mode.BATCH) {
-                    logInfoMessage("Starting first stage analysis"); //NON-NLS
-                    this.startFirstStage();
+                    logInfoMessage("Starting first stage analysis in batch mode"); //NON-NLS
+                    startFirstStage();
                 } else {
-                    logInfoMessage("Preparing for first stage analysis"); //NON-NLS
-                    this.startFileIngestStreaming();
+                    logInfoMessage("Starting first stage analysis in streaming mode"); //NON-NLS
+                    startFileIngestStreaming();
                 }
-            } else if (this.hasSecondStageDataSourceIngestPipeline()) {
+            } else if (hasSecondStageDataSourceIngestPipeline()) {
                 logInfoMessage("Starting second stage analysis"); //NON-NLS
-                this.startSecondStage();
+                startSecondStage();
             }
         }
         return errors;
     }
 
     /**
-     * Starts up each of the ingest pipelines for this job to collect any file
-     * and data source level ingest modules errors that might occur.
+     * Starts up each of the ingest task pipelines in this ingest job pipeline.
+     * All of the pipelines are started so that any and all start up errors can
+     * be returned to the caller. It is important to capture all of the errors
+     * since the ingest job will be automatically cancelled and the errors will
+     * be reported to the user so the issues can be addressed or the modules
+     * that can't start up can be disabled before the ingest job is attempted
+     * again.
      *
-     * @return A collection of ingest module startup errors, empty on success.
+     * @return A list of ingest module startup errors, empty on success.
      */
-    private List<IngestModuleError> startUpIngestPipelines() {
+    private List<IngestModuleError> startUpIngestTaskPipelines() {
         List<IngestModuleError> errors = new ArrayList<>();
-
-        /*
-         * Start the data-source-level ingest module pipelines.
-         */
-        errors.addAll(this.firstStageDataSourceIngestPipeline.startUp());
-        errors.addAll(this.secondStageDataSourceIngestPipeline.startUp());
-
-        /*
-         * If the data-source-level ingest pipelines were successfully started,
-         * start the file-level ingest pipelines (one per pipeline file ingest
-         * thread).
-         */
-        if (errors.isEmpty()) {
-            for (FileIngestPipeline pipeline : this.fileIngestPipelinesQueue) {
-                errors.addAll(pipeline.startUp());
-                if (!errors.isEmpty()) {
-                    /*
-                     * If there are start up errors, the ingest job will not
-                     * proceed, so shut down any file ingest pipelines that did
-                     * start up.
-                     */
-                    while (!this.fileIngestPipelinesQueue.isEmpty()) {
-                        FileIngestPipeline startedPipeline = this.fileIngestPipelinesQueue.poll();
-                        if (startedPipeline.isRunning()) {
-                            List<IngestModuleError> shutDownErrors = startedPipeline.shutDown();
-                            if (!shutDownErrors.isEmpty()) {
-                                /*
-                                 * The start up errors will ultimately be
-                                 * reported to the user for possible remedy, but
-                                 * the shut down errors are logged here.
-                                 */
-                                logIngestModuleErrors(shutDownErrors);
-                            }
-                        }
-                    }
-                    break;
-                }
+        startUpIngestTaskPipeline(firstStageDataSourceIngestPipeline);
+        startUpIngestTaskPipeline(secondStageDataSourceIngestPipeline);
+        for (FileIngestPipeline pipeline : fileIngestPipelines) {
+            List<IngestModuleError> filePipelineErrors = startUpIngestTaskPipeline(pipeline);
+            if (!filePipelineErrors.isEmpty()) {
+                /*
+                 * If one pipeline copy can't start up, assume that none of them
+                 * will be able to start up for the same reasons.
+                 */
+                errors.addAll(filePipelineErrors);
+                break;
             }
         }
-
+        errors.addAll(this.artifactIngestPipeline.startUp());
         return errors;
     }
 
     /**
-     * Starts the first stage of this job.
+     * Starts up an ingest task pipeline. If there are any start up errors, the
+     * piepline is imediately shut down.
+     *
+     * @param pipeline The ingest task pipeline to start up.
+     *
+     * @return A list of ingest module startup errors, empty on success.
+     */
+    private List<IngestModuleError> startUpIngestTaskPipeline(IngestTaskPipeline<?> pipeline) {
+        List<IngestModuleError> startUpErrors = pipeline.startUp();
+        if (!startUpErrors.isEmpty()) {
+            List<IngestModuleError> shutDownErrors = pipeline.shutDown();
+            if (!shutDownErrors.isEmpty()) {
+                /*
+                 * The start up errors will ultimately be reported to the user
+                 * for possible remedy, but the shut down errors are logged
+                 * here.
+                 */
+                logIngestModuleErrors(shutDownErrors);
+            }
+        }
+        return startUpErrors;
+    }
+
+    /**
+     * Schedules data artifact tasks for all of the existing data artifacts for
+     * the ingest job's data source, if any. Note that there is a possiblity,
+     * just as in with the other item types, that a user may process artifacts
+     * more than once if the same ingest job is run more than once.
+     */
+    private void startArtifactProcessing() {
+        Blackboard blackboard = Case.getCurrentCase().getSleuthkitCase().getBlackboard();
+        try {
+            List<DataArtifact> artifacts = blackboard.getDataArtifacts(dataSource);
+            taskScheduler.scheduleDataArtifactIngestTasks(this, artifacts);
+        } catch (TskCoreException ex) {
+            // RJCTODO
+        }
+    }
+
+    /**
+     * Starts the first stage of the ingest job.
      */
     private void startFirstStage() {
         this.stage = IngestJobPipeline.Stages.FIRST_STAGE_FILES_AND_DATASOURCE;
@@ -880,7 +923,7 @@ final class IngestJobPipeline {
             }
         }
 
-        /**
+        /*
          * Start the second stage, if appropriate.
          */
         if (!this.cancelled && this.hasSecondStageDataSourceIngestPipeline()) {
@@ -927,16 +970,37 @@ final class IngestJobPipeline {
                 logErrorMessage(Level.WARNING, "Failed to set job end date in case database", ex);
             }
         }
-        this.parentJob.ingestJobPipelineFinished(this);
+        this.job.ingestJobPipelineFinished(this);
     }
 
     /**
-     * Passes the data source for this job through the currently active data
+     * Executes an ingest task for an ingest job by passing the item associated
+     * with the task through the appropriate pipeline of ingest modules.
+     *
+     * @param task The ingest task.
+     */
+    void execute(IngestTask task) {
+        /*
+         * The following "switch on actual type" eliminates code duplication in
+         * the IngestTask hierarchy. Future work may or may not be able to
+         * eliminate the switch.
+         */
+        if (task instanceof DataSourceIngestTask) {
+            executeDataSourceIngestTask((DataSourceIngestTask) task);
+        } else if (task instanceof FileIngestTask) {
+            executeFileIngestTask((FileIngestTask) task);
+        } else if (task instanceof DataArtifactIngestTask) {
+            executeDataArtifactIngestTask((DataArtifactIngestTask) task);
+        }
+    }
+
+    /**
+     * Passes a data source for this job through the currently active data
      * source level ingest pipeline.
      *
      * @param task A data source ingest task wrapping the data source.
      */
-    void process(DataSourceIngestTask task) {
+    private void executeDataSourceIngestTask(DataSourceIngestTask task) {
         try {
             synchronized (this.dataSourceIngestPipelineLock) {
                 if (!this.isCancelled() && !this.currentDataSourceIngestPipeline.isEmpty()) {
@@ -968,17 +1032,12 @@ final class IngestJobPipeline {
     }
 
     /**
-     * Passes a file from the data source for this job through the file level
-     * ingest pipeline.
+     * Passes a file from the data source for this job through the file ingest
+     * pipeline.
      *
-     * @param task A file ingest task.
-     *
-     * @throws InterruptedException if the thread executing this code is
-     *                              interrupted while blocked on taking from or
-     *                              putting to the file ingest pipelines
-     *                              collection.
+     * @param task A file ingest task wrapping the file.
      */
-    void process(FileIngestTask task) throws InterruptedException {
+    private void executeFileIngestTask(FileIngestTask task) {
         try {
             if (!this.isCancelled()) {
                 FileIngestPipeline pipeline = this.fileIngestPipelinesQueue.take();
@@ -1037,10 +1096,22 @@ final class IngestJobPipeline {
                 }
                 this.fileIngestPipelinesQueue.put(pipeline);
             }
+        } catch (InterruptedException ex) {
+            // RJCTODO
         } finally {
             IngestJobPipeline.taskScheduler.notifyTaskCompleted(task);
             this.checkForStageCompleted();
         }
+    }
+
+    /**
+     * Passes a data artifact from the data source for this job through the data
+     * artifact ingest pipeline.
+     *
+     * @param task A data artifact ingest task wrapping the file.
+     */
+    private void executeDataArtifactIngestTask(DataArtifactIngestTask task) {
+        // RJCTODO
     }
 
     /**
@@ -1297,8 +1368,7 @@ final class IngestJobPipeline {
      * @param taskName   Name of file the module is running on.
      */
     void setCurrentFileIngestModule(String moduleName, String taskName) {
-        this.currentFileIngestModule = moduleName;
-        this.currentFileIngestTask = taskName;
+        currentFileIngestTask = taskName;
     }
 
     /**
@@ -1327,7 +1397,7 @@ final class IngestJobPipeline {
      * @param message The message.
      */
     private void logInfoMessage(String message) {
-        logger.log(Level.INFO, String.format("%s (data source = %s, objId = %d, pipeline id = %d, ingest job id = %d)", message, this.dataSource.getName(), this.dataSource.getId(), id, ingestJob.getIngestJobId())); //NON-NLS        
+        logger.log(Level.INFO, String.format("%s (data source = %s, objId = %d, pipeline id = %d, ingest job id = %d)", message, this.dataSource.getName(), this.dataSource.getId(), pipelineId, ingestJob.getIngestJobId())); //NON-NLS        
     }
 
     /**
@@ -1339,7 +1409,7 @@ final class IngestJobPipeline {
      * @param throwable The throwable associated with the error.
      */
     private void logErrorMessage(Level level, String message, Throwable throwable) {
-        logger.log(level, String.format("%s (data source = %s, objId = %d, pipeline id = %d, ingest job id = %d)", message, this.dataSource.getName(), this.dataSource.getId(), id, ingestJob.getIngestJobId()), throwable); //NON-NLS
+        logger.log(level, String.format("%s (data source = %s, objId = %d, pipeline id = %d, ingest job id = %d)", message, this.dataSource.getName(), this.dataSource.getId(), pipelineId, ingestJob.getIngestJobId()), throwable); //NON-NLS
     }
 
     /**
@@ -1350,7 +1420,7 @@ final class IngestJobPipeline {
      * @param message The message.
      */
     private void logErrorMessage(Level level, String message) {
-        logger.log(level, String.format("%s (data source = %s, objId = %d, pipeline id = %d, ingest job id %d)", message, this.dataSource.getName(), this.dataSource.getId(), id, ingestJob.getIngestJobId())); //NON-NLS
+        logger.log(level, String.format("%s (data source = %s, objId = %d, pipeline id = %d, ingest job id %d)", message, this.dataSource.getName(), this.dataSource.getId(), pipelineId, ingestJob.getIngestJobId())); //NON-NLS
     }
 
     /**
@@ -1411,13 +1481,14 @@ final class IngestJobPipeline {
                 estimatedFilesToProcessCount = this.estimatedFilesToProcess;
                 snapShotTime = new Date().getTime();
             }
-            tasksSnapshot = IngestJobPipeline.taskScheduler.getTasksSnapshotForJob(id);
+            tasksSnapshot = IngestJobPipeline.taskScheduler.getTasksSnapshotForJob(pipelineId);
 
         }
 
-        return new Snapshot(this.dataSource.getName(), id, createTime,
+        return new Snapshot(this.dataSource.getName(), pipelineId, createTime,
                 getCurrentDataSourceIngestModule(), fileIngestRunning, fileIngestStartTime,
                 cancelled, cancellationReason, cancelledDataSourceIngestModules,
                 processedFilesCount, estimatedFilesToProcessCount, snapShotTime, tasksSnapshot);
     }
+
 }

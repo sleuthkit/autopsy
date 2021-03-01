@@ -622,7 +622,7 @@ final class IngestTasksScheduler {
             return false;
         }
     }
-
+    
     /**
      * Checks whether or not a collection of ingest tasks includes a task for a
      * given data source ingest job.

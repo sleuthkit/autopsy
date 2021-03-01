@@ -30,13 +30,13 @@ import org.sleuthkit.datamodel.TskCoreException;
 final class FileIngestTask extends IngestTask {
 
     private final long fileId;
-    private AbstractFile file = null;
+    private AbstractFile file;
 
     /**
      * Constructs a file ingest task that will be executed by an ingest thread
      * using a given ingest job pipeline.
      *
-     * @param ingestJobPipeline The ingest job pipeline to use to complete the
+     * @param ingestJobPipeline The ingest job pipeline to use to execute the
      *                          task.
      * @param file              The file to be processed.
      */
@@ -46,8 +46,19 @@ final class FileIngestTask extends IngestTask {
         fileId = file.getId();
     }
 
+    /**
+     * Constructs a file ingest task that will be executed by an ingest thread
+     * using a given ingest job pipeline. This constructor supports streaming
+     * ingest by deferring the construction of the AbstractFile object for this
+     * task to conserve heap memory.
+     *
+     * @param ingestJobPipeline The ingest job pipeline to use to execute the
+     *                          task.
+     * @param fileId            The object ID of the file to be processed.
+     */
     FileIngestTask(IngestJobPipeline ingestJobPipeline, long fileId) {
         super(ingestJobPipeline);
+        file = null;
         this.fileId = fileId;
     }
 
@@ -73,20 +84,6 @@ final class FileIngestTask extends IngestTask {
             file = Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(fileId);
         }
         return file;
-    }
-
-    /**
-     * Executes this task by passing it to the given ingest job pipeline.
-     *
-     * @param ingestJobPipeline The ingest job pipeline.
-     *
-     * @throws InterruptedException This exception is thrown if the thread
-     *                              executing the task is interrupted while
-     *                              blocked.
-     */
-    @Override
-    void execute(IngestJobPipeline ingestJobPipeline) throws InterruptedException {
-        ingestJobPipeline.process(this);
     }
 
     @Override
