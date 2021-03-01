@@ -162,8 +162,7 @@ final class ArtifactsListPanel extends AbstractArtifactListPanel {
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     void clearList() {
-        tableModel.setContents(new ArrayList<>());
-        tableModel.fireTableDataChanged();
+        addArtifacts(new ArrayList<>());
     }
 
     /**
