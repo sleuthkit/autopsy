@@ -247,7 +247,7 @@ final class ExtractZoneIdentifier extends Extract {
                         RecentActivityExtracterModuleFactory.getModuleName(),
                         zoneInfo.getZoneIdAsString()));
         }
-        return createArtifactWithAttributes(TSK_WEB_DOWNLOAD, zoneFile, bbattributes);
+        return createDataArtifactWithAttributes(TSK_WEB_DOWNLOAD, zoneFile, bbattributes);
     }
 
     /**

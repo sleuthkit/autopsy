@@ -56,6 +56,7 @@ import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProcessTerminator;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.AbstractFile;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -168,7 +169,7 @@ class ExtractIE extends Extract {
                         RecentActivityExtracterModuleFactory.getModuleName(), domain));
             }
 
-            BlackboardArtifact bbart = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_BOOKMARK, fav, bbattributes);
+            BlackboardArtifact bbart = createDataArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_BOOKMARK, fav, bbattributes);
             if (bbart != null) {
                 bbartifacts.add(bbart);
             }
@@ -280,7 +281,7 @@ class ExtractIE extends Extract {
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
                         RecentActivityExtracterModuleFactory.getModuleName(), domain));
             }
-            BlackboardArtifact bbart = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_COOKIE, cookiesFile, bbattributes);
+            BlackboardArtifact bbart = createDataArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_COOKIE, cookiesFile, bbattributes);
             if (bbart != null) {
                 bbartifacts.add(bbart);
             }
@@ -558,34 +559,28 @@ class ExtractIE extends Extract {
                 }
             }
 
-            try {
-                BlackboardArtifact bbart = origFile.newArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY);
-                Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
-                        RecentActivityExtracterModuleFactory.getModuleName(), realurl));
-                //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "RecentActivity", EscapeUtil.decodeURL(realurl)));
+            Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
+                    RecentActivityExtracterModuleFactory.getModuleName(), realurl));
+            //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "RecentActivity", EscapeUtil.decodeURL(realurl)));
 
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
-                        RecentActivityExtracterModuleFactory.getModuleName(), ftime));
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_REFERRER,
-                        RecentActivityExtracterModuleFactory.getModuleName(), ""));
-                // @@@ NOte that other browser modules are adding TITLE in hre for the title
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
-                        RecentActivityExtracterModuleFactory.getModuleName(),
-                        NbBundle.getMessage(this.getClass(),
-                                "ExtractIE.moduleName.text")));
-                if (domain != null && domain.isEmpty() == false) {
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
-                            RecentActivityExtracterModuleFactory.getModuleName(), domain));
-                }
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME,
-                        RecentActivityExtracterModuleFactory.getModuleName(), user));
-                bbart.addAttributes(bbattributes);
-
-                bbartifacts.add(bbart);
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Error writing Internet Explorer web history artifact to the blackboard. Pasco results will be incomplete", ex); //NON-NLS
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
+                    RecentActivityExtracterModuleFactory.getModuleName(), ftime));
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_REFERRER,
+                    RecentActivityExtracterModuleFactory.getModuleName(), ""));
+            // @@@ NOte that other browser modules are adding TITLE in hre for the title
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
+                    RecentActivityExtracterModuleFactory.getModuleName(),
+                    NbBundle.getMessage(this.getClass(),
+                            "ExtractIE.moduleName.text")));
+            if (domain != null && domain.isEmpty() == false) {
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
+                        RecentActivityExtracterModuleFactory.getModuleName(), domain));
             }
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME,
+                    RecentActivityExtracterModuleFactory.getModuleName(), user));
+
+            bbartifacts.add(createDataArtifactWithAttributes(TSK_WEB_HISTORY, origFile, bbattributes));
         }
         fileScanner.close();
         return bbartifacts;

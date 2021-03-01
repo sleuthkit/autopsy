@@ -422,7 +422,7 @@ class DomainCategoryRunner extends Extract {
                 new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_HOST, moduleName, artHost.getHost()),
                 new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME, moduleName, domainCategory)
         );
-        postArtifact(createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_CATEGORIZATION, artHost.getAbstractFile(), bbattributes));
+        postArtifact(createDataArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_CATEGORIZATION, artHost.getAbstractFile(), bbattributes));
     }
 
     @Override

@@ -382,7 +382,7 @@ class SearchEngineURLQueryAnalyzer extends Extract {
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
                             NbBundle.getMessage(this.getClass(),
                                     "SearchEngineURLQueryAnalyzer.parentModuleName"), last_accessed));
-                    postArtifact(createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY, file, bbattributes));
+                    postArtifact(createDataArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY, file, bbattributes));
                     ++totalQueries;
                 }
             }

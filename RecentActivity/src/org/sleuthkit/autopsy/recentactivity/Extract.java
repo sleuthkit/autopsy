@@ -34,6 +34,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 import java.util.logging.Level;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -49,6 +50,8 @@ import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.DataArtifact;
+import org.sleuthkit.datamodel.OsAccount;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
@@ -128,6 +131,17 @@ abstract class Extract {
             return bbart;
         } catch (TskException ex) {
             logger.log(Level.WARNING, "Error while trying to add an artifact", ex); //NON-NLS
+        }
+        return null;
+    }
+    
+    DataArtifact createDataArtifactWithAttributes(BlackboardArtifact.ARTIFACT_TYPE type, AbstractFile file, Collection<BlackboardAttribute> attributes) {
+        try {
+            Optional<OsAccount> optional = file.getOsAccount();
+            DataArtifact bbart = file.newDataArtifact(new BlackboardArtifact.Type(type), attributes, optional.isPresent() ? optional.get() : null);
+            return bbart;
+        } catch (TskException ex) {
+            logger.log(Level.WARNING, String.format("Error while trying to add an artifact (%s) for abstractFile %d", type.getDisplayName(), file.getId()), ex); //NON-NLS
         }
         return null;
     }

@@ -236,7 +236,7 @@ class Firefox extends Extract {
                         RecentActivityExtracterModuleFactory.getModuleName(), domain)); //NON-NLS
 
                 }
-                BlackboardArtifact bbart = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_HISTORY, historyFile, bbattributes);
+                BlackboardArtifact bbart = createDataArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_HISTORY, historyFile, bbattributes);
                 if (bbart != null) {
                     bbartifacts.add(bbart);
                 }
@@ -332,7 +332,7 @@ class Firefox extends Extract {
                         RecentActivityExtracterModuleFactory.getModuleName(), domain)); //NON-NLS
                 }
 
-                BlackboardArtifact bbart = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_BOOKMARK, bookmarkFile, bbattributes);
+                BlackboardArtifact bbart = createDataArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_BOOKMARK, bookmarkFile, bbattributes);
                 if (bbart != null) {
                     bbartifacts.add(bbart);
                 }
@@ -448,7 +448,7 @@ class Firefox extends Extract {
                         RecentActivityExtracterModuleFactory.getModuleName(), domain));
                 }
 
-                BlackboardArtifact bbart = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_COOKIE, cookiesFile, bbattributes);
+                BlackboardArtifact bbart = createDataArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_COOKIE, cookiesFile, bbattributes);
                 if (bbart != null) {
                     bbartifacts.add(bbart);
                 }
@@ -575,7 +575,7 @@ class Firefox extends Extract {
                             domain)); //NON-NLS
                 }
 
-                BlackboardArtifact webDownloadArtifact = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, downloadsFile, bbattributes);
+                BlackboardArtifact webDownloadArtifact = createDataArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, downloadsFile, bbattributes);
                 if (webDownloadArtifact != null) {
                     bbartifacts.add(webDownloadArtifact);
 
@@ -717,7 +717,7 @@ class Firefox extends Extract {
                         RecentActivityExtracterModuleFactory.getModuleName(), domain)); //NON-NLS
                 }
 
-                BlackboardArtifact webDownloadArtifact = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, downloadsFile, bbattributes);
+                BlackboardArtifact webDownloadArtifact = createDataArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, downloadsFile, bbattributes);
                 if (webDownloadArtifact != null) {
                     bbartifacts.add(webDownloadArtifact);
                 
@@ -857,7 +857,7 @@ class Firefox extends Extract {
                
                 }
                 // Add artifact
-                BlackboardArtifact bbart = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_FORM_AUTOFILL, formHistoryFile, bbattributes);
+                BlackboardArtifact bbart = createDataArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_FORM_AUTOFILL, formHistoryFile, bbattributes);
                 if (bbart != null) {
                     bbartifacts.add(bbart);
                 }

@@ -49,6 +49,10 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.recentactivity.BinaryCookieReader.Cookie;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -430,10 +434,12 @@ final class ExtractSafari extends Extract {
             String title = row.get(HEAD_TITLE).toString();
             Long time = (Double.valueOf(row.get(HEAD_TIME).toString())).longValue();
 
-            BlackboardArtifact bbart = origFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY);
-            bbart.addAttributes(createHistoryAttribute(url, time, null, title,
-                    this.getName(), NetworkUtils.extractDomain(url), null));
-            bbartifacts.add(bbart);
+            bbartifacts.add(
+                    createDataArtifactWithAttributes(
+                            TSK_WEB_HISTORY, 
+                            origFile, 
+                            createHistoryAttribute(url, time, null, title,
+                    this.getName(), NetworkUtils.extractDomain(url), null)));
         }
 
         return bbartifacts;
@@ -564,10 +570,19 @@ final class ExtractSafari extends Extract {
                 }
                 
                 Cookie cookie = iter.next();
-
-                BlackboardArtifact bbart = origFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE);
-                bbart.addAttributes(createCookieAttributes(cookie.getURL(), cookie.getCreationDate(), null, cookie.getExpirationDate(), cookie.getName(), cookie.getValue(), this.getName(), NetworkUtils.extractDomain(cookie.getURL())));
-                bbartifacts.add(bbart);
+                
+                bbartifacts.add(
+                        createDataArtifactWithAttributes(
+                                TSK_WEB_COOKIE, 
+                                origFile, 
+                                createCookieAttributes(
+                                        cookie.getURL(), 
+                                        cookie.getCreationDate(), 
+                                        null, 
+                                        cookie.getExpirationDate(), 
+                                        cookie.getName(), cookie.getValue(), 
+                                        this.getName(), 
+                                        NetworkUtils.extractDomain(cookie.getURL()))));
             }
         }
 
@@ -615,9 +630,12 @@ final class ExtractSafari extends Extract {
             }
 
             if (url != null || title != null) {
-                BlackboardArtifact bbart = origFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK);
-                bbart.addAttributes(createBookmarkAttributes(url, title, null, getName(), NetworkUtils.extractDomain(url)));
-                bbartifacts.add(bbart);
+                bbartifacts.add(createDataArtifactWithAttributes(TSK_WEB_BOOKMARK, origFile,
+                        createBookmarkAttributes(url, 
+                                title, 
+                                null, 
+                                getName(), 
+                                NetworkUtils.extractDomain(url))));
             }
         }
     }
@@ -656,8 +674,7 @@ final class ExtractSafari extends Extract {
             time = date.getDate().getTime();
         }
 
-        BlackboardArtifact webDownloadArtifact = origFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD);
-        webDownloadArtifact.addAttributes(this.createDownloadAttributes(path, pathID, url, time, NetworkUtils.extractDomain(url), getName()));
+        BlackboardArtifact webDownloadArtifact = createDataArtifactWithAttributes(TSK_WEB_DOWNLOAD, origFile, createDownloadAttributes(path, pathID, url, time, NetworkUtils.extractDomain(url), getName())); 
         bbartifacts.add(webDownloadArtifact);
         
         // find the downloaded file and create a TSK_ASSOCIATED_OBJECT for it, associating it with the TSK_WEB_DOWNLOAD artifact.

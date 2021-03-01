@@ -298,7 +298,7 @@ class ExtractWebAccountType extends Extract {
                             NbBundle.getMessage(this.getClass(),
                                     "ExtractWebAccountType.parentModuleName"), role.getUrl()));
 
-                    artifactList.add(createArtifactWithAttributes(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_ACCOUNT_TYPE, file, bbattributes));
+                    artifactList.add(createDataArtifactWithAttributes(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_ACCOUNT_TYPE, file, bbattributes));
                 }
                 
                 if (!context.dataSourceIngestIsCancelled()) {

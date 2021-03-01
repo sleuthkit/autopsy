@@ -41,6 +41,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.ArrayList;
+import java.util.Optional;
 import org.apache.commons.io.FilenameUtils;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -54,9 +55,12 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.OsAccount;
 import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamException;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -264,7 +268,7 @@ class Chromium extends Extract {
                         RecentActivityExtracterModuleFactory.getModuleName(),
                         (NetworkUtils.extractDomain((result.get("url").toString() != null) ? result.get("url").toString() : "")))); //NON-NLS
 
-                BlackboardArtifact bbart = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_HISTORY, historyFile, bbattributes);
+                BlackboardArtifact bbart = createDataArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_HISTORY, historyFile, bbattributes);
                 if (bbart != null) {
                     bbartifacts.add(bbart);
                 }
@@ -390,29 +394,21 @@ class Chromium extends Extract {
                     date = Long.valueOf(0);
                 }
                 String domain = NetworkUtils.extractDomain(url);
-                try {
-                    BlackboardArtifact bbart = bookmarkFile.newArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK);
-                    Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
-                    //TODO Revisit usage of deprecated constructor as per TSK-583
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
-                            RecentActivityExtracterModuleFactory.getModuleName(), url));
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TITLE,
-                            RecentActivityExtracterModuleFactory.getModuleName(), name));
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
-                            RecentActivityExtracterModuleFactory.getModuleName(), (date / 1000000) - Long.valueOf("11644473600")));
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
-                            RecentActivityExtracterModuleFactory.getModuleName(), browser));
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
-                            RecentActivityExtracterModuleFactory.getModuleName(), domain));
-                    bbart.addAttributes(bbattributes);
+                Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
+                //TODO Revisit usage of deprecated constructor as per TSK-583
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
+                        RecentActivityExtracterModuleFactory.getModuleName(), url));
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TITLE,
+                        RecentActivityExtracterModuleFactory.getModuleName(), name));
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
+                        RecentActivityExtracterModuleFactory.getModuleName(), (date / 1000000) - Long.valueOf("11644473600")));
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
+                        RecentActivityExtracterModuleFactory.getModuleName(), browser));
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
+                        RecentActivityExtracterModuleFactory.getModuleName(), domain));
 
-                    bbartifacts.add(bbart);
-                } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "Error while trying to insert Chrome bookmark artifact{0}", ex); //NON-NLS
-                    this.addErrorMessage(
-                            NbBundle.getMessage(this.getClass(), "Chrome.getBookmark.errMsg.errAnalyzingFile4",
-                                    this.getName(), bookmarkFile.getName()));
-                }
+                bbartifacts.add(createDataArtifactWithAttributes(TSK_WEB_BOOKMARK, bookmarkFile, bbattributes));
+                
             }
             
             if(!context.dataSourceIngestIsCancelled()) {
@@ -504,7 +500,7 @@ class Chromium extends Extract {
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
                         RecentActivityExtracterModuleFactory.getModuleName(), domain));
 
-                BlackboardArtifact bbart = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_COOKIE, cookiesFile, bbattributes);
+                BlackboardArtifact bbart = createDataArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_COOKIE, cookiesFile, bbattributes);
                 if (bbart != null) {
                     bbartifacts.add(bbart);
                 }
@@ -610,7 +606,7 @@ class Chromium extends Extract {
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
                         RecentActivityExtracterModuleFactory.getModuleName(), browser));
 
-                BlackboardArtifact webDownloadArtifact = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, downloadFile, bbattributes);
+                BlackboardArtifact webDownloadArtifact = createDataArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, downloadFile, bbattributes);
                 if (webDownloadArtifact != null) {
                     bbartifacts.add(webDownloadArtifact);
 
@@ -618,7 +614,8 @@ class Chromium extends Extract {
                     try {
                         String normalizedFullPath = FilenameUtils.normalize(fullPath, true);
                         for (AbstractFile downloadedFile : fileManager.findFiles(dataSource, FilenameUtils.getName(normalizedFullPath), FilenameUtils.getPath(normalizedFullPath))) {
-                            BlackboardArtifact associatedObjectArtifact = downloadedFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT);
+                            BlackboardArtifact associatedObjectArtifact = 
+                                    downloadedFile.newArtifact(TSK_ASSOCIATED_OBJECT);
                             associatedObjectArtifact.addAttribute(
                                     new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT,
                                             RecentActivityExtracterModuleFactory.getModuleName(), webDownloadArtifact.getArtifactID()));
@@ -870,7 +867,7 @@ class Chromium extends Extract {
                     RecentActivityExtracterModuleFactory.getModuleName(), browser));
 
             // Add an artifact
-            BlackboardArtifact bbart = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_FORM_AUTOFILL, webDataFile, bbattributes);
+            BlackboardArtifact bbart = createDataArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_FORM_AUTOFILL, webDataFile, bbattributes);
             if (bbart != null) {
                 bbartifacts.add(bbart);
             }
