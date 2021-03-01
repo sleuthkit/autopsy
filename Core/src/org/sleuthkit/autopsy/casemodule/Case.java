@@ -39,6 +39,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -81,6 +82,9 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceNameChangedEvent;
+import org.sleuthkit.autopsy.casemodule.events.HostAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.HostChangedEvent;
+import org.sleuthkit.autopsy.casemodule.events.HostRemovedEvent;
 import org.sleuthkit.autopsy.casemodule.events.OsAccountAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.OsAccountChangedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ReportAddedEvent;
@@ -130,6 +134,7 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.FileSystem;
+import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.OsAccount;
 import org.sleuthkit.datamodel.OsAccountManager;
@@ -426,8 +431,38 @@ public class Case {
          * OSAccount associated with the current case has changed. 
          * Call getOsAccount to get the changed account;
          */
-        OS_ACCOUNT_CHANGED;
+        OS_ACCOUNT_CHANGED,
+        
+        /**
+         * Hosts associated with the current case added.
+         */
+        HOSTS_ADDED,
 
+        /**
+         * Hosts associated with the current case has changed. 
+         */
+        HOSTS_CHANGED,
+
+        /**
+         * Hosts associated with the current case has been deleted. 
+         */
+        HOSTS_DELETED,
+
+        /**
+         * Persons associated with the current case added.
+         */
+        PERSONS_ADDED,
+
+        /**
+         * Persons associated with the current case has changed. 
+         */
+        PERSONS_CHANGED,
+
+        /**
+         * Persons associated with the current case has been deleted. 
+         */
+        PERSONS_DELETED
+        ;
     };
 
     /**
@@ -473,6 +508,78 @@ public class Case {
             for(OsAccount account: event.getOsAcounts()) {
                 eventPublisher.publish(new OsAccountChangedEvent(account));
             }
+        }
+        
+        /**
+         * Publishes an autopsy event from the sleuthkit HostCreationEvent 
+         * indicating that hosts have been created.
+         * 
+         * @param event The sleuthkit event for the creation of hosts.
+         */
+        @Subscribe 
+        public void publishHostsAddedEvent(HostCreationEvent event) {
+            eventPublisher.publish(new HostsAddedEvent(
+                    event == null ? Collections.emptyList() : event.getHosts()));
+        }
+        
+        /**
+         * Publishes an autopsy event from the sleuthkit HostUpdateEvent 
+         * indicating that hosts have been updated.
+         * 
+         * @param event The sleuthkit event for the updating of hosts.
+         */        
+        @Subscribe 
+        public void publishHostsChangedEvent(HostUpdateEvent event) {
+            eventPublisher.publish(new HostsChangedEvent(
+                    event == null ? Collections.emptyList() : event.getHosts()));
+        }
+        
+        /**
+         * Publishes an autopsy event from the sleuthkit HostDeletedEvent 
+         * indicating that hosts have been deleted.
+         * 
+         * @param event The sleuthkit event for the deleting of hosts.
+         */    
+        @Subscribe 
+        public void publishHostsDeletedEvent(HostDeletedEvent event) {
+            eventPublisher.publish(new HostsRemovedEvent(
+                    event == null ? Collections.emptyList() : event.getHosts()));
+        }
+        
+        /**
+         * Publishes an autopsy event from the sleuthkit PersonCreationEvent 
+         * indicating that persons have been created.
+         * 
+         * @param event The sleuthkit event for the creation of persons.
+         */
+        @Subscribe 
+        public void publishPersonsAddedEvent(PersonCreationEvent event) {
+            eventPublisher.publish(new PersonsAddedEvent(
+                    event == null ? Collections.emptyList() : event.getPersons()));
+        }
+        
+        /**
+         * Publishes an autopsy event from the sleuthkit PersonUpdateEvent 
+         * indicating that persons have been updated.
+         * 
+         * @param event The sleuthkit event for the updating of persons.
+         */        
+        @Subscribe 
+        public void publishPersonsChangedEvent(PersonUpdateEvent event) {
+            eventPublisher.publish(new PersonsChangedEvent(
+                    event == null ? Collections.emptyList() : event.getPersons()));
+        }
+        
+        /**
+         * Publishes an autopsy event from the sleuthkit PersonDeletedEvent 
+         * indicating that persons have been deleted.
+         * 
+         * @param event The sleuthkit event for the deleting of persons.
+         */    
+        @Subscribe 
+        public void publishPersonsDeletedEvent(PersonDeletedEvent event) {
+            eventPublisher.publish(new PersonsRemovedEvent(
+                    event == null ? Collections.emptyList() : event.getPersons()));
         }
     }
 
@@ -1680,7 +1787,55 @@ public class Case {
     public void notifyOsAccountChanged(OsAccount account) {
         eventPublisher.publish(new OsAccountChangedEvent(account));
     }
- 
+    
+    /**
+     * Notify via an autopsy event that a host has been added.
+     * @param host The host that has been added.
+     */
+    public void notifyHostAdded(Host host) {
+        eventPublisher.publish(new HostAddedEvent(Collections.singletonList(host)));
+    }
+
+    /**
+     * Notify via an autopsy event that a host has been changed.
+     * @param newValue The host that has been updated.
+     */
+    public void notifyHostChanged(Host newValue) {
+        eventPublisher.publish(new HostChangedEvent(Collections.singletonList(newValue)));
+    }
+    
+    /**
+     * Notify via an autopsy event that a host has been deleted.
+     * @param host The host that has been deleted.
+     */
+    public void notifyHostDeleted(Host host) {
+        eventPublisher.publish(new HostRemovedEvent(Collections.singletonList(host)));
+    }
+     
+    /**
+     * Notify via an autopsy event that a person has been added.
+     * @param person The person that has been added.
+     */
+    public void notifyPersonAdded(Person person) {
+        eventPublisher.publish(new PersonAddedEvent(Collections.singletonList(person)));
+    }
+
+    /**
+     * Notify via an autopsy event that a person has been changed.
+     * @param newValue The person that has been updated.
+     */
+    public void notifyPersonChanged(Person newValue) {
+        eventPublisher.publish(new PersonChangedEvent(Collections.singletonList(newValue)));
+    }
+    
+    /**
+     * Notify via an autopsy event that a person has been deleted.
+     * @param person The person that has been deleted.
+     */
+    public void notifyPersonDeleted(Person person) {
+        eventPublisher.publish(new PersonRemovedEvent(Collections.singletonList(person)));
+    }
+    
     /**
      * Adds a report to the case.
      *
