@@ -177,14 +177,6 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
     public void run(Host host, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         if (!setDataSourceOptionsCalled) {
             
-            // HOSTTODO - use passed in value
-            try {
-                host = Case.getCurrentCase().getSleuthkitCase().getHostManager().getOrCreateHost("LocalFilesDSProcessor Host");
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Error creating/loading host", ex);
-                host = null;
-            }
-            
             localFilePaths = configPanel.getContentPaths();
             if (configPanel.subTypeIsLogicalEvidencePanel()) {
                 try {
@@ -340,7 +332,7 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
      *                                 during processing.
      * @param callback                 Callback to call when processing is done.
      */
-    void run(String deviceId, String rootVirtualDirectoryName, List<String> localFilePaths, Host host, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+    public void run(String deviceId, String rootVirtualDirectoryName, List<String> localFilePaths, Host host, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         new Thread(new AddLocalFilesTask(deviceId, rootVirtualDirectoryName, localFilePaths, host, progressMonitor, callback)).start();
     }
 
@@ -427,8 +419,13 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
 
     @Override
     public void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) {
+        process(deviceId, dataSourcePath, null, progressMonitor, callBack);
+    }
+    
+    @Override
+    public void process(String deviceId, Path dataSourcePath, Host host, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) {
         List<String> filePaths = Arrays.asList(new String[]{dataSourcePath.toString()});
-        run(deviceId, "", filePaths, progressMonitor, callBack);
+        run(deviceId, "", filePaths, host, progressMonitor, callBack);
     }
 
     /**

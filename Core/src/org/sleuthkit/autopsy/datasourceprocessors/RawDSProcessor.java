@@ -159,15 +159,6 @@ public class RawDSProcessor implements DataSourceProcessor, AutoIngestDataSource
     @Override
     public void run(Host host, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         configPanel.storeSettings();
-        
-        // HOSTTODO - use passed in value
-        try {
-            host = Case.getCurrentCase().getSleuthkitCase().getHostManager().getOrCreateHost("RawDSProcessor Host");
-        } catch (TskCoreException ex) {
-            // It's not worth adding a logger for temporary code
-            //logger.log(Level.SEVERE, "Error creating/loading host", ex);
-            host = null;
-        }
         run(UUID.randomUUID().toString(), configPanel.getImageFilePath(), configPanel.getTimeZone(), configPanel.getChunkSize(), host, progressMonitor, callback);
     }
 
@@ -236,10 +227,15 @@ public class RawDSProcessor implements DataSourceProcessor, AutoIngestDataSource
 
         return 2;
     }
-
+    
     @Override
     public void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) {
-        run(deviceId, dataSourcePath.toString(), Calendar.getInstance().getTimeZone().getID(), DEFAULT_CHUNK_SIZE, null, progressMonitor, callBack);
+        process(deviceId, dataSourcePath, null, progressMonitor, callBack);
+    }
+    
+    @Override
+    public void process(String deviceId, Path dataSourcePath, Host host, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) {
+        run(deviceId, dataSourcePath.toString(), Calendar.getInstance().getTimeZone().getID(), DEFAULT_CHUNK_SIZE, host, progressMonitor, callBack);
     }
 
 }

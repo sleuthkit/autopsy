@@ -166,7 +166,7 @@ class DomainSummaryPanel extends javax.swing.JPanel implements ListCellRenderer<
     @NbBundle.Messages({"# {0} - startDate",
         "# {1} - endDate",
         "DomainSummaryPanel.activity.text=Activity: {0} to {1}",
-        "DomainSummaryPanel.pages.text=Page views in past 60 days: ",
+        "DomainSummaryPanel.pages.text=Page views in final 60 days: ",
         "DomainSummaryPanel.totalPages.text=Total page views: ",
         "DomainSummaryPanel.downloads.text=Files downloaded: ",
         "DomainSummaryPanel.notability.text=Previously tagged as notable: ",

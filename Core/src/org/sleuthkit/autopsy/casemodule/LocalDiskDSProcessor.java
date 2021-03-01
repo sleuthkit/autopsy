@@ -171,13 +171,6 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
         }
         
         this.host = host;
-        // HOSTTODO - set to value from config panel
-        try {
-            this.host = Case.getCurrentCase().getSleuthkitCase().getHostManager().getOrCreateHost("LocalDiskDSProcessor Host");
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error creating/loading host", ex);
-            this.host = null;
-        }
 
         Image image;
         try {
@@ -193,7 +186,7 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
         }   
 
         addDiskTask = new AddImageTask(
-                new AddImageTask.ImageDetails(deviceId, image, sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, this.host, imageWriterSettings), 
+                new AddImageTask.ImageDetails(deviceId, image, sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, imageWriterSettings), 
                 progressMonitor,
                 new StreamingAddDataSourceCallbacks(new DefaultIngestStream()), 
                 new StreamingAddImageTaskCallback(new DefaultIngestStream(), callback));
@@ -261,7 +254,7 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
             return;
         } 
         
-	    addDiskTask = new AddImageTask(new AddImageTask.ImageDetails(deviceId, image, sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, null, imageWriterSettings), 
+	    addDiskTask = new AddImageTask(new AddImageTask.ImageDetails(deviceId, image, sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, imageWriterSettings), 
                 progressMonitor, 
                 new StreamingAddDataSourceCallbacks(new DefaultIngestStream()), 
                 new StreamingAddImageTaskCallback(new DefaultIngestStream(), callback));

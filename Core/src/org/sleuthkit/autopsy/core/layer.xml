@@ -49,6 +49,7 @@
             </file>
             <file name="org-sleuthkit-autopsy-casemodule-CaseDetailsAction.instance"/>
             <file name="org-sleuthkit-autopsy-casemodule-datasourcesummary-DataSourceSummaryAction.instance"/>
+            <file name="org-sleuthkit-autopsy-datamodel-hosts-OpenHostsAction.instance"/>
             <file name="org-sleuthkit-autopsy-casemodule-CaseDeleteAction.instance"/>
             <file name="org-sleuthkit-autopsy-casemodule-UnpackagePortableCaseAction.instance"/>
             <file name="org-sleuthkit-autopsy-casemodule-CaseSaveAction.instance">
@@ -164,7 +165,11 @@
             </file>
             <file name="org-sleuthkit-autopsy-casemodule-AddImage-separatorBefore.instance">
                 <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
-                <attr name="position" intvalue="200"/>
+                <attr name="position" intvalue="150"/>
+            </file>
+                <file name="org-sleuthkit-autopsy-datamodel-hosts-OpenHostsAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Case/org-sleuthkit-autopsy-datamodel-hosts-OpenHostsAction.instance"/>
+                <attr name="position" intvalue="151"/>
             </file>
             <file name="org-sleuthkit-autopsy-casemodule-AddImageAction.shadow">
                 <attr name="originalFile" stringvalue="Actions/Case/org-sleuthkit-autopsy-casemodule-AddImageAction.instance"/>
