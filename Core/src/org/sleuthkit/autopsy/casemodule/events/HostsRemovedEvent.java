@@ -20,20 +20,20 @@ package org.sleuthkit.autopsy.casemodule.events;
 
 import java.util.List;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.datamodel.Person;
+import org.sleuthkit.datamodel.Host;
 
 /**
- * Event fired when new persons are added.
+ * Event fired when hosts are removed.
  */
-public class PersonAddedEvent extends PersonEvent {
+public class HostsRemovedEvent extends HostsEvent {
     
     private static final long serialVersionUID = 1L;
     
     /**
      * Main constructor.
-     * @param dataModelObjects The persons that have been added.
+     * @param dataModelObjects The list of hosts that have been deleted.
      */
-    public PersonAddedEvent(List<Person> dataModelObjects) {
-        super(Case.Events.PERSON_ADDED.name(), dataModelObjects);
+    public HostsRemovedEvent(List<Host> dataModelObjects) {
+        super(Case.Events.HOSTS_DELETED.name(), dataModelObjects);
     }
 }

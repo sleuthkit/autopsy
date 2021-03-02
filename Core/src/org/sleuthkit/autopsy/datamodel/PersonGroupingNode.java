@@ -23,7 +23,10 @@ import java.beans.PropertyChangeListener;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import javax.swing.Action;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
@@ -33,6 +36,8 @@ import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.casemodule.events.HostsChangedEvent;
+import org.sleuthkit.autopsy.casemodule.events.PersonsChangedEvent;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.persons.DeletePersonAction;
 import org.sleuthkit.autopsy.datamodel.persons.EditPersonAction;
@@ -56,6 +61,11 @@ public class PersonGroupingNode extends DisplayableItemNode {
 
         private static final Logger logger = Logger.getLogger(PersonChildren.class.getName());
 
+        private static final Set<Case.Events> CHILD_EVENTS = EnumSet.of(Case.Events.HOSTS_ADDED, Case.Events.HOSTS_CHANGED);
+        private static final Set<String> CHILD_EVENTS_STR = CHILD_EVENTS.stream()
+                .map(ev -> ev.name())
+                .collect(Collectors.toSet());
+        
         private final Person person;
 
         /**
@@ -68,15 +78,13 @@ public class PersonGroupingNode extends DisplayableItemNode {
         }
 
         /**
-         * Listener for handling DATA_SOURCE_ADDED and DATA_SOURCE_DELETED
-         * events.
+         * Listener for handling adding and removing host events.
          */
-        private final PropertyChangeListener pcl = new PropertyChangeListener() {
+        private final PropertyChangeListener hostAddedDeletedPcl = new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 String eventType = evt.getPropertyName();
-                if (eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())
-                        || eventType.equals(Case.Events.DATA_SOURCE_DELETED.toString())) {
+                if (eventType != null && CHILD_EVENTS_STR.contains(eventType)) {
                     refresh(true);
                 }
             }
@@ -84,12 +92,12 @@ public class PersonGroupingNode extends DisplayableItemNode {
 
         @Override
         protected void addNotify() {
-            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED), pcl);
+            Case.addEventTypeSubscriber(CHILD_EVENTS, hostAddedDeletedPcl);
         }
 
         @Override
         protected void removeNotify() {
-            Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED), pcl);
+            Case.removeEventTypeSubscriber(CHILD_EVENTS, hostAddedDeletedPcl);
         }
 
         @Override
@@ -117,7 +125,24 @@ public class PersonGroupingNode extends DisplayableItemNode {
     }
 
     private final Person person;
+    private final Long personId;
 
+    /**
+     * Listener for handling person change events.
+     */
+    private final PropertyChangeListener personChangePcl = new PropertyChangeListener() {
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+            String eventType = evt.getPropertyName();
+            if (personId != null && eventType.equals(Case.Events.PERSONS_CHANGED.toString()) && evt instanceof PersonsChangedEvent) {
+                ((PersonsChangedEvent) evt).getNewValue().stream()
+                        .filter(p -> p != null && p.getId() == personId)
+                        .findFirst()
+                        .ifPresent((newPerson) -> setDisplayName(newPerson.getName()));
+            }
+        }
+    };
+    
     /**
      * Main constructor.
      *
@@ -134,7 +159,11 @@ public class PersonGroupingNode extends DisplayableItemNode {
         super.setDisplayName(safeName);
         this.setIconBaseWithExtension(ICON_PATH);
         this.person = person;
+        this.personId = person == null ? null : person.getId();
+        Case.addEventTypeSubscriber(EnumSet.of(Case.Events.PERSONS_CHANGED), personChangePcl);
     }
+    
+    
 
     @Override
     public boolean isLeafTypeNode() {

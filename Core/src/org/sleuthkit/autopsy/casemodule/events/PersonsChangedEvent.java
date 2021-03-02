@@ -23,17 +23,19 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.Person;
 
 /**
- * Event fired when persons are removed.
+ * Event fired when persons are changed.
  */
-public class PersonRemovedEvent extends PersonEvent {
-    
+public class PersonsChangedEvent extends PersonxEvent {
+
     private static final long serialVersionUID = 1L;
-    
+
     /**
      * Main constructor.
-     * @param dataModelObjects The list of persons that have been deleted.
+     *
+     * @param dataModelObjects The new values for the persons that have been
+     * changed.
      */
-    public PersonRemovedEvent(List<Person> dataModelObjects) {
-        super(Case.Events.PERSON_DELETED.name(), dataModelObjects);
+    public PersonsChangedEvent(List<Person> dataModelObjects) {
+        super(Case.Events.PERSONS_CHANGED.name(), dataModelObjects);
     }
 }

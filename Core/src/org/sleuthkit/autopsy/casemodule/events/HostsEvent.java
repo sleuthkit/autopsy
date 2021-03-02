@@ -31,7 +31,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Base event class for when something pertaining to hosts changes.
  */
-public class HostEvent extends TskDataModelChangeEvent<Host> {
+public class HostsEvent extends TskDataModelChangeEvent<Host> {
 
     /**
      * Retrieves a list of ids from a list of hosts.
@@ -62,7 +62,7 @@ public class HostEvent extends TskDataModelChangeEvent<Host> {
      * type.
      * @param dataModelObjects The list of hosts for the event.
      */
-    protected HostEvent(String eventName, List<Host> dataModelObjects) {
+    protected HostsEvent(String eventName, List<Host> dataModelObjects) {
         super(eventName, getIds(dataModelObjects), new ArrayList<>(getSafeList(dataModelObjects)));
     }
 

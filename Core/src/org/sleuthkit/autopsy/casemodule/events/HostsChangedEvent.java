@@ -25,7 +25,7 @@ import org.sleuthkit.datamodel.Host;
 /**
  * Event fired when hosts are changed.
  */
-public class HostChangedEvent extends HostEvent {
+public class HostsChangedEvent extends HostsEvent {
 
     private static final long serialVersionUID = 1L;
 
@@ -35,7 +35,7 @@ public class HostChangedEvent extends HostEvent {
      * @param dataModelObjects The new values for the hosts that have been
      * changed.
      */
-    public HostChangedEvent(List<Host> dataModelObjects) {
-        super(Case.Events.HOST_CHANGED.name(), dataModelObjects);
+    public HostsChangedEvent(List<Host> dataModelObjects) {
+        super(Case.Events.HOSTS_CHANGED.name(), dataModelObjects);
     }
 }

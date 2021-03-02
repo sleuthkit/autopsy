@@ -36,6 +36,7 @@ import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.casemodule.events.HostsChangedEvent;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.hosts.AssociatePersonsMenuAction;
 import org.sleuthkit.autopsy.datamodel.hosts.RemoveParentPersonAction;
@@ -76,7 +77,7 @@ public class HostNode extends DisplayableItemNode {
         /**
          * Listener for handling DATA_SOURCE_ADDED events.
          */
-        private final PropertyChangeListener pcl = new PropertyChangeListener() {
+        private final PropertyChangeListener dataSourceAddedPcl = new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 String eventType = evt.getPropertyName();
@@ -88,12 +89,12 @@ public class HostNode extends DisplayableItemNode {
 
         @Override
         protected void addNotify() {
-            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED), pcl);
+            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED), dataSourceAddedPcl);
         }
 
         @Override
         protected void removeNotify() {
-            Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED), pcl);
+            Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED), dataSourceAddedPcl);
         }
 
         @Override
@@ -163,7 +164,24 @@ public class HostNode extends DisplayableItemNode {
         return new DataSourceGroupingNode(key.getDataSource());
     };
 
+    /**
+     * Listener for handling host change events.
+     */
+    private final PropertyChangeListener hostChangePcl = new PropertyChangeListener() {
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+            String eventType = evt.getPropertyName();
+            if (hostId != null && eventType.equals(Case.Events.HOSTS_CHANGED.toString()) && evt instanceof HostsChangedEvent) {
+                ((HostsChangedEvent) evt).getNewValue().stream()
+                        .filter(h -> h != null && h.getId() == hostId)
+                        .findFirst()
+                        .ifPresent((newHost) -> setDisplayName(newHost.getName()));
+            }
+        }
+    };
+
     private final Host host;
+    private final Long hostId;
 
     /**
      * Main constructor for HostDataSources key where data source children
@@ -197,7 +215,9 @@ public class HostNode extends DisplayableItemNode {
         String safeName = (host == null || host.getName() == null)
                 ? Bundle.HostGroupingNode_unknownHostNode_title()
                 : host.getName();
-
+        
+        hostId = host == null ? null : host.getId();
+        Case.addEventTypeSubscriber(EnumSet.of(Case.Events.HOSTS_CHANGED), hostChangePcl);
         super.setName(safeName);
         super.setDisplayName(safeName);
         this.setIconBaseWithExtension(ICON_PATH);
