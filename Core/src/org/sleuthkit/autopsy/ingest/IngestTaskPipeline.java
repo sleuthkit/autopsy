@@ -323,6 +323,11 @@ abstract class IngestTaskPipeline<T extends IngestTask> {
          *                               performing the task.
          */
         abstract void performTask(IngestJobPipeline ingestJobPipeline, T task) throws IngestModuleException;
+        
+        @Override
+        public void shutDown() {
+            module.shutDown();
+        }        
 
     }
 
