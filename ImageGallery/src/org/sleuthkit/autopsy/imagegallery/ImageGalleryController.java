@@ -192,11 +192,14 @@ public final class ImageGalleryController {
      * @param theCase The case.
      */
     static void shutDownController(Case theCase) {
+        ImageGalleryController controller = null;
         synchronized (controllersByCaseLock) {
             if (controllersByCase.containsKey(theCase.getName())) {
-                ImageGalleryController controller = controllersByCase.remove(theCase.getName());
-                controller.shutDown();
+                controller = controllersByCase.remove(theCase.getName());
             }
+        }
+        if (controller != null) {
+            controller.shutDown();
         }
     }
 

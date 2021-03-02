@@ -105,8 +105,15 @@ public abstract class DrawableFile {
     protected DrawableFile(AbstractFile file, Boolean analyzed) {
         this.analyzed = new SimpleBooleanProperty(analyzed);
         this.file = file;
-
-        categoryManager = ImageGalleryController.getController(Case.getCurrentCase()).getCategoryManager();
+  
+        ImageGalleryController controllerForCase = ImageGalleryController.getController(Case.getCurrentCase());
+        if (controllerForCase != null) {
+            categoryManager = ImageGalleryController.getController(Case.getCurrentCase()).getCategoryManager();
+        } else {
+            // If getting the controller fails it means the case is currently closing. No need to 
+            // print an error.
+            categoryManager = null;
+        }
     }
 
     public abstract boolean isVideo();
@@ -246,6 +253,12 @@ public abstract class DrawableFile {
      * Update the category property.
      */
     private void updateCategory() {
+        // This only happens when a DrawableFile is created while the case is closing. No need
+        // to display the error message.
+        if (categoryManager == null) {
+            return;
+        }
+        
         try {
             List<ContentTag> contentTags = getContentTags();
             TagName tag = null;
