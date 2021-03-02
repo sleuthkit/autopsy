@@ -23,7 +23,6 @@ import java.beans.PropertyChangeListener;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -33,10 +32,10 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
+import org.openide.util.WeakListeners;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.casemodule.events.HostsChangedEvent;
 import org.sleuthkit.autopsy.casemodule.events.PersonsChangedEvent;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.persons.DeletePersonAction;
@@ -65,7 +64,7 @@ public class PersonGroupingNode extends DisplayableItemNode {
         private static final Set<String> CHILD_EVENTS_STR = CHILD_EVENTS.stream()
                 .map(ev -> ev.name())
                 .collect(Collectors.toSet());
-        
+
         private final Person person;
 
         /**
@@ -138,11 +137,14 @@ public class PersonGroupingNode extends DisplayableItemNode {
                 ((PersonsChangedEvent) evt).getNewValue().stream()
                         .filter(p -> p != null && p.getId() == personId)
                         .findFirst()
-                        .ifPresent((newPerson) -> setDisplayName(newPerson.getName()));
+                        .ifPresent((newPerson) -> {
+                            setName(newPerson.getName());
+                            setDisplayName(newPerson.getName());
+                        });
             }
         }
     };
-    
+
     /**
      * Main constructor.
      *
@@ -160,10 +162,9 @@ public class PersonGroupingNode extends DisplayableItemNode {
         this.setIconBaseWithExtension(ICON_PATH);
         this.person = person;
         this.personId = person == null ? null : person.getId();
-        Case.addEventTypeSubscriber(EnumSet.of(Case.Events.PERSONS_CHANGED), personChangePcl);
+        Case.addEventTypeSubscriber(EnumSet.of(Case.Events.PERSONS_CHANGED),
+                WeakListeners.propertyChange(personChangePcl, this));
     }
-    
-    
 
     @Override
     public boolean isLeafTypeNode() {

@@ -33,6 +33,7 @@ import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
+import org.openide.util.WeakListeners;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -175,7 +176,10 @@ public class HostNode extends DisplayableItemNode {
                 ((HostsChangedEvent) evt).getNewValue().stream()
                         .filter(h -> h != null && h.getId() == hostId)
                         .findFirst()
-                        .ifPresent((newHost) -> setDisplayName(newHost.getName()));
+                        .ifPresent((newHost) -> {
+                            setName(newHost.getName());
+                            setDisplayName(newHost.getName());
+                        });
             }
         }
     };
@@ -215,9 +219,10 @@ public class HostNode extends DisplayableItemNode {
         String safeName = (host == null || host.getName() == null)
                 ? Bundle.HostGroupingNode_unknownHostNode_title()
                 : host.getName();
-        
+
         hostId = host == null ? null : host.getId();
-        Case.addEventTypeSubscriber(EnumSet.of(Case.Events.HOSTS_CHANGED), hostChangePcl);
+        Case.addEventTypeSubscriber(EnumSet.of(Case.Events.HOSTS_CHANGED),
+                WeakListeners.propertyChange(hostChangePcl, this));
         super.setName(safeName);
         super.setDisplayName(safeName);
         this.setIconBaseWithExtension(ICON_PATH);

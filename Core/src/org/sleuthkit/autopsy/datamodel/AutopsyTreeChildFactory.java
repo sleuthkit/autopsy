@@ -23,7 +23,6 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -55,7 +54,7 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
             Case.Events.PERSONS_ADDED,
             Case.Events.PERSONS_DELETED
     );
-    
+
     private static final Set<String> LISTENING_EVENT_NAMES = LISTENING_EVENTS.stream()
             .map(evt -> evt.name())
             .collect(Collectors.toSet());
