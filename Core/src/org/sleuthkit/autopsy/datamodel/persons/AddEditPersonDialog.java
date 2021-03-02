@@ -16,10 +16,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datamodel.hosts;
+package org.sleuthkit.autopsy.datamodel.persons;
 
 import java.awt.Color;
-import org.sleuthkit.datamodel.Host;
+import org.sleuthkit.datamodel.Person;
 import java.util.Collection;
 import java.util.Set;
 import javax.swing.event.DocumentEvent;
@@ -28,50 +28,50 @@ import org.openide.util.NbBundle.Messages;
 
 /**
  *
- * Dialog for adding or editing a host.
+ * Dialog for adding or editing a person.
  */
-class AddEditHostDialog extends javax.swing.JDialog {
+public class AddEditPersonDialog extends javax.swing.JDialog {
 
     private static final long serialVersionUID = 1L;
 
     private boolean changed = false;
 
-    // host names to upper and trimmed
-    private final Set<String> hostNamesSanitized;
-    private final Host initialHost;
+    // person names to upper and trimmed
+    private final Set<String> personNamesSanitized;
+    private final Person initialPerson;
 
     /**
      * Main constructor.
      *
      * @param parent The parent frame for this dialog.
-     * @param currentHosts The current set of hosts in the case.
+     * @param currentPersons The current set of persons in the case.
      */
-    AddEditHostDialog(java.awt.Frame parent, Collection<Host> currentHosts) {
-        this(parent, currentHosts, null);
+    public AddEditPersonDialog(java.awt.Frame parent, Collection<Person> currentPersons) {
+        this(parent, currentPersons, null);
     }
 
     /**
      * Main constructor.
      *
      * @param parent The parent frame for this dialog.
-     * @param currentHosts The current set of hosts (used for determining if
+     * @param currentPersons The current set of persons (used for determining if
      * name is unique).
-     * @param initialHost If adding a new host, this will be a null value.
-     * Otherwise, if editing, this will be the host being edited.
+     * @param initialPerson If adding a new person, this will be a null value.
+     * Otherwise, if editing, this will be the person being edited.
      */
     @Messages({
-        "AddEditHostDialog_addHost_title=Add Host",
-        "AddEditHostDialog_editHost_title=Edit Host"
+        "AddEditPersonDialog_addPerson_title=Add Person",
+        "AddEditPersonDialog_editPerson_title=Edit Person"
     })
-    AddEditHostDialog(java.awt.Frame parent, Collection<Host> currentHosts, Host initialHost) {
+    public AddEditPersonDialog(java.awt.Frame parent, Collection<Person> currentPersons, Person initialPerson) {
         super(parent, true);
-        this.initialHost = initialHost;
-        setTitle(initialHost == null ? Bundle.AddEditHostDialog_addHost_title() : Bundle.AddEditHostDialog_editHost_title());
+        this.initialPerson = initialPerson;
+        setTitle(initialPerson == null ? Bundle.AddEditPersonDialog_addPerson_title() : Bundle.AddEditPersonDialog_editPerson_title());
 
-        hostNamesSanitized = HostNameValidator.getSanitizedHostNames(currentHosts);
+        personNamesSanitized = PersonNameValidator.getSanitizedPersonNames(currentPersons);
 
         initComponents();
-        onNameUpdate(initialHost == null ? null : initialHost.getName());
+        onNameUpdate(initialPerson == null ? null : initialPerson.getName());
 
         // initially, don't show validation message (for empty strings or repeat),
         // but do disable ok button if not valid.
@@ -99,7 +99,7 @@ class AddEditHostDialog extends javax.swing.JDialog {
      * @return The string value for the name in the input field if Ok pressed or
      * null if not.
      */
-    String getValue() {
+    public String getValue() {
         return inputTextField.getText();
     }
 
@@ -107,7 +107,7 @@ class AddEditHostDialog extends javax.swing.JDialog {
      * @return Whether or not the value has been changed and the user pressed
      * okay to save the new value.
      */
-    boolean isChanged() {
+    public boolean isChanged() {
         return changed;
     }
 
@@ -125,8 +125,8 @@ class AddEditHostDialog extends javax.swing.JDialog {
 
         // validate text input against invariants setting validation 
         // message and whether or not okay button is enabled accordingly.
-        String validationMessage = HostNameValidator.getValidationMessage(
-                newNameValue, initialHost == null ? null : initialHost.getName(), hostNamesSanitized);
+        String validationMessage = PersonNameValidator.getValidationMessage(
+                newNameValue, initialPerson == null ? null : initialPerson.getName(), personNamesSanitized);
         
         okButton.setEnabled(validationMessage == null);
         validationLabel.setText(validationMessage == null ? "" : validationMessage);
@@ -149,21 +149,21 @@ class AddEditHostDialog extends javax.swing.JDialog {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
-        inputTextField.setText(org.openide.util.NbBundle.getMessage(AddEditHostDialog.class, "AddEditHostDialog.inputTextField.text")); // NOI18N
+        inputTextField.setText(org.openide.util.NbBundle.getMessage(AddEditPersonDialog.class, "AddEditPersonDialog.inputTextField.text_1")); // NOI18N
 
-        nameLabel.setText(org.openide.util.NbBundle.getMessage(AddEditHostDialog.class, "AddEditHostDialog.nameLabel.text")); // NOI18N
+        nameLabel.setText(org.openide.util.NbBundle.getMessage(AddEditPersonDialog.class, "AddEditPersonDialog.nameLabel.text_1")); // NOI18N
 
         validationLabel.setForeground(Color.RED);
         validationLabel.setVerticalAlignment(javax.swing.SwingConstants.TOP);
 
-        okButton.setText(org.openide.util.NbBundle.getMessage(AddEditHostDialog.class, "AddEditHostDialog.okButton.text")); // NOI18N
+        okButton.setText(org.openide.util.NbBundle.getMessage(AddEditPersonDialog.class, "AddEditPersonDialog.okButton.text_1")); // NOI18N
         okButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 okButtonActionPerformed(evt);
             }
         });
 
-        cancelButton.setText(org.openide.util.NbBundle.getMessage(AddEditHostDialog.class, "AddEditHostDialog.cancelButton.text")); // NOI18N
+        cancelButton.setText(org.openide.util.NbBundle.getMessage(AddEditPersonDialog.class, "AddEditPersonDialog.cancelButton.text_1")); // NOI18N
         cancelButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cancelButtonActionPerformed(evt);
