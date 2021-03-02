@@ -25,7 +25,7 @@ import org.sleuthkit.datamodel.Person;
 /**
  * Event fired when persons are removed.
  */
-public class PersonsRemovedEvent extends PersonxEvent {
+public class PersonsRemovedEvent extends PersonsEvent {
     
     private static final long serialVersionUID = 1L;
     

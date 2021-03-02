@@ -31,7 +31,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Base event class for when something pertaining to persons changes.
  */
-public class PersonxEvent extends TskDataModelChangeEvent<Person> {
+public class PersonsEvent extends TskDataModelChangeEvent<Person> {
 
     /**
      * Retrieves a list of ids from a list of persons.
@@ -62,7 +62,7 @@ public class PersonxEvent extends TskDataModelChangeEvent<Person> {
      * type.
      * @param dataModelObjects The list of persons for the event.
      */
-    protected PersonxEvent(String eventName, List<Person> dataModelObjects) {
+    protected PersonsEvent(String eventName, List<Person> dataModelObjects) {
         super(eventName, getIds(dataModelObjects), new ArrayList<>(getSafeList(dataModelObjects)));
     }
 

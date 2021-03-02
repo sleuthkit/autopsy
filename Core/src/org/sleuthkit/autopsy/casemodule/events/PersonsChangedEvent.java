@@ -25,7 +25,7 @@ import org.sleuthkit.datamodel.Person;
 /**
  * Event fired when persons are changed.
  */
-public class PersonsChangedEvent extends PersonxEvent {
+public class PersonsChangedEvent extends PersonsEvent {
 
     private static final long serialVersionUID = 1L;
 
