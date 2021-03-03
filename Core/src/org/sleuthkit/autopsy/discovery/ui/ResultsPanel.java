@@ -128,8 +128,8 @@ final class ResultsPanel extends javax.swing.JPanel {
             }
         });
         domainSummaryViewer.addListSelectionListener((e) -> {
-            if (resultType == SearchData.Type.DOMAIN) {
-                domainSummaryViewer.sendPopulateEvent(!e.getValueIsAdjusting());
+            if (resultType == SearchData.Type.DOMAIN && !e.getValueIsAdjusting()) {
+                domainSummaryViewer.sendPopulateEvent();
             }
         });
     }

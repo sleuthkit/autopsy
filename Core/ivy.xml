@@ -13,7 +13,7 @@
         <dependency conf="core->default" org="org.apache.curator" name="curator-framework" rev="2.8.0"/>
         <dependency conf="core->default" org="org.apache.curator" name="curator-recipes" rev="2.8.0"/>
 
-        <dependency conf="core->default" org="org.python" name="jython-standalone" rev="2.7.0" />
+        <dependency conf="core->default" org="org.python" name="jython-standalone" rev="2.7.2" />
 
         <dependency conf="core->default" org="com.adobe.xmp" name="xmpcore" rev="5.1.2"/>
         <dependency conf="core->default" org="org.apache.zookeeper" name="zookeeper" rev="3.4.6"/>
