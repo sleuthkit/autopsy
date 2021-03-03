@@ -25,15 +25,26 @@ import java.awt.Insets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import static java.util.Locale.US;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 import javax.swing.Box;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.SwingWorker;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.contentviewers.osaccount.SectionData.RowData;
+import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.Host;
+import org.sleuthkit.datamodel.HostManager;
 import org.sleuthkit.datamodel.OsAccount;
+import org.sleuthkit.datamodel.OsAccountAttribute;
+import org.sleuthkit.datamodel.OsAccountManager;
 import org.sleuthkit.datamodel.OsAccountRealm;
 
 /**
@@ -195,6 +206,15 @@ public class OsAccountDataPanel extends JPanel {
 
         return data;
     }
+    
+    private SectionData buildHostData(Host host, List<OsAccountAttribute> attributeList) {
+        SectionData data = new SectionData(host.getName());
+        for(OsAccountAttribute attribute: attributeList) {
+            data.addData(attribute.getAttributeType().getDisplayName(), attribute.getDisplayString());
+        }
+        
+        return data;
+    }
 
     /**
      * Add a section title to the panel with the given title and location.
@@ -314,6 +334,113 @@ public class OsAccountDataPanel extends JPanel {
             } else {
                 return Bundle.OsAccountDataPanel_basic_no();
             }
+        }
+    }
+    
+    private class HostFetcher extends SwingWorker<WorkerResults, Void> {
+
+        private final OsAccount account;
+        
+        HostFetcher(OsAccount account) {
+            this.account = account;
+        }
+        
+        @Override
+        protected WorkerResults doInBackground() throws Exception {
+            Map<Host, List<OsAccountAttribute>> hostMap = new HashMap<>();
+            Map<Host, DataSource> instanceMap = new HashMap<>();
+            OsAccountManager osAccountManager = Case.getCurrentCase().getSleuthkitCase().getOsAccountManager();
+            List<Host> hosts = osAccountManager.getHosts(account);
+            List<OsAccountAttribute> attributeList = account.getOsAccountAttributes();
+            
+            if(attributeList != null) {
+                if(hosts != null) {
+                    // Organize the attributes by hostId
+                    Map<Long, List<OsAccountAttribute>> idMap = new HashMap<>();
+                    for(OsAccountAttribute attribute: attributeList) {
+                        List<OsAccountAttribute> atList = null;
+                        Optional<Long> optionalId = attribute.getHostId();
+                        Long key = null;
+                        if(optionalId.isPresent()) {
+                           key = optionalId.get();
+                        }
+
+                        atList = idMap.get(key);
+
+                        if(atList == null) {
+                            atList = new ArrayList<>();
+                            idMap.put(key, atList);
+                        }
+
+                        atList.add(attribute);
+                    }
+                    
+                    HostManager hostManager = Case.getCurrentCase().getSleuthkitCase().getHostManager();
+                    // Add attribute lists to the hostMap 
+                    for(Host host: hosts) {
+                        List<OsAccountAttribute> atList = idMap.get(host.getId());
+                        if(atList != null) {
+                            hostMap.put(host, atList);
+                        }
+                        
+                    }
+                    List<OsAccountAttribute> atList = idMap.get(null);
+                    if(atList != null) {
+                        hostMap.put(null, atList);
+                    }
+                } else {
+                    hostMap.put(null, attributeList);
+                }
+            }
+            
+            return new WorkerResults(hostMap, instanceMap);
+        }
+        
+        @Override
+        protected void done() {
+            WorkerResults results = null;
+            
+            try {
+                results = get();
+            } catch (InterruptedException ex) {
+                Exceptions.printStackTrace(ex);
+            } catch (ExecutionException ex) {
+                Exceptions.printStackTrace(ex);
+            }
+            
+            if(results != null) {
+                List<SectionData> data = new ArrayList<>();
+                data.add(buildBasicProperties(account));
+                Map<Host, List<OsAccountAttribute>> hostDataMap = results.getAttributeMap();
+                if(hostDataMap != null && !hostDataMap.isEmpty()) {
+                    hostDataMap.forEach((K,V)-> data.add(buildHostData(K,V)));
+                }
+
+                OsAccountRealm realm = account.getRealm();
+                if (realm != null) {
+                    data.add(buildRealmProperties(realm));
+                }
+
+                addDataComponents(data);
+            }
+        }   
+    }
+    
+    private final class WorkerResults {
+        private final Map<Host, List<OsAccountAttribute>> attributeMap;
+        private final Map<Host, DataSource> instanceMap;
+        
+        WorkerResults(Map<Host, List<OsAccountAttribute>> attributeMap, Map<Host, DataSource> instanceMap) {
+            this.attributeMap = attributeMap;
+            this.instanceMap = instanceMap;
+        }
+        
+        Map<Host, List<OsAccountAttribute>> getAttributeMap() {
+            return attributeMap;
+        }
+        
+        Map<Host, DataSource> getDataSourceMap() {
+            return instanceMap;
         }
     }
 
