@@ -5,6 +5,7 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.uiutils;
 
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.time.LocalDate;
@@ -172,11 +173,26 @@ public class ExcelExport {
         }
     }
 
+    private static final Logger logger = Logger.getLogger(ExcelExport.class.getName());
+    private static ExcelExport instance = null;
+
+    public static ExcelExport getInstance() {
+        if (instance == null) {
+            instance = new ExcelExport();
+        }
+
+        return instance;
+    }
+
+    private ExcelExport() {
+
+    }
+
     @Messages({
         "# {0} - sheetNumber",
         "ExcelExport_writeExcel_noSheetName=Sheet {0}"
     })
-    public void writeExcel(List<ExcelSheetExport> exports, String path) throws IOException, ExcelExportException {
+    public void writeExcel(List<ExcelSheetExport> exports, File path) throws IOException, ExcelExportException {
         // Create a Workbook
         Workbook workbook = new XSSFWorkbook(); // new HSSFWorkbook() for generating `.xls` file
 
@@ -185,30 +201,29 @@ public class ExcelExport {
         headerFont.setBold(true);
         //headerFont.setFontHeightInPoints((short) 14);
 
-        
         // Create a CellStyle with the font
         CellStyle headerCellStyle = workbook.createCellStyle();
         headerCellStyle.setFont(headerFont);
 
         WorksheetEnv env = new WorksheetEnv(headerCellStyle, workbook);
-        
+
         if (exports != null) {
             for (int i = 0; i < exports.size(); i++) {
                 ExcelSheetExport export = exports.get(i);
                 if (export == null) {
                     continue;
                 }
-                
+
                 String sheetName = export.getSheetName();
                 if (sheetName == null) {
                     sheetName = Bundle.ExcelExport_writeExcel_noSheetName(i + 1);
                 }
-                
+
                 Sheet sheet = workbook.createSheet(sheetName);
                 export.renderSheet(sheet, env);
             }
         }
-                
+
         // Write the output to a file
         FileOutputStream fileOut = new FileOutputStream(path);
         workbook.write(fileOut);
@@ -217,86 +232,4 @@ public class ExcelExport {
         // Closing the workbook
         workbook.close();
     }
-    private static final Logger logger = Logger.getLogger(ExcelExport.class.getName());
-
-//    public static void main(String[] args) throws IOException {
-//        // Create a Workbook
-//        Workbook workbook = new XSSFWorkbook(); // new HSSFWorkbook() for generating `.xls` file
-//
-//        // Create a Font for styling header cells
-//        Font headerFont = workbook.createFont();
-//        headerFont.setBold(true);
-//        //headerFont.setFontHeightInPoints((short) 14);
-//
-//        // Create a CellStyle with the font
-//        CellStyle headerCellStyle = workbook.createCellStyle();
-//        headerCellStyle.setFont(headerFont);
-//
-//        createSheet(workbook, headerCellStyle, GeolocationDTO.TEMPLATE_1, dtos1);
-//        createSheet(workbook, headerCellStyle, GeolocationDTO.TEMPLATE_2, dtos2);
-//
-//        // Write the output to a file
-//        FileOutputStream fileOut = new FileOutputStream("C:\\Users\\gregd\\Desktop\\datasourcesummary-export.xlsx");
-//        workbook.write(fileOut);
-//        fileOut.close();
-//
-//        // Closing the workbook
-//        workbook.close();
-//    }
-//    public static <T, C extends ExcelCellModel> Sheet createSheet(
-//            Workbook workbook, CellStyle headerCellStyle, TableTemplate<T, C> tableTemplate, List<T> data)
-//            throws IllegalArgumentException {
-//
-//        Sheet sheet = workbook.createSheet(tableTemplate.getTabName());
-//
-//        if (workbook == null || tableTemplate == null) {
-//            throw new IllegalArgumentException("workbook and tableTemplate parameters cannot be null");
-//        }
-//
-//        List<ColumnModel<T, C>> columns = tableTemplate.getColumns() != null
-//                ? tableTemplate.getColumns()
-//                : Collections.emptyList();
-//
-//        List<T> safeData = data == null ? Collections.emptyList() : data;
-//
-//        // Create a header row
-//        Row headerRow = sheet.createRow(0);
-//
-//        // Create header cells
-//        for (int i = 0; i < columns.size(); i++) {
-//            Cell cell = headerRow.createCell(i);
-//            cell.setCellValue(columns.get(i).getHeaderTitle());
-//            cell.setCellStyle(headerCellStyle);
-//        }
-//
-//        // freeze header row
-//        sheet.createFreezePane(0, 1);
-//
-//        // Create Cell Style for each column (if one is needed)
-//        Map<String, CellStyle> cellStyles = new HashMap<>();
-//
-//        for (int rowNum = 0; rowNum < safeData.size(); rowNum++) {
-//            T rowData = safeData.get(rowNum);
-//            Row row = sheet.createRow(rowNum + 1);
-//
-//            for (int colNum = 0; colNum < columns.size(); colNum++) {
-//                ColumnModel<T, ? extends ExcelCellModel> colModel = columns.get(colNum);
-//                ExcelCellModel cellModel = colModel.getCellRenderer().apply(rowData);
-//                String formatString = cellModel.getExcelFormatString();
-//
-//                Optional<CellStyle> cellStyle = (formatString == null)
-//                        ? Optional.empty()
-//                        : Optional.of(cellStyles.computeIfAbsent(formatString, (k) -> getCellStyles(workbook, formatString)));
-//
-//                createCell(row, colNum, cellModel, cellStyle);
-//            }
-//        }
-//
-//        // Resize all columns to fit the content size
-//        for (int i = 0; i < columns.size(); i++) {
-//            sheet.autoSizeColumn(i);
-//        }
-//
-//        return sheet;
-//    }
 }
