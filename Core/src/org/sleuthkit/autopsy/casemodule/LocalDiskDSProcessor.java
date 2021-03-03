@@ -59,7 +59,6 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
     private Host host;
     private ImageWriterSettings imageWriterSettings;
     private boolean ignoreFatOrphanFiles;
-    private boolean setDataSourceOptionsCalled;
 
     /**
      * Constructs a local drive data source processor that implements the
@@ -138,7 +137,7 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
     public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         run(null, progressMonitor, callback);
     }
-    
+
     /**
      * Adds a data source to the case database using a background task in a
      * separate thread and the settings provided by the selection and
@@ -156,38 +155,36 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
      */
     @Override
     public void run(Host host, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
-        if (!setDataSourceOptionsCalled) {
-            deviceId = UUID.randomUUID().toString();
-            drivePath = configPanel.getContentPath();
-            sectorSize = configPanel.getSectorSize();
-            timeZone = configPanel.getTimeZone();
-            ignoreFatOrphanFiles = configPanel.getNoFatOrphans();
-            if (configPanel.getImageWriterEnabled()) {
-                imageWriterSettings = configPanel.getImageWriterSettings();
-            } else {
-                imageWriterSettings = null;
-            }
+        deviceId = UUID.randomUUID().toString();
+        drivePath = configPanel.getContentPath();
+        sectorSize = configPanel.getSectorSize();
+        timeZone = configPanel.getTimeZone();
+        ignoreFatOrphanFiles = configPanel.getNoFatOrphans();
+        if (configPanel.getImageWriterEnabled()) {
+            imageWriterSettings = configPanel.getImageWriterSettings();
+        } else {
+            imageWriterSettings = null;
         }
-        
+
         this.host = host;
 
         Image image;
         try {
             image = SleuthkitJNI.addImageToDatabase(Case.getCurrentCase().getSleuthkitCase(),
-                new String[]{drivePath}, sectorSize,
-                timeZone, null, null, null, deviceId, this.host);
+                    new String[]{drivePath}, sectorSize,
+                    timeZone, null, null, null, deviceId, this.host);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error adding local disk with path " + drivePath + " to database", ex);
             final List<String> errors = new ArrayList<>();
             errors.add(ex.getMessage());
             callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errors, new ArrayList<>());
             return;
-        }   
+        }
 
         addDiskTask = new AddImageTask(
-                new AddImageTask.ImageDetails(deviceId, image, sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, imageWriterSettings), 
+                new AddImageTask.ImageDetails(deviceId, image, sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, imageWriterSettings),
                 progressMonitor,
-                new StreamingAddDataSourceCallbacks(new DefaultIngestStream()), 
+                new StreamingAddDataSourceCallbacks(new DefaultIngestStream()),
                 new StreamingAddImageTaskCallback(new DefaultIngestStream(), callback));
         new Thread(addDiskTask).start();
     }
@@ -243,19 +240,19 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
         Image image;
         try {
             image = SleuthkitJNI.addImageToDatabase(Case.getCurrentCase().getSleuthkitCase(),
-                new String[]{drivePath}, sectorSize,
-                timeZone, null, null, null, deviceId);
+                    new String[]{drivePath}, sectorSize,
+                    timeZone, null, null, null, deviceId);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error adding local disk with path " + drivePath + " to database", ex);
             final List<String> errors = new ArrayList<>();
             errors.add(ex.getMessage());
             callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errors, new ArrayList<>());
             return;
-        } 
-        
-	    addDiskTask = new AddImageTask(new AddImageTask.ImageDetails(deviceId, image, sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, imageWriterSettings), 
-                progressMonitor, 
-                new StreamingAddDataSourceCallbacks(new DefaultIngestStream()), 
+        }
+
+        addDiskTask = new AddImageTask(new AddImageTask.ImageDetails(deviceId, image, sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, imageWriterSettings),
+                progressMonitor,
+                new StreamingAddDataSourceCallbacks(new DefaultIngestStream()),
                 new StreamingAddImageTaskCallback(new DefaultIngestStream(), callback));
         new Thread(addDiskTask).start();
     }
@@ -284,6 +281,5 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
         drivePath = null;
         timeZone = null;
         ignoreFatOrphanFiles = false;
-        setDataSourceOptionsCalled = false;
     }
 }
