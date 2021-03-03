@@ -1,7 +1,7 @@
 /*
  * Autopsy
  *
- * Copyright 2020 Basis Technology Corp.
+ * Copyright 2020-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.discovery.ui;
 
+import java.util.ArrayList;
 import org.sleuthkit.autopsy.discovery.search.AbstractFilter;
 import java.util.List;
 import java.util.logging.Level;
@@ -47,6 +48,8 @@ final class ObjectDetectedFilterPanel extends AbstractDiscoveryFilterPanel {
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     ObjectDetectedFilterPanel() {
         initComponents();
+        objectsList.setCellRenderer(new CheckboxCellRenderer(objectsCheckbox));
+        objectsList.setSelectionModel(new CheckboxListSelectionModel(objectsList));
         setUpObjectFilter();
     }
 
@@ -57,11 +60,11 @@ final class ObjectDetectedFilterPanel extends AbstractDiscoveryFilterPanel {
     private void setUpObjectFilter() {
         int count = 0;
         try {
-            DefaultListModel<String> objListModel = (DefaultListModel<String>) objectsList.getModel();
+            DefaultListModel<JCheckBox> objListModel = (DefaultListModel<JCheckBox>) objectsList.getModel();
             objListModel.removeAllElements();
             List<String> setNames = DiscoveryUiUtils.getSetNames(BlackboardArtifact.ARTIFACT_TYPE.TSK_OBJECT_DETECTED, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION);
             for (String name : setNames) {
-                objListModel.add(count, name);
+                objListModel.add(count, new JCheckBox(name));
                 count++;
             }
         } catch (TskCoreException ex) {
@@ -103,7 +106,7 @@ final class ObjectDetectedFilterPanel extends AbstractDiscoveryFilterPanel {
         objectsScrollPane.setName(""); // NOI18N
         objectsScrollPane.setPreferredSize(new java.awt.Dimension(27, 27));
 
-        objectsList.setModel(new DefaultListModel<String>());
+        objectsList.setModel(new DefaultListModel<JCheckBox>());
         objectsList.setEnabled(false);
         objectsList.setMaximumSize(new java.awt.Dimension(32767, 32767));
         objectsList.setVisibleRowCount(2);
@@ -128,7 +131,7 @@ final class ObjectDetectedFilterPanel extends AbstractDiscoveryFilterPanel {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox objectsCheckbox;
-    private javax.swing.JList<String> objectsList;
+    private javax.swing.JList<JCheckBox> objectsList;
     private javax.swing.JScrollPane objectsScrollPane;
     // End of variables declaration//GEN-END:variables
 
@@ -181,7 +184,11 @@ final class ObjectDetectedFilterPanel extends AbstractDiscoveryFilterPanel {
     @Override
     AbstractFilter getFilter() {
         if (objectsCheckbox.isSelected()) {
-            return new SearchFiltering.ObjectDetectionFilter(objectsList.getSelectedValuesList());
+            List<String> objectDetectedList = new ArrayList<>();
+            for (JCheckBox checkbox : objectsList.getSelectedValuesList()) {
+                objectDetectedList.add(checkbox.getName());
+            }
+            return new SearchFiltering.ObjectDetectionFilter(objectDetectedList);
         }
         return null;
     }

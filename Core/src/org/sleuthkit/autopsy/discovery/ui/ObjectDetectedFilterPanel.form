@@ -74,7 +74,7 @@
         <Component class="javax.swing.JList" name="objectsList">
           <Properties>
             <Property name="model" type="javax.swing.ListModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
-              <Connection code="new DefaultListModel&lt;String&gt;()" type="code"/>
+              <Connection code="new DefaultListModel&lt;JCheckBox&gt;()" type="code"/>
             </Property>
             <Property name="enabled" type="boolean" value="false"/>
             <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
@@ -83,7 +83,7 @@
             <Property name="visibleRowCount" type="int" value="2"/>
           </Properties>
           <AuxValues>
-            <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
+            <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;JCheckBox&gt;"/>
           </AuxValues>
         </Component>
       </SubComponents>

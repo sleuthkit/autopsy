@@ -167,8 +167,9 @@ class ArtifactTypeFilterPanel extends AbstractDiscoveryFilterPanel {
      * Utility class to allow us to display the AritfactType display name
      * instead of the name.
      */
-    private class ArtifactTypeItem {
+    private class ArtifactTypeItem extends JCheckBox {
 
+        private static final long serialVersionUID = 1L;
         private final BlackboardArtifact.ARTIFACT_TYPE artifactType;
 
         /**
