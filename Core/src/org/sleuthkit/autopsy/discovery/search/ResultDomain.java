@@ -61,6 +61,24 @@ public class ResultDomain extends Result {
     }
 
     /**
+     * Make a copy of the specified ResultDomain, without a category set.
+     *
+     * @param resultDomain The ResultDomain to copy
+     */
+    ResultDomain(ResultDomain resultDomain) {
+        this.domain = resultDomain.getDomain();
+        this.dataSource = resultDomain.getDataSource();
+        this.dataSourceId = resultDomain.getDataSourceObjectId();
+        this.activityStart = resultDomain.getActivityStart();
+        this.activityEnd = resultDomain.getActivityEnd();
+        this.totalPageViews = resultDomain.getTotalPageViews();
+        this.pageViewsInLast60 = resultDomain.getPageViewsInLast60Days();
+        this.filesDownloaded = resultDomain.getFilesDownloaded();
+        this.countOfKnownAccountTypes = resultDomain.getCountOfKnownAccountTypes();
+        this.accountTypes = resultDomain.getWebCategory();
+    }
+
+    /**
      * Get the domain represented as a String.
      *
      * @return The String representation of the domain this result is for.
@@ -144,8 +162,8 @@ public class ResultDomain extends Result {
      * (TSK_WEB_ACCOUNT_TYPE).
      */
     public boolean hasKnownAccountType() {
-        return countOfKnownAccountTypes != null
-                && countOfKnownAccountTypes > 0;
+        return getCountOfKnownAccountTypes() != null
+                && getCountOfKnownAccountTypes() > 0;
     }
 
     /**
@@ -191,5 +209,12 @@ public class ResultDomain extends Result {
                 + this.activityStart + ", end=" + this.activityEnd + ", totalVisits=" + this.totalPageViews + ", visitsLast60="
                 + this.pageViewsInLast60 + ", downloads=" + this.filesDownloaded + ", frequency="
                 + this.getFrequency() + "]";
+    }
+
+    /**
+     * @return the countOfKnownAccountTypes
+     */
+    Long getCountOfKnownAccountTypes() {
+        return countOfKnownAccountTypes;
     }
 }

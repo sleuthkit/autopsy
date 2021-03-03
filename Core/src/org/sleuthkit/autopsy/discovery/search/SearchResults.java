@@ -25,6 +25,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryKeyUtils.GroupKey;
 
 /**
@@ -75,13 +76,44 @@ class SearchResults {
     void add(List<Result> results) {
         for (Result result : results) {
             // Add the file to the appropriate group, creating it if necessary
-            GroupKey groupKey = attrType.getGroupKey(result);
-
-            if (!groupMap.containsKey(groupKey)) {
-                groupMap.put(groupKey, new Group(groupSortingType, groupKey));
+            if (result.getType() == SearchData.Type.DOMAIN && attrType instanceof DiscoveryAttributes.DomainCategoryAttribute) {
+                /**
+                 * This section is to add results to individual groups based on
+                 * the individual Web Categories the domain is part of instead
+                 * of the combination of categories. So that results will show
+                 * up in every group for which they have a category.
+                 */
+                String categoryString = ((ResultDomain) result).getWebCategory();
+                if (!StringUtils.isBlank(categoryString)) {
+                    String[] categories = categoryString.split(", ");
+                    ResultDomain currentResult = (ResultDomain) result;
+                    for (String category : categories) {
+                        ResultDomain copyOfResult = new ResultDomain(currentResult);
+                        copyOfResult.setWebCategory(category);
+                        GroupKey groupKey = attrType.getGroupKey(copyOfResult);
+                        //purposefully adding original instead of copy so it will display all categories when looking at domain
+                        addResultToGroupMap(groupKey, result);
+                    }
+                }
+            } else {
+                GroupKey groupKey = attrType.getGroupKey(result);
+                addResultToGroupMap(groupKey, result);
             }
-            groupMap.get(groupKey).addResult(result);
         }
+    }
+
+    /**
+     * Private helper method to add a result to the groupMap with a specified
+     * key.
+     *
+     * @param groupKey The key to add the result under.
+     * @param result   The result to add.
+     */
+    private void addResultToGroupMap(GroupKey groupKey, Result result) {
+        if (!groupMap.containsKey(groupKey)) {
+            groupMap.put(groupKey, new Group(groupSortingType, groupKey));
+        }
+        groupMap.get(groupKey).addResult(result);
     }
 
     /**
