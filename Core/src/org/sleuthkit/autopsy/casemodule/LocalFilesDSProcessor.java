@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -426,27 +426,6 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
     public void process(String deviceId, Path dataSourcePath, Host host, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) {
         List<String> filePaths = Arrays.asList(new String[]{dataSourcePath.toString()});
         run(deviceId, "", filePaths, host, progressMonitor, callBack);
-    }
-
-    /**
-     * Sets the configuration of the data source processor without using the
-     * configuration panel. The data source processor will assign a UUID to the
-     * data source and will use the time zone of the machine executing this code
-     * when when processing dates and times for the image.
-     *
-     * @param paths A list of local/logical file and/or directory
-     *              localFilePaths.
-     *
-     * @deprecated Use the provided overload of the run method instead.
-     */
-    @Deprecated
-    public void setDataSourceOptions(String paths) {
-        // The LocalFilesPanel used to separate file paths with a comma and pass
-        // them as a string, but because file names are allowed to contain
-        // commas, this approach was buggy and replaced. We now pass a list of
-        // String paths.
-        this.localFilePaths = Arrays.asList(paths.split(","));
-        setDataSourceOptionsCalled = true;
     }
 
     /**

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2018 Basis Technology Corp.
+ * Copyright 2013-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -569,29 +569,4 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
         
         return ingestStream;
     }
-
-    /**
-     * Sets the configuration of the data source processor without using the
-     * selection and configuration panel.
-     *
-     * @param imagePath            Path to the image file.
-     * @param timeZone             The time zone to use when processing dates
-     *                             and times for the image, obtained from
-     *                             java.util.TimeZone.getID.
-     * @param ignoreFatOrphanFiles Whether to parse orphans if the image has a
-     *                             FAT filesystem.
-     *
-     * @deprecated Use the provided overload of the run method instead.
-     */
-    @Deprecated
-    public void setDataSourceOptions(String imagePath, String timeZone, boolean ignoreFatOrphanFiles) {
-        this.deviceId = UUID.randomUUID().toString();
-        this.imagePath = imagePath;
-        this.sectorSize = 0;
-        this.timeZone = Calendar.getInstance().getTimeZone().getID();
-        this.ignoreFatOrphanFiles = ignoreFatOrphanFiles;
-        this.host = null;
-        setDataSourceOptionsCalled = true;
-    }
-
 }

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2018 Basis Technology Corp.
+ * Copyright 2013-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
 import java.util.UUID;
 import java.util.logging.Level;
@@ -287,28 +286,4 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
         ignoreFatOrphanFiles = false;
         setDataSourceOptionsCalled = false;
     }
-
-    /**
-     * Sets the configuration of the data source processor without using the
-     * configuration panel.
-     *
-     * @param drivePath            Path to the local drive.
-     * @param timeZone             The time zone to use when processing dates
-     *                             and times for the local drive, obtained from
-     *                             java.util.TimeZone.getID.
-     * @param ignoreFatOrphanFiles Whether to parse orphans if the image has a
-     *                             FAT filesystem.
-     *
-     * @deprecated Use the provided overload of the run method instead.
-     */
-    @Deprecated
-    public void setDataSourceOptions(String drivePath, String timeZone, boolean ignoreFatOrphanFiles) {
-        this.deviceId = UUID.randomUUID().toString();
-        this.drivePath = drivePath;
-        this.sectorSize = 0;
-        this.timeZone = Calendar.getInstance().getTimeZone().getID();
-        this.ignoreFatOrphanFiles = ignoreFatOrphanFiles;
-        setDataSourceOptionsCalled = true;
-    }
-
 }
