@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.datasourcesummary.ui;
 
 import java.beans.PropertyChangeEvent;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -32,6 +33,7 @@ import org.sleuthkit.autopsy.datasourcesummary.datamodel.ContainerSummary;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult.ResultType;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultUpdateGovernor;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelExport;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.UpdateGovernor;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Image;
@@ -273,6 +275,11 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
         sha256HashValue.setText("");
         unallocatedSizeValue.setText("");
         ((DefaultTableModel) filePathsTable.getModel()).setRowCount(0);
+    }
+
+    @Override
+    List<ExcelExport.ExcelSheetExport> getExports(DataSource ds) {
+        return Collections.emptyList();
     }
 
     /**

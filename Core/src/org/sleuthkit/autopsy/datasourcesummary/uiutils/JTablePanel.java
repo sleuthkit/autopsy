@@ -225,17 +225,6 @@ public class JTablePanel<T> extends AbstractLoadableComponent<List<T>> {
         return resultTable;
     }
 
-    /**
-     * Generates a JTablePanel corresponding to the provided table template
-     * where 'T' is the object representing each row.
-     *
-     * @param columns The table template.
-     *
-     * @return The corresponding JTablePanel.
-     */
-    public static <T, C extends GuiCellModel> JTablePanel<T> getJTablePanel(TableTemplate<T, C> template) {
-        return getJTablePanel(template.getColumns());
-    }
 
     private JScrollPane tableScrollPane;
     private Overlay overlayLayer;

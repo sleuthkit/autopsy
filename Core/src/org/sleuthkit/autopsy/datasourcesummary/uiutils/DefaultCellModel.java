@@ -20,15 +20,15 @@ import java.util.function.Supplier;
  * The default cell model.
  */
 public class DefaultCellModel<T> implements GuiCellModel, ExcelCellModel {
+
     private final T data;
-    private final Function<T, String> stringConverter;    
+    private final Function<T, String> stringConverter;
     String tooltip;
     CellModel.HorizontalAlign horizontalAlignment;
     Insets insets;
     List<MenuItem> popupMenu;
     Supplier<List<MenuItem>> menuItemSupplier;
     private final String excelFormatString;
-
 
     /**
      * Main constructor.
@@ -39,24 +39,26 @@ public class DefaultCellModel<T> implements GuiCellModel, ExcelCellModel {
         this(data, null, null);
     }
 
+    public DefaultCellModel(T data, Function<T, String> stringConverter) {
+        this(data, stringConverter, null);
+    }
+
     public DefaultCellModel(T data, Function<T, String> stringConverter, String excelFormatString) {
         this.data = data;
         this.stringConverter = stringConverter;
         this.excelFormatString = excelFormatString;
     }
-    
-    
-    
+
     @Override
     public T getData() {
         return this.data;
     }
-    
+
     @Override
     public String getExcelFormatString() {
         return this.excelFormatString;
     }
-        
+
     @Override
     public String getText() {
         if (this.stringConverter == null) {

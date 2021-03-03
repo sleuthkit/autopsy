@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.datasourcesummary.ui;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -42,10 +43,11 @@ import org.sleuthkit.autopsy.datasourcesummary.uiutils.ColumnModel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetcher;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultCellModel;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelExport;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.IngestRunningLabel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.TableTemplate;
 import org.sleuthkit.autopsy.geolocation.GeoFilter;
 import org.sleuthkit.autopsy.geolocation.GeoLocationUIException;
 import org.sleuthkit.autopsy.geolocation.GeolocationTopComponent;
@@ -65,6 +67,25 @@ import org.sleuthkit.datamodel.DataSource;
     "GeolocationPanel_mostRecent_tabName=Most Recent Cities",})
 public class GeolocationPanel extends BaseDataSourceSummaryPanel {
 
+    private static class GeolocationViewModel {
+
+        private final List<Pair<String, Integer>> mostRecentData;
+        private final List<Pair<String, Integer>> mostCommonData;
+
+        GeolocationViewModel(List<Pair<String, Integer>> mostRecentData, List<Pair<String, Integer>> mostCommonData) {
+            this.mostRecentData = mostRecentData;
+            this.mostCommonData = mostCommonData;
+        }
+
+        List<Pair<String, Integer>> getMostRecentData() {
+            return mostRecentData;
+        }
+
+        List<Pair<String, Integer>> getMostCommonData() {
+            return mostCommonData;
+        }
+    }
+
     private static final long serialVersionUID = 1L;
     private static final int DAYS_COUNT = 30;
     private static final int MAX_COUNT = 10;
@@ -83,21 +104,16 @@ public class GeolocationPanel extends BaseDataSourceSummaryPanel {
             100
     );
 
-    private static TableTemplate<Pair<String, Integer>, DefaultCellModel<?>> MOST_COMMON_TEMPLATE = new TableTemplate<>(
-            Arrays.asList(CITY_COL, COUNT_COL),
-            Bundle.GeolocationPanel_mostCommon_tabName()
-    );
-
-    private static TableTemplate<Pair<String, Integer>, DefaultCellModel<?>> MOST_RECENT_TEMPLATE = new TableTemplate<>(
-            Arrays.asList(CITY_COL, COUNT_COL),
-            Bundle.GeolocationPanel_mostRecent_tabName()
+    private static final List<ColumnModel<Pair<String, Integer>, DefaultCellModel<?>>> DEFAULT_TEMPLATE = Arrays.asList(
+            CITY_COL,
+            COUNT_COL
     );
 
     // tables displaying city and number of hits for that city
-    private final JTablePanel<Pair<String, Integer>> mostCommonTable = JTablePanel.getJTablePanel(MOST_COMMON_TEMPLATE)
+    private final JTablePanel<Pair<String, Integer>> mostCommonTable = JTablePanel.getJTablePanel(DEFAULT_TEMPLATE)
             .setKeyFunction((pair) -> pair.getLeft());
 
-    private final JTablePanel<Pair<String, Integer>> mostRecentTable = JTablePanel.getJTablePanel(MOST_RECENT_TEMPLATE)
+    private final JTablePanel<Pair<String, Integer>> mostRecentTable = JTablePanel.getJTablePanel(DEFAULT_TEMPLATE)
             .setKeyFunction((pair) -> pair.getLeft());
 
     // loadable components on this tab
@@ -111,6 +127,8 @@ public class GeolocationPanel extends BaseDataSourceSummaryPanel {
     private final IngestRunningLabel ingestRunningLabel = new IngestRunningLabel();
 
     private final GeolocationSummary whereUsedData;
+
+    private final DataFetcher<DataSource, GeolocationViewModel> geolocationFetcher;
 
     /**
      * Main constructor.
@@ -128,10 +146,13 @@ public class GeolocationPanel extends BaseDataSourceSummaryPanel {
         super(whereUsedData);
 
         this.whereUsedData = whereUsedData;
+
+        this.geolocationFetcher = (dataSource) -> convertToViewModel(whereUsedData.getCityCounts(dataSource, DAYS_COUNT, MAX_COUNT));
+
         // set up data acquisition methods
         dataFetchComponents = Arrays.asList(
                 new DataFetchWorker.DataFetchComponents<>(
-                        (dataSource) -> whereUsedData.getCityCounts(dataSource, DAYS_COUNT, MAX_COUNT),
+                        geolocationFetcher,
                         (result) -> handleData(result)));
 
         initComponents();
@@ -140,11 +161,12 @@ public class GeolocationPanel extends BaseDataSourceSummaryPanel {
     /**
      * Means of rendering data to be shown in the tables.
      *
-     * @param result The result of fetching data for a data source.
+     * @param result The result of fetching data for a data source and
+     * processing into view model data.
      */
-    private void handleData(DataFetchResult<CityData> result) {
-        showCityContent(DataFetchResult.getSubResult(result, (dr) -> dr.getMostCommon()), mostCommonTable, commonViewInGeolocationBtn);
-        showCityContent(DataFetchResult.getSubResult(result, (dr) -> dr.getMostRecent()), mostRecentTable, recentViewInGeolocationBtn);
+    private void handleData(DataFetchResult<GeolocationViewModel> result) {
+        showCityContent(DataFetchResult.getSubResult(result, (dr) -> dr.getMostCommonData()), mostCommonTable, commonViewInGeolocationBtn);
+        showCityContent(DataFetchResult.getSubResult(result, (dr) -> dr.getMostRecentData()), mostRecentTable, recentViewInGeolocationBtn);
     }
 
     /**
@@ -201,7 +223,7 @@ public class GeolocationPanel extends BaseDataSourceSummaryPanel {
      */
     private List<Pair<String, Integer>> formatList(CityCountsList countsList) {
         if (countsList == null) {
-            return null;
+            return Collections.emptyList();
         }
 
         Stream<CityRecordCount> countsStream = ((countsList.getCounts() == null)
@@ -219,6 +241,14 @@ public class GeolocationPanel extends BaseDataSourceSummaryPanel {
                 .collect(Collectors.toList());
     }
 
+    private GeolocationViewModel convertToViewModel(CityData cityData) {
+        if (cityData == null) {
+            return new GeolocationViewModel(Collections.emptyList(), Collections.emptyList());
+        } else {
+            return new GeolocationViewModel(formatList(cityData.getMostRecent()), formatList(cityData.getMostCommon()));
+        }
+    }
+
     /**
      * Shows data in a particular table.
      *
@@ -226,13 +256,12 @@ public class GeolocationPanel extends BaseDataSourceSummaryPanel {
      * @param table The table where the data will be displayed.
      * @param goToGeolocation The corresponding geolocation navigation button.
      */
-    private void showCityContent(DataFetchResult<CityCountsList> result, JTablePanel<Pair<String, Integer>> table, JButton goToGeolocation) {
-        DataFetchResult<List<Pair<String, Integer>>> convertedData = DataFetchResult.getSubResult(result, (countsList) -> formatList(countsList));
-        if (convertedData != null && convertedData.getResultType() == DataFetchResult.ResultType.SUCCESS && CollectionUtils.isNotEmpty(convertedData.getData())) {
+    private void showCityContent(DataFetchResult<List<Pair<String, Integer>>> result, JTablePanel<Pair<String, Integer>> table, JButton goToGeolocation) {
+        if (result != null && result.getResultType() == DataFetchResult.ResultType.SUCCESS && CollectionUtils.isNotEmpty(result.getData())) {
             goToGeolocation.setEnabled(true);
         }
 
-        table.showDataFetchResult(convertedData);
+        table.showDataFetchResult(result);
     }
 
     /**
@@ -290,6 +319,19 @@ public class GeolocationPanel extends BaseDataSourceSummaryPanel {
     protected void onNewDataSource(DataSource dataSource) {
         disableNavButtons();
         onNewDataSource(dataFetchComponents, tables, dataSource);
+    }
+
+    @Override
+    List<ExcelExport.ExcelSheetExport> getExports(DataSource dataSource) {
+        GeolocationViewModel model = getFetchResult(geolocationFetcher, "Geolocation sheets", dataSource);
+        if (model == null) {
+            return Collections.emptyList();
+        }
+
+        return Arrays.asList(
+                getTableExport(DEFAULT_TEMPLATE, Bundle.GeolocationPanel_mostRecent_tabName(), model.getMostRecentData()),
+                getTableExport(DEFAULT_TEMPLATE, Bundle.GeolocationPanel_mostCommon_tabName(), model.getMostCommonData())
+        );
     }
 
     @Override

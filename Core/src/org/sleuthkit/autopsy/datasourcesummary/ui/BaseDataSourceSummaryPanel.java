@@ -24,6 +24,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
@@ -38,10 +39,16 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.ColumnModel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetcher;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.EventUpdateHandler;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelCellModel;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelExport;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelExport.ExcelExportException;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelExport.ExcelSheetExport;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.GuiCellModel.DefaultMenuItem;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.GuiCellModel.MenuItem;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.LoadableComponent;
@@ -440,6 +447,71 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
      * @param dataSource The new dataSource.
      */
     protected abstract void onNewDataSource(DataSource dataSource);
+
+    abstract List<ExcelSheetExport> getExports(DataSource dataSource);
+
+    protected interface ExcelExportFunction<T> {
+
+        ExcelSheetExport convert(T data) throws ExcelExportException;
+    }
+
+    protected static <T> T getFetchResult(
+            DataFetcher<DataSource, T> dataFetcher,
+            String sheetName, DataSource ds) {
+
+        try {
+            return dataFetcher.runQuery(ds);
+        } catch (Exception ex) {
+            logger.log(Level.WARNING,
+                    String.format("There was an error while acquiring data for exporting worksheet(s): '%s' for dataSource: %s",
+                            sheetName == null ? "<null>" : sheetName,
+                            ds == null || ds.getName() == null ? "<null>" : ds.getName()), ex);
+            return null;
+        }
+    }
+
+    protected static <T> ExcelSheetExport convertToExcel(ExcelExportFunction<T> excelConverter, T data, String sheetName) {
+        try {
+            return excelConverter.convert(data);
+        } catch (ExcelExportException ex) {
+            logger.log(Level.WARNING,
+                    String.format("There was an error while preparing export of worksheet(s): '%s'",
+                            sheetName == null ? "<null>" : sheetName), ex);
+            return null;
+        }
+    }
+
+    protected static <T> ExcelSheetExport getExport(
+            DataFetcher<DataSource, T> dataFetcher, ExcelExportFunction<T> excelConverter,
+            String sheetName, DataSource ds) {
+
+        T data = getFetchResult(dataFetcher, sheetName, ds);
+        if (data == null) {
+            return null;
+        }
+
+        return convertToExcel(excelConverter, data, sheetName);
+    }
+
+    protected static <T, C extends ExcelCellModel> ExcelSheetExport getTableExport(List<ColumnModel<T, C>> columnsModel,
+            String sheetName, List<T> data) {
+
+        return convertToExcel(
+                (dataList) -> new ExcelExport.ExcelTableExport<T, C>(Bundle.AnalysisPanel_hashsetHits_tabName(), columnsModel, dataList),
+                data,
+                sheetName);
+    }
+
+    protected static <T, C extends ExcelCellModel> ExcelSheetExport getTableExport(
+            DataFetcher<DataSource, List<T>> dataFetcher, List<ColumnModel<T, C>> columnsModel,
+            String sheetName, DataSource ds) {
+
+        return getExport(
+                dataFetcher,
+                (dataList) -> new ExcelExport.ExcelTableExport<T, C>(Bundle.AnalysisPanel_hashsetHits_tabName(), columnsModel, dataList),
+                sheetName,
+                ds);
+    }
 
     /**
      * Utility method that shows a loading screen with loadable components,
