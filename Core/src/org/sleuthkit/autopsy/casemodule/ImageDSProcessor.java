@@ -496,6 +496,7 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
     
     @Override
     public void process(String deviceId, Path dataSourcePath, Host host, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) {
+        // this method does not use the config panel
         this.deviceId = deviceId;
         this.imagePath = dataSourcePath.toString();
         this.sectorSize = 0;
@@ -517,6 +518,9 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
         }
         
         doAddImageProcess(deviceId, dataSourcePath.toString(), sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, progressMonitor, callBack);
+        
+        // reset the settings so that by default the config panel is used next time (JIRA-7337).
+        reset();
     }
     
     @Override
@@ -526,6 +530,7 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
     
     @Override
     public IngestStream processWithIngestStream(String deviceId, Path dataSourcePath, Host host, IngestJobSettings settings, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) {
+        // this method does not use the config panel
         this.deviceId = deviceId;
         this.imagePath = dataSourcePath.toString();
         this.sectorSize = 0;
@@ -558,6 +563,10 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
         }        
         
         doAddImageProcess(deviceId, dataSourcePath.toString(), sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, progressMonitor, callBack);
+        
+        // reset the settings so that by default the config panel is used next time (JIRA-7337).
+        reset();
+        
         return ingestStream;
     }
 
