@@ -57,12 +57,12 @@ public class AnalysisPanel extends BaseDataSourceSummaryPanel {
     private static final List<ColumnModel<Pair<String, Long>, DefaultCellModel<?>>> DEFAULT_COLUMNS = Arrays.asList(
             new ColumnModel<>(
                     Bundle.AnalysisPanel_keyColumn_title(),
-                    (pair) -> new DefaultCellModel(pair.getKey()),
+                    (pair) -> new DefaultCellModel<>(pair.getKey()),
                     300
             ),
             new ColumnModel<>(
                     Bundle.AnalysisPanel_countColumn_title(),
-                    (pair) -> new DefaultCellModel(pair.getValue()),
+                    (pair) -> new DefaultCellModel<>(pair.getValue()),
                     100
             )
     );

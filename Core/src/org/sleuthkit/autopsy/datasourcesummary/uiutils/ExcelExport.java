@@ -86,10 +86,6 @@ public class ExcelExport {
                 cell.setCellValue((Date) cellData);
             } else if (cellData instanceof Double) {
                 cell.setCellValue((Double) cellData);
-            } else if (cellData instanceof LocalDate) {
-                cell.setCellValue((LocalDate) cellData);
-            } else if (cellData instanceof LocalDateTime) {
-                cell.setCellValue((LocalDateTime) cellData);
             } else if (cellData instanceof String) {
                 cell.setCellValue((String) cellData);
             } else if (cellData instanceof Short) {

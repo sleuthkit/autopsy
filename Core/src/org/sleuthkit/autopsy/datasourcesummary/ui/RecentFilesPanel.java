@@ -72,7 +72,7 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
     private final List<ColumnModel<RecentFileDetails, DefaultCellModel<?>>> docsTemplate = Arrays.asList(
             new ColumnModel<>(Bundle.RecentFilePanel_col_header_path(),
                     (prog) -> {
-                        return new DefaultCellModel(prog.getPath())
+                        return new DefaultCellModel<>(prog.getPath())
                                 .setPopupMenuRetriever(getPopupFunct(prog));
                     }, 250),
             new ColumnModel<>(Bundle.RecentFilesPanel_col_head_date(),
@@ -82,12 +82,12 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
     private final List<ColumnModel<RecentDownloadDetails, DefaultCellModel<?>>> downloadsTemplate = Arrays.asList(
             new ColumnModel<>(Bundle.RecentFilePanel_col_header_domain(),
                     (prog) -> {
-                        return new DefaultCellModel(prog.getWebDomain())
+                        return new DefaultCellModel<>(prog.getWebDomain())
                                 .setPopupMenuRetriever(getPopupFunct(prog));
                     }, 100),
             new ColumnModel<>(Bundle.RecentFilePanel_col_header_path(),
                     (prog) -> {
-                        return new DefaultCellModel(prog.getPath())
+                        return new DefaultCellModel<>(prog.getPath())
                                 .setPopupMenuRetriever(getPopupFunct(prog));
                     }, 250),
             new ColumnModel<>(Bundle.RecentFilesPanel_col_head_date(),
@@ -97,7 +97,7 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
     private final List<ColumnModel<RecentAttachmentDetails, DefaultCellModel<?>>> attachmentsTemplate = Arrays.asList(
             new ColumnModel<>(Bundle.RecentFilePanel_col_header_path(),
                     (prog) -> {
-                        return new DefaultCellModel(prog.getPath())
+                        return new DefaultCellModel<>(prog.getPath())
                                 .setPopupMenuRetriever(getPopupFunct(prog));
                     }, 250),
             new ColumnModel<>(Bundle.RecentFilesPanel_col_head_date(),
@@ -105,7 +105,7 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
                     80),
             new ColumnModel<>(Bundle.RecentFilePanel_col_header_sender(),
                     (prog) -> {
-                        return new DefaultCellModel(prog.getSender())
+                        return new DefaultCellModel<>(prog.getSender())
                                 .setPopupMenuRetriever(getPopupFunct(prog));
                     }, 150));
 
@@ -139,7 +139,7 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
     private <T extends RecentFileDetails> Function<T, DefaultCellModel<?>> getDateFunct() {
         return (T lastAccessed) -> {
             Function<Date, String> dateParser = (dt) -> dt == null ? "" : DATETIME_FORMAT.format(dt);
-            return new DefaultCellModel<>(new Date(lastAccessed.getDateAsLong()), dateParser, DATETIME_FORMAT_STR)
+            return new DefaultCellModel<>(new Date(lastAccessed.getDateAsLong() * 1000), dateParser, DATETIME_FORMAT_STR)
                     .setPopupMenuRetriever(getPopupFunct(lastAccessed));
         };
     }

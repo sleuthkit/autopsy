@@ -54,13 +54,13 @@ public class PastCasesPanel extends BaseDataSourceSummaryPanel {
 
     private static final ColumnModel<Pair<String, Long>, DefaultCellModel<?>> CASE_COL = new ColumnModel<>(
             Bundle.PastCasesPanel_caseColumn_title(),
-            (pair) -> new DefaultCellModel(pair.getKey()),
+            (pair) -> new DefaultCellModel<>(pair.getKey()),
             300
     );
 
     private static final ColumnModel<Pair<String, Long>, DefaultCellModel<?>> COUNT_COL = new ColumnModel<>(
             Bundle.PastCasesPanel_countColumn_title(),
-            (pair) -> new DefaultCellModel(pair.getValue()),
+            (pair) -> new DefaultCellModel<>(pair.getValue()),
             100
     );
 

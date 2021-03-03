@@ -497,7 +497,7 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
             String sheetName, List<T> data) {
 
         return convertToExcel(
-                (dataList) -> new ExcelExport.ExcelTableExport<T, C>(Bundle.AnalysisPanel_hashsetHits_tabName(), columnsModel, dataList),
+                (dataList) -> new ExcelExport.ExcelTableExport<T, C>(sheetName, columnsModel, dataList),
                 data,
                 sheetName);
     }
@@ -508,7 +508,7 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
 
         return getExport(
                 dataFetcher,
-                (dataList) -> new ExcelExport.ExcelTableExport<T, C>(Bundle.AnalysisPanel_hashsetHits_tabName(), columnsModel, dataList),
+                (dataList) -> new ExcelExport.ExcelTableExport<T, C>(sheetName, columnsModel, dataList),
                 sheetName,
                 ds);
     }

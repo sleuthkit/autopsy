@@ -80,7 +80,7 @@ public class DefaultCellModel<T> implements GuiCellModel, ExcelCellModel {
      *
      * @return As a utility, returns this.
      */
-    public DefaultCellModel setTooltip(String tooltip) {
+    public DefaultCellModel<T> setTooltip(String tooltip) {
         this.tooltip = tooltip;
         return this;
     }
@@ -97,7 +97,7 @@ public class DefaultCellModel<T> implements GuiCellModel, ExcelCellModel {
      *
      * @return As a utility, returns this.
      */
-    public DefaultCellModel setHorizontalAlignment(CellModel.HorizontalAlign alignment) {
+    public DefaultCellModel<T> setHorizontalAlignment(CellModel.HorizontalAlign alignment) {
         this.horizontalAlignment = alignment;
         return this;
     }
@@ -114,7 +114,7 @@ public class DefaultCellModel<T> implements GuiCellModel, ExcelCellModel {
      *
      * @return As a utility, returns this.
      */
-    public DefaultCellModel setInsets(Insets insets) {
+    public DefaultCellModel<T> setInsets(Insets insets) {
         this.insets = insets;
         return this;
     }
@@ -138,7 +138,7 @@ public class DefaultCellModel<T> implements GuiCellModel, ExcelCellModel {
      * @param menuItemSupplier The lazy load function for popup items.
      * @return
      */
-    public DefaultCellModel setPopupMenuRetriever(Supplier<List<MenuItem>> menuItemSupplier) {
+    public DefaultCellModel<T> setPopupMenuRetriever(Supplier<List<MenuItem>> menuItemSupplier) {
         this.menuItemSupplier = menuItemSupplier;
         return this;
     }
@@ -149,7 +149,7 @@ public class DefaultCellModel<T> implements GuiCellModel, ExcelCellModel {
      * @param popupMenu
      * @return As a utility, returns this.
      */
-    public DefaultCellModel setPopupMenu(List<MenuItem> popupMenu) {
+    public DefaultCellModel<T> setPopupMenu(List<MenuItem> popupMenu) {
         this.popupMenu = popupMenu == null ? null : new ArrayList<>(popupMenu);
         return this;
     }

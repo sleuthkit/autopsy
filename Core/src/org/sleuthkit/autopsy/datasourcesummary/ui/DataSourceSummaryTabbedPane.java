@@ -25,20 +25,28 @@ import java.awt.event.ActionListener;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.logging.Level;
 import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.IngestJobInfoPanel;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.coreutils.FileUtil;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelExport;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelExport.ExcelExportException;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelExport.ExcelSheetExport;
@@ -145,6 +153,8 @@ public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
     }
 
     private static final long serialVersionUID = 1L;
+    private static final Logger logger = Logger.getLogger(DataSourceSummaryTabbedPane.class.getName());
+
     // needs to match value provided for card layout in designed
     private static final String TABBED_PANE = "tabbedPane";
     private static final String NO_DATASOURCE_PANE = "noDataSourcePane";
@@ -271,19 +281,19 @@ public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
     @Messages({
         "DataSourceSummaryTabbedPane_promptAndExportToXLSX_fileExistsTitle=File Already Exists",
         "# {0} - path",
-        "DataSourceSummaryTabbedPane_promptAndExportToXLSX_fileExistsMessage=File at {0} already exists.",
-    })
+        "DataSourceSummaryTabbedPane_promptAndExportToXLSX_fileExistsMessage=File at {0} already exists.",})
     private void promptAndExportToXLSX() {
         DataSource ds = this.dataSource;
         if (ds == null) {
             return;
         }
-
         String expectedExtension = "xlsx";
         JFileChooser fc = new JFileChooser();
         FileNameExtensionFilter xmlFilter = new FileNameExtensionFilter("XLSX file (*.xlsx)", expectedExtension);
         fc.addChoosableFileFilter(xmlFilter);
         fc.setFileFilter(xmlFilter);
+        DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss");
+        fc.setSelectedFile(new File(String.format("%s-%s.xlsx", ds.getName() == null ? "" : FileUtil.escapeFileName(ds.getName()), dateFormat.format(new Date()))));
 
         int returnVal = fc.showSaveDialog(this);
 
@@ -295,14 +305,15 @@ public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
         if (!file.getAbsolutePath().endsWith("." + expectedExtension)) {
             file = new File(file.getAbsolutePath() + "." + expectedExtension);
         }
-        
+
         if (file.exists()) {
-            MessageNotifyUtil.Notify.error(
-                    Bundle.DataSourceSummaryTabbedPane_promptAndExportToXLSX_fileExistsTitle(), 
-                    Bundle.DataSourceSummaryTabbedPane_promptAndExportToXLSX_fileExistsMessage(file.getAbsolutePath()));
+            JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
+                    Bundle.DataSourceSummaryTabbedPane_promptAndExportToXLSX_fileExistsMessage(file.getAbsolutePath()),
+                    Bundle.DataSourceSummaryTabbedPane_promptAndExportToXLSX_fileExistsTitle(),
+                    JOptionPane.WARNING_MESSAGE);
             return;
         }
-        
+
         if (!file.getParentFile().exists()) {
             file.getParentFile().mkdirs();
         }
@@ -357,7 +368,15 @@ public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
 
             @Override
             protected void done() {
-                progressIndicator.finish();
+                try {
+                    get();
+                } catch (ExecutionException ex) {
+                    logger.log(Level.WARNING, "Error while trying to export data source summary to xlsx.", ex);
+                } catch (InterruptedException | CancellationException ex) {
+                    // no op on cancellation
+                } finally {
+                    progressIndicator.finish();
+                }
             }
         };
 
@@ -368,14 +387,15 @@ public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
     @Messages({
         "DataSourceSummaryTabbedPane_exportToXLSX_beginExport=Beginning Export...",
         "# {0} - tabName",
-        "DataSourceSummaryTabbedPane_exportToXLSX_gatheringTabData=Fetching Data for {0}...",
+        "DataSourceSummaryTabbedPane_exportToXLSX_gatheringTabData=Fetching Data for {0} Tab...",
         "DataSourceSummaryTabbedPane_exportToXLSX_writingToFile=Writing to File...",})
+
     private void exportToXLSX(ProgressIndicator progressIndicator, DataSource dataSource, File path)
             throws InterruptedException, IOException, ExcelExportException {
 
         int exportWeight = 3;
         int totalWeight = tabs.size() + exportWeight;
-        progressIndicator.switchToDeterminate(Bundle.DataSourceSummaryTabbedPane_exportToXLSX_beginExport(), 0, totalWeight);
+        progressIndicator.start(Bundle.DataSourceSummaryTabbedPane_exportToXLSX_beginExport(), totalWeight);
         List<ExcelSheetExport> sheetExports = new ArrayList<>();
         for (int i = 0; i < tabs.size(); i++) {
             if (Thread.interrupted()) {
@@ -431,7 +451,7 @@ public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
         tabContentPane.setLayout(new java.awt.BorderLayout());
         tabContentPane.add(tabbedPane, java.awt.BorderLayout.CENTER);
 
-        actionsPane.setBorder(javax.swing.BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        actionsPane.setBorder(javax.swing.BorderFactory.createEmptyBorder(2, 2, 2, 2));
         actionsPane.setLayout(new java.awt.BorderLayout());
 
         org.openide.awt.Mnemonics.setLocalizedText(exportXLSXButton, org.openide.util.NbBundle.getMessage(DataSourceSummaryTabbedPane.class, "DataSourceSummaryTabbedPane.exportXLSXButton.text")); // NOI18N
@@ -440,7 +460,7 @@ public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
                 exportXLSXButtonActionPerformed(evt);
             }
         });
-        actionsPane.add(exportXLSXButton, java.awt.BorderLayout.EAST);
+        actionsPane.add(exportXLSXButton, java.awt.BorderLayout.WEST);
 
         tabContentPane.add(actionsPane, java.awt.BorderLayout.SOUTH);
 

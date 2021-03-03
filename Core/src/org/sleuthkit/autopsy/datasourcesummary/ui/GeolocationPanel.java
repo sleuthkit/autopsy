@@ -93,14 +93,14 @@ public class GeolocationPanel extends BaseDataSourceSummaryPanel {
     // The column indicating the city
     private static final ColumnModel<Pair<String, Integer>, DefaultCellModel<?>> CITY_COL = new ColumnModel<>(
             Bundle.GeolocationPanel_cityColumn_title(),
-            (pair) -> new DefaultCellModel(pair.getLeft()),
+            (pair) -> new DefaultCellModel<>(pair.getLeft()),
             300
     );
 
     // The column indicating the count of points seen close to that city
     private static final ColumnModel<Pair<String, Integer>, DefaultCellModel<?>> COUNT_COL = new ColumnModel<>(
             Bundle.GeolocationPanel_countColumn_title(),
-            (pair) -> new DefaultCellModel(pair.getRight()),
+            (pair) -> new DefaultCellModel<>(pair.getRight()),
             100
     );
 
