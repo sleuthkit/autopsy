@@ -52,7 +52,8 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
             Case.Events.HOSTS_ADDED,
             Case.Events.HOSTS_DELETED,
             Case.Events.PERSONS_ADDED,
-            Case.Events.PERSONS_DELETED
+            Case.Events.PERSONS_DELETED,
+            Case.Events.PERSONS_CHANGED
     );
 
     private static final Set<String> LISTENING_EVENT_NAMES = LISTENING_EVENTS.stream()
