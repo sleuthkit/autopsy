@@ -675,7 +675,7 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
             fields_list[1] = accounts_table[parent_id]
         elif os_account_id == 'NULL':
             fields_list[1] = "NULL"
-        newLine = = ('INSERT INTO "tsk_os_account_attributes" VALUES(' + ','.join(fields_list[1:]) + ');') # remove id
+        newLine = ('INSERT INTO "tsk_os_account_attributes" VALUES(' + ','.join(fields_list[1:]) + ');') # remove id
     else:
         return line
         
