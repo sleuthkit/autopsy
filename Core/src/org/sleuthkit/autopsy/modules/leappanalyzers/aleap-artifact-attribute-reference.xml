@@ -477,7 +477,7 @@
     </FileName>
 
     <FileName filename="Whatsapp - Messages.tsv" description="Whatsapp">
-        <ArtifactName artifactname="TSK_MESSAGES" comment="Whatsapp Messages">
+        <ArtifactName artifactname="TSK_MESSAGE" comment="Whatsapp Messages">
             <AttributeName attributename="TSK_THREAD_ID" columnName="messages_id" required="yes"/>
             <AttributeName attributename="TSK_PHONE_NUMBER_TO" columnName="recipients" required="yes"/>
             <AttributeName attributename="TSK_DIRECTION" columnName="direction" required="yes"/>
