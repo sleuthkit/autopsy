@@ -443,7 +443,7 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
     ig_groups_index = line.find('INSERT INTO "image_gallery_groups"') > -1 or line.find('INSERT INTO image_gallery_groups ') > -1
     ig_groups_seen_index = line.find('INSERT INTO "image_gallery_groups_seen"') > -1 or line.find('INSERT INTO image_gallery_groups_seen ') > -1
     os_account_index = line.find('INSERT INTO "tsk_os_accounts"') > -1 or line.find('INSERT INTO tsk_os_accounts') > -1
-    os_accaount_attr_index = line.find('INSERT INTO "tsk_os_account_attributes"') > -1 or line.find('INSERT INTO tsk_os_account_attributes') > -1
+    os_account_attr_index = line.find('INSERT INTO "tsk_os_account_attributes"') > -1 or line.find('INSERT INTO tsk_os_account_attributes') > -1
     
     parens = line[line.find('(') + 1 : line.rfind(')')]
     no_space_parens = parens.replace(" ", "")
@@ -642,7 +642,7 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
     elif os_account_index:
         newLine = ('INSERT INTO "tsk_os_accounts" VALUES(' + ','.join(fields_list[1:]) + ');') # remove id since value that would be substituted is in diff line already
         return newLine
-    elif os_accaount_attr_index:
+    elif os_account_attr_index:
         #substitue the account object id for a non changing value
         os_account_id = fields_list[1]
         if os_account_id in files_table.keys():
