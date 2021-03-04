@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-2019 Basis Technology Corp.
+ * Copyright 2014-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -553,7 +553,7 @@ final class IngestJobPipeline {
 
         /*
          * If the data-source-level ingest pipelines were successfully started,
-         * start the Start the file-level ingest pipelines (one per file ingest
+         * start the file-level ingest pipelines (one per pipeline file ingest
          * thread).
          */
         if (errors.isEmpty()) {
@@ -940,7 +940,7 @@ final class IngestJobPipeline {
             synchronized (this.dataSourceIngestPipelineLock) {
                 if (!this.isCancelled() && !this.currentDataSourceIngestPipeline.isEmpty()) {
                     List<IngestModuleError> errors = new ArrayList<>();
-                    errors.addAll(this.currentDataSourceIngestPipeline.process(task));
+                    errors.addAll(this.currentDataSourceIngestPipeline.performTask(task));
                     if (!errors.isEmpty()) {
                         logIngestModuleErrors(errors);
                     }
@@ -1014,7 +1014,7 @@ final class IngestJobPipeline {
                      * Run the file through the pipeline.
                      */
                     List<IngestModuleError> errors = new ArrayList<>();
-                    errors.addAll(pipeline.process(task));
+                    errors.addAll(pipeline.performTask(task));
                     if (!errors.isEmpty()) {
                         logIngestModuleErrors(errors, file);
                     }
@@ -1232,9 +1232,9 @@ final class IngestJobPipeline {
      *
      * @return The currently running module, may be null.
      */
-    DataSourceIngestPipeline.PipelineModule getCurrentDataSourceIngestModule() {
-        if (null != this.currentDataSourceIngestPipeline) {
-            return this.currentDataSourceIngestPipeline.getCurrentlyRunningModule();
+    DataSourceIngestPipeline.DataSourcePipelineModule getCurrentDataSourceIngestModule() {
+        if (null != currentDataSourceIngestPipeline) {
+            return (DataSourceIngestPipeline.DataSourcePipelineModule) currentDataSourceIngestPipeline.getCurrentlyRunningModule();
         } else {
             return null;
         }
@@ -1274,7 +1274,7 @@ final class IngestJobPipeline {
                 }
             }
         }
-        
+
         // If a data source had no tasks in progress it may now be complete.
         checkForStageCompleted();
     }
@@ -1353,18 +1353,18 @@ final class IngestJobPipeline {
             logErrorMessage(Level.SEVERE, String.format("%s experienced an error during analysis", error.getModuleDisplayName()), error.getThrowable()); //NON-NLS
         }
     }
-    
+
     /**
      * Write ingest module errors to the log.
      *
      * @param errors The errors.
-     * @param file AbstractFile that caused the errors.
+     * @param file   AbstractFile that caused the errors.
      */
     private void logIngestModuleErrors(List<IngestModuleError> errors, AbstractFile file) {
         for (IngestModuleError error : errors) {
             logErrorMessage(Level.SEVERE, String.format("%s experienced an error during analysis while processing file %s, object ID %d", error.getModuleDisplayName(), file.getName(), file.getId()), error.getThrowable()); //NON-NLS
         }
-    }    
+    }
 
     /**
      * Gets a snapshot of this jobs state and performance.

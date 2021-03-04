@@ -93,16 +93,12 @@ public class DomainSummaryViewer extends javax.swing.JPanel {
      * reflect the currently selected domain. Will populate the list with
      * nothing when a domain is not used.
      *
-     * @param useDomain If the currently selected domain should be used to
-     *                  retrieve a list.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    void sendPopulateEvent(boolean useDomain) {
+    void sendPopulateEvent() {
         String domain = "";
-        if (useDomain) {
-            if (domainList.getSelectedIndex() != -1) {
-                domain = domainListModel.getElementAt(domainList.getSelectedIndex()).getResultDomain().getDomain();
-            }
+        if (domainList.getSelectedIndex() != -1) {
+            domain = domainListModel.getElementAt(domainList.getSelectedIndex()).getResultDomain().getDomain();
         }
         //send populateMesage
         DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.PopulateDomainTabsEvent(domain));

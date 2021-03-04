@@ -27,20 +27,23 @@
               <EmptySpace min="-2" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
                   <Component id="domainNameLabel" alignment="0" max="32767" attributes="0"/>
-                  <Group type="102" attributes="0">
+                  <Component id="pagesLabel" alignment="0" max="32767" attributes="0"/>
+                  <Group type="102" alignment="0" attributes="0">
                       <Group type="103" groupAlignment="1" max="-2" attributes="0">
-                          <Component id="filesDownloadedLabel" linkSize="3" alignment="0" pref="300" max="32767" attributes="0"/>
-                          <Component id="activityLabel" linkSize="3" alignment="0" max="32767" attributes="0"/>
+                          <Component id="totalVisitsLabel" alignment="0" max="32767" attributes="0"/>
+                          <Group type="103" groupAlignment="1" max="-2" attributes="0">
+                              <Component id="filesDownloadedLabel" linkSize="3" alignment="0" pref="300" max="32767" attributes="0"/>
+                              <Component id="activityLabel" linkSize="3" alignment="0" max="32767" attributes="0"/>
+                          </Group>
                       </Group>
-                      <EmptySpace min="-2" max="-2" attributes="0"/>
+                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="domainNotabilityLabel" pref="300" max="32767" attributes="0"/>
+                          <Component id="domainNotabilityLabel" pref="295" max="32767" attributes="0"/>
                           <Component id="categoryLabel" max="32767" attributes="0"/>
+                          <Component id="knownAccountTypesLabel" max="32767" attributes="0"/>
                       </Group>
                       <EmptySpace min="-2" pref="4" max="-2" attributes="0"/>
                   </Group>
-                  <Component id="pagesLabel" alignment="0" max="32767" attributes="0"/>
-                  <Component id="totalVisitsLabel" alignment="0" max="32767" attributes="0"/>
               </Group>
               <EmptySpace min="-2" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" max="-2" attributes="0">
@@ -58,12 +61,12 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" attributes="0">
                       <Component id="numberOfImagesLabel" min="-2" pref="17" max="-2" attributes="0"/>
-                      <EmptySpace pref="8" max="32767" attributes="0"/>
+                      <EmptySpace max="32767" attributes="0"/>
                       <Component id="sampleImageLabel" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <Group type="102" attributes="0">
                       <Component id="domainNameLabel" min="-2" pref="35" max="-2" attributes="0"/>
-                      <EmptySpace type="unrelated" max="32767" attributes="0"/>
+                      <EmptySpace type="unrelated" pref="15" max="32767" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Component id="activityLabel" linkSize="4" alignment="1" min="-2" pref="15" max="-2" attributes="0"/>
                           <Component id="domainNotabilityLabel" linkSize="2" alignment="1" min="-2" max="-2" attributes="0"/>
@@ -73,8 +76,11 @@
                           <Component id="filesDownloadedLabel" linkSize="4" pref="14" max="32767" attributes="0"/>
                           <Component id="categoryLabel" max="32767" attributes="0"/>
                       </Group>
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Component id="totalVisitsLabel" linkSize="2" pref="14" max="32767" attributes="0"/>
+                      <EmptySpace min="-2" pref="9" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                          <Component id="totalVisitsLabel" linkSize="2" pref="14" max="32767" attributes="0"/>
+                          <Component id="knownAccountTypesLabel" max="32767" attributes="0"/>
+                      </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="pagesLabel" min="-2" pref="15" max="-2" attributes="0"/>
                       <EmptySpace min="-2" pref="1" max="-2" attributes="0"/>
@@ -130,6 +136,8 @@
     <Component class="javax.swing.JLabel" name="domainNotabilityLabel">
     </Component>
     <Component class="javax.swing.JLabel" name="categoryLabel">
+    </Component>
+    <Component class="javax.swing.JLabel" name="knownAccountTypesLabel">
     </Component>
   </SubComponents>
 </Form>

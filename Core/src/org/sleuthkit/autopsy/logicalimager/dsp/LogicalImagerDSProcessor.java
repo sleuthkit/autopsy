@@ -38,6 +38,8 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.coreutils.TimeStampUtils;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.Host;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * A Logical Imager data source processor that implements the
@@ -128,6 +130,26 @@ public final class LogicalImagerDSProcessor implements DataSourceProcessor {
      * @param callback        Callback that will be used by the background task
      *                        to return results.
      */
+    @Override
+    public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {  
+        run(null, progressMonitor, callback);
+    }  
+    
+    /**
+     * Adds a data source to the case database using a background task in a
+     * separate thread and the settings provided by the selection and
+     * configuration panel. Returns as soon as the background task is started.
+     * The background task uses a callback object to signal task completion and
+     * return results.
+     *
+     * This method should not be called unless isPanelValid returns true.
+     *
+     * @param host            Host for the data source.
+     * @param progressMonitor Progress monitor that will be used by the
+     *                        background task to report progress.
+     * @param callback        Callback that will be used by the background task
+     *                        to return results.
+     */
     @Messages({
         "# {0} - imageDirPath", "LogicalImagerDSProcessor.imageDirPathNotFound={0} not found.\nUSB drive has been ejected.",
         "# {0} - directory", "LogicalImagerDSProcessor.failToCreateDirectory=Failed to create directory {0}",
@@ -137,9 +159,8 @@ public final class LogicalImagerDSProcessor implements DataSourceProcessor {
         "LogicalImagerDSProcessor.noCurrentCase=No current case",
     })
     @Override
-    public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
-        configPanel.storeSettings();
-
+    public void run(Host host, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+        configPanel.storeSettings();       
         Path imageDirPath = configPanel.getImageDirPath();
         List<String> errorList = new ArrayList<>();
         List<Content> emptyDataSources = new ArrayList<>();
@@ -187,7 +208,7 @@ public final class LogicalImagerDSProcessor implements DataSourceProcessor {
         try {
             String deviceId = UUID.randomUUID().toString();
             String timeZone = Calendar.getInstance().getTimeZone().getID();
-            run(deviceId, timeZone, src, dest,
+            run(deviceId, timeZone, src, dest, host,
                     progressMonitor, callback);
         } catch (NoCurrentCaseException ex) {
             String msg = Bundle.LogicalImagerDSProcessor_noCurrentCase();
@@ -211,15 +232,16 @@ public final class LogicalImagerDSProcessor implements DataSourceProcessor {
      *                        java.util.TimeZone.getID.
      * @param src             The source directory of image.
      * @param dest            The destination directory to copy the source.
+     * @param host            The host for this data source.
      * @param progressMonitor Progress monitor for reporting progress during
      *                        processing.
      * @param callback        Callback to call when processing is done.
      */
     private void run(String deviceId, String timeZone,
-            File src, File dest,
+            File src, File dest, Host host,
             DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback
     ) throws NoCurrentCaseException {
-        addLogicalImageTask = new AddLogicalImageTask(deviceId, timeZone, src, dest,
+        addLogicalImageTask = new AddLogicalImageTask(deviceId, timeZone, src, dest, host,
                 progressMonitor, callback);
         Thread thread = new Thread(addLogicalImageTask);
         thread.start();

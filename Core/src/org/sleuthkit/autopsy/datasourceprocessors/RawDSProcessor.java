@@ -33,6 +33,8 @@ import org.sleuthkit.autopsy.casemodule.GeneralFilter;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
+import org.sleuthkit.datamodel.Host;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * A Raw data source processor that implements the DataSourceProcessor service
@@ -135,8 +137,28 @@ public class RawDSProcessor implements DataSourceProcessor, AutoIngestDataSource
      */
     @Override
     public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+        run(null, progressMonitor, callback);
+    }
+    
+    /**
+     * Adds a data source to the case database using a background task in a
+     * separate thread and the settings provided by the selection and
+     * configuration panel. Returns as soon as the background task is started.
+     * The background task uses a callback object to signal task completion and
+     * return results.
+     *
+     * This method should not be called unless isPanelValid returns true.
+     *
+     * @param host            Host for the data source.
+     * @param progressMonitor Progress monitor that will be used by the
+     *                        background task to report progress.
+     * @param callback        Callback that will be used by the background task
+     *                        to return results.
+     */
+    @Override
+    public void run(Host host, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         configPanel.storeSettings();
-        run(UUID.randomUUID().toString(), configPanel.getImageFilePath(), configPanel.getTimeZone(), configPanel.getChunkSize(), progressMonitor, callback);
+        run(UUID.randomUUID().toString(), configPanel.getImageFilePath(), configPanel.getTimeZone(), configPanel.getChunkSize(), host, progressMonitor, callback);
     }
 
     /**
@@ -157,12 +179,13 @@ public class RawDSProcessor implements DataSourceProcessor, AutoIngestDataSource
      * @param chunkSize            The maximum size of each chunk of the raw
      *                             data source as it is divided up into virtual
      *                             unallocated space files.
+     * @param host                 The host for this data source.
      * @param progressMonitor      Progress monitor for reporting progress
      *                             during processing.
      * @param callback             Callback to call when processing is done.
      */
-    private void run(String deviceId, String imageFilePath, String timeZone, long chunkSize, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
-        AddRawImageTask addImageTask = new AddRawImageTask(deviceId, imageFilePath, timeZone, chunkSize, progressMonitor, callback);
+    private void run(String deviceId, String imageFilePath, String timeZone, long chunkSize, Host host, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+        AddRawImageTask addImageTask = new AddRawImageTask(deviceId, imageFilePath, timeZone, chunkSize, host, progressMonitor, callback);
         new Thread(addImageTask).start();
     }
 
@@ -203,10 +226,15 @@ public class RawDSProcessor implements DataSourceProcessor, AutoIngestDataSource
 
         return 2;
     }
-
+    
     @Override
     public void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) {
-        run(deviceId, dataSourcePath.toString(), Calendar.getInstance().getTimeZone().getID(), DEFAULT_CHUNK_SIZE, progressMonitor, callBack);
+        process(deviceId, dataSourcePath, null, progressMonitor, callBack);
+    }
+    
+    @Override
+    public void process(String deviceId, Path dataSourcePath, Host host, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) {
+        run(deviceId, dataSourcePath.toString(), Calendar.getInstance().getTimeZone().getID(), DEFAULT_CHUNK_SIZE, host, progressMonitor, callBack);
     }
 
 }

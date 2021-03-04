@@ -30,6 +30,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgress
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DefaultAddDataSourceCallbacks;
+import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitJNI;
@@ -53,6 +54,7 @@ class AddMultipleImagesTask implements Runnable {
     private final String deviceId;
     private final List<String> imageFilePaths;
     private final String timeZone;
+    private final Host host;
     private final long chunkSize = TWO_GB;
     private final DataSourceProcessorProgressMonitor progressMonitor;
     private final Case currentCase;
@@ -85,6 +87,7 @@ class AddMultipleImagesTask implements Runnable {
      * @param timeZone        The time zone to use when processing dates and
      *                        times for the image, obtained from
      *                        java.util.TimeZone.getID.
+     * @param host            Host for this data source (may be null).
      * @param progressMonitor Progress monitor for reporting progress during
      *                        processing.
      *
@@ -94,11 +97,12 @@ class AddMultipleImagesTask implements Runnable {
         "# {0} - file", "AddMultipleImagesTask.addingFileAsLogicalFile=Adding: {0} as an unallocated space file.",
         "# {0} - deviceId", "# {1} - exceptionMessage",
         "AddMultipleImagesTask.errorAddingImgWithoutFileSystem=Error adding images without file systems for device {0}: {1}",})
-    AddMultipleImagesTask(String deviceId, List<String> imageFilePaths, String timeZone,
+    AddMultipleImagesTask(String deviceId, List<String> imageFilePaths, String timeZone, Host host,
             DataSourceProcessorProgressMonitor progressMonitor) throws NoCurrentCaseException {
         this.deviceId = deviceId;
         this.imageFilePaths = imageFilePaths;
         this.timeZone = timeZone;
+        this.host = host;
         this.progressMonitor = progressMonitor;
         currentCase = Case.getCurrentCaseThrows();
         this.criticalErrorOccurred = false;
@@ -124,7 +128,7 @@ class AddMultipleImagesTask implements Runnable {
         for (String imageFilePath : imageFilePaths) {
             try {
                 currentImage = SleuthkitJNI.addImageToDatabase(currentCase.getSleuthkitCase(), new String[]{imageFilePath}, 
-                    0, timeZone, "", "", "", deviceId);
+                    0, timeZone, "", "", "", deviceId, host);
             } catch (TskCoreException ex) {
                 LOGGER.log(Level.SEVERE, "Error adding image " + imageFilePath + " to database", ex);
                 errorMessages.add(Bundle.AddMultipleImagesTask_imageError(imageFilePath));

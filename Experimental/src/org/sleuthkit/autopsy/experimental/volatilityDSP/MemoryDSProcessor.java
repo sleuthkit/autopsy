@@ -23,9 +23,12 @@ import java.util.List;
 import javax.swing.JPanel;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
+import org.sleuthkit.datamodel.Host;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * A memory image data source processor that implements the DataSourceProcessor
@@ -116,8 +119,28 @@ public class MemoryDSProcessor implements DataSourceProcessor {
      */
     @Override
     public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+        run(null, progressMonitor, callback);
+    }    
+    
+    /**
+     * Adds a data source to the case database using a background task in a
+     * separate thread and the settings provided by the selection and
+     * configuration panel. Returns as soon as the background task is started.
+     * The background task uses a callback object to signal task completion and
+     * return results.
+     *
+     * This method should not be called unless isPanelValid returns true.
+     *
+     * @param host            Host for the data source.
+     * @param progressMonitor Progress monitor that will be used by the
+     *                        background task to report progress.
+     * @param callback        Callback that will be used by the background task
+     *                        to return results.
+     */
+    @Override
+    public void run(Host host, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         configPanel.storeSettings();
-        run(UUID.randomUUID().toString(), configPanel.getImageFilePath(), configPanel.getProfile(), configPanel.getPluginsToRun(), configPanel.getTimeZone(), progressMonitor, callback);
+        run(UUID.randomUUID().toString(), configPanel.getImageFilePath(), configPanel.getProfile(), configPanel.getPluginsToRun(), configPanel.getTimeZone(), host, progressMonitor, callback);
     }
 
     /**
@@ -136,12 +159,13 @@ public class MemoryDSProcessor implements DataSourceProcessor {
      * @param timeZone        The time zone to use when processing dates and
      *                        times for the image, obtained from
      *                        java.util.TimeZone.getID.
+     * @param host            The host for this data source (may be null)
      * @param progressMonitor Progress monitor for reporting progress during
      *                        processing.
      * @param callback        Callback to call when processing is done.
      */
-    private void run(String deviceId, String memoryImagePath, String profile, List<String> pluginsToRun, String timeZone, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
-        addImageTask = new AddMemoryImageTask(deviceId, memoryImagePath, profile, pluginsToRun, timeZone, progressMonitor, callback);
+    private void run(String deviceId, String memoryImagePath, String profile, List<String> pluginsToRun, String timeZone, Host host, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+        addImageTask = new AddMemoryImageTask(deviceId, memoryImagePath, profile, pluginsToRun, timeZone, host, progressMonitor, callback);
         new Thread(addImageTask).start();
     }
 

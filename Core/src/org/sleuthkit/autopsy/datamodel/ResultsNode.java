@@ -46,7 +46,8 @@ public class ResultsNode extends DisplayableItemNode {
                     new HashsetHits(sleuthkitCase, dsObjId),
                     new EmailExtracted(sleuthkitCase, dsObjId),
                     new InterestingHits(sleuthkitCase, dsObjId ),
-                    new Accounts(sleuthkitCase, dsObjId) )
+                    new Accounts(sleuthkitCase, dsObjId),
+                    new OsAccounts(sleuthkitCase, dsObjId))
                 ),
                 Lookups.singleton(NAME));
         setName(NAME);

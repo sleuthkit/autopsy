@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2018 Basis Technology Corp.
+ * Copyright 2013-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
 import java.util.UUID;
 import java.util.logging.Level;
@@ -31,6 +30,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgress
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagewriter.ImageWriterSettings;
+import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitJNI;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -56,9 +56,9 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
     private String drivePath;
     private int sectorSize;
     private String timeZone;
+    private Host host;
     private ImageWriterSettings imageWriterSettings;
     private boolean ignoreFatOrphanFiles;
-    private boolean setDataSourceOptionsCalled;
 
     /**
      * Constructs a local drive data source processor that implements the
@@ -135,36 +135,56 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
      */
     @Override
     public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
-        if (!setDataSourceOptionsCalled) {
-            deviceId = UUID.randomUUID().toString();
-            drivePath = configPanel.getContentPath();
-            sectorSize = configPanel.getSectorSize();
-            timeZone = configPanel.getTimeZone();
-            ignoreFatOrphanFiles = configPanel.getNoFatOrphans();
-            if (configPanel.getImageWriterEnabled()) {
-                imageWriterSettings = configPanel.getImageWriterSettings();
-            } else {
-                imageWriterSettings = null;
-            }
+        run(null, progressMonitor, callback);
+    }
+
+    /**
+     * Adds a data source to the case database using a background task in a
+     * separate thread and the settings provided by the selection and
+     * configuration panel. Returns as soon as the background task is started.
+     * The background task uses a callback object to signal task completion and
+     * return results.
+     *
+     * This method should not be called unless isPanelValid returns true.
+     *
+     * @param host            Host for this data source.
+     * @param progressMonitor Progress monitor that will be used by the
+     *                        background task to report progress.
+     * @param callback        Callback that will be used by the background task
+     *                        to return results.
+     */
+    @Override
+    public void run(Host host, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+        deviceId = UUID.randomUUID().toString();
+        drivePath = configPanel.getContentPath();
+        sectorSize = configPanel.getSectorSize();
+        timeZone = configPanel.getTimeZone();
+        ignoreFatOrphanFiles = configPanel.getNoFatOrphans();
+        if (configPanel.getImageWriterEnabled()) {
+            imageWriterSettings = configPanel.getImageWriterSettings();
+        } else {
+            imageWriterSettings = null;
         }
+
+        this.host = host;
 
         Image image;
         try {
             image = SleuthkitJNI.addImageToDatabase(Case.getCurrentCase().getSleuthkitCase(),
-                new String[]{drivePath}, sectorSize,
-                timeZone, null, null, null, deviceId);
+                    new String[]{drivePath}, sectorSize,
+                    timeZone, null, null, null, deviceId, this.host);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error adding local disk with path " + drivePath + " to database", ex);
             final List<String> errors = new ArrayList<>();
             errors.add(ex.getMessage());
             callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errors, new ArrayList<>());
             return;
-        }   
+        }
 
         addDiskTask = new AddImageTask(
-                new AddImageTask.ImageDetails(deviceId, image, sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, imageWriterSettings), 
+                new AddImageTask.ImageDetails(deviceId, image, sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, imageWriterSettings),
                 progressMonitor,
-                new StreamingAddDataSourceCallbacks(new DefaultIngestStream()), 
+                new StreamingAddDataSourceCallbacks(new DefaultIngestStream()),
                 new StreamingAddImageTaskCallback(new DefaultIngestStream(), callback));
         new Thread(addDiskTask).start();
     }
@@ -220,19 +240,19 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
         Image image;
         try {
             image = SleuthkitJNI.addImageToDatabase(Case.getCurrentCase().getSleuthkitCase(),
-                new String[]{drivePath}, sectorSize,
-                timeZone, null, null, null, deviceId);
+                    new String[]{drivePath}, sectorSize,
+                    timeZone, null, null, null, deviceId);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error adding local disk with path " + drivePath + " to database", ex);
             final List<String> errors = new ArrayList<>();
             errors.add(ex.getMessage());
             callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errors, new ArrayList<>());
             return;
-        } 
-        
-	    addDiskTask = new AddImageTask(new AddImageTask.ImageDetails(deviceId, image, sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, imageWriterSettings), 
-                progressMonitor, 
-                new StreamingAddDataSourceCallbacks(new DefaultIngestStream()), 
+        }
+
+        addDiskTask = new AddImageTask(new AddImageTask.ImageDetails(deviceId, image, sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, imageWriterSettings),
+                progressMonitor,
+                new StreamingAddDataSourceCallbacks(new DefaultIngestStream()),
                 new StreamingAddImageTaskCallback(new DefaultIngestStream(), callback));
         new Thread(addDiskTask).start();
     }
@@ -261,30 +281,5 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
         drivePath = null;
         timeZone = null;
         ignoreFatOrphanFiles = false;
-        setDataSourceOptionsCalled = false;
     }
-
-    /**
-     * Sets the configuration of the data source processor without using the
-     * configuration panel.
-     *
-     * @param drivePath            Path to the local drive.
-     * @param timeZone             The time zone to use when processing dates
-     *                             and times for the local drive, obtained from
-     *                             java.util.TimeZone.getID.
-     * @param ignoreFatOrphanFiles Whether to parse orphans if the image has a
-     *                             FAT filesystem.
-     *
-     * @deprecated Use the provided overload of the run method instead.
-     */
-    @Deprecated
-    public void setDataSourceOptions(String drivePath, String timeZone, boolean ignoreFatOrphanFiles) {
-        this.deviceId = UUID.randomUUID().toString();
-        this.drivePath = drivePath;
-        this.sectorSize = 0;
-        this.timeZone = Calendar.getInstance().getTimeZone().getID();
-        this.ignoreFatOrphanFiles = ignoreFatOrphanFiles;
-        setDataSourceOptionsCalled = true;
-    }
-
 }
