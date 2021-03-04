@@ -119,19 +119,37 @@ public class PersonGroupingNode extends DisplayableItemNode {
     private final Person person;
 
     /**
+     * Gets the display name for this person or "Unknown Persons".
+     *
+     * @param person The person.
+     * @return The non-empty string for the display name.
+     */
+    private static String getDisplayName(Person person) {
+        return (person == null || person.getName() == null)
+                ? Bundle.PersonNode_unknownPersonNode_title()
+                : person.getName();
+    }
+
+    /**
      * Main constructor.
      *
      * @param person The person record to be represented.
      */
     PersonGroupingNode(Person person) {
-        super(Children.create(new PersonChildren(person), false), person == null ? null : Lookups.singleton(person));
+        this(person, getDisplayName(person));
+    }
 
-        String safeName = (person == null || person.getName() == null)
-                ? Bundle.PersonNode_unknownPersonNode_title()
-                : person.getName();
-
-        super.setName(safeName);
-        super.setDisplayName(safeName);
+    /**
+     * Constructor.
+     *
+     * @param person The person.
+     * @param displayName The display name for the person.
+     */
+    private PersonGroupingNode(Person person, String displayName) {
+        super(Children.create(new PersonChildren(person), false),
+                person == null ? Lookups.fixed(displayName) : Lookups.fixed(person, displayName));
+        super.setName(displayName);
+        super.setDisplayName(displayName);
         this.setIconBaseWithExtension(ICON_PATH);
         this.person = person;
     }
