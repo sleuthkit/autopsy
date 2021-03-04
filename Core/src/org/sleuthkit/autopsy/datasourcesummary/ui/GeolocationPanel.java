@@ -67,20 +67,41 @@ import org.sleuthkit.datamodel.DataSource;
     "GeolocationPanel_mostRecent_tabName=Most Recent Cities",})
 public class GeolocationPanel extends BaseDataSourceSummaryPanel {
 
+    /**
+     * Object encapsulating the view model of this panel.
+     */
     private static class GeolocationViewModel {
 
         private final List<Pair<String, Integer>> mostRecentData;
         private final List<Pair<String, Integer>> mostCommonData;
 
+        /**
+         * Main constructor.
+         *
+         * @param mostRecentData The data to be displayed in the most recent
+         * table.
+         * @param mostCommonData The data to be displayed in the most common
+         * table.
+         */
         GeolocationViewModel(List<Pair<String, Integer>> mostRecentData, List<Pair<String, Integer>> mostCommonData) {
             this.mostRecentData = mostRecentData;
             this.mostCommonData = mostCommonData;
         }
 
+        /**
+         * Returns the data to be displayed in the most recent table.
+         *
+         * @return The data to be displayed in the most recent table.
+         */
         List<Pair<String, Integer>> getMostRecentData() {
             return mostRecentData;
         }
 
+        /**
+         * Returns the data to be displayed in the most common table.
+         *
+         * @return The data to be displayed in the most common table.
+         */
         List<Pair<String, Integer>> getMostCommonData() {
             return mostCommonData;
         }
@@ -241,6 +262,13 @@ public class GeolocationPanel extends BaseDataSourceSummaryPanel {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Converts CityData from GeolocationSummary into data that can be directly
+     * put into table in this panel.
+     *
+     * @param cityData The city data.
+     * @return The view model data.
+     */
     private GeolocationViewModel convertToViewModel(CityData cityData) {
         if (cityData == null) {
             return new GeolocationViewModel(Collections.emptyList(), Collections.emptyList());

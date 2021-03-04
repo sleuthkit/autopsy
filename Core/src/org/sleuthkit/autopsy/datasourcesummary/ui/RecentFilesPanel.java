@@ -136,6 +136,12 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
         initalizeTables();
     }
 
+    /**
+     * Returns a function that gets the date from the RecentFileDetails object and
+     * converts into a DefaultCellModel to be displayed in a table.
+     *
+     * @return The function that determines the date cell from a RecentFileDetails object.
+     */
     private <T extends RecentFileDetails> Function<T, DefaultCellModel<?>> getDateFunct() {
         return (T lastAccessed) -> {
             Function<Date, String> dateParser = (dt) -> dt == null ? "" : DATETIME_FORMAT.format(dt);

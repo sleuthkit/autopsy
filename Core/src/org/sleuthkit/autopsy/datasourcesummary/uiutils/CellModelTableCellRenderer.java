@@ -37,7 +37,7 @@ import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel.CellMouseList
 
 /**
  * A Table cell renderer that renders a cell of a table based off of the
- *CellModel interface provided within this class.
+ * CellModel interface provided within this class.
  */
 public class CellModelTableCellRenderer extends DefaultTableCellRenderer {
 

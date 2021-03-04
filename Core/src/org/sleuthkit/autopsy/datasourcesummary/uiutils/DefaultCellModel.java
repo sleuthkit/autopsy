@@ -1,7 +1,20 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2021 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.datasourcesummary.uiutils;
 
@@ -11,11 +24,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelTableExport.ExcelCellModel;
 
-/**
- *
- * @author gregd
- */
 /**
  * The default cell model.
  */
@@ -33,16 +43,35 @@ public class DefaultCellModel<T> implements GuiCellModel, ExcelCellModel {
     /**
      * Main constructor.
      *
-     * @param text The text to be displayed in the cell.
+     * @param data The data to be displayed in the cell.
      */
     public DefaultCellModel(T data) {
         this(data, null, null);
     }
 
+    /**
+     * Constructor.
+     *
+     * @param data The data to be displayed in the cell.
+     * @param stringConverter The means of converting that data to a string or
+     * null to use .toString method on object.
+     */
     public DefaultCellModel(T data, Function<T, String> stringConverter) {
         this(data, stringConverter, null);
     }
 
+    /**
+     * Constructor.
+     *
+     * @param data The data to be displayed in the cell.
+     * @param stringConverter The means of converting that data to a string or
+     * null to use .toString method on object.
+     * @param excelFormatString The apache poi excel format string to use with
+     * the data.
+     *
+     * NOTE: Only certain data types can be exported. See
+     * ExcelTableExport.createCell() for types.
+     */
     public DefaultCellModel(T data, Function<T, String> stringConverter, String excelFormatString) {
         this.data = data;
         this.stringConverter = stringConverter;

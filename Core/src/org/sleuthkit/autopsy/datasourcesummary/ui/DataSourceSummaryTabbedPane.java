@@ -20,42 +20,17 @@ package org.sleuthkit.autopsy.datasourcesummary.ui;
 
 import java.awt.CardLayout;
 import java.awt.Component;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.beans.PropertyChangeListener;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Paths;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.logging.Level;
-import javax.swing.JFileChooser;
-import javax.swing.JOptionPane;
-import javax.swing.SwingWorker;
-import javax.swing.filechooser.FileNameExtensionFilter;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
-import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.IngestJobInfoPanel;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.coreutils.FileUtil;
-import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelExport;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelExport.ExcelExportException;
+import org.sleuthkit.autopsy.datasourcesummary.ui.ExcelExportAction.ExportableTab;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelExport.ExcelSheetExport;
-import org.sleuthkit.autopsy.progress.ModalDialogProgressIndicator;
-import org.sleuthkit.autopsy.progress.ProgressIndicator;
-import org.sleuthkit.autopsy.report.infrastructure.ReportGenerator;
 import org.sleuthkit.datamodel.DataSource;
 
 /**
@@ -80,7 +55,7 @@ public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
      * Records of tab information (i.e. title, component, function to call on
      * new data source).
      */
-    private class DataSourceTab {
+    private class DataSourceTab implements ExportableTab {
 
         private final String tabTitle;
         private final Component component;
@@ -123,7 +98,8 @@ public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
         /**
          * @return The title for the tab.
          */
-        String getTabTitle() {
+        @Override
+        public String getTabTitle() {
             return tabTitle;
         }
 
@@ -141,12 +117,9 @@ public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
             return onDataSource;
         }
 
-        /**
-         * @return The function that creates excel exports for a particular data
-         * source for this tab.
-         */
-        Function<DataSource, List<ExcelSheetExport>> getExcelExporter() {
-            return excelExporter;
+        @Override
+        public List<ExcelSheetExport> getExcelExports(DataSource dataSource) {
+            return excelExporter == null ? null : excelExporter.apply(dataSource);
         }
 
         /**
@@ -158,7 +131,6 @@ public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
     }
 
     private static final long serialVersionUID = 1L;
-    private static final Logger logger = Logger.getLogger(DataSourceSummaryTabbedPane.class.getName());
 
     // needs to match value provided for card layout in designed
     private static final String TABBED_PANE = "tabbedPane";
@@ -166,8 +138,10 @@ public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
 
     private Runnable notifyParentClose = null;
     private final IngestJobInfoPanel ingestHistoryPanel = new IngestJobInfoPanel();
-    private final ExportPanel exportPanel = new ExportPanel(this::promptAndExportToXLSX);
-
+    
+    // create an export panel whose button triggers the export to XLSX action
+    private final ExportPanel exportPanel = new ExportPanel();
+    
     private final List<DataSourceTab> tabs = Arrays.asList(
             new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_typesTab_title(), new TypesPanel()),
             new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_userActivityTab_title(), new UserActivityPanel()),
@@ -191,9 +165,10 @@ public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
                     null,
                     null)
     );
-
-    private final ExcelExport excelExport = ExcelExport.getInstance();
-
+    
+    // the action that does the export
+    private final ExcelExportAction exportAction = new ExcelExportAction(tabs, exportPanel);
+  
     private DataSource dataSource = null;
     private CardLayout cardLayout;
 
@@ -247,6 +222,9 @@ public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
 
         // set this to no datasource initially
         cardLayout.show(this, NO_DATASOURCE_PANE);
+        
+        // set action for when user requests xlsx export
+        exportPanel.setXlsxExportAction(() -> exportAction.accept(getDataSource()));
     }
 
     /**
@@ -292,161 +270,6 @@ public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
         Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), caseEventsListener);
     }
 
-    @Messages({
-        "DataSourceSummaryTabbedPane_promptAndExportToXLSX_fileExistsTitle=File Already Exists",
-        "# {0} - path",
-        "DataSourceSummaryTabbedPane_promptAndExportToXLSX_fileExistsMessage=File at {0} already exists.",})
-    private void promptAndExportToXLSX() {
-        DataSource ds = this.dataSource;
-        if (ds == null) {
-            return;
-        }
-        String expectedExtension = "xlsx";
-        JFileChooser fc = new JFileChooser();
-        FileNameExtensionFilter xmlFilter = new FileNameExtensionFilter("XLSX file (*.xlsx)", expectedExtension);
-        fc.addChoosableFileFilter(xmlFilter);
-        fc.setFileFilter(xmlFilter);
-        DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss");
-        String fileName = String.format("%s-%s.xlsx", ds.getName() == null ? "" : FileUtil.escapeFileName(ds.getName()), dateFormat.format(new Date()));
-        String reportsDir = "";
-        try {
-            reportsDir = Case.getCurrentCaseThrows().getReportDirectory();
-            File reportsDirFile = new File(reportsDir);
-            if (!reportsDirFile.exists()) {
-                reportsDirFile.mkdirs();
-            }
-        } catch (NoCurrentCaseException ex) {
-            logger.log(Level.WARNING, "Unable to find reports directory.", ex);
-        }
-
-        fc.setSelectedFile(Paths.get(reportsDir, fileName).toFile());
-
-        int returnVal = fc.showSaveDialog(this);
-
-        if (returnVal != JFileChooser.APPROVE_OPTION || fc.getSelectedFile() == null) {
-            return;
-        }
-
-        File file = fc.getSelectedFile();
-        if (!file.getAbsolutePath().endsWith("." + expectedExtension)) {
-            file = new File(file.getAbsolutePath() + "." + expectedExtension);
-        }
-
-        if (file.exists()) {
-            JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
-                    Bundle.DataSourceSummaryTabbedPane_promptAndExportToXLSX_fileExistsMessage(file.getAbsolutePath()),
-                    Bundle.DataSourceSummaryTabbedPane_promptAndExportToXLSX_fileExistsTitle(),
-                    JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-        if (!file.getParentFile().exists()) {
-            file.getParentFile().mkdirs();
-        }
-
-        runXLSXExport(ds, file);
-    }
-
-    private class CancelExportListener implements ActionListener {
-
-        private SwingWorker<Boolean, Void> worker = null;
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            if (worker != null && !worker.isCancelled() && !worker.isDone()) {
-                worker.cancel(true);
-            }
-        }
-
-        SwingWorker<Boolean, Void> getWorker() {
-            return worker;
-        }
-
-        void setWorker(SwingWorker<Boolean, Void> worker) {
-            this.worker = worker;
-        }
-    }
-
-    @Messages({
-        "# {0} - dataSource",
-        "DataSourceSummaryTabbedPane_runXLSXExport_progressTitle=Exporting {0} to XLSX",
-        "DataSourceSummaryTabbedPane_runXLSXExport_progressCancelTitle=Cancel",
-        "DataSourceSummaryTabbedPane_runXLSXExport_progressCancelActionTitle=Cancelling..."
-    })
-    private void runXLSXExport(DataSource dataSource, File path) {
-
-        CancelExportListener cancelButtonListener = new CancelExportListener();
-
-        ProgressIndicator progressIndicator = new ModalDialogProgressIndicator(
-                WindowManager.getDefault().getMainWindow(),
-                Bundle.DataSourceSummaryTabbedPane_runXLSXExport_progressTitle(dataSource.getName()),
-                new String[]{Bundle.DataSourceSummaryTabbedPane_runXLSXExport_progressCancelTitle()},
-                Bundle.DataSourceSummaryTabbedPane_runXLSXExport_progressCancelTitle(),
-                cancelButtonListener
-        );
-
-        SwingWorker<Boolean, Void> worker = new SwingWorker<Boolean, Void>() {
-            @Override
-            protected Boolean doInBackground() throws Exception {
-                exportToXLSX(progressIndicator, dataSource, path);
-                return true;
-            }
-
-            @Override
-            protected void done() {
-                try {
-                    get();
-                } catch (ExecutionException ex) {
-                    logger.log(Level.WARNING, "Error while trying to export data source summary to xlsx.", ex);
-                } catch (InterruptedException | CancellationException ex) {
-                    // no op on cancellation
-                } finally {
-                    progressIndicator.finish();
-                }
-            }
-        };
-
-        cancelButtonListener.setWorker(worker);
-        worker.execute();
-    }
-
-    @Messages({
-        "DataSourceSummaryTabbedPane_exportToXLSX_beginExport=Beginning Export...",
-        "# {0} - tabName",
-        "DataSourceSummaryTabbedPane_exportToXLSX_gatheringTabData=Fetching Data for {0} Tab...",
-        "DataSourceSummaryTabbedPane_exportToXLSX_writingToFile=Writing to File...",})
-
-    private void exportToXLSX(ProgressIndicator progressIndicator, DataSource dataSource, File path)
-            throws InterruptedException, IOException, ExcelExportException {
-
-        int exportWeight = 3;
-        int totalWeight = tabs.size() + exportWeight;
-        progressIndicator.start(Bundle.DataSourceSummaryTabbedPane_exportToXLSX_beginExport(), totalWeight);
-        List<ExcelSheetExport> sheetExports = new ArrayList<>();
-        for (int i = 0; i < tabs.size(); i++) {
-            if (Thread.interrupted()) {
-                throw new InterruptedException("Export has been cancelled.");
-            }
-
-            DataSourceTab tab = tabs.get(i);
-            progressIndicator.progress(Bundle.DataSourceSummaryTabbedPane_exportToXLSX_gatheringTabData(tab == null ? "" : tab.getTabTitle()), i);
-            if (tab.getExcelExporter() != null) {
-                List<ExcelSheetExport> exports = tab.getExcelExporter().apply(dataSource);
-                if (exports != null) {
-                    sheetExports.addAll(exports);
-                }
-            }
-        }
-
-        if (Thread.interrupted()) {
-            throw new InterruptedException("Export has been cancelled.");
-        }
-
-        progressIndicator.progress(Bundle.DataSourceSummaryTabbedPane_exportToXLSX_writingToFile(), tabs.size());
-        excelExport.writeExcel(sheetExports, path);
-
-        progressIndicator.finish();
-    }
 
     /**
      * This method is called from within the constructor to initialize the form.

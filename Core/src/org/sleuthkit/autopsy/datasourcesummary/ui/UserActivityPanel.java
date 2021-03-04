@@ -85,7 +85,7 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
     private static final int TOP_ACCOUNTS_COUNT = 5;
     private static final int TOP_DEVICES_COUNT = 10;
 
-// set up recent programs table 
+    // set up recent programs table 
     private final List<ColumnModel<TopProgramsResult, DefaultCellModel<?>>> topProgramsTemplate = Arrays.asList(
             // program name column
             new ColumnModel<>(
@@ -148,7 +148,6 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
                     150)
     );
 
-//            Bundle.UserActivityPanel_TopDomainsTableModel_tabName()
     // top web searches table
     private final List<ColumnModel<TopWebSearchResult, DefaultCellModel<?>>> topWebSearchesTemplate = Arrays.asList(
             // search string column

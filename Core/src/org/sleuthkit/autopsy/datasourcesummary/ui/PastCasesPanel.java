@@ -52,18 +52,21 @@ public class PastCasesPanel extends BaseDataSourceSummaryPanel {
 
     private static final long serialVersionUID = 1L;
 
+    // model for column indicating the case
     private static final ColumnModel<Pair<String, Long>, DefaultCellModel<?>> CASE_COL = new ColumnModel<>(
             Bundle.PastCasesPanel_caseColumn_title(),
             (pair) -> new DefaultCellModel<>(pair.getKey()),
             300
     );
 
+    // model for column indicating the count
     private static final ColumnModel<Pair<String, Long>, DefaultCellModel<?>> COUNT_COL = new ColumnModel<>(
             Bundle.PastCasesPanel_countColumn_title(),
             (pair) -> new DefaultCellModel<>(pair.getValue()),
             100
     );
 
+    // the template for columns in both tables in this tab
     private static List<ColumnModel<Pair<String, Long>, DefaultCellModel<?>>> DEFAULT_TEMPLATE
             = Arrays.asList(CASE_COL, COUNT_COL);
 

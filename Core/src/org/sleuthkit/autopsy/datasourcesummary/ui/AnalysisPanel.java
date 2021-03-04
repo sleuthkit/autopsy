@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.datasourcesummary.ui;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -51,9 +50,7 @@ public class AnalysisPanel extends BaseDataSourceSummaryPanel {
 
     private static final long serialVersionUID = 1L;
 
-    /**
-     * Default Column definitions for each table
-     */
+    // Default Column definitions for each table
     private static final List<ColumnModel<Pair<String, Long>, DefaultCellModel<?>>> DEFAULT_COLUMNS = Arrays.asList(
             new ColumnModel<>(
                     Bundle.AnalysisPanel_keyColumn_title(),
@@ -67,6 +64,7 @@ public class AnalysisPanel extends BaseDataSourceSummaryPanel {
             )
     );
 
+    // Identifies the key in the records for the tables.
     private static final Function<Pair<String, Long>, String> DEFAULT_KEY_PROVIDER = (pair) -> pair.getKey();
 
     private final DataFetcher<DataSource, List<Pair<String, Long>>> hashsetsFetcher;
