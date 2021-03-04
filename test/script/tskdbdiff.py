@@ -646,33 +646,33 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
         #substitue the account object id for a non changing value
         os_account_id = fields_list[1]
         if os_account_id in files_table.keys():
-            fields_list[1] = files_table[parent_id]
+            fields_list[1] = files_table[os_account_id]
         elif os_account_id in vs_parts_table.keys():
-            fields_list[1] = vs_parts_table[parent_id]
+            fields_list[1] = vs_parts_table[os_account_id]
         elif os_account_id in vs_info_table.keys():
-            fields_list[1] = vs_info_table[parent_id]
+            fields_list[1] = vs_info_table[os_account_id]
         elif os_account_id in fs_info_table.keys():
-            fields_list[1] = fs_info_table[parent_id]
+            fields_list[1] = fs_info_table[os_account_id]
         elif os_account_id in images_table.keys():
-            fields_list[1] = images_table[parent_id]
+            fields_list[1] = images_table[os_account_id]
         elif os_account_id in accounts_table.keys():
-            fields_list[1] = accounts_table[parent_id]
+            fields_list[1] = accounts_table[os_account_id]
         elif os_account_id == 'NULL':
             fields_list[1] = "NULL"
         #substitue the source object id for a non changing value
         source_obj_id = fields_list[3]
         if source_obj_id in files_table.keys():
-            fields_list[3] = files_table[parent_id]
+            fields_list[3] = files_table[source_obj_id]
         elif source_obj_id in vs_parts_table.keys():
-            fields_list[3] = vs_parts_table[parent_id]
+            fields_list[3] = vs_parts_table[source_obj_id]
         elif source_obj_id in vs_info_table.keys():
-            fields_list[3] = vs_info_table[parent_id]
+            fields_list[3] = vs_info_table[source_obj_id]
         elif source_obj_id in fs_info_table.keys():
-            fields_list[3] = fs_info_table[parent_id]
+            fields_list[3] = fs_info_table[source_obj_id]
         elif source_obj_id in images_table.keys():
-            fields_list[3] = images_table[parent_id]
+            fields_list[3] = images_table[source_obj_id]
         elif source_obj_id in accounts_table.keys():
-            fields_list[3] = accounts_table[parent_id]
+            fields_list[3] = accounts_table[source_obj_id]
         elif source_obj_id == 'NULL':
             fields_list[3] = "NULL"
         newLine = ('INSERT INTO "tsk_os_account_attributes" VALUES(' + ','.join(fields_list[1:]) + ');') # remove id
