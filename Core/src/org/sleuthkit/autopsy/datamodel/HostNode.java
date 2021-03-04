@@ -22,8 +22,10 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.logging.Level;
+import javax.swing.Action;
 import org.openide.nodes.ChildFactory;
 
 import org.openide.nodes.Children;
@@ -35,8 +37,11 @@ import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.hosts.AssociatePersonsMenuAction;
+import org.sleuthkit.autopsy.datamodel.hosts.RemoveParentPersonAction;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Host;
+import org.sleuthkit.datamodel.Person;
 import org.sleuthkit.datamodel.SleuthkitVisitableItem;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -131,6 +136,7 @@ public class HostNode extends DisplayableItemNode {
         }
     }
 
+    private static final Logger logger = Logger.getLogger(HostNode.class.getName());
     private static final String ICON_PATH = "org/sleuthkit/autopsy/images/host.png";
     private static final CreateSleuthkitNodeVisitor CREATE_TSK_NODE_VISITOR = new CreateSleuthkitNodeVisitor();
 
@@ -246,5 +252,39 @@ public class HostNode extends DisplayableItemNode {
         sheetSet.put(new NodeProperty<>("Name", Bundle.HostNode_createSheet_nameProperty(), "", getDisplayName())); //NON-NLS
 
         return sheet;
+    }
+
+    @Override
+    @Messages({"HostNode_actions_associateWithExisting=Associate with existing person...",
+        "HostNode_actions_associateWithNew=Associate with new person...",
+        "# {0} - hostName",
+        "HostNode_actions_removeFromPerson=Remove from person ({0})"})
+    public Action[] getActions(boolean context) {
+
+        Optional<Person> parent = Optional.empty();
+
+        // if there is a host, then provide actions
+        if (this.host != null) {
+            try {
+                parent = Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().getPerson(this.host);
+            } catch (NoCurrentCaseException | TskCoreException ex) {
+                logger.log(Level.WARNING, String.format("Error fetching parent person of host: %s", this.host.getName() == null ? "<null>" : this.host.getName()), ex);
+                return new Action[0];
+            }
+
+            // if there is a parent, only give option to remove parent person.
+            if (parent.isPresent()) {
+                return new Action[]{
+                    new RemoveParentPersonAction(this.host, parent.get()),
+                    null
+                };
+            } else {
+                return new Action[]{
+                    new AssociatePersonsMenuAction(this.host),
+                    null
+                };
+            }
+        }
+        return new Action[0];
     }
 }

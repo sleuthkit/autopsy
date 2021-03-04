@@ -34,7 +34,7 @@ public final class Snapshot implements Serializable {
     private final long jobId;
     private final long jobStartTime;
     private final long snapShotTime;
-    transient private final DataSourceIngestPipeline.PipelineModule dataSourceLevelIngestModule;
+    transient private final DataSourceIngestPipeline.DataSourcePipelineModule dataSourceLevelIngestModule;
     private final boolean fileIngestRunning;
     private final Date fileIngestStartTime;
     private final long processedFiles;
@@ -48,7 +48,7 @@ public final class Snapshot implements Serializable {
      * Constructs an object to store basic diagnostic statistics for a data
      * source ingest job.
      */
-    Snapshot(String dataSourceName, long jobId, long jobStartTime, DataSourceIngestPipeline.PipelineModule dataSourceIngestModule,
+    Snapshot(String dataSourceName, long jobId, long jobStartTime, DataSourceIngestPipeline.DataSourcePipelineModule dataSourceIngestModule,
             boolean fileIngestRunning, Date fileIngestStartTime,
             boolean jobCancelled, IngestJob.CancellationReason cancellationReason, List<String> cancelledModules,
             long processedFiles, long estimatedFilesToProcess,
@@ -110,7 +110,7 @@ public final class Snapshot implements Serializable {
         return jobStartTime;
     }
 
-    DataSourceIngestPipeline.PipelineModule getDataSourceLevelIngestModule() {
+    DataSourceIngestPipeline.DataSourcePipelineModule getDataSourceLevelIngestModule() {
         return this.dataSourceLevelIngestModule;
     }
 

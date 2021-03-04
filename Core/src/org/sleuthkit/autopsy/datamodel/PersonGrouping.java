@@ -19,7 +19,7 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import java.util.Objects;
-import org.sleuthkit.autopsy.datamodel.PersonGroupingNode.Person;
+import org.sleuthkit.datamodel.Person;
 
 /**
  * A top level UI grouping of hosts under a person.
