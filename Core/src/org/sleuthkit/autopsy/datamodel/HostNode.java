@@ -184,6 +184,18 @@ public class HostNode extends DisplayableItemNode {
         }
     };
 
+    /*
+     * Get the host name or 'unknown host' if null.
+     *
+     * @param host The host.
+     * @return The display name.
+     */
+    private static String getHostName(Host host) {
+        return (host == null || host.getName() == null)
+                ? Bundle.HostGroupingNode_unknownHostNode_title()
+                : host.getName();
+    }
+
     private final Host host;
     private final Long hostId;
 
@@ -214,17 +226,25 @@ public class HostNode extends DisplayableItemNode {
      * @param host The host.
      */
     private HostNode(Children children, Host host) {
-        super(children, host == null ? null : Lookups.singleton(host));
+        this(children, host, getHostName(host));
+    }
 
-        String safeName = (host == null || host.getName() == null)
-                ? Bundle.HostGroupingNode_unknownHostNode_title()
-                : host.getName();
-
+    /**
+     * Constructor.
+     *
+     * @param children The children for this host node.
+     * @param host The host.
+     * @param displayName The displayName.
+     */
+    private HostNode(Children children, Host host, String displayName) {
+        super(children,
+                host == null ? Lookups.fixed(displayName) : Lookups.fixed(host, displayName));
+                
         hostId = host == null ? null : host.getId();
         Case.addEventTypeSubscriber(EnumSet.of(Case.Events.HOSTS_CHANGED),
                 WeakListeners.propertyChange(hostChangePcl, this));
-        super.setName(safeName);
-        super.setDisplayName(safeName);
+        super.setName(displayName);
+        super.setDisplayName(displayName);
         this.setIconBaseWithExtension(ICON_PATH);
         this.host = host;
     }
