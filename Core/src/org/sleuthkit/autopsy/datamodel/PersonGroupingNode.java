@@ -52,6 +52,14 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class PersonGroupingNode extends DisplayableItemNode {
 
     private static final String ICON_PATH = "org/sleuthkit/autopsy/images/person.png";
+    
+    /**
+     * Returns the id of an unknown persons node.  This can be used with a node lookup.
+     * @return The id of an unknown persons node.
+     */
+    public static String getUnknownPersonId() {
+        return Bundle.PersonNode_unknownPersonNode_title();
+    }
 
     /**
      * Responsible for creating the host children of this person.
@@ -157,7 +165,7 @@ public class PersonGroupingNode extends DisplayableItemNode {
      */
     private static String getDisplayName(Person person) {
         return (person == null || person.getName() == null)
-                ? Bundle.PersonNode_unknownPersonNode_title()
+                ? getUnknownPersonId()
                 : person.getName();
     }
 
