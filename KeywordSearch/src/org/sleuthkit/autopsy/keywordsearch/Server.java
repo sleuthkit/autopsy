@@ -36,6 +36,7 @@ import java.net.ServerSocket;
 import java.net.SocketException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.nio.file.OpenOption;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -52,6 +53,7 @@ import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import org.apache.commons.io.FileUtils;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 import static java.util.stream.Collectors.toList;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest;
@@ -66,8 +68,10 @@ import org.apache.solr.client.solrj.response.CollectionAdminResponse;
 import org.apache.solr.client.solrj.request.CoreAdminRequest;
 import org.apache.solr.client.solrj.response.CoreAdminResponse;
 import org.apache.solr.client.solrj.impl.BaseHttpSolrClient.RemoteSolrException;
+import org.apache.solr.client.solrj.request.QueryRequest;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.response.TermsResponse;
+import org.apache.solr.client.solrj.response.TermsResponse.Term;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.SolrException;
@@ -80,6 +84,7 @@ import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -90,6 +95,8 @@ import org.sleuthkit.autopsy.coreutils.ThreadUtils;
 import org.sleuthkit.autopsy.healthmonitor.HealthMonitor;
 import org.sleuthkit.autopsy.healthmonitor.TimingMetric;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
+import org.sleuthkit.autopsy.report.GeneralReportSettings;
+import org.sleuthkit.autopsy.report.ReportProgressPanel;
 import org.sleuthkit.datamodel.Content;
 
 /**
@@ -1785,6 +1792,34 @@ public class Server {
             currentCoreLock.writeLock().unlock();
         }
     }
+        
+    /**
+     * Extract all unique terms/words from current index.
+     *
+     * @param outputFile Absolute path to the output file
+     * @param progressPanel ReportProgressPanel to update
+     *
+     * @throws NoOpenCoreException
+     */
+    @NbBundle.Messages({
+        "Server.getAllTerms.error=Extraction of all unique Solr terms failed:"})
+    void extractAllTermsForDataSource(Path outputFile, ReportProgressPanel progressPanel) throws KeywordSearchModuleException, NoOpenCoreException {
+        try {
+            currentCoreLock.writeLock().lock();
+            if (null == currentCollection) {
+                throw new NoOpenCoreException();
+            }
+            try {
+                currentCollection.extractAllTermsForDataSource(outputFile, progressPanel);
+            } catch (Exception ex) {
+                // intentional "catch all" as Solr is known to throw all kinds of Runtime exceptions
+                logger.log(Level.SEVERE, "Extraction of all unique Solr terms failed: ", ex); //NON-NLS
+                throw new KeywordSearchModuleException(Bundle.Server_getAllTerms_error(), ex);
+            }
+        } finally {
+            currentCoreLock.writeLock().unlock();
+        }
+    }  
 
     /**
      * Get the text contents of the given file as stored in SOLR.
@@ -2132,6 +2167,71 @@ public class Server {
 
             queryClient.deleteByQuery(deleteQuery);
         }
+        
+        /**
+         * Extract all unique terms/words from current index. Gets 1,000 terms at a time and
+         * writes them to output file. Updates ReportProgressPanel status.
+         * 
+         * @param outputFile Absolute path to the output file
+         * @param progressPanel ReportProgressPanel to update
+         * @throws IOException 
+         * @throws SolrServerException
+         * @throws NoCurrentCaseException
+         * @throws KeywordSearchModuleException 
+         */
+        @NbBundle.Messages({
+            "# {0} - Number of extracted terms",
+            "ExtractAllTermsReport.numberExtractedTerms=Extracted {0} terms..."
+        })
+        private void extractAllTermsForDataSource(Path outputFile, ReportProgressPanel progressPanel) throws IOException, SolrServerException, NoCurrentCaseException, KeywordSearchModuleException {
+            
+            Files.deleteIfExists(outputFile);
+            OpenOption[] options = new OpenOption[] { java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.APPEND };
+            
+            // step through the terms 
+            int termStep = 1000;
+            long numExtractedTerms = 0;
+            String firstTerm = "";
+            while (true) {
+                SolrQuery query = new SolrQuery();
+                query.setRequestHandler("/terms");
+                query.setTerms(true);
+                query.setTermsLimit(termStep);
+                query.setTermsLower(firstTerm);
+                query.setTermsLowerInclusive(false);
+                
+                // Returned terms sorted by "index" order, which is the fastest way. Per Solr documentation:
+                // "Retrieving terms in index order is very fast since the implementation directly uses Lucene’s TermEnum to iterate over the term dictionary."
+                // All other sort criteria return very inconsistent and overlapping resuts.
+                query.setTermsSortString("index");
+                
+                // "text" field is the schema field that we populate with (lowercased) terms
+                query.addTermsField(Server.Schema.TEXT.toString());
+                query.setTermsMinCount(0);
+
+                // Unfortunatelly Solr "terms queries" do not support any filtering so we can't filter by data source this way.
+                // query.addFilterQuery(Server.Schema.IMAGE_ID.toString() + ":" + dataSourceId);
+
+                QueryRequest request = new QueryRequest(query);
+                TermsResponse response = request.process(queryClient).getTermsResponse();
+                List<Term> terms = response.getTerms(Server.Schema.TEXT.toString());
+
+                if (terms == null || terms.isEmpty()) {
+                    numExtractedTerms += terms.size();
+                    progressPanel.updateStatusLabel(Bundle.ExtractAllTermsReport_numberExtractedTerms(numExtractedTerms));
+                    break;
+                }
+                
+                // set the first term for the next query
+                firstTerm = terms.get(terms.size()-1).getTerm();
+
+                List<String> listTerms = terms.stream().map(Term::getTerm).collect(Collectors.toList());
+                Files.write(outputFile, listTerms, options);
+                
+                numExtractedTerms += termStep;
+                progressPanel.updateStatusLabel(Bundle.ExtractAllTermsReport_numberExtractedTerms(numExtractedTerms));
+            }
+        }
 
         /**
          * Add a Solr document for indexing. Documents get batched instead of
@@ -2168,7 +2268,6 @@ public class Server {
          *
          * @throws KeywordSearchModuleException
          */
-        // ELTODO DECIDE ON SYNCHRONIZATION
         private void sendBufferedDocs(List<SolrInputDocument> docBuffer) throws KeywordSearchModuleException {
             
             if (docBuffer.isEmpty()) {
