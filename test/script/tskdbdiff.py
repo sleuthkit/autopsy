@@ -644,23 +644,10 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
         return newLine
     elif os_account_attr_index:
         #substitue the account object id for a non changing value
-        os_account_id = fields_list[1]
-        if os_account_id in files_table.keys():
-            fields_list[1] = files_table[os_account_id]
-        elif os_account_id in vs_parts_table.keys():
-            fields_list[1] = vs_parts_table[os_account_id]
-        elif os_account_id in vs_info_table.keys():
-            fields_list[1] = vs_info_table[os_account_id]
-        elif os_account_id in fs_info_table.keys():
-            fields_list[1] = fs_info_table[os_account_id]
-        elif os_account_id in images_table.keys():
-            fields_list[1] = images_table[os_account_id]
-        elif os_account_id in accounts_table.keys():
-            fields_list[1] = accounts_table[os_account_id]
-        elif os_account_id == 'NULL':
-            fields_list[1] = "NULL"
+        os_account_id = int(fields_list[1])
+        fields_list[1] = accounts_table[os_account_id]
         #substitue the source object id for a non changing value
-        source_obj_id = fields_list[3]
+        source_obj_id = int(fields_list[3])
         if source_obj_id in files_table.keys():
             fields_list[3] = files_table[source_obj_id]
         elif source_obj_id in vs_parts_table.keys():
@@ -838,9 +825,7 @@ def build_id_obj_path_table(files_table, objects_table, artifacts_table, reports
                     path = images_table[par_obj_id]
                 mapping[k] = path + "/" + artifacts_table[k]
             elif k in accounts_table.keys(): # For an OS Account object ID we use its unique_id field which is the account SID
-                unique_id = v[0]
-                if unique_id is not None:
-                    mapping[k] = accounts_table[k]
+                mapping[k] = accounts_table[k]
         elif v[0] not in mapping.keys():
             if v[0] in artifacts_table.keys():
                 par_obj_id = objects_table[v[0]]
