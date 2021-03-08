@@ -1085,7 +1085,7 @@ public class PortableCaseReportModule implements ReportModule {
             Host newHost = null;
             if (content instanceof DataSource) {
                 Host oldHost = ((DataSource)content).getHost();
-                newHost = portableSkCase.getHostManager().getOrCreateHost(oldHost.getName());
+                newHost = portableSkCase.getHostManager().createHost(oldHost.getName());
             }
             
             CaseDbTransaction trans = portableSkCase.beginTransaction();

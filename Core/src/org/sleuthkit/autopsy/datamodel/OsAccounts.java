@@ -18,9 +18,14 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.text.SimpleDateFormat;
+import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.logging.Level;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
@@ -28,6 +33,8 @@ import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.Lookups;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.events.OsAccountChangedEvent;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.OsAccount;
@@ -99,8 +106,25 @@ public final class OsAccounts implements AutopsyVisitableItem {
      * The child node factory that creates the OsAccountNode children for a
      * OsAccountListNode.
      */
-    private final class OsAccountNodeFactory extends ChildFactory<OsAccount> {
+    private final class OsAccountNodeFactory extends ChildFactory.Detachable<OsAccount> {
 
+        private final PropertyChangeListener listener = new PropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                refresh(true);
+            }
+        };
+        
+        @Override
+        protected void addNotify() {
+            Case.addEventTypeSubscriber(Collections.singleton(Case.Events.OS_ACCOUNT_ADDED), listener);
+        }
+        
+        @Override
+        protected void removeNotify() {
+            Case.removeEventTypeSubscriber(Collections.singleton(Case.Events.OS_ACCOUNT_ADDED), listener);
+        }
+        
         @Override
         protected boolean createKeys(List<OsAccount> list) {
             try {
@@ -129,7 +153,18 @@ public final class OsAccounts implements AutopsyVisitableItem {
      */
     public static final class OsAccountNode extends DisplayableItemNode {
 
-        private final OsAccount account;
+        private OsAccount account;
+        
+        private final PropertyChangeListener listener = new PropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                if(((OsAccountChangedEvent)evt).getOsAccount().getId() == account.getId()) {
+                    // Update the account node to the new one
+                    account = ((OsAccountChangedEvent)evt).getOsAccount();
+                    updateSheet();
+                }
+            }
+        };
 
         /**
          * Constructs a new OsAccountNode.
@@ -143,6 +178,8 @@ public final class OsAccounts implements AutopsyVisitableItem {
             setName(account.getName());
             setDisplayName(account.getName());
             setIconBaseWithExtension(ICON_PATH);
+            
+            Case.addEventTypeSubscriber(Collections.singleton(Case.Events.OS_ACCOUNT_CHANGED), listener);
         }
 
         @Override
@@ -159,7 +196,7 @@ public final class OsAccounts implements AutopsyVisitableItem {
         public String getItemType() {
             return getClass().getName();
         }
-
+        
         @Messages({
             "OsAccounts_accountNameProperty_name=Name",
             "OsAccounts_accountNameProperty_displayName=Name",
@@ -174,6 +211,13 @@ public final class OsAccounts implements AutopsyVisitableItem {
             "OsAccounts_loginNameProperty_displayName=Login Name",
             "OsAccounts_loginNameProperty_desc=Os Account login name"
         })
+        
+        /**
+        * Refreshes this node's property sheet.
+        */
+       void updateSheet() {
+           this.setSheet(createSheet());
+       }
 
         @Override
         protected Sheet createSheet() {

@@ -329,7 +329,8 @@ class TskDbDiff(object):
         id_legacy_artifact_types = build_id_legacy_artifact_types_table(conn.cursor(), isMultiUser)
         id_reports_table = build_id_reports_table(conn.cursor(), isMultiUser)
         id_images_table = build_id_image_names_table(conn.cursor(), isMultiUser)
-        id_obj_path_table = build_id_obj_path_table(id_files_table, id_objects_table, id_artifact_types_table, id_reports_table, id_images_table)
+        id_accounts_table = build_id_accounts_table(conn.cursor(), isMultiUser)
+        id_obj_path_table = build_id_obj_path_table(id_files_table, id_objects_table, id_artifact_types_table, id_reports_table, id_images_table, id_accounts_table)
 
         if isMultiUser: # Use PostgreSQL
             os.environ['PGPASSWORD']=pgSettings.password
@@ -352,7 +353,7 @@ class TskDbDiff(object):
                     if 'INSERT INTO image_gallery_groups_seen' in dump_line:
                         dump_line = ''
                         continue;
-                    dump_line = normalize_db_entry(dump_line, id_obj_path_table, id_vs_parts_table, id_vs_info_table, id_fs_info_table, id_objects_table, id_reports_table, id_images_table, id_legacy_artifact_types)
+                    dump_line = normalize_db_entry(dump_line, id_obj_path_table, id_vs_parts_table, id_vs_info_table, id_fs_info_table, id_objects_table, id_reports_table, id_images_table, id_legacy_artifact_types, id_accounts_table)
                     db_log.write('%s\n' % dump_line)
                     dump_line = ''
             postgreSQL_db.close()
@@ -366,7 +367,7 @@ class TskDbDiff(object):
                 for line in conn.iterdump():
                     if 'INSERT INTO "image_gallery_groups_seen"' in line:
                         continue
-                    line = normalize_db_entry(line, id_obj_path_table, id_vs_parts_table, id_vs_info_table, id_fs_info_table, id_objects_table, id_reports_table, id_images_table, id_legacy_artifact_types)
+                    line = normalize_db_entry(line, id_obj_path_table, id_vs_parts_table, id_vs_info_table, id_fs_info_table, id_objects_table, id_reports_table, id_images_table, id_legacy_artifact_types, id_accounts_table)
                     db_log.write('%s\n' % line)
         # Now sort the file  
         srtcmdlst = ["sort", dump_file, "-o", dump_file]
@@ -419,7 +420,7 @@ class PGSettings(object):
         return self.password
 
 
-def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info_table, objects_table, reports_table, images_table, artifact_table):
+def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info_table, objects_table, reports_table, images_table, artifact_table, accounts_table):
     """ Make testing more consistent and reasonable by doctoring certain db entries.
 
     Args:
@@ -442,6 +443,7 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
     ig_groups_index = line.find('INSERT INTO "image_gallery_groups"') > -1 or line.find('INSERT INTO image_gallery_groups ') > -1
     ig_groups_seen_index = line.find('INSERT INTO "image_gallery_groups_seen"') > -1 or line.find('INSERT INTO image_gallery_groups_seen ') > -1
     os_account_index = line.find('INSERT INTO "tsk_os_accounts"') > -1 or line.find('INSERT INTO tsk_os_accounts') > -1
+    os_account_attr_index = line.find('INSERT INTO "tsk_os_account_attributes"') > -1 or line.find('INSERT INTO tsk_os_account_attributes') > -1
     
     parens = line[line.find('(') + 1 : line.rfind(')')]
     no_space_parens = parens.replace(" ", "")
@@ -569,6 +571,8 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
             parent_path = fs_info_table[parent_id]
         elif parent_id in images_table.keys():
             parent_path = images_table[parent_id]
+        elif parent_id in accounts_table.keys():
+            parent_path = accounts_table[parent_id]
         elif parent_id == 'NULL':
             parent_path = "NULL"
         
@@ -636,7 +640,29 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
         newLine = ('INSERT INTO "tsk_event_descriptions" VALUES(' + ','.join(fields_list[1:]) + ');') # remove report_id
         return newLine
     elif os_account_index:
-        newLine = ('INSERT INTO "tsk_os_accounts" VALUES(' + ','.join(fields_list[1:]) + ');') # remove id
+        newLine = ('INSERT INTO "tsk_os_accounts" VALUES(' + ','.join(fields_list[1:]) + ');') # remove id since value that would be substituted is in diff line already
+        return newLine
+    elif os_account_attr_index:
+        #substitue the account object id for a non changing value
+        os_account_id = int(fields_list[1])
+        fields_list[1] = accounts_table[os_account_id]
+        #substitue the source object id for a non changing value
+        source_obj_id = int(fields_list[3])
+        if source_obj_id in files_table.keys():
+            fields_list[3] = files_table[source_obj_id]
+        elif source_obj_id in vs_parts_table.keys():
+            fields_list[3] = vs_parts_table[source_obj_id]
+        elif source_obj_id in vs_info_table.keys():
+            fields_list[3] = vs_info_table[source_obj_id]
+        elif source_obj_id in fs_info_table.keys():
+            fields_list[3] = fs_info_table[source_obj_id]
+        elif source_obj_id in images_table.keys():
+            fields_list[3] = images_table[source_obj_id]
+        elif source_obj_id in accounts_table.keys():
+            fields_list[3] = accounts_table[source_obj_id]
+        elif source_obj_id == 'NULL':
+            fields_list[3] = "NULL"
+        newLine = ('INSERT INTO "tsk_os_account_attributes" VALUES(' + ','.join(fields_list[1:]) + ');') # remove id
         return newLine
     else:
         return line
@@ -758,8 +784,18 @@ def build_id_reports_table(db_cursor, isPostgreSQL):
     mapping = dict([(row[0], row[1]) for row in sql_select_execute(db_cursor, isPostgreSQL, "SELECT obj_id, path FROM reports")])
     return mapping
 
+def build_id_accounts_table(db_cursor, isPostgreSQL):
+    """Build the map of object ids to OS account SIDs.
 
-def build_id_obj_path_table(files_table, objects_table, artifacts_table, reports_table, images_table):
+    Args:
+        db_cursor: the database cursor
+    """
+    # for each row in the db, take the object id and account SID then creates a tuple in the dictionary
+    # with the object id as the key and the OS Account's SID as the value
+    mapping = dict([(row[0], row[1]) for row in sql_select_execute(db_cursor, isPostgreSQL, "SELECT os_account_obj_id, unique_id FROM tsk_os_accounts")])
+    return mapping
+
+def build_id_obj_path_table(files_table, objects_table, artifacts_table, reports_table, images_table, accounts_table):
     """Build the map of object ids to artifact ids.
 
     Args:
@@ -767,6 +803,8 @@ def build_id_obj_path_table(files_table, objects_table, artifacts_table, reports
         objects_table: obj_id, par_obj_id, type
         artifacts_table: obj_id, artifact_type_name
         reports_table: obj_id, path
+        images_table: obj_id, name
+        accounts_table: obj_id, unique_id 
     """
     # make a copy of files_table and update it with new data from artifacts_table and reports_table
     mapping = files_table.copy()
@@ -786,6 +824,8 @@ def build_id_obj_path_table(files_table, objects_table, artifacts_table, reports
                 elif par_obj_id in images_table.keys():
                     path = images_table[par_obj_id]
                 mapping[k] = path + "/" + artifacts_table[k]
+            elif k in accounts_table.keys(): # For an OS Account object ID we use its unique_id field which is the account SID
+                mapping[k] = accounts_table[k]
         elif v[0] not in mapping.keys():
             if v[0] in artifacts_table.keys():
                 par_obj_id = objects_table[v[0]]

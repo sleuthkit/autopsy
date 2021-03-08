@@ -22,8 +22,6 @@ import java.awt.Color;
 import org.sleuthkit.datamodel.Host;
 import java.util.Collection;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import org.openide.util.NbBundle.Messages;
