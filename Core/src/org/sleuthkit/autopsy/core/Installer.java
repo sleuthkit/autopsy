@@ -50,6 +50,7 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.autopsy.python.JythonModuleLoader;
+import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
 
 /**
  * Wrapper over Installers in packages in Core module. This is the main
@@ -369,6 +370,7 @@ public class Installer extends ModuleInstall {
         }
         logger.log(Level.INFO, "Autopsy Core restore completed"); //NON-NLS    
         preloadJython();
+        preloadTranslationServices();
     }
 
     /**
@@ -376,7 +378,7 @@ public class Installer extends ModuleInstall {
      * because we encountered issues related to file locking when initialization
      * was performed closer to where the bindings are used. See JIRA-6528.
      */
-    private void initializeSevenZip() {
+    private static void initializeSevenZip() {
         try {
             SevenZip.initSevenZipFromPlatformJAR();
             logger.log(Level.INFO, "7zip-java bindings loaded"); //NON-NLS
@@ -388,7 +390,7 @@ public class Installer extends ModuleInstall {
     /**
      * Runs an initial load of the Jython modules to speed up subsequent loads.
      */
-    private void preloadJython() {
+    private static void preloadJython() {
         Runnable loader = () -> {
             try {
                 JythonModuleLoader.getIngestModuleFactories();
@@ -402,6 +404,22 @@ public class Installer extends ModuleInstall {
         };
         new Thread(loader).start();
     }
+    
+    /**
+     * Runs an initial load of the translation services to speed up subsequent loads.
+     */
+    private static void preloadTranslationServices() {
+        Runnable loader = () -> {
+            try {
+                TextTranslationService.getInstance();
+            } catch (Exception ex) {
+                // This is a firewall exception to ensure that any possible exception caused
+                // by this initial load of the translation modules are caught and logged.
+                logger.log(Level.SEVERE, "There was an error while doing an initial load of translation services.", ex);
+            }
+        };
+        new Thread(loader).start();
+    }    
 
     @Override
     public void validate() throws IllegalStateException {

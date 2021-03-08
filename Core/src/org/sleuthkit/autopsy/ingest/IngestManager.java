@@ -371,6 +371,10 @@ public class IngestManager implements IngestProgressSnapshotProvider {
      */
     public IngestJobStartResult beginIngestJob(Collection<Content> dataSources, IngestJobSettings settings) {
         if (caseIsOpen) {
+            
+            // initialize IngestMessageInbox, if it hasn't been initialized yet
+            initIngestMessageInbox();
+            
             IngestJob job = new IngestJob(dataSources, settings);
             if (job.hasIngestPipeline()) {
                 return startIngestJob(job);
@@ -699,8 +703,11 @@ public class IngestManager implements IngestProgressSnapshotProvider {
 
     /**
      * Causes the ingest manager to get the top component used to display ingest
-     * inbox messages. Called by the custom installer for this package once the
-     * window system is initialized.
+     * inbox messages. Used to be called by the custom installer for this
+     * package once the window system is initialized, but that results in a lot
+     * of UI components being initialized, which freezes the UI for a long
+     * period of time(JIRA-7345). Instead we are now initializing
+     * IngestMessageInbox immediately prior to running first ingest job.
      */
     void initIngestMessageInbox() {
         synchronized (this.ingestMessageBoxLock) {
