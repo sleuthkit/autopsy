@@ -1,5 +1,16 @@
 AddEditHostDialog_addHost_title=Add Host
 AddEditHostDialog_editHost_title=Edit Host
+AssociateNewPersonAction_menuTitle=New Person...
+# {0} - hostName
+# {1} - personName
+AssociateNewPersonAction_onError_description=There was an error while associating host {0} with new person {1}.
+AssociateNewPersonAction_onError_title=Error While Associating New Person
+# {0} - hostName
+# {1} - personName
+AssociatePersonAction_onError_description=There was an error associating host {0} with person {1}.
+AssociatePersonAction_onError_title=Error Associating Host with Person
+AssociatePersonAction_unknownPerson=Unknown Person
+AssociatePersonsMenuAction_menuTitle=Associate with Person
 CTL_OpenHosts=Manage Hosts
 HostNameValidator_getValidationMessage_onDuplicate=Another host already has the same name.  Please choose a different name.
 HostNameValidator_getValidationMessage_onEmpty=Please provide some text for the host name.
@@ -21,3 +32,9 @@ AddEditHostDialog.cancelButton.text=Cancel
 AddEditHostDialog.inputTextField.text=jTextField1
 ManageHostsDialog_title_text=Manage Hosts
 OpenHostsAction_displayName=Hosts
+# {0} - personName
+RemoveParentPersonAction_menuTitle=Remove from Person ({0})
+# {0} - hostName
+RemoveParentPersonAction_onError_description=There was an error removing person from host: {0}.
+RemoveParentPersonAction_onError_title=Error Removing Host from Person
+RemoveParentPersonAction_unknownPerson=Unknown Person

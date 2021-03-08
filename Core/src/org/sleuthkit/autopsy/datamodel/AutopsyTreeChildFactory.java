@@ -23,11 +23,11 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import org.apache.commons.collections.CollectionUtils;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Node;
@@ -35,10 +35,8 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CasePreferences;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.PersonGroupingNode.Person;
-import org.sleuthkit.autopsy.datamodel.PersonGroupingNode.PersonManager;
-import org.sleuthkit.datamodel.Host;
-import org.sleuthkit.datamodel.Host.HostStatus;
+import org.sleuthkit.datamodel.Person;
+import org.sleuthkit.datamodel.PersonManager;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitVisitableItem;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -49,6 +47,19 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Object> {
 
+    private static final Set<Case.Events> LISTENING_EVENTS = EnumSet.of(
+            Case.Events.DATA_SOURCE_ADDED,
+            Case.Events.HOSTS_ADDED,
+            Case.Events.HOSTS_DELETED,
+            Case.Events.PERSONS_ADDED,
+            Case.Events.PERSONS_DELETED,
+            Case.Events.PERSONS_CHANGED
+    );
+
+    private static final Set<String> LISTENING_EVENT_NAMES = LISTENING_EVENTS.stream()
+            .map(evt -> evt.name())
+            .collect(Collectors.toSet());
+
     private static final Logger logger = Logger.getLogger(AutopsyTreeChildFactory.class.getName());
 
     /**
@@ -58,7 +69,7 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
             String eventType = evt.getPropertyName();
-            if (eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())
+            if (LISTENING_EVENT_NAMES.contains(eventType)
                     && Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) {
                 refreshChildren();
             }
@@ -68,13 +79,13 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
     @Override
     protected void addNotify() {
         super.addNotify();
-        Case.addEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED), pcl);
+        Case.addEventTypeSubscriber(LISTENING_EVENTS, pcl);
     }
 
     @Override
     protected void removeNotify() {
         super.removeNotify();
-        Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED), pcl);
+        Case.removeEventTypeSubscriber(LISTENING_EVENTS, pcl);
     }
 
     /**
@@ -88,16 +99,19 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
         try {
             SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
             if (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) {
-                // TODO replace with sleuthkit call when PersonManager created
-                PersonManager personManager = new PersonManager();
-                
-                Set<Person> persons = new HashSet<>(); //personManager.getPersons();
+                PersonManager personManager = tskCase.getPersonManager();
+                List<Person> persons = personManager.getPersons();
                 // show persons level if there are persons to be shown
                 if (!CollectionUtils.isEmpty(persons)) {
                     persons.stream()
                             .map(PersonGrouping::new)
                             .sorted()
                             .forEach(list::add);
+
+                    if (CollectionUtils.isNotEmpty(personManager.getHostsForPerson(null))) {
+                        list.add(new PersonGrouping(null));
+                    }
+
                     return true;
                 } else {
                     // otherwise, just show host level

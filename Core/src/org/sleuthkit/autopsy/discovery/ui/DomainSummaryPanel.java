@@ -1,7 +1,7 @@
 /*
  * Autopsy
  *
- * Copyright 2020 Basis Technology Corp.
+ * Copyright 2020-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -69,6 +69,7 @@ class DomainSummaryPanel extends javax.swing.JPanel implements ListCellRenderer<
         totalVisitsLabel = new javax.swing.JLabel();
         domainNotabilityLabel = new javax.swing.JLabel();
         categoryLabel = new javax.swing.JLabel();
+        knownAccountTypesLabel = new javax.swing.JLabel();
 
         setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
@@ -90,17 +91,19 @@ class DomainSummaryPanel extends javax.swing.JPanel implements ListCellRenderer<
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(domainNameLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(pagesLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                            .addComponent(filesDownloadedLabel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
-                            .addComponent(activityLabel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                            .addComponent(totalVisitsLabel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                                .addComponent(filesDownloadedLabel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
+                                .addComponent(activityLabel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(domainNotabilityLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
-                            .addComponent(categoryLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addGap(4, 4, 4))
-                    .addComponent(pagesLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(totalVisitsLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                            .addComponent(domainNotabilityLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 295, Short.MAX_VALUE)
+                            .addComponent(categoryLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(knownAccountTypesLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addGap(4, 4, 4)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(numberOfImagesLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -117,11 +120,11 @@ class DomainSummaryPanel extends javax.swing.JPanel implements ListCellRenderer<
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(numberOfImagesLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 17, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 8, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(sampleImageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(domainNameLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED, 15, Short.MAX_VALUE)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(activityLabel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 15, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(domainNotabilityLabel, javax.swing.GroupLayout.Alignment.TRAILING))
@@ -129,8 +132,10 @@ class DomainSummaryPanel extends javax.swing.JPanel implements ListCellRenderer<
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(filesDownloadedLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 14, Short.MAX_VALUE)
                             .addComponent(categoryLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(totalVisitsLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 14, Short.MAX_VALUE)
+                        .addGap(9, 9, 9)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(totalVisitsLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 14, Short.MAX_VALUE)
+                            .addComponent(knownAccountTypesLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(pagesLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 15, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(1, 1, 1)))
@@ -150,6 +155,7 @@ class DomainSummaryPanel extends javax.swing.JPanel implements ListCellRenderer<
     private javax.swing.JLabel domainNameLabel;
     private javax.swing.JLabel domainNotabilityLabel;
     private javax.swing.JLabel filesDownloadedLabel;
+    private javax.swing.JLabel knownAccountTypesLabel;
     private javax.swing.JLabel numberOfImagesLabel;
     private javax.swing.JLabel pagesLabel;
     private javax.swing.JLabel sampleImageLabel;
@@ -164,8 +170,7 @@ class DomainSummaryPanel extends javax.swing.JPanel implements ListCellRenderer<
         "DomainSummaryPanel.totalPages.text=Total page views: ",
         "DomainSummaryPanel.downloads.text=Files downloaded: ",
         "DomainSummaryPanel.notability.text=Previously tagged as notable: ",
-        "DomainSummaryPanel.unknown.text=User role: Unknown",
-        "DomainSummaryPanel.known.text=User role: Known account type(s)",
+        "DomainSummaryPanel.userRole.text=Account type: ",
         "DomainSummaryPanel.category.text=Category: ",
         "DomainSummaryPanel.loadingImages.text=Loading thumbnail...",
         "DomainSummaryPanel.no.text=No",
@@ -188,6 +193,7 @@ class DomainSummaryPanel extends javax.swing.JPanel implements ListCellRenderer<
         totalVisitsLabel.setText(Bundle.DomainSummaryPanel_totalPages_text() + value.getResultDomain().getTotalPageViews());
         pagesLabel.setText(Bundle.DomainSummaryPanel_pages_text() + value.getResultDomain().getPageViewsInLast60Days());
         filesDownloadedLabel.setText(Bundle.DomainSummaryPanel_downloads_text() + value.getResultDomain().getFilesDownloaded());
+        knownAccountTypesLabel.setText(Bundle.DomainSummaryPanel_userRole_text() + value.getResultDomain().getAccountTypes());
         if (value.getThumbnail() == null) {
             numberOfImagesLabel.setText(Bundle.DomainSummaryPanel_loadingImages_text());
             sampleImageLabel.setIcon(null);
