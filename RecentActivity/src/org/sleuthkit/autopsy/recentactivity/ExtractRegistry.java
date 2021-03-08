@@ -2226,7 +2226,9 @@ class ExtractRegistry extends Extract {
 
         if (homeDir != null && !homeDir.isEmpty()) {
             List<OsAccountAttribute> attributes = new ArrayList<>();
-            attributes.add(createOsAccountAttribute(TSK_HOME_DIR, homeDir, osAccount, host, file));
+            String dir = homeDir.replaceFirst("^(%\\w*%)", "");
+            dir = dir.replace("\\", "/");
+            attributes.add(createOsAccountAttribute(TSK_HOME_DIR, dir, osAccount, host, file));
             osAccount.addAttributes(attributes);
         }
 

@@ -34,6 +34,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Level;
 import org.openide.util.NbBundle.Messages;
@@ -66,6 +67,7 @@ abstract class Extract {
     private final ArrayList<String> errorMessages = new ArrayList<>();
     String moduleName = "";
     boolean dataFound = false;
+    private RAOsAccountCache osAccountCache = null;
 
     Extract() {        
     }
@@ -89,6 +91,11 @@ abstract class Extract {
     void configExtractor() throws IngestModuleException  {        
     }
 
+    void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar, RAOsAccountCache osAccountCache) {
+        this.osAccountCache = osAccountCache;
+        process(dataSource, context, progressBar);
+    }
+    
     abstract void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar);
 
     void complete() {
@@ -137,7 +144,7 @@ abstract class Extract {
     
     DataArtifact createDataArtifactWithAttributes(BlackboardArtifact.ARTIFACT_TYPE type, AbstractFile file, Collection<BlackboardAttribute> attributes) {
         try {
-            Optional<OsAccount> optional = file.getOsAccount();
+            Optional<OsAccount> optional = getOsAccount(file);
             DataArtifact bbart = file.newDataArtifact(new BlackboardArtifact.Type(type), attributes, optional.isPresent() ? optional.get() : null);
             return bbart;
         } catch (TskException ex) {
@@ -497,5 +504,13 @@ abstract class Extract {
         }
          
         return tempFile;
+    }
+    
+    Optional<OsAccount> getOsAccount(AbstractFile file) throws TskCoreException {
+        if(osAccountCache == null) {
+            return file.getOsAccount();
+        } 
+        
+        return osAccountCache.getOsAccount(file);
     }
 }
