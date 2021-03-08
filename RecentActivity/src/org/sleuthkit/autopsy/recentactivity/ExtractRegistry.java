@@ -2318,8 +2318,9 @@ class ExtractRegistry extends Extract {
         // "Default Admin User", "Custom Limited Acct"
         // and "Default Guest Acct"
         value = userInfo.get(ACCOUNT_TYPE_KEY);
-        if (value != null && !value.isEmpty()) {
-            osAccount.setIsAdmin(value.toLowerCase().contains("Admin"));
+        if (value != null && !value.isEmpty() && value.toLowerCase().contains("admin")) {
+             attributes.add(createOsAccountAttribute(ATTRIBUTE_TYPE.TSK_IS_ADMIN,
+                    1, osAccount, host, regFile));
         }
 
         value = userInfo.get(USER_COMMENT_KEY);

@@ -3,6 +3,7 @@ Keyword Search:
 - A major upgrade from Solr 4 to Solr 8.6.3.  Single user cases continue to use the embedded server.  
 Multi-user clusters need to install a new Solr 8 server and can now create a Solr cloud with multiple servers. 
 -- NOTE: Cases created with Autopsy 4.18 cannot be opened by previous versions of Autopsy.  Autopsy 4.18 can open older cases though. 
+-- See http://sleuthkit.org/autopsy/docs/user-docs/4.18.0/upgrade_solr8_page.html for more details. 
 - Improved text indexing speed by not doing language detection on unknown file formats and unallocated space. 
 
 Domain Discovery:

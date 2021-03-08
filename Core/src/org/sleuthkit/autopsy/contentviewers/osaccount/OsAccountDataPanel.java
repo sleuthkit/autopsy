@@ -161,8 +161,6 @@ public class OsAccountDataPanel extends JPanel {
         data.addData(Bundle.OsAccountDataPanel_basic_address(),
                 account.getName() == null || account.getName().isEmpty() ? "" : account.getName());
 
-        data.addData(Bundle.OsAccountDataPanel_basic_admin(), getIsAdminValue(account.isAdmin()));
-
         data.addData(Bundle.OsAccountDataPanel_basic_type(), account.getOsAccountType().getName());
 
         Optional<Long> crTime = account.getCreationTime();
@@ -315,29 +313,6 @@ public class OsAccountDataPanel extends JPanel {
         constraints.insets = new Insets(0, 5, 5, 5);
 
         return constraints;
-    }
-
-    @Messages({
-        "OsAccountDataPanel_basic_yes=Yes",
-        "OsAccountDataPanel_basic_no=No",
-        "OsAccountDataPanel_basic_unknown=Unknown",})
-    /**
-     * Return a string representation of the isAdmin status for OsAccounts.
-     *
-     * @param isAdmin Admin state for the OsAccount
-     *
-     * @return String representation of the admin state.
-     */
-    private String getIsAdminValue(Optional<Boolean> isAdmin) {
-        if (!isAdmin.isPresent()) {
-            return Bundle.OsAccountDataPanel_basic_unknown();
-        } else {
-            if (isAdmin.get()) {
-                return Bundle.OsAccountDataPanel_basic_yes();
-            } else {
-                return Bundle.OsAccountDataPanel_basic_no();
-            }
-        }
     }
 
     /**
@@ -501,5 +476,4 @@ public class OsAccountDataPanel extends JPanel {
             return instanceMap;
         }
     }
-
 }

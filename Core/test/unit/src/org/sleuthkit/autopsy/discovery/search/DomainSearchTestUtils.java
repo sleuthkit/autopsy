@@ -34,7 +34,7 @@ public class DomainSearchTestUtils {
             long totalVisits, long visits, long filesDownloaded, long dataSourceId) {
         Content dataSource = TskMockUtils.getDataSource(dataSourceId);
         return new ResultDomain(domain, start, end, totalVisits,
-                visits, filesDownloaded, 0L, dataSource);
+                visits, filesDownloaded, 0L, "", dataSource);
     }
     
     public static ResultDomain mockDomainResult(String domain) {

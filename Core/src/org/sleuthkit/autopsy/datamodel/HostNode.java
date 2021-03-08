@@ -20,12 +20,12 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.logging.Level;
+import javax.swing.Action;
 import org.openide.nodes.ChildFactory;
 
 import org.openide.nodes.Children;
@@ -33,12 +33,17 @@ import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
+import org.openide.util.WeakListeners;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.casemodule.events.HostsChangedEvent;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.hosts.AssociatePersonsMenuAction;
+import org.sleuthkit.autopsy.datamodel.hosts.RemoveParentPersonAction;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Host;
+import org.sleuthkit.datamodel.Person;
 import org.sleuthkit.datamodel.SleuthkitVisitableItem;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -73,7 +78,7 @@ public class HostNode extends DisplayableItemNode {
         /**
          * Listener for handling DATA_SOURCE_ADDED events.
          */
-        private final PropertyChangeListener pcl = new PropertyChangeListener() {
+        private final PropertyChangeListener dataSourceAddedPcl = new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 String eventType = evt.getPropertyName();
@@ -85,12 +90,12 @@ public class HostNode extends DisplayableItemNode {
 
         @Override
         protected void addNotify() {
-            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED), pcl);
+            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED), dataSourceAddedPcl);
         }
 
         @Override
         protected void removeNotify() {
-            Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED), pcl);
+            Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED), dataSourceAddedPcl);
         }
 
         @Override
@@ -133,6 +138,7 @@ public class HostNode extends DisplayableItemNode {
         }
     }
 
+    private static final Logger logger = Logger.getLogger(HostNode.class.getName());
     private static final String ICON_PATH = "org/sleuthkit/autopsy/images/host.png";
     private static final CreateSleuthkitNodeVisitor CREATE_TSK_NODE_VISITOR = new CreateSleuthkitNodeVisitor();
 
@@ -159,7 +165,39 @@ public class HostNode extends DisplayableItemNode {
         return new DataSourceGroupingNode(key.getDataSource());
     };
 
+    /**
+     * Listener for handling host change events.
+     */
+    private final PropertyChangeListener hostChangePcl = new PropertyChangeListener() {
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+            String eventType = evt.getPropertyName();
+            if (hostId != null && eventType.equals(Case.Events.HOSTS_CHANGED.toString()) && evt instanceof HostsChangedEvent) {
+                ((HostsChangedEvent) evt).getNewValue().stream()
+                        .filter(h -> h != null && h.getId() == hostId)
+                        .findFirst()
+                        .ifPresent((newHost) -> {
+                            setName(newHost.getName());
+                            setDisplayName(newHost.getName());
+                        });
+            }
+        }
+    };
+
+    /*
+     * Get the host name or 'unknown host' if null.
+     *
+     * @param host The host.
+     * @return The display name.
+     */
+    private static String getHostName(Host host) {
+        return (host == null || host.getName() == null)
+                ? Bundle.HostGroupingNode_unknownHostNode_title()
+                : host.getName();
+    }
+
     private final Host host;
+    private final Long hostId;
 
     /**
      * Main constructor for HostDataSources key where data source children
@@ -188,14 +226,25 @@ public class HostNode extends DisplayableItemNode {
      * @param host The host.
      */
     private HostNode(Children children, Host host) {
-        super(children, host == null ? null : Lookups.singleton(host));
+        this(children, host, getHostName(host));
+    }
 
-        String safeName = (host == null || host.getName() == null)
-                ? Bundle.HostGroupingNode_unknownHostNode_title()
-                : host.getName();
-
-        super.setName(safeName);
-        super.setDisplayName(safeName);
+    /**
+     * Constructor.
+     *
+     * @param children The children for this host node.
+     * @param host The host.
+     * @param displayName The displayName.
+     */
+    private HostNode(Children children, Host host, String displayName) {
+        super(children,
+                host == null ? Lookups.fixed(displayName) : Lookups.fixed(host, displayName));
+                
+        hostId = host == null ? null : host.getId();
+        Case.addEventTypeSubscriber(EnumSet.of(Case.Events.HOSTS_CHANGED),
+                WeakListeners.propertyChange(hostChangePcl, this));
+        super.setName(displayName);
+        super.setDisplayName(displayName);
         this.setIconBaseWithExtension(ICON_PATH);
         this.host = host;
     }
@@ -229,5 +278,39 @@ public class HostNode extends DisplayableItemNode {
         sheetSet.put(new NodeProperty<>("Name", Bundle.HostNode_createSheet_nameProperty(), "", getDisplayName())); //NON-NLS
 
         return sheet;
+    }
+
+    @Override
+    @Messages({"HostNode_actions_associateWithExisting=Associate with existing person...",
+        "HostNode_actions_associateWithNew=Associate with new person...",
+        "# {0} - hostName",
+        "HostNode_actions_removeFromPerson=Remove from person ({0})"})
+    public Action[] getActions(boolean context) {
+
+        Optional<Person> parent = Optional.empty();
+
+        // if there is a host, then provide actions
+        if (this.host != null) {
+            try {
+                parent = Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().getPerson(this.host);
+            } catch (NoCurrentCaseException | TskCoreException ex) {
+                logger.log(Level.WARNING, String.format("Error fetching parent person of host: %s", this.host.getName() == null ? "<null>" : this.host.getName()), ex);
+                return new Action[0];
+            }
+
+            // if there is a parent, only give option to remove parent person.
+            if (parent.isPresent()) {
+                return new Action[]{
+                    new RemoveParentPersonAction(this.host, parent.get()),
+                    null
+                };
+            } else {
+                return new Action[]{
+                    new AssociatePersonsMenuAction(this.host),
+                    null
+                };
+            }
+        }
+        return new Action[0];
     }
 }

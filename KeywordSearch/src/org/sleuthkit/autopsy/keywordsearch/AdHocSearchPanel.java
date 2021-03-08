@@ -148,7 +148,7 @@ abstract class AdHocSearchPanel extends javax.swing.JPanel {
     }
 
     /**
-     * Get a list of data source display name.
+     * Get a list of data source display names.
      *
      * @return The list of data source name
      */

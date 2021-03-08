@@ -309,14 +309,14 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
             // new case that doesn't have an existing index. create new index folder
             progressUnitsCompleted++;
             progress.progress(Bundle.SolrSearch_creatingNewIndex_msg(), progressUnitsCompleted);
-            currentVersionIndex = IndexFinder.createLatestVersionIndexDir(theCase);
+            currentVersionIndex = IndexFinder.createLatestVersionIndex(theCase);
             // add current index to the list of indexes that exist for this case
             indexes.add(currentVersionIndex);
         } else {
             // check if one of the existing indexes is for latest Solr version and schema
             progressUnitsCompleted++;
             progress.progress(Bundle.SolrSearch_checkingForLatestIndex_msg(), progressUnitsCompleted);
-            currentVersionIndex = IndexFinder.findLatestVersionIndexDir(indexes);
+            currentVersionIndex = IndexFinder.findLatestVersionIndex(indexes);
             if (currentVersionIndex == null) {
                 // found existing index(es) but none were for latest Solr version and schema version
                 progressUnitsCompleted++;
