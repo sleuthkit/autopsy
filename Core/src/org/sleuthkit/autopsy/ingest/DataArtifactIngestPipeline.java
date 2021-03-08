@@ -27,7 +27,7 @@ import java.util.Optional;
  */
 final class DataArtifactIngestPipeline extends IngestTaskPipeline<DataArtifactIngestTask> {
 
-    private final IngestJobPipeline ingestJobPipeline;
+    private final IngestPipeline ingestJobPipeline;
 
     /**
      * Constructs a pipeline of data artifact ingest modules for performing data
@@ -37,7 +37,7 @@ final class DataArtifactIngestPipeline extends IngestTaskPipeline<DataArtifactIn
      * @param moduleTemplates   The ingest module templates that define this
      *                          pipeline.
      */
-    DataArtifactIngestPipeline(IngestJobPipeline ingestJobPipeline, List<IngestModuleTemplate> moduleTemplates) {
+    DataArtifactIngestPipeline(IngestPipeline ingestJobPipeline, List<IngestModuleTemplate> moduleTemplates) {
         super(ingestJobPipeline, moduleTemplates);
         this.ingestJobPipeline = ingestJobPipeline;
     }
@@ -88,7 +88,7 @@ final class DataArtifactIngestPipeline extends IngestTaskPipeline<DataArtifactIn
          * org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException
          */
         @Override
-        void performTask(IngestJobPipeline ingestJobPipeline, FileIngestTask task) throws IngestModule.IngestModuleException {
+        void performTask(IngestPipeline ingestJobPipeline, FileIngestTask task) throws IngestModule.IngestModuleException {
             // RJCTODO: Fill in and change to executeTask()
         }
 

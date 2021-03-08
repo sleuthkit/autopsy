@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2015-2018 Basis Technology Corp.
+ * Copyright 2015-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,19 +26,20 @@ import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 import org.sleuthkit.autopsy.centralrepository.optionspanel.GlobalSettingsPanel;
 import org.sleuthkit.autopsy.coreutils.Version;
+import org.sleuthkit.autopsy.ingest.DataArtifactIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
 import org.sleuthkit.autopsy.ingest.NoIngestModuleIngestJobSettings;
 
 /**
- * Factory for Central Repository ingest modules
+ * An ingest module factory for Central Repository ingest modules.
  */
 @ServiceProvider(service = org.sleuthkit.autopsy.ingest.IngestModuleFactory.class)
 @NbBundle.Messages({"CentralRepoIngestModuleFactory.ingestmodule.name=Central Repository",
-                    "CentralRepoIngestModuleFactory.ingestmodule.desc=Saves properties to the central repository for later correlation"})
+    "CentralRepoIngestModuleFactory.ingestmodule.desc=Saves properties to the central repository for later correlation"})
 public class CentralRepoIngestModuleFactory extends IngestModuleFactoryAdapter {
 
     /**
-     * Get the name of the module.
+     * Gets the name of the module.
      *
      * @return The module name.
      */
@@ -62,26 +63,6 @@ public class CentralRepoIngestModuleFactory extends IngestModuleFactoryAdapter {
     }
 
     @Override
-    public boolean isFileIngestModuleFactory() {
-        return true;
-    }
-
-    @Override
-    public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings settings) {
-        if (settings instanceof IngestSettings) {
-            return new CentralRepoIngestModule((IngestSettings) settings);
-        }
-        /*
-         * Compatibility check for older versions.
-         */
-        if (settings instanceof NoIngestModuleIngestJobSettings) {
-            return new CentralRepoIngestModule(new IngestSettings());
-        }
-        
-        throw new IllegalArgumentException("Expected settings argument to be an instance of IngestSettings");
-    }
-
-    @Override
     public boolean hasGlobalSettingsPanel() {
         return true;
     }
@@ -92,7 +73,7 @@ public class CentralRepoIngestModuleFactory extends IngestModuleFactoryAdapter {
         globalOptionsPanel.load();
         return globalOptionsPanel;
     }
-    
+
     @Override
     public IngestModuleIngestJobSettings getDefaultIngestJobSettings() {
         return new IngestSettings();
@@ -109,13 +90,43 @@ public class CentralRepoIngestModuleFactory extends IngestModuleFactoryAdapter {
             return new IngestSettingsPanel((IngestSettings) settings);
         }
         /*
-         * Compatibility check for older versions.
+         * Earlier versions of the modules had no ingest job settings. Create a
+         * panel with the default settings.
          */
         if (settings instanceof NoIngestModuleIngestJobSettings) {
-            return new IngestSettingsPanel(new IngestSettings());
+            return new IngestSettingsPanel((IngestSettings) getDefaultIngestJobSettings());
         }
-        
         throw new IllegalArgumentException("Expected settings argument to be an instance of IngestSettings");
+    }
+
+    @Override
+    public boolean isFileIngestModuleFactory() {
+        return true;
+    }
+
+    @Override
+    public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings settings) {
+        if (settings instanceof IngestSettings) {
+            return new CentralRepoIngestModule((IngestSettings) settings);
+        }
+        /*
+         * Earlier versions of the modules had no ingest job settings. Create a
+         * module with the default settings.
+         */
+        if (settings instanceof NoIngestModuleIngestJobSettings) {
+            return new CentralRepoIngestModule((IngestSettings) getDefaultIngestJobSettings());
+        }
+        throw new IllegalArgumentException("Expected settings argument to be an instance of IngestSettings");
+    }
+
+    @Override
+    public boolean isDataArtifactIngestModuleFactory() {
+        return true;
+    }
+
+    @Override
+    public DataArtifactIngestModule createDataArtifactIngestModule(IngestModuleIngestJobSettings settings) {
+        return new CentralRepoDataArtifactIngestModule();
     }
 
 }

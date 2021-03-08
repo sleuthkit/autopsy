@@ -29,7 +29,7 @@ import org.sleuthkit.datamodel.Content;
 abstract class IngestTask {
     
     private final static long NOT_SET = Long.MIN_VALUE;
-    private final IngestJobPipeline ingestJobPipeline;
+    private final IngestPipeline ingestJobPipeline;
     private long threadId;
 
     /**
@@ -41,7 +41,7 @@ abstract class IngestTask {
      * @param ingestJobPipeline The ingest job pipeline to use to execute the
      *                          task.
      */
-    IngestTask(IngestJobPipeline ingestJobPipeline) {
+    IngestTask(IngestPipeline ingestJobPipeline) {
         this.ingestJobPipeline = ingestJobPipeline;
         threadId = NOT_SET;
     }
@@ -51,7 +51,7 @@ abstract class IngestTask {
      *
      * @return The ingest job pipeline.
      */
-    IngestJobPipeline getIngestJobPipeline() {
+    IngestPipeline getIngestJobPipeline() {
         return ingestJobPipeline;
     }
 

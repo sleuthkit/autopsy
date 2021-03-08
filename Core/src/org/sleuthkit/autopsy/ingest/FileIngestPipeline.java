@@ -30,7 +30,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 final class FileIngestPipeline extends IngestTaskPipeline<FileIngestTask> {
 
     private static final IngestManager ingestManager = IngestManager.getInstance();
-    private final IngestJobPipeline ingestJobPipeline;
+    private final IngestPipeline ingestJobPipeline;
 
     /**
      * Constructs a pipeline of file ingest modules for performing file ingest
@@ -40,7 +40,7 @@ final class FileIngestPipeline extends IngestTaskPipeline<FileIngestTask> {
      * @param moduleTemplates   The ingest module templates that define this
      *                          pipeline.
      */
-    FileIngestPipeline(IngestJobPipeline ingestJobPipeline, List<IngestModuleTemplate> moduleTemplates) {
+    FileIngestPipeline(IngestPipeline ingestJobPipeline, List<IngestModuleTemplate> moduleTemplates) {
         super(ingestJobPipeline, moduleTemplates);
         this.ingestJobPipeline = ingestJobPipeline;
     }
@@ -140,7 +140,7 @@ final class FileIngestPipeline extends IngestTaskPipeline<FileIngestTask> {
          * org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException
          */
         @Override
-        void performTask(IngestJobPipeline ingestJobPipeline, FileIngestTask task) throws IngestModuleException {
+        void performTask(IngestPipeline ingestJobPipeline, FileIngestTask task) throws IngestModuleException {
             AbstractFile file = null;
             try {
                 file = task.getFile();

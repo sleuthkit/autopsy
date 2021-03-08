@@ -28,9 +28,9 @@ import org.sleuthkit.datamodel.Content;
  */
 public final class IngestJobContext {
 
-    private final IngestJobPipeline ingestJobPipeline;
+    private final IngestPipeline ingestJobPipeline;
 
-    IngestJobContext(IngestJobPipeline ingestJobPipeline) {
+    IngestJobContext(IngestPipeline ingestJobPipeline) {
         this.ingestJobPipeline = ingestJobPipeline;
     }
 
