@@ -12,34 +12,40 @@ import org.openide.util.NbBundle.Messages;
  *
  * @author gregd
  */
+@Messages({
+    "AddEditCategoryDialog_Edit=Edit Entry",
+    "AddEditCategoryDialog_Add=Add Entry"
+})
 public class AddEditCategoryDialog extends javax.swing.JDialog {
 
     private boolean changed = false;
     private final Set<String> currentSuffixesToUpper;
-    private final String currentSuffix;
-    private final String currentCategory;
+    private final DomainCategory currentDomainCategory;
 
     /**
      * Creates new form AddEditCategoryDialog
      */
     public AddEditCategoryDialog(java.awt.Frame parent, Set<String> currentSuffixesToUpper) {
-        this(parent, currentSuffixesToUpper, null, null);
+        this(parent, currentSuffixesToUpper, null);
     }
 
-    public AddEditCategoryDialog(java.awt.Frame parent, Set<String> currentSuffixesToUpper, String currentSuffix, String currentCategory) {
+    public AddEditCategoryDialog(java.awt.Frame parent, Set<String> currentSuffixesToUpper, DomainCategory currentDomainCategory) {
         super(parent, true);
         initComponents();
         this.currentSuffixesToUpper = currentSuffixesToUpper;
-        this.currentSuffix = currentSuffix;
-        this.currentCategory = currentCategory;
-        
-        if (currentSuffix == null && currentCategory == null) {
-            
+        this.currentDomainCategory = currentDomainCategory;
+
+        if (currentDomainCategory == null) {
+            setTitle(Bundle.AddEditCategoryDialog_Add());
+            domainSuffixTextField.setEditable(true);
+            domainSuffixTextField.setEnabled(true);
         } else {
-            
+            setTitle(Bundle.AddEditCategoryDialog_Edit());
+            domainSuffixTextField.setEditable(false);
+            domainSuffixTextField.setEnabled(false);
         }
     }
-        
+
     /**
      * @return The string value for the name in the input field if Ok pressed or
      * null if not.
@@ -55,8 +61,8 @@ public class AddEditCategoryDialog extends javax.swing.JDialog {
     boolean isChanged() {
         return changed;
     }
-    
-        /**
+
+    /**
      * When the text field is updated, this method is called.
      *
      * @param newNameValue
@@ -67,39 +73,41 @@ public class AddEditCategoryDialog extends javax.swing.JDialog {
         "# {0} - maxCategoryLen",
         "AddEditCategoryDialog_onValueUpdate_badCategory=Please provide a domain suffix that is no more than {0} characters.",
         "AddEditCategoryDialog_onValueUpdate_suffixRepeat=Please provide a unique domain suffix.",
-        "AddEditCategoryDialog_onValueUpdate_sameCategory=Please provide a new category for this domain suffix.",
-    })
+        "AddEditCategoryDialog_onValueUpdate_sameCategory=Please provide a new category for this domain suffix.",})
     void onValueUpdate(String suffixStr, String categoryStr) {
-        
+
         String safeSuffixStr = suffixStr == null ? "" : suffixStr;
         String safeCategoryStr = categoryStr == null ? "" : categoryStr;
-        
+
         // update input text field if it is not the same.
         if (!safeCategoryStr.equals(categoryTextField.getText())) {
             categoryTextField.setText(safeCategoryStr);
         }
-        
+
         if (!safeSuffixStr.equals(domainSuffixTextField.getText())) {
             domainSuffixTextField.setText(safeSuffixStr);
         }
-        
+
         String validationMessage = null;
         if (safeSuffixStr.trim().length() == 0 || safeSuffixStr.trim().length() > WebCategoriesDataModel.getMaxDomainSuffixLength()) {
             validationMessage = Bundle.AddEditCategoryDialog_onValueUpdate_badSuffix(WebCategoriesDataModel.getMaxCategoryLength());
-        }else if (safeCategoryStr.trim().length() == 0 || safeCategoryStr.trim().length() > WebCategoriesDataModel.getMaxCategoryLength()) {
+            
+        } else if (safeCategoryStr.trim().length() == 0 || safeCategoryStr.trim().length() > WebCategoriesDataModel.getMaxCategoryLength()) {
             validationMessage = Bundle.AddEditCategoryDialog_onValueUpdate_badCategory(WebCategoriesDataModel.getMaxDomainSuffixLength());
+            
         } else if (currentSuffixesToUpper.contains(safeSuffixStr.trim().toUpperCase())) {
             validationMessage = Bundle.AddEditCategoryDialog_onValueUpdate_suffixRepeat();
-        } else if (currentCategory != null && safeCategoryStr.trim().equals(currentCategory.trim())) {
+            
+        } else if (currentDomainCategory != null &&
+                currentDomainCategory.getCategory() != null && 
+                safeCategoryStr.trim().equals(currentDomainCategory.getCategory().trim())) {
+            
             validationMessage = Bundle.AddEditCategoryDialog_onValueUpdate_sameCategory();
         }
-        
+
         saveButton.setEnabled(validationMessage == null);
         validationLabel.setText(validationMessage == null ? "" : validationMessage);
     }
-    
-    
-    
 
     /**
      * This method is called from within the constructor to initialize the form.

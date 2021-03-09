@@ -5,9 +5,18 @@
  */
 package org.sleuthkit.autopsy.url.analytics;
 
+import java.io.File;
+import java.io.IOException;
 import java.sql.SQLException;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+import javax.swing.filechooser.FileNameExtensionFilter;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
 
@@ -18,7 +27,12 @@ import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
 public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel implements OptionsPanel {
 
     private static final Logger logger = Logger.getLogger(WebCategoriesOptionsPanel.class.getName());
+    private static final String DEFAULT_EXTENSION = "json";
+    private static final FileNameExtensionFilter DB_FILTER = new FileNameExtensionFilter("JSON", DEFAULT_EXTENSION);
+
+    private final JFileChooser fileChooser = new JFileChooser();
     private final WebCategoriesDataModel dataModel;
+    private Set<String> domainCategoriesToUpper = new HashSet<>();
 
     /**
      * Creates new form CustomWebCategoriesOptionsPanel
@@ -26,14 +40,35 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
     public WebCategoriesOptionsPanel(WebCategoriesDataModel dataModel) {
         initComponents();
         this.dataModel = dataModel;
+
+        fileChooser.addChoosableFileFilter(DB_FILTER);
+        fileChooser.setFileFilter(DB_FILTER);
     }
-    
+
     private DomainCategory getSelected() {
         return null;
     }
-    
+
     void refresh() {
-        
+
+    }
+
+    private DomainCategory getAddEditValue(DomainCategory original) {
+        JFrame parent = (this.getRootPane() != null && this.getRootPane().getParent() instanceof JFrame)
+                ? (JFrame) this.getRootPane().getParent()
+                : null;
+
+        AddEditCategoryDialog addEditDialog = new AddEditCategoryDialog(parent, domainCategoriesToUpper, original);
+        addEditDialog.setResizable(false);
+        addEditDialog.setLocationRelativeTo(parent);
+        addEditDialog.setVisible(true);
+        addEditDialog.toFront();
+
+        if (addEditDialog.isChanged()) {
+            return addEditDialog.getValue();
+        } else {
+            return null;
+        }
     }
 
     /**
@@ -184,19 +219,72 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
     }//GEN-LAST:event_deleteEntryButtonActionPerformed
 
     private void newEntryButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newEntryButtonActionPerformed
-        // TODO add your handling code here:
+        DomainCategory newCategory = getAddEditValue(null);
+        if (newCategory != null) {
+            try {
+                dataModel.insertUpdateSuffix(newCategory);
+            } catch (SQLException ex) {
+                logger.log(Level.WARNING, "There was an error while adding new record: " + newCategory.getHostSuffix(), ex);
+            }
+        }
     }//GEN-LAST:event_newEntryButtonActionPerformed
 
     private void editEntryButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_editEntryButtonActionPerformed
-        // TODO add your handling code here:
+        DomainCategory selected = getSelected();
+        if (selected != null && selected.getHostSuffix() != null) {
+            try {
+                DomainCategory newCategory = getAddEditValue(selected);
+                if (newCategory != null) {
+                    dataModel.insertUpdateSuffix(newCategory);
+                }
+            } catch (SQLException ex) {
+                logger.log(Level.WARNING, "There was an error while editing: " + selected.getHostSuffix(), ex);
+            }
+        }
     }//GEN-LAST:event_editEntryButtonActionPerformed
 
+    @Messages({
+        "WebCategoriesOptionsPanel_importSetButtonActionPerformed_errorMessage=There was an error importing this json file.",
+        "WebCategoriesOptionsPanel_importSetButtonActionPerformed_errorTitle=Import Error",})
     private void importSetButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_importSetButtonActionPerformed
-        // TODO add your handling code here:
+        int result = fileChooser.showOpenDialog(this);
+        if (result == JFileChooser.APPROVE_OPTION) {
+            File selectedFile = fileChooser.getSelectedFile();
+            if (selectedFile != null && selectedFile.exists()) {
+                try {
+                    dataModel.convertJsonToSqlite(selectedFile);
+                } catch (IOException ex) {
+                    JOptionPane.showMessageDialog(
+                            this,
+                            Bundle.WebCategoriesOptionsPanel_importSetButtonActionPerformed_errorMessage(),
+                            Bundle.WebCategoriesOptionsPanel_importSetButtonActionPerformed_errorTitle(),
+                            JOptionPane.ERROR);
+                    logger.log(Level.WARNING, "There was an error on import.", ex);
+                }
+            }
+        }
     }//GEN-LAST:event_importSetButtonActionPerformed
 
+    @Messages({
+        "WebCategoriesOptionsPanel_exportSetButtonActionPerformed_errorMessage=There was an error exporting.",
+        "WebCategoriesOptionsPanel_exportSetButtonActionPerformed_errorTitle=Export Error",})
     private void exportSetButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exportSetButtonActionPerformed
-        // TODO add your handling code here:
+        int result = fileChooser.showSaveDialog(this);
+        if (result == JFileChooser.APPROVE_OPTION) {
+            File selectedFile = fileChooser.getSelectedFile();
+            if (selectedFile != null && selectedFile.exists()) {
+                try {
+                    dataModel.convertSqliteToJson(selectedFile);
+                } catch (SQLException | IOException ex) {
+                    JOptionPane.showMessageDialog(
+                            this,
+                            Bundle.WebCategoriesOptionsPanel_importSetButtonActionPerformed_errorMessage(),
+                            Bundle.WebCategoriesOptionsPanel_importSetButtonActionPerformed_errorTitle(),
+                            JOptionPane.ERROR);
+                    logger.log(Level.WARNING, "There was an error on export.", ex);
+                }
+            }
+        }
     }//GEN-LAST:event_exportSetButtonActionPerformed
 
 
@@ -208,12 +296,12 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
 
     @Override
     public void saveSettings() {
-        
+
     }
 
     @Override
     public void store() {
-        
+
     }
 
     @Override
