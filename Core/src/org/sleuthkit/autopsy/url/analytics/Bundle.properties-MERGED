@@ -1,0 +1,4 @@
+# {0} - maxCategoryLen
+AddEditCategoryDialog_onValueUpdate_badCategory=Please provide a domain suffix that is no more than {0} characters.
+# {0} - maxSuffixLen
+AddEditCategoryDialog_onValueUpdate_badSuffix=Please provide a domain suffix that is no more than {0} characters.
