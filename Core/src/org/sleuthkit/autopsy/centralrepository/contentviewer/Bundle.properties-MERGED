@@ -1,38 +1,6 @@
-DataContentViewerOtherCases.caseDetailsDialog.noCaseNameError=Error
-DataContentViewerOtherCases.caseDetailsDialog.noDetails=No details for this case.
-DataContentViewerOtherCases.caseDetailsDialog.noDetailsReference=No case details for Global reference properties.
-DataContentViewerOtherCases.caseDetailsDialog.notSelected=No Row Selected
-# {0} - commonality percentage
-# {1} - correlation type
-# {2} - correlation value
-DataContentViewerOtherCases.correlatedArtifacts.byType={0}% of data sources have {2} (type: {1})\n
-DataContentViewerOtherCases.correlatedArtifacts.failed=Failed to get frequency details.
-DataContentViewerOtherCases.correlatedArtifacts.isEmpty=There are no files or artifacts to correlate.
-DataContentViewerOtherCases.correlatedArtifacts.title=Attribute Frequency
-DataContentViewerOtherCases.dataSources.header.text=Data Source Name
-DataContentViewerOtherCases.earliestCaseNotAvailable=\ Not Enabled.
-DataContentViewerOtherCases.foundIn.text=Found %d instances in %d cases and %d data sources.
-DataContentViewerOtherCases.noOpenCase.errMsg=No open case available.
-DataContentViewerOtherCases.showCaseDetailsMenuItem.text=Show Case Details
-DataContentViewerOtherCases.table.noArtifacts=Item has no attributes with which to search.
-DataContentViewerOtherCases.table.noResultsFound=No results found.
 DataContentViewerOtherCases.table.toolTip.text=Click column name to sort. Right-click on the table for more options.
-DataContentViewerOtherCases.exportToCSVMenuItem.text=Export all Other Occurrences to CSV
-DataContentViewerOtherCases.showCommonalityMenuItem.text=Show Frequency
-DataContentViewerOtherCases.earliestCaseDate.text=Earliest Case Date
-DataContentViewerOtherCases.earliestCaseLabel.toolTipText=
-DataContentViewerOtherCases.earliestCaseLabel.text=Central Repository Starting Date:
-DataContentViewerOtherCases.foundInLabel.text=
 DataContentViewerOtherCases.title=Other Occurrences
 DataContentViewerOtherCases.toolTip=Displays instances of the selected file/artifact from other occurrences.
-DataContentViewerOtherCasesModel.csvHeader.attribute=Matched Attribute
-DataContentViewerOtherCasesModel.csvHeader.case=Case
-DataContentViewerOtherCasesModel.csvHeader.comment=Comment
-DataContentViewerOtherCasesModel.csvHeader.dataSource=Data Source
-DataContentViewerOtherCasesModel.csvHeader.device=Device
-DataContentViewerOtherCasesModel.csvHeader.known=Known
-DataContentViewerOtherCasesModel.csvHeader.path=Path
-DataContentViewerOtherCasesModel.csvHeader.value=Attribute Value
 OccurrencePanel.caseCreatedDateLabel.text=Created Date:
 OccurrencePanel.caseDetails.text=Case Details
 OccurrencePanel.caseNameLabel.text=Name:
@@ -51,3 +19,36 @@ OtherOccurrencesDataSourcesTableModel.dataSourceName=Data Source Name
 OtherOccurrencesDataSourcesTableModel.noData=No Data.
 OtherOccurrencesFilesTableModel.fileName=File Name
 OtherOccurrencesFilesTableModel.noData=No Data.
+OtherOccurrencesPanel.caseDatasourceFileSplitPane.toolTipText=
+OtherOccurrencesPanel.caseDetailsDialog.noCaseNameError=Error
+OtherOccurrencesPanel.caseDetailsDialog.noDetails=No details for this case.
+OtherOccurrencesPanel.caseDetailsDialog.noDetailsReference=No case details for Global reference properties.
+OtherOccurrencesPanel.caseDetailsDialog.notSelected=No Row Selected
+# {0} - commonality percentage
+# {1} - correlation type
+# {2} - correlation value
+OtherOccurrencesPanel.correlatedArtifacts.byType={0}% of data sources have {2} (type: {1})\n
+OtherOccurrencesPanel.correlatedArtifacts.failed=Failed to get frequency details.
+OtherOccurrencesPanel.correlatedArtifacts.isEmpty=There are no files or artifacts to correlate.
+OtherOccurrencesPanel.correlatedArtifacts.title=Attribute Frequency
+OtherOccurrencesPanel.csvHeader.attribute=Matched Attribute
+OtherOccurrencesPanel.csvHeader.case=Case
+OtherOccurrencesPanel.csvHeader.comment=Comment
+OtherOccurrencesPanel.csvHeader.dataSource=Data Source
+OtherOccurrencesPanel.csvHeader.device=Device
+OtherOccurrencesPanel.csvHeader.known=Known
+OtherOccurrencesPanel.csvHeader.path=Path
+OtherOccurrencesPanel.csvHeader.value=Attribute Value
+OtherOccurrencesPanel.earliestCaseLabel.toolTipText=
+OtherOccurrencesPanel.earliestCaseLabel.text=Central Repository Starting Date:
+OtherOccurrencesPanel.earliestCaseDate.text=Earliest Case Date
+OtherOccurrencesPanel.earliestCaseNotAvailable=\ Not Enabled.
+OtherOccurrencesPanel.foundIn.text=Found %d instances in %d cases and %d data sources.
+OtherOccurrencesPanel.foundInLabel.text=
+OtherOccurrencesPanel.filesTable.toolTipText=Click column name to sort. Right-click on the table for more options.
+OtherOccurrencesPanel.exportToCSVMenuItem.text=Export all Other Occurrences to CSV
+OtherOccurrencesPanel.noOpenCase.errMsg=No open case available.
+OtherOccurrencesPanel.showCommonalityMenuItem.text=Show Frequency
+OtherOccurrencesPanel.showCaseDetailsMenuItem.text=Show Case Details
+OtherOccurrencesPanel.table.noArtifacts=Item has no attributes with which to search.
+OtherOccurrencesPanel.table.noResultsFound=No results found.

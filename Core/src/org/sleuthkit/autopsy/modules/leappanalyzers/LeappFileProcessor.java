@@ -23,7 +23,6 @@ import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvParser;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import com.google.common.collect.ImmutableMap;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -65,13 +64,21 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
 import org.sleuthkit.autopsy.ingest.IngestModule.ProcessResult;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.Blackboard;
+import org.sleuthkit.datamodel.Blackboard.BlackboardException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
+import org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper;
+import org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper.CallMediaType;
+import org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper.CommunicationDirection;
+import org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper.MessageReadStatus;
+import org.sleuthkit.datamodel.blackboardutils.attributes.MessageAttachments;
+import org.sleuthkit.datamodel.blackboardutils.attributes.MessageAttachments.FileAttachment;
 import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.NodeList;
@@ -139,6 +146,26 @@ public final class LeappFileProcessor {
 
     private static final Map<String, String> CUSTOM_ARTIFACT_MAP = ImmutableMap.<String, String>builder()
             .put("TSK_IP_DHCP", "DHCP Information")
+            .build();
+
+    private static final Map<String, String> ACCOUNT_RELATIONSHIPS = ImmutableMap.<String, String>builder()
+            .put("Zapya.tsv", "message")
+            .put("sms messages.tsv", "message")
+            .put("mms messages.tsv", "message")
+            .put("Viber - Messages.tsv", "message")
+            .put("Viber - Contacts.tsv", "contact")
+            .put("Viber - Call Logs.tsv", "calllog")
+            .put("Xender file transfer - Messages.tsv", "message")
+            .put("Whatsapp - Contacts.tsv", "contact")
+            .put("Whatsapp - Group Call Logs.tsv", "calllog")
+            .put("Whatsapp - Single Call Logs.tsv", "calllog")
+            .put("Whatsapp - Messages Logs.tsv", "message")
+            .put("Shareit file transfer.tsv", "message")
+            .put("tangomessages messages.tsv", "message")
+            .put("Contacts.tsv", "contact")
+            .put("IMO - AccountId.tsv", "contact")
+            .put("IMO - messages.tsv", "message")
+            
             .build();
 
     Blackboard blkBoard;
@@ -267,7 +294,7 @@ public final class LeappFileProcessor {
 
         for (String LeappFileName : LeappFilesToProcess) {
             String fileName = FilenameUtils.getName(LeappFileName);
-            File LeappFile = new File(LeappFileName);
+                File LeappFile = new File(LeappFileName);
             if (tsvFileAttributes.containsKey(fileName)) {
                 List<TsvColumn> attrList = tsvFileAttributes.get(fileName);
                 BlackboardArtifact.Type artifactType = tsvFileArtifacts.get(fileName);
@@ -321,9 +348,22 @@ public final class LeappFileProcessor {
                     Collection<BlackboardAttribute> bbattributes = processReadLine(columnItems, columnIndexes, attrList, fileName, lineNum);
 
                     if (!bbattributes.isEmpty()) {
-                        BlackboardArtifact bbartifact = createArtifactWithAttributes(artifactType.getTypeID(), dataSource, bbattributes);
-                        if (bbartifact != null) {
-                            bbartifacts.add(bbartifact);
+                        switch (ACCOUNT_RELATIONSHIPS.getOrDefault(fileName, "norelationship").toLowerCase()) {
+                            case "message":
+                                createMessageRelationship(bbattributes, dataSource, fileName);
+                                break;
+                            case "contact":
+                                createContactRelationship(bbattributes, dataSource, fileName);
+                                break;
+                            case "calllog":
+                                createCalllogRelationship(bbattributes, dataSource, fileName);
+                                break;
+                            default: // There is no relationship defined so just process the artifact normally
+                                BlackboardArtifact bbartifact = createArtifactWithAttributes(artifactType.getTypeID(), dataSource, bbattributes);
+                                if (bbartifact != null) {
+                                    bbartifacts.add(bbartifact);
+                                }
+                                break;
                         }
                     }
 
@@ -333,6 +373,266 @@ public final class LeappFileProcessor {
         }
     }
 
+    @NbBundle.Messages({
+        "LeappFileProcessor.cannot.create.message.relationship=Cannot create TSK_MESSAGE Relationship.",
+    })
+    
+    private void createMessageRelationship(Collection<BlackboardAttribute> bbattributes, Content dataSource, String fileName) throws IngestModuleException {
+
+        String messageType = null;
+        CommunicationDirection communicationDirection = CommunicationDirection.UNKNOWN;
+        String senderId = null;
+        String receipentId = null;
+        String[] receipentIdList = null;
+        Long dateTime = Long.valueOf(0);
+        MessageReadStatus messageStatus = MessageReadStatus.UNKNOWN;
+        String subject = null;
+        String messageText = null;
+        String threadId = null;
+        List<BlackboardAttribute> otherAttributes = new ArrayList<>();
+        List<FileAttachment> fileAttachments = new ArrayList<>();
+        String sourceFile = null;
+        MessageAttachments messageAttachments = null;
+
+        try {
+            for (BlackboardAttribute bba : bbattributes) {
+                switch (bba.getAttributeType().getTypeName()) {
+                    case "TSK_DIRECTION":
+                        if (bba.getValueString().toLowerCase().equals("outgoing")) {
+                            communicationDirection = CommunicationDirection.OUTGOING;
+                        } else if (bba.getValueString().toLowerCase().equals("incoming")) {
+                            communicationDirection = CommunicationDirection.INCOMING;
+                        }
+                        break;
+                    case "TSK_PHONE_NUMBER_FROM":
+                        if (!bba.getValueString().isEmpty()) {
+                            senderId = bba.getValueString();
+                        }
+                        break;
+                    case "TSK_PHONE_NUMBER_TO":
+                        if (!bba.getValueString().isEmpty()) {
+                            receipentIdList = bba.getValueString().split(",", 0);
+                        }
+                        break;
+                    case "TSK_DATETIME":
+                        dateTime = bba.getValueLong();
+                        break;
+                    case "TSK_COMMENT":
+                        messageType = bba.getValueString();
+                        break;
+                    case "TSK_ATTACHMENTS":
+                        if (!bba.getValueString().isEmpty()) {
+                            fileAttachments.add(new FileAttachment(Case.getCurrentCaseThrows().getSleuthkitCase(), dataSource, bba.getValueString()));
+                        }
+                        break;
+                    case "TSK_TEXT_FILE":
+                        sourceFile = bba.getValueString();
+                        break;
+                    case "TSK_READ_STATUS":
+                        if (bba.getValueInt() == 1 ) {
+                            messageStatus = MessageReadStatus.READ;
+                        } else {
+                            messageStatus = MessageReadStatus.UNREAD;
+                        }
+                        break;
+                    case "TSK_TEXT":
+                        messageText = bba.getValueString();
+                        break;
+                    case "TSK_SUBJECT":
+                        subject = bba.getValueString();
+                        break;
+                    default:
+                        otherAttributes.add(bba);
+                        break;
+                }
+            }
+            AbstractFile absFile = findAbstractFile(dataSource, sourceFile);
+            Account.Type accountType = getAccountType(fileName);
+            if ((absFile != null) || (accountType != null)) {
+                CommunicationArtifactsHelper accountArtifact = new CommunicationArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(),
+                                                               moduleName, absFile, accountType);
+                BlackboardArtifact messageArtifact = accountArtifact.addMessage(messageType, communicationDirection, senderId,
+                                                                                receipentId, dateTime, messageStatus, subject,
+                                                                                messageText, threadId, otherAttributes);
+                if (!fileAttachments.isEmpty()) {
+                    messageAttachments = new MessageAttachments(fileAttachments, new ArrayList<>());
+                    accountArtifact.addAttachments(messageArtifact, messageAttachments);
+                }
+            }
+        } catch (NoCurrentCaseException | TskCoreException | BlackboardException ex) {
+            throw new IngestModuleException(Bundle.LeappFileProcessor_cannot_create_message_relationship() + ex.getLocalizedMessage(), ex); //NON-NLS
+        }
+
+    }
+
+    private void createContactRelationship(Collection<BlackboardAttribute> bbattributes, Content dataSource, String fileName) throws IngestModuleException {
+
+        String alternateId = null;
+        String contactName = null;
+        String phoneNumber = null;
+        String homePhoneNumber = null;
+        String mobilePhoneNumber = null;
+        String emailAddr = null;
+        List<BlackboardAttribute> otherAttributes = new ArrayList<>();
+        String sourceFile = null;
+
+        try {
+            for (BlackboardAttribute bba : bbattributes) {
+                switch (bba.getAttributeType().getTypeName()) {
+                    case "TSK_PHONE_NUMBER":
+                        if (!bba.getValueString().isEmpty()) {
+                            phoneNumber = bba.getValueString();
+                        }
+                        break;
+                    case "TSK_NAME":
+                        if (!bba.getValueString().isEmpty()) {
+                            contactName = bba.getValueString();
+                        }
+                        break;
+                    case "TSK_TEXT_FILE":
+                        sourceFile = bba.getValueString();
+                        break;
+                    case "TSK_PHONE_NUMBER_HOME":
+                        homePhoneNumber = bba.getValueString();
+                        break;
+                    case "TSK_PHONE_NUMBER_MOBILE":
+                        mobilePhoneNumber = bba.getValueString();
+                        break;
+                    case "TSK_EMAIL":
+                        emailAddr = bba.getValueString();
+                        break;
+                    case "TSK_ID":
+                        alternateId = bba.getValueString();
+                        break;
+                    default:
+                        otherAttributes.add(bba);
+                        break;
+                }
+            }
+            AbstractFile absFile = findAbstractFile(dataSource, sourceFile);
+            Account.Type accountType = getAccountType(fileName);
+            if ((absFile != null) || (accountType != null)) {
+                
+                CommunicationArtifactsHelper accountArtifact;
+                if (alternateId == null) {
+                    accountArtifact = new CommunicationArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(),
+                                                               moduleName, absFile, accountType);
+                } else {
+                    accountArtifact = new CommunicationArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(),
+                                                               moduleName, absFile, accountType, accountType, alternateId);                    
+                }
+                BlackboardArtifact messageArtifact = accountArtifact.addContact(contactName, phoneNumber, homePhoneNumber, mobilePhoneNumber, emailAddr, otherAttributes);
+            }
+        } catch (NoCurrentCaseException | TskCoreException | BlackboardException ex) {
+            throw new IngestModuleException(Bundle.LeappFileProcessor_cannot_create_message_relationship() + ex.getLocalizedMessage(), ex); //NON-NLS
+        }
+
+    }
+
+    private void createCalllogRelationship(Collection<BlackboardAttribute> bbattributes, Content dataSource, String fileName) throws IngestModuleException {
+
+        String callerId = null;
+        List<String> calleeId  = Arrays.asList();
+        CommunicationDirection communicationDirection = CommunicationDirection.UNKNOWN;
+        Long startDateTime = Long.valueOf(0);
+        Long endDateTime = Long.valueOf(0);
+        CallMediaType mediaType = CallMediaType.UNKNOWN;
+        List<BlackboardAttribute> otherAttributes = new ArrayList<>();
+        String sourceFile = null;
+
+        try {
+            for (BlackboardAttribute bba : bbattributes) {
+                switch (bba.getAttributeType().getTypeName()) {
+                    case "TSK_TEXT_FILE":
+                         sourceFile = bba.getValueString();
+                         break;
+                    case "TSK_DATETIME_START":
+                         startDateTime = bba.getValueLong();
+                         break;
+                    case "TSK_DATETIME_END":
+                         startDateTime = bba.getValueLong();
+                         break;
+                    case "TSK_DIRECTION":
+                        if (bba.getValueString().toLowerCase().equals("outgoing")) {
+                            communicationDirection = CommunicationDirection.OUTGOING;
+                        } else if (bba.getValueString().toLowerCase().equals("incoming")) {
+                            communicationDirection = CommunicationDirection.INCOMING;
+                        }
+                        break;
+                    case "TSK_PHONE_NUMBER_FROM":
+                        if (!bba.getValueString().isEmpty()) {
+                            callerId = bba.getValueString();
+                        }
+                        break;
+                    case "TSK_PHONE_NUMBER_TO":
+                        if (!bba.getValueString().isEmpty()) {
+                            String [] calleeTempList = bba.getValueString().split(",", 0);
+                            calleeId  = Arrays.asList(calleeTempList);
+                        }
+                        break;
+                    default:
+                        otherAttributes.add(bba);
+                        break;
+                }
+            }
+            
+            if (calleeId.isEmpty() && communicationDirection == CommunicationDirection.OUTGOING) {
+                String [] calleeTempList = callerId.split(",", 0);
+                calleeId  = Arrays.asList(calleeTempList);
+                callerId = null;       
+            }            
+            AbstractFile absFile = findAbstractFile(dataSource, sourceFile);
+            Account.Type accountType = getAccountType(fileName);
+            if ((absFile != null) || (accountType != null)) {
+                CommunicationArtifactsHelper accountArtifact = new CommunicationArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(),
+                                                               moduleName, absFile, accountType);
+                BlackboardArtifact callLogArtifact = accountArtifact.addCalllog(communicationDirection, callerId, calleeId, startDateTime, endDateTime, mediaType, otherAttributes);
+            }
+        } catch (NoCurrentCaseException | TskCoreException | BlackboardException ex) {
+            throw new IngestModuleException(Bundle.LeappFileProcessor_cannot_create_message_relationship() + ex.getLocalizedMessage(), ex); //NON-NLS
+        }
+
+    }
+        
+    private Account.Type getAccountType(String AccountTypeName) {
+        switch (AccountTypeName.toLowerCase()) {
+            case "zapya.tsv":
+                return Account.Type.ZAPYA;
+            case "sms messages.tsv":
+                return Account.Type.PHONE;
+            case "contacts.tsv":
+                return Account.Type.PHONE;
+            case "imo - accountid.tsv":
+                return Account.Type.IMO;
+            case "imo - messages.tsv":
+                return Account.Type.IMO;
+            case "mms messages.tsv":
+                return Account.Type.PHONE;
+            case "viber - call logs.tsv":
+                return Account.Type.VIBER;
+            case "viber - contacts.tsv":
+                return Account.Type.VIBER;
+            case "viber - messages.tsv":
+                return Account.Type.VIBER;
+            case "xender file transfer - messages.tsv":
+                return Account.Type.XENDER;
+            case "whatsapp - single call logs.tsv":
+                return Account.Type.WHATSAPP;
+            case "whatsapp - messages logs.tsv":
+                return Account.Type.WHATSAPP;
+            case "whatsapp - group call logs.tsv":
+                return Account.Type.WHATSAPP;
+            case "whatsapp - contacts.tsv":
+                return Account.Type.WHATSAPP;
+            case "tangomessages messages.tsv":
+                return Account.Type.TANGO;  
+            case "shareit file transfer.tsv":
+                return Account.Type.SHAREIT;   
+            default:
+                return null;
+        }
+    }
+    
     /**
      * Process the line read and create the necessary attributes for it.
      *
@@ -399,16 +699,17 @@ public final class LeappFileProcessor {
 
     /**
      * Check type of attribute and possibly format string based on it.
-     * 
+     *
      * @param colAttr Column Attribute information
      * @param value string to be formatted
-     * @return formatted string based on attribute type if no attribute type found then return original string 
+     * @return formatted string based on attribute type if no attribute type
+     * found then return original string
      */
     private String formatValueBasedOnAttrType(TsvColumn colAttr, String value) {
         if (colAttr.getAttributeType().getTypeName().equals("TSK_DOMAIN")) {
             return NetworkUtils.extractDomain(value);
         }
-        
+
         return value;
     }
 
@@ -460,6 +761,7 @@ public final class LeappFileProcessor {
                 // Log this and continue on with processing
                 logger.log(Level.WARNING, String.format("Attribute Type %s for file %s not defined.", attrType, fileName)); //NON-NLS                   
                 return null;
+
         }
     }
 
@@ -514,7 +816,7 @@ public final class LeappFileProcessor {
     }
 
     @NbBundle.Messages({
-        "LeappFileProcessor.cannot.load.artifact.xml=Cannor load xml artifact file.",
+        "LeappFileProcessor.cannot.load.artifact.xml=Cannot load xml artifact file.",
         "LeappFileProcessor.cannotBuildXmlParser=Cannot buld an XML parser.",
         "LeappFileProcessor_cannotParseXml=Cannot Parse XML file.",
         "LeappFileProcessor.postartifacts_error=Error posting Blackboard Artifact",
@@ -607,7 +909,7 @@ public final class LeappFileProcessor {
         for (int k = 0; k < attributeNlist.getLength(); k++) {
             NamedNodeMap nnm = attributeNlist.item(k).getAttributes();
             String attributeName = nnm.getNamedItem("attributename").getNodeValue();
-
+            
             if (!attributeName.toLowerCase().matches("null")) {
                 String columnName = nnm.getNamedItem("columnName").getNodeValue();
                 String required = nnm.getNamedItem("required").getNodeValue();
@@ -704,7 +1006,7 @@ public final class LeappFileProcessor {
      */
     private void configExtractor() throws IOException {
         PlatformUtil.extractResourceToUserConfigDir(LeappFileProcessor.class,
-                xmlFile, true);
+                 xmlFile, true);
     }
 
     private static final Set<String> ALLOWED_EXTENSIONS = new HashSet<>(Arrays.asList("zip", "tar", "tgz"));
@@ -761,4 +1063,35 @@ public final class LeappFileProcessor {
 
         }
     }
-}
+    
+    private AbstractFile findAbstractFile(Content dataSource, String fileNamePath) {
+        if (fileNamePath == null) {
+            return null;
+        }
+        
+        List<AbstractFile> files;
+        
+        String fileName = FilenameUtils.getName(fileNamePath);
+        String filePath = FilenameUtils.normalize(FilenameUtils.getPath(fileNamePath), true);
+
+        FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
+
+        try {
+            files = fileManager.findFiles(dataSource, fileName); //NON-NLS
+
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, "Unable to find prefetch files.", ex); //NON-NLS
+            return null;  // No need to continue
+        }
+
+        for (AbstractFile pFile : files) {
+
+            if (pFile.getParentPath().toLowerCase().endsWith(filePath.toLowerCase())) {
+                return pFile;
+            }
+        }
+
+        return null;
+
+    }
+    }
