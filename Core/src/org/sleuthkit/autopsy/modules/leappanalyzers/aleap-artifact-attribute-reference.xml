@@ -470,7 +470,7 @@
 
     <FileName filename="Whatsapp - Contacts.tsv" description="Whatsapp">
         <ArtifactName artifactname="TSK_CONTACT" comment="Whatsapp Contacts">
-            <AttributeName attributename="TSK_PHONE_NUMBER" columnName="number" required="yes"/>
+            <AttributeName attributename="TSK_EMAIL" columnName="number" required="yes"/>
             <AttributeName attributename="TSK_NAME" columnName="name" required="yes" />
             <AttributeName attributename="TSK_TEXT_FILE" columnName="source file" required="yes"/>
         </ArtifactName>
