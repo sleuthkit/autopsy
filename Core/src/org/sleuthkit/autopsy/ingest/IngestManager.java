@@ -372,7 +372,8 @@ public class IngestManager implements IngestProgressSnapshotProvider {
     public IngestJobStartResult beginIngestJob(Collection<Content> dataSources, IngestJobSettings settings) {
         if (caseIsOpen) {
             
-            // initialize IngestMessageInbox, if it hasn't been initialized yet
+            // initialize IngestMessageInbox, if it hasn't been initialized yet. This can't be done in
+            // the constructor because that ends up freezing the UI on startup (JIRA-7345).
             initIngestMessageInbox();
             
             IngestJob job = new IngestJob(dataSources, settings);
@@ -399,6 +400,11 @@ public class IngestManager implements IngestProgressSnapshotProvider {
         "IngestManager.startupErr.dlgErrorList=Errors:"
     })
     IngestJobStartResult startIngestJob(IngestJob job) {
+
+        // initialize IngestMessageInbox, if it hasn't been initialized yet. This can't be done in
+        // the constructor because that ends up freezing the UI on startup (JIRA-7345).
+        initIngestMessageInbox();
+
         List<IngestModuleError> errors = null;
         Case openCase;
         try {
