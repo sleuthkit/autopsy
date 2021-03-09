@@ -46,13 +46,7 @@ public class AnalysisSummary implements DefaultArtifactUpdateGovernor {
 
     private static final BlackboardAttribute.Type TYPE_SET_NAME = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_SET_NAME);
 
-    private static final Set<String> EXCLUDED_KEYWORD_SEARCH_ITEMS = new HashSet<>(Arrays.asList(
-            "PHONE NUMBERS",
-            "IP ADDRESSES",
-            "EMAIL ADDRESSES",
-            "URLS",
-            "CREDIT CARD NUMBERS"
-    ));
+    private static final Set<String> EXCLUDED_KEYWORD_SEARCH_ITEMS = new HashSet<>();
 
     private static final Set<Integer> ARTIFACT_UPDATE_TYPE_IDS = new HashSet<>(Arrays.asList(
             ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID(),
