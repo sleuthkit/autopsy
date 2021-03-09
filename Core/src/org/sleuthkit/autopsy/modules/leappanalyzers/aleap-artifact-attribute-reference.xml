@@ -344,17 +344,18 @@
             <AttributeName attributename="TSK_DATETIME" columnName="Date" required="yes"/>
             <AttributeName attributename="null" columnName="MSG ID" required="no"/>
             <AttributeName attributename="TSK_THREAD_ID" columnName="Thread ID" required="yes"/>
-            <AttributeName attributename="TSK_DATETIME_SENT" columnName="Date sent" required="yes"/>
+            <AttributeName attributename="null" columnName="Date sent" required="no"/>
             <AttributeName attributename="TSK_READ_STATUS" columnName="Read" required="yes"/>
             <AttributeName attributename="TSK_PHONE_NUMBER_FROM" columnName="From" required="yes"/>
             <AttributeName attributename="TSK_PHONE_NUMBER_TO" columnName="To" required="yes"/>
             <AttributeName attributename="null" columnName="Cc" required="no"/>
             <AttributeName attributename="null" columnName="Bcc" required="no"/>
             <AttributeName attributename="TSK_TEXT" columnName="Body" required="yes"/>            
+            <AttributeName attributename="TSK_TEXT_FILE" columnName="source file" required="yes"/>
         </ArtifactName>
     </FileName>
 
-<!--    <FileName filename="partner settings.tsv" description="Partner Settings">
+    <!--    <FileName filename="partner settings.tsv" description="Partner Settings">
         <ArtifactName artifactname="TSK_" comment="null">
             <AttributeName attributename="null" columnName="Name" required="no" />
             <AttributeName attributename="null" columnName="Value ) # Dont remove the comma" required="no" />
@@ -365,17 +366,139 @@
 
     <FileName filename="sms messages.tsv" description="SMS messages">
         <ArtifactName artifactname="TSK_MESSAGE" comment="SMS messages">
-            <AttributeName attributename="TSK_DATETIME" columnName="Date" required="yes"/>
+            <AttributeName attributename="null" columnName="Date" required="no"/>
             <AttributeName attributename="null" columnName="MSG ID" required="no"/>
             <AttributeName attributename="TSK_THREAD_ID" columnName="Thread ID" required="yes"/>
             <AttributeName attributename="TSK_PHONE_NUMBER_FROM" columnName="Address" required="yes" />
-            <AttributeName attributename="null" columnName="Contact ID" required="yes"/>
-            <AttributeName attributename="TSK_DATETIME_SENT" columnName="Date sent" required="yes"/>
+            <AttributeName attributename="TSK_PHONE_NUMBER_TO" columnName="Contact ID" required="yes"/>
+            <AttributeName attributename="TSK_DATETIME" columnName="Date sent" required="yes"/>
             <AttributeName attributename="TSK_READ_STATUS" columnName="Read" required="yes"/>
             <AttributeName attributename="TSK_TEXT" columnName="Body" required="yes"/>            
-            <AttributeName attributename="null" columnName="Service Center" required="yes"/>
+            <AttributeName attributename="null" columnName="Service Center" required="no"/>
             <AttributeName attributename="null" columnName="Error Code" required="no"/>
+            <AttributeName attributename="TSK_TEXT_FILE" columnName="source file" required="yes"/>
+        </ArtifactName>
+    </FileName>
+    
+    <FileName filename="Viber - Messages.tsv" description="Viber">
+        <ArtifactName artifactname="TSK_MESSAGE" comment="Viber Message">
+            <AttributeName attributename="TSK_DATETIME" columnName="Message Date" required="yes" />
+            <AttributeName attributename="TSK_PHONE_NUMBER_FROM" columnName="From Phone Number" required="yes"/>
+            <AttributeName attributename="TSK_PHONE_NUMBER_TO" columnName="Recipients" required="yes"/>
+            <AttributeName attributename="TSK_THREAD_ID" columnName="Thread ID" required="yes" />
+            <AttributeName attributename="TSK_TEXT" columnName="Message" required="yes" />
+            <AttributeName attributename="TSK_DIRECTION" columnName="direction" required="yes"/>
+            <AttributeName attributename="TSK_READ_STATUS" columnName="Read Status" required="yes"/>
+            <AttributeName attributename="TSK_ATTACHMENTS" columnName="File Attachment" required="yes"/>
+            <AttributeName attributename="TSK_TEXT_FILE" columnName="source file" required="yes"/>
         </ArtifactName>
     </FileName>
 
-    </aLeap_Files_To_Process>
+    <FileName filename="Viber - Contacts.tsv" description="Viber">
+        <ArtifactName artifactname="TSK_CONTACT" comment="Viber Contacts">
+            <AttributeName attributename="TSK_NAME" columnName="display name" required="yes" />
+            <AttributeName attributename="TSK_PHONE_NUMBER" columnName="phone number" required="yes"/>
+            <AttributeName attributename="TSK_TEXT_FILE" columnName="source file" required="yes"/>
+        </ArtifactName>
+    </FileName>
+
+    <FileName filename="Viber - Call Logs.tsv" description="Viber">
+        <ArtifactName artifactname="TSK_CALLLOG" comment="Viber Contacts">
+            <AttributeName attributename="TSK_DATETIME_START" columnName="Call Start Time" required="yes" />
+            <AttributeName attributename="TSK_PHONE_NUMBER_FROM" columnName="phone number" required="yes"/>
+            <AttributeName attributename="TSK_DIRECTION" columnName="Call Direction" required="yes"/>
+            <AttributeName attributename="TSK_DATETIME_END" columnName="Call End Time" required="yes"/>
+            <AttributeName attributename="null" columnName="Call Type" required="no"/>
+            <AttributeName attributename="TSK_TEXT_FILE" columnName="source file" required="yes"/>
+        </ArtifactName>
+    </FileName>
+
+    <FileName filename="Zapya.tsv" description="Zapya">
+        <ArtifactName artifactname="TSK_MESSAGE" comment="Zapya Message">
+            <AttributeName attributename="null" columnName="Device" required="no"/>
+            <AttributeName attributename="null" columnName="Name" required="no"/>
+            <AttributeName attributename="TSK_DIRECTION" columnName="direction" required="yes"/>
+            <AttributeName attributename="TSK_PHONE_NUMBER_FROM" columnName="fromid" required="yes"/>
+            <AttributeName attributename="TSK_PHONE_NUMBER_TO" columnName="toid" required="yes"/>
+            <AttributeName attributename="TSK_DATETIME" columnName="createtime" required="yes" />
+            <AttributeName attributename="TSK_ATTACHMENTS" columnName="path" required="yes"/>
+            <AttributeName attributename="null" columnName="title" required="no"/>
+            <AttributeName attributename="TSK_TEXT_FILE" columnName="source file" required="yes"/>
+        </ArtifactName>
+    </FileName>
+
+    <FileName filename="Xender file transfer - Messages.tsv" description="Xender">
+        <ArtifactName artifactname="TSK_MESSAGE" comment="Xender Message">
+            <AttributeName attributename="TSK_ATTACHMENTS" columnName="file_path" required="yes"/>
+            <AttributeName attributename="null" columnName="file_display_name" required="no"/>
+            <AttributeName attributename="null" columnName="file_size" required="no"/>
+            <AttributeName attributename="TSK_DATETIME" columnName="timestamp" required="yes" />
+            <AttributeName attributename="TSK_DIRECTION" columnName="direction" required="yes"/>
+            <AttributeName attributename="TSK_PHONE_NUMBER_TO" columnName="to_id" required="yes"/>
+            <AttributeName attributename="TSK_PHONE_NUMBER_FROM" columnName="from_id" required="yes"/>
+            <AttributeName attributename="TSK_THREAD_ID" columnName="session_id" required="yes" />
+            <AttributeName attributename="null" columnName="sender_name" required="no"/>
+            <AttributeName attributename="null" columnName="sender_device_id" required="no"/>
+            <AttributeName attributename="null" columnName="recipient_name" required="no"/>
+            <AttributeName attributename="null" columnName="recipient_device_id" required="no"/>
+            <AttributeName attributename="TSK_TEXT_FILE" columnName="source file" required="yes"/>
+        </ArtifactName>
+    </FileName>
+
+    <FileName filename="Whatsapp - Single Call Logs.tsv" description="Whatsapp">
+        <ArtifactName artifactname="TSK_CALLLOG" comment="Whatsapp Single Call Log">
+            <AttributeName attributename="TSK_DATETIME_START" columnName="start_time" required="yes" />
+            <AttributeName attributename="null" columnName="call_type" required="no"/>
+            <AttributeName attributename="TSK_DATETIME_END" columnName="end_time" required="yes"/>
+            <AttributeName attributename="TSK_PHONE_NUMBER_FROM" columnName="num" required="yes"/>
+            <AttributeName attributename="TSK_DIRECTION" columnName="call_direction" required="yes"/>
+            <AttributeName attributename="TSK_TEXT_FILE" columnName="source file" required="yes"/>
+        </ArtifactName>
+    </FileName>
+
+    <FileName filename="Whatsapp - Group Call Logs.tsv" description="Whatsapp">
+        <ArtifactName artifactname="TSK_CALLLOG" comment="Whatsapp Group Call Log">
+            <AttributeName attributename="null" columnName="call_type" required="no"/>
+            <AttributeName attributename="TSK_DATETIME_START" columnName="start_time" required="yes" />
+            <AttributeName attributename="TSK_DATETIME_END" columnName="end_time" required="yes"/>
+            <AttributeName attributename="TSK_DIRECTION" columnName="call_direction" required="yes"/>
+            <AttributeName attributename="TSK_PHONE_NUMBER_FROM" columnName="from_id" required="yes"/>
+            <AttributeName attributename="TSK_PHONE_NUMBER_TO" columnName="group_members" required="yes"/>
+            <AttributeName attributename="TSK_TEXT_FILE" columnName="source file" required="yes"/>
+        </ArtifactName>
+    </FileName>
+
+    <FileName filename="Whatsapp - Contacts.tsv" description="Whatsapp">
+        <ArtifactName artifactname="TSK_CONTACT" comment="Whatsapp Contacts">
+            <AttributeName attributename="TSK_EMAIL" columnName="number" required="yes"/>
+            <AttributeName attributename="TSK_NAME" columnName="name" required="yes" />
+            <AttributeName attributename="TSK_TEXT_FILE" columnName="source file" required="yes"/>
+        </ArtifactName>
+    </FileName>
+
+    <FileName filename="Whatsapp - Messages.tsv" description="Whatsapp">
+        <ArtifactName artifactname="TSK_MESSAGE" comment="Whatsapp Messages">
+            <AttributeName attributename="TSK_THREAD_ID" columnName="messages_id" required="yes"/>
+            <AttributeName attributename="TSK_PHONE_NUMBER_TO" columnName="recipients" required="yes"/>
+            <AttributeName attributename="TSK_DIRECTION" columnName="direction" required="yes"/>
+            <AttributeName attributename="TSK_TEXT" columnName="content" required="yes"/>
+            <AttributeName attributename="TSK_DATETIME_START" columnName="send_timestamp" required="yes" />
+            <AttributeName attributename="TSK_DATETIME_END" columnName="received_timestamp" required="yes"/>
+            <AttributeName attributename="TSK_PHONE_NUMBER_FROM" columnName="number" required="yes"/>
+            <AttributeName attributename="TSK_ATTACHMENTS" columnName="name" required="yes" />
+            <AttributeName attributename="TSK_TEXT_FILE" columnName="source file" required="yes"/>
+        </ArtifactName>
+    </FileName>
+
+    <FileName filename="Contacts.tsv" description="Contacts">
+        <ArtifactName artifactname="TSK_CONTACT" comment="Contacts">
+            <AttributeName attributename="null" columnName="mimetype" required="no" />
+            <AttributeName attributename="null" columnName="data1" required="no" />
+            <AttributeName attributename="TSK_NAME" columnName="display_name" required="yes" />
+            <AttributeName attributename="TSK_PHONE_NUMBER" columnName="phone_number" required="yes"/>
+            <AttributeName attributename="TSK_EMAIL" columnName="email address" required="yes"/>
+            <AttributeName attributename="TSK_TEXT_FILE" columnName="source file" required="yes"/>
+        </ArtifactName>
+    </FileName>
+
+</aLeap_Files_To_Process>
