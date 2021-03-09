@@ -5,6 +5,9 @@
  */
 package org.sleuthkit.autopsy.url.analytics;
 
+import java.sql.SQLException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
 
@@ -14,11 +17,23 @@ import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
  */
 public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel implements OptionsPanel {
 
+    private static final Logger logger = Logger.getLogger(WebCategoriesOptionsPanel.class.getName());
+    private final WebCategoriesDataModel dataModel;
+
     /**
      * Creates new form CustomWebCategoriesOptionsPanel
      */
-    public WebCategoriesOptionsPanel() {
+    public WebCategoriesOptionsPanel(WebCategoriesDataModel dataModel) {
         initComponents();
+        this.dataModel = dataModel;
+    }
+    
+    private DomainCategory getSelected() {
+        return null;
+    }
+    
+    void refresh() {
+        
     }
 
     /**
@@ -44,7 +59,7 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
 
         setLayout(new java.awt.GridBagLayout());
 
-        panelDescription.setText("<html>This module allows you to find web categories based on host name.</html>");
+        panelDescription.setText(org.openide.util.NbBundle.getMessage(WebCategoriesOptionsPanel.class, "WebCategoriesOptionsPanel.panelDescription.text")); // NOI18N
         panelDescription.setBorder(javax.swing.BorderFactory.createEtchedBorder());
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridwidth = 3;
@@ -158,7 +173,14 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
     }// </editor-fold>//GEN-END:initComponents
 
     private void deleteEntryButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteEntryButtonActionPerformed
-        // TODO add your handling code here:
+        DomainCategory selected = getSelected();
+        if (selected != null && selected.getHostSuffix() != null) {
+            try {
+                dataModel.deleteRecord(selected.getHostSuffix());
+            } catch (SQLException ex) {
+                logger.log(Level.WARNING, "There was an error while deleting: " + selected.getHostSuffix(), ex);
+            }
+        }
     }//GEN-LAST:event_deleteEntryButtonActionPerformed
 
     private void newEntryButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newEntryButtonActionPerformed
@@ -196,6 +218,6 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
 
     @Override
     public void load() {
-        
+        refresh();
     }
 }

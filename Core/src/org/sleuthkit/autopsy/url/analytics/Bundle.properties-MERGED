@@ -2,3 +2,11 @@
 AddEditCategoryDialog_onValueUpdate_badCategory=Please provide a domain suffix that is no more than {0} characters.
 # {0} - maxSuffixLen
 AddEditCategoryDialog_onValueUpdate_badSuffix=Please provide a domain suffix that is no more than {0} characters.
+AddEditCategoryDialog_onValueUpdate_sameCategory=Please provide a new category for this domain suffix.
+AddEditCategoryDialog_onValueUpdate_suffixRepeat=Please provide a unique domain suffix.
+WebCategoryOptionsController_title=Custom Web Categories
+WebCategoryOptionsController_keywords=Custom Web Categories
+AddEditCategoryDialog.categoryLabel.text=Category:
+AddEditCategoryDialog.domainSuffixLabel.text=Domain Suffix:
+AddEditCategoryDialog.saveButton.text=Save
+AddEditCategoryDialog.cancelButton.text=Cancel

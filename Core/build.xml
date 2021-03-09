@@ -89,6 +89,8 @@
             <fileset dir="${thirdparty.dir}/ImageMagick-7.0.10-27-portable-Q16-x64"/>
         </copy>
 
+        <mkdir dir="${basedir}/release/DomainCategorization"/>
+
         <!-- The 'libgstlibav.dll' file is too big to store on GitHub, so we
         have it stored in a ZIP file. We'll extract it in place and remove
         the ZIP file afterward. -->

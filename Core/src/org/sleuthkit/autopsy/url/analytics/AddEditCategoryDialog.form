@@ -83,7 +83,9 @@
     </Component>
     <Component class="javax.swing.JLabel" name="categoryLabel">
       <Properties>
-        <Property name="text" type="java.lang.String" value="Category:"/>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/sleuthkit/autopsy/datamodel/hosts/Bundle.properties" key="AddEditCategoryDialog.categoryLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+        </Property>
       </Properties>
       <AuxValues>
         <AuxValue name="JavaCodeGenerator_VariableLocal" type="java.lang.Boolean" value="true"/>
@@ -92,7 +94,9 @@
     </Component>
     <Component class="javax.swing.JLabel" name="domainSuffixLabel">
       <Properties>
-        <Property name="text" type="java.lang.String" value="Domain Suffix:"/>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/sleuthkit/autopsy/datamodel/hosts/Bundle.properties" key="AddEditCategoryDialog.domainSuffixLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+        </Property>
       </Properties>
       <AuxValues>
         <AuxValue name="JavaCodeGenerator_VariableLocal" type="java.lang.Boolean" value="true"/>
@@ -110,7 +114,9 @@
     </Component>
     <Component class="javax.swing.JButton" name="cancelButton">
       <Properties>
-        <Property name="text" type="java.lang.String" value="Cancel"/>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/sleuthkit/autopsy/datamodel/hosts/Bundle.properties" key="AddEditCategoryDialog.cancelButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+        </Property>
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cancelButtonActionPerformed"/>
@@ -122,7 +128,9 @@
     </Component>
     <Component class="javax.swing.JButton" name="saveButton">
       <Properties>
-        <Property name="text" type="java.lang.String" value="Save"/>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/sleuthkit/autopsy/datamodel/hosts/Bundle.properties" key="AddEditCategoryDialog.saveButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+        </Property>
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="saveButtonActionPerformed"/>

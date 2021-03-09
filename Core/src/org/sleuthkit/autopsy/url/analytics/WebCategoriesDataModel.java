@@ -34,7 +34,7 @@ import org.openide.modules.InstalledFileLocator;
  *
  * @author gregd
  */
-public class WebCategoriesManager {
+public class WebCategoriesDataModel {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class CustomCategorizationJsonDto {
@@ -68,7 +68,7 @@ public class WebCategoriesManager {
     private static final String ROOT_FOLDER = "DomainCategorization";
     private static final String FILE_REL_PATH = "custom_list.db";
     private static final String JDBC_SQLITE_PREFIX = "jdbc:sqlite:";
-    private static final Logger logger = Logger.getLogger(WebCategoriesManager.class.getName());
+    private static final Logger logger = Logger.getLogger(WebCategoriesDataModel.class.getName());
     
     
     private final File sqlitePath;
@@ -84,15 +84,15 @@ public class WebCategoriesManager {
     
     
     private static File getDefaultPath() {
-        File dir = InstalledFileLocator.getDefault().locate(ROOT_FOLDER, WebCategoriesManager.class.getPackage().getName(), false);
+        File dir = InstalledFileLocator.getDefault().locate(ROOT_FOLDER, WebCategoriesDataModel.class.getPackage().getName(), false);
         return Paths.get(dir.getAbsolutePath(), FILE_REL_PATH).toFile();
     }
 
-    public WebCategoriesManager(File sqlitePath) {
+    public WebCategoriesDataModel(File sqlitePath) {
         this.sqlitePath = sqlitePath;
     }
     
-    public WebCategoriesManager() {
+    public WebCategoriesDataModel() {
         this(getDefaultPath());
     }
     

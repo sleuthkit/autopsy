@@ -5,6 +5,7 @@
  */
 package org.sleuthkit.autopsy.url.analytics;
 
+import java.util.Set;
 import org.openide.util.NbBundle.Messages;
 
 /**
@@ -14,21 +15,31 @@ import org.openide.util.NbBundle.Messages;
 public class AddEditCategoryDialog extends javax.swing.JDialog {
 
     private boolean changed = false;
+    private final Set<String> currentSuffixesToUpper;
+    private final String currentSuffix;
+    private final String currentCategory;
 
     /**
      * Creates new form AddEditCategoryDialog
      */
-    public AddEditCategoryDialog(java.awt.Frame parent, boolean modal) {
-        super(parent, modal);
-        initComponents();
+    public AddEditCategoryDialog(java.awt.Frame parent, Set<String> currentSuffixesToUpper) {
+        this(parent, currentSuffixesToUpper, null, null);
     }
 
+    public AddEditCategoryDialog(java.awt.Frame parent, Set<String> currentSuffixesToUpper, String currentSuffix, String currentCategory) {
+        super(parent, true);
+        initComponents();
+        this.currentSuffixesToUpper = currentSuffixesToUpper;
+        this.currentSuffix = currentSuffix;
+        this.currentCategory = currentCategory;
+    }
+        
     /**
      * @return The string value for the name in the input field if Ok pressed or
      * null if not.
      */
     DomainCategory getValue() {
-        return new DomainCategory(domainSuffixTextField.getText(), categoryTextField.getText());
+        return new DomainCategory(domainSuffixTextField.getText().trim(), categoryTextField.getText().trim());
     }
 
     /**
@@ -49,6 +60,8 @@ public class AddEditCategoryDialog extends javax.swing.JDialog {
         "AddEditCategoryDialog_onValueUpdate_badSuffix=Please provide a domain suffix that is no more than {0} characters.",
         "# {0} - maxCategoryLen",
         "AddEditCategoryDialog_onValueUpdate_badCategory=Please provide a domain suffix that is no more than {0} characters.",
+        "AddEditCategoryDialog_onValueUpdate_suffixRepeat=Please provide a unique domain suffix.",
+        "AddEditCategoryDialog_onValueUpdate_sameCategory=Please provide a new category for this domain suffix.",
     })
     void onValueUpdate(String suffixStr, String categoryStr) {
         
@@ -64,20 +77,21 @@ public class AddEditCategoryDialog extends javax.swing.JDialog {
             domainSuffixTextField.setText(safeSuffixStr);
         }
         
-        if (safeSuffixStr.length() == 0 || safeSuffixStr.length() > WebCategoriesManager.getMaxDomainSuffixLength()) {
-            
-        } else if (safeCategoryStr.length() == 0 || safeCategoryStr.length() > WebCategoriesManager.getMaxCategoryLength()) {
-            
-        }  
-
-        // validate text input against invariants setting validation 
-        // message and whether or not okay button is enabled accordingly.
-//        String validationMessage = HostNameValidator.getValidationMessage(
-//                newNameValue, initialHost == null ? null : initialHost.getName(), hostNamesSanitized);
-//        
-//        okButton.setEnabled(validationMessage == null);
-//        validationLabel.setText(validationMessage == null ? "" : validationMessage);
+        String validationMessage = null;
+        if (safeSuffixStr.trim().length() == 0 || safeSuffixStr.trim().length() > WebCategoriesDataModel.getMaxDomainSuffixLength()) {
+            validationMessage = Bundle.AddEditCategoryDialog_onValueUpdate_badSuffix(WebCategoriesDataModel.getMaxCategoryLength());
+        }else if (safeCategoryStr.trim().length() == 0 || safeCategoryStr.trim().length() > WebCategoriesDataModel.getMaxCategoryLength()) {
+            validationMessage = Bundle.AddEditCategoryDialog_onValueUpdate_badCategory(WebCategoriesDataModel.getMaxDomainSuffixLength());
+        } else if (currentSuffixesToUpper.contains(safeSuffixStr.trim().toUpperCase())) {
+            validationMessage = Bundle.AddEditCategoryDialog_onValueUpdate_suffixRepeat();
+        } else if (currentCategory != null && safeCategoryStr.trim().equals(currentCategory.trim())) {
+            validationMessage = Bundle.AddEditCategoryDialog_onValueUpdate_sameCategory();
+        }
+        
+        saveButton.setEnabled(validationMessage == null);
+        validationLabel.setText(validationMessage == null ? "" : validationMessage);
     }
+    
     
     
 
@@ -100,22 +114,22 @@ public class AddEditCategoryDialog extends javax.swing.JDialog {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
-        categoryLabel.setText("Category:");
+        categoryLabel.setText(org.openide.util.NbBundle.getMessage(AddEditCategoryDialog.class, "AddEditCategoryDialog.categoryLabel.text")); // NOI18N
 
-        domainSuffixLabel.setText("Domain Suffix:");
+        domainSuffixLabel.setText(org.openide.util.NbBundle.getMessage(AddEditCategoryDialog.class, "AddEditCategoryDialog.domainSuffixLabel.text")); // NOI18N
 
         validationLabel.setForeground(java.awt.Color.RED);
         validationLabel.setText(" ");
         validationLabel.setToolTipText("");
 
-        cancelButton.setText("Cancel");
+        cancelButton.setText(org.openide.util.NbBundle.getMessage(AddEditCategoryDialog.class, "AddEditCategoryDialog.cancelButton.text")); // NOI18N
         cancelButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cancelButtonActionPerformed(evt);
             }
         });
 
-        saveButton.setText("Save");
+        saveButton.setText(org.openide.util.NbBundle.getMessage(AddEditCategoryDialog.class, "AddEditCategoryDialog.saveButton.text")); // NOI18N
         saveButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 saveButtonActionPerformed(evt);
