@@ -164,7 +164,8 @@ public class OsAccountDataPanel extends JPanel {
         "OsAccountDataPanel_realm_name=Name",
         "OsAccountDataPanel_realm_address=Address",
         "OsAccountDataPanel_realm_confidence=Confidence",
-        "OsAccountDataPanel_realm_unknown=Unknown",})
+        "OsAccountDataPanel_realm_unknown=Unknown",
+        "OsAccountDataPanel_realm_scope=Scope",})
 
     /**
      * Builds the Realm Properties.
@@ -183,7 +184,10 @@ public class OsAccountDataPanel extends JPanel {
         optional = realm.getRealmAddr();
         data.addData(Bundle.OsAccountDataPanel_realm_address(),
                 optional.isPresent() ? optional.get() : "");
-
+        
+        data.addData(Bundle.OsAccountDataPanel_realm_scope(),
+            realm.getScope().getName());
+        
         data.addData(Bundle.OsAccountDataPanel_realm_confidence(),
                 realm.getScopeConfidence().getName());
 
