@@ -60,7 +60,7 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
         setLayout(new java.awt.GridBagLayout());
 
         panelDescription.setText(org.openide.util.NbBundle.getMessage(WebCategoriesOptionsPanel.class, "WebCategoriesOptionsPanel.panelDescription.text")); // NOI18N
-        panelDescription.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        panelDescription.setBorder(javax.swing.BorderFactory.createCompoundBorder(javax.swing.BorderFactory.createEtchedBorder(), javax.swing.BorderFactory.createEmptyBorder(5, 5, 5, 5)));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridwidth = 3;
         gridBagConstraints.fill = java.awt.GridBagConstraints.VERTICAL;
@@ -68,7 +68,7 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
         gridBagConstraints.insets = new java.awt.Insets(10, 10, 10, 0);
         add(panelDescription, gridBagConstraints);
 
-        categoriesTitle.setText("Categories:");
+        categoriesTitle.setText(org.openide.util.NbBundle.getMessage(WebCategoriesOptionsPanel.class, "WebCategoriesOptionsPanel.categoriesTitle.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 1;
@@ -99,7 +99,7 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
         gridBagConstraints.insets = new java.awt.Insets(0, 10, 5, 0);
         add(categoriesScrollPane, gridBagConstraints);
 
-        newEntryButton.setText("New Entry");
+        newEntryButton.setText(org.openide.util.NbBundle.getMessage(WebCategoriesOptionsPanel.class, "WebCategoriesOptionsPanel.newEntryButton.text")); // NOI18N
         newEntryButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 newEntryButtonActionPerformed(evt);
@@ -112,7 +112,7 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
         gridBagConstraints.insets = new java.awt.Insets(0, 10, 5, 5);
         add(newEntryButton, gridBagConstraints);
 
-        editEntryButton.setText("Edit Entry");
+        editEntryButton.setText(org.openide.util.NbBundle.getMessage(WebCategoriesOptionsPanel.class, "WebCategoriesOptionsPanel.editEntryButton.text")); // NOI18N
         editEntryButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 editEntryButtonActionPerformed(evt);
@@ -125,7 +125,7 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
         gridBagConstraints.insets = new java.awt.Insets(0, 0, 5, 5);
         add(editEntryButton, gridBagConstraints);
 
-        deleteEntryButton.setText("Delete Entry");
+        deleteEntryButton.setText(org.openide.util.NbBundle.getMessage(WebCategoriesOptionsPanel.class, "WebCategoriesOptionsPanel.deleteEntryButton.text")); // NOI18N
         deleteEntryButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 deleteEntryButtonActionPerformed(evt);
@@ -138,7 +138,7 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
         gridBagConstraints.insets = new java.awt.Insets(0, 0, 5, 5);
         add(deleteEntryButton, gridBagConstraints);
 
-        importSetButton.setText("Import Set");
+        importSetButton.setText(org.openide.util.NbBundle.getMessage(WebCategoriesOptionsPanel.class, "WebCategoriesOptionsPanel.importSetButton.text")); // NOI18N
         importSetButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 importSetButtonActionPerformed(evt);
@@ -151,7 +151,7 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
         gridBagConstraints.insets = new java.awt.Insets(0, 10, 5, 5);
         add(importSetButton, gridBagConstraints);
 
-        exportSetButton.setText("Export Set");
+        exportSetButton.setText(org.openide.util.NbBundle.getMessage(WebCategoriesOptionsPanel.class, "WebCategoriesOptionsPanel.exportSetButton.text")); // NOI18N
         exportSetButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 exportSetButtonActionPerformed(evt);

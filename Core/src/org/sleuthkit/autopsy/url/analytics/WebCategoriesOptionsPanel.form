@@ -19,11 +19,18 @@
     <Component class="javax.swing.JLabel" name="panelDescription">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/datamodel/hosts/Bundle.properties" key="WebCategoriesOptionsPanel.panelDescription.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/sleuthkit/autopsy/url/analytics/Bundle.properties" key="WebCategoriesOptionsPanel.panelDescription.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
         <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
-          <Border info="org.netbeans.modules.form.compat2.border.EtchedBorderInfo">
-            <EtchetBorder/>
+          <Border info="org.netbeans.modules.form.compat2.border.CompoundBorderInfo">
+            <CompoundBorder>
+              <Border PropertyName="outside" info="org.netbeans.modules.form.compat2.border.EtchedBorderInfo">
+                <EtchetBorder/>
+              </Border>
+              <Border PropertyName="inside" info="org.netbeans.modules.form.compat2.border.EmptyBorderInfo">
+                <EmptyBorder bottom="5" left="5" right="5" top="5"/>
+              </Border>
+            </CompoundBorder>
           </Border>
         </Property>
       </Properties>
@@ -39,7 +46,9 @@
     </Component>
     <Component class="javax.swing.JLabel" name="categoriesTitle">
       <Properties>
-        <Property name="text" type="java.lang.String" value="Categories:"/>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/sleuthkit/autopsy/url/analytics/Bundle.properties" key="WebCategoriesOptionsPanel.categoriesTitle.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+        </Property>
       </Properties>
       <AuxValues>
         <AuxValue name="JavaCodeGenerator_VariableLocal" type="java.lang.Boolean" value="true"/>
@@ -86,7 +95,9 @@
     </Container>
     <Component class="javax.swing.JButton" name="newEntryButton">
       <Properties>
-        <Property name="text" type="java.lang.String" value="New Entry"/>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/sleuthkit/autopsy/url/analytics/Bundle.properties" key="WebCategoriesOptionsPanel.newEntryButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+        </Property>
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="newEntryButtonActionPerformed"/>
@@ -103,7 +114,9 @@
     </Component>
     <Component class="javax.swing.JButton" name="editEntryButton">
       <Properties>
-        <Property name="text" type="java.lang.String" value="Edit Entry"/>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/sleuthkit/autopsy/url/analytics/Bundle.properties" key="WebCategoriesOptionsPanel.editEntryButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+        </Property>
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="editEntryButtonActionPerformed"/>
@@ -116,7 +129,9 @@
     </Component>
     <Component class="javax.swing.JButton" name="deleteEntryButton">
       <Properties>
-        <Property name="text" type="java.lang.String" value="Delete Entry"/>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/sleuthkit/autopsy/url/analytics/Bundle.properties" key="WebCategoriesOptionsPanel.deleteEntryButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+        </Property>
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="deleteEntryButtonActionPerformed"/>
@@ -129,7 +144,9 @@
     </Component>
     <Component class="javax.swing.JButton" name="importSetButton">
       <Properties>
-        <Property name="text" type="java.lang.String" value="Import Set"/>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/sleuthkit/autopsy/url/analytics/Bundle.properties" key="WebCategoriesOptionsPanel.importSetButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+        </Property>
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="importSetButtonActionPerformed"/>
@@ -146,7 +163,9 @@
     </Component>
     <Component class="javax.swing.JButton" name="exportSetButton">
       <Properties>
-        <Property name="text" type="java.lang.String" value="Export Set"/>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/sleuthkit/autopsy/url/analytics/Bundle.properties" key="WebCategoriesOptionsPanel.exportSetButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+        </Property>
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="exportSetButtonActionPerformed"/>

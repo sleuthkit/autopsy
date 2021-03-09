@@ -32,6 +32,12 @@ public class AddEditCategoryDialog extends javax.swing.JDialog {
         this.currentSuffixesToUpper = currentSuffixesToUpper;
         this.currentSuffix = currentSuffix;
         this.currentCategory = currentCategory;
+        
+        if (currentSuffix == null && currentCategory == null) {
+            
+        } else {
+            
+        }
     }
         
     /**
@@ -114,6 +120,18 @@ public class AddEditCategoryDialog extends javax.swing.JDialog {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
+        categoryTextField.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                categoryTextFieldActionPerformed(evt);
+            }
+        });
+
+        domainSuffixTextField.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                domainSuffixTextFieldActionPerformed(evt);
+            }
+        });
+
         categoryLabel.setText(org.openide.util.NbBundle.getMessage(AddEditCategoryDialog.class, "AddEditCategoryDialog.categoryLabel.text")); // NOI18N
 
         domainSuffixLabel.setText(org.openide.util.NbBundle.getMessage(AddEditCategoryDialog.class, "AddEditCategoryDialog.domainSuffixLabel.text")); // NOI18N
@@ -192,6 +210,14 @@ public class AddEditCategoryDialog extends javax.swing.JDialog {
         this.changed = false;
         dispose();
     }//GEN-LAST:event_cancelButtonActionPerformed
+
+    private void domainSuffixTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_domainSuffixTextFieldActionPerformed
+        onValueUpdate(domainSuffixTextField.getText(), categoryTextField.getText());
+    }//GEN-LAST:event_domainSuffixTextFieldActionPerformed
+
+    private void categoryTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_categoryTextFieldActionPerformed
+        onValueUpdate(domainSuffixTextField.getText(), categoryTextField.getText());
+    }//GEN-LAST:event_categoryTextFieldActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
