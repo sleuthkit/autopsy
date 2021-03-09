@@ -367,8 +367,7 @@ final class ExtractSru extends Extract {
                                 BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, getName(), NETWORK_USAGE_SOURCE_NAME));
 
                 try {
-                    BlackboardArtifact bbart = sruAbstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_PROG_RUN);
-                    bbart.addAttributes(bbattributes);
+                    BlackboardArtifact bbart = createArtifactWithAttributes(BlackboardArtifact.ARTIFACT_TYPE.TSK_PROG_RUN, sruAbstractFile, bbattributes);
                     bba.add(bbart);
                     BlackboardArtifact associateBbArtifact = createAssociatedArtifact(applicationName.toLowerCase(), bbart);
                     if (associateBbArtifact != null) {
@@ -424,8 +423,7 @@ final class ExtractSru extends Extract {
                                 BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, getName(), APPLICATION_USAGE_SOURCE_NAME));
 
                 try {
-                    BlackboardArtifact bbart = sruAbstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_PROG_RUN);
-                    bbart.addAttributes(bbattributes);
+                    BlackboardArtifact bbart = createArtifactWithAttributes(BlackboardArtifact.ARTIFACT_TYPE.TSK_PROG_RUN, sruAbstractFile, bbattributes);
                     bba.add(bbart);
                     BlackboardArtifact associateBbArtifact = createAssociatedArtifact(applicationName.toLowerCase(), bbart);
                     if (associateBbArtifact != null) {

@@ -143,8 +143,8 @@ abstract class Extract {
      * @return The newly created artifact.
      */
     BlackboardArtifact createArtifactWithAttributes(BlackboardArtifact.ARTIFACT_TYPE type, Content content, Collection<BlackboardAttribute> attributes) throws TskCoreException {
-        Optional<OsAccount> optional = getOsAccount(content);
-        if (optional.isPresent()) {
+        Optional<OsAccount> optional = getOsAccount(content);        
+        if (optional.isPresent() && type.getCategory() == BlackboardArtifact.Category.DATA_ARTIFACT)  {
             return content.newDataArtifact(new BlackboardArtifact.Type(type), attributes, optional.get());
         } else {
             BlackboardArtifact bbart = content.newArtifact(type);

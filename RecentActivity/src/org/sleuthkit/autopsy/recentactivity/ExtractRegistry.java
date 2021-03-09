@@ -1507,13 +1507,10 @@ class ExtractRegistry extends Extract {
             
             try {
                 BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_PROG_RUN, regFile, attributes);
-           
+                bbartifacts.add(bba);
+                bba = createAssociatedArtifact(FilenameUtils.normalize(fileName, true), bba);
                 if (bba != null) {
                     bbartifacts.add(bba);
-                    bba = createAssociatedArtifact(FilenameUtils.normalize(fileName, true), bba);
-                    if (bba != null) {
-                        bbartifacts.add(bba);
-                    }
                 }
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, String.format("Failed to create TSK_PROG_RUN artifact for file %d", regFile.getId()), ex);
