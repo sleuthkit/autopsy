@@ -53,7 +53,6 @@ import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_B
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY;
-import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.xml.sax.SAXException;
@@ -101,14 +100,6 @@ final class ExtractSafari extends Extract {
         "Progress_Message_Safari_Cookies=Safari Cookies",
         "Progress_Message_Safari_Downloads=Safari Downloads",
     })
-
-    /**
-     * Extract the bookmarks, cookies, downloads and history from Safari.
-     *
-     */
-    ExtractSafari() {
-
-    }
 
     @Override
     protected String getName() {
@@ -435,7 +426,7 @@ final class ExtractSafari extends Extract {
             Long time = (Double.valueOf(row.get(HEAD_TIME).toString())).longValue();
 
             bbartifacts.add(
-                    createDataArtifactWithAttributes(
+                    createArtifactWithAttributes(
                             TSK_WEB_HISTORY, 
                             origFile, 
                             createHistoryAttribute(url, time, null, title,
@@ -572,7 +563,7 @@ final class ExtractSafari extends Extract {
                 Cookie cookie = iter.next();
                 
                 bbartifacts.add(
-                        createDataArtifactWithAttributes(
+                        createArtifactWithAttributes(
                                 TSK_WEB_COOKIE, 
                                 origFile, 
                                 createCookieAttributes(
@@ -630,7 +621,7 @@ final class ExtractSafari extends Extract {
             }
 
             if (url != null || title != null) {
-                bbartifacts.add(createDataArtifactWithAttributes(TSK_WEB_BOOKMARK, origFile,
+                bbartifacts.add(createArtifactWithAttributes(TSK_WEB_BOOKMARK, origFile,
                         createBookmarkAttributes(url, 
                                 title, 
                                 null, 
@@ -674,16 +665,12 @@ final class ExtractSafari extends Extract {
             time = date.getDate().getTime();
         }
 
-        BlackboardArtifact webDownloadArtifact = createDataArtifactWithAttributes(TSK_WEB_DOWNLOAD, origFile, createDownloadAttributes(path, pathID, url, time, NetworkUtils.extractDomain(url), getName())); 
+        BlackboardArtifact webDownloadArtifact = createArtifactWithAttributes(TSK_WEB_DOWNLOAD, origFile, createDownloadAttributes(path, pathID, url, time, NetworkUtils.extractDomain(url), getName())); 
         bbartifacts.add(webDownloadArtifact);
         
         // find the downloaded file and create a TSK_ASSOCIATED_OBJECT for it, associating it with the TSK_WEB_DOWNLOAD artifact.
         for (AbstractFile downloadedFile : fileManager.findFiles(dataSource, FilenameUtils.getName(path), FilenameUtils.getPath(path))) {
-            BlackboardArtifact associatedObjectArtifact = downloadedFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT);
-            associatedObjectArtifact.addAttribute(
-                    new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT,
-                            RecentActivityExtracterModuleFactory.getModuleName(), webDownloadArtifact.getArtifactID()));
-            bbartifacts.add(associatedObjectArtifact);
+            bbartifacts.add(createAssociatedArtifact(downloadedFile, webDownloadArtifact));
             break;
         }
         

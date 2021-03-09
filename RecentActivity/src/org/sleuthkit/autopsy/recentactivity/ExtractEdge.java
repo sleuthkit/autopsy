@@ -24,7 +24,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Date;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.text.DateFormat;
@@ -127,6 +126,7 @@ final class ExtractEdge extends Extract {
     * Extract the bookmarks, cookies, downloads and history from Microsoft Edge
     */
     ExtractEdge() throws NoCurrentCaseException {
+        super(Bundle.ExtractEdge_Module_Name());
         moduleTempResultPath = Paths.get(RAImageIngestModule.getRATempPath(Case.getCurrentCaseThrows(), EDGE), EDGE_RESULT_FOLDER_NAME);
     }
 
@@ -631,7 +631,7 @@ final class ExtractEdge extends Extract {
         String accessTime = rowSplit[index].trim();
         Long ftime = parseTimestamp(accessTime);
 
-        return createDataArtifactWithAttributes(TSK_WEB_HISTORY, origFile, createHistoryAttribute(url, ftime,
+        return createArtifactWithAttributes(TSK_WEB_HISTORY, origFile, createHistoryAttribute(url, ftime,
                 null, null,
                 this.getName(),
                 NetworkUtils.extractDomain(url), user));
@@ -657,7 +657,7 @@ final class ExtractEdge extends Extract {
         String value = hexToChar(lineSplit[headers.indexOf(EDGE_HEAD_VALUE)].trim());
         String url = flipDomain(domain);
 
-        return createDataArtifactWithAttributes(TSK_WEB_COOKIE, origFile, createCookieAttributes(url, null, ftime, null, name, value, this.getName(), NetworkUtils.extractDomain(url)));
+        return createArtifactWithAttributes(TSK_WEB_COOKIE, origFile, createCookieAttributes(url, null, ftime, null, name, value, this.getName(), NetworkUtils.extractDomain(url)));
     }
 
     /**
@@ -705,7 +705,7 @@ final class ExtractEdge extends Extract {
             return null;
         }
         
-        return createDataArtifactWithAttributes(TSK_WEB_BOOKMARK, origFile, createBookmarkAttributes(url, title, null,
+        return createArtifactWithAttributes(TSK_WEB_BOOKMARK, origFile, createBookmarkAttributes(url, title, null,
                 this.getName(), NetworkUtils.extractDomain(url)));
     }
     

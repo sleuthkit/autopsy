@@ -80,7 +80,7 @@ class SearchEngineURLQueryAnalyzer extends Extract {
     private IngestJobContext context;
 
     SearchEngineURLQueryAnalyzer() {
-        moduleName = NbBundle.getMessage(ExtractIE.class, "SearchEngineURLQueryAnalyzer.moduleName.text");
+        super(NbBundle.getMessage(ExtractIE.class, "SearchEngineURLQueryAnalyzer.moduleName.text"));
     }
 
     /**
@@ -382,7 +382,7 @@ class SearchEngineURLQueryAnalyzer extends Extract {
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
                             NbBundle.getMessage(this.getClass(),
                                     "SearchEngineURLQueryAnalyzer.parentModuleName"), last_accessed));
-                    postArtifact(createDataArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY, file, bbattributes));
+                    postArtifact(createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY, file, bbattributes));
                     ++totalQueries;
                 }
             }

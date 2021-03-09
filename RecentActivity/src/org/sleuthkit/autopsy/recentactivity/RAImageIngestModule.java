@@ -92,7 +92,7 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
         Extract messageDomainType = new DomainCategoryRunner();
 
         extractors.add(recentDocuments);
-        extractors.add(registry); // this should run after quicker modules like the browser modules and needs to run before the DataSourceUsageAnalyzer
+        extractors.add(registry); //  needs to run before the DataSourceUsageAnalyzer
         extractors.add(osExtract); // this needs to run before the DataSourceUsageAnalyzer
         extractors.add(dataSourceAnalyzer); //this needs to run after ExtractRegistry and ExtractOs
         extractors.add(chrome);
@@ -100,12 +100,8 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
         extractors.add(iexplore);
         extractors.add(edge);
         extractors.add(safari);
-//        extractors.add(recentDocuments);
         extractors.add(SEUQA); // this needs to run after the web browser modules
         extractors.add(webAccountType); // this needs to run after the web browser modules
-//        extractors.add(registry); // this should run after quicker modules like the browser modules and needs to run before the DataSourceUsageAnalyzer
-//        extractors.add(osExtract); // this needs to run before the DataSourceUsageAnalyzer
-//        extractors.add(dataSourceAnalyzer); //this needs to run after ExtractRegistry and ExtractOs
         extractors.add(zoneInfo); // this needs to run after the web browser modules
         extractors.add(recycleBin); // this needs to run after ExtractRegistry and ExtractOS
         extractors.add(sru); 

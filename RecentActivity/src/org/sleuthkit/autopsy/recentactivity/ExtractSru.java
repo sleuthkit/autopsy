@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2020 Basis Technology Corp.
+ * Copyright 2020-2021 Basis Technology Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,11 +46,8 @@ import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProcessTerminator;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -84,7 +81,7 @@ final class ExtractSru extends Extract {
         "ExtractSru_module_name=System Resource Usage Extractor"
     })
     ExtractSru() {
-        this.moduleName = Bundle.ExtractSru_module_name();
+        super(Bundle.ExtractSru_module_name());
     }
 
     @Messages({
@@ -459,18 +456,10 @@ final class ExtractSru extends Extract {
      *
      * @returnv BlackboardArtifact or a null value
      */
-    private BlackboardArtifact createAssociatedArtifact(String filePathName, BlackboardArtifact bba) {
+    private BlackboardArtifact createAssociatedArtifact(String filePathName, BlackboardArtifact bba) throws TskCoreException {
         if (applicationFilesFound.containsKey(filePathName)) {
             AbstractFile sourceFile = applicationFilesFound.get(filePathName);
-            Collection<BlackboardAttribute> bbattributes2 = new ArrayList<>();
-            bbattributes2.addAll(Arrays.asList(
-                    new BlackboardAttribute(TSK_ASSOCIATED_ARTIFACT, this.getName(),
-                            bba.getArtifactID())));
-
-            BlackboardArtifact associatedObjectBba = createArtifactWithAttributes(TSK_ASSOCIATED_OBJECT, sourceFile, bbattributes2);
-            if (associatedObjectBba != null) {
-                return associatedObjectBba;
-            }
+            return createAssociatedArtifact(sourceFile, bba);
         }
 
         return null;

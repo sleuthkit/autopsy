@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2020 Basis Technology Corp.
+ * Copyright 2020-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -165,7 +165,7 @@ class DomainCategoryRunner extends Extract {
      * Main constructor.
      */
     DomainCategoryRunner() {
-        moduleName = null;
+        
     }
 
     /**
@@ -415,14 +415,14 @@ class DomainCategoryRunner extends Extract {
      * parent file).
      * @param domainCategory The category for this host/domain.
      */
-    private void addCategoryArtifact(ArtifactHost artHost, String domainCategory) {
+    private void addCategoryArtifact(ArtifactHost artHost, String domainCategory) throws TskCoreException {
         String moduleName = Bundle.DomainCategoryRunner_parentModuleName();
         Collection<BlackboardAttribute> bbattributes = Arrays.asList(
                 new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN, moduleName, artHost.getDomain()),
                 new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_HOST, moduleName, artHost.getHost()),
                 new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME, moduleName, domainCategory)
         );
-        postArtifact(createDataArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_CATEGORIZATION, artHost.getAbstractFile(), bbattributes));
+        postArtifact(createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_CATEGORIZATION, artHost.getAbstractFile(), bbattributes));
     }
 
     @Override

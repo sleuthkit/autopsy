@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2020 Basis Technology Corp.
+ * Copyright 2012-2021 Basis Technology Corp.
  *
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -85,7 +85,7 @@ class ExtractIE extends Extract {
         "Progress_Message_IE_Logins=IE Logins",})
 
     ExtractIE() throws NoCurrentCaseException {
-        moduleName = NbBundle.getMessage(ExtractIE.class, "ExtractIE.moduleName.text");
+        super(NbBundle.getMessage(ExtractIE.class, "ExtractIE.moduleName.text"));
         moduleTempResultsDir = RAImageIngestModule.getRATempPath(Case.getCurrentCaseThrows(), "IE") + File.separator + "results"; //NON-NLS
         JAVA_PATH = PlatformUtil.getJavaPath();
     }
@@ -169,9 +169,10 @@ class ExtractIE extends Extract {
                         RecentActivityExtracterModuleFactory.getModuleName(), domain));
             }
 
-            BlackboardArtifact bbart = createDataArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_BOOKMARK, fav, bbattributes);
-            if (bbart != null) {
-                bbartifacts.add(bbart);
+            try {
+                bbartifacts.add(createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_BOOKMARK, fav, bbattributes));
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, String.format("Failed to create %s for file %d",ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getDisplayName(), fav.getId() ), ex);
             }
         }
 
@@ -281,9 +282,11 @@ class ExtractIE extends Extract {
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
                         RecentActivityExtracterModuleFactory.getModuleName(), domain));
             }
-            BlackboardArtifact bbart = createDataArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_COOKIE, cookiesFile, bbattributes);
-            if (bbart != null) {
-                bbartifacts.add(bbart);
+
+            try {
+                bbartifacts.add(createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_COOKIE, cookiesFile, bbattributes));
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, String.format("Failed to create %s for file %d",ARTIFACT_TYPE.TSK_WEB_COOKIE.getDisplayName(), cookiesFile.getId() ), ex);
             }
         }
 
@@ -580,7 +583,11 @@ class ExtractIE extends Extract {
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME,
                     RecentActivityExtracterModuleFactory.getModuleName(), user));
 
-            bbartifacts.add(createDataArtifactWithAttributes(TSK_WEB_HISTORY, origFile, bbattributes));
+            try {
+                bbartifacts.add(createArtifactWithAttributes(TSK_WEB_HISTORY, origFile, bbattributes));
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, String.format("Failed to create %s for file %d",ARTIFACT_TYPE.TSK_WEB_HISTORY.getDisplayName(), origFile.getId() ), ex);
+            }
         }
         fileScanner.close();
         return bbartifacts;

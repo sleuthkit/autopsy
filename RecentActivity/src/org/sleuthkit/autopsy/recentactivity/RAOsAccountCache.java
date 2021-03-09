@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.recentactivity;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,78 +33,98 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Cache of OsAccounts for a given host to be used by the various 
- * Recent Activity Extractors.
- * 
+ * Cache of OsAccounts for a given host to be used by the various Recent
+ * Activity Extractors.
+ *
  */
-final class RAOsAccountCache {   
+final class RAOsAccountCache {
+
     private final Map<String, OsAccount> accountCache = new HashMap<>();
 
     /**
      * initialize the account map for the given host. This should be done after
      * the ExtractRegistry is run.
-     * 
+     *
      * @param tskCase
      * @param host
-     * 
-     * @throws TskCoreException 
+     *
+     * @throws TskCoreException
      */
     void initialize(SleuthkitCase tskCase, Host host) throws TskCoreException {
         buildAccountMap(tskCase, host);
     }
-    
+
     /**
      * Returns the appropriate OsAccount for the given file.
-     * 
-     * If the file is not associated with an OsAccount, try to find one
-     * based on the location of the file.
-     * 
-     * If the file is associated with the system account of S-1-5-32-544 use
-     * the file path to determine which user account to associate the file with.
-     * 
-     * 
-     * @param file
-     * @return
-     * @throws TskCoreException 
+     *
+     * If the file is not associated with an OsAccount, try to find one based on
+     * the location of the file.
+     *
+     * If the file is associated with the system account of S-1-5-32-544 use the
+     * file path to determine which user account to associate the file with.
+     *
+     *
+     * @param file The file to match with appropriate OsAccount.
+     *
+     * @return Optional OsAccount, may not be present if one is not found.
+     *
+     * @throws TskCoreException
      */
     Optional<OsAccount> getOsAccount(AbstractFile file) throws TskCoreException {
         Optional<OsAccount> optional = file.getOsAccount();
-        
-        if(!optional.isPresent()) {
+
+        if (!optional.isPresent()) {
             return getAccountForPath(file.getParentPath());
         }
-        
+
         OsAccount osAccount = optional.get();
-        if(osAccount.getName().equals("S-1-5-32-544")) {
+        if (osAccount.getName().equals("S-1-5-32-544")) {
             return getAccountForPath(file.getParentPath());
         }
-        
+
         return optional;
     }
-    
+
+    /**
+     * Return a user account if the given path's parent directory is a user
+     * account home directory.
+     *
+     * @param path Path to search.
+     *
+     * @return An Optional OsAccount if one was found.
+     */
     private Optional<OsAccount> getAccountForPath(String path) {
-        return null;
-    } 
-    
+        Path filePath = Paths.get(path.toLowerCase());
+        // Check if the path might be a user path.
+        if (filePath.startsWith(Paths.get("/users")) || filePath.startsWith("/document and settings")) {
+            for (String key : accountCache.keySet()) {
+                if (filePath.startsWith(Paths.get(key))) {
+                    return Optional.of(accountCache.get(key));
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
     /**
      * Build a map of user home directories to OsAccounts for the given host.
-     * 
-     * @throws TskCoreException 
+     *
+     * @throws TskCoreException
      */
     private void buildAccountMap(SleuthkitCase tskCase, Host host) throws TskCoreException {
         BlackboardAttribute.Type homeDir = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_HOME_DIR);
         List<OsAccount> accounts = tskCase.getOsAccountManager().getAccounts(host);
-        
-        for(OsAccount account: accounts) {
+
+        for (OsAccount account : accounts) {
             List<OsAccountAttribute> attributeList = account.getOsAccountAttributes();
-            
-            for(OsAccountAttribute attribute: attributeList) {
-                if(attribute.getHostId().isPresent() 
+
+            for (OsAccountAttribute attribute : attributeList) {
+                if (attribute.getHostId().isPresent()
                         && attribute.getHostId().get().equals(host.getId())
                         && attribute.getAttributeType().equals(homeDir)) {
                     accountCache.put(attribute.getValueString(), account);
                 }
             }
         }
-    }   
+    }
 }
