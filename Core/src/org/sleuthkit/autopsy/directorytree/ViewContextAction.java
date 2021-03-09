@@ -22,10 +22,13 @@ import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyVetoException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.AbstractAction;
 import org.openide.nodes.AbstractNode;
@@ -43,8 +46,10 @@ import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode;
 import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.datamodel.ContentNodeSelectionInfo;
+import org.sleuthkit.autopsy.datamodel.DataSourcesByTypeNode;
 import org.sleuthkit.autopsy.datamodel.DataSourcesNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
+import org.sleuthkit.autopsy.datamodel.PersonGroupingNode;
 import org.sleuthkit.autopsy.datamodel.RootContentChildren;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -52,6 +57,8 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.FileSystem;
+import org.sleuthkit.datamodel.Host;
+import org.sleuthkit.datamodel.Person;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -141,6 +148,12 @@ public class ViewContextAction extends AbstractAction {
      * branch of the tree view to the level of the parent of the content,
      * selecting the parent in the tree view, then selecting the content in the
      * results view.
+     * 
+     * NOTE: This code will likely need updating in the event that the structure
+     * of the nodes is changed (i.e. adding parent levels). Places to look when
+     * changing node structure include:
+     *
+     * DirectoryTreeTopComponent.viewArtifact, ViewContextAction
      *
      * @param event The action event.
      */
@@ -186,23 +199,26 @@ public class ViewContextAction extends AbstractAction {
                     DataSource datasource = skCase.getDataSource(contentDSObjid);
                     dsname = datasource.getName();
                     Children rootChildren = treeViewExplorerMgr.getRootContext().getChildren();
-                    
+
                     if (null != parentContent) {
                         // the tree view needs to be searched to find the parent treeview node.
                         /* NOTE: we can't do a lookup by data source name here, becase if there 
                         are multiple data sources with the same name, then "getChildren().findChild(dsname)"
                         simply returns the first one that it finds. Instead we have to loop over all
                         data sources with that name, and make sure we find the correct one.
-                         */                        
-                        for (int i = 0; i < rootChildren.getNodesCount(); i++) {
+                         */
+                        List<Node> dataSourceLevelNodes = Stream.of(rootChildren.getNodes())
+                                .flatMap(rootNode -> getDataSourceLevelNodes(rootNode).stream())
+                                .collect(Collectors.toList());
+                        
+                        for (Node treeNode : dataSourceLevelNodes) {
                             // in the root, look for a data source node with the name of interest
-                            Node treeNode = rootChildren.getNodeAt(i);
                             if (!(treeNode.getName().equals(dsname))) {
                                 continue;
                             }
 
                             // for this data source, get the "Data Sources" child node
-                            Node datasourceGroupingNode = treeNode.getChildren().findChild(DataSourcesNode.NAME);
+                            Node datasourceGroupingNode = treeNode.getChildren().findChild(DataSourcesNode.getNameIdentifier());
 
                             // check whether this is the data source we are looking for
                             parentTreeViewNode = findParentNodeInTree(parentContent, datasourceGroupingNode);
@@ -218,7 +234,7 @@ public class ViewContextAction extends AbstractAction {
                         Node datasourceGroupingNode = rootChildren.findChild(dsname);
                         if (!Objects.isNull(datasourceGroupingNode)) {
                             Children dsChildren = datasourceGroupingNode.getChildren();
-                            parentTreeViewNode = dsChildren.findChild(DataSourcesNode.NAME);
+                            parentTreeViewNode = dsChildren.findChild(DataSourcesNode.getNameIdentifier());
                         }
                     }
 
@@ -234,13 +250,19 @@ public class ViewContextAction extends AbstractAction {
                 }
             } else {  // Classic view 
                 // Start the search at the DataSourcesNode
-                parentTreeViewNode = treeViewExplorerMgr.getRootContext().getChildren().findChild(DataSourcesNode.NAME);
-
-                if (null != parentContent) {
-                    // the tree view needs to be searched to find the parent treeview node.
-                    Node potentialParentTreeViewNode = findParentNodeInTree(parentContent, parentTreeViewNode);
-                    if (potentialParentTreeViewNode != null) {
-                        parentTreeViewNode = potentialParentTreeViewNode;
+                Children rootChildren = treeViewExplorerMgr.getRootContext().getChildren();
+                Node rootDsNode = rootChildren == null ? null : rootChildren.findChild(DataSourcesByTypeNode.getNameIdentifier());
+                if (rootDsNode != null) {
+                    for (Node dataSourceLevelNode : getDataSourceLevelNodes(rootDsNode)) {
+                        DataSource dataSource = dataSourceLevelNode.getLookup().lookup(DataSource.class);
+                        if (dataSource != null) {
+                            // the tree view needs to be searched to find the parent treeview node.
+                            Node potentialParentTreeViewNode = findParentNodeInTree(parentContent, dataSourceLevelNode);
+                            if (potentialParentTreeViewNode != null) {
+                                parentTreeViewNode = potentialParentTreeViewNode;
+                                break;
+                            }
+                        }
                     }
                 }
             }
@@ -284,6 +306,34 @@ public class ViewContextAction extends AbstractAction {
                 }
             }
         });
+    }
+
+    /**
+     * If the node has lookup of host or person, returns children. If not, just
+     * returns itself.
+     *
+     * @param node The node.
+     * @return The child nodes that are at the data source level.
+     */
+    private List<Node> getDataSourceLevelNodes(Node node) {
+        if (node == null) {
+            return Collections.emptyList();
+        } else if (node.getLookup().lookup(Host.class) != null || 
+                node.getLookup().lookup(Person.class) != null || 
+                DataSourcesByTypeNode.getNameIdentifier().equals(node.getLookup().lookup(String.class)) || 
+                PersonGroupingNode.getUnknownPersonId().equals(node.getLookup().lookup(String.class))) {
+            Children children = node.getChildren();
+            Node[] childNodes = children == null ? null : children.getNodes();
+            if (childNodes == null) {
+                return Collections.emptyList();
+            }
+
+            return Stream.of(node.getChildren().getNodes())
+                    .flatMap(parent -> getDataSourceLevelNodes(parent).stream())
+                    .collect(Collectors.toList());
+        } else {
+            return Arrays.asList(node);
+        }
     }
 
     /**
