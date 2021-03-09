@@ -95,8 +95,8 @@ final class FileIngestTask extends IngestTask {
             return false;
         }
         FileIngestTask other = (FileIngestTask) obj;
-        IngestPipeline thisPipeline = getIngestJobPipeline();
-        IngestPipeline otherPipeline = other.getIngestJobPipeline();
+        IngestPipeline thisPipeline = getIngestPipeline();
+        IngestPipeline otherPipeline = other.getIngestPipeline();
         if (thisPipeline != otherPipeline && (thisPipeline == null || !thisPipeline.equals(otherPipeline))) {
             return false;
         }
@@ -106,7 +106,7 @@ final class FileIngestTask extends IngestTask {
     @Override
     public int hashCode() {
         int hash = 5;
-        hash = 47 * hash + Objects.hashCode(getIngestJobPipeline());
+        hash = 47 * hash + Objects.hashCode(getIngestPipeline());
         hash = 47 * hash + Objects.hashCode(this.fileId);
         return hash;
     }

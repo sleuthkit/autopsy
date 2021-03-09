@@ -767,7 +767,7 @@ public class IngestManager implements IngestProgressSnapshotProvider {
      *                                the task.
      */
     void setIngestTaskProgress(DataSourceIngestTask task, String ingestModuleDisplayName) {
-        ingestThreadActivitySnapshots.put(task.getThreadId(), new IngestThreadActivitySnapshot(task.getThreadId(), task.getIngestJobPipeline().getId(), ingestModuleDisplayName, task.getDataSource()));
+        ingestThreadActivitySnapshots.put(task.getThreadId(), new IngestThreadActivitySnapshot(task.getThreadId(), task.getIngestPipeline().getId(), ingestModuleDisplayName, task.getDataSource()));
     }
 
     /**
@@ -785,11 +785,11 @@ public class IngestManager implements IngestProgressSnapshotProvider {
         IngestThreadActivitySnapshot prevSnap = ingestThreadActivitySnapshots.get(task.getThreadId());
         IngestThreadActivitySnapshot newSnap;
         try {
-            newSnap = new IngestThreadActivitySnapshot(task.getThreadId(), task.getIngestJobPipeline().getId(), ingestModuleDisplayName, task.getDataSource(), task.getFile());
+            newSnap = new IngestThreadActivitySnapshot(task.getThreadId(), task.getIngestPipeline().getId(), ingestModuleDisplayName, task.getDataSource(), task.getFile());
         } catch (TskCoreException ex) {
             // In practice, this task would never have been enqueued or processed since the file
             // lookup would have failed.
-            newSnap = new IngestThreadActivitySnapshot(task.getThreadId(), task.getIngestJobPipeline().getId(), ingestModuleDisplayName, task.getDataSource());
+            newSnap = new IngestThreadActivitySnapshot(task.getThreadId(), task.getIngestPipeline().getId(), ingestModuleDisplayName, task.getDataSource());
         }
         ingestThreadActivitySnapshots.put(task.getThreadId(), newSnap);
         incrementModuleRunTime(prevSnap.getActivity(), newSnap.getStartTime().getTime() - prevSnap.getStartTime().getTime());

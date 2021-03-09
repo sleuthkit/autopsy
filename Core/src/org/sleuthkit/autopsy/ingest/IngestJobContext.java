@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,44 +21,125 @@ package org.sleuthkit.autopsy.ingest;
 import java.util.List;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.DataArtifact;
 
 /**
- * Provides an ingest module with services specific to the ingest job of which
- * the module is a part.
+ * An ingest job context object that provides an ingest module with operations
+ * specific to the ingest job of which the module is a part.
+ *
+ * From a coding perspective, this object provides an abstraction that hides
+ * ingest infrastructure details.
  */
 public final class IngestJobContext {
 
-    private final IngestPipeline ingestJobPipeline;
+    private final IngestPipeline ingestPipeline;
 
+    /**
+     * Constructs an ingest job context object that provides an ingest module
+     * with operations specific to the ingest job of which the module is a part.
+     *
+     * @param ingestJobPipeline
+     */
     IngestJobContext(IngestPipeline ingestJobPipeline) {
-        this.ingestJobPipeline = ingestJobPipeline;
+        this.ingestPipeline = ingestJobPipeline;
     }
 
     /**
-     * Gets the ingest job execution context identifier.
+     * Gets the execution context identifier of the ingest job.
      *
      * @return The context string.
      */
     public String getExecutionContext() {
-        return this.ingestJobPipeline.getExecutionContext();
+        return this.ingestPipeline.getExecutionContext();
     }
-        
+
     /**
-     * Gets the data source associated with this context.
+     * Gets the data source for the ingest job.
      *
      * @return The data source.
      */
     public Content getDataSource() {
-        return this.ingestJobPipeline.getDataSource();
+        return ingestPipeline.getDataSource();
     }
 
     /**
-     * Gets the identifier of the ingest job associated with this context.
+     * Gets the unique identifier for the ingest job.
      *
-     * @return The ingest job identifier.
+     * @return The ID.
      */
     public long getJobId() {
-        return this.ingestJobPipeline.getId();
+        return ingestPipeline.getId();
+    }
+
+    /**
+     * Checks whether or not cancellation of the currently running data source
+     * level ingest module for the ingest job has been requested. Data source
+     * level ingest modules should check this periodically and break off
+     * processing if the method returns true.
+     *
+     * @return True or false.
+     */
+    public boolean dataSourceIngestIsCancelled() {
+        return ingestPipeline.currentDataSourceIngestModuleIsCancelled() || ingestPipeline.isCancelled();
+    }
+
+    /**
+     * Checks whether or not cancellation of the currently running file ingest
+     * module for the ingest job has been requested. File ingest modules should
+     * check this periodically and break off processing if the method returns
+     * true.
+     *
+     * RJCTODO: Figure out how to check/handle cancellation for data artoifact
+     * ingest modules. Perhaps it is time to add a cancel method with an
+     * implementation in teh "adapter" classes.
+     *
+     * @return True or false.
+     */
+    public boolean fileIngestIsCancelled() {
+        return ingestPipeline.isCancelled();
+    }
+
+    /**
+     * Queries whether or not unallocated space should be processed for the
+     * ingest job.
+     *
+     * @return True or false.
+     */
+    public boolean processingUnallocatedSpace() {
+        return ingestPipeline.shouldProcessUnallocatedSpace();
+    }
+
+    /**
+     * Adds one or more files, e.g., extracted or carved files, to the ingest
+     * job for processing by its file ingest modules.
+     *
+     * @param files The files.
+     */
+    public void addFilesToJob(List<AbstractFile> files) {
+        ingestPipeline.addFiles(files);
+    }
+
+    /**
+     * Adds one or more data artifacts to the ingest job for processing by its
+     * data artifact ingest modules.
+     *
+     * @param artifacts The artifacts.
+     */
+    public void addDataArtifactsToJob(List<DataArtifact> artifacts) {
+        ingestPipeline.addDataArtifacts(artifacts);
+    }
+
+    /**
+     * Adds one or more files, i.e., extracted or carved files, to the ingest
+     * job associated with this context.
+     *
+     * @param files The files to be added.
+     *
+     * @deprecated use addFilesToJob() instead.
+     */
+    @Deprecated
+    public void scheduleFiles(List<AbstractFile> files) {
+        addFilesToJob(files);
     }
 
     /**
@@ -72,62 +153,7 @@ public final class IngestJobContext {
      */
     @Deprecated
     public boolean isJobCancelled() {
-        return this.dataSourceIngestIsCancelled();
-    }
-
-    /**
-     * Allows a data source ingest module to determine whether or not
-     * cancellation of the data source ingest part of the ingest job associated
-     * with this context has been requested.
-     *
-     * @return True or false.
-     */
-    public boolean dataSourceIngestIsCancelled() {
-        return this.ingestJobPipeline.currentDataSourceIngestModuleIsCancelled() || this.ingestJobPipeline.isCancelled();
-    }
-
-    /**
-     * Allows a file ingest module to determine whether or not cancellation of
-     * the file ingest part of the ingest job associated with this context has
-     * been requested.
-     *
-     * @return True or false.
-     */
-    public boolean fileIngestIsCancelled() {
-        return this.ingestJobPipeline.isCancelled();
-    }
-
-    /**
-     * Queries whether or not unallocated space should be processed for the
-     * ingest job associated with this context.
-     *
-     * @return True or false.
-     */
-    public boolean processingUnallocatedSpace() {
-        return this.ingestJobPipeline.shouldProcessUnallocatedSpace();
-    }
-
-    /**
-     * Adds one or more files, i.e., extracted or carved files, to the ingest
-     * job associated with this context.
-     *
-     * @param files The files to be added.
-     *
-     * @deprecated use addFilesToJob() instead
-     */
-    @Deprecated
-    public void scheduleFiles(List<AbstractFile> files) {
-        this.addFilesToJob(files);
-    }
-
-    /**
-     * Adds one or more files, i.e., extracted or carved files, to the ingest
-     * job associated with this context.
-     *
-     * @param files The files to be added.
-     */
-    public void addFilesToJob(List<AbstractFile> files) {
-        this.ingestJobPipeline.addFiles(files);
+        return dataSourceIngestIsCancelled();
     }
 
 }

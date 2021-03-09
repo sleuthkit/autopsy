@@ -1502,7 +1502,7 @@ final class IngestPipeline {
     void cancel(IngestJob.CancellationReason reason) {
         this.cancelled = true;
         this.cancellationReason = reason;
-        IngestPipeline.taskScheduler.cancelPendingTasksForIngestJob(this);
+        IngestPipeline.taskScheduler.cancelPendingFileTasksForIngestJob(this);
 
         if (this.doUI) {
             synchronized (this.dataSourceIngestProgressLock) {
