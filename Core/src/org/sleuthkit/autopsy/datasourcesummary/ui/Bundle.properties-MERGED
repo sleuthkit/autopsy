@@ -66,7 +66,7 @@ ExcelExportAction_runXLSXExport_progressCancelActionTitle=Cancelling...
 ExcelExportAction_runXLSXExport_progressCancelTitle=Cancel
 # {0} - dataSource
 ExcelExportAction_runXLSXExport_progressTitle=Exporting {0} to XLSX
-ExcelExportDialog_title=Data Source Summary Exported.
+ExcelExportDialog_title=Data Source Summary Exported
 GeolocationPanel_cityColumn_title=Closest City
 GeolocationPanel_countColumn_title=Count
 GeolocationPanel_mostCommon_tabName=Most Common Cities
@@ -148,7 +148,6 @@ TimelinePanel.viewInTimelineBtn.text=View in Timeline
 ExportPanel.xlsxExportMessage.text=Export Data from Data Source Summary to an Excel Document.
 ExportPanel.xlsxExportButton.text=Export Summary Data
 ExcelExportDialog.titleLabel.text=Data Source Summary has been exported to:
-ExcelExportDialog.linkLabel.text=
 ExcelExportDialog.okButton.text=OK
 UserActivityPanel_noDataExists=No communication data exists
 UserActivityPanel_tab_title=User Activity

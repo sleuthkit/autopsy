@@ -167,7 +167,7 @@ public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
     );
     
     // the action that does the export
-    private final ExcelExportAction exportAction = new ExcelExportAction(tabs, exportPanel);
+    private final ExcelExportAction exportAction = new ExcelExportAction(tabs);
   
     private DataSource dataSource = null;
     private CardLayout cardLayout;

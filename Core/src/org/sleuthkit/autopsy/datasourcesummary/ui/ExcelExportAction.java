@@ -34,6 +34,7 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 import java.util.logging.Level;
+import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -82,17 +83,14 @@ class ExcelExportAction implements Consumer<DataSource> {
 
     private final ExcelExport excelExport = ExcelExport.getInstance();
     private final List<? extends ExportableTab> tabExports;
-    private final Component dialogParent;
 
     /**
      * Main constructor.
      *
      * @param tabExports The different tabs that may have excel exports.
-     * @param dialogParent The component that jdialogs will claim as parent.
      */
-    ExcelExportAction(List<? extends ExportableTab> tabExports, Component dialogParent) {
+    ExcelExportAction(List<? extends ExportableTab> tabExports) {
         this.tabExports = Collections.unmodifiableList(new ArrayList<>(tabExports));
-        this.dialogParent = dialogParent;
     }
 
     /**
@@ -116,7 +114,7 @@ class ExcelExportAction implements Consumer<DataSource> {
     }
 
     /**
-     * Prompts the user for an output location.
+     * Generates an xlsx path for the data source summary export.
      *
      * @param dataSourceName The name of the data source.
      * @return The file to which the excel document should be written or null if
@@ -125,7 +123,6 @@ class ExcelExportAction implements Consumer<DataSource> {
     @NbBundle.Messages({
         "ExcelExportAction_getXLSXPath_directory=DataSourceSummary",})
     private File getXLSXPath(String dataSourceName) {
-        String expectedExtension = "xlsx";
         // set initial path to reports directory with filename that is 
         // a combination of the data source name and time stamp
         DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss");
@@ -273,22 +270,23 @@ class ExcelExportAction implements Consumer<DataSource> {
         excelExport.writeExcel(sheetExports, path);
 
         progressIndicator.finish();
-        onFinish(dataSource, path);
-    }
 
-    private void onFinish(DataSource ds, File outputLoc) {
         try {
+            // add to reports
             Case curCase = Case.getCurrentCaseThrows();
-            curCase.addReport(outputLoc.getParent(),
+            curCase.addReport(path.getParent(),
                     Bundle.ExcelExportAction_moduleName(),
-                    outputLoc.getName(),
-                    ds);
+                    path.getName(),
+                    dataSource);
 
-            ExcelExportDialog dialog = new ExcelExportDialog(WindowManager.getDefault().getMainWindow(), outputLoc);
-            dialog.setResizable(false);
-            dialog.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
-            dialog.setVisible(true);
-            dialog.toFront();
+            // and show finished dialog
+            SwingUtilities.invokeLater(() -> {
+                ExcelExportDialog dialog = new ExcelExportDialog(WindowManager.getDefault().getMainWindow(), path);
+                dialog.setResizable(false);
+                dialog.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
+                dialog.setVisible(true);
+                dialog.toFront();
+            });
 
         } catch (NoCurrentCaseException | TskCoreException ex) {
             logger.log(Level.WARNING, "There was an error attaching report to case.", ex);

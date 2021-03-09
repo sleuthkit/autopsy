@@ -1,7 +1,20 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2021 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.datasourcesummary.ui;
 
@@ -12,40 +25,44 @@ import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.logging.Level;
+import javax.swing.SwingUtilities;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
- *
- * @author gregd
+ * Dialog showing where the data source summary excel export can be located.
  */
 @Messages({
     "ExcelExportDialog_title=Data Source Summary Exported"
 })
 public class ExcelExportDialog extends javax.swing.JDialog {
+
     private static final Logger logger = Logger.getLogger(ExcelExportDialog.class.getName());
+
     /**
      * Creates new form ExcelExportDialog
      */
     public ExcelExportDialog(java.awt.Frame parent, File filePath) {
         super(parent, true);
-        
+
         initComponents();
         setTitle(Bundle.ExcelExportDialog_title());
-        
-        this.linkLabel.setText(String.format("<html>%s</html>", filePath.getAbsolutePath()));
-        this.linkLabel.addMouseListener(new MouseAdapter() {
+
+        this.linkText.setText(filePath.getAbsolutePath());
+        this.linkText.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                try {
-                    Desktop.getDesktop().open(filePath);
-                } catch (IOException ex) {
-                    logger.log(Level.WARNING, "Unable to open: " + filePath.getAbsolutePath(), ex);
-                }
+                SwingUtilities.invokeLater(() -> {
+                    try {
+                        Desktop.getDesktop().open(filePath);
+                    } catch (IOException ex) {
+                        logger.log(Level.WARNING, "Unable to open: " + filePath.getAbsolutePath(), ex);
+                    }
+                });
             }
-            
+
         });
-        this.linkLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        this.linkText.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     }
 
     /**
@@ -58,15 +75,13 @@ public class ExcelExportDialog extends javax.swing.JDialog {
     private void initComponents() {
 
         javax.swing.JLabel titleLabel = new javax.swing.JLabel();
-        linkLabel = new javax.swing.JLabel();
         javax.swing.JButton okButton = new javax.swing.JButton();
+        javax.swing.JScrollPane linkTextScrollPane = new javax.swing.JScrollPane();
+        linkText = new javax.swing.JTextArea();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
         org.openide.awt.Mnemonics.setLocalizedText(titleLabel, org.openide.util.NbBundle.getMessage(ExcelExportDialog.class, "ExcelExportDialog.titleLabel.text")); // NOI18N
-
-        linkLabel.setForeground(java.awt.Color.BLUE);
-        org.openide.awt.Mnemonics.setLocalizedText(linkLabel, org.openide.util.NbBundle.getMessage(ExcelExportDialog.class, "ExcelExportDialog.linkLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(okButton, org.openide.util.NbBundle.getMessage(ExcelExportDialog.class, "ExcelExportDialog.okButton.text")); // NOI18N
         okButton.addActionListener(new java.awt.event.ActionListener() {
@@ -75,20 +90,31 @@ public class ExcelExportDialog extends javax.swing.JDialog {
             }
         });
 
+        linkText.setEditable(false);
+        linkText.setBackground(null);
+        linkText.setColumns(20);
+        linkText.setForeground(java.awt.Color.BLUE);
+        linkText.setLineWrap(true);
+        linkText.setRows(1);
+        linkText.setWrapStyleWord(true);
+        linkText.setBorder(null);
+        linkText.setOpaque(false);
+        linkTextScrollPane.setViewportView(linkText);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(linkTextScrollPane)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(titleLabel)
-                        .addGap(0, 125, Short.MAX_VALUE))
-                    .addComponent(linkLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(okButton)))
+                        .addComponent(okButton))
+                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                        .addComponent(titleLabel)
+                        .addGap(0, 116, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -96,11 +122,11 @@ public class ExcelExportDialog extends javax.swing.JDialog {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(titleLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(linkLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(linkTextScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 39, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(okButton)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
 
         pack();
@@ -112,6 +138,6 @@ public class ExcelExportDialog extends javax.swing.JDialog {
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel linkLabel;
+    private javax.swing.JTextArea linkText;
     // End of variables declaration//GEN-END:variables
 }
