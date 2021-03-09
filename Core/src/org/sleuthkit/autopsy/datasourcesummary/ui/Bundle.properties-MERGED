@@ -60,13 +60,13 @@ ExcelExportAction_exportToXLSX_beginExport=Beginning Export...
 # {0} - tabName
 ExcelExportAction_exportToXLSX_gatheringTabData=Fetching Data for {0} Tab...
 ExcelExportAction_exportToXLSX_writingToFile=Writing to File...
-# {0} - path
-ExcelExportAction_promptAndExportToXLSX_fileExistsMessage=File at {0} already exists.
-ExcelExportAction_promptAndExportToXLSX_fileExistsTitle=File Already Exists
+ExcelExportAction_getXLSXPath_directory=DataSourceSummary
+ExcelExportAction_moduleName=Data Source Summary
 ExcelExportAction_runXLSXExport_progressCancelActionTitle=Cancelling...
 ExcelExportAction_runXLSXExport_progressCancelTitle=Cancel
 # {0} - dataSource
 ExcelExportAction_runXLSXExport_progressTitle=Exporting {0} to XLSX
+ExcelExportDialog_title=Data Source Summary Exported.
 GeolocationPanel_cityColumn_title=Closest City
 GeolocationPanel_countColumn_title=Count
 GeolocationPanel_mostCommon_tabName=Most Common Cities
@@ -147,6 +147,9 @@ UserActivityPanel.rightClickForMoreOptions5.text=Right click on row for more opt
 TimelinePanel.viewInTimelineBtn.text=View in Timeline
 ExportPanel.xlsxExportMessage.text=Export Data from Data Source Summary to an Excel Document.
 ExportPanel.xlsxExportButton.text=Export Summary Data
+ExcelExportDialog.titleLabel.text=Data Source Summary has been exported to:
+ExcelExportDialog.linkLabel.text=
+ExcelExportDialog.okButton.text=OK
 UserActivityPanel_noDataExists=No communication data exists
 UserActivityPanel_tab_title=User Activity
 UserActivityPanel_TopAccountTableModel_accountType_header=Account Type

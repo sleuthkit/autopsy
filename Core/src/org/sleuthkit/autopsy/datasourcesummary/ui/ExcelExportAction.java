@@ -34,11 +34,9 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 import java.util.logging.Level;
-import javax.swing.JFileChooser;
-import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -50,10 +48,13 @@ import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelExport.ExcelSheetExp
 import org.sleuthkit.autopsy.progress.ModalDialogProgressIndicator;
 import org.sleuthkit.autopsy.progress.ProgressIndicator;
 import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Action that exports tab data to an excel workbook.
  */
+@Messages({
+    "ExcelExportAction_moduleName=Data Source Summary",})
 class ExcelExportAction implements Consumer<DataSource> {
 
     private static final Logger logger = Logger.getLogger(ExcelExportAction.class.getName());
@@ -106,10 +107,11 @@ class ExcelExportAction implements Consumer<DataSource> {
             return;
         }
 
-        File outputLoc = promptXLSXLocation(ds.getName());
+        File outputLoc = getXLSXPath(ds.getName());
         if (outputLoc == null) {
             return;
         }
+
         runXLSXExport(ds, outputLoc);
     }
 
@@ -121,61 +123,26 @@ class ExcelExportAction implements Consumer<DataSource> {
      * file already exists or cancellation.
      */
     @NbBundle.Messages({
-        "ExcelExportAction_promptAndExportToXLSX_fileExistsTitle=File Already Exists",
-        "# {0} - path",
-        "ExcelExportAction_promptAndExportToXLSX_fileExistsMessage=File at {0} already exists.",})
-    private File promptXLSXLocation(String dataSourceName) {
+        "ExcelExportAction_getXLSXPath_directory=DataSourceSummary",})
+    private File getXLSXPath(String dataSourceName) {
         String expectedExtension = "xlsx";
-        JFileChooser fc = new JFileChooser();
-        FileNameExtensionFilter xmlFilter = new FileNameExtensionFilter("XLSX file (*.xlsx)", expectedExtension);
-        fc.addChoosableFileFilter(xmlFilter);
-        fc.setFileFilter(xmlFilter);
-
         // set initial path to reports directory with filename that is 
         // a combination of the data source name and time stamp
         DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss");
         String fileName = String.format("%s-%s.xlsx", dataSourceName == null ? "" : FileUtil.escapeFileName(dataSourceName), dateFormat.format(new Date()));
-        String reportsDir = "";
         try {
-            reportsDir = Case.getCurrentCaseThrows().getReportDirectory();
-            File reportsDirFile = new File(reportsDir);
+            String reportsDir = Case.getCurrentCaseThrows().getReportDirectory();
+            File reportsDirFile = Paths.get(reportsDir, Bundle.ExcelExportAction_getXLSXPath_directory()).toFile();
             if (!reportsDirFile.exists()) {
                 reportsDirFile.mkdirs();
             }
+
+            return Paths.get(reportsDirFile.getAbsolutePath(), fileName).toFile();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.WARNING, "Unable to find reports directory.", ex);
         }
 
-        fc.setSelectedFile(Paths.get(reportsDir, fileName).toFile());
-
-        int returnVal = fc.showSaveDialog(dialogParent);
-
-        if (returnVal != JFileChooser.APPROVE_OPTION || fc.getSelectedFile() == null) {
-            return null;
-        }
-
-        File file = fc.getSelectedFile();
-
-        // insert xlsx if not at the end.
-        if (!file.getAbsolutePath().endsWith("." + expectedExtension)) {
-            file = new File(file.getAbsolutePath() + "." + expectedExtension);
-        }
-
-        // if file already exists, don't overwrite.
-        if (file.exists()) {
-            JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
-                    Bundle.ExcelExportAction_promptAndExportToXLSX_fileExistsMessage(file.getAbsolutePath()),
-                    Bundle.ExcelExportAction_promptAndExportToXLSX_fileExistsTitle(),
-                    JOptionPane.WARNING_MESSAGE);
-            return null;
-        }
-
-        // make sure directories leading to the file are present.
-        if (!file.getParentFile().exists()) {
-            file.getParentFile().mkdirs();
-        }
-
-        return file;
+        return null;
     }
 
     /**
@@ -306,5 +273,25 @@ class ExcelExportAction implements Consumer<DataSource> {
         excelExport.writeExcel(sheetExports, path);
 
         progressIndicator.finish();
+        onFinish(dataSource, path);
+    }
+
+    private void onFinish(DataSource ds, File outputLoc) {
+        try {
+            Case curCase = Case.getCurrentCaseThrows();
+            curCase.addReport(outputLoc.getParent(),
+                    Bundle.ExcelExportAction_moduleName(),
+                    outputLoc.getName(),
+                    ds);
+
+            ExcelExportDialog dialog = new ExcelExportDialog(WindowManager.getDefault().getMainWindow(), outputLoc);
+            dialog.setResizable(false);
+            dialog.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
+            dialog.setVisible(true);
+            dialog.toFront();
+
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            logger.log(Level.WARNING, "There was an error attaching report to case.", ex);
+        }
     }
 }
