@@ -18,29 +18,42 @@
  */
 package org.sleuthkit.autopsy.url.analytics.domaincategorization;
 
+import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import org.openide.util.NbBundle.Messages;
+import org.openide.util.WeakListeners;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.ColumnModel;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult.ResultType;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultCellModel;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
 import org.sleuthkit.autopsy.url.analytics.DomainCategory;
-
-// TODO Turn off when ingest running
 
 /**
  * The options panel displayed for import, export, and CRUD operations on domain
  * categories.
  */
-public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel implements OptionsPanel {
+@Messages({
+    "WebCategoriesOptionsPanel_categoryTable_suffixColumnName=Domain Suffix",
+    "WebCategoriesOptionsPanel_categoryTable_categoryColumnName=Category",})
+public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel implements OptionsPanel, AutoCloseable {
 
     private static final Logger logger = Logger.getLogger(WebCategoriesOptionsPanel.class.getName());
     private static final String DEFAULT_EXTENSION = "json";
@@ -48,10 +61,30 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
 
     private final JFileChooser fileChooser = new JFileChooser();
     private final WebCategoriesDataModel dataModel;
-    private Set<String> domainCategoriesToUpper = new HashSet<>();
+
+    private final JTablePanel<DomainCategory> categoryTable
+            = JTablePanel.getJTablePanel(Arrays.asList(
+                    new ColumnModel<DomainCategory, DefaultCellModel<?>>(
+                            Bundle.WebCategoriesOptionsPanel_categoryTable_suffixColumnName(),
+                            (domCat) -> new DefaultCellModel<>(domCat.getHostSuffix()),
+                            300
+                    ),
+                    new ColumnModel<>(
+                            Bundle.WebCategoriesOptionsPanel_categoryTable_categoryColumnName(),
+                            (domCat) -> new DefaultCellModel<>(domCat.getCategory()),
+                            200
+                    )
+            )).setKeyFunction((domCat) -> domCat.getHostSuffix());
+
+    private final PropertyChangeListener ingestListener = (evt) -> refreshComponentStates();
+    private final PropertyChangeListener weakIngestListener = WeakListeners.propertyChange(ingestListener, this);
+    private Set<String> domainSuffixes = new HashSet<>();
+    private boolean isRefreshing = false;
 
     /**
-     * Creates new form CustomWebCategoriesOptionsPanel
+     * Main constructor.
+     *
+     * @param dataModel The data model that interacts with the database.
      */
     public WebCategoriesOptionsPanel(WebCategoriesDataModel dataModel) {
         initComponents();
@@ -59,23 +92,84 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
 
         fileChooser.addChoosableFileFilter(DB_FILTER);
         fileChooser.setFileFilter(DB_FILTER);
+        categoryTable.setCellListener((evt) -> refreshComponentStates());
+        IngestManager.getInstance().addIngestJobEventListener(weakIngestListener);
         refresh();
     }
 
+    /**
+     * Returns the item selected in the table or null if no selection.
+     *
+     * @return The item selected in the table or null if no selection.
+     */
     private DomainCategory getSelected() {
-        return null;
+        return categoryTable.getSelectedItem();
     }
 
+    /**
+     * Triggers swing worker to fetch data and show in table.
+     */
     void refresh() {
-        //
+        isRefreshing = true;
+        refreshComponentStates();
+        categoryTable.showDefaultLoadingMessage();
+        new DataFetchWorker<Void, List<DomainCategory>>(
+                (noVal) -> this.dataModel.getRecords(),
+                (data) -> onRefreshedData(data),
+                null).execute();
     }
 
+    /**
+     * When the result of loading the data is returned, this function handles
+     * updating the GUI.
+     *
+     * @param categoriesResult The result of attempting to fetch the data.
+     */
+    private void onRefreshedData(DataFetchResult<List<DomainCategory>> categoriesResult) {
+        categoryTable.showDataFetchResult(categoriesResult);
+        if (categoriesResult.getResultType() == ResultType.SUCCESS && categoriesResult.getData() != null) {
+            domainSuffixes = categoriesResult.getData().stream()
+                    .map((dc) -> dc.getHostSuffix())
+                    .collect(Collectors.toSet());
+        } else {
+            domainSuffixes = new HashSet<>();
+        }
+        isRefreshing = false;
+        refreshComponentStates();
+    }
+
+    /**
+     * Refreshes the state of the components based on whether or not an item is
+     * selected as well as whether or not data is loading or ingest is
+     * happening.
+     */
+    private void refreshComponentStates() {
+        boolean selectedItem = getSelected() != null;
+        boolean isIngestRunning = IngestManager.getInstance().isIngestRunning();
+        boolean operationsPermitted = !isIngestRunning && !isRefreshing;
+
+        deleteEntryButton.setEnabled(selectedItem && operationsPermitted);
+        editEntryButton.setEnabled(selectedItem && operationsPermitted);
+
+        newEntryButton.setEnabled(operationsPermitted);
+        exportSetButton.setEnabled(operationsPermitted);
+        importSetButton.setEnabled(operationsPermitted);
+        ingestRunningWarning.setEnabled(operationsPermitted);
+        
+        ingestRunningWarning.setVisible(isIngestRunning);
+    }
+
+    /**
+     * Shows the AddEditCategoryDialog to the user and returns the user-inputted DomainCategory or null if nothing was saved.
+     * @param original If editing a value, this is the original value being edited.  If adding a new value, this should be null.
+     * @return 
+     */
     private DomainCategory getAddEditValue(DomainCategory original) {
         JFrame parent = (this.getRootPane() != null && this.getRootPane().getParent() instanceof JFrame)
                 ? (JFrame) this.getRootPane().getParent()
                 : null;
 
-        AddEditCategoryDialog addEditDialog = new AddEditCategoryDialog(parent, domainCategoriesToUpper, original);
+        AddEditCategoryDialog addEditDialog = new AddEditCategoryDialog(parent, domainSuffixes, original);
         addEditDialog.setResizable(false);
         addEditDialog.setLocationRelativeTo(parent);
         addEditDialog.setVisible(true);
@@ -100,14 +194,15 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
 
         javax.swing.JLabel panelDescription = new javax.swing.JLabel();
         javax.swing.JLabel categoriesTitle = new javax.swing.JLabel();
-        javax.swing.JButton newEntryButton = new javax.swing.JButton();
+        newEntryButton = new javax.swing.JButton();
         editEntryButton = new javax.swing.JButton();
         deleteEntryButton = new javax.swing.JButton();
-        javax.swing.JButton importSetButton = new javax.swing.JButton();
-        javax.swing.JButton exportSetButton = new javax.swing.JButton();
+        importSetButton = new javax.swing.JButton();
+        exportSetButton = new javax.swing.JButton();
         javax.swing.JPanel bottomStrut = new javax.swing.JPanel();
-        tableScrollPane = new javax.swing.JScrollPane();
+        javax.swing.JScrollPane tableScrollPane = new javax.swing.JScrollPane();
         javax.swing.JPanel categoryTablePanel = categoryTable;
+        ingestRunningWarning = new javax.swing.JLabel();
 
         setLayout(new java.awt.GridBagLayout());
 
@@ -195,15 +290,15 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
         add(exportSetButton, gridBagConstraints);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 3;
-        gridBagConstraints.gridy = 5;
+        gridBagConstraints.gridy = 6;
         gridBagConstraints.fill = java.awt.GridBagConstraints.VERTICAL;
         gridBagConstraints.weightx = 1.0;
         gridBagConstraints.weighty = 1.0;
         add(bottomStrut, gridBagConstraints);
 
         tableScrollPane.setMaximumSize(new java.awt.Dimension(325, 32767));
-        tableScrollPane.setMinimumSize(new java.awt.Dimension(325, 300));
-        tableScrollPane.setPreferredSize(new java.awt.Dimension(325, 400));
+        tableScrollPane.setMinimumSize(new java.awt.Dimension(500, 300));
+        tableScrollPane.setPreferredSize(new java.awt.Dimension(500, 400));
         tableScrollPane.setViewportView(categoryTablePanel);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -213,6 +308,16 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
         gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
         gridBagConstraints.insets = new java.awt.Insets(2, 10, 5, 0);
         add(tableScrollPane, gridBagConstraints);
+
+        ingestRunningWarning.setForeground(java.awt.Color.RED);
+        ingestRunningWarning.setText(org.openide.util.NbBundle.getMessage(WebCategoriesOptionsPanel.class, "WebCategoriesOptionsPanel.ingestRunningWarning.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 5;
+        gridBagConstraints.gridwidth = 3;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        gridBagConstraints.insets = new java.awt.Insets(10, 10, 10, 10);
+        add(ingestRunningWarning, gridBagConstraints);
     }// </editor-fold>//GEN-END:initComponents
 
     private void deleteEntryButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteEntryButtonActionPerformed
@@ -303,7 +408,10 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton deleteEntryButton;
     private javax.swing.JButton editEntryButton;
-    private javax.swing.JScrollPane tableScrollPane;
+    private javax.swing.JButton exportSetButton;
+    private javax.swing.JButton importSetButton;
+    private javax.swing.JLabel ingestRunningWarning;
+    private javax.swing.JButton newEntryButton;
     // End of variables declaration//GEN-END:variables
 
     @Override
@@ -319,5 +427,10 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
     @Override
     public void load() {
         refresh();
+    }
+
+    @Override
+    public void close() throws Exception {
+        IngestManager.getInstance().removeIngestJobEventListener(weakIngestListener);
     }
 }

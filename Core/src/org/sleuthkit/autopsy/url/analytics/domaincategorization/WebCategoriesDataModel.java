@@ -148,7 +148,7 @@ class WebCategoriesDataModel implements AutoCloseable {
      * @param category The category.
      * @return The normalized string.
      */
-    private static String getNormalizedCategory(String category) {
+    static String getNormalizedCategory(String category) {
         if (category == null) {
             return "";
         }
@@ -163,7 +163,7 @@ class WebCategoriesDataModel implements AutoCloseable {
      * @param domainSuffix The domain suffix.
      * @return The normalized string.
      */
-    private static String getNormalizedSuffix(String domainSuffix) {
+    static String getNormalizedSuffix(String domainSuffix) {
         if (domainSuffix == null) {
             return "";
         }

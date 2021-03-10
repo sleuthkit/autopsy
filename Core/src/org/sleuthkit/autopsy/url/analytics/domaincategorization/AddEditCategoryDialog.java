@@ -32,33 +32,31 @@ import org.sleuthkit.autopsy.url.analytics.DomainCategory;
 class AddEditCategoryDialog extends javax.swing.JDialog {
 
     private boolean changed = false;
-    private final Set<String> currentSuffixesToUpper;
+    private final Set<String> currentSuffixes;
     private final DomainCategory currentDomainCategory;
 
     /**
      * Main constructor if adding a new domain suffix.
      *
      * @param parent The parent frame for this dialog.
-     * @param currentSuffixesToUpper The current domain suffixes to upper case
-     * and trimmed. Used for determining repeats.
+     * @param currentSuffixes The current domain suffixes.
      */
-    AddEditCategoryDialog(java.awt.Frame parent, Set<String> currentSuffixesToUpper) {
-        this(parent, currentSuffixesToUpper, null);
+    AddEditCategoryDialog(java.awt.Frame parent, Set<String> currentSuffixes) {
+        this(parent, currentSuffixes, null);
     }
 
     /**
      * Main constructor if editing a domain suffix.
      *
      * @param parentThe parent frame for this dialog.
-     * @param currentSuffixesToUpper The current domain suffixes to upper case
-     * and trimmed. Used for determining repeats.
+     * @param currentSuffixes The current domain suffixes.
      * @param currentDomainCategory The domain category being edited. If null,
      * it will be assumed that a new domain suffix is being added.
      */
-    AddEditCategoryDialog(java.awt.Frame parent, Set<String> currentSuffixesToUpper, DomainCategory currentDomainCategory) {
+    AddEditCategoryDialog(java.awt.Frame parent, Set<String> currentSuffixes, DomainCategory currentDomainCategory) {
         super(parent, true);
         initComponents();
-        this.currentSuffixesToUpper = currentSuffixesToUpper;
+        this.currentSuffixes = currentSuffixes;
         this.currentDomainCategory = currentDomainCategory;
 
         // set title based on whether or not we are editing or adding
@@ -81,7 +79,7 @@ class AddEditCategoryDialog extends javax.swing.JDialog {
      * null if not.
      */
     DomainCategory getValue() {
-        return new DomainCategory(domainSuffixTextField.getText().trim(), categoryTextField.getText().trim());
+        return new DomainCategory(domainSuffixTextField.getText(), categoryTextField.getText());
     }
 
     /**
@@ -126,7 +124,7 @@ class AddEditCategoryDialog extends javax.swing.JDialog {
         } else if (safeCategoryStr.trim().length() == 0 || safeCategoryStr.trim().length() > WebCategoriesDataModel.getMaxCategoryLength()) {
             validationMessage = Bundle.AddEditCategoryDialog_onValueUpdate_badCategory(WebCategoriesDataModel.getMaxDomainSuffixLength());
 
-        } else if (currentSuffixesToUpper.contains(safeSuffixStr.trim().toUpperCase())) {
+        } else if (currentSuffixes.contains(WebCategoriesDataModel.getNormalizedSuffix(safeSuffixStr))) {
             validationMessage = Bundle.AddEditCategoryDialog_onValueUpdate_suffixRepeat();
 
         } else if (currentDomainCategory != null
