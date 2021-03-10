@@ -8,6 +8,7 @@ OsAccountDataPanel_basic_type=Type
 OsAccountDataPanel_realm_address=Address
 OsAccountDataPanel_realm_confidence=Confidence
 OsAccountDataPanel_realm_name=Name
+OsAccountDataPanel_realm_scope=Scope
 OsAccountDataPanel_realm_title=Realm Properties
 OsAccountDataPanel_realm_unknown=Unknown
 OsAccountViewer_title=Os Account

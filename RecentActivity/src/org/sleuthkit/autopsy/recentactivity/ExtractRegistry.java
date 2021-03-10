@@ -102,6 +102,7 @@ import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.HostManager;
 import org.sleuthkit.datamodel.OsAccount;
 import org.sleuthkit.datamodel.OsAccountAttribute;
+import org.sleuthkit.datamodel.OsAccountInstance;
 import org.sleuthkit.datamodel.OsAccountManager;
 import org.sleuthkit.datamodel.OsAccountRealm;
 import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamException;
@@ -1166,6 +1167,7 @@ class ExtractRegistry extends Extract {
             //add remaining userinfos as accounts;
             for (Map<String, String> userInfo : userInfoMap.values()) {
                 OsAccount osAccount = accountMgr.createWindowsAccount(userInfo.get(SID_KEY), null, null, host, OsAccountRealm.RealmScope.UNKNOWN);
+                accountMgr.createOsAccountInstance(osAccount, (DataSource)dataSource, OsAccountInstance.OsAccountInstanceType.LAUNCHED);
                 updateOsAccount(osAccount, userInfo, groupMap.get(userInfo.get(SID_KEY)), regAbstractFile);
             }
             
@@ -2214,6 +2216,7 @@ class ExtractRegistry extends Extract {
         OsAccount osAccount;
         if (!optional.isPresent()) {
             osAccount = accountMgr.createWindowsAccount(sid, userName != null && userName.isEmpty() ? null : userName, null, host, OsAccountRealm.RealmScope.UNKNOWN);
+            accountMgr.createOsAccountInstance(osAccount, (DataSource)dataSource, OsAccountInstance.OsAccountInstanceType.LAUNCHED);
         } else {
             osAccount = optional.get();
             if (userName != null && !userName.isEmpty()) {
@@ -2369,16 +2372,14 @@ class ExtractRegistry extends Extract {
             }
         }
 
-        String settingString = getSettingsFromMap(ACCOUNT_SETTINGS_FLAGS, userInfo);
+        String settingString = getSettingsFromMap(PASSWORD_SETTINGS_FLAGS, userInfo);
         if (!settingString.isEmpty()) {
-            settingString = settingString.substring(0, settingString.length() - 2);
             attributes.add(createOsAccountAttribute(ATTRIBUTE_TYPE.TSK_PASSWORD_SETTINGS,
                     settingString, osAccount, host, regFile));
         }
 
         settingString = getSettingsFromMap(ACCOUNT_SETTINGS_FLAGS, userInfo);
         if (!settingString.isEmpty()) {
-            settingString = settingString.substring(0, settingString.length() - 2);
             attributes.add(createOsAccountAttribute(ATTRIBUTE_TYPE.TSK_ACCOUNT_SETTINGS,
                     settingString, osAccount, host, regFile));
         }
