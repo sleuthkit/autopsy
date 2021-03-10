@@ -58,6 +58,7 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
 
         fileChooser.addChoosableFileFilter(DB_FILTER);
         fileChooser.setFileFilter(DB_FILTER);
+        refresh();
     }
 
     private DomainCategory getSelected() {
@@ -65,7 +66,7 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
     }
 
     void refresh() {
-        
+        /
     }
 
     private DomainCategory getAddEditValue(DomainCategory original) {
@@ -98,14 +99,14 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
 
         javax.swing.JLabel panelDescription = new javax.swing.JLabel();
         javax.swing.JLabel categoriesTitle = new javax.swing.JLabel();
-        javax.swing.JScrollPane categoriesScrollPane = new javax.swing.JScrollPane();
-        categoriesTable = new javax.swing.JTable();
         javax.swing.JButton newEntryButton = new javax.swing.JButton();
         editEntryButton = new javax.swing.JButton();
         deleteEntryButton = new javax.swing.JButton();
         javax.swing.JButton importSetButton = new javax.swing.JButton();
         javax.swing.JButton exportSetButton = new javax.swing.JButton();
         javax.swing.JPanel bottomStrut = new javax.swing.JPanel();
+        tableScrollPane = new javax.swing.JScrollPane();
+        javax.swing.JPanel categoryTablePanel = categoryTable;
 
         setLayout(new java.awt.GridBagLayout());
 
@@ -126,28 +127,6 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
         gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
         gridBagConstraints.insets = new java.awt.Insets(0, 10, 0, 0);
         add(categoriesTitle, gridBagConstraints);
-
-        categoriesScrollPane.setMinimumSize(new java.awt.Dimension(250, 350));
-
-        categoriesTable.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null}
-            },
-            new String [] {
-                "Title 1", "Title 2", "Title 3", "Title 4"
-            }
-        ));
-        categoriesScrollPane.setViewportView(categoriesTable);
-
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 2;
-        gridBagConstraints.gridwidth = 3;
-        gridBagConstraints.insets = new java.awt.Insets(0, 10, 5, 0);
-        add(categoriesScrollPane, gridBagConstraints);
 
         newEntryButton.setText(org.openide.util.NbBundle.getMessage(WebCategoriesOptionsPanel.class, "WebCategoriesOptionsPanel.newEntryButton.text")); // NOI18N
         newEntryButton.addActionListener(new java.awt.event.ActionListener() {
@@ -220,6 +199,19 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
         gridBagConstraints.weightx = 1.0;
         gridBagConstraints.weighty = 1.0;
         add(bottomStrut, gridBagConstraints);
+
+        tableScrollPane.setMaximumSize(new java.awt.Dimension(325, 32767));
+        tableScrollPane.setMinimumSize(new java.awt.Dimension(325, 300));
+        tableScrollPane.setPreferredSize(new java.awt.Dimension(325, 400));
+        tableScrollPane.setViewportView(categoryTablePanel);
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 2;
+        gridBagConstraints.gridwidth = 3;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        gridBagConstraints.insets = new java.awt.Insets(2, 10, 5, 0);
+        add(tableScrollPane, gridBagConstraints);
     }// </editor-fold>//GEN-END:initComponents
 
     private void deleteEntryButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteEntryButtonActionPerformed
@@ -308,9 +300,9 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JTable categoriesTable;
     private javax.swing.JButton deleteEntryButton;
     private javax.swing.JButton editEntryButton;
+    private javax.swing.JScrollPane tableScrollPane;
     // End of variables declaration//GEN-END:variables
 
     @Override
