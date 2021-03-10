@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.discovery.search;
 
+import java.util.Set;
+import java.util.HashSet;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.Content;
@@ -36,7 +38,7 @@ public class ResultDomain extends Result {
     private final Long filesDownloaded;
     private final Long countOfKnownAccountTypes;
     private final String accountTypes;
-    private String webCategory;
+    private final Set<String> webCategories = new HashSet<>();
 
     private final Content dataSource;
     private final long dataSourceId;
@@ -75,7 +77,7 @@ public class ResultDomain extends Result {
         this.pageViewsInLast60 = resultDomain.getPageViewsInLast60Days();
         this.filesDownloaded = resultDomain.getFilesDownloaded();
         this.countOfKnownAccountTypes = resultDomain.getCountOfKnownAccountTypes();
-        this.accountTypes = resultDomain.getWebCategory();
+        this.accountTypes = resultDomain.getAccountTypes();
     }
 
     /**
@@ -141,20 +143,24 @@ public class ResultDomain extends Result {
     @NbBundle.Messages({
         "ResultDomain_getDefaultCategory=Uncategorized"
     })
-    public String getWebCategory() {
-        if (webCategory == null) {
-            return Bundle.ResultDomain_getDefaultCategory();
+    public Set<String> getWebCategories() {
+        Set<String> returnList = new HashSet<>();
+        if (webCategories.isEmpty()) {
+            returnList.add(Bundle.ResultDomain_getDefaultCategory());
         } else {
-            return webCategory;
+            returnList.addAll(webCategories);
         }
+        return returnList;
     }
 
     /**
-     * Set the web category for this domain (derived from TSK_WEB_CATEGORY)
+     * Add the web categories for this domain (derived from TSK_WEB_CATEGORY)
      * artifacts.
      */
-    public void setWebCategory(String webCategory) {
-        this.webCategory = webCategory;
+    public void addWebCategories(Set<String> categories) {
+        if (categories != null && !categories.isEmpty()) {
+            this.webCategories.addAll(categories);
+        }
     }
 
     /**

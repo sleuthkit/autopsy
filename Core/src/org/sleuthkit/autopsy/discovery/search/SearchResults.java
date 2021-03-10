@@ -21,9 +21,11 @@ package org.sleuthkit.autopsy.discovery.search;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryKeyUtils.GroupKey;
@@ -83,13 +85,13 @@ class SearchResults {
                  * of the combination of categories. So that results will show
                  * up in every group for which they have a category.
                  */
-                String categoryString = ((ResultDomain) result).getWebCategory();
-                if (!StringUtils.isBlank(categoryString)) {
-                    String[] categories = categoryString.split(", ");
-                    ResultDomain currentResult = (ResultDomain) result;
-                    for (String category : categories) {
+                for (String category : ((ResultDomain) result).getWebCategories()) {
+                    if (!StringUtils.isBlank(category)) {
+                        ResultDomain currentResult = (ResultDomain) result;
+                        Set<String> newCategorySet = new HashSet<>();
+                        newCategorySet.add(category);
                         ResultDomain copyOfResult = new ResultDomain(currentResult);
-                        copyOfResult.setWebCategory(category);
+                        copyOfResult.addWebCategories(newCategorySet);
                         GroupKey groupKey = attrType.getGroupKey(copyOfResult);
                         //purposefully adding original instead of copy so it will display all categories when looking at domain
                         addResultToGroupMap(groupKey, result);
@@ -112,7 +114,7 @@ class SearchResults {
     private void addResultToGroupMap(GroupKey groupKey, Result result) {
         if (!groupMap.containsKey(groupKey)) {
             groupMap.put(groupKey, new Group(groupSortingType, groupKey));
-        }
+        } 
         groupMap.get(groupKey).addResult(result);
     }
 
@@ -198,7 +200,6 @@ class SearchResults {
         for (Group group : groupList) {
             map.put(group.getGroupKey(), group.getResults());
         }
-
         return map;
     }
 }

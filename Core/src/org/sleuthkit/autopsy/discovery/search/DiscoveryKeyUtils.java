@@ -23,6 +23,8 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.time.temporal.TemporalAdjusters;
 import java.util.Collections;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.TimeZone;
@@ -796,18 +798,20 @@ public class DiscoveryKeyUtils {
             return 0;
         }
     }
-    
+
     /**
      * Group key representing a domain category (TSK_WEB_CATEGORY artifact).
      */
     static class DomainCategoryGroupKey extends GroupKey {
-        
-        private final String webCategory;
-        
+
+        private final Set<String> webCategories = new HashSet<>();
+        private final String displayName;
+
         DomainCategoryGroupKey(Result result) {
             if (result instanceof ResultDomain) {
                 ResultDomain domain = (ResultDomain) result;
-                this.webCategory = domain.getWebCategory();
+                this.webCategories.addAll(domain.getWebCategories());
+                displayName = String.join(",", webCategories);
             } else {
                 throw new IllegalArgumentException("Input result should be of type ResultDomain");
             }
@@ -815,7 +819,8 @@ public class DiscoveryKeyUtils {
 
         @Override
         String getDisplayName() {
-            return this.webCategory;
+
+            return this.displayName;
         }
 
         @Override
@@ -828,31 +833,37 @@ public class DiscoveryKeyUtils {
 
         @Override
         public int hashCode() {
-            return Objects.hash(getWebCategory());
+            return Objects.hash(webCategories);
         }
 
         @Override
         public int compareTo(GroupKey otherGroupKey) {
             if (otherGroupKey instanceof DomainCategoryGroupKey) {
-                DomainCategoryGroupKey webCategoryKey = (DomainCategoryGroupKey) otherGroupKey;
-                return this.webCategory.compareTo(webCategoryKey.getWebCategory());
+                if (webCategories.size() != ((DomainCategoryGroupKey) otherGroupKey).getWebCategories().size()) {
+                    return 1;
+                }
+                if (webCategories.containsAll(((DomainCategoryGroupKey) otherGroupKey).getWebCategories())) {
+                    return 0;
+                } else {
+                    return -1;
+                }
             } else {
                 return compareClassNames(otherGroupKey);
             }
         }
-        
-        String getWebCategory() {
-            return this.webCategory;
+
+        Set<String> getWebCategories() {
+            return Collections.unmodifiableSet(webCategories);
         }
     }
-    
+
     /**
      * Key representing a central repository notable status.
      */
     static class PreviouslyNotableGroupKey extends GroupKey {
-        
+
         private final SearchData.PreviouslyNotable notableStatus;
-        
+
         PreviouslyNotableGroupKey(Result result) {
             this.notableStatus = result.getPreviouslyNotableInCR();
         }
@@ -884,7 +895,7 @@ public class DiscoveryKeyUtils {
                 return compareClassNames(otherGroupKey);
             }
         }
-        
+
         SearchData.PreviouslyNotable getStatus() {
             return notableStatus;
         }
@@ -1163,7 +1174,7 @@ public class DiscoveryKeyUtils {
         String getDisplayName() {
             MonthAbbreviation currentCutOffMonth = MonthAbbreviation.fromMonthValue(currentWeekCutOff.getMonthValue());
             return Bundle.DiscoveryAttributes_ActivityDateGroupKey_getDisplayNameTemplate(
-                    currentCutOffMonth.toString(), Integer.toString(currentWeekCutOff.getDayOfMonth()), 
+                    currentCutOffMonth.toString(), Integer.toString(currentWeekCutOff.getDayOfMonth()),
                     Integer.toString(currentWeekCutOff.getYear()));
         }
 
@@ -1196,11 +1207,11 @@ public class DiscoveryKeyUtils {
             }
         }
     }
-    
+
     /**
-     * Get the next closed Sunday given an epoch time and timezone.
-     * Dates for grouping are managed on a weekly basis. Each Sunday
-     * acts as the boundary and representative for the week.
+     * Get the next closed Sunday given an epoch time and timezone. Dates for
+     * grouping are managed on a weekly basis. Each Sunday acts as the boundary
+     * and representative for the week.
      */
     private static ZonedDateTime getCurrentWeekCutOff(long epochSeconds, ResultDomain domainResult) {
         Instant startActivityAsInsant = Instant.ofEpochSecond(epochSeconds);
@@ -1234,12 +1245,12 @@ public class DiscoveryKeyUtils {
                 throw new IllegalArgumentException("Expected a domain result only.");
             }
         }
-        
+
         @Override
         String getDisplayName() {
             MonthAbbreviation currentCutOffMonth = MonthAbbreviation.fromMonthValue(currentWeekCutOff.getMonthValue());
             return Bundle.DiscoveryAttributes_ActivityDateGroupKey_getDisplayNameTemplate(
-                    currentCutOffMonth.toString(), Integer.toString(currentWeekCutOff.getDayOfMonth()), 
+                    currentCutOffMonth.toString(), Integer.toString(currentWeekCutOff.getDayOfMonth()),
                     Integer.toString(currentWeekCutOff.getYear()));
         }
 
@@ -1274,9 +1285,8 @@ public class DiscoveryKeyUtils {
     }
 
     /**
-     * Key representing the number of page views.
-     * Page views are defined as the number of TSK_WEB_HISTORY artifacts that match
-     * a domain value.
+     * Key representing the number of page views. Page views are defined as the
+     * number of TSK_WEB_HISTORY artifacts that match a domain value.
      */
     static class PageViewsGroupKey extends GroupKey {
 

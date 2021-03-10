@@ -45,7 +45,6 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import java.util.StringJoiner;
-import org.apache.commons.lang.StringUtils;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizer;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CATEGORIZATION;
 
@@ -157,12 +156,11 @@ public class DiscoveryAttributes {
         public void addAttributeToResults(List<Result> results, SleuthkitCase caseDb,
                 CentralRepository centralRepoDb) throws DiscoveryException {
             try {
-                Map<String, String> domainsToCategories = getDomainsWithWebCategories(caseDb);
+                Map<String, Set<String>> domainsToCategories = getDomainsWithWebCategories(caseDb);
                 for (Result result : results) {
                     if (result instanceof ResultDomain) {
                         ResultDomain domain = (ResultDomain) result;
-                        String webCategory = domainsToCategories.get(domain.getDomain());
-                        domain.setWebCategory(webCategory);
+                        domain.addWebCategories(domainsToCategories.get(domain.getDomain()));
                     }
                 }
             } catch (TskCoreException | InterruptedException ex) {
@@ -175,30 +173,23 @@ public class DiscoveryAttributes {
          * the category name attribute. Each ResultDomain is then parsed and
          * matched against this map of values.
          */
-        private Map<String, String> getDomainsWithWebCategories(SleuthkitCase caseDb) throws TskCoreException, InterruptedException {
-            Map<String, String> domainToCategory = new HashMap<>();
+        private Map<String, Set<String>> getDomainsWithWebCategories(SleuthkitCase caseDb) throws TskCoreException, InterruptedException {
+            Map<String, Set<String>> domainToCategory = new HashMap<>();
 
             for (BlackboardArtifact artifact : caseDb.getBlackboardArtifacts(TSK_WEB_CATEGORIZATION)) {
                 if (Thread.currentThread().isInterrupted()) {
                     throw new InterruptedException();
                 }
-
                 BlackboardAttribute webCategory = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME));
                 BlackboardAttribute domain = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN));
-
                 if (webCategory != null && domain != null) {
                     String domainDisplayName = domain.getValueString().trim().toLowerCase();
-
-                    String webCatDisplayName = webCategory.getValueString();
-                    //since a domain may have been categorized as more than one category
-                    String existingCategories = domainToCategory.get(domainDisplayName);
-                    if (!StringUtils.isBlank(existingCategories)) {
-                        webCatDisplayName = webCatDisplayName + ", " + existingCategories;
+                    if (!domainToCategory.containsKey(domainDisplayName)) {
+                        domainToCategory.put(domainDisplayName, new HashSet<>());
                     }
-                    domainToCategory.put(domainDisplayName, webCatDisplayName);
+                    domainToCategory.get(domainDisplayName).add(webCategory.getValueString());
                 }
             }
-
             return domainToCategory;
         }
     }
