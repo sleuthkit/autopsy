@@ -21,14 +21,18 @@ package org.sleuthkit.autopsy.datasourcesummary.ui;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.AnalysisSummary;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer.DefaultCellModel;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.ColumnModel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetcher;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultCellModel;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelExport.ExcelSheetExport;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.IngestRunningLabel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel.ColumnModel;
 import org.sleuthkit.datamodel.DataSource;
 
 /**
@@ -38,29 +42,34 @@ import org.sleuthkit.datamodel.DataSource;
 @Messages({
     "AnalysisPanel_keyColumn_title=Name",
     "AnalysisPanel_countColumn_title=Count",
-    "AnalysisPanel_keywordSearchModuleName=Keyword Search"
-})
+    "AnalysisPanel_keywordSearchModuleName=Keyword Search",
+    "AnalysisPanel_hashsetHits_tabName=Hashset Hits",
+    "AnalysisPanel_keywordHits_tabName=Keyword Hits",
+    "AnalysisPanel_interestingItemHits_tabName=Interesting Item Hits",})
 public class AnalysisPanel extends BaseDataSourceSummaryPanel {
 
     private static final long serialVersionUID = 1L;
 
-    /**
-     * Default Column definitions for each table
-     */
-    private static final List<ColumnModel<Pair<String, Long>>> DEFAULT_COLUMNS = Arrays.asList(
+    // Default Column definitions for each table
+    private static final List<ColumnModel<Pair<String, Long>, DefaultCellModel<?>>> DEFAULT_COLUMNS = Arrays.asList(
             new ColumnModel<>(
                     Bundle.AnalysisPanel_keyColumn_title(),
-                    (pair) -> new DefaultCellModel(pair.getKey()),
+                    (pair) -> new DefaultCellModel<>(pair.getKey()),
                     300
             ),
             new ColumnModel<>(
                     Bundle.AnalysisPanel_countColumn_title(),
-                    (pair) -> new DefaultCellModel(String.valueOf(pair.getValue())),
+                    (pair) -> new DefaultCellModel<>(pair.getValue()),
                     100
             )
     );
 
+    // Identifies the key in the records for the tables.
     private static final Function<Pair<String, Long>, String> DEFAULT_KEY_PROVIDER = (pair) -> pair.getKey();
+
+    private final DataFetcher<DataSource, List<Pair<String, Long>>> hashsetsFetcher;
+    private final DataFetcher<DataSource, List<Pair<String, Long>>> keywordsFetcher;
+    private final DataFetcher<DataSource, List<Pair<String, Long>>> interestingItemsFetcher;
 
     private final JTablePanel<Pair<String, Long>> hashsetHitsTable
             = JTablePanel.getJTablePanel(DEFAULT_COLUMNS)
@@ -98,19 +107,23 @@ public class AnalysisPanel extends BaseDataSourceSummaryPanel {
     public AnalysisPanel(AnalysisSummary analysisData) {
         super(analysisData);
 
+        hashsetsFetcher = (dataSource) -> analysisData.getHashsetCounts(dataSource);
+        keywordsFetcher = (dataSource) -> analysisData.getKeywordCounts(dataSource);
+        interestingItemsFetcher = (dataSource) -> analysisData.getInterestingItemCounts(dataSource);
+
         // set up data acquisition methods
         dataFetchComponents = Arrays.asList(
                 // hashset hits loading components
                 new DataFetchWorker.DataFetchComponents<>(
-                        (dataSource) -> analysisData.getHashsetCounts(dataSource),
+                        hashsetsFetcher,
                         (result) -> hashsetHitsTable.showDataFetchResult(result)),
                 // keyword hits loading components
                 new DataFetchWorker.DataFetchComponents<>(
-                        (dataSource) -> analysisData.getKeywordCounts(dataSource),
+                        keywordsFetcher,
                         (result) -> keywordHitsTable.showDataFetchResult(result)),
                 // interesting item hits loading components
                 new DataFetchWorker.DataFetchComponents<>(
-                        (dataSource) -> analysisData.getInterestingItemCounts(dataSource),
+                        interestingItemsFetcher,
                         (result) -> interestingItemsTable.showDataFetchResult(result))
         );
 
@@ -215,6 +228,16 @@ public class AnalysisPanel extends BaseDataSourceSummaryPanel {
             .addComponent(mainScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
+
+    @Override
+    List<ExcelSheetExport> getExports(DataSource dataSource) {
+        return Stream.of(
+                getTableExport(hashsetsFetcher, DEFAULT_COLUMNS, Bundle.AnalysisPanel_hashsetHits_tabName(), dataSource),
+                getTableExport(keywordsFetcher, DEFAULT_COLUMNS, Bundle.AnalysisPanel_keywordHits_tabName(), dataSource),
+                getTableExport(interestingItemsFetcher, DEFAULT_COLUMNS, Bundle.AnalysisPanel_interestingItemHits_tabName(), dataSource))
+                .filter(sheet -> sheet != null)
+                .collect(Collectors.toList());
+    }
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
