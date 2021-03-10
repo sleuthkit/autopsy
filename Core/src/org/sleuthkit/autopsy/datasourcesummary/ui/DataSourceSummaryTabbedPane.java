@@ -25,9 +25,12 @@ import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.IngestJobInfoPanel;
+import org.sleuthkit.autopsy.datasourcesummary.ui.ExcelExportAction.ExportableTab;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelExport.ExcelSheetExport;
 import org.sleuthkit.datamodel.DataSource;
 
 /**
@@ -43,7 +46,8 @@ import org.sleuthkit.datamodel.DataSource;
     "DataSourceSummaryTabbedPane_pastCasesTab_title=Past Cases",
     "DataSourceSummaryTabbedPane_analysisTab_title=Analysis",
     "DataSourceSummaryTabbedPane_geolocationTab_title=Geolocation",
-    "DataSourceSummaryTabbedPane_timelineTab_title=Timeline"
+    "DataSourceSummaryTabbedPane_timelineTab_title=Timeline",
+    "DataSourceSummaryTabbedPane_exportTab_title=Export"
 })
 public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
 
@@ -51,27 +55,13 @@ public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
      * Records of tab information (i.e. title, component, function to call on
      * new data source).
      */
-    private class DataSourceTab {
+    private class DataSourceTab implements ExportableTab {
 
         private final String tabTitle;
         private final Component component;
         private final Consumer<DataSource> onDataSource;
+        private final Function<DataSource, List<ExcelSheetExport>> excelExporter;
         private final Runnable onClose;
-
-        /**
-         * Main constructor.
-         *
-         * @param tabTitle The title of the tab.
-         * @param component The component to be displayed.
-         * @param onDataSource The function to be called on a new data source.
-         * @param onClose Called to cleanup resources when closing tabs.
-         */
-        DataSourceTab(String tabTitle, Component component, Consumer<DataSource> onDataSource, Runnable onClose) {
-            this.tabTitle = tabTitle;
-            this.component = component;
-            this.onDataSource = onDataSource;
-            this.onClose = onClose;
-        }
 
         /**
          * Main constructor.
@@ -81,19 +71,35 @@ public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
          * @param notifyParentClose Notifies parent to trigger a close.
          */
         DataSourceTab(String tabTitle, BaseDataSourceSummaryPanel panel) {
-
+            this(tabTitle, panel, panel::setDataSource, panel::getExports, panel::close);
             panel.setParentCloseListener(() -> notifyParentClose());
+        }
 
+        /**
+         * Main constructor.
+         *
+         * @param tabTitle The title of the tab.
+         * @param component The component to be displayed.
+         * @param onDataSource The function to be called on a new data source.
+         * @param excelExporter The function that creates excel exports for a
+         * particular data source for this tab. Can be null for no exports.
+         * @param onClose Called to cleanup resources when closing tabs. Can be
+         * null for no-op.
+         */
+        DataSourceTab(String tabTitle, Component component, Consumer<DataSource> onDataSource,
+                Function<DataSource, List<ExcelSheetExport>> excelExporter, Runnable onClose) {
             this.tabTitle = tabTitle;
-            this.component = panel;
-            this.onDataSource = panel::setDataSource;
-            this.onClose = panel::close;
+            this.component = component;
+            this.onDataSource = onDataSource;
+            this.excelExporter = excelExporter;
+            this.onClose = onClose;
         }
 
         /**
          * @return The title for the tab.
          */
-        String getTabTitle() {
+        @Override
+        public String getTabTitle() {
             return tabTitle;
         }
 
@@ -111,6 +117,11 @@ public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
             return onDataSource;
         }
 
+        @Override
+        public List<ExcelSheetExport> getExcelExports(DataSource dataSource) {
+            return excelExporter == null ? null : excelExporter.apply(dataSource);
+        }
+
         /**
          * @return The action for closing resources in the tab.
          */
@@ -120,13 +131,17 @@ public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
     }
 
     private static final long serialVersionUID = 1L;
+
     // needs to match value provided for card layout in designed
     private static final String TABBED_PANE = "tabbedPane";
     private static final String NO_DATASOURCE_PANE = "noDataSourcePane";
 
     private Runnable notifyParentClose = null;
     private final IngestJobInfoPanel ingestHistoryPanel = new IngestJobInfoPanel();
-
+    
+    // create an export panel whose button triggers the export to XLSX action
+    private final ExportPanel exportPanel = new ExportPanel();
+    
     private final List<DataSourceTab> tabs = Arrays.asList(
             new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_typesTab_title(), new TypesPanel()),
             new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_userActivityTab_title(), new UserActivityPanel()),
@@ -136,11 +151,24 @@ public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
             new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_geolocationTab_title(), new GeolocationPanel()),
             new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_timelineTab_title(), new TimelinePanel()),
             // do nothing on closing 
-            new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_ingestHistoryTab_title(), ingestHistoryPanel, ingestHistoryPanel::setDataSource, () -> {
-            }),
-            new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_detailsTab_title(), new ContainerPanel())
+            new DataSourceTab(
+                    Bundle.DataSourceSummaryTabbedPane_ingestHistoryTab_title(),
+                    ingestHistoryPanel,
+                    ingestHistoryPanel::setDataSource,
+                    null,
+                    null),
+            new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_detailsTab_title(), new ContainerPanel()),
+            new DataSourceTab(
+                    Bundle.DataSourceSummaryTabbedPane_exportTab_title(),
+                    exportPanel,
+                    null,
+                    null,
+                    null)
     );
-
+    
+    // the action that does the export
+    private final ExcelExportAction exportAction = new ExcelExportAction(tabs);
+  
     private DataSource dataSource = null;
     private CardLayout cardLayout;
 
@@ -194,6 +222,9 @@ public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
 
         // set this to no datasource initially
         cardLayout.show(this, NO_DATASOURCE_PANE);
+        
+        // set action for when user requests xlsx export
+        exportPanel.setXlsxExportAction(() -> exportAction.accept(getDataSource()));
     }
 
     /**
@@ -212,11 +243,13 @@ public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
      */
     public void setDataSource(DataSource dataSource) {
         this.dataSource = dataSource;
-        
+
         for (DataSourceTab tab : tabs) {
-            tab.getOnDataSource().accept(dataSource);
+            if (tab.getOnDataSource() != null) {
+                tab.getOnDataSource().accept(dataSource);
+            }
         }
-                    
+
         if (this.dataSource == null) {
             cardLayout.show(this, NO_DATASOURCE_PANE);
         } else {
@@ -229,11 +262,14 @@ public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
      */
     public void close() {
         for (DataSourceTab tab : tabs) {
-            tab.getOnClose().run();
+            if (tab.getOnClose() != null) {
+                tab.getOnClose().run();
+            }
         }
 
         Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), caseEventsListener);
     }
+
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -244,12 +280,12 @@ public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        tabbedPane = new javax.swing.JTabbedPane();
         javax.swing.JPanel noDataSourcePane = new javax.swing.JPanel();
         javax.swing.JLabel noDataSourceLabel = new javax.swing.JLabel();
+        javax.swing.JPanel tabContentPane = new javax.swing.JPanel();
+        tabbedPane = new javax.swing.JTabbedPane();
 
         setLayout(new java.awt.CardLayout());
-        add(tabbedPane, "tabbedPane");
 
         noDataSourcePane.setLayout(new java.awt.BorderLayout());
 
@@ -258,6 +294,11 @@ public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
         noDataSourcePane.add(noDataSourceLabel, java.awt.BorderLayout.CENTER);
 
         add(noDataSourcePane, "noDataSourcePane");
+
+        tabContentPane.setLayout(new java.awt.BorderLayout());
+        tabContentPane.add(tabbedPane, java.awt.BorderLayout.CENTER);
+
+        add(tabContentPane, "tabbedPane");
     }// </editor-fold>//GEN-END:initComponents
 
 

@@ -35,7 +35,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.prefs.PreferenceChangeEvent;
 import java.util.prefs.PreferenceChangeListener;
-import java.util.stream.Stream;
 import javax.swing.Action;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
@@ -82,8 +81,7 @@ import org.sleuthkit.autopsy.datamodel.InterestingHits;
 import org.sleuthkit.autopsy.datamodel.KeywordHits;
 import org.sleuthkit.autopsy.datamodel.ResultsNode;
 import org.sleuthkit.autopsy.datamodel.AutopsyTreeChildFactory;
-import org.sleuthkit.autopsy.datamodel.DataSourceGrouping;
-import org.sleuthkit.autopsy.datamodel.DataSourcesByTypeNode;
+import org.sleuthkit.autopsy.datamodel.PersonGroupingNode;
 import org.sleuthkit.autopsy.datamodel.Tags;
 import org.sleuthkit.autopsy.datamodel.ViewsNode;
 import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
@@ -1086,7 +1084,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         if (node == null) {
             return null;
         } else if (node.getLookup().lookup(Host.class) != null
-                || node.getLookup().lookup(Person.class) != null) {
+                || node.getLookup().lookup(Person.class) != null
+                || PersonGroupingNode.getUnknownPersonId().equals(node.getLookup().lookup(String.class))) {
             Children children = node.getChildren();
             Node[] childNodes = children == null ? null : children.getNodes();
             if (childNodes != null) {

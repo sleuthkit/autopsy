@@ -1,0 +1,15 @@
+OsAccountDataPanel_basic_address=Address
+OsAccountDataPanel_basic_admin=Administrator
+OsAccountDataPanel_basic_creationDate=Creation Date
+OsAccountDataPanel_basic_fullname=Full Name
+OsAccountDataPanel_basic_login=Login
+OsAccountDataPanel_basic_title=Basic Properties
+OsAccountDataPanel_basic_type=Type
+OsAccountDataPanel_realm_address=Address
+OsAccountDataPanel_realm_confidence=Confidence
+OsAccountDataPanel_realm_name=Name
+OsAccountDataPanel_realm_title=Realm Properties
+OsAccountDataPanel_realm_unknown=Unknown
+OsAccountViewer_title=Os Account
+OsAccountViewer_tooltip=Viewer for OS accounts related to the selected node.
+TableDataPanel.titleLabel.text=Title
