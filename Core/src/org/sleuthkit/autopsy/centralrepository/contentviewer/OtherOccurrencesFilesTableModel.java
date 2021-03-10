@@ -130,7 +130,7 @@ public class OtherOccurrencesFilesTableModel extends AbstractTableModel {
                 //place holder value will be used since correlation attribute was unavailble
             } catch (NoCurrentCaseException ex) {
                 logger.log(Level.WARNING, "Unable to get current case", ex);
-                caseUUID = DataContentViewerOtherCases.getPlaceholderUUID();
+                caseUUID = OtherOccurrencesPanel.getPlaceholderUUID();
             }
         }
         return nodeData.getCaseName() + nodeData.getDataSourceName() + nodeData.getDeviceID() + nodeData.getFilePath() + caseUUID;

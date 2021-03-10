@@ -43,7 +43,15 @@ import org.sleuthkit.datamodel.TskDataException;
  */
 public class DataSourcesNode extends DisplayableItemNode {
 
-    public static final String NAME = NbBundle.getMessage(DataSourcesNode.class, "DataSourcesNode.name");
+    private static final String NAME = NbBundle.getMessage(DataSourcesNode.class, "DataSourcesNode.name");
+    
+    /**
+     * @return The name used to identify the node of this type with a lookup.
+     */
+    public static String getNameIdentifier() {
+        return NAME;
+    }
+    
     private final String displayName;
 
     // NOTE: The images passed in via argument will be ignored.

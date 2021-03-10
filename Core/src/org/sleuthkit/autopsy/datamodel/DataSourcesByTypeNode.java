@@ -33,7 +33,6 @@ import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.datamodel.Host.HostStatus;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -95,6 +94,13 @@ public class DataSourcesByTypeNode extends DisplayableItemNode {
     
     private static final String NAME = Bundle.DataSourcesHostsNode_name();
 
+    /**
+     * @return The name used to identify the node of this type with a lookup.
+     */
+    public static String getNameIdentifier() {
+        return NAME;
+    }
+    
     /**
      * Main constructor.
      */

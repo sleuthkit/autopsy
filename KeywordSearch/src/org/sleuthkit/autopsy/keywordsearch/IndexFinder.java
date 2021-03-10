@@ -21,10 +21,8 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.io.File;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.logging.Level;
 import org.apache.commons.lang.math.NumberUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.appservices.AutopsyService;
 
 /**
@@ -32,7 +30,6 @@ import org.sleuthkit.autopsy.appservices.AutopsyService;
  */
 class IndexFinder {
 
-    private static final Logger logger = Logger.getLogger(IndexFinder.class.getName());
     private static final String KWS_OUTPUT_FOLDER_NAME = "keywordsearch";
     private static final String KWS_DATA_FOLDER_NAME = "data";
     private static final String INDEX_FOLDER_NAME = "index";
@@ -48,7 +45,7 @@ class IndexFinder {
         return CURRENT_SOLR_SCHEMA_VERSION;
     }
 
-    static Index findLatestVersionIndexDir(List<Index> allIndexes) {
+    static Index findLatestVersionIndex(List<Index> allIndexes) {
         for (Index index : allIndexes) {
             if (index.getSolrVersion().equals(CURRENT_SOLR_VERSION) && index.getSchemaVersion().equals(CURRENT_SOLR_SCHEMA_VERSION)) {
                 return index;
@@ -57,7 +54,7 @@ class IndexFinder {
         return null;
     }
 
-    static Index createLatestVersionIndexDir(Case theCase) throws AutopsyService.AutopsyServiceException {
+    static Index createLatestVersionIndex(Case theCase) throws AutopsyService.AutopsyServiceException {
         String indexFolderName = "solr" + CURRENT_SOLR_VERSION + "_schema" + CURRENT_SOLR_SCHEMA_VERSION;
         // new index should be stored in "\ModuleOutput\keywordsearch\data\solrX_schemaY\index"
         File targetDirPath = Paths.get(theCase.getModuleDirectory(), KWS_OUTPUT_FOLDER_NAME, KWS_DATA_FOLDER_NAME, indexFolderName, INDEX_FOLDER_NAME).toFile(); //NON-NLS

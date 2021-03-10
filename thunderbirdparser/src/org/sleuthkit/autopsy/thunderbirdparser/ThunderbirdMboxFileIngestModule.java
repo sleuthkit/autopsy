@@ -619,8 +619,6 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
                         size, cTime, crTime, aTime, mTime, true, abstractFile, "",
                         EmailParserModuleFactory.getModuleName(), EmailParserModuleFactory.getModuleVersion(), "", encodingType);
 
-                associateAttachmentWithMesssge(messageArtifact, df);
-
                 files.add(df);
 
                 fileAttachments.add(new FileAttachment(df));
@@ -644,19 +642,6 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         }
 
         return files;
-    }
-
-    /**
-     * Creates a TSK_ASSOCIATED_OBJECT artifact between the attachment file and
-     * the message artifact.
-     */
-    private BlackboardArtifact associateAttachmentWithMesssge(BlackboardArtifact message, AbstractFile attachedFile) throws TskCoreException {
-        Collection<BlackboardAttribute> attributes = new ArrayList<>();
-        attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, EmailParserModuleFactory.getModuleName(), message.getArtifactID()));
-
-        BlackboardArtifact bba = attachedFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT);
-        bba.addAttributes(attributes); //write out to bb
-        return bba;
     }
 
     /**

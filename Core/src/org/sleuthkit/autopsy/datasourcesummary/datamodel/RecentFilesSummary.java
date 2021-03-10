@@ -353,7 +353,7 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
          *
          * @return Seconds from java epoch.
          */
-        Long getDateAsLong() {
+        public Long getDateAsLong() {
             return date;
         }
 

@@ -9,8 +9,20 @@ DropdownListSearchPanel.selected=Ad Hoc Search data source filter is selected
 DropdownSingleTermSearchPanel.selected=Ad Hoc Search data source filter is selected
 DropdownSingleTermSearchPanel.warning.text=Boundary characters ^ and $ do not match word boundaries. Consider\nreplacing with an explicit list of boundary characters, such as [ \\.,]
 DropdownSingleTermSearchPanel.warning.title=Warning
+ExtractAllTermsReport.description.text=Extracts all unique words out of the current case. NOTE: The extracted words are lower-cased.
+ExtractAllTermsReport.error.noOpenCase=No currently open case.
+ExtractAllTermsReport.export.error=Error During Unique Word Extraction
+ExtractAllTermsReport.exportComplete=Unique Word Extraction Complete
+ExtractAllTermsReport.getName.text=Extract Unique Words
+# {0} - Number of extracted terms
+ExtractAllTermsReport.numberExtractedTerms=Extracted {0} terms...
+ExtractAllTermsReport.search.ingestInProgressBody=<html>Keyword Search Ingest is currently running.<br />Not all files have been indexed and unique word extraction might yield incomplete results.<br />Do you want to proceed with unique word extraction anyway?</html>
+# {0} - Keyword search commit frequency
+ExtractAllTermsReport.search.noFilesInIdxMsg=No files are in index yet. Try again later. Index is updated every {0} minutes.
+ExtractAllTermsReport.search.noFilesInIdxMsg2=No files are in index yet. Try again later
+ExtractAllTermsReport.search.searchIngestInProgressTitle=Keyword Search Ingest in Progress
+ExtractAllTermsReport.startExport=Starting Unique Word Extraction
 ExtractedContentPanel.setMarkup.panelTxt=<span style='font-style:italic'>Loading text... Please wait</span>
-# {0} - Content name
 ExtractedContentPanel.SetMarkup.progress.loading=Loading text for {0}
 GlobalEditListPanel.editKeyword.title=Edit Keyword
 GlobalEditListPanel.warning.text=Boundary characters ^ and $ do not match word boundaries. Consider\nreplacing with an explicit list of boundary characters, such as [ \\.,]
@@ -218,6 +230,7 @@ Server.deleteCore.exception.msg=Failed to delete Solr colelction {0}
 Server.exceptionMessage.unableToBackupCollection=Unable to backup Solr collection
 Server.exceptionMessage.unableToCreateCollection=Unable to create Solr collection
 Server.exceptionMessage.unableToRestoreCollection=Unable to restore Solr collection
+Server.getAllTerms.error=Extraction of all unique Solr terms failed:
 Server.start.exception.cantStartSolr.msg=Could not start Solr server process
 Server.start.exception.cantStartSolr.msg2=Could not start Solr server process
 Server.isRunning.exception.errCheckSolrRunning.msg=Error checking if Solr server is running

@@ -662,7 +662,7 @@ public final class ImageGalleryController {
 
     private static ListeningExecutorService getNewDBExecutor() {
         return MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor(
-                new ThreadFactoryBuilder().setNameFormat("DB-Worker-Thread-%d").build()));
+                new ThreadFactoryBuilder().setNameFormat("ImageGallery-DB-Worker-Thread-%d").build()));
     }
 
     /**
