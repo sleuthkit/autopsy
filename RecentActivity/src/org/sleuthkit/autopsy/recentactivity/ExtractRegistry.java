@@ -2381,16 +2381,14 @@ class ExtractRegistry extends Extract {
             }
         }
 
-        String settingString = getSettingsFromMap(ACCOUNT_SETTINGS_FLAGS, userInfo);
+        String settingString = getSettingsFromMap(PASSWORD_SETTINGS_FLAGS, userInfo);
         if (!settingString.isEmpty()) {
-            settingString = settingString.substring(0, settingString.length() - 2);
             attributes.add(createOsAccountAttribute(ATTRIBUTE_TYPE.TSK_PASSWORD_SETTINGS,
                     settingString, osAccount, host, regFile));
         }
 
         settingString = getSettingsFromMap(ACCOUNT_SETTINGS_FLAGS, userInfo);
         if (!settingString.isEmpty()) {
-            settingString = settingString.substring(0, settingString.length() - 2);
             attributes.add(createOsAccountAttribute(ATTRIBUTE_TYPE.TSK_ACCOUNT_SETTINGS,
                     settingString, osAccount, host, regFile));
         }
