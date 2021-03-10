@@ -1,7 +1,20 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2021 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.url.analytics;
 
@@ -20,9 +33,11 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
 
+// TODO Turn off when ingest running
+
 /**
- *
- * @author gregd
+ * The options panel displayed for import, export, and CRUD operations on domain
+ * categories.
  */
 public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel implements OptionsPanel {
 
@@ -50,7 +65,7 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
     }
 
     void refresh() {
-
+        
     }
 
     private DomainCategory getAddEditValue(DomainCategory original) {
@@ -212,6 +227,7 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
         if (selected != null && selected.getHostSuffix() != null) {
             try {
                 dataModel.deleteRecord(selected.getHostSuffix());
+                refresh();
             } catch (SQLException ex) {
                 logger.log(Level.WARNING, "There was an error while deleting: " + selected.getHostSuffix(), ex);
             }
@@ -223,6 +239,7 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
         if (newCategory != null) {
             try {
                 dataModel.insertUpdateSuffix(newCategory);
+                refresh();
             } catch (SQLException ex) {
                 logger.log(Level.WARNING, "There was an error while adding new record: " + newCategory.getHostSuffix(), ex);
             }
@@ -236,6 +253,7 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
                 DomainCategory newCategory = getAddEditValue(selected);
                 if (newCategory != null) {
                     dataModel.insertUpdateSuffix(newCategory);
+                    refresh();
                 }
             } catch (SQLException ex) {
                 logger.log(Level.WARNING, "There was an error while editing: " + selected.getHostSuffix(), ex);
@@ -252,8 +270,9 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
             File selectedFile = fileChooser.getSelectedFile();
             if (selectedFile != null && selectedFile.exists()) {
                 try {
-                    dataModel.convertJsonToSqlite(selectedFile);
-                } catch (IOException ex) {
+                    dataModel.importJson(selectedFile);
+                    refresh();
+                } catch (SQLException | IOException ex) {
                     JOptionPane.showMessageDialog(
                             this,
                             Bundle.WebCategoriesOptionsPanel_importSetButtonActionPerformed_errorMessage(),
@@ -274,7 +293,7 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
             File selectedFile = fileChooser.getSelectedFile();
             if (selectedFile != null && selectedFile.exists()) {
                 try {
-                    dataModel.convertSqliteToJson(selectedFile);
+                    dataModel.exportToJson(selectedFile);
                 } catch (SQLException | IOException ex) {
                     JOptionPane.showMessageDialog(
                             this,
@@ -296,12 +315,12 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
 
     @Override
     public void saveSettings() {
-
+        // NO OP since saves happen whenever there is a change.
     }
 
     @Override
     public void store() {
-
+        // NO OP since saves happen whenever there is a change.
     }
 
     @Override

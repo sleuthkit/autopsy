@@ -1,7 +1,20 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2021 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.url.analytics;
 
@@ -9,32 +22,46 @@ import java.util.Set;
 import org.openide.util.NbBundle.Messages;
 
 /**
- *
- * @author gregd
+ * Dialog for adding or editing a custom domain suffix category.
  */
 @Messages({
     "AddEditCategoryDialog_Edit=Edit Entry",
     "AddEditCategoryDialog_Add=Add Entry"
 })
-public class AddEditCategoryDialog extends javax.swing.JDialog {
+class AddEditCategoryDialog extends javax.swing.JDialog {
 
     private boolean changed = false;
     private final Set<String> currentSuffixesToUpper;
     private final DomainCategory currentDomainCategory;
 
     /**
-     * Creates new form AddEditCategoryDialog
+     * Main constructor if adding a new domain suffix.
+     *
+     * @param parent The parent frame for this dialog.
+     * @param currentSuffixesToUpper The current domain suffixes to upper case
+     * and trimmed. Used for determining repeats.
      */
-    public AddEditCategoryDialog(java.awt.Frame parent, Set<String> currentSuffixesToUpper) {
+    AddEditCategoryDialog(java.awt.Frame parent, Set<String> currentSuffixesToUpper) {
         this(parent, currentSuffixesToUpper, null);
     }
 
-    public AddEditCategoryDialog(java.awt.Frame parent, Set<String> currentSuffixesToUpper, DomainCategory currentDomainCategory) {
+    /**
+     * Main constructor if editing a domain suffix.
+     *
+     * @param parentThe parent frame for this dialog.
+     * @param currentSuffixesToUpper The current domain suffixes to upper case
+     * and trimmed. Used for determining repeats.
+     * @param currentDomainCategory The domain category being edited. If null,
+     * it will be assumed that a new domain suffix is being added.
+     */
+    AddEditCategoryDialog(java.awt.Frame parent, Set<String> currentSuffixesToUpper, DomainCategory currentDomainCategory) {
         super(parent, true);
         initComponents();
         this.currentSuffixesToUpper = currentSuffixesToUpper;
         this.currentDomainCategory = currentDomainCategory;
 
+        // set title based on whether or not we are editing or adding
+        // also don't allow editing of domain suffix if editing
         if (currentDomainCategory == null) {
             setTitle(Bundle.AddEditCategoryDialog_Add());
             domainSuffixTextField.setEditable(true);
@@ -47,6 +74,8 @@ public class AddEditCategoryDialog extends javax.swing.JDialog {
     }
 
     /**
+     * Returns the string value for the name in the input field if Ok pressed or
+     * null if not.
      * @return The string value for the name in the input field if Ok pressed or
      * null if not.
      */
@@ -55,8 +84,8 @@ public class AddEditCategoryDialog extends javax.swing.JDialog {
     }
 
     /**
-     * @return Whether or not the value has been changed and the user pressed
-     * okay to save the new value.
+     * Returns whether or not the value has been changed and saved by the user.
+     * @return Whether or not the value has been changed and saved by the user.
      */
     boolean isChanged() {
         return changed;
@@ -65,7 +94,8 @@ public class AddEditCategoryDialog extends javax.swing.JDialog {
     /**
      * When the text field is updated, this method is called.
      *
-     * @param newNameValue
+     * @param suffixStr The current domain suffix string in the input.
+     * @param categoryStr The current category string in the input.
      */
     @Messages({
         "# {0} - maxSuffixLen",
@@ -91,17 +121,17 @@ public class AddEditCategoryDialog extends javax.swing.JDialog {
         String validationMessage = null;
         if (safeSuffixStr.trim().length() == 0 || safeSuffixStr.trim().length() > WebCategoriesDataModel.getMaxDomainSuffixLength()) {
             validationMessage = Bundle.AddEditCategoryDialog_onValueUpdate_badSuffix(WebCategoriesDataModel.getMaxCategoryLength());
-            
+
         } else if (safeCategoryStr.trim().length() == 0 || safeCategoryStr.trim().length() > WebCategoriesDataModel.getMaxCategoryLength()) {
             validationMessage = Bundle.AddEditCategoryDialog_onValueUpdate_badCategory(WebCategoriesDataModel.getMaxDomainSuffixLength());
-            
+
         } else if (currentSuffixesToUpper.contains(safeSuffixStr.trim().toUpperCase())) {
             validationMessage = Bundle.AddEditCategoryDialog_onValueUpdate_suffixRepeat();
-            
-        } else if (currentDomainCategory != null &&
-                currentDomainCategory.getCategory() != null && 
-                safeCategoryStr.trim().equals(currentDomainCategory.getCategory().trim())) {
-            
+
+        } else if (currentDomainCategory != null
+                && currentDomainCategory.getCategory() != null
+                && safeCategoryStr.trim().equals(currentDomainCategory.getCategory().trim())) {
+
             validationMessage = Bundle.AddEditCategoryDialog_onValueUpdate_sameCategory();
         }
 
