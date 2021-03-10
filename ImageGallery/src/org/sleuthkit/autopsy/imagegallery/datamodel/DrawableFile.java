@@ -100,20 +100,9 @@ public abstract class DrawableFile {
 
     private String model;
 
-    private final CategoryManager categoryManager;
-
     protected DrawableFile(AbstractFile file, Boolean analyzed) {
         this.analyzed = new SimpleBooleanProperty(analyzed);
         this.file = file;
-  
-        ImageGalleryController controllerForCase = ImageGalleryController.getController(Case.getCurrentCase());
-        if (controllerForCase != null) {
-            categoryManager = ImageGalleryController.getController(Case.getCurrentCase()).getCategoryManager();
-        } else {
-            // If getting the controller fails it means the case is currently closing. No need to 
-            // print an error.
-            categoryManager = null;
-        }
     }
 
     public abstract boolean isVideo();
@@ -252,19 +241,19 @@ public abstract class DrawableFile {
     /**
      * Update the category property.
      */
-    private void updateCategory() {
-        // This only happens when a DrawableFile is created while the case is closing. No need
-        // to display the error message.
-        if (categoryManager == null) {
-            return;
-        }
-        
+    private void updateCategory() {    
         try {
+            ImageGalleryController controllerForCase = ImageGalleryController.getController(Case.getCurrentCaseThrows());
+            if (controllerForCase == null) {
+                // This can only happen during case closing, so return without generating an error.
+                return;
+            }
+            
             List<ContentTag> contentTags = getContentTags();
             TagName tag = null;
             for (ContentTag ct : contentTags) {
                 TagName tagName = ct.getName();
-                if (categoryManager.isCategoryTagName(tagName)) {
+                if (controllerForCase.getCategoryManager().isCategoryTagName(tagName)) {
                     tag = tagName;
                     break;
                 }
@@ -272,7 +261,7 @@ public abstract class DrawableFile {
             categoryTagName.set(tag);
         } catch (TskCoreException ex) {
             LOGGER.log(Level.WARNING, "problem looking up category for " + this.getContentPathSafe(), ex); //NON-NLS
-        } catch (IllegalStateException ex) {
+        } catch (IllegalStateException | NoCurrentCaseException ex) {
             // We get here many times if the case is closed during ingest, so don't print out a ton of warnings.
         }
     }
