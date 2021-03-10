@@ -51,7 +51,7 @@ public final class OsAccounts implements AutopsyVisitableItem {
     private static final String ICON_PATH = "org/sleuthkit/autopsy/images/os-account.png";
     private static final SimpleDateFormat DATE_FORMATTER = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z");
 
-    private final SleuthkitCase skCase;
+    private SleuthkitCase skCase;
     private final long filteringDSObjId;
 
     public OsAccounts(SleuthkitCase skCase) {
@@ -111,34 +111,46 @@ public final class OsAccounts implements AutopsyVisitableItem {
         private final PropertyChangeListener listener = new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
-                refresh(true);
+                String eventType = evt.getPropertyName();
+                if(eventType.equals(Case.Events.OS_ACCOUNT_ADDED.toString())) {
+                     refresh(true);
+                } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
+                    // case was closed. Remove listeners so that we don't get called with a stale case handle
+                    if (evt.getNewValue() == null) {
+                        removeNotify();
+                        skCase = null;
+                    }
+                }
             }
         };
         
         @Override
         protected void addNotify() {
             Case.addEventTypeSubscriber(Collections.singleton(Case.Events.OS_ACCOUNT_ADDED), listener);
+            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), listener);
         }
         
         @Override
         protected void removeNotify() {
             Case.removeEventTypeSubscriber(Collections.singleton(Case.Events.OS_ACCOUNT_ADDED), listener);
+            Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), listener);
         }
         
         @Override
         protected boolean createKeys(List<OsAccount> list) {
-            try {
-                if (filteringDSObjId == 0) {
-                    list.addAll(skCase.getOsAccountManager().getAccounts());
-                } else {
-                    Host host = skCase.getHostManager().getHost(skCase.getDataSource(filteringDSObjId));
-                    list.addAll(skCase.getOsAccountManager().getAccounts(host));
+            if(skCase != null) {
+                try {
+                    if (filteringDSObjId == 0) {
+                        list.addAll(skCase.getOsAccountManager().getAccounts());
+                    } else {
+                        Host host = skCase.getHostManager().getHost(skCase.getDataSource(filteringDSObjId));
+                        list.addAll(skCase.getOsAccountManager().getAccounts(host));
+                    }
+                } catch (TskCoreException | TskDataException ex) {
+                    logger.log(Level.SEVERE, "Unable to retrieve list of OsAccounts for case", ex);
+                    return false;
                 }
-            } catch (TskCoreException | TskDataException ex) {
-                logger.log(Level.SEVERE, "Unable to retrieve list of OsAccounts for case", ex);
-                return false;
             }
-
             return true;
         }
 
