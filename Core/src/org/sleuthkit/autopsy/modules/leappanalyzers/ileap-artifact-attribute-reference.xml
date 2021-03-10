@@ -255,14 +255,12 @@
             <ArtifactName artifactname="TSK_USER_DEVICE_EVENT" comment="KnowledgeC Car Play Connections">
                 <AttributeName attributename="TSK_DATETIME_START" columnName="Start" required="yes" />
                 <AttributeName attributename="TSK_DATETIME_END" columnName="End" required="yes" />
-                <AttributeName attributename="null" columnName="Car Play Connected" required="yes" />
+                <AttributeName attributename="null" columnName="Car Play Connected" required="no" />
                 <AttributeName attributename="null" columnName="Usage in Seconds" required="no" />
                 <AttributeName attributename="null" columnName="Usage in Minutes" required="no" />
                 <AttributeName attributename="null" columnName="Day of Week" required="no" />
                 <AttributeName attributename="null" columnName="GMT Offset" required="no" />
                 <AttributeName attributename="null" columnName="Entry Creation" required="no" />
-                <AttributeName attributename="TSK_PROG_NAME" columnName="UUID" required="yes" />
-                <AttributeName attributename="null" columnName="Zobject Table ID" required="no" />
             </ArtifactName>
         </FileName>
 
@@ -517,7 +515,7 @@
 
         <FileName filename="RoutineD Vehicle Location.tsv" description="RoutineD Vehicle Location">
             <ArtifactName artifactname="TSK_GPS_LAST_KNOWN_LOCATION" comment="RoutineD Vehicle Location">
-                <AttributeName attributename="TSK_DATETIME" columnName="Date" required="yes" />
+                <AttributeName attributename="TSK_DATETIME" columnName="Timestamp" required="yes" />
                 <AttributeName attributename="null" columnName="Location Date" required="no" />
                 <AttributeName attributename="null" columnName="Coordinates" required="no" />
                 <AttributeName attributename="null" columnName="Vehicle Identifier" required="no" />
@@ -536,14 +534,12 @@
 
         <FileName filename="RoutineD Parked Vehicle Historical.tsv" description="RoutineD Parked Vehicle Historical">
             <ArtifactName artifactname="TSK_GPS_LAST_KNOWN_LOCATION" comment="RoutineD Parked Vehicle Historical">
-                <AttributeName attributename="TSK_DATETIME" columnName="Date" required="yes" />
+                <AttributeName attributename="TSK_DATETIME" columnName="Timestamp" required="yes" />
                 <AttributeName attributename="null" columnName="Location Date" required="no" />
-                <AttributeName attributename="null" columnName="Coordinates" required="no" />
                 <AttributeName attributename="null" columnName="Location Uncertainty" required="no" />
                 <AttributeName attributename="null" columnName="Identifier" required="no" />
                 <AttributeName attributename="TSK_GEO_LATITUDE" columnName="Latitude" required="yes" />
                 <AttributeName attributename="TSK_GEO_LONGITUDE" columnName="Longitude" required="yes" />
-                <AttributeName attributename="null" columnName="Table ID" required="no" />
             </ArtifactName>
         </FileName>
 
@@ -711,9 +707,10 @@
                 <AttributeName attributename="TSK_DATETIME" columnName="Timestamp" required="yes" />
                 <AttributeName attributename="TSK_DEVICE_ID" columnName="Build" required="yes" />
                 <AttributeName attributename="TSK_DEVICE_MAKE" columnName="Device" required="yes" />
-                <AttributeName attributename="TSK_DEVICE_MODEL" columnName="PairedDeviceConfig Table ID" required="yes" />
+                <AttributeName attributename="TSK_DEVICE_MODEL" columnName="HW Model" required="yes" />
+                <AttributeName attributename="null" columnName="Pairing ID" required="no" />                
             </ArtifactName>
-        </FileName>
+        </FileName>   
                
         <FileName filename="Safari Browser History.tsv" description="Safari Browser">
             <ArtifactName artifactname="TSK_WEB_HISTORY" comment="null">
