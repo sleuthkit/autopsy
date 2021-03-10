@@ -66,8 +66,8 @@
 
         <FileName filename="Browser cookies.tsv" description="Browser Cookies">
             <ArtifactName artifactname="TSK_WEB_COOKIE" comment="Browser Cookies">
-                <AttributeName attributename="TSK_DATETIME_START" columnName="Last Access Date" required="yes" />
-                <AttributeName attributename="TSK_DOMAIN" columnName="Host" required="yes" />
+                <AttributeName attributename="TSK_DATETIME_ACCESSED" columnName="Last Access Date" required="yes" />
+                <AttributeName attributename="TSK_URL" columnName="Host" required="yes" />
                 <AttributeName attributename="TSK_NAME" columnName="Name" required="yes" />
                 <AttributeName attributename="TSK_VALUE" columnName="Value" required="yes" />
                 <AttributeName attributename="TSK_DATETIME_CREATED" columnName="Created Date" required="yes" />
@@ -90,7 +90,7 @@
             <ArtifactName artifactname="TSK_WEB_SEARCH_QUERY" comment="Browser Keyword Search Terms">
                 <AttributeName attributename="TSK_DATETIME_ACCESSED" columnName="Last Visit Time" required="yes"/>
                 <AttributeName attributename="TSK_TEXT" columnName="Term" required="yes"/>
-                <AttributeName attributename="TSK_URL" columnName="URL" required="yes"/>
+                <AttributeName attributename="TSK_DOMAIN" columnName="URL" required="yes"/>
             </ArtifactName>
         </FileName>
 
@@ -120,7 +120,7 @@
             <ArtifactName artifactname="TSK_WEB_SEARCH_QUERY" comment="Browser Search Terms">
                 <AttributeName attributename="TSK_DATETIME_ACCESSED" columnName="Last Visit Time" required="yes"/>
                 <AttributeName attributename="TSK_TEXT" columnName="Search Term" required="yes"/>
-                <AttributeName attributename="TSK_URL" columnName="URL" required="yes"/>
+                <AttributeName attributename="TSK_DOMAIN" columnName="URL" required="yes"/>
                 <AttributeName attributename="null" columnName="Title" required="no"/>
                 <AttributeName attributename="null" columnName="Visit Count" required="no"/>
             </ArtifactName>
@@ -163,13 +163,13 @@
 
     <FileName filename="Chrome cookies.tsv" description="Chrome Cookies">
         <ArtifactName artifactname="TSK_WEB_COOKIE" comment="Chrome Cookies">
-            <AttributeName attributename="TSK_DATETIME_START" columnName="Last Access Date" required="yes" />
-            <AttributeName attributename="TSK_DOMAIN" columnName="Host" required="yes" />
+            <AttributeName attributename="TSK_DATETIME_ACCESSED" columnName="Last Access Date" required="yes" />
+            <AttributeName attributename="TSK_URL" columnName="Host" required="yes" />
             <AttributeName attributename="TSK_NAME" columnName="Name" required="yes" />
             <AttributeName attributename="TSK_VALUE" columnName="Value" required="yes" />
             <AttributeName attributename="TSK_DATETIME_CREATED" columnName="Created Date" required="yes" />
             <AttributeName attributename="TSK_DATETIME_END" columnName="Expiration Date" required="yes" />
-            <AttributeName attributename="TSK_PATH" columnName="Path" required="yes" />
+            <AttributeName attributename="null" columnName="Path" required="no" />
         </ArtifactName>
     </FileName>
 
@@ -209,7 +209,7 @@
         <ArtifactName artifactname="TSK_WEB_SEARCH_QUERY" comment="Chrome Search Terms">
             <AttributeName attributename="TSK_DATETIME_ACCESSED" columnName="Last Visit Time" required="yes"/>
             <AttributeName attributename="TSK_TEXT" columnName="Search Term" required="yes"/>
-            <AttributeName attributename="TSK_URL" columnName="URL" required="yes"/>
+            <AttributeName attributename="TSK_DOMAIN" columnName="URL" required="yes"/>
             <AttributeName attributename="null" columnName="Title" required="no"/>
             <AttributeName attributename="null" columnName="Visit Count" required="no"/>
         </ArtifactName>
@@ -225,7 +225,7 @@
     </FileName>
 
     <FileName filename="Edge Bookmarks.tsv" description="Edge Bookmarks">
-        <ArtifactName artifactname="TSK_WEB_BOOKMARK" comment="Chrome Bookmarks">
+        <ArtifactName artifactname="TSK_WEB_BOOKMARK" comment="Edge Bookmarks">
             <AttributeName attributename="TSK_DATETIME_CREATED" columnName="Added Date" required="yes" />
             <AttributeName attributename="TSK_URL" columnName="URL" required="yes" />
             <AttributeName attributename="TSK_TITLE" columnName="Name" required="yes" />
@@ -236,13 +236,13 @@
 
     <FileName filename="Edge cookies.tsv" description="Edge Cookies">
         <ArtifactName artifactname="TSK_WEB_COOKIE" comment="Edge Cookies">
-            <AttributeName attributename="TSK_DATETIME_START" columnName="Last Access Date" required="yes" />
-            <AttributeName attributename="TSK_DOMAIN" columnName="Host" required="yes" />
+            <AttributeName attributename="TSK_DATETIME_ACCESSED" columnName="Last Access Date" required="yes" />
+            <AttributeName attributename="TSK_URL" columnName="Host" required="yes" />
             <AttributeName attributename="TSK_NAME" columnName="Name" required="yes" />
             <AttributeName attributename="TSK_VALUE" columnName="Value" required="yes" />
             <AttributeName attributename="TSK_DATETIME_CREATED" columnName="Created Date" required="yes" />
             <AttributeName attributename="TSK_DATETIME_END" columnName="Expiration Date" required="yes" />
-            <AttributeName attributename="TSK_PATH" columnName="Path" required="yes" />
+            <AttributeName attributename="null" columnName="Path" required="no" />
         </ArtifactName>
     </FileName>
 
@@ -282,7 +282,7 @@
         <ArtifactName artifactname="TSK_WEB_SEARCH_QUERY" comment="Chrome Search Terms">
             <AttributeName attributename="TSK_DATETIME_ACCESSED" columnName="Last Visit Time" required="yes"/>
             <AttributeName attributename="TSK_TEXT" columnName="Search Term" required="yes"/>
-            <AttributeName attributename="TSK_URL" columnName="URL" required="yes"/>
+            <AttributeName attributename="TSK_DOMAIN" columnName="URL" required="yes"/>
             <AttributeName attributename="null" columnName="Title" required="no"/>
             <AttributeName attributename="null" columnName="Visit Count" required="no"/>
         </ArtifactName>
