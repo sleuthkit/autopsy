@@ -34,7 +34,6 @@ import javax.swing.plaf.LayerUI;
 import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer.CellModel;
 
 /**
  * A table that displays a list of items and also can display messages for
@@ -158,65 +157,6 @@ public class JTablePanel<T> extends AbstractLoadableComponent<List<T>> {
         }
     }
 
-    /**
-     * Describes aspects of a column which can be used with getTableModel or
-     * getJTablePanel. 'T' represents the object that will represent rows in the
-     * table.
-     */
-    public static class ColumnModel<T> {
-
-        private final String headerTitle;
-        private final Function<T, CellModelTableCellRenderer.CellModel> cellRenderer;
-        private final Integer width;
-
-        /**
-         * Constructor for a DataResultColumnModel.
-         *
-         * @param headerTitle The title for the column.
-         * @param cellRenderer The method that generates a CellModel for the
-         * column based on the data.
-         */
-        public ColumnModel(String headerTitle, Function<T, CellModelTableCellRenderer.CellModel> cellRenderer) {
-            this(headerTitle, cellRenderer, null);
-        }
-
-        /**
-         * Constructor for a DataResultColumnModel.
-         *
-         * @param headerTitle The title for the column.
-         * @param cellRenderer The method that generates a CellModel for the
-         * column based on the data.
-         * @param width The preferred width of the column.
-         */
-        public ColumnModel(String headerTitle, Function<T, CellModelTableCellRenderer.CellModel> cellRenderer, Integer width) {
-            this.headerTitle = headerTitle;
-            this.cellRenderer = cellRenderer;
-            this.width = width;
-        }
-
-        /**
-         * @return The title for the column.
-         */
-        public String getHeaderTitle() {
-            return headerTitle;
-        }
-
-        /**
-         * @return The method that generates a CellModel for the column based on
-         * the data.
-         */
-        public Function<T, CellModel> getCellRenderer() {
-            return cellRenderer;
-        }
-
-        /**
-         * @return The preferred width of the column (can be null).
-         */
-        public Integer getWidth() {
-            return width;
-        }
-    }
-
     private static final long serialVersionUID = 1L;
 
     private static final CellModelTableCellRenderer DEFAULT_CELL_RENDERER = new CellModelTableCellRenderer();
@@ -228,12 +168,12 @@ public class JTablePanel<T> extends AbstractLoadableComponent<List<T>> {
      *
      * @return The corresponding TableColumnModel to be used with a JTable.
      */
-    public static <T> TableColumnModel getTableColumnModel(List<ColumnModel<T>> columns) {
+    public static <T, C extends GuiCellModel> TableColumnModel getTableColumnModel(List<ColumnModel<T, C>> columns) {
         TableColumnModel tableModel = new DefaultTableColumnModel();
 
         for (int i = 0; i < columns.size(); i++) {
             TableColumn col = new TableColumn(i);
-            ColumnModel<T> model = columns.get(i);
+            ColumnModel<T, C> model = columns.get(i);
             // if a preferred width is specified in the column definition, 
             // set the underlying TableColumn preferred width.
             if (model.getWidth() != null && model.getWidth() >= 0) {
@@ -260,7 +200,7 @@ public class JTablePanel<T> extends AbstractLoadableComponent<List<T>> {
      *
      * @return The corresponding ListTableModel.
      */
-    public static <T> ListTableModel<T> getTableModel(List<ColumnModel<T>> columns) {
+    public static <T, C extends GuiCellModel> ListTableModel<T> getTableModel(List<ColumnModel<T, C>> columns) {
         List<Function<T, ? extends Object>> columnRenderers = columns.stream()
                 .map((colModel) -> colModel.getCellRenderer())
                 .collect(Collectors.toList());
@@ -276,7 +216,7 @@ public class JTablePanel<T> extends AbstractLoadableComponent<List<T>> {
      *
      * @return The corresponding JTablePanel.
      */
-    public static <T> JTablePanel<T> getJTablePanel(List<ColumnModel<T>> columns) {
+    public static <T, C extends GuiCellModel> JTablePanel<T> getJTablePanel(List<ColumnModel<T, C>> columns) {
         ListTableModel<T> tableModel = getTableModel(columns);
         JTablePanel<T> resultTable = new JTablePanel<>(tableModel)
                 .setColumnModel(getTableColumnModel(columns))
@@ -284,6 +224,7 @@ public class JTablePanel<T> extends AbstractLoadableComponent<List<T>> {
 
         return resultTable;
     }
+
 
     private JScrollPane tableScrollPane;
     private Overlay overlayLayer;

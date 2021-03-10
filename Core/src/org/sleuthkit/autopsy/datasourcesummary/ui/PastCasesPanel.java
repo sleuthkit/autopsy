@@ -19,18 +19,23 @@
 package org.sleuthkit.autopsy.datasourcesummary.ui;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.PastCasesSummary;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.PastCasesSummary.PastCasesResult;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer.DefaultCellModel;
+import static org.sleuthkit.autopsy.datasourcesummary.ui.BaseDataSourceSummaryPanel.getFetchResult;
+import static org.sleuthkit.autopsy.datasourcesummary.ui.BaseDataSourceSummaryPanel.getTableExport;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.ColumnModel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetcher;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultCellModel;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelExport;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.IngestRunningLabel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel.ColumnModel;
 import org.sleuthkit.datamodel.DataSource;
 
 /**
@@ -40,29 +45,34 @@ import org.sleuthkit.datamodel.DataSource;
 @Messages({
     "PastCasesPanel_caseColumn_title=Case",
     "PastCasesPanel_countColumn_title=Count",
-    "PastCasesPanel_onNoCrIngest_message=No results will be shown because the Central Repository module was not run."
-})
+    "PastCasesPanel_onNoCrIngest_message=No results will be shown because the Central Repository module was not run.",
+    "PastCasesPanel_notableFileTable_tabName=Cases with Common Notable",
+    "PastCasesPanel_sameIdsTable_tabName=Past Cases with the Same Devices",})
 public class PastCasesPanel extends BaseDataSourceSummaryPanel {
 
     private static final long serialVersionUID = 1L;
 
-    private static final ColumnModel<Pair<String, Long>> CASE_COL = new ColumnModel<>(
+    // model for column indicating the case
+    private static final ColumnModel<Pair<String, Long>, DefaultCellModel<?>> CASE_COL = new ColumnModel<>(
             Bundle.PastCasesPanel_caseColumn_title(),
-            (pair) -> new DefaultCellModel(pair.getKey()),
+            (pair) -> new DefaultCellModel<>(pair.getKey()),
             300
     );
 
-    private static final ColumnModel<Pair<String, Long>> COUNT_COL = new ColumnModel<>(
+    // model for column indicating the count
+    private static final ColumnModel<Pair<String, Long>, DefaultCellModel<?>> COUNT_COL = new ColumnModel<>(
             Bundle.PastCasesPanel_countColumn_title(),
-            (pair) -> new DefaultCellModel(String.valueOf(pair.getValue())),
+            (pair) -> new DefaultCellModel<>(pair.getValue()),
             100
     );
 
-    private static final List<ColumnModel<Pair<String, Long>>> DEFAULT_COLUMNS = Arrays.asList(CASE_COL, COUNT_COL);
+    // the template for columns in both tables in this tab
+    private static List<ColumnModel<Pair<String, Long>, DefaultCellModel<?>>> DEFAULT_TEMPLATE
+            = Arrays.asList(CASE_COL, COUNT_COL);
 
-    private final JTablePanel<Pair<String, Long>> notableFileTable = JTablePanel.getJTablePanel(DEFAULT_COLUMNS);
+    private final JTablePanel<Pair<String, Long>> notableFileTable = JTablePanel.getJTablePanel(DEFAULT_TEMPLATE);
 
-    private final JTablePanel<Pair<String, Long>> sameIdTable = JTablePanel.getJTablePanel(DEFAULT_COLUMNS);
+    private final JTablePanel<Pair<String, Long>> sameIdTable = JTablePanel.getJTablePanel(DEFAULT_TEMPLATE);
 
     private final List<JTablePanel<?>> tables = Arrays.asList(
             notableFileTable,
@@ -73,6 +83,8 @@ public class PastCasesPanel extends BaseDataSourceSummaryPanel {
 
     private final IngestRunningLabel ingestRunningLabel = new IngestRunningLabel();
 
+    private final DataFetcher<DataSource, PastCasesResult> pastCasesFetcher;
+    
     public PastCasesPanel() {
         this(new PastCasesSummary());
     }
@@ -83,10 +95,12 @@ public class PastCasesPanel extends BaseDataSourceSummaryPanel {
     public PastCasesPanel(PastCasesSummary pastCaseData) {
         super(pastCaseData);
 
+        this.pastCasesFetcher = (dataSource) -> pastCaseData.getPastCasesData(dataSource);
+        
         // set up data acquisition methods
         dataFetchComponents = Arrays.asList(
                 new DataFetchWorker.DataFetchComponents<>(
-                        (dataSource) -> pastCaseData.getPastCasesData(dataSource),
+                        pastCasesFetcher,
                         (result) -> handleResult(result))
         );
 
@@ -112,6 +126,19 @@ public class PastCasesPanel extends BaseDataSourceSummaryPanel {
     @Override
     protected void onNewDataSource(DataSource dataSource) {
         onNewDataSource(dataFetchComponents, tables, dataSource);
+    }
+
+    @Override
+    List<ExcelExport.ExcelSheetExport> getExports(DataSource dataSource) {
+        PastCasesResult result = getFetchResult(pastCasesFetcher, "Past cases sheets", dataSource);
+        if (result == null) {
+            return Collections.emptyList();
+        }
+
+        return Arrays.asList(
+                getTableExport(DEFAULT_TEMPLATE, Bundle.PastCasesPanel_notableFileTable_tabName(), result.getTaggedNotable()),
+                getTableExport(DEFAULT_TEMPLATE, Bundle.PastCasesPanel_sameIdsTable_tabName(), result.getSameIdsResults())
+        );
     }
 
     @Override
