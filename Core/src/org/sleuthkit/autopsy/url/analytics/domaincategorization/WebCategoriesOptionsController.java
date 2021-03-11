@@ -29,7 +29,7 @@ import org.openide.util.Lookup;
  * custom web categories.
  */
 @OptionsPanelController.TopLevelRegistration(categoryName = "#WebCategoryOptionsController_title",
-        iconBase = "org/sleuthkit/autopsy/corecomponents/checkbox32.png",
+        iconBase = "org/sleuthkit/autopsy/images/domain-32.png",
         position = 21,
         keywords = "#WebCategoryOptionsController_keywords",
         keywordsCategory = "Custom Web Categories")

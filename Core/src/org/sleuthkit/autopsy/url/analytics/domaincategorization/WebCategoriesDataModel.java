@@ -340,7 +340,7 @@ class WebCategoriesDataModel implements AutoCloseable {
 
         // write to disk
         ObjectMapper mapper = new ObjectMapper();
-        mapper.writeValue(jsonOutput, categories);
+        mapper.writerWithDefaultPrettyPrinter().writeValue(jsonOutput, categories);
     }
 
     /**
@@ -391,7 +391,7 @@ class WebCategoriesDataModel implements AutoCloseable {
                 Statement.RETURN_GENERATED_KEYS)) {
 
             insertUpdate.setString(1, getNormalizedSuffix(entry.getHostSuffix()));
-            insertUpdate.setString(1, getNormalizedCategory(entry.getCategory()));
+            insertUpdate.setString(2, getNormalizedCategory(entry.getCategory()));
             return insertUpdate.executeUpdate() > 0;
         }
     }
@@ -503,7 +503,7 @@ class WebCategoriesDataModel implements AutoCloseable {
     }
 
     @Override
-    public synchronized void close() throws Exception {
+    public synchronized void close() throws SQLException {
         dbConn.close();
         dbConn = null;
     }

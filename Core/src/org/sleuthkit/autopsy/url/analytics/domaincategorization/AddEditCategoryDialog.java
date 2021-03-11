@@ -19,6 +19,8 @@
 package org.sleuthkit.autopsy.url.analytics.domaincategorization;
 
 import java.util.Set;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.url.analytics.DomainCategory;
 
@@ -35,6 +37,23 @@ class AddEditCategoryDialog extends javax.swing.JDialog {
     private final Set<String> currentSuffixes;
     private final DomainCategory currentDomainCategory;
 
+    // listens for document updates
+    private final DocumentListener updateListener = new DocumentListener() {
+        @Override
+        public void insertUpdate(DocumentEvent e) {
+            onValueUpdate(domainSuffixTextField.getText(), categoryTextField.getText());
+        }
+
+        @Override
+        public void removeUpdate(DocumentEvent e) {
+            onValueUpdate(domainSuffixTextField.getText(), categoryTextField.getText());
+        }
+
+        @Override
+        public void changedUpdate(DocumentEvent e) {
+            onValueUpdate(domainSuffixTextField.getText(), categoryTextField.getText());
+        }
+    };
     /**
      * Main constructor if adding a new domain suffix.
      *
@@ -58,6 +77,8 @@ class AddEditCategoryDialog extends javax.swing.JDialog {
         initComponents();
         this.currentSuffixes = currentSuffixes;
         this.currentDomainCategory = currentDomainCategory;
+        
+        
 
         // set title based on whether or not we are editing or adding
         // also don't allow editing of domain suffix if editing
@@ -65,11 +86,18 @@ class AddEditCategoryDialog extends javax.swing.JDialog {
             setTitle(Bundle.AddEditCategoryDialog_Add());
             domainSuffixTextField.setEditable(true);
             domainSuffixTextField.setEnabled(true);
+            onValueUpdate(null, null);
         } else {
             setTitle(Bundle.AddEditCategoryDialog_Edit());
             domainSuffixTextField.setEditable(false);
             domainSuffixTextField.setEnabled(false);
+            onValueUpdate(currentDomainCategory.getHostSuffix(), currentDomainCategory.getCategory());
         }
+        
+        validationLabel.setText("");
+        
+        categoryTextField.getDocument().addDocumentListener(updateListener);
+        domainSuffixTextField.getDocument().addDocumentListener(updateListener);
     }
 
     /**
@@ -100,12 +128,13 @@ class AddEditCategoryDialog extends javax.swing.JDialog {
         "# {0} - maxSuffixLen",
         "AddEditCategoryDialog_onValueUpdate_badSuffix=Please provide a domain suffix that is no more than {0} characters.",
         "# {0} - maxCategoryLen",
-        "AddEditCategoryDialog_onValueUpdate_badCategory=Please provide a domain suffix that is no more than {0} characters.",
+        "AddEditCategoryDialog_onValueUpdate_badCategory=Please provide a category that is no more than {0} characters.",
         "AddEditCategoryDialog_onValueUpdate_suffixRepeat=Please provide a unique domain suffix.",
         "AddEditCategoryDialog_onValueUpdate_sameCategory=Please provide a new category for this domain suffix.",})
     void onValueUpdate(String suffixStr, String categoryStr) {
 
         String safeSuffixStr = suffixStr == null ? "" : suffixStr;
+        String normalizedSuffix = WebCategoriesDataModel.getNormalizedSuffix(safeSuffixStr);
         String safeCategoryStr = categoryStr == null ? "" : categoryStr;
 
         // update input text field if it is not the same.
@@ -122,9 +151,12 @@ class AddEditCategoryDialog extends javax.swing.JDialog {
             validationMessage = Bundle.AddEditCategoryDialog_onValueUpdate_badSuffix(WebCategoriesDataModel.getMaxCategoryLength());
 
         } else if (safeCategoryStr.trim().length() == 0 || safeCategoryStr.trim().length() > WebCategoriesDataModel.getMaxCategoryLength()) {
-            validationMessage = Bundle.AddEditCategoryDialog_onValueUpdate_badCategory(WebCategoriesDataModel.getMaxDomainSuffixLength());
+            validationMessage = Bundle.AddEditCategoryDialog_onValueUpdate_badCategory(WebCategoriesDataModel.getMaxCategoryLength());
 
-        } else if (currentSuffixes.contains(WebCategoriesDataModel.getNormalizedSuffix(safeSuffixStr))) {
+        } else if (currentSuffixes.contains(normalizedSuffix) && 
+                currentDomainCategory != null && 
+                !normalizedSuffix.equals(currentDomainCategory.getHostSuffix())) {
+            
             validationMessage = Bundle.AddEditCategoryDialog_onValueUpdate_suffixRepeat();
 
         } else if (currentDomainCategory != null
@@ -157,18 +189,6 @@ class AddEditCategoryDialog extends javax.swing.JDialog {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
-        categoryTextField.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                categoryTextFieldActionPerformed(evt);
-            }
-        });
-
-        domainSuffixTextField.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                domainSuffixTextFieldActionPerformed(evt);
-            }
-        });
-
         categoryLabel.setText(org.openide.util.NbBundle.getMessage(AddEditCategoryDialog.class, "AddEditCategoryDialog.categoryLabel.text")); // NOI18N
 
         domainSuffixLabel.setText(org.openide.util.NbBundle.getMessage(AddEditCategoryDialog.class, "AddEditCategoryDialog.domainSuffixLabel.text")); // NOI18N
@@ -198,41 +218,40 @@ class AddEditCategoryDialog extends javax.swing.JDialog {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(validationLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(saveButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cancelButton))
+                    .addComponent(validationLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(domainSuffixLabel)
                             .addComponent(categoryLabel))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(categoryTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 272, Short.MAX_VALUE)
-                            .addComponent(domainSuffixTextField)))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 216, Short.MAX_VALUE)
-                        .addComponent(saveButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cancelButton)))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(categoryTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 276, Short.MAX_VALUE)
+                            .addComponent(domainSuffixTextField))))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(categoryLabel)
-                            .addComponent(categoryTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(18, 18, 18)
-                        .addComponent(domainSuffixTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(domainSuffixTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(domainSuffixLabel))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(validationLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(categoryTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(categoryLabel))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(validationLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(saveButton)
                     .addComponent(cancelButton))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(12, Short.MAX_VALUE))
         );
 
         pack();
@@ -247,14 +266,6 @@ class AddEditCategoryDialog extends javax.swing.JDialog {
         this.changed = false;
         dispose();
     }//GEN-LAST:event_cancelButtonActionPerformed
-
-    private void domainSuffixTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_domainSuffixTextFieldActionPerformed
-        onValueUpdate(domainSuffixTextField.getText(), categoryTextField.getText());
-    }//GEN-LAST:event_domainSuffixTextFieldActionPerformed
-
-    private void categoryTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_categoryTextFieldActionPerformed
-        onValueUpdate(domainSuffixTextField.getText(), categoryTextField.getText());
-    }//GEN-LAST:event_categoryTextFieldActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

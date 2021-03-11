@@ -326,7 +326,7 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
             try {
                 dataModel.deleteRecord(selected.getHostSuffix());
                 refresh();
-            } catch (SQLException ex) {
+            } catch (IllegalArgumentException | SQLException ex) {
                 logger.log(Level.WARNING, "There was an error while deleting: " + selected.getHostSuffix(), ex);
             }
         }
@@ -338,7 +338,7 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
             try {
                 dataModel.insertUpdateSuffix(newCategory);
                 refresh();
-            } catch (SQLException ex) {
+            } catch (IllegalArgumentException | SQLException ex) {
                 logger.log(Level.WARNING, "There was an error while adding new record: " + newCategory.getHostSuffix(), ex);
             }
         }
@@ -353,7 +353,7 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
                     dataModel.insertUpdateSuffix(newCategory);
                     refresh();
                 }
-            } catch (SQLException ex) {
+            } catch (IllegalArgumentException | SQLException ex) {
                 logger.log(Level.WARNING, "There was an error while editing: " + selected.getHostSuffix(), ex);
             }
         }
@@ -389,7 +389,7 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
         int result = fileChooser.showSaveDialog(this);
         if (result == JFileChooser.APPROVE_OPTION) {
             File selectedFile = fileChooser.getSelectedFile();
-            if (selectedFile != null && selectedFile.exists()) {
+            if (selectedFile != null) {
                 try {
                     dataModel.exportToJson(selectedFile);
                 } catch (SQLException | IOException ex) {
@@ -430,7 +430,7 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         IngestManager.getInstance().removeIngestJobEventListener(weakIngestListener);
     }
 }

@@ -85,7 +85,7 @@ public class CustomWebCategorizer implements DomainCategorizer {
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() throws SQLException {
         dataModel.close();
     }
 }
