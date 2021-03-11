@@ -21,12 +21,13 @@ package org.sleuthkit.autopsy.datamodel;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.logging.Level;
+import javax.swing.Action;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
@@ -271,6 +272,15 @@ public final class OsAccounts implements AutopsyVisitableItem {
                     timeDisplayStr));
 
             return sheet;
+        }
+        
+        @Override
+        public Action[] getActions(boolean popup) {
+            List<Action> actionsList = new ArrayList<>();
+            actionsList.addAll(Arrays.asList(super.getActions(popup)));
+            actionsList.addAll(DataModelActionsFactory.getActions(account));
+            
+            return actionsList.toArray(new Action[actionsList.size()]);
         }
     }
 }
