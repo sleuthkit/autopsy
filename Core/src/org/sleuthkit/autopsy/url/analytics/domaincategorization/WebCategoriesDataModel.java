@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.url.analytics.domaincategorization;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -81,6 +82,7 @@ class WebCategoriesDataModel implements AutoCloseable {
          *
          * @return The category.
          */
+        @JsonGetter("category")
         String getCategory() {
             return category;
         }
@@ -90,6 +92,7 @@ class WebCategoriesDataModel implements AutoCloseable {
          *
          * @return The list of domain suffixes in this category.
          */
+        @JsonGetter("domains")
         List<String> getDomains() {
             return domains;
         }
@@ -278,7 +281,7 @@ class WebCategoriesDataModel implements AutoCloseable {
 
                 String categoryStr = getNormalizedCategory(category.getCategory());
 
-                for (int listIdx = 0; listIdx < category.getDomains().size(); i++) {
+                for (int listIdx = 0; listIdx < category.getDomains().size(); listIdx++) {
                     String domain = category.getDomains().get(listIdx);
                     if (domain == null) {
                         logger.log(Level.WARNING, String.format("Could not process domain at idx: %d in category %s for file %s",

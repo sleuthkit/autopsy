@@ -154,8 +154,8 @@ class AddEditCategoryDialog extends javax.swing.JDialog {
             validationMessage = Bundle.AddEditCategoryDialog_onValueUpdate_badCategory(WebCategoriesDataModel.getMaxCategoryLength());
 
         } else if (currentSuffixes.contains(normalizedSuffix) && 
-                currentDomainCategory != null && 
-                !normalizedSuffix.equals(currentDomainCategory.getHostSuffix())) {
+                (currentDomainCategory == null || 
+                !normalizedSuffix.equals(currentDomainCategory.getHostSuffix()))) {
             
             validationMessage = Bundle.AddEditCategoryDialog_onValueUpdate_suffixRepeat();
 

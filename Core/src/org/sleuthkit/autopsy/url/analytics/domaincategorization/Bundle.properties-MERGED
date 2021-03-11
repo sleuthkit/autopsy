@@ -1,13 +1,14 @@
 AddEditCategoryDialog_Add=Add Entry
 AddEditCategoryDialog_Edit=Edit Entry
 # {0} - maxCategoryLen
-AddEditCategoryDialog_onValueUpdate_badCategory=Please provide a domain suffix that is no more than {0} characters.
+AddEditCategoryDialog_onValueUpdate_badCategory=Please provide a category that is no more than {0} characters.
 # {0} - maxSuffixLen
 AddEditCategoryDialog_onValueUpdate_badSuffix=Please provide a domain suffix that is no more than {0} characters.
 AddEditCategoryDialog_onValueUpdate_sameCategory=Please provide a new category for this domain suffix.
 AddEditCategoryDialog_onValueUpdate_suffixRepeat=Please provide a unique domain suffix.
 WebCategoriesOptionsPanel_categoryTable_categoryColumnName=Category
 WebCategoriesOptionsPanel_categoryTable_suffixColumnName=Domain Suffix
+WebCategoriesOptionsPanel_exportSetButtonActionPerformed_defaultFileName=Custom Categories Export
 WebCategoriesOptionsPanel_exportSetButtonActionPerformed_errorMessage=There was an error exporting.
 WebCategoriesOptionsPanel_exportSetButtonActionPerformed_errorTitle=Export Error
 WebCategoriesOptionsPanel_importSetButtonActionPerformed_errorMessage=There was an error importing this json file.
