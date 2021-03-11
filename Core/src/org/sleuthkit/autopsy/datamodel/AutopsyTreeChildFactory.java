@@ -23,11 +23,11 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import org.apache.commons.collections.CollectionUtils;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Node;
@@ -47,6 +47,19 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Object> {
 
+    private static final Set<Case.Events> LISTENING_EVENTS = EnumSet.of(
+            Case.Events.DATA_SOURCE_ADDED,
+            Case.Events.HOSTS_ADDED,
+            Case.Events.HOSTS_DELETED,
+            Case.Events.PERSONS_ADDED,
+            Case.Events.PERSONS_DELETED,
+            Case.Events.PERSONS_CHANGED
+    );
+
+    private static final Set<String> LISTENING_EVENT_NAMES = LISTENING_EVENTS.stream()
+            .map(evt -> evt.name())
+            .collect(Collectors.toSet());
+
     private static final Logger logger = Logger.getLogger(AutopsyTreeChildFactory.class.getName());
 
     /**
@@ -56,7 +69,7 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
             String eventType = evt.getPropertyName();
-            if (eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())
+            if (LISTENING_EVENT_NAMES.contains(eventType)
                     && Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) {
                 refreshChildren();
             }
@@ -66,13 +79,13 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
     @Override
     protected void addNotify() {
         super.addNotify();
-        Case.addEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED), pcl);
+        Case.addEventTypeSubscriber(LISTENING_EVENTS, pcl);
     }
 
     @Override
     protected void removeNotify() {
         super.removeNotify();
-        Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED), pcl);
+        Case.removeEventTypeSubscriber(LISTENING_EVENTS, pcl);
     }
 
     /**
@@ -94,11 +107,11 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
                             .map(PersonGrouping::new)
                             .sorted()
                             .forEach(list::add);
-                    
+
                     if (CollectionUtils.isNotEmpty(personManager.getHostsForPerson(null))) {
                         list.add(new PersonGrouping(null));
                     }
-                    
+
                     return true;
                 } else {
                     // otherwise, just show host level
