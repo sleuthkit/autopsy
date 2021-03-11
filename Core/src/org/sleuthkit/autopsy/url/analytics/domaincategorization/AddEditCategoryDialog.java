@@ -54,6 +54,7 @@ class AddEditCategoryDialog extends javax.swing.JDialog {
             onValueUpdate(domainSuffixTextField.getText(), categoryTextField.getText());
         }
     };
+
     /**
      * Main constructor if adding a new domain suffix.
      *
@@ -77,8 +78,6 @@ class AddEditCategoryDialog extends javax.swing.JDialog {
         initComponents();
         this.currentSuffixes = currentSuffixes;
         this.currentDomainCategory = currentDomainCategory;
-        
-        
 
         // set title based on whether or not we are editing or adding
         // also don't allow editing of domain suffix if editing
@@ -93,9 +92,9 @@ class AddEditCategoryDialog extends javax.swing.JDialog {
             domainSuffixTextField.setEnabled(false);
             onValueUpdate(currentDomainCategory.getHostSuffix(), currentDomainCategory.getCategory());
         }
-        
+
         validationLabel.setText("");
-        
+
         categoryTextField.getDocument().addDocumentListener(updateListener);
         domainSuffixTextField.getDocument().addDocumentListener(updateListener);
     }
@@ -103,6 +102,7 @@ class AddEditCategoryDialog extends javax.swing.JDialog {
     /**
      * Returns the string value for the name in the input field if Ok pressed or
      * null if not.
+     *
      * @return The string value for the name in the input field if Ok pressed or
      * null if not.
      */
@@ -112,6 +112,7 @@ class AddEditCategoryDialog extends javax.swing.JDialog {
 
     /**
      * Returns whether or not the value has been changed and saved by the user.
+     *
      * @return Whether or not the value has been changed and saved by the user.
      */
     boolean isChanged() {
@@ -126,7 +127,7 @@ class AddEditCategoryDialog extends javax.swing.JDialog {
      */
     @Messages({
         "# {0} - maxSuffixLen",
-        "AddEditCategoryDialog_onValueUpdate_badSuffix=Please provide a domain suffix that is no more than {0} characters.",
+        "AddEditCategoryDialog_onValueUpdate_badSuffix=Please provide a domain suffix that is no more than {0} characters that includes at least one period.",
         "# {0} - maxCategoryLen",
         "AddEditCategoryDialog_onValueUpdate_badCategory=Please provide a category that is no more than {0} characters.",
         "AddEditCategoryDialog_onValueUpdate_suffixRepeat=Please provide a unique domain suffix.",
@@ -147,16 +148,18 @@ class AddEditCategoryDialog extends javax.swing.JDialog {
         }
 
         String validationMessage = null;
-        if (safeSuffixStr.trim().length() == 0 || safeSuffixStr.trim().length() > WebCategoriesDataModel.getMaxDomainSuffixLength()) {
+        if (safeSuffixStr.trim().length() == 0
+                || safeSuffixStr.trim().length() > WebCategoriesDataModel.getMaxDomainSuffixLength()
+                || safeSuffixStr.indexOf('.') < 0) {
             validationMessage = Bundle.AddEditCategoryDialog_onValueUpdate_badSuffix(WebCategoriesDataModel.getMaxCategoryLength());
 
         } else if (safeCategoryStr.trim().length() == 0 || safeCategoryStr.trim().length() > WebCategoriesDataModel.getMaxCategoryLength()) {
             validationMessage = Bundle.AddEditCategoryDialog_onValueUpdate_badCategory(WebCategoriesDataModel.getMaxCategoryLength());
 
-        } else if (currentSuffixes.contains(normalizedSuffix) && 
-                (currentDomainCategory == null || 
-                !normalizedSuffix.equals(currentDomainCategory.getHostSuffix()))) {
-            
+        } else if (currentSuffixes.contains(normalizedSuffix)
+                && (currentDomainCategory == null
+                || !normalizedSuffix.equals(currentDomainCategory.getHostSuffix()))) {
+
             validationMessage = Bundle.AddEditCategoryDialog_onValueUpdate_suffixRepeat();
 
         } else if (currentDomainCategory != null
@@ -167,7 +170,7 @@ class AddEditCategoryDialog extends javax.swing.JDialog {
         }
 
         saveButton.setEnabled(validationMessage == null);
-        validationLabel.setText(validationMessage == null ? "" : validationMessage);
+        validationLabel.setText(validationMessage == null ? "" : String.format("<html>%s</html>", validationMessage));
     }
 
     /**
@@ -246,12 +249,12 @@ class AddEditCategoryDialog extends javax.swing.JDialog {
                     .addComponent(categoryTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(categoryLabel))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(validationLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(validationLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(saveButton)
-                    .addComponent(cancelButton))
-                .addContainerGap(12, Short.MAX_VALUE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(cancelButton)
+                    .addComponent(saveButton))
+                .addContainerGap(8, Short.MAX_VALUE))
         );
 
         pack();

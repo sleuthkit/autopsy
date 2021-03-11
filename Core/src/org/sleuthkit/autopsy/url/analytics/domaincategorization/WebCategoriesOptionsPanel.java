@@ -35,6 +35,7 @@ import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import org.apache.commons.collections.CollectionUtils;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.WeakListeners;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
@@ -101,12 +102,12 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
     }
 
     /**
-     * Returns the item selected in the table or null if no selection.
+     * Returns the items selected in the table or null if no selection.
      *
-     * @return The item selected in the table or null if no selection.
+     * @return The items selected in the table or null if no selection.
      */
-    private DomainCategory getSelected() {
-        return categoryTable.getSelectedItem();
+    private List<DomainCategory> getSelected() {
+        return categoryTable.getSelectedItems();
     }
 
     /**
@@ -147,12 +148,13 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
      * happening.
      */
     private void refreshComponentStates() {
-        boolean selectedItem = getSelected() != null;
+        List<DomainCategory> selectedItems = getSelected();
+        int selectedCount = CollectionUtils.isEmpty(selectedItems) ? 0 : selectedItems.size();
         boolean isIngestRunning = IngestManager.getInstance().isIngestRunning();
         boolean operationsPermitted = !isIngestRunning && !isRefreshing;
 
-        deleteEntryButton.setEnabled(selectedItem && operationsPermitted);
-        editEntryButton.setEnabled(selectedItem && operationsPermitted);
+        deleteEntryButton.setEnabled(selectedCount > 0 && operationsPermitted);
+        editEntryButton.setEnabled(selectedCount == 1 && operationsPermitted);
 
         newEntryButton.setEnabled(operationsPermitted);
         exportSetButton.setEnabled(operationsPermitted);
@@ -287,6 +289,7 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
         gridBagConstraints.insets = new java.awt.Insets(2, 10, 10, 0);
         add(categoryTablePanel, gridBagConstraints);
 
+        newEntryButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/add16.png"))); // NOI18N
         newEntryButton.setText(org.openide.util.NbBundle.getMessage(WebCategoriesOptionsPanel.class, "WebCategoriesOptionsPanel.newEntryButton.text")); // NOI18N
         newEntryButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -301,6 +304,7 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
         gridBagConstraints.insets = new java.awt.Insets(0, 10, 5, 5);
         add(newEntryButton, gridBagConstraints);
 
+        editEntryButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/edit16.png"))); // NOI18N
         editEntryButton.setText(org.openide.util.NbBundle.getMessage(WebCategoriesOptionsPanel.class, "WebCategoriesOptionsPanel.editEntryButton.text")); // NOI18N
         editEntryButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -315,6 +319,7 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
         gridBagConstraints.insets = new java.awt.Insets(0, 0, 5, 5);
         add(editEntryButton, gridBagConstraints);
 
+        deleteEntryButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/delete16.png"))); // NOI18N
         deleteEntryButton.setText(org.openide.util.NbBundle.getMessage(WebCategoriesOptionsPanel.class, "WebCategoriesOptionsPanel.deleteEntryButton.text")); // NOI18N
         deleteEntryButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -328,6 +333,7 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
         gridBagConstraints.insets = new java.awt.Insets(0, 0, 5, 5);
         add(deleteEntryButton, gridBagConstraints);
 
+        importSetButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/import16.png"))); // NOI18N
         importSetButton.setText(org.openide.util.NbBundle.getMessage(WebCategoriesOptionsPanel.class, "WebCategoriesOptionsPanel.importSetButton.text")); // NOI18N
         importSetButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -342,6 +348,7 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
         gridBagConstraints.insets = new java.awt.Insets(0, 10, 5, 5);
         add(importSetButton, gridBagConstraints);
 
+        exportSetButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/export16.png"))); // NOI18N
         exportSetButton.setText(org.openide.util.NbBundle.getMessage(WebCategoriesOptionsPanel.class, "WebCategoriesOptionsPanel.exportSetButton.text")); // NOI18N
         exportSetButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -375,14 +382,20 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
     }// </editor-fold>//GEN-END:initComponents
 
     private void deleteEntryButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteEntryButtonActionPerformed
-        DomainCategory selected = getSelected();
-        if (selected != null && selected.getHostSuffix() != null) {
-            try {
-                runUpdateAction(() -> dataModel.deleteRecord(selected.getHostSuffix()));
-            } catch (IllegalArgumentException | SQLException | IOException ex) {
-                setDefaultCursor();
-                logger.log(Level.WARNING, "There was an error while deleting: " + selected.getHostSuffix(), ex);
+        List<DomainCategory> selectedItems = getSelected();
+        if (!CollectionUtils.isEmpty(selectedItems)) {
+            setWaitingCursor();
+            for (DomainCategory selected : selectedItems) {
+                if (selected != null && selected.getHostSuffix() != null) {
+                    try {
+                        dataModel.deleteRecord(selected.getHostSuffix());
+                    } catch (IllegalArgumentException | SQLException ex) {
+                        logger.log(Level.WARNING, "There was an error while deleting: " + selected.getHostSuffix(), ex);
+                    }
+                }
             }
+            setDefaultCursor();
+            refresh();
         }
     }//GEN-LAST:event_deleteEntryButtonActionPerformed
 
@@ -399,16 +412,19 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
     }//GEN-LAST:event_newEntryButtonActionPerformed
 
     private void editEntryButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_editEntryButtonActionPerformed
-        DomainCategory selected = getSelected();
-        if (selected != null && selected.getHostSuffix() != null) {
-            try {
-                DomainCategory newCategory = getAddEditValue(selected);
-                if (newCategory != null) {
-                    runUpdateAction(() -> dataModel.insertUpdateSuffix(newCategory));
+        List<DomainCategory> selectedItems = getSelected();
+        if (CollectionUtils.isNotEmpty(selectedItems)) {
+            DomainCategory selected = selectedItems.get(0);
+            if (selected != null && selected.getHostSuffix() != null) {
+                try {
+                    DomainCategory newCategory = getAddEditValue(selected);
+                    if (newCategory != null) {
+                        runUpdateAction(() -> dataModel.insertUpdateSuffix(newCategory));
+                    }
+                } catch (IllegalArgumentException | SQLException | IOException ex) {
+                    setDefaultCursor();
+                    logger.log(Level.WARNING, "There was an error while editing: " + selected.getHostSuffix(), ex);
                 }
-            } catch (IllegalArgumentException | SQLException | IOException ex) {
-                setDefaultCursor();
-                logger.log(Level.WARNING, "There was an error while editing: " + selected.getHostSuffix(), ex);
             }
         }
     }//GEN-LAST:event_editEntryButtonActionPerformed
@@ -417,7 +433,7 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
         "WebCategoriesOptionsPanel_importSetButtonActionPerformed_errorMessage=There was an error importing this json file.",
         "WebCategoriesOptionsPanel_importSetButtonActionPerformed_errorTitle=Import Error",})
     private void importSetButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_importSetButtonActionPerformed
-        fileChooser.setSelectedFile(null);
+        fileChooser.setSelectedFile(new File(""));
         int result = fileChooser.showOpenDialog(this);
         if (result == JFileChooser.APPROVE_OPTION) {
             File selectedFile = fileChooser.getSelectedFile();

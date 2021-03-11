@@ -28,7 +28,9 @@ import org.sleuthkit.autopsy.url.analytics.DomainCategorizerException;
 import org.sleuthkit.autopsy.url.analytics.DomainCategory;
 
 /**
- * A DomainCategoryProvider for custom web categories.
+ * A DomainCategoryProvider for custom web categories. NOTE: If this class
+ * package or name change, code in DomainCategoryRunner will also need to change
+ * to reflect the changing class name for ordering purposes.
  */
 @ServiceProvider(service = DomainCategorizer.class)
 public class CustomWebCategorizer implements DomainCategorizer {
