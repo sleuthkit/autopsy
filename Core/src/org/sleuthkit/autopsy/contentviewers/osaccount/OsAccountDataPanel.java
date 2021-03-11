@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.contentviewers.osaccount;
 
+import java.awt.BorderLayout;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -25,15 +26,27 @@ import java.awt.Insets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import static java.util.Locale.US;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.Box;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.SwingWorker;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.contentviewers.osaccount.SectionData.RowData;
+import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.OsAccount;
+import org.sleuthkit.datamodel.OsAccountAttribute;
+import org.sleuthkit.datamodel.OsAccountInstance;
+import org.sleuthkit.datamodel.OsAccountManager;
 import org.sleuthkit.datamodel.OsAccountRealm;
 
 /**
@@ -42,11 +55,14 @@ import org.sleuthkit.datamodel.OsAccountRealm;
 public class OsAccountDataPanel extends JPanel {
 
     private static final long serialVersionUID = 1L;
+    final private static Logger logger = Logger.getLogger(OsAccountDataPanel.class.getName());
 
     private static final int KEY_COLUMN = 0;
     private static final int VALUE_COLUMN = 1;
-    
+
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("MMM dd yyyy", US);
+
+    private PanelDataFetcher dataFetcher = null;
 
     // Panel constructor.
     OsAccountDataPanel() {
@@ -68,19 +84,19 @@ public class OsAccountDataPanel extends JPanel {
      */
     void setOsAccount(OsAccount account) {
         removeAll();
+        revalidate();
 
         if (account != null) {
-            List<SectionData> data = new ArrayList<>();
-            data.add(buildBasicProperties(account));
+            setLayout(new BorderLayout());
+            add(new JLabel("Loading OsAccount Data..."), BorderLayout.NORTH);
 
-            OsAccountRealm realm = account.getRealm();
-            if (realm != null) {
-                data.add(buildRealmProperties(realm));
+            if (dataFetcher != null && !dataFetcher.isDone()) {
+                dataFetcher.cancel(true);
             }
 
-            addDataComponents(data);
+            dataFetcher = new PanelDataFetcher(account);
+            dataFetcher.execute();
         }
-        revalidate();
     }
 
     /**
@@ -122,8 +138,7 @@ public class OsAccountDataPanel extends JPanel {
         "OsAccountDataPanel_basic_address=Address",
         "OsAccountDataPanel_basic_admin=Administrator",
         "OsAccountDataPanel_basic_type=Type",
-        "OsAccountDataPanel_basic_creationDate=Creation Date",
-    })
+        "OsAccountDataPanel_basic_creationDate=Creation Date",})
 
     /**
      * Returns the data for the Basic Properties section of the panel.
@@ -147,12 +162,11 @@ public class OsAccountDataPanel extends JPanel {
                 account.getName() == null || account.getName().isEmpty() ? "" : account.getName());
 
         data.addData(Bundle.OsAccountDataPanel_basic_type(), account.getOsAccountType().getName());
-        
+
         Optional<Long> crTime = account.getCreationTime();
-        if(crTime.isPresent()) {
+        if (crTime.isPresent()) {
             data.addData(Bundle.OsAccountDataPanel_basic_creationDate(), DATE_FORMAT.format(new Date(crTime.get() * 1000)));
-        }
-        else {
+        } else {
             data.addData(Bundle.OsAccountDataPanel_basic_creationDate(), "");
         }
 
@@ -184,12 +198,21 @@ public class OsAccountDataPanel extends JPanel {
         optional = realm.getRealmAddr();
         data.addData(Bundle.OsAccountDataPanel_realm_address(),
                 optional.isPresent() ? optional.get() : "");
-        
+
         data.addData(Bundle.OsAccountDataPanel_realm_scope(),
-            realm.getScope().getName());
-        
+                realm.getScope().getName());
+
         data.addData(Bundle.OsAccountDataPanel_realm_confidence(),
                 realm.getScopeConfidence().getName());
+
+        return data;
+    }
+
+    private SectionData buildHostData(Host host, List<OsAccountAttribute> attributeList) {
+        SectionData data = new SectionData(host.getName());
+        for (OsAccountAttribute attribute : attributeList) {
+            data.addData(attribute.getAttributeType().getDisplayName(), attribute.getDisplayString());
+        }
 
         return data;
     }
@@ -290,5 +313,167 @@ public class OsAccountDataPanel extends JPanel {
         constraints.insets = new Insets(0, 5, 5, 5);
 
         return constraints;
+    }
+
+    /**
+     * A SwingWorker to gather the data for the content panel.
+     */
+    private class PanelDataFetcher extends SwingWorker<WorkerResults, Void> {
+
+        private final OsAccount account;
+
+        /**
+         * Construct a new worker for the given account.
+         *
+         * @param account
+         */
+        PanelDataFetcher(OsAccount account) {
+            this.account = account;
+        }
+
+        @Override
+        protected WorkerResults doInBackground() throws Exception {
+            Map<Host, List<OsAccountAttribute>> hostMap = new HashMap<>();
+            Map<Host, DataSource> instanceMap = new HashMap<>();
+            OsAccountManager osAccountManager = Case.getCurrentCase().getSleuthkitCase().getOsAccountManager();
+            List<Host> hosts = osAccountManager.getHosts(account);
+            List<OsAccountAttribute> attributeList = account.getOsAccountAttributes();
+
+            if (attributeList != null) {
+                if (hosts != null) {
+                    // Organize the attributes by hostId
+                    Map<Long, List<OsAccountAttribute>> idMap = new HashMap<>();
+                    for (OsAccountAttribute attribute : attributeList) {
+                        List<OsAccountAttribute> atList = null;
+                        Optional<Long> optionalId = attribute.getHostId();
+                        Long key = null;
+                        if (optionalId.isPresent()) {
+                            key = optionalId.get();
+                        }
+
+                        atList = idMap.get(key);
+
+                        if (atList == null) {
+                            atList = new ArrayList<>();
+                            idMap.put(key, atList);
+                        }
+
+                        atList.add(attribute);
+                    }
+
+                    // Add attribute lists to the hostMap 
+                    for (Host host : hosts) {
+                        List<OsAccountAttribute> atList = idMap.get(host.getId());
+                        if (atList != null) {
+                            hostMap.put(host, atList);
+                        }
+
+                    }
+                    List<OsAccountAttribute> atList = idMap.get(null);
+                    if (atList != null) {
+                        hostMap.put(null, atList);
+                    }
+
+                    // Store both the host and the dataSource so that we get
+                    // all of the calls to the db done in the thread.
+                    for (OsAccountInstance instance : account.getOsAccountInstances()) {
+                        instanceMap.put(instance.getDataSource().getHost(), instance.getDataSource());
+                    }
+
+                } else {
+                    hostMap.put(null, attributeList);
+                }
+            }
+
+            return new WorkerResults(hostMap, instanceMap);
+        }
+
+        @Override
+        protected void done() {
+            WorkerResults results = null;
+
+            try {
+                if (this.isCancelled()) {
+                    return;
+                } else {
+                    results = get();
+                }
+            } catch (ExecutionException | InterruptedException ex) {
+                logger.log(Level.SEVERE, String.format("Failed to retrieve data for OsAccount (%d)", account.getId()), ex);
+            }
+
+            if (results != null) {
+                removeAll();
+                setLayout(new GridBagLayout());
+
+                List<SectionData> data = new ArrayList<>();
+                data.add(buildBasicProperties(account));
+                Map<Host, List<OsAccountAttribute>> hostDataMap = results.getAttributeMap();
+                if (hostDataMap != null && !hostDataMap.isEmpty()) {
+                    hostDataMap.forEach((K, V) -> data.add(buildHostData(K, V)));
+                }
+
+                OsAccountRealm realm = account.getRealm();
+                if (realm != null) {
+                    data.add(buildRealmProperties(realm));
+                }
+
+                Map<Host, DataSource> instanceMap = results.getDataSourceMap();
+                if (!instanceMap.isEmpty()) {
+                    SectionData instanceSection = new SectionData("Instances");
+                    instanceMap.forEach((K, V) -> instanceSection.addData(K.getName(), V.getName()));
+
+                    data.add(instanceSection);
+                }
+
+                addDataComponents(data);
+
+                revalidate();
+                repaint();
+            }
+        }
+    }
+
+    /**
+     * Helper class for PanelDataFetcher that wraps the returned data needed for
+     * the panel.
+     */
+    private final class WorkerResults {
+
+        private final Map<Host, List<OsAccountAttribute>> attributeMap;
+        private final Map<Host, DataSource> instanceMap;
+
+        /**
+         * Construct a new WorkerResult object.
+         *
+         * @param attributeMap Maps the OsAccountAttributes to the host they
+         *                     belong with.
+         * @param instanceMap  A map of data to display OsAccount instance
+         *                     information.
+         */
+        WorkerResults(Map<Host, List<OsAccountAttribute>> attributeMap, Map<Host, DataSource> instanceMap) {
+            this.attributeMap = attributeMap;
+            this.instanceMap = instanceMap;
+        }
+
+        /**
+         * Returns a map of OsAccountAttributes that belong to a specific Host.
+         * There maybe a null key in the map which represents properties that
+         * are not host specific.
+         *
+         * @return OsAccountAttribute map.
+         */
+        Map<Host, List<OsAccountAttribute>> getAttributeMap() {
+            return attributeMap;
+        }
+
+        /**
+         * A map of the instance data for the OsAccount.
+         *
+         * @return
+         */
+        Map<Host, DataSource> getDataSourceMap() {
+            return instanceMap;
+        }
     }
 }
