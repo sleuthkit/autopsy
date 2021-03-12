@@ -24,34 +24,27 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * A pipeline of file ingest modules for performing file ingest tasks for an
+ * A pipeline of file ingest modules for executing file ingest tasks for an
  * ingest job.
  */
 final class FileIngestPipeline extends IngestTaskPipeline<FileIngestTask> {
 
     private static final IngestManager ingestManager = IngestManager.getInstance();
-    private final IngestPipeline ingestJobPipeline;
+    private final IngestJobPipeline ingestJobPipeline;
 
     /**
-     * Constructs a pipeline of file ingest modules for performing file ingest
+     * Constructs a pipeline of file ingest modules for executing file ingest
      * tasks for an ingest job.
      *
      * @param ingestJobPipeline The ingest job pipeline that owns this pipeline.
      * @param moduleTemplates   The ingest module templates that define this
      *                          pipeline.
      */
-    FileIngestPipeline(IngestPipeline ingestJobPipeline, List<IngestModuleTemplate> moduleTemplates) {
+    FileIngestPipeline(IngestJobPipeline ingestJobPipeline, List<IngestModuleTemplate> moduleTemplates) {
         super(ingestJobPipeline, moduleTemplates);
         this.ingestJobPipeline = ingestJobPipeline;
     }
 
-    /**
-     * RJCTODO
-     *
-     * @param template
-     *
-     * @return
-     */
     @Override
     Optional<IngestTaskPipeline.PipelineModule<FileIngestTask>> acceptModuleTemplate(IngestModuleTemplate template) {
         Optional<IngestTaskPipeline.PipelineModule<FileIngestTask>> module = Optional.empty();
@@ -62,28 +55,12 @@ final class FileIngestPipeline extends IngestTaskPipeline<FileIngestTask> {
         return module;
     }
 
-    /**
-     * RJCTODO
-     *
-     * @param task
-     *
-     * @throws
-     * org.sleuthkit.autopsy.ingest.IngestTaskPipeline.IngestTaskPipelineException
-     */
     @Override
-    void prepareTask(FileIngestTask task) throws IngestTaskPipelineException {
+    void prepareForTask(FileIngestTask task) throws IngestTaskPipelineException {
     }
 
-    /**
-     * RJCTODO
-     *
-     * @param task
-     *
-     * @throws
-     * org.sleuthkit.autopsy.ingest.IngestTaskPipeline.IngestTaskPipelineException
-     */
     @Override
-    void completeTask(FileIngestTask task) throws IngestTaskPipelineException {
+    void cleanUpAfterTask(FileIngestTask task) throws IngestTaskPipelineException {
         AbstractFile file = null;
         try {
             file = task.getFile();
@@ -130,17 +107,8 @@ final class FileIngestPipeline extends IngestTaskPipeline<FileIngestTask> {
             this.module = module;
         }
 
-        /**
-         * RJCTODO
-         *
-         * @param ingestJobPipeline
-         * @param task
-         *
-         * @throws
-         * org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException
-         */
         @Override
-        void performTask(IngestPipeline ingestJobPipeline, FileIngestTask task) throws IngestModuleException {
+        void executeTask(IngestJobPipeline ingestJobPipeline, FileIngestTask task) throws IngestModuleException {
             AbstractFile file = null;
             try {
                 file = task.getFile();
@@ -148,7 +116,6 @@ final class FileIngestPipeline extends IngestTaskPipeline<FileIngestTask> {
                 throw new IngestModuleException(String.format("Failed to get file (file objId = %d)", task.getFileId()), ex); //NON-NLS
             }
             ingestManager.setIngestTaskProgress(task, getDisplayName());
-            ingestJobPipeline.setCurrentFileIngestModule(getDisplayName(), file.getName());
             ProcessResult result = module.process(file);
             if (result == ProcessResult.ERROR) {
                 throw new IngestModuleException(String.format("%s experienced an error analyzing %s (file objId = %d)", getDisplayName(), file.getName(), file.getId())); //NON-NLS

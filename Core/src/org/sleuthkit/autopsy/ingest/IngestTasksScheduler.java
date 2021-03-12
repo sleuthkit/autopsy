@@ -66,7 +66,7 @@ final class IngestTasksScheduler {
     @GuardedBy("this")
     private final Queue<FileIngestTask> streamedFileIngestTasksQueue;
     private final IngestTaskTrackingQueue fileIngestTasksQueue;
-    private final IngestTaskTrackingQueue artifactIngestTasksQueue;
+    private final IngestTaskTrackingQueue resultIngestTasksQueue;
 
     /**
      * Gets the ingest tasks scheduler singleton that creates ingest tasks for
@@ -91,7 +91,7 @@ final class IngestTasksScheduler {
         batchedFileIngestTasksQueue = new LinkedList<>();
         fileIngestTasksQueue = new IngestTaskTrackingQueue();
         streamedFileIngestTasksQueue = new LinkedList<>();
-        artifactIngestTasksQueue = new IngestTaskTrackingQueue();
+        resultIngestTasksQueue = new IngestTaskTrackingQueue();
     }
 
     /**
@@ -120,8 +120,8 @@ final class IngestTasksScheduler {
      *
      * @return The queue.
      */
-    BlockingIngestTaskQueue getDataArtifactIngestTaskQueue() {
-        return artifactIngestTasksQueue;
+    BlockingIngestTaskQueue getResultIngestTaskQueue() {
+        return resultIngestTasksQueue;
     }
 
     /**
@@ -149,7 +149,7 @@ final class IngestTasksScheduler {
      *                       target Content of the task to the pipeline for
      *                       processing by the pipeline's ingest modules.
      */
-    synchronized void scheduleDataSourceAndFileIngestTasks(IngestPipeline ingestPipeline) {
+    synchronized void scheduleDataSourceAndFileIngestTasks(IngestJobPipeline ingestPipeline) {
         if (!ingestPipeline.isCancelled()) {
             scheduleDataSourceIngestTask(ingestPipeline);
             scheduleFileIngestTasks(ingestPipeline, Collections.emptyList());
@@ -178,7 +178,7 @@ final class IngestTasksScheduler {
      *                       target Content of the task to the pipeline for
      *                       processing by the pipeline's ingest modules.
      */
-    synchronized void scheduleDataSourceIngestTask(IngestPipeline ingestPipeline) {
+    synchronized void scheduleDataSourceIngestTask(IngestJobPipeline ingestPipeline) {
         if (!ingestPipeline.isCancelled()) {
             DataSourceIngestTask task = new DataSourceIngestTask(ingestPipeline);
             try {
@@ -217,7 +217,7 @@ final class IngestTasksScheduler {
      *                       empty, then all if the files from the data source
      *                       are candidates for scheduling.
      */
-    synchronized void scheduleFileIngestTasks(IngestPipeline ingestPipeline, Collection<AbstractFile> files) {
+    synchronized void scheduleFileIngestTasks(IngestJobPipeline ingestPipeline, Collection<AbstractFile> files) {
         if (!ingestPipeline.isCancelled()) {
             Collection<AbstractFile> candidateFiles;
             if (files.isEmpty()) {
@@ -260,7 +260,7 @@ final class IngestTasksScheduler {
      *                       processing by the pipeline's ingest modules.
      * @param files          A list of file object IDs for the streamed files.
      */
-    synchronized void scheduleStreamedFileIngestTasks(IngestPipeline ingestPipeline, List<Long> fileIds) {
+    synchronized void scheduleStreamedFileIngestTasks(IngestJobPipeline ingestPipeline, List<Long> fileIds) {
         if (!ingestPipeline.isCancelled()) {
             for (long id : fileIds) {
                 /*
@@ -303,7 +303,7 @@ final class IngestTasksScheduler {
      *                       processing by the pipeline's ingest modules.
      * @param files          The files.
      */
-    synchronized void fastTrackFileIngestTasks(IngestPipeline ingestPipeline, Collection<AbstractFile> files) {
+    synchronized void fastTrackFileIngestTasks(IngestJobPipeline ingestPipeline, Collection<AbstractFile> files) {
         if (!ingestPipeline.isCancelled()) {
             /*
              * Put the files directly into the queue for the file ingest
@@ -351,7 +351,7 @@ final class IngestTasksScheduler {
      *                       target Content of the task to the pipeline for
      *                       processing by the pipeline's ingest modules.
      */
-    synchronized void scheduleDataArtifactIngestTasks(IngestPipeline ingestPipeline) {
+    synchronized void scheduleDataArtifactIngestTasks(IngestJobPipeline ingestPipeline) {
         if (!ingestPipeline.isCancelled()) {
             Blackboard blackboard = Case.getCurrentCase().getSleuthkitCase().getBlackboard();
             try {
@@ -388,12 +388,12 @@ final class IngestTasksScheduler {
      *                       processing by the pipeline's ingest modules.
      * @param artifacts      The artifacts.
      */
-    synchronized void scheduleDataArtifactIngestTasks(IngestPipeline ingestPipeline, List<DataArtifact> artifacts) { // RJCTODO: WHy are cancellation checks in the scheduler instead of in the pipeline?
+    synchronized void scheduleDataArtifactIngestTasks(IngestJobPipeline ingestPipeline, List<DataArtifact> artifacts) {
         if (!ingestPipeline.isCancelled()) {
             for (DataArtifact artifact : artifacts) {
                 DataArtifactIngestTask task = new DataArtifactIngestTask(ingestPipeline, artifact);
                 try {
-                    this.artifactIngestTasksQueue.putLast(task);
+                    this.resultIngestTasksQueue.putLast(task);
                 } catch (InterruptedException ex) {
                     DataSource dataSource = ingestPipeline.getDataSource();
                     logger.log(Level.WARNING, String.format("Interrupted while enqueuing data artifact tasks for %s (data source object ID = %d)", dataSource.getName(), dataSource.getId()), ex); //NON-NLS
@@ -432,7 +432,7 @@ final class IngestTasksScheduler {
      * @param task The completed task.
      */
     synchronized void notifyTaskCompleted(DataArtifactIngestTask task) {
-        artifactIngestTasksQueue.taskCompleted(task);
+        resultIngestTasksQueue.taskCompleted(task);
     }
 
     /**
@@ -443,14 +443,14 @@ final class IngestTasksScheduler {
      *
      * @return True or false.
      */
-    synchronized boolean currentTasksAreCompleted(IngestPipeline ingestPipeline) {
+    synchronized boolean currentTasksAreCompleted(IngestJobPipeline ingestPipeline) {
         long pipelineId = ingestPipeline.getId();
         return !(dataSourceIngestTasksQueue.hasTasksForJob(pipelineId)
                 || hasTasksForJob(topLevelFileIngestTasksQueue, pipelineId)
                 || hasTasksForJob(batchedFileIngestTasksQueue, pipelineId)
                 || hasTasksForJob(streamedFileIngestTasksQueue, pipelineId)
                 || fileIngestTasksQueue.hasTasksForJob(pipelineId)
-                || artifactIngestTasksQueue.hasTasksForJob(pipelineId));
+                || resultIngestTasksQueue.hasTasksForJob(pipelineId));
     }
 
     /**
@@ -472,7 +472,7 @@ final class IngestTasksScheduler {
      *
      * @param ingestJobPipeline The ingest pipeline for the job.
      */
-    synchronized void cancelPendingFileTasksForIngestJob(IngestPipeline ingestJobPipeline) {
+    synchronized void cancelPendingFileTasksForIngestJob(IngestJobPipeline ingestJobPipeline) {
         long jobId = ingestJobPipeline.getId();
         removeTasksForJob(topLevelFileIngestTasksQueue, jobId);
         removeTasksForJob(batchedFileIngestTasksQueue, jobId);
@@ -512,7 +512,6 @@ final class IngestTasksScheduler {
                         }
                     }
                 } catch (TskCoreException ex) {
-                    // RJCTODO: Improve logging
                     logger.log(Level.SEVERE, "Could not get children of root to enqueue: " + root.getId() + ": " + root.getName(), ex); //NON-NLS
                 }
             }
@@ -791,7 +790,7 @@ final class IngestTasksScheduler {
         Iterator<? extends IngestTask> iterator = tasks.iterator();
         while (iterator.hasNext()) {
             IngestTask task = iterator.next();
-            if (task.getIngestPipeline().getId() == pipelineId) { // RJCTODO: Is this right? Why is there no synchronization, are these collections thread safe?
+            if (task.getIngestPipeline().getId() == pipelineId) {
                 iterator.remove();
             }
         }
@@ -817,7 +816,6 @@ final class IngestTasksScheduler {
     }
 
     /**
-     * //RJCTODO
      * Returns a snapshot of the states of the tasks in progress for an ingest
      * job.
      *

@@ -24,7 +24,7 @@ package org.sleuthkit.autopsy.ingest;
  *
  * NOTE: As of Java 8, interfaces can have default methods. IngestModuleFactory
  * now provides default no-op versions of all of its optional methods. This
- * class is no longer needed and can be deprecated when convenient.
+ * class is no longer needed and can be DEPRECATED when convenient.
  */
 public abstract class IngestModuleFactoryAdapter implements IngestModuleFactory {
 

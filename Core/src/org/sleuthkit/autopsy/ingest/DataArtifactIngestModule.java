@@ -29,6 +29,14 @@ public interface DataArtifactIngestModule extends IngestModule {
     /**
      * Processes a data artifact.
      *
+     * IMPORTANT: In addition to returning ProcessResult.OK or
+     * ProcessResult.ERROR, modules should log all errors using methods provided
+     * by the org.sleuthkit.autopsy.coreutils.Logger class. Log messages should
+     * include the name and object ID of the data being processed. If an
+     * exception has been caught by the module, the exception should be sent to
+     * the Logger along with the log message so that a stack trace will appear
+     * in the application log.
+     *
      * @param artifact The artifact to process.
      *
      * @return A result code indicating success or failure of the processing.

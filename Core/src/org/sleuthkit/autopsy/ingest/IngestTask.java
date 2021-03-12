@@ -29,7 +29,7 @@ import org.sleuthkit.datamodel.Content;
 abstract class IngestTask {
     
     private final static long NOT_SET = Long.MIN_VALUE;
-    private final IngestPipeline ingestJobPipeline;
+    private final IngestJobPipeline ingestJobPipeline;
     private long threadId;
 
     /**
@@ -41,7 +41,7 @@ abstract class IngestTask {
      * @param ingestJobPipeline The ingest job pipeline to use to execute the
      *                          task.
      */
-    IngestTask(IngestPipeline ingestJobPipeline) {
+    IngestTask(IngestJobPipeline ingestJobPipeline) {
         this.ingestJobPipeline = ingestJobPipeline;
         threadId = NOT_SET;
     }
@@ -51,7 +51,7 @@ abstract class IngestTask {
      *
      * @return The ingest job pipeline.
      */
-    IngestPipeline getIngestPipeline() {
+    IngestJobPipeline getIngestPipeline() {
         return ingestJobPipeline;
     }
 
@@ -78,12 +78,8 @@ abstract class IngestTask {
      * using the ingest job pipeline specified when the task was created.
      *
      * @param threadId The numeric ID of the ingest thread executing this task.
-     *
-     * @throws InterruptedException This exception is thrown if the calling
-     *                              thread is interrupted while blocked waiting
-     *                              for some task operation to complete.
-     */
-    void execute(long threadId) throws InterruptedException { // RJCTODO: Why does htis block?
+=     */
+    void execute(long threadId) {
         this.threadId = threadId;
         ingestJobPipeline.execute(this);
     }

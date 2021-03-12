@@ -45,7 +45,6 @@ public class CentralRepoDataArtifactIngestModule implements DataArtifactIngestMo
                 CentralRepoIngestModuleFactory.getModuleName(),
                 "Data Artifacts Processed", //NON-NLS 
                 String.format("Count = %d", artifactCounter.get()))); //NON-NLS 
-
     }
 
 }

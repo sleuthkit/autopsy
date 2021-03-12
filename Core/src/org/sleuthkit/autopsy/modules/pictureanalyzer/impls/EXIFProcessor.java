@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2020 Basis Technology Corp.
+ * Copyright 2020-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,6 +33,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.List;
 import java.util.TimeZone;
 import java.util.logging.Level;
 import org.apache.commons.lang3.StringUtils;
@@ -56,17 +57,20 @@ import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.modules.pictureanalyzer.spi.PictureProcessor;
+import org.sleuthkit.datamodel.AnalysisResult;
+import org.sleuthkit.datamodel.DataArtifact;
 
 /**
  * Extracts EXIF metadata from JPEG, TIFF, and WAV files. Currently only date,
  * latitude, longitude, altitude, device model, and device make are extracted.
- * 
+ *
  * User content suspected artifacts are also created by this processor.
  */
 @ServiceProvider(service = PictureProcessor.class)
 public class EXIFProcessor implements PictureProcessor {
 
     private static final Logger logger = Logger.getLogger(EXIFProcessor.class.getName());
+    private static final BlackboardArtifact.Type EXIF_METADATA = new BlackboardArtifact.Type(TSK_METADATA_EXIF);
 
     @Override
     @NbBundle.Messages({
@@ -143,25 +147,43 @@ public class EXIFProcessor implements PictureProcessor {
             if (context.fileIngestIsCancelled()) {
                 return;
             }
-            
+
             final Blackboard blackboard = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard();
 
             if (!attributes.isEmpty() && !blackboard.artifactExists(file, TSK_METADATA_EXIF, attributes)) {
-                
-                final BlackboardArtifact exifArtifact = file.newArtifact(TSK_METADATA_EXIF);
+                /*
+                 * Create a TSK_METADATA_EXIF data artifact.
+                 */
+                final List<BlackboardArtifact> newArtifacts = new ArrayList<>();
+                final List<DataArtifact> newDataArtifacts = new ArrayList<>();
+                final DataArtifact exifArtifact = file.newDataArtifact(EXIF_METADATA, attributes, null);
+                newArtifacts.add(exifArtifact);
+                newDataArtifacts.add(exifArtifact);
+
+                /*
+                 * Create a TSK_USER_CONTENT_SUSPECTED analysis result.
+                 */
                 final BlackboardArtifact userSuspectedArtifact = file.newArtifact(TSK_USER_CONTENT_SUSPECTED);
-                exifArtifact.addAttributes(attributes);
                 userSuspectedArtifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT,
                         MODULE_NAME, Bundle.ExifProcessor_userContent_description()));
+                newArtifacts.add(userSuspectedArtifact);
+
+                /*
+                 * Post all of the artifacts to the blackboard.
+                 */
                 try {
-                    // index the artifact for keyword search
-                    blackboard.postArtifact(exifArtifact, MODULE_NAME);
-                    blackboard.postArtifact(userSuspectedArtifact, MODULE_NAME);
+                    blackboard.postArtifacts(newArtifacts, MODULE_NAME);
                 } catch (Blackboard.BlackboardException ex) {
-                    logger.log(Level.SEVERE, "Unable to index blackboard artifact " + exifArtifact.getArtifactID(), ex); //NON-NLS
+                    logger.log(Level.SEVERE, String.format("Error posting TSK_METADATA_EXIF and TSK_USER_CONTENT_SUSPECTED artifacts for %s (object ID = %d)", file.getName(), file.getId()), ex); //NON-NLS
                     MessageNotifyUtil.Notify.error(
                             Bundle.ExifProcessor_indexError_message(), exifArtifact.getDisplayName());
                 }
+
+                /*
+                 * Add the data artifact to the ingest job for processing by the
+                 * data artifact ingest modules.
+                 */
+                context.addDataArtifactsToJob(newDataArtifacts);
             }
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Failed to create blackboard artifact for " //NON-NLS

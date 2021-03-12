@@ -23,9 +23,9 @@ package org.sleuthkit.autopsy.ingest;
  */
 public class DataSourceIngestModuleProgress {
 
-    private final IngestPipeline ingestJobPipeline;
+    private final IngestJobPipeline ingestJobPipeline;
 
-    DataSourceIngestModuleProgress(IngestPipeline pipeline) {
+    DataSourceIngestModuleProgress(IngestJobPipeline pipeline) {
         this.ingestJobPipeline = pipeline;
     }
 

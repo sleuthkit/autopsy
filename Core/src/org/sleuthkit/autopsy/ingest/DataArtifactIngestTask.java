@@ -36,7 +36,7 @@ final class DataArtifactIngestTask extends IngestTask {
      *                          task.
      * @param artifact          The data artifact to be processed.
      */
-    DataArtifactIngestTask(IngestPipeline ingestJobPipeline, DataArtifact artifact) {
+    DataArtifactIngestTask(IngestJobPipeline ingestJobPipeline, DataArtifact artifact) {
         super(ingestJobPipeline);
         this.artifact = artifact;
     }

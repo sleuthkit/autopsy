@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
+import java.util.ArrayList;
 import java.util.List;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
@@ -32,7 +33,7 @@ import org.sleuthkit.datamodel.DataArtifact;
  */
 public final class IngestJobContext {
 
-    private final IngestPipeline ingestPipeline;
+    private final IngestJobPipeline ingestPipeline;
 
     /**
      * Constructs an ingest job context object that provides an ingest module
@@ -40,7 +41,7 @@ public final class IngestJobContext {
      *
      * @param ingestJobPipeline
      */
-    IngestJobContext(IngestPipeline ingestJobPipeline) {
+    IngestJobContext(IngestJobPipeline ingestJobPipeline) {
         this.ingestPipeline = ingestJobPipeline;
     }
 
@@ -50,7 +51,7 @@ public final class IngestJobContext {
      * @return The context string.
      */
     public String getExecutionContext() {
-        return this.ingestPipeline.getExecutionContext();
+        return ingestPipeline.getExecutionContext();
     }
 
     /**
@@ -89,13 +90,31 @@ public final class IngestJobContext {
      * check this periodically and break off processing if the method returns
      * true.
      *
-     * RJCTODO: Figure out how to check/handle cancellation for data artoifact
-     * ingest modules. Perhaps it is time to add a cancel method with an
-     * implementation in teh "adapter" classes.
-     *
      * @return True or false.
      */
     public boolean fileIngestIsCancelled() {
+        /*
+         * It is not currently possible to cancel individual file ingest
+         * modules. File ingest cancellation is equiovalent to ingest job
+         * cancellation.
+         */
+        return ingestPipeline.isCancelled();
+    }
+
+    /**
+     * Checks whether or not cancellation of the currently running data artifact
+     * ingest module for the ingest job has been requested. File ingest modules
+     * should check this periodically and break off processing if the method
+     * returns true.
+     *
+     * @return True or false.
+     */
+    public boolean dataArtifactIngestIsCancelled() {
+        /*
+         * It is not currently possible to cancel individual file ingest
+         * modules. Data artifact ingest cancellation is equivalent to ingest
+         * job cancellation.
+         */
         return ingestPipeline.isCancelled();
     }
 

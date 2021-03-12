@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-2020 Basis Technology Corp.
+ * Copyright 2014-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,7 +33,6 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.DataSource;
 
 /**
  * Analyzes one or more data sources using a set of ingest modules specified via
@@ -78,7 +77,7 @@ public final class IngestJob {
     private final List<Content> dataSources = new ArrayList<>();
     private final List<AbstractFile> files = new ArrayList<>();
     private final Mode ingestMode;
-    private final Map<Long, IngestPipeline> ingestJobPipelines;
+    private final Map<Long, IngestJobPipeline> ingestJobPipelines;
     private final AtomicInteger incompleteJobsCount;
     private final IngestJobSettings settings;
     private volatile CancellationReason cancellationReason;
@@ -136,7 +135,6 @@ public final class IngestJob {
      * @return The job identifier.
      */
     public long getId() {
-        // RJCTODO: Replace this with the pipeline ID, as has been done elsewhere.
         return this.id;
     }
 
@@ -162,7 +160,7 @@ public final class IngestJob {
             return;
         }
         // Streaming ingest jobs will only have one data source
-        IngestPipeline streamingIngestPipeline = ingestJobPipelines.values().iterator().next();
+        IngestJobPipeline streamingIngestPipeline = ingestJobPipelines.values().iterator().next();
         streamingIngestPipeline.addStreamingIngestFiles(fileObjIds);
     }
 
@@ -175,7 +173,7 @@ public final class IngestJob {
             return;
         }
         // Streaming ingest jobs will only have one data source
-        IngestPipeline streamingIngestPipeline = ingestJobPipelines.values().iterator().next();
+        IngestJobPipeline streamingIngestPipeline = ingestJobPipelines.values().iterator().next();
         streamingIngestPipeline.addStreamingIngestDataSource();
     }
 
@@ -193,11 +191,11 @@ public final class IngestJob {
          */
         if (files.isEmpty()) {
             for (Content dataSource : dataSources) {
-                IngestPipeline ingestJobPipeline = new IngestPipeline(this, dataSource, settings);
+                IngestJobPipeline ingestJobPipeline = new IngestJobPipeline(this, dataSource, settings);
                 ingestJobPipelines.put(ingestJobPipeline.getId(), ingestJobPipeline);
             }
         } else {
-            IngestPipeline ingestJobPipeline = new IngestPipeline(this, dataSources.get(0), files, settings);
+            IngestJobPipeline ingestJobPipeline = new IngestJobPipeline(this, dataSources.get(0), files, settings);
             ingestJobPipelines.put(ingestJobPipeline.getId(), ingestJobPipeline);
         }
         incompleteJobsCount.set(ingestJobPipelines.size());
@@ -206,7 +204,7 @@ public final class IngestJob {
          * Try to start up each ingest job pipeline. Stop at the first failure.
          */
         List<IngestModuleError> errors = new ArrayList<>();
-        for (IngestPipeline ingestJobPipeline : ingestJobPipelines.values()) {
+        for (IngestJobPipeline ingestJobPipeline : ingestJobPipelines.values()) {
             errors.addAll(ingestJobPipeline.startUp());
             if (errors.isEmpty() == false) {
                 break;
@@ -217,7 +215,7 @@ public final class IngestJob {
          * Handle start up success or failure.
          */
         if (errors.isEmpty()) {
-            for (IngestPipeline ingestJobPipeline : ingestJobPipelines.values()) {
+            for (IngestJobPipeline ingestJobPipeline : ingestJobPipelines.values()) {
                 IngestManager.getInstance().fireDataSourceAnalysisStarted(id, ingestJobPipeline.getId(), ingestJobPipeline.getDataSource());
             }
         } else {
@@ -323,7 +321,7 @@ public final class IngestJob {
      *
      * @param ingestJobPipeline A completed ingestJobPipeline.
      */
-    void notifyIngestPipelineShutDown(IngestPipeline ingestJobPipeline) {
+    void notifyIngestPipelineShutDown(IngestJobPipeline ingestJobPipeline) {
         IngestManager ingestManager = IngestManager.getInstance();
         if (!ingestJobPipeline.isCancelled()) {
             ingestManager.fireDataSourceAnalysisCompleted(id, ingestJobPipeline.getId(), ingestJobPipeline.getDataSource());
@@ -409,7 +407,7 @@ public final class IngestJob {
             fileIngestRunning = false;
             fileIngestStartTime = null;
             dataSourceProcessingSnapshots = new ArrayList<>();
-            for (IngestPipeline pipeline : ingestJobPipelines.values()) {
+            for (IngestJobPipeline pipeline : ingestJobPipelines.values()) {
                 Snapshot snapshot = pipeline.getSnapshot(getIngestTasksSnapshot);
                 dataSourceProcessingSnapshots.add(new DataSourceProcessingSnapshot(snapshot));
                 if (null == dataSourceModule) {
@@ -496,7 +494,7 @@ public final class IngestJob {
      */
     public static class DataSourceIngestModuleHandle {
 
-        private final IngestPipeline ingestJobPipeline;
+        private final IngestJobPipeline ingestJobPipeline;
         private final DataSourceIngestPipeline.DataSourcePipelineModule module;
         private final boolean cancelled;
 
@@ -509,7 +507,7 @@ public final class IngestJob {
          *                          source level ingest module.
          * @param module            The data source level ingest module.
          */
-        private DataSourceIngestModuleHandle(IngestPipeline ingestJobPipeline, DataSourceIngestPipeline.DataSourcePipelineModule module) {
+        private DataSourceIngestModuleHandle(IngestJobPipeline ingestJobPipeline, DataSourceIngestPipeline.DataSourcePipelineModule module) {
             this.ingestJobPipeline = ingestJobPipeline;
             this.module = module;
             this.cancelled = ingestJobPipeline.currentDataSourceIngestModuleIsCancelled();

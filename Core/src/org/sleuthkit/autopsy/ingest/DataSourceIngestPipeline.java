@@ -26,7 +26,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
 
 /**
- * A pipeline of data source level ingest modules for performing data source
+ * A pipeline of data source level ingest modules for executing data source
  * level ingest tasks for an ingest job.
  */
 final class DataSourceIngestPipeline extends IngestTaskPipeline<DataSourceIngestTask> {
@@ -42,7 +42,7 @@ final class DataSourceIngestPipeline extends IngestTaskPipeline<DataSourceIngest
      * @param moduleTemplates   The ingest module templates that define this
      *                          pipeline.
      */
-    DataSourceIngestPipeline(IngestPipeline ingestJobPipeline, List<IngestModuleTemplate> moduleTemplates) {
+    DataSourceIngestPipeline(IngestJobPipeline ingestJobPipeline, List<IngestModuleTemplate> moduleTemplates) {
         super(ingestJobPipeline, moduleTemplates);
     }
 
@@ -57,11 +57,11 @@ final class DataSourceIngestPipeline extends IngestTaskPipeline<DataSourceIngest
     }
 
     @Override
-    void prepareTask(DataSourceIngestTask task) {
+    void prepareForTask(DataSourceIngestTask task) {
     }
 
     @Override
-    void completeTask(DataSourceIngestTask task) {
+    void cleanUpAfterTask(DataSourceIngestTask task) {
         ingestManager.setIngestTaskProgressCompleted(task);
     }
 
@@ -83,7 +83,7 @@ final class DataSourceIngestPipeline extends IngestTaskPipeline<DataSourceIngest
         }
 
         @Override
-        void performTask(IngestPipeline ingestJobPipeline, DataSourceIngestTask task) throws IngestModuleException {
+        void executeTask(IngestJobPipeline ingestJobPipeline, DataSourceIngestTask task) throws IngestModuleException {
             Content dataSource = task.getDataSource();
             String progressBarDisplayName = NbBundle.getMessage(this.getClass(), "IngestJob.progress.dataSourceIngest.displayName", getDisplayName(), dataSource.getName());
             ingestJobPipeline.updateDataSourceIngestProgressBarDisplayName(progressBarDisplayName);

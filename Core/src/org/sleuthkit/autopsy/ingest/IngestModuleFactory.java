@@ -91,10 +91,7 @@ public interface IngestModuleFactory {
      * family of ingest modules the factory creates. For example, the Autopsy
      * core hash lookup ingest module factory provides a global settings panel
      * to import and create hash databases. The hash databases are then enabled
-     * or disabled per ingest job using an ingest job settings panel. If the
-     * module family does not have global settings, the factory may extend
-     * IngestModuleFactoryAdapter to get an implementation of this method that
-     * returns false.
+     * or disabled per ingest job using an ingest job settings panel.
      *
      * @return True if the factory provides a global settings panel.
      */
@@ -108,10 +105,7 @@ public interface IngestModuleFactory {
      * creates. For example, the Autopsy core hash lookup ingest module factory
      * provides a global settings panel to import and create hash databases. The
      * imported hash databases are then enabled or disabled per ingest job using
-     * ingest an ingest job settings panel. If the module family does not have a
-     * global settings, the factory may extend IngestModuleFactoryAdapter to get
-     * an implementation of this method that throws an
-     * UnsupportedOperationException.
+     * ingest an ingest job settings panel.
      *
      * @return A global settings panel.
      */
@@ -124,10 +118,7 @@ public interface IngestModuleFactory {
      * ingest modules the factory creates. For example, the Autopsy core hash
      * lookup ingest modules family uses hash databases imported or created
      * using its global settings panel. All of the hash databases are enabled by
-     * default for an ingest job. If the module family does not have per ingest
-     * job settings, the factory may extend IngestModuleFactoryAdapter to get an
-     * implementation of this method that returns an instance of the
-     * NoIngestModuleJobSettings class.
+     * default for an ingest job.
      *
      * @return The default ingest job settings.
      */
@@ -140,10 +131,7 @@ public interface IngestModuleFactory {
      * allow a user to make per ingest job settings for instances of the family
      * of ingest modules the factory creates. For example, the Autopsy core hash
      * lookup ingest module factory provides an ingest job settings panels to
-     * enable or disable hash databases per ingest job. If the module family
-     * does not have per ingest job settings, the factory may extend
-     * IngestModuleFactoryAdapter to get an implementation of this method that
-     * returns false.
+     * enable or disable hash databases per ingest job.
      *
      * @return True if the factory provides ingest job settings panels.
      */
@@ -156,10 +144,7 @@ public interface IngestModuleFactory {
      * settings for instances of the family of ingest modules the factory
      * creates. For example, the core hash lookup ingest module factory provides
      * an ingest job settings panel to enable or disable hash databases per
-     * ingest job. If the module family does not have per ingest job settings,
-     * the factory may extend IngestModuleFactoryAdapter to get an
-     * implementation of this method that throws an
-     * UnsupportedOperationException.
+     * ingest job.
      *
      * @param settings Per ingest job settings to initialize the panel.
      *
@@ -171,9 +156,7 @@ public interface IngestModuleFactory {
 
     /**
      * Queries the factory to determine if it is capable of creating data source
-     * ingest modules. If the module family does not include data source ingest
-     * modules, the factory may extend IngestModuleFactoryAdapter to get an
-     * implementation of this method that returns false.
+     * ingest modules.
      *
      * @return True if the factory can create data source ingest modules.
      */
@@ -201,12 +184,8 @@ public interface IngestModuleFactory {
      * correctly. Also, more than one ingest job may be in progress at any given
      * time. This must also be taken into consideration when sharing resources
      * between module instances. modules.
-     * <p>
-     * If the module family does not include data source ingest modules, the
-     * factory may extend IngestModuleFactoryAdapter to get an implementation of
-     * this method that throws an UnsupportedOperationException.
      *
-     * @param settings The settings for the ingest job.
+     * @param ingestOptions The settings for the ingest job.
      *
      * @return A data source ingest module instance.
      */
@@ -216,9 +195,7 @@ public interface IngestModuleFactory {
 
     /**
      * Queries the factory to determine if it is capable of creating file ingest
-     * modules. If the module family does not include file ingest modules, the
-     * factory may extend IngestModuleFactoryAdapter to get an implementation of
-     * this method that returns false.
+     * modules.
      *
      * @return True if the factory can create file ingest modules.
      */
@@ -246,38 +223,27 @@ public interface IngestModuleFactory {
      * correctly. Also, more than one ingest job may be in progress at any given
      * time. This must also be taken into consideration when sharing resources
      * between module instances. modules.
-     * <p>
-     * If the module family does not include file ingest modules, the factory
-     * may extend IngestModuleFactoryAdapter to get an implementation of this
-     * method that throws an UnsupportedOperationException.
      *
      * @param settings The settings for the ingest job.
      *
      * @return A file ingest module instance.
-     * RJCTODO: Remove refs to adapters
      */
     default FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings ingestOptions) {
         throw new UnsupportedOperationException();
     }
 
     /**
-     * RJCTODO
+     * Queries the factory to determine if it is capable of creating data
+     * artifact ingest modules.
      *
-     * Queries the factory to determine if it is capable of creating file ingest
-     * modules. If the module family does not include file ingest modules, the
-     * factory may extend IngestModuleFactoryAdapter to get an implementation of
-     * this method that returns false.
-     *
-     * @return True if the factory can create file ingest modules.
+     * @return True or false.
      */
     default boolean isDataArtifactIngestModuleFactory() {
         return false;
     }
 
     /**
-     * RJCTODO
-     *
-     * Creates a file ingest module instance.
+     * Creates a data artifact ingest module instance.
      * <p>
      * Autopsy will generally use the factory to several instances of each type
      * of module for each ingest job it performs. Completing an ingest job
@@ -296,10 +262,6 @@ public interface IngestModuleFactory {
      * correctly. Also, more than one ingest job may be in progress at any given
      * time. This must also be taken into consideration when sharing resources
      * between module instances. modules.
-     * <p>
-     * If the module family does not include file ingest modules, the factory
-     * may extend IngestModuleFactoryAdapter to get an implementation of this
-     * method that throws an UnsupportedOperationException.
      *
      * @param settings The settings for the ingest job.
      *

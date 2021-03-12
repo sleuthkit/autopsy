@@ -20,6 +20,11 @@ package org.sleuthkit.autopsy.ingest;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.logging.Level;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.DataArtifact;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * A pipeline of data artifact ingest modules for performing data artifact
@@ -27,7 +32,7 @@ import java.util.Optional;
  */
 final class DataArtifactIngestPipeline extends IngestTaskPipeline<DataArtifactIngestTask> {
 
-    private final IngestPipeline ingestJobPipeline;
+    private static final Logger logger = Logger.getLogger(IngestJobPipeline.class.getName());
 
     /**
      * Constructs a pipeline of data artifact ingest modules for performing data
@@ -37,38 +42,39 @@ final class DataArtifactIngestPipeline extends IngestTaskPipeline<DataArtifactIn
      * @param moduleTemplates   The ingest module templates that define this
      *                          pipeline.
      */
-    DataArtifactIngestPipeline(IngestPipeline ingestJobPipeline, List<IngestModuleTemplate> moduleTemplates) {
+    DataArtifactIngestPipeline(IngestJobPipeline ingestJobPipeline, List<IngestModuleTemplate> moduleTemplates) {
         super(ingestJobPipeline, moduleTemplates);
-        this.ingestJobPipeline = ingestJobPipeline;
     }
 
     @Override
-    Optional<PipelineModule<DataArtifactIngestTask>> acceptModuleTemplate(IngestModuleTemplate ingestModuleTemplate) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    Optional<PipelineModule<DataArtifactIngestTask>> acceptModuleTemplate(IngestModuleTemplate template) {
+        Optional<IngestTaskPipeline.PipelineModule<DataArtifactIngestTask>> module = Optional.empty();
+        if (template.isDataArtifactIngestModuleTemplate()) {
+            DataArtifactIngestModule ingestModule = template.createDataArtifactIngestModule();
+            module = Optional.of(new DataArtifactIngestPipelineModule(ingestModule, template.getModuleName()));
+        }
+        return module;
     }
 
     @Override
-    void prepareTask(DataArtifactIngestTask task) throws IngestTaskPipelineException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    void prepareForTask(DataArtifactIngestTask task) throws IngestTaskPipelineException {
     }
 
     @Override
-    void completeTask(DataArtifactIngestTask task) throws IngestTaskPipelineException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    void cleanUpAfterTask(DataArtifactIngestTask task) throws IngestTaskPipelineException {
     }
 
     /**
      * A wrapper that adds ingest infrastructure operations to a data artifact
      * ingest module.
      */
-    static final class DataArtifactIngestPipelineModule extends IngestTaskPipeline.PipelineModule<FileIngestTask> {
+    static final class DataArtifactIngestPipelineModule extends IngestTaskPipeline.PipelineModule<DataArtifactIngestTask> {
 
         private final DataArtifactIngestModule module;
 
         /**
          * Constructs a wrapper that adds ingest infrastructure operations to a
-         * file ingest module.
-         *
+         * data artifact ingest module.
          *
          * @param module      The module.
          * @param displayName The display name of the module.
@@ -78,18 +84,13 @@ final class DataArtifactIngestPipeline extends IngestTaskPipeline<DataArtifactIn
             this.module = module;
         }
 
-        /**
-         * RJCTODO
-         *
-         * @param ingestJobPipeline
-         * @param task
-         *
-         * @throws
-         * org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException
-         */
         @Override
-        void performTask(IngestPipeline ingestJobPipeline, FileIngestTask task) throws IngestModule.IngestModuleException {
-            // RJCTODO: Fill in and change to executeTask()
+        void executeTask(IngestJobPipeline ingestJobPipeline, DataArtifactIngestTask task) throws IngestModuleException {
+            DataArtifact artifact = task.getDataArtifact();
+            ProcessResult result = module.process(artifact);
+            if (result == ProcessResult.ERROR) {
+                throw new IngestModuleException(String.format("%s experienced an error analyzing %s artifact (artifact object ID = %d, source object ID = %d)", getDisplayName(), artifact.getDisplayName(), artifact.getId(), artifact.getObjectID())); //NON-NLS
+            }
         }
 
     }

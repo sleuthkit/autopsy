@@ -31,7 +31,7 @@ final class DataSourceIngestTask extends IngestTask {
      * @param ingestJobPipeline The ingest job pipeline to use to execute the
      *                          task.
      */
-    DataSourceIngestTask(IngestPipeline ingestJobPipeline) {
+    DataSourceIngestTask(IngestJobPipeline ingestJobPipeline) {
         super(ingestJobPipeline);
     }
 
