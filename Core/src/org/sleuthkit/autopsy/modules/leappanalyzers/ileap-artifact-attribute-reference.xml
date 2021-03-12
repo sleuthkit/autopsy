@@ -312,7 +312,7 @@
 
         <FileName filename="KnowledgeC Application in Focus.tsv" description="KnowledgeC Application In Focus">
             <ArtifactName artifactname="TSK_PROG_RUN" comment="KnowledgeC Application In Focus">
-                <AttributeName attributename="TSK_DATETIME_START" columnName="Start" required="yes" />
+                <AttributeName attributename="TSK_DATETIME" columnName="Start" required="yes" />
                 <AttributeName attributename="null" columnName="End" required="no" />
                 <AttributeName attributename="TSK_PROG_NAME" columnName="Bundle ID" required="yes" />
                 <AttributeName attributename="null" columnName="Usage in Seconds" required="no" />
@@ -731,13 +731,13 @@
             <ArtifactName artifactname="TSK_WEB_SEARCH_QUERY" comment="null">
                 <AttributeName attributename="TSK_DATETIME_ACCESSED" columnName="Visit Time" required="yes" />
                 <AttributeName attributename="TSK_TEXT" columnName="Search Term" required="yes" />
-                <AttributeName attributename="TSK_URL" columnName="URL" required="yes" />
+                <AttributeName attributename="null" columnName="URL" required="yes" />
                 <AttributeName attributename="null" columnName="Visit Count" required="no" />
-                <AttributeName attributename="TSK_TITLE" columnName="Title" required="yes" />
+                <AttributeName attributename="null" columnName="Title" required="no" />
                 <AttributeName attributename="null" columnName="iCloud Sync" required="no" />			
                 <AttributeName attributename="null" columnName="Load Successful" required="no" />
                 <AttributeName attributename="null" columnName="Visit ID" required="no" />			
-                <AttributeName attributename="TSK_REFERRER" columnName="Redirect Source" required="yes" />
+                <AttributeName attributename="null" columnName="Redirect Source" required="no" />
                 <AttributeName attributename="null" columnName="Redirect Destination" required="no" />			
                 <AttributeName attributename="null" columnName="History Item ID"	 required="no" />
             </ArtifactName>

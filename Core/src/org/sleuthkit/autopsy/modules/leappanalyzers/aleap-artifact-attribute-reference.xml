@@ -48,7 +48,7 @@
 
         <FileName filename="accounts de 0.tsv" description="Accounts_de">
             <ArtifactName artifactname="TSK_SERVICE_ACCOUNT" comment="accounts de 0">
-                <AttributeName attributename="TSK_DATETIME_ACCESSED" columnName="Last password entry" required="no" />
+                <AttributeName attributename="null" columnName="Last password entry" required="no" />
                 <AttributeName attributename="TSK_USER_ID" columnName="Name" required="yes" />
                 <AttributeName attributename="TSK_PROG_NAME" columnName="Type" required="yes" />
             </ArtifactName>
@@ -72,7 +72,7 @@
                 <AttributeName attributename="TSK_VALUE" columnName="Value" required="yes" />
                 <AttributeName attributename="TSK_DATETIME_CREATED" columnName="Created Date" required="yes" />
                 <AttributeName attributename="TSK_DATETIME_END" columnName="Expiration Date" required="yes" />
-                <AttributeName attributename="TSK_PATH" columnName="Path" required="yes" />
+                <AttributeName attributename="null" columnName="Path" required="yes" />
             </ArtifactName>
         </FileName>
 
@@ -318,7 +318,7 @@
     <FileName filename="installed apps library.tsv" description="Installed Apps (Library)">
         <ArtifactName artifactname="TSK_INSTALLED_PROG" comment="Installed Apps (Library)">
             <AttributeName attributename="TSK_DATETIME" columnName="Purchase Time" required="yes"/>
-            <AttributeName attributename="TSK_USER_NAME" columnName="Account" required="yes"/>
+            <AttributeName attributename="null" columnName="Account" required="no"/>
             <AttributeName attributename="TSK_PROG_NAME" columnName="Doc ID" required="yes"/>
         </ArtifactName>
     </FileName>
@@ -333,7 +333,7 @@
         <ArtifactName artifactname="TSK_INSTALLED_PROG" comment="Installed Apps (Vending)">
             <AttributeName attributename="TSK_DATETIME" columnName="First Download" required="yes" />
             <AttributeName attributename="TSK_PROG_NAME" columnName="Package Name" required="yes" />
-            <AttributeName attributename="TSK_TITLE" columnName="Title" required="yes" />
+            <AttributeName attributename="null" columnName="Title" required="no" />
             <AttributeName attributename="null" columnName="Install Reason" required="no" />
             <AttributeName attributename="null" columnName="Auto Update?" required="no" />
         </ArtifactName>
@@ -482,8 +482,8 @@
             <AttributeName attributename="TSK_PHONE_NUMBER_TO" columnName="recipients" required="yes"/>
             <AttributeName attributename="TSK_DIRECTION" columnName="direction" required="yes"/>
             <AttributeName attributename="TSK_TEXT" columnName="content" required="yes"/>
-            <AttributeName attributename="TSK_DATETIME_START" columnName="send_timestamp" required="yes" />
-            <AttributeName attributename="TSK_DATETIME_END" columnName="received_timestamp" required="yes"/>
+            <AttributeName attributename="TSK_DATETIME" columnName="send_timestamp" required="yes" />
+            <AttributeName attributename="null" columnName="received_timestamp" required="no"/>
             <AttributeName attributename="TSK_PHONE_NUMBER_FROM" columnName="number" required="yes"/>
             <AttributeName attributename="TSK_ATTACHMENTS" columnName="name" required="yes" />
             <AttributeName attributename="TSK_TEXT_FILE" columnName="source file" required="yes"/>
