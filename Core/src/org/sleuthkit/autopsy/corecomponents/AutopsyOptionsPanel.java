@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -86,6 +86,8 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
     private static final int MIN_MEMORY_IN_GB = 2; //the enforced minimum memory in gigabytes
     private static final Logger logger = Logger.getLogger(AutopsyOptionsPanel.class.getName());
     private String initialMemValue = Long.toString(Runtime.getRuntime().maxMemory() / ONE_BILLION);
+    
+    private final ReportBranding reportBranding;
 
     /**
      * Instantiate the Autopsy options panel.
@@ -120,6 +122,8 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         agencyLogoPathField.getDocument().addDocumentListener(textFieldListener);
         tempDirectoryField.getDocument().addDocumentListener(textFieldListener);
         logFileCount.setText(String.valueOf(UserPreferences.getLogFileCount()));
+        
+        reportBranding = new ReportBranding();
     }
 
     /**
@@ -303,7 +307,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
      * Load the saved user preferences.
      */
     void load() {
-        String path = ModuleSettings.getConfigSetting(ReportBranding.MODULE_NAME, ReportBranding.AGENCY_LOGO_PATH_PROP);
+        String path = reportBranding.getAgencyLogoPath();
         boolean useDefault = (path == null || path.isEmpty());
         defaultLogoRB.setSelected(useDefault);
         specifyLogoRB.setSelected(!useDefault);
@@ -395,10 +399,10 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         if (!agencyLogoPathField.getText().isEmpty()) {
             File file = new File(agencyLogoPathField.getText());
             if (file.exists()) {
-                ModuleSettings.setConfigSetting(ReportBranding.MODULE_NAME, ReportBranding.AGENCY_LOGO_PATH_PROP, agencyLogoPathField.getText());
+                reportBranding.setAgencyLogoPath(agencyLogoPathField.getText());
             }
         } else {
-            ModuleSettings.setConfigSetting(ReportBranding.MODULE_NAME, ReportBranding.AGENCY_LOGO_PATH_PROP, "");
+            reportBranding.setAgencyLogoPath("");
         }
         UserPreferences.setMaxSolrVMSize((int) solrMaxHeapSpinner.getValue());
         if (memField.isEnabled()) {  //if the field could of been changed we need to try and save it
@@ -971,7 +975,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         browseLogosButton.setEnabled(true);
         try {
             if (agencyLogoPathField.getText().isEmpty()) {
-                String path = ModuleSettings.getConfigSetting(ReportBranding.MODULE_NAME, ReportBranding.AGENCY_LOGO_PATH_PROP);
+                String path = reportBranding.getAgencyLogoPath();
                 if (path != null && !path.isEmpty()) {
                     updateAgencyLogo(path);
                 }
