@@ -18,9 +18,7 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.uiutils;
 
-import java.util.Calendar;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,7 +27,7 @@ import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelExport.ExcelExportException;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelTableExport.ExcelCellModel;
 
 /**
@@ -116,58 +114,9 @@ public class ExcelTableExport<T, C extends ExcelCellModel> implements ExcelExpor
                 String formatString = cellModel.getExcelFormatString();
                 Optional<CellStyle> cellStyle = (formatString == null)
                         ? Optional.empty()
-                        : Optional.of(cellStyles.computeIfAbsent(formatString, k -> createCellStyle(worksheetEnv.getParentWorkbook(), formatString)));
-                createCell(row, colNum, cellModel, cellStyle);
+                        : Optional.of(cellStyles.computeIfAbsent(formatString, k -> ExcelExport.createCellStyle(worksheetEnv.getParentWorkbook(), formatString)));
+                ExcelExport.createCell(row, colNum, cellModel, cellStyle);
             }
         }
     }
-
-    /**
-     * Create a cell style in the workbook with the given format string.
-     *
-     * @param workbook The workbook.
-     * @param formatString The format string.
-     * @return The cell style.
-     */
-    private static <T> CellStyle createCellStyle(Workbook workbook, String formatString) {
-        CellStyle cellStyle = workbook.createCellStyle();
-        cellStyle.setDataFormat(workbook.getCreationHelper().createDataFormat().getFormat(formatString));
-        return cellStyle;
-    }
-
-    /**
-     * Creates an excel cell given the model.
-     *
-     * @param row The row in the excel document.
-     * @param colNum The column number (not zero-indexed).
-     * @param cellModel The model for the cell.
-     * @param cellStyle The style to use.
-     * @return The created cell.
-     */
-    private static Cell createCell(Row row, int colNum, ExcelCellModel cellModel, Optional<CellStyle> cellStyle) {
-        Object cellData = cellModel.getData();
-        Cell cell = row.createCell(colNum);
-        if (cellData instanceof Calendar) {
-            cell.setCellValue((Calendar) cellData);
-        } else if (cellData instanceof Date) {
-            cell.setCellValue((Date) cellData);
-        } else if (cellData instanceof Double) {
-            cell.setCellValue((Double) cellData);
-        } else if (cellData instanceof String) {
-            cell.setCellValue((String) cellData);
-        } else if (cellData instanceof Short) {
-            cell.setCellValue((Short) cellData);
-        } else if (cellData instanceof Integer) {
-            cell.setCellValue((Integer) cellData);
-        } else if (cellData instanceof Long) {
-            cell.setCellValue((Long) cellData);
-        } else if (cellData instanceof Float) {
-            cell.setCellValue((Float) cellData);
-        } else {
-            cell.setCellValue(cellModel.getText());
-        }
-        cellStyle.ifPresent(cs -> cell.setCellStyle(cs));
-        return cell;
-    }
-
 }
