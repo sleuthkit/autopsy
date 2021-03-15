@@ -132,7 +132,7 @@ public final class ReportBranding implements ReportBrandingProviderI {
         
 
         //if has been set, validate it's correct, if not set, return null
-        if (curPath != null) {
+        if (curPath != null && !curPath.isEmpty()) {
             
             // check if the path is an absolute path (starts with either drive letter or "/")            
             Path driveLetterOrNetwork = Paths.get(curPath).getRoot();            
