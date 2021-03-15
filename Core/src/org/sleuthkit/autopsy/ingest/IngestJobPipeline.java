@@ -397,9 +397,8 @@ final class IngestJobPipeline {
             }
         } catch (InterruptedException ex) {
             /*
-             * RJCTODO: This is incorrect. If this thread is interrupted, the
-             * pipeline is incomplete and should not be used. Either fix this or
-             * write a story about it.
+             * RC: This is not incorrect. If this thread is interrupted, the
+             * pipeline is incomplete and should not be used. We are currently relying on  
              */
             Thread.currentThread().interrupt();
         }
