@@ -52,7 +52,6 @@ public class ExcelTableExport<T, C extends ExcelCellModel> implements ExcelSheet
     private final String sheetName;
     private final List<ColumnModel<T, C>> columns;
     private final List<T> data;
-    private final int colStart;
 
     /**
      * Main constructor.
@@ -63,14 +62,9 @@ public class ExcelTableExport<T, C extends ExcelCellModel> implements ExcelSheet
      * @param data The data to export.
      */
     public ExcelTableExport(String sheetName, List<ColumnModel<T, C>> columns, List<T> data) {
-        this(sheetName, columns, data, 0);
-    }
-    
-    public ExcelTableExport(String sheetName, List<ColumnModel<T, C>> columns, List<T> data, int colStart) {
         this.sheetName = sheetName;
         this.columns = columns;
         this.data = data;
-        this.colStart = colStart;
     }
 
     @Override
@@ -80,12 +74,12 @@ public class ExcelTableExport<T, C extends ExcelCellModel> implements ExcelSheet
 
     @Override
     public void renderSheet(Sheet sheet, ExcelExport.WorksheetEnv style) throws ExcelExport.ExcelExportException {
-        renderSheet(sheet, style, 1, colStart, columns, data);
+        renderSheet(sheet, style, 1, 1, columns, data);
 
     }
 
     @Override
-    public int write(Sheet sheet, int rowStart, ExcelExport.WorksheetEnv env) throws ExcelExportException {
+    public int write(Sheet sheet, int rowStart, int colStart, ExcelExport.WorksheetEnv env) throws ExcelExportException {
         int rowsWritten = renderSheet(sheet, env, rowStart, colStart, columns, data);
         return rowStart + rowsWritten - 1;
     }

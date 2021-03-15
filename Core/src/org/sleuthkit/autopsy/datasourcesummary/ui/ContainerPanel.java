@@ -25,21 +25,24 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.table.DefaultTableModel;
+import org.apache.commons.lang.StringUtils;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.ContainerSummary;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.PastCasesSummary;
 import static org.sleuthkit.autopsy.datasourcesummary.ui.BaseDataSourceSummaryPanel.getFetchResult;
-import static org.sleuthkit.autopsy.datasourcesummary.ui.BaseDataSourceSummaryPanel.getTableExport;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult.ResultType;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetcher;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultCellModel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultUpdateGovernor;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelExport;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelSpecialFormatExport;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelSpecialFormatExport.KeyValueItemExportable;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelSpecialFormatExport.TitledExportable;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.UpdateGovernor;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Image;
@@ -289,6 +292,31 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
         ((DefaultTableModel) filePathsTable.getModel()).setRowCount(0);
     }
 
+    
+    private static List<KeyValueItemExportable> getAcquisitionDetails(String acquisitionDetails) {
+        if (StringUtils.isBlank(acquisitionDetails)) {
+            return Collections.emptyList();
+        } else {
+            return Stream.of(acquisitionDetails.split("\\r?\\n"))
+                    .map((line) -> {
+                        if (StringUtils.isBlank(line)) {
+                            return null;
+                        } else {
+                            int colonIdx = line.indexOf(':');
+                            if (colonIdx >= 0) {
+                                return new KeyValueItemExportable(new DefaultCellModel<>(line.substring(0, colonIdx + 1).trim()), 
+                                        new DefaultCellModel<>(line.substring(colonIdx + 1, line.length()).trim()));
+                            } else {
+                                return new KeyValueItemExportable(new DefaultCellModel<>(""), new DefaultCellModel<>(line));
+                            }
+                        }
+                    })
+                    .filter(item -> item != null)
+                    .collect(Collectors.toList());
+        }
+    }
+    
+
     @Override
     List<ExcelExport.ExcelSheetExport> getExports(DataSource ds) {
         ContainerPanelData result = getFetchResult(containerDataFetcher, "Container sheets", ds);
@@ -302,8 +330,18 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
                         new KeyValueItemExportable(Bundle.ContainerPanel_export_originalName(), ds.getName()),
                         new KeyValueItemExportable(Bundle.ContainerPanel_export_deviceId(), ds.getDeviceId()),
                         new KeyValueItemExportable(Bundle.ContainerPanel_export_timeZone(), ds.getTimeZone()),
-                        new KeyValueItemExportable(Bundle.ContainerPanel_export_acquisitionDetails(), null),
-                        // ...acquisition details...
+                        
+                        new TitledExportable(Bundle.ContainerPanel_export_acquisitionDetails(), getAcquisitionDetails(ds.getAcquisitionDetails())),
+                        
+                        new KeyValueItemExportable()
+                        imageTypeValue.setText("");
+        sizeValue.setText("");
+        sectorSizeValue.setText("");
+        md5HashValue.setText("");
+        sha1HashValue.setText("");
+        sha256HashValue.setText("");
+        unallocatedSizeValue.setText("");
+        ((DefaultTableModel) filePathsTable.getModel()).setRowCount(0);
                 ))
         );
     }

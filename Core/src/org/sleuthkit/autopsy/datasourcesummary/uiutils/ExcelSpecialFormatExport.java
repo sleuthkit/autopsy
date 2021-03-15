@@ -18,7 +18,9 @@ import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelTableExport.ExcelCel
  * @author gregd
  */
 public class ExcelSpecialFormatExport implements ExcelExport.ExcelSheetExport {
+
     public static class ExcelItemResult {
+
         private final int rowStart;
         private final int rowEnd;
         private final int colStart;
@@ -47,13 +49,14 @@ public class ExcelSpecialFormatExport implements ExcelExport.ExcelSheetExport {
             return colEnd;
         }
     }
-    
-    
+
     public interface ExcelItemExportable {
-        int write(Sheet sheet, int rowStart, ExcelExport.WorksheetEnv env) throws ExcelExportException;
+
+        int write(Sheet sheet, int rowStart, int colStart, ExcelExport.WorksheetEnv env) throws ExcelExportException;
     }
-    
+
     public static class KeyValueItemExportable implements ExcelItemExportable {
+
         private final ExcelCellModel key;
         private final ExcelCellModel value;
         private final int colStart;
@@ -61,23 +64,22 @@ public class ExcelSpecialFormatExport implements ExcelExport.ExcelSheetExport {
         public KeyValueItemExportable(ExcelCellModel key, ExcelCellModel value) {
             this(key, value, 1);
         }
-        
+
         public KeyValueItemExportable(ExcelCellModel key, ExcelCellModel value, int colStart) {
             this.key = key;
             this.value = value;
             this.colStart = colStart;
         }
-        
+
         @Override
-        public int write(Sheet sheet, int rowStart, ExcelExport.WorksheetEnv env) throws ExcelExportException {
+        public int write(Sheet sheet, int rowStart, int colStart, ExcelExport.WorksheetEnv env) throws ExcelExportException {
             Row row = sheet.getRow(rowStart);
             ExcelExport.createCell(row, colStart, key, Optional.of(env.getHeaderStyle()));
             ExcelExport.createCell(row, colStart + 1, value, Optional.empty());
             return rowStart + 1;
         }
-        
     }
-    
+
     private final String sheetName;
     private final List<ExcelItemExportable> exports;
 
@@ -85,9 +87,37 @@ public class ExcelSpecialFormatExport implements ExcelExport.ExcelSheetExport {
         this.sheetName = sheetName;
         this.exports = exports == null ? Collections.emptyList() : exports;
     }
-    
-    
-    
+
+    public static class TitledExportable implements ExcelItemExportable {
+
+        private static final int DEFAULT_INDENT = 1;
+
+        private final String title;
+        private final List<? extends ExcelItemExportable> children;
+
+        public TitledExportable(String title, List<? extends ExcelItemExportable> children) {
+            this.title = title;
+            this.children = children;
+        }
+
+        @Override
+        public int write(Sheet sheet, int rowStart, int colStart, ExcelExport.WorksheetEnv env) throws ExcelExportException {
+            ExcelExport.createCell(sheet.getRow(rowStart), colStart, new DefaultCellModel<>(title), Optional.of(env.getHeaderStyle()));
+            int curRow = rowStart + 1;
+            for (ExcelItemExportable export : children) {
+                if (export == null) {
+                    continue;
+                }
+
+                int endRow = export.write(sheet, rowStart, colStart + DEFAULT_INDENT, env);
+                curRow = endRow + 1;
+            }
+            
+            return curRow;
+        }
+
+    }
+
     @Override
     public String getSheetName() {
         return sheetName;
@@ -100,10 +130,10 @@ public class ExcelSpecialFormatExport implements ExcelExport.ExcelSheetExport {
             if (export == null) {
                 continue;
             }
-            
-            int endRow = export.write(sheet, rowStart, env);
+
+            int endRow = export.write(sheet, rowStart, 1, env);
             rowStart = endRow + 1;
         }
     }
-    
+
 }
