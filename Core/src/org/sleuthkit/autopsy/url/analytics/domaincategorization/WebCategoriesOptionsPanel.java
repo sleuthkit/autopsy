@@ -446,7 +446,7 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
                             this,
                             Bundle.WebCategoriesOptionsPanel_importSetButtonActionPerformed_errorMessage(),
                             Bundle.WebCategoriesOptionsPanel_importSetButtonActionPerformed_errorTitle(),
-                            JOptionPane.ERROR);
+                            JOptionPane.ERROR_MESSAGE);
                     logger.log(Level.WARNING, "There was an error on import.", ex);
                 }
             }
@@ -454,6 +454,8 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
     }//GEN-LAST:event_importSetButtonActionPerformed
 
     @Messages({
+        "WebCategoriesOptionsPanel_exportSetButtonActionPerformed_duplicateMessage=A file already exists at the selected path.",
+        "WebCategoriesOptionsPanel_exportSetButtonActionPerformed_duplicateTitle=File Already Exists",
         "WebCategoriesOptionsPanel_exportSetButtonActionPerformed_errorMessage=There was an error exporting.",
         "WebCategoriesOptionsPanel_exportSetButtonActionPerformed_errorTitle=Export Error",
         "WebCategoriesOptionsPanel_exportSetButtonActionPerformed_defaultFileName=Custom Categories Export"
@@ -467,9 +469,9 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
                 if (selectedFile.exists()) {
                     JOptionPane.showMessageDialog(
                             this,
-                            Bundle.WebCategoriesOptionsPanel_importSetButtonActionPerformed_errorMessage(),
-                            Bundle.WebCategoriesOptionsPanel_importSetButtonActionPerformed_errorTitle(),
-                            JOptionPane.ERROR);
+                            Bundle.WebCategoriesOptionsPanel_exportSetButtonActionPerformed_duplicateMessage(),
+                            Bundle.WebCategoriesOptionsPanel_exportSetButtonActionPerformed_duplicateTitle(),
+                            JOptionPane.ERROR_MESSAGE);
                 }
                 try {
                     setWaitingCursor();
@@ -481,7 +483,7 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
                             this,
                             Bundle.WebCategoriesOptionsPanel_importSetButtonActionPerformed_errorMessage(),
                             Bundle.WebCategoriesOptionsPanel_importSetButtonActionPerformed_errorTitle(),
-                            JOptionPane.ERROR);
+                            JOptionPane.ERROR_MESSAGE);
                     logger.log(Level.WARNING, "There was an error on export.", ex);
                 }
             }
