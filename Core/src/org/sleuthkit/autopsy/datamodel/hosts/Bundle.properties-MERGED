@@ -31,6 +31,8 @@ AddEditHostDialog.okButton.text=OK
 AddEditHostDialog.cancelButton.text=Cancel
 AddEditHostDialog.inputTextField.text=jTextField1
 ManageHostsDialog_title_text=Manage Hosts
+MergeHostAction.progressIndicatorName=Merge Host Process
+MergeHostAction.startingMsg=Merging hosts...
 # {0} - sourceHostName
 # {1} - destHostName
 MergeHostAction_onError_description=There was an error merging host {0} into host {1}.
