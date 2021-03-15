@@ -24,6 +24,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
@@ -49,23 +50,27 @@ public class DataSourcesByTypeNode extends DisplayableItemNode {
      */
     public static class DataSourcesByTypeChildren extends ChildFactory.Detachable<HostDataSources> {
 
+        private static final Set<Case.Events> UPDATE_EVTS = EnumSet.of(
+                Case.Events.DATA_SOURCE_ADDED,
+                Case.Events.HOSTS_ADDED,
+                Case.Events.HOSTS_DELETED,
+                Case.Events.HOSTS_CHANGED);
+        
+        private static final Set<String> UPDATE_EVT_STRS = UPDATE_EVTS.stream()
+                .map(evt -> evt.name())
+                .collect(Collectors.toSet());
+
         private static final Logger logger = Logger.getLogger(DataSourcesByTypeChildren.class.getName());
 
         private final PropertyChangeListener pcl = new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 String eventType = evt.getPropertyName();
-                if (eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
+                if (UPDATE_EVT_STRS.contains(eventType)) {
                     refresh(true);
                 }
             }
         };
-        
-        private static final Set<Case.Events> UPDATE_EVTS = EnumSet.of(
-                Case.Events.DATA_SOURCE_ADDED, 
-                Case.Events.HOSTS_ADDED, 
-                Case.Events.HOSTS_DELETED, 
-                Case.Events.HOSTS_CHANGED);
 
         @Override
         protected void addNotify() {
@@ -98,7 +103,7 @@ public class DataSourcesByTypeNode extends DisplayableItemNode {
         }
 
     }
-    
+
     private static final String NAME = Bundle.DataSourcesHostsNode_name();
 
     /**
@@ -107,7 +112,7 @@ public class DataSourcesByTypeNode extends DisplayableItemNode {
     public static String getNameIdentifier() {
         return NAME;
     }
-    
+
     /**
      * Main constructor.
      */
