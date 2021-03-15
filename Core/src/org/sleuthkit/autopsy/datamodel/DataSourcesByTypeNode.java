@@ -22,6 +22,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
@@ -59,15 +60,21 @@ public class DataSourcesByTypeNode extends DisplayableItemNode {
                 }
             }
         };
+        
+        private static final Set<Case.Events> UPDATE_EVTS = EnumSet.of(
+                Case.Events.DATA_SOURCE_ADDED, 
+                Case.Events.HOSTS_ADDED, 
+                Case.Events.HOSTS_DELETED, 
+                Case.Events.HOSTS_CHANGED);
 
         @Override
         protected void addNotify() {
-            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED), pcl);
+            Case.addEventTypeSubscriber(UPDATE_EVTS, pcl);
         }
 
         @Override
         protected void removeNotify() {
-            Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED), pcl);
+            Case.removeEventTypeSubscriber(UPDATE_EVTS, pcl);
         }
 
         @Override
