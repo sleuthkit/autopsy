@@ -28,12 +28,14 @@ import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelExport.ExcelExportException;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelExport.ExcelSheetExport;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelSpecialFormatExport.ExcelItemExportable;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelTableExport.ExcelCellModel;
 
 /**
  * An excel sheet export of table data.
  */
-public class ExcelTableExport<T, C extends ExcelCellModel> implements ExcelExport.ExcelSheetExport {
+public class ExcelTableExport<T, C extends ExcelCellModel> implements ExcelSheetExport, ExcelItemExportable {
 
     /**
      * Basic interface for a cell model.
@@ -50,6 +52,7 @@ public class ExcelTableExport<T, C extends ExcelCellModel> implements ExcelExpor
     private final String sheetName;
     private final List<ColumnModel<T, C>> columns;
     private final List<T> data;
+    private final int colStart;
 
     /**
      * Main constructor.
@@ -60,9 +63,14 @@ public class ExcelTableExport<T, C extends ExcelCellModel> implements ExcelExpor
      * @param data The data to export.
      */
     public ExcelTableExport(String sheetName, List<ColumnModel<T, C>> columns, List<T> data) {
+        this(sheetName, columns, data, 0);
+    }
+    
+    public ExcelTableExport(String sheetName, List<ColumnModel<T, C>> columns, List<T> data, int colStart) {
         this.sheetName = sheetName;
         this.columns = columns;
         this.data = data;
+        this.colStart = colStart;
     }
 
     @Override
@@ -72,11 +80,14 @@ public class ExcelTableExport<T, C extends ExcelCellModel> implements ExcelExpor
 
     @Override
     public void renderSheet(Sheet sheet, ExcelExport.WorksheetEnv style) throws ExcelExport.ExcelExportException {
-        renderSheet(sheet, style, columns, data);
-        // Resize all columns to fit the content size
-        for (int i = 0; i < columns.size(); i++) {
-            sheet.autoSizeColumn(i);
-        }
+        renderSheet(sheet, style, 1, colStart, columns, data);
+
+    }
+
+    @Override
+    public int write(Sheet sheet, int rowStart, ExcelExport.WorksheetEnv env) throws ExcelExportException {
+        int rowsWritten = renderSheet(sheet, env, rowStart, colStart, columns, data);
+        return rowStart + rowsWritten - 1;
     }
 
     /**
@@ -84,12 +95,19 @@ public class ExcelTableExport<T, C extends ExcelCellModel> implements ExcelExpor
      *
      * @param sheet The sheet.
      * @param worksheetEnv The worksheet environment and preferences.
+     * @param rowStart The row to start in.
+     * @param colStart The column to start in.
      * @param columns The columns.
      * @param data The data.
      * @throws ExcelExportException
+     * @return The number of rows (including the header) written.
      */
-    private static <T, C extends ExcelCellModel> void renderSheet(
-            Sheet sheet, ExcelExport.WorksheetEnv worksheetEnv, List<ColumnModel<T, C>> columns, List<T> data)
+    private static <T, C extends ExcelCellModel> int renderSheet(
+            Sheet sheet, 
+            ExcelExport.WorksheetEnv worksheetEnv, 
+            int rowStart, 
+            int colStart,
+            List<ColumnModel<T, C>> columns, List<T> data)
             throws ExcelExport.ExcelExportException {
 
         List<T> safeData = data == null ? Collections.emptyList() : data;
@@ -115,8 +133,15 @@ public class ExcelTableExport<T, C extends ExcelCellModel> implements ExcelExpor
                 Optional<CellStyle> cellStyle = (formatString == null)
                         ? Optional.empty()
                         : Optional.of(cellStyles.computeIfAbsent(formatString, k -> ExcelExport.createCellStyle(worksheetEnv.getParentWorkbook(), formatString)));
-                ExcelExport.createCell(row, colNum, cellModel, cellStyle);
+                ExcelExport.createCell(row, colNum + colStart, cellModel, cellStyle);
             }
         }
+        
+        // Resize all columns to fit the content size
+        for (int i = colStart; i < columns.size() + colStart; i++) {
+            sheet.autoSizeColumn(i);
+        }
+        
+        return safeData.size() + 1;
     }
 }

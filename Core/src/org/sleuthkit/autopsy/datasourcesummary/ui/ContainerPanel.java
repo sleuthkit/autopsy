@@ -30,10 +30,16 @@ import javax.swing.table.DefaultTableModel;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.ContainerSummary;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.PastCasesSummary;
+import static org.sleuthkit.autopsy.datasourcesummary.ui.BaseDataSourceSummaryPanel.getFetchResult;
+import static org.sleuthkit.autopsy.datasourcesummary.ui.BaseDataSourceSummaryPanel.getTableExport;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult.ResultType;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetcher;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultUpdateGovernor;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelExport;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelSpecialFormatExport;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelSpecialFormatExport.KeyValueItemExportable;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.UpdateGovernor;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Image;
@@ -42,6 +48,9 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Panel to display additional details associated with a specific DataSource
  */
+@Messages({
+    "ContainerPanel_tabName=Container"
+})
 class ContainerPanel extends BaseDataSourceSummaryPanel {
 
     /**
@@ -103,6 +112,7 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
     private static final Logger logger = Logger.getLogger(ContainerPanel.class.getName());
 
     private final List<DataFetchComponents<DataSource, ?>> dataFetchComponents;
+    private final DataFetcher<DataSource, ContainerPanelData> containerDataFetcher;
 
     /**
      * Creates a new form ContainerPanel.
@@ -117,14 +127,16 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
     ContainerPanel(ContainerSummary containerSummary) {
         super(containerSummary, CONTAINER_UPDATES);
 
+        containerDataFetcher = (dataSource) -> {
+            return new ContainerPanelData(
+                    dataSource,
+                    containerSummary.getSizeOfUnallocatedFiles(dataSource)
+            );
+        };
+
         dataFetchComponents = Arrays.asList(
                 new DataFetchComponents<>(
-                        (dataSource) -> {
-                            return new ContainerPanelData(
-                                    dataSource,
-                                    containerSummary.getSizeOfUnallocatedFiles(dataSource)
-                            );
-                        },
+                        containerDataFetcher,
                         (result) -> {
                             if (result != null && result.getResultType() == ResultType.SUCCESS) {
                                 ContainerPanelData data = result.getData();
@@ -279,7 +291,21 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
 
     @Override
     List<ExcelExport.ExcelSheetExport> getExports(DataSource ds) {
-        return Collections.emptyList();
+        ContainerPanelData result = getFetchResult(containerDataFetcher, "Container sheets", ds);
+        if (ds == null || result == null) {
+            return Collections.emptyList();
+        }
+
+        return Arrays.asList(
+                new ExcelSpecialFormatExport(Bundle.ContainerPanel_tabName(), Arrays.asList(
+                        new KeyValueItemExportable(Bundle.ContainerPanel_export_displayName(), ds.getName()),
+                        new KeyValueItemExportable(Bundle.ContainerPanel_export_originalName(), ds.getName()),
+                        new KeyValueItemExportable(Bundle.ContainerPanel_export_deviceId(), ds.getDeviceId()),
+                        new KeyValueItemExportable(Bundle.ContainerPanel_export_timeZone(), ds.getTimeZone()),
+                        new KeyValueItemExportable(Bundle.ContainerPanel_export_acquisitionDetails(), null),
+                        // ...acquisition details...
+                ))
+        );
     }
 
     /**
