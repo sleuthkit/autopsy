@@ -55,20 +55,38 @@ public class ExcelSpecialFormatExport implements ExcelExport.ExcelSheetExport {
         int write(Sheet sheet, int rowStart, int colStart, ExcelExport.WorksheetEnv env) throws ExcelExportException;
     }
 
+    public static class SingleCellExportable implements ExcelItemExportable {
+
+        private final ExcelCellModel item;
+
+        public SingleCellExportable(String key) {
+            this(new DefaultCellModel<>(key));
+        }
+
+        public SingleCellExportable(ExcelCellModel item) {
+            this.item = item;
+        }
+
+        @Override
+        public int write(Sheet sheet, int rowStart, int colStart, ExcelExport.WorksheetEnv env) throws ExcelExportException {
+            Row row = sheet.getRow(rowStart);
+            ExcelExport.createCell(row, colStart, item, Optional.empty());
+            return rowStart;
+        }
+    }
+
     public static class KeyValueItemExportable implements ExcelItemExportable {
 
         private final ExcelCellModel key;
         private final ExcelCellModel value;
-        private final int colStart;
 
-        public KeyValueItemExportable(ExcelCellModel key, ExcelCellModel value) {
-            this(key, value, 1);
+        public KeyValueItemExportable(String key, ExcelCellModel value) {
+            this(new DefaultCellModel<>(key), value);
         }
 
-        public KeyValueItemExportable(ExcelCellModel key, ExcelCellModel value, int colStart) {
+        public KeyValueItemExportable(ExcelCellModel key, ExcelCellModel value) {
             this.key = key;
             this.value = value;
-            this.colStart = colStart;
         }
 
         @Override
@@ -112,7 +130,7 @@ public class ExcelSpecialFormatExport implements ExcelExport.ExcelSheetExport {
                 int endRow = export.write(sheet, rowStart, colStart + DEFAULT_INDENT, env);
                 curRow = endRow + 1;
             }
-            
+
             return curRow;
         }
 

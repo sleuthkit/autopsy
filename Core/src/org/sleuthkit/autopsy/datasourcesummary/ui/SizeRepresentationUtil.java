@@ -32,14 +32,45 @@ public final class SizeRepresentationUtil {
     private static final int SIZE_CONVERSION_CONSTANT = 1000;
     private static final DecimalFormat APPROXIMATE_SIZE_FORMAT = new DecimalFormat("#.##");
 
-    private static List<String> UNITS = Arrays.asList(
-            Bundle.SizeRepresentationUtil_units_bytes(),
-            Bundle.SizeRepresentationUtil_units_kilobytes(),
-            Bundle.SizeRepresentationUtil_units_megabytes(),
-            Bundle.SizeRepresentationUtil_units_gigabytes(),
-            Bundle.SizeRepresentationUtil_units_terabytes(),
-            Bundle.SizeRepresentationUtil_units_petabytes()
-    );
+    // based on https://www.mrexcel.com/board/threads/how-do-i-format-cells-to-show-gb-mb-kb.140135/
+    @NbBundle.Messages({
+        "SizeRepresentationUtil_units_bytes=bytes",
+        "SizeRepresentationUtil_units_kilobytes=KB",
+        "SizeRepresentationUtil_units_megabytes=MB",
+        "SizeRepresentationUtil_units_gigabytes=GB",
+        "SizeRepresentationUtil_units_terabytes=TB",
+        "SizeRepresentationUtil_units_petabytes=PB"
+    })
+    public enum SizeUnit {
+        B(Bundle.SizeRepresentationUtil_units_bytes(), "#", 0),
+        KB(Bundle.SizeRepresentationUtil_units_kilobytes(), "#,##0.0,", 1),
+        MB(Bundle.SizeRepresentationUtil_units_megabytes(), "#,##0.0,,", 2),
+        GB(Bundle.SizeRepresentationUtil_units_gigabytes(), "#,##0.0,,,", 3),
+        TB(Bundle.SizeRepresentationUtil_units_terabytes(), "#,##0.0,,,,", 4),
+        PB(Bundle.SizeRepresentationUtil_units_petabytes(), "#,##0.0,,,,,", 5);
+
+        private final String suffix;
+        private final String excelFormatString;
+        private final long divisor;
+
+        SizeUnit(String suffix, String excelFormatString, int power) {
+            this.suffix = suffix;
+            this.excelFormatString = String.format("%s \"%s\"", excelFormatString, suffix);
+            this.divisor = (long) Math.pow(SIZE_CONVERSION_CONSTANT, power);
+        }
+
+        public String getSuffix() {
+            return suffix;
+        }
+
+        public String getExcelFormatString() {
+            return excelFormatString;
+        }
+
+        public long getDivisor() {
+            return divisor;
+        }
+    }
 
     /**
      * Get a long size in bytes as a string formated to be read by users.
@@ -47,50 +78,48 @@ public final class SizeRepresentationUtil {
      * @param size Long value representing a size in bytes.
      *
      * @return Return a string formated with a user friendly version of the size
-     *         as a string, returns empty String when provided empty size.
+     * as a string, returns empty String when provided empty size.
      */
     public static String getSizeString(Long size) {
         return getSizeString(size, APPROXIMATE_SIZE_FORMAT, true);
     }
 
+    public static SizeUnit getSizeUnit(Long size) {
+        if (size == null) {
+            return SizeUnit.values()[0];
+        }
+        
+        for (int unitsIndex = 0; unitsIndex < SizeUnit.values().length; unitsIndex++) {
+            SizeUnit unit = SizeUnit.values()[unitsIndex];
+            long result = size / unit.getDivisor();
+            if (result < SIZE_CONVERSION_CONSTANT) {
+                return unit;
+            }
+        }
+        
+        return SizeUnit.values()[SizeUnit.values().length - 1];
+    }
+
     /**
      * Get a long size in bytes as a string formated to be read by users.
      *
-     * @param size         Long value representing a size in byte.s
-     * @param format       The means of formatting the number.
+     * @param size Long value representing a size in byte.s
+     * @param format The means of formatting the number.
      * @param showFullSize Optionally show the number of bytes in the
-     *                     datasource.
+     * datasource.
      *
      * @return Return a string formated with a user friendly version of the size
-     *         as a string, returns empty String when provided empty size.
+     * as a string, returns empty String when provided empty size.
      */
-    @NbBundle.Messages({
-        "SizeRepresentationUtil_units_bytes= bytes",
-        "SizeRepresentationUtil_units_kilobytes= kB",
-        "SizeRepresentationUtil_units_megabytes= MB",
-        "SizeRepresentationUtil_units_gigabytes= GB",
-        "SizeRepresentationUtil_units_terabytes= TB",
-        "SizeRepresentationUtil_units_petabytes= PB"
-    })
     public static String getSizeString(Long size, DecimalFormat format, boolean showFullSize) {
         if (size == null) {
             return "";
         }
-        double approximateSize = size;
-        int unitsIndex = 0;
-        for (; unitsIndex < UNITS.size(); unitsIndex++) {
-            if (approximateSize < SIZE_CONVERSION_CONSTANT) {
-                break;
-            } else {
-                approximateSize /= SIZE_CONVERSION_CONSTANT;
-            }
-        }
 
-        String fullSize = size + UNITS.get(0);
-        String closestUnitSize = format.format(approximateSize) + UNITS.get(unitsIndex);
-
-        if (unitsIndex == 0) {
-            return fullSize;
+        SizeUnit sizeUnit = getSizeUnit(size);
+        
+        if (sizeUnit == null || sizeUnit.equals(SizeUnit.B)) {
+            return String.format("%d %s", size, SizeUnit.B.getSuffix());
         } else if (showFullSize) {
             return String.format("%s (%s)", closestUnitSize, fullSize);
         } else {
