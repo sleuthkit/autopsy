@@ -76,6 +76,7 @@ public class DefaultCellModel<T> implements GuiCellModel, ExcelCellModel {
         this.data = data;
         this.stringConverter = stringConverter;
         this.excelFormatString = excelFormatString;
+        this.tooltip = getText();
     }
 
     @Override
