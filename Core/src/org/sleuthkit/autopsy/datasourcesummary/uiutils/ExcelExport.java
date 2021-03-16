@@ -195,12 +195,13 @@ public class ExcelExport {
         //headerFont.setFontHeightInPoints((short) 14);
 
         // Create a CellStyle with the font
+        HorizontalAlignment alignment = HorizontalAlignment.LEFT;
         CellStyle headerCellStyle = workbook.createCellStyle();
         headerCellStyle.setFont(headerFont);
-        headerCellStyle.setAlignment(HorizontalAlignment.LEFT);
+        headerCellStyle.setAlignment(alignment);
         
         CellStyle defaultCellStyle = workbook.createCellStyle();
-        defaultCellStyle.setAlignment(HorizontalAlignment.LEFT);
+        defaultCellStyle.setAlignment(alignment);
 
         WorksheetEnv env = new WorksheetEnv(headerCellStyle, defaultCellStyle, workbook);
 
