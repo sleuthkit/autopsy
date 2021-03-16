@@ -337,7 +337,7 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
             ((DefaultTableModel) filePathsTable.getModel()).addRow(new Object[]{path});
         }
 
-        md5HashLabel.setText(viewModel.getMd5Hash());
+        md5HashValue.setText(viewModel.getMd5Hash());
         sha1HashValue.setText(viewModel.getSha1Hash());
         sha256HashValue.setText(viewModel.getSha256Hash());
     }

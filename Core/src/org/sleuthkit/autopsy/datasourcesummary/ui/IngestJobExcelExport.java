@@ -105,7 +105,7 @@ class IngestJobExcelExport {
                     (entry) -> new DefaultCellModel<>(entry.getIngestModuleVersion()))
     );
 
-    private static DefaultCellModel getDateCell(Date date) {
+    private static DefaultCellModel<?> getDateCell(Date date) {
         Function<Date, String> dateParser = (dt) -> dt == null ? "" : DATETIME_FORMAT.format(dt);
         return new DefaultCellModel<>(date, dateParser, DATETIME_FORMAT_STR);
     }
@@ -118,11 +118,19 @@ class IngestJobExcelExport {
             Date startTime = job.getStartDateTime();
             Date endTime = job.getEndDateTime();
             String status = job.getStatus().getDisplayName();
-            
+
             return infoList.stream()
                     .filter(info -> info != null)
                     .map(info -> new IngestJobEntry(startTime, endTime, status, info.getDisplayName(), info.getVersion()))
-                    .sorted((a,b) -> StringUtils.compareIgnoreCase(a.getIngestModule(), b.getIngestModule()))
+                    .sorted((a, b) -> {
+                        boolean aIsNull = a == null || a.getIngestModule() == null;
+                        boolean bIsNull = b == null || b.getIngestModule() == null;
+                        if (aIsNull || bIsNull) {
+                            return Boolean.compare(aIsNull, bIsNull);
+                        } else {
+                            return a.getIngestModule().compareTo(b.getIngestModule());
+                        }
+                    })
                     .collect(Collectors.toList());
         }
     }
@@ -137,7 +145,7 @@ class IngestJobExcelExport {
                         return new IngestJobEntry(null, null, null, entry.getIngestModule(), entry.getIngestModuleVersion());
                     }
                 });
-                
+
     }
 
     static List<ExcelSheetExport> getExports(DataSource dataSource) {
@@ -151,18 +159,18 @@ class IngestJobExcelExport {
         } catch (NoCurrentCaseException | TskCoreException ex) {
             logger.log(Level.WARNING, "There was an error fetching ingest jobs", ex);
         }
-        
+
         if (info == null) {
             info = Collections.emptyList();
         }
-        
+
         List<IngestJobEntry> toDisplay = info.stream()
                 .filter(job -> job != null && dataSource.getId() == job.getObjectId())
-                .sorted((a,b) -> {
+                .sorted((a, b) -> {
                     boolean aIsNull = a.getStartDateTime() == null;
                     boolean bIsNull = b.getStartDateTime() == null;
                     if (aIsNull || bIsNull) {
-                        return Boolean.compare(bIsNull, aIsNull);
+                        return Boolean.compare(aIsNull, bIsNull);
                     } else {
                         return a.getStartDateTime().compareTo(b.getStartDateTime());
                     }
@@ -172,7 +180,7 @@ class IngestJobExcelExport {
                 .flatMap((lst) -> showFirstRowOnly(lst))
                 .filter(item -> item != null)
                 .collect(Collectors.toList());
-                        
-        return Arrays.asList(new ExcelTableExport(Bundle.IngestJobExcelExport_sheetName(), COLUMNS, toDisplay));
+
+        return Arrays.asList(new ExcelTableExport<>(Bundle.IngestJobExcelExport_sheetName(), COLUMNS, toDisplay));
     }
 }

@@ -281,13 +281,13 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
                         (dataSource) -> getMimeTypeCategoriesModel(mimeTypeData, dataSource),
                         this::showMimeTypeCategories),
                 new DataFetchWorker.DataFetchComponents<>(allocatedFetcher,
-                        countRes -> allocatedLabel.showDataFetchResult(DataFetchResult.getSubResult(countRes, this::getStringOrZero))),
+                        countRes -> allocatedLabel.showDataFetchResult(DataFetchResult.getSubResult(countRes, (count) -> getStringOrZero(count)))),
                 new DataFetchWorker.DataFetchComponents<>(unallocatedFetcher,
-                        countRes -> unallocatedLabel.showDataFetchResult(DataFetchResult.getSubResult(countRes, this::getStringOrZero))),
+                        countRes -> unallocatedLabel.showDataFetchResult(DataFetchResult.getSubResult(countRes, (count) -> getStringOrZero(count)))),
                 new DataFetchWorker.DataFetchComponents<>(slackFetcher,
-                        countRes -> slackLabel.showDataFetchResult(DataFetchResult.getSubResult(countRes, this::getStringOrZero))),
+                        countRes -> slackLabel.showDataFetchResult(DataFetchResult.getSubResult(countRes, (count) -> getStringOrZero(count)))),
                 new DataFetchWorker.DataFetchComponents<>(directoriesFetcher,
-                        countRes -> directoriesLabel.showDataFetchResult(DataFetchResult.getSubResult(countRes, this::getStringOrZero)))
+                        countRes -> directoriesLabel.showDataFetchResult(DataFetchResult.getSubResult(countRes, (count) -> getStringOrZero(count))))
         );
 
         initComponents();
