@@ -137,6 +137,7 @@ class AddEditCategoryDialog extends javax.swing.JDialog {
         String safeSuffixStr = suffixStr == null ? "" : suffixStr;
         String normalizedSuffix = WebCategoriesDataModel.getNormalizedSuffix(safeSuffixStr);
         String safeCategoryStr = categoryStr == null ? "" : categoryStr;
+        String normalizedCategory = WebCategoriesDataModel.getNormalizedCategory(safeCategoryStr);
 
         // update input text field if it is not the same.
         if (!safeCategoryStr.equals(categoryTextField.getText())) {
@@ -148,12 +149,12 @@ class AddEditCategoryDialog extends javax.swing.JDialog {
         }
 
         String validationMessage = null;
-        if (safeSuffixStr.trim().length() == 0
-                || safeSuffixStr.trim().length() > WebCategoriesDataModel.getMaxDomainSuffixLength()
+        if (normalizedSuffix.length() == 0
+                || normalizedSuffix.length() > WebCategoriesDataModel.getMaxDomainSuffixLength()
                 || safeSuffixStr.indexOf('.') < 0) {
             validationMessage = Bundle.AddEditCategoryDialog_onValueUpdate_badSuffix(WebCategoriesDataModel.getMaxCategoryLength());
 
-        } else if (safeCategoryStr.trim().length() == 0 || safeCategoryStr.trim().length() > WebCategoriesDataModel.getMaxCategoryLength()) {
+        } else if (normalizedCategory.length() == 0 || normalizedCategory.length() > WebCategoriesDataModel.getMaxCategoryLength()) {
             validationMessage = Bundle.AddEditCategoryDialog_onValueUpdate_badCategory(WebCategoriesDataModel.getMaxCategoryLength());
 
         } else if (currentSuffixes.contains(normalizedSuffix)
@@ -164,7 +165,7 @@ class AddEditCategoryDialog extends javax.swing.JDialog {
 
         } else if (currentDomainCategory != null
                 && currentDomainCategory.getCategory() != null
-                && safeCategoryStr.trim().equals(currentDomainCategory.getCategory().trim())) {
+                && normalizedCategory.equals(WebCategoriesDataModel.getNormalizedCategory(currentDomainCategory.getCategory()))) {
 
             validationMessage = Bundle.AddEditCategoryDialog_onValueUpdate_sameCategory();
         }

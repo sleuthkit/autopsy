@@ -155,8 +155,10 @@ class WebCategoriesDataModel implements AutoCloseable {
         if (category == null) {
             return "";
         }
+        
+        String trimmedCategory = category.trim();
 
-        return category.trim().substring(0, Math.min(category.length(), MAX_CAT_SIZE));
+        return trimmedCategory.substring(0, Math.min(trimmedCategory.length(), MAX_CAT_SIZE));
     }
 
     /**
@@ -171,7 +173,9 @@ class WebCategoriesDataModel implements AutoCloseable {
             return "";
         }
 
-        return domainSuffix.trim().substring(0, Math.min(domainSuffix.length(), MAX_DOMAIN_SIZE)).toLowerCase();
+        String trimmedSuffix = domainSuffix.trim();
+        
+        return trimmedSuffix.substring(0, Math.min(trimmedSuffix.length(), MAX_DOMAIN_SIZE)).toLowerCase();
     }
 
     /**

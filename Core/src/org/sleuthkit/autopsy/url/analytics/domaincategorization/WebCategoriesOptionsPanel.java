@@ -472,6 +472,7 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
                             Bundle.WebCategoriesOptionsPanel_exportSetButtonActionPerformed_duplicateMessage(),
                             Bundle.WebCategoriesOptionsPanel_exportSetButtonActionPerformed_duplicateTitle(),
                             JOptionPane.ERROR_MESSAGE);
+                    return;
                 }
                 try {
                     setWaitingCursor();
