@@ -19,17 +19,17 @@ import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelTableExport.ExcelCel
  */
 public class ExcelSpecialFormatExport implements ExcelExport.ExcelSheetExport {
 
-    public static class ExcelItemResult {
+    public static class ItemDimensions {
 
         private final int rowStart;
         private final int rowEnd;
         private final int colStart;
         private final int colEnd;
 
-        public ExcelItemResult(int rowStart, int rowEnd, int colStart, int colEnd) {
+        public ItemDimensions(int rowStart, int colStart, int rowEnd, int colEnd) {
             this.rowStart = rowStart;
-            this.rowEnd = rowEnd;
             this.colStart = colStart;
+            this.rowEnd = rowEnd;
             this.colEnd = colEnd;
         }
 
@@ -52,7 +52,7 @@ public class ExcelSpecialFormatExport implements ExcelExport.ExcelSheetExport {
 
     public interface ExcelItemExportable {
 
-        int write(Sheet sheet, int rowStart, int colStart, ExcelExport.WorksheetEnv env) throws ExcelExportException;
+        ItemDimensions write(Sheet sheet, int rowStart, int colStart, ExcelExport.WorksheetEnv env) throws ExcelExportException;
     }
 
     public static class SingleCellExportable implements ExcelItemExportable {
@@ -68,10 +68,13 @@ public class ExcelSpecialFormatExport implements ExcelExport.ExcelSheetExport {
         }
 
         @Override
-        public int write(Sheet sheet, int rowStart, int colStart, ExcelExport.WorksheetEnv env) throws ExcelExportException {
-            Row row = sheet.getRow(rowStart);
-            ExcelExport.createCell(row, colStart, item, Optional.empty());
-            return rowStart;
+        public ItemDimensions write(Sheet sheet, int rowStart, int colStart, ExcelExport.WorksheetEnv env) throws ExcelExportException {
+            Row row = sheet.createRow(rowStart);
+            ExcelExport.createCell(row, colStart, item,
+                    item.getExcelFormatString() == null
+                    ? Optional.empty()
+                    : Optional.of(ExcelExport.createCellStyle(env.getParentWorkbook(), item.getExcelFormatString())));
+            return new ItemDimensions(rowStart, colStart, rowStart, colStart);
         }
     }
 
@@ -90,11 +93,14 @@ public class ExcelSpecialFormatExport implements ExcelExport.ExcelSheetExport {
         }
 
         @Override
-        public int write(Sheet sheet, int rowStart, int colStart, ExcelExport.WorksheetEnv env) throws ExcelExportException {
-            Row row = sheet.getRow(rowStart);
+        public ItemDimensions write(Sheet sheet, int rowStart, int colStart, ExcelExport.WorksheetEnv env) throws ExcelExportException {
+            Row row = sheet.createRow(rowStart);
             ExcelExport.createCell(row, colStart, key, Optional.of(env.getHeaderStyle()));
-            ExcelExport.createCell(row, colStart + 1, value, Optional.empty());
-            return rowStart + 1;
+            ExcelExport.createCell(row, colStart + 1, value,
+                    value.getExcelFormatString() == null
+                    ? Optional.empty()
+                    : Optional.of(ExcelExport.createCellStyle(env.getParentWorkbook(), value.getExcelFormatString())));
+            return new ItemDimensions(rowStart, colStart, rowStart, colStart + 1);
         }
     }
 
@@ -119,19 +125,21 @@ public class ExcelSpecialFormatExport implements ExcelExport.ExcelSheetExport {
         }
 
         @Override
-        public int write(Sheet sheet, int rowStart, int colStart, ExcelExport.WorksheetEnv env) throws ExcelExportException {
-            ExcelExport.createCell(sheet.getRow(rowStart), colStart, new DefaultCellModel<>(title), Optional.of(env.getHeaderStyle()));
+        public ItemDimensions write(Sheet sheet, int rowStart, int colStart, ExcelExport.WorksheetEnv env) throws ExcelExportException {
+            ExcelExport.createCell(sheet.createRow(rowStart), colStart, new DefaultCellModel<>(title), Optional.of(env.getHeaderStyle()));
             int curRow = rowStart + 1;
+            int maxCol = colStart;
             for (ExcelItemExportable export : children) {
                 if (export == null) {
                     continue;
                 }
 
-                int endRow = export.write(sheet, rowStart, colStart + DEFAULT_INDENT, env);
-                curRow = endRow + 1;
+                ItemDimensions thisItemDim = export.write(sheet, curRow, colStart + DEFAULT_INDENT, env);
+                curRow = thisItemDim.getRowEnd() + 1;
+                maxCol = Math.max(thisItemDim.getColEnd(), maxCol);
             }
 
-            return curRow;
+            return new ItemDimensions(rowStart, colStart, curRow - 1, maxCol);
         }
 
     }
@@ -143,14 +151,21 @@ public class ExcelSpecialFormatExport implements ExcelExport.ExcelSheetExport {
 
     @Override
     public void renderSheet(Sheet sheet, ExcelExport.WorksheetEnv env) throws ExcelExportException {
-        int rowStart = 1;
+        int rowStart = 0;
+        int maxCol = 0;
         for (ExcelItemExportable export : exports) {
             if (export == null) {
                 continue;
             }
 
-            int endRow = export.write(sheet, rowStart, 1, env);
-            rowStart = endRow + 1;
+            ItemDimensions dimensions = export.write(sheet, rowStart, 0, env);
+            rowStart = dimensions.getRowEnd() + 1;
+            maxCol = Math.max(maxCol, dimensions.getColEnd());
+        }
+
+        // Resize all columns to fit the content size
+        for (int i = 0; i <= maxCol; i++) {
+            sheet.autoSizeColumn(i);
         }
     }
 

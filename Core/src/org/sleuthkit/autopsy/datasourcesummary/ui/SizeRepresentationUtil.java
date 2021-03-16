@@ -42,12 +42,12 @@ public final class SizeRepresentationUtil {
         "SizeRepresentationUtil_units_petabytes=PB"
     })
     public enum SizeUnit {
-        B(Bundle.SizeRepresentationUtil_units_bytes(), "#", 0),
-        KB(Bundle.SizeRepresentationUtil_units_kilobytes(), "#,##0.0,", 1),
-        MB(Bundle.SizeRepresentationUtil_units_megabytes(), "#,##0.0,,", 2),
-        GB(Bundle.SizeRepresentationUtil_units_gigabytes(), "#,##0.0,,,", 3),
-        TB(Bundle.SizeRepresentationUtil_units_terabytes(), "#,##0.0,,,,", 4),
-        PB(Bundle.SizeRepresentationUtil_units_petabytes(), "#,##0.0,,,,,", 5);
+        BYTES(Bundle.SizeRepresentationUtil_units_bytes(), "#", 0),
+        KB(Bundle.SizeRepresentationUtil_units_kilobytes(), "#,##0.00,", 1),
+        MB(Bundle.SizeRepresentationUtil_units_megabytes(), "#,##0.00,,", 2),
+        GB(Bundle.SizeRepresentationUtil_units_gigabytes(), "#,##0.00,,,", 3),
+        TB(Bundle.SizeRepresentationUtil_units_terabytes(), "#,##0.00,,,,", 4),
+        PB(Bundle.SizeRepresentationUtil_units_petabytes(), "#,##0.00,,,,,", 5);
 
         private final String suffix;
         private final String excelFormatString;
@@ -117,9 +117,16 @@ public final class SizeRepresentationUtil {
         }
 
         SizeUnit sizeUnit = getSizeUnit(size);
+        if (sizeUnit == null) {
+            sizeUnit = SizeUnit.BYTES;
+        }
         
-        if (sizeUnit == null || sizeUnit.equals(SizeUnit.B)) {
-            return String.format("%d %s", size, SizeUnit.B.getSuffix());
+        String closestUnitSize = String.format("%s %s", 
+                format.format(((double) size) / sizeUnit.getDivisor()), sizeUnit.getSuffix());
+        
+        String fullSize = String.format("%d %s", size, SizeUnit.BYTES.getSuffix());
+        if (sizeUnit.equals(SizeUnit.BYTES)) {
+            return fullSize;
         } else if (showFullSize) {
             return String.format("%s (%s)", closestUnitSize, fullSize);
         } else {

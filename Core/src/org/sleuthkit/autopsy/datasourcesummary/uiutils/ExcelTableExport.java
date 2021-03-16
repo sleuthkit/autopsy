@@ -30,6 +30,7 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelExport.ExcelExportException;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelExport.ExcelSheetExport;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelSpecialFormatExport.ExcelItemExportable;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelSpecialFormatExport.ItemDimensions;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelTableExport.ExcelCellModel;
 
 /**
@@ -74,14 +75,19 @@ public class ExcelTableExport<T, C extends ExcelCellModel> implements ExcelSheet
 
     @Override
     public void renderSheet(Sheet sheet, ExcelExport.WorksheetEnv style) throws ExcelExport.ExcelExportException {
-        renderSheet(sheet, style, 1, 1, columns, data);
+        renderSheet(sheet, style, 0, 0, columns, data);
+
+        // Resize all columns to fit the content size
+        for (int i = 0; i < columns.size(); i++) {
+            sheet.autoSizeColumn(i);
+        }
 
     }
 
     @Override
-    public int write(Sheet sheet, int rowStart, int colStart, ExcelExport.WorksheetEnv env) throws ExcelExportException {
+    public ItemDimensions write(Sheet sheet, int rowStart, int colStart, ExcelExport.WorksheetEnv env) throws ExcelExportException {
         int rowsWritten = renderSheet(sheet, env, rowStart, colStart, columns, data);
-        return rowStart + rowsWritten - 1;
+        return new ItemDimensions(rowStart, colStart, rowStart + rowsWritten - 1, this.columns == null ? colStart : colStart + this.columns.size());
     }
 
     /**
@@ -97,19 +103,19 @@ public class ExcelTableExport<T, C extends ExcelCellModel> implements ExcelSheet
      * @return The number of rows (including the header) written.
      */
     private static <T, C extends ExcelCellModel> int renderSheet(
-            Sheet sheet, 
-            ExcelExport.WorksheetEnv worksheetEnv, 
-            int rowStart, 
+            Sheet sheet,
+            ExcelExport.WorksheetEnv worksheetEnv,
+            int rowStart,
             int colStart,
             List<ColumnModel<T, C>> columns, List<T> data)
             throws ExcelExport.ExcelExportException {
 
         List<T> safeData = data == null ? Collections.emptyList() : data;
         // Create a header row
-        Row headerRow = sheet.createRow(0);
+        Row headerRow = sheet.createRow(rowStart);
         // Create header cells
         for (int i = 0; i < columns.size(); i++) {
-            Cell cell = headerRow.createCell(i);
+            Cell cell = headerRow.createCell(i + colStart);
             cell.setCellValue(columns.get(i).getHeaderTitle());
             cell.setCellStyle(worksheetEnv.getHeaderStyle());
         }
@@ -119,7 +125,7 @@ public class ExcelTableExport<T, C extends ExcelCellModel> implements ExcelSheet
         Map<String, CellStyle> cellStyles = new HashMap<>();
         for (int rowNum = 0; rowNum < safeData.size(); rowNum++) {
             T rowData = safeData.get(rowNum);
-            Row row = sheet.createRow(rowNum + 1);
+            Row row = sheet.createRow(rowNum + rowStart + 1);
             for (int colNum = 0; colNum < columns.size(); colNum++) {
                 ColumnModel<T, ? extends ExcelCellModel> colModel = columns.get(colNum);
                 ExcelCellModel cellModel = colModel.getCellRenderer().apply(rowData);
@@ -130,12 +136,7 @@ public class ExcelTableExport<T, C extends ExcelCellModel> implements ExcelSheet
                 ExcelExport.createCell(row, colNum + colStart, cellModel, cellStyle);
             }
         }
-        
-        // Resize all columns to fit the content size
-        for (int i = colStart; i < columns.size() + colStart; i++) {
-            sheet.autoSizeColumn(i);
-        }
-        
+
         return safeData.size() + 1;
     }
 }

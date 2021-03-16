@@ -389,11 +389,30 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
             return new DefaultCellModel<>("");
         } else {
             SizeUnit unit = SizeRepresentationUtil.getSizeUnit(bytes);
-            return new DefaultCellModel<>(bytes, unit.getExcelFormatString());
+            if (unit == null) {
+                unit = SizeUnit.BYTES;
+            }
+
+            return new DefaultCellModel<Long>(bytes, SizeRepresentationUtil::getSizeString, unit.getExcelFormatString());
         }
     }
 
+    
     @Override
+    @Messages({
+        "ContainerPanel_export_displayName=Display Name:",
+        "ContainerPanel_export_originalName=Name:",
+        "ContainerPanel_export_deviceId=Device ID:",
+        "ContainerPanel_export_timeZone=Time Zone:",
+        "ContainerPanel_export_acquisitionDetails=Acquisition Details:",
+        "ContainerPanel_export_imageType=Image Type:",
+        "ContainerPanel_export_size=Size:",
+        "ContainerPanel_export_sectorSize=Sector Size:",
+        "ContainerPanel_export_md5=MD5:",
+        "ContainerPanel_export_sha1=SHA1:",
+        "ContainerPanel_export_sha256=SHA256:",
+        "ContainerPanel_export_unallocatedSize=Unallocated Space:",
+        "ContainerPanel_export_filePaths=File Paths:",})
     protected List<ExcelSheetExport> getExports(DataSource ds) {
         ContainerViewModel result = getFetchResult(containerDataFetcher, "Container sheets", ds);
         if (ds == null || result == null) {
@@ -421,9 +440,9 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
 
         return Arrays.asList(
                 new ExcelSpecialFormatExport(Bundle.ContainerPanel_tabName(), Arrays.asList(
-                        new KeyValueItemExportable(Bundle.ContainerPanel_displayNameLabel_text(), result.getDisplayName()),
-                        new KeyValueItemExportable(Bundle.ContainerPanel_export_originalName(), result.getOriginalName()),
-                        new KeyValueItemExportable(Bundle.ContainerPanel_export_deviceId(), result.getDeviceId()),
+                        new KeyValueItemExportable(Bundle.ContainerPanel_export_displayName(), new DefaultCellModel<>(result.getDisplayName())),
+                        new KeyValueItemExportable(Bundle.ContainerPanel_export_originalName(), new DefaultCellModel<>(result.getOriginalName())),
+                        new KeyValueItemExportable(Bundle.ContainerPanel_export_deviceId(), new DefaultCellModel<>(result.getDeviceId())),
                         new KeyValueItemExportable(Bundle.ContainerPanel_export_timeZone(), timeZone),
                         new TitledExportable(Bundle.ContainerPanel_export_acquisitionDetails(), getAcquisitionDetails(result.getAcquisitionDetails())),
                         new KeyValueItemExportable(Bundle.ContainerPanel_export_imageType(), imageType),
