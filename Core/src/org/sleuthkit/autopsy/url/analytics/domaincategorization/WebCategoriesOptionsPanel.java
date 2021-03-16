@@ -69,12 +69,14 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
             = JTablePanel.getJTablePanel(Arrays.asList(
                     new ColumnModel<DomainCategory, DefaultCellModel<?>>(
                             Bundle.WebCategoriesOptionsPanel_categoryTable_suffixColumnName(),
-                            (domCat) -> new DefaultCellModel<>(domCat.getHostSuffix()),
+                            (domCat) -> new DefaultCellModel<>(domCat.getHostSuffix())
+                                    .setTooltip(domCat.getHostSuffix()),
                             300
                     ),
                     new ColumnModel<>(
                             Bundle.WebCategoriesOptionsPanel_categoryTable_categoryColumnName(),
-                            (domCat) -> new DefaultCellModel<>(domCat.getCategory()),
+                            (domCat) -> new DefaultCellModel<>(domCat.getCategory())
+                                .setTooltip(domCat.getCategory()),
                             200
                     )
             )).setKeyFunction((domCat) -> domCat.getHostSuffix());

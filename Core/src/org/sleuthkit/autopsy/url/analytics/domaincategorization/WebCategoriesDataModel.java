@@ -323,7 +323,7 @@ class WebCategoriesDataModel implements AutoCloseable {
         List<Pair<String, String>> categoryDomains = new ArrayList<>();
         try (Statement domainSelect = dbConn.createStatement();
                 ResultSet resultSet = domainSelect.executeQuery(
-                        "SELECT " + SUFFIX_COLUMN + ", " + CATEGORY_COLUMN + " FROM " + TABLE_NAME)) {
+                        "SELECT " + SUFFIX_COLUMN + ", " + CATEGORY_COLUMN + " FROM " + TABLE_NAME + " ORDER BY " + SUFFIX_COLUMN)) {
 
             while (resultSet.next()) {
                 categoryDomains.add(Pair.of(resultSet.getString(CATEGORY_COLUMN), resultSet.getString(SUFFIX_COLUMN)));
@@ -418,7 +418,7 @@ class WebCategoriesDataModel implements AutoCloseable {
 
         try (Statement domainSelect = dbConn.createStatement();
                 ResultSet resultSet = domainSelect.executeQuery(
-                        "SELECT " + SUFFIX_COLUMN + ", " + CATEGORY_COLUMN + " FROM " + TABLE_NAME + "")) {
+                        "SELECT " + SUFFIX_COLUMN + ", " + CATEGORY_COLUMN + " FROM " + TABLE_NAME + " ORDER BY " + SUFFIX_COLUMN)) {
 
             while (resultSet.next()) {
                 entries.add(new DomainCategory(
