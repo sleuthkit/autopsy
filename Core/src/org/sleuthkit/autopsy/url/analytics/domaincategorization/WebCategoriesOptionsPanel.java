@@ -437,7 +437,7 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
         "WebCategoriesOptionsPanel_importSetButtonActionPerformed_errorTitle=Import Error",
         "WebCategoriesOptionsPanel_importSetButtonActionPerformed_onConflictTitle=Domain Suffix Already Exists",
         "# {0} - domainSuffix",
-        "WebCategoriesOptionsPanel_importSetButtonActionPerformed_onConflictMessage=Domain suffix: {0} already exists. What would you like to do?",
+        "WebCategoriesOptionsPanel_importSetButtonActionPerformed_onConflictMessage=Domain suffix {0} already exists. What would you like to do?",
         "WebCategoriesOptionsPanel_importSetButtonActionPerformed_onConflictOverwrite=Overwrite",
         "WebCategoriesOptionsPanel_importSetButtonActionPerformed_onConflictSkip=Skip",
         "WebCategoriesOptionsPanel_importSetButtonActionPerformed_onConflictCancel=Cancel"})
@@ -462,25 +462,31 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
 
                             DomainCategory currentCategory = dataModel.getRecordBySuffix(normalizedSuffix);
                             // if a mapping for the domain suffix already exists and the value will change, prompt the user on what to do.
-                            if (currentCategory != null && !normalizedCategory.equalsIgnoreCase(currentCategory.getCategory())) {
-                                String[] options = {
-                                    Bundle.WebCategoriesOptionsPanel_importSetButtonActionPerformed_onConflictOverwrite(),
-                                    Bundle.WebCategoriesOptionsPanel_importSetButtonActionPerformed_onConflictSkip(),
-                                    Bundle.WebCategoriesOptionsPanel_importSetButtonActionPerformed_onConflictCancel()
-                                };
+                            if (currentCategory != null) {
+                                if (normalizedCategory.equalsIgnoreCase(currentCategory.getCategory()))  {
+                                    // do nothing if import item is same as already present
+                                    continue;
+                                } else {
 
-                                int optionItem = JOptionPane.showOptionDialog(null,
-                                        Bundle.WebCategoriesOptionsPanel_importSetButtonActionPerformed_onConflictMessage(normalizedSuffix),
-                                        Bundle.WebCategoriesOptionsPanel_importSetButtonActionPerformed_onConflictTitle(),
-                                        JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[0]);
+                                    String[] options = {
+                                        Bundle.WebCategoriesOptionsPanel_importSetButtonActionPerformed_onConflictOverwrite(),
+                                        Bundle.WebCategoriesOptionsPanel_importSetButtonActionPerformed_onConflictSkip(),
+                                        Bundle.WebCategoriesOptionsPanel_importSetButtonActionPerformed_onConflictCancel()
+                                    };
 
-                                switch (optionItem) {
-                                    case 0:
-                                        break;
-                                    case 1:
-                                        continue;
-                                    case 2:
-                                        return;
+                                    int optionItem = JOptionPane.showOptionDialog(null,
+                                            Bundle.WebCategoriesOptionsPanel_importSetButtonActionPerformed_onConflictMessage(normalizedSuffix),
+                                            Bundle.WebCategoriesOptionsPanel_importSetButtonActionPerformed_onConflictTitle(),
+                                            JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[0]);
+
+                                    switch (optionItem) {
+                                        case 0:
+                                            break;
+                                        case 1:
+                                            continue;
+                                        case 2:
+                                            return;
+                                    }
                                 }
                             }
 
