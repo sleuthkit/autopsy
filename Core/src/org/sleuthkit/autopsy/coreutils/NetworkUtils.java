@@ -55,12 +55,16 @@ public class NetworkUtils {
     }
 
     /**
-     * Attempt to manually extract the domain from a URL.
+     * Return the host in the url or empty string if no host can be determined.
      *
-     * @param url
-     * @return empty string if no domain could be found
+     * @param url The original url-like item.
+     * @return The host or empty string if no host can be determined.
      */
-    private static String getBaseDomain(String url) {
+    public static String extractHost(String url) {
+        if (url == null) {
+            return "";
+        }
+
         String host = null;
 
         //strip protocol
@@ -74,24 +78,37 @@ public class NetworkUtils {
             host = cleanUrl;
         }
 
-        String base = host;
-        try {
-            base = DomainTokenizer.getInstance().getDomain(host);
-        } catch (IOException ex) {
-            logger.log(Level.WARNING, "Unable to load resources for domain categorization.", ex);
-        }
-
         // verify there are no special characters in there
-        if (base.matches(".*[~`!@#$%^&\\*\\(\\)\\+={}\\[\\];:\\?<>,/ ].*")) {
+        if (host.matches(".*[~`!@#$%^&\\*\\(\\)\\+={}\\[\\];:\\?<>,/ ].*")) {
             return "";
         }
 
         //verify that the base domain actually has a '.', details JIRA-4609
-        if (!base.contains(".")) {
+        if (!host.contains(".")) {
             return "";
         }
 
-        return base;
+        return host;
+    }
+
+    /**
+     * Attempt to manually extract the domain from a URL.
+     *
+     * @param url
+     * @return empty string if no domain could be found
+     */
+    private static String getBaseDomain(String url) {
+        String base = extractHost(url);
+        if (StringUtils.isBlank(base)) {
+            return "";
+        }
+
+        try {
+            return DomainTokenizer.getInstance().getDomain(base);
+        } catch (IOException ex) {
+            logger.log(Level.WARNING, "Unable to load resources for domain categorization.", ex);
+            return "";
+        }
     }
 
     /**

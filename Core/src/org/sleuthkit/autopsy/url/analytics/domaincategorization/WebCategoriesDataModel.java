@@ -41,9 +41,11 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.modules.InstalledFileLocator;
+import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.url.analytics.DomainCategory;
 
 /**
@@ -155,7 +157,7 @@ class WebCategoriesDataModel implements AutoCloseable {
         if (category == null) {
             return "";
         }
-        
+
         String trimmedCategory = category.trim();
 
         return trimmedCategory.substring(0, Math.min(trimmedCategory.length(), MAX_CAT_SIZE));
@@ -174,8 +176,9 @@ class WebCategoriesDataModel implements AutoCloseable {
         }
 
         String trimmedSuffix = domainSuffix.trim();
-        
-        return trimmedSuffix.substring(0, Math.min(trimmedSuffix.length(), MAX_DOMAIN_SIZE)).toLowerCase();
+        String extractedSuffix = NetworkUtils.extractHost(trimmedSuffix);
+
+        return extractedSuffix.substring(0, Math.min(extractedSuffix.length(), MAX_DOMAIN_SIZE)).toLowerCase();
     }
 
     /**
@@ -250,56 +253,32 @@ class WebCategoriesDataModel implements AutoCloseable {
     }
 
     /**
-     * Imports json file replacing any data in this database.
+     * Retrieves all domain categories present in json file.
      *
-     * @param jsonInput The json file to import.
+     * @param jsonInput The json file.
+     * @return The domain categories.
      * @throws IOException
-     * @throws SQLException
      */
-    synchronized void importJson(File jsonInput) throws IOException, SQLException {
+    List<DomainCategory> getJsonEntries(File jsonInput) throws IOException {
         if (jsonInput == null) {
             logger.log(Level.WARNING, "No valid file provided.");
-            return;
-        }
-
-        if (!isInitialized()) {
-            initialize();
+            return Collections.emptyList();
         }
 
         ObjectMapper mapper = new ObjectMapper();
         List<CustomCategorizationJsonDto> customCategorizations = mapper.readValue(jsonInput, new TypeReference<List<CustomCategorizationJsonDto>>() {
         });
 
-        customCategorizations = customCategorizations == null ? Collections.emptyList() : customCategorizations;
+        Stream<CustomCategorizationJsonDto> categoryStream = (customCategorizations != null) ? customCategorizations.stream() : Stream.empty();
 
-        // insert all records as a batch for speed purposes
-        try (PreparedStatement domainInsert = dbConn.prepareStatement(
-                "INSERT OR REPLACE INTO " + TABLE_NAME + "(" + SUFFIX_COLUMN + ", " + CATEGORY_COLUMN + ") VALUES (?, ?)", Statement.NO_GENERATED_KEYS)) {
+        return categoryStream
+                .filter(c -> c != null && c.getCategory() != null && c.getDomains() != null)
+                .flatMap(c -> c.getDomains().stream()
+                .map(WebCategoriesDataModel::getNormalizedSuffix)
+                .filter(StringUtils::isNotBlank)
+                .map(d -> new DomainCategory(d, getNormalizedCategory(c.getCategory()))))
+                .collect(Collectors.toList());
 
-            for (int i = 0; i < customCategorizations.size(); i++) {
-                CustomCategorizationJsonDto category = customCategorizations.get(i);
-                if (category == null || category.getDomains() == null || category.getCategory() == null) {
-                    logger.log(Level.WARNING, String.format("Could not process item in file: %s at index: %d", jsonInput.getAbsolutePath(), i));
-                    continue;
-                }
-
-                String categoryStr = getNormalizedCategory(category.getCategory());
-
-                for (int listIdx = 0; listIdx < category.getDomains().size(); listIdx++) {
-                    String domain = category.getDomains().get(listIdx);
-                    if (domain == null) {
-                        logger.log(Level.WARNING, String.format("Could not process domain at idx: %d in category %s for file %s",
-                                listIdx, categoryStr, jsonInput.getAbsolutePath()));
-                    }
-
-                    domainInsert.setString(1, getNormalizedSuffix(domain));
-                    domainInsert.setString(2, categoryStr);
-                    domainInsert.addBatch();
-                }
-            }
-
-            domainInsert.executeBatch();
-        }
     }
 
     /**
@@ -385,8 +364,8 @@ class WebCategoriesDataModel implements AutoCloseable {
      * @throws IllegalArgumentException
      */
     synchronized boolean insertUpdateSuffix(DomainCategory entry) throws SQLException, IllegalStateException, IllegalArgumentException {
-        if (entry == null || StringUtils.isBlank(entry.getCategory()) || StringUtils.isBlank(entry.getHostSuffix())) {
-            throw new IllegalArgumentException("Expected non-empty category and domain suffix.");
+        if (entry == null || StringUtils.isBlank(getNormalizedCategory(entry.getCategory())) || StringUtils.isBlank(getNormalizedSuffix(entry.getHostSuffix()))) {
+            throw new IllegalArgumentException("Expected non-empty, valid category and domain suffix.");
         }
 
         if (!isInitialized()) {
@@ -428,6 +407,37 @@ class WebCategoriesDataModel implements AutoCloseable {
         }
         return entries;
 
+    }
+
+    private static final String GET_DOMAIN_SUFFIX_QUERY
+            = "SELECT " + SUFFIX_COLUMN + ", " + CATEGORY_COLUMN
+            + " FROM " + TABLE_NAME + " WHERE " + SUFFIX_COLUMN + " = ?";
+
+    /**
+     * Return the matching domain suffix or null if none found.
+     *
+     * @param domainSuffix The domain suffix.
+     * @return The found entry or null.
+     * @throws SQLException
+     */
+    DomainCategory getRecordBySuffix(String domainSuffix) throws SQLException {
+        if (!isInitialized()) {
+            initialize();
+        }
+
+        try (PreparedStatement domainSelect = dbConn.prepareStatement(GET_DOMAIN_SUFFIX_QUERY)) {
+            domainSelect.setString(1, domainSuffix);
+
+            try (ResultSet resultSet = domainSelect.executeQuery()) {
+                if (resultSet.next()) {
+                    return new DomainCategory(
+                            resultSet.getString(SUFFIX_COLUMN),
+                            resultSet.getString(CATEGORY_COLUMN));
+                } else {
+                    return null;
+                }
+            }
+        }
     }
 
     // get the suffix and category from the main table and gets the longest matching suffix.

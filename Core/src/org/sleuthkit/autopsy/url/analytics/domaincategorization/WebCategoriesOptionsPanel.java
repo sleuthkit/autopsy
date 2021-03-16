@@ -36,6 +36,7 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.WeakListeners;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
@@ -76,7 +77,7 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
                     new ColumnModel<>(
                             Bundle.WebCategoriesOptionsPanel_categoryTable_categoryColumnName(),
                             (domCat) -> new DefaultCellModel<>(domCat.getCategory())
-                                .setTooltip(domCat.getCategory()),
+                                    .setTooltip(domCat.getCategory()),
                             200
                     )
             )).setKeyFunction((domCat) -> domCat.getHostSuffix());
@@ -433,7 +434,13 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
 
     @Messages({
         "WebCategoriesOptionsPanel_importSetButtonActionPerformed_errorMessage=There was an error importing this json file.",
-        "WebCategoriesOptionsPanel_importSetButtonActionPerformed_errorTitle=Import Error",})
+        "WebCategoriesOptionsPanel_importSetButtonActionPerformed_errorTitle=Import Error",
+        "WebCategoriesOptionsPanel_importSetButtonActionPerformed_onConflictTitle=Domain Suffix Already Exists",
+        "# {0} - domainSuffix",
+        "WebCategoriesOptionsPanel_importSetButtonActionPerformed_onConflictMessage=Domain suffix: {0} already exists. What would you like to do?",
+        "WebCategoriesOptionsPanel_importSetButtonActionPerformed_onConflictOverwrite=Overwrite",
+        "WebCategoriesOptionsPanel_importSetButtonActionPerformed_onConflictSkip=Skip",
+        "WebCategoriesOptionsPanel_importSetButtonActionPerformed_onConflictCancel=Cancel"})
     private void importSetButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_importSetButtonActionPerformed
         fileChooser.setSelectedFile(new File(""));
         int result = fileChooser.showOpenDialog(this);
@@ -441,7 +448,45 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
             File selectedFile = fileChooser.getSelectedFile();
             if (selectedFile != null && selectedFile.exists()) {
                 try {
-                    runUpdateAction(() -> dataModel.importJson(selectedFile));
+                    runUpdateAction(() -> {
+                        List<DomainCategory> categories = dataModel.getJsonEntries(selectedFile);
+
+                        for (DomainCategory domcat : categories) {
+                            String normalizedCategory = domcat == null ? "" : WebCategoriesDataModel.getNormalizedCategory(domcat.getCategory());
+                            String normalizedSuffix = domcat == null ? "" : WebCategoriesDataModel.getNormalizedSuffix(domcat.getHostSuffix());
+
+                            if (StringUtils.isBlank(normalizedCategory) || StringUtils.isBlank(normalizedSuffix)) {
+                                logger.log(Level.WARNING, String.format("Invalid entry [category: %s, domain suffix: %s]", normalizedCategory, normalizedSuffix));
+                                continue;
+                            }
+
+                            DomainCategory currentCategory = dataModel.getRecordBySuffix(normalizedSuffix);
+                            // if a mapping for the domain suffix already exists and the value will change, prompt the user on what to do.
+                            if (currentCategory != null && !normalizedCategory.equalsIgnoreCase(currentCategory.getCategory())) {
+                                String[] options = {
+                                    Bundle.WebCategoriesOptionsPanel_importSetButtonActionPerformed_onConflictOverwrite(),
+                                    Bundle.WebCategoriesOptionsPanel_importSetButtonActionPerformed_onConflictSkip(),
+                                    Bundle.WebCategoriesOptionsPanel_importSetButtonActionPerformed_onConflictCancel()
+                                };
+
+                                int optionItem = JOptionPane.showOptionDialog(null,
+                                        Bundle.WebCategoriesOptionsPanel_importSetButtonActionPerformed_onConflictMessage(normalizedSuffix),
+                                        Bundle.WebCategoriesOptionsPanel_importSetButtonActionPerformed_onConflictTitle(),
+                                        JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[0]);
+
+                                switch (optionItem) {
+                                    case 0:
+                                        break;
+                                    case 1:
+                                        continue;
+                                    case 2:
+                                        return;
+                                }
+                            }
+
+                            dataModel.insertUpdateSuffix(new DomainCategory(normalizedSuffix, normalizedCategory));
+                        }
+                    });
                 } catch (IllegalArgumentException | SQLException | IOException ex) {
                     setDefaultCursor();
                     JOptionPane.showMessageDialog(

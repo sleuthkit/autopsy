@@ -3,7 +3,7 @@ AddEditCategoryDialog_Edit=Edit Entry
 # {0} - maxCategoryLen
 AddEditCategoryDialog_onValueUpdate_badCategory=Please provide a category that is no more than {0} characters.
 # {0} - maxSuffixLen
-AddEditCategoryDialog_onValueUpdate_badSuffix=Please provide a domain suffix that is no more than {0} characters that includes at least one period.
+AddEditCategoryDialog_onValueUpdate_badSuffix=Please provide a valid domain suffix that is no more than {0} characters that includes at least one period.
 AddEditCategoryDialog_onValueUpdate_sameCategory=Please provide a new category for this domain suffix.
 AddEditCategoryDialog_onValueUpdate_suffixRepeat=Please provide a unique domain suffix.
 WebCategoriesOptionsPanel_categoryTable_categoryColumnName=Category
@@ -15,6 +15,12 @@ WebCategoriesOptionsPanel_exportSetButtonActionPerformed_errorMessage=There was 
 WebCategoriesOptionsPanel_exportSetButtonActionPerformed_errorTitle=Export Error
 WebCategoriesOptionsPanel_importSetButtonActionPerformed_errorMessage=There was an error importing this json file.
 WebCategoriesOptionsPanel_importSetButtonActionPerformed_errorTitle=Import Error
+WebCategoriesOptionsPanel_importSetButtonActionPerformed_onConflictCancel=Cancel
+# {0} - domainSuffix
+WebCategoriesOptionsPanel_importSetButtonActionPerformed_onConflictMessage=Domain suffix: {0} already exists. What would you like to do?
+WebCategoriesOptionsPanel_importSetButtonActionPerformed_onConflictOverwrite=Overwrite
+WebCategoriesOptionsPanel_importSetButtonActionPerformed_onConflictSkip=Skip
+WebCategoriesOptionsPanel_importSetButtonActionPerformed_onConflictTitle=Domain Suffix Already Exists
 WebCategoryOptionsController_title=Custom Web Categories
 WebCategoryOptionsController_keywords=Custom Web Categories
 AddEditCategoryDialog.categoryLabel.text=Category:

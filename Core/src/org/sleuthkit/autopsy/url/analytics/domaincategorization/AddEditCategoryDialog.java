@@ -127,7 +127,7 @@ class AddEditCategoryDialog extends javax.swing.JDialog {
      */
     @Messages({
         "# {0} - maxSuffixLen",
-        "AddEditCategoryDialog_onValueUpdate_badSuffix=Please provide a domain suffix that is no more than {0} characters that includes at least one period.",
+        "AddEditCategoryDialog_onValueUpdate_badSuffix=Please provide a valid domain suffix that is no more than {0} characters that includes at least one period.",
         "# {0} - maxCategoryLen",
         "AddEditCategoryDialog_onValueUpdate_badCategory=Please provide a category that is no more than {0} characters.",
         "AddEditCategoryDialog_onValueUpdate_suffixRepeat=Please provide a unique domain suffix.",
@@ -150,8 +150,7 @@ class AddEditCategoryDialog extends javax.swing.JDialog {
 
         String validationMessage = null;
         if (normalizedSuffix.length() == 0
-                || normalizedSuffix.length() > WebCategoriesDataModel.getMaxDomainSuffixLength()
-                || safeSuffixStr.indexOf('.') < 0) {
+                || normalizedSuffix.length() > WebCategoriesDataModel.getMaxDomainSuffixLength()) {
             validationMessage = Bundle.AddEditCategoryDialog_onValueUpdate_badSuffix(WebCategoriesDataModel.getMaxCategoryLength());
 
         } else if (normalizedCategory.length() == 0 || normalizedCategory.length() > WebCategoriesDataModel.getMaxCategoryLength()) {
