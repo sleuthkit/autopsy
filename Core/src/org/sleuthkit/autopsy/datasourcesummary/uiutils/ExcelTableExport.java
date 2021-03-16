@@ -53,6 +53,7 @@ public class ExcelTableExport<T, C extends ExcelCellModel> implements ExcelSheet
     private final String sheetName;
     private final List<ColumnModel<T, C>> columns;
     private final List<T> data;
+    private final int columnIndent;
 
     /**
      * Main constructor.
@@ -63,9 +64,14 @@ public class ExcelTableExport<T, C extends ExcelCellModel> implements ExcelSheet
      * @param data The data to export.
      */
     public ExcelTableExport(String sheetName, List<ColumnModel<T, C>> columns, List<T> data) {
+        this(sheetName, columns, data, 0);
+    }
+    
+    public ExcelTableExport(String sheetName, List<ColumnModel<T, C>> columns, List<T> data, int columnIndent) {
         this.sheetName = sheetName;
         this.columns = columns;
         this.data = data;
+        this.columnIndent = columnIndent;
     }
 
     @Override
@@ -75,7 +81,7 @@ public class ExcelTableExport<T, C extends ExcelCellModel> implements ExcelSheet
 
     @Override
     public void renderSheet(Sheet sheet, ExcelExport.WorksheetEnv style) throws ExcelExport.ExcelExportException {
-        renderSheet(sheet, style, 0, 0, columns, data);
+        renderSheet(sheet, style, 0, columnIndent, columns, data);
 
         // Resize all columns to fit the content size
         for (int i = 0; i < columns.size(); i++) {
@@ -86,8 +92,9 @@ public class ExcelTableExport<T, C extends ExcelCellModel> implements ExcelSheet
 
     @Override
     public ItemDimensions write(Sheet sheet, int rowStart, int colStart, ExcelExport.WorksheetEnv env) throws ExcelExportException {
-        int rowsWritten = renderSheet(sheet, env, rowStart, colStart, columns, data);
-        return new ItemDimensions(rowStart, colStart, rowStart + rowsWritten - 1, this.columns == null ? colStart : colStart + this.columns.size());
+        int columnStart = columnIndent + colStart;
+        int rowsWritten = renderSheet(sheet, env, rowStart, columnStart, columns, data);
+        return new ItemDimensions(rowStart, columnStart, rowStart + rowsWritten - 1, this.columns == null ? columnStart : columnStart + this.columns.size());
     }
 
     /**

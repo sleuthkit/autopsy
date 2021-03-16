@@ -383,20 +383,6 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
                     .collect(Collectors.toList());
         }
     }
-
-    private DefaultCellModel<?> getBytesCell(Long bytes) {
-        if (bytes == null) {
-            return new DefaultCellModel<>("");
-        } else {
-            SizeUnit unit = SizeRepresentationUtil.getSizeUnit(bytes);
-            if (unit == null) {
-                unit = SizeUnit.BYTES;
-            }
-
-            return new DefaultCellModel<Long>(bytes, SizeRepresentationUtil::getSizeString, unit.getExcelFormatString());
-        }
-    }
-
     
     @Override
     @Messages({
@@ -427,12 +413,12 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
 
         DefaultCellModel<?> timeZone = hasImage ? new DefaultCellModel<>(imageModel.getTimeZone()) : NACell;
         DefaultCellModel<?> imageType = hasImage ? new DefaultCellModel<>(imageModel.getImageType()) : NACell;
-        DefaultCellModel<?> size = hasImage ? getBytesCell(imageModel.getSize()) : NACell;
-        DefaultCellModel<?> sectorSize = hasImage ? getBytesCell(imageModel.getSectorSize()) : NACell;
+        DefaultCellModel<?> size = hasImage ? SizeRepresentationUtil.getBytesCell(imageModel.getSize()) : NACell;
+        DefaultCellModel<?> sectorSize = hasImage ? SizeRepresentationUtil.getBytesCell(imageModel.getSectorSize()) : NACell;
         DefaultCellModel<?> md5 = hasImage ? new DefaultCellModel<>(imageModel.getMd5Hash()) : NACell;
         DefaultCellModel<?> sha1 = hasImage ? new DefaultCellModel<>(imageModel.getSha1Hash()) : NACell;
         DefaultCellModel<?> sha256 = hasImage ? new DefaultCellModel<>(imageModel.getSha256Hash()) : NACell;
-        DefaultCellModel<?> unallocatedSize = hasImage ? getBytesCell(imageModel.getUnallocatedSize()) : NACell;
+        DefaultCellModel<?> unallocatedSize = hasImage ? SizeRepresentationUtil.getBytesCell(imageModel.getUnallocatedSize()) : NACell;
         List<String> paths = result.getImageViewModel() == null ? Collections.singletonList(NA) : result.getImageViewModel().getPaths();
         List<SingleCellExportable> cellPaths = paths.stream()
                 .map(SingleCellExportable::new)

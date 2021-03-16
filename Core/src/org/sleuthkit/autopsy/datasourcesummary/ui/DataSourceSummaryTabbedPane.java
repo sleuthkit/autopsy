@@ -155,7 +155,7 @@ public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
                     Bundle.DataSourceSummaryTabbedPane_ingestHistoryTab_title(),
                     ingestHistoryPanel,
                     ingestHistoryPanel::setDataSource,
-                    null,
+                    IngestJobExcelExport::getExports,
                     null),
             new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_detailsTab_title(), new ContainerPanel()),
             new DataSourceTab(

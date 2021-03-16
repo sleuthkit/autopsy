@@ -22,6 +22,7 @@ import java.text.DecimalFormat;
 import java.util.Arrays;
 import java.util.List;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultCellModel;
 
 /**
  * This class provides utilities for representing storage size in most relevant
@@ -41,7 +42,7 @@ public final class SizeRepresentationUtil {
         "SizeRepresentationUtil_units_terabytes=TB",
         "SizeRepresentationUtil_units_petabytes=PB"
     })
-    public enum SizeUnit {
+    enum SizeUnit {
         BYTES(Bundle.SizeRepresentationUtil_units_bytes(), "#", 0),
         KB(Bundle.SizeRepresentationUtil_units_kilobytes(), "#,##0.00,", 1),
         MB(Bundle.SizeRepresentationUtil_units_megabytes(), "#,##0.00,,", 2),
@@ -80,11 +81,11 @@ public final class SizeRepresentationUtil {
      * @return Return a string formated with a user friendly version of the size
      * as a string, returns empty String when provided empty size.
      */
-    public static String getSizeString(Long size) {
+    static String getSizeString(Long size) {
         return getSizeString(size, APPROXIMATE_SIZE_FORMAT, true);
     }
 
-    public static SizeUnit getSizeUnit(Long size) {
+    static SizeUnit getSizeUnit(Long size) {
         if (size == null) {
             return SizeUnit.values()[0];
         }
@@ -111,7 +112,7 @@ public final class SizeRepresentationUtil {
      * @return Return a string formated with a user friendly version of the size
      * as a string, returns empty String when provided empty size.
      */
-    public static String getSizeString(Long size, DecimalFormat format, boolean showFullSize) {
+    static String getSizeString(Long size, DecimalFormat format, boolean showFullSize) {
         if (size == null) {
             return "";
         }
@@ -131,6 +132,20 @@ public final class SizeRepresentationUtil {
             return String.format("%s (%s)", closestUnitSize, fullSize);
         } else {
             return closestUnitSize;
+        }
+    }
+    
+    
+    static DefaultCellModel<?> getBytesCell(Long bytes) {
+        if (bytes == null) {
+            return new DefaultCellModel<>("");
+        } else {
+            SizeUnit unit = SizeRepresentationUtil.getSizeUnit(bytes);
+            if (unit == null) {
+                unit = SizeUnit.BYTES;
+            }
+
+            return new DefaultCellModel<Long>(bytes, SizeRepresentationUtil::getSizeString, unit.getExcelFormatString());
         }
     }
 
