@@ -61,11 +61,11 @@ public class MergeHostAction extends AbstractAction {
     }
 
     @NbBundle.Messages({
-        "MergeHostAction.progressIndicatorName=Merge Host Process",
+        "MergeHostAction.progressIndicatorName=Merging Hosts",
         "MergeHostAction.confirmTitle=Confirmation",
         "# {0} - sourceHost",
         "# {1} - destHost",
-        "MergeHostAction.confirmText=Are you sure you want to merge {0} into {1}?\nThis may result in OS Accounts merging together and cannot be undone.",
+        "MergeHostAction.confirmText=Are you sure you want to merge {0} into {1}?\nThis may include merging OS Accounts and cannot be undone.",
         "# {0} - sourceHost",
         "# {1} - destHost",
         "MergeHostAction.progressText=Merging {0} into {1}..."    

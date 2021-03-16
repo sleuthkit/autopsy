@@ -33,11 +33,11 @@ AddEditHostDialog.inputTextField.text=jTextField1
 ManageHostsDialog_title_text=Manage Hosts
 # {0} - sourceHost
 # {1} - destHost
-MergeHostAction.confirmText=Are you sure you want to merge {0} into {1}?\nThis may result in OS Accounts merging together and cannot be undone.
+MergeHostAction.confirmText=Are you sure you want to merge {0} into {1}?\nThis may include merging OS Accounts and cannot be undone.
 MergeHostAction.confirmTitle=Confirmation
 MergeHostAction.errorText=An error occurred while merging hosts.\nTry again in a few minutes or check the log for details.
 MergeHostAction.errorTitle=Error Merging Hosts
-MergeHostAction.progressIndicatorName=Merge Host Process
+MergeHostAction.progressIndicatorName=Merging Hosts
 # {0} - sourceHost
 # {1} - destHost
 MergeHostAction.progressText=Merging {0} into {1}...
