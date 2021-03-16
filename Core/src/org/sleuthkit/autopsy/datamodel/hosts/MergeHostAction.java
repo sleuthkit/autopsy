@@ -18,9 +18,7 @@
  */
 package org.sleuthkit.autopsy.datamodel.hosts;
 
-import java.awt.Cursor;
 import java.awt.event.ActionEvent;
-import java.io.File;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.JOptionPane;
@@ -29,12 +27,10 @@ import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.progress.ModalDialogProgressIndicator;
 import org.sleuthkit.autopsy.progress.ProgressIndicator;
 import org.sleuthkit.datamodel.Host;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Menu action to merge a host into another host.
@@ -66,43 +62,33 @@ public class MergeHostAction extends AbstractAction {
 
     @NbBundle.Messages({
         "MergeHostAction.progressIndicatorName=Merge Host Process",
-        "MergeHostAction.startingMsg=Merging hosts..."
+        "MergeHostAction.confirmTitle=Confirmation",
+        "# {0} - sourceHost",
+        "# {1} - destHost",
+        "MergeHostAction.confirmText=Are you sure you want to merge {0} into {1}?\nThis may result in OS Accounts merging together and cannot be undone.",
+        "# {0} - sourceHost",
+        "# {1} - destHost",
+        "MergeHostAction.progressText=Merging {0} into {1}..."    
     })
     @Override
     public void actionPerformed(ActionEvent e) {
         
-        // TODO confirm
+        // Display confirmation dialog
+        int response = JOptionPane.showConfirmDialog(
+                WindowManager.getDefault().getMainWindow(),
+                NbBundle.getMessage(this.getClass(), "MergeHostAction.confirmText", sourceHost.getName(), destHost.getName()),
+                NbBundle.getMessage(this.getClass(), "MergeHostAction.confirmTitle"),
+                JOptionPane.YES_NO_OPTION);
+        if (response == JOptionPane.NO_OPTION) {
+            return;
+        }
         
-        ModalDialogProgressIndicator progressDialog = new ModalDialogProgressIndicator(null,
+        ModalDialogProgressIndicator progressDialog = new ModalDialogProgressIndicator(WindowManager.getDefault().getMainWindow(),
                 Bundle.MergeHostAction_progressIndicatorName());
         
         MergeHostsBackgroundTask mergeTask = new MergeHostsBackgroundTask(sourceHost, destHost, progressDialog);
-        progressDialog.start(NAME);
+        progressDialog.start(NbBundle.getMessage(this.getClass(), "MergeHostAction.progressText", sourceHost.getName(), destHost.getName()));
         mergeTask.execute();
-        
-        /*
-        new Thread(() -> {
-            try {
-                WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-                try {
-                Thread.sleep(10000);
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
-                Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().mergeHosts(sourceHost, destHost);
-            } catch (NoCurrentCaseException | TskCoreException ex) {
-                logger.log(Level.WARNING, String.format("Unable to merge host: %s into host: %s", sourceHost.getName(), destHost.getName()), ex);
-
-                JOptionPane.showMessageDialog(
-                        WindowManager.getDefault().getMainWindow(),
-                        Bundle.MergeHostAction_onError_description(sourceHost, destHost),
-                        Bundle.MergeHostAction_onError_title(),
-                        JOptionPane.WARNING_MESSAGE);
-            } finally {
-                WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-            }
-        }).start();
-        * */
     }
 
     /**
@@ -122,20 +108,28 @@ public class MergeHostAction extends AbstractAction {
 
         @Override
         protected Void doInBackground() throws Exception {
-            try {
-                try {
-                Thread.sleep(5000);
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
-                Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().mergeHosts(sourceHost, destHost);
-            } finally {
-                progress.finish();
-            }
+            Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().mergeHosts(sourceHost, destHost);
             return null;
         }
         
-        
+        @NbBundle.Messages({
+            "MergeHostAction.errorTitle=Error Merging Hosts",
+            "MergeHostAction.errorText=An error occurred while merging hosts.\nTry again in a few minutes or check the log for details."
+        })
+        @Override
+        protected void done() {
+            progress.finish();
+            try {
+                get();
+            } catch (Exception ex) {
+                logger.log(Level.SEVERE, "Error merging " + sourceHost.getName() + " into " + destHost.getName(), ex);
+                
+                JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), 
+                        NbBundle.getMessage(this.getClass(), "MergeHostAction.errorText"),
+                        NbBundle.getMessage(this.getClass(), "MergeHostAction.errorTitle"),
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        }
     }
     
 }
