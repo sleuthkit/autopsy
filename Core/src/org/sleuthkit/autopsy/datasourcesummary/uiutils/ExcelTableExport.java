@@ -129,18 +129,14 @@ public class ExcelTableExport<T, C extends ExcelCellModel> implements ExcelSheet
         // freeze header row
         sheet.createFreezePane(0, 1);
         // Create Cell Style for each column (if one is needed)
-        Map<String, CellStyle> cellStyles = new HashMap<>();
+        
         for (int rowNum = 0; rowNum < safeData.size(); rowNum++) {
             T rowData = safeData.get(rowNum);
             Row row = sheet.createRow(rowNum + rowStart + 1);
             for (int colNum = 0; colNum < columns.size(); colNum++) {
                 ColumnModel<T, ? extends ExcelCellModel> colModel = columns.get(colNum);
                 ExcelCellModel cellModel = colModel.getCellRenderer().apply(rowData);
-                String formatString = cellModel.getExcelFormatString();
-                Optional<CellStyle> cellStyle = (formatString == null)
-                        ? Optional.empty()
-                        : Optional.of(cellStyles.computeIfAbsent(formatString, k -> ExcelExport.createCellStyle(worksheetEnv.getParentWorkbook(), formatString)));
-                ExcelExport.createCell(row, colNum + colStart, cellModel, cellStyle);
+                ExcelExport.createCell(worksheetEnv, row, colNum + colStart, cellModel, Optional.empty());
             }
         }
 

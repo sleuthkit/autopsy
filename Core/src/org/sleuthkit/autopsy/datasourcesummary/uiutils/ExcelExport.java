@@ -23,11 +23,15 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -71,17 +75,34 @@ public class ExcelExport {
 
         private final CellStyle headerStyle;
         private final Workbook parentWorkbook;
-
+        private final CellStyle defaultStyle;
+        
+        // maps a data format string / original cell style combination to a created cell style
+        private final Map<Pair<String, CellStyle>, CellStyle> cellStyleCache = new HashMap<>();
+        
         /**
          * Main constructor.
          *
          * @param headerStyle The cell style to use for headers.
+         * @param defaultStyle The cell style to use as a default.
          * @param parentWorkbook The parent workbook.
          */
-        WorksheetEnv(CellStyle headerStyle, Workbook parentWorkbook) {
+        WorksheetEnv(CellStyle headerStyle, CellStyle defaultStyle, Workbook parentWorkbook) {
             this.headerStyle = headerStyle;
+            this.defaultStyle = defaultStyle;
             this.parentWorkbook = parentWorkbook;
         }
+        
+        
+        public CellStyle getCellStyle(CellStyle baseStyle, String dataFormat) {
+            return cellStyleCache.computeIfAbsent(Pair.of(dataFormat, baseStyle), (pair) -> {
+                CellStyle computed = this.parentWorkbook.createCellStyle();
+                computed.cloneStyleFrom(pair.getRight() == null ? defaultStyle : pair.getRight());
+                computed.setDataFormat(this.parentWorkbook.getCreationHelper().createDataFormat().getFormat(dataFormat));
+                return computed;
+            });
+        }
+        
 
         /**
          * Returns the cell style to use for headers.
@@ -92,6 +113,15 @@ public class ExcelExport {
             return headerStyle;
         }
 
+        /**
+         * Returns the cell style for default items.
+         * 
+         * @return The cell style for default items.
+         */
+        public CellStyle getDefaultCellStyle() {
+            return defaultStyle;
+        }
+        
         /**
          * Returns the parent workbook.
          *
@@ -167,8 +197,12 @@ public class ExcelExport {
         // Create a CellStyle with the font
         CellStyle headerCellStyle = workbook.createCellStyle();
         headerCellStyle.setFont(headerFont);
+        headerCellStyle.setAlignment(HorizontalAlignment.LEFT);
+        
+        CellStyle defaultCellStyle = workbook.createCellStyle();
+        defaultCellStyle.setAlignment(HorizontalAlignment.LEFT);
 
-        WorksheetEnv env = new WorksheetEnv(headerCellStyle, workbook);
+        WorksheetEnv env = new WorksheetEnv(headerCellStyle, defaultCellStyle, workbook);
 
         if (exports != null) {
             for (int i = 0; i < exports.size(); i++) {
@@ -195,31 +229,25 @@ public class ExcelExport {
         // Closing the workbook
         workbook.close();
     }
-    
-    
-    /**
-     * Create a cell style in the workbook with the given format string.
-     *
-     * @param workbook The workbook.
-     * @param formatString The format string.
-     * @return The cell style.
-     */
-    static <T> CellStyle createCellStyle(Workbook workbook, String formatString) {
-        CellStyle cellStyle = workbook.createCellStyle();
-        cellStyle.setDataFormat(workbook.getCreationHelper().createDataFormat().getFormat(formatString));
-        return cellStyle;
-    }
+
 
     /**
      * Creates an excel cell given the model.
      *
+     * @param env The work sheet environment including the workbook.
      * @param row The row in the excel document.
      * @param colNum The column number (not zero-indexed).
      * @param cellModel The model for the cell.
      * @param cellStyle The style to use.
      * @return The created cell.
      */
-    static Cell createCell(Row row, int colNum, ExcelTableExport.ExcelCellModel cellModel, Optional<CellStyle> cellStyle) {
+    static Cell createCell(WorksheetEnv env, Row row, int colNum, ExcelTableExport.ExcelCellModel cellModel, Optional<CellStyle> cellStyle) {
+        CellStyle cellStyleToUse = cellStyle.orElse(env.getDefaultCellStyle());
+        
+        if (cellModel.getExcelFormatString() != null) {
+            cellStyleToUse = env.getCellStyle(cellStyleToUse, cellModel.getExcelFormatString());
+        }
+        
         Object cellData = cellModel.getData();
         Cell cell = row.createCell(colNum);
         if (cellData instanceof Calendar) {
@@ -241,7 +269,7 @@ public class ExcelExport {
         } else {
             cell.setCellValue(cellModel.getText());
         }
-        cellStyle.ifPresent(cs -> cell.setCellStyle(cs));
+        cell.setCellStyle(cellStyleToUse);
         return cell;
     }
 }

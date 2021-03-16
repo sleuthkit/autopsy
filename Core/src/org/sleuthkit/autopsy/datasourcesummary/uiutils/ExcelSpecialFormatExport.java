@@ -70,10 +70,7 @@ public class ExcelSpecialFormatExport implements ExcelExport.ExcelSheetExport {
         @Override
         public ItemDimensions write(Sheet sheet, int rowStart, int colStart, ExcelExport.WorksheetEnv env) throws ExcelExportException {
             Row row = sheet.createRow(rowStart);
-            ExcelExport.createCell(row, colStart, item,
-                    item.getExcelFormatString() == null
-                    ? Optional.empty()
-                    : Optional.of(ExcelExport.createCellStyle(env.getParentWorkbook(), item.getExcelFormatString())));
+            ExcelExport.createCell(env, row, colStart, item, Optional.empty());
             return new ItemDimensions(rowStart, colStart, rowStart, colStart);
         }
     }
@@ -95,11 +92,8 @@ public class ExcelSpecialFormatExport implements ExcelExport.ExcelSheetExport {
         @Override
         public ItemDimensions write(Sheet sheet, int rowStart, int colStart, ExcelExport.WorksheetEnv env) throws ExcelExportException {
             Row row = sheet.createRow(rowStart);
-            ExcelExport.createCell(row, colStart, key, Optional.of(env.getHeaderStyle()));
-            ExcelExport.createCell(row, colStart + 1, value,
-                    value.getExcelFormatString() == null
-                    ? Optional.empty()
-                    : Optional.of(ExcelExport.createCellStyle(env.getParentWorkbook(), value.getExcelFormatString())));
+            ExcelExport.createCell(env, row, colStart, key, Optional.of(env.getHeaderStyle()));
+            ExcelExport.createCell(env, row, colStart + 1, value, Optional.empty());
             return new ItemDimensions(rowStart, colStart, rowStart, colStart + 1);
         }
     }
@@ -126,7 +120,7 @@ public class ExcelSpecialFormatExport implements ExcelExport.ExcelSheetExport {
 
         @Override
         public ItemDimensions write(Sheet sheet, int rowStart, int colStart, ExcelExport.WorksheetEnv env) throws ExcelExportException {
-            ExcelExport.createCell(sheet.createRow(rowStart), colStart, new DefaultCellModel<>(title), Optional.of(env.getHeaderStyle()));
+            ExcelExport.createCell(env, sheet.createRow(rowStart), colStart, new DefaultCellModel<>(title), Optional.of(env.getHeaderStyle()));
             int curRow = rowStart + 1;
             int maxCol = colStart;
             for (ExcelItemExportable export : children) {
