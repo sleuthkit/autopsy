@@ -149,23 +149,36 @@ public final class LeappFileProcessor {
             .build();
 
     private static final Map<String, String> ACCOUNT_RELATIONSHIPS = ImmutableMap.<String, String>builder()
-            .put("Zapya.tsv", "message")
+            .put("zapya.tsv", "message")
             .put("sms messages.tsv", "message")
             .put("mms messages.tsv", "message")
-            .put("Viber - Messages.tsv", "message")
-            .put("Viber - Contacts.tsv", "contact")
-            .put("Viber - Call Logs.tsv", "calllog")
-            .put("Xender file transfer - Messages.tsv", "message")
-            .put("Whatsapp - Contacts.tsv", "contact")
-            .put("Whatsapp - Group Call Logs.tsv", "calllog")
-            .put("Whatsapp - Single Call Logs.tsv", "calllog")
-            .put("Whatsapp - Messages Logs.tsv", "message")
-            .put("Shareit file transfer.tsv", "message")
+            .put("viber - messages.tsv", "message")
+            .put("viber - contacts.tsv", "contact")
+            .put("viber - call logs.tsv", "calllog")
+            .put("xender file transfer - messages.tsv", "message")
+            .put("xender file transfer - contacts.tsv", "contact")
+            .put("whatsapp - contacts.tsv", "contact")
+            .put("whatsapp - group call logs.tsv", "calllog")
+            .put("whatsapp - single call logs.tsv", "calllog")
+            .put("whatsapp - messages logs.tsv", "message")
+            .put("shareit file transfer.tsv", "message")
             .put("tangomessages messages.tsv", "message")
-            .put("Contacts.tsv", "contact")
-            .put("IMO - AccountId.tsv", "contact")
-            .put("IMO - messages.tsv", "message")
-            
+            .put("contacts.tsv", "contact")
+            .put("imo - accountid.tsv", "contact")
+            .put("imo - messages.tsv", "message")
+            .put("textnow - contacts.tsv", "contact")
+            .put("textnow - messages.tsv", "message")
+            .put("line - messages.tsv", "message")
+            .put("line - contacts.tsv", "contact")
+            .put("line - calllogs.tsv", "calllog")
+            .put("skype - messages logs.tsv", "message")
+            .put("skype - contacts.tsv", "contact")
+            .put("skype - call logs.tsv", "calllog")
+            .put("facebook messenger - chats.tsv", "message")
+            .put("facebook messenger - contacts.tsv", "contact")
+            .put("facebook messenger - calls.tsv", "calllog")
+            .put("call logs2.tsv", "calllog")
+            .put("call logs.tsv", "calllog")
             .build();
 
     Blackboard blkBoard;
@@ -348,7 +361,7 @@ public final class LeappFileProcessor {
                     Collection<BlackboardAttribute> bbattributes = processReadLine(columnItems, columnIndexes, attrList, fileName, lineNum);
 
                     if (!bbattributes.isEmpty()) {
-                        switch (ACCOUNT_RELATIONSHIPS.getOrDefault(fileName, "norelationship").toLowerCase()) {
+                        switch (ACCOUNT_RELATIONSHIPS.getOrDefault(fileName.toLowerCase(), "norelationship").toLowerCase()) {
                             case "message":
                                 createMessageRelationship(bbattributes, dataSource, fileName);
                                 break;
@@ -380,6 +393,7 @@ public final class LeappFileProcessor {
     private void createMessageRelationship(Collection<BlackboardAttribute> bbattributes, Content dataSource, String fileName) throws IngestModuleException {
 
         String messageType = null;
+        String alternateId = null;
         CommunicationDirection communicationDirection = CommunicationDirection.UNKNOWN;
         String senderId = null;
         String receipentId = null;
@@ -441,17 +455,30 @@ public final class LeappFileProcessor {
                     case "TSK_SUBJECT":
                         subject = bba.getValueString();
                         break;
+                    case "TSK_ID":
+                        alternateId = bba.getValueString();
+                        otherAttributes.add(bba);
+                        break;
                     default:
                         otherAttributes.add(bba);
                         break;
                 }
             }
             AbstractFile absFile = findAbstractFile(dataSource, sourceFile);
+            if (absFile == null) {
+                absFile = (AbstractFile) dataSource;
+            }
             Account.Type accountType = getAccountType(fileName);
-            if ((absFile != null) || (accountType != null)) {
-                CommunicationArtifactsHelper accountArtifact = new CommunicationArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(),
+            if (accountType != null) {
+                CommunicationArtifactsHelper accountArtifact;
+                if (alternateId == null) {
+                    accountArtifact = new CommunicationArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(),
                                                                moduleName, absFile, accountType);
-                BlackboardArtifact messageArtifact = accountArtifact.addMessage(messageType, communicationDirection, senderId,
+                } else {
+                    accountArtifact = new CommunicationArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(),
+                                                               moduleName, absFile, accountType, accountType, alternateId);                    
+                }
+                    BlackboardArtifact messageArtifact = accountArtifact.addMessage(messageType, communicationDirection, senderId,
                                                                                 receipentId, dateTime, messageStatus, subject,
                                                                                 messageText, threadId, otherAttributes);
                 if (!fileAttachments.isEmpty()) {
@@ -461,6 +488,10 @@ public final class LeappFileProcessor {
             }
         } catch (NoCurrentCaseException | TskCoreException | BlackboardException ex) {
             throw new IngestModuleException(Bundle.LeappFileProcessor_cannot_create_message_relationship() + ex.getLocalizedMessage(), ex); //NON-NLS
+        } catch (NullPointerException ex) {
+            logger.log(Level.WARNING, String.format(
+                    "Row at line number message %s has from id is %s and timestamp is .", messageText, senderId));
+            
         }
 
     }
@@ -503,6 +534,7 @@ public final class LeappFileProcessor {
                         break;
                     case "TSK_ID":
                         alternateId = bba.getValueString();
+                        otherAttributes.add(bba);
                         break;
                     default:
                         otherAttributes.add(bba);
@@ -510,8 +542,11 @@ public final class LeappFileProcessor {
                 }
             }
             AbstractFile absFile = findAbstractFile(dataSource, sourceFile);
+            if (absFile == null) {
+                absFile = (AbstractFile) dataSource;
+            }
             Account.Type accountType = getAccountType(fileName);
-            if ((absFile != null) || (accountType != null)) {
+            if (accountType != null) {
                 
                 CommunicationArtifactsHelper accountArtifact;
                 if (alternateId == null) {
@@ -525,13 +560,17 @@ public final class LeappFileProcessor {
             }
         } catch (NoCurrentCaseException | TskCoreException | BlackboardException ex) {
             throw new IngestModuleException(Bundle.LeappFileProcessor_cannot_create_message_relationship() + ex.getLocalizedMessage(), ex); //NON-NLS
-        }
+        } catch (NullPointerException ex) {
+            logger.log(Level.WARNING, String.format(
+                    "Row at line number message %s has from id is %s and timestamp is .", alternateId, contactName));
+        }    
 
     }
 
     private void createCalllogRelationship(Collection<BlackboardAttribute> bbattributes, Content dataSource, String fileName) throws IngestModuleException {
 
         String callerId = null;
+        String alternateId = null;
         List<String> calleeId  = Arrays.asList();
         CommunicationDirection communicationDirection = CommunicationDirection.UNKNOWN;
         Long startDateTime = Long.valueOf(0);
@@ -570,6 +609,10 @@ public final class LeappFileProcessor {
                             calleeId  = Arrays.asList(calleeTempList);
                         }
                         break;
+                    case "TSK_ID":
+                        alternateId = bba.getValueString();
+                        otherAttributes.add(bba);
+                        break;
                     default:
                         otherAttributes.add(bba);
                         break;
@@ -582,12 +625,19 @@ public final class LeappFileProcessor {
                 callerId = null;       
             }            
             AbstractFile absFile = findAbstractFile(dataSource, sourceFile);
-            Account.Type accountType = getAccountType(fileName);
-            if ((absFile != null) || (accountType != null)) {
-                CommunicationArtifactsHelper accountArtifact = new CommunicationArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(),
-                                                               moduleName, absFile, accountType);
-                BlackboardArtifact callLogArtifact = accountArtifact.addCalllog(communicationDirection, callerId, calleeId, startDateTime, endDateTime, mediaType, otherAttributes);
+            if (absFile == null) {
+                absFile = (AbstractFile) dataSource;
             }
+            Account.Type accountType = getAccountType(fileName);
+            CommunicationArtifactsHelper accountArtifact;
+            if (accountType != null) {
+                accountArtifact = new CommunicationArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(),
+                                                               moduleName, absFile, accountType);
+            } else {
+                accountArtifact = new CommunicationArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(),
+                                                               moduleName, absFile, accountType, accountType, alternateId);                    
+            }
+            BlackboardArtifact callLogArtifact = accountArtifact.addCalllog(communicationDirection, callerId, calleeId, startDateTime, endDateTime, mediaType, otherAttributes);
         } catch (NoCurrentCaseException | TskCoreException | BlackboardException ex) {
             throw new IngestModuleException(Bundle.LeappFileProcessor_cannot_create_message_relationship() + ex.getLocalizedMessage(), ex); //NON-NLS
         }
@@ -606,6 +656,10 @@ public final class LeappFileProcessor {
                 return Account.Type.IMO;
             case "imo - messages.tsv":
                 return Account.Type.IMO;
+            case "textnow - contacts.tsv":
+                return Account.Type.TEXTNOW;
+            case "textnow - messages.tsv":
+                return Account.Type.TEXTNOW;
             case "mms messages.tsv":
                 return Account.Type.PHONE;
             case "viber - call logs.tsv":
@@ -615,6 +669,8 @@ public final class LeappFileProcessor {
             case "viber - messages.tsv":
                 return Account.Type.VIBER;
             case "xender file transfer - messages.tsv":
+                return Account.Type.XENDER;
+            case "xender file transfer - contacts.tsv":
                 return Account.Type.XENDER;
             case "whatsapp - single call logs.tsv":
                 return Account.Type.WHATSAPP;
@@ -627,7 +683,29 @@ public final class LeappFileProcessor {
             case "tangomessages messages.tsv":
                 return Account.Type.TANGO;  
             case "shareit file transfer.tsv":
-                return Account.Type.SHAREIT;   
+                return Account.Type.SHAREIT;
+            case "line - calllogs.tsv":
+                return Account.Type.LINE;
+            case "line - contacts.tsv":
+                return Account.Type.LINE;
+            case "line - messages.tsv":
+                return Account.Type.LINE;
+            case "skype - call logs.tsv":
+                return Account.Type.SKYPE;
+            case "skype - contacts.tsv":
+                return Account.Type.SKYPE;
+            case "skype - messages logs.tsv":
+                return Account.Type.SKYPE;
+            case "facebook messenger - calls.tsv":
+                return Account.Type.FACEBOOK;
+            case "facebook messenger - contacts.tsv":
+                return Account.Type.FACEBOOK;
+            case "facebook messenger - chats.tsv":
+                return Account.Type.FACEBOOK;
+            case "call logs2.tsv":
+                return Account.Type.PHONE;
+            case "call logs.tsv":
+                return Account.Type.PHONE;
             default:
                 return null;
         }
