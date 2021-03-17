@@ -53,8 +53,7 @@ Follow these steps to configure Solr:
 Required Solr Configuration Parameters:
 <ul>
 <li><b>JAVA_HOME</b> – path to 64-bit JRE installation. For example \c "JAVA_HOME=C:\Program Files\Java\jre1.8.0_151" or \c "JAVA_HOME=C:\Program Files\ojdkbuild\java-1.8.0-openjdk-1.8.0.222-1"
-<li><b>DEFAULT_CONFDIR</b> – path to Autopsy configuration directory. If the Solr archive was extracted into \c "C:\solr-8.6.3" directory, then this path will be \c "C:\ solr-8.6.3\server\solr\configsets\AutopsyConfig\conf".
-<li><b>Dbootstrap_confdir</b> – same path as <b>DEFAULT_CONFDIR</b>
+<li><b>DEFAULT_CONFDIR</b> – path to Autopsy configuration directory. If the Solr archive was extracted into \c "C:\solr-8.6.3" directory, then this path will be \c "C:\ solr-8.6.3\server\solr\configsets\AutopsyConfig\conf". Please note that there are quote or double quote marks surrounding the path.
 <li><b>SOLR_JAVA_MEM</b> - Solr JVM heap size should be as large as the Solr machine’s resources allow, at least half of the total RAM available on the machine. A rule of thumb would be use "set SOLR_JAVA_MEM=-Xms2G -Xmx40G" for a machine with 64GB of RAM, "set SOLR_JAVA_MEM=-Xms2G -Xmx20G" for a machine with 32GB of RAM, and "set SOLR_JAVA_MEM=-Xms2G -Xmx8G" for a machine with 16GB of RAM. Please see the \ref install_solr_heap_usage "troubleshooting section" for more info regarding Solr heap usage and troubleshooting information.
 <li><b>SOLR_DATA_HOME</b> – location where Solr indexes will be stored. If this is not configured, the indexes will be stored in the \c "C:\solr-8.6.3\server\solr" directory. NOTE: for Autopsy cases consisting of large number of data sources, Solr indexes can get very large (hundreds of GBs, or TBs) so they should probably be stored on a larger network share.
 </ul>
