@@ -176,9 +176,7 @@ class WebCategoriesDataModel implements AutoCloseable {
         }
 
         String trimmedSuffix = domainSuffix.trim();
-        String extractedSuffix = NetworkUtils.extractHost(trimmedSuffix);
-
-        return extractedSuffix.substring(0, Math.min(extractedSuffix.length(), MAX_DOMAIN_SIZE)).toLowerCase();
+        return trimmedSuffix.substring(0, Math.min(trimmedSuffix.length(), MAX_DOMAIN_SIZE)).toLowerCase();
     }
 
     /**
