@@ -1,7 +1,20 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2021 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.datasourcesummary.uiutils;
 
@@ -11,14 +24,16 @@ import java.util.Optional;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelExport.ExcelExportException;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelTableExport.ExcelCellModel;
 
 /**
- *
- * @author gregd
+ * An excel export that has special row-by-row formatting.
  */
 public class ExcelSpecialFormatExport implements ExcelExport.ExcelSheetExport {
 
+    /**
+     * The dimensions consumed by an item in an ExcelSpecialFormatExport list of
+     * items to be rendered.
+     */
     public static class ItemDimensions {
 
         private final int rowStart;
@@ -26,6 +41,14 @@ public class ExcelSpecialFormatExport implements ExcelExport.ExcelSheetExport {
         private final int colStart;
         private final int colEnd;
 
+        /**
+         * Main constructor.
+         *
+         * @param rowStart The starting excel row of the item.
+         * @param colStart The starting excel column of the item.
+         * @param rowEnd The last excel row of the the item.
+         * @param colEnd The last excel column of the item.
+         */
         public ItemDimensions(int rowStart, int colStart, int rowEnd, int colEnd) {
             this.rowStart = rowStart;
             this.colStart = colStart;
@@ -33,36 +56,74 @@ public class ExcelSpecialFormatExport implements ExcelExport.ExcelSheetExport {
             this.colEnd = colEnd;
         }
 
+        /**
+         * @return The starting excel row of the item.
+         */
         public int getRowStart() {
             return rowStart;
         }
 
+        /**
+         * @return The last excel row of the the item.
+         */
         public int getRowEnd() {
             return rowEnd;
         }
 
+        /**
+         * @return The starting excel column of the item.
+         */
         public int getColStart() {
             return colStart;
         }
 
+        /**
+         * @return The last excel column of the item.
+         */
         public int getColEnd() {
             return colEnd;
         }
     }
 
+    /**
+     * An item to be exported in a specially formatted excel export.
+     */
     public interface ExcelItemExportable {
 
+        /**
+         * Writes the item to the sheet in the special format export sheet.
+         *
+         * @param sheet The sheet.
+         * @param rowStart The starting row to start writing.
+         * @param colStart The starting column to start writing.
+         * @param env The excel export context.
+         * @return The dimensions of what has been written.
+         * @throws ExcelExportException
+         */
         ItemDimensions write(Sheet sheet, int rowStart, int colStart, ExcelExport.WorksheetEnv env) throws ExcelExportException;
     }
 
+    /**
+     * Writes a string to a single cell in a specially formatted excel export.
+     */
     public static class SingleCellExportable implements ExcelItemExportable {
 
         private final ExcelCellModel item;
 
+        /**
+         * Main constructor.
+         *
+         * @param key The text to be written.
+         */
         public SingleCellExportable(String key) {
             this(new DefaultCellModel<>(key));
         }
 
+        /**
+         * Main constructor.
+         *
+         * @param item The cell model to be written.
+         */
         public SingleCellExportable(ExcelCellModel item) {
             this.item = item;
         }
@@ -75,15 +136,31 @@ public class ExcelSpecialFormatExport implements ExcelExport.ExcelSheetExport {
         }
     }
 
+    /**
+     * Writes a row consisting of first column as a key and second column as a
+     * value.
+     */
     public static class KeyValueItemExportable implements ExcelItemExportable {
 
         private final ExcelCellModel key;
         private final ExcelCellModel value;
 
+        /**
+         * Main constructor.
+         *
+         * @param key The string key to be exported.
+         * @param value The cell model to be exported.
+         */
         public KeyValueItemExportable(String key, ExcelCellModel value) {
             this(new DefaultCellModel<>(key), value);
         }
 
+        /**
+         * Main constructor.
+         *
+         * @param key The cell key to be exported.
+         * @param value The cell model to be exported.
+         */
         public KeyValueItemExportable(ExcelCellModel key, ExcelCellModel value) {
             this.key = key;
             this.value = value;
@@ -98,14 +175,17 @@ public class ExcelSpecialFormatExport implements ExcelExport.ExcelSheetExport {
         }
     }
 
-    private final String sheetName;
-    private final List<ExcelItemExportable> exports;
-
-    public ExcelSpecialFormatExport(String sheetName, List<ExcelItemExportable> exports) {
-        this.sheetName = sheetName;
-        this.exports = exports == null ? Collections.emptyList() : exports;
-    }
-
+    /**
+     * A special format excel export item that shows a title and a list of items
+     * indented one column.
+     *
+     * i.e.
+     * <pre>
+     * title
+     *      item 1
+     *      item 2
+     * </pre>
+     */
     public static class TitledExportable implements ExcelItemExportable {
 
         private static final int DEFAULT_INDENT = 1;
@@ -113,6 +193,12 @@ public class ExcelSpecialFormatExport implements ExcelExport.ExcelSheetExport {
         private final String title;
         private final List<? extends ExcelItemExportable> children;
 
+        /**
+         * Main constructor.
+         *
+         * @param title The title for the export.
+         * @param children The children to be indented and enumerated.
+         */
         public TitledExportable(String title, List<? extends ExcelItemExportable> children) {
             this.title = title;
             this.children = children;
@@ -135,7 +221,20 @@ public class ExcelSpecialFormatExport implements ExcelExport.ExcelSheetExport {
 
             return new ItemDimensions(rowStart, colStart, curRow - 1, maxCol);
         }
+    }
 
+    private final String sheetName;
+    private final List<ExcelItemExportable> exports;
+
+    /**
+     * Main constructor.
+     *
+     * @param sheetName The name of the sheet.
+     * @param exports The row-by-row items to be exported.
+     */
+    public ExcelSpecialFormatExport(String sheetName, List<ExcelItemExportable> exports) {
+        this.sheetName = sheetName;
+        this.exports = exports == null ? Collections.emptyList() : exports;
     }
 
     @Override

@@ -1,7 +1,20 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2021 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.datasourcesummary.ui;
 
@@ -17,8 +30,6 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
-import org.apache.commons.lang3.StringUtils;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -33,8 +44,7 @@ import org.sleuthkit.datamodel.IngestModuleInfo;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- *
- * @author gregd
+ * Class that handles exporting information in IngestJobInfoPanel to excel.
  */
 @Messages({
     "IngestJobExcelExport_startTimeColumn=Start Time",
@@ -46,6 +56,9 @@ import org.sleuthkit.datamodel.TskCoreException;
 })
 class IngestJobExcelExport {
 
+    /**
+     * An entry to display in an excel export.
+     */
     private static class IngestJobEntry {
 
         private final Date startTime;
@@ -54,6 +67,15 @@ class IngestJobExcelExport {
         private final String ingestModule;
         private final String ingestModuleVersion;
 
+        /**
+         * Main constructor.
+         *
+         * @param startTime The ingest start time.
+         * @param endTime The ingest stop time.
+         * @param status The ingest status.
+         * @param ingestModule The ingest module.
+         * @param ingestModuleVersion The ingest module version.
+         */
         IngestJobEntry(Date startTime, Date endTime, String status, String ingestModule, String ingestModuleVersion) {
             this.startTime = startTime;
             this.endTime = endTime;
@@ -62,22 +84,37 @@ class IngestJobExcelExport {
             this.ingestModuleVersion = ingestModuleVersion;
         }
 
+        /**
+         * @return The ingest start time.
+         */
         Date getStartTime() {
             return startTime;
         }
 
+        /**
+         * @return The ingest stop time.
+         */
         Date getEndTime() {
             return endTime;
         }
 
+        /**
+         * @return The ingest status.
+         */
         String getStatus() {
             return status;
         }
 
+        /**
+         * @return The ingest module.
+         */
         String getIngestModule() {
             return ingestModule;
         }
 
+        /**
+         * @return The ingest module version.
+         */
         String getIngestModuleVersion() {
             return ingestModuleVersion;
         }
@@ -87,6 +124,7 @@ class IngestJobExcelExport {
     private static final String DATETIME_FORMAT_STR = "yyyy/MM/dd HH:mm:ss";
     private static final DateFormat DATETIME_FORMAT = new SimpleDateFormat(DATETIME_FORMAT_STR, Locale.getDefault());
 
+    // columns in the excel export table to be created.
     private static final List<ColumnModel<IngestJobEntry, DefaultCellModel<?>>> COLUMNS = Arrays.asList(
             new ColumnModel<>(
                     Bundle.IngestJobExcelExport_startTimeColumn(),
@@ -105,11 +143,23 @@ class IngestJobExcelExport {
                     (entry) -> new DefaultCellModel<>(entry.getIngestModuleVersion()))
     );
 
+    /**
+     * Retrieves data for a date cell.
+     *
+     * @param date The date.
+     * @return The data cell to be used in the excel export.
+     */
     private static DefaultCellModel<?> getDateCell(Date date) {
         Function<Date, String> dateParser = (dt) -> dt == null ? "" : DATETIME_FORMAT.format(dt);
         return new DefaultCellModel<>(date, dateParser, DATETIME_FORMAT_STR);
     }
 
+    /**
+     * Retrieves all the ingest job modules and versions for a job.
+     *
+     * @param job The ingest job.
+     * @return All of the corresponding entries sorted by module name.
+     */
     private static List<IngestJobEntry> getEntries(IngestJobInfo job) {
         List<IngestModuleInfo> infoList = job.getIngestModuleInfo();
         if (infoList == null) {
@@ -135,6 +185,13 @@ class IngestJobExcelExport {
         }
     }
 
+    /**
+     * For output, show ingest job details in first row present. Otherwise, set
+     * to null.
+     *
+     * @param list The list of entries for an ingest job.
+     * @return The stream of entries to be displayed.
+     */
     private static Stream<IngestJobEntry> showFirstRowOnly(List<IngestJobEntry> list) {
         return IntStream.range(0, list.size())
                 .mapToObj(idx -> {
@@ -148,6 +205,12 @@ class IngestJobExcelExport {
 
     }
 
+    /**
+     * Returns a list of sheets to be exported for the Ingest History tab.
+     *
+     * @param dataSource The data source.
+     * @return The list of sheets to be included in an export.
+     */
     static List<ExcelSheetExport> getExports(DataSource dataSource) {
         if (dataSource == null) {
             return Collections.emptyList();
@@ -167,6 +230,7 @@ class IngestJobExcelExport {
         List<IngestJobEntry> toDisplay = info.stream()
                 .filter(job -> job != null && dataSource.getId() == job.getObjectId())
                 .sorted((a, b) -> {
+                    // sort ingest jobs by time.
                     boolean aIsNull = a.getStartDateTime() == null;
                     boolean bIsNull = b.getStartDateTime() == null;
                     if (aIsNull || bIsNull) {
@@ -182,5 +246,8 @@ class IngestJobExcelExport {
                 .collect(Collectors.toList());
 
         return Arrays.asList(new ExcelTableExport<>(Bundle.IngestJobExcelExport_sheetName(), COLUMNS, toDisplay));
+    }
+
+    private IngestJobExcelExport() {
     }
 }

@@ -24,21 +24,21 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelTableExport.ExcelCellModel;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelCellModel;
 
 /**
  * The default cell model.
  */
 public class DefaultCellModel<T> implements GuiCellModel, ExcelCellModel {
 
-    private final T data;
-    private final Function<T, String> stringConverter;
+    final T data;
+    final Function<T, String> stringConverter;
     String tooltip;
     CellModel.HorizontalAlign horizontalAlignment;
     Insets insets;
     List<MenuItem> popupMenu;
     Supplier<List<MenuItem>> menuItemSupplier;
-    private final String excelFormatString;
+    final String excelFormatString;
 
     /**
      * Main constructor.

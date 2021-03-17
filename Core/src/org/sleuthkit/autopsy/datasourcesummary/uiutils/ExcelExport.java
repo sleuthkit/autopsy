@@ -26,8 +26,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.Font;
@@ -37,6 +37,7 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModel.HorizontalAlign;
 
 /**
  * Class for handling Excel exporting.
@@ -69,6 +70,87 @@ public class ExcelExport {
     }
 
     /**
+     * A cell style key that can be used with the WorksheetEnv to generate a
+     * cell style to be used in a POI excel document.
+     */
+    static class CellStyleKey {
+
+        private final String formatString;
+        private final CellStyle cellStyle;
+        private final HorizontalAlign alignment;
+
+        /**
+         * Main constructor.
+         *
+         * @param formatString The format string or null if no special
+         * formatting.
+         * @param cellStyle The base cell style or null if default is to be
+         * used.
+         * @param alignment The horizontal alignment or null if default is to be
+         * used.
+         */
+        CellStyleKey(String formatString, CellStyle cellStyle, HorizontalAlign alignment) {
+            this.formatString = formatString;
+            this.cellStyle = cellStyle;
+            this.alignment = alignment;
+        }
+
+        /**
+         * @return The format string or null if no special formatting.
+         */
+        String getFormatString() {
+            return formatString;
+        }
+
+        /**
+         * @return The base cell style or null if default is to be used.
+         */
+        CellStyle getCellStyle() {
+            return cellStyle;
+        }
+
+        /**
+         * @return The horizontal alignment or null if default is to be used.
+         */
+        HorizontalAlign getAlignment() {
+            return alignment;
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 7;
+            hash = 29 * hash + Objects.hashCode(this.formatString);
+            hash = 29 * hash + Objects.hashCode(this.cellStyle);
+            hash = 29 * hash + Objects.hashCode(this.alignment);
+            return hash;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            final CellStyleKey other = (CellStyleKey) obj;
+            if (!Objects.equals(this.formatString, other.formatString)) {
+                return false;
+            }
+            if (!Objects.equals(this.cellStyle, other.cellStyle)) {
+                return false;
+            }
+            if (this.alignment != other.alignment) {
+                return false;
+            }
+            return true;
+        }
+    }
+
+    /**
      * Class detailing aspects of the worksheet.
      */
     public static class WorksheetEnv {
@@ -76,10 +158,10 @@ public class ExcelExport {
         private final CellStyle headerStyle;
         private final Workbook parentWorkbook;
         private final CellStyle defaultStyle;
-        
+
         // maps a data format string / original cell style combination to a created cell style
-        private final Map<Pair<String, CellStyle>, CellStyle> cellStyleCache = new HashMap<>();
-        
+        private final Map<CellStyleKey, CellStyle> cellStyleCache = new HashMap<>();
+
         /**
          * Main constructor.
          *
@@ -92,17 +174,29 @@ public class ExcelExport {
             this.defaultStyle = defaultStyle;
             this.parentWorkbook = parentWorkbook;
         }
-        
-        
-        public CellStyle getCellStyle(CellStyle baseStyle, String dataFormat) {
-            return cellStyleCache.computeIfAbsent(Pair.of(dataFormat, baseStyle), (pair) -> {
+
+        /**
+         * Returns a cell style signified by the given cell style key. If the
+         * key is already present, a cached version is returned.
+         *
+         * @param cellStyleKey The key.
+         * @return The cell style representing this key.
+         */
+        public CellStyle getCellStyle(CellStyleKey cellStyleKey) {
+            return cellStyleCache.computeIfAbsent(cellStyleKey, (pair) -> {
                 CellStyle computed = this.parentWorkbook.createCellStyle();
-                computed.cloneStyleFrom(pair.getRight() == null ? defaultStyle : pair.getRight());
-                computed.setDataFormat(this.parentWorkbook.getCreationHelper().createDataFormat().getFormat(dataFormat));
+                computed.cloneStyleFrom(cellStyleKey.getCellStyle() == null ? defaultStyle : cellStyleKey.getCellStyle());
+
+                if (cellStyleKey.getAlignment() != null) {
+                    computed.setAlignment(cellStyleKey.getAlignment().getPoiAlignment());
+                }
+
+                if (cellStyleKey.getFormatString() != null) {
+                    computed.setDataFormat(this.parentWorkbook.getCreationHelper().createDataFormat().getFormat(cellStyleKey.getFormatString()));
+                }
                 return computed;
             });
         }
-        
 
         /**
          * Returns the cell style to use for headers.
@@ -115,13 +209,13 @@ public class ExcelExport {
 
         /**
          * Returns the cell style for default items.
-         * 
+         *
          * @return The cell style for default items.
          */
         public CellStyle getDefaultCellStyle() {
             return defaultStyle;
         }
-        
+
         /**
          * Returns the parent workbook.
          *
@@ -160,6 +254,7 @@ public class ExcelExport {
 
     /**
      * Retrieves a singleton instance of this class.
+     *
      * @return The instance.
      */
     public static ExcelExport getInstance() {
@@ -176,10 +271,11 @@ public class ExcelExport {
 
     /**
      * Writes the exports to a workbook.
+     *
      * @param exports The sheets to export.
      * @param path The path to the output file.
      * @throws IOException
-     * @throws ExcelExportException 
+     * @throws ExcelExportException
      */
     @Messages({
         "# {0} - sheetNumber",
@@ -199,7 +295,7 @@ public class ExcelExport {
         CellStyle headerCellStyle = workbook.createCellStyle();
         headerCellStyle.setFont(headerFont);
         headerCellStyle.setAlignment(alignment);
-        
+
         CellStyle defaultCellStyle = workbook.createCellStyle();
         defaultCellStyle.setAlignment(alignment);
 
@@ -231,7 +327,6 @@ public class ExcelExport {
         workbook.close();
     }
 
-
     /**
      * Creates an excel cell given the model.
      *
@@ -242,13 +337,13 @@ public class ExcelExport {
      * @param cellStyle The style to use.
      * @return The created cell.
      */
-    static Cell createCell(WorksheetEnv env, Row row, int colNum, ExcelTableExport.ExcelCellModel cellModel, Optional<CellStyle> cellStyle) {
+    static Cell createCell(WorksheetEnv env, Row row, int colNum, ExcelCellModel cellModel, Optional<CellStyle> cellStyle) {
         CellStyle cellStyleToUse = cellStyle.orElse(env.getDefaultCellStyle());
-        
-        if (cellModel.getExcelFormatString() != null) {
-            cellStyleToUse = env.getCellStyle(cellStyleToUse, cellModel.getExcelFormatString());
+
+        if (cellModel.getExcelFormatString() != null || cellModel.getHorizontalAlignment() != null) {
+            cellStyleToUse = env.getCellStyle(new CellStyleKey(cellModel.getExcelFormatString(), cellStyleToUse, cellModel.getHorizontalAlignment()));
         }
-        
+
         Object cellData = cellModel.getData();
         Cell cell = row.createCell(colNum);
         if (cellData instanceof Calendar) {

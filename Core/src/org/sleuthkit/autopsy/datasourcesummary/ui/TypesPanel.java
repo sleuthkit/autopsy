@@ -31,7 +31,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.FileTypeUtils.FileTypeCategory;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.TypesSummary;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.ContainerSummary;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.MimeTypeSummary;
@@ -50,7 +49,6 @@ import org.sleuthkit.autopsy.datasourcesummary.uiutils.LoadableComponent;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.LoadableLabel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.PieChartPanel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.PieChartPanel.PieChartItem;
-import org.sleuthkit.autopsy.modules.filetypeid.FileTypeIdModuleFactory;
 
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -173,9 +171,8 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
     private static final long serialVersionUID = 1L;
     private static final DecimalFormat INTEGER_SIZE_FORMAT = new DecimalFormat("#");
     private static final String COMMA_FORMAT_STR = "#,###";
-    
+
     private static final DecimalFormat COMMA_FORMATTER = new DecimalFormat(COMMA_FORMAT_STR);
-    private static final Logger logger = Logger.getLogger(TypesPanel.class.getName());
 
     private static final Color IMAGES_COLOR = new Color(156, 39, 176);
     private static final Color VIDEOS_COLOR = Color.YELLOW;
@@ -412,14 +409,31 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
         return longVal == null ? "0" : COMMA_FORMATTER.format(longVal);
     }
 
+    /**
+     * Returns a key value pair to be exported in a sheet.
+     *
+     * @param fetcher The means of fetching the data.
+     * @param key The key to use.
+     * @param dataSource The data source containing the data.
+     * @return The key value pair to be exported.
+     */
     private static KeyValueItemExportable getStrExportable(DataFetcher<DataSource, String> fetcher, String key, DataSource dataSource) {
         String result = getFetchResult(fetcher, "Types", dataSource);
         return (result == null) ? null : new KeyValueItemExportable(key, new DefaultCellModel<>(result));
     }
 
+    /**
+     * Returns a key value pair to be exported in a sheet formatting the long
+     * with commas separated by orders of 1000.
+     *
+     * @param fetcher The means of fetching the data.
+     * @param key The string key for this key value pair.
+     * @param dataSource The data source.
+     * @return The key value pair.
+     */
     private static KeyValueItemExportable getCountExportable(DataFetcher<DataSource, Long> fetcher, String key, DataSource dataSource) {
         Long count = getFetchResult(fetcher, "Types", dataSource);
-        return (count == null) ? null : new KeyValueItemExportable(key, 
+        return (count == null) ? null : new KeyValueItemExportable(key,
                 new DefaultCellModel<Long>(count, COMMA_FORMATTER::format, COMMA_FORMAT_STR));
     }
 

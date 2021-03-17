@@ -37,7 +37,6 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.ContainerSummary;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import static org.sleuthkit.autopsy.datasourcesummary.ui.BaseDataSourceSummaryPanel.getFetchResult;
-import org.sleuthkit.autopsy.datasourcesummary.ui.SizeRepresentationUtil.SizeUnit;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult.ResultType;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetcher;
@@ -45,6 +44,7 @@ import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultCellModel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultUpdateGovernor;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelExport.ExcelSheetExport;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelSpecialFormatExport;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelSpecialFormatExport.ExcelItemExportable;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelSpecialFormatExport.KeyValueItemExportable;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelSpecialFormatExport.SingleCellExportable;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelSpecialFormatExport.TitledExportable;
@@ -61,6 +61,9 @@ import org.sleuthkit.datamodel.TskCoreException;
 })
 class ContainerPanel extends BaseDataSourceSummaryPanel {
 
+    /**
+     * View model data for data source images.
+     */
     private static class ImageViewModel {
 
         private final long unallocatedSize;
@@ -75,7 +78,20 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
         private final String sha1Hash;
         private final String sha256Hash;
 
-        public ImageViewModel(long unallocatedSize, long size, long sectorSize,
+        /**
+         * Main constructor.
+         *
+         * @param unallocatedSize Size in bytes of unallocated space.
+         * @param size Total size in bytes.
+         * @param sectorSize Sector size in bytes.
+         * @param timeZone The time zone.
+         * @param imageType The type of image.
+         * @param paths The source paths for the image.
+         * @param md5Hash The md5 hash or null.
+         * @param sha1Hash The sha1 hash or null.
+         * @param sha256Hash The sha256 hash or null.
+         */
+        ImageViewModel(long unallocatedSize, long size, long sectorSize,
                 String timeZone, String imageType, List<String> paths, String md5Hash,
                 String sha1Hash, String sha256Hash) {
             this.unallocatedSize = unallocatedSize;
@@ -89,44 +105,73 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
             this.sha256Hash = sha256Hash;
         }
 
-        public long getUnallocatedSize() {
+        /**
+         * @return Size in bytes of unallocated space.
+         */
+        long getUnallocatedSize() {
             return unallocatedSize;
         }
 
-        public long getSize() {
+        /**
+         * @return Total size in bytes.
+         */
+        long getSize() {
             return size;
         }
 
-        public long getSectorSize() {
+        /**
+         * @return Sector size in bytes.
+         */
+        long getSectorSize() {
             return sectorSize;
         }
 
-        public String getTimeZone() {
+        /**
+         * @return The time zone.
+         */
+        String getTimeZone() {
             return timeZone;
         }
 
-        public String getImageType() {
+        /**
+         * @return The type of image.
+         */
+        String getImageType() {
             return imageType;
         }
 
-        public List<String> getPaths() {
+        /**
+         * @return The source paths for the image.
+         */
+        List<String> getPaths() {
             return paths;
         }
 
-        public String getMd5Hash() {
+        /**
+         * @return The md5 hash or null.
+         */
+        String getMd5Hash() {
             return md5Hash;
         }
 
-        public String getSha1Hash() {
+        /**
+         * @return The sha1 hash or null.
+         */
+        String getSha1Hash() {
             return sha1Hash;
         }
 
-        public String getSha256Hash() {
+        /**
+         * @return The sha256 hash or null.
+         */
+        String getSha256Hash() {
             return sha256Hash;
         }
-
     }
 
+    /**
+     * View model for container data.
+     */
     private static class ContainerViewModel {
 
         private final String displayName;
@@ -135,6 +180,17 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
         private final String acquisitionDetails;
         private final ImageViewModel imageViewModel;
 
+        /**
+         * Main constructor.
+         *
+         * @param displayName The display name for this data source.
+         * @param originalName The original name for this data source.
+         * @param deviceIdValue The device id value for this data source.
+         * @param acquisitionDetails The acquisition details for this data
+         * source or null.
+         * @param imageViewModel If the data source is an image, the image view
+         * model for this data source or null if non-image.
+         */
         ContainerViewModel(String displayName, String originalName, String deviceIdValue,
                 String acquisitionDetails, ImageViewModel imageViewModel) {
             this.displayName = displayName;
@@ -144,22 +200,38 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
             this.imageViewModel = imageViewModel;
         }
 
+        /**
+         * @return The display name for this data source.
+         */
         String getDisplayName() {
             return displayName;
         }
 
+        /**
+         * @return The original name for this data source.
+         */
         String getOriginalName() {
             return originalName;
         }
 
+        /**
+         * @return The device id value for this data source.
+         */
         String getDeviceId() {
             return deviceIdValue;
         }
 
+        /**
+         * @return The acquisition details for this data source or null.
+         */
         String getAcquisitionDetails() {
             return acquisitionDetails;
         }
 
+        /**
+         * @return If the data source is an image, the image view model for this
+         * data source or null if non-image.
+         */
         ImageViewModel getImageViewModel() {
             return imageViewModel;
         }
@@ -241,11 +313,29 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
         fetchInformation(dataFetchComponents, dataSource);
     }
 
+    /**
+     * A means of retrieving data that could potentially throw an exception.
+     */
     private interface Retriever<O> {
 
+        /**
+         * Retrieves data of a certain type and possibly throws an exception.
+         *
+         * @return The data type.
+         * @throws TskCoreException
+         * @throws SleuthkitCaseProviderException
+         * @throws SQLException
+         */
         O retrieve() throws TskCoreException, SleuthkitCaseProviderException, SQLException;
     }
 
+    /**
+     * Retrieves data of a particular type and handles any exceptions that may
+     * be thrown by logging.
+     *
+     * @param retriever The retrieving function.
+     * @return The retrieved data.
+     */
     private static <O> O retrieve(Retriever<O> retriever) {
         try {
             return retriever.retrieve();
@@ -255,6 +345,14 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
         }
     }
 
+    /**
+     * Generates a container view model object containing data to display about
+     * the data source.
+     *
+     * @param containerSummary The service providing data about the data source.
+     * @param ds The data source.
+     * @return The generated view model.
+     */
     private static ContainerViewModel getContainerViewModel(ContainerSummary containerSummary, DataSource ds) {
         if (ds == null) {
             return null;
@@ -269,6 +367,14 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
         );
     }
 
+    /**
+     * Generates an image view model object containing data to display about the
+     * image.
+     *
+     * @param containerSummary The service providing data about the image.
+     * @param image The image.
+     * @return The generated view model.
+     */
     private static ImageViewModel getImageViewModel(ContainerSummary containerSummary, Image image) {
         if (image == null) {
             return null;
@@ -287,6 +393,11 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
         return new ImageViewModel(unallocSize, size, sectorSize, timeZone, imageType, paths, md5, sha1, sha256);
     }
 
+    /**
+     * Update the swing components with fetched data.
+     *
+     * @param viewModel The data source view model data.
+     */
     private void updateDetailsPanelData(ContainerViewModel viewModel) {
         clearTableValues();
         if (viewModel == null) {
@@ -307,6 +418,9 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
         this.repaint();
     }
 
+    /**
+     * Sets image-only fields to N/A.
+     */
     @Messages({
         "ContainerPanel_setFieldsForNonImageDataSource_na=N/A"
     })
@@ -326,6 +440,11 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
         sha256HashValue.setText(NA);
     }
 
+    /**
+     * Sets fields for images.
+     *
+     * @param viewModel The image view model data.
+     */
     private void setFieldsForImage(ImageViewModel viewModel) {
         unallocatedSizeValue.setText(SizeRepresentationUtil.getSizeString(viewModel.getUnallocatedSize()));
         imageTypeValue.setText(viewModel.getImageType());
@@ -361,29 +480,25 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
         ((DefaultTableModel) filePathsTable.getModel()).setRowCount(0);
     }
 
-    private static List<KeyValueItemExportable> getAcquisitionDetails(String acquisitionDetails) {
+    /**
+     * Divides acquisition details into key/value pairs to be displayed in
+     * separate cells in an excel export.
+     *
+     * @param acquisitionDetails The acquisition details.
+     * @return The list of key value pairs that can be incorporated into the
+     * excel export.
+     */
+    private static List<? extends ExcelItemExportable> getAcquisitionDetails(String acquisitionDetails) {
         if (StringUtils.isBlank(acquisitionDetails)) {
             return Collections.emptyList();
         } else {
             return Stream.of(acquisitionDetails.split("\\r?\\n"))
-                    .map((line) -> {
-                        if (StringUtils.isBlank(line)) {
-                            return null;
-                        } else {
-                            int colonIdx = line.indexOf(':');
-                            if (colonIdx >= 0) {
-                                return new KeyValueItemExportable(new DefaultCellModel<>(line.substring(0, colonIdx + 1).trim()),
-                                        new DefaultCellModel<>(line.substring(colonIdx + 1, line.length()).trim()));
-                            } else {
-                                return new KeyValueItemExportable(new DefaultCellModel<>(""), new DefaultCellModel<>(line));
-                            }
-                        }
-                    })
+                    .map((line) -> (StringUtils.isBlank(line)) ? null : new SingleCellExportable(line))
                     .filter(item -> item != null)
                     .collect(Collectors.toList());
         }
     }
-    
+
     @Override
     @Messages({
         "ContainerPanel_export_displayName=Display Name:",

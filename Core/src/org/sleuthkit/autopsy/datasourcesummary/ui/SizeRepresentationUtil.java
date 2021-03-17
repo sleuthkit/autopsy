@@ -33,7 +33,9 @@ public final class SizeRepresentationUtil {
     private static final int SIZE_CONVERSION_CONSTANT = 1000;
     private static final DecimalFormat APPROXIMATE_SIZE_FORMAT = new DecimalFormat("#.##");
 
-    // based on https://www.mrexcel.com/board/threads/how-do-i-format-cells-to-show-gb-mb-kb.140135/
+    /**
+     * A size unit corresponding to orders of magnitude of bytes (kilobyte, gigabytes, etc.).
+     */
     @NbBundle.Messages({
         "SizeRepresentationUtil_units_bytes=bytes",
         "SizeRepresentationUtil_units_kilobytes=KB",
@@ -54,20 +56,37 @@ public final class SizeRepresentationUtil {
         private final String excelFormatString;
         private final long divisor;
 
+        /**
+         * Main constructor.
+         * @param suffix The string suffix to use for size unit.
+         * @param excelFormatString The excel format string to use for this size unit.
+         * @param power The power of 1000 of bytes for this size unit.
+         */
         SizeUnit(String suffix, String excelFormatString, int power) {
             this.suffix = suffix;
+            
+            // based on https://www.mrexcel.com/board/threads/how-do-i-format-cells-to-show-gb-mb-kb.140135/
             this.excelFormatString = String.format("%s \"%s\"", excelFormatString, suffix);
             this.divisor = (long) Math.pow(SIZE_CONVERSION_CONSTANT, power);
         }
 
+        /**
+         * @return The string suffix to use for size unit.
+         */
         public String getSuffix() {
             return suffix;
         }
 
+        /**
+         * @return The excel format string to use for this size unit.
+         */
         public String getExcelFormatString() {
             return excelFormatString;
         }
 
+        /**
+         * @return The divisor to convert from bytes to this unit.
+         */
         public long getDivisor() {
             return divisor;
         }
@@ -85,6 +104,11 @@ public final class SizeRepresentationUtil {
         return getSizeString(size, APPROXIMATE_SIZE_FORMAT, true);
     }
 
+    /**
+     * Determines the relevant size unit that should be used for a particular size.
+     * @param size The size in bytes.
+     * @return The relevant size unit.
+     */
     static SizeUnit getSizeUnit(Long size) {
         if (size == null) {
             return SizeUnit.values()[0];
@@ -135,7 +159,11 @@ public final class SizeRepresentationUtil {
         }
     }
     
-    
+    /**
+     * Returns a default cell model using size units.
+     * @param bytes The number of bytes.
+     * @return The default cell model.
+     */
     static DefaultCellModel<?> getBytesCell(Long bytes) {
         if (bytes == null) {
             return new DefaultCellModel<>("");

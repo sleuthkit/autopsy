@@ -19,36 +19,20 @@
 package org.sleuthkit.autopsy.datasourcesummary.uiutils;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelExport.ExcelExportException;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelExport.ExcelSheetExport;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelSpecialFormatExport.ExcelItemExportable;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelSpecialFormatExport.ItemDimensions;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelTableExport.ExcelCellModel;
 
 /**
  * An excel sheet export of table data.
  */
 public class ExcelTableExport<T, C extends ExcelCellModel> implements ExcelSheetExport, ExcelItemExportable {
-
-    /**
-     * Basic interface for a cell model.
-     */
-    public interface ExcelCellModel extends CellModel {
-
-        /**
-         * @return The format string to be used with Apache POI during excel
-         * export or null if none necessary.
-         */
-        String getExcelFormatString();
-    }
 
     private final String sheetName;
     private final List<ColumnModel<T, C>> columns;
@@ -66,7 +50,16 @@ public class ExcelTableExport<T, C extends ExcelCellModel> implements ExcelSheet
     public ExcelTableExport(String sheetName, List<ColumnModel<T, C>> columns, List<T> data) {
         this(sheetName, columns, data, 0);
     }
-    
+
+    /**
+     * Main constructor.
+     *
+     * @param sheetName The name of the sheet. NOTE: There can be no duplicates
+     * in a workbook.
+     * @param columns The columns of the table.
+     * @param data The data to export.
+     * @param columnIndent The column indent.
+     */
     public ExcelTableExport(String sheetName, List<ColumnModel<T, C>> columns, List<T> data, int columnIndent) {
         this.sheetName = sheetName;
         this.columns = columns;
@@ -129,7 +122,7 @@ public class ExcelTableExport<T, C extends ExcelCellModel> implements ExcelSheet
         // freeze header row
         sheet.createFreezePane(0, 1);
         // Create Cell Style for each column (if one is needed)
-        
+
         for (int rowNum = 0; rowNum < safeData.size(); rowNum++) {
             T rowData = safeData.get(rowNum);
             Row row = sheet.createRow(rowNum + rowStart + 1);
