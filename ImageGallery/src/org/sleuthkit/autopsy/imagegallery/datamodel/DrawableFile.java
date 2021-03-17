@@ -100,13 +100,9 @@ public abstract class DrawableFile {
 
     private String model;
 
-    private final CategoryManager categoryManager;
-
     protected DrawableFile(AbstractFile file, Boolean analyzed) {
         this.analyzed = new SimpleBooleanProperty(analyzed);
         this.file = file;
-
-        categoryManager = ImageGalleryController.getController(Case.getCurrentCase()).getCategoryManager();
     }
 
     public abstract boolean isVideo();
@@ -245,13 +241,19 @@ public abstract class DrawableFile {
     /**
      * Update the category property.
      */
-    private void updateCategory() {
+    private void updateCategory() {    
         try {
+            ImageGalleryController controllerForCase = ImageGalleryController.getController(Case.getCurrentCaseThrows());
+            if (controllerForCase == null) {
+                // This can only happen during case closing, so return without generating an error.
+                return;
+            }
+            
             List<ContentTag> contentTags = getContentTags();
             TagName tag = null;
             for (ContentTag ct : contentTags) {
                 TagName tagName = ct.getName();
-                if (categoryManager.isCategoryTagName(tagName)) {
+                if (controllerForCase.getCategoryManager().isCategoryTagName(tagName)) {
                     tag = tagName;
                     break;
                 }
@@ -259,7 +261,7 @@ public abstract class DrawableFile {
             categoryTagName.set(tag);
         } catch (TskCoreException ex) {
             LOGGER.log(Level.WARNING, "problem looking up category for " + this.getContentPathSafe(), ex); //NON-NLS
-        } catch (IllegalStateException ex) {
+        } catch (IllegalStateException | NoCurrentCaseException ex) {
             // We get here many times if the case is closed during ingest, so don't print out a ton of warnings.
         }
     }
