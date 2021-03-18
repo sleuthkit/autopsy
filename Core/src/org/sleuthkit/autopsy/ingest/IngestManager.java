@@ -287,15 +287,16 @@ public class IngestManager implements IngestProgressSnapshotProvider {
         caseIsOpen = false;
         clearIngestMessageBox();
     }
-    
+
     /**
-     * Creates an ingest stream from the given ingest settings for a data source.
-     * 
+     * Creates an ingest stream from the given ingest settings for a data
+     * source.
+     *
      * @param dataSource The data source
      * @param settings   The ingest job settings.
-     * 
+     *
      * @return The newly created ingest stream.
-     * 
+     *
      * @throws TskCoreException if there was an error starting the ingest job.
      */
     public IngestStream openIngestStream(DataSource dataSource, IngestJobSettings settings) throws TskCoreException {
@@ -312,7 +313,6 @@ public class IngestManager implements IngestProgressSnapshotProvider {
             throw new TskCoreException("Error starting ingest modules", stream.getIngestJobStartResult().getStartupException());
         }
     }
-
 
     /**
      * Gets the number of file ingest threads the ingest manager is using to do
@@ -519,10 +519,11 @@ public class IngestManager implements IngestProgressSnapshotProvider {
     public void addIngestJobEventListener(final PropertyChangeListener listener) {
         jobEventPublisher.addSubscriber(INGEST_JOB_EVENT_NAMES, listener);
     }
-    
+
     /**
-     * Adds an ingest job event property change listener for the given event types.
-     * 
+     * Adds an ingest job event property change listener for the given event
+     * types.
+     *
      * @param eventTypes The event types to listen for
      * @param listener   The PropertyChangeListener to be added
      */
@@ -540,18 +541,18 @@ public class IngestManager implements IngestProgressSnapshotProvider {
     public void removeIngestJobEventListener(final PropertyChangeListener listener) {
         jobEventPublisher.removeSubscriber(INGEST_JOB_EVENT_NAMES, listener);
     }
-    
+
     /**
      * Removes an ingest job event property change listener.
      *
      * @param eventTypes The event types to stop listening for
-     * @param listener The PropertyChangeListener to be removed.
+     * @param listener   The PropertyChangeListener to be removed.
      */
     public void removeIngestJobEventListener(Set<IngestJobEvent> eventTypes, final PropertyChangeListener listener) {
         eventTypes.forEach((IngestJobEvent event) -> {
             jobEventPublisher.removeSubscriber(event.toString(), listener);
         });
-    }   
+    }
 
     /**
      * Adds an ingest module event property change listener.
@@ -563,8 +564,9 @@ public class IngestManager implements IngestProgressSnapshotProvider {
     }
 
     /**
-     * Adds an ingest module event property change listener for given event types.
-     * 
+     * Adds an ingest module event property change listener for given event
+     * types.
+     *
      * @param eventTypes The event types to listen for
      * @param listener   The PropertyChangeListener to be removed.
      */
@@ -573,7 +575,7 @@ public class IngestManager implements IngestProgressSnapshotProvider {
             moduleEventPublisher.addSubscriber(event.toString(), listener);
         });
     }
-    
+
     /**
      * Removes an ingest module event property change listener.
      *
@@ -582,16 +584,16 @@ public class IngestManager implements IngestProgressSnapshotProvider {
     public void removeIngestModuleEventListener(final PropertyChangeListener listener) {
         moduleEventPublisher.removeSubscriber(INGEST_MODULE_EVENT_NAMES, listener);
     }
-    
+
     /**
      * Removes an ingest module event property change listener.
-     * 
+     *
      * @param eventTypes The event types to stop listening for
      * @param listener   The PropertyChangeListener to be removed.
      */
     public void removeIngestModuleEventListener(Set<IngestModuleEvent> eventTypes, final PropertyChangeListener listener) {
         moduleEventPublisher.removeSubscriber(INGEST_MODULE_EVENT_NAMES, listener);
-    }    
+    }
 
     /**
      * Publishes an ingest job event signifying an ingest job started.
@@ -747,49 +749,21 @@ public class IngestManager implements IngestProgressSnapshotProvider {
     }
 
     /**
-     * Updates the ingest job snapshot when a data source level ingest job task
-     * starts to be processd by a data source ingest module in the data source
-     * ingest modules pipeline of an ingest job.
+     * Updates the ingest progress snapshot for an ingest job when a data source
+     * level ingest module starts processing a data source from a data source
+     * ingest task.
      *
-     * @param task                    The data source level ingest job task that
-     *                                was started.
-     * @param ingestModuleDisplayName The dislpay name of the data source level
-     *                                ingest module that has started processing
-     *                                the task.
+     * @param task              The data source ingest task.
+     * @param currentModuleName The display name of the current data source
+     *                          level ingest module.
      */
-    void setIngestTaskProgress(DataSourceIngestTask task, String ingestModuleDisplayName) {
-        ingestThreadActivitySnapshots.put(task.getThreadId(), new IngestThreadActivitySnapshot(task.getThreadId(), task.getIngestJobPipeline().getId(), ingestModuleDisplayName, task.getDataSource()));
+    void setIngestTaskProgress(DataSourceIngestTask task, String currentModuleName) {
+        ingestThreadActivitySnapshots.put(task.getThreadId(), new IngestThreadActivitySnapshot(task.getThreadId(), task.getIngestJobPipeline().getId(), currentModuleName, task.getDataSource()));
     }
 
     /**
-     * Updates the ingest job snapshot when a file source level ingest job task
-     * starts to be processed by a file level ingest module in the file ingest
-     * modules pipeline of an ingest job.
-     *
-     * @param task                    The file level ingest job task that was
-     *                                started.
-     * @param ingestModuleDisplayName The dislpay name of the file level ingest
-     *                                module that has started processing the
-     *                                task.
-     */
-    void setIngestTaskProgress(FileIngestTask task, String ingestModuleDisplayName) {
-        IngestThreadActivitySnapshot prevSnap = ingestThreadActivitySnapshots.get(task.getThreadId());
-        IngestThreadActivitySnapshot newSnap;
-        try {
-            newSnap = new IngestThreadActivitySnapshot(task.getThreadId(), task.getIngestJobPipeline().getId(), ingestModuleDisplayName, task.getDataSource(), task.getFile());
-        } catch (TskCoreException ex) {
-            // In practice, this task would never have been enqueued or processed since the file
-            // lookup would have failed.
-            newSnap = new IngestThreadActivitySnapshot(task.getThreadId(), task.getIngestJobPipeline().getId(), ingestModuleDisplayName, task.getDataSource());
-        }
-        ingestThreadActivitySnapshots.put(task.getThreadId(), newSnap);
-        incrementModuleRunTime(prevSnap.getActivity(), newSnap.getStartTime().getTime() - prevSnap.getStartTime().getTime());
-    }
-
-    /**
-     * Updates the ingest job snapshot when a data source level ingest job task
-     * is completed by the data source ingest modules in the data source ingest
-     * modules pipeline of an ingest job.
+     * Updates the ingest progress snapshot for an ingest job when a data source
+     * level ingest task is completed.
      *
      * @param task The data source level ingest job task that was completed.
      */
@@ -798,17 +772,39 @@ public class IngestManager implements IngestProgressSnapshotProvider {
     }
 
     /**
-     * Updates the ingest job snapshot when a file level ingest job task is
-     * completed by the file ingest modules in the file ingest modules pipeline
-     * of an ingest job.
+     * Updates the ingest progress snapshot for an ingest job when a file ingest
+     * module starts or finishes processing a file from a file ingest task.
      *
-     * @param task The file level ingest job task that was completed.
+     * @param task              The file ingest task.
+     * @param currentModuleName The display name of the current file ingest
+     *                          module.
      */
-    void setIngestTaskProgressCompleted(FileIngestTask task) {
+    void setIngestTaskProgress(FileIngestTask task, String currentModuleName) {
         IngestThreadActivitySnapshot prevSnap = ingestThreadActivitySnapshots.get(task.getThreadId());
-        IngestThreadActivitySnapshot newSnap = new IngestThreadActivitySnapshot(task.getThreadId());
+        IngestThreadActivitySnapshot newSnap;
+        try {
+            newSnap = new IngestThreadActivitySnapshot(task.getThreadId(), task.getIngestJobPipeline().getId(), currentModuleName, task.getDataSource(), task.getFile());
+        } catch (TskCoreException ex) {
+            /*
+             * In practice, the file should have already been lazily looked up
+             * and cached when the task was enqueued by the ingest tasks
+             * scheduler.
+             */
+            logger.log(Level.SEVERE, "Error getting file from file ingest task", ex);
+            newSnap = new IngestThreadActivitySnapshot(task.getThreadId(), task.getIngestJobPipeline().getId(), currentModuleName, task.getDataSource());
+        }
         ingestThreadActivitySnapshots.put(task.getThreadId(), newSnap);
         incrementModuleRunTime(prevSnap.getActivity(), newSnap.getStartTime().getTime() - prevSnap.getStartTime().getTime());
+    }
+
+    /**
+     * Updates the ingest progress snapshot for an ingest job when a file ingest
+     * task is completed.
+     *
+     * @param task The file ingest task.
+     */
+    void setIngestTaskProgressCompleted(FileIngestTask task) {
+        ingestThreadActivitySnapshots.put(task.getThreadId(), new IngestThreadActivitySnapshot(task.getThreadId()));
     }
 
     /**

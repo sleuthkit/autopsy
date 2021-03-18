@@ -118,6 +118,7 @@ final class FileIngestPipeline extends IngestTaskPipeline<FileIngestTask> {
             ingestManager.setIngestTaskProgress(task, getDisplayName());
             ingestJobPipeline.setCurrentFileIngestModule(getDisplayName(), file.getName());
             ProcessResult result = module.process(file);
+            ingestManager.setIngestTaskProgress(task, getDisplayName());
             if (result == ProcessResult.ERROR) {
                 throw new IngestModuleException(String.format("%s experienced an error analyzing %s (file objId = %d)", getDisplayName(), file.getName(), file.getId())); //NON-NLS
             }
