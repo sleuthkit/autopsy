@@ -777,8 +777,9 @@ public class IngestManager implements IngestProgressSnapshotProvider {
         } catch (TskCoreException ex) {
             /*
              * In practice, the file should have already been lazily looked up
-             * and cached when the task was enqueued by the ingest tasks
-             * scheduler.
+             * and cached in the file task when the task was enqueued by the
+             * ingest tasks scheduler. Therefore there is no case database query
+             * here and there should be no TskCoreException.
              */
             logger.log(Level.SEVERE, "Error getting file from file ingest task", ex);
             newSnap = new IngestThreadActivitySnapshot(task.getThreadId(), task.getIngestJobPipeline().getId(), currentModuleName, task.getDataSource());
