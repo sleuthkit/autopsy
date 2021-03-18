@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
+import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.EventQueue;
 import java.util.List;
@@ -49,7 +50,7 @@ public final class AutoIngestDashboardTopComponent extends TopComponent {
     public final static String PREFERRED_ID = "AutoIngestDashboardTopComponent"; // NON-NLS
     private static final Logger logger = Logger.getLogger(AutoIngestDashboardTopComponent.class.getName());
     private static boolean topComponentInitialized = false;
-
+    
     @Messages({
         "AutoIngestDashboardTopComponent.exceptionMessage.failedToCreateDashboard=Failed to create Auto Ingest Dashboard.",})
     public static void openTopComponent() {
@@ -69,13 +70,14 @@ public final class AutoIngestDashboardTopComponent extends TopComponent {
                      * dashboard instance so we don't accumulate them.
                      */
                     tc.removeAll();
+                    tc.setLayout(new BorderLayout());
 
                     /*
                      * Create a new dashboard instance to ensure we're using the
                      * most recent configuration.
                      */
                     AutoIngestDashboard dashboard = AutoIngestDashboard.createDashboard();
-                    tc.add(dashboard);
+                    tc.add(dashboard, BorderLayout.CENTER);
                     dashboard.setSize(dashboard.getPreferredSize());
                     //if the user has administrator access enabled open the Node Status and cases top components as well
                     if (AutoIngestDashboard.isAdminAutoIngestDashboard()) {
