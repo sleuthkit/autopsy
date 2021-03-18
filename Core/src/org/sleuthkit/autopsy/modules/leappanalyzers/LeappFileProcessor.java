@@ -77,6 +77,11 @@ import org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper;
 import org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper.CallMediaType;
 import org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper.CommunicationDirection;
 import org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper.MessageReadStatus;
+import org.sleuthkit.datamodel.blackboardutils.GeoArtifactsHelper;
+import org.sleuthkit.datamodel.blackboardutils.attributes.GeoTrackPoints;
+import org.sleuthkit.datamodel.blackboardutils.attributes.GeoTrackPoints.TrackPoint;
+import org.sleuthkit.datamodel.blackboardutils.attributes.GeoWaypoints;
+import org.sleuthkit.datamodel.blackboardutils.attributes.GeoWaypoints.Waypoint;
 import org.sleuthkit.datamodel.blackboardutils.attributes.MessageAttachments;
 import org.sleuthkit.datamodel.blackboardutils.attributes.MessageAttachments.FileAttachment;
 import org.w3c.dom.Document;
@@ -179,6 +184,8 @@ public final class LeappFileProcessor {
             .put("facebook messenger - calls.tsv", "calllog")
             .put("call logs2.tsv", "calllog")
             .put("call logs.tsv", "calllog")
+            .put("oruxmaps tracks.tsv", "trackpoint")
+            .put("google map locations.tsv", "route")
             .build();
 
     Blackboard blkBoard;
@@ -331,6 +338,10 @@ public final class LeappFileProcessor {
             List<BlackboardArtifact> bbartifacts, Content dataSource) throws FileNotFoundException, IOException, IngestModuleException,
             TskCoreException {
 
+        String trackpointSegmentName = null;
+        GeoTrackPoints pointList = new GeoTrackPoints();
+        AbstractFile geoAbstractFile = null;
+        
         if (LeappFile == null || !LeappFile.exists() || fileName == null) {
             logger.log(Level.WARNING, String.format("Leap file: %s is null or does not exist", LeappFile == null ? LeappFile.toString() : "<null>"));
             return;
@@ -371,6 +382,12 @@ public final class LeappFileProcessor {
                             case "calllog":
                                 createCalllogRelationship(bbattributes, dataSource, fileName);
                                 break;
+                            case "route":
+                                createRoute(bbattributes, dataSource, fileName);
+                                break;
+                            case "trackpoint":
+                                geoAbstractFile = createTrackpoint(bbattributes, dataSource, fileName, trackpointSegmentName, pointList);
+                                break;
                             default: // There is no relationship defined so just process the artifact normally
                                 BlackboardArtifact bbartifact = createArtifactWithAttributes(artifactType.getTypeID(), dataSource, bbattributes);
                                 if (bbartifact != null) {
@@ -384,8 +401,151 @@ public final class LeappFileProcessor {
                 }
             }
         }
+        
+        try {
+            if (ACCOUNT_RELATIONSHIPS.getOrDefault(fileName.toLowerCase(), "norelationship").toLowerCase() == "trackpoint") {
+               (new GeoArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(), moduleName, "", geoAbstractFile)).addTrack(trackpointSegmentName, pointList, new ArrayList<>());
+                
+            }
+        } catch (NoCurrentCaseException | TskCoreException | BlackboardException ex) {
+            throw new IngestModuleException(Bundle.LeappFileProcessor_cannot_create_message_relationship() + ex.getLocalizedMessage(), ex); //NON-NLS
+        }
+
     }
 
+
+    private void createRoute (Collection<BlackboardAttribute> bbattributes, Content dataSource, String fileName) throws IngestModuleException {
+
+        Double startLatitude = Double.valueOf(0);
+        Double startLongitude = Double.valueOf(0);
+        Double endLatitude = Double.valueOf(0);
+        Double endLongitude = Double.valueOf(0);
+        Double zeroValue = Double.valueOf(0);
+        String destinationName = "";
+        String locationName = "";
+        Long dateTime = Long.valueOf(0);
+        Collection<BlackboardAttribute> otherAttributes = new ArrayList<>();
+        String sourceFile = null;
+        AbstractFile absFile = null;
+        String comment = "";
+        
+        try {
+            for (BlackboardAttribute bba : bbattributes) {
+                switch (bba.getAttributeType().getTypeName()) {
+                    case "TSK_GEO_LATITUDE_START":
+                        startLatitude = bba.getValueDouble();
+                        break;
+                    case "TSK_GEO_LONGITUDE_START":
+                        startLongitude = bba.getValueDouble();
+                        break;
+                    case "TSK_GEO_LATITUDE_END":
+                        startLatitude = bba.getValueDouble();
+                        break;
+                    case "TSK_GEO_LONGITUDE_END":
+                        startLongitude = bba.getValueDouble();
+                        break;
+                    case "TSK_DATETIME":
+                        dateTime = bba.getValueLong();
+                        break;
+                    case "TSK_NAME":
+                        destinationName = bba.getValueString();
+                        break;
+                    case "TSK_LOCATION":
+                        locationName = bba.getValueString();
+                        break;
+                    case "TSK_TEXT_FILE":
+                        sourceFile = bba.getValueString();
+                        break;
+                    case "TSK_COMMENT":
+                        comment = bba.getValueString();
+                        break;
+                    default:
+                        otherAttributes.add(bba);
+                        break;
+                }
+            }
+            absFile = findAbstractFile(dataSource, sourceFile);
+            if (absFile == null) {
+                absFile = (AbstractFile) dataSource;
+            }
+            GeoWaypoints waypointList = new GeoWaypoints();
+            waypointList.addPoint(new Waypoint(startLatitude, startLongitude, zeroValue, ""));
+            waypointList.addPoint(new Waypoint(endLatitude, endLongitude, zeroValue, locationName));
+           (new GeoArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(), moduleName, comment, absFile)).addRoute(destinationName, dateTime, waypointList, new ArrayList<>());
+                    
+        } catch (NoCurrentCaseException | TskCoreException | BlackboardException ex) {
+            throw new IngestModuleException(Bundle.LeappFileProcessor_cannot_create_message_relationship() + ex.getLocalizedMessage(), ex); //NON-NLS
+        }
+         
+        
+    }
+        
+    private AbstractFile createTrackpoint(Collection<BlackboardAttribute> bbattributes, Content dataSource, String fileName, String trackpointSegmentName, GeoTrackPoints pointList) throws IngestModuleException {
+
+        Double latitude = Double.valueOf(0);
+        Double longitude = Double.valueOf(0);
+        Double altitude = Double.valueOf(0);
+        Double zeroValue = Double.valueOf(0);
+        String segmentName = null;
+        Long dateTime = Long.valueOf(0);
+        Collection<BlackboardAttribute> otherAttributes = new ArrayList<>();
+        String sourceFile = null;
+        String comment = null;
+        AbstractFile absFile = null;
+        
+        try {
+            for (BlackboardAttribute bba : bbattributes) {
+                switch (bba.getAttributeType().getTypeName()) {
+                    case "TSK_GEO_LATITUDE":
+                        latitude = bba.getValueDouble();
+                        break;
+                    case "TSK_GEO_LONGITUDE":
+                        longitude = bba.getValueDouble();
+                        break;
+                    case "TSK_GEO_ALTITUDE":
+                        altitude = bba.getValueDouble();
+                        break;
+                    case "TSK_DATETIME":
+                        dateTime = bba.getValueLong();
+                        break;
+                    case "TSK_NAME":
+                        segmentName = bba.getValueString();
+                        break;
+                    case "TSK_TEXT_FILE":
+                        sourceFile = bba.getValueString();
+                        break;
+                    case "TSK_COMMENT":
+                        comment = bba.getValueString();
+                        otherAttributes.add(bba);
+                        break;
+                    default:
+                        otherAttributes.add(bba);
+                        break;
+                }
+            }
+            absFile = findAbstractFile(dataSource, sourceFile);
+            if (absFile == null) {
+                absFile = (AbstractFile) dataSource;
+            }
+            if ((trackpointSegmentName == null) || (trackpointSegmentName == segmentName)) {
+                    trackpointSegmentName = segmentName;
+                    pointList.addPoint(new TrackPoint(latitude, longitude, altitude, segmentName, zeroValue, zeroValue, zeroValue, dateTime));
+            } else {
+                    (new GeoArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(), moduleName, comment, absFile)).addTrack(segmentName, pointList, new ArrayList<>());
+                    trackpointSegmentName = segmentName;
+                    pointList = new GeoTrackPoints();
+                    pointList.addPoint(new TrackPoint(latitude, longitude, altitude, segmentName, zeroValue, zeroValue, zeroValue, dateTime));
+                    
+            }
+        } catch (NoCurrentCaseException | TskCoreException | BlackboardException ex) {
+            throw new IngestModuleException(Bundle.LeappFileProcessor_cannot_create_message_relationship() + ex.getLocalizedMessage(), ex); //NON-NLS
+        }
+        
+        return absFile; 
+        
+    }
+
+    
     @NbBundle.Messages({
         "LeappFileProcessor.cannot.create.message.relationship=Cannot create TSK_MESSAGE Relationship.",
     })
@@ -488,10 +648,6 @@ public final class LeappFileProcessor {
             }
         } catch (NoCurrentCaseException | TskCoreException | BlackboardException ex) {
             throw new IngestModuleException(Bundle.LeappFileProcessor_cannot_create_message_relationship() + ex.getLocalizedMessage(), ex); //NON-NLS
-        } catch (NullPointerException ex) {
-            logger.log(Level.WARNING, String.format(
-                    "Row at line number message %s has from id is %s and timestamp is .", messageText, senderId));
-            
         }
 
     }
@@ -560,11 +716,7 @@ public final class LeappFileProcessor {
             }
         } catch (NoCurrentCaseException | TskCoreException | BlackboardException ex) {
             throw new IngestModuleException(Bundle.LeappFileProcessor_cannot_create_message_relationship() + ex.getLocalizedMessage(), ex); //NON-NLS
-        } catch (NullPointerException ex) {
-            logger.log(Level.WARNING, String.format(
-                    "Row at line number message %s has from id is %s and timestamp is .", alternateId, contactName));
-        }    
-
+        }
     }
 
     private void createCalllogRelationship(Collection<BlackboardAttribute> bbattributes, Content dataSource, String fileName) throws IngestModuleException {

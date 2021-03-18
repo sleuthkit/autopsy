@@ -713,4 +713,31 @@
         </ArtifactName>
     </FileName>
 
+    <FileName filename="Oruxmaps Tracks.tsv" description="Oruxmaps Tracks">
+        <ArtifactName artifactname="TSK_GPS_TRACK" comment="Oruxmaps Tracks">
+            <AttributeName attributename="null" columnName="track id" required="no"/>
+            <AttributeName attributename="null" columnName="track name" required="no"/>
+            <AttributeName attributename="null" columnName="track description" required="no"/>
+            <AttributeName attributename="TSK_NAME" columnName="segment name" required="yes"/>
+            <AttributeName attributename="TSK_GEO_LATITUDE" columnName="latitude" required="yes"/>
+            <AttributeName attributename="TSK_GEO_LONGITUDE" columnName="longitude" required="yes"/>
+            <AttributeName attributename="TSK_GEO_ALTITUDE" columnName="altimeter" required="yes" />
+            <AttributeName attributename="TSK_DATETIME" columnName="datetime" required="yes" />
+            <AttributeName attributename="TSK_TEXT_FILE" columnName="source file" required="yes"/>
+        </ArtifactName>
+    </FileName>
+
+    <FileName filename="Google Map Locations.tsv" description="Google Map Locations">
+        <ArtifactName artifactname="TSK_GPS_ROUTE" comment="Google Map Locations">
+            <AttributeName attributename="TSK_DATETIME" columnName="timestamp" required="yes" />
+            <AttributeName attributename="TSK_GEO_LATITUDE_END" columnName="destination_latitude" required="yes"/>
+            <AttributeName attributename="TSK_GEO_LONGITUDE_END" columnName="destination_longitude" required="yes"/>
+            <AttributeName attributename="TSK_NAME" columnName="destination_title" required="yes"/>
+            <AttributeName attributename="TSK_LOCATION" columnName="destination_address" required="yes"/>
+            <AttributeName attributename="TSK_GEO_LATITUDE_START" columnName="source_latitude" required="yes"/>
+            <AttributeName attributename="TSK_GEO_LONGITUDE_START" columnName="source_longitude" required="yes"/>
+            <AttributeName attributename="TSK_TEXT_FILE" columnName="source file" required="yes"/>
+        </ArtifactName>
+    </FileName>
+
 </aLeap_Files_To_Process>
