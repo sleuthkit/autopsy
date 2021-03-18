@@ -762,16 +762,6 @@ public class IngestManager implements IngestProgressSnapshotProvider {
     }
 
     /**
-     * Updates the ingest progress snapshot for an ingest job when a data source
-     * level ingest task is completed.
-     *
-     * @param task The data source level ingest job task that was completed.
-     */
-    void setIngestTaskProgressCompleted(DataSourceIngestTask task) {
-        ingestThreadActivitySnapshots.put(task.getThreadId(), new IngestThreadActivitySnapshot(task.getThreadId()));
-    }
-
-    /**
      * Updates the ingest progress snapshot for an ingest job when a file ingest
      * module starts or finishes processing a file from a file ingest task.
      *
@@ -795,6 +785,16 @@ public class IngestManager implements IngestProgressSnapshotProvider {
         }
         ingestThreadActivitySnapshots.put(task.getThreadId(), newSnap);
         incrementModuleRunTime(prevSnap.getActivity(), newSnap.getStartTime().getTime() - prevSnap.getStartTime().getTime());
+    }
+
+    /**
+     * Updates the ingest progress snapshot for an ingest job when a data source
+     * level ingest task is completed.
+     *
+     * @param task The data source level ingest job task that was completed.
+     */
+    void setIngestTaskProgressCompleted(DataSourceIngestTask task) {
+        ingestThreadActivitySnapshots.put(task.getThreadId(), new IngestThreadActivitySnapshot(task.getThreadId()));
     }
 
     /**
