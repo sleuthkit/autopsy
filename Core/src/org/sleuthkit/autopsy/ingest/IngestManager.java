@@ -782,8 +782,8 @@ public class IngestManager implements IngestProgressSnapshotProvider {
         ingestThreadActivitySnapshots.put(task.getThreadId(), newSnap);
 
         /*
-         * Update the total run time for the PREVIOUS ingest module, which has
-         * now finished its processing for the task.
+         * Update the total run time for the PREVIOUS ingest module in teh
+         * pipeline, which has now finished its processing for the task.
          */
         incrementModuleRunTime(prevSnap.getActivity(), newSnap.getStartTime().getTime() - prevSnap.getStartTime().getTime());
     }
@@ -808,30 +808,27 @@ public class IngestManager implements IngestProgressSnapshotProvider {
         ingestThreadActivitySnapshots.put(task.getThreadId(), newSnap);
 
         /*
-         * Update the total run time for the PREVIOUS ingest module, which has
-         * now finished its processing for the task.
+         * Update the total run time for the PREVIOUS ingest module in teh
+         * pipeline, which has now finished its processing for the task.
          */
         incrementModuleRunTime(prevSnap.getActivity(), newSnap.getStartTime().getTime() - prevSnap.getStartTime().getTime());
     }
 
     /**
-     * Updates the ingest progress snapshot when a data source level ingest task
-     * is completed.
+     * Updates the ingest progress snapshot when an ingest task is completed.
      *
      * @param task The ingest task.
      */
-    void setIngestTaskProgressCompleted(DataSourceIngestTask task) {
-        ingestThreadActivitySnapshots.put(task.getThreadId(), new IngestThreadActivitySnapshot(task.getThreadId()));
-    }
+    void setIngestTaskProgressCompleted(IngestTask task) {
+        IngestThreadActivitySnapshot prevSnap = ingestThreadActivitySnapshots.get(task.getThreadId());
+        IngestThreadActivitySnapshot newSnap = new IngestThreadActivitySnapshot(task.getThreadId());
+        ingestThreadActivitySnapshots.put(task.getThreadId(), newSnap);
 
-    /**
-     * Updates the ingest progress snapshot for an ingest job when a file ingest
-     * task is completed.
-     *
-     * @param task The ingest task.
-     */
-    void setIngestTaskProgressCompleted(FileIngestTask task) {
-        ingestThreadActivitySnapshots.put(task.getThreadId(), new IngestThreadActivitySnapshot(task.getThreadId()));
+        /*
+         * Update the total run time for the LAST ingest module in the pipeline,
+         * which has now finished its processing for the task.
+         */
+        incrementModuleRunTime(prevSnap.getActivity(), newSnap.getStartTime().getTime() - prevSnap.getStartTime().getTime());
     }
 
     /**
