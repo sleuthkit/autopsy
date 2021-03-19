@@ -92,7 +92,7 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
      * @param column          The column to add the DiscoveryFilterPanel to.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    final void addFilter(AbstractDiscoveryFilterPanel filterPanel, boolean isSelected, int[] indicesSelected, int column) {
+    final void addFilter(AbstractDiscoveryFilterPanel filterPanel, boolean isSelected, List<?> selectedItems, int column) {
         if (!isInitialized) {
             constraints.gridy = 0;
             constraints.anchor = GridBagConstraints.FIRST_LINE_START;
@@ -105,7 +105,7 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
             constraints.gridy = secondColumnY;
         }
         constraints.gridx = 0;
-        filterPanel.configurePanel(isSelected, indicesSelected);
+        filterPanel.configurePanel(isSelected, selectedItems);
         filterPanel.addListeners(this, this);
         filters.add(filterPanel);
         constraints.fill = GridBagConstraints.VERTICAL;

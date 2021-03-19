@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.discovery.ui;
 
+import java.util.ArrayList;
 import org.sleuthkit.autopsy.discovery.search.AbstractFilter;
 import java.util.List;
 import java.util.logging.Level;
@@ -28,7 +29,6 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.discovery.search.SearchFiltering;
-import org.sleuthkit.autopsy.guiutils.CheckBoxListPanel;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -40,7 +40,6 @@ final class ObjectDetectedFilterPanel extends AbstractDiscoveryFilterPanel {
 
     private static final long serialVersionUID = 1L;
     private final static Logger logger = Logger.getLogger(ObjectDetectedFilterPanel.class.getName());
-    private static final CheckBoxListPanel<String> objectsList = new CheckBoxListPanel<>();
 
     /**
      * Creates new form ObjectDetectedFilter.
@@ -80,6 +79,7 @@ final class ObjectDetectedFilterPanel extends AbstractDiscoveryFilterPanel {
     private void initComponents() {
 
         objectsCheckbox = new javax.swing.JCheckBox();
+        objectsList = new org.sleuthkit.autopsy.guiutils.CheckBoxListPanel<>();
 
         org.openide.awt.Mnemonics.setLocalizedText(objectsCheckbox, org.openide.util.NbBundle.getMessage(ObjectDetectedFilterPanel.class, "ObjectDetectedFilterPanel.text")); // NOI18N
         objectsCheckbox.setMaximumSize(new java.awt.Dimension(150, 25));
@@ -96,17 +96,8 @@ final class ObjectDetectedFilterPanel extends AbstractDiscoveryFilterPanel {
 
         setMinimumSize(new java.awt.Dimension(250, 30));
         setPreferredSize(new java.awt.Dimension(250, 30));
-
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 250, Short.MAX_VALUE)
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 30, Short.MAX_VALUE)
-        );
+        setLayout(new java.awt.BorderLayout());
+        add(objectsList, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
     private void objectsCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_objectsCheckboxActionPerformed
@@ -116,19 +107,28 @@ final class ObjectDetectedFilterPanel extends AbstractDiscoveryFilterPanel {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox objectsCheckbox;
+    private org.sleuthkit.autopsy.guiutils.CheckBoxListPanel<String> objectsList;
     // End of variables declaration//GEN-END:variables
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
-    void configurePanel(boolean selected, int[] indicesSelected) {
+    void configurePanel(boolean selected, List<?> selectedItems) {
         boolean hasObjects = isFilterSupported();
         objectsCheckbox.setEnabled(hasObjects);
         objectsCheckbox.setSelected(selected && hasObjects);
         if (objectsCheckbox.isEnabled() && objectsCheckbox.isSelected()) {
             objectsList.setEnabled(true);
-//            if (indicesSelected != null) {
-//                objectsList.setSelectedIndices(indicesSelected);
-//            }
+            if (selectedItems != null) {
+                List<String> objectList = new ArrayList<>();
+                for (Object item : selectedItems) {
+                    if (item instanceof String) {
+                        objectList.add((String) item);
+                    }
+                }
+                if (!objectList.isEmpty()) {
+                    objectsList.setSelectedElements(objectList);
+                }
+            }
         } else {
             objectsList.setEnabled(false);
         }

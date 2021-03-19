@@ -21,11 +21,13 @@ package org.sleuthkit.autopsy.discovery.ui;
 import org.sleuthkit.autopsy.discovery.search.AbstractFilter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 import javax.swing.DefaultListModel;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.event.ListSelectionListener;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.discovery.search.SearchFiltering;
 import org.sleuthkit.autopsy.discovery.search.SearchFiltering.ParentSearchTerm;
@@ -37,6 +39,7 @@ final class ParentFolderFilterPanel extends AbstractDiscoveryFilterPanel {
 
     private static final long serialVersionUID = 1L;
     private DefaultListModel<SearchFiltering.ParentSearchTerm> parentListModel;
+    private final static Logger logger = Logger.getLogger(ParentFolderFilterPanel.class.getName());
     private static final String[] DEFAULT_IGNORED_PATHS = {"/Windows/", "/Program Files/"}; //NON-NLS
 
     /**
@@ -244,7 +247,7 @@ final class ParentFolderFilterPanel extends AbstractDiscoveryFilterPanel {
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
-    void configurePanel(boolean selected, int[] indicesSelected) {
+    void configurePanel(boolean selected, List<?> selectedItems) {
         parentCheckbox.setSelected(selected);
         if (parentCheckbox.isEnabled() && parentCheckbox.isSelected()) {
             parentScrollPane.setEnabled(true);
@@ -257,9 +260,6 @@ final class ParentFolderFilterPanel extends AbstractDiscoveryFilterPanel {
             deleteButton.setEnabled(!parentListModel.isEmpty());
             parentList.setEnabled(true);
             parentTextField.setEnabled(true);
-            if (indicesSelected != null) {
-                parentList.setSelectedIndices(indicesSelected);
-            }
         } else {
             parentScrollPane.setEnabled(false);
             parentLabel.setEnabled(false);
@@ -318,6 +318,17 @@ final class ParentFolderFilterPanel extends AbstractDiscoveryFilterPanel {
             return new SearchFiltering.ParentFilter(getParentPaths());
         }
         return null;
+    }
+
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    @Override
+    void removeListeners() {
+        super.removeListeners();
+        if (parentList != null) {
+            for (ListSelectionListener listener : getListSelectionListeners()) {
+                parentList.removeListSelectionListener(listener);
+            }
+        }
     }
 
     @Override

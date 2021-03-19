@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.discovery.ui;
 
 import org.sleuthkit.autopsy.discovery.search.AbstractFilter;
+import java.util.List;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.event.ListSelectionListener;
@@ -73,7 +74,7 @@ final class UserCreatedFilterPanel extends AbstractDiscoveryFilterPanel {
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
-    void configurePanel(boolean selected, int[] indicesSelected) {
+    void configurePanel(boolean selected, List<?> selectedItems) {
         userCreatedCheckbox.setSelected(selected);
     }
 

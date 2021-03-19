@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.discovery.ui;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import org.sleuthkit.autopsy.discovery.search.AbstractFilter;
 import java.util.List;
@@ -29,8 +30,8 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
+import org.sleuthkit.autopsy.discovery.search.SearchData;
 import org.sleuthkit.autopsy.discovery.search.SearchFiltering;
-import org.sleuthkit.autopsy.guiutils.CheckBoxListPanel;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -41,7 +42,6 @@ final class DataSourceFilterPanel extends AbstractDiscoveryFilterPanel {
 
     private static final long serialVersionUID = 1L;
     private final static Logger logger = Logger.getLogger(DataSourceFilterPanel.class.getName());
-    private final CheckBoxListPanel<DataSource> dataSourceCheckBoxList = new CheckBoxListPanel<>();
 
     /**
      * Creates new form DataSourceFilterPanel.
@@ -50,7 +50,7 @@ final class DataSourceFilterPanel extends AbstractDiscoveryFilterPanel {
     DataSourceFilterPanel() {
         initComponents();
         setUpDataSourceFilter();
-        add(dataSourceCheckBoxList);
+        this.add(dataSourceCheckBoxList);
     }
 
     /**
@@ -62,8 +62,7 @@ final class DataSourceFilterPanel extends AbstractDiscoveryFilterPanel {
     private void initComponents() {
 
         dataSourceCheckbox = new javax.swing.JCheckBox();
-        selectAllButton = new javax.swing.JButton();
-        deselectAllButton = new javax.swing.JButton();
+        dataSourceCheckBoxList = new org.sleuthkit.autopsy.guiutils.CheckBoxListPanel<>();
 
         org.openide.awt.Mnemonics.setLocalizedText(dataSourceCheckbox, org.openide.util.NbBundle.getMessage(DataSourceFilterPanel.class, "DataSourceFilterPanel.dataSourceCheckbox.text")); // NOI18N
         dataSourceCheckbox.setMaximumSize(new java.awt.Dimension(150, 25));
@@ -78,78 +77,37 @@ final class DataSourceFilterPanel extends AbstractDiscoveryFilterPanel {
         setMinimumSize(new java.awt.Dimension(250, 30));
         setPreferredSize(new java.awt.Dimension(250, 50));
         setRequestFocusEnabled(false);
-
-        org.openide.awt.Mnemonics.setLocalizedText(selectAllButton, org.openide.util.NbBundle.getMessage(DataSourceFilterPanel.class, "DataSourceFilterPanel.selectAllButton.text")); // NOI18N
-        selectAllButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                selectAllButtonActionPerformed(evt);
-            }
-        });
-
-        org.openide.awt.Mnemonics.setLocalizedText(deselectAllButton, org.openide.util.NbBundle.getMessage(DataSourceFilterPanel.class, "DataSourceFilterPanel.deselectAllButton.text")); // NOI18N
-        deselectAllButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                deselectAllButtonActionPerformed(evt);
-            }
-        });
-
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(selectAllButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(deselectAllButton)
-                .addGap(0, 45, Short.MAX_VALUE))
-        );
-
-        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {deselectAllButton, selectAllButton});
-
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap(19, Short.MAX_VALUE)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(selectAllButton)
-                    .addComponent(deselectAllButton))
-                .addGap(6, 6, 6))
-        );
-
-        layout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {deselectAllButton, selectAllButton});
-
+        setLayout(new java.awt.BorderLayout());
+        add(dataSourceCheckBoxList, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
     private void dataSourceCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_dataSourceCheckboxActionPerformed
         dataSourceCheckBoxList.setEnabled(dataSourceCheckbox.isSelected());
-        selectAllButton.setEnabled(dataSourceCheckbox.isSelected());
-        deselectAllButton.setEnabled(dataSourceCheckbox.isSelected());
     }//GEN-LAST:event_dataSourceCheckboxActionPerformed
-
-    private void selectAllButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectAllButtonActionPerformed
-        dataSourceCheckBoxList.setSetAllSelected(true);
-    }//GEN-LAST:event_selectAllButtonActionPerformed
-
-    private void deselectAllButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deselectAllButtonActionPerformed
-        dataSourceCheckBoxList.setSetAllSelected(false);
-    }//GEN-LAST:event_deselectAllButtonActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private org.sleuthkit.autopsy.guiutils.CheckBoxListPanel<DataSource> dataSourceCheckBoxList;
     private javax.swing.JCheckBox dataSourceCheckbox;
-    private javax.swing.JButton deselectAllButton;
-    private javax.swing.JButton selectAllButton;
     // End of variables declaration//GEN-END:variables
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
-    void configurePanel(boolean selected, int[] indicesSelected) {
+    void configurePanel(boolean selected, List<?> selectedItems) {
         dataSourceCheckbox.setSelected(selected);
         if (dataSourceCheckbox.isEnabled() && dataSourceCheckbox.isSelected()) {
             dataSourceCheckBoxList.setEnabled(true);
-//            if (indicesSelected != null) {
-//                dataSourceCheckBoxList.setSelectedIndices(indicesSelected);
-//            }
+            if (selectedItems != null) {
+                List<DataSource> dsList = new ArrayList<>();
+                for (Object item : selectedItems) {
+                    if (item instanceof DataSource) {
+                        dsList.add((DataSource) item);
+                    }
+                }
+                if (!dsList.isEmpty()) {
+                    dataSourceCheckBoxList.setSelectedElements(dsList);
+                }
+            }
         } else {
             dataSourceCheckBoxList.setEnabled(false);
         }

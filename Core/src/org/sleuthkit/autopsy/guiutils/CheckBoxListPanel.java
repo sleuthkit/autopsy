@@ -137,7 +137,6 @@ public final class CheckBoxListPanel<T> extends javax.swing.JPanel {
             element.setChecked(selected);
             checkboxList.repaint();
             checkboxList.revalidate();
-
         }
     }
 

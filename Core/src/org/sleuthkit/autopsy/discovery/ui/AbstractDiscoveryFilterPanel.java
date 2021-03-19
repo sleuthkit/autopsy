@@ -20,13 +20,11 @@ package org.sleuthkit.autopsy.discovery.ui;
 
 import org.sleuthkit.autopsy.discovery.search.AbstractFilter;
 import java.awt.event.ActionListener;
+import java.util.List;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
-import javax.swing.JList;
 import javax.swing.event.ListSelectionListener;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.guiutils.CheckBoxListPanel;
-
 /**
  * Abstract class extending JPanel for filter controls.
  */
@@ -44,7 +42,7 @@ abstract class AbstractDiscoveryFilterPanel extends javax.swing.JPanel {
      *                        unchanged or that there are no items to select.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    abstract void configurePanel(boolean selected, int[] indicesSelected);
+    abstract void configurePanel(boolean selected, List<?> selectedItems);
 
     /**
      * Get the checkbox which enables and disables this filter.
