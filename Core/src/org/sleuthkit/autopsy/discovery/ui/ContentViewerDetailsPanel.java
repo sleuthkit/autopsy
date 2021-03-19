@@ -18,11 +18,16 @@
  */
 package org.sleuthkit.autopsy.discovery.ui;
 
+import java.util.logging.Level;
 import org.openide.nodes.Node;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.corecomponents.DataContentPanel;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Details panel for displaying the collection of content viewers.
@@ -31,6 +36,7 @@ final class ContentViewerDetailsPanel extends AbstractArtifactDetailsPanel {
 
     private static final long serialVersionUID = 1L;
     private final DataContentPanel contentViewer = DataContentPanel.createInstance();
+    private final static Logger logger = Logger.getLogger(ContentViewerDetailsPanel.class.getName());
 
     /**
      * Creates new form ContentViewerDetailsPanel
@@ -61,7 +67,18 @@ final class ContentViewerDetailsPanel extends AbstractArtifactDetailsPanel {
         if (artifact != null) {
             boolean useAssociatedFile = artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID()
                     || artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID();
-            node = new BlackboardArtifactNode(artifact, useAssociatedFile);
+            BlackboardAttribute pathIdAttr = null;
+            if (useAssociatedFile) {
+
+                try {
+                    artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID));
+                } catch (TskCoreException ex) {
+                    logger.log(Level.WARNING, "Error getting Path ID Attribute for artifact with ID: " + artifact.getArtifactID(), ex);
+                }
+            }
+            if (!useAssociatedFile || pathIdAttr != null) {
+                node = new BlackboardArtifactNode(artifact, useAssociatedFile);
+            }
         }
         contentViewer.setNode(node);
     }
