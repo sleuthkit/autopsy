@@ -25,6 +25,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.event.ListSelectionListener;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
+
 /**
  * Abstract class extending JPanel for filter controls.
  */
@@ -62,9 +63,19 @@ abstract class AbstractDiscoveryFilterPanel extends javax.swing.JPanel {
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     abstract ListSelectionListener[] getListSelectionListeners();
 
+    /**
+     * Add a list selection listener to the filter list in this panel
+     *
+     * @param listener The list selection listener to add.
+     */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     abstract void addListSelectionListener(ListSelectionListener listener);
 
+    /**
+     * Remove a list selection listener to the filter list in this panel
+     *
+     * @param listener The list selection listener to remove.
+     */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     abstract void removeListSelectionListener(ListSelectionListener listener);
 
@@ -123,7 +134,7 @@ abstract class AbstractDiscoveryFilterPanel extends javax.swing.JPanel {
             }
         }
         /*
-         * Should be overridden if a list is present and have something allong
+         * Should be overridden if a list is present and have something along
          * the lines of the following added after a call to the super.
          *
          * if (list != null) { for (ListSelectionListener listener :
@@ -137,10 +148,6 @@ abstract class AbstractDiscoveryFilterPanel extends javax.swing.JPanel {
      */
     abstract boolean isFilterSupported();
 
-    /**
-     * 
-     */
-    
     /**
      * Return whether or not this filter has a panel.
      *
