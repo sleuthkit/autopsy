@@ -95,7 +95,6 @@ public class DomainSearch {
         final Map<GroupKey, List<Result>> searchResults = searchCache.get(
                 userName, filters, groupAttributeType, groupSortingType,
                 domainSortingMethod, caseDb, centralRepoDb);
-
         // Transform the cached results into a map of group key to group size.
         final LinkedHashMap<GroupKey, Integer> groupSizes = new LinkedHashMap<>();
         for (GroupKey groupKey : searchResults.keySet()) {
@@ -139,7 +138,6 @@ public class DomainSearch {
                 userName, filters, groupAttributeType, groupSortingType,
                 domainSortingMethod, caseDb, centralRepoDb);
         final List<Result> domainsInGroup = searchResults.get(groupKey);
-
         final List<Result> page = new ArrayList<>();
         for (int i = startingEntry; (i < startingEntry + numberOfEntries)
                 && (i < domainsInGroup.size()); i++) {

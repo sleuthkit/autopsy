@@ -68,7 +68,6 @@ public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
          *
          * @param tabTitle The title of the tab.
          * @param panel The component to be displayed in the tab.
-         * @param notifyParentClose Notifies parent to trigger a close.
          */
         DataSourceTab(String tabTitle, BaseDataSourceSummaryPanel panel) {
             this(tabTitle, panel, panel::setDataSource, panel::getExports, panel::close);
@@ -138,10 +137,10 @@ public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
 
     private Runnable notifyParentClose = null;
     private final IngestJobInfoPanel ingestHistoryPanel = new IngestJobInfoPanel();
-    
+
     // create an export panel whose button triggers the export to XLSX action
     private final ExportPanel exportPanel = new ExportPanel();
-    
+
     private final List<DataSourceTab> tabs = Arrays.asList(
             new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_typesTab_title(), new TypesPanel()),
             new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_userActivityTab_title(), new UserActivityPanel()),
@@ -155,7 +154,7 @@ public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
                     Bundle.DataSourceSummaryTabbedPane_ingestHistoryTab_title(),
                     ingestHistoryPanel,
                     ingestHistoryPanel::setDataSource,
-                    null,
+                    IngestJobExcelExport::getExports,
                     null),
             new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_detailsTab_title(), new ContainerPanel()),
             new DataSourceTab(
@@ -165,10 +164,10 @@ public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
                     null,
                     null)
     );
-    
+
     // the action that does the export
     private final ExcelExportAction exportAction = new ExcelExportAction(tabs);
-  
+
     private DataSource dataSource = null;
     private CardLayout cardLayout;
 
@@ -222,7 +221,7 @@ public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
 
         // set this to no datasource initially
         cardLayout.show(this, NO_DATASOURCE_PANE);
-        
+
         // set action for when user requests xlsx export
         exportPanel.setXlsxExportAction(() -> exportAction.accept(getDataSource()));
     }
@@ -269,7 +268,6 @@ public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
 
         Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), caseEventsListener);
     }
-
 
     /**
      * This method is called from within the constructor to initialize the form.

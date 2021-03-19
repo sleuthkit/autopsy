@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.datasourcesummary.uiutils;
 
 import javax.swing.JLabel;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
 
 /**
  * Basic interface for a cell model.
@@ -29,20 +30,23 @@ public interface CellModel {
      * Describes the horizontal alignment.
      */
     public enum HorizontalAlign {
-        LEFT(JLabel.LEFT),
-        CENTER(JLabel.CENTER),
-        RIGHT(JLabel.RIGHT);
+        LEFT(JLabel.LEFT, HorizontalAlignment.LEFT),
+        CENTER(JLabel.CENTER, HorizontalAlignment.CENTER),
+        RIGHT(JLabel.RIGHT, HorizontalAlignment.RIGHT);
 
         private final int jlabelAlignment;
+        private final HorizontalAlignment poiAlignment;
 
         /**
          * Constructor for a HorizontalAlign enum.
          *
          * @param jlabelAlignment The corresponding JLabel horizontal alignment
          * number.
+         * @param poiAlignment Horizontal alignment for Apache POI.
          */
-        HorizontalAlign(int jlabelAlignment) {
+        HorizontalAlign(int jlabelAlignment, HorizontalAlignment poiAlignment) {
             this.jlabelAlignment = jlabelAlignment;
+            this.poiAlignment = poiAlignment;
         }
 
         /**
@@ -51,6 +55,13 @@ public interface CellModel {
          */
         int getJLabelAlignment() {
             return this.jlabelAlignment;
+        }
+
+        /**
+         * @return Horizontal alignment for Apache POI.
+         */
+        HorizontalAlignment getPoiAlignment() {
+            return poiAlignment;
         }
     }
 

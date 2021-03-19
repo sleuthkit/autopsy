@@ -53,9 +53,8 @@ Follow these steps to configure Solr:
 Required Solr Configuration Parameters:
 <ul>
 <li><b>JAVA_HOME</b> – path to 64-bit JRE installation. For example \c "JAVA_HOME=C:\Program Files\Java\jre1.8.0_151" or \c "JAVA_HOME=C:\Program Files\ojdkbuild\java-1.8.0-openjdk-1.8.0.222-1"
-<li><b>DEFAULT_CONFDIR</b> – path to Autopsy configuration directory. If the Solr archive was extracted into \c "C:\solr-8.6.3" directory, then this path will be \c "C:\ solr-8.6.3\server\solr\configsets\AutopsyConfig\conf".
-<li><b>Dbootstrap_confdir</b> – same path as <b>DEFAULT_CONFDIR</b>
-<li><b>SOLR_JAVA_MEM</b> - Solr JVM heap size should be somewhere between one third and one half of the total RAM available on the machine. A rule of thumb would be use \c "set SOLR_JAVA_MEM=-Xms2G -Xmx14G" for a machine with 32GB of RAM or more, and \c "set SOLR_JAVA_MEM=-Xms2G -Xmx8G" for a machine with 16GB of RAM.
+<li><b>DEFAULT_CONFDIR</b> – path to Autopsy configuration directory. If the Solr archive was extracted into \c "C:\solr-8.6.3" directory, then this path will be \c "C:\ solr-8.6.3\server\solr\configsets\AutopsyConfig\conf". Do not include quotes around the path.
+<li><b>SOLR_JAVA_MEM</b> - Solr JVM heap size should be as large as the Solr machine’s resources allow, at least half of the total RAM available on the machine. A rule of thumb would be use "set SOLR_JAVA_MEM=-Xms2G -Xmx40G" for a machine with 64GB of RAM, "set SOLR_JAVA_MEM=-Xms2G -Xmx20G" for a machine with 32GB of RAM, and "set SOLR_JAVA_MEM=-Xms2G -Xmx8G" for a machine with 16GB of RAM. Please see the \ref install_solr_heap_usage "troubleshooting section" for more info regarding Solr heap usage and troubleshooting information.
 <li><b>SOLR_DATA_HOME</b> – location where Solr indexes will be stored. If this is not configured, the indexes will be stored in the \c "C:\solr-8.6.3\server\solr" directory. NOTE: for Autopsy cases consisting of large number of data sources, Solr indexes can get very large (hundreds of GBs, or TBs) so they should probably be stored on a larger network share.
 </ul>
 
@@ -208,8 +207,57 @@ Solr creates two types of data that need to be backed up:
 <ol><li>In a default installation that data is stored in \c "C:\solr-8.6.3\server\solr zoo_data" (assuming that the Solr package ZIP was extracted into \c "C:\solr-8.6.3" directory).</ol>
 </ul>
 
-\section install_solr_delayed_start Delayed Start Problems With Large Number Of Solr Collections
+\section Troubleshooting
+
+\subsection install_solr_delayed_start Delayed Start Problems With Large Number Of Solr Collections
 
 In our testing, we have encountered an issue when a very large number (thousands) of Autopsy multi-user cases was created. Each new Autopsy multi-user case creates a Solr "collection" that contains the Solr text index. With 2,000 existing collections, when Solr service is restarted, Solr appears to internally be "loading" roughly 250 collections per minute (in chronological order, starting with oldest collections). After 4 minutes roughly half of the 2,000 collections were loaded. Users are able to search the collections that have been loaded, but they are unable to open or search the collections that have not yet been internally loaded by Solr. After 7-8 minutes all collections were loaded. These numbers will vary depending on the specific cluster configuration, text index file location (network or local storage), network throughput, number of Solr servers, etc. 
+
+\subsection install_solr_heap_usage Solr Heap Usage and Recommendations
+
+Solr JVM heap plays especially important role if you are going to create a large number of Autopsy cases (i.e. Solr collections). Here are some “rule of thumb” Solr heap usage stats that we identified during our internal testing:
+<ul>
+<li>For very small cases/collections, our tests show that Solr uses an absolute minimum of 7-10 MB of heap per collection. 
+<li>For larger cases/collections (50-100GB input E01 size) Solr uses at least 65 MB per collection 
+<li>For large cases/collections (1.5TB input E01 size) Solr uses at least 850 MB per collection
+</ul>
+
+\subsubsection install_solr_heap_troublshooting Troubleshooting Solr Heap Issues
+
+Once the Solr JVM uses all of its available heap and is unable to free up any memory via garbage collection, the Solr service will not be able to create new collections or may become completely unresponsive, resulting in Autopsy being unable to create new text indexes. Below is a list of some of the errors that you might see as a result of this in the Solr (not Autopsy) service logs and/or the Solr admin console:
+
+<ul>
+<li>org.apache.solr.common.SolrException: Could not register as the leader because creating the ephemeral registration node in ZooKeeper failed
+<li>RequestHandlerBase org.apache.solr.common.SolrException: Failed to get config from zookeeper
+<li>RecoveryStrategy Error while trying to recover. org.apache.solr.common.SolrException: Cloud state still says we are leader.
+<li>RequestHandlerBase org.apache.solr.common.SolrException: Could not load collection from ZK
+<li>org.apache.solr.common.SolrException: Error CREATEing SolrCore: Unable to create core. Caused by: There are no more files
+<li>org.apache.solr.common.SolrException: java.io.IOException: There are no more files
+<li>org.apache.solr.common.SolrException: Cannot unload non-existent core
+<li>ZkIndexSchemaReader Error creating ZooKeeper watch for the managed schema
+</ul>
+
+You may also see the following ZooKeeper errors:
+<ul>
+<li>org.apache.zookeeper.KeeperException$NodeExistsException: KeeperErrorCode = NodeExists
+<li>org.apache.zookeeper.KeeperException$BadVersionException: KeeperErrorCode = BadVersion for (collection_name)/state.json
+<li>org.apache.zookeeper.KeeperException$SessionExpiredException: KeeperErrorCode = Session expired for /roles.json
+<li>org.apache.zookeeper.KeeperException$SessionExpiredException: KeeperErrorCode = Session expired for /configs/AutopsyConfig/managed-schema
+</ul>
+
+The common theme among most of these errors is the breakdown in communication between Solr and ZooKeeper, especially when using an embedded ZooKeeper server. It is important to note that these errors may potentially occur for other reasons and are not unique to Solr heap issues. 
+
+\subsubsection install_solr_monitoring Monitoring Solr Heap Usage
+
+The simplest way to see current Solr heap usage is to check the Solr Admin Console web page. To access the Solr admin console, on the Solr machine navigate to http://localhost:8983/solr/#/ . There you will be able to see the Solr memory usage:
+
+\image html solr_config_monitoring.png
+
+However, the dashboard does not show enough detail to know when Solr is out of heap, so it should only be used to identify that you are NOT having heap issues. Even if the dashboard shows that the Solr heap is fully used, it may or may not be an issue. It is best to use profiling tools like Java VisualVM. In order for VisualVM to connect to Solr, you will need to enable the JMX interface for Solr’s Java process. The details are described here:
+<ul><li>https://solr.apache.org/guide/8_3/using-jmx-with-solr.html#using-jmx-with-solr</ul>
+
+Solr heap and other performance tuning is described in the following article:
+<ul><li>https://cwiki.apache.org/confluence/display/SOLR/SolrPerformanceProblems</ul>
+
 
 */

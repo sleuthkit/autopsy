@@ -287,15 +287,16 @@ public class IngestManager implements IngestProgressSnapshotProvider {
         caseIsOpen = false;
         clearIngestMessageBox();
     }
-    
+
     /**
-     * Creates an ingest stream from the given ingest settings for a data source.
-     * 
+     * Creates an ingest stream from the given ingest settings for a data
+     * source.
+     *
      * @param dataSource The data source
      * @param settings   The ingest job settings.
-     * 
+     *
      * @return The newly created ingest stream.
-     * 
+     *
      * @throws TskCoreException if there was an error starting the ingest job.
      */
     public IngestStream openIngestStream(DataSource dataSource, IngestJobSettings settings) throws TskCoreException {
@@ -312,7 +313,6 @@ public class IngestManager implements IngestProgressSnapshotProvider {
             throw new TskCoreException("Error starting ingest modules", stream.getIngestJobStartResult().getStartupException());
         }
     }
-
 
     /**
      * Gets the number of file ingest threads the ingest manager is using to do
@@ -524,10 +524,11 @@ public class IngestManager implements IngestProgressSnapshotProvider {
     public void addIngestJobEventListener(final PropertyChangeListener listener) {
         jobEventPublisher.addSubscriber(INGEST_JOB_EVENT_NAMES, listener);
     }
-    
+
     /**
-     * Adds an ingest job event property change listener for the given event types.
-     * 
+     * Adds an ingest job event property change listener for the given event
+     * types.
+     *
      * @param eventTypes The event types to listen for
      * @param listener   The PropertyChangeListener to be added
      */
@@ -545,18 +546,18 @@ public class IngestManager implements IngestProgressSnapshotProvider {
     public void removeIngestJobEventListener(final PropertyChangeListener listener) {
         jobEventPublisher.removeSubscriber(INGEST_JOB_EVENT_NAMES, listener);
     }
-    
+
     /**
      * Removes an ingest job event property change listener.
      *
      * @param eventTypes The event types to stop listening for
-     * @param listener The PropertyChangeListener to be removed.
+     * @param listener   The PropertyChangeListener to be removed.
      */
     public void removeIngestJobEventListener(Set<IngestJobEvent> eventTypes, final PropertyChangeListener listener) {
         eventTypes.forEach((IngestJobEvent event) -> {
             jobEventPublisher.removeSubscriber(event.toString(), listener);
         });
-    }   
+    }
 
     /**
      * Adds an ingest module event property change listener.
@@ -568,8 +569,9 @@ public class IngestManager implements IngestProgressSnapshotProvider {
     }
 
     /**
-     * Adds an ingest module event property change listener for given event types.
-     * 
+     * Adds an ingest module event property change listener for given event
+     * types.
+     *
      * @param eventTypes The event types to listen for
      * @param listener   The PropertyChangeListener to be removed.
      */
@@ -578,7 +580,7 @@ public class IngestManager implements IngestProgressSnapshotProvider {
             moduleEventPublisher.addSubscriber(event.toString(), listener);
         });
     }
-    
+
     /**
      * Removes an ingest module event property change listener.
      *
@@ -587,16 +589,16 @@ public class IngestManager implements IngestProgressSnapshotProvider {
     public void removeIngestModuleEventListener(final PropertyChangeListener listener) {
         moduleEventPublisher.removeSubscriber(INGEST_MODULE_EVENT_NAMES, listener);
     }
-    
+
     /**
      * Removes an ingest module event property change listener.
-     * 
+     *
      * @param eventTypes The event types to stop listening for
      * @param listener   The PropertyChangeListener to be removed.
      */
     public void removeIngestModuleEventListener(Set<IngestModuleEvent> eventTypes, final PropertyChangeListener listener) {
         moduleEventPublisher.removeSubscriber(INGEST_MODULE_EVENT_NAMES, listener);
-    }    
+    }
 
     /**
      * Publishes an ingest job event signifying an ingest job started.
