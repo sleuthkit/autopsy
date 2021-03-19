@@ -1,3 +1,4 @@
+ArtifactMenuMouseAdapter.noFile.text=File does not exist.
 ArtifactMenuMouseAdapter_ExternalViewer_label=Open in external viewer
 ArtifactMenuMouseAdapter_label=Extract Files
 ArtifactsListPanel.dateColumn.name=Date/Time
