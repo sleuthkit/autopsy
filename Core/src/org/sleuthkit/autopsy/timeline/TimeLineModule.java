@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,7 +27,6 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import static org.sleuthkit.autopsy.casemodule.Case.Events.CURRENT_CASE;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -87,11 +86,19 @@ public class TimeLineModule {
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
             if (Case.Events.valueOf(evt.getPropertyName()).equals(CURRENT_CASE)) {
-                if (evt.getNewValue() == null) {
+                if (evt.getNewValue() != null) {
                     /*
-                     * Current case is closing, shut down the timeline top
-                     * component and set the pre case singleton controller
-                     * reference to null.
+                     * Case opened. Create a timeline controller for the case.
+                     */
+                    try {
+                        getController();
+                    } catch (NoCurrentCaseException | TskCoreException ex) {
+                        logger.log(Level.SEVERE, String.format("Error creating controller for %s", ((Case) evt.getNewValue()).getName()), ex); //NON-NLS
+                    }
+                } else {
+                    /*
+                     * Case closed. Shut down the timeline controller for the
+                     * case.
                      */
                     synchronized (controllerLock) {
                         if (controller != null) {
@@ -104,9 +111,8 @@ public class TimeLineModule {
             } else {
                 try {
                     getController().handleCaseEvent(evt);
-                } catch (NoCurrentCaseException ignored) {
-                } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "Error handling application event", ex);
+                } catch (NoCurrentCaseException | TskCoreException ex) {
+                    logger.log(Level.SEVERE, String.format("Error handling %s event", evt.getPropertyName()), ex);  //NON-NLS
                 }
             }
         }
@@ -121,12 +127,8 @@ public class TimeLineModule {
         public void propertyChange(PropertyChangeEvent evt) {
             try {
                 getController().handleIngestModuleEvent(evt);
-            } catch (NoCurrentCaseException ex) {
-                // ignore
-                return;
-            } catch (TskCoreException ex) {
-                MessageNotifyUtil.Message.error("Error creating timeline controller.");
-                logger.log(Level.SEVERE, "Error creating timeline controller", ex);
+            } catch (NoCurrentCaseException | TskCoreException ex) {
+                logger.log(Level.SEVERE, String.format("Error handling %s event", evt.getPropertyName()), ex);  //NON-NLS
             }
         }
     }
