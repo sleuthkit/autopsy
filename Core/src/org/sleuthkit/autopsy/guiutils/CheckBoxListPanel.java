@@ -158,14 +158,33 @@ public final class CheckBoxListPanel<T> extends javax.swing.JPanel {
         titleLabel.setIcon(icon);
     }
 
+    /**
+     * Add a list selection listener to the checkbox list contained in this
+     * panel.
+     *
+     * @param listener The list selection listener to add.
+     */
     public void addListSelectionListener(ListSelectionListener listener) {
         checkboxList.addListSelectionListener(listener);
     }
 
+    /**
+     * Remove a list selection listener to the checkbox list contained in this
+     * panel.
+     *
+     * @param listener The list selection listener to remove.
+     */
     public void removeListSelectionListener(ListSelectionListener listener) {
         checkboxList.removeListSelectionListener(listener);
     }
 
+    /**
+     * Get all list selection listeners which exist for the list contained in
+     * this panel.
+     *
+     * @return The array of list selection listeners which are on the list
+     *         currently.
+     */
     public ListSelectionListener[] getListSelectionListeners() {
         return checkboxList.getListSelectionListeners();
     }
