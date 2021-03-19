@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.discovery.ui;
 
 import java.util.logging.Level;
 import org.openide.nodes.Node;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.corecomponents.DataContentPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
