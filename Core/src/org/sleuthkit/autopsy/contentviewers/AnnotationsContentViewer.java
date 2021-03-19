@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.contentviewers;
 import java.awt.Component;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import java.util.logging.Level;
@@ -30,7 +31,6 @@ import javax.swing.text.EditorKit;
 import javax.swing.text.html.HTMLEditorKit;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
-
 import static org.openide.util.NbBundle.Messages;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -83,6 +83,8 @@ import org.jsoup.nodes.Element;
     "AnnotationsContentViewer.onEmpty=No annotations were found for this particular item."
 })
 public class AnnotationsContentViewer extends javax.swing.JPanel implements DataContentViewer {
+
+    private static final long serialVersionUID = 1L;
 
     /**
      * Describes a key value pair for an item of type T where the key is the
@@ -141,7 +143,7 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
          *         user.
          */
         List<ItemEntry<T>> getAttributes() {
-            return attributes;
+            return Collections.unmodifiableList(attributes);
         }
     }
 
@@ -247,32 +249,13 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
 
         Document html = Jsoup.parse(EMPTY_HTML);
         Element body = html.getElementsByTag("body").first();
-
         BlackboardArtifact artifact = node.getLookup().lookup(BlackboardArtifact.class);
-        Content sourceFile = null;
+        /*
+         * Get the content based on what's present in the node.
+         */
+        Content sourceFile = node.getLookup().lookup(AbstractFile.class);
 
-        try {
-            if (artifact != null) {
-                /*
-                 * Get the source content based on the artifact to ensure we
-                 * display the correct data instead of whatever was in the node.
-                 */
-                sourceFile = artifact.getSleuthkitCase().getAbstractFileById(artifact.getObjectID());
-            } else {
-                /*
-                 * No artifact is present, so get the content based on what's
-                 * present in the node. In this case, the selected item IS the
-                 * source file.
-                 */
-                sourceFile = node.getLookup().lookup(AbstractFile.class);
-            }
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, String.format(
-                    "Exception while trying to retrieve a Content instance from the BlackboardArtifact '%s' (id=%d).",
-                    artifact.getDisplayName(), artifact.getArtifactID()), ex);
-        }
-
-        boolean somethingWasRendered = false;
+        boolean somethingWasRendered;
         if (artifact != null) {
             somethingWasRendered = renderArtifact(body, artifact, sourceFile);
         } else {
@@ -336,26 +319,29 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
      * @return If any content was actually rendered.
      */
     private static boolean renderContent(Element parent, Content sourceContent, boolean isSubheader) {
-        boolean contentRendered = appendEntries(parent, TAG_CONFIG, getTags(sourceContent), isSubheader);
+        boolean contentRendered = false;
+        if (sourceContent != null) {
+            contentRendered = appendEntries(parent, TAG_CONFIG, getTags(sourceContent), isSubheader);
 
-        if (sourceContent instanceof AbstractFile) {
-            AbstractFile sourceFile = (AbstractFile) sourceContent;
+            if (sourceContent instanceof AbstractFile) {
+                AbstractFile sourceFile = (AbstractFile) sourceContent;
 
-            if (CentralRepository.isEnabled()) {
-                List<CorrelationAttributeInstance> centralRepoComments = getCentralRepositoryData(sourceFile);
-                boolean crRendered = appendEntries(parent, CR_COMMENTS_CONFIG, centralRepoComments, isSubheader);
-                contentRendered = contentRendered || crRendered;
+                if (CentralRepository.isEnabled()) {
+                    List<CorrelationAttributeInstance> centralRepoComments = getCentralRepositoryData(sourceFile);
+                    boolean crRendered = appendEntries(parent, CR_COMMENTS_CONFIG, centralRepoComments, isSubheader);
+                    contentRendered = contentRendered || crRendered;
+                }
+
+                boolean hashsetRendered = appendEntries(parent, HASHSET_CONFIG,
+                        getFileSetHits(sourceFile, ARTIFACT_TYPE.TSK_HASHSET_HIT),
+                        isSubheader);
+
+                boolean interestingFileRendered = appendEntries(parent, INTERESTING_FILE_CONFIG,
+                        getFileSetHits(sourceFile, ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT),
+                        isSubheader);
+
+                contentRendered = contentRendered || hashsetRendered || interestingFileRendered;
             }
-
-            boolean hashsetRendered = appendEntries(parent, HASHSET_CONFIG,
-                    getFileSetHits(sourceFile, ARTIFACT_TYPE.TSK_HASHSET_HIT),
-                    isSubheader);
-
-            boolean interestingFileRendered = appendEntries(parent, INTERESTING_FILE_CONFIG,
-                    getFileSetHits(sourceFile, ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT),
-                    isSubheader);
-
-            contentRendered = contentRendered || hashsetRendered || interestingFileRendered;
         }
         return contentRendered;
     }
@@ -760,25 +746,7 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
 
     @Override
     public boolean isSupported(Node node) {
-        BlackboardArtifact artifact = node.getLookup().lookup(BlackboardArtifact.class);
-
-        try {
-            if (artifact != null) {
-                if (artifact.getSleuthkitCase().getAbstractFileById(artifact.getObjectID()) != null) {
-                    return true;
-                }
-            } else {
-                if (node.getLookup().lookup(AbstractFile.class) != null) {
-                    return true;
-                }
-            }
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, String.format(
-                    "Exception while trying to retrieve a Content instance from the BlackboardArtifact '%s' (id=%d).",
-                    artifact.getDisplayName(), artifact.getArtifactID()), ex);
-        }
-
-        return false;
+        return node.getLookup().lookup(AbstractFile.class) != null;
     }
 
     @Override

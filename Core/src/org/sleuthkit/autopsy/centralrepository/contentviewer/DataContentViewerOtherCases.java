@@ -41,7 +41,6 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
@@ -128,52 +127,7 @@ public final class DataContentViewerOtherCases extends JPanel implements DataCon
 
     }
 
-    /**
-     * Get the associated AbstractFile from a node, if it exists.
-     *
-     * @param node The node
-     *
-     * @return The associated AbstractFile, or null
-     */
-    private AbstractFile getAbstractFileFromNode(Node node) {
-        BlackboardArtifactTag nodeBbArtifactTag = node.getLookup().lookup(BlackboardArtifactTag.class
-        );
-        ContentTag nodeContentTag = node.getLookup().lookup(ContentTag.class
-        );
-        BlackboardArtifact nodeBbArtifact = node.getLookup().lookup(BlackboardArtifact.class
-        );
-        AbstractFile nodeAbstractFile = node.getLookup().lookup(AbstractFile.class
-        );
-
-        if (nodeBbArtifactTag != null) {
-            Content content = nodeBbArtifactTag.getContent();
-            if (content instanceof AbstractFile) {
-                return (AbstractFile) content;
-            }
-        } else if (nodeContentTag != null) {
-            Content content = nodeContentTag.getContent();
-            if (content instanceof AbstractFile) {
-                return (AbstractFile) content;
-            }
-        } else if (nodeBbArtifact != null) {
-            Content content;
-            try {
-                content = nodeBbArtifact.getSleuthkitCase().getContentById(nodeBbArtifact.getObjectID());
-            } catch (TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, "Error retrieving blackboard artifact", ex); // NON-NLS
-                return null;
-            }
-
-            if (content instanceof AbstractFile) {
-                return (AbstractFile) content;
-            }
-        } else if (nodeAbstractFile != null) {
-            return nodeAbstractFile;
-        }
-
-        return null;
-    }
-
+  
     /**
      * Determine what attributes can be used for correlation based on the node.
      * If EamDB is not enabled, get the default Files correlation.
@@ -251,7 +205,7 @@ public final class DataContentViewerOtherCases extends JPanel implements DataCon
         // - The central repo is enabled and the node has correlatable content
         //   (either through the MD5 hash of the associated file or through a BlackboardArtifact)
         // - The central repo is disabled and the backing file has a valid MD5 hash
-        this.file = this.getAbstractFileFromNode(node);
+        this.file = node.getLookup().lookup(AbstractFile.class);;
         if (CentralRepository.isEnabled()) {
             return !getCorrelationAttributesFromNode(node).isEmpty();
         } else {
@@ -269,7 +223,7 @@ public final class DataContentViewerOtherCases extends JPanel implements DataCon
             return;
         }
         //could be null
-        this.file = this.getAbstractFileFromNode(node);
+        this.file = node.getLookup().lookup(AbstractFile.class);
         String dataSourceName = "";
         String deviceId = "";
         try {
