@@ -228,7 +228,7 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
     boolean isObjectsFilterSupported() {
         for (AbstractDiscoveryFilterPanel filter : filters) {
             if (filter instanceof ObjectDetectedFilterPanel) {
-                return filter.getList().getModel().getSize() > 0;
+                return filter.isFilterSupported();
             }
         }
         return false;
@@ -243,7 +243,7 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
     boolean isHashSetFilterSupported() {
         for (AbstractDiscoveryFilterPanel filter : filters) {
             if (filter instanceof HashSetFilterPanel) {
-                return filter.getList().getModel().getSize() > 0;
+                return filter.isFilterSupported();
             }
         }
         return false;
@@ -258,7 +258,7 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
     boolean isInterestingItemsFilterSupported() {
         for (AbstractDiscoveryFilterPanel filter : filters) {
             if (filter instanceof InterestingItemsFilterPanel) {
-                return filter.getList().getModel().getSize() > 0;
+                return filter.isFilterSupported();
             }
         }
         return false;

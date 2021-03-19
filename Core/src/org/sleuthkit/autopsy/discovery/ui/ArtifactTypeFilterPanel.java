@@ -18,25 +18,25 @@
  */
 package org.sleuthkit.autopsy.discovery.ui;
 
-import java.util.ArrayList;
 import java.util.List;
 import org.sleuthkit.autopsy.discovery.search.AbstractFilter;
-import javax.swing.DefaultListModel;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
-import javax.swing.JList;
+import javax.swing.event.ListSelectionListener;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.discovery.search.SearchData;
 import org.sleuthkit.autopsy.discovery.search.SearchFiltering.ArtifactTypeFilter;
+import org.sleuthkit.autopsy.guiutils.CheckBoxListPanel;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
  * Filter for selection of a specific Artifact type to limit results to.
  */
-class ArtifactTypeFilterPanel extends AbstractDiscoveryFilterPanel {
+final class ArtifactTypeFilterPanel extends AbstractDiscoveryFilterPanel {
 
     private static final long serialVersionUID = 1L;
+    private static final CheckBoxListPanel<BlackboardArtifact.ARTIFACT_TYPE> artifactList = new CheckBoxListPanel<>();
 
     /**
      * Creates new form ArtifactTypeFilterPanel
@@ -45,7 +45,7 @@ class ArtifactTypeFilterPanel extends AbstractDiscoveryFilterPanel {
     ArtifactTypeFilterPanel() {
         initComponents();
         setUpArtifactTypeFilter();
-
+        add(artifactList);
     }
 
     /**
@@ -53,12 +53,9 @@ class ArtifactTypeFilterPanel extends AbstractDiscoveryFilterPanel {
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private void setUpArtifactTypeFilter() {
-        int count = 0;
-        DefaultListModel<ArtifactTypeItem> artifactTypeModel = (DefaultListModel<ArtifactTypeItem>) artifactList.getModel();
-        artifactTypeModel.removeAllElements();
+        artifactList.clearList();
         for (BlackboardArtifact.ARTIFACT_TYPE artifactType : SearchData.Type.DOMAIN.getArtifactTypes()) {
-            artifactTypeModel.add(count, new ArtifactTypeItem(artifactType));
-            count++;
+            artifactList.addElement(artifactType.getDisplayName(), null, artifactType);
         }
     }
 
@@ -72,8 +69,6 @@ class ArtifactTypeFilterPanel extends AbstractDiscoveryFilterPanel {
     private void initComponents() {
 
         artifactTypeCheckbox = new javax.swing.JCheckBox();
-        artifactTypeScrollPane = new javax.swing.JScrollPane();
-        artifactList = new javax.swing.JList<>();
 
         org.openide.awt.Mnemonics.setLocalizedText(artifactTypeCheckbox, org.openide.util.NbBundle.getMessage(ArtifactTypeFilterPanel.class, "ArtifactTypeFilterPanel.artifactTypeCheckbox.text")); // NOI18N
         artifactTypeCheckbox.addActionListener(new java.awt.event.ActionListener() {
@@ -84,26 +79,19 @@ class ArtifactTypeFilterPanel extends AbstractDiscoveryFilterPanel {
 
         setPreferredSize(new java.awt.Dimension(27, 27));
 
-        artifactTypeScrollPane.setPreferredSize(new java.awt.Dimension(27, 27));
-
-        artifactList.setModel(new DefaultListModel<ArtifactTypeItem>());
-        artifactList.setEnabled(false);
-        artifactTypeScrollPane.setViewportView(artifactList);
-
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(artifactTypeScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGap(0, 27, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(artifactTypeScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGap(0, 27, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
     private void artifactTypeCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_artifactTypeCheckboxActionPerformed
-        artifactTypeScrollPane.setEnabled(artifactTypeCheckbox.isSelected());
         artifactList.setEnabled(artifactTypeCheckbox.isSelected());
     }//GEN-LAST:event_artifactTypeCheckboxActionPerformed
 
@@ -112,13 +100,11 @@ class ArtifactTypeFilterPanel extends AbstractDiscoveryFilterPanel {
     void configurePanel(boolean selected, int[] indicesSelected) {
         artifactTypeCheckbox.setSelected(selected);
         if (artifactTypeCheckbox.isEnabled() && artifactTypeCheckbox.isSelected()) {
-            artifactTypeScrollPane.setEnabled(true);
             artifactList.setEnabled(true);
-            if (indicesSelected != null) {
-                artifactList.setSelectedIndices(indicesSelected);
-            }
+//            if (indicesSelected != null) {
+//                artifactList.setSelectedIndices(indicesSelected);
+//            }
         } else {
-            artifactTypeScrollPane.setEnabled(false);
             artifactList.setEnabled(false);
         }
     }
@@ -127,12 +113,6 @@ class ArtifactTypeFilterPanel extends AbstractDiscoveryFilterPanel {
     @Override
     JCheckBox getCheckbox() {
         return artifactTypeCheckbox;
-    }
-
-    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    @Override
-    JList<?> getList() {
-        return artifactList;
     }
 
     @Override
@@ -144,7 +124,7 @@ class ArtifactTypeFilterPanel extends AbstractDiscoveryFilterPanel {
     @NbBundle.Messages({"ArtifactTypeFilterPanel.selectionNeeded.text=At least one Result type must be selected."})
     @Override
     String checkForError() {
-        if (artifactTypeCheckbox.isSelected() && artifactList.getSelectedValuesList().isEmpty()) {
+        if (artifactTypeCheckbox.isSelected() && artifactList.getSelectedElements().isEmpty()) {
             return Bundle.ArtifactTypeFilterPanel_selectionNeeded_text();
         }
         return "";
@@ -153,52 +133,46 @@ class ArtifactTypeFilterPanel extends AbstractDiscoveryFilterPanel {
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     AbstractFilter getFilter() {
-        if (artifactTypeCheckbox.isSelected() && !artifactList.getSelectedValuesList().isEmpty()) {
-            List<BlackboardArtifact.ARTIFACT_TYPE> artifactTypeList = new ArrayList<>();
-            for (ArtifactTypeItem item : artifactList.getSelectedValuesList()) {
-                artifactTypeList.add(item.getArtifactType());
-            }
+        if (artifactTypeCheckbox.isSelected() && isFilterSupported()) {
+            List<BlackboardArtifact.ARTIFACT_TYPE> artifactTypeList = artifactList.getSelectedElements();
             return new ArtifactTypeFilter(artifactTypeList);
         }
         return null;
     }
 
-    /**
-     * Utility class to allow us to display the AritfactType display name
-     * instead of the name.
-     */
-    private class ArtifactTypeItem extends JCheckBox {
-
-        private static final long serialVersionUID = 1L;
-        private final BlackboardArtifact.ARTIFACT_TYPE artifactType;
-
-        /**
-         * Construct a new ArtifactTypeItem.
-         *
-         * @param ds The artifact type being wrapped.
-         */
-        ArtifactTypeItem(BlackboardArtifact.ARTIFACT_TYPE artifactType) {
-            this.artifactType = artifactType;
-        }
-
-        /**
-         * Get the ArtifactType represented by this ArtifactTypeItem.
-         *
-         * @return The ArtifactType represented by this ArtifactTypeItem.
-         */
-        BlackboardArtifact.ARTIFACT_TYPE getArtifactType() {
-            return artifactType;
-        }
-
-        @Override
-        public String toString() {
-            return artifactType.getDisplayName();
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    @Override
+    void removeListeners() {
+        super.removeListeners();
+        if (artifactList != null) {
+            for (ListSelectionListener listener : getListSelectionListeners()) {
+                artifactList.removeListSelectionListener(listener);
+            }
         }
     }
 
+    @Override
+    ListSelectionListener[] getListSelectionListeners() {
+        return artifactList.getListSelectionListeners();
+    }
+
+    @Override
+    void addListSelectionListener(ListSelectionListener listener) {
+        artifactList.addListSelectionListener(listener);
+    }
+
+    @Override
+    void removeListSelectionListener(ListSelectionListener listener) {
+        artifactList.removeListSelectionListener(listener);
+    }
+
+    @Override
+    boolean isFilterSupported() {
+        return !artifactList.isEmpty();
+    }
+
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JList<ArtifactTypeItem> artifactList;
     private javax.swing.JCheckBox artifactTypeCheckbox;
-    private javax.swing.JScrollPane artifactTypeScrollPane;
     // End of variables declaration//GEN-END:variables
 }

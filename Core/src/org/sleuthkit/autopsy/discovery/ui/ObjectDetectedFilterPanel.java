@@ -18,18 +18,17 @@
  */
 package org.sleuthkit.autopsy.discovery.ui;
 
-import java.util.ArrayList;
 import org.sleuthkit.autopsy.discovery.search.AbstractFilter;
 import java.util.List;
 import java.util.logging.Level;
-import javax.swing.DefaultListModel;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
-import javax.swing.JList;
+import javax.swing.event.ListSelectionListener;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.discovery.search.SearchFiltering;
+import org.sleuthkit.autopsy.guiutils.CheckBoxListPanel;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -41,6 +40,7 @@ final class ObjectDetectedFilterPanel extends AbstractDiscoveryFilterPanel {
 
     private static final long serialVersionUID = 1L;
     private final static Logger logger = Logger.getLogger(ObjectDetectedFilterPanel.class.getName());
+    private static final CheckBoxListPanel<String> objectsList = new CheckBoxListPanel<>();
 
     /**
      * Creates new form ObjectDetectedFilter.
@@ -48,9 +48,8 @@ final class ObjectDetectedFilterPanel extends AbstractDiscoveryFilterPanel {
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     ObjectDetectedFilterPanel() {
         initComponents();
-        objectsList.setCellRenderer(new CheckboxCellRenderer(objectsCheckbox));
-        objectsList.setSelectionModel(new CheckboxListSelectionModel(objectsList));
         setUpObjectFilter();
+        add(objectsList);
     }
 
     /**
@@ -58,14 +57,11 @@ final class ObjectDetectedFilterPanel extends AbstractDiscoveryFilterPanel {
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private void setUpObjectFilter() {
-        int count = 0;
         try {
-            DefaultListModel<JCheckBox> objListModel = (DefaultListModel<JCheckBox>) objectsList.getModel();
-            objListModel.removeAllElements();
+            objectsList.clearList();
             List<String> setNames = DiscoveryUiUtils.getSetNames(BlackboardArtifact.ARTIFACT_TYPE.TSK_OBJECT_DETECTED, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION);
             for (String name : setNames) {
-                objListModel.add(count, new JCheckBox(name));
-                count++;
+                objectsList.addElement(name, null, null);
             }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error loading object detected set names", ex);
@@ -84,8 +80,6 @@ final class ObjectDetectedFilterPanel extends AbstractDiscoveryFilterPanel {
     private void initComponents() {
 
         objectsCheckbox = new javax.swing.JCheckBox();
-        objectsScrollPane = new javax.swing.JScrollPane();
-        objectsList = new javax.swing.JList<>();
 
         org.openide.awt.Mnemonics.setLocalizedText(objectsCheckbox, org.openide.util.NbBundle.getMessage(ObjectDetectedFilterPanel.class, "ObjectDetectedFilterPanel.text")); // NOI18N
         objectsCheckbox.setMaximumSize(new java.awt.Dimension(150, 25));
@@ -103,24 +97,15 @@ final class ObjectDetectedFilterPanel extends AbstractDiscoveryFilterPanel {
         setMinimumSize(new java.awt.Dimension(250, 30));
         setPreferredSize(new java.awt.Dimension(250, 30));
 
-        objectsScrollPane.setName(""); // NOI18N
-        objectsScrollPane.setPreferredSize(new java.awt.Dimension(27, 27));
-
-        objectsList.setModel(new DefaultListModel<JCheckBox>());
-        objectsList.setEnabled(false);
-        objectsList.setMaximumSize(new java.awt.Dimension(32767, 32767));
-        objectsList.setVisibleRowCount(2);
-        objectsScrollPane.setViewportView(objectsList);
-
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(objectsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
+            .addGap(0, 250, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(objectsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 64, Short.MAX_VALUE)
+            .addGap(0, 30, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -131,24 +116,20 @@ final class ObjectDetectedFilterPanel extends AbstractDiscoveryFilterPanel {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox objectsCheckbox;
-    private javax.swing.JList<JCheckBox> objectsList;
-    private javax.swing.JScrollPane objectsScrollPane;
     // End of variables declaration//GEN-END:variables
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     void configurePanel(boolean selected, int[] indicesSelected) {
-        boolean hasObjects = objectsList.getModel().getSize() > 0;
+        boolean hasObjects = isFilterSupported();
         objectsCheckbox.setEnabled(hasObjects);
         objectsCheckbox.setSelected(selected && hasObjects);
         if (objectsCheckbox.isEnabled() && objectsCheckbox.isSelected()) {
-            objectsScrollPane.setEnabled(true);
             objectsList.setEnabled(true);
-            if (indicesSelected != null) {
-                objectsList.setSelectedIndices(indicesSelected);
-            }
+//            if (indicesSelected != null) {
+//                objectsList.setSelectedIndices(indicesSelected);
+//            }
         } else {
-            objectsScrollPane.setEnabled(false);
             objectsList.setEnabled(false);
         }
     }
@@ -168,7 +149,7 @@ final class ObjectDetectedFilterPanel extends AbstractDiscoveryFilterPanel {
     @NbBundle.Messages({"ObjectDetectedFilterPanel.error.text=At least one object type name must be selected."})
     @Override
     String checkForError() {
-        if (objectsCheckbox.isSelected() && objectsList.getSelectedValuesList().isEmpty()) {
+        if (objectsCheckbox.isSelected() && objectsList.getSelectedElements().isEmpty()) {
             return Bundle.ObjectDetectedFilterPanel_error_text();
         }
         return "";
@@ -176,21 +157,43 @@ final class ObjectDetectedFilterPanel extends AbstractDiscoveryFilterPanel {
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
-    JList<?> getList() {
-        return objectsList;
+    AbstractFilter getFilter() {
+        if (objectsCheckbox.isSelected()) {
+            List<String> objectDetectedList = objectsList.getSelectedElements();
+            return new SearchFiltering.ObjectDetectionFilter(objectDetectedList);
+        }
+        return null;
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
-    AbstractFilter getFilter() {
-        if (objectsCheckbox.isSelected()) {
-            List<String> objectDetectedList = new ArrayList<>();
-            for (JCheckBox checkbox : objectsList.getSelectedValuesList()) {
-                objectDetectedList.add(checkbox.getName());
+    void removeListeners() {
+        super.removeListeners();
+        if (objectsList != null) {
+            for (ListSelectionListener listener : getListSelectionListeners()) {
+                objectsList.removeListSelectionListener(listener);
             }
-            return new SearchFiltering.ObjectDetectionFilter(objectDetectedList);
         }
-        return null;
+    }
+
+    @Override
+    ListSelectionListener[] getListSelectionListeners() {
+        return objectsList.getListSelectionListeners();
+    }
+
+    @Override
+    void addListSelectionListener(ListSelectionListener listener) {
+        objectsList.addListSelectionListener(listener);
+    }
+
+    @Override
+    void removeListSelectionListener(ListSelectionListener listener) {
+        objectsList.removeListSelectionListener(listener);
+    }
+
+    @Override
+    boolean isFilterSupported() {
+        return !objectsList.isEmpty();
     }
 
 }

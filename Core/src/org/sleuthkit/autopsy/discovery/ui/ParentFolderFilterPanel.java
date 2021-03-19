@@ -24,7 +24,7 @@ import java.util.List;
 import javax.swing.DefaultListModel;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
-import javax.swing.JList;
+import javax.swing.event.ListSelectionListener;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.discovery.search.SearchFiltering;
@@ -313,16 +313,30 @@ final class ParentFolderFilterPanel extends AbstractDiscoveryFilterPanel {
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
-    JList<?> getList() {
-        return parentList;
-    }
-
-    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    @Override
     AbstractFilter getFilter() {
         if (parentCheckbox.isSelected()) {
             return new SearchFiltering.ParentFilter(getParentPaths());
         }
         return null;
+    }
+
+    @Override
+    ListSelectionListener[] getListSelectionListeners() {
+        return parentList.getListSelectionListeners();
+    }
+
+    @Override
+    void addListSelectionListener(ListSelectionListener listener) {
+        parentList.addListSelectionListener(listener);
+    }
+
+    @Override
+    void removeListSelectionListener(ListSelectionListener listener) {
+        parentList.removeListSelectionListener(listener);
+    }
+
+    @Override
+    boolean isFilterSupported() {
+        return true;
     }
 }

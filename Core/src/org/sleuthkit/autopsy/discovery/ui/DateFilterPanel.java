@@ -29,7 +29,6 @@ import java.util.logging.Level;
 import org.sleuthkit.autopsy.discovery.search.AbstractFilter;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
-import javax.swing.JList;
 import javax.swing.JSpinner;
 import javax.swing.event.ListSelectionListener;
 import org.openide.util.NbBundle;
@@ -38,7 +37,6 @@ import org.sleuthkit.autopsy.communications.Utils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.discovery.search.SearchFiltering;
-import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -254,11 +252,6 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
     }
 
     @Override
-    JList<?> getList() {
-        return null;
-    }
-
-    @Override
     JLabel getAdditionalLabel() {
         return null;
     }
@@ -372,4 +365,24 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
     private javax.swing.JCheckBox startCheckBox;
     private com.github.lgooddatepicker.components.DatePicker startDatePicker;
     // End of variables declaration//GEN-END:variables
+
+    @Override
+    ListSelectionListener[] getListSelectionListeners() {
+        return null;
+    }
+
+    @Override
+    void addListSelectionListener(ListSelectionListener listener) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    void removeListSelectionListener(ListSelectionListener listener) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    boolean isFilterSupported() {
+       return true;
+    }
 }

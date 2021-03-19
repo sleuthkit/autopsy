@@ -21,15 +21,15 @@ package org.sleuthkit.autopsy.discovery.ui;
 import org.sleuthkit.autopsy.discovery.search.AbstractFilter;
 import java.util.ArrayList;
 import java.util.List;
-import javax.swing.DefaultListModel;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
-import javax.swing.JList;
+import javax.swing.event.ListSelectionListener;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.discovery.search.SearchData;
 import org.sleuthkit.autopsy.discovery.search.SearchData.FileSize;
 import org.sleuthkit.autopsy.discovery.search.SearchFiltering;
+import org.sleuthkit.autopsy.guiutils.CheckBoxListPanel;
 
 /**
  * Panel to allow configuration of the Size Filter.
@@ -37,6 +37,7 @@ import org.sleuthkit.autopsy.discovery.search.SearchFiltering;
 final class SizeFilterPanel extends AbstractDiscoveryFilterPanel {
 
     private static final long serialVersionUID = 1L;
+    private static final CheckBoxListPanel<FileSize> sizeList = new CheckBoxListPanel<>();
 
     /**
      * Creates new form SizeFilterPanel.
@@ -47,6 +48,7 @@ final class SizeFilterPanel extends AbstractDiscoveryFilterPanel {
     SizeFilterPanel(SearchData.Type type) {
         initComponents();
         setUpSizeFilter(type);
+        add(sizeList);
     }
 
     /**
@@ -59,8 +61,6 @@ final class SizeFilterPanel extends AbstractDiscoveryFilterPanel {
     private void initComponents() {
 
         sizeCheckbox = new javax.swing.JCheckBox();
-        sizeScrollPane = new javax.swing.JScrollPane();
-        sizeList = new javax.swing.JList<>();
 
         org.openide.awt.Mnemonics.setLocalizedText(sizeCheckbox, org.openide.util.NbBundle.getMessage(SizeFilterPanel.class, "SizeFilterPanel.sizeCheckbox.text")); // NOI18N
         sizeCheckbox.setMaximumSize(new java.awt.Dimension(150, 25));
@@ -78,25 +78,15 @@ final class SizeFilterPanel extends AbstractDiscoveryFilterPanel {
         setName(""); // NOI18N
         setPreferredSize(new java.awt.Dimension(250, 30));
 
-        sizeScrollPane.setPreferredSize(new java.awt.Dimension(27, 27));
-
-        sizeList.setModel(new DefaultListModel<FileSize>());
-        sizeList.setEnabled(false);
-        sizeList.setMaximumSize(new java.awt.Dimension(32767, 32767));
-        sizeList.setVisibleRowCount(5);
-        sizeScrollPane.setViewportView(sizeList);
-
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(sizeScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGap(0, 250, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(sizeScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGap(0, 0, 0))
+            .addGap(0, 30, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -107,8 +97,6 @@ final class SizeFilterPanel extends AbstractDiscoveryFilterPanel {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox sizeCheckbox;
-    private javax.swing.JList<FileSize> sizeList;
-    private javax.swing.JScrollPane sizeScrollPane;
     // End of variables declaration//GEN-END:variables
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
@@ -116,13 +104,11 @@ final class SizeFilterPanel extends AbstractDiscoveryFilterPanel {
     void configurePanel(boolean selected, int[] indicesSelected) {
         sizeCheckbox.setSelected(selected);
         if (sizeCheckbox.isEnabled() && sizeCheckbox.isSelected()) {
-            sizeScrollPane.setEnabled(true);
             sizeList.setEnabled(true);
-            if (indicesSelected != null) {
-                sizeList.setSelectedIndices(indicesSelected);
-            }
+//            if (indicesSelected != null) {
+//                sizeList.setSelectedIndices(indicesSelected);
+//            }
         } else {
-            sizeScrollPane.setEnabled(false);
             sizeList.setEnabled(false);
         }
     }
@@ -143,12 +129,12 @@ final class SizeFilterPanel extends AbstractDiscoveryFilterPanel {
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private void setUpSizeFilter(SearchData.Type fileType) {
-        int count = 0;
-        DefaultListModel<FileSize> sizeListModel = (DefaultListModel<FileSize>) sizeList.getModel();
-        sizeListModel.removeAllElements();
+        int insertIndex = 0;
+//        DefaultListModel<FileSizeItem> sizeListModel = (DefaultListModel<FileSizeItem>) sizeList.getModel();
+        sizeList.removeAll();
         if (null == fileType) {
             for (FileSize size : FileSize.values()) {
-                sizeListModel.add(count, size);
+                sizeList.addElement(size.toString(), null, size);
             }
         } else {
             List<SearchData.FileSize> sizes;
@@ -167,7 +153,7 @@ final class SizeFilterPanel extends AbstractDiscoveryFilterPanel {
                     break;
             }
             for (FileSize size : sizes) {
-                sizeListModel.add(count, size);
+                sizeList.addElement(size.toString(), null, size);
             }
         }
     }
@@ -176,7 +162,7 @@ final class SizeFilterPanel extends AbstractDiscoveryFilterPanel {
     @Override
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     String checkForError() {
-        if (sizeCheckbox.isSelected() && sizeList.getSelectedValuesList().isEmpty()) {
+        if (sizeCheckbox.isSelected() && sizeList.getSelectedElements().isEmpty()) {
             return Bundle.SizeFilterPanel_error_text();
         }
         return "";
@@ -185,16 +171,43 @@ final class SizeFilterPanel extends AbstractDiscoveryFilterPanel {
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
-    JList<?> getList() {
-        return sizeList;
+    AbstractFilter getFilter() {
+        if (sizeCheckbox.isSelected()) {
+            List<FileSize> fileSizes = sizeList.getSelectedElements();
+            return new SearchFiltering.SizeFilter(fileSizes);
+        }
+        return null;
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
-    AbstractFilter getFilter() {
-        if (sizeCheckbox.isSelected()) {
-            return new SearchFiltering.SizeFilter(sizeList.getSelectedValuesList());
+    void removeListeners() {
+        super.removeListeners();
+        if (sizeList != null) {
+            for (ListSelectionListener listener : getListSelectionListeners()) {
+                sizeList.removeListSelectionListener(listener);
+            }
         }
-        return null;
     }
+    
+    @Override
+    ListSelectionListener[] getListSelectionListeners() {
+        return sizeList.getListSelectionListeners();
+    }
+
+    @Override
+    void addListSelectionListener(ListSelectionListener listener) {
+        sizeList.addListSelectionListener(listener);
+    }
+
+    @Override
+    void removeListSelectionListener(ListSelectionListener listener) {
+        sizeList.removeListSelectionListener(listener);
+    }
+
+    @Override
+    boolean isFilterSupported() {
+        return !sizeList.isEmpty();
+    }
+
 }

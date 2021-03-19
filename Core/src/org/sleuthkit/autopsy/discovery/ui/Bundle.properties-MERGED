@@ -54,6 +54,7 @@ DocumentPanel.numberOfImages.noImages=No images
 DocumentPanel.numberOfImages.text=1 of {0} images
 DocumentWrapper.previewInitialValue=Preview not generated yet.
 DomainDetailsPanel.miniTimelineTitle.text=Timeline
+DomainDetailsPanel.otherOccurrencesTab.title=Other Occurrences
 # {0} - startDate
 # {1} - endDate
 DomainSummaryPanel.activity.text=Activity: {0} to {1}
@@ -174,6 +175,8 @@ CookieDetailsPanel.jLabel2.text=
 PreviouslyNotableFilterPanel.text_1=Include only previously notable domains
 KnownAccountTypeFilterPanel.text_1=Include only domains with a known account type
 LoadingPanel.detailsLabel.AccessibleContext.accessibleName=detailsLabel
+DataSourceFilterPanel.deselectAllButton.text=Deselect All
+DataSourceFilterPanel.selectAllButton.text=Select All
 VideoThumbnailPanel.bytes.text=bytes
 VideoThumbnailPanel.deleted.text=All instances of file are deleted.
 VideoThumbnailPanel.gigaBytes.text=GB

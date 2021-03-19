@@ -22,16 +22,15 @@ import java.util.Collections;
 import org.sleuthkit.autopsy.discovery.search.AbstractFilter;
 import java.util.List;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
-import javax.swing.DefaultListModel;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
-import javax.swing.JList;
+import javax.swing.event.ListSelectionListener;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.discovery.search.SearchFiltering;
+import org.sleuthkit.autopsy.guiutils.CheckBoxListPanel;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -42,6 +41,7 @@ final class DataSourceFilterPanel extends AbstractDiscoveryFilterPanel {
 
     private static final long serialVersionUID = 1L;
     private final static Logger logger = Logger.getLogger(DataSourceFilterPanel.class.getName());
+    private final CheckBoxListPanel<DataSource> dataSourceCheckBoxList = new CheckBoxListPanel<>();
 
     /**
      * Creates new form DataSourceFilterPanel.
@@ -50,8 +50,7 @@ final class DataSourceFilterPanel extends AbstractDiscoveryFilterPanel {
     DataSourceFilterPanel() {
         initComponents();
         setUpDataSourceFilter();
-        dataSourceList.setCellRenderer(new CheckboxCellRenderer(dataSourceCheckbox));
-        dataSourceList.setSelectionModel(new CheckboxListSelectionModel(dataSourceList));
+        add(dataSourceCheckBoxList);
     }
 
     /**
@@ -63,8 +62,8 @@ final class DataSourceFilterPanel extends AbstractDiscoveryFilterPanel {
     private void initComponents() {
 
         dataSourceCheckbox = new javax.swing.JCheckBox();
-        dataSourceScrollPane = new javax.swing.JScrollPane();
-        dataSourceList = new javax.swing.JList<>();
+        selectAllButton = new javax.swing.JButton();
+        deselectAllButton = new javax.swing.JButton();
 
         org.openide.awt.Mnemonics.setLocalizedText(dataSourceCheckbox, org.openide.util.NbBundle.getMessage(DataSourceFilterPanel.class, "DataSourceFilterPanel.dataSourceCheckbox.text")); // NOI18N
         dataSourceCheckbox.setMaximumSize(new java.awt.Dimension(150, 25));
@@ -77,39 +76,69 @@ final class DataSourceFilterPanel extends AbstractDiscoveryFilterPanel {
         });
 
         setMinimumSize(new java.awt.Dimension(250, 30));
-        setPreferredSize(new java.awt.Dimension(250, 30));
+        setPreferredSize(new java.awt.Dimension(250, 50));
         setRequestFocusEnabled(false);
 
-        dataSourceScrollPane.setPreferredSize(new java.awt.Dimension(27, 27));
+        org.openide.awt.Mnemonics.setLocalizedText(selectAllButton, org.openide.util.NbBundle.getMessage(DataSourceFilterPanel.class, "DataSourceFilterPanel.selectAllButton.text")); // NOI18N
+        selectAllButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                selectAllButtonActionPerformed(evt);
+            }
+        });
 
-        dataSourceList.setModel(new DefaultListModel<DataSourceItem>());
-        dataSourceList.setEnabled(false);
-        dataSourceList.setVisibleRowCount(5);
-        dataSourceScrollPane.setViewportView(dataSourceList);
+        org.openide.awt.Mnemonics.setLocalizedText(deselectAllButton, org.openide.util.NbBundle.getMessage(DataSourceFilterPanel.class, "DataSourceFilterPanel.deselectAllButton.text")); // NOI18N
+        deselectAllButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                deselectAllButtonActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(dataSourceScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(selectAllButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(deselectAllButton)
+                .addGap(0, 45, Short.MAX_VALUE))
         );
+
+        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {deselectAllButton, selectAllButton});
+
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(dataSourceScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGap(0, 0, 0))
+                .addContainerGap(19, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(selectAllButton)
+                    .addComponent(deselectAllButton))
+                .addGap(6, 6, 6))
         );
+
+        layout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {deselectAllButton, selectAllButton});
+
     }// </editor-fold>//GEN-END:initComponents
 
     private void dataSourceCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_dataSourceCheckboxActionPerformed
-        dataSourceList.setEnabled(dataSourceCheckbox.isSelected());
+        dataSourceCheckBoxList.setEnabled(dataSourceCheckbox.isSelected());
+        selectAllButton.setEnabled(dataSourceCheckbox.isSelected());
+        deselectAllButton.setEnabled(dataSourceCheckbox.isSelected());
     }//GEN-LAST:event_dataSourceCheckboxActionPerformed
+
+    private void selectAllButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectAllButtonActionPerformed
+        dataSourceCheckBoxList.setSetAllSelected(true);
+    }//GEN-LAST:event_selectAllButtonActionPerformed
+
+    private void deselectAllButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deselectAllButtonActionPerformed
+        dataSourceCheckBoxList.setSetAllSelected(false);
+    }//GEN-LAST:event_deselectAllButtonActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox dataSourceCheckbox;
-    private javax.swing.JList<DataSourceItem> dataSourceList;
-    private javax.swing.JScrollPane dataSourceScrollPane;
+    private javax.swing.JButton deselectAllButton;
+    private javax.swing.JButton selectAllButton;
     // End of variables declaration//GEN-END:variables
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
@@ -117,14 +146,12 @@ final class DataSourceFilterPanel extends AbstractDiscoveryFilterPanel {
     void configurePanel(boolean selected, int[] indicesSelected) {
         dataSourceCheckbox.setSelected(selected);
         if (dataSourceCheckbox.isEnabled() && dataSourceCheckbox.isSelected()) {
-            dataSourceScrollPane.setEnabled(true);
-            dataSourceList.setEnabled(true);
-            if (indicesSelected != null) {
-                dataSourceList.setSelectedIndices(indicesSelected);
-            }
+            dataSourceCheckBoxList.setEnabled(true);
+//            if (indicesSelected != null) {
+//                dataSourceCheckBoxList.setSelectedIndices(indicesSelected);
+//            }
         } else {
-            dataSourceScrollPane.setEnabled(false);
-            dataSourceList.setEnabled(false);
+            dataSourceCheckBoxList.setEnabled(false);
         }
     }
 
@@ -144,71 +171,46 @@ final class DataSourceFilterPanel extends AbstractDiscoveryFilterPanel {
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private void setUpDataSourceFilter() {
-        int count = 0;
         try {
-            DefaultListModel<DataSourceItem> dsListModel = (DefaultListModel<DataSourceItem>) dataSourceList.getModel();
-            dsListModel.removeAllElements();
+            dataSourceCheckBoxList.clearList();
             List<DataSource> dataSources = Case.getCurrentCase().getSleuthkitCase().getDataSources();
             Collections.sort(dataSources, (DataSource ds1, DataSource ds2) -> ds1.getName().compareToIgnoreCase(ds2.getName()));
             for (DataSource ds : dataSources) {
-                dsListModel.add(count, new DataSourceItem(ds));
-                count++;
+                dataSourceCheckBoxList.addElement(ds.getName() + " (ID: " + ds.getId() + ")", null, ds);
             }
 
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error loading data sources", ex);
             dataSourceCheckbox.setEnabled(false);
-            dataSourceList.setEnabled(false);
+            dataSourceCheckBoxList.setEnabled(false);
         }
     }
 
-    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
-    JList<?> getList() {
-        return dataSourceList;
+    ListSelectionListener[] getListSelectionListeners() {
+        return dataSourceCheckBoxList.getListSelectionListeners();
     }
 
-    /**
-     * Utility class to allow us to display the data source ID along with the
-     * name
-     */
-    private final class DataSourceItem extends javax.swing.JCheckBox {
+    @Override
+    void addListSelectionListener(ListSelectionListener listener) {
+        dataSourceCheckBoxList.addListSelectionListener(listener);
+    }
 
-        private static final long serialVersionUID = 1L;
+    @Override
+    void removeListSelectionListener(ListSelectionListener listener) {
+        dataSourceCheckBoxList.removeListSelectionListener(listener);
+    }
 
-        private final DataSource ds;
-
-        /**
-         * Construct a new DataSourceItem.
-         *
-         * @param ds The data source being wrapped.
-         */
-        DataSourceItem(DataSource ds) {
-            super(ds.getName() + " (ID: " + ds.getId() + ")");
-            this.ds = ds;
-        }
-
-        /**
-         * Get the data source represented by this data source item.
-         *
-         * @return The data source represented by this data source item.
-         */
-        DataSource getDataSource() {
-            return ds;
-        }
-
-        @Override
-        public String toString() {
-            return ds.getName() + " (ID: " + ds.getId() + ")";
-        }
-        
+    @Override
+    boolean isFilterSupported() {
+        return !dataSourceCheckBoxList.isEmpty();
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @NbBundle.Messages({"DataSourceFilterPanel.error.text=At least one data source must be selected."})
     @Override
     String checkForError() {
-        if (dataSourceCheckbox.isSelected() && dataSourceList.getSelectedValuesList().isEmpty()) {
+        if (dataSourceCheckbox.isSelected() && dataSourceCheckBoxList.getSelectedElements().isEmpty()) {
             return Bundle.DataSourceFilterPanel_error_text();
         }
         return "";
@@ -216,9 +218,20 @@ final class DataSourceFilterPanel extends AbstractDiscoveryFilterPanel {
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
+    void removeListeners() {
+        super.removeListeners();
+        if (dataSourceCheckBoxList != null) {
+            for (ListSelectionListener listener : getListSelectionListeners()) {
+                dataSourceCheckBoxList.removeListSelectionListener(listener);
+            }
+        }
+    }
+
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    @Override
     AbstractFilter getFilter() {
         if (dataSourceCheckbox.isSelected()) {
-            List<DataSource> dataSources = dataSourceList.getSelectedValuesList().stream().map(t -> t.getDataSource()).collect(Collectors.toList());
+            List<DataSource> dataSources = dataSourceCheckBoxList.getSelectedElements();
             return new SearchFiltering.DataSourceFilter(dataSources);
         }
         return null;

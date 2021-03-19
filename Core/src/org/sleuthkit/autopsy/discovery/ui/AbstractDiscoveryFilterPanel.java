@@ -25,6 +25,7 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.event.ListSelectionListener;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
+import org.sleuthkit.autopsy.guiutils.CheckBoxListPanel;
 
 /**
  * Abstract class extending JPanel for filter controls.
@@ -54,14 +55,20 @@ abstract class AbstractDiscoveryFilterPanel extends javax.swing.JPanel {
     abstract JCheckBox getCheckbox();
 
     /**
-     * Get the list of values associated with this filter if one exists. If one
-     * does not exist this should return null.
+     * Get the array of list selection listeners associated with this filter. If
+     * a list does not exist this should return null.
      *
-     * @return The JList which contains the values available for selection for
-     *         this filter.
+     * @return The array which contains the list selection listeners for this
+     *         panel.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    abstract JList<?> getList();
+    abstract ListSelectionListener[] getListSelectionListeners();
+
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    abstract void addListSelectionListener(ListSelectionListener listener);
+
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    abstract void removeListSelectionListener(ListSelectionListener listener);
 
     /**
      * Get any additional text that should be displayed under the checkbox. If
@@ -93,8 +100,8 @@ abstract class AbstractDiscoveryFilterPanel extends javax.swing.JPanel {
         if (getCheckbox() != null) {
             getCheckbox().addActionListener(actionListener);
         }
-        if (getList() != null) {
-            getList().addListSelectionListener(listListener);
+        if (getListSelectionListeners() != null) {
+            addListSelectionListener(listListener);
         }
     }
 
@@ -117,13 +124,25 @@ abstract class AbstractDiscoveryFilterPanel extends javax.swing.JPanel {
                 getCheckbox().removeActionListener(listener);
             }
         }
-        if (getList() != null) {
-            for (ListSelectionListener listener : getList().getListSelectionListeners()) {
-                getList().removeListSelectionListener(listener);
-            }
-        }
+        /*
+         * Should be overridden if a list is present and have something allong
+         * the lines of the following added after a call to the super.
+         *
+         * if (list != null) { for (ListSelectionListener listener :
+         * list.getListSelectionListeners()) {
+         * list.removeListSelectionListener(listener); } }
+         */
     }
 
+    /**
+     * Get whether or not the filter has sufficient options to be used.
+     */
+    abstract boolean isFilterSupported();
+
+    /**
+     * 
+     */
+    
     /**
      * Return whether or not this filter has a panel.
      *

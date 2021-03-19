@@ -21,7 +21,7 @@ package org.sleuthkit.autopsy.discovery.ui;
 import org.sleuthkit.autopsy.discovery.search.AbstractFilter;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
-import javax.swing.JList;
+import javax.swing.event.ListSelectionListener;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.discovery.search.SearchFiltering;
@@ -103,11 +103,6 @@ final class PreviouslyNotableFilterPanel extends AbstractDiscoveryFilterPanel {
     private javax.swing.JCheckBox previouslyNotableCheckbox;
     // End of variables declaration//GEN-END:variables
 
-    @Override
-    JList<?> getList() {
-        return null;
-    }
-
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     AbstractFilter getFilter() {
@@ -120,5 +115,25 @@ final class PreviouslyNotableFilterPanel extends AbstractDiscoveryFilterPanel {
     @Override
     boolean hasPanel() {
         return false;
+    }
+
+    @Override
+    ListSelectionListener[] getListSelectionListeners() {
+        return null;
+    }
+
+    @Override
+    void addListSelectionListener(ListSelectionListener listener) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    void removeListSelectionListener(ListSelectionListener listener) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    boolean isFilterSupported() {
+        return true;
     }
 }

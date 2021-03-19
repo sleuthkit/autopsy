@@ -21,14 +21,14 @@ package org.sleuthkit.autopsy.discovery.ui;
 import org.sleuthkit.autopsy.discovery.search.AbstractFilter;
 import java.util.List;
 import java.util.logging.Level;
-import javax.swing.DefaultListModel;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
-import javax.swing.JList;
+import javax.swing.event.ListSelectionListener;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.discovery.search.SearchFiltering;
+import org.sleuthkit.autopsy.guiutils.CheckBoxListPanel;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -40,6 +40,7 @@ final class HashSetFilterPanel extends AbstractDiscoveryFilterPanel {
 
     private static final long serialVersionUID = 1L;
     private final static Logger logger = Logger.getLogger(HashSetFilterPanel.class.getName());
+    private static final CheckBoxListPanel<String> hashSetList = new CheckBoxListPanel<>();
 
     /**
      * Creates new form HashSetFilterPaenl.
@@ -48,6 +49,7 @@ final class HashSetFilterPanel extends AbstractDiscoveryFilterPanel {
     HashSetFilterPanel() {
         initComponents();
         setUpHashFilter();
+        add(hashSetList);
     }
 
     /**
@@ -55,15 +57,12 @@ final class HashSetFilterPanel extends AbstractDiscoveryFilterPanel {
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private void setUpHashFilter() {
-        int count = 0;
         try {
-            DefaultListModel<String> hashListModel = (DefaultListModel<String>) hashSetList.getModel();
-            hashListModel.removeAllElements();
+            hashSetList.clearList();
             List<String> setNames = DiscoveryUiUtils.getSetNames(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT,
                     BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME);
             for (String name : setNames) {
-                hashListModel.add(count, name);
-                count++;
+                hashSetList.addElement(name, null, name);
             }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error loading hash set names", ex);
@@ -82,8 +81,6 @@ final class HashSetFilterPanel extends AbstractDiscoveryFilterPanel {
     private void initComponents() {
 
         hashSetCheckbox = new javax.swing.JCheckBox();
-        hashSetScrollPane = new javax.swing.JScrollPane();
-        hashSetList = new javax.swing.JList<>();
 
         org.openide.awt.Mnemonics.setLocalizedText(hashSetCheckbox, org.openide.util.NbBundle.getMessage(HashSetFilterPanel.class, "HashSetFilterPanel.hashSetCheckbox.text")); // NOI18N
         hashSetCheckbox.setMaximumSize(new java.awt.Dimension(150, 25));
@@ -98,20 +95,15 @@ final class HashSetFilterPanel extends AbstractDiscoveryFilterPanel {
         setMinimumSize(new java.awt.Dimension(250, 30));
         setPreferredSize(new java.awt.Dimension(250, 30));
 
-        hashSetList.setModel(new DefaultListModel<String>());
-        hashSetList.setEnabled(false);
-        hashSetList.setVisibleRowCount(3);
-        hashSetScrollPane.setViewportView(hashSetList);
-
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(hashSetScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
+            .addGap(0, 250, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(hashSetScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 60, Short.MAX_VALUE)
+            .addGap(0, 30, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -122,24 +114,20 @@ final class HashSetFilterPanel extends AbstractDiscoveryFilterPanel {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox hashSetCheckbox;
-    private javax.swing.JList<String> hashSetList;
-    private javax.swing.JScrollPane hashSetScrollPane;
     // End of variables declaration//GEN-END:variables
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     void configurePanel(boolean selected, int[] indicesSelected) {
-        boolean hasHashSets = hashSetList.getModel().getSize() > 0;
+        boolean hasHashSets = isFilterSupported();
         hashSetCheckbox.setEnabled(hasHashSets);
         hashSetCheckbox.setSelected(selected && hasHashSets);
         if (hashSetCheckbox.isEnabled() && hashSetCheckbox.isSelected()) {
-            hashSetScrollPane.setEnabled(true);
             hashSetList.setEnabled(true);
-            if (indicesSelected != null) {
-                hashSetList.setSelectedIndices(indicesSelected);
-            }
+//            if (indicesSelected != null) {
+//                hashSetList.setSelectedIndices(indicesSelected);
+//            }
         } else {
-            hashSetScrollPane.setEnabled(false);
             hashSetList.setEnabled(false);
         }
     }
@@ -159,7 +147,7 @@ final class HashSetFilterPanel extends AbstractDiscoveryFilterPanel {
     @NbBundle.Messages({"HashSetFilterPanel.error.text=At least one hash set name must be selected."})
     @Override
     String checkForError() {
-        if (hashSetCheckbox.isSelected() && hashSetList.getSelectedValuesList().isEmpty()) {
+        if (hashSetCheckbox.isSelected() && hashSetList.getSelectedElements().isEmpty()) {
             return Bundle.HashSetFilterPanel_error_text();
         }
         return "";
@@ -167,16 +155,42 @@ final class HashSetFilterPanel extends AbstractDiscoveryFilterPanel {
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
-    JList<?> getList() {
-        return hashSetList;
+    AbstractFilter getFilter() {
+        if (hashSetCheckbox.isSelected()) {
+            List<String> setList = hashSetList.getSelectedElements();
+            return new SearchFiltering.InterestingFileSetFilter(setList);
+        }
+        return null;
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
-    AbstractFilter getFilter() {
-        if (hashSetCheckbox.isSelected()) {
-            return new SearchFiltering.HashSetFilter(hashSetList.getSelectedValuesList());
+    void removeListeners() {
+        super.removeListeners();
+        if (hashSetList != null) {
+            for (ListSelectionListener listener : getListSelectionListeners()) {
+                hashSetList.removeListSelectionListener(listener);
+            }
         }
-        return null;
+    }
+
+    @Override
+    ListSelectionListener[] getListSelectionListeners() {
+        return hashSetList.getListSelectionListeners();
+    }
+
+    @Override
+    void addListSelectionListener(ListSelectionListener listener) {
+        hashSetList.addListSelectionListener(listener);
+    }
+
+    @Override
+    void removeListSelectionListener(ListSelectionListener listener) {
+        hashSetList.removeListSelectionListener(listener);
+    }
+
+    @Override
+    boolean isFilterSupported() {
+        return !hashSetList.isEmpty();
     }
 }

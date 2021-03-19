@@ -21,14 +21,14 @@ package org.sleuthkit.autopsy.discovery.ui;
 import org.sleuthkit.autopsy.discovery.search.AbstractFilter;
 import java.util.List;
 import java.util.logging.Level;
-import javax.swing.DefaultListModel;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
-import javax.swing.JList;
+import javax.swing.event.ListSelectionListener;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.discovery.search.SearchFiltering;
+import org.sleuthkit.autopsy.guiutils.CheckBoxListPanel;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -40,6 +40,7 @@ final class InterestingItemsFilterPanel extends AbstractDiscoveryFilterPanel {
 
     private static final long serialVersionUID = 1L;
     private final static Logger logger = Logger.getLogger(InterestingItemsFilterPanel.class.getName());
+    private static final CheckBoxListPanel<String> interestingItemsList = new CheckBoxListPanel<>();
 
     /**
      * Creates new form InterestingItemsFilterPanel.
@@ -48,6 +49,7 @@ final class InterestingItemsFilterPanel extends AbstractDiscoveryFilterPanel {
     InterestingItemsFilterPanel() {
         initComponents();
         setUpInterestingItemsFilter();
+        add(interestingItemsList);
     }
 
     /**
@@ -55,15 +57,12 @@ final class InterestingItemsFilterPanel extends AbstractDiscoveryFilterPanel {
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private void setUpInterestingItemsFilter() {
-        int count = 0;
         try {
-            DefaultListModel<String> intListModel = (DefaultListModel<String>) interestingItemsList.getModel();
-            intListModel.removeAllElements();
+            interestingItemsList.clearList();
             List<String> setNames = DiscoveryUiUtils.getSetNames(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT,
                     BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME);
             for (String name : setNames) {
-                intListModel.add(count, name);
-                count++;
+                interestingItemsList.addElement(name, null, name);
             }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error loading interesting file set names", ex);
@@ -82,8 +81,6 @@ final class InterestingItemsFilterPanel extends AbstractDiscoveryFilterPanel {
     private void initComponents() {
 
         interestingItemsCheckbox = new javax.swing.JCheckBox();
-        interestingItemsScrollPane = new javax.swing.JScrollPane();
-        interestingItemsList = new javax.swing.JList<>();
 
         org.openide.awt.Mnemonics.setLocalizedText(interestingItemsCheckbox, org.openide.util.NbBundle.getMessage(InterestingItemsFilterPanel.class, "InterestingItemsFilterPanel.interestingItemsCheckbox.text")); // NOI18N
         interestingItemsCheckbox.setMaximumSize(new java.awt.Dimension(150, 25));
@@ -98,22 +95,15 @@ final class InterestingItemsFilterPanel extends AbstractDiscoveryFilterPanel {
         setMinimumSize(new java.awt.Dimension(250, 30));
         setPreferredSize(new java.awt.Dimension(250, 30));
 
-        interestingItemsScrollPane.setPreferredSize(new java.awt.Dimension(27, 27));
-
-        interestingItemsList.setModel(new DefaultListModel<String>());
-        interestingItemsList.setEnabled(false);
-        interestingItemsList.setVisibleRowCount(2);
-        interestingItemsScrollPane.setViewportView(interestingItemsList);
-
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(interestingItemsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
+            .addGap(0, 250, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(interestingItemsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 88, Short.MAX_VALUE)
+            .addGap(0, 30, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -124,17 +114,15 @@ final class InterestingItemsFilterPanel extends AbstractDiscoveryFilterPanel {
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     void configurePanel(boolean selected, int[] indicesSelected) {
-        boolean hasInterestingItems = interestingItemsList.getModel().getSize() > 0;
+        boolean hasInterestingItems = isFilterSupported();
         interestingItemsCheckbox.setEnabled(hasInterestingItems);
         interestingItemsCheckbox.setSelected(selected && hasInterestingItems);
         if (interestingItemsCheckbox.isEnabled() && interestingItemsCheckbox.isSelected()) {
-            interestingItemsScrollPane.setEnabled(true);
             interestingItemsList.setEnabled(true);
-            if (indicesSelected != null) {
-                interestingItemsList.setSelectedIndices(indicesSelected);
-            }
+//            if (indicesSelected != null) {
+//                interestingItemsList.setSelectedIndices(indicesSelected);
+//            }
         } else {
-            interestingItemsScrollPane.setEnabled(false);
             interestingItemsList.setEnabled(false);
         }
     }
@@ -154,7 +142,7 @@ final class InterestingItemsFilterPanel extends AbstractDiscoveryFilterPanel {
     @NbBundle.Messages({"InterestingItemsFilterPanel.error.text=At least one interesting file set name must be selected."})
     @Override
     String checkForError() {
-        if (interestingItemsCheckbox.isSelected() && interestingItemsList.getSelectedValuesList().isEmpty()) {
+        if (interestingItemsCheckbox.isSelected() && interestingItemsList.getSelectedElements().isEmpty()) {
             return Bundle.InterestingItemsFilterPanel_error_text();
         }
         return "";
@@ -163,22 +151,46 @@ final class InterestingItemsFilterPanel extends AbstractDiscoveryFilterPanel {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox interestingItemsCheckbox;
-    private javax.swing.JList<String> interestingItemsList;
-    private javax.swing.JScrollPane interestingItemsScrollPane;
     // End of variables declaration//GEN-END:variables
-
-    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    @Override
-    JList<?> getList() {
-        return interestingItemsList;
-    }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     AbstractFilter getFilter() {
         if (interestingItemsCheckbox.isSelected()) {
-            return new SearchFiltering.InterestingFileSetFilter(interestingItemsList.getSelectedValuesList());
+            List<String> itemsList = interestingItemsList.getSelectedElements();
+            return new SearchFiltering.InterestingFileSetFilter(itemsList);
         }
         return null;
+    }
+
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    @Override
+    void removeListeners() {
+        super.removeListeners();
+        if (interestingItemsList != null) {
+            for (ListSelectionListener listener : getListSelectionListeners()) {
+                interestingItemsList.removeListSelectionListener(listener);
+            }
+        }
+    }
+
+    @Override
+    ListSelectionListener[] getListSelectionListeners() {
+        return interestingItemsList.getListSelectionListeners();
+    }
+
+    @Override
+    void addListSelectionListener(ListSelectionListener listener) {
+        interestingItemsList.addListSelectionListener(listener);
+    }
+
+    @Override
+    void removeListSelectionListener(ListSelectionListener listener) {
+        interestingItemsList.removeListSelectionListener(listener);
+    }
+
+    @Override
+    boolean isFilterSupported() {
+        return !interestingItemsList.isEmpty();
     }
 }

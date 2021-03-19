@@ -18,18 +18,18 @@
  */
 package org.sleuthkit.autopsy.discovery.ui;
 
-import javax.swing.DefaultListModel;
+import java.util.List;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
-import javax.swing.JList;
+import javax.swing.event.ListSelectionListener;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.discovery.search.AbstractFilter;
 import org.sleuthkit.autopsy.discovery.search.SearchData;
-import org.sleuthkit.autopsy.discovery.search.SearchData.Frequency;
 import org.sleuthkit.autopsy.discovery.search.SearchData.Type;
 import org.sleuthkit.autopsy.discovery.search.SearchFiltering;
+import org.sleuthkit.autopsy.guiutils.CheckBoxListPanel;
 
 /**
  * Panel to allow configuration of the Past Occurrences filter.
@@ -38,6 +38,7 @@ final class PastOccurrencesFilterPanel extends AbstractDiscoveryFilterPanel {
 
     private static final long serialVersionUID = 1L;
     private final Type type;
+    private static final CheckBoxListPanel<SearchData.Frequency> crFrequencyList = new CheckBoxListPanel<>();
 
     /**
      * Creates new form PastOccurrencesFilterPanel.
@@ -47,6 +48,7 @@ final class PastOccurrencesFilterPanel extends AbstractDiscoveryFilterPanel {
         initComponents();
         this.type = type;
         setUpFrequencyFilter();
+        add(crFrequencyList);
     }
 
     /**
@@ -59,8 +61,6 @@ final class PastOccurrencesFilterPanel extends AbstractDiscoveryFilterPanel {
     private void initComponents() {
 
         pastOccurrencesCheckbox = new javax.swing.JCheckBox();
-        crFrequencyScrollPane = new javax.swing.JScrollPane();
-        crFrequencyList = new javax.swing.JList<>();
 
         org.openide.awt.Mnemonics.setLocalizedText(pastOccurrencesCheckbox, org.openide.util.NbBundle.getMessage(PastOccurrencesFilterPanel.class, "PastOccurrencesFilterPanel.pastOccurrencesCheckbox.text")); // NOI18N
         pastOccurrencesCheckbox.setMaximumSize(new java.awt.Dimension(150, 25));
@@ -75,24 +75,15 @@ final class PastOccurrencesFilterPanel extends AbstractDiscoveryFilterPanel {
         setMinimumSize(new java.awt.Dimension(250, 30));
         setPreferredSize(new java.awt.Dimension(250, 30));
 
-        crFrequencyScrollPane.setPreferredSize(new java.awt.Dimension(27, 27));
-
-        crFrequencyList.setModel(new DefaultListModel<Frequency>());
-        crFrequencyList.setEnabled(false);
-        crFrequencyList.setVisibleRowCount(5);
-        crFrequencyScrollPane.setViewportView(crFrequencyList);
-
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(crFrequencyScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
+            .addGap(0, 250, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(crFrequencyScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGap(0, 0, 0))
+            .addGap(0, 30, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -105,27 +96,23 @@ final class PastOccurrencesFilterPanel extends AbstractDiscoveryFilterPanel {
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private void setUpFrequencyFilter() {
-        int count = 0;
-        DefaultListModel<SearchData.Frequency> frequencyListModel = (DefaultListModel<SearchData.Frequency>) crFrequencyList.getModel();
-        frequencyListModel.removeAllElements();
+        crFrequencyList.clearList();
         if (!CentralRepository.isEnabled()) {
             if (type != Type.DOMAIN) {
                 for (SearchData.Frequency freq : SearchData.Frequency.getOptionsForFilteringWithoutCr()) {
-                    frequencyListModel.add(count, freq);
+                    crFrequencyList.addElement(freq.toString(), null, freq);
                 }
             }
         } else {
             for (SearchData.Frequency freq : SearchData.Frequency.getOptionsForFilteringWithCr()) {
                 if (type != Type.DOMAIN || freq != SearchData.Frequency.KNOWN) {
-                    frequencyListModel.add(count, freq);
+                    crFrequencyList.addElement(freq.toString(), null, freq);
                 }
             }
         }
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JList<Frequency> crFrequencyList;
-    private javax.swing.JScrollPane crFrequencyScrollPane;
     private javax.swing.JCheckBox pastOccurrencesCheckbox;
     // End of variables declaration//GEN-END:variables
 
@@ -137,13 +124,11 @@ final class PastOccurrencesFilterPanel extends AbstractDiscoveryFilterPanel {
         pastOccurrencesCheckbox.setSelected(selected && canBeFilteredOn);
 
         if (pastOccurrencesCheckbox.isEnabled() && pastOccurrencesCheckbox.isSelected()) {
-            crFrequencyScrollPane.setEnabled(true);
             crFrequencyList.setEnabled(true);
-            if (indicesSelected != null) {
-                crFrequencyList.setSelectedIndices(indicesSelected);
-            }
+//            if (indicesSelected != null) {
+//                crFrequencyList.setSelectedIndices(indicesSelected);
+//            }
         } else {
-            crFrequencyScrollPane.setEnabled(false);
             crFrequencyList.setEnabled(false);
         }
     }
@@ -163,7 +148,7 @@ final class PastOccurrencesFilterPanel extends AbstractDiscoveryFilterPanel {
     @NbBundle.Messages({"PastOccurrencesFilterPanel.error.text=At least one value in the past occurrence filter must be selected."})
     @Override
     String checkForError() {
-        if (pastOccurrencesCheckbox.isSelected() && crFrequencyList.getSelectedValuesList().isEmpty()) {
+        if (pastOccurrencesCheckbox.isSelected() && crFrequencyList.getSelectedElements().isEmpty()) {
             return Bundle.PastOccurrencesFilterPanel_error_text();
         }
         return "";
@@ -171,16 +156,43 @@ final class PastOccurrencesFilterPanel extends AbstractDiscoveryFilterPanel {
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
-    JList<?> getList() {
-        return crFrequencyList;
+    AbstractFilter getFilter() {
+        if (pastOccurrencesCheckbox.isSelected()) {
+            List<SearchData.Frequency> frequencies = crFrequencyList.getSelectedElements();
+            return new SearchFiltering.FrequencyFilter(frequencies);
+        }
+        return null;
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
-    AbstractFilter getFilter() {
-        if (pastOccurrencesCheckbox.isSelected()) {
-            return new SearchFiltering.FrequencyFilter(crFrequencyList.getSelectedValuesList());
+    void removeListeners() {
+        super.removeListeners();
+        if (crFrequencyList != null) {
+            for (ListSelectionListener listener : getListSelectionListeners()) {
+                crFrequencyList.removeListSelectionListener(listener);
+            }
         }
-        return null;
     }
+
+    @Override
+    ListSelectionListener[] getListSelectionListeners() {
+        return crFrequencyList.getListSelectionListeners();
+    }
+
+    @Override
+    void addListSelectionListener(ListSelectionListener listener) {
+        crFrequencyList.addListSelectionListener(listener);
+    }
+
+    @Override
+    void removeListSelectionListener(ListSelectionListener listener) {
+        crFrequencyList.removeListSelectionListener(listener);
+    }
+
+    @Override
+    boolean isFilterSupported() {
+        return !crFrequencyList.isEmpty();
+    }
+
 }
