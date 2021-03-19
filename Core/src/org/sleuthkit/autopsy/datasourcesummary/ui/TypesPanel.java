@@ -47,6 +47,7 @@ import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelSpecialFormatExport.
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.IngestRunningLabel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.LoadableComponent;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.LoadableLabel;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.PieChartExport;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.PieChartPanel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.PieChartItem;
 
@@ -449,6 +450,10 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
                         getStrExportable(osFetcher, Bundle.TypesPanel_osLabel_title(), dataSource),
                         new KeyValueItemExportable(Bundle.TypesPanel_sizeLabel_title(),
                                 SizeRepresentationUtil.getBytesCell(getFetchResult(sizeFetcher, "Types", dataSource))),
+                        new PieChartExport(String keyColumnHeader, 
+            String valueColumnHeader, String valueFormatString,
+            String chartTitle,
+            List<PieChartItem> slices),
                         getCountExportable(allocatedFetcher, Bundle.TypesPanel_filesByCategoryTable_allocatedRow_title(), dataSource),
                         getCountExportable(unallocatedFetcher, Bundle.TypesPanel_filesByCategoryTable_unallocatedRow_title(), dataSource),
                         getCountExportable(slackFetcher, Bundle.TypesPanel_filesByCategoryTable_slackRow_title(), dataSource),
