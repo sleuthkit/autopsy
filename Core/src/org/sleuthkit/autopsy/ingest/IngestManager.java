@@ -769,9 +769,8 @@ public class IngestManager implements IngestProgressSnapshotProvider {
     }
 
     /**
-     * Updates the ingest progress snapshot for data source ingest task. This
-     * method should be called every time a new ingest module starts working on
-     * the task.
+     * Updates the ingest progress snapshot for a data source level ingest task
+     * when a new ingest module starts working on the task.
      *
      * @param task              The data source ingest task.
      * @param currentModuleName The display name of the currently processing
@@ -790,9 +789,8 @@ public class IngestManager implements IngestProgressSnapshotProvider {
     }
 
     /**
-     * Updates the ingest progress snapshot for data source ingest task. This
-     * method should be called every time a new ingest module starts working on
-     * the task.
+     * Updates the ingest progress snapshot for a file ingest task when a new
+     * ingest module starts working on the task.
      *
      * @param task              The file ingest task.
      * @param currentModuleName The display name of the currently processing

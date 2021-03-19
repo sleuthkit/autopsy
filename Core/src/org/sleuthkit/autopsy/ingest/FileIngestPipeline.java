@@ -66,12 +66,6 @@ final class FileIngestPipeline extends IngestTaskPipeline<FileIngestTask> {
         try {
             file = task.getFile();
         } catch (TskCoreException ex) {
-            /*
-             * In practice, the file should have already been lazily looked up
-             * and cached in the file task when the task was enqueued by the
-             * ingest tasks scheduler. Therefore there is no case database query
-             * here and there should be no TskCoreException.
-             */
             throw new IngestTaskPipelineException(String.format("Failed to get file (file objId = %d)", task.getFileId()), ex); //NON-NLS
         }
         try {
