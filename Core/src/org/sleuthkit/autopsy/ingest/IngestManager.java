@@ -23,6 +23,7 @@ import java.awt.EventQueue;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.Serializable;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -46,6 +47,7 @@ import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.Immutable;
 import javax.annotation.concurrent.ThreadSafe;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.Cancellable;
 import org.openide.util.NbBundle;
@@ -395,6 +397,21 @@ public class IngestManager implements IngestProgressSnapshotProvider {
         "IngestManager.startupErr.dlgErrorList=Errors:"
     })
     IngestJobStartResult startIngestJob(IngestJob job) {
+
+        // initialize IngestMessageInbox, if it hasn't been initialized yet. This can't be done in
+        // the constructor because that ends up freezing the UI on startup (JIRA-7345).
+        if (SwingUtilities.isEventDispatchThread()) {
+            initIngestMessageInbox();
+        } else {
+            try {
+                SwingUtilities.invokeAndWait(() -> initIngestMessageInbox());
+            } catch (InterruptedException ex) {
+                // ignore interruptions
+            } catch (InvocationTargetException ex) {
+                logger.log(Level.WARNING, "There was an error starting ingest message inbox", ex);
+            }
+        }
+
         List<IngestModuleError> errors = null;
         Case openCase;
         try {
@@ -701,8 +718,11 @@ public class IngestManager implements IngestProgressSnapshotProvider {
 
     /**
      * Causes the ingest manager to get the top component used to display ingest
-     * inbox messages. Called by the custom installer for this package once the
-     * window system is initialized.
+     * inbox messages. Used to be called by the custom installer for this
+     * package once the window system is initialized, but that results in a lot
+     * of UI components being initialized, which freezes the UI for a long
+     * period of time(JIRA-7345). Instead we are now initializing
+     * IngestMessageInbox immediately prior to running first ingest job.
      */
     void initIngestMessageInbox() {
         synchronized (this.ingestMessageBoxLock) {
