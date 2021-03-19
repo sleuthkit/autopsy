@@ -165,7 +165,8 @@ public final class LeappFileProcessor {
             .put("Contacts.tsv", "contact")
             .put("IMO - AccountId.tsv", "contact")
             .put("IMO - messages.tsv", "message")
-            
+            .put("SMS - iMessage.tsv", "message")
+            .put("Call History.tsv", "calllog")
             .build();
 
     Blackboard blkBoard;
@@ -447,7 +448,9 @@ public final class LeappFileProcessor {
                 }
             }
             AbstractFile absFile = findAbstractFile(dataSource, sourceFile);
-            Account.Type accountType = getAccountType(fileName);
+            if (absFile == null) {
+                absFile = (AbstractFile) dataSource;
+            }            Account.Type accountType = getAccountType(fileName);
             if ((absFile != null) || (accountType != null)) {
                 CommunicationArtifactsHelper accountArtifact = new CommunicationArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(),
                                                                moduleName, absFile, accountType);
@@ -628,8 +631,10 @@ public final class LeappFileProcessor {
                 return Account.Type.TANGO;  
             case "shareit file transfer.tsv":
                 return Account.Type.SHAREIT;   
+            case "sms - imessage.tsv":
+                return Account.Type.PHONE;
             default:
-                return null;
+                return Account.Type.PHONE;
         }
     }
     
