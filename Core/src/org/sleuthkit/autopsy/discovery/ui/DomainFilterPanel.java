@@ -42,7 +42,6 @@ public class DomainFilterPanel extends AbstractFiltersPanel {
         super();
         initComponents();
         addFilter(new DataSourceFilterPanel(), false, null, 0);
-        addFilter(new PreviouslyNotableFilterPanel(), false, null, 1);
         addFilter(new KnownAccountTypeFilterPanel(), false, null, 1);
         addFilter(new ArtifactTypeFilterPanel(), false, null, 1);
         addFilter(new DateFilterPanel(), false, null, 1);
@@ -54,6 +53,7 @@ public class DomainFilterPanel extends AbstractFiltersPanel {
             defaultFrequencies.add(SearchData.Frequency.COMMON);
         }
         addFilter(new PastOccurrencesFilterPanel(TYPE), true, defaultFrequencies, 0);
+        addFilter(new PreviouslyNotableFilterPanel(), false, null, 0);
         addPanelsToScrollPane(domainFiltersSplitPane);
         setLastGroupingAttributeType(DiscoveryAttributes.GroupingAttributeType.LAST_ACTIVITY_DATE);
         setLastSortingMethod(ResultsSorter.SortingMethod.BY_DOMAIN_NAME);

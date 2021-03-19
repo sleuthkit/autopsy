@@ -44,7 +44,7 @@ final class DocumentFilterPanel extends AbstractFiltersPanel {
         List<SearchData.FileSize> defaultSizes = new ArrayList<>();
         defaultSizes.add(SearchData.FileSize.LARGE_IMAGE);
         defaultSizes.add(SearchData.FileSize.XLARGE_IMAGE);
-        defaultSizes.add(SearchData.FileSize.XXLARGE_VIDEO);
+        defaultSizes.add(SearchData.FileSize.XXLARGE_IMAGE);
         addFilter(sizeFilterPanel, true, defaultSizes, 0);
         addFilter(new DataSourceFilterPanel(), false, null, 0);
         List<SearchData.Frequency> defaultFrequencies = new ArrayList<>();

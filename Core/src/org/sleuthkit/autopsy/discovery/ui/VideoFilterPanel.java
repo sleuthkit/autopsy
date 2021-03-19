@@ -55,7 +55,7 @@ final class VideoFilterPanel extends AbstractFiltersPanel {
             defaultFrequencies.add(SearchData.Frequency.COMMON);
         }
         addFilter(new PastOccurrencesFilterPanel(TYPE), true, defaultFrequencies, 0);
-        addFilter(new UserCreatedFilterPanel(), false, null, 1);
+        addFilter(new UserCreatedFilterPanel(), false, null, 0);
         addFilter(new HashSetFilterPanel(), false, null, 1);
         addFilter(new InterestingItemsFilterPanel(), false, null, 1);
         addFilter(new ObjectDetectedFilterPanel(), false, null, 1);
