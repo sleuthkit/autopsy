@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -31,6 +32,8 @@ final class FileIngestPipeline extends IngestTaskPipeline<FileIngestTask> {
 
     private static final IngestManager ingestManager = IngestManager.getInstance();
     private final IngestJobPipeline ingestJobPipeline;
+    private final Object fileBatchLock;
+    private final List<AbstractFile> fileBatch;
 
     /**
      * Constructs a pipeline of file ingest modules for performing file ingest
@@ -43,6 +46,8 @@ final class FileIngestPipeline extends IngestTaskPipeline<FileIngestTask> {
     FileIngestPipeline(IngestJobPipeline ingestJobPipeline, List<IngestModuleTemplate> moduleTemplates) {
         super(ingestJobPipeline, moduleTemplates);
         this.ingestJobPipeline = ingestJobPipeline;
+        fileBatchLock = new Object();
+        fileBatch = new ArrayList<>();
     }
 
     @Override
