@@ -127,7 +127,6 @@ public final class DataContentViewerOtherCases extends JPanel implements DataCon
 
     }
 
-  
     /**
      * Determine what attributes can be used for correlation based on the node.
      * If EamDB is not enabled, get the default Files correlation.
@@ -205,13 +204,15 @@ public final class DataContentViewerOtherCases extends JPanel implements DataCon
         // - The central repo is enabled and the node has correlatable content
         //   (either through the MD5 hash of the associated file or through a BlackboardArtifact)
         // - The central repo is disabled and the backing file has a valid MD5 hash
-        this.file = node.getLookup().lookup(AbstractFile.class);;
-        if (CentralRepository.isEnabled()) {
+        this.file = node.getLookup().lookup(AbstractFile.class);
+        if (file == null) {
+            return false;
+        } else if (CentralRepository.isEnabled()) {
             return !getCorrelationAttributesFromNode(node).isEmpty();
         } else {
-            return this.file != null
-                    && this.file.getSize() > 0
-                    && ((this.file.getMd5Hash() != null) && (!this.file.getMd5Hash().isEmpty()));
+            return this.file.getSize() > 0
+                    && ((this.file.getMd5Hash() != null)
+                    && (!this.file.getMd5Hash().isEmpty()));
         }
     }
 
