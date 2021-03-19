@@ -45,7 +45,7 @@ import org.sleuthkit.autopsy.datasourcesummary.uiutils.IngestRunningLabel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.LoadableComponent;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.LoadableLabel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.PieChartPanel;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.PieChartPanel.PieChartItem;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.PieChartItem;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeIdModuleFactory;
 
 import org.sleuthkit.datamodel.DataSource;
