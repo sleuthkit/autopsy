@@ -304,13 +304,13 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
     }
     
     private void evaluateTempDirState() {
-        boolean caseOpen = !Case.isCaseOpen();
+        boolean caseOpen = Case.isCaseOpen();
         boolean customSelected = tempCustomRadio.isSelected();
         
         tempDirectoryBrowseButton.setEnabled(!caseOpen && customSelected);
         tempCustomField.setEnabled(!caseOpen && customSelected);
         
-        tempDirectoryWarningLabel.setVisible(customSelected && StringUtils.isBlank(tempCustomField.getText()));
+        tempOnCustomNoPath.setVisible(customSelected && StringUtils.isBlank(tempCustomField.getText()));
     }
 
     /**
@@ -681,7 +681,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         tempLocalRadio = new javax.swing.JRadioButton();
         tempCaseRadio = new javax.swing.JRadioButton();
         tempCustomRadio = new javax.swing.JRadioButton();
-        tmpOnCustomNoPath = new javax.swing.JLabel();
+        tempOnCustomNoPath = new javax.swing.JLabel();
         rdpPanel = new javax.swing.JPanel();
         javax.swing.JScrollPane sizingScrollPane = new javax.swing.JScrollPane();
         javax.swing.JTextPane sizingTextPane = new javax.swing.JTextPane();
@@ -944,8 +944,8 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
             }
         });
 
-        tmpOnCustomNoPath.setForeground(java.awt.Color.RED);
-        org.openide.awt.Mnemonics.setLocalizedText(tmpOnCustomNoPath, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.tmpOnCustomNoPath.text")); // NOI18N
+        tempOnCustomNoPath.setForeground(java.awt.Color.RED);
+        org.openide.awt.Mnemonics.setLocalizedText(tempOnCustomNoPath, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.tempOnCustomNoPath.text")); // NOI18N
 
         javax.swing.GroupLayout tempDirectoryPanelLayout = new javax.swing.GroupLayout(tempDirectoryPanel);
         tempDirectoryPanel.setLayout(tempDirectoryPanelLayout);
@@ -953,24 +953,18 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
             tempDirectoryPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(tempDirectoryPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(tempDirectoryPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                .addGroup(tempDirectoryPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(tempOnCustomNoPath)
                     .addGroup(tempDirectoryPanelLayout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addGroup(tempDirectoryPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(tempDirectoryWarningLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 615, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(tempLocalRadio)
-                            .addComponent(tempCaseRadio)))
-                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, tempDirectoryPanelLayout.createSequentialGroup()
-                        .addGroup(tempDirectoryPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(tmpOnCustomNoPath, javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, tempDirectoryPanelLayout.createSequentialGroup()
-                                .addComponent(tempCustomRadio)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(tempCustomField, javax.swing.GroupLayout.PREFERRED_SIZE, 388, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(tempDirectoryBrowseButton)))
-                        .addGap(0, 0, Short.MAX_VALUE)))
-                .addGap(158, 158, 158))
+                        .addComponent(tempCustomRadio)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(tempCustomField, javax.swing.GroupLayout.PREFERRED_SIZE, 459, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(tempDirectoryBrowseButton))
+                    .addComponent(tempLocalRadio)
+                    .addComponent(tempCaseRadio)
+                    .addComponent(tempDirectoryWarningLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 615, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         tempDirectoryPanelLayout.setVerticalGroup(
             tempDirectoryPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -985,8 +979,8 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
                     .addComponent(tempCustomField)
                     .addComponent(tempDirectoryBrowseButton))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(tmpOnCustomNoPath)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(tempOnCustomNoPath)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(tempDirectoryWarningLabel)
                 .addGap(14, 14, 14))
         );
@@ -1041,7 +1035,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 648, Short.MAX_VALUE)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 860, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1203,7 +1197,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
     private javax.swing.JPanel tempDirectoryPanel;
     private javax.swing.JLabel tempDirectoryWarningLabel;
     private javax.swing.JRadioButton tempLocalRadio;
-    private javax.swing.JLabel tmpOnCustomNoPath;
+    private javax.swing.JLabel tempOnCustomNoPath;
     private javax.swing.JLabel totalMemoryLabel;
     // End of variables declaration//GEN-END:variables
 
