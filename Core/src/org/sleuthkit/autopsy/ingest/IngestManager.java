@@ -769,8 +769,8 @@ public class IngestManager implements IngestProgressSnapshotProvider {
     }
 
     /**
-     * Updates the ingest progress snapshot for a data source level ingest task
-     * when a new ingest module starts working on the task.
+     * Updates the ingest progress snapshot when a new ingest module starts
+     * working on a data source level ingest task.
      *
      * @param task              The data source ingest task.
      * @param currentModuleName The display name of the currently processing
@@ -789,8 +789,8 @@ public class IngestManager implements IngestProgressSnapshotProvider {
     }
 
     /**
-     * Updates the ingest progress snapshot for a file ingest task when a new
-     * ingest module starts working on the task.
+     * Updates the ingest progress snapshot when a new ingest module starts
+     * working on a file ingest task.
      *
      * @param task              The file ingest task.
      * @param currentModuleName The display name of the currently processing
@@ -802,12 +802,6 @@ public class IngestManager implements IngestProgressSnapshotProvider {
         try {
             newSnap = new IngestThreadActivitySnapshot(task.getThreadId(), task.getIngestJobPipeline().getId(), currentModuleName, task.getDataSource(), task.getFile());
         } catch (TskCoreException ex) {
-            /*
-             * In practice, the file should have already been lazily looked up
-             * and cached in the file task when the task was enqueued by the
-             * ingest tasks scheduler. Therefore there is no case database query
-             * here and there should be no TskCoreException.
-             */
             logger.log(Level.SEVERE, "Error getting file from file ingest task", ex);
             newSnap = new IngestThreadActivitySnapshot(task.getThreadId(), task.getIngestJobPipeline().getId(), currentModuleName, task.getDataSource());
         }
@@ -821,8 +815,8 @@ public class IngestManager implements IngestProgressSnapshotProvider {
     }
 
     /**
-     * Updates the ingest progress snapshot for an ingest job when a data source
-     * level ingest task is completed.
+     * Updates the ingest progress snapshot when a data source level ingest task
+     * is completed.
      *
      * @param task The ingest task.
      */
