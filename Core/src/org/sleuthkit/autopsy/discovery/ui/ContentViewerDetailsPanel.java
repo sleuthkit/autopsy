@@ -68,9 +68,8 @@ final class ContentViewerDetailsPanel extends AbstractArtifactDetailsPanel {
                     || artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID();
             BlackboardAttribute pathIdAttr = null;
             if (useAssociatedFile) {
-
                 try {
-                    artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID));
+                    pathIdAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID));
                 } catch (TskCoreException ex) {
                     logger.log(Level.WARNING, "Error getting Path ID Attribute for artifact with ID: " + artifact.getArtifactID(), ex);
                 }
