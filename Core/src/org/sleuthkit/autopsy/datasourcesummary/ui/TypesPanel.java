@@ -65,6 +65,7 @@ import org.sleuthkit.datamodel.TskCoreException;
     "TypesPanel_filesByCategoryTable_slackRow_title=Slack Files",
     "TypesPanel_filesByCategoryTable_directoryRow_title=Directories",
     "TypesPanel_fileMimeTypesChart_title=File Types",
+    "TypesPanel_fileMimeTypesChart_valueLabel=Count",
     "TypesPanel_fileMimeTypesChart_audio_title=Audio",
     "TypesPanel_fileMimeTypesChart_documents_title=Documents",
     "TypesPanel_fileMimeTypesChart_executables_title=Executables",
@@ -198,6 +199,8 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
     private final DataFetcher<DataSource, String> osFetcher;
     private final DataFetcher<DataSource, Long> sizeFetcher;
 
+    private final DataFetcher<DataSource, TypesPieChartData> typesFetcher;
+    
     private final DataFetcher<DataSource, Long> allocatedFetcher;
     private final DataFetcher<DataSource, Long> unallocatedFetcher;
     private final DataFetcher<DataSource, Long> slackFetcher;
@@ -262,6 +265,8 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
         this.osFetcher = containerData::getOperatingSystems;
 
         this.sizeFetcher = (dataSource) -> dataSource == null ? null : dataSource.getSize();
+        
+        this.typesFetcher = (dataSource) -> getMimeTypeCategoriesModel(mimeTypeData, dataSource);
 
         this.allocatedFetcher = (dataSource) -> typeData.getCountOfAllocatedFiles(dataSource);
         this.unallocatedFetcher = (dataSource) -> typeData.getCountOfUnallocatedFiles(dataSource);
@@ -275,9 +280,7 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
                         (sizeResult) -> sizeLabel.showDataFetchResult(
                                 DataFetchResult.getSubResult(sizeResult,
                                         size -> SizeRepresentationUtil.getSizeString(size, INTEGER_SIZE_FORMAT, false)))),
-                new DataFetchWorker.DataFetchComponents<>(
-                        (dataSource) -> getMimeTypeCategoriesModel(mimeTypeData, dataSource),
-                        this::showMimeTypeCategories),
+                new DataFetchWorker.DataFetchComponents<>(typesFetcher, this::showMimeTypeCategories),
                 new DataFetchWorker.DataFetchComponents<>(allocatedFetcher,
                         countRes -> allocatedLabel.showDataFetchResult(DataFetchResult.getSubResult(countRes, (count) -> getStringOrZero(count)))),
                 new DataFetchWorker.DataFetchComponents<>(unallocatedFetcher,
@@ -443,6 +446,15 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
         if (dataSource == null) {
             return Collections.emptyList();
         }
+        
+        TypesPieChartData typesData = this.getFetchResult(typesFetcher, "Types", dataSource);
+        PieChartExport typesChart = (typesData == null || !typesData.isUsefulContent()) ? null :
+                        new PieChartExport(
+                                Bundle.TypesPanel_fileMimeTypesChart_title(), 
+                                Bundle.TypesPanel_fileMimeTypesChart_valueLabel(),
+                                "#,###",
+                                Bundle.TypesPanel_fileMimeTypesChart_title(),
+                                typesData.getPieSlices());
 
         return Arrays.asList(new ExcelSpecialFormatExport(Bundle.TypesPanel_excelTabName(),
                 Stream.of(
@@ -450,10 +462,7 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
                         getStrExportable(osFetcher, Bundle.TypesPanel_osLabel_title(), dataSource),
                         new KeyValueItemExportable(Bundle.TypesPanel_sizeLabel_title(),
                                 SizeRepresentationUtil.getBytesCell(getFetchResult(sizeFetcher, "Types", dataSource))),
-                        new PieChartExport(String keyColumnHeader, 
-            String valueColumnHeader, String valueFormatString,
-            String chartTitle,
-            List<PieChartItem> slices),
+                        typesChart,
                         getCountExportable(allocatedFetcher, Bundle.TypesPanel_filesByCategoryTable_allocatedRow_title(), dataSource),
                         getCountExportable(unallocatedFetcher, Bundle.TypesPanel_filesByCategoryTable_unallocatedRow_title(), dataSource),
                         getCountExportable(slackFetcher, Bundle.TypesPanel_filesByCategoryTable_slackRow_title(), dataSource),
