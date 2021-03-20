@@ -67,7 +67,7 @@ public final class ResetWindowsAction extends CallableSystemAction {
                     WindowManager.getDefault().getMainWindow(),
                     Bundle.ResetWindowAction_confirm_text(),
                     Bundle.ResetWindowAction_confirm_title(),
-                    JOptionPane.YES_NO_OPTION);
+                    JOptionPane.YES_NO_OPTION,  JOptionPane.PLAIN_MESSAGE);
             if (response == JOptionPane.YES_OPTION) {
                 Runtime.getRuntime().addShutdownHook(new Thread() {
                     @Override
