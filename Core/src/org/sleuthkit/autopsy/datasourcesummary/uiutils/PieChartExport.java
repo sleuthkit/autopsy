@@ -5,24 +5,23 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.uiutils;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.List;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.util.CellRangeAddress;
-import org.apache.poi.xddf.usermodel.chart.AxisPosition;
-import org.apache.poi.xddf.usermodel.chart.ChartTypes;
 import org.apache.poi.xddf.usermodel.chart.LegendPosition;
-import org.apache.poi.xddf.usermodel.chart.XDDFCategoryAxis;
 import org.apache.poi.xddf.usermodel.chart.XDDFChartLegend;
 import org.apache.poi.xddf.usermodel.chart.XDDFDataSource;
 import org.apache.poi.xddf.usermodel.chart.XDDFDataSourcesFactory;
 import org.apache.poi.xddf.usermodel.chart.XDDFNumericalDataSource;
 import org.apache.poi.xddf.usermodel.chart.XDDFPieChartData;
-import org.apache.poi.xddf.usermodel.chart.XDDFValueAxis;
 import org.apache.poi.xssf.usermodel.XSSFChart;
 import org.apache.poi.xssf.usermodel.XSSFClientAnchor;
 import org.apache.poi.xssf.usermodel.XSSFDrawing;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.openxmlformats.schemas.drawingml.x2006.chart.CTPieChart;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelExport.ExcelExportException;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelExport.ExcelSheetExport;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelSpecialFormatExport.ExcelItemExportable;
@@ -112,12 +111,22 @@ public class PieChartExport implements ExcelItemExportable, ExcelSheetExport {
                 new CellRangeAddress(tableDimensions.getRowStart() + 1, tableDimensions.getRowEnd(),
                         tableDimensions.getColStart() + 1, tableDimensions.getColStart() + 1));
 
+        
+        // XDDFCategoryAxis bottomAxis = chart.createCategoryAxis(AxisPosition.BOTTOM);
+        // XDDFValueAxis leftAxis = chart.createValueAxis(AxisPosition.LEFT);
+
         // NOTE: these can be null parameters to chart.createData in poi >= 4.1.1
-        XDDFCategoryAxis bottomAxis = chart.createCategoryAxis(AxisPosition.BOTTOM);
-        XDDFValueAxis leftAxis = chart.createValueAxis(AxisPosition.LEFT);
+        //XDDFPieChartData data = (XDDFPieChartData) chart.createData(ChartTypes.PIE, bottomAxis, leftAxis);
 
-        XDDFPieChartData data = (XDDFPieChartData) chart.createData(ChartTypes.PIE, bottomAxis, leftAxis);
-
+        XDDFPieChartData data;
+        try {
+            Constructor<XDDFPieChartData> constructor = XDDFPieChartData.class.getConstructor(CTPieChart.class);
+            constructor.setAccessible(true);
+            data = constructor.newInstance(chart.getCTChart().getPlotArea().addNewPieChart());
+        } catch (NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException | IllegalArgumentException ex) {
+            throw new ExcelExportException("Error while instantiating chart data.", ex);
+        }
+        
         data.setVaryColors(true);
         data.addSeries(cat, val);
 

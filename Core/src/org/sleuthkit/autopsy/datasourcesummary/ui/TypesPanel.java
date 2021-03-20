@@ -447,7 +447,7 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
             return Collections.emptyList();
         }
         
-        TypesPieChartData typesData = this.getFetchResult(typesFetcher, "Types", dataSource);
+        TypesPieChartData typesData = TypesPanel.getFetchResult(typesFetcher, "Types", dataSource);
         PieChartExport typesChart = (typesData == null || !typesData.isUsefulContent()) ? null :
                         new PieChartExport(
                                 Bundle.TypesPanel_fileMimeTypesChart_title(), 

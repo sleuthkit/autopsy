@@ -104,14 +104,14 @@ public class BarChartExport implements ExcelItemExportable, ExcelSheetExport {
                 })
                 .collect(Collectors.toList());
 
-        ColumnModel<Pair<Object, List<Double>>, DefaultCellModel> categoryColumn = new ColumnModel<>(keyColumnHeader, (row) -> new DefaultCellModel<>(row.getKey()));
+        ColumnModel<Pair<Object, List<Double>>, DefaultCellModel<?>> categoryColumn = new ColumnModel<>(keyColumnHeader, (row) -> new DefaultCellModel<>(row.getKey()));
 
-        Stream<ColumnModel<Pair<Object, List<Double>>, DefaultCellModel>> dataColumns = IntStream.range(0, categories.size())
+        Stream<ColumnModel<Pair<Object, List<Double>>, DefaultCellModel<?>>> dataColumns = IntStream.range(0, categories.size())
                 .mapToObj(idx -> new ColumnModel<>(
                 categories.get(idx).getKey().toString(),
                 (row) -> new DefaultCellModel<>(row.getValue().get(idx))));
 
-        this.tableExport = new ExcelTableExport<Pair<Object, List<Double>>, DefaultCellModel>(
+        this.tableExport = new ExcelTableExport<Pair<Object, List<Double>>, DefaultCellModel<?>>(
                 chartTitle,
                 Stream.concat(Stream.of(categoryColumn), dataColumns)
                         .collect(Collectors.toList()),
