@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2020 Basis Technology Corp.
+ * Copyright 2012-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -143,7 +143,6 @@ import org.sleuthkit.datamodel.HostManager.HostsUpdateEvent;
 import org.sleuthkit.datamodel.HostManager.HostsDeletionEvent;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.OsAccount;
-import org.sleuthkit.datamodel.OsAccountManager;
 import org.sleuthkit.datamodel.OsAccountManager.OsAccountsCreationEvent;
 import org.sleuthkit.datamodel.OsAccountManager.OsAccountsUpdateEvent;
 import org.sleuthkit.datamodel.Person;
