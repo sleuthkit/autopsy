@@ -5,13 +5,13 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.uiutils;
 
-import com.google.cloud.Tuple;
 import java.awt.Color;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -31,8 +31,6 @@ import org.apache.poi.xddf.usermodel.chart.XDDFChartData;
 import org.apache.poi.xddf.usermodel.chart.XDDFChartLegend;
 import org.apache.poi.xddf.usermodel.chart.XDDFDataSource;
 import org.apache.poi.xddf.usermodel.chart.XDDFDataSourcesFactory;
-import org.apache.poi.xddf.usermodel.chart.XDDFNumericalDataSource;
-import org.apache.poi.xddf.usermodel.chart.XDDFPieChartData;
 import org.apache.poi.xddf.usermodel.chart.XDDFValueAxis;
 import org.apache.poi.xssf.usermodel.XSSFChart;
 import org.apache.poi.xssf.usermodel.XSSFClientAnchor;
@@ -48,7 +46,8 @@ import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelSpecialFormatExport.
  * @author gregd
  */
 public class BarChartExport implements ExcelItemExportable, ExcelSheetExport {
-    private final ExcelTableExport<BarChartSeries, ? extends ExcelCellModel> tableExport;
+
+    private final ExcelTableExport<Pair<Object, List<Double>>, ? extends ExcelCellModel> tableExport;
     private final int colOffset;
     private final int rowPadding;
     private final int colSize;
@@ -57,8 +56,8 @@ public class BarChartExport implements ExcelItemExportable, ExcelSheetExport {
     private final String sheetName;
     private final List<BarChartSeries> categories;
     private final String keyColumnHeader;
-    
-    public BarChartExport(String keyColumnHeader, 
+
+    public BarChartExport(String keyColumnHeader,
             String valueFormatString,
             String chartTitle,
             List<BarChartSeries> categories) {
@@ -66,39 +65,59 @@ public class BarChartExport implements ExcelItemExportable, ExcelSheetExport {
     }
 
     public BarChartExport(String keyColumnHeader, String valueFormatString,
-            String chartTitle, String sheetName, 
-            List<BarChartSeries> categories, 
+            String chartTitle, String sheetName,
+            List<BarChartSeries> categories,
             int colOffset, int rowPadding, int colSize, int rowSize) {
-        
+
         this.keyColumnHeader = keyColumnHeader;
-        
-        List<BarChartSeries> categoryKeys = categories.stream()
-                .filter(cat -> cat != null && cat.getKey() != null)
-                .sorted((c1, c2) -> c1.getKey().compareTo(c2.getKey()))
-                .collect(Collectors.toList());
-        
-        List<Comparable<?>> rowKeys = categories.stream()
+
+        List<? extends Object> rowKeys = categories.stream()
                 .filter(cat -> cat != null && cat.getItems() != null)
-                .flatMap(cat -> cat.getItems().stream().map(item -> item.getKey()))
-                .filter(i -> i != null)
-                .distinct()
-                .sorted()
+                .map(cat -> cat.getItems())
+                .max((items1, items2) -> Integer.compare(items1.size(), items2.size()))
+                .orElse(Collections.emptyList())
+                .stream()
+                .map((barChartItem) -> barChartItem.getKey())
                 .collect(Collectors.toList());
-        
-        Map<Tuple<Comparable<?>, Comparable<?>>, Double> valueMap = categories.stream()
-                .flatMap((cat) -> cat.getItems().stream().map((item) -> Tuple.of(Tuple.of(cat.getKey(), item.getKey()), item.getValue())))
+
+        // map of (category, item) -> value
+        Map<Pair<Integer, Integer>, Double> valueMap = IntStream.range(0, categories.size())
+                .mapToObj(idx -> Pair.of(idx, categories.get(idx)))
+                .filter(pair -> pair.getValue() != null && pair.getValue().getItems() != null)
+                .flatMap(categoryPair -> {
+                    return IntStream.range(0, categoryPair.getValue().getItems().size())
+                            .mapToObj(idx -> Pair.of(idx, categoryPair.getValue().getItems().get(idx)))
+                            .map(itemPair -> Pair.of(
+                                    Pair.of(categoryPair.getKey(), itemPair.getKey()), 
+                                    itemPair.getValue() == null ? null : itemPair.getValue().getValue()));
+                })
                 .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue(), (v1, v2) -> v1));
-        
-        List<Pair<Comparable<?>, List<Double>>> values = rowKeys.stream()
-                .map((rowValue))
-                        
-        this.tableExport = new ExcelTableExport<>(chartTitle,
-                Stream.concat(Stream.of(new ColumnModel<>(keyColumnHeader, (category) -> new DefaultCellModel<>(category.getLabel()))), )
-                Arrays.asList(
-                        ,
-                        new ColumnModel<>(valueColumnHeader, (category) -> new DefaultCellModel<>(category.getValue(), null, valueFormatString))
-                        ), 
-                categories);
+
+        List<Pair<Object, List<Double>>> values = IntStream.range(0, rowKeys.size())
+                .mapToObj(idx -> Pair.of(idx, rowKeys.get(idx)))
+                .map((rowPair) -> {
+                    List<Double> items = IntStream.range(0, categories.size())
+                            .mapToObj(idx -> valueMap.get(Pair.of(idx, rowPair.getKey())))
+                            .collect(Collectors.toList());
+
+                    return Pair.of(rowPair.getValue(), items);
+                })
+                .collect(Collectors.toList());
+
+        ColumnModel<Pair<Object, List<Double>>, DefaultCellModel> categoryColumn = new ColumnModel<>(keyColumnHeader, (row) -> new DefaultCellModel<>(row.getKey()));
+
+        Stream<ColumnModel<Pair<Object, List<Double>>, DefaultCellModel>> dataColumns = IntStream.range(0, categories.size())
+                .mapToObj(idx -> new ColumnModel<>(
+                categories.get(idx).getKey().toString(),
+                (row) -> new DefaultCellModel<>(row.getValue().get(idx))));
+
+        this.tableExport = new ExcelTableExport<Pair<Object, List<Double>>, DefaultCellModel>(
+                chartTitle,
+                Stream.concat(Stream.of(categoryColumn), dataColumns)
+                        .collect(Collectors.toList()),
+                values
+        );
+
         this.colOffset = colOffset;
         this.rowPadding = rowPadding;
         this.colSize = colSize;
@@ -107,9 +126,7 @@ public class BarChartExport implements ExcelItemExportable, ExcelSheetExport {
         this.sheetName = sheetName;
         this.categories = categories;
     }
-    
-    
-    
+
     @Override
     public String getSheetName() {
         return sheetName;
@@ -125,16 +142,16 @@ public class BarChartExport implements ExcelItemExportable, ExcelSheetExport {
         if (!(sheet instanceof XSSFSheet)) {
             throw new ExcelExportException("Sheet must be an XSSFSheet in order to write.");
         }
-        
+
         XSSFSheet xssfSheet = (XSSFSheet) sheet;
-        
+
         // write pie chart table data
         ItemDimensions tableDimensions = tableExport.write(xssfSheet, rowStart + rowPadding, colStart, env);
 
         XSSFDrawing drawing = xssfSheet.createDrawingPatriarch();
-        
-        int chartColStart = colStart + 2 + colOffset;
-        
+
+        int chartColStart = colStart + categories.size() + 1 + colOffset;
+
         //createAnchor(int dx1, int dy1, int dx2, int dy2, int col1, int row1, int col2, int row2);
         XSSFClientAnchor anchor = drawing.createAnchor(0, 0, 0, 0, chartColStart, rowStart + rowPadding, chartColStart + colSize, rowStart + rowSize);
 
@@ -143,7 +160,6 @@ public class BarChartExport implements ExcelItemExportable, ExcelSheetExport {
         chart.setTitleOverlay(false);
         XDDFChartLegend legend = chart.getOrAddLegend();
         legend.setPosition(LegendPosition.BOTTOM);
-        
 
         // Use a category axis for the bottom axis.
         XDDFCategoryAxis bottomAxis = chart.createCategoryAxis(AxisPosition.BOTTOM);
@@ -156,13 +172,19 @@ public class BarChartExport implements ExcelItemExportable, ExcelSheetExport {
         XDDFBarChartData data = (XDDFBarChartData) chart.createData(ChartTypes.BAR, bottomAxis, leftAxis);
         data.setBarGrouping(BarGrouping.STACKED);
 
-        XDDFDataSource<String> headerSource = XDDFDataSourcesFactory.fromStringCellRange(sheet, new CellRangeAddress(1, keyVals.size(), 0, 0));
+        XDDFDataSource<String> headerSource = XDDFDataSourcesFactory.fromStringCellRange(xssfSheet,
+                new CellRangeAddress(tableDimensions.getRowStart() + 1, tableDimensions.getRowEnd(),
+                        tableDimensions.getColStart(), tableDimensions.getColStart()));
+
         data.setBarDirection(BarDirection.COL);
 
         for (int i = 0; i < categories.size(); i++) {
             XDDFChartData.Series series = data.addSeries(headerSource,
-                    XDDFDataSourcesFactory.fromNumericCellRange(sheet, new CellRangeAddress(1, keyVals.size(), i + 1, i + 1)));
-            series.setTitle(categories.size() > i && categories.get(i).getIdentifier() != null ? categories.get(i).getIdentifier() : "", null);
+                    XDDFDataSourcesFactory.fromNumericCellRange(xssfSheet,
+                            new CellRangeAddress(tableDimensions.getRowStart() + 1, tableDimensions.getRowEnd(),
+                                    tableDimensions.getColStart() + 1 + i, tableDimensions.getColStart() + 1 + i)));
+
+            series.setTitle(categories.size() > i && categories.get(i).getKey() != null ? categories.get(i).getKey().toString() : "", null);
             if (categories.get(i).getColor() != null) {
                 Color color = categories.get(i).getColor();
                 byte[] colorArrARGB = ByteBuffer.allocate(4).putInt(color.getRGB()).array();
@@ -178,10 +200,8 @@ public class BarChartExport implements ExcelItemExportable, ExcelSheetExport {
         }
 
         chart.plot(data);
-        
+
         return new ItemDimensions(rowStart, colStart, Math.max(tableDimensions.getRowEnd(), rowStart + rowSize) + rowPadding, chartColStart + colSize);
     }
 
-
-    
 }
