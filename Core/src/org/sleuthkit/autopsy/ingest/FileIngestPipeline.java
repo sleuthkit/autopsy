@@ -65,7 +65,7 @@ final class FileIngestPipeline extends IngestTaskPipeline<FileIngestTask> {
         "FileIngestPipeline_SaveResults_Activity=Saving Results"
     })
     void completeTask(FileIngestTask task) throws IngestTaskPipelineException {
-        ingestManager.setIngestTaskProgress(task, Bundle.FileIngestPipeline_SaveResults_Activity()); //NON-NLS
+        ingestManager.setIngestTaskProgress(task, Bundle.FileIngestPipeline_SaveResults_Activity());
         AbstractFile file = null;
         try {
             file = task.getFile();
