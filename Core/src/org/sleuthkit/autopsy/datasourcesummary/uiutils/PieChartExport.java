@@ -46,8 +46,8 @@ import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelSpecialFormatExport.
  */
 public class PieChartExport implements ExcelItemExportable, ExcelSheetExport {
 
-    private static final int DEFAULT_ROW_SIZE = 8;
-    private static final int DEFAULT_COL_SIZE = 15;
+    private static final int DEFAULT_ROW_SIZE = 20;
+    private static final int DEFAULT_COL_SIZE = 10;
     private static final int DEFAULT_ROW_PADDING = 1;
     private static final int DEFAULT_COL_OFFSET = 1;
 
@@ -139,7 +139,7 @@ public class PieChartExport implements ExcelItemExportable, ExcelSheetExport {
         int chartColStart = colStart + 2 + colOffset;
 
         //createAnchor has arguments of (int dx1, int dy1, int dx2, int dy2, int col1, int row1, int col2, int row2);
-        XSSFClientAnchor anchor = drawing.createAnchor(0, 0, 0, 0, chartColStart, rowStart + rowPadding, chartColStart + colSize, rowStart + rowSize);
+        XSSFClientAnchor anchor = drawing.createAnchor(0, 0, 0, 0, chartColStart, rowStart + rowPadding, chartColStart + colSize + 1, rowStart + rowSize + 1);
 
         XSSFChart chart = drawing.createChart(anchor);
         chart.setTitleText(chartTitle);
