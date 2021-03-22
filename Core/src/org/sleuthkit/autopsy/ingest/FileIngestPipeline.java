@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.ingest;
 
 import java.util.List;
 import java.util.Optional;
+import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -60,8 +61,11 @@ final class FileIngestPipeline extends IngestTaskPipeline<FileIngestTask> {
     }
 
     @Override
+    @NbBundle.Messages({
+        "FileIngestPipeline_SaveResults_Activity=Saving Results"
+    })
     void completeTask(FileIngestTask task) throws IngestTaskPipelineException {
-        ingestManager.setIngestTaskProgress(task, "Saving Files"); //NON-NLS
+        ingestManager.setIngestTaskProgress(task, Bundle.FileIngestPipeline_SaveResults_Activity()); //NON-NLS
         AbstractFile file = null;
         try {
             file = task.getFile();
