@@ -231,7 +231,6 @@ public class BarChartExport implements ExcelItemExportable, ExcelSheetExport {
         XDDFCategoryAxis bottomAxis = chart.createCategoryAxis(AxisPosition.BOTTOM);
         bottomAxis.setTitle(keyColumnHeader);
         XDDFValueAxis leftAxis = chart.createValueAxis(AxisPosition.LEFT);
-        // leftAxis.setTitle(valHeader);
         leftAxis.setCrosses(AxisCrosses.AUTO_ZERO);
         leftAxis.setVisible(false);
 
@@ -256,7 +255,7 @@ public class BarChartExport implements ExcelItemExportable, ExcelSheetExport {
                 Color color = categories.get(i).getColor();
                 byte[] colorArrARGB = ByteBuffer.allocate(4).putInt(color.getRGB()).array();
                 byte[] colorArrRGB = new byte[]{colorArrARGB[1], colorArrARGB[2], colorArrARGB[3]};
-                XDDFSolidFillProperties fill = new XDDFSolidFillProperties(XDDFColor.from(colorArrRGB)); // XDDFColor.from(color.getRed(), color.getGreen(), color.getBlue()));
+                XDDFSolidFillProperties fill = new XDDFSolidFillProperties(XDDFColor.from(colorArrRGB));
                 XDDFShapeProperties properties = series.getShapeProperties();
                 if (properties == null) {
                     properties = new XDDFShapeProperties();
