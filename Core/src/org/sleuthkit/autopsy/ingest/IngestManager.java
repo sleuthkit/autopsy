@@ -782,7 +782,7 @@ public class IngestManager implements IngestProgressSnapshotProvider {
         ingestThreadActivitySnapshots.put(task.getThreadId(), newSnap);
 
         /*
-         * Update the total run time for the PREVIOUS ingest module in teh
+         * Update the total run time for the PREVIOUS ingest module in the
          * pipeline, which has now finished its processing for the task.
          */
         incrementModuleRunTime(prevSnap.getActivity(), newSnap.getStartTime().getTime() - prevSnap.getStartTime().getTime());
@@ -808,7 +808,7 @@ public class IngestManager implements IngestProgressSnapshotProvider {
         ingestThreadActivitySnapshots.put(task.getThreadId(), newSnap);
 
         /*
-         * Update the total run time for the PREVIOUS ingest module in teh
+         * Update the total run time for the PREVIOUS ingest module in the
          * pipeline, which has now finished its processing for the task.
          */
         incrementModuleRunTime(prevSnap.getActivity(), newSnap.getStartTime().getTime() - prevSnap.getStartTime().getTime());
