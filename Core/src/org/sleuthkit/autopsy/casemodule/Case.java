@@ -124,6 +124,7 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
+import org.sleuthkit.autopsy.machinesettings.UserMachinePreferences;
 import org.sleuthkit.autopsy.progress.LoggingProgressIndicator;
 import org.sleuthkit.autopsy.progress.ModalDialogProgressIndicator;
 import org.sleuthkit.autopsy.progress.ProgressIndicator;
@@ -1477,16 +1478,7 @@ public class Case {
      * @return The temp subdirectory path.
      */
     public String getTempDirectory() {
-        // get temp folder scoped to the combination of case name and timestamp 
-        // provided by getName()
-        Path path = Paths.get(UserPreferences.getAppTempDirectory(), CASE_TEMP_DIR, getName());
-        File f = path.toFile();
-        // verify that the folder exists
-        if (!f.exists()) {
-            f.mkdirs();
-        }
-
-        return path.toAbsolutePath().toString();
+        return UserMachinePreferences.getTempDirectory();
     }
 
     /**
