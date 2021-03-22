@@ -23,6 +23,7 @@ import java.awt.EventQueue;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.Serializable;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -46,6 +47,7 @@ import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.Immutable;
 import javax.annotation.concurrent.ThreadSafe;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.Cancellable;
 import org.openide.util.NbBundle;
@@ -395,6 +397,21 @@ public class IngestManager implements IngestProgressSnapshotProvider {
         "IngestManager.startupErr.dlgErrorList=Errors:"
     })
     IngestJobStartResult startIngestJob(IngestJob job) {
+
+        // initialize IngestMessageInbox, if it hasn't been initialized yet. This can't be done in
+        // the constructor because that ends up freezing the UI on startup (JIRA-7345).
+        if (SwingUtilities.isEventDispatchThread()) {
+            initIngestMessageInbox();
+        } else {
+            try {
+                SwingUtilities.invokeAndWait(() -> initIngestMessageInbox());
+            } catch (InterruptedException ex) {
+                // ignore interruptions
+            } catch (InvocationTargetException ex) {
+                logger.log(Level.WARNING, "There was an error starting ingest message inbox", ex);
+            }
+        }
+
         List<IngestModuleError> errors = null;
         Case openCase;
         try {
@@ -701,8 +718,11 @@ public class IngestManager implements IngestProgressSnapshotProvider {
 
     /**
      * Causes the ingest manager to get the top component used to display ingest
-     * inbox messages. Called by the custom installer for this package once the
-     * window system is initialized.
+     * inbox messages. Used to be called by the custom installer for this
+     * package once the window system is initialized, but that results in a lot
+     * of UI components being initialized, which freezes the UI for a long
+     * period of time(JIRA-7345). Instead we are now initializing
+     * IngestMessageInbox immediately prior to running first ingest job.
      */
     void initIngestMessageInbox() {
         synchronized (this.ingestMessageBoxLock) {
@@ -749,63 +769,51 @@ public class IngestManager implements IngestProgressSnapshotProvider {
     }
 
     /**
-     * Updates the ingest progress snapshot for an ingest job when a data source
-     * level ingest module starts processing a data source from a data source
-     * ingest task.
+     * Updates the ingest progress snapshot when a new ingest module starts
+     * working on an ingest task.
      *
-     * @param task              The data source ingest task.
-     * @param currentModuleName The display name of the current data source
-     *                          level ingest module.
-     */
-    void setIngestTaskProgress(DataSourceIngestTask task, String currentModuleName) {
-        ingestThreadActivitySnapshots.put(task.getThreadId(), new IngestThreadActivitySnapshot(task.getThreadId(), task.getIngestJobPipeline().getId(), currentModuleName, task.getDataSource()));
-    }
-
-    /**
-     * Updates the ingest progress snapshot for an ingest job when a file ingest
-     * module starts or finishes processing a file from a file ingest task.
-     *
-     * @param task              The file ingest task.
-     * @param currentModuleName The display name of the current file ingest
+     * @param task              The ingest task.
+     * @param currentModuleName The display name of the currently processing
      *                          module.
      */
-    void setIngestTaskProgress(FileIngestTask task, String currentModuleName) {
+    void setIngestTaskProgress(IngestTask task, String currentModuleName) {
         IngestThreadActivitySnapshot prevSnap = ingestThreadActivitySnapshots.get(task.getThreadId());
         IngestThreadActivitySnapshot newSnap;
-        try {
-            newSnap = new IngestThreadActivitySnapshot(task.getThreadId(), task.getIngestJobPipeline().getId(), currentModuleName, task.getDataSource(), task.getFile());
-        } catch (TskCoreException ex) {
-            /*
-             * In practice, the file should have already been lazily looked up
-             * and cached in the file task when the task was enqueued by the
-             * ingest tasks scheduler. Therefore there is no case database query
-             * here and there should be no TskCoreException.
-             */
-            logger.log(Level.SEVERE, "Error getting file from file ingest task", ex);
+        if (task instanceof FileIngestTask) {
+            try {
+                newSnap = new IngestThreadActivitySnapshot(task.getThreadId(), task.getIngestJobPipeline().getId(), currentModuleName, task.getDataSource(), ((FileIngestTask)task).getFile());
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Error getting file from file ingest task", ex);
+                newSnap = new IngestThreadActivitySnapshot(task.getThreadId(), task.getIngestJobPipeline().getId(), currentModuleName, task.getDataSource());
+            }
+        } else {
             newSnap = new IngestThreadActivitySnapshot(task.getThreadId(), task.getIngestJobPipeline().getId(), currentModuleName, task.getDataSource());
         }
         ingestThreadActivitySnapshots.put(task.getThreadId(), newSnap);
+
+        /*
+         * Update the total run time for the PREVIOUS ingest module in the
+         * pipeline, which has now finished its processing for the task.
+         */
         incrementModuleRunTime(prevSnap.getActivity(), newSnap.getStartTime().getTime() - prevSnap.getStartTime().getTime());
     }
 
     /**
-     * Updates the ingest progress snapshot for an ingest job when a data source
-     * level ingest task is completed.
+     * Updates the ingest progress snapshot when an ingest task is completed.
      *
-     * @param task The data source level ingest job task that was completed.
+     * @param task The ingest task.
      */
-    void setIngestTaskProgressCompleted(DataSourceIngestTask task) {
-        ingestThreadActivitySnapshots.put(task.getThreadId(), new IngestThreadActivitySnapshot(task.getThreadId()));
-    }
+    void setIngestTaskProgressCompleted(IngestTask task
+    ) {
+        IngestThreadActivitySnapshot prevSnap = ingestThreadActivitySnapshots.get(task.getThreadId());
+        IngestThreadActivitySnapshot newSnap = new IngestThreadActivitySnapshot(task.getThreadId());
+        ingestThreadActivitySnapshots.put(task.getThreadId(), newSnap);
 
-    /**
-     * Updates the ingest progress snapshot for an ingest job when a file ingest
-     * task is completed.
-     *
-     * @param task The file ingest task.
-     */
-    void setIngestTaskProgressCompleted(FileIngestTask task) {
-        ingestThreadActivitySnapshots.put(task.getThreadId(), new IngestThreadActivitySnapshot(task.getThreadId()));
+        /*
+         * Update the total run time for the LAST ingest module in the pipeline,
+         * which has now finished its processing for the task.
+         */
+        incrementModuleRunTime(prevSnap.getActivity(), newSnap.getStartTime().getTime() - prevSnap.getStartTime().getTime());
     }
 
     /**
