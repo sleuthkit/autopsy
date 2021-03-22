@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.ingest;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -30,9 +31,9 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 final class FileIngestPipeline extends IngestTaskPipeline<FileIngestTask> {
 
+    private static final int FILE_BATCH_SIZE = 500;
     private static final IngestManager ingestManager = IngestManager.getInstance();
     private final IngestJobPipeline ingestJobPipeline;
-    private final Object fileBatchLock;
     private final List<AbstractFile> fileBatch;
 
     /**
@@ -46,7 +47,6 @@ final class FileIngestPipeline extends IngestTaskPipeline<FileIngestTask> {
     FileIngestPipeline(IngestJobPipeline ingestJobPipeline, List<IngestModuleTemplate> moduleTemplates) {
         super(ingestJobPipeline, moduleTemplates);
         this.ingestJobPipeline = ingestJobPipeline;
-        fileBatchLock = new Object();
         fileBatch = new ArrayList<>();
     }
 
@@ -66,29 +66,58 @@ final class FileIngestPipeline extends IngestTaskPipeline<FileIngestTask> {
 
     @Override
     void completeTask(FileIngestTask task) throws IngestTaskPipelineException {
-        ingestManager.setIngestTaskProgress(task, "Saving Files"); //NON-NLS
-        AbstractFile file = null;
-        try {
-            file = task.getFile();
-        } catch (TskCoreException ex) {
-            throw new IngestTaskPipelineException(String.format("Failed to get file (file objId = %d)", task.getFileId()), ex); //NON-NLS
-        }
-        try {
-            if (!ingestJobPipeline.isCancelled()) {
-                /*
-                 * Save any updates from the ingest modules to the case
-                 * database.
-                 */
-                file.save();
+        ingestManager.setIngestTaskProgress(task, "Saving Files"); //NON-NLS // RJCTODO
+        synchronized (fileBatch) {
+            AbstractFile file = null;
+            try {
+                file = task.getFile();
+                file.close();
+            } catch (TskCoreException ex) {
+                // RJCTODO: Is this right?
+                throw new IngestTaskPipelineException(String.format("Failed to get file (file objId = %d)", task.getFileId()), ex); //NON-NLS
             }
-        } catch (TskCoreException ex) {
-            throw new IngestTaskPipelineException(String.format("Failed to save updated data for file (file objId = %d)", task.getFileId()), ex); //NON-NLS
-        } finally {
             if (!ingestJobPipeline.isCancelled()) {
-                IngestManager.getInstance().fireFileIngestDone(file);
+                fileBatch.add(file);
+                if (fileBatch.size() >= FILE_BATCH_SIZE) {
+                    saveFiles();
+                }
             }
-            file.close();
             ingestManager.setIngestTaskProgressCompleted(task);
+        }
+    }
+
+    @Override
+    List<IngestModuleError> shutDown() {
+        Date start = new Date();
+        saveFiles();
+        Date finish = new Date();
+        ingestManager.incrementModuleRunTime("Save Files", finish.getTime() - start.getTime()); // RJCTODO
+        return super.shutDown();
+    }
+
+    private void saveFiles() {
+        synchronized (fileBatch) {
+            for (AbstractFile file : fileBatch) {
+                try {
+                    if (!ingestJobPipeline.isCancelled()) {
+                        /*
+                         * Save any updates from the ingest modules to the case
+                         * database.
+                         */
+                        file.save();
+                    }
+                } catch (TskCoreException ex) {
+                    // RJCTODO: Log instead?
+//                    throw new IngestTaskPipelineException(String.format("Failed to save updated data for file (file objId = %d)", task.getFileId()), ex); //NON-NLS
+                } finally {
+                    if (!ingestJobPipeline.isCancelled()) {
+                        IngestManager.getInstance().fireFileIngestDone(file);
+                    }
+                    file.close();
+                    //ingestManager.setIngestTaskProgressCompleted(task);
+                }
+            }
+            fileBatch.clear();
         }
     }
 
