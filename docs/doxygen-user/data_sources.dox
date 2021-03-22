@@ -25,6 +25,18 @@ The data source must remain accessible for the duration of the analysis because 
 
 Regardless of the type of data source, there are some common steps in the process:
 <ol>
+
+<li> You will choose the host for the data source you are going to add.
+
+\image html data_source_host_select.png
+
+There are three options:
+<ul>
+<li> <b>Generate new host based on data source name</b> - this will typically create a host with a name similar to your data source with the ID used in the database appended for uniqueness.
+<li> <b>Specify new host name</b> - this allows you to enter a host name.
+<li> <b>Use existing host</b> - this allows you to choose a host name already in use in the current case.
+</ul>
+
 <li> You will select the type of data source.
 
 \image html select-data-source-type.PNG
