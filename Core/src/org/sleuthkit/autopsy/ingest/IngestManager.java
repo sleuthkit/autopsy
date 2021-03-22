@@ -770,45 +770,29 @@ public class IngestManager implements IngestProgressSnapshotProvider {
 
     /**
      * Updates the ingest progress snapshot when a new ingest module starts
-     * working on a data source level ingest task.
+     * working on an ingest task.
      *
-     * @param task              The data source ingest task.
+     * @param task              The ingest task.
      * @param currentModuleName The display name of the currently processing
      *                          module.
      */
-    void setIngestTaskProgress(DataSourceIngestTask task, String currentModuleName) {
-        IngestThreadActivitySnapshot prevSnap = ingestThreadActivitySnapshots.get(task.getThreadId());
-        IngestThreadActivitySnapshot newSnap = new IngestThreadActivitySnapshot(task.getThreadId(), task.getIngestJobPipeline().getId(), currentModuleName, task.getDataSource());
-        ingestThreadActivitySnapshots.put(task.getThreadId(), newSnap);
-
-        /*
-         * Update the total run time for the PREVIOUS ingest module in teh
-         * pipeline, which has now finished its processing for the task.
-         */
-        incrementModuleRunTime(prevSnap.getActivity(), newSnap.getStartTime().getTime() - prevSnap.getStartTime().getTime());
-    }
-
-    /**
-     * Updates the ingest progress snapshot when a new ingest module starts
-     * working on a file ingest task.
-     *
-     * @param task              The file ingest task.
-     * @param currentModuleName The display name of the currently processing
-     *                          module.
-     */
-    void setIngestTaskProgress(FileIngestTask task, String currentModuleName) {
+    void setIngestTaskProgress(IngestTask task, String currentModuleName) {
         IngestThreadActivitySnapshot prevSnap = ingestThreadActivitySnapshots.get(task.getThreadId());
         IngestThreadActivitySnapshot newSnap;
-        try {
-            newSnap = new IngestThreadActivitySnapshot(task.getThreadId(), task.getIngestJobPipeline().getId(), currentModuleName, task.getDataSource(), task.getFile());
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error getting file from file ingest task", ex);
+        if (task instanceof FileIngestTask) {
+            try {
+                newSnap = new IngestThreadActivitySnapshot(task.getThreadId(), task.getIngestJobPipeline().getId(), currentModuleName, task.getDataSource(), ((FileIngestTask)task).getFile());
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Error getting file from file ingest task", ex);
+                newSnap = new IngestThreadActivitySnapshot(task.getThreadId(), task.getIngestJobPipeline().getId(), currentModuleName, task.getDataSource());
+            }
+        } else {
             newSnap = new IngestThreadActivitySnapshot(task.getThreadId(), task.getIngestJobPipeline().getId(), currentModuleName, task.getDataSource());
         }
         ingestThreadActivitySnapshots.put(task.getThreadId(), newSnap);
 
         /*
-         * Update the total run time for the PREVIOUS ingest module in teh
+         * Update the total run time for the PREVIOUS ingest module in the
          * pipeline, which has now finished its processing for the task.
          */
         incrementModuleRunTime(prevSnap.getActivity(), newSnap.getStartTime().getTime() - prevSnap.getStartTime().getTime());
@@ -819,7 +803,8 @@ public class IngestManager implements IngestProgressSnapshotProvider {
      *
      * @param task The ingest task.
      */
-    void setIngestTaskProgressCompleted(IngestTask task) {
+    void setIngestTaskProgressCompleted(IngestTask task
+    ) {
         IngestThreadActivitySnapshot prevSnap = ingestThreadActivitySnapshots.get(task.getThreadId());
         IngestThreadActivitySnapshot newSnap = new IngestThreadActivitySnapshot(task.getThreadId());
         ingestThreadActivitySnapshots.put(task.getThreadId(), newSnap);
