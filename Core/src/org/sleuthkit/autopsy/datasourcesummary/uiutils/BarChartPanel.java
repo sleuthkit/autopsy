@@ -39,7 +39,6 @@ import org.sleuthkit.autopsy.datasourcesummary.uiutils.BarChartSeries.BarChartIt
  */
 public class BarChartPanel extends AbstractLoadableComponent<List<BarChartSeries>> {
 
-
     /**
      * JFreeChart bar charts don't preserve the order of bars provided to the
      * chart, but instead uses the comparable nature to order items. This

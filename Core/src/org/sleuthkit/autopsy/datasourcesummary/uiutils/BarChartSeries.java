@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2020 Basis Technology Corp.
+ * Copyright 2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,8 +23,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Represents a series in a bar chart where all items pertain to one
- * category.
+ * Represents a series in a bar chart where all items pertain to one category.
  */
 public class BarChartSeries {
 
@@ -98,5 +97,5 @@ public class BarChartSeries {
     public Comparable<?> getKey() {
         return key;
     }
-    
+
 }

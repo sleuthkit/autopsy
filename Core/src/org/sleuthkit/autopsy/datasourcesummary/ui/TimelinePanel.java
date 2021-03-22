@@ -291,6 +291,13 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
         super.close();
     }
 
+    /**
+     * Create a default cell model to be use with excel export in the earliest /
+     * latest date format.
+     *
+     * @param date The date.
+     * @return The cell model.
+     */
     private static DefaultCellModel<?> getEarliestLatestCell(Date date) {
         return new DefaultCellModel<>(date, (dt) -> dt == null ? "" : EARLIEST_LATEST_FORMAT.format(dt), EARLIEST_LATEST_FORMAT_STR);
     }

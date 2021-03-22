@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.ui;
 
-import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -34,6 +33,7 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 import java.util.logging.Level;
+import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.openide.util.NbBundle;
@@ -186,7 +186,9 @@ class ExcelExportAction implements Consumer<DataSource> {
         "# {0} - dataSource",
         "ExcelExportAction_runXLSXExport_progressTitle=Exporting {0} to XLSX",
         "ExcelExportAction_runXLSXExport_progressCancelTitle=Cancel",
-        "ExcelExportAction_runXLSXExport_progressCancelActionTitle=Cancelling..."
+        "ExcelExportAction_runXLSXExport_progressCancelActionTitle=Cancelling...",
+        "ExcelExportAction_runXLSXExport_errorTitle=Error While Exporting",
+        "ExcelExportAction_runXLSXExport_errorMessage=There was an error while exporting.",
     })
     private void runXLSXExport(DataSource dataSource, File path) {
 
@@ -213,6 +215,10 @@ class ExcelExportAction implements Consumer<DataSource> {
                     get();
                 } catch (ExecutionException ex) {
                     logger.log(Level.WARNING, "Error while trying to export data source summary to xlsx.", ex);
+                    JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
+                            Bundle.ExcelExportAction_runXLSXExport_errorMessage(),
+                            Bundle.ExcelExportAction_runXLSXExport_errorTitle(),
+                            JOptionPane.ERROR_MESSAGE);
                 } catch (InterruptedException | CancellationException ex) {
                     // no op on cancellation
                 } finally {

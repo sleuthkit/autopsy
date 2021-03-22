@@ -123,7 +123,6 @@ public class ExcelTableExport<T, C extends ExcelCellModel> implements ExcelSheet
         }
 
         // Create Cell Style for each column (if one is needed)
-
         for (int rowNum = 0; rowNum < safeData.size(); rowNum++) {
             T rowData = safeData.get(rowNum);
             Row row = sheet.createRow(rowNum + rowStart + 1);

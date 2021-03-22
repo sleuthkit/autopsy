@@ -1,7 +1,20 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2021 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.datasourcesummary.uiutils;
 
@@ -29,9 +42,14 @@ import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelSpecialFormatExport.
 
 /**
  *
- * @author gregd
+ * Class that creates an excel pie chart along with data table.
  */
 public class PieChartExport implements ExcelItemExportable, ExcelSheetExport {
+
+    private static final int DEFAULT_ROW_SIZE = 8;
+    private static final int DEFAULT_COL_SIZE = 15;
+    private static final int DEFAULT_ROW_PADDING = 1;
+    private static final int DEFAULT_COL_OFFSET = 1;
 
     private final ExcelTableExport<PieChartItem, ? extends ExcelCellModel> tableExport;
     private final int colOffset;
@@ -41,13 +59,40 @@ public class PieChartExport implements ExcelItemExportable, ExcelSheetExport {
     private final String chartTitle;
     private final String sheetName;
 
+    /**
+     * Main constructor assuming defaults.
+     *
+     * @param keyColumnHeader The header column name for the table descriptions
+     * (i.e. file types).
+     * @param valueColumnHeader The header column name for the values.
+     * @param valueFormatString The excel format string to use for values.
+     * @param chartTitle The title for the chart.
+     * @param slices The values for the pie slices.
+     */
     public PieChartExport(String keyColumnHeader,
             String valueColumnHeader, String valueFormatString,
             String chartTitle,
             List<PieChartItem> slices) {
-        this(keyColumnHeader, valueColumnHeader, valueFormatString, chartTitle, chartTitle, slices, 1, 1, 8, 14);
+        this(keyColumnHeader, valueColumnHeader, valueFormatString, chartTitle, chartTitle, slices,
+                DEFAULT_COL_OFFSET, DEFAULT_ROW_PADDING, DEFAULT_COL_SIZE, DEFAULT_ROW_SIZE);
     }
 
+    /**
+     * Main constructor.
+     *
+     * @param keyColumnHeader The header column name for the table descriptions
+     * (i.e. file types).
+     * @param valueColumnHeader The header column name for the values.
+     * @param valueFormatString The excel format string to use for values.
+     * @param chartTitle The title for the chart.
+     * @param sheetName The sheet name if used as a sheet export.
+     * @param slices The values for the pie slices.
+     * @param colOffset The column spacing between the table and the chart.
+     * @param rowPadding The padding between this and data above or below (if
+     * used as an ExcelItemExportable).
+     * @param colSize The column size of the chart.
+     * @param rowSize The row size of the chart.
+     */
     public PieChartExport(String keyColumnHeader,
             String valueColumnHeader, String valueFormatString,
             String chartTitle, String sheetName,
@@ -93,7 +138,7 @@ public class PieChartExport implements ExcelItemExportable, ExcelSheetExport {
 
         int chartColStart = colStart + 2 + colOffset;
 
-        //createAnchor(int dx1, int dy1, int dx2, int dy2, int col1, int row1, int col2, int row2);
+        //createAnchor has arguments of (int dx1, int dy1, int dx2, int dy2, int col1, int row1, int col2, int row2);
         XSSFClientAnchor anchor = drawing.createAnchor(0, 0, 0, 0, chartColStart, rowStart + rowPadding, chartColStart + colSize, rowStart + rowSize);
 
         XSSFChart chart = drawing.createChart(anchor);
@@ -102,7 +147,7 @@ public class PieChartExport implements ExcelItemExportable, ExcelSheetExport {
         XDDFChartLegend legend = chart.getOrAddLegend();
         legend.setPosition(LegendPosition.RIGHT);
 
-        // (int firstRow, int lastRow, int firstCol, int lastCol)
+        // CellRangeAddress has arguments of (int firstRow, int lastRow, int firstCol, int lastCol)
         XDDFDataSource<String> cat = XDDFDataSourcesFactory.fromStringCellRange(xssfSheet,
                 new CellRangeAddress(tableDimensions.getRowStart() + 1, tableDimensions.getRowEnd(),
                         tableDimensions.getColStart(), tableDimensions.getColStart()));
@@ -111,13 +156,14 @@ public class PieChartExport implements ExcelItemExportable, ExcelSheetExport {
                 new CellRangeAddress(tableDimensions.getRowStart() + 1, tableDimensions.getRowEnd(),
                         tableDimensions.getColStart() + 1, tableDimensions.getColStart() + 1));
 
-        
-        // XDDFCategoryAxis bottomAxis = chart.createCategoryAxis(AxisPosition.BOTTOM);
-        // XDDFValueAxis leftAxis = chart.createValueAxis(AxisPosition.LEFT);
-
-        // NOTE: these can be null parameters to chart.createData in poi >= 4.1.1
-        //XDDFPieChartData data = (XDDFPieChartData) chart.createData(ChartTypes.PIE, bottomAxis, leftAxis);
-
+        // NOTE: There appears to be a classpath issue with POI (a version of 4.0.1 and 4.1.1 simultaneously) 
+        // that is causing conflicts for XDDFPieChartData creation (i.e. the compiler thinks its using 4.1.1 
+        // and the runtime thinks its using 4.0.1) Reflection is used below to use the 4.0.1 method while
+        // sidestepping compiler issues.
+        // XDDFPieChartData creation that can be used in poi >= 4.1.1:
+        // XDDFPieChartData data = (XDDFPieChartData) chart.createData(ChartTypes.PIE, bottomAxis, leftAxis);
+        // XDDFPieChartData creation that can be used in 4.0.1:
+        // XDDFPieChartData data = new XDDFPieChartData(chart.getCTChart().getPlotArea().addNewPieChart());
         XDDFPieChartData data;
         try {
             Constructor<XDDFPieChartData> constructor = XDDFPieChartData.class.getConstructor(CTPieChart.class);
@@ -126,7 +172,7 @@ public class PieChartExport implements ExcelItemExportable, ExcelSheetExport {
         } catch (NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException | IllegalArgumentException ex) {
             throw new ExcelExportException("Error while instantiating chart data.", ex);
         }
-        
+
         data.setVaryColors(true);
         data.addSeries(cat, val);
 
