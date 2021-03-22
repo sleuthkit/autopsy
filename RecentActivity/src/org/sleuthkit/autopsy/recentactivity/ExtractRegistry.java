@@ -876,9 +876,9 @@ class ExtractRegistry extends Extract {
                                             try{
                                                 createOrUpdateOsAccount(regFile, sid, username, homeDir);
                                                 
-                                            } catch(TskCoreException | TskDataException ex) {
+                                            } catch(TskCoreException | TskDataException | OsAccountManager.NotUserSIDException ex) {
                                                 logger.log(Level.SEVERE, String.format("Failed to create OsAccount for file: %s, sid: %s", regFile.getId(), sid));
-                                            }
+                                            } 
                                             
                                             BlackboardArtifact bbart = null;
                                             try {
@@ -1214,7 +1214,7 @@ class ExtractRegistry extends Extract {
             logger.log(Level.WARNING, "Error building the document parser: {0}", ex); //NON-NLS
         } catch (ParseException ex) {
             logger.log(Level.WARNING, "Error parsing the the date from the registry file", ex); //NON-NLS
-        } catch (TskDataException | TskCoreException ex) {
+        } catch (TskDataException | TskCoreException | OsAccountManager.NotUserSIDException ex) {
             logger.log(Level.WARNING, "Error updating TSK_OS_ACCOUNT artifacts to include newly parsed data.", ex); //NON-NLS
         } finally {
             if (!context.dataSourceIngestIsCancelled()) {
@@ -2206,8 +2206,9 @@ class ExtractRegistry extends Extract {
      *
      * @throws TskCoreException
      * @throws TskDataException
+     * @throws OsAccountManager.NotUserSIDException
      */
-    private void createOrUpdateOsAccount(AbstractFile file, String sid, String userName, String homeDir) throws TskCoreException, TskDataException {
+    private void createOrUpdateOsAccount(AbstractFile file, String sid, String userName, String homeDir) throws TskCoreException, TskDataException, OsAccountManager.NotUserSIDException {
         OsAccountManager accountMgr = tskCase.getOsAccountManager();
         HostManager hostMrg = tskCase.getHostManager();
         Host host = hostMrg.getHost((DataSource)dataSource);
