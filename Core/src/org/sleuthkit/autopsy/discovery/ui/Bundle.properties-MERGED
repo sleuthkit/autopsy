@@ -58,7 +58,7 @@ DomainDetailsPanel.otherOccurrencesTab.title=Other Occurrences
 # {0} - startDate
 # {1} - endDate
 DomainSummaryPanel.activity.text=Activity: {0} to {1}
-DomainSummaryPanel.category.text=Category: 
+DomainSummaryPanel.category.text=Categories: 
 DomainSummaryPanel.downloads.text=Files downloaded: 
 DomainSummaryPanel.loadingImages.text=Loading thumbnail...
 DomainSummaryPanel.no.text=No

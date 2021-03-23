@@ -27,6 +27,7 @@ import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.corecomponents.DataContentTopComponent;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 
 /**
  * Responsible for opening and closing the core windows when a case is opened
@@ -49,7 +50,8 @@ final public class CoreComponentControl {
      * ({@link DataExplorer}, {@link DataResult}, and {@link DataContent})
      */
     public static void openCoreWindows() {
-        // TODO: there has to be a better way to do this.
+        // preload UI components (JIRA-7345). This only takes place the first time Autopsy opens a case. 
+        DirectoryTreeTopComponent dtc = DirectoryTreeTopComponent.findInstance();
 
         // find the data explorer top components
         Collection<? extends DataExplorer> dataExplorers = Lookup.getDefault().lookupAll(DataExplorer.class);

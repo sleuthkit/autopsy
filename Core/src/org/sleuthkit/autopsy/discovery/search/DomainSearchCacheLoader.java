@@ -138,7 +138,7 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
                 = "SELECT " + sqlSpecificAccountAggregator + " as value_text," //naming field value_text the same as the field it is aggregating to re-use aggregator
                 + "artifact_id AS account_artifact_id "
                 + "FROM blackboard_attributes "
-                + "WHERE (attribute_type_id = " + TSK_TEXT.getTypeID() 
+                + "WHERE (attribute_type_id = " + TSK_TEXT.getTypeID()
                 + "   AND value_text <> '' "
                 + "   AND (artifact_type_id = " + TSK_WEB_ACCOUNT_TYPE.getTypeID() + ")) "
                 + "GROUP BY artifact_id ";
@@ -188,7 +188,7 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
                 + "                 ELSE 0 "
                 + "               END) AS countOfKnownAccountTypes,"
                 + "           MAX(data_source_obj_id) AS dataSource, "
-                +             sqlSpecificAccountAggregator +  " as accountTypes "
+                + sqlSpecificAccountAggregator + " as accountTypes "
                 + "FROM blackboard_artifacts as barts"
                 + "     JOIN (" + domainsTable + ") AS domains_table"
                 + "       ON barts.artifact_id = parent_artifact_id "
