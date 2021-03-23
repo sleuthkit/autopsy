@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.apache.commons.lang3.StringUtils;
@@ -150,17 +151,6 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
     }
 
     /**
-     * Clear the filters from the panel
-     */
-    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    final void clearFilters() {
-        for (AbstractDiscoveryFilterPanel filterPanel : filters) {
-            filterPanel.removeListeners();
-        }
-        filters.clear();
-    }
-
-    /**
      * Update the constraints and add a component to one of the columns.
      *
      * @param componentToAdd           The Component to add to the specified
@@ -214,9 +204,15 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     public void actionPerformed(ActionEvent e) {
-        validateFields();
-        validate();
-        repaint();
+        //invoke it after all the currently queued gui actions are performed
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                validateFields();
+                validate();
+                repaint();
+            }
+        });
     }
 
     /**
@@ -290,9 +286,15 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
     @Override
     public void valueChanged(ListSelectionEvent evt) {
         if (!evt.getValueIsAdjusting()) {
-            validateFields();
-            validate();
-            repaint();
+            //invoke it after all the currently queued gui actions are performed
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    validateFields();
+                    validate();
+                    repaint();
+                }
+            });
         }
     }
 

@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.discovery.ui;
 
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import org.sleuthkit.autopsy.discovery.search.AbstractFilter;
 import java.util.List;
@@ -161,35 +162,20 @@ final class HashSetFilterPanel extends AbstractDiscoveryFilterPanel {
         }
         return null;
     }
-
-    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    @Override
-    void removeListeners() {
-        super.removeListeners();
-        if (hashSetList != null) {
-            for (ListSelectionListener listener : getListSelectionListeners()) {
-                hashSetList.removeListSelectionListener(listener);
-            }
-        }
-    }
-
-    @Override
-    ListSelectionListener[] getListSelectionListeners() {
-        return hashSetList.getListSelectionListeners();
-    }
-
+    
     @Override
     void addListSelectionListener(ListSelectionListener listener) {
         hashSetList.addListSelectionListener(listener);
     }
 
     @Override
-    void removeListSelectionListener(ListSelectionListener listener) {
-        hashSetList.removeListSelectionListener(listener);
-    }
-
-    @Override
     boolean isFilterSupported() {
         return !hashSetList.isEmpty();
     }
+
+    @Override
+    void addActionListener(ActionListener actionListener) {
+        hashSetList.addActionListener(actionListener);
+    }
+
 }

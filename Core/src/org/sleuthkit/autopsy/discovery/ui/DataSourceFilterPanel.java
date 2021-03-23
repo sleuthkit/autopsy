@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.discovery.ui;
 
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import org.sleuthkit.autopsy.discovery.search.AbstractFilter;
@@ -144,20 +145,15 @@ final class DataSourceFilterPanel extends AbstractDiscoveryFilterPanel {
     }
 
     @Override
-    ListSelectionListener[] getListSelectionListeners() {
-        return dataSourceCheckBoxList.getListSelectionListeners();
-    }
-
-    @Override
     void addListSelectionListener(ListSelectionListener listener) {
         dataSourceCheckBoxList.addListSelectionListener(listener);
     }
-
+    
     @Override
-    void removeListSelectionListener(ListSelectionListener listener) {
-        dataSourceCheckBoxList.removeListSelectionListener(listener);
+    void addActionListener(ActionListener actionListener) {
+        dataSourceCheckBoxList.addActionListener(actionListener);
     }
-
+    
     @Override
     boolean isFilterSupported() {
         return !dataSourceCheckBoxList.isEmpty();
@@ -171,17 +167,6 @@ final class DataSourceFilterPanel extends AbstractDiscoveryFilterPanel {
             return Bundle.DataSourceFilterPanel_error_text();
         }
         return "";
-    }
-
-    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    @Override
-    void removeListeners() {
-        super.removeListeners();
-        if (dataSourceCheckBoxList != null) {
-            for (ListSelectionListener listener : getListSelectionListeners()) {
-                dataSourceCheckBoxList.removeListSelectionListener(listener);
-            }
-        }
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)

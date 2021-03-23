@@ -54,16 +54,6 @@ abstract class AbstractDiscoveryFilterPanel extends javax.swing.JPanel {
     abstract JCheckBox getCheckbox();
 
     /**
-     * Get the array of list selection listeners associated with this filter. If
-     * a list does not exist this should return null.
-     *
-     * @return The array which contains the list selection listeners for this
-     *         panel.
-     */
-    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    abstract ListSelectionListener[] getListSelectionListeners();
-
-    /**
      * Add a list selection listener to the filter list in this panel
      *
      * @param listener The list selection listener to add.
@@ -72,12 +62,13 @@ abstract class AbstractDiscoveryFilterPanel extends javax.swing.JPanel {
     abstract void addListSelectionListener(ListSelectionListener listener);
 
     /**
-     * Remove a list selection listener to the filter list in this panel
+     * Add an action listener to any buttons related to the filter list in this
+     * panel
      *
-     * @param listener The list selection listener to remove.
+     * @param listener The action listener to add.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    abstract void removeListSelectionListener(ListSelectionListener listener);
+    abstract void addActionListener(ActionListener actionListener);
 
     /**
      * Get any additional text that should be displayed under the checkbox. If
@@ -109,8 +100,9 @@ abstract class AbstractDiscoveryFilterPanel extends javax.swing.JPanel {
         if (getCheckbox() != null) {
             getCheckbox().addActionListener(actionListener);
         }
-        if (getListSelectionListeners() != null) {
+        if (hasPanel() == true) {
             addListSelectionListener(listListener);
+            addActionListener(actionListener);
         }
     }
 
@@ -122,26 +114,6 @@ abstract class AbstractDiscoveryFilterPanel extends javax.swing.JPanel {
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     abstract AbstractFilter getFilter();
-
-    /**
-     * Remove listeners from the checkbox and the list if they exist.
-     */
-    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    void removeListeners() {
-        if (getCheckbox() != null) {
-            for (ActionListener listener : getCheckbox().getActionListeners()) {
-                getCheckbox().removeActionListener(listener);
-            }
-        }
-        /*
-         * Should be overridden if a list is present and have something along
-         * the lines of the following added after a call to the super.
-         *
-         * if (list != null) { for (ListSelectionListener listener :
-         * list.getListSelectionListeners()) {
-         * list.removeListSelectionListener(listener); } }
-         */
-    }
 
     /**
      * Get whether or not the filter has sufficient options to be used.

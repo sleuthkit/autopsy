@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.guiutils;
 
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -169,24 +170,13 @@ public final class CheckBoxListPanel<T> extends javax.swing.JPanel {
     }
 
     /**
-     * Remove a list selection listener to the checkbox list contained in this
-     * panel.
+     * Add an action listener to the buttons contained in this panel.
      *
-     * @param listener The list selection listener to remove.
+     * @param listener The action listener to add.
      */
-    public void removeListSelectionListener(ListSelectionListener listener) {
-        checkboxList.removeListSelectionListener(listener);
-    }
-
-    /**
-     * Get all list selection listeners which exist for the list contained in
-     * this panel.
-     *
-     * @return The array of list selection listeners which are on the list
-     *         currently.
-     */
-    public ListSelectionListener[] getListSelectionListeners() {
-        return checkboxList.getListSelectionListeners();
+    public void addActionListener(ActionListener listener) {
+        checkButton.addActionListener(listener);
+        uncheckButton.addActionListener(listener);
     }
 
     /**

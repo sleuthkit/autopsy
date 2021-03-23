@@ -18,16 +18,15 @@
  */
 package org.sleuthkit.autopsy.discovery.ui;
 
+import java.awt.event.ActionListener;
 import org.sleuthkit.autopsy.discovery.search.AbstractFilter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
 import javax.swing.DefaultListModel;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.event.ListSelectionListener;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.discovery.search.SearchFiltering;
 import org.sleuthkit.autopsy.discovery.search.SearchFiltering.ParentSearchTerm;
@@ -39,7 +38,6 @@ final class ParentFolderFilterPanel extends AbstractDiscoveryFilterPanel {
 
     private static final long serialVersionUID = 1L;
     private DefaultListModel<SearchFiltering.ParentSearchTerm> parentListModel;
-    private final static Logger logger = Logger.getLogger(ParentFolderFilterPanel.class.getName());
     private static final String[] DEFAULT_IGNORED_PATHS = {"/Windows/", "/Program Files/"}; //NON-NLS
 
     /**
@@ -319,35 +317,19 @@ final class ParentFolderFilterPanel extends AbstractDiscoveryFilterPanel {
         }
         return null;
     }
-
-    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    @Override
-    void removeListeners() {
-        super.removeListeners();
-        if (parentList != null) {
-            for (ListSelectionListener listener : getListSelectionListeners()) {
-                parentList.removeListSelectionListener(listener);
-            }
-        }
-    }
-
-    @Override
-    ListSelectionListener[] getListSelectionListeners() {
-        return parentList.getListSelectionListeners();
-    }
-
+    
     @Override
     void addListSelectionListener(ListSelectionListener listener) {
         parentList.addListSelectionListener(listener);
     }
 
     @Override
-    void removeListSelectionListener(ListSelectionListener listener) {
-        parentList.removeListSelectionListener(listener);
+    boolean isFilterSupported() {
+        return true;
     }
 
     @Override
-    boolean isFilterSupported() {
-        return true;
+    void addActionListener(ActionListener actionListener) {
+       //do nothing
     }
 }

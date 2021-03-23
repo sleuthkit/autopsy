@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.discovery.ui;
 
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import org.sleuthkit.autopsy.discovery.search.AbstractFilter;
 import java.util.List;
@@ -162,30 +163,14 @@ final class InterestingItemsFilterPanel extends AbstractDiscoveryFilterPanel {
         return null;
     }
 
-    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    @Override
-    void removeListeners() {
-        super.removeListeners();
-        if (interestingItemsList != null) {
-            for (ListSelectionListener listener : getListSelectionListeners()) {
-                interestingItemsList.removeListSelectionListener(listener);
-            }
-        }
-    }
-
-    @Override
-    ListSelectionListener[] getListSelectionListeners() {
-        return interestingItemsList.getListSelectionListeners();
-    }
-
     @Override
     void addListSelectionListener(ListSelectionListener listener) {
         interestingItemsList.addListSelectionListener(listener);
     }
 
     @Override
-    void removeListSelectionListener(ListSelectionListener listener) {
-        interestingItemsList.removeListSelectionListener(listener);
+    void addActionListener(ActionListener actionListener) {
+        interestingItemsList.addActionListener(actionListener);
     }
 
     @Override

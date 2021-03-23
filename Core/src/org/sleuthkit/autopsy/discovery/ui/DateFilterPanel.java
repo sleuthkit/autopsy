@@ -259,11 +259,7 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     void addListeners(ActionListener actionListener, ListSelectionListener listListener) {
-        dateFilterCheckBox.addActionListener(actionListener);
-        startCheckBox.addActionListener(actionListener);
-        endCheckBox.addActionListener(actionListener);
-        rangeRadioButton.addActionListener(actionListener);
-        mostRecentRadioButton.addActionListener(actionListener);
+        addActionListener(actionListener);
         startDatePicker.addDateChangeListener(new DateChangeListener() {
             @Override
             public void dateChanged(DateChangeEvent event) {
@@ -276,35 +272,6 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
                 actionListener.actionPerformed(new ActionEvent(endDatePicker, ActionEvent.ACTION_PERFORMED, "EndDateChanged"));
             }
         });
-    }
-
-    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    @Override
-    void removeListeners() {
-        for (ActionListener listener : dateFilterCheckBox.getActionListeners()) {
-            dateFilterCheckBox.removeActionListener(listener);
-        }
-        for (ActionListener listener : rangeRadioButton.getActionListeners()) {
-            rangeRadioButton.removeActionListener(listener);
-        }
-        for (ActionListener listener : mostRecentRadioButton.getActionListeners()) {
-            mostRecentRadioButton.removeActionListener(listener);
-        }
-        for (ActionListener listener : rangeRadioButton.getActionListeners()) {
-            rangeRadioButton.removeActionListener(listener);
-        }
-        for (ActionListener listener : startCheckBox.getActionListeners()) {
-            startCheckBox.removeActionListener(listener);
-        }
-        for (ActionListener listener : endCheckBox.getActionListeners()) {
-            endCheckBox.removeActionListener(listener);
-        }
-        for (DateChangeListener listener : endDatePicker.getDateChangeListeners()) {
-            endDatePicker.removeDateChangeListener(listener);
-        }
-        for (DateChangeListener listener : startDatePicker.getDateChangeListeners()) {
-            startDatePicker.removeDateChangeListener(listener);
-        }
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
@@ -367,22 +334,22 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
     // End of variables declaration//GEN-END:variables
 
     @Override
-    ListSelectionListener[] getListSelectionListeners() {
-        return null;
-    }
-
-    @Override
     void addListSelectionListener(ListSelectionListener listener) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
-    void removeListSelectionListener(ListSelectionListener listener) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    boolean isFilterSupported() {
+        return true;
     }
 
     @Override
-    boolean isFilterSupported() {
-       return true;
+    void addActionListener(ActionListener actionListener) {
+        dateFilterCheckBox.addActionListener(actionListener);
+        startCheckBox.addActionListener(actionListener);
+        endCheckBox.addActionListener(actionListener);
+        rangeRadioButton.addActionListener(actionListener);
+        mostRecentRadioButton.addActionListener(actionListener);
     }
+
 }
