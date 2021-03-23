@@ -571,7 +571,7 @@ class ExtractIE extends Extract {
                     RecentActivityExtracterModuleFactory.getModuleName(), ftime));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_REFERRER,
                     RecentActivityExtracterModuleFactory.getModuleName(), ""));
-            // @@@ NOte that other browser modules are adding TITLE in hre for the title
+            // @@@ NOte that other browser modules are adding TITLE in here for the title
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
                     RecentActivityExtracterModuleFactory.getModuleName(),
                     NbBundle.getMessage(this.getClass(),

@@ -769,10 +769,7 @@ class ExtractRegistry extends Extract {
                                     case "usb": //NON-NLS
                                         try {
                                         Long usbMtime = Long.parseLong(artnode.getAttribute("mtime")); //NON-NLS
-                                        usbMtime = Long.valueOf(usbMtime.toString());
-
-//                                        BlackboardArtifact bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_DEVICE_ATTACHED);
-
+                                        usbMtime = Long.valueOf(usbMtime.toString());         
                                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, parentModuleName, usbMtime));
                                         String dev = artnode.getAttribute("dev"); //NON-NLS
                                         String make = "";
@@ -789,8 +786,6 @@ class ExtractRegistry extends Extract {
                                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MAKE, parentModuleName, make));
                                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL, parentModuleName, model));
                                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_ID, parentModuleName, value));
-//                                        bbart.addAttributes(bbattributes);
-
                                         newArtifacts.add(createArtifactWithAttributes(ARTIFACT_TYPE.TSK_DEVICE_ATTACHED, regFile, bbattributes));
                                     } catch (TskCoreException ex) {
                                         logger.log(Level.SEVERE, String.format("Error adding device_attached artifact to blackboard for file %d.", regFile.getId()), ex); //NON-NLS

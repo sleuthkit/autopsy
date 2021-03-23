@@ -244,9 +244,9 @@ class Chromium extends Extract {
             }
             List<HashMap<String, Object>> tempList;
             tempList = this.dbConnect(temps, HISTORY_QUERY);
-            logger.log(Level.INFO, "{0}- Now getting history from {1} with {2}artifacts identified.", new Object[]{getName(), temps, tempList.size()}); //NON-NLS
+            logger.log(Level.INFO, "{0}- Now getting history from {1} with {2} artifacts identified.", new Object[]{getName(), temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
-                Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
+                Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
                         RecentActivityExtracterModuleFactory.getModuleName(),
                         ((result.get("url").toString() != null) ? result.get("url").toString() : ""))); //NON-NLS
@@ -687,7 +687,7 @@ class Chromium extends Extract {
                 break;
             }
             List<HashMap<String, Object>> tempList = this.dbConnect(temps, LOGIN_QUERY);
-            logger.log(Level.INFO, "{0}- Now getting login information from {1} with {2}artifacts identified.", new Object[]{getName(), temps, tempList.size()}); //NON-NLS
+            logger.log(Level.INFO, "{0}- Now getting login information from {1} with {2} artifacts identified.", new Object[]{getName(), temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
 
@@ -830,7 +830,7 @@ class Chromium extends Extract {
                 : AUTOFILL_QUERY;
 
         List<HashMap<String, Object>> autofills = this.dbConnect(dbFilePath, autoFillquery);
-        logger.log(Level.INFO, "{0}- Now getting Autofill information from {1} with {2}artifacts identified.", new Object[]{getName(), dbFilePath, autofills.size()}); //NON-NLS
+        logger.log(Level.INFO, "{0}- Now getting Autofill information from {1} with {2} artifacts identified.", new Object[]{getName(), dbFilePath, autofills.size()}); //NON-NLS
         for (HashMap<String, Object> result : autofills) {
             Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
 
@@ -899,7 +899,7 @@ class Chromium extends Extract {
 
         // Get Web form addresses
         List<HashMap<String, Object>> addresses = this.dbConnect(dbFilePath, webformAddressQuery);
-        logger.log(Level.INFO, "{0}- Now getting Web form addresses from {1} with {2}artifacts identified.", new Object[]{getName(), dbFilePath, addresses.size()}); //NON-NLS
+        logger.log(Level.INFO, "{0}- Now getting Web form addresses from {1} with {2} artifacts identified.", new Object[]{getName(), dbFilePath, addresses.size()}); //NON-NLS
         for (HashMap<String, Object> result : addresses) {
 
             // get name fields
