@@ -147,9 +147,11 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
      * data to be displayed as a bar chart.
      *
      * @param recentDaysActivity The data retrieved from TimelineSummary.
+     * @param showIntermediateDates If true, shows all dates. If false, shows
+     * only first and last date.
      * @return The data to be displayed in the BarChart.
      */
-    private List<BarChartSeries> parseChartData(List<DailyActivityAmount> recentDaysActivity) {
+    private List<BarChartSeries> parseChartData(List<DailyActivityAmount> recentDaysActivity, boolean showIntermediateDates) {
         // if no data, return null indicating no result.
         if (CollectionUtils.isEmpty(recentDaysActivity)) {
             return null;
@@ -164,7 +166,7 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
 
             long fileAmt = curItem.getFileActivityCount();
             long artifactAmt = curItem.getArtifactActivityCount() * 100;
-            String formattedDate = (i == 0 || i == recentDaysActivity.size() - 1)
+            String formattedDate = (showIntermediateDates || i == 0 || i == recentDaysActivity.size() - 1)
                     ? formatDate(curItem.getDay(), CHART_FORMAT) : "";
 
             OrderedKey thisKey = new OrderedKey(formattedDate, i);
@@ -191,7 +193,7 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
     private void handleResult(DataFetchResult<TimelineSummaryData> result) {
         earliestLabel.showDataFetchResult(DataFetchResult.getSubResult(result, r -> formatDate(r.getMinDate(), EARLIEST_LATEST_FORMAT)));
         latestLabel.showDataFetchResult(DataFetchResult.getSubResult(result, r -> formatDate(r.getMaxDate(), EARLIEST_LATEST_FORMAT)));
-        last30DaysChart.showDataFetchResult(DataFetchResult.getSubResult(result, r -> parseChartData(r.getMostRecentDaysActivity())));
+        last30DaysChart.showDataFetchResult(DataFetchResult.getSubResult(result, r -> parseChartData(r.getMostRecentDaysActivity(), false)));
 
         if (result != null
                 && result.getResultType() == DataFetchResult.ResultType.SUCCESS
@@ -325,7 +327,7 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
                                 new BarChartExport(Bundle.TimelinePanel_getExports_dateColumnHeader(),
                                         "#,###",
                                         Bundle.TimelinePanel_getExports_chartName(),
-                                        parseChartData(summaryData.getMostRecentDaysActivity())))));
+                                        parseChartData(summaryData.getMostRecentDaysActivity(), true)))));
     }
 
     /**
