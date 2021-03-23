@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
@@ -40,6 +41,7 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.events.HostsChangedEvent;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.hosts.AssociatePersonsMenuAction;
+import org.sleuthkit.autopsy.datamodel.hosts.MergeHostMenuAction;
 import org.sleuthkit.autopsy.datamodel.hosts.RemoveParentPersonAction;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Host;
@@ -287,10 +289,13 @@ public class HostNode extends DisplayableItemNode {
         "HostNode_actions_removeFromPerson=Remove from person ({0})"})
     public Action[] getActions(boolean context) {
 
-        Optional<Person> parent = Optional.empty();
-
+        List<Action> actionsList = new ArrayList<>();
+        
         // if there is a host, then provide actions
         if (this.host != null) {
+            
+            // Add the appropriate Person action
+            Optional<Person> parent;
             try {
                 parent = Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().getPerson(this.host);
             } catch (NoCurrentCaseException | TskCoreException ex) {
@@ -300,17 +305,14 @@ public class HostNode extends DisplayableItemNode {
 
             // if there is a parent, only give option to remove parent person.
             if (parent.isPresent()) {
-                return new Action[]{
-                    new RemoveParentPersonAction(this.host, parent.get()),
-                    null
-                };
+                actionsList.add(new RemoveParentPersonAction(this.host, parent.get()));
             } else {
-                return new Action[]{
-                    new AssociatePersonsMenuAction(this.host),
-                    null
-                };
+                actionsList.add(new AssociatePersonsMenuAction(this.host));
             }
+            
+            // Add option to merge hosts
+            actionsList.add(new MergeHostMenuAction(this.host));
         }
-        return new Action[0];
+        return actionsList.toArray(new Action[actionsList.size()]);
     }
 }

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,6 +38,7 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import org.apache.commons.lang3.StringUtils;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -47,9 +48,9 @@ import org.sleuthkit.autopsy.casemodule.GeneralFilter;
 import org.sleuthkit.autopsy.machinesettings.UserMachinePreferences;
 import org.sleuthkit.autopsy.machinesettings.UserMachinePreferencesException;
 import org.sleuthkit.autopsy.core.UserPreferences;
-import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.Version;
+import org.sleuthkit.autopsy.machinesettings.UserMachinePreferences.TempDirChoice;
 import org.sleuthkit.autopsy.report.ReportBranding;
 
 /**
@@ -77,7 +78,6 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
     private static final long serialVersionUID = 1L;
     private final JFileChooser logoFileChooser;
     private final JFileChooser tempDirChooser;
-    private final TextFieldListener textFieldListener;
     private static final String ETC_FOLDER_NAME = "etc";
     private static final String CONFIG_FILE_EXTENSION = ".conf";
     private static final long ONE_BILLION = 1000000000L;  //used to roughly convert system memory from bytes to gigabytes
@@ -86,6 +86,8 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
     private static final int MIN_MEMORY_IN_GB = 2; //the enforced minimum memory in gigabytes
     private static final Logger logger = Logger.getLogger(AutopsyOptionsPanel.class.getName());
     private String initialMemValue = Long.toString(Runtime.getRuntime().maxMemory() / ONE_BILLION);
+    
+    private final ReportBranding reportBranding;
 
     /**
      * Instantiate the Autopsy options panel.
@@ -116,10 +118,12 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         solrMaxHeapSpinner.setModel(new javax.swing.SpinnerNumberModel(UserPreferences.getMaxSolrVMSize(),
                 JVM_MEMORY_STEP_SIZE_MB, ((int) getSystemMemoryInGB()) * MEGA_IN_GIGA, JVM_MEMORY_STEP_SIZE_MB));
 
-        textFieldListener = new TextFieldListener();
+        TextFieldListener textFieldListener = new TextFieldListener();
         agencyLogoPathField.getDocument().addDocumentListener(textFieldListener);
-        tempDirectoryField.getDocument().addDocumentListener(textFieldListener);
+        tempCustomField.getDocument().addDocumentListener(new TempCustomTextListener());
         logFileCount.setText(String.valueOf(UserPreferences.getLogFileCount()));
+        
+        reportBranding = new ReportBranding();
     }
 
     /**
@@ -298,21 +302,46 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         }
         return new String[]{};
     }
+    
+    private void evaluateTempDirState() {
+        boolean caseOpen = Case.isCaseOpen();
+        boolean customSelected = tempCustomRadio.isSelected();
+        
+        tempDirectoryBrowseButton.setEnabled(!caseOpen && customSelected);
+        tempCustomField.setEnabled(!caseOpen && customSelected);
+        
+        tempOnCustomNoPath.setVisible(customSelected && StringUtils.isBlank(tempCustomField.getText()));
+    }
 
     /**
      * Load the saved user preferences.
      */
     void load() {
-        String path = ModuleSettings.getConfigSetting(ReportBranding.MODULE_NAME, ReportBranding.AGENCY_LOGO_PATH_PROP);
+        String path = reportBranding.getAgencyLogoPath();
         boolean useDefault = (path == null || path.isEmpty());
         defaultLogoRB.setSelected(useDefault);
         specifyLogoRB.setSelected(!useDefault);
         agencyLogoPathField.setEnabled(!useDefault);
         browseLogosButton.setEnabled(!useDefault);
-        tempDirectoryField.setText(UserMachinePreferences.getBaseTempDirectory());
+        
+        tempCustomField.setText(UserMachinePreferences.getCustomTempDirectory());
+        switch (UserMachinePreferences.getTempDirChoice()) {
+            case CASE: 
+                tempCaseRadio.setSelected(true);
+                break;
+            case CUSTOM: 
+                tempCustomRadio.setSelected(true);
+                break;
+            default:
+            case SYSTEM: 
+                tempLocalRadio.setSelected(true);
+                break;
+        }
+        
+        evaluateTempDirState();
+        
         logFileCount.setText(String.valueOf(UserPreferences.getLogFileCount()));
         solrMaxHeapSpinner.setValue(UserPreferences.getMaxSolrVMSize());
-        tempDirectoryField.setText(UserMachinePreferences.getBaseTempDirectory());
         try {
             updateAgencyLogo(path);
         } catch (IOException ex) {
@@ -333,9 +362,13 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
 
     private void setTempDirEnabled() {
         boolean enabled = !Case.isCaseOpen();
-        this.tempDirectoryBrowseButton.setEnabled(enabled);
-        this.tempDirectoryField.setEnabled(enabled);
+        
+        this.tempCaseRadio.setEnabled(enabled);
+        this.tempCustomRadio.setEnabled(enabled);
+        this.tempLocalRadio.setEnabled(enabled);
+        
         this.tempDirectoryWarningLabel.setVisible(!enabled);
+        evaluateTempDirState();
     }
 
     /**
@@ -367,18 +400,43 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
     @Messages({
         "AutopsyOptionsPanel_storeTempDir_onError_title=Error Saving Temporary Directory",
         "# {0} - path",
-        "AutopsyOptionsPanel_storeTempDir_onError_description=There was an error creating the temporary directory on the filesystem at: {0}.",})
+        "AutopsyOptionsPanel_storeTempDir_onError_description=There was an error creating the temporary directory on the filesystem at: {0}.",
+        "AutopsyOptionsPanel_storeTempDir_onChoiceError_title=Error Saving Temporary Directory Choice",
+        "AutopsyOptionsPanel_storeTempDir_onChoiceError_description=There was an error updating temporary directory choice selection.",})
     private void storeTempDir() {
-        String tempDirectoryPath = tempDirectoryField.getText();
-        if (!UserMachinePreferences.getBaseTempDirectory().equals(tempDirectoryPath)) {
+        String tempDirectoryPath = tempCustomField.getText();
+        if (!UserMachinePreferences.getCustomTempDirectory().equals(tempDirectoryPath)) {
             try {
-                UserMachinePreferences.setBaseTempDirectory(tempDirectoryPath);
+                UserMachinePreferences.setCustomTempDirectory(tempDirectoryPath);
             } catch (UserMachinePreferencesException ex) {
                 logger.log(Level.WARNING, "There was an error creating the temporary directory defined by the user: " + tempDirectoryPath, ex);
                 SwingUtilities.invokeLater(() -> {
                     JOptionPane.showMessageDialog(this,
                             String.format("<html>%s</html>", Bundle.AutopsyOptionsPanel_storeTempDir_onError_description(tempDirectoryPath)),
                             Bundle.AutopsyOptionsPanel_storeTempDir_onError_title(),
+                            JOptionPane.ERROR_MESSAGE);
+                });
+            }
+        }
+        
+        TempDirChoice choice;
+        if (tempCaseRadio.isSelected()) {
+            choice = TempDirChoice.CASE;
+        } else if (tempCustomRadio.isSelected()) {
+            choice = TempDirChoice.CUSTOM;
+        } else {
+            choice = TempDirChoice.SYSTEM;
+        }
+        
+        if (!choice.equals(UserMachinePreferences.getTempDirChoice())) {
+            try {
+                UserMachinePreferences.setTempDirChoice(choice);
+            } catch (UserMachinePreferencesException ex) {
+                logger.log(Level.WARNING, "There was an error updating choice to: " + choice.name(), ex);
+                SwingUtilities.invokeLater(() -> {
+                    JOptionPane.showMessageDialog(this,
+                            String.format("<html>%s</html>", Bundle.AutopsyOptionsPanel_storeTempDir_onChoiceError_description()),
+                            Bundle.AutopsyOptionsPanel_storeTempDir_onChoiceError_title(),
                             JOptionPane.ERROR_MESSAGE);
                 });
             }
@@ -395,10 +453,10 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         if (!agencyLogoPathField.getText().isEmpty()) {
             File file = new File(agencyLogoPathField.getText());
             if (file.exists()) {
-                ModuleSettings.setConfigSetting(ReportBranding.MODULE_NAME, ReportBranding.AGENCY_LOGO_PATH_PROP, agencyLogoPathField.getText());
+                reportBranding.setAgencyLogoPath(agencyLogoPathField.getText());
             }
         } else {
-            ModuleSettings.setConfigSetting(ReportBranding.MODULE_NAME, ReportBranding.AGENCY_LOGO_PATH_PROP, "");
+            reportBranding.setAgencyLogoPath("");
         }
         UserPreferences.setMaxSolrVMSize((int) solrMaxHeapSpinner.getValue());
         if (memField.isEnabled()) {  //if the field could of been changed we need to try and save it
@@ -550,6 +608,32 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
             firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
         }
     }
+    
+    /**
+     * Listens for changes in the temp directory custom directory text field.
+     */
+    private class TempCustomTextListener extends TextFieldListener {
+
+        @Override
+        public void changedUpdate(DocumentEvent e) {
+            evaluateTempDirState();
+            super.changedUpdate(e);
+        }
+
+        @Override
+        public void removeUpdate(DocumentEvent e) {
+            evaluateTempDirState();
+            super.changedUpdate(e);
+        }
+
+        @Override
+        public void insertUpdate(DocumentEvent e) {
+            evaluateTempDirState();
+            super.changedUpdate(e);
+        }
+        
+        
+    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -563,6 +647,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         fileSelectionButtonGroup = new javax.swing.ButtonGroup();
         displayTimesButtonGroup = new javax.swing.ButtonGroup();
         logoSourceButtonGroup = new javax.swing.ButtonGroup();
+        tempDirChoiceGroup = new javax.swing.ButtonGroup();
         jScrollPane1 = new javax.swing.JScrollPane();
         javax.swing.JPanel mainPanel = new javax.swing.JPanel();
         logoPanel = new javax.swing.JPanel();
@@ -589,9 +674,13 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         solrMaxHeapSpinner = new javax.swing.JSpinner();
         solrJVMHeapWarning = new javax.swing.JLabel();
         tempDirectoryPanel = new javax.swing.JPanel();
-        tempDirectoryField = new javax.swing.JTextField();
+        tempCustomField = new javax.swing.JTextField();
         tempDirectoryBrowseButton = new javax.swing.JButton();
         tempDirectoryWarningLabel = new javax.swing.JLabel();
+        tempLocalRadio = new javax.swing.JRadioButton();
+        tempCaseRadio = new javax.swing.JRadioButton();
+        tempCustomRadio = new javax.swing.JRadioButton();
+        tempOnCustomNoPath = new javax.swing.JLabel();
         rdpPanel = new javax.swing.JPanel();
         javax.swing.JScrollPane sizingScrollPane = new javax.swing.JScrollPane();
         javax.swing.JTextPane sizingTextPane = new javax.swing.JTextPane();
@@ -818,7 +907,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         tempDirectoryPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.tempDirectoryPanel.border.title"))); // NOI18N
         tempDirectoryPanel.setName(org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.tempDirectoryPanel.name")); // NOI18N
 
-        tempDirectoryField.setText(org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.tempDirectoryField.text")); // NOI18N
+        tempCustomField.setText(org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.tempCustomField.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(tempDirectoryBrowseButton, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.tempDirectoryBrowseButton.text")); // NOI18N
         tempDirectoryBrowseButton.addActionListener(new java.awt.event.ActionListener() {
@@ -830,6 +919,33 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         tempDirectoryWarningLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/warning16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(tempDirectoryWarningLabel, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.tempDirectoryWarningLabel.text")); // NOI18N
 
+        tempDirChoiceGroup.add(tempLocalRadio);
+        org.openide.awt.Mnemonics.setLocalizedText(tempLocalRadio, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.tempLocalRadio.text")); // NOI18N
+        tempLocalRadio.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                tempLocalRadioActionPerformed(evt);
+            }
+        });
+
+        tempDirChoiceGroup.add(tempCaseRadio);
+        org.openide.awt.Mnemonics.setLocalizedText(tempCaseRadio, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.tempCaseRadio.text")); // NOI18N
+        tempCaseRadio.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                tempCaseRadioActionPerformed(evt);
+            }
+        });
+
+        tempDirChoiceGroup.add(tempCustomRadio);
+        org.openide.awt.Mnemonics.setLocalizedText(tempCustomRadio, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.tempCustomRadio.text")); // NOI18N
+        tempCustomRadio.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                tempCustomRadioActionPerformed(evt);
+            }
+        });
+
+        tempOnCustomNoPath.setForeground(java.awt.Color.RED);
+        org.openide.awt.Mnemonics.setLocalizedText(tempOnCustomNoPath, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.tempOnCustomNoPath.text")); // NOI18N
+
         javax.swing.GroupLayout tempDirectoryPanelLayout = new javax.swing.GroupLayout(tempDirectoryPanel);
         tempDirectoryPanel.setLayout(tempDirectoryPanelLayout);
         tempDirectoryPanelLayout.setHorizontalGroup(
@@ -837,23 +953,37 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
             .addGroup(tempDirectoryPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(tempDirectoryPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(tempLocalRadio)
+                    .addComponent(tempCaseRadio)
                     .addComponent(tempDirectoryWarningLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 615, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(tempDirectoryPanelLayout.createSequentialGroup()
-                        .addComponent(tempDirectoryField, javax.swing.GroupLayout.PREFERRED_SIZE, 367, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(tempCustomRadio)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(tempDirectoryBrowseButton)))
-                .addGap(0, 0, Short.MAX_VALUE))
+                        .addGroup(tempDirectoryPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(tempOnCustomNoPath)
+                            .addGroup(tempDirectoryPanelLayout.createSequentialGroup()
+                                .addComponent(tempCustomField, javax.swing.GroupLayout.PREFERRED_SIZE, 459, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(tempDirectoryBrowseButton)))))
+                .addContainerGap(158, Short.MAX_VALUE))
         );
         tempDirectoryPanelLayout.setVerticalGroup(
             tempDirectoryPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(tempDirectoryPanelLayout.createSequentialGroup()
                 .addContainerGap()
+                .addComponent(tempLocalRadio)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(tempCaseRadio)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(tempDirectoryPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(tempDirectoryField)
+                    .addComponent(tempCustomRadio)
+                    .addComponent(tempCustomField)
                     .addComponent(tempDirectoryBrowseButton))
-                .addGap(18, 18, 18)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(tempOnCustomNoPath)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(tempDirectoryWarningLabel)
-                .addContainerGap())
+                .addGap(14, 14, 14))
         );
 
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -906,11 +1036,11 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 648, Short.MAX_VALUE)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 860, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 382, Short.MAX_VALUE)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 620, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -927,7 +1057,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
                 if (!f.exists() && !f.mkdirs()) {
                     throw new InvalidPathException(specifiedPath, "Unable to create parent directories leading to " + specifiedPath);
                 }
-                tempDirectoryField.setText(specifiedPath);
+                tempCustomField.setText(specifiedPath);
                 firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
             } catch (InvalidPathException ex) {
                 logger.log(Level.WARNING, "Unable to create temporary directory in " + specifiedPath, ex);
@@ -971,7 +1101,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         browseLogosButton.setEnabled(true);
         try {
             if (agencyLogoPathField.getText().isEmpty()) {
-                String path = ModuleSettings.getConfigSetting(ReportBranding.MODULE_NAME, ReportBranding.AGENCY_LOGO_PATH_PROP);
+                String path = reportBranding.getAgencyLogoPath();
                 if (path != null && !path.isEmpty()) {
                     updateAgencyLogo(path);
                 }
@@ -1017,6 +1147,21 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_browseLogosButtonActionPerformed
 
+    private void tempLocalRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tempLocalRadioActionPerformed
+        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+        evaluateTempDirState();
+    }//GEN-LAST:event_tempLocalRadioActionPerformed
+
+    private void tempCaseRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tempCaseRadioActionPerformed
+        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+        evaluateTempDirState();
+    }//GEN-LAST:event_tempCaseRadioActionPerformed
+
+    private void tempCustomRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tempCustomRadioActionPerformed
+        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+        evaluateTempDirState();
+    }//GEN-LAST:event_tempCustomRadioActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextField agencyLogoPathField;
     private javax.swing.JLabel agencyLogoPathFieldValidationLabel;
@@ -1045,10 +1190,15 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
     private javax.swing.JSpinner solrMaxHeapSpinner;
     private javax.swing.JRadioButton specifyLogoRB;
     private javax.swing.JLabel systemMemoryTotal;
+    private javax.swing.JRadioButton tempCaseRadio;
+    private javax.swing.JTextField tempCustomField;
+    private javax.swing.JRadioButton tempCustomRadio;
+    private javax.swing.ButtonGroup tempDirChoiceGroup;
     private javax.swing.JButton tempDirectoryBrowseButton;
-    private javax.swing.JTextField tempDirectoryField;
     private javax.swing.JPanel tempDirectoryPanel;
     private javax.swing.JLabel tempDirectoryWarningLabel;
+    private javax.swing.JRadioButton tempLocalRadio;
+    private javax.swing.JLabel tempOnCustomNoPath;
     private javax.swing.JLabel totalMemoryLabel;
     // End of variables declaration//GEN-END:variables
 

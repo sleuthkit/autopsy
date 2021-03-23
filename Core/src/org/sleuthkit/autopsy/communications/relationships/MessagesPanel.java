@@ -113,7 +113,7 @@ class MessagesPanel extends javax.swing.JPanel implements Lookup.Provider {
         outlineViewPanel.setTableColumnsWidth(5, 10, 10, 15, 50, 10);
     }
 
-    public MessagesPanel(ChildFactory<?> nodeFactory) {
+    MessagesPanel(ChildFactory<?> nodeFactory) {
         this();
         setChildFactory(nodeFactory);
     }
@@ -121,6 +121,15 @@ class MessagesPanel extends javax.swing.JPanel implements Lookup.Provider {
     @Override
     public Lookup getLookup() {
         return proxyLookup;
+    }
+    
+    /**
+     * Return the explorerManager for the table.
+     * 
+     * @return The explorer manager for the table.
+     */
+    ExplorerManager getExplorerManager() {
+        return outlineViewPanel.getExplorerManager();
     }
 
     @Override

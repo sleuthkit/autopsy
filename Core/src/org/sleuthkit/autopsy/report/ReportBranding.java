@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2014 Basis Technology Corp.
+ * Copyright 2013-2021 Basis Technology Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,8 @@ package org.sleuthkit.autopsy.report;
 import org.sleuthkit.autopsy.report.infrastructure.ReportGenerator;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.util.NbBundle;
@@ -37,7 +39,7 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 public final class ReportBranding implements ReportBrandingProviderI {
 
     //property names
-    public static final String AGENCY_LOGO_PATH_PROP = "AgencyLogoPath"; //NON-NLS
+    private static final String AGENCY_LOGO_PATH_PROP = "AgencyLogoPath"; //NON-NLS
     private static final String REPORT_TITLE_PROP = "ReportTitle"; //NON-NLS
     private static final String REPORT_FOOTER_PROP = "ReportFooter"; //NON-NLS
     //default settings
@@ -46,8 +48,9 @@ public final class ReportBranding implements ReportBrandingProviderI {
             .getMessage(ReportBranding.class, "ReportBranding.defaultReportTitle.text");
     private static final String DEFAULT_REPORT_FOOTER = NbBundle
             .getMessage(ReportBranding.class, "ReportBranding.defaultReportFooter.text");
-    private String reportsBrandingDir; //dir with extracted reports branding resources
-    public static final String MODULE_NAME = ReportBranding.class.getSimpleName();
+    private final String reportsBrandingDir; //dir with extracted reports branding resources
+    private final Path userConfigDir = Paths.get(PlatformUtil.getUserDirectory().getAbsolutePath());
+    private static final String MODULE_NAME = ReportBranding.class.getSimpleName();
     private static final Logger logger = Logger.getLogger(ReportBranding.class.getName());
 
     // this is static so that it can be set by another object
@@ -109,38 +112,73 @@ public final class ReportBranding implements ReportBrandingProviderI {
         generatorLogoPath = path;
     }
 
+    /**
+     * Read logo path from preferences file. Reverses the path relativization performed 
+     * in setAgencyLogoPath(). If the stored path starts with either “/” or drive letter, 
+     * it is a full path, and is returned to the caller. Otherwise, append current user 
+     * directory to the saved relative path. See JIRA-7348.
+     *
+     * @return Full path to the logo file.
+     */
     @Override
     public String getAgencyLogoPath() {
-        String curPath = null;
 
         /*
          * The agency logo code uses these properties to persist changes in the
          * logo (within the same process). This is different from the generator
          * logo that uses a static variable.
          */
-        curPath = ModuleSettings.getConfigSetting(MODULE_NAME, AGENCY_LOGO_PATH_PROP);
+        String curPath = ModuleSettings.getConfigSetting(MODULE_NAME, AGENCY_LOGO_PATH_PROP);
+        
+
         //if has been set, validate it's correct, if not set, return null
-        if (curPath != null && new File(curPath).canRead() == false) {
-            //use default
-            logger.log(Level.INFO, "Custom report branding for agency logo is not valid: " + curPath); //NON-NLS
-            curPath = null;
+        if (curPath != null && !curPath.isEmpty()) {
+            
+            // check if the path is an absolute path (starts with either drive letter or "/")            
+            Path driveLetterOrNetwork = Paths.get(curPath).getRoot();            
+            if (driveLetterOrNetwork != null) {
+                // absolute path
+                return curPath;
+            }
+            
+            // Path is a relative path. Reverse path relativization performed in setAgencyLogoPath() 
+            Path absolutePath = userConfigDir.resolve(curPath);
+            curPath = absolutePath.toString();
+            if (new File(curPath).canRead() == false) {
+                //use default
+                logger.log(Level.INFO, "Custom report branding for agency logo is not valid: {0}", curPath); //NON-NLS
+                curPath = null;
+            }
         }
 
         return curPath;
     }
 
+    /**
+     * Save logo path. If the path is inside user directory (e.g.
+     * "C:\Users\USER_NAME\AppData\Roaming\autopsy"), trim that off and save it
+     * as a relative path (i.e it will not start with a “/” or drive letter). Otherwise,
+     * full path is saved. See JIRA-7348.
+     *
+     * @param fullPath Full path to the logo file.
+     */
     @Override
-    public void setAgencyLogoPath(String path) {
+    public void setAgencyLogoPath(String fullPath) {
+        
+        Path relativePath = Paths.get(fullPath);
+        // check if the path is within user directory
+        if (Paths.get(fullPath).startsWith(userConfigDir)) {
+            // relativize the path
+            relativePath = userConfigDir.relativize(relativePath);
+        }
         // Use properties to persist the logo to use.
-        // Should use static variable instead
-        ModuleSettings.setConfigSetting(MODULE_NAME, AGENCY_LOGO_PATH_PROP, path);
+        ModuleSettings.setConfigSetting(MODULE_NAME, AGENCY_LOGO_PATH_PROP, relativePath.toString());
     }
 
     @Override
     public String getReportTitle() {
-        String curTitle = null;
 
-        curTitle = ModuleSettings.getConfigSetting(MODULE_NAME, REPORT_TITLE_PROP);
+        String curTitle = ModuleSettings.getConfigSetting(MODULE_NAME, REPORT_TITLE_PROP);
         if (curTitle == null || curTitle.isEmpty()) {
             //use default
             logger.log(Level.INFO, "Using default report branding for report title"); //NON-NLS
@@ -158,9 +196,8 @@ public final class ReportBranding implements ReportBrandingProviderI {
 
     @Override
     public String getReportFooter() {
-        String curFooter = null;
 
-        curFooter = ModuleSettings.getConfigSetting(MODULE_NAME, REPORT_FOOTER_PROP);
+        String curFooter = ModuleSettings.getConfigSetting(MODULE_NAME, REPORT_FOOTER_PROP);
         if (curFooter == null) {
             //use default
             logger.log(Level.INFO, "Using default report branding for report footer"); //NON-NLS

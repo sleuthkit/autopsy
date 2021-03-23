@@ -768,7 +768,6 @@ public class SearchFiltering {
                 CentralRepository centralRepoDb) throws DiscoveryException {
             DiscoveryAttributes.PreviouslyNotableAttribute previouslyNotableAttr = new DiscoveryAttributes.PreviouslyNotableAttribute();
             previouslyNotableAttr.addAttributeToResults(currentResults, caseDb, centralRepoDb);
-
             List<Result> filteredResults = new ArrayList<>();
             for (Result file : currentResults) {
                 if (file.getPreviouslyNotableInCR() == SearchData.PreviouslyNotable.PREVIOUSLY_NOTABLE) {
