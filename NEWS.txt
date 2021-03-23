@@ -33,6 +33,7 @@ Reporting:
 
 Misc:
 - Added support for Ext4 inline data and sparse blocks (via TSK fix).
+- Fixed timeline controller deadlock issue 
 - Updated PostgreSQL JDBC driver to support any recent version of PostgreSQL for multi-user cases and PostgreSQL Central Repository.
 - Added personas to the summary viewer in CVT.
 - Handling of bad characters in auto ingest manifest files.
