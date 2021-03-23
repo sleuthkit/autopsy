@@ -507,7 +507,7 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
     }//GEN-LAST:event_importSetButtonActionPerformed
 
     @Messages({
-        "WebCategoriesOptionsPanel_exportSetButtonActionPerformed_duplicateMessage=A file already exists at the selected path.",
+        "WebCategoriesOptionsPanel_exportSetButtonActionPerformed_duplicateMessage=A file already exists at the selected path.  The categories will not be exported.",
         "WebCategoriesOptionsPanel_exportSetButtonActionPerformed_duplicateTitle=File Already Exists",
         "WebCategoriesOptionsPanel_exportSetButtonActionPerformed_errorMessage=There was an error exporting.",
         "WebCategoriesOptionsPanel_exportSetButtonActionPerformed_errorTitle=Export Error",

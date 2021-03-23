@@ -175,8 +175,18 @@ class WebCategoriesDataModel implements AutoCloseable {
             return "";
         }
 
-        String trimmedSuffix = domainSuffix.trim();
-        return trimmedSuffix.substring(0, Math.min(trimmedSuffix.length(), MAX_DOMAIN_SIZE)).toLowerCase();
+        String sanitized = Stream.of(domainSuffix.split("\\."))
+                .map(s -> {
+                    return s
+                            // alphanumeric and hyphen
+                            .replaceAll("[^0-9a-zA-Z\\-]", "")
+                            // no leading or trailing hyphen
+                            .replaceAll("^\\-*(.+?)?\\-*$", "$1");
+                })
+                .filter(StringUtils::isNotEmpty)
+                .collect(Collectors.joining("."));
+
+        return sanitized.substring(0, Math.min(sanitized.length(), MAX_DOMAIN_SIZE)).toLowerCase();
     }
 
     /**
