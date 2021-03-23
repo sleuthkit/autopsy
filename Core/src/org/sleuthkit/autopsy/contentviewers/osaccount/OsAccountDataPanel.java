@@ -191,11 +191,10 @@ public class OsAccountDataPanel extends JPanel {
     private SectionData buildRealmProperties(OsAccountRealm realm) {
         SectionData data = new SectionData(Bundle.OsAccountDataPanel_realm_title());
 
-        Optional<String> optional = realm.getRealmName();
-        data.addData(Bundle.OsAccountDataPanel_realm_name(),
-                optional.isPresent() ? optional.get() : Bundle.OsAccountDataPanel_realm_unknown());
+        String realmName = realm.getRealmNames().isEmpty() ?  Bundle.OsAccountDataPanel_realm_unknown() :  realm.getRealmNames().get(0);
+        data.addData(Bundle.OsAccountDataPanel_realm_name(), realmName);
 
-        optional = realm.getRealmAddr();
+         Optional<String> optional = realm.getRealmAddr();
         data.addData(Bundle.OsAccountDataPanel_realm_address(),
                 optional.isPresent() ? optional.get() : "");
 

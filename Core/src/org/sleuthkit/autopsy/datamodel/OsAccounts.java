@@ -256,12 +256,12 @@ public final class OsAccounts implements AutopsyVisitableItem {
                     Bundle.OsAccounts_loginNameProperty_desc(),
                     optional.isPresent() ? optional.get() : ""));
 
-            optional = account.getRealm().getRealmName();
+            String realmName = account.getRealm().getRealmNames().isEmpty() ? "" :  account.getRealm().getRealmNames().get(0);
             propertiesSet.put(new NodeProperty<>(
                     Bundle.OsAccounts_accountRealmNameProperty_name(),
                     Bundle.OsAccounts_accountRealmNameProperty_displayName(),
                     Bundle.OsAccounts_accountRealmNameProperty_desc(),
-                    optional.isPresent() ? optional.get() : ""));
+                    realmName));
 
             Optional<Long> creationTimeValue = account.getCreationTime();
             String timeDisplayStr
