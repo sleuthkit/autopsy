@@ -21,12 +21,14 @@ package org.sleuthkit.autopsy.datamodel;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.logging.Level;
+import javax.swing.Action;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
@@ -51,7 +53,7 @@ public final class OsAccounts implements AutopsyVisitableItem {
     private static final String ICON_PATH = "org/sleuthkit/autopsy/images/os-account.png";
     private static final SimpleDateFormat DATE_FORMATTER = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z");
 
-    private final SleuthkitCase skCase;
+    private SleuthkitCase skCase;
     private final long filteringDSObjId;
 
     public OsAccounts(SleuthkitCase skCase) {
@@ -111,34 +113,46 @@ public final class OsAccounts implements AutopsyVisitableItem {
         private final PropertyChangeListener listener = new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
-                refresh(true);
+                String eventType = evt.getPropertyName();
+                if(eventType.equals(Case.Events.OS_ACCOUNT_ADDED.toString())) {
+                     refresh(true);
+                } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
+                    // case was closed. Remove listeners so that we don't get called with a stale case handle
+                    if (evt.getNewValue() == null) {
+                        removeNotify();
+                        skCase = null;
+                    }
+                }
             }
         };
         
         @Override
         protected void addNotify() {
             Case.addEventTypeSubscriber(Collections.singleton(Case.Events.OS_ACCOUNT_ADDED), listener);
+            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), listener);
         }
         
         @Override
         protected void removeNotify() {
             Case.removeEventTypeSubscriber(Collections.singleton(Case.Events.OS_ACCOUNT_ADDED), listener);
+            Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), listener);
         }
         
         @Override
         protected boolean createKeys(List<OsAccount> list) {
-            try {
-                if (filteringDSObjId == 0) {
-                    list.addAll(skCase.getOsAccountManager().getAccounts());
-                } else {
-                    Host host = skCase.getHostManager().getHost(skCase.getDataSource(filteringDSObjId));
-                    list.addAll(skCase.getOsAccountManager().getAccounts(host));
+            if(skCase != null) {
+                try {
+                    if (filteringDSObjId == 0) {
+                        list.addAll(skCase.getOsAccountManager().getAccounts());
+                    } else {
+                        Host host = skCase.getHostManager().getHost(skCase.getDataSource(filteringDSObjId));
+                        list.addAll(skCase.getOsAccountManager().getAccounts(host));
+                    }
+                } catch (TskCoreException | TskDataException ex) {
+                    logger.log(Level.SEVERE, "Unable to retrieve list of OsAccounts for case", ex);
+                    return false;
                 }
-            } catch (TskCoreException | TskDataException ex) {
-                logger.log(Level.SEVERE, "Unable to retrieve list of OsAccounts for case", ex);
-                return false;
             }
-
             return true;
         }
 
@@ -259,6 +273,15 @@ public final class OsAccounts implements AutopsyVisitableItem {
                     timeDisplayStr));
 
             return sheet;
+        }
+        
+        @Override
+        public Action[] getActions(boolean popup) {
+            List<Action> actionsList = new ArrayList<>();
+            actionsList.addAll(Arrays.asList(super.getActions(popup)));
+            actionsList.addAll(DataModelActionsFactory.getActions(account));
+            
+            return actionsList.toArray(new Action[actionsList.size()]);
         }
     }
 }

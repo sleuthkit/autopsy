@@ -444,6 +444,7 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
     ig_groups_seen_index = line.find('INSERT INTO "image_gallery_groups_seen"') > -1 or line.find('INSERT INTO image_gallery_groups_seen ') > -1
     os_account_index = line.find('INSERT INTO "tsk_os_accounts"') > -1 or line.find('INSERT INTO tsk_os_accounts') > -1
     os_account_attr_index = line.find('INSERT INTO "tsk_os_account_attributes"') > -1 or line.find('INSERT INTO tsk_os_account_attributes') > -1
+    os_account_instances_index = line.find('INSERT INTO "tsk_os_account_instances"') > -1 or line.find('INSERT INTO tsk_os_account_instances') > -1
     
     parens = line[line.find('(') + 1 : line.rfind(')')]
     no_space_parens = parens.replace(" ", "")
@@ -663,6 +664,11 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
         elif source_obj_id == 'NULL':
             fields_list[3] = "NULL"
         newLine = ('INSERT INTO "tsk_os_account_attributes" VALUES(' + ','.join(fields_list[1:]) + ');') # remove id
+        return newLine
+    elif os_account_instances_index:
+        os_account_id = int(fields_list[1])
+        fields_list[1] = accounts_table[os_account_id]
+        newLine = ('INSERT INTO "tsk_os_account_instances" VALUES(' + ','.join(fields_list[1:]) + ');') # remove id
         return newLine
     else:
         return line
