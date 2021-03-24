@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.discovery.ui;
 
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JCheckBox;
@@ -172,11 +171,6 @@ final class PastOccurrencesFilterPanel extends AbstractDiscoveryFilterPanel {
     @Override
     boolean isFilterSupported() {
         return !crFrequencyList.isEmpty();
-    }
-
-    @Override
-    void addActionListener(ActionListener actionListener) {
-        crFrequencyList.addActionListener(actionListener);
     }
 
 }

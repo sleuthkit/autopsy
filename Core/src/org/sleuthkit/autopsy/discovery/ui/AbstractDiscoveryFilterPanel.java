@@ -62,15 +62,6 @@ abstract class AbstractDiscoveryFilterPanel extends javax.swing.JPanel {
     abstract void addListSelectionListener(ListSelectionListener listener);
 
     /**
-     * Add an action listener to any buttons related to the filter list in this
-     * panel
-     *
-     * @param listener The action listener to add.
-     */
-    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    abstract void addActionListener(ActionListener actionListener);
-
-    /**
      * Get any additional text that should be displayed under the checkbox. If
      * no text should be displayed this should return null.
      *
@@ -102,7 +93,6 @@ abstract class AbstractDiscoveryFilterPanel extends javax.swing.JPanel {
         }
         if (hasPanel() == true) {
             addListSelectionListener(listListener);
-            addActionListener(actionListener);
         }
     }
 

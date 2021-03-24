@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.discovery.ui;
 
-import java.awt.event.ActionListener;
 import org.sleuthkit.autopsy.discovery.search.AbstractFilter;
 import java.util.List;
 import javax.swing.JCheckBox;
@@ -127,11 +126,6 @@ final class PreviouslyNotableFilterPanel extends AbstractDiscoveryFilterPanel {
     @Override
     boolean isFilterSupported() {
         return true;
-    }
-
-    @Override
-    void addActionListener(ActionListener actionListener) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
     
 }

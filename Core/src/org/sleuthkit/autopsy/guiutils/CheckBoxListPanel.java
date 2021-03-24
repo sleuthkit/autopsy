@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.guiutils;
 
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -28,6 +27,7 @@ import java.util.Objects;
 import java.util.Set;
 import javax.swing.DefaultListModel;
 import javax.swing.Icon;
+import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 /**
@@ -121,7 +121,6 @@ public final class CheckBoxListPanel<T> extends javax.swing.JPanel {
                 model.set(i, item);
             }
         }
-
         checkboxList.repaint();
         checkboxList.revalidate();
     }
@@ -138,6 +137,11 @@ public final class CheckBoxListPanel<T> extends javax.swing.JPanel {
             element.setChecked(selected);
             checkboxList.repaint();
             checkboxList.revalidate();
+        }
+        if (!isEmpty()) {
+            for (ListSelectionListener listener : checkboxList.getListSelectionListeners()) {
+                listener.valueChanged(new ListSelectionEvent(checkboxList, 0, model.getSize() - 1, false));
+            }
         }
     }
 
@@ -167,16 +171,6 @@ public final class CheckBoxListPanel<T> extends javax.swing.JPanel {
      */
     public void addListSelectionListener(ListSelectionListener listener) {
         checkboxList.addListSelectionListener(listener);
-    }
-
-    /**
-     * Add an action listener to the buttons contained in this panel.
-     *
-     * @param listener The action listener to add.
-     */
-    public void addActionListener(ActionListener listener) {
-        checkButton.addActionListener(listener);
-        uncheckButton.addActionListener(listener);
     }
 
     /**

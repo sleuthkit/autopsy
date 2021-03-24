@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.discovery.ui;
 
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import org.sleuthkit.autopsy.discovery.search.AbstractFilter;
 import java.util.List;
@@ -171,11 +170,6 @@ final class HashSetFilterPanel extends AbstractDiscoveryFilterPanel {
     @Override
     boolean isFilterSupported() {
         return !hashSetList.isEmpty();
-    }
-
-    @Override
-    void addActionListener(ActionListener actionListener) {
-        hashSetList.addActionListener(actionListener);
     }
 
 }

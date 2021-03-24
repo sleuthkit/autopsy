@@ -259,7 +259,11 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     void addListeners(ActionListener actionListener, ListSelectionListener listListener) {
-        addActionListener(actionListener);
+        dateFilterCheckBox.addActionListener(actionListener);
+        startCheckBox.addActionListener(actionListener);
+        endCheckBox.addActionListener(actionListener);
+        rangeRadioButton.addActionListener(actionListener);
+        mostRecentRadioButton.addActionListener(actionListener);
         startDatePicker.addDateChangeListener(new DateChangeListener() {
             @Override
             public void dateChanged(DateChangeEvent event) {
@@ -341,15 +345,6 @@ class DateFilterPanel extends AbstractDiscoveryFilterPanel {
     @Override
     boolean isFilterSupported() {
         return true;
-    }
-
-    @Override
-    void addActionListener(ActionListener actionListener) {
-        dateFilterCheckBox.addActionListener(actionListener);
-        startCheckBox.addActionListener(actionListener);
-        endCheckBox.addActionListener(actionListener);
-        rangeRadioButton.addActionListener(actionListener);
-        mostRecentRadioButton.addActionListener(actionListener);
     }
 
 }

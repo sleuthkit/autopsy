@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.discovery.ui;
 
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import org.sleuthkit.autopsy.discovery.search.AbstractFilter;
 import java.util.List;
@@ -166,11 +165,6 @@ final class InterestingItemsFilterPanel extends AbstractDiscoveryFilterPanel {
     @Override
     void addListSelectionListener(ListSelectionListener listener) {
         interestingItemsList.addListSelectionListener(listener);
-    }
-
-    @Override
-    void addActionListener(ActionListener actionListener) {
-        interestingItemsList.addActionListener(actionListener);
     }
 
     @Override

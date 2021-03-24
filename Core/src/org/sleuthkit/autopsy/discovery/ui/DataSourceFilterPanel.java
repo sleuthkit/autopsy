@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.discovery.ui;
 
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import org.sleuthkit.autopsy.discovery.search.AbstractFilter;
@@ -147,11 +146,6 @@ final class DataSourceFilterPanel extends AbstractDiscoveryFilterPanel {
     @Override
     void addListSelectionListener(ListSelectionListener listener) {
         dataSourceCheckBoxList.addListSelectionListener(listener);
-    }
-    
-    @Override
-    void addActionListener(ActionListener actionListener) {
-        dataSourceCheckBoxList.addActionListener(actionListener);
     }
     
     @Override
