@@ -83,6 +83,9 @@ class DomainCategoryRunner extends Extract {
 
     private static final Logger logger = Logger.getLogger(DomainCategoryRunner.class.getName());
 
+    // NOTE: if CustomWebCategorizer ever changes name, this will need to be changed as well.
+    private static final String CUSTOM_CATEGORIZER_PATH = "org.sleuthkit.autopsy.url.analytics.domaincategorization.CustomWebCategorizer";
+
     /**
      * Get seconds from epoch from the mapping for the attribute type id.
      *
@@ -444,7 +447,16 @@ class DomainCategoryRunner extends Extract {
 
         List<DomainCategorizer> foundProviders = lookupList.stream()
                 .filter(provider -> provider != null)
-                .sorted((a, b) -> a.getClass().getName().compareToIgnoreCase(b.getClass().getName()))
+                .sorted((a, b) -> {
+                    boolean aIsCustom = a.getClass().getName().contains(CUSTOM_CATEGORIZER_PATH);
+                    boolean bIsCustom = b.getClass().getName().contains(CUSTOM_CATEGORIZER_PATH);
+                    if (aIsCustom != bIsCustom) {
+                        // push custom categorizer to top
+                        return -Boolean.compare(aIsCustom, bIsCustom);
+                    }
+
+                    return a.getClass().getName().compareToIgnoreCase(b.getClass().getName());
+                })
                 .collect(Collectors.toList());
 
         // add the default categorizer last as a last resort
