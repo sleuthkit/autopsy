@@ -1,0 +1,3 @@
+CTL_ResetWindowsAction=Reset Windows
+ResetWindowAction.confirm.text=The program will close and restart to perform the resetting of window locations.\n\nAre you sure you want to reset all window locations?
+ResetWindowAction.confirm.title=Reset Windows
