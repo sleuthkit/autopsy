@@ -413,6 +413,9 @@ public final class LeappFileProcessor {
 
     }
 
+    @NbBundle.Messages({
+        "LeappFileProcessor.cannot.create.waypoint.relationship=Cannot create TSK_WAYPOINT artifact.",
+    })
 
     private void createRoute (Collection<BlackboardAttribute> bbattributes, Content dataSource, String fileName) throws IngestModuleException {
 
@@ -474,12 +477,16 @@ public final class LeappFileProcessor {
            (new GeoArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(), moduleName, comment, absFile)).addRoute(destinationName, dateTime, waypointList, new ArrayList<>());
                     
         } catch (NoCurrentCaseException | TskCoreException | BlackboardException ex) {
-            throw new IngestModuleException(Bundle.LeappFileProcessor_cannot_create_message_relationship() + ex.getLocalizedMessage(), ex); //NON-NLS
+            throw new IngestModuleException(Bundle.LeappFileProcessor_cannot_create_waypoint_relationship() + ex.getLocalizedMessage(), ex); //NON-NLS
         }
          
         
     }
         
+    @NbBundle.Messages({
+        "LeappFileProcessor.cannot.create.trackpoint.relationship=Cannot create TSK_TRACK_POINT artifact.",
+    })
+
     private AbstractFile createTrackpoint(Collection<BlackboardAttribute> bbattributes, Content dataSource, String fileName, String trackpointSegmentName, GeoTrackPoints pointList) throws IngestModuleException {
 
         Double latitude = Double.valueOf(0);
@@ -538,7 +545,7 @@ public final class LeappFileProcessor {
                     
             }
         } catch (NoCurrentCaseException | TskCoreException | BlackboardException ex) {
-            throw new IngestModuleException(Bundle.LeappFileProcessor_cannot_create_message_relationship() + ex.getLocalizedMessage(), ex); //NON-NLS
+            throw new IngestModuleException(Bundle.LeappFileProcessor_cannot_create_trackpoint_relationship() + ex.getLocalizedMessage(), ex); //NON-NLS
         }
         
         return absFile; 
@@ -652,6 +659,9 @@ public final class LeappFileProcessor {
 
     }
 
+    @NbBundle.Messages({
+        "LeappFileProcessor.cannot.create.contact.relationship=Cannot create TSK_CONTACT Relationship.",
+    })
     private void createContactRelationship(Collection<BlackboardAttribute> bbattributes, Content dataSource, String fileName) throws IngestModuleException {
 
         String alternateId = null;
@@ -715,9 +725,13 @@ public final class LeappFileProcessor {
                 BlackboardArtifact messageArtifact = accountArtifact.addContact(contactName, phoneNumber, homePhoneNumber, mobilePhoneNumber, emailAddr, otherAttributes);
             }
         } catch (NoCurrentCaseException | TskCoreException | BlackboardException ex) {
-            throw new IngestModuleException(Bundle.LeappFileProcessor_cannot_create_message_relationship() + ex.getLocalizedMessage(), ex); //NON-NLS
+            throw new IngestModuleException(Bundle.LeappFileProcessor_cannot_create_contact_relationship() + ex.getLocalizedMessage(), ex); //NON-NLS
         }
     }
+
+    @NbBundle.Messages({
+        "LeappFileProcessor.cannot.create.calllog.relationship=Cannot create TSK_CALLLOG Relationship.",
+    })
 
     private void createCalllogRelationship(Collection<BlackboardAttribute> bbattributes, Content dataSource, String fileName) throws IngestModuleException {
 
@@ -791,7 +805,7 @@ public final class LeappFileProcessor {
             }
             BlackboardArtifact callLogArtifact = accountArtifact.addCalllog(communicationDirection, callerId, calleeId, startDateTime, endDateTime, mediaType, otherAttributes);
         } catch (NoCurrentCaseException | TskCoreException | BlackboardException ex) {
-            throw new IngestModuleException(Bundle.LeappFileProcessor_cannot_create_message_relationship() + ex.getLocalizedMessage(), ex); //NON-NLS
+            throw new IngestModuleException(Bundle.LeappFileProcessor_cannot_create_calllog_relationship() + ex.getLocalizedMessage(), ex); //NON-NLS
         }
 
     }
